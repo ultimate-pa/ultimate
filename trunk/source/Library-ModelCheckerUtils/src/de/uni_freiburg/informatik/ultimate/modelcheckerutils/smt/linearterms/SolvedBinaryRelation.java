@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 
@@ -97,6 +98,13 @@ public class SolvedBinaryRelation {
 	 */
 	public AssumptionForSolvability getAssumptionForSolability() {
 		return mAssumptionForSolability;
+	}
+
+	/**
+	 * @return This relation as SMT term. (Without the additional assumption.)
+	 */
+	public Term relationToTerm(final Script script) {
+		return script.term(mRelationSymbol.toString(), mLeftHandSide, mRightHandSide);
 	}
 
 }

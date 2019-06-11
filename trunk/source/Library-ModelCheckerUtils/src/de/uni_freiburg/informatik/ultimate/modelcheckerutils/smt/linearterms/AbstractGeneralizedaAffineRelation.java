@@ -17,12 +17,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
 public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGeneralizedAffineTerm<AVAR>, AVAR extends Term> {
 
 	protected static final String NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE = "No affine representation where desired variable is on left hand side";
 	protected static final boolean TEMPORARY_POLYNOMIAL_TERM_TEST = false;
+	private static final boolean THROW_EXCEPTION_IF_NOT_SOLVABLE = false;
 	protected final Term mOriginalTerm;
 	protected final RelationSymbol mRelationSymbol;
 	protected final TrivialityStatus mTrivialityStatus;
@@ -58,106 +60,6 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 		}
 	}
 
-	/**
-	 * Transform {@link Term} to {@link AffineRelation} without transforming any
-	 * equalities (i.e., by keeping the original relation of the term).
-	 *
-	 * @param term
-	 * @throws NotAffineException
-	 */
-//	public AbstractGeneralizedaAffineRelation(final Script script, final Term term) throws NotAffineException {
-//		this(script, term, TransformInequality.NO_TRANFORMATION);
-//	}
-
-//	/**
-//	 * Transform Term into AffineRelation.
-//	 *
-//	 * @param term
-//	 *            Term to which the resulting AffineRelation is equivalent.
-//	 * @param transformInequality
-//	 *            transform strict inequalities to non-strict inequalities and vice
-//	 *            versa
-//	 * @throws NotAffineException
-//	 *             Thrown if Term is not affine.
-//	 */
-//	public AbstractGeneralizedaAffineRelation(final Script script, final Term term, final TransformInequality transformInequality)
-//			throws NotAffineException {
-//		mOriginalTerm = term;
-//		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
-//		if (bnr == null) {
-//			throw new NotAffineException("Relation is not affine");
-//		}
-//
-//		final Term lhs = bnr.getLhs();
-//		final Term rhs = bnr.getRhs();
-//		final AffineTerm affineLhs = transformToAffineTerm(script, lhs);
-//		final AffineTerm affineRhs = transformToAffineTerm(script, rhs);
-//		if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
-//			throw new NotAffineException("Relation is not affine");
-//		}
-//		final AffineTerm difference = AffineTerm.sum(affineLhs, AffineTerm.mul(affineRhs, Rational.MONE));
-//		if (transformInequality != TransformInequality.NO_TRANFORMATION
-//				&& SmtSortUtils.isIntSort(difference.getSort())) {
-//			if (transformInequality == TransformInequality.STRICT2NONSTRICT) {
-//				switch (bnr.getRelationSymbol()) {
-//				case DISTINCT:
-//				case EQ:
-//				case GEQ:
-//				case LEQ:
-//					// relation symbol is not strict anyway
-//					mAffineTerm = difference;
-//					mRelationSymbol = bnr.getRelationSymbol();
-//					break;
-//				case LESS:
-//					// increment affine term by one
-//					mRelationSymbol = RelationSymbol.LEQ;
-//					mAffineTerm = AffineTerm.sum(difference,
-//							AffineTerm.constructConstant(difference.getSort(), Rational.ONE));
-//					break;
-//				case GREATER:
-//					// decrement affine term by one
-//					mRelationSymbol = RelationSymbol.GEQ;
-//					mAffineTerm = AffineTerm.sum(difference,
-//							AffineTerm.constructConstant(difference.getSort(), Rational.MONE));
-//
-//					break;
-//				default:
-//					throw new AssertionError("unknown symbol");
-//				}
-//			} else if (transformInequality == TransformInequality.NONSTRICT2STRICT) {
-//				switch (bnr.getRelationSymbol()) {
-//				case DISTINCT:
-//				case EQ:
-//				case LESS:
-//				case GREATER:
-//					// relation symbol is strict anyway
-//					mAffineTerm = difference;
-//					mRelationSymbol = bnr.getRelationSymbol();
-//					break;
-//				case GEQ:
-//					// increment affine term by one
-//					mRelationSymbol = RelationSymbol.GREATER;
-//					mAffineTerm = AffineTerm.sum(difference,
-//							AffineTerm.constructConstant(difference.getSort(), Rational.ONE));
-//					break;
-//				case LEQ:
-//					// decrement affine term by one
-//					mRelationSymbol = RelationSymbol.LESS;
-//					mAffineTerm = AffineTerm.sum(difference,
-//							AffineTerm.constructConstant(difference.getSort(), Rational.MONE));
-//					break;
-//				default:
-//					throw new AssertionError("unknown symbol");
-//				}
-//			} else {
-//				throw new AssertionError("unknown case");
-//			}
-//		} else {
-//			mAffineTerm = difference;
-//			mRelationSymbol = bnr.getRelationSymbol();
-//		}
-//		mTrivialityStatus = computeTrivialityStatus(mAffineTerm, mRelationSymbol);
-//	}
 
 	protected AbstractGeneralizedaAffineRelation(final Script script, final TransformInequality transformInequality,
 			final RelationSymbol relationSymbol, final AGAT affineLhs, final AGAT affineRhs, final Term originalTerm) {
@@ -231,6 +133,14 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 	protected abstract AGAT mul(final AGAT op, final Rational r);
 
 	protected abstract AGAT constructConstant(final Sort s, final Rational r);
+
+	/**
+	 * Check if subject occurs in exactly one abstract variable.
+	 * Assumes that subject is variable of at least one abstract variable (throws AssertionError otherwise).
+	 * Returns null if subject occurs in more that one abstract variable,
+	 * returns the abstract variable of the subject otherwise.
+	 */
+	protected abstract AVAR getTheAbstractVarOfSubject(final Term subject);
 
 	protected static <AGAT extends AbstractGeneralizedAffineTerm<?>> TrivialityStatus computeTrivialityStatus(
 			final AGAT term, final RelationSymbol symbol) {
@@ -340,5 +250,131 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 	public AGAT getAffineTerm() {
 		return mAffineTerm;
 	}
+
+
+	/**
+	 * Returns a term representation of this AffineRelation where the variable var
+	 * (note that in our AffineTerms the variables may be SMT terms like e.g., a
+	 * select term) is on the left hand side with coeffcient one. Throw a
+	 * NotAffineException if no such representation is possible (e.g, if the
+	 * variable does not occur in the term, or the variable is x, its sort is Int
+	 * and the term is 2x=1.)
+	 */
+	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) throws NotAffineException {
+		if (!isVariable(subject)) {
+			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
+				throw new UnsupportedOperationException("subject is not a variable");
+			} else {
+				return null;
+			}
+		}
+		final AVAR abstractVarOfSubject = getTheAbstractVarOfSubject(subject);
+		if (abstractVarOfSubject == null) {
+			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
+				throw new UnsupportedOperationException("subject occurs in several abstract variables");
+			} else {
+				return null;
+			}
+		}
+		final Rational coeffOfSubject = mAffineTerm.getAbstractVariable2Coefficient().get(abstractVarOfSubject);
+		if (coeffOfSubject.equals(Rational.ZERO)) {
+			throw new AssertionError("no abstract variable must have coefficient zero");
+		}
+		if (SmtSortUtils.isBitvecSort(mAffineTerm.getSort()) && !coeffOfSubject.abs().equals(Rational.ONE)) {
+			// for bitvectors we may only divide by 1 or -1
+			// reason: consider bitvectors of length 8 (i.e., 256=0)
+			// then e.g., 2*x = 0 is not equivalent to x = 0 because
+			// for x=128 the first equation hold but the second does not
+			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
+				throw new UnsupportedOperationException(
+						"for bitvector subjects only coefficients 1 and -1 are supported");
+			} else {
+				return null;
+			}
+		}
+
+		final Term assumptionFreeRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
+				coeffOfSubject);
+		final AssumptionForSolvability assumptionForSolvability;
+		final Term additionalAssumption;
+		final Term rhsTerm;
+		if (assumptionFreeRhsTerm == null) {
+			assumptionForSolvability = AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT;
+			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
+					Rational.ONE);
+			rhsTerm = SmtUtils.div(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort()));
+			additionalAssumption = null; // TODO
+		} else {
+			assumptionForSolvability = AssumptionForSolvability.NONE;
+			additionalAssumption = null;
+			rhsTerm = assumptionFreeRhsTerm;
+		}
+
+		final RelationSymbol resultRelationSymbol;
+		if (coeffOfSubject.isNegative()) {
+			// if coefficient is negative we have to use the "swapped"
+			// RelationSymbol
+			resultRelationSymbol = BinaryRelation.swapParameters(mRelationSymbol);
+		} else {
+			resultRelationSymbol = mRelationSymbol;
+		}
+
+		// TODO 2019-06-10 Matthias:
+		// Add here some code for polynominals where we have to try to divide by the
+		// other variables in the monomial
+
+		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm,
+				resultRelationSymbol, additionalAssumption, assumptionForSolvability);
+		final Term relationToTerm = result.relationToTerm(script);
+		assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
+				relationToTerm) != LBool.SAT : "transformation to AffineRelation unsound";
+		return result;
+	}
+
+	/**
+	 * Try to bring everything but abstractVarOfSubject to the right-hand side.
+	 * Try to divide the coefficient of every other variable and the constant
+	 * by the coeffOfAbstractVar. If the sort is not real and for some
+	 * coefficient the quotient is not integral return null.
+	 * Otherwise return the {@link Term} representation of the right-hand side.
+	 */
+	private Term constructRhsForAbstractVariable(final Script script, final AVAR abstractVarOfSubject,
+			final Rational coeffOfAbstractVar) {
+		final List<Term> rhsSummands = new ArrayList<>(mAffineTerm.getAbstractVariable2Coefficient().size());
+		for (final Entry<AVAR, Rational> entry : mAffineTerm.getAbstractVariable2Coefficient().entrySet()) {
+			if (abstractVarOfSubject == entry.getKey()) {
+				// do nothing
+			} else {
+				final Rational newCoeff = entry.getValue().div(coeffOfAbstractVar);
+				if (newCoeff.isIntegral() || SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
+					rhsSummands.add(product(script, newCoeff.negate(), entry.getKey()));
+				} else {
+					if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
+						throw new UnsupportedOperationException(
+								"some coefficient not divisible by coefficient of subject");
+					} else {
+						return null;
+					}
+				}
+			}
+		}
+		if (!mAffineTerm.getConstant().equals(Rational.ZERO)) {
+			final Rational newConstant = mAffineTerm.getConstant().div(coeffOfAbstractVar);
+			if (newConstant.isIntegral() || SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
+				rhsSummands.add(SmtUtils.rational2Term(script, newConstant.negate(), mAffineTerm.getSort()));
+			} else {
+				if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
+					throw new UnsupportedOperationException("some constant not divisible by coefficient of subject");
+				} else {
+					return null;
+				}
+			}
+		}
+		final Term rhsTerm = SmtUtils.sum(script, mAffineTerm.getSort(),
+				rhsSummands.toArray(new Term[rhsSummands.size()]));
+		return rhsTerm;
+	}
+
+
 
 }

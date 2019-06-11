@@ -41,7 +41,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -108,6 +110,26 @@ public class AffineRelation extends AbstractGeneralizedaAffineRelation<AffineTer
 		return convert(script, term, TransformInequality.NO_TRANFORMATION);
 	}
 
+	@Override
+	protected Term getTheAbstractVarOfSubject(final Term subject) {
+		boolean subjectOccurred = false;
+		for (final Term concreteVar : mAffineTerm.getVariable2Coefficient().keySet()) {
+			if (concreteVar == subject) {
+				subjectOccurred = true;
+			} else {
+				final boolean subjectOccursAsSubterm = new SubtermPropertyChecker(x -> x == subject)
+						.isPropertySatisfied(concreteVar);
+				if (subjectOccursAsSubterm) {
+					return null;
+				}
+			}
+		}
+		if (!subjectOccurred) {
+			throw new AssertionError("superclass already chekced that subject is abstract var");
+		}
+		return subject;
+	}
+
 	public static AffineRelation convert(final Script script, final Term term,
 			final TransformInequality transformInequality) {
 		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
@@ -125,6 +147,7 @@ public class AffineRelation extends AbstractGeneralizedaAffineRelation<AffineTer
 		return new AffineRelation(script, transformInequality, relationSymbol, affineLhs, affineRhs, term);
 	}
 
+
 	/**
 	 * Returns a term representation of this AffineRelation where the variable var
 	 * (note that in our AffineTerms the variables may be SMT terms like e.g., a
@@ -134,53 +157,15 @@ public class AffineRelation extends AbstractGeneralizedaAffineRelation<AffineTer
 	 * and the term is 2x=1.)
 	 */
 	public ApplicationTerm onLeftHandSideOnly(final Script script, final Term var) throws NotAffineException {
-		assert mAffineTerm.getVariable2Coefficient().containsKey(var);
-		final Rational termsCoeff = mAffineTerm.getVariable2Coefficient().get(var);
-		if (termsCoeff.equals(Rational.ZERO)) {
+		final SolvedBinaryRelation res = solveForSubject(script, var);
+		if (res == null) {
 			throw new NotAffineException(NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
-		}
-		final List<Term> rhsSummands = new ArrayList<>(mAffineTerm.getVariable2Coefficient().size());
-		for (final Entry<Term, Rational> entry : mAffineTerm.getVariable2Coefficient().entrySet()) {
-			if (var == entry.getKey()) {
-				// do nothing
-			} else {
-				final Rational newCoeff = entry.getValue().div(termsCoeff);
-				if (newCoeff.isIntegral() || SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
-					final Rational negated = newCoeff.negate();
-					rhsSummands.add(product(script, negated, entry.getKey()));
-				} else {
-					throw new NotAffineException(NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
-				}
-			}
-		}
-		{
-			if (!mAffineTerm.getSort().isNumericSort() && !termsCoeff.abs().equals(Rational.ONE)) {
-				// for bitvectors we may only divide by 1 or -1
+		} else {
+			if (res.getAssumptionForSolability() != AssumptionForSolvability.NONE) {
 				throw new NotAffineException(NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
 			}
-			final Rational newConstant = mAffineTerm.getConstant().div(termsCoeff);
-			if (newConstant.isIntegral() && newConstant.isRational()
-					|| SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
-				if (!newConstant.equals(Rational.ZERO)) {
-					final Rational negated = newConstant.negate();
-					rhsSummands.add(SmtUtils.rational2Term(script, negated, mAffineTerm.getSort()));
-				}
-			} else {
-				throw new NotAffineException(NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
-			}
+			return (ApplicationTerm) res.relationToTerm(script);
 		}
-		final Term rhsTerm = SmtUtils.sum(script, mAffineTerm.getSort(),
-				rhsSummands.toArray(new Term[rhsSummands.size()]));
-
-		// if coefficient is negative we have to use the "swapped"
-		// RelationSymbol
-		final boolean useRelationSymbolForSwappedTerms = termsCoeff.isNegative();
-		final RelationSymbol relSymb = useRelationSymbolForSwappedTerms ? BinaryRelation.swapParameters(mRelationSymbol)
-				: mRelationSymbol;
-		final ApplicationTerm result = (ApplicationTerm) script.term(relSymb.toString(), var, rhsTerm);
-		assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
-				result) != LBool.SAT : "transformation to AffineRelation unsound";
-		return result;
 	}
 
 	/**
