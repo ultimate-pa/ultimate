@@ -1023,17 +1023,36 @@ public final class TransFormulaUtils {
 		return map.entrySet().stream().collect(Collectors.toMap(Entry::getValue, c -> c.getKey()));
 	}
 
+	public static Term renameInvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript,
+			final Term term) {
+		return renameXvarsToDefaultVars(tf.getInVars(), mgdScript, term, "term contains non-Invar");
+	}
+
 	public static Term renameInvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript) {
-		final Map<TermVariable, IProgramVar> inVarsReverseMapping = constructReverseMapping(tf.getInVars());
+		return renameInvarsToDefaultVars(tf, mgdScript, tf.getFormula());
+	}
+
+	public static Term renameOutvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript,
+			final Term term) {
+		return renameXvarsToDefaultVars(tf.getOutVars(), mgdScript, term, "term contains non-Outvar");
+	}
+
+	public static Term renameOutvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript) {
+		return renameOutvarsToDefaultVars(tf, mgdScript, tf.getFormula());
+	}
+
+	private static Term renameXvarsToDefaultVars(final Map<IProgramVar, TermVariable> inVarsOrOutVars,
+			final ManagedScript mgdScript, final Term term, final String errorMessage) {
+		final Map<TermVariable, IProgramVar> inVarsReverseMapping = constructReverseMapping(inVarsOrOutVars);
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final TermVariable tv : tf.getFormula().getFreeVars()) {
+		for (final TermVariable tv : term.getFreeVars()) {
 			final IProgramVar pv = inVarsReverseMapping.get(tv);
 			if (pv == null) {
-				throw new IllegalArgumentException("TransFormula contains non-Invar");
+				throw new IllegalArgumentException(errorMessage);
 			}
 			substitutionMapping.put(tv, pv.getTermVariable());
 		}
-		return (new Substitution(mgdScript, substitutionMapping)).transform(tf.getFormula());
+		return (new Substitution(mgdScript, substitutionMapping)).transform(term);
 	}
 
 	public static UnmodifiableTransFormula constructHavoc(final TransFormula tf, final ManagedScript mgdScript) {
