@@ -305,28 +305,16 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 		final Term additionalAssumption;
 		final Term rhsTerm;
 		if (assumptionFreeRhsTerm == null) {
+			/*
+			 * Integer Division under a modulo assumption
+			 */
 			assumptionForSolvability = AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT;
 			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 					Rational.ONE);
 			final Term divTerm = SmtUtils.div(script, rhsTermWithoutDivision,
 					coeffOfSubject.toTerm(mAffineTerm.getSort()));
-
-			Term modTerm = SmtUtils.mod(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort())); // TODO
+			Term modTerm = SmtUtils.mod(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort()));
 			modTerm = SmtUtils.binaryEquality(script, modTerm, TermParseUtils.parseTerm(script, "0"));
-
-			Term conjTerm = script.term("false");
-
-			if (mRelationSymbol == RelationSymbol.GEQ) {
-				conjTerm = SmtUtils.sum(script, mAffineTerm.getSort(), TermParseUtils.parseTerm(script, "1"), divTerm);
-				conjTerm = script.term(mRelationSymbol.toString(), subject, conjTerm);
-
-			} else if (mRelationSymbol == RelationSymbol.LEQ || mRelationSymbol == RelationSymbol.GREATER) {
-				modTerm = script.term("true");
-			} else if (mRelationSymbol == RelationSymbol.LESS) {
-				// TODO
-			}
-
-			modTerm = SmtUtils.or(script, modTerm, conjTerm);
 			additionalAssumption = modTerm;
 			rhsTerm = divTerm;
 		} else {
