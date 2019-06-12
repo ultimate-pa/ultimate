@@ -323,16 +323,12 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 			} else if (mRelationSymbol == RelationSymbol.LEQ || mRelationSymbol == RelationSymbol.GREATER) {
 				modTerm = script.term("true");
 			} else if (mRelationSymbol == RelationSymbol.LESS) {
-				// TODO fiix
-				// mod shit a mod b +1
+				// TODO
 			}
 
 			modTerm = SmtUtils.or(script, modTerm, conjTerm);
 			additionalAssumption = modTerm;
 			rhsTerm = divTerm;
-
-			System.out.println(divTerm);
-			System.out.println(modTerm);
 		} else {
 			assumptionForSolvability = AssumptionForSolvability.NONE;
 			additionalAssumption = null;
@@ -355,7 +351,6 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
 				additionalAssumption, assumptionForSolvability);
 		final Term relationToTerm = result.relationToTerm(script);
-		System.out.println(relationToTerm);
 		if (additionalAssumption != null) {
 			assert script instanceof INonSolverScript || assumptionImpliesEquivalence(script, mOriginalTerm,
 					relationToTerm, additionalAssumption) != LBool.SAT : "transformation to AffineRelation unsound";
