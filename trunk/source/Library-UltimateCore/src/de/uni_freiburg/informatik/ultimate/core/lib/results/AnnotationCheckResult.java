@@ -127,7 +127,7 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 		sb.append(getShortDescription());
 		sb.append(System.lineSeparator());
 		for (final LoopFreeSegmentWithStatePair<ELEM, EXPR> segment : mSegmentsInvalid) {
-			sb.append(validSegmentToString(segment, mTranslatorSequence));
+			sb.append(invalidSegmentToString(segment, mTranslatorSequence));
 			sb.append(System.lineSeparator());
 		}
 		for (final LoopFreeSegment<ELEM> segment : mSegmentsUnknown) {
@@ -149,7 +149,7 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 		return "Insufficient resources for checking whether annotation is valid for " + segment  + ".";
 	}
 
-	public static <ELEM, E> String validSegmentToString(final LoopFreeSegmentWithStatePair<ELEM, E> segment,
+	public static <ELEM, E> String invalidSegmentToString(final LoopFreeSegmentWithStatePair<ELEM, E> segment,
 			final IBacktranslationService translation) {
 		return "Annotation is not valid for " + segment
 				+ ". One counterxample starts in " + translation.translateProgramStateToString(segment.getStateBefore())
