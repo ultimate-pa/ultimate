@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SolvedBinaryRelation.AssumptionForSolvability;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
 public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGeneralizedAffineTerm<AVAR>, AVAR extends Term> {
@@ -48,7 +49,8 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 	 *
 	 * Resulting relation is then <code><term> <symbol> 0</code>.
 	 */
-	public AbstractGeneralizedaAffineRelation(final Script script, final AGAT term, final RelationSymbol relationSymbol) {
+	public AbstractGeneralizedaAffineRelation(final Script script, final AGAT term,
+			final RelationSymbol relationSymbol) {
 		mAffineTerm = Objects.requireNonNull(term);
 		mRelationSymbol = relationSymbol;
 		mTrivialityStatus = computeTrivialityStatus(mAffineTerm, mRelationSymbol);
@@ -59,7 +61,6 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 			mOriginalTerm = null;
 		}
 	}
-
 
 	protected AbstractGeneralizedaAffineRelation(final Script script, final TransformInequality transformInequality,
 			final RelationSymbol relationSymbol, final AGAT affineLhs, final AGAT affineRhs, final Term originalTerm) {
@@ -125,7 +126,8 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 		mAffineTerm = affineTerm;
 		mRelationSymbol = relationSymbolAfterTransformation;
 		mTrivialityStatus = computeTrivialityStatus(affineTerm, relationSymbolAfterTransformation);
-//		return new AbstractGeneralizedaAffineRelation(script, affineTerm, relationSymbolAfterTransformation);
+		// return new AbstractGeneralizedaAffineRelation(script, affineTerm,
+		// relationSymbolAfterTransformation);
 	}
 
 	protected abstract AGAT sum(final AGAT op1, final AGAT op2);
@@ -135,10 +137,10 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 	protected abstract AGAT constructConstant(final Sort s, final Rational r);
 
 	/**
-	 * Check if subject occurs in exactly one abstract variable.
-	 * Assumes that subject is variable of at least one abstract variable (throws AssertionError otherwise).
-	 * Returns null if subject occurs in more that one abstract variable,
-	 * returns the abstract variable of the subject otherwise.
+	 * Check if subject occurs in exactly one abstract variable. Assumes that
+	 * subject is variable of at least one abstract variable (throws AssertionError
+	 * otherwise). Returns null if subject occurs in more that one abstract
+	 * variable, returns the abstract variable of the subject otherwise.
 	 */
 	protected abstract AVAR getTheAbstractVarOfSubject(final Term subject);
 
@@ -179,6 +181,13 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 		comp = script.term("not", comp);
 		final LBool sat = Util.checkSat(script, comp);
 		return sat;
+	}
+
+	protected static LBool assumptionImpliesEquivalence(final Script script, final Term originalTerm,
+			final Term relationToTerm, final Term additionalAssumption) {
+		final Term impli1 = SmtUtils.implies(script, additionalAssumption, relationToTerm);
+		final Term impli2 = SmtUtils.implies(script, additionalAssumption, originalTerm);
+		return isEquivalent(script, impli1, impli2);
 	}
 
 	public RelationSymbol getRelationSymbol() {
@@ -245,12 +254,9 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 		}
 	}
 
-
-
 	public AGAT getAffineTerm() {
 		return mAffineTerm;
 	}
-
 
 	/**
 	 * Returns a term representation of this AffineRelation where the variable var
@@ -295,15 +301,38 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 
 		final Term assumptionFreeRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 				coeffOfSubject);
-		final AssumptionForSolvability assumptionForSolvability;
+		AssumptionForSolvability assumptionForSolvability;
 		final Term additionalAssumption;
 		final Term rhsTerm;
 		if (assumptionFreeRhsTerm == null) {
 			assumptionForSolvability = AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT;
 			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 					Rational.ONE);
-			rhsTerm = SmtUtils.div(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort()));
-			additionalAssumption = null; // TODO
+			final Term divTerm = SmtUtils.div(script, rhsTermWithoutDivision,
+					coeffOfSubject.toTerm(mAffineTerm.getSort()));
+
+			Term modTerm = SmtUtils.mod(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort())); // TODO
+			modTerm = SmtUtils.binaryEquality(script, modTerm, TermParseUtils.parseTerm(script, "0"));
+
+			Term conjTerm = script.term("false");
+
+			if (mRelationSymbol == RelationSymbol.GEQ) {
+				conjTerm = SmtUtils.sum(script, mAffineTerm.getSort(), TermParseUtils.parseTerm(script, "1"), divTerm);
+				conjTerm = script.term(mRelationSymbol.toString(), subject, conjTerm);
+
+			} else if (mRelationSymbol == RelationSymbol.LEQ || mRelationSymbol == RelationSymbol.GREATER) {
+				modTerm = script.term("true");
+			} else if (mRelationSymbol == RelationSymbol.LESS) {
+				// TODO fiix
+				// mod shit a mod b +1
+			}
+
+			modTerm = SmtUtils.or(script, modTerm, conjTerm);
+			additionalAssumption = modTerm;
+			rhsTerm = divTerm;
+
+			System.out.println(divTerm);
+			System.out.println(modTerm);
 		} else {
 			assumptionForSolvability = AssumptionForSolvability.NONE;
 			additionalAssumption = null;
@@ -323,20 +352,26 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 		// Add here some code for polynominals where we have to try to divide by the
 		// other variables in the monomial
 
-		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm,
-				resultRelationSymbol, additionalAssumption, assumptionForSolvability);
+		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
+				additionalAssumption, assumptionForSolvability);
 		final Term relationToTerm = result.relationToTerm(script);
-		assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
-				relationToTerm) != LBool.SAT : "transformation to AffineRelation unsound";
+		System.out.println(relationToTerm);
+		if (additionalAssumption != null) {
+			assert script instanceof INonSolverScript || assumptionImpliesEquivalence(script, mOriginalTerm,
+					relationToTerm, additionalAssumption) != LBool.SAT : "transformation to AffineRelation unsound";
+		} else {
+			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
+					relationToTerm) != LBool.SAT : "transformation to AffineRelation unsound";
+		}
 		return result;
 	}
 
 	/**
-	 * Try to bring everything but abstractVarOfSubject to the right-hand side.
-	 * Try to divide the coefficient of every other variable and the constant
-	 * by the coeffOfAbstractVar. If the sort is not real and for some
-	 * coefficient the quotient is not integral return null.
-	 * Otherwise return the {@link Term} representation of the right-hand side.
+	 * Try to bring everything but abstractVarOfSubject to the right-hand side. Try
+	 * to divide the coefficient of every other variable and the constant by the
+	 * coeffOfAbstractVar. If the sort is not real and for some coefficient the
+	 * quotient is not integral return null. Otherwise return the {@link Term}
+	 * representation of the right-hand side.
 	 */
 	private Term constructRhsForAbstractVariable(final Script script, final AVAR abstractVarOfSubject,
 			final Rational coeffOfAbstractVar) {
@@ -374,7 +409,5 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 				rhsSummands.toArray(new Term[rhsSummands.size()]));
 		return rhsTerm;
 	}
-
-
 
 }

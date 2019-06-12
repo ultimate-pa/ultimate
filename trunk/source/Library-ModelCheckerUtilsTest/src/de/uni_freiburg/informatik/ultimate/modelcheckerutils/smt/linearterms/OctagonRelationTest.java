@@ -32,17 +32,14 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author schaetzc@tf.uni-freiburg.de
@@ -117,75 +114,6 @@ public class OctagonRelationTest {
 		Assert.assertNull(octRelAsString("(<= (- x y) z)"));
 	}
 
-	@Test
-	public void relationIntDiv() throws NotAffineException {
-		final String inputSTR = "(= (* 3 a) b )";
-		Assert.assertTrue(SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "a"), mScript));
-
-	}
-
-	@Test
-	public void relationIntDiv2() throws NotAffineException {
-		final String inputSTR = "(= (* 3 a) (* 7 b) )";
-		Assert.assertTrue(SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "a"), mScript));
-	}
-
-	@Test
-	public void relationIntDiv3() throws NotAffineException {
-		final String inputSTR = "(= (* 3 a) (+ (* 7 b) (* 5 c)) )";
-		Assert.assertTrue(SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "a"), mScript));
-	}
-
-	@Test
-	public void relationIntDiv4() throws NotAffineException {
-		final String inputSTR = "(= (* 6 (+ 33 a)) (* 7 b) )";
-		Assert.assertTrue(SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "a"), mScript));
-	}
-
-	@Test
-	public void relationIntDiv51() throws NotAffineException {
-		final String inputSTR = "(>= (* 3 a) b )";
-		Assert.assertTrue(SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "a"), mScript));
-
-	}
-
-	@Test
-	public void relationIntDiv52() throws NotAffineException {
-		final String inputSTR = "(<= (* 3 a) b )";
-		Assert.assertTrue(SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "a"), mScript));
-
-	}
-
-	// @Test
-	public void relationIntDiv6() throws NotAffineException {
-		final String inputSTR = "(not(= (* 3 a) b ))";
-		Assert.assertTrue(SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "a"), mScript));
-
-	}
-
-	@Test
-	public void relationIntDiv71() throws NotAffineException {
-		final String inputSTR = "(> (* 3 a) b )";
-		Assert.assertTrue(SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "a"), mScript));
-
-	}
-
-	// @Test
-	public void relationIntDiv72() throws NotAffineException {
-		final String inputSTR = "(< (* 3 a) b )";
-		Assert.assertTrue(SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "a"), mScript));
-
-	}
-
 	/**
 	 * 2018-12-25 Matthias: Shows that {@link AffineRelation} does not support
 	 * comparison of Int and Real. Support for such comparisons is required by
@@ -204,14 +132,6 @@ public class OctagonRelationTest {
 		}
 		final OctagonRelation octRel = OctagonRelation.from(affRel);
 		return octRel == null ? null : octRel.toString();
-	}
-
-	private Term affRelOnLeftHandSide(final String termAsString, final String varString) throws NotAffineException {
-		final Term var = TermParseUtils.parseTerm(mScript, varString);
-		final Pair<ApplicationTerm, ApplicationTerm> pair = AffineRelation.convert(mScript,
-				TermParseUtils.parseTerm(mScript, termAsString)).onLeftHandSideOnlyWithIntegerDivision(mScript, var);
-		final Term newTerm = SmtUtils.and(mScript, pair.getFirst(), pair.getSecond());
-		return newTerm;
 	}
 
 }
