@@ -27,15 +27,18 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -50,12 +53,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
@@ -97,7 +102,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	 *            if a Hoare triple was invalid, then construct a pair of {@link ProgramState}s. This pair constitutes a
 	 *            counterexample to validity. One {@link ProgramState} represents a state before executing the
 	 *            transition, the other represents a state after executing the transition.
-	 * 
+	 *
 	 *            TODO: Return a third {@link ProgramState} in counterexamples to validity of return transitions (will
 	 *            represent state before call)
 	 */
@@ -686,30 +691,74 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	private ProgramState<Term> constructCounterexampleStateForPrecondition() {
-		final Map<Term, Collection<Term>> ctxPrecondition = new HashMap<>();
-		for (final Entry<IProgramVar, TermVariable> entry : mAssertedAction.getTransformula().getInVars().entrySet()) {
+		final Map<Term, Term> representativeTerm2ClosedTerm = new HashMap<>();
+		final UnmodifiableTransFormula tf = mAssertedAction.getTransformula();
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			if (SmtUtils.isSortForWhichWeCanGetValues(entry.getKey().getTermVariable().getSort())) {
 				final Term inVarConst = UnmodifiableTransFormula.getConstantForInVar(entry.getKey());
-				final Map<Term, Term> values = mManagedScript.getValue(this, new Term[] { inVarConst });
-				final Term value = values.get(inVarConst);
-				ctxPrecondition.put(entry.getKey().getTermVariable(), Collections.singletonList(value));
+				representativeTerm2ClosedTerm.put(entry.getKey().getTermVariable(), inVarConst);
 			}
 		}
-		return new ProgramState<>(ctxPrecondition, Term.class);
+		final Set<TermVariable> inVars = tf.getInVars().entrySet().stream().map(x -> x.getValue())
+				.collect(Collectors.toSet());
+		final Set<Term> selectTerms = new SubTermFinder(x -> isSuitableArrayReadTerm(x, inVars))
+				.findMatchingSubterms(tf.getFormula());
+		for (final Term selectTerm : selectTerms) {
+			final Term selectTermWithDefaultVars = TransFormulaUtils.renameInvarsToDefaultVars(tf, mManagedScript,
+					selectTerm);
+			// version of the select term as is was asserted
+			final Term selectTermClosed = UnmodifiableTransFormula.computeClosedFormula(selectTerm, tf.getInVars(),
+					tf.getOutVars(), Collections.emptySet(), mManagedScript);
+			representativeTerm2ClosedTerm.put(selectTermWithDefaultVars, selectTermClosed);
+		}
+		return generateProgramState(representativeTerm2ClosedTerm);
+	}
+
+	/**
+	 * @param varSet here, these are inVar or outVars of a TransFormula
+	 * @return true iff term is an array select term, whose Sort allows us to get values and whose
+	 * free variables are in the set varSet.
+	 */
+	private boolean isSuitableArrayReadTerm(final Term term, final Set<TermVariable> varSet) {
+		return (term instanceof ApplicationTerm)
+				&& ((ApplicationTerm) term).getFunction().getName().equals("select")
+				&& SmtUtils.isSortForWhichWeCanGetValues(term.getSort())
+				&& Arrays.stream(term.getFreeVars()).allMatch(x -> varSet.contains(x));
 	}
 
 	private ProgramState<Term> constructCounterexampleStateForPostcondition() {
-		final Map<Term, Collection<Term>> ctxPostcondition = new HashMap<>();
-		for (final Entry<IProgramVar, TermVariable> entry : mAssertedAction.getTransformula().getOutVars().entrySet()) {
+		final Map<Term, Term> representativeTerm2ClosedTerm = new HashMap<>();
+		final UnmodifiableTransFormula tf = mAssertedAction.getTransformula();
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			if (SmtUtils.isSortForWhichWeCanGetValues(entry.getKey().getTermVariable().getSort())) {
 				final Term outVarConst = UnmodifiableTransFormula.getConstantForOutVar(entry.getKey(),
-						mAssertedAction.getTransformula().getInVars(), mAssertedAction.getTransformula().getOutVars());
-				final Map<Term, Term> values = mManagedScript.getValue(this, new Term[] { outVarConst });
-				final Term value = values.get(outVarConst);
-				ctxPostcondition.put(entry.getKey().getTermVariable(), Collections.singletonList(value));
+						tf.getInVars(), tf.getOutVars());
+				representativeTerm2ClosedTerm.put(entry.getKey().getTermVariable(), outVarConst);
 			}
 		}
-		return new ProgramState<>(ctxPostcondition, Term.class);
+		final Set<TermVariable> outVars = tf.getOutVars().entrySet().stream().map(x -> x.getValue())
+				.collect(Collectors.toSet());
+		final Set<Term> selectTerms = new SubTermFinder(x -> isSuitableArrayReadTerm(x, outVars))
+				.findMatchingSubterms(tf.getFormula());
+		for (final Term selectTerm : selectTerms) {
+			final Term selectTermWithDefaultVars = TransFormulaUtils.renameOutvarsToDefaultVars(tf, mManagedScript,
+					selectTerm);
+			// version of the select term as is was asserted
+			final Term selectTermClosed = UnmodifiableTransFormula.computeClosedFormula(selectTerm, tf.getInVars(),
+					tf.getOutVars(), Collections.emptySet(), mManagedScript);
+			representativeTerm2ClosedTerm.put(selectTermWithDefaultVars, selectTermClosed);
+		}
+		return generateProgramState(representativeTerm2ClosedTerm);
+	}
+
+	private ProgramState<Term> generateProgramState(final Map<Term, Term> representativeTerm2ClosedTerm) {
+		final Map<Term, Collection<Term>> valuesMapping = new HashMap<>();
+		for (final Entry<Term, Term> entry : representativeTerm2ClosedTerm.entrySet()) {
+			final Map<Term, Term> values = mManagedScript.getValue(this, new Term[] { entry.getValue() });
+			final Term value = values.get(entry.getValue());
+			valuesMapping.put(entry.getKey(), Collections.singletonList(value));
+		}
+		return new ProgramState<>(valuesMapping, Term.class);
 	}
 
 	private static Term renameVarsToDefaultConstants(final Set<? extends IProgramVar> set, final Term formula,
