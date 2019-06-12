@@ -31,8 +31,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieOnceVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -182,6 +184,7 @@ public class BoogieSymbolTableConstructor extends BoogieOnceVisitor implements I
 				mSymbolTable.addGlobalVariable(name, mCurrentDeclaration);
 			}
 			break;
+		case QUANTIFIED:
 		case PROC_FUNC:
 			break;
 		default:
@@ -190,5 +193,15 @@ public class BoogieSymbolTableConstructor extends BoogieOnceVisitor implements I
 		}
 		return super.processVarList(vl);
 	}
+
+	@Override
+	protected Expression processExpression(final Expression expr) {
+		if (expr instanceof QuantifierExpression) {
+			mCurrentScope = StorageClass.QUANTIFIED;
+		}
+		return super.processExpression(expr);
+	}
+
+
 
 }
