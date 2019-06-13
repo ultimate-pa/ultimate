@@ -125,34 +125,13 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 	}
 
 	public static AffineTerm mulAffineTerms(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
-		return new AffineTerm(poly1.getSort(), poly1.getConstant().mul(poly2.getConstant()),
-					calculateProductMapOfAffineTerms(poly1, poly2));
-	}
-
-	/**
-	 * Calculate the map of the product of affineTerms (in Variable2Coefficient form).
-	 */
-	private static Map<Term, Rational> calculateProductMapOfAffineTerms(final IPolynomialTerm poly1, final IPolynomialTerm poly2){
-		final Map<Term, Rational> map = new HashMap<>();
 		if (poly1.isConstant()) {
-			if (poly1.getConstant().equals(Rational.ZERO)) {
-				return Collections.emptyMap();
-			}
-			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) poly2).getVariable2Coefficient().entrySet()) {
-				map.put(summand.getKey(), summand.getValue().mul(poly1.getConstant()));
-			}
-		//poly2 must be a constant then, or else the product will not be affine -> Error
+			return mul(poly2, poly1.getConstant());
 		}else if (poly2.isConstant()){
-			if (poly2.getConstant().equals(Rational.ZERO)) {
-				return Collections.emptyMap();
-			}
-			for (final Map.Entry<Term, Rational> summand : ((AffineTerm) poly1).getVariable2Coefficient().entrySet()) {
-				map.put(summand.getKey(), summand.getValue().mul(poly2.getConstant()));
-			}
+			return mul(poly1, poly2.getConstant());
 		}else {
 			throw new UnsupportedOperationException("The outcome of this product is not affine!");
 		}
-		return PolynomialTermUtils.shrinkMap(map);
 	}
 
 	/**
