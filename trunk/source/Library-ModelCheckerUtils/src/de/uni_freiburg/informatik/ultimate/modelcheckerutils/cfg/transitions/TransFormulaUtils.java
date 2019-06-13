@@ -1020,39 +1020,51 @@ public final class TransFormulaUtils {
 	}
 
 	public static <V, K> Map<V, K> constructReverseMapping(final Map<K, V> map) {
-		return map.entrySet().stream().collect(Collectors.toMap(Entry::getValue, c -> c.getKey()));
+		return map.entrySet().stream().collect(Collectors.toMap(Entry::getValue, Entry::getKey));
+	}
+
+	public static Map<TermVariable, TermVariable> constructInvarsToDefaultvarsMap(final TransFormula tf) {
+		return tf.getInVars().entrySet().stream()
+				.collect(Collectors.toMap(Entry::getValue, x -> x.getKey().getTermVariable()));
+	}
+
+	public static Map<TermVariable, TermVariable> constructOutvarsToDefaultvarsMap(final TransFormula tf) {
+		return tf.getOutVars().entrySet().stream()
+				.collect(Collectors.toMap(Entry::getValue, x -> x.getKey().getTermVariable()));
+	}
+
+	public static Map<TermVariable, TermVariable> constructInvarsToOutvarsMap(final TransFormula tf) {
+		return tf.getInVars().entrySet().stream().filter(x -> tf.getOutVars().containsKey(x.getKey()))
+				.collect(Collectors.toMap(Entry::getValue, x -> tf.getOutVars().get(x.getKey())));
+	}
+
+	public static Map<TermVariable, TermVariable> constructOutvarsToInvarsMap(final TransFormula tf) {
+		return tf.getOutVars().entrySet().stream().filter(x -> tf.getInVars().containsKey(x.getKey()))
+				.collect(Collectors.toMap(Entry::getValue, x -> tf.getInVars().get(x.getKey())));
+	}
+
+	public static boolean eachFreeVarIsInvar(final TransFormula tf, final Term term) {
+		final Set<TermVariable> inVars = tf.getInVars().entrySet().stream().map(x -> x.getValue())
+				.collect(Collectors.toSet());
+		return Arrays.stream(term.getFreeVars()).allMatch(inVars::contains);
+	}
+
+	public static boolean eachFreeVarIsOutvar(final TransFormula tf, final Term term) {
+		final Set<TermVariable> outVars = tf.getOutVars().entrySet().stream().map(x -> x.getValue())
+				.collect(Collectors.toSet());
+		return Arrays.stream(term.getFreeVars()).allMatch(outVars::contains);
 	}
 
 	public static Term renameInvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript,
 			final Term term) {
-		return renameXvarsToDefaultVars(tf.getInVars(), mgdScript, term, "term contains non-Invar");
-	}
-
-	public static Term renameInvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript) {
-		return renameInvarsToDefaultVars(tf, mgdScript, tf.getFormula());
+		final Map<TermVariable, TermVariable> map = constructInvarsToDefaultvarsMap(tf);
+		return new Substitution(mgdScript, map).transform(term);
 	}
 
 	public static Term renameOutvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript,
 			final Term term) {
-		return renameXvarsToDefaultVars(tf.getOutVars(), mgdScript, term, "term contains non-Outvar");
-	}
-
-	public static Term renameOutvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript) {
-		return renameOutvarsToDefaultVars(tf, mgdScript, tf.getFormula());
-	}
-
-	private static Term renameXvarsToDefaultVars(final Map<IProgramVar, TermVariable> inVarsOrOutVars,
-			final ManagedScript mgdScript, final Term term, final String errorMessage) {
-		final Map<TermVariable, IProgramVar> inVarsReverseMapping = constructReverseMapping(inVarsOrOutVars);
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final TermVariable tv : term.getFreeVars()) {
-			final IProgramVar pv = inVarsReverseMapping.get(tv);
-			if (pv == null) {
-				throw new IllegalArgumentException(errorMessage);
-			}
-			substitutionMapping.put(tv, pv.getTermVariable());
-		}
-		return (new Substitution(mgdScript, substitutionMapping)).transform(term);
+		final Map<TermVariable, TermVariable> map = constructOutvarsToDefaultvarsMap(tf);
+		return new Substitution(mgdScript, map).transform(term);
 	}
 
 	public static UnmodifiableTransFormula constructHavoc(final TransFormula tf, final ManagedScript mgdScript) {
