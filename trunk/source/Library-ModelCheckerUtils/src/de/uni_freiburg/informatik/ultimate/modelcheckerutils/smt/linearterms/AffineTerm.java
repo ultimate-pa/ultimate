@@ -141,38 +141,11 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 		return Collections.unmodifiableMap(mAbstractVariable2Coefficient);
 	}
 
-
-
-
-
-
-
-
-	/*
 	 public static AffineTerm applyModuloToAllCoefficients(final Script script, final AffineTerm affineTerm,
 			final BigInteger divident) {
 		final GeneralizedConstructor<Term, AffineTerm> constructor = AffineTerm::new;
 		return PolynomialTermUtils.applyModuloToAllCoefficients(script, affineTerm, divident, 
 														        x -> ((AffineTerm) x).getVariable2Coefficient(), constructor);
-	}
-	 */
-
-	public static AffineTerm applyModuloToAllCoefficients(final Script script, final AffineTerm affineTerm,
-			final BigInteger divident) {
-		assert SmtSortUtils.isIntSort(affineTerm.getSort());
-		final Map<Term, Rational> map = affineTerm.getVariable2Coefficient();
-		final Term[] terms = new Term[map.size()];
-		final Rational[] coefficients = new Rational[map.size()];
-		int offset = 0;
-		for (final Entry<Term, Rational> entry : map.entrySet()) {
-			terms[offset] = entry.getKey();
-			coefficients[offset] =
-					SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(entry.getValue()), divident));
-			offset++;
-		}
-		final Rational constant =
-				SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(affineTerm.getConstant()), divident));
-		return new AffineTerm(affineTerm.getSort(), terms, coefficients, constant);
 	}
 
 
