@@ -105,6 +105,21 @@ public final class SmtSortUtils {
 		return script.sort(REAL_SORT);
 	}
 
+	/**
+	 * @param size number of bits
+	 */
+	public static Sort getBitvectorSort(final Script script, final int size) {
+		return getBitvectorSort(script, BigInteger.valueOf(size));
+	}
+
+	/**
+	 * @param size number of bits
+	 */
+	public static Sort getBitvectorSort(final Script script, final BigInteger size) {
+		return script.sort(BITVECTOR_SORT, new BigInteger[] { size });
+	}
+
+	@Deprecated
 	public static Sort getBitvectorSort(final Script script, final BigInteger[] sortIndices) {
 		return script.sort(BITVECTOR_SORT, sortIndices);
 	}
