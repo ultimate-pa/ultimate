@@ -169,6 +169,14 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 
 
 
+	/*
+	 public static AffineTerm applyModuloToAllCoefficients(final Script script, final AffineTerm affineTerm,
+			final BigInteger divident) {
+		final GeneralizedConstructor<Term, AffineTerm> constructor = AffineTerm::new;
+		return PolynomialTermUtils.applyModuloToAllCoefficients(script, affineTerm, divident, 
+														        x -> ((AffineTerm) x).getVariable2Coefficient(), constructor);
+	}
+	 */
 
 	public static AffineTerm applyModuloToAllCoefficients(final Script script, final AffineTerm affineTerm,
 			final BigInteger divident) {

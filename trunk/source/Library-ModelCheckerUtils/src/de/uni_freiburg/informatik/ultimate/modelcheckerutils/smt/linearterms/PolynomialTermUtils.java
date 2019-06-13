@@ -213,7 +213,7 @@ public class PolynomialTermUtils {
 	}
 
 	@FunctionalInterface
-	interface GeneralizedConstructor<V, T> {
+	public interface GeneralizedConstructor<V, T> {
 		public T apply(Sort sort, Rational constant, Map<V, Rational> map);
 	}
 }

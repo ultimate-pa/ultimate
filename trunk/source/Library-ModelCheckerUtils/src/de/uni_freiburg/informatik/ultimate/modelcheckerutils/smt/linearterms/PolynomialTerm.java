@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -175,6 +176,14 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 	@Override
 	protected Term abstractVariableToTerm(final Script script, final Monomial abstractVariable) {
 		return abstractVariable.toTerm(script);
+	}
+	
+	public static PolynomialTerm applyModuloToAllCoefficients(final Script script, final PolynomialTerm polynomialTerm,
+			final BigInteger divident) {
+		final GeneralizedConstructor<Monomial, PolynomialTerm> constructor = PolynomialTerm::new;
+		return PolynomialTermUtils.applyModuloToAllCoefficients(script, polynomialTerm, divident, 
+																x -> ((PolynomialTerm) x).getMonomial2Coefficient(), 
+																constructor);
 	}
 
 	/* (non-Javadoc)
