@@ -59,6 +59,10 @@ public class SolvedBinaryRelation {
 	public SolvedBinaryRelation(final Term leftHandSide, final Term rightHandSide, final RelationSymbol relationSymbol,
 			final Term additionalAssumption, final AssumptionForSolvability assumptionForSolability) {
 		super();
+		if ((additionalAssumption == null) != (assumptionForSolability == AssumptionForSolvability.NONE)) {
+			throw new IllegalArgumentException(
+					"Term additionalAssumption must be null iff we not have an assumptionForSolability");
+		}
 		mLeftHandSide = leftHandSide;
 		mRightHandSide = rightHandSide;
 		mRelationSymbol = relationSymbol;
