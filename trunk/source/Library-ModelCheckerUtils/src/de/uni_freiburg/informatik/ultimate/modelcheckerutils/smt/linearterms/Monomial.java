@@ -13,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
@@ -42,15 +41,6 @@ public class Monomial extends Term {
 	private final Sort mSort;
 	
 	/**
-	 * Monomial that consists of the single variable tv, to the exponent r.
-	 */
-	public Monomial(final TermVariable tv, Rational r) {
-		super(0);
-		mSort = tv.getSort();
-		mVariable2Exponent = Collections.singletonMap((Term) tv, r);
-	}
-
-	/**
 	 * Monomial that consists of the single Term t raised to the power of r.
 	 */
 	public Monomial(final Term t, Rational r) {
@@ -58,52 +48,6 @@ public class Monomial extends Term {
 		checkIfTermIsLegalVariable(t);
 		mSort = t.getSort();
 		mVariable2Exponent = Collections.singletonMap(t, r);
-	}
-	
-	/**
-	 * Monomial that consists of the single variable which is an application term.
-	 */
-	public Monomial(final ApplicationTerm appTerm) {
-		super(0);
-		mSort = appTerm.getSort();
-		mVariable2Exponent = Collections.singletonMap((Term) appTerm, Rational.ONE);
-	}
-	
-	/**
-	 * Monomial whose variables are given by an array of terms, whose corresponding exponents are given by the
-	 * array exponents.
-	 */
-	public Monomial(final Sort s, final Term[] terms, final Rational[] exponents) {
-		super(0);
-		mSort = s;
-		if (terms.length != exponents.length) {
-			throw new IllegalArgumentException("number of variables and coefficients different");
-		}
-		switch (terms.length) {
-		case 0:
-			mVariable2Exponent = Collections.emptyMap();
-			break;
-		case 1:
-			final Term variable = terms[0];
-			checkIfTermIsLegalVariable(variable);
-			if (exponents[0].equals(Rational.ZERO)) {
-				throw new IllegalArgumentException("exponents mustn't be zero");
-			} else {
-				mVariable2Exponent = Collections.singletonMap(variable, exponents[0]);
-			}
-			break;
-		default:
-			mVariable2Exponent = new HashMap<>();
-			for (int i = 0; i < terms.length; i++) {
-				checkIfTermIsLegalVariable(terms[i]);
-				if (!exponents[i].equals(Rational.ZERO)) {
-					mVariable2Exponent.put(terms[i], exponents[i]);
-				}else {
-					throw new IllegalArgumentException("exponents mustn't be zero");
-				}
-			}
-			break;
-		}
 	}
 	
 	/**
@@ -125,12 +69,14 @@ public class Monomial extends Term {
 		mSort = monomials[0].getSort();
 		mVariable2Exponent = new HashMap<>();
 		for (final Monomial monomial : monomials) {
-			for (final Map.Entry<Term, Rational> factor : monomial.mVariable2Exponent.entrySet()) {
+			for (final Map.Entry<Term, Rational> factor : monomial.getVariable2Exponent().entrySet()) {
 				assert factor.getKey().getSort() == mSort : "Sort mismatch: " + factor.getKey().getSort() + " vs. "
 						+ mSort;
 				final Rational exp = mVariable2Exponent.get(factor.getKey());
 				if (exp == null) {
 					mVariable2Exponent.put(factor.getKey(), factor.getValue());
+				} else if (exp.isNegative() || factor.getValue().isNegative()) {
+					throw new UnsupportedOperationException("Division is only allowed by constants");
 				} else {
 					final Rational newExp;
 					newExp = exp.add(factor.getValue());
@@ -204,7 +150,6 @@ public class Monomial extends Term {
 		for (final Map.Entry<Term, Rational> entry : mVariable2Exponent.entrySet()) {
 			assert !entry.getValue().equals(Rational.ZERO) : "zero is no legal exponent in AffineTerm";
 			Term factor = entry.getKey();
-			//Make sure that the exponent is an integer.
 			assert entry.getValue().isIntegral();
 	        //TODO: Ask Matthias about whether it is to be expected that the implementation of isintegral changes.
 			//Because then this could be made easier.
