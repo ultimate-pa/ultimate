@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -96,6 +97,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
@@ -627,7 +629,7 @@ public class PathProgramDumper {
 		final ManagedScript mgdScript = mPathProgram.getCfgSmtToolkit().getManagedScript();
 		final UnmodifiableTransFormula guardTf =
 				TransFormulaUtils.computeGuard(action.getTransformula(), mgdScript, mServices, mLogger);
-		final Term guardTerm = TransFormulaUtils.renameInvarsToDefaultVars(guardTf, mgdScript);
+		final Term guardTerm = renameInvarsToDefaultVars(mgdScript, guardTf);
 		final Expression guardExpression = mTerm2Expression.translate(guardTerm);
 		final AssumeStatement assume = new AssumeStatement(constructNewLocation(), guardExpression);
 
@@ -669,6 +671,18 @@ public class PathProgramDumper {
 		return edge.getTarget();
 
 	}
+
+	private Term renameInvarsToDefaultVars(final ManagedScript mgdScript, final UnmodifiableTransFormula guardTf) {
+		final boolean eachFreeVarIsInvar = TransFormulaUtils.eachFreeVarIsInvar(guardTf, guardTf.getFormula());
+		if (!eachFreeVarIsInvar) {
+			throw new IllegalArgumentException("term contains non-Invar");
+		}
+		final Map<TermVariable, TermVariable> substitutionMapping = TransFormulaUtils
+				.constructInvarsToDefaultvarsMap(guardTf);
+		return new Substitution(mgdScript, substitutionMapping).transform(guardTf.getFormula());
+	}
+
+
 
 	private IIcfgReturnTransition<?, ?> getCorrespondingReturn(final IAction action, final Program program) {
 		IIcfgReturnTransition<?, ?> correspondingReturn = null;
