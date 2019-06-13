@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @author Leonard Fichtner 
+ * @author Leonard Fichtner
  */
 public class PolynomialTest {
 
@@ -103,7 +103,7 @@ public class PolynomialTest {
 		Assert.assertTrue(result instanceof AffineTerm);
 	}
 
-	
+
 	/**
 	 * Test division by constant.
 	 */
@@ -122,7 +122,7 @@ public class PolynomialTest {
 		Assert.assertTrue(resultIsCorrect);
 		Assert.assertTrue(result instanceof AffineTerm);
 	}
-	
+
 	/**
 	 * Test cancellation of division by sum of variables.
 	 */
@@ -155,7 +155,7 @@ public class PolynomialTest {
 		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
 		Assert.assertTrue(resultIsCorrect);
 	}
-	
+
 	/**
 	 * Test cancellation of division by sum of constant and variable.
 	 */
@@ -169,7 +169,7 @@ public class PolynomialTest {
 		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
 		Assert.assertTrue(result.isErrorTerm());
 	}
-	
+
 	/**
 	 * Test multiplication of equal variables.
 	 */
@@ -187,7 +187,7 @@ public class PolynomialTest {
 		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
 		Assert.assertTrue(resultIsCorrect);
 	}
-	
+
 	/**
 	 * Test addition of differently ordered (but equal) multiplications of variables.
 	 */
@@ -205,7 +205,27 @@ public class PolynomialTest {
 		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
 		Assert.assertTrue(resultIsCorrect);
 	}
-	
+
+	/**
+	 * A the product of non-zero bitvectors can be zero.
+	 */
+	@Test
+	public void polynomialTermTest08() {
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("x", new Sort[0], bv8);
+		mScript.declareFun("y", new Sort[0], bv8);
+		final String formulaAsString = "(bvmul (bvmul (_ bv4 8) x y) (bvmul (_ bv64 8) x x x))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mLogger.info("Input: " + formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final Term resultAsTerm = result.toTerm(mScript);
+		mLogger.info("Output: " + resultAsTerm);
+		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
+		Assert.assertTrue(resultIsCorrect);
+		final boolean resultIsCorrect2 = BitvectorUtils.constructTerm(mScript, BigInteger.ZERO, bv8).equals(resultAsTerm);
+		Assert.assertTrue(resultIsCorrect2);
+	}
+
 	private static boolean areEquivalent(final Script script, final Term formulaAsTerm, final Term resultAsTerm) {
 		final Term equality = SmtUtils.binaryEquality(script, formulaAsTerm, resultAsTerm);
 		final Term negatedEquality = SmtUtils.not(script, equality);
