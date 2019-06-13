@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PolynomialTermUtils.GeneralizedConstructor;
 
 /**
@@ -55,15 +56,32 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 				polynomialTerm, multiplier);
 	}
 
+	//TODO: Ask Matthias where assert poly1.getSort() == poly2.getSort(); should be put. Highest level? Only on Multiplication?
 	/**
 	 * Returns a new PolynomialTerm that represents the product of two polynomialTerms.
 	 */
 	public static PolynomialTerm mulPolynomials(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
+		assert poly1.getSort() == poly2.getSort();
 		return new PolynomialTerm(poly1.getSort(),
-				  				  poly1.getConstant().mul(poly2.getConstant()),
+				  				  calculateProductCoefficient(poly1, poly2),
 				  				  calculateProductMap(poly1, poly2));
 	}
 
+	
+	/**
+	 * Calculate the Coefficient of the product of two polynomials.
+	 */
+	private static Rational calculateProductCoefficient(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
+		Rational newCoeff;
+		if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
+			newCoeff = PolynomialTermUtils.bringValueInRange(poly1.getConstant().mul(poly2.getConstant()),
+															 poly1.getSort());
+		}else {
+			newCoeff = poly1.getConstant().mul(poly2.getConstant());
+		}
+		return newCoeff;
+	}
+	
 	/**
 	 * Calculate the map of the product of two polynomials (in Monomial2Coefficient form).
 	 */
@@ -91,9 +109,13 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 					newCoeff = summand1.getValue().mul(summand2.getValue());
 					map.put(mono, newCoeff);
 				}else {
-					//TODO: Probably something with bitvectors should be here, too
 					//TODO: Write Tests for Bitvectors.
-					newCoeff = summand1.getValue().mul(summand2.getValue()).add(coeff);
+					if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
+						newCoeff = PolynomialTermUtils.bringValueInRange(summand1.getValue().mul(summand2.getValue()).add(coeff),
+																		 poly1.getSort());
+					}else {
+						newCoeff = summand1.getValue().mul(summand2.getValue()).add(coeff);
+					}
 					if (newCoeff.equals(Rational.ZERO)) {
 						map.remove(mono);
 					}else {
@@ -121,8 +143,12 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 					map.put(summand.getKey(), newCoeff);
 				}
 			}else {
-				//TODO: Probably something with bitvectors should be here, too
-				newCoeff = summand.getValue().mul(poly2.getConstant()).add(coeff);
+				if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
+					newCoeff = PolynomialTermUtils.bringValueInRange(summand.getValue().mul(poly2.getConstant()).add(coeff),
+																	 poly1.getSort());
+				}else {
+					newCoeff = summand.getValue().mul(poly2.getConstant()).add(coeff);
+				}
 				if (!newCoeff.equals(Rational.ZERO)) {
 					map.put(summand.getKey(), newCoeff);
 				}

@@ -258,7 +258,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	/**
 	 * Construct a {@link PolynomialTerm} that is the sum of all inputs.
 	 */
-	private static IPolynomialTerm add(final IPolynomialTerm[] polynomialArgs) {
+	private static IPolynomialTerm add(final IPolynomialTerm... polynomialArgs) {
 		if (someTermIsPolynomial(polynomialArgs)) {
 			return PolynomialTerm.sum(polynomialArgs);
 		}else {

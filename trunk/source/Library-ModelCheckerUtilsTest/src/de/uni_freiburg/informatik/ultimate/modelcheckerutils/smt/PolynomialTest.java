@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.math.BigInteger;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -82,6 +84,9 @@ public class PolynomialTest {
 		mScript.exit();
 	}
 
+	/**
+	 * Test addition and multiplication.
+	 */
 	@Test
 	public void polynomialTermTest01() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
@@ -98,35 +103,12 @@ public class PolynomialTest {
 		Assert.assertTrue(result instanceof AffineTerm);
 	}
 
-	@Test(expected = UnsupportedOperationException.class)
-	public void polynomialTermTest02() {
-		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
-		mScript.declareFun("x", new Sort[0], realSort);
-		mScript.declareFun("y", new Sort[0], realSort);
-		final String formulaAsString = "(/ (- 2.0 x) y)";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
-	}
 	
-	@Test(expected = UnsupportedOperationException.class)
-	public void polynomialTermTest03() {
-		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
-		mScript.declareFun("x", new Sort[0], realSort);
-		mScript.declareFun("y", new Sort[0], realSort);
-		final String formulaAsString = "(/ (- 2.0 x) (+ y x))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		Assert.assertTrue(result.isErrorTerm());
-	}
-	
+	/**
+	 * Test division by constant.
+	 */
 	@Test
-	public void polynomialTermTest04() {
+	public void polynomialTermTest02() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
@@ -141,8 +123,26 @@ public class PolynomialTest {
 		Assert.assertTrue(result instanceof AffineTerm);
 	}
 	
+	/**
+	 * Test cancellation of division by sum of variables.
+	 */
 	@Test(expected = UnsupportedOperationException.class)
-	public void polynomialTermTest05() {
+	public void polynomialTermTest03() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		mScript.declareFun("y", new Sort[0], realSort);
+		final String formulaAsString = "(/ (- 2.0 x) (+ y x))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mLogger.info("Input: " + formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		Assert.assertTrue(result.isErrorTerm());
+	}
+
+	/**
+	 * Test cancellation of division by variable.
+	 */
+	@Test(expected = UnsupportedOperationException.class)
+	public void polynomialTermTest04() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
@@ -156,6 +156,23 @@ public class PolynomialTest {
 		Assert.assertTrue(resultIsCorrect);
 	}
 	
+	/**
+	 * Test cancellation of division by sum of constant and variable.
+	 */
+	@Test(expected = UnsupportedOperationException.class)
+	public void polynomialTermTest05() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		final String formulaAsString = "(/ (- 2.0 x) (+ x 19.0))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mLogger.info("Input: " + formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		Assert.assertTrue(result.isErrorTerm());
+	}
+	
+	/**
+	 * Test multiplication of equal variables.
+	 */
 	@Test
 	public void polynomialTermTest06() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
@@ -171,6 +188,9 @@ public class PolynomialTest {
 		Assert.assertTrue(resultIsCorrect);
 	}
 	
+	/**
+	 * Test addition of differently ordered (but equal) multiplications of variables.
+	 */
 	@Test
 	public void polynomialTermTest07() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
