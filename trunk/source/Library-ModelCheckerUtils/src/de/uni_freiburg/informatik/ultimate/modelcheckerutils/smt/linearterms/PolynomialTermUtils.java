@@ -74,6 +74,42 @@ public class PolynomialTermUtils {
 	}
 	
 	/**
+	 * Generalized method for applying Modulo to the coefficients and the constant of 
+	 * {@link AffineTerm}s and {@link PolynomialTerm}s. The type parameter T refers either to
+	 * {@link AffineTerm} or {@link PolynomialTerm}. The type parameter MNL is a
+	 * {@link Term} for {@link AffineTerm}s and a {@link Monomial} for
+	 * {@link PolynomialTerm}s.
+	 *
+	 * @param term2map
+	 *            {@link Function} that returns for a given T the Map<MNL,Rational>
+	 *            map.
+	 * @param constructor
+	 *            Methods that constructs the term of type T.
+	 */
+	public static <T extends IPolynomialTerm, MNL extends Term> T applyModuloToAllCoefficients(
+			final Script script, 
+			final IPolynomialTerm polynomialTerm,
+			final BigInteger divident,
+			final Function<IPolynomialTerm, Map<MNL, Rational>> term2map,
+			final GeneralizedConstructor<MNL, T> constructor) {
+		assert SmtSortUtils.isIntSort(polynomialTerm.getSort());
+		final Map<MNL, Rational> newMap = new HashMap<>();
+		Rational newCoeff;
+		for (final Entry<MNL, Rational> entry : term2map.apply(polynomialTerm).entrySet()) {
+			newCoeff = SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(entry.getValue()), divident));
+			if (newCoeff == Rational.ZERO) {
+				continue;
+			}else {
+				newMap.put(entry.getKey(), newCoeff);
+			}
+		}
+		shrinkMap(newMap);
+		final Rational constant =
+				SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(polynomialTerm.getConstant()), divident));
+		return constructor.apply(polynomialTerm.getSort(), constant, newMap);
+	}
+	
+	/**
 	 * Returns a shrinked version of a map if possible. Returns the given map otherwise.
 	 */
 	protected static <MNL extends Term> Map<MNL, Rational> shrinkMap(final Map<MNL, Rational> map) {

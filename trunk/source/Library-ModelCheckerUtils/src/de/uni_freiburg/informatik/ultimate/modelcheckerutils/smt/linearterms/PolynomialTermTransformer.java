@@ -153,7 +153,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		return result;
 	}
 
-	//TODO: Change PolynomialTermTransformer to use the more efficient class AffineTerm if possible.
+	//TODO: Implement "linear" PolynomialTerm detection
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		// This method is called for every subformula for which we let the

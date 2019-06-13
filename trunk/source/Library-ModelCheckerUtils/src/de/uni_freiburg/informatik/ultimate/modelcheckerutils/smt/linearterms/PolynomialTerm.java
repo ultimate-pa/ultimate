@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -105,6 +106,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 					map.put(mono, newCoeff);
 				}else {
 					//TODO: Probably something with bitvectors should be here, too
+					//TODO: Write Tests for Bitvectors.
 					newCoeff = summand1.getValue().mul(summand2.getValue()).add(coeff);
 					if (newCoeff.equals(Rational.ZERO)) {
 						map.remove(mono);
@@ -161,24 +163,6 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 	@Override
 	protected Term abstractVariableToTerm(final Script script, final Monomial abstractVariable) {
 		return abstractVariable.toTerm(script);
-	}
-
-	public static IPolynomialTerm applyModuloToAllCoefficients(final Script script, final IPolynomialTerm polynomialTerm,
-			final BigInteger divident) {
-		assert SmtSortUtils.isIntSort(polynomialTerm.getSort());
-		final Map<Monomial, Rational> map = polynomialTerm.getMonomial2Coefficient();
-		final Monomial[] monomials = new Monomial[map.size()];
-		final Rational[] coefficients = new Rational[map.size()];
-		int offset = 0;
-		for (final Entry<Monomial, Rational> entry : map.entrySet()) {
-			monomials[offset] = entry.getKey();
-			coefficients[offset] =
-					SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(entry.getValue()), divident));
-			offset++;
-		}
-		final Rational constant =
-				SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(polynomialTerm.getConstant()), divident));
-		return new PolynomialTerm(polynomialTerm.getSort(), monomials, coefficients, constant);
 	}
 
 	/* (non-Javadoc)

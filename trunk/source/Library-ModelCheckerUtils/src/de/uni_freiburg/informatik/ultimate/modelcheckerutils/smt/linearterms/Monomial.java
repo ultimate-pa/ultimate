@@ -168,7 +168,7 @@ public class Monomial extends Term {
 	 * @return
 	 */
 	public boolean isLinear() {
-		if (mVariable2Exponent.entrySet().size() == 1 && mVariable2Exponent.values().contains(Rational.ONE)) {
+		if (getVariable2Exponent().entrySet().size() == 1 && getVariable2Exponent().values().contains(Rational.ONE)) {
 		    return true;
 		}
 		return false;
@@ -186,8 +186,6 @@ public class Monomial extends Term {
 		return mSort;
 	}
 	
-	//TODO: Find out whether the error constructor is necessary. So far it doesn't look like it, since
-	//an ErrorTerm for the PolynomialTerm is enough.
 	@Override
 	public void toStringHelper(final ArrayDeque<Object> mTodo) {
 		throw new UnsupportedOperationException("This is a Monomial. Something went wrong.");
