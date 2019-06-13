@@ -40,14 +40,6 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 	}
 
 	/**
-	 * PolynomialTerm whose variables are given by an array of terms, whose corresponding coefficients are given by the
-	 * array coefficients, and whose constant term is given by the Rational constant.
-	 */
-	public PolynomialTerm(final Sort s, final Monomial[] terms, final Rational[] coefficients, final Rational constant) {
-		super(s, terms, coefficients, constant);
-	}
-
-	/**
 	 * Check if term is of a type that may be a variable of an PolynomialTerm.
 	 */
 	@Override

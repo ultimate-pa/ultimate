@@ -88,13 +88,6 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 	}
 
 	/**
-	 * {@inheritDoc}
-	 */
-	public AffineTerm(final Sort sort, final Term[] terms, final Rational[] coefficients, final Rational constant) {
-		super(sort, terms, coefficients, constant);
-	}
-
-	/**
 	 * @returns {@link AffineTerm} that has sort s and represents a Term of the
 	 *          given {@link Rational} value.
 	 */
@@ -165,28 +158,6 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 
 
 
-
-
-
-
-
-	public static AffineTerm applyModuloToAllCoefficients(final Script script, final AffineTerm affineTerm,
-			final BigInteger divident) {
-		assert SmtSortUtils.isIntSort(affineTerm.getSort());
-		final Map<Term, Rational> map = affineTerm.getVariable2Coefficient();
-		final Term[] terms = new Term[map.size()];
-		final Rational[] coefficients = new Rational[map.size()];
-		int offset = 0;
-		for (final Entry<Term, Rational> entry : map.entrySet()) {
-			terms[offset] = entry.getKey();
-			coefficients[offset] =
-					SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(entry.getValue()), divident));
-			offset++;
-		}
-		final Rational constant =
-				SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(affineTerm.getConstant()), divident));
-		return new AffineTerm(affineTerm.getSort(), terms, coefficients, constant);
-	}
 
 
 
