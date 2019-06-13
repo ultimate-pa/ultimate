@@ -88,13 +88,6 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 	}
 
 	/**
-	 * {@inheritDoc}
-	 */
-	public AffineTerm(final Sort sort, final Term[] terms, final Rational[] coefficients, final Rational constant) {
-		super(sort, terms, coefficients, constant);
-	}
-
-	/**
 	 * @returns {@link AffineTerm} that has sort s and represents a Term of the
 	 *          given {@link Rational} value.
 	 */
