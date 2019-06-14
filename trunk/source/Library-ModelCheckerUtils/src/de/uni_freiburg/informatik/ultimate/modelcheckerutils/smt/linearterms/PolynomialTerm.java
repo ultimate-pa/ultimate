@@ -103,25 +103,26 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 																  		  final IPolynomialTerm poly2){
 		for (final Map.Entry<Monomial, Rational> summand1 : poly1.getMonomial2Coefficient().entrySet()) {
 			for (final Map.Entry<Monomial, Rational> summand2 : poly2.getMonomial2Coefficient().entrySet()) {
-				final Monomial mono = new Monomial(summand1.getKey(),summand2.getKey());
+				final Monomial mono = new Monomial(summand1.getKey(), summand2.getKey());
+				final Rational tempCoeff;
 				final Rational newCoeff;
 				final Rational coeff = map.get(mono);
+				
+				//Check whether this Monomial does already exist in the map
 				if (coeff == null) {
-					newCoeff = summand1.getValue().mul(summand2.getValue());
-					map.put(mono, newCoeff);
+					tempCoeff = summand1.getValue().mul(summand2.getValue());
 				}else {
-					//TODO: Write Tests for Bitvectors.
-					if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
-						newCoeff = PolynomialTermUtils.bringValueInRange(summand1.getValue().mul(summand2.getValue()).add(coeff),
-																		 poly1.getSort());
-					}else {
-						newCoeff = summand1.getValue().mul(summand2.getValue()).add(coeff);
-					}
-					if (newCoeff.equals(Rational.ZERO)) {
-						map.remove(mono);
-					}else {
-						map.put(mono, newCoeff);
-					}
+					tempCoeff = summand1.getValue().mul(summand2.getValue()).add(coeff);
+				}
+				
+				if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
+					newCoeff = PolynomialTermUtils.bringValueInRange(tempCoeff, poly1.getSort());
+				}else {
+					newCoeff = tempCoeff;
+				}
+				
+				if (!newCoeff.equals(Rational.ZERO)) {
+					map.put(mono, newCoeff);
 				}
 			}
 		}
@@ -138,21 +139,23 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 		for (final Map.Entry<Monomial, Rational> summand : poly1.getMonomial2Coefficient().entrySet()) {
 			final Rational coeff = map.get(summand.getKey());
 			final Rational newCoeff;
+			final Rational tempCoeff;
+			
+			//Check whether this Monomial does already exist in the map
 			if (coeff == null) {
-				newCoeff = summand.getValue().mul(poly2.getConstant());
-				if (!newCoeff.equals(Rational.ZERO)) {
-					map.put(summand.getKey(), newCoeff);
-				}
+				tempCoeff = summand.getValue().mul(poly2.getConstant());
 			}else {
-				if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
-					newCoeff = PolynomialTermUtils.bringValueInRange(summand.getValue().mul(poly2.getConstant()).add(coeff),
-																	 poly1.getSort());
-				}else {
-					newCoeff = summand.getValue().mul(poly2.getConstant()).add(coeff);
-				}
-				if (!newCoeff.equals(Rational.ZERO)) {
-					map.put(summand.getKey(), newCoeff);
-				}
+				tempCoeff = summand.getValue().mul(poly2.getConstant()).add(coeff);
+			}
+			
+			if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
+				newCoeff = PolynomialTermUtils.bringValueInRange(tempCoeff, poly1.getSort());
+			}else {
+				newCoeff = tempCoeff;
+			}
+			
+			if (!newCoeff.equals(Rational.ZERO)) {
+				map.put(summand.getKey(), newCoeff);
 			}
 		}
 		return map;
