@@ -225,6 +225,40 @@ public class PolynomialTest {
 		final boolean resultIsCorrect2 = BitvectorUtils.constructTerm(mScript, BigInteger.ZERO, bv8).equals(resultAsTerm);
 		Assert.assertTrue(resultIsCorrect2);
 	}
+	
+	/**
+	 * Test div.
+	 */
+	@Test
+	public void polynomialTermTest09() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		final String formulaAsString = "(div (* 8 x) 4)";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mLogger.info("Input: " + formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final Term resultAsTerm = result.toTerm(mScript);
+		mLogger.info("Output: " + resultAsTerm);
+		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
+		Assert.assertTrue(resultIsCorrect);
+	}
+	
+	/**
+	 * Test failure of div.
+	 */
+	@Test(expected = UnsupportedOperationException.class)
+	public void polynomialTermTest10() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String formulaAsString = "(div (* 8 y) 3)";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mLogger.info("Input: " + formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final Term resultAsTerm = result.toTerm(mScript);
+		mLogger.info("Output: " + resultAsTerm);
+		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
+		Assert.assertTrue(resultIsCorrect);
+	}
 
 	private static boolean areEquivalent(final Script script, final Term formulaAsTerm, final Term resultAsTerm) {
 		final Term equality = SmtUtils.binaryEquality(script, formulaAsTerm, resultAsTerm);

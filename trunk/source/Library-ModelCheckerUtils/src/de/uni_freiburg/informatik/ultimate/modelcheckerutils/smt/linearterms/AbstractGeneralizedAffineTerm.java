@@ -30,6 +30,7 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -90,6 +91,43 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 
 
 	/**
+	 * {@link AbstractGeneralizedAffineTerm} whose variables are given by an array
+	 * of terms, whose corresponding coefficients are given by the array
+	 * coefficients, and whose constant term is given by the Rational constant.
+	 */
+	protected AbstractGeneralizedAffineTerm(final Sort s, final AVAR[] terms, final Rational[] coefficients, final Rational constant) {
+		super(0);
+		mSort = s;
+		mConstant = constant;
+		if (terms.length != coefficients.length) {
+			throw new IllegalArgumentException("number of variables and coefficients different");
+		}
+		switch (terms.length) {
+		case 0:
+			mAbstractVariable2Coefficient = Collections.emptyMap();
+			break;
+		case 1:
+			final AVAR variable = terms[0];
+			checkIfTermIsLegalVariable(variable);
+			if (coefficients[0].equals(Rational.ZERO)) {
+				mAbstractVariable2Coefficient = Collections.emptyMap();
+			} else {
+				mAbstractVariable2Coefficient = Collections.singletonMap(variable, coefficients[0]);
+			}
+			break;
+		default:
+			mAbstractVariable2Coefficient = new HashMap<>();
+			for (int i = 0; i < terms.length; i++) {
+				checkIfTermIsLegalVariable(terms[i]);
+				if (!coefficients[i].equals(Rational.ZERO)) {
+					mAbstractVariable2Coefficient.put(terms[i], coefficients[i]);
+				}
+			}
+			break;
+		}
+	}
+
+	/**
 	 * True if this represents not an legal term of its kind but an error during the
 	 * translation process, e.g., if original term was not linear or not polynomial.
 	 */
@@ -128,6 +166,22 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	}
 
 	/**
+	 * Check whether every coefficient and every constant is of an integral value.
+	 * Return true if thats the case.
+	 */
+	public boolean isIntegral() {
+		if (!getConstant().isIntegral()) {
+			return false;
+		}
+		for (Rational coefficient : getAbstractVariable2Coefficient().values()) {
+			if (!coefficient.isIntegral()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * @return the constant summand of this {@link AbstractGeneralizedAffineTerm}
 	 */
 	@Override
@@ -135,43 +189,6 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		return mConstant;
 	}
 
-
-	/**
-	 * {@link AbstractGeneralizedAffineTerm} whose variables are given by an array
-	 * of terms, whose corresponding coefficients are given by the array
-	 * coefficients, and whose constant term is given by the Rational constant.
-	 */
-	protected AbstractGeneralizedAffineTerm(final Sort s, final AVAR[] terms, final Rational[] coefficients, final Rational constant) {
-		super(0);
-		mSort = s;
-		mConstant = constant;
-		if (terms.length != coefficients.length) {
-			throw new IllegalArgumentException("number of variables and coefficients different");
-		}
-		switch (terms.length) {
-		case 0:
-			mAbstractVariable2Coefficient = Collections.emptyMap();
-			break;
-		case 1:
-			final AVAR variable = terms[0];
-			checkIfTermIsLegalVariable(variable);
-			if (coefficients[0].equals(Rational.ZERO)) {
-				mAbstractVariable2Coefficient = Collections.emptyMap();
-			} else {
-				mAbstractVariable2Coefficient = Collections.singletonMap(variable, coefficients[0]);
-			}
-			break;
-		default:
-			mAbstractVariable2Coefficient = new HashMap<>();
-			for (int i = 0; i < terms.length; i++) {
-				checkIfTermIsLegalVariable(terms[i]);
-				if (!coefficients[i].equals(Rational.ZERO)) {
-					mAbstractVariable2Coefficient.put(terms[i], coefficients[i]);
-				}
-			}
-			break;
-		}
-	}
 
 	/**
 	 * Check if term is of a type that may be a variable of an
@@ -258,7 +275,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	Map<AVAR, Rational> getAbstractVariable2Coefficient() {
 		return Collections.unmodifiableMap(mAbstractVariable2Coefficient);
 	}
-
+	
 	@Override
 	public void toStringHelper(final ArrayDeque<Object> mTodo) {
 		throw new UnsupportedOperationException("This is an auxilliary Term and not supported by the solver");

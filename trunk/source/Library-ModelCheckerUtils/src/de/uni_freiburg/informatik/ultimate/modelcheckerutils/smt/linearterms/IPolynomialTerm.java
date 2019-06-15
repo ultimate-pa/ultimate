@@ -83,6 +83,11 @@ public interface IPolynomialTerm {
 	 * @return whether this polynomial term is zero
 	 */
 	boolean isZero();
+	
+	/**
+	 * @return whether this polynomial has integral coefficients and constant.
+	 */
+	boolean isIntegral();
 
 	/**
 	 * @return the constant summand of this polynomial term

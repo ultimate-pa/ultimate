@@ -121,7 +121,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 
 	private static boolean isPolynomialFunctionSymbol(final String funName) {
 		return (funName.equals("+") || funName.equals("-") || funName.equals("*") || funName.equals("/")
-				|| funName.equals("bvadd") || funName.equals("bvsub") || funName.equals("bvmul"));
+				|| funName.equals("bvadd") || funName.equals("bvsub") || funName.equals("bvmul") || funName.equals("div"));
 	}
 
 	/**
@@ -165,35 +165,53 @@ public class PolynomialTermTransformer extends TermTransformer {
 			return;
 		}
 		final String funName = appTerm.getFunction().getName();
-		if (funName.equals("*") || funName.equals("bvmul")) {
-			final Sort sort = appTerm.getSort();
-			final IPolynomialTerm result = multiply(sort, polynomialArgs);
-			castAndSetResult(result);
-			return;
-		} else if (funName.equals("+") || funName.equals("bvadd")) {
-			final IPolynomialTerm result = add(polynomialArgs);
-			castAndSetResult(result);
-			return;
-		} else if (funName.equals("-") || funName.equals("bvsub")) {
-			final IPolynomialTerm result;
+		final Sort sort = appTerm.getSort();
+		final IPolynomialTerm result = convertArgumentsToFunction(sort, polynomialArgs, funName);
+		castAndSetResult(result);
+	}
+	
+	/**
+	 * Create an IPolynomialTerm out of the polynomialArgs, according to the given funName, if possible.
+	 */
+	private IPolynomialTerm convertArgumentsToFunction(final Sort sort, 
+													   final IPolynomialTerm[] polynomialArgs, 
+													   String funName) {
+		switch(funName) {
+		case "*":
+			return multiply(sort, polynomialArgs);
+			
+		case "bvmul":
+			return multiply(sort, polynomialArgs);
+			
+		case "+":
+			return add(polynomialArgs);
+			
+		case "bvadd":
+			return add(polynomialArgs);
+			
+		case "-":
 			if (polynomialArgs.length == 1) {
 				// unary minus
-				result = negate(polynomialArgs[0]);
+				return negate(polynomialArgs[0]);
 			} else {
-				result = subtract(polynomialArgs);
+				return subtract(polynomialArgs);
 			}
-			castAndSetResult(result);
-			return;
-		} else if (funName.equals("/")) {
-			final Sort sort = appTerm.getSort();
-			final IPolynomialTerm result = divide(sort, polynomialArgs);
-			if (result.isErrorTerm()) {
-				inputIsNotPolynomial();
-				return;
+			
+		case "bvsub":
+			if (polynomialArgs.length == 1) {
+				// unary minus
+				return negate(polynomialArgs[0]);
+			} else {
+				return subtract(polynomialArgs);
 			}
-			castAndSetResult(result);
-			return;
-		} else {
+			
+		case "/":
+			return divide(sort, polynomialArgs);
+			
+		case "div":
+			return div(sort, polynomialArgs);
+			
+		default:
 			throw new UnsupportedOperationException("unsupported symbol " + funName);
 		}
 	}
@@ -238,8 +256,6 @@ public class PolynomialTermTransformer extends TermTransformer {
 	 * Returns the product of poly1 and poly2.
 	 */
 	private static IPolynomialTerm multiplyTwoPolynomials(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
-		assert poly1.getSort() == poly2.getSort();
-
 		if (productWillBePolynomial(poly1, poly2)) {
 			return PolynomialTerm.mulPolynomials(poly1, poly2);
 		} else {
@@ -258,7 +274,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	/**
 	 * Construct a {@link PolynomialTerm} that is the sum of all inputs.
 	 */
-	private static IPolynomialTerm add(final IPolynomialTerm... polynomialArgs) {
+	private static IPolynomialTerm add(final IPolynomialTerm[] polynomialArgs) {
 		if (someTermIsPolynomial(polynomialArgs)) {
 			return PolynomialTerm.sum(polynomialArgs);
 		}else {
@@ -270,7 +286,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	 * Returns true when one of the given Terms is truly polynomial (not representable
 	 * by an AffineTerm)
 	 */
-	private static boolean someTermIsPolynomial(final IPolynomialTerm...polynomialTerms) {
+	private static boolean someTermIsPolynomial(final IPolynomialTerm[] polynomialTerms) {
 		for (final IPolynomialTerm polynomialTerm: polynomialTerms) {
 			if (!polynomialTerm.isAffine()) {
 				return true;
@@ -312,8 +328,8 @@ public class PolynomialTermTransformer extends TermTransformer {
 	 * {@link PolynomialTerm} that represents the quotient <code>t1/t2/.../tn</code>,
 	 * i.e., the {@link PolynomialTerm} that is equivalent to
 	 * <code>t1*((1/t2)*...*(1/tn))</code>. Note that the function "/" is only
-	 * defined the sort of reals. For integer division we have the function "div"
-	 * which is currently not supported by our polynomial terms.
+	 * defined for the sort of reals. For integer division we have the function "div"
+	 * which is currently partially supported by our polynomial terms.
 	 */
 	private static IPolynomialTerm divide(final Sort sort, final IPolynomialTerm[] polynomialArgs) {
 		assert SmtSortUtils.isRealSort(sort);
@@ -325,64 +341,38 @@ public class PolynomialTermTransformer extends TermTransformer {
 
 		//Only Term at position 0 may be not affine.
 		if (polynomialArgs[0].isAffine()) {
-			return affineDivision(sort, polynomialArgs);
+			//TODO: Ask Matthias about the passing of sort here (is it really necessary to take the sort from the appTerm?).
+			return AffineTerm.divide(sort, polynomialArgs);
 		}else {
-			return polynomialDivision(polynomialArgs);
+			return PolynomialTerm.divide(polynomialArgs);
 		}
 	}
-
+	
 	/**
-	 * Returns a PolynomialTerm which represents the quotient of the given arguments (see divide method above).
+	 * Given {@link PolynomialTerm}s <code>t1,t2,...,tn</code> construct an
+	 * {@link PolynomialTerm} that represents the quotient <code>t1 div t2 div ... div tn</code>,
+	 * Note that the function "div" does currently only work if all coefficients and the constant of t1
+	 * is divisible by t2...tn. Also only t1 may have variables, t2...tn must be constants.
+	 * For the "usual" division we have the function "divide".
 	 */
-	private static IPolynomialTerm polynomialDivision(final IPolynomialTerm[] polynomialTerms) {
-		for (int i = 1; i < polynomialTerms.length; i++) {
-			if (!polynomialTerms[i].isConstant()) {
-				throw new UnsupportedOperationException("Division by Variables not supported!");
-			}
+	private static IPolynomialTerm div(final Sort sort, final IPolynomialTerm[] polynomialArgs) {
+		//TODO: Ask Matthias whether this is necessary. I can only find a definition for Integers,
+		//but an extension on Reals is also thinkable.
+		//assert SmtSortUtils.isIntSort(sort);
+		if (polynomialArgs.length == 0) {
+			return AffineTerm.constructConstant(sort, Rational.ONE);
+		}else if (polynomialArgs.length == 1) {
+			return polynomialArgs[0];
 		}
-		PolynomialTerm inverse = new PolynomialTerm(polynomialTerms[1].getSort(),
-													polynomialTerms[1].getConstant().inverse(),
-													Collections.emptyMap());
-		PolynomialTerm poly = PolynomialTerm.mulPolynomials(polynomialTerms[0], inverse);
-		for (int i = 2; i < polynomialTerms.length; i++) {
-			inverse = new PolynomialTerm(polynomialTerms[i].getSort(),
-					 					 polynomialTerms[i].getConstant().inverse(), 
-					 					 Collections.emptyMap());
-			poly = PolynomialTerm.mulPolynomials(poly, inverse);
-		}
-		return poly;
-	}
 
-	/**
-	 * Returns an AffineTerm which represents the quotient of the given arguments (see divide method above).
-	 */
-	private static IPolynomialTerm affineDivision(final Sort sort, final IPolynomialTerm[] affineArgs) {
-		final IPolynomialTerm affineTerm;
-		Rational multiplier;
-		if (affineArgs[0].isConstant()) {
-			affineTerm = null;
-			multiplier = affineArgs[0].getConstant();
-		} else {
-			affineTerm = affineArgs[0];
-			multiplier = Rational.ONE;
+		//Only Term at position 0 may be not affine.
+		if (polynomialArgs[0].isAffine()) {
+			//TODO: Ask Matthias about the passing of sort here (does it necessarily have to be the sort of appTerm? 
+			// or does the sort of an argument suffice?).
+			return AffineTerm.div(sort, polynomialArgs);
+		}else {
+			return PolynomialTerm.div(polynomialArgs);
 		}
-		final AffineTerm result;
-		for (int i = 1; i < affineArgs.length; i++) {
-			if (affineArgs[i].isConstant() && !affineArgs[i].isZero()) {
-				multiplier = multiplier.mul(affineArgs[i].getConstant().inverse());
-			} else {
-				// Only the argument at position 0 may be a non-constant,
-				// all other arguments must be literals,
-				// divisors must not be zero.
-				throw new UnsupportedOperationException("Division by Variables not supported!");
-			}
-		}
-		if (affineTerm == null) {
-			result = AffineTerm.constructConstant(sort, multiplier);
-		} else {
-			result = AffineTerm.mul(affineTerm, multiplier);
-		}
-		return result;
 	}
 
 	//TODO: PolynomialRelation

@@ -126,7 +126,52 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 			throw new UnsupportedOperationException("The outcome of this product is not affine!");
 		}
 	}
+	
+	/**
+	 * Returns an AffineTerm which represents the quotient of the given arguments 
+	 * (see {@PolynomialTermTransformer #divide(Sort, IPolynomialTerm[])}).
+	 */
+	public static IPolynomialTerm divide(final Sort sort, final IPolynomialTerm[] affineArgs) {
+		final IPolynomialTerm affineTerm;
+		Rational multiplier;
+		if (affineArgs[0].isConstant()) {
+			affineTerm = null;
+			multiplier = affineArgs[0].getConstant();
+		} else {
+			affineTerm = affineArgs[0];
+			multiplier = Rational.ONE;
+		}
+		final AffineTerm result;
+		for (int i = 1; i < affineArgs.length; i++) {
+			if (affineArgs[i].isConstant() && !affineArgs[i].isZero()) {
+				multiplier = multiplier.mul(affineArgs[i].getConstant().inverse());
+			} else {
+				// Only the argument at position 0 may be a non-constant,
+				// all other arguments must be literals,
+				// divisors must not be zero.
+				throw new UnsupportedOperationException("Division by variables or zero not supported!");
+			}
+		}
+		if (affineTerm == null) {
+			result = AffineTerm.constructConstant(sort, multiplier);
+		} else {
+			result = AffineTerm.mul(affineTerm, multiplier);
+		}
+		return result;
+	}
 
+	/**
+	 * Returns an AffineTerm which represents the integral quotient of the given arguments 
+	 * (see {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
+	 */
+	public static IPolynomialTerm div(final Sort sort, final IPolynomialTerm[] affineArgs) {
+		final IPolynomialTerm result = divide(sort, affineArgs);
+		if (result.isIntegral()) {
+			return result;
+		}
+		throw new UnsupportedOperationException("Integer-Division must result in integrals.");
+	}
+	
 	/**
 	 * @return unmodifiable map where each variable is mapped to its coefficient.
 	 */
