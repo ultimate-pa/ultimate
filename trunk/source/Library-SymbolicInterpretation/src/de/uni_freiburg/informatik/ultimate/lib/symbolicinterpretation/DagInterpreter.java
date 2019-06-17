@@ -119,17 +119,28 @@ public class DagInterpreter {
 		}
 	}
 
-	private IPredicate interpretInternal(final IIcfgInternalTransition<IcfgLocation> transition, final IPredicate input) {
+	private IPredicate interpretInternal(final IIcfgInternalTransition<IcfgLocation> transition, IPredicate input) {
+		input = fluidAbstraction(input);
 		final IPredicate output = mTools.post(input, transition);
 		mInterpreterResources.getIcfgInterpreter().storePredicateIfLoi(transition.getTarget(), output);
 		return output;
 	}
 
-	private IPredicate interpretEnterCall(final IIcfgCallTransition<IcfgLocation> transition, final IPredicate input) {
+	private IPredicate interpretEnterCall(final IIcfgCallTransition<IcfgLocation> transition, IPredicate input) {
+		input = fluidAbstraction(input);
 		final IPredicate calleeInput = mTools.postCall(input, transition);
 		mInterpreterResources.getIcfgInterpreter().registerEnterCall(transition.getSucceedingProcedure(), calleeInput);
 		mInterpreterResources.getIcfgInterpreter().storePredicateIfLoi(transition.getTarget(), calleeInput);
 		return calleeInput;
+	}
+
+	private IPredicate fluidAbstraction(IPredicate predicate) {
+		if (mFluid.shallBeAbstracted(predicate)) {
+			mLogger.debug("abstracting %s", predicate);
+			predicate = mDomain.alpha(predicate);
+			mLogger.debug("abstraction is %s", predicate);
+		}
+		return predicate;
 	}
 
 	// log messages -------------------------------------------------------------------------------
