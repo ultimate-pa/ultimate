@@ -36,6 +36,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
+/**
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
+ */
 public class ExplicitValueDomain implements IDomain {
 
 	private final SymbolicTools mTools;

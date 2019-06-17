@@ -39,6 +39,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
+/**
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
+ */
 public class DnfToExplicitValue extends TermTransformer {
 
 	private final Term mTrue;
@@ -63,7 +67,7 @@ public class DnfToExplicitValue extends TermTransformer {
 				setResult(mTrue);
 			}
 		} else if (term instanceof LetTerm) {
-			throw new UnsupportedOperationException("We were told there are not let terms");
+			throw new UnsupportedOperationException("We were told there are no let terms");
 		} else if (term instanceof AnnotatedTerm) {
 			convert(((AnnotatedTerm) term).getSubterm());
 		} else if (term instanceof QuantifiedFormula) {
