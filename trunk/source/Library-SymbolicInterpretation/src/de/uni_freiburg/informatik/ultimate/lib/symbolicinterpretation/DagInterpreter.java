@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
@@ -49,14 +50,16 @@ public class DagInterpreter {
 	private final ILogger mLogger;
 	private final SymbolicTools mTools;
 	private final IDomain mDomain;
+	private final IFluid mFluid;
 	private final InterpreterResources mInterpreterResources;
 	private final TopsortCache mTopsortCache = new TopsortCache();
 
-	public DagInterpreter(final ILogger logger, final SymbolicTools tools, final IDomain domain,
+	public DagInterpreter(final ILogger logger, final SymbolicTools tools, final IDomain domain, final IFluid fluid,
 			final InterpreterResources resources) {
 		mLogger = logger;
 		mTools = tools;
 		mDomain = domain;
+		mFluid = fluid;
 		mInterpreterResources = resources;
 	}
 

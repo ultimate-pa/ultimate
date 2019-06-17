@@ -39,6 +39,9 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.Interprete
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFluid;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -71,10 +74,11 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
 		final SymbolicTools tools = new SymbolicTools(mServices, icfg);
 		final IDomain domain = new ExplicitValueDomain(mServices, tools);
+		final IFluid fluid = new LogSizeWrapperFluid(mLogger, new NeverFluid());
 
 		final InterpreterResources resources = new InterpreterResources();
 		resources.setIcfgInterpreter(new IcfgInterpreter(mLogger, tools, icfg, resources));
-		resources.setDagInterpreter(new DagInterpreter(mLogger, tools, domain, resources));
+		resources.setDagInterpreter(new DagInterpreter(mLogger, tools, domain, fluid, resources));
 		resources.setLoopSummarizer(new FixpointLoopSummarizer(mLogger, domain, resources));
 		final Map<IcfgLocation, IPredicate> predicates = resources.getIcfgInterpreter().interpret();
 		mLogger.debug("final results are " + predicates);

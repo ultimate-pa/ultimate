@@ -13,5 +13,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation,
  de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing,
  de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain,
+ de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid,
  de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag,
  de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers
+Import-Package: de.uni_freiburg.informatik.ultimate.smtinterpol.util
