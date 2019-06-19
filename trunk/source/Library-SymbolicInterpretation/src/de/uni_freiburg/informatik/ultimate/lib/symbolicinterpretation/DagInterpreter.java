@@ -123,6 +123,7 @@ public class DagInterpreter {
 		input = fluidAbstraction(input);
 		final IPredicate output = mTools.post(input, transition);
 		mInterpreterResources.getIcfgInterpreter().storePredicateIfLoi(transition.getTarget(), output);
+		logInterpretInternal(output);
 		return output;
 	}
 
@@ -147,5 +148,9 @@ public class DagInterpreter {
 
 	private void logInterpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
 		mLogger.debug("Interpreting transition %s with input %s", transition, input);
+	}
+
+	private void logInterpretInternal(final IPredicate output) {
+		mLogger.debug("Internal transition's output is %s", output);
 	}
 }

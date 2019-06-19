@@ -59,10 +59,7 @@ public class ExplicitValueDomain implements IDomain {
 
 	@Override
 	public IPredicate join(final IPredicate first, final IPredicate second) {
-		// TODO decide whether or not to use simplification or use a setting
-		final boolean simplifyDDA = true;
-		final IPredicate joined = mTools.getFactory().or(simplifyDDA, first, second);
-		return joinAccordingToMax(joined);
+		return joinAccordingToMax(mTools.or(first, second));
 	}
 
 	@Override
@@ -113,8 +110,8 @@ public class ExplicitValueDomain implements IDomain {
 		final Term[] joined = new Term[mMaxDisjuncts];
 		int sourceIdx = 0;
 		for (int targetIdx = 0; targetIdx < joined.length; ++targetIdx) {
-			final int joinGroupSize = (int) Math.ceil((joined.length - targetIdx) /
-					(double) (disjuncts.length - sourceIdx));
+			final int joinGroupSize = (int) Math.ceil((disjuncts.length - sourceIdx) /
+					(double) (joined.length - targetIdx));
 			joined[targetIdx] = Arrays.stream(disjuncts, sourceIdx, sourceIdx + joinGroupSize)
 					.reduce(disjuncts[sourceIdx], this::joinConjunctions);
 			sourceIdx += joinGroupSize;
@@ -127,8 +124,7 @@ public class ExplicitValueDomain implements IDomain {
 	}
 
 	private Term mapToConjunction(final Map<Term, Term> equalities) {
-		return mTools.getScript().term(this, "and", equalities.entrySet().stream()
-				.map(this::entryToEq).toArray(Term[]::new));
+		return mTools.and(equalities.entrySet().stream().map(this::entryToEq).toArray(Term[]::new)).getFormula();
 	}
 
 	private Term entryToEq(final Map.Entry<Term, Term> entry) {

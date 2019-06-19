@@ -98,6 +98,7 @@ public class SymbolicTools {
 	}
 
 	public IPredicate or(final IPredicate... operands) {
+		// TODO use a setting for simplification
 		return mFactory.or(true, operands);
 	}
 
@@ -107,6 +108,20 @@ public class SymbolicTools {
 
 	public IPredicate or(final Collection<Term> operands) {
 		return mFactory.newPredicate(SmtUtils.or(mScript.getScript(), operands));
+	}
+	
+	public IPredicate and(final IPredicate... operands) {
+		// TODO use a setting for simplification
+		final SimplificationTechnique simplification = SimplificationTechnique.SIMPLIFY_QUICK;
+		return mFactory.and(simplification, operands);
+	}
+
+	public IPredicate and(final Term... operands) {
+		return mFactory.newPredicate(SmtUtils.and(mScript.getScript(), operands));
+	}
+
+	public IPredicate and(final Collection<Term> operands) {
+		return mFactory.newPredicate(SmtUtils.and(mScript.getScript(), operands));
 	}
 
 	public boolean isFalse(final IPredicate pred) {
