@@ -26,13 +26,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -44,7 +50,7 @@ public class ExplicitValueDomain implements IDomain {
 
 	private final SymbolicTools mTools;
 	private final IUltimateServiceProvider mServices;
-	private int mDisjunctThreshold;
+	private int mMaxDisjuncts = 1;
 
 	public ExplicitValueDomain(final IUltimateServiceProvider services, final SymbolicTools tools) {
 		mTools = tools;
@@ -55,13 +61,16 @@ public class ExplicitValueDomain implements IDomain {
 	public IPredicate join(final IPredicate first, final IPredicate second) {
 		// TODO decide whether or not to use simplification or use a setting
 		final boolean simplifyDDA = true;
-		return mTools.getFactory().or(simplifyDDA, first, second);
+		final IPredicate joined = mTools.getFactory().or(simplifyDDA, first, second);
+		return joinAccordingToMax(joined);
 	}
 
 	@Override
 	public IPredicate widen(final IPredicate old, final IPredicate widenWith) {
-		// TODO implement non-trivial version
-		return mTools.top();
+		// join will reach a fixpoint on every sequence since
+		// - we limited the number of disjuncts to mMaxDisjuncts and
+		// - the number of variables in every (non-recursive) program is finite
+		return join(old, widenWith);
 	}
 
 	@Override
@@ -84,14 +93,131 @@ public class ExplicitValueDomain implements IDomain {
 		final Term dnf = SmtUtils.toDnf(mServices, mTools.getScript(), pred.getFormula(),
 				SmtUtils.XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final DnfToExplicitValue rewriter = new DnfToExplicitValue(mServices, mTools);
-		final Set<Term> rewrittenDisjuncts = Arrays.stream(SmtUtils.getDisjuncts(dnf))
+		final Term[] rewrittenDisjuncts = Arrays.stream(SmtUtils.getDisjuncts(dnf))
 				.map(rewriter::transform)
-				.collect(Collectors.toSet());
-		// decide how many of the unique disjuncts are allowed to survive, join if necessary
-		if (rewrittenDisjuncts.size() > mDisjunctThreshold) {
-			// TODO: Join
-		}
-		return mTools.or(rewrittenDisjuncts);
+				.toArray(Term[]::new);
+		// TODO use a more strict normal form, where assignments have a variable on the left and a number on the right?
+		return mTools.or(joinAccordingToMax(rewrittenDisjuncts));
 	}
 
+	private IPredicate joinAccordingToMax(final IPredicate dnfPredicate) {
+		return mTools.or(joinAccordingToMax(SmtUtils.getDisjuncts(dnfPredicate.getFormula())));
+	}
+
+	private Term[] joinAccordingToMax(final Term[] disjuncts) {
+		if (disjuncts.length <= mMaxDisjuncts) {
+			return disjuncts;
+		}
+		// TODO at the moment we group disjunctions to be joined based on their order ...
+		// ... Using a heuristic could lead to less precision loss.
+		final Term[] joined = new Term[mMaxDisjuncts];
+		int sourceIdx = 0;
+		for (int targetIdx = 0; targetIdx < joined.length; ++targetIdx) {
+			final int joinGroupSize = (int) Math.ceil((joined.length - targetIdx) /
+					(double) (disjuncts.length - sourceIdx));
+			joined[targetIdx] = Arrays.stream(disjuncts, sourceIdx, sourceIdx + joinGroupSize)
+					.reduce(disjuncts[sourceIdx], this::joinConjunctions);
+			sourceIdx += joinGroupSize;
+		}
+		return joined;
+	}
+
+	private Term joinConjunctions(final Term leftConjn, final Term rightConjn) {
+		return mapToConjunction(joinMapsOfVarsToValues(mapVarsToValues(leftConjn), mapVarsToValues(rightConjn)));
+	}
+
+	private Term mapToConjunction(final Map<Term, Term> equalities) {
+		return mTools.getScript().term(this, "and", equalities.entrySet().stream()
+				.map(this::entryToEq).toArray(Term[]::new));
+	}
+
+	private Term entryToEq(final Map.Entry<Term, Term> entry) {
+		return mTools.getScript().term(this, "=", entry.getKey(), entry.getValue());
+	}
+
+	private static Map<Term, Term> joinMapsOfVarsToValues(
+			final Map<Term, Term> leftMap, final Map<Term, Term> rightMap) {
+		leftMap.entrySet().retainAll(rightMap.entrySet());
+		return leftMap;
+	}
+
+	private static Map<Term, Term> mapVarsToValues(final Term conjunction) {
+		final Map<Term, Term> map = new LinkedHashMap<>();
+		for (final Term conjunct : SmtUtils.getConjuncts(conjunction)) {
+			addPairsToMap(map, conjunct);
+		}
+		return map;
+	}
+
+	private static void addPairsToMap(final Map<Term, Term> map, final Term eqTerm) {
+		final Term[] subterms = subtermsOfEq(eqTerm);
+		final Optional<Term> value = extractValue(subterms);
+		if (!value.isPresent()) {
+			return;
+		}
+		extractVariables(subterms).forEach(var -> map.put(var, value.get()));
+	}
+
+	private static Term[] subtermsOfEq(final Term eqTerm) {
+		if (eqTerm instanceof ApplicationTerm) {
+			final ApplicationTerm applTerm = (ApplicationTerm) eqTerm;
+			if ("=".equals(applTerm.getFunction().getName())) {
+				return applTerm.getParameters();
+			}
+		}
+		// not an equality
+		return new Term[0];
+	}
+
+	private static Collection<Term> extractVariables(final Term[] terms) {
+		final Collection<Term> vars = new ArrayList<>(terms.length);
+		for (final Term term : terms) {
+			if (term instanceof TermVariable) {
+				vars.add(term);
+			}
+		}
+		return vars;
+	}
+
+	private static Optional<Term> extractValue(final Term[] terms) {
+		Term constant = null;
+		for (final Term term : terms) {
+			if (term instanceof ConstantTerm) {
+				if (constant != null) {
+					throw new AssertionError("More than one constant. Expected simplification to remove them.");
+				}
+				constant = term;
+			}
+		}
+		return Optional.ofNullable(constant);
+	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
