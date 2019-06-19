@@ -89,12 +89,6 @@ public class SymbolicTools {
 				toolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProcedure)));
 	}
 
-	public IPredicate merge(final IPredicate first, final IPredicate second) {
-		// TODO decide whether or not to use simplification or use a setting
-		final boolean simplifyDDA = true;
-		return mFactory.or(simplifyDDA, first, second);
-	}
-
 	public IPredicate top() {
 		return mTop;
 	}

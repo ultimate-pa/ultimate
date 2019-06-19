@@ -77,7 +77,7 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 		final IFluid fluid = new LogSizeWrapperFluid(mLogger, new NeverFluid());
 
 		final InterpreterResources resources = new InterpreterResources();
-		resources.setIcfgInterpreter(new IcfgInterpreter(mLogger, tools, icfg, resources));
+		resources.setIcfgInterpreter(new IcfgInterpreter(mLogger, tools, icfg, domain, resources));
 		resources.setDagInterpreter(new DagInterpreter(mLogger, tools, domain, fluid, resources));
 		resources.setLoopSummarizer(new FixpointLoopSummarizer(mLogger, domain, resources));
 		final Map<IcfgLocation, IPredicate> predicates = resources.getIcfgInterpreter().interpret();

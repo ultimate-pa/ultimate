@@ -34,6 +34,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -47,6 +48,7 @@ public class IcfgInterpreter {
 	private final IWorklistWithInputs<String, IPredicate> mEnterCallWorklist;
 	private final Map<IcfgLocation, IPredicate> mPredicatesForLoi = new HashMap<>();
 	private final SymbolicTools mTools;
+	private final IDomain mDomain;
 	private final InterpreterResources mInterpreterResources;
 
 	/**
@@ -55,8 +57,8 @@ public class IcfgInterpreter {
 	 * @see #interpret()
 	 */
 	public IcfgInterpreter(final ILogger logger, final SymbolicTools tools, final IIcfg<IcfgLocation> icfg,
-			final InterpreterResources resources) {
-		this(logger, tools, icfg, errorLocations(icfg), resources);
+			final IDomain domain, final InterpreterResources resources) {
+		this(logger, tools, icfg, errorLocations(icfg), domain, resources);
 	}
 
 	private static Collection<IcfgLocation> errorLocations(final IIcfg<IcfgLocation> icfg) {
@@ -72,13 +74,14 @@ public class IcfgInterpreter {
 	 */
 	public IcfgInterpreter(final ILogger logger, final SymbolicTools tools,
 			final IIcfg<IcfgLocation> icfg, final Collection<IcfgLocation> locationsOfInterest,
-			final InterpreterResources resources) {
+			final IDomain domain, final InterpreterResources resources) {
 		mLogger = logger;
 		mTools = tools;
 		mIcfg = icfg;
+		mDomain = domain;
 		mInterpreterResources = resources;
 		logStartingSifa(locationsOfInterest);
-		mEnterCallWorklist = new FifoWorklist<>(mTools::merge);
+		mEnterCallWorklist = new FifoWorklist<>(domain::join);
 		logBuildingCallGraph();
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
 		logCallGraphComputed();
@@ -137,7 +140,7 @@ public class IcfgInterpreter {
 
 	public void storePredicateIfLoi(final IcfgLocation location, final IPredicate addPredicate) {
 		mPredicatesForLoi.computeIfPresent(location,
-				(unused, oldPredicate) -> mTools.merge(oldPredicate, addPredicate));
+				(unused, oldPredicate) -> mDomain.join(oldPredicate, addPredicate));
 	}
 
 	// log messages -------------------------------------------------------------------------------
