@@ -122,8 +122,8 @@ public class DagInterpreter {
 	private IPredicate interpretInternal(final IIcfgInternalTransition<IcfgLocation> transition, IPredicate input) {
 		input = fluidAbstraction(input);
 		final IPredicate output = mTools.post(input, transition);
-		mInterpreterResources.getIcfgInterpreter().storePredicateIfLoi(transition.getTarget(), output);
 		logInterpretInternal(output);
+		mInterpreterResources.getIcfgInterpreter().storePredicateIfLoi(transition.getTarget(), output);
 		return output;
 	}
 
@@ -131,15 +131,16 @@ public class DagInterpreter {
 		input = fluidAbstraction(input);
 		final IPredicate calleeInput = mTools.postCall(input, transition);
 		mInterpreterResources.getIcfgInterpreter().registerEnterCall(transition.getSucceedingProcedure(), calleeInput);
+		// TODO remove. Is already stored in registerEnterCall
 		mInterpreterResources.getIcfgInterpreter().storePredicateIfLoi(transition.getTarget(), calleeInput);
 		return calleeInput;
 	}
 
 	private IPredicate fluidAbstraction(IPredicate predicate) {
+		mLogger.debug("Asking fluid if we should abstract");
 		if (mFluid.shallBeAbstracted(predicate)) {
-			mLogger.debug("abstracting %s", predicate);
 			predicate = mDomain.alpha(predicate);
-			mLogger.debug("abstraction is %s", predicate);
+			mLogger.debug("Abstraction is %s", predicate);
 		}
 		return predicate;
 	}

@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 public class IcfgInterpreter {
@@ -134,13 +135,21 @@ public class IcfgInterpreter {
 	}
 
 	public void registerEnterCall(final String callee, final IPredicate calleeInput) {
+		logRegisterEnterCall(callee, calleeInput);
 		mEnterCallWorklist.add(callee, calleeInput);
 		storePredicateIfLoi(mIcfg.getProcedureEntryNodes().get(callee), calleeInput);
 	}
 
-	public void storePredicateIfLoi(final IcfgLocation location, final IPredicate addPredicate) {
+	public void storePredicateIfLoi(final IcfgLocation location, final IPredicate addPred) {
 		mPredicatesForLoi.computeIfPresent(location,
-				(unused, oldPredicate) -> mDomain.join(oldPredicate, addPredicate));
+				(loi, oldPred) -> joinLoiPredicate(loi, oldPred, addPred));
+	}
+
+	private IPredicate joinLoiPredicate(final IcfgLocation loi, final IPredicate oldPred, final IPredicate addPred) {
+		logBeforeRegisterLoi(loi, addPred);
+		final IPredicate newPred = mDomain.join(oldPred, addPred);
+		logAfterRegisterLoi(loi, addPred, newPred);
+		return newPred;
 	}
 
 	// log messages -------------------------------------------------------------------------------
@@ -169,14 +178,33 @@ public class IcfgInterpreter {
 			mLogger.warn("No locations of interest were given");
 			return;
 		}
-		mLogger.info("Final predicates for locations of interest are:");
-		for (final Entry<IcfgLocation, IPredicate> entry : mPredicatesForLoi.entrySet()) {
-			mLogger.info("Location %s has predicate %s", entry.getKey(), entry.getValue());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Final predicates for locations of interest are:");
+			for (final Entry<IcfgLocation, IPredicate> entry : mPredicatesForLoi.entrySet()) {
+				mLogger.info("Location %s has predicate %s", entry.getKey(), entry.getValue());
+			}
 		}
 	}
 
 	private void logEnterProcedure(final String procedure, final IPredicate input) {
-		mLogger.debug("Interpreting procedure %s with input %s", procedure, input);
+		mLogger.info("Interpreting procedure %s with input of size %s", procedure, new DagSizePrinter(input.getFormula()));
+		mLogger.debug("Procedure's input is %s", input);
+	}
+
+	private void logRegisterEnterCall(final String callee, final IPredicate calleeInput) {
+		mLogger.debug("Call to procedure %s received the predicate %s", callee, calleeInput);
+	}
+
+	private void logBeforeRegisterLoi(final IcfgLocation loi, final IPredicate addPred) {
+		mLogger.debug("LOI %s received the predicate %s", loi, addPred);
+	}
+
+	private void logAfterRegisterLoi(final IcfgLocation loi, final IPredicate addedPred, final IPredicate newPred) {
+		if (addedPred == newPred) {
+			mLogger.debug("Updated predicate for LOI %s is identical", loi);
+		} else {
+			mLogger.debug("Updated predicate for LOI %s is %s", loi, newPred);
+		}
 	}
 
 }
