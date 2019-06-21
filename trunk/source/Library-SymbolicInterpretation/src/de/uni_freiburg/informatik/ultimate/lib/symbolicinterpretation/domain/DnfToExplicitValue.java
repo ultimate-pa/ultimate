@@ -61,6 +61,8 @@ public class DnfToExplicitValue extends TermTransformer {
 		} else if (term instanceof ApplicationTerm) {
 			final ApplicationTerm applTerm = (ApplicationTerm) term;
 			final String funName = applTerm.getFunction().getName();
+			// TODO use a more sophisticated approach which uses all information in (and (= x 1) (= x y))
+			// maybe even all information in (and (= x 1) (= x (+ y 2))) (see what simplification are available first)
 			if ("=".equals(funName) && hasAtLeastOneConstant(applTerm.getParameters())) {
 				setResult(term);
 			} else {
