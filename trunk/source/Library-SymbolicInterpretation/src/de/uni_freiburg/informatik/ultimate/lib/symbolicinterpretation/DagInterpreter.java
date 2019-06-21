@@ -131,8 +131,7 @@ public class DagInterpreter {
 		input = fluidAbstraction(input);
 		final IPredicate calleeInput = mTools.postCall(input, transition);
 		mInterpreterResources.getIcfgInterpreter().registerEnterCall(transition.getSucceedingProcedure(), calleeInput);
-		// TODO remove. Is already stored in registerEnterCall
-		mInterpreterResources.getIcfgInterpreter().storePredicateIfLoi(transition.getTarget(), calleeInput);
+		// registerEnterCall() already stores predicates for LOIs
 		return calleeInput;
 	}
 
