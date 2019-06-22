@@ -35,24 +35,24 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
-*
-* This represents a term in form of
-*
-* <pre>
+ *
+ * This represents a term in form of
+ *
+ * <pre>
 * Σ c_i * x_i^{e_i} + c
-* </pre>
-*
-* where c_i, c, e_i are literals, and x_i are variables.
-*
-* @author Leonard Fichtner
-* @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
-*
-*/
+ * </pre>
+ *
+ * where c_i, c, e_i are literals, and x_i are variables.
+ *
+ * @author Leonard Fichtner
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
 public interface IPolynomialTerm {
 
 	/**
-	 * True if this represents not an polynomial or affine term but an error during the translation process, e.g., if original term
-	 * had wrong sorts.
+	 * True if this represents not an polynomial or affine term but an error during the translation process, e.g., if
+	 * original term had wrong sorts.
 	 */
 	boolean isErrorTerm();
 
@@ -83,7 +83,7 @@ public interface IPolynomialTerm {
 	 * @return whether this polynomial term is zero
 	 */
 	boolean isZero();
-	
+
 	/**
 	 * @return whether this polynomial has integral coefficients and constant.
 	 */

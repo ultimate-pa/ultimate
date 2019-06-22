@@ -1,11 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
+import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.math.BigInteger;
-
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -30,26 +29,26 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 public class Monomial extends Term {
 
 	/**
-	 * Map from Variables to their exponent. Exponent Zero is forbidden. 
-	 * Roots are not prohibited but we cannot handle them, yet(?).
+	 * Map from Variables to their exponent. Exponent Zero is forbidden. Roots are not prohibited but we cannot handle
+	 * them, yet(?).
 	 */
 	private final Map<Term, Rational> mVariable2Exponent;
-	
+
 	/**
 	 * Sort of this term. E.g, "Int" or "Real".
 	 */
 	private final Sort mSort;
-	
+
 	/**
 	 * Monomial that consists of the single Term t raised to the power of r.
 	 */
-	public Monomial(final Term t, Rational r) {
+	public Monomial(final Term t, final Rational r) {
 		super(0);
 		checkIfTermIsLegalVariable(t);
 		mSort = t.getSort();
 		mVariable2Exponent = Collections.singletonMap(t, r);
 	}
-	
+
 	/**
 	 * Check if term is of a type that may be a variable of an Monomial.
 	 */
@@ -60,7 +59,7 @@ public class Monomial extends Term {
 			throw new IllegalArgumentException("Variable of Monomial has to be TermVariable or ApplicationTerm");
 		}
 	}
-	
+
 	/**
 	 * Monomial that represents the product of Monomials.
 	 */
@@ -89,7 +88,7 @@ public class Monomial extends Term {
 			}
 		}
 	}
-	
+
 	/**
 	 * Monomial that represents the inverse Monomial in the sense of Product (i.e. 1/Monomial)
 	 */
@@ -97,46 +96,44 @@ public class Monomial extends Term {
 		super(0);
 		mSort = monomial.getSort();
 		if (monomial.getVariable2Exponent().size() == 1) {
-			Term variable = monomial.getVariable2Exponent().keySet().iterator().next();
-			Rational exponent = monomial.getVariable2Exponent().values().iterator().next().negate();
+			final Term variable = monomial.getVariable2Exponent().keySet().iterator().next();
+			final Rational exponent = monomial.getVariable2Exponent().values().iterator().next().negate();
 			mVariable2Exponent = Collections.singletonMap(variable, exponent);
 			return;
-		}else {
-			mVariable2Exponent = new HashMap<>();
 		}
+
+		mVariable2Exponent = new HashMap<>();
 		for (final Map.Entry<Term, Rational> variabletoexponent : monomial.getVariable2Exponent().entrySet()) {
 			mVariable2Exponent.put(variabletoexponent.getKey(), variabletoexponent.getValue().negate());
 		}
 	}
-	
+
 	/**
 	 * Find out whether this Term is linear.
+	 * 
 	 * @return
 	 */
 	public boolean isLinear() {
-		if (getVariable2Exponent().entrySet().size() == 1 && getVariable2Exponent().values().contains(Rational.ONE)) {
-		    return true;
-		}
-		return false;
+		return getVariable2Exponent().entrySet().size() == 1 && getVariable2Exponent().values().contains(Rational.ONE);
 	}
-	
+
 	/**
 	 * @return unmodifiable map where each variable is mapped to its exponent.
 	 */
 	public Map<Term, Rational> getVariable2Exponent() {
 		return Collections.unmodifiableMap(mVariable2Exponent);
 	}
-	
+
 	@Override
 	public Sort getSort() {
 		return mSort;
 	}
-	
+
 	@Override
 	public void toStringHelper(final ArrayDeque<Object> mTodo) {
 		throw new UnsupportedOperationException("This is a Monomial. Something went wrong.");
 	}
-	
+
 	/**
 	 * Transforms this Monomial into a Term that is supported by the solver.
 	 *
@@ -151,24 +148,24 @@ public class Monomial extends Term {
 			assert !entry.getValue().equals(Rational.ZERO) : "zero is no legal exponent in AffineTerm";
 			Term factor = entry.getKey();
 			assert entry.getValue().isIntegral();
-	        //TODO: Ask Matthias about whether it is to be expected that the implementation of isintegral changes.
-			//Because then this could be made easier.
-			BigInteger exponent = entry.getValue().numerator().divide(entry.getValue().denominator());
+			// TODO: Ask Matthias about whether it is to be expected that the implementation of isintegral changes.
+			// Because then this could be made easier.
+			final BigInteger exponent = entry.getValue().numerator().divide(entry.getValue().denominator());
 			if (exponent.signum() == 1) {
-				Term singlefactor = factor;
-				//Here we could use intValueExact. But I think it would be veeeeery unusual to have such big exponents.
-				//Nonetheless: TODO: Better ask Matthias about this
-				for (int j = 1; j < exponent.intValue() ; j++) {
+				final Term singlefactor = factor;
+				// Here we could use intValueExact. But I think it would be veeeeery unusual to have such big exponents.
+				// Nonetheless: TODO: Better ask Matthias about this
+				for (int j = 1; j < exponent.intValue(); j++) {
 					factor = SmtUtils.mul(script, mSort, factor, singlefactor);
 				}
 				factors[i] = factor;
 				++i;
-			}else {
-				Term singlefactor = factor;
-				for (int j = 1; j < exponent.negate().intValue() ; j++) {
+			} else {
+				final Term singlefactor = factor;
+				for (int j = 1; j < exponent.negate().intValue(); j++) {
 					factor = SmtUtils.mul(script, mSort, factor, singlefactor);
 				}
-				//TODO: Ask Matthias whether it is ok, that I multiply with 1/factor instead of directly dividing.
+				// TODO: Ask Matthias whether it is ok, that I multiply with 1/factor instead of directly dividing.
 				factors[i] = script.term("/", Rational.ONE.toTerm(mSort), factor);
 				++i;
 			}
@@ -182,8 +179,7 @@ public class Monomial extends Term {
 		final StringBuilder sb = new StringBuilder();
 		for (final Map.Entry<Term, Rational> entry : mVariable2Exponent.entrySet()) {
 			sb.append(entry.getKey());
-			sb.append("^" + (entry.getValue().isNegative() ? "[-" : "[") + 
-			entry.getValue().abs() + "]");
+			sb.append("^" + (entry.getValue().isNegative() ? "[-" : "[") + entry.getValue().abs() + "]");
 		}
 		String result = sb.toString();
 		if (result.charAt(0) == ' ') {
@@ -191,7 +187,7 @@ public class Monomial extends Term {
 		}
 		return result;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -200,7 +196,7 @@ public class Monomial extends Term {
 		result = prime * result + (mVariable2Exponent == null ? 0 : mVariable2Exponent.hashCode());
 		return result;
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {

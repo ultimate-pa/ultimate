@@ -47,7 +47,9 @@ public class LogSizeWrapperFluid implements IFluid {
 
 	@Override
 	public boolean shallBeAbstracted(final IPredicate predicate) {
-		mLogger.debug("Formula dag size is %s", new DagSizePrinter(predicate.getFormula()));
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Formula dag size is %s", new DagSizePrinter(predicate.getFormula()));
+		}
 		return mFluid.shallBeAbstracted(predicate);
 	}
 }

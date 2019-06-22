@@ -30,7 +30,6 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -42,14 +41,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
- * Common superclass of {@link AffineTerm} and {@link PolynomialTerm}.
- * This class represents an affine term whose kinds of variables are
- * abstract objectsspecified by a type parameter. For a {@link PolynomialTerm}
- * these abstract variables are {@link Monomials} for an {@link AffineTerm}
- * the instance of these abstract variables are already "the variables".
+ * Common superclass of {@link AffineTerm} and {@link PolynomialTerm}. This class represents an affine term whose kinds
+ * of variables are abstract objectsspecified by a type parameter. For a {@link PolynomialTerm} these abstract variables
+ * are {@link Monomials} for an {@link AffineTerm} the instance of these abstract variables are already "the variables".
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
- * @param <AVAR> type of the variables
+ * @param <AVAR>
+ *            type of the variables
  */
 public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends Term implements IPolynomialTerm {
 
@@ -67,9 +66,8 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	protected final Sort mSort;
 
 	/**
-	 * Auxiliary {@link AbstractGeneralizedAffineTerm} term that represents an error
-	 * during the translation process, e.g., if original term was not linear or not
-	 * polynomial.
+	 * Auxiliary {@link AbstractGeneralizedAffineTerm} term that represents an error during the translation process,
+	 * e.g., if original term was not linear or not polynomial.
 	 */
 	public AbstractGeneralizedAffineTerm() {
 		super(0);
@@ -89,13 +87,12 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		mAbstractVariable2Coefficient = variables2coeffcient;
 	}
 
-
 	/**
-	 * {@link AbstractGeneralizedAffineTerm} whose variables are given by an array
-	 * of terms, whose corresponding coefficients are given by the array
-	 * coefficients, and whose constant term is given by the Rational constant.
+	 * {@link AbstractGeneralizedAffineTerm} whose variables are given by an array of terms, whose corresponding
+	 * coefficients are given by the array coefficients, and whose constant term is given by the Rational constant.
 	 */
-	protected AbstractGeneralizedAffineTerm(final Sort s, final AVAR[] terms, final Rational[] coefficients, final Rational constant) {
+	protected AbstractGeneralizedAffineTerm(final Sort s, final AVAR[] terms, final Rational[] coefficients,
+			final Rational constant) {
 		super(0);
 		mSort = s;
 		mConstant = constant;
@@ -128,8 +125,8 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	}
 
 	/**
-	 * True if this represents not an legal term of its kind but an error during the
-	 * translation process, e.g., if original term was not linear or not polynomial.
+	 * True if this represents not an legal term of its kind but an error during the translation process, e.g., if
+	 * original term was not linear or not polynomial.
 	 */
 	@Override
 	public boolean isErrorTerm() {
@@ -166,14 +163,14 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	}
 
 	/**
-	 * Check whether every coefficient and every constant is of an integral value.
-	 * Return true if thats the case.
+	 * Check whether every coefficient and every constant is of an integral value. Return true if thats the case.
 	 */
+	@Override
 	public boolean isIntegral() {
 		if (!getConstant().isIntegral()) {
 			return false;
 		}
-		for (Rational coefficient : getAbstractVariable2Coefficient().values()) {
+		for (final Rational coefficient : getAbstractVariable2Coefficient().values()) {
 			if (!coefficient.isIntegral()) {
 				return false;
 			}
@@ -189,10 +186,8 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		return mConstant;
 	}
 
-
 	/**
-	 * Check if term is of a type that may be a variable of an
-	 * {@link AbstractGeneralizedAffineTerm}.
+	 * Check if term is of a type that may be a variable of an {@link AbstractGeneralizedAffineTerm}.
 	 */
 	public void checkIfTermIsLegalVariable(final Term term) {
 		if (term instanceof TermVariable || term instanceof ApplicationTerm) {
@@ -226,16 +221,13 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		return result;
 	}
 
-
 	/**
-	 * @return an SMT {@link Term} that represents an abstract variable
-	 * that occurs in the map of this object
+	 * @return an SMT {@link Term} that represents an abstract variable that occurs in the map of this object
 	 */
 	protected abstract Term abstractVariableToTerm(Script script, AVAR abstractVariable);
 
 	/**
-	 * Transforms this {@link AbstractGeneralizedAffineTerm} into a Term that is
-	 * supported by the solver.
+	 * Transforms this {@link AbstractGeneralizedAffineTerm} into a Term that is supported by the solver.
 	 *
 	 * @param script
 	 *            Script for that this term is constructed.
@@ -275,7 +267,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	Map<AVAR, Rational> getAbstractVariable2Coefficient() {
 		return Collections.unmodifiableMap(mAbstractVariable2Coefficient);
 	}
-	
+
 	@Override
 	public void toStringHelper(final ArrayDeque<Object> mTodo) {
 		throw new UnsupportedOperationException("This is an auxilliary Term and not supported by the solver");
@@ -285,39 +277,47 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((mConstant == null) ? 0 : mConstant.hashCode());
-		result = prime * result + ((mSort == null) ? 0 : mSort.hashCode());
-		result = prime * result + ((mAbstractVariable2Coefficient == null) ? 0 : mAbstractVariable2Coefficient.hashCode());
+		result = prime * result + (mConstant == null ? 0 : mConstant.hashCode());
+		result = prime * result + (mSort == null ? 0 : mSort.hashCode());
+		result = prime * result
+				+ (mAbstractVariable2Coefficient == null ? 0 : mAbstractVariable2Coefficient.hashCode());
 		return result;
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final AbstractGeneralizedAffineTerm other = (AbstractGeneralizedAffineTerm) obj;
 		if (mConstant == null) {
-			if (other.mConstant != null)
+			if (other.mConstant != null) {
 				return false;
-		} else if (!mConstant.equals(other.mConstant))
+			}
+		} else if (!mConstant.equals(other.mConstant)) {
 			return false;
+		}
 		if (mSort == null) {
-			if (other.mSort != null)
+			if (other.mSort != null) {
 				return false;
-		} else if (!mSort.equals(other.mSort))
+			}
+		} else if (!mSort.equals(other.mSort)) {
 			return false;
+		}
 		if (mAbstractVariable2Coefficient == null) {
-			if (other.mAbstractVariable2Coefficient != null)
+			if (other.mAbstractVariable2Coefficient != null) {
 				return false;
-		} else if (!mAbstractVariable2Coefficient.equals(other.mAbstractVariable2Coefficient))
+			}
+		} else if (!mAbstractVariable2Coefficient.equals(other.mAbstractVariable2Coefficient)) {
 			return false;
+		}
 		return true;
 	}
-
-
 
 }

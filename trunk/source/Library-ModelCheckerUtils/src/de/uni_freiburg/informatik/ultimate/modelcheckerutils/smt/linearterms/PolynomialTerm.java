@@ -27,13 +27,21 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Pol
  * @author Leonard Fichtner
  *
  */
-public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> implements IPolynomialTerm {
+public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 
 	/**
 	 * Constructor to be used of all static methods that construct a polynomialTerm.
 	 */
 	public PolynomialTerm(final Sort s, final Rational constant, final Map<Monomial, Rational> map) {
 		super(s, constant, map);
+	}
+
+	/**
+	 * Auxiliary polynomial term that represents an error during the translation process, e.g., if original term had
+	 * wrong sorts.
+	 */
+	public PolynomialTerm() {
+		super();
 	}
 
 	/**
@@ -51,25 +59,23 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 	/**
 	 * Returns a new PolynomialTerm that represents the product of polynomialTerm and multiplier.
 	 */
-	public static PolynomialTerm mul(final IPolynomialTerm polynomialTerm,
-									 final Rational multiplier) {
+	public static PolynomialTerm mul(final IPolynomialTerm polynomialTerm, final Rational multiplier) {
 		final GeneralizedConstructor<Monomial, PolynomialTerm> constructor = PolynomialTerm::new;
 		return PolynomialTermUtils.constructMul(x -> ((PolynomialTerm) x).getMonomial2Coefficient(), constructor,
 				polynomialTerm, multiplier);
 	}
 
-	//TODO: Ask Matthias where assert poly1.getSort() == poly2.getSort(); should be put. Highest level? Only on Multiplication?
+	// TODO: Ask Matthias where assert poly1.getSort() == poly2.getSort(); should be put. Highest level? Only on
+	// Multiplication?
 	/**
 	 * Returns a new PolynomialTerm that represents the product of two polynomialTerms.
 	 */
 	public static PolynomialTerm mulPolynomials(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
-		//assert poly1.getSort() == poly2.getSort() : "sort mismatch";
-		return new PolynomialTerm(poly1.getSort(),
-				  				  calculateProductCoefficient(poly1, poly2),
-				  				  calculateProductMap(poly1, poly2));
+		// assert poly1.getSort() == poly2.getSort() : "sort mismatch";
+		return new PolynomialTerm(poly1.getSort(), calculateProductCoefficient(poly1, poly2),
+				calculateProductMap(poly1, poly2));
 	}
 
-	
 	/**
 	 * Calculate the Coefficient of the product of two polynomials.
 	 */
@@ -77,17 +83,18 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 		Rational newCoeff;
 		if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
 			newCoeff = PolynomialTermUtils.bringValueInRange(poly1.getConstant().mul(poly2.getConstant()),
-															 poly1.getSort());
-		}else {
+					poly1.getSort());
+		} else {
 			newCoeff = poly1.getConstant().mul(poly2.getConstant());
 		}
 		return newCoeff;
 	}
-	
+
 	/**
 	 * Calculate the map of the product of two polynomials (in Monomial2Coefficient form).
 	 */
-	private static Map<Monomial, Rational> calculateProductMap(final IPolynomialTerm poly1, final IPolynomialTerm poly2){
+	private static Map<Monomial, Rational> calculateProductMap(final IPolynomialTerm poly1,
+			final IPolynomialTerm poly2) {
 		final Map<Monomial, Rational> map = new HashMap<>();
 		monomialsTimesMonomialsIntoMap(map, poly1, poly2);
 		monomialsTimesConstantIntoMap(map, poly1, poly2);
@@ -96,32 +103,31 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 	}
 
 	/**
-	 * Multiply just the Monomials of the two polynomialTerms with each other and put them into the given map.
-	 * Return that same map.
+	 * Multiply just the Monomials of the two polynomialTerms with each other and put them into the given map. Return
+	 * that same map.
 	 */
 	private static Map<Monomial, Rational> monomialsTimesMonomialsIntoMap(final Map<Monomial, Rational> map,
-																  		  final IPolynomialTerm poly1,
-																  		  final IPolynomialTerm poly2){
+			final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
 		for (final Map.Entry<Monomial, Rational> summand1 : poly1.getMonomial2Coefficient().entrySet()) {
 			for (final Map.Entry<Monomial, Rational> summand2 : poly2.getMonomial2Coefficient().entrySet()) {
 				final Monomial mono = new Monomial(summand1.getKey(), summand2.getKey());
 				final Rational tempCoeff;
 				final Rational newCoeff;
 				final Rational coeff = map.get(mono);
-				
-				//Check whether this Monomial does already exist in the map
+
+				// Check whether this Monomial does already exist in the map
 				if (coeff == null) {
 					tempCoeff = summand1.getValue().mul(summand2.getValue());
-				}else {
+				} else {
 					tempCoeff = summand1.getValue().mul(summand2.getValue()).add(coeff);
 				}
-				
+
 				if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
 					newCoeff = PolynomialTermUtils.bringValueInRange(tempCoeff, poly1.getSort());
-				}else {
+				} else {
 					newCoeff = tempCoeff;
 				}
-				
+
 				if (!newCoeff.equals(Rational.ZERO)) {
 					map.put(mono, newCoeff);
 				}
@@ -131,30 +137,28 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 	}
 
 	/**
-	 * Multiply the Monomials of poly1 with the constant of poly2 and put them into the given map.
-	 * Return that same map.
+	 * Multiply the Monomials of poly1 with the constant of poly2 and put them into the given map. Return that same map.
 	 */
 	private static Map<Monomial, Rational> monomialsTimesConstantIntoMap(final Map<Monomial, Rational> map,
-																  		final IPolynomialTerm poly1,
-																  		final IPolynomialTerm poly2){
+			final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
 		for (final Map.Entry<Monomial, Rational> summand : poly1.getMonomial2Coefficient().entrySet()) {
 			final Rational coeff = map.get(summand.getKey());
 			final Rational newCoeff;
 			final Rational tempCoeff;
-			
-			//Check whether this Monomial does already exist in the map
+
+			// Check whether this Monomial does already exist in the map
 			if (coeff == null) {
 				tempCoeff = summand.getValue().mul(poly2.getConstant());
-			}else {
+			} else {
 				tempCoeff = summand.getValue().mul(poly2.getConstant()).add(coeff);
 			}
-			
+
 			if (SmtSortUtils.isBitvecSort(poly1.getSort())) {
 				newCoeff = PolynomialTermUtils.bringValueInRange(tempCoeff, poly1.getSort());
-			}else {
+			} else {
 				newCoeff = tempCoeff;
 			}
-			
+
 			if (!newCoeff.equals(Rational.ZERO)) {
 				map.put(summand.getKey(), newCoeff);
 			}
@@ -167,12 +171,13 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 	 */
 	public static PolynomialTerm sum(final IPolynomialTerm... summands) {
 		final GeneralizedConstructor<Monomial, PolynomialTerm> constructor = PolynomialTerm::new;
-		return PolynomialTermUtils.constructSum(x -> ((PolynomialTerm) x).getMonomial2Coefficient(), constructor, summands);
+		return PolynomialTermUtils.constructSum(x -> ((PolynomialTerm) x).getMonomial2Coefficient(), constructor,
+				summands);
 	}
-	
+
 	/**
-	 * Returns a PolynomialTerm which represents the quotient of the given arguments
-	 * (see {@PolynomialTermTransformer #divide(Sort, IPolynomialTerm[])}).
+	 * Returns a PolynomialTerm which represents the quotient of the given arguments (see
+	 * {@PolynomialTermTransformer #divide(Sort, IPolynomialTerm[])}).
 	 */
 	public static IPolynomialTerm divide(final IPolynomialTerm[] polynomialTerms) {
 		for (int i = 1; i < polynomialTerms.length; i++) {
@@ -181,21 +186,19 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 			}
 		}
 		PolynomialTerm inverse = new PolynomialTerm(polynomialTerms[1].getSort(),
-													polynomialTerms[1].getConstant().inverse(),
-													Collections.emptyMap());
+				polynomialTerms[1].getConstant().inverse(), Collections.emptyMap());
 		PolynomialTerm poly = PolynomialTerm.mulPolynomials(polynomialTerms[0], inverse);
 		for (int i = 2; i < polynomialTerms.length; i++) {
-			inverse = new PolynomialTerm(polynomialTerms[i].getSort(),
-					 					 polynomialTerms[i].getConstant().inverse(), 
-					 					 Collections.emptyMap());
+			inverse = new PolynomialTerm(polynomialTerms[i].getSort(), polynomialTerms[i].getConstant().inverse(),
+					Collections.emptyMap());
 			poly = PolynomialTerm.mulPolynomials(poly, inverse);
 		}
 		return poly;
 	}
 
 	/**
-	 * Returns a PolynomialTerm which represents the integral quotient of the given arguments 
-	 * (see {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
+	 * Returns a PolynomialTerm which represents the integral quotient of the given arguments (see
+	 * {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
 	 */
 	public static IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs) {
 		final IPolynomialTerm result = divide(polynomialArgs);
@@ -204,39 +207,27 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> impl
 		}
 		throw new UnsupportedOperationException("Result of Integer-Division must be integral.");
 	}
-	
-	/**
-	 * Auxiliary polynomial term that represents an error during the translation process, e.g., if original term had wrong sorts.
-	 */
-	public PolynomialTerm() {
-		super();
-	}
 
 	@Override
 	protected Term abstractVariableToTerm(final Script script, final Monomial abstractVariable) {
 		return abstractVariable.toTerm(script);
 	}
-	
+
 	public static PolynomialTerm applyModuloToAllCoefficients(final Script script, final PolynomialTerm polynomialTerm,
 			final BigInteger divident) {
 		final GeneralizedConstructor<Monomial, PolynomialTerm> constructor = PolynomialTerm::new;
-		return PolynomialTermUtils.applyModuloToAllCoefficients(script, polynomialTerm, divident, 
-																x -> ((PolynomialTerm) x).getMonomial2Coefficient(), 
-																constructor);
+		return PolynomialTermUtils.applyModuloToAllCoefficients(script, polynomialTerm, divident,
+				x -> ((PolynomialTerm) x).getMonomial2Coefficient(), constructor);
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.IPolynomialTerm#getMonomial2Coefficient()
-	 */
 	@Override
 	public Map<Monomial, Rational> getMonomial2Coefficient() {
 		return mAbstractVariable2Coefficient;
 	}
 
 	/**
-	 * @return true iff var is a variable of this {@link PolynomialTerm} (i.e., if
-	 *         var is a variable of some {@link Monomial} that has a non-zero
-	 *         coefficient) Note that for returning true it is especially NOT
+	 * @return true iff var is a variable of this {@link PolynomialTerm} (i.e., if var is a variable of some
+	 *         {@link Monomial} that has a non-zero coefficient) Note that for returning true it is especially NOT
 	 *         sufficient if var occurs only as a subterm of some variable.
 	 */
 	@Override

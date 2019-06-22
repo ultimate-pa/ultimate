@@ -28,12 +28,10 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -41,8 +39,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PolynomialTermUtils.GeneralizedConstructor;
 
 /**
@@ -52,30 +48,24 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Pol
  * Σ c_i * x_i + c,
  * </pre>
  *
- * where c_i, c are literals and x_i are variables. We consider every term as a
- * variable unless is is an {@link ApplicationTerm} whose {@link FunctionSymbol}
- * is an "affine symbol" {@link AffineTermTransformer#isAffineSymbol}. Hence
- * variables are e.g., {@link TermVariable}, constants (i.e., 0-ary function
- * symbols), function applications, array read expressions (i.e., select terms)
+ * where c_i, c are literals and x_i are variables. We consider every term as a variable unless is is an
+ * {@link ApplicationTerm} whose {@link FunctionSymbol} is an "affine symbol"
+ * {@link AffineTermTransformer#isAffineSymbol}. Hence variables are e.g., {@link TermVariable}, constants (i.e., 0-ary
+ * function symbols), function applications, array read expressions (i.e., select terms)
  * <p>
- * Note that this class extends {@link Term} but it is not supported by the
- * solver. We extend Term only that this can be returned by a TermTransformer.
+ * Note that this class extends {@link Term} but it is not supported by the solver. We extend Term only that this can be
+ * returned by a TermTransformer.
  * </p>
  * <p>
- * Note that there is a class (@link
- * de.uni_freiburg.informatik.ultimate.smtinterpol.convert.AffineTerm} which is
- * somehow similar but we cannot extend it because it too closely interweaved
- * with the SMTInterpol.
+ * Note that there is a class (@link de.uni_freiburg.informatik.ultimate.smtinterpol.convert.AffineTerm} which is
+ * somehow similar but we cannot extend it because it too closely interweaved with the SMTInterpol.
  * </p>
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Jan Leike
  */
-public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements IPolynomialTerm {
+public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public AffineTerm() {
 		super();
 	}
@@ -88,16 +78,14 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 	}
 
 	/**
-	 * @returns {@link AffineTerm} that has sort s and represents a Term of the
-	 *          given {@link Rational} value.
+	 * @returns {@link AffineTerm} that has sort s and represents a Term of the given {@link Rational} value.
 	 */
 	public static AffineTerm constructConstant(final Sort s, final Rational constant) {
 		return new AffineTerm(s, constant, Collections.emptyMap());
 	}
 
 	/**
-	 * {@link AffineTerm} that consists of the single variable that is represented by
-	 * the {@link Term} t.
+	 * {@link AffineTerm} that consists of the single variable that is represented by the {@link Term} t.
 	 */
 	public static AffineTerm constructVariable(final Term t) {
 		return new AffineTerm(t.getSort(), Rational.ZERO, Collections.singletonMap(t, Rational.ONE));
@@ -120,16 +108,16 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 	public static AffineTerm mulAffineTerms(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
 		if (poly1.isConstant()) {
 			return mul(poly2, poly1.getConstant());
-		}else if (poly2.isConstant()){
+		} else if (poly2.isConstant()) {
 			return mul(poly1, poly2.getConstant());
-		}else {
+		} else {
 			throw new UnsupportedOperationException("The outcome of this product is not affine!");
 		}
 	}
-	
+
 	/**
-	 * Returns an AffineTerm which represents the quotient of the given arguments 
-	 * (see {@PolynomialTermTransformer #divide(Sort, IPolynomialTerm[])}).
+	 * Returns an AffineTerm which represents the quotient of the given arguments (see
+	 * {@PolynomialTermTransformer #divide(Sort, IPolynomialTerm[])}).
 	 */
 	public static IPolynomialTerm divide(final Sort sort, final IPolynomialTerm[] affineArgs) {
 		final IPolynomialTerm affineTerm;
@@ -161,8 +149,8 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 	}
 
 	/**
-	 * Returns an AffineTerm which represents the integral quotient of the given arguments 
-	 * (see {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
+	 * Returns an AffineTerm which represents the integral quotient of the given arguments (see
+	 * {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
 	 */
 	public static IPolynomialTerm div(final Sort sort, final IPolynomialTerm[] affineArgs) {
 		final IPolynomialTerm result = divide(sort, affineArgs);
@@ -171,7 +159,7 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 		}
 		throw new UnsupportedOperationException("Integer-Division must result in integrals.");
 	}
-	
+
 	/**
 	 * @return unmodifiable map where each variable is mapped to its coefficient.
 	 */
@@ -179,16 +167,12 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 		return Collections.unmodifiableMap(mAbstractVariable2Coefficient);
 	}
 
-	 public static AffineTerm applyModuloToAllCoefficients(final Script script, final AffineTerm affineTerm,
+	public static AffineTerm applyModuloToAllCoefficients(final Script script, final AffineTerm affineTerm,
 			final BigInteger divident) {
 		final GeneralizedConstructor<Term, AffineTerm> constructor = AffineTerm::new;
-		return PolynomialTermUtils.applyModuloToAllCoefficients(script, affineTerm, divident, 
-														        x -> ((AffineTerm) x).getVariable2Coefficient(), constructor);
+		return PolynomialTermUtils.applyModuloToAllCoefficients(script, affineTerm, divident,
+				x -> ((AffineTerm) x).getVariable2Coefficient(), constructor);
 	}
-
-
-
-
 
 	@Override
 	public Map<Monomial, Rational> getMonomial2Coefficient() {
@@ -202,9 +186,8 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> implements I
 	}
 
 	/**
-	 * @return true iff var is a variable of this {@link AffineTerm} (i.e., if this
-	 *         variable has a non-zero coefficient) Note that for returning true it
-	 *         is especially NOT sufficient if var occurs only as a subterm of some
+	 * @return true iff var is a variable of this {@link AffineTerm} (i.e., if this variable has a non-zero coefficient)
+	 *         Note that for returning true it is especially NOT sufficient if var occurs only as a subterm of some
 	 *         variable.
 	 */
 	@Override
