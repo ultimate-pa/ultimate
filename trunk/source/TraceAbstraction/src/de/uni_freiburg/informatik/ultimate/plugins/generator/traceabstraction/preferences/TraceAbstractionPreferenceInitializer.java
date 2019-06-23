@@ -482,6 +482,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		CAMEL_NO_AM,
 		/**
+		 * An integer strategy without assertion order modulation using SMTInterpol with interpolation, Z3 with FP, and
+		 * Mathsat with FP. This strategy is used by ReqChecker.
+		 */
+		BADGER,
+		/**
 		 * Bitvector strategy that tries SP/WP with CVC4, Z3 and Mathsat with a low interpolant threshold
 		 */
 		WOLF,

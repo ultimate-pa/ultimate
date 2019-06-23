@@ -108,6 +108,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		case CAMEL_NO_AM:
 		case MAMMOTH_NO_AM:
 		case WARTHOG_NO_AM:
+		case BADGER:
 			return new AssertionOrderModulation<>(pathProgramCache, logger, AssertCodeBlockOrder.NOT_INCREMENTALLY);
 		case TAIPAN:
 			return new AssertionOrderModulation<>(pathProgramCache, logger, AssertCodeBlockOrder.NOT_INCREMENTALLY,
@@ -175,6 +176,10 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			return new CamelRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, precondition,
 					abstraction, mPrefsConsolidation, taskIdentifier, emptyStackFactory);
+		case BADGER:
+			return new CamelRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, precondition,
+					abstraction, mPrefsConsolidation, taskIdentifier, emptyStackFactory);
 		case WALRUS:
 			return new WalrusRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, precondition,
@@ -220,7 +225,8 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private ManagedScript setupManagedScriptFromPreferences(final IUltimateServiceProvider services,
-			final IIcfg<?> icfgContainer, final TaskIdentifier taskIdentifier, final TaCheckAndRefinementPreferences<LETTER> prefs) throws AssertionError {
+			final IIcfg<?> icfgContainer, final TaskIdentifier taskIdentifier,
+			final TaCheckAndRefinementPreferences<LETTER> prefs) throws AssertionError {
 		final ManagedScript mgdScriptTc;
 		if (prefs.getUseSeparateSolverForTracechecks()) {
 			final String filename = taskIdentifier + "_TraceCheck";
