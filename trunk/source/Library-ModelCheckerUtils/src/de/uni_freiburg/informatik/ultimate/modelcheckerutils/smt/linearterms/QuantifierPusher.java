@@ -34,7 +34,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -43,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -86,10 +86,8 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	/**
-	 * If set to true we check after applying distributivity if we were able to
-	 * eliminate some quantified variables. If elimination failed for all
-	 * variables then we return the original term without applying
-	 * distributivity.
+	 * If set to true we check after applying distributivity if we were able to eliminate some quantified variables. If
+	 * elimination failed for all variables then we return the original term without applying distributivity.
 	 *
 	 */
 	private static final boolean EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION = true;
@@ -178,10 +176,10 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	private Term pushOverCorrespondingFiniteConnective(final QuantifiedFormula quantifiedFormula) {
-		assert (quantifiedFormula.getSubformula() instanceof ApplicationTerm);
+		assert quantifiedFormula.getSubformula() instanceof ApplicationTerm;
 		final ApplicationTerm appTerm = (ApplicationTerm) quantifiedFormula.getSubformula();
-		assert (appTerm.getFunction().getApplicationString()
-				.equals(SmtUtils.getCorrespondingFiniteConnective(quantifiedFormula.getQuantifier())));
+		assert appTerm.getFunction().getApplicationString()
+				.equals(SmtUtils.getCorrespondingFiniteConnective(quantifiedFormula.getQuantifier()));
 		final Term[] oldParams = appTerm.getParameters();
 		final Term[] newParams = new Term[oldParams.length];
 		for (int i = 0; i < oldParams.length; i++) {
@@ -192,10 +190,10 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	private Term tryToPushOverDualFiniteConnective(final QuantifiedFormula quantifiedFormula) {
-		assert (quantifiedFormula.getSubformula() instanceof ApplicationTerm);
+		assert quantifiedFormula.getSubformula() instanceof ApplicationTerm;
 		final ApplicationTerm appTerm = (ApplicationTerm) quantifiedFormula.getSubformula();
-		assert (appTerm.getFunction().getApplicationString().equals(SmtUtils
-				.getCorrespondingFiniteConnective(SmtUtils.getOtherQuantifier(quantifiedFormula.getQuantifier()))));
+		assert appTerm.getFunction().getApplicationString().equals(SmtUtils
+				.getCorrespondingFiniteConnective(SmtUtils.getOtherQuantifier(quantifiedFormula.getQuantifier())));
 
 		assert quantifiedFormula.getQuantifier() == QuantifiedFormula.EXISTS
 				&& appTerm.getFunction().getName().equals("and")
@@ -261,8 +259,9 @@ public class QuantifierPusher extends TermTransformer {
 							if (!EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION) {
 								return correspondingFinite;
 							}
-							final Term pushed = new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity,
-									mPqeTechniques).transform(correspondingFinite);
+							final Term pushed =
+									new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques)
+											.transform(correspondingFinite);
 							if (allStillQuantified(eliminatees, pushed)) {
 								// we should not pay the high price for applying distributivity if we do not get
 								// a formula with less quantified variales in return
@@ -289,8 +288,8 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	private boolean allStillQuantified(final Set<TermVariable> eliminatees, final Term pushed) {
-		final Set<Term> quantifiedFormulas = new SubTermFinder(x -> (x instanceof QuantifiedFormula))
-				.findMatchingSubterms(pushed);
+		final Set<Term> quantifiedFormulas =
+				new SubTermFinder(x -> (x instanceof QuantifiedFormula)).findMatchingSubterms(pushed);
 		final Set<TermVariable> allQuantifiedVars = quantifiedFormulas.stream()
 				.map(x -> ((QuantifiedFormula) x).getVariables()).flatMap(Stream::of).collect(Collectors.toSet());
 		return allQuantifiedVars.containsAll(eliminatees);
@@ -317,7 +316,7 @@ public class QuantifierPusher extends TermTransformer {
 					SmtUtils.quantifier(mScript, quantifier, eliminatees, resultOuterParams[offset]);
 			offset++;
 		}
-		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		final ILogger logger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		logger.info("Applying distributivity, recursing on " + resultOuterParams.length + " terms");
 
 		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, quantifier, resultOuterParams);
@@ -412,9 +411,9 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	private QuantifiedFormula processSameQuantifier(final QuantifiedFormula quantifiedFormula) {
-		assert (quantifiedFormula.getSubformula() instanceof QuantifiedFormula);
+		assert quantifiedFormula.getSubformula() instanceof QuantifiedFormula;
 		final QuantifiedFormula quantifiedSubFormula = (QuantifiedFormula) quantifiedFormula.getSubformula();
-		assert (quantifiedSubFormula.getQuantifier() == quantifiedFormula.getQuantifier());
+		assert quantifiedSubFormula.getQuantifier() == quantifiedFormula.getQuantifier();
 		TermVariable[] vars;
 		{
 			final TermVariable[] varsOuter = quantifiedFormula.getVariables();
@@ -427,11 +426,11 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	private Term processDualQuantifier(final QuantifiedFormula quantifiedFormula) {
-		assert (quantifiedFormula.getSubformula() instanceof QuantifiedFormula);
+		assert quantifiedFormula.getSubformula() instanceof QuantifiedFormula;
 		final QuantifiedFormula quantifiedSubFormula = (QuantifiedFormula) quantifiedFormula.getSubformula();
-		assert (quantifiedSubFormula.getQuantifier() == SmtUtils.getOtherQuantifier(quantifiedFormula.getQuantifier()));
+		assert quantifiedSubFormula.getQuantifier() == SmtUtils.getOtherQuantifier(quantifiedFormula.getQuantifier());
 		final Term quantifiedSubFormulaPushed =
-				(new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques))
+				new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques)
 						.transform(quantifiedSubFormula);
 		final Term result = mScript.quantifier(quantifiedFormula.getQuantifier(), quantifiedFormula.getVariables(),
 				quantifiedSubFormulaPushed);

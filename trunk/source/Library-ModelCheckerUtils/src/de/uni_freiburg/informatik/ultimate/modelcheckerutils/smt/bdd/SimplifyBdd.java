@@ -28,13 +28,13 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.bdd;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -58,7 +58,7 @@ public class SimplifyBdd {
 	public SimplifyBdd(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		super();
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
 	}
@@ -190,7 +190,7 @@ public class SimplifyBdd {
 		mScript.assertTerm(SmtUtils.not(mScript, t2));
 		final LBool result = mScript.checkSat();
 		mScript.pop(1);
-		return (result == LBool.UNSAT);
+		return result == LBool.UNSAT;
 	}
 
 	public List<Pair<Term, Term>> impliesPairwise(final List<Term> in) {

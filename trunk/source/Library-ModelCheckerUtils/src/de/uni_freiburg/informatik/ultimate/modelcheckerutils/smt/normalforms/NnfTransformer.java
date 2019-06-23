@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -48,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -119,7 +119,7 @@ public class NnfTransformer {
 		mQuantifierHandling = quantifierHandling;
 		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mNnfTransformerHelper = getNnfTransformerHelper(services);
 		mOmitSoundnessCheck = omitSoundnessCheck;
 	}
@@ -313,8 +313,7 @@ public class NnfTransformer {
 
 		@Override
 		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
-			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, appTerm.getFunction(),
-					newArgs);
+			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, appTerm.getFunction(), newArgs);
 			setResult(simplified);
 		}
 
