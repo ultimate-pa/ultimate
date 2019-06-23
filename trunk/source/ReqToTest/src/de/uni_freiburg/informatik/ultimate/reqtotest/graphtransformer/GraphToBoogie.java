@@ -303,7 +303,7 @@ public class GraphToBoogie {
 		for(String clock: mSymbolTable.getClockVars()) {
 			statements.add(generateVarIntAssignment(clock, 0));
 		}
-		statements.add(generateVarIntAssignment(GraphToBoogie.GLOBAL_CLOCK_VAR, 0));
+		statements.add(generateVarIntAssignment(GraphToBoogie.GLOBAL_CLOCK_VAR, 1));
 		return statements;
 	}
 	
