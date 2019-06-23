@@ -47,6 +47,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessparser"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessprinter"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.referee"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.source.smtparser"/>
       <plugin id="edu.uci.ics.jung"/>
       <plugin id="javax.xml"/>
       <plugin id="net.sf.javabdd"/>
@@ -139,6 +140,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.smtinterpol" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.referee" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.source.smtparser" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.smtsolver.external" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.webbridge" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.webinterface" autoStart="true" startLevel="0" />
