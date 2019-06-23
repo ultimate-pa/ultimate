@@ -18,23 +18,30 @@ public class ServletLogger {
 		return mDebug;
 	}
 
-	public void logDebug(String message) {
-		if (mDebug && message != null) {
-			String timestamp = CoreUtil.getCurrentDateTimeAsString();
-			timestamp = "[" + timestamp + "][DEBUG] ";
-			message = timestamp + message;
-			System.out.println(message);
-			mServlet.log(message);
+	public void logDebug(final String message) {
+		if (!mDebug || message == null) {
+			return;
 		}
+		final String stampedMsg = "[" + CoreUtil.getCurrentDateTimeAsString() + "][DEBUG] " + message;
+		mServlet.log(stampedMsg);
+		System.out.println(stampedMsg);
 	}
 
-	public void log(String message) {
-		if (message != null) {
-			String timestamp = CoreUtil.getCurrentDateTimeAsString();
-			timestamp = "[" + timestamp + "] ";
-			message = timestamp + message;
-			System.out.println(message);
-			mServlet.log(message);
+	public void log(final String message) {
+		if (message == null) {
+			return;
 		}
+		final String stampedMsg = "[" + CoreUtil.getCurrentDateTimeAsString() + "] " + message;
+		mServlet.log(stampedMsg);
+		System.out.println(stampedMsg);
+	}
+
+	public void logException(final String message, final Throwable t) {
+		if (message == null) {
+			return;
+		}
+		final String stampedMsg = "[" + CoreUtil.getCurrentDateTimeAsString() + "] " + message;
+		mServlet.log(stampedMsg, t);
+		System.out.println(stampedMsg + " " + t.toString());
 	}
 }

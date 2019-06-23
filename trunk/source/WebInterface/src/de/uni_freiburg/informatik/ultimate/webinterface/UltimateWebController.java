@@ -113,14 +113,14 @@ public class UltimateWebController implements IController<RunDefinition> {
 	@Override
 	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
-
+		// no need to do anything in this case
 	}
 
 	@Override
 	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
 			final Throwable e) {
 		mLogger.log("Exception during Ultimate run: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-		mLogger.log(description);
+		mLogger.logException(description, e);
 	}
 
 	@Override
