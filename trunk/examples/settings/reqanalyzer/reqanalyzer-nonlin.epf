@@ -1,6 +1,10 @@
 #Tue Feb 20 14:06:03 CET 2018
 file_export_version=3.0
 
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/ultimate.logging.details=Library-ModelCheckerUtils\=WARN;
+@de.uni_freiburg.informatik.ultimate.core=0.1.24
+
 
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
@@ -44,7 +48,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ weakest\ precondition\ in\ PathInvariants=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/cut-off\ requires\ same\ transition=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/use\ unfolding\ as\ abstraction=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL_NO_AM
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=BADGER
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ exception\ blacklist=UNKNOWN
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.1.23
 
