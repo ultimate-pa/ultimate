@@ -94,7 +94,7 @@ public class ReqParser implements ISource {
 			try {
 				final List<PatternType> pattern = parseFile(filePath);
 				final List<PatternType> nonNullPatterns =
-						pattern.stream().filter(a -> a != null).collect(Collectors.toList());
+						pattern.stream().filter(Objects::nonNull).collect(Collectors.toList());
 				if (nonNullPatterns.size() != pattern.size()) {
 					mReporter.unexpectedParserFailure(filePath);
 				}
