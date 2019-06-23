@@ -243,6 +243,8 @@ public class PolynomialTest {
 		Assert.assertTrue(resultIsCorrect);
 	}
 	
+	
+	//TODO: Make test 09 and 10 harder
 	/**
 	 * Test failure of div.
 	 */
