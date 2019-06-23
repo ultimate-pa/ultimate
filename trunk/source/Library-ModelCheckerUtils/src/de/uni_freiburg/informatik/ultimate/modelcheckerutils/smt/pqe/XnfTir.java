@@ -308,8 +308,9 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			final ExtendedSimplificationResult res = SmtUtils.simplifyWithStatistics(mMgdScript, conjunction, null,
 					mServices, SimplificationTechnique.SIMPLIFY_DDA);
 			return res.getSimplifiedTerm();
+		} else {
+			return conjunction;
 		}
-		return conjunction;
 	}
 
 	private class BuildingInstructions {
