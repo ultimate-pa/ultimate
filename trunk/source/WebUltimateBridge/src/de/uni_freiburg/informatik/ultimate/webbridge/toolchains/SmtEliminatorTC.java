@@ -3,7 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.webbridge.toolchains;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.webbridge.website.Setting;
@@ -63,29 +63,12 @@ public class SmtEliminatorTC extends WebToolchain {
 
 	@Override
 	protected List<Tool> defineTools() {
-		return boogieRefereeTools();
+		return Collections.emptyList();
 	}
 
 	@Override
 	protected List<Setting> defineAdditionalSettings() {
-		return boogieAutomizerAdditionalSettings();
-	}
-
-	static List<Tool> boogieRefereeTools() {
-		final List<Tool> tools = new ArrayList<>();
-
-		// empty toolchain
-
-		return tools;
-	}
-
-	static List<Setting> boogieAutomizerAdditionalSettings() {
-		final List<Setting> rtr = new ArrayList<>();
-
-		// rtr.add(new Setting(PrefStrings.s_TA_LABEL_Hoare, Setting.SettingType.BOOLEAN, "Compute Hoare Annotation",
-		// "true", true));
-
-		return rtr;
+		return Collections.emptyList();
 	}
 
 	@Override

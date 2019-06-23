@@ -358,8 +358,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 	}
 
 	private static String createPluginID(final String classname) {
-		final String rtr = classname.substring(0, classname.lastIndexOf('.'));
-		return rtr;
+		return classname.substring(0, classname.lastIndexOf('.'));
 	}
 
 	private static String getExtensionPointFromClass(final Class<?> clazz) {
@@ -390,10 +389,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		if (unknownfactory == null) {
 			return null;
 		}
-
 		final IServiceFactory<T> factory = service.cast(unknownfactory);
-
-		final T rtr = factory.createInstance(services, storage);
-		return rtr;
+		return factory.createInstance(services, storage);
 	}
 }

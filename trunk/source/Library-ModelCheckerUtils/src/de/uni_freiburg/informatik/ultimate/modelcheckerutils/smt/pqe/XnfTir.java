@@ -90,8 +90,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	@Override
 	public Term[] tryToEliminate(final int quantifier, final Term[] inputConjuncts,
 			final Set<TermVariable> eliminatees) {
-		final Term inputConjunction = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
-				Arrays.asList(inputConjuncts));
+		final Term inputConjunction =
+				QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, Arrays.asList(inputConjuncts));
 		List<Term> currentDisjuncts = new ArrayList<>(Arrays.asList(inputConjunction));
 		final Iterator<TermVariable> it = eliminatees.iterator();
 		while (it.hasNext()) {
@@ -221,7 +221,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				resultAtoms.add(buildInequality(quantifier, lowerBound, upperBound));
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(),
-							"building " + (lowerBounds.size() * upperBounds.size())  + " inequalities");
+							"building " + lowerBounds.size() * upperBounds.size() + " inequalities");
 				}
 			}
 		}
@@ -248,7 +248,6 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		}
 		return resultDisjunctions;
 	}
-
 
 	/**
 	 * @return true iff tv is subterm of some select term in term.
@@ -294,7 +293,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
-		final String symbol = (isStrict ? "<" : "<=");
+		final String symbol = isStrict ? "<" : "<=";
 		final Term term = mScript.term(symbol, lowerBound.getTerm(), upperBound.getTerm());
 		final AffineRelation rel = AffineRelation.convert(mScript, term);
 		if (rel == null) {
@@ -309,9 +308,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			final ExtendedSimplificationResult res = SmtUtils.simplifyWithStatistics(mMgdScript, conjunction, null,
 					mServices, SimplificationTechnique.SIMPLIFY_DDA);
 			return res.getSimplifiedTerm();
-		} else {
-			return conjunction;
 		}
+		return conjunction;
 	}
 
 	private class BuildingInstructions {

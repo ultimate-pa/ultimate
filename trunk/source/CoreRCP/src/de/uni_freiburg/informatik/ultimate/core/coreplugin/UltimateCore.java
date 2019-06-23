@@ -151,7 +151,6 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			return -2;
 		}
 
-		final String randomWorkspaceLoc;
 		if (workspaceLoc != null) {
 			final Location instanceLocation = Platform.getInstanceLocation();
 			if (instanceLocation == null) {
@@ -164,14 +163,12 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 				return -2;
 			}
 			final String randomSubDir = UUID.randomUUID().toString().substring(0, 10).replace("-", "");
-			randomWorkspaceLoc = Path.fromOSString(workspaceLoc).append(randomSubDir).toOSString();
+			final String randomWorkspaceLoc = Path.fromOSString(workspaceLoc).append(randomSubDir).toOSString();
 			instanceLocation.set(new URL("file", null, randomWorkspaceLoc), false);
 			final File toDelete = new File(randomWorkspaceLoc);
 			final Thread deleteWorkspaceThread =
 					new Thread((Runnable) () -> CoreUtil.deleteDirectory(toDelete), "DeleteRandomWorkspace");
 			Runtime.getRuntime().addShutdownHook(deleteWorkspaceThread);
-		} else {
-			randomWorkspaceLoc = null;
 		}
 
 		// loading classes exported by plugins
@@ -275,7 +272,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 	}
 
 	@Override
-	public void loadPreferences(final String absolutePath, boolean silent) {
+	public void loadPreferences(final String absolutePath, final boolean silent) {
 		mSettingsManager.loadPreferencesFromFile(this, absolutePath, silent);
 		mLoggingService.reloadLoggers();
 	}
