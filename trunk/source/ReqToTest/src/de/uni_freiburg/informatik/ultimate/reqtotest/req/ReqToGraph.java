@@ -497,6 +497,7 @@ public class ReqToGraph {
 			final ReqGuardGraph q0 = new ReqGuardGraph(0, id);
 			final ReqGuardGraph q1 = new ReqGuardGraph(1, id);
 			final ReqGuardGraph q2 = new ReqGuardGraph(2, id);
+			final ReqGuardGraph q3 = new ReqGuardGraph(3, id);
 			mThreeValuedAuxVarGen.setEffectLabel(q0, T);
 			//define labels 
 			final Term dT = mThreeValuedAuxVarGen.getDefineGuard(q0);
@@ -509,6 +510,7 @@ public class ReqToGraph {
 			final String duration = pattern.getDuration().get(0);
 			TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
 			Term clockGuardLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(duration));	
+			Term clockGuardEq = SmtUtils.binaryEquality(mScript, clockIdent, getDurationTerm(duration));	
 			Term clockGuardGeq = SmtUtils.geq(mScript, clockIdent, getDurationTerm(duration));
 			//edges
 			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, ndT, uP, nP)));
@@ -517,8 +519,9 @@ public class ReqToGraph {
 			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, S, uS, ndT)));
 			q1.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, uS, nS, ndT), clockIdent));
 			q2.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, uS, nS, ndT, clockGuardLess)));
-			q2.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, uS, nS, dT, T, clockGuardGeq), true));
-			q2.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, uS, dT, T, clockGuardGeq), true));
+			q2.connectOutgoing(q3, new TimedLabel(SmtUtils.and(mScript, uS, nS, dT, T, clockGuardEq), true));
+			q3.connectOutgoing(q3, new TimedLabel(SmtUtils.and(mScript, uS, nS, dT, T), true));
+			q3.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, uS, dT, T, clockGuardGeq), true));
 			//no uncertainty here, either we may stay in q0 (by nP or nS) or it is possible to loose track of state changes
 			return q0; 
 
