@@ -300,7 +300,8 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 			case ARITHMUL:
 			case ARITHPLUS:
 			case BITVECCONCAT:
-				throw new AssertionError("The tree root should be boolean");
+				throw new RuntimeException(
+						"Saw " + BoogiePrettyPrinter.print(node) + " but expected boolean binary expression");
 			case COMPEQ:
 			case COMPGEQ:
 			case COMPGT:
@@ -366,7 +367,8 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 			switch (node.getOperator()) {
 			case ARITHNEGATIVE:
 			case OLD:
-				throw new AssertionError("The tree root should be boolean");
+				throw new RuntimeException(
+						"Saw " + BoogiePrettyPrinter.print(node) + " but expected boolean unary expression");
 			case LOGICNEG:
 				node.getExpr().accept(this);
 				mOpenCDDs.push(mOpenCDDs.pop().negate());
