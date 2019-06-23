@@ -110,6 +110,12 @@
 									<fileset dir="${examplesDir}/programs/toy/InvariantChecking/showcase/"
 										includes="*.c" />
 								</copy>
+								
+								<copy todir="${websiteExamplesDir}/smt"
+									verbose="true">
+									<fileset dir="${examplesDir}/smtlib/QuantifierElimination/"
+										includes="*.smt2" />
+								</copy>
 							</tasks>
 						</configuration>
 						<goals>

@@ -414,9 +414,11 @@ public abstract class WebToolchain {
 		if (tools == null) {
 			throw new IllegalArgumentException("NULL is not a valid toolchain!");
 		}
-		if (tools.isEmpty()) {
-			throw new IllegalArgumentException("Empty toolchain is not valid!");
-		}
+//		2019-06-21 Matthias: I commented the following lines because
+//		Ultimate Eliminator does have an emtpy toolchain.
+//		if (tools.isEmpty()) {
+//			throw new IllegalArgumentException("Empty toolchain is not valid!");
+//		}
 		mTools = tools;
 	}
 

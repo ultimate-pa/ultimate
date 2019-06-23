@@ -131,6 +131,7 @@ public class Worker {
 				result = NameStrings.TASK_SYNTHESIZE;
 				break;
 			case NameStrings.TOOL_AUTOMATA_LIBRARY:
+			case NameStrings.TOOL_ELIMINATOR:
 				result = NameStrings.TASK_RUN;
 				break;
 			default:

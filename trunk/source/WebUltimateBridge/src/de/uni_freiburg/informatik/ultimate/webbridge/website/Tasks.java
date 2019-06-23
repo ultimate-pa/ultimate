@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.CLassoRankerTC;
 import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.CRefereeTC;
 import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.CTaipanTC;
 import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.NameStrings;
+import de.uni_freiburg.informatik.ultimate.webbridge.toolchains.SmtEliminatorTC;
 
 /**
  * @author Markus Lindenmann
@@ -54,6 +55,7 @@ public class Tasks {
 			BoogieTaipanTC.class,
 			BoogieRefereeTC.class,
 			CRefereeTC.class,
+			SmtEliminatorTC.class,
 			//@formatter:on
 	};
 	/**
@@ -105,6 +107,8 @@ public class Tasks {
 		REFEREE_BOOGIE,
 
 		REFEREE_C,
+
+		ELIMINATOR_SMT,
 
 		// If you add something here, add a String representation to
 		// initTaskNames()
@@ -168,6 +172,7 @@ public class Tasks {
 			case TAIPAN_C:
 			case REFEREE_C:
 				return "c_cpp";
+			case ELIMINATOR_SMT:
 			default:
 				return "text";
 			}
@@ -217,6 +222,8 @@ public class Tasks {
 				NameStrings.DESCRIPTION_AUTOMIZER_PETRI);
 
 		addWorker(NameStrings.TOOL_REFEREE, NameStrings.TASK_ANALYZE, NameStrings.DESCRIPTION_REFEREE);
+
+		addWorker(NameStrings.TOOL_ELIMINATOR, NameStrings.TASK_RUN, NameStrings.DESCRIPTION_ELIMINATOR);
 
 		completeInitWorker();
 	}
@@ -269,6 +276,7 @@ public class Tasks {
 		TASK_STRINGS.put(TaskNames.KOJAK_BOOGIE, "Verify Boogie");
 		TASK_STRINGS.put(TaskNames.REFEREE_BOOGIE, "Check invariants Boogie");
 		TASK_STRINGS.put(TaskNames.REFEREE_C, "Check invariants Boogie");
+		TASK_STRINGS.put(TaskNames.ELIMINATOR_SMT, "Run SMT script");
 
 		SimpleLogger.log("Finished initializing task names");
 		SimpleLogger.log("The following " + TASK_STRINGS.size() + " task names are present:");

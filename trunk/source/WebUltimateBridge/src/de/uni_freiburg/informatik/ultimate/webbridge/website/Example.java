@@ -107,6 +107,9 @@ public final class Example {
 		final Tasks.TaskNames[] invariantCheckC = { Tasks.TaskNames.REFEREE_C };
 		addAllFilesInExamplesSubfolder(list, "invariantCheckC/", invariantCheckC);
 
+		final Tasks.TaskNames[] smt = { Tasks.TaskNames.ELIMINATOR_SMT };
+		addAllFilesInExamplesSubfolder(list, "smt/", smt);
+
 		// load the content for the examples in the list and place it in the
 		// sExamplesByTask map (via the alternate example constructor)
 		for (final Example e : list) {

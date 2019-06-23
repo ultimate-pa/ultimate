@@ -10,6 +10,7 @@ public class NameStrings {
 	public static final String TOOL_KOJAK = "Kojak";
 	public static final String TOOL_TAIPAN = "Taipan";
 	public static final String TOOL_REFEREE = "Referee";
+	public static final String TOOL_ELIMINATOR = "Eliminator";
 
 	public static final String DESCRIPTION_AUTOMIZER = "Verification of safety properties based on an automata-theoretic approach to software verification";
 	public static final String DESCRIPTION_AUTOMIZER_BUCHI = "Termination analysis based on Büchi automata";
@@ -18,6 +19,7 @@ public class NameStrings {
 	public static final String DESCRIPTION_AUTOMATA_LIBRARY = "Nested Word Automta, Büchi Nested Word Automta, Petri Net, Alternating Finite Automata, Tree Automata";
 	public static final String DESCRIPTION_TAIPAN = "Verification of safety properties using trace abstraction and abstract interpretation on path programs";
 	public static final String DESCRIPTION_REFEREE = "Checking validity of given invariants";
+	public static final String DESCRIPTION_ELIMINATOR = "Run SMT script";
 
 	public static final String TASK_SYNTHESIZE = "synthesize";
 	public static final String TASK_ANALYZE = "analyze";

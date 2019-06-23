@@ -170,6 +170,9 @@ public class UltimateExecutor {
 		case AUTOMATA_SCRIPT:
 			fileExtension = ".ats";
 			break;
+		case ELIMINATOR_SMT:
+			fileExtension = ".smt2";
+			break;
 		case AUTOMIZER_BOOGIE:
 		case CONCURRENT_BOOGIE:
 		case RANK_SYNTHESIS_BOOGIE:
