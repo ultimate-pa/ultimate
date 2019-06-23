@@ -6,15 +6,15 @@
       os="linux,win32,macosx"
       arch="x86,x86_64">
 
-   <description url="http://www.example.com/description">
+   <description url="">
       [Enter Feature Description here.]
    </description>
 
-   <copyright url="http://www.example.com/copyright">
+   <copyright url="">
       [Enter Copyright Description here.]
    </copyright>
 
-   <license url="http://www.example.com/license">
+   <license url="">
       [Enter License Description here.]
    </license>
 
@@ -470,9 +470,23 @@
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-         
+
    <plugin
          id="de.uni_freiburg.informatik.ultimate.plugins.generator.referee"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.lib.mso"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer"
          download-size="0"
          install-size="0"
          version="0.0.0"
