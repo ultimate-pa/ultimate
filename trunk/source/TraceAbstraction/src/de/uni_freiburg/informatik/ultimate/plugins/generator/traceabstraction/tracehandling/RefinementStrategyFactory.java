@@ -177,7 +177,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, precondition,
 					abstraction, mPrefsConsolidation, taskIdentifier, emptyStackFactory);
 		case BADGER:
-			return new CamelRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
+			return new BadgerRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, precondition,
 					abstraction, mPrefsConsolidation, taskIdentifier, emptyStackFactory);
 		case WALRUS:
