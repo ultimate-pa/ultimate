@@ -124,6 +124,10 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 	 */
 	IBacktranslationValueProvider<TE, E> getBacktranslationValueProvider();
 
+	/**
+	 * @param <E>  Type of the expressions that are used to denote program variables and their values.
+	 * @param <TE> Type of the elements whose sequence are the trace.
+	 */
 	public static <TE, E> IProgramExecution<TE, E> emptyExecution(final Class<E> exprClass,
 			final Class<? extends TE> teClass) {
 		return new IProgramExecution<TE, E>() {
