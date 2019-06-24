@@ -28,7 +28,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -38,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -205,7 +203,9 @@ public class GraphToBoogie {
 	private Statement[] generateInnerIf(Statement[] innerIf, ReqGuardGraph reqId, ReqGuardGraph source, ReqGuardGraph successor, TimedLabel label) {
 		Statement[] body;
 		Statement setPcNextState = generateVarIntAssignment(mGraphToPcPrime.get(reqId), successor.getLabel());
-		Statement guardAssume = new AssumeStatement(mDummyLocation, mTerm2Expression.translate(label.getGuard()));
+		Statement guardAssume = new AssumeStatement(mDummyLocation, new BinaryExpression(mDummyLocation, BinaryExpression.Operator.LOGICAND, 
+				mTerm2Expression.translate(label.getGuard()), 
+				mTerm2Expression.translate(label.getClockGuard())));
 		ReqGraphAnnotation annotation = new ReqGraphAnnotation(reqId, label, source);
 		annotation.annotate(guardAssume);
 		if (label.getReset() != null) {

@@ -14,6 +14,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
@@ -66,7 +67,7 @@ public class TestGeneratorResult implements IResult  {
 			DirectTriggerDependency dependencyNode = new DirectTriggerDependency(reqAut);
 			stepDependencyNodes.put(reqAut, dependencyNode);
 		}
-		//for a requirement find an effect that is responsible for triggering the quirement
+		//for a requirement find an effect that is responsible for triggering the requirement
 		for(ReqGraphAnnotation annotation: stepAnnotations) {
 			DirectTriggerDependency dependencyNode = stepDependencyNodes.get(annotation.getRequirementAut());
 			connectEffectDependencies(dependencyNode, stepDependencyNodes, annotation, stepAnnotations);
@@ -82,7 +83,7 @@ public class TestGeneratorResult implements IResult  {
 		if(toJustifyAnnotation.getSourceLocation().getLabel() > 0) {
 			//if source.label > 0 there must have already been a useful transition in the last step.
 			DirectTriggerDependency lastStepDepNode = lastStepDependencyNodes.get(toJustifyAnnotation.getRequirementAut());
-			dependencyNode.connectOutgoing(lastStepDepNode, new HashSet<TermVariable>());
+			dependencyNode.connectOutgoing(lastStepDepNode, new HashSet<>(Arrays.asList(toJustifyAnnotation.getLabel().getClockGuard().getFreeVars())));
 		}
 	}
 	
@@ -181,7 +182,7 @@ public class TestGeneratorResult implements IResult  {
 			DirectTriggerDependency peek = queue.poll();
 			dependencyNodes.add(peek);
 			for(DirectTriggerDependency determinesPeek: peek.getOutgoingNodes()) {
-				//there may be loopes in the dependency graph (think a -> b, b -> a) so prevent unrolling)
+				//there may be loops in the dependency graph (think a -> b, b -> a) so prevent unrolling)
 				if(!queue.contains(determinesPeek) && !dependencyNodes.contains(determinesPeek)) {
 					queue.add(determinesPeek);
 				}
@@ -209,26 +210,26 @@ public class TestGeneratorResult implements IResult  {
 		StringBuilder sbout = new StringBuilder();
 		sbin.append("Set inputs:");
 		sbin.append(System.getProperty("line.separator"));
-		for(ReqGuardGraph reqAut: stepDependencyGraphNodes.keySet()) {
-			DirectTriggerDependency dependencyNode = stepDependencyGraphNodes.get(reqAut);
+		for(DirectTriggerDependency dependencyNode: stepDependencyGraphNodes.values()) {
 			if (!filter.contains(dependencyNode)) continue;
 			//inputs
 			if(dependencyNode.getInputs().size() > 0) {
 				sbin.append("\t");
 				sbin.append(state.getVarSetToValueSet(dependencyNode.getInputs()));
+				sbin.append("\t\t(" + dependencyNode.getReqAut().getName() + ") ");
 				sbin.append(System.getProperty("line.separator"));
 			}
 			//Outputs
 			if(dependencyNode.getOutputs().size() > 0) {
 				sbout.append("\t");
 				sbout.append(state.getVarSetToValueSet(dependencyNode.getOutputs()));
-				sbout.append("(" + dependencyNode.getReqAut().getName() + ") ");
+				sbout.append("\t\t(" + dependencyNode.getReqAut().getName() + ") ");
 				sbout.append(System.getProperty("line.separator"));
 			}
 		}
 		if (sbout.length() > 0) {
-			sbout.append(System.getProperty("line.separator"));
-			sbin.append("Wait for at most " + Integer.toString(timeStep) + " for:" + System.getProperty("line.separator"));
+			sbin.append("Expect output:"+ System.getProperty("line.separator"));
+			sbout.append("Wait exactly  " + Integer.toString(timeStep)+ System.getProperty("line.separator"));
 			return sbin.append(sbout).toString();
 		} else {
 			sbin.append("Wait exactly  " + Integer.toString(timeStep));
@@ -264,6 +265,7 @@ public class TestGeneratorResult implements IResult  {
 				}
 				sbtrans.append("---------- (");
 				sbtrans.append(state.getVarSetToValueSet((Set<TermVariable>) dependencyNode.getOutgoingEdgeLabel(dependeeNode)));
+				//sbtrans.append(dependencyNode.getOutgoingEdgeLabel(dependeeNode));
 				sbtrans.append(") ----------> ");
 				sbtrans.append(dependencyNode.getReqAut().getName());
 				sbtrans.append(System.getProperty("line.separator"));
@@ -277,7 +279,7 @@ public class TestGeneratorResult implements IResult  {
 				sbout.append(System.getProperty("line.separator"));
 			}
 		}
-		return sbin.append(sbtrans).append(sbout).toString();
+		return "Wait " + Double.toString(timeStep) + ":\n" + sbin.append(sbtrans).append(sbout).toString() ;
 	}
 	
 	

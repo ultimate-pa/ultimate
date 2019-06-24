@@ -8,34 +8,42 @@ public class TimedLabel{
 	private final Term mGuard;
 	private final TermVariable mReset;
 	private final boolean mIsEffectEdge;
+	private final Term mClockGuard;
 	
-	public TimedLabel(Term guard, TermVariable reset, boolean isEffect) {
+	public TimedLabel(Term guard, Term clockGuard, TermVariable reset, boolean isEffect) {
 		mGuard = guard;
 		mReset = reset;
+		mClockGuard = clockGuard;
 		mIsEffectEdge = isEffect;
 	}
 	
-	public TimedLabel(Term guard, TermVariable reset) {
+	public TimedLabel(Term guard, Term clockGuard, TermVariable reset) {
 		mGuard = guard;
 		mReset = reset;
+		mClockGuard = clockGuard;
 		mIsEffectEdge = false;
 	}
 	
-	public TimedLabel(Term guard, boolean isEffect) {
+	public TimedLabel(Term guard, Term clockGuard, boolean isEffect) {
 		mGuard = guard;
 		mReset = null;
+		mClockGuard = clockGuard;
 		mIsEffectEdge = isEffect;
 	}
 	
-	
-	public TimedLabel(Term guard) {
+	public TimedLabel(Term guard, Term clockGuard) {
 		mGuard = guard;
 		mReset = null;
+		mClockGuard = clockGuard;
 		mIsEffectEdge = false;
 	}
 	
 	public Term getGuard() {
 		return mGuard;
+	}
+	
+	public Term getClockGuard() {
+		return mClockGuard;
 	}
 	
 	public boolean isEffect() {
