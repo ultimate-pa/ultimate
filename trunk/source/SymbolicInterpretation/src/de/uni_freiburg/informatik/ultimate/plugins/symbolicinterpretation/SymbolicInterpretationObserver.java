@@ -27,12 +27,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation;
 
+import java.util.Collections;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.InterpreterResources;
@@ -43,8 +49,12 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFlu
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -82,6 +92,54 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 		resources.setLoopSummarizer(new FixpointLoopSummarizer(mLogger, domain, resources));
 		final Map<IcfgLocation, IPredicate> predicates = resources.getIcfgInterpreter().interpret();
 		mLogger.debug("final results are " + predicates);
-		// TODO set ultimate results
+		reportResult(predicates);
+	}
+
+	private void reportResult(final Map<IcfgLocation, IPredicate> predicates) {
+		if (allPredicatesAreFalse(predicates)) {
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, new AllSpecificationsHoldResult(
+					Activator.PLUGIN_ID, "All locations of interest are guaranteed to be unreachable."));
+		} else {
+			predicates.entrySet().forEach(this::reportSingleResult);
+		}
+	}
+
+	private void reportSingleResult(final Map.Entry<IcfgLocation, IPredicate> loiPred) {
+		final IResult result;
+		if (isFalse(loiPred.getValue())) {
+			result = new PositiveResult<>(Activator.PLUGIN_ID, loiPred.getKey(), mServices.getBacktranslationService());
+		} else {
+			result = new UnprovableResult<>(Activator.PLUGIN_ID, loiPred.getKey(),
+					mServices.getBacktranslationService(),
+					IcfgProgramExecution.create(Collections.emptyList(), Collections.emptyMap()),
+					"Interpreter reached this location of interest. Location might be reachable.");
+		}
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
+	}
+
+	private boolean allPredicatesAreFalse(final Map<IcfgLocation, IPredicate> predicates) {
+		return predicates.values().stream().allMatch(this::isFalse);
+	}
+
+	private boolean isFalse(final IPredicate predicate) {
+		return SmtUtils.isFalse(predicate.getFormula());
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
