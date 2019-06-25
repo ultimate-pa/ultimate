@@ -57,12 +57,12 @@ public class ProcedureGraphBuilder {
 	/**
 	 * Constructs a procedure graph for a given procedure.
 	 * The resulting procedure graph is labeled with edges and nodes from its ICFG.
-	 * Each call inside the procedure is represented by two edges:
+	 * Each call inside the procedure is represented by two edges as already done in the ICFG:
 	 * <ul>
-	 * <li> One summary edge of type {@link CallReturnSummary} for the case in which we
+	 * <li> One summary edge of type {@link IIcfgSummaryTransition} for the case in which we
 	 *      enter the function and return normally.<br>
 	 *      Note that summary edges do not actually summarize the call.
-	 *      They are just there to point out, that we skipped the procedure 
+	 *      They are just there to point out, that we skipped the procedure.
 	 * <li> One error edge of type {@link IIcfgCallTransition} for the case in which we 
 	 *      enter the function but do not return due to errors in the callee or functions called by the callee.
 	 * </ul>
