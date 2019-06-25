@@ -45,6 +45,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
+/**
+ * Interprets the dag of a single procedure.
+ * Calls are processed by a given {@link IcfgInterpreter}.
+ * 
+ * @author schaetzc@tf.uni-freiburg.de
+ */
 public class DagInterpreter {
 
 	private final ILogger mLogger;
@@ -107,6 +113,7 @@ public class DagInterpreter {
 	private IPredicate interpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
 		logInterpretTransition(transition, input);
 		if (transition instanceof IIcfgSummaryTransition<?>) {
+			// TODO use IcfgInterpreter or another class to query/compute a summary
 			throw new UnsupportedOperationException("Call summaries not implemented yet: " + transition);
 		} else if (transition instanceof IIcfgCallTransition<?>) {
 			return interpretEnterCall((IIcfgCallTransition<IcfgLocation>) transition, input);

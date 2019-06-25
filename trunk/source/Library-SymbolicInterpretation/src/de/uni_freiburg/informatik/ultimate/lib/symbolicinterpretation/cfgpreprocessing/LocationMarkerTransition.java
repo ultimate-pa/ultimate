@@ -29,10 +29,16 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgprepro
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
+/**
+ * Transition to mark paths in {@link RegexDag}.
+ * 
+ * @author schaetzc@tf.uni-freiburg.de
+ */
 public class LocationMarkerTransition implements IIcfgInternalTransition<IcfgLocation> {
 
 	private static final long serialVersionUID = 1L;

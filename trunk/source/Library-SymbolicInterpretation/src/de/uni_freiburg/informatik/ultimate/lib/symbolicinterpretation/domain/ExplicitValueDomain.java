@@ -50,7 +50,7 @@ public class ExplicitValueDomain implements IDomain {
 
 	private final SymbolicTools mTools;
 	private final IUltimateServiceProvider mServices;
-	private int mMaxDisjuncts = 1;
+	private final int mMaxDisjuncts = 1;
 
 	public ExplicitValueDomain(final IUltimateServiceProvider services, final SymbolicTools tools) {
 		mTools = tools;

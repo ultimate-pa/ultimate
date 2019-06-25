@@ -47,6 +47,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Pred
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
+/**
+ * Helper class to create and transform terms/formulas/predicates.
+ * 
+ * @author schaetzc@tf.uni-freiburg.de
+ */
 public class SymbolicTools {
 
 	private final IIcfg<IcfgLocation> mIcfg;

@@ -40,6 +40,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
+/**
+ * Interprets a whole interprocedural control flow graph (ICFG).
+ * 
+ * @author schaetzc@tf.uni-freiburg.de
+ */
 public class IcfgInterpreter {
 
 	private final ILogger mLogger;
