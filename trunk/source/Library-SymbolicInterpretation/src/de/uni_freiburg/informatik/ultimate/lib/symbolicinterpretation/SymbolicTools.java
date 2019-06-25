@@ -140,7 +140,7 @@ public class SymbolicTools {
 		}
 		final Script script = mScript.getScript();
 		final Term negImplTerm =
-				SmtUtils.neg(script, SmtUtils.implies(script, p1.getClosedFormula(), p2.getClosedFormula()));
+				SmtUtils.not(script, SmtUtils.implies(script, p1.getClosedFormula(), p2.getClosedFormula()));
 		final LBool result = SmtUtils.checkSatTerm(script, negImplTerm);
 		return !satAsBool(result);
 	}
