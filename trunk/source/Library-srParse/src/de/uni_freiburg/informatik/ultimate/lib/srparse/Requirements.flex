@@ -109,6 +109,7 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
    "time"           { return symbol(ReqSymbols.TIME); }
    "to"             { return symbol(ReqSymbols.TO); }
    "toggles"        { return symbol(ReqSymbols.TOGGLES); }
+   "enables"        { return symbol(ReqSymbols.TOGGLES); }
    "transitions"    { return symbol(ReqSymbols.TRANSITIONS); }
    "twice"          { return symbol(ReqSymbols.TWICE); }
    "units"          { return symbol(ReqSymbols.UNITS); }
