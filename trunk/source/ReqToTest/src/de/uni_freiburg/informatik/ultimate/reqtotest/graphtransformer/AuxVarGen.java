@@ -133,7 +133,7 @@ public class AuxVarGen {
 	
 	public TermVariable generateClockIdent(ReqGuardGraph req) {
 		final String auxIdent = AuxVarGen.CLOCK_PREFIX + Integer.toString(getReqToId(req));
-		mReqSymbolTable.addClockVar(auxIdent,  BoogieType.TYPE_INT);
+		mReqSymbolTable.addClockVar(auxIdent,  BoogieType.TYPE_REAL);
 		return mScript.variable(auxIdent,  mSortInt);
 	}
 	

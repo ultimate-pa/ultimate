@@ -13,10 +13,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class SystemState extends ProgramState<Expression> {
 	
-	private final int mTime;
+	private final float mTime;
 	private final Map<String,  Collection<Expression>> mIdentToValues = new HashMap<>();
 
-	public SystemState(Map<Expression, Collection<Expression>> variable2Values, int time) {
+	public SystemState(Map<Expression, Collection<Expression>> variable2Values, float time) {
 		super(variable2Values, Expression.class);
 		mTime = time;
 		for(Expression v : variable2Values.keySet()) {
@@ -28,7 +28,7 @@ public class SystemState extends ProgramState<Expression> {
 		return mIdentToValues.get(ident);
 	}
 	
-	public int getTimeStep() {
+	public float getTimeStep() {
 		return mTime;
 	}
 	

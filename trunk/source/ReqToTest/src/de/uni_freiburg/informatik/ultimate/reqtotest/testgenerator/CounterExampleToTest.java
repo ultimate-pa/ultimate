@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
@@ -133,7 +134,7 @@ public class CounterExampleToTest {
 	private SystemState generateSystemState(final ProgramState<Expression> programState) {
 		LinkedHashMap<Expression, Collection<Expression>> observableState = new LinkedHashMap<>();
 		LinkedHashSet<Expression> inputs = new LinkedHashSet<>();
-		int i = 0;
+		float i = 0;
 		for(Expression e: programState.getVariables()) {
 			if (e instanceof IdentifierExpression && 
 				! mReqSymbolTable.isAuxVar(((IdentifierExpression) e).getIdentifier())) {	
@@ -142,8 +143,8 @@ public class CounterExampleToTest {
 			}
 			if (e instanceof IdentifierExpression && 
 				((IdentifierExpression) e).getIdentifier().equals(GraphToBoogie.GLOBAL_CLOCK_VAR)){
-				IntegerLiteral ilit = (IntegerLiteral) programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
-					i =  Integer.parseInt(ilit.getValue());
+				RealLiteral ilit = (RealLiteral) programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
+					i =  Float.parseFloat(ilit.getValue());
 			}
 		}
 		return new SystemState(observableState, i);

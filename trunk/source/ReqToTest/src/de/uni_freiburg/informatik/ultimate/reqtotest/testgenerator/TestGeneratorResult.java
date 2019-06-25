@@ -196,7 +196,7 @@ public class TestGeneratorResult implements IResult  {
 		StringBuilder sb = new StringBuilder();
 		for(int step = 0; step < mDependenciesGraphNodes.size(); step++) {
 			SystemState state = mTestStates.get(step);
-			int timeStep = mTestStates.get(step).getTimeStep();
+			float timeStep = mTestStates.get(step).getTimeStep();
 			sb.append(System.getProperty("line.separator"));
 			Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes = mDependenciesGraphNodes.get(step);
 			sb.append(getStepTestPlan(stepDependencyGraphNodes, state, filter, timeStep));
@@ -205,7 +205,8 @@ public class TestGeneratorResult implements IResult  {
 		return sb.toString();
 	}
 
-	private String getStepTestPlan(Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes, SystemState state, Set<DirectTriggerDependency> filter, int timeStep) {
+	private String getStepTestPlan(Map<ReqGuardGraph, DirectTriggerDependency> stepDependencyGraphNodes, SystemState state, 
+			Set<DirectTriggerDependency> filter, float timeStep) {
 		StringBuilder sbin = new StringBuilder();
 		StringBuilder sbout = new StringBuilder();
 		sbin.append("Set inputs:");
@@ -229,10 +230,10 @@ public class TestGeneratorResult implements IResult  {
 		}
 		if (sbout.length() > 0) {
 			sbin.append("Expect output:"+ System.getProperty("line.separator"));
-			sbout.append("Wait exactly  " + Integer.toString(timeStep)+ System.getProperty("line.separator"));
+			sbout.append("Wait exactly  " + Float.toString(timeStep)+ System.getProperty("line.separator"));
 			return sbin.append(sbout).toString();
 		} else {
-			sbin.append("Wait exactly  " + Integer.toString(timeStep));
+			sbin.append("Wait exactly  " + Float.toString(timeStep));
 			sbin.append(System.getProperty("line.separator"));
 			return sbin.toString();
 		}

@@ -291,6 +291,7 @@ public class ReqToGraph {
 			q0.connectOutgoing(q0, new TimedLabel( SmtUtils.and(mScript, ndS, uS, S), mSmtTrue));
 			q0.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), mSmtTrue, clockIdent));
 			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, R, uR, ndS), clockGuardLess));
+			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, nR, uR, ndS), clockGuardGeq));
 			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, R, uR, S, dS), clockGuardGeq, true));
 
 			q1.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, ndS, uR, nR),clockGuardLess));
@@ -338,18 +339,20 @@ public class ReqToGraph {
 			final Term uQ = mThreeValuedAuxVarGen.getUseGuard(Q);
 			final Term nuQ = SmtUtils.not(mScript, Q);
 			
+			q0.connectOutgoing(q1, new TimedLabel( SmtUtils.and(mScript, ndS, uQ, Q), mSmtTrue));
+			q0.connectOutgoing(q2, new TimedLabel( SmtUtils.and(mScript, ndS, uQ, Q, R, uR), mSmtTrue));
+			q0.connectOutgoing(q0, new TimedLabel( SmtUtils.and(mScript, ndS, 
+					SmtUtils.or(mScript, nQ, nuQ)), mSmtTrue));
 			//regular automaton
-			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, nuQ, nQ, ndS), mSmtTrue));
-			q0.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, Q, uQ, ndS), mSmtTrue));
-			q0.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS, Q, uQ), mSmtTrue, clockIdent));
-			q0.connectOutgoing(q0, new TimedLabel( SmtUtils.and(mScript, ndS, uR, nR), mSmtTrue));
-			q0.connectOutgoing(q0, new TimedLabel( SmtUtils.and(mScript, ndS, uS, S), mSmtTrue));
+			q1.connectOutgoing(q1, new TimedLabel( SmtUtils.and(mScript, ndS, uR, nR), mSmtTrue));
+			q1.connectOutgoing(q1, new TimedLabel( SmtUtils.and(mScript, ndS, uS, S), mSmtTrue));
 			q1.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), mSmtTrue, clockIdent));
 			q2.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, R, uR, ndS), clockGuardLess));
+			q2.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, nR, uR, ndS), clockGuardGeq));
 			q2.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, R, uR, S, dS), clockGuardGeq, true));
-			q2.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, nR, uR, ndS), clockGuardGeq));
-			q2.connectOutgoing(q3, new TimedLabel(SmtUtils.and(mScript, ndS, uR, nR), clockGuardLess));
-			q2.connectOutgoing(q3, new TimedLabel(SmtUtils.and(mScript, nuR), clockGuardLess));
+
+			q2.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, ndS, uR, nR),clockGuardLess));
+			q2.connectOutgoing(q3, new TimedLabel(SmtUtils.and(mScript, ndS, nuR),clockGuardLess));
 			q3.connectOutgoing(q3, new TimedLabel(SmtUtils.and(mScript, ndS), clockGuardLess));
 			q3.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, S, dS), clockGuardEq, true));
 			// uncertainty
@@ -358,7 +361,7 @@ public class ReqToGraph {
 			qw.connectOutgoing(q1, new TimedLabel(SmtUtils.or(mScript, 
 					SmtUtils.and(mScript, uR, nR, ndS),
 					SmtUtils.and(mScript, uS, S, ndS)), mSmtTrue));
-			qw.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), clockIdent));
+			qw.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), mSmtTrue, clockIdent));
 			
 			return q0;		
 		} else {
