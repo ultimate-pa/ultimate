@@ -40,6 +40,7 @@ final class StoreSelectEqualityCollector extends TermTransformer {
 	final Set<Term> mStoreTerms = new HashSet<>();
 	final Set<Term> mSelectTerms = new HashSet<>();
 	final Set<Term> mEqualityTerms = new HashSet<>();
+	Boolean mMultDim = false;
 
 	@Override
 	protected void convert(final Term term) {
@@ -58,7 +59,17 @@ final class StoreSelectEqualityCollector extends TermTransformer {
 
 			} else if (funName.equals("select")) {
 				// It's a select term
-				mSelectTerms.add(aterm);
+				Boolean localMult = false;
+				final Term[] params = aterm.getParameters();
+				for (int i = 0; i < params.length; ++i) {
+					if (params[i] instanceof ApplicationTerm) {
+						mMultDim = true;
+						localMult = true;
+					}
+				}
+				if (!localMult) {
+					mSelectTerms.add(aterm);
+				}
 			} else {
 				checkAndAddIfParamIsStoreTerm(aterm);
 			}
@@ -91,6 +102,10 @@ final class StoreSelectEqualityCollector extends TermTransformer {
 	
 	protected boolean hasNoStoEqu() {
 		return mStoreTerms.isEmpty() && mEqualityTerms.isEmpty();
+	}
+	
+	public Boolean hasMultDim() {
+		return mMultDim;
 	}
 
 	@Override

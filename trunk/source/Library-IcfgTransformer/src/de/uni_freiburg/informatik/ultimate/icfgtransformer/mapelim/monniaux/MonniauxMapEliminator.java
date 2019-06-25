@@ -191,6 +191,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 
 				final StoreSelectEqualityCollector ssec = new StoreSelectEqualityCollector();
 				ssec.transform(atMostOneStore);
+				Boolean iterate = ssec.hasMultDim();
 
 				if (ssec.isEmpty()) {
 					final IcfgLocation oldSource = internalTransition.getSource();
@@ -237,18 +238,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 						val.add(varVal);
 						tempAux.add(varIdx);
 						tempAux.add(varVal);
-						/*Not needed for auxVars
-						final TermVariable idxBool = mMgdScript.constructFreshTermVariable(
-								SmtUtils.removeSmtQuoteCharacters(idxName + "_assigned"), SmtSortUtils.getBoolSort(script));
-						if (!bools.containsKey(varIdx)) {
-							final IProgramVar boolPrg =
-									ProgramVarUtils.constructGlobalProgramVarPair(
-											SmtUtils.removeSmtQuoteCharacters(idxName + "_bool"),
-											SmtSortUtils.getBoolSort(script), mMgdScript, this);
-							bools.put(varIdx, new Pair<>(idxBool, boolPrg));
-						}*/
 						
-						// TODO: Add the auxVars to the list of auxVars
 					}
 					idxAuxVars.put(var, idx);
 					valAuxVars.put(var, val);
@@ -440,46 +430,12 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 					subst.put(equalityTerm, substTerm);
 				}
 
-				/*final Set<Term> constraints = new HashSet<>();
-				for (final IProgramVar var : programArrayVars) {
-					for (final IProgramVar idxVar : idxVars.get(var)) {
-						final Set<Term> equalities = new HashSet<>();
-						if (!idxAssignments.containsKey(idxVar)) {
-							continue;
-						}
-						for (final Term con : idxAssignments.get(idxVar)) {
-							equalities.add(SmtUtils.binaryEquality(script, newOutVars.get(idxVar), con));
-						}
-						constraints.add(SmtUtils.or(script, equalities));
-					}
-				}
-
-				final Set<IProgramVar> keysChain = chain.keySet();
-				final Set<Term> outImps = new HashSet<>();
-				for (final IProgramVar proVar : keysChain) {
-					for (int i = 0; i < mCells; i++) {
-						outImps.add(SmtUtils.binaryEquality(script, chain.get(proVar).getFirst().get(i),
-								oldProgramVarsToOutVars.get(proVar).get(i)));
-					}
-				}
-				final Set<IProgramVar> keysOut = oldProgramVarsToOutVars.keySet();
-				for (final IProgramVar proVar : keysOut) {
-					if (!keysChain.contains(proVar)) {
-						for (int i = 0; i < mCells; i++) {
-							outImps.add(SmtUtils.binaryEquality(script, oldProgramVarsToInVars.get(proVar).get(i),
-									oldProgramVarsToOutVars.get(proVar).get(i)));
-						}
-					}
-				}
-
-				addendum.add(SmtUtils.and(script, outImps));
-				addendum.add(SmtUtils.and(script, constraints));*/
+				
 				for (final IProgramVar key : newInVars.keySet()) {
 					if (allPrgValVars.contains(key)) {
 						addendum.add(SmtUtils.binaryEquality(script, newInVars.get(key), newOutVars.get(key)));
 					}
 				}
-				//addendum.add(atMostOneStore);
 				
 				final Map<Integer, Set<Pair<Term, Set<Term>>>> disAssgn = new HashMap<>();
 				final Map<Term, Term> newSubst = new HashMap<>();
@@ -620,8 +576,156 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				final Term newTfTerm = new SubstitutionWithLocalSimplification(mMgdScript, subst)
 						.transform(SmtUtils.and(script, addendum));
 				
+				Term finalTfTerm = newTfTerm;
+				
+				while (iterate) {
+					//TODO
+					final Term iterDnf = SmtUtils.toDnf(
+							mServices, mMgdScript, scs.transform(newTfTerm), XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+					final StoreSelectEqualityCollector iterSsec = new StoreSelectEqualityCollector();
+					iterSsec.transform(iterDnf);
+					
+					final Map<Term, Term> iterSubst = new HashMap<>();
+					final Set<Term> iterAdd = new LinkedHashSet<>();
+					// Eliminate the Select-, Store-, and Equality-Terms
+					for (final Term selectTerm : iterSsec.mSelectTerms) {
+						final ApplicationTerm aSelectTerm = (ApplicationTerm) selectTerm;
+						final Pair<TermVariable, Term> substTerm = eliminateSelects(mMgdScript, idxTerms, aSelectTerm,
+								hierarchy, auxVars, subst, idxTermToIdxProgramVar, idxAssignments, newInVars, chain,
+								oldProgramVars, mCells, valVars, lowValues, idxAuxVars, valAuxVars);
+						iterSubst.put(selectTerm, substTerm.getFirst());
+						iterAdd.add(substTerm.getSecond());
+
+					}
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					for (final IProgramVar key : newInVars.keySet()) {
+						if (allPrgValVars.contains(key)) {
+							iterAdd.add(SmtUtils.binaryEquality(script, newInVars.get(key), newOutVars.get(key)));
+						}
+					}
+					
+					final Map<Integer, Set<Pair<Term, Set<Term>>>> disAssgn2 = new HashMap<>();
+					final Map<Term, Term> newSubst2 = new HashMap<>();
+					final Term[] disjuncts2 = SmtUtils.getDisjuncts(iterDnf);
+					for (int i = 0; i < disjuncts2.length; i++) {
+						final Term term = disjuncts2[i];
+						final StoreSelectEqualityCollector newSsec = new StoreSelectEqualityCollector();
+						newSsec.transform(term);
+						final Set<Term> ors = new HashSet<>();
+						
+						final Set<Term> selectTerms = new HashSet<>(newSsec.mSelectTerms);
+						for (final Term selectTerm : selectTerms) {
+							final ApplicationTerm aSelectTerm = ((ApplicationTerm) selectTerm);
+							final Term[] paramsTerm = aSelectTerm.getParameters();
+							Term x = paramsTerm[0];
+							Term y = paramsTerm[1];
+							Set<Term> idxs = idxTerms.get(x);
+							if (idxs != null) {
+								
+							} else {
+								idxs = idxAuxVars.get(x);
+							}
+							
+							for (final Term idx : idxs) {
+								final Set<Pair<Term, Set<Term>>> wholeSet;
+								if (disAssgn2.get(i) != null) {
+									wholeSet = new HashSet<>(disAssgn2.get(i));
+								} else {
+									wholeSet = null;
+								}
+								if (wholeSet != null) {
+									for (Pair<Term, Set<Term>> pairAssgn : wholeSet) {
+										final Set<Term> assgn = pairAssgn.getSecond();
+										assgn.add(y);
+										final Set<Pair<Term, Set<Term>>> tempSet = new HashSet<>(wholeSet);
+										tempSet.add(new Pair<>(idx, assgn));
+										disAssgn2.put(i, tempSet);
+										// TODO: Find the correct way to implement a "true"
+										if (!auxVars.contains(idx)) {
+											ors.add(bools.get(idxTermToIdxProgramVar.get(idx)).getFirst());
+										}
+									}	
+								} else {
+									final Set<Term> assgn = new HashSet<>();
+									assgn.add(y);
+									final Set<Pair<Term, Set<Term>>> tempSet = new HashSet<>();
+									tempSet.add(new Pair<>(idx, assgn));
+									disAssgn2.put(i, tempSet);
+									// TODO: Find the correct way to implement a "true"
+									if (!auxVars.contains(idx)) {
+										ors.add(bools.get(idxTermToIdxProgramVar.get(idx)).getFirst());
+									}
+								}	
+							}
+						}
+						
+						if (disAssgn2.get(i) != null) {
+							for (final Pair<Term, Set<Term>> pair : disAssgn2.get(i)) {
+								final Set<Term> assignments = pair.getSecond();
+								final Term idx = pair.getFirst();
+								final Set<Term> equalities = new HashSet<>();
+								for (final Term assgn : assignments) {
+									equalities.add(SmtUtils.binaryEquality(script, idx, assgn));
+								}
+								final IProgramVar idxPrgVar = idxTermToIdxProgramVar.get(idx);
+								if (idxPrgVar != null) {
+									ors.add(SmtUtils.implies(
+											script, bools.get(idxTermToIdxProgramVar.get(idx)).getFirst(), SmtUtils.or(script, equalities)));
+								}
+							}
+						}
+						
+						ors.add(term);
+						newSubst2.put(term, SmtUtils.and(script, ors));
+					}
+					
+					
+					final Term tempTfTerm2 = new SubstitutionWithLocalSimplification(mMgdScript, newSubst2)
+							.transform(iterDnf);
+					
+					iterAdd.add(tempTfTerm2);
+					
+					finalTfTerm = new SubstitutionWithLocalSimplification(mMgdScript, subst)
+							.transform(SmtUtils.and(script, iterAdd));
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					iterate = iterSsec.hasMultDim();
+				}
+				
 				final UnmodifiableTransFormula newTf =
-						buildTransitionFormula(tf, newTfTerm, newInVars, newOutVars, auxVars);
+						buildTransitionFormula(tf, finalTfTerm, newInVars, newOutVars, auxVars);
 
 				final IcfgLocation oldSource = internalTransition.getSource();
 				final IcfgLocation newSource = lst.createNewLocation(oldSource);
@@ -698,20 +802,6 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 			y = params[1];
 		}
 
-		/*
-		 * List<Term> vals = new ArrayList<>(); IProgramVar old = null; for (final IProgramVar var : oldProgramVars) {
-		 * if (params[0].toString().contains(var.toString())) { old = var; } } if (hierarchy.containsKey(params[0])) {
-		 * for (final Term val : hierarchy.get(params[0])) { vals.add(val); } } if (!hierarchy.containsKey(params[0]) &&
-		 * !chain.containsKey(old)) { for (int i = 0; i < mCells; i++) { final String valName = (old.toString() +
-		 * "_val_" + Integer.toString(i) + Integer.toString(0)); final Term varVal =
-		 * mMgdScript.constructFreshTermVariable(valName, valVars.get(old).iterator().next().getSort());
-		 * vals.add(varVal); } chain.put(old, new Pair<>(vals, 0)); } if (chain.containsKey(old)) { int length =
-		 * chain.get(old).getValue() + 1; for (int i = 0; i < mCells; i++) { final String valName = (old.toString() +
-		 * "_val_" + Integer.toString(i) + Integer.toString(length)); final Term varVal =
-		 * mMgdScript.constructFreshTermVariable(valName, valVars.get(old).iterator().next().getSort());
-		 * vals.add(varVal); lowValues.put(varVal, chain.get(old).getFirst().get(length-1)); } chain.remove(old);
-		 * chain.put(old, new Pair<>(vals, length)); }
-		 */
 
 		final List<Term> vals = new ArrayList<>();
 		final List<Term> idxs = new ArrayList<>();
@@ -729,7 +819,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 				idxs.add(idx);
 			}
 		}
-		if (!hierarchy.containsKey(x) && !chain.containsKey(old) && !valAuxVars.containsKey(x)) {
+		if (!hierarchy.containsKey(x) && !chain.containsKey(old) && !auxVars.contains(x)) {
 			for (int i = 0; i < mCells; i++) {
 				final String valName = (old.toString() + "_val_" + Integer.toString(i) + Integer.toString(0));
 				final Term varVal =
@@ -768,6 +858,40 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 		}
 
 		final Script script = mMgdScript.getScript();
+		
+		// If we are iterating since we found multidimensional arrays we need to create new term variables for the earlier created aux variables
+		if (vals.isEmpty() && idxs.isEmpty()) {
+			final Set<Term> idx2 = new LinkedHashSet<>();
+			final List<Term> val2 = new ArrayList<>();
+			for (int i = 0; i < mCells; ++i) {
+				assert x.getSort().isArraySort();
+				assert x.getSort().getArguments().length == 2 : "Array sort with != 2 arguments";
+				if (!x.getSort().isArraySort()) {
+					continue;
+				}
+				final Sort indexSort = x.getSort().getArguments()[0];
+				final Sort valueSort = x.getSort().getArguments()[1];
+				
+				final String idxName = (x.toString() + "_iterIdx" + Integer.toString(i));
+				final String valName = (x.toString() + "_iterVal" + Integer.toString(i));
+
+				final TermVariable varIdx = mMgdScript.constructFreshTermVariable(
+							SmtUtils.removeSmtQuoteCharacters(idxName), indexSort);
+
+				final TermVariable varVal = mMgdScript.constructFreshTermVariable(
+							SmtUtils.removeSmtQuoteCharacters(valName), valueSort);
+				idx2.add(varIdx);
+				val2.add(varVal);
+				idxs.add(varIdx);
+				vals.add(varVal);
+				auxVars.add(varVal);
+				auxVars.add(varIdx);
+				
+			}
+			idxAuxVars.put(x, idx2);
+			valAuxVars.put(x, val2);
+		}
+
 
 		final Sort sort = x.getSort().getArguments()[1];
 		final TermVariable placeholder = mMgdScript.constructFreshTermVariable(SmtUtils.removeSmtQuoteCharacters(x.toString() + "_aux"), sort);
