@@ -87,7 +87,7 @@ public class ExplicitValueDomain implements IDomain {
 		// you can ensure that there are no let terms by using the unletter, but there should not be any let terms
 		// final Term unletedTerm = new FormulaUnLet().transform(pred.getFormula());
 
-		final Term dnf = SmtUtils.toDnf(mServices, mTools.getScript(), pred.getFormula(),
+		final Term dnf = SmtUtils.toDnf(mServices, mTools.getManagedScript(), pred.getFormula(),
 				SmtUtils.XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final DnfToExplicitValue rewriter = new DnfToExplicitValue(mServices, mTools);
 		final Term[] rewrittenDisjuncts = Arrays.stream(SmtUtils.getDisjuncts(dnf))
@@ -128,7 +128,7 @@ public class ExplicitValueDomain implements IDomain {
 	}
 
 	private Term entryToEq(final Map.Entry<Term, Term> entry) {
-		return mTools.getScript().term(this, "=", entry.getKey(), entry.getValue());
+		return mTools.getScript().term("=", entry.getKey(), entry.getValue());
 	}
 
 	private static Map<Term, Term> joinMapsOfVarsToValues(

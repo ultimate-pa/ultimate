@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class SymbolicTools {
 
 	private final IIcfg<IcfgLocation> mIcfg;
-	private final ManagedScript mScript;
+	private final ManagedScript mMngdScript;
 	private final PredicateFactory mFactory;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mTransformer;
 	private final IPredicate mTop;
@@ -58,18 +58,22 @@ public class SymbolicTools {
 
 	public SymbolicTools(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
 		mIcfg = icfg;
-		mScript = icfg.getCfgSmtToolkit().getManagedScript();
-		final Script script = mScript.getScript();
+		mMngdScript = icfg.getCfgSmtToolkit().getManagedScript();
+		final Script script = mMngdScript.getScript();
 		// TODO decide which techniques to use or use a setting
-		mFactory = new PredicateFactory(services, mScript, icfg.getCfgSmtToolkit().getSymbolTable(),
+		mFactory = new PredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable(),
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		mTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(services, mScript));
+		mTransformer = new PredicateTransformer<>(mMngdScript, new TermDomainOperationProvider(services, mMngdScript));
 		mTop = mFactory.newPredicate(script.term("true"));
 		mBottom = mFactory.newPredicate(script.term("false"));
 	}
 
-	public ManagedScript getScript() {
-		return mScript;
+	public ManagedScript getManagedScript() {
+		return mMngdScript;
+	}
+
+	public Script getScript() {
+		return mMngdScript.getScript();
 	}
 
 	public PredicateFactory getFactory() {
@@ -103,11 +107,11 @@ public class SymbolicTools {
 	}
 
 	public IPredicate or(final Term... operands) {
-		return mFactory.newPredicate(SmtUtils.or(mScript.getScript(), operands));
+		return mFactory.newPredicate(SmtUtils.or(mMngdScript.getScript(), operands));
 	}
 
 	public IPredicate or(final Collection<Term> operands) {
-		return mFactory.newPredicate(SmtUtils.or(mScript.getScript(), operands));
+		return mFactory.newPredicate(SmtUtils.or(mMngdScript.getScript(), operands));
 	}
 	
 	public IPredicate and(final IPredicate... operands) {
@@ -117,11 +121,11 @@ public class SymbolicTools {
 	}
 
 	public IPredicate and(final Term... operands) {
-		return mFactory.newPredicate(SmtUtils.and(mScript.getScript(), operands));
+		return mFactory.newPredicate(SmtUtils.and(mMngdScript.getScript(), operands));
 	}
 
 	public IPredicate and(final Collection<Term> operands) {
-		return mFactory.newPredicate(SmtUtils.and(mScript.getScript(), operands));
+		return mFactory.newPredicate(SmtUtils.and(mMngdScript.getScript(), operands));
 	}
 
 	public boolean isFalse(final IPredicate pred) {
@@ -129,7 +133,7 @@ public class SymbolicTools {
 		if (mBottom.equals(pred)) {
 			return true;
 		}
-		final LBool result = SmtUtils.checkSatTerm(mScript.getScript(), pred.getClosedFormula());
+		final LBool result = SmtUtils.checkSatTerm(mMngdScript.getScript(), pred.getClosedFormula());
 		return !satAsBool(result);
 	}
 
@@ -138,7 +142,7 @@ public class SymbolicTools {
 		if (p1.equals(p2)) {
 			return true;
 		}
-		final Script script = mScript.getScript();
+		final Script script = mMngdScript.getScript();
 		final Term negImplTerm =
 				SmtUtils.not(script, SmtUtils.implies(script, p1.getClosedFormula(), p2.getClosedFormula()));
 		final LBool result = SmtUtils.checkSatTerm(script, negImplTerm);
