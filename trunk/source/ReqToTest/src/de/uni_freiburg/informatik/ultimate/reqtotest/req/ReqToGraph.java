@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndDelayedResponsePatternUT;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndInvariancePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTT;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTU;
@@ -76,6 +77,7 @@ public class ReqToGraph {
     	BndResponsePatternTT			X
     	BndResponsePatternUT			X
        	BndResponsePatternTU 			X
+       	BndDelayedResponsePatternUT
     	InvariantPattern				X
     	InstAbsPattern					X
       	UniversalityPattern				X
@@ -93,6 +95,8 @@ public class ReqToGraph {
 			return getBndResponsePatternTTPattern(pattern);
 		} else if(pattern instanceof UniversalityPattern){
 			return getUniversalityPattern(pattern);
+		} else if(pattern instanceof BndDelayedResponsePatternUT){
+			return getBndDelayedResponsePatternUT(pattern);
 		} else if (pattern instanceof InstAbsPattern){
 			return getInstAbsPattern(pattern);
 		} else if(pattern instanceof BndResponsePatternTU){
@@ -149,6 +153,54 @@ public class ReqToGraph {
 			qw.connectOutgoing(qw, new TimedLabel(SmtUtils.and(mScript, nuR, ndS), mSmtTrue));
 			qw.connectOutgoing(q0, new TimedLabel(SmtUtils.or(mScript, uR, nR, ndS), mSmtTrue));
 			qw.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), mSmtTrue, clockIdent));
+			
+			return q0;		
+		} else {
+			scopeNotImplementedWarning(pattern);
+			return null;
+		}
+	}
+	
+	/*
+"{scope}, it is always the case that if "R" holds, then "S" holds after at most "c1" time units for at least "c2"
+ * time units
+	 */
+	private ReqGuardGraph getBndDelayedResponsePatternUT(PatternType pattern){
+		if(pattern.getScope() instanceof SrParseScopeGlob) {
+			final List<CDD> args = pattern.getCdds();
+			final Term R = mCddToSmt.toSmt(args.get(1));
+			final Term S = mCddToSmt.toSmt(args.get(0)); 
+			//create states to identify automaton
+			String id = pattern.getId();
+			final ReqGuardGraph q0 = new ReqGuardGraph(0,id);
+			final ReqGuardGraph q1 = new ReqGuardGraph(1,id);
+			final ReqGuardGraph q2 = new ReqGuardGraph(2,id);
+			//create effect guards
+
+			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
+			final String delayEffect = pattern.getDuration().get(0);
+			final String durationEffect = pattern.getDuration().get(1);
+			TermVariable clockIdent = mThreeValuedAuxVarGen.generateClockIdent(q0);
+			//assuming RT-Consistency <>(\leq t) can be transformed into <>(==t)
+			Term triggerLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(delayEffect));
+			Term triggerEq = SmtUtils.binaryEquality(mScript, clockIdent, getDurationTerm(delayEffect));	
+			Term effectLess = SmtUtils.less(mScript, clockIdent, getDurationTerm(durationEffect));
+			Term effectEq = SmtUtils.binaryEquality(mScript, clockIdent, getDurationTerm(durationEffect));
+			//define labels 
+			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
+			final Term ndS = mThreeValuedAuxVarGen.getNonDefineGuard(q0);
+			//normal labels
+			final Term uR = mThreeValuedAuxVarGen.getUseGuard(R);
+			final Term nuR = SmtUtils.not(mScript, uR); 
+			final Term nR = SmtUtils.not(mScript, R);
+			
+			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, ndS, uR, nR), mSmtTrue));
+			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, ndS, nuR), mSmtTrue));
+			q0.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), mSmtTrue, clockIdent));
+			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, ndS), triggerLess));
+			q1.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript, uR, R), triggerEq, clockIdent));
+			q2.connectOutgoing(q2, new TimedLabel(SmtUtils.and(mScript,  dS, S), effectLess, true));
+			q2.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript,  dS, S), effectEq, true));
 			
 			return q0;		
 		} else {
