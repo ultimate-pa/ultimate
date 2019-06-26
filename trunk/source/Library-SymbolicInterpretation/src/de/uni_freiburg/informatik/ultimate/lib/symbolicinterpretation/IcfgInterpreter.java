@@ -50,13 +50,13 @@ public class IcfgInterpreter {
 	private final ILogger mLogger;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final CallGraph mCallGraph;
-	private final Map<String, ProcedureResources> mProcResources = new HashMap<>();
 	private final IWorklistWithInputs<String, IPredicate> mEnterCallWorklist;
 	private final Map<IcfgLocation, IPredicate> mPredicatesForLoi = new HashMap<>();
 	private final SymbolicTools mTools;
 	private final IDomain mDomain;
 	private final InterpreterResources mInterpreterResources;
-
+	private final ProcedureResourceCache mProcResCache;
+	
 	/**
 	 * Creates a new interpreter assuming all error locations to be locations of interest.
 	 *
@@ -91,6 +91,7 @@ public class IcfgInterpreter {
 		logBuildingCallGraph();
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
 		logCallGraphComputed();
+		mProcResCache = new ProcedureResourceCache(mCallGraph, icfg);
 		initPredicates(locationsOfInterest);
 		enqueInitial();
 	}
@@ -122,16 +123,10 @@ public class IcfgInterpreter {
 			final String procedure = mEnterCallWorklist.getWork();
 			final IPredicate input = mEnterCallWorklist.getInput();
 			logEnterProcedure(procedure, input);
-			final ProcedureResources resources = mProcResources.computeIfAbsent(procedure, this::computeProcResources);
-			interpretLoisInProcedure(resources, input);
+			interpretLoisInProcedure(mProcResCache.resourcesOf(procedure), input);
 		}
 		logFinalResults();
 		return mPredicatesForLoi;
-	}
-
-	private ProcedureResources computeProcResources(final String procedure) {
-		return new ProcedureResources(mIcfg, procedure, mCallGraph.locationsOfInterest(procedure),
-				mCallGraph.successorsOfInterest(procedure));
 	}
 
 	private void interpretLoisInProcedure(final ProcedureResources resources, final IPredicate initialInput) {
@@ -155,6 +150,14 @@ public class IcfgInterpreter {
 		final IPredicate newPred = mDomain.join(oldPred, addPred);
 		logAfterRegisterLoi(loi, addPred, newPred);
 		return newPred;
+	}
+
+	public CallGraph callGraph() {
+		return mCallGraph;
+	}
+
+	public ProcedureResourceCache procedureResourceCache() {
+		return mProcResCache;
 	}
 
 	// log messages -------------------------------------------------------------------------------

@@ -69,6 +69,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 	}
 
 	private IPredicate summarizeInternal(final Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate> starAndInput) {
+		logComputeSummary();
 		final IRegex<IIcfgTransition<IcfgLocation>> starredRegex = starAndInput.getFirst().getInner();
 		final RegexDag<IIcfgTransition<IcfgLocation>> dag = mStarDagCache.dagOf(starredRegex);
 		final IDagOverlay<IIcfgTransition<IcfgLocation>> fullOverlay = new FullOverlay<>();
@@ -84,4 +85,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		return postState;
 	}
 
+	private void logComputeSummary() {
+		mLogger.debug("Computing new summary using true as input");
+	}
 }

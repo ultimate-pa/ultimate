@@ -46,6 +46,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
+/**
+ * Resources like dag and overlays for a single procedure.
+ * 
+ * @author schaetzc@tf.uni-freiburg.de
+ */
 public class ProcedureResources {
 
 	private final RegexDag<IIcfgTransition<IcfgLocation>> mRegexDag;

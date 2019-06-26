@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.CallReturnSummary;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
@@ -40,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.R
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -110,11 +110,12 @@ public class DagInterpreter {
 		}
 	}
 
-	private IPredicate interpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
+	private IPredicate interpretTransition(final IIcfgTransition<IcfgLocation> transition, IPredicate input) {
+		// TODO move up? Also interpret before stars
+		input = fluidAbstraction(input);
 		logInterpretTransition(transition, input);
-		if (transition instanceof IIcfgSummaryTransition<?>) {
-			// TODO use IcfgInterpreter or another class to query/compute a summary
-			throw new UnsupportedOperationException("Call summaries not implemented yet: " + transition);
+		if (transition instanceof CallReturnSummary) {
+			return interpretCallReturnSummary((CallReturnSummary) transition, input);
 		} else if (transition instanceof IIcfgCallTransition<?>) {
 			return interpretEnterCall((IIcfgCallTransition<IcfgLocation>) transition, input);
 		} else if (transition instanceof IIcfgInternalTransition) {
@@ -126,20 +127,22 @@ public class DagInterpreter {
 		}
 	}
 
-	private IPredicate interpretInternal(final IIcfgInternalTransition<IcfgLocation> transition, IPredicate input) {
-		input = fluidAbstraction(input);
-		final IPredicate output = mTools.post(input, transition);
-		logInterpretInternal(output);
-		mInterpreterResources.getIcfgInterpreter().storePredicateIfLoi(transition.getTarget(), output);
-		return output;
+	private IPredicate interpretCallReturnSummary(final CallReturnSummary transition, final IPredicate input) {
+		return mInterpreterResources.getCallSummarzier().summarize(transition, input);
 	}
 
-	private IPredicate interpretEnterCall(final IIcfgCallTransition<IcfgLocation> transition, IPredicate input) {
-		input = fluidAbstraction(input);
+	private IPredicate interpretEnterCall(final IIcfgCallTransition<IcfgLocation> transition, final IPredicate input) {
 		final IPredicate calleeInput = mTools.postCall(input, transition);
 		mInterpreterResources.getIcfgInterpreter().registerEnterCall(transition.getSucceedingProcedure(), calleeInput);
 		// registerEnterCall() already stores predicates for LOIs
 		return calleeInput;
+	}
+
+	private IPredicate interpretInternal(final IIcfgInternalTransition<IcfgLocation> transition, final IPredicate input) {
+		final IPredicate output = mTools.post(input, transition);
+		logInterpretInternal(output);
+		mInterpreterResources.getIcfgInterpreter().storePredicateIfLoi(transition.getTarget(), output);
+		return output;
 	}
 
 	private IPredicate fluidAbstraction(IPredicate predicate) {

@@ -26,17 +26,23 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.CallReturnSummary;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Used to compute summaries to skip loops.
+ * Used to compute summaries to skip procedure calls.
  * 
  * @author schaetzc@tf.uni-freiburg.de
  */
-public interface ILoopSummarizer {
+public interface ICallSummarizer {
 
-	IPredicate summarize(Star<IIcfgTransition<IcfgLocation>> regex, IPredicate input);
+	/**
+	 * Given an input and call (including execution of the callee's body and returning back to the caller),
+	 * computes an (over-approximated) output.
+	 * 
+	 * @param callSumTrans Call to be completely summarized
+	 * @param input pre state for the call
+	 * @return Over-approximated post state
+	 */
+	IPredicate summarize(CallReturnSummary callSumTrans, IPredicate input);
 }

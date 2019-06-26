@@ -9,7 +9,8 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.pathexpressions,
  de.uni_freiburg.informatik.ultimate.lib.util,
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation,
  de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing,
  de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain,

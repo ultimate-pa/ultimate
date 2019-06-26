@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFlu
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.TopInputCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -87,6 +88,7 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 		resources.setIcfgInterpreter(new IcfgInterpreter(mLogger, tools, icfg, domain, resources));
 		resources.setDagInterpreter(new DagInterpreter(mLogger, tools, domain, fluid, resources));
 		resources.setLoopSummarizer(new FixpointLoopSummarizer(mLogger, domain, resources));
+		resources.setCallSummarzier(new TopInputCallSummarizer(tools, resources));
 		final Map<IcfgLocation, IPredicate> predicates = resources.getIcfgInterpreter().interpret();
 		mLogger.debug("final results are " + predicates);
 		reportResult(predicates);

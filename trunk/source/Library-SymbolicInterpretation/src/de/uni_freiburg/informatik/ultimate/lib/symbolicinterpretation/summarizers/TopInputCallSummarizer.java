@@ -26,17 +26,41 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import java.util.HashMap;
+import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.InterpreterResources;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.CallReturnSummary;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Used to compute summaries to skip loops.
+ * Computes call summaries ignoring the actual call's input and using only true as an input.
+ * Summaries computed once are cached and re-used.
  * 
  * @author schaetzc@tf.uni-freiburg.de
  */
-public interface ILoopSummarizer {
+public class TopInputCallSummarizer implements ICallSummarizer {
 
-	IPredicate summarize(Star<IIcfgTransition<IcfgLocation>> regex, IPredicate input);
+	private final SymbolicTools mTools;
+	private final InterpreterResources mInterpRes;
+
+	private final Map<String, IPredicate> mProcToSummary = new HashMap<>();
+
+	public TopInputCallSummarizer(final SymbolicTools tools, final InterpreterResources interpRes) {
+		mTools = tools;
+		mInterpRes = interpRes;
+	}
+
+	@Override
+	public IPredicate summarize(CallReturnSummary callSumTrans, final IPredicate unusedInput) {
+		return mProcToSummary.computeIfAbsent(callSumTrans.calledProcedure(), this::computeTopSummary);
+	}
+
+	private IPredicate computeTopSummary(final String procedure) {
+		final ProcedureResources res = mInterpRes.getProcedureResourceCache().resourcesOf(procedure);
+		return mInterpRes.getDagInterpreter().interpret(
+				res.getRegexDag(), res.getDagOverlayPathToReturn(), mTools.top());
+	}
 }

@@ -33,6 +33,7 @@ import java.util.Queue;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -40,9 +41,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 /**
  * @see #graphOfProcedure(String, Collection)
  * @author schaetzc@tf.uni-freiburg.de
- * 
- * TODO consider creating a lightweight subgraph overlay since RCFG builder already constructs super graph of the
- *      required form.
  */
 public class ProcedureGraphBuilder {
 
@@ -59,7 +57,7 @@ public class ProcedureGraphBuilder {
 	 * The resulting procedure graph is labeled with edges and nodes from its ICFG.
 	 * Each call inside the procedure is represented by two edges as already done in the ICFG:
 	 * <ul>
-	 * <li> One summary edge of type {@link IIcfgSummaryTransition} for the case in which we
+	 * <li> One summary edge of type {@link CallReturnSummary} for the case in which we
 	 *      enter the function and return normally.<br>
 	 *      Note that summary edges do not actually summarize the call.
 	 *      They are just there to point out, that we skipped the procedure.
@@ -94,8 +92,9 @@ public class ProcedureGraphBuilder {
 			processReturn((IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>>) edge);
 		} else if (edge instanceof IIcfgCallTransition<?>) {
 			processCall((IIcfgCallTransition<IcfgLocation>) edge);
+		} else if (edge instanceof IIcfgSummaryTransition<?>) {
+			processCallSummary((IIcfgSummaryTransition<IcfgLocation>) edge);
 		} else {
-			// this case also includes call summaries of type IIcfgSummaryTransition
 			addToWorklistIfNew(edge.getSource());
 			copyEdge(edge);
 		}
@@ -105,13 +104,19 @@ public class ProcedureGraphBuilder {
 		final IIcfgCallTransition<IcfgLocation> correspondingCallEdge = returnEdge.getCorrespondingCall();
 		final IcfgLocation correspondingSource = correspondingCallEdge.getSource();
 		addToWorklistIfNew(correspondingSource);
-		// Dead end edge representing the possibility to enter a procedure without returning due to an error
+		// Dead end edge representing the possibility to enter the callee without returning due to an error
 		copyEdge(correspondingCallEdge);
+		// Summary representing entering, executing the body, and returning from the callee in one step
+		mCurrentProcedureGraph.addEdge(correspondingSource, new CallReturnSummary(returnEdge), returnEdge.getTarget());
 	}
 
 	private void processCall(final IIcfgCallTransition<IcfgLocation> callEdge) {
-		assert callEdge.getSource() == mCurrentProcedureGraph.getEntryNode();
-		// or else we entered a return backwards
+		assert callEdge.getSource() == mCurrentProcedureGraph.getEntryNode() :
+				"Builder entered return (backwards) but should have skipped body of sub-procedure.";
+	}
+
+	private void processCallSummary(final IIcfgSummaryTransition<IcfgLocation> callSummaryEdge) {
+		// nothing to do, we insert our own summary based on the return transition
 	}
 
 	private void addToWorklistIfNew(final IcfgLocation node) {

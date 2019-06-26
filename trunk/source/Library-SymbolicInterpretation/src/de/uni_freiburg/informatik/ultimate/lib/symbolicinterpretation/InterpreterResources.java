@@ -26,11 +26,28 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
 
 /**
  * Class to resolve cyclic dependencies between {@link IcfgInterpreter}, {@link DagInterpreter}, and some
- * {@link ILoopSummarizer}s.
+ * {@link ILoopSummarizer}s. In constructors this class' getters may return null.
+ * Always use the getters of this class when accessing a resource. Do <i>not</i> store the resource.
+ * Example:
+ * <pre>
+ * private Something mSomething;
+ * // constructor
+ * public MyClass(InterpreterResources res) {
+ *     // WRONG USAGE. At this point res.getSomething() might still be null
+ *     mSomething = res.getSomething();
+ * }
+ * public someMethod() {
+ *     // WRONG USAGE. May fail with a null pointer exception.
+ *     mSomething.doStuff();
+ *     // CORRECT USAGE
+ *     res.getSomething().doStuff();
+ * }
+ * </pre>
  * 
  * TODO add more shared resources (for instance domain) to simplify constructor signatures.
  * 
@@ -38,21 +55,25 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizer
  */
 public class InterpreterResources {
 
-	private ILoopSummarizer mSummarizer;
+	private ICallSummarizer mCallSummarzier;
 	private DagInterpreter mDagInterpreter;
 	private IcfgInterpreter mIcfgInterpreter;
+	private ILoopSummarizer mLoopSummarizer;
 
-	public void setIcfgInterpreter(final IcfgInterpreter icfgInterpreter) {
-		mIcfgInterpreter = icfgInterpreter;
+	public void setCallSummarzier(final ICallSummarizer callSummarzier) {
+		mCallSummarzier = callSummarzier;
 	}
 	public void setDagInterpreter(final DagInterpreter dagInterpreter) {
 		mDagInterpreter = dagInterpreter;
 	}
-	public void setLoopSummarizer(final ILoopSummarizer summarizer) {
-		mSummarizer = summarizer;
+	public void setIcfgInterpreter(final IcfgInterpreter icfgInterpreter) {
+		mIcfgInterpreter = icfgInterpreter;
 	}
-	public ILoopSummarizer getLoopSummarizer() {
-		return mSummarizer;
+	public void setLoopSummarizer(final ILoopSummarizer summarizer) {
+		mLoopSummarizer = summarizer;
+	}
+	public ICallSummarizer getCallSummarzier() {
+		return mCallSummarzier;
 	}
 	public DagInterpreter getDagInterpreter() {
 		return mDagInterpreter;
@@ -60,5 +81,13 @@ public class InterpreterResources {
 	public IcfgInterpreter getIcfgInterpreter() {
 		return mIcfgInterpreter;
 	}
-
+	public ILoopSummarizer getLoopSummarizer() {
+		return mLoopSummarizer;
+	}
+	public CallGraph getCallGraph() {
+		return mIcfgInterpreter.callGraph();
+	}
+	public ProcedureResourceCache getProcedureResourceCache() {
+		return mIcfgInterpreter.procedureResourceCache();
+	}
 }
