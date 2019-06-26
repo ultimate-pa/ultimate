@@ -144,12 +144,11 @@ public class CounterExampleToTest {
 			}
 			if (e instanceof IdentifierExpression && 
 				((IdentifierExpression) e).getIdentifier().equals(GraphToBoogie.GLOBAL_CLOCK_VAR)){
-				if (e instanceof IntegerLiteral) {
-					IntegerLiteral ilit = (IntegerLiteral) programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
-					i =  (float) Integer.parseInt(ilit.getValue());
-				} else if(e instanceof RealLiteral) {
-					RealLiteral ilit = (RealLiteral) programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
-					i =  Float.parseFloat(ilit.getValue());
+				Expression expr = programState.getValues(e).toArray(new Expression[programState.getValues(e).size()])[0];
+				if (expr instanceof RealLiteral) {
+					i = Float.parseFloat(((RealLiteral)expr).getValue());
+				} else if (expr instanceof IntegerLiteral) {
+					i = Float.parseFloat(((IntegerLiteral)expr).getValue());
 				}
 			}
 		}

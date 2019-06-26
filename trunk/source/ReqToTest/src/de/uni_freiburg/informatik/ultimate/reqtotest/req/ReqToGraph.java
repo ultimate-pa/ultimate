@@ -298,7 +298,7 @@ public class ReqToGraph {
 			qw.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, uR, nR, ndS), mSmtTrue));
 			qw.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, dS, S), mSmtTrue, clockIdent, true));
 			
-			return q0;		
+			return q0;	
 		} else {
 			scopeNotImplementedWarning(pattern);
 			return null;
@@ -446,6 +446,33 @@ public class ReqToGraph {
 			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, S, uS, ndS), mSmtTrue));
 			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.and(mScript, uR, R, dS, S), mSmtTrue,true));
 			return q0;
+		} else if(pattern.getScope() instanceof SrParseScopeAfter) {
+			final List<CDD> args = pattern.getCdds();
+			final Term R = mCddToSmt.toSmt(args.get(1));
+			final Term S = mCddToSmt.toSmt(args.get(0)); 
+			final Term Q = mCddToSmt.toSmt(pattern.getScope().getCdd1()); 
+			String id = pattern.getId();
+			final ReqGuardGraph q0 = new ReqGuardGraph(0, id);
+			final ReqGuardGraph q1 = new ReqGuardGraph(1, id);
+			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
+			//define labels 
+			final Term dS = mThreeValuedAuxVarGen.getDefineGuard(q0);
+			final Term ndS = mThreeValuedAuxVarGen.getNonDefineGuard(q0);
+			//normal labels
+			final Term uR = mThreeValuedAuxVarGen.getUseGuard(R);
+			final Term nuR = SmtUtils.not(mScript, uR); 
+			final Term uS = mThreeValuedAuxVarGen.getUseGuard(S);
+			final Term nR = SmtUtils.not(mScript, R);
+			final Term uQ = mThreeValuedAuxVarGen.getUseGuard(Q);
+			final Term nuQ = SmtUtils.not(mScript, uQ);
+			final Term nQ = SmtUtils.not(mScript, Q);
+			q0.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uQ, Q), mSmtTrue));
+			q0.connectOutgoing(q0, new TimedLabel(SmtUtils.or(mScript, nuQ, SmtUtils.and(mScript, uQ, nQ)), mSmtTrue));
+			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, nuR, ndS), mSmtTrue));
+			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, nR, ndS), mSmtTrue));
+			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, S, uS, ndS), mSmtTrue));
+			q1.connectOutgoing(q1, new TimedLabel(SmtUtils.and(mScript, uR, R, dS, S), mSmtTrue,true));
+				return q0;
 		} else {
 			scopeNotImplementedWarning(pattern);
 			return null;

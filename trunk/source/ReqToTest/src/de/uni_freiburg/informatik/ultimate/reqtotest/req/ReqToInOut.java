@@ -221,6 +221,14 @@ public class ReqToInOut {
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
 			addTriggerSet(R.getFreeVars());
 			addEffectSet(S.getFreeVars());
+		} else if(pattern.getScope() instanceof SrParseScopeAfter) {
+			final List<CDD> args = pattern.getCdds();
+			final Term R = mCddToSmt.toSmt(args.get(1));
+			final Term S = mCddToSmt.toSmt(args.get(0)); 
+			final Term Q = mCddToSmt.toSmt(pattern.getScope().getCdd1()); 
+			addTriggerSet(R.getFreeVars());
+			addEffectSet(S.getFreeVars());
+			addTriggerSet(Q.getFreeVars());
 		} else {
 			scopeNotImplementedWarning(pattern);
 		}
