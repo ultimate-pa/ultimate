@@ -1,0 +1,15 @@
+// #TestSpec: rt-inconsistent:req1+req2; vacuous:; inconsistent:; results: 4
+// var == 20.0 is not the same as var == K 
+// During quantifier elimination the encoding of const variables is not correct 
+
+CONST CYCLE_TIME IS 50.0
+
+Input T2 IS bool
+Input T1 IS bool
+
+Input var IS real
+CONST K IS 20.0
+CONST H IS 30.0
+
+SW_DELib_ElecActrVdPosnGovr_171_0: Globally, it is always the case that if "T1 " holds, then "var == K" holds after at most "CYCLE_TIME" time units
+SW_DELib_ElecActrVdPosnGovr_83_1: Globally, it is always the case that if "T2" holds, then "var == H" holds for at least "CYCLE_TIME" time units 

@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -38,6 +39,7 @@ public class ReqSymboltable implements IReqSymbolExpressionTable {
 	private final Map<String, BoogieType> mId2Type;
 	private final Map<String, IdentifierExpression> mId2IdExpr;
 	private final Map<String, VariableLHS> mId2VarLHS;
+	private final Map<String, Expression> mConst2Value;
 
 	private final Map<PatternType, BoogieLocation> mReq2Loc;
 
@@ -65,6 +67,7 @@ public class ReqSymboltable implements IReqSymbolExpressionTable {
 		mPcVars = new LinkedHashSet<>();
 		mClockVars = new LinkedHashSet<>();
 		mReq2Loc = new LinkedHashMap<>();
+		mConst2Value = new LinkedHashMap<>();
 
 		mLogger = logger;
 
@@ -101,6 +104,7 @@ public class ReqSymboltable implements IReqSymbolExpressionTable {
 				addVar(name, type, init, mStateVars);
 			} else {
 				addVar(name, type, init, mConstVars);
+				mConst2Value.put(name, init.getExpression());
 			}
 		}
 	}
@@ -303,6 +307,10 @@ public class ReqSymboltable implements IReqSymbolExpressionTable {
 
 	public Set<String> getConstVars() {
 		return Collections.unmodifiableSet(mConstVars);
+	}
+
+	public Expression getConstValue(final String name) {
+		return mConst2Value.get(name);
 	}
 
 	public Map<String, TypeErrorInfo> getTypeErrors() {
