@@ -68,8 +68,8 @@ public class BadgerRefinementStrategy<LETTER extends IIcfgTransition<?>>
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
 		list.add(Track.SMTINTERPOL_TREE_INTERPOLANTS);
-		list.add(Track.MATHSAT_FP);
 		list.add(Track.Z3_FP);
+		list.add(Track.MATHSAT_FP);
 		list.add(Track.MATHSAT_FPBP);
 		return list.iterator();
 	}
