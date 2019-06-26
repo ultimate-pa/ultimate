@@ -402,7 +402,7 @@ public class RtInconcistencyConditionGenerator {
 			final Rational rational = SmtUtils.toRational(((RealLiteral) constvalue).getValue());
 			return rational.toTerm(SmtSortUtils.getRealSort(mScript));
 		} else if (constvalue instanceof IntegerLiteral) {
-			final Rational rational = SmtUtils.toRational(((RealLiteral) constvalue).getValue());
+			final Rational rational = SmtUtils.toRational(((IntegerLiteral) constvalue).getValue());
 			return rational.toTerm(SmtSortUtils.getIntSort(mScript));
 		} else if (constvalue instanceof BooleanLiteral) {
 			if (((BooleanLiteral) constvalue).getValue()) {
