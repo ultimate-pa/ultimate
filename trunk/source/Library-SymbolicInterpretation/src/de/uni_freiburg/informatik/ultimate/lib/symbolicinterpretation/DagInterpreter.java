@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFlu
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -47,7 +48,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 
 /**
  * Interprets the dag of a single procedure.
- * Calls are processed by a given {@link IcfgInterpreter}.
+ * Entered calls are processed by a given {@link IcfgInterpreter}.
+ * Call summaries are computed by a given {@link ICallSummarizer}.
  * 
  * @author schaetzc@tf.uni-freiburg.de
  */
