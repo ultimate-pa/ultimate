@@ -85,7 +85,8 @@ public class CallReturnSummary implements IIcfgInternalTransition<IcfgLocation> 
 
 	@Override
 	public UnmodifiableTransFormula getTransformula() {
-		throw new UnsupportedOperationException("Summary transformula must be computed manually");
+		throw new UnsupportedOperationException("Summary transformula must be computed manually."
+				+ "Use correspondingCall/Return() to get transformulas of either the call or return statement.");
 	}
 
 	public String calledProcedure() {

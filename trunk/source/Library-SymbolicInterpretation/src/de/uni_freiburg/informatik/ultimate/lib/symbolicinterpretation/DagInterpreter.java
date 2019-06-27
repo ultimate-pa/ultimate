@@ -130,7 +130,8 @@ public class DagInterpreter {
 	}
 
 	private IPredicate interpretCallReturnSummary(final CallReturnSummary transition, final IPredicate input) {
-		return mInterpreterResources.getCallSummarzier().summarize(transition, input);
+		final IPredicate summary = mInterpreterResources.getCallSummarzier().summarize(transition, input);
+		return mTools.postReturn(input, summary, transition.correspondingReturn());
 	}
 
 	private IPredicate interpretEnterCall(final IIcfgCallTransition<IcfgLocation> transition, final IPredicate input) {

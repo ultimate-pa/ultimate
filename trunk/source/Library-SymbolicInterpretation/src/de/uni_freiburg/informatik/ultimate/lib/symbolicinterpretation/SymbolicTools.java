@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
 import java.util.Collection;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -35,9 +36,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -89,6 +92,10 @@ public class SymbolicTools {
 		return mFactory.newPredicate(mTransformer.strongestPostcondition(input, transition.getTransformula()));
 	}
 
+	/**
+	 * Assigns arguments to parameters of the callee.
+	 * Also handles globals and old vars.
+	 */
 	public IPredicate postCall(final IPredicate input, final IIcfgCallTransition<IcfgLocation> transition) {
 		final CfgSmtToolkit toolkit = mIcfg.getCfgSmtToolkit();
 		final String calledProcedure = transition.getSucceedingProcedure();
@@ -96,6 +103,20 @@ public class SymbolicTools {
 				toolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(calledProcedure),
 				toolkit.getOldVarsAssignmentCache().getOldVarsAssignment(calledProcedure),
 				toolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProcedure)));
+	}
+
+	/**
+	 * Assigns the return values from the callee to local variables of the caller.
+	 * Also handles globals and old vars.
+	 */
+	public IPredicate postReturn(final IPredicate inputBeforeCall, final IPredicate inputBeforeReturn,
+			final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnTransition) {
+		final CfgSmtToolkit toolkit = mIcfg.getCfgSmtToolkit();
+		final String callee = returnTransition.getPrecedingProcedure();
+		return mFactory.newPredicate(mTransformer.strongestPostconditionReturn(inputBeforeReturn, inputBeforeCall,
+				returnTransition.getTransformula(), returnTransition.getCorrespondingCall().getTransformula(),
+				toolkit.getOldVarsAssignmentCache().getOldVarsAssignment(callee),
+				toolkit.getModifiableGlobalsTable().getModifiedBoogieVars(callee)));
 	}
 
 	public IPredicate top() {
