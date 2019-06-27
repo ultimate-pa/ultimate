@@ -233,7 +233,8 @@ public class PolynomialTest {
 	public void polynomialTermTest09() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
-		final String formulaAsString = "(div (* 8 x) 4)";
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String formulaAsString = "(div (* (* y 6) (* y (* x x) ) ) (div 6 3))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info("Input: " + formulaAsTerm);
 		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
@@ -243,16 +244,51 @@ public class PolynomialTest {
 		Assert.assertTrue(resultIsCorrect);
 	}
 	
-	
-	//TODO: Make test 09 and 10 harder
 	/**
-	 * Test failure of div.
+	 * Test division of zero by something with div.
 	 */
-	@Test(expected = UnsupportedOperationException.class)
+	@Test
 	public void polynomialTermTest10() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
-		final String formulaAsString = "(div (* 8 y) 3)";
+		final String formulaAsString = "(div (* (* y 0) (* y (* x x) ) ) (div 144 12))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mLogger.info("Input: " + formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final Term resultAsTerm = result.toTerm(mScript);
+		mLogger.info("Output: " + resultAsTerm);
+		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
+		Assert.assertTrue(resultIsCorrect);
+	}
+	
+	/**
+	 * Test cancellation of div, if division is by zero.
+	 */
+	@Test(expected = UnsupportedOperationException.class)
+	public void polynomialTermTest11() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String formulaAsString = "(div (* (* y 23) (* y (* x x))) (div 0 12))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mLogger.info("Input: " + formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final Term resultAsTerm = result.toTerm(mScript);
+		mLogger.info("Output: " + resultAsTerm);
+		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
+		Assert.assertTrue(resultIsCorrect);
+	}
+
+	/**
+	 * Test cancellation of div, if coefficients are not integer-divisible.
+	 */
+	@Test(expected = UnsupportedOperationException.class)
+	public void polynomialTermTest12() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String formulaAsString = "(div (* (* y 6) (* y (* x x))) (div 144 12))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info("Input: " + formulaAsTerm);
 		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);

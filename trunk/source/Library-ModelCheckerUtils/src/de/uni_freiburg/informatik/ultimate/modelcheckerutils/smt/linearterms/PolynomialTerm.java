@@ -181,7 +181,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 */
 	public static IPolynomialTerm divide(final IPolynomialTerm[] polynomialTerms) {
 		for (int i = 1; i < polynomialTerms.length; i++) {
-			if (!polynomialTerms[i].isConstant() || !polynomialTerms[i].isZero()) {
+			if (!polynomialTerms[i].isConstant() || polynomialTerms[i].isZero()) {
 				throw new UnsupportedOperationException("Division by variables or zero not supported!");
 			}
 		}
