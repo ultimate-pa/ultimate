@@ -65,8 +65,6 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 				polynomialTerm, multiplier);
 	}
 
-	// TODO: Ask Matthias where assert poly1.getSort() == poly2.getSort(); should be put. Highest level? Only on
-	// Multiplication?
 	/**
 	 * Returns a new PolynomialTerm that represents the product of two polynomialTerms.
 	 */
@@ -196,6 +194,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		return poly;
 	}
 
+	//TODO: Do not crash, when div is not applicable. Instead treat this as its own variable.
 	/**
 	 * Returns a PolynomialTerm which represents the integral quotient of the given arguments (see
 	 * {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).

@@ -150,6 +150,8 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	//TODO: Implement "linear" PolynomialTerm detection
+	//Assert this in the constructor, but Eliminate "unreal" PolynomialTerms in the Methods, that build the map.
+	//Look, that the sum stays efficient, and the multiplication of polynomialTerms with constants.
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		// This method is called for every subformula for which we let the
@@ -165,23 +167,21 @@ public class PolynomialTermTransformer extends TermTransformer {
 			return;
 		}
 		final String funName = appTerm.getFunction().getName();
-		final Sort sort = appTerm.getSort();
-		final IPolynomialTerm result = convertArgumentsToFunction(sort, polynomialArgs, funName);
+		final IPolynomialTerm result = convertArgumentsToFunction(polynomialArgs, funName);
 		castAndSetResult(result);
 	}
 	
 	/**
 	 * Create an IPolynomialTerm out of the polynomialArgs, according to the given funName, if possible.
 	 */
-	private IPolynomialTerm convertArgumentsToFunction(final Sort sort, 
-													   final IPolynomialTerm[] polynomialArgs, 
+	private IPolynomialTerm convertArgumentsToFunction(final IPolynomialTerm[] polynomialArgs, 
 													   String funName) {
 		switch(funName) {
 		case "*":
-			return multiply(sort, polynomialArgs);
+			return multiply(polynomialArgs);
 			
 		case "bvmul":
-			return multiply(sort, polynomialArgs);
+			return multiply(polynomialArgs);
 			
 		case "+":
 			return add(polynomialArgs);
@@ -206,10 +206,10 @@ public class PolynomialTermTransformer extends TermTransformer {
 			}
 			
 		case "/":
-			return divide(sort, polynomialArgs);
+			return divide(polynomialArgs);
 			
 		case "div":
-			return div(sort, polynomialArgs);
+			return div(polynomialArgs);
 			
 		default:
 			throw new UnsupportedOperationException("unsupported symbol " + funName);
@@ -234,17 +234,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	/**
 	 * Multiply an array of PolynomialTerms.
 	 */
-	private static IPolynomialTerm multiply(final Sort sort, final IPolynomialTerm[] polynomialArgs) {
-		//TODO: Find out whether passing the sort explicitly in case every polynomialTerm is just a Constant
-		//is really necessary (like in the AffineTermTransformer): YES it is in case that the array is empty
-		//TODO: Ask Matthias why does AffineTermTransformer not catch this in add?
-		if (polynomialArgs.length == 0) {
-			return new PolynomialTerm(sort, Rational.ONE, Collections.emptyMap());
-		}
-		if (polynomialArgs.length == 1) {
-			return polynomialArgs[0];
-		}
-
+	private static IPolynomialTerm multiply(final IPolynomialTerm[] polynomialArgs) {
 		IPolynomialTerm poly = multiplyTwoPolynomials(polynomialArgs[0], polynomialArgs[1]);
 		for (int i = 2; i < polynomialArgs.length; i++) {
 			poly = multiplyTwoPolynomials(poly, polynomialArgs[i]);
@@ -331,18 +321,12 @@ public class PolynomialTermTransformer extends TermTransformer {
 	 * defined for the sort of reals. For integer division we have the function "div"
 	 * which is currently partially supported by our polynomial terms.
 	 */
-	private static IPolynomialTerm divide(final Sort sort, final IPolynomialTerm[] polynomialArgs) {
-		assert SmtSortUtils.isRealSort(sort);
-		if (polynomialArgs.length == 0) {
-			return AffineTerm.constructConstant(sort, Rational.ONE);
-		}else if (polynomialArgs.length == 1) {
-			return polynomialArgs[0];
-		}
-
+	private static IPolynomialTerm divide(final IPolynomialTerm[] polynomialArgs) {
+		assert SmtSortUtils.isRealSort(polynomialArgs[0].getSort());
+		
 		//Only Term at position 0 may be not affine.
 		if (polynomialArgs[0].isAffine()) {
-			//TODO: Ask Matthias about the passing of sort here (is it really necessary to take the sort from the appTerm?).
-			return AffineTerm.divide(sort, polynomialArgs);
+			return AffineTerm.divide(polynomialArgs);
 		}else {
 			return PolynomialTerm.divide(polynomialArgs);
 		}
@@ -355,21 +339,14 @@ public class PolynomialTermTransformer extends TermTransformer {
 	 * is divisible by t2...tn. Also only t1 may have variables, t2...tn must be constants.
 	 * For the "usual" division we have the function "divide".
 	 */
-	private static IPolynomialTerm div(final Sort sort, final IPolynomialTerm[] polynomialArgs) {
-		//TODO: Ask Matthias whether this is necessary. I can only find a definition for Integers,
-		//but an extension on Reals is also thinkable.
-		//assert SmtSortUtils.isIntSort(sort);
-		if (polynomialArgs.length == 0) {
-			return AffineTerm.constructConstant(sort, Rational.ONE);
-		}else if (polynomialArgs.length == 1) {
-			return polynomialArgs[0];
-		}
-
+	private static IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs) {
+		assert SmtSortUtils.isIntSort(polynomialArgs[0].getSort());
+		
 		//Only Term at position 0 may be not affine.
 		if (polynomialArgs[0].isAffine()) {
 			//TODO: Ask Matthias about the passing of sort here (does it necessarily have to be the sort of appTerm? 
 			// or does the sort of an argument suffice?).
-			return AffineTerm.div(sort, polynomialArgs);
+			return AffineTerm.div(polynomialArgs);
 		}else {
 			return PolynomialTerm.div(polynomialArgs);
 		}

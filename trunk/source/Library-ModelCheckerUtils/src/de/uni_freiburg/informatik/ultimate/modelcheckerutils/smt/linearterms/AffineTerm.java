@@ -119,7 +119,7 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 	 * Returns an AffineTerm which represents the quotient of the given arguments (see
 	 * {@PolynomialTermTransformer #divide(Sort, IPolynomialTerm[])}).
 	 */
-	public static IPolynomialTerm divide(final Sort sort, final IPolynomialTerm[] affineArgs) {
+	public static IPolynomialTerm divide(final IPolynomialTerm[] affineArgs) {
 		final IPolynomialTerm affineTerm;
 		Rational multiplier;
 		if (affineArgs[0].isConstant()) {
@@ -141,7 +141,7 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 			}
 		}
 		if (affineTerm == null) {
-			result = AffineTerm.constructConstant(sort, multiplier);
+			result = AffineTerm.constructConstant(affineArgs[0].getSort(), multiplier);
 		} else {
 			result = AffineTerm.mul(affineTerm, multiplier);
 		}
@@ -152,8 +152,8 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 	 * Returns an AffineTerm which represents the integral quotient of the given arguments (see
 	 * {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
 	 */
-	public static IPolynomialTerm div(final Sort sort, final IPolynomialTerm[] affineArgs) {
-		final IPolynomialTerm result = divide(sort, affineArgs);
+	public static IPolynomialTerm div(final IPolynomialTerm[] affineArgs) {
+		final IPolynomialTerm result = divide(affineArgs);
 		if (result.isIntegral()) {
 			return result;
 		}
