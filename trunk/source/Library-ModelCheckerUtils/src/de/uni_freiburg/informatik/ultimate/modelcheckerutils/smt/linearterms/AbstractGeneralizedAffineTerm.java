@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
 import java.util.ArrayDeque;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -44,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * Common superclass of {@link AffineTerm} and {@link PolynomialTerm}. This class represents an affine term whose kinds
  * of variables are abstract objectsspecified by a type parameter. For a {@link PolynomialTerm} these abstract variables
  * are {@link Monomials} for an {@link AffineTerm} the instance of these abstract variables are already "the variables".
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  * @param <AVAR>
@@ -85,43 +84,6 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		mSort = s;
 		mConstant = constant;
 		mAbstractVariable2Coefficient = variables2coeffcient;
-	}
-
-	/**
-	 * {@link AbstractGeneralizedAffineTerm} whose variables are given by an array of terms, whose corresponding
-	 * coefficients are given by the array coefficients, and whose constant term is given by the Rational constant.
-	 */
-	protected AbstractGeneralizedAffineTerm(final Sort s, final AVAR[] terms, final Rational[] coefficients,
-			final Rational constant) {
-		super(0);
-		mSort = s;
-		mConstant = constant;
-		if (terms.length != coefficients.length) {
-			throw new IllegalArgumentException("number of variables and coefficients different");
-		}
-		switch (terms.length) {
-		case 0:
-			mAbstractVariable2Coefficient = Collections.emptyMap();
-			break;
-		case 1:
-			final AVAR variable = terms[0];
-			checkIfTermIsLegalVariable(variable);
-			if (coefficients[0].equals(Rational.ZERO)) {
-				mAbstractVariable2Coefficient = Collections.emptyMap();
-			} else {
-				mAbstractVariable2Coefficient = Collections.singletonMap(variable, coefficients[0]);
-			}
-			break;
-		default:
-			mAbstractVariable2Coefficient = new HashMap<>();
-			for (int i = 0; i < terms.length; i++) {
-				checkIfTermIsLegalVariable(terms[i]);
-				if (!coefficients[i].equals(Rational.ZERO)) {
-					mAbstractVariable2Coefficient.put(terms[i], coefficients[i]);
-				}
-			}
-			break;
-		}
 	}
 
 	/**
