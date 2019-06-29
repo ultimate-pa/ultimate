@@ -62,7 +62,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 * Returns a new PolynomialTerm that represents the product of polynomialTerm and multiplier.
 	 */
 	public static IPolynomialTerm mul(final IPolynomialTerm polynomialTerm, final Rational multiplier) {
-		final GeneralizedConstructor<Monomial, IPolynomialTerm> constructor = PolynomialTerm::downgrade;
+		final GeneralizedConstructor<Monomial, IPolynomialTerm> constructor = PolynomialTerm::minimalRepresentation;
 		return PolynomialTermUtils.constructMul(x -> ((PolynomialTerm) x).getMonomial2Coefficient(), constructor,
 												polynomialTerm, multiplier);
 	}
@@ -72,7 +72,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 * PolynomialTerm class, or if the AffineTerm class is sufficient (more storage efficiency). Afterwards
 	 * it returns this Term represented by one of the two classes, chosen accordingly.
 	 */
-	private static IPolynomialTerm downgrade(Sort sort, Rational coeff, Map<Monomial, Rational> map) {
+	private static IPolynomialTerm minimalRepresentation(Sort sort, Rational coeff, Map<Monomial, Rational> map) {
 		if (PolynomialTermUtils.isAffineMap(map)) {
 			return new AffineTerm(sort, coeff, PolynomialTermUtils.convertToAffineMap(map));
 		}
@@ -87,7 +87,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		final Sort s = poly1.getSort();
 		final Rational coeff = calculateProductCoefficient(poly1, poly2);
 		final Map<Monomial, Rational> polyMap = calculateProductMap(poly1, poly2);
-		return downgrade(s, coeff, polyMap);
+		return minimalRepresentation(s, coeff, polyMap);
 	}
 
 	/**
@@ -184,7 +184,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 * Returns the sum of given polynomials.
 	 */
 	public static IPolynomialTerm sum(final IPolynomialTerm... summands) {
-		final GeneralizedConstructor<Monomial, IPolynomialTerm> constructor = PolynomialTerm::downgrade;
+		final GeneralizedConstructor<Monomial, IPolynomialTerm> constructor = PolynomialTerm::minimalRepresentation;
 		return PolynomialTermUtils.constructSum(x -> ((PolynomialTerm) x).getMonomial2Coefficient(), 
 												constructor, summands);
 	}
