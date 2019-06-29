@@ -108,7 +108,7 @@ public class PolynomialTermUtils {
 	/**
 	 * Returns a shrinked version of a map if possible. Returns the given map otherwise.
 	 */
-	protected static <MNL extends Term> Map<MNL, Rational> shrinkMap(final Map<MNL, Rational> map) {
+	public static <MNL extends Term> Map<MNL, Rational> shrinkMap(final Map<MNL, Rational> map) {
 		if (map.size() == 0) {
 			return Collections.emptyMap();
 		}
@@ -118,10 +118,38 @@ public class PolynomialTermUtils {
 		}
 		return map;
 	}
+	
+	/**
+	 * It may occur, that the PolynomialTerm-class is used to represent a term, that could be represented by
+	 * the AffineTerm-class. Hence, this method checks, whether the term given by the map could be represented by the
+	 * AffineTerm-class.
+	 */
+	public static boolean isAffineMap(final Map<Monomial, Rational> map) {
+		for(Entry<Monomial, Rational> entry : map.entrySet()) {
+			if (!entry.getKey().isLinear()) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Convert a map in <Monomial, Rational> Form to an equivalent map in <Term, Rational> Form if possible.
+	 */
+	public static Map<Term, Rational> convertToAffineMap(final Map<Monomial, Rational> map){
+		final Map<Term, Rational> affineMap = new HashMap<>();
+		for(Entry<Monomial, Rational> entry : map.entrySet()) {
+			Map<Term, Rational> monomialMap = entry.getKey().getVariable2Exponent();
+			assert monomialMap.size() == 1 : "Cannot convert to AffineMap.";
+			Term term = monomialMap.keySet().iterator().next();
+			affineMap.put(term, entry.getValue());
+		}
+		return shrinkMap(affineMap);
+	}
 
 	/**
 	 * Generalized builder for sums of {@link AffineTerm}s and
-	 * {@link PolynomialTerm}s. The type paramter T refers either to
+	 * {@link PolynomialTerm}s. The type parameter T refers either to
 	 * {@link AffineTerm} or {@link PolynomialTerm}. The type parameter MNL is a
 	 * {@link Term} for {@link AffineTerm}s and a {@link Monomial} for
 	 * {@link PolynomialTerm}s.
@@ -171,8 +199,8 @@ public class PolynomialTermUtils {
 
 	/**
 	 * Generalized builder for multiplication of a constant and either an
-	 * {@link AffineTerm}s or a {@link PolynomialTerm}s. The type paramter T refers
-	 * either to {@link AffineTerm} or {@link PolynomialTerm}. The type paramter MNL
+	 * {@link AffineTerm}s or a {@link PolynomialTerm}s. The type parameter T refers
+	 * either to {@link AffineTerm} or {@link PolynomialTerm}. The type parameter MNL
 	 * is a {@link Term} for {@link AffineTerm}s and a {@link Monomial} for
 	 * {@link PolynomialTerm}s.
 	 *

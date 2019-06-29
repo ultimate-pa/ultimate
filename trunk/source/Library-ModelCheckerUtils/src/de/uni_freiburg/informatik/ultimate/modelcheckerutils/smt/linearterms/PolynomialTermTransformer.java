@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -149,9 +148,6 @@ public class PolynomialTermTransformer extends TermTransformer {
 		return result;
 	}
 
-	//TODO: Implement "linear" PolynomialTerm detection
-	//Assert this in the constructor, but Eliminate "unreal" PolynomialTerms in the Methods, that build the map.
-	//Look, that the sum stays efficient, and the multiplication of polynomialTerms with constants.
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		// This method is called for every subformula for which we let the
@@ -344,8 +340,6 @@ public class PolynomialTermTransformer extends TermTransformer {
 		
 		//Only Term at position 0 may be not affine.
 		if (polynomialArgs[0].isAffine()) {
-			//TODO: Ask Matthias about the passing of sort here (does it necessarily have to be the sort of appTerm? 
-			// or does the sort of an argument suffice?).
 			return AffineTerm.div(polynomialArgs);
 		}else {
 			return PolynomialTerm.div(polynomialArgs);

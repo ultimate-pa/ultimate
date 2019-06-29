@@ -34,6 +34,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 */
 	public PolynomialTerm(final Sort s, final Rational constant, final Map<Monomial, Rational> map) {
 		super(s, constant, map);
+		assert !PolynomialTermUtils.isAffineMap(map) : "This PolynomialTerm can be represented as an AffineTerm!";
 	}
 
 	/**
@@ -59,19 +60,33 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	/**
 	 * Returns a new PolynomialTerm that represents the product of polynomialTerm and multiplier.
 	 */
-	public static PolynomialTerm mul(final IPolynomialTerm polynomialTerm, final Rational multiplier) {
-		final GeneralizedConstructor<Monomial, PolynomialTerm> constructor = PolynomialTerm::new;
+	public static IPolynomialTerm mul(final IPolynomialTerm polynomialTerm, final Rational multiplier) {
+		final GeneralizedConstructor<Monomial, IPolynomialTerm> constructor = PolynomialTerm::downgrade;
 		return PolynomialTermUtils.constructMul(x -> ((PolynomialTerm) x).getMonomial2Coefficient(), constructor,
-				polynomialTerm, multiplier);
+												polynomialTerm, multiplier);
+	}
+	
+	/**
+	 * The given arguments specify a Term. This constructor determines whether it must be represented by the
+	 * PolynomialTerm class, or if the AffineTerm class is sufficient (more storage efficiency). Afterwards
+	 * it returns this Term represented by one of the two classes, chosen accordingly.
+	 */
+	private static IPolynomialTerm downgrade(Sort sort, Rational coeff, Map<Monomial, Rational> map) {
+		if (PolynomialTermUtils.isAffineMap(map)) {
+			return new AffineTerm(sort, coeff, PolynomialTermUtils.convertToAffineMap(map));
+		}
+		return new PolynomialTerm(sort, coeff, map);
 	}
 
 	/**
 	 * Returns a new PolynomialTerm that represents the product of two polynomialTerms.
 	 */
-	public static PolynomialTerm mulPolynomials(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
+	public static IPolynomialTerm mulPolynomials(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
 		// assert poly1.getSort() == poly2.getSort() : "sort mismatch";
-		return new PolynomialTerm(poly1.getSort(), calculateProductCoefficient(poly1, poly2),
-				calculateProductMap(poly1, poly2));
+		final Sort s = poly1.getSort();
+		final Rational coeff = calculateProductCoefficient(poly1, poly2);
+		final Map<Monomial, Rational> polyMap = calculateProductMap(poly1, poly2);
+		return downgrade(s, coeff, polyMap);
 	}
 
 	/**
@@ -167,10 +182,10 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	/**
 	 * Returns the sum of given polynomials.
 	 */
-	public static PolynomialTerm sum(final IPolynomialTerm... summands) {
-		final GeneralizedConstructor<Monomial, PolynomialTerm> constructor = PolynomialTerm::new;
-		return PolynomialTermUtils.constructSum(x -> ((PolynomialTerm) x).getMonomial2Coefficient(), constructor,
-				summands);
+	public static IPolynomialTerm sum(final IPolynomialTerm... summands) {
+		final GeneralizedConstructor<Monomial, IPolynomialTerm> constructor = PolynomialTerm::downgrade;
+		return PolynomialTermUtils.constructSum(x -> ((PolynomialTerm) x).getMonomial2Coefficient(), 
+												constructor, summands);
 	}
 
 	/**
@@ -183,13 +198,9 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 				throw new UnsupportedOperationException("Division by variables or zero not supported!");
 			}
 		}
-		PolynomialTerm inverse = new PolynomialTerm(polynomialTerms[1].getSort(),
-				polynomialTerms[1].getConstant().inverse(), Collections.emptyMap());
-		PolynomialTerm poly = PolynomialTerm.mulPolynomials(polynomialTerms[0], inverse);
+		IPolynomialTerm poly = PolynomialTerm.mul(polynomialTerms[0], polynomialTerms[1].getConstant().inverse());
 		for (int i = 2; i < polynomialTerms.length; i++) {
-			inverse = new PolynomialTerm(polynomialTerms[i].getSort(), polynomialTerms[i].getConstant().inverse(),
-					Collections.emptyMap());
-			poly = PolynomialTerm.mulPolynomials(poly, inverse);
+			poly = PolynomialTerm.mul(poly, polynomialTerms[i].getConstant().inverse());
 		}
 		return poly;
 	}
