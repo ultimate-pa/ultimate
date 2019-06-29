@@ -35,7 +35,6 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
@@ -86,29 +85,26 @@ public class PolynomialTermUtils {
 	 * @param constructor
 	 *            Methods that constructs the term of type T.
 	 */
-	public static <T extends IPolynomialTerm, MNL extends Term> T applyModuloToAllCoefficients(
-			final Script script, 
-			final IPolynomialTerm polynomialTerm,
-			final BigInteger divident,
-			final Function<IPolynomialTerm, Map<MNL, Rational>> term2map,
+	public static <T extends AbstractGeneralizedAffineTerm<MNL>, MNL extends Term> T applyModuloToAllCoefficients(
+			final T agAffineTerm, final BigInteger divident,
 			final GeneralizedConstructor<MNL, T> constructor) {
-		assert SmtSortUtils.isIntSort(polynomialTerm.getSort());
+		assert SmtSortUtils.isIntSort(agAffineTerm.getSort());
 		final Map<MNL, Rational> newMap = new HashMap<>();
 		Rational newCoeff;
-		for (final Entry<MNL, Rational> entry : term2map.apply(polynomialTerm).entrySet()) {
+		for (final Entry<MNL, Rational> entry : agAffineTerm.getAbstractVariable2Coefficient().entrySet()) {
 			newCoeff = SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(entry.getValue()), divident));
 			if (newCoeff == Rational.ZERO) {
 				continue;
-			}else {
+			} else {
 				newMap.put(entry.getKey(), newCoeff);
 			}
 		}
 		shrinkMap(newMap);
-		final Rational constant =
-				SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(polynomialTerm.getConstant()), divident));
-		return constructor.apply(polynomialTerm.getSort(), constant, newMap);
+		final Rational constant = SmtUtils
+				.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(agAffineTerm.getConstant()), divident));
+		return constructor.apply(agAffineTerm.getSort(), constant, newMap);
 	}
-	
+
 	/**
 	 * Returns a shrinked version of a map if possible. Returns the given map otherwise.
 	 */

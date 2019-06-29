@@ -216,8 +216,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	public static PolynomialTerm applyModuloToAllCoefficients(final Script script, final PolynomialTerm polynomialTerm,
 			final BigInteger divident) {
 		final GeneralizedConstructor<Monomial, PolynomialTerm> constructor = PolynomialTerm::new;
-		return PolynomialTermUtils.applyModuloToAllCoefficients(script, polynomialTerm, divident,
-				x -> ((PolynomialTerm) x).getMonomial2Coefficient(), constructor);
+		return PolynomialTermUtils.applyModuloToAllCoefficients(polynomialTerm, divident, constructor);
 	}
 
 	@Override
