@@ -34,6 +34,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 */
 	public PolynomialTerm(final Sort s, final Rational constant, final Map<Monomial, Rational> map) {
 		super(s, constant, map);
+		//TODO: Decide whether empty Maps for PolynomialTerms are ok.
 		assert !PolynomialTermUtils.isAffineMap(map) : "This PolynomialTerm can be represented as an AffineTerm!";
 	}
 
