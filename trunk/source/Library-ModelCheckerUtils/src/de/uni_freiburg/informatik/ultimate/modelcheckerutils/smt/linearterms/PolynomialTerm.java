@@ -34,7 +34,6 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 */
 	public PolynomialTerm(final Sort s, final Rational constant, final Map<Monomial, Rational> map) {
 		super(s, constant, map);
-		//TODO: Decide whether empty Maps for PolynomialTerms are ok.
 		assert !PolynomialTermUtils.isAffineMap(map) : "This PolynomialTerm can be represented as an AffineTerm!";
 	}
 
@@ -194,25 +193,46 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 * {@PolynomialTermTransformer #divide(Sort, IPolynomialTerm[])}).
 	 */
 	public static IPolynomialTerm divide(final IPolynomialTerm[] polynomialTerms) {
+		if (!divisionPossible(polynomialTerms)) {
+			throw new UnsupportedOperationException("Division by Variables or Zero is not supported!");
+		}
+		return constructDivision(polynomialTerms);
+	}
+
+	/**
+	 * Given an array of polynomialTerms, this determines whether a division is actually possible at the moment.
+	 * If it is return true, false otherwise.
+	 */
+	private static boolean divisionPossible(final IPolynomialTerm[] polynomialTerms) {
 		for (int i = 1; i < polynomialTerms.length; i++) {
 			if (!polynomialTerms[i].isConstant() || polynomialTerms[i].isZero()) {
-				throw new UnsupportedOperationException("Division by variables or zero not supported!");
+				return false;
 			}
 		}
+		return true;
+	}
+	
+	/**
+	 * Construct the division of the given polynomialTerms.
+	 */
+	private static IPolynomialTerm constructDivision(final IPolynomialTerm[] polynomialTerms) {
 		IPolynomialTerm poly = PolynomialTerm.mul(polynomialTerms[0], polynomialTerms[1].getConstant().inverse());
 		for (int i = 2; i < polynomialTerms.length; i++) {
 			poly = PolynomialTerm.mul(poly, polynomialTerms[i].getConstant().inverse());
 		}
 		return poly;
 	}
-
+	
 	//TODO: Do not crash, when div is not applicable. Instead treat this as its own variable.
 	/**
 	 * Returns a PolynomialTerm which represents the integral quotient of the given arguments (see
 	 * {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
 	 */
 	public static IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs) {
-		final IPolynomialTerm result = divide(polynomialArgs);
+		if (!divisionPossible(polynomialArgs)) {
+			throw new UnsupportedOperationException("Division by Variables or Zero is not supported!");
+		}
+		final IPolynomialTerm result = constructDivision(polynomialArgs);
 		if (result.isIntegral()) {
 			return result;
 		}
