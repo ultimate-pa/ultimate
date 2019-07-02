@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
 import java.util.Collection;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -40,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -52,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 /**
  * Helper class to create and transform terms/formulas/predicates.
- * 
+ *
  * @author schaetzc@tf.uni-freiburg.de
  */
 public class SymbolicTools {
@@ -139,7 +137,7 @@ public class SymbolicTools {
 	public IPredicate or(final Collection<Term> operands) {
 		return mFactory.newPredicate(SmtUtils.or(mMngdScript.getScript(), operands));
 	}
-	
+
 	public IPredicate and(final IPredicate... operands) {
 		// TODO use a setting for simplification
 		final SimplificationTechnique simplification = SimplificationTechnique.SIMPLIFY_QUICK;
