@@ -72,11 +72,13 @@ public class ExplicitValueDomain implements IDomain {
 
 	@Override
 	public boolean isBottom(final IPredicate pred) {
+		// TODO do not use SMT solver
 		return mTools.isFalse(pred);
 	}
 
 	@Override
 	public boolean isSubsetEq(final IPredicate subset, final IPredicate superset) {
+		// TODO do not use SMT solver
 		return mTools.implies(subset, superset);
 	}
 
