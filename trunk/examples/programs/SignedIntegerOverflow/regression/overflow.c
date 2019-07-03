@@ -14,9 +14,6 @@
 // This is probably a bug in library mode where parameters of functions are not assumed to be in range although the option is set. 
 //
 
-int foo();
-
-int main() { 
-  int x = foo();
+int foo(int x) { 
   return x >= 1000000 ? 1000000 : x + 1;
 }
