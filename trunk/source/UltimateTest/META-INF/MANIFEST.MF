@@ -34,4 +34,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation,
  de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator,
  de.uni_freiburg.informatik.ultimate.source.smtparser,
- de.uni_freiburg.informatik.ultimate.plugins.chctoboogie
+ de.uni_freiburg.informatik.ultimate.plugins.chctoboogie,
+ de.uni_freiburg.informatik.ultimate.reqparser,
+ de.uni_freiburg.informatik.ultimate.pea2boogie
