@@ -96,12 +96,9 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 			mRtInconsistent = Objects.requireNonNull(rtInconsistent);
 			mVacuous = Objects.requireNonNull(vacuous);
 			mInconsistent = Objects.requireNonNull(inconsistent);
-			if (results < 0) {
-				throw new IllegalArgumentException("negative number of results");
-			}
 			mNoResults = results;
 			mIsIrregular = false;
-			mOverallResultMessage = createString();
+			mOverallResultMessage = createOverallMessage();
 		}
 
 		public ReqCheckerResult() {
@@ -156,7 +153,7 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 			mVacuous = vacuous;
 			mRtInconsistent = rtInconsistent;
 			mInconsistent = inconsistent;
-			mOverallResultMessage = createString();
+			mOverallResultMessage = createOverallMessage();
 
 		}
 
@@ -174,7 +171,7 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 			return mOverallResultMessage;
 		}
 
-		private String createString() {
+		private String createOverallMessage() {
 			final StringBuilder sb = new StringBuilder();
 			sb.append("rt-inconsistent:");
 			for (final Set<String> inc : mRtInconsistent) {
@@ -198,11 +195,19 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 			return sb.toString();
 		}
 
+		/**
+		 * Use this instance as specification and check if the "actual" result of the run conforms to this
+		 * specification.
+		 *
+		 * @param actual
+		 *            The result of the run.
+		 * @return true iff the run satisfies the specification, false otherwise.
+		 */
 		public boolean isSuccess(final ReqCheckerResult actual) {
 			if (actual.mIsIrregular) {
 				return false;
 			}
-			if (actual.mNoResults != mNoResults) {
+			if (mNoResults != -1 && actual.mNoResults != mNoResults) {
 				return false;
 			}
 			if (DataStructureUtils.isDifferent(actual.mInconsistent, mInconsistent)) {
@@ -358,6 +363,12 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 			}
 		}
 
+		/**
+		 *
+		 * @param substring
+		 *            the first line of the file that begins with KEYWORD, and where KEYWORD is already removed
+		 * @return null if the spec is broken, a spec otherwise
+		 */
 		private static ReqCheckerResult createExpectedResult(final String substring) {
 			final String[] splitted = substring.split(";");
 			final Set<Set<String>> rtInconsistent = new HashSet<>();
@@ -402,7 +413,16 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 					if (results != -1) {
 						return null;
 					}
-					results = Integer.parseInt(value);
+					try {
+						results = Integer.parseInt(value);
+					} catch (final NumberFormatException ex) {
+						// spec broken, is not an integer
+						return null;
+					}
+					if (results < -1) {
+						// we only allow -1 to signify that number of results is not important
+						return null;
+					}
 					break;
 				default:
 					return null;
@@ -460,8 +480,8 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 
 			if (expected == null) {
 				mTestResult = TestResult.UNKNOWN;
-				mCategory = "MISSING SPEC";
-				mMessage = "Did not find test specification";
+				mCategory = "UNKNOWN";
+				mMessage = expectedResultEvaluation.getExpectedResultFinderMessage();
 			} else if (expected.isSuccess(actual)) {
 				mTestResult = TestResult.SUCCESS;
 				mCategory = "SUCCESS";
