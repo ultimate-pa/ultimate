@@ -11,5 +11,5 @@ Input var IS real
 CONST K IS 20.0
 CONST H IS 30.0
 
-SW_DELib_ElecActrVdPosnGovr_171_0: Globally, it is always the case that if "T1 " holds, then "var == K" holds after at most "CYCLE_TIME" time units
-SW_DELib_ElecActrVdPosnGovr_83_1: Globally, it is always the case that if "T2" holds, then "var == H" holds for at least "CYCLE_TIME" time units 
+req1: Globally, it is always the case that if "T1 " holds, then "var == K" holds after at most "CYCLE_TIME" time units
+req2: Globally, it is always the case that if "T2" holds, then "var == H" holds for at least "CYCLE_TIME" time units 
