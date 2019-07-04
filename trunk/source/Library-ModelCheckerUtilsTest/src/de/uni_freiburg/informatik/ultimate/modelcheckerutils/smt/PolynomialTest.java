@@ -124,9 +124,9 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * Test cancellation of division by sum of variables.
+	 * Test treating of division by sum of variables as a unique variable.
 	 */
-	@Test(expected = UnsupportedOperationException.class)
+	@Test
 	public void polynomialTermTest03() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
@@ -135,13 +135,17 @@ public class PolynomialTest {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info("Input: " + formulaAsTerm);
 		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		Assert.assertTrue(result.isErrorTerm());
+		final Term resultAsTerm = result.toTerm(mScript);
+		mLogger.info("Output: " + resultAsTerm);
+		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
+		Assert.assertTrue(resultIsCorrect);
+		Assert.assertTrue(result instanceof AffineTerm);
 	}
 
 	/**
-	 * Test cancellation of division by variable.
+	 * Test treating division by variable as a unique variable.
 	 */
-	@Test(expected = UnsupportedOperationException.class)
+	@Test
 	public void polynomialTermTest04() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
@@ -157,9 +161,9 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * Test cancellation of division by sum of constant and variable.
+	 * Test treating division by sum of constant and variable as a unique variable.
 	 */
-	@Test(expected = UnsupportedOperationException.class)
+	@Test
 	public void polynomialTermTest05() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
@@ -167,7 +171,11 @@ public class PolynomialTest {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info("Input: " + formulaAsTerm);
 		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		Assert.assertTrue(result.isErrorTerm());
+		final Term resultAsTerm = result.toTerm(mScript);
+		mLogger.info("Output: " + resultAsTerm);
+		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
+		Assert.assertTrue(resultIsCorrect);
+		Assert.assertTrue(result instanceof AffineTerm);
 	}
 
 	/**
@@ -263,9 +271,9 @@ public class PolynomialTest {
 	}
 	
 	/**
-	 * Test cancellation of div, if division is by zero.
+	 * Test treating div as a unique variable, if division is by zero.
 	 */
-	@Test(expected = UnsupportedOperationException.class)
+	@Test
 	public void polynomialTermTest11() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
@@ -281,9 +289,9 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * Test cancellation of div, if coefficients are not integer-divisible.
+	 * Test treating div as a unique variable, if coefficients are not integer-divisible.
 	 */
-	@Test(expected = UnsupportedOperationException.class)
+	@Test
 	public void polynomialTermTest12() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
@@ -296,6 +304,25 @@ public class PolynomialTest {
 		mLogger.info("Output: " + resultAsTerm);
 		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
 		Assert.assertTrue(resultIsCorrect);
+	}
+	
+	/**
+	 * Test affine div.
+	 */
+	@Test
+	public void polynomialTermTest13() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String formulaAsString = "(+ (div (* y 14) (div 1337 191)) (div (* (+ x y) 20) 10))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mLogger.info("Input: " + formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final Term resultAsTerm = result.toTerm(mScript);
+		mLogger.info("Output: " + resultAsTerm);
+		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
+		Assert.assertTrue(resultIsCorrect);
+		Assert.assertTrue(result instanceof AffineTerm);
 	}
 
 	private static boolean areEquivalent(final Script script, final Term formulaAsTerm, final Term resultAsTerm) {

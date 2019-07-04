@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PolynomialTermUtils.GeneralizedConstructor;
 
 /**
@@ -192,24 +193,14 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 * Returns a PolynomialTerm which represents the quotient of the given arguments (see
 	 * {@PolynomialTermTransformer #divide(Sort, IPolynomialTerm[])}).
 	 */
-	public static IPolynomialTerm divide(final IPolynomialTerm[] polynomialTerms) {
+	public static IPolynomialTerm divide(final IPolynomialTerm[] polynomialTerms, final Script script) {
 		if (!divisionPossible(polynomialTerms)) {
-			throw new UnsupportedOperationException("Division by Variables or Zero is not supported!");
+			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this 
+			//whole term as an unique variable.
+			final Term term = PolynomialTermUtils.constructIteratedTerm("/", polynomialTerms, script);
+			return AffineTerm.constructVariable(term);
 		}
 		return constructDivision(polynomialTerms);
-	}
-
-	/**
-	 * Given an array of polynomialTerms, this determines whether a division is actually possible at the moment.
-	 * If it is return true, false otherwise.
-	 */
-	private static boolean divisionPossible(final IPolynomialTerm[] polynomialTerms) {
-		for (int i = 1; i < polynomialTerms.length; i++) {
-			if (!polynomialTerms[i].isConstant() || polynomialTerms[i].isZero()) {
-				return false;
-			}
-		}
-		return true;
 	}
 	
 	/**
@@ -223,20 +214,36 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		return poly;
 	}
 	
-	//TODO: Do not crash, when div is not applicable. Instead treat this as its own variable.
+	/**
+	 * Given an array of polynomialTerms, this determines whether a division is actually possible at the moment.
+	 * If it is return true, false otherwise.
+	 */
+	public static boolean divisionPossible(final IPolynomialTerm[] polynomialTerms) {
+		for (int i = 1; i < polynomialTerms.length; i++) {
+			if (!polynomialTerms[i].isConstant() || polynomialTerms[i].isZero()) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	/**
 	 * Returns a PolynomialTerm which represents the integral quotient of the given arguments (see
 	 * {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
 	 */
-	public static IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs) {
+	public static IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs, final Script script) {
 		if (!divisionPossible(polynomialArgs)) {
-			throw new UnsupportedOperationException("Division by Variables or Zero is not supported!");
+			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this 
+			//whole term as an unique variable.
+			final Term term = PolynomialTermUtils.constructIteratedTerm("div", polynomialArgs, script);
+			return AffineTerm.constructVariable(term);
 		}
 		final IPolynomialTerm result = constructDivision(polynomialArgs);
 		if (result.isIntegral()) {
 			return result;
 		}
-		throw new UnsupportedOperationException("Result of Integer-Division must be integral.");
+		final Term term = PolynomialTermUtils.constructIteratedTerm("div", polynomialArgs, script);
+		return AffineTerm.constructVariable(term);
 	}
 
 	@Override

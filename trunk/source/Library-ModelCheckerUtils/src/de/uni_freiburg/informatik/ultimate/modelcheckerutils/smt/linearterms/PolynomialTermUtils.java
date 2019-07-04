@@ -35,6 +35,7 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
@@ -72,6 +73,22 @@ public class PolynomialTermUtils {
 		return Rational.valueOf(resultBigInt, BigInteger.ONE);
 	}
 	
+	/**
+	 * Constructs an iterated SMT-Term (func ...(func arg[0] arg[1]) ... arg[n]) as determined by the arguments.
+	 */
+	public static Term constructIteratedTerm(final String functionSymbol, 
+									         final IPolynomialTerm[] polynomialArgs, 
+											 final Script script) {
+		
+		Term term = script.term(functionSymbol, polynomialArgs[0].toTerm(script),
+				   polynomialArgs[1].toTerm(script));
+		for (int i = 2; i < polynomialArgs.length; i++) {
+			term = script.term(functionSymbol, polynomialArgs[0].toTerm(script),
+							          polynomialArgs[1].toTerm(script));
+		}
+		return term;
+	}
+
 	/**
 	 * Generalized method for applying Modulo to the coefficients and the constant of 
 	 * {@link AffineTerm}s and {@link PolynomialTerm}s. The type parameter T refers either to

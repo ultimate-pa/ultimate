@@ -119,7 +119,18 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 	 * Returns an AffineTerm which represents the quotient of the given arguments (see
 	 * {@PolynomialTermTransformer #divide(Sort, IPolynomialTerm[])}).
 	 */
-	public static IPolynomialTerm divide(final IPolynomialTerm[] affineArgs) {
+	public static IPolynomialTerm divide(final IPolynomialTerm[] affineArgs, final Script script) {
+		return constructDivision(affineArgs, "/", script);
+	}
+	
+	/**
+	 * Construct the division of the given polynomialTerms. If this is not possible, treat the whole
+	 * division term as a variable and return it, wrapped in an AffineTerm. To distinguish, which
+	 * division is used here, funcName is needed. This should be either "div" or "/".
+	 */
+	private static IPolynomialTerm constructDivision(final IPolynomialTerm[] affineArgs, 
+													 final String funcName, 
+													 final Script script) {
 		final IPolynomialTerm affineTerm;
 		Rational multiplier;
 		if (affineArgs[0].isConstant()) {
@@ -137,7 +148,15 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 				// Only the argument at position 0 may be a non-constant,
 				// all other arguments must be literals,
 				// divisors must not be zero.
-				throw new UnsupportedOperationException("Division by variables or zero not supported!");
+				if (funcName == "div") {
+					final Term term = PolynomialTermUtils.constructIteratedTerm("div", affineArgs, script);
+					return constructVariable(term);
+				}else if (funcName == "/") {
+					final Term term = PolynomialTermUtils.constructIteratedTerm("/", affineArgs, script);
+					return constructVariable(term);
+				}else {
+					throw new UnsupportedOperationException("FuncName does not match any known division.");
+				}
 			}
 		}
 		if (affineTerm == null) {
@@ -147,17 +166,20 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 		}
 		return result;
 	}
+	
+	
 
 	/**
 	 * Returns an AffineTerm which represents the integral quotient of the given arguments (see
 	 * {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
 	 */
-	public static IPolynomialTerm div(final IPolynomialTerm[] affineArgs) {
-		final IPolynomialTerm result = divide(affineArgs);
+	public static IPolynomialTerm div(final IPolynomialTerm[] affineArgs, final Script script) {
+		final IPolynomialTerm result = constructDivision(affineArgs, "div", script);
 		if (result.isIntegral()) {
 			return result;
 		}
-		throw new UnsupportedOperationException("Integer-Division must result in integrals.");
+		final Term term = PolynomialTermUtils.constructIteratedTerm("div", affineArgs, script);
+		return constructVariable(term);
 	}
 
 	/**

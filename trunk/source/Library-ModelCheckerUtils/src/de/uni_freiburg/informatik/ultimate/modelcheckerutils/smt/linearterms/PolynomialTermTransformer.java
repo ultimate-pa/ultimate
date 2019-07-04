@@ -316,15 +316,17 @@ public class PolynomialTermTransformer extends TermTransformer {
 	 * <code>t1*((1/t2)*...*(1/tn))</code>. Note that the function "/" is only
 	 * defined for the sort of reals. For integer division we have the function "div"
 	 * which is currently partially supported by our polynomial terms.
+	 * If this is not possible, treat the whole
+	 * division term as a variable and return it, wrapped in an AffineTerm.
 	 */
-	private static IPolynomialTerm divide(final IPolynomialTerm[] polynomialArgs) {
+	private IPolynomialTerm divide(final IPolynomialTerm[] polynomialArgs) {
 		assert SmtSortUtils.isRealSort(polynomialArgs[0].getSort());
 		
 		//Only Term at position 0 may be not affine.
 		if (polynomialArgs[0].isAffine()) {
-			return AffineTerm.divide(polynomialArgs);
+			return AffineTerm.divide(polynomialArgs, mScript);
 		}else {
-			return PolynomialTerm.divide(polynomialArgs);
+			return PolynomialTerm.divide(polynomialArgs, mScript);
 		}
 	}
 	
@@ -334,15 +336,17 @@ public class PolynomialTermTransformer extends TermTransformer {
 	 * Note that the function "div" does currently only work if all coefficients and the constant of t1
 	 * is divisible by t2...tn. Also only t1 may have variables, t2...tn must be constants.
 	 * For the "usual" division we have the function "divide".
+	 * If this is not possible, treat the whole
+	 * division term as a variable and return it, wrapped in an AffineTerm.
 	 */
-	private static IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs) {
+	private IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs) {
 		assert SmtSortUtils.isIntSort(polynomialArgs[0].getSort());
 		
 		//Only Term at position 0 may be not affine.
 		if (polynomialArgs[0].isAffine()) {
-			return AffineTerm.div(polynomialArgs);
+			return AffineTerm.div(polynomialArgs, mScript);
 		}else {
-			return PolynomialTerm.div(polynomialArgs);
+			return PolynomialTerm.div(polynomialArgs, mScript);
 		}
 	}
 
