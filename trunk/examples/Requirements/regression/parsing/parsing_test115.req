@@ -1,4 +1,4 @@
-// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:; results: 1
+// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:; results:-1
 Input var1 is bool
 Input var2 is bool
 Input var3 is bool
@@ -6,4 +6,4 @@ Input var4 is bool
 CONST time_at_least is 30.0
 CONST time is 50.0
 
-req1: After "var1" until "var2" It is always the case that If "var3" holds, then "var4" holds after at most "time" for at least "time_at_least"
+req1: After "var1" until "var2" It is always the case that If "var3" holds, then "var4" holds after at most "time" time units for at least "time_at_least" time units
