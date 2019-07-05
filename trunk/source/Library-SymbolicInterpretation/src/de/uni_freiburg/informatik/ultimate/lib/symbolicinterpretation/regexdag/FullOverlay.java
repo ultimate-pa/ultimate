@@ -27,11 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Overlay mimicking the original DAG.
  * Use this class when you have to use an overlay but don't want to.
- * 
+ *
  * @author schaetzc@tf.uni-freiburg.de
  *
  * @param <L> Type of letters that are used inside regex literals inside RegexDagNodes
@@ -39,13 +40,23 @@ import java.util.Collection;
 public class FullOverlay<L> implements IDagOverlay<L> {
 
 	@Override
-	public Collection<RegexDagNode<L>> successorsOf(RegexDagNode<L> node) {
+	public Collection<RegexDagNode<L>> successorsOf(final RegexDagNode<L> node) {
 		return node.getOutgoingNodes();
 	}
 
 	@Override
-	public Collection<RegexDagNode<L>> predecessorsOf(RegexDagNode<L> node) {
+	public Collection<RegexDagNode<L>> predecessorsOf(final RegexDagNode<L> node) {
 		return node.getIncomingNodes();
+	}
+
+	@Override
+	public Collection<RegexDagNode<L>> sources(final RegexDag<L> dag) {
+		return Collections.singleton(dag.getSource());
+	}
+
+	@Override
+	public Collection<RegexDagNode<L>> sinks(final RegexDag<L> dag) {
+		return Collections.singleton(dag.getSink());
 	}
 
 }

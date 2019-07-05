@@ -27,31 +27,35 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Overlay whose {@link #predecessorsOf()} always returns all predecessors.
  * Overlaid graphs always have exactly one source but can have multiple sinks.
- * 
+ *
  * @author schaetzc@tf.uni-freiburg.de
- * 
+ *
  * @param <L> Type of letters that are used inside regex literals inside RegexDagNodes
  */
 public class BackwardClosedOverlay<L> implements IDagOverlay<L> {
 
 	private final HashRelation<RegexDagNode<L>, RegexDagNode<L>> mPredecessorRelation = new HashRelation<>();
 	private final HashRelation<RegexDagNode<L>, RegexDagNode<L>> mSuccessorRelation = new HashRelation<>();
+	private final Set<RegexDagNode<L>> mSinks = new HashSet<>();
 
 	/**
 	 * Adds all backward edges to this overlay starting from the predecessors of the given node.
 	 * As a result, all paths from the DAG's source to the predecessors of the given node will be part of this overlay.
 	 * Paths to the given node itself will <i>not</i> be added.
-	 * @param targetNodeInclusive Node whose predecessors will be added
+	 * @param targetNodeExclusive Node whose predecessors will be added
 	 */
 	public void addExclusive(final RegexDagNode<L> targetNodeExclusive) {
 		targetNodeExclusive.getIncomingNodes().forEach(this::addInclusive);
-	} 
+	}
 
 	/**
 	 * Adds all backward edges to this overlay starting from the given node.
@@ -59,8 +63,17 @@ public class BackwardClosedOverlay<L> implements IDagOverlay<L> {
 	 * @param targetNodeInclusive Node to be added
 	 */
 	public void addInclusive(final RegexDagNode<L> targetNodeInclusive) {
+		if (mSuccessorRelation.hasEmptyImage(targetNodeInclusive)) {
+			mSinks.add(targetNodeInclusive);
+		}
+		addInclusiveIntern(targetNodeInclusive);
+	}
+
+	private void addInclusiveIntern(final RegexDagNode<L> targetNodeInclusive) {
 		for (final RegexDagNode<L> predecessor : targetNodeInclusive.getIncomingNodes()) {
 			if (mSuccessorRelation.addPair(predecessor, targetNodeInclusive)) {
+				mPredecessorRelation.addPair(targetNodeInclusive, predecessor);
+				mSinks.remove(predecessor);
 				addInclusive(predecessor);
 			}
 		}
@@ -76,5 +89,14 @@ public class BackwardClosedOverlay<L> implements IDagOverlay<L> {
 		return mPredecessorRelation.getImage(node);
 	}
 
-	
+	@Override
+	public Collection<RegexDagNode<L>> sources(final RegexDag<L> dag) {
+		return Collections.singleton(dag.getSource());
+	}
+
+	@Override
+	public Collection<RegexDagNode<L>> sinks(final RegexDag<L> dag) {
+		return mSinks;
+	}
+
 }
