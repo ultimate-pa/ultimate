@@ -121,7 +121,7 @@ public class ProcedureGraphBuilder {
 	}
 
 	private void processCall(final IIcfgCallTransition<IcfgLocation> callEdge) {
-		assert callEdge.getSource() == mCurrentProcedureGraph.getEntryNode() :
+		assert callEdge.getTarget() == mCurrentProcedureGraph.getEntryNode() :
 				"Builder entered return (backwards) but should have skipped body of sub-procedure.";
 	}
 
