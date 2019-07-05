@@ -3,6 +3,6 @@ Input var1 is bool
 Input var2 is bool
 Input var3 is bool
 Input var5 is bool
-CONST time is 50.0
+CONST MAX_TIME is 50.0
 
-req1: After "var1" until "var2" It is always the case that After "var3" holds for "time" time units, then "var5" holds
+req1: After "var1" until "var2" It is always the case that After "var3" holds for "MAX_TIME" time units, then "var5" holds

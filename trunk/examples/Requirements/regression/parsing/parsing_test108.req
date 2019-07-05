@@ -4,6 +4,6 @@ Input var2 is bool
 Input var3 is bool
 Input var4 is bool
 Input var5 is bool
-CONST time is 50.0
+CONST MAX_TIME is 50.0
 
-req1: Between "var1" and "var2" It is always the case that If "var3" holds, then "var4" toggles "var5" at most "time" time units later
+req1: Between "var1" and "var2" It is always the case that If "var3" holds, then "var4" toggles "var5" at most "MAX_TIME" time units later

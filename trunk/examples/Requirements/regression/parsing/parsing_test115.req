@@ -4,6 +4,6 @@ Input var2 is bool
 Input var3 is bool
 Input var4 is bool
 CONST time_at_least is 30.0
-CONST time is 50.0
+CONST MAX_TIME is 50.0
 
-req1: After "var1" until "var2" It is always the case that If "var3" holds, then "var4" holds after at most "time" time units for at least "time_at_least" time units
+req1: After "var1" until "var2" It is always the case that If "var3" holds, then "var4" holds after at most "MAX_TIME" time units for at least "time_at_least" time units
