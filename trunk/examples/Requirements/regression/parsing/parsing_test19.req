@@ -3,4 +3,4 @@ Input var1 is bool
 Input var2 is bool
 Input var3 is bool
 
-req1: Between "var1" and "var2" Transition to states in which "var3" holds occur at most twice
+req1: Between "var1" and "var2" Transitions to states in which "var3" holds occur at most twice
