@@ -38,9 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.IcfgInterpreter;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.InterpreterResources;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
@@ -83,14 +81,12 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 		final SymbolicTools tools = new SymbolicTools(mServices, icfg);
 		final IDomain domain = new ExplicitValueDomain(mServices, tools);
 		final IFluid fluid = new LogSizeWrapperFluid(mLogger, new NeverFluid());
-
-		final InterpreterResources resources = new InterpreterResources();
-		resources.setIcfgInterpreter(new IcfgInterpreter(mLogger, tools, icfg, domain, resources));
-		resources.setDagInterpreter(new DagInterpreter(mLogger, tools, domain, fluid, resources));
-		resources.setLoopSummarizer(new FixpointLoopSummarizer(mLogger, domain, resources));
-		resources.setCallSummarzier(new TopInputCallSummarizer(tools, resources));
-		final Map<IcfgLocation, IPredicate> predicates = resources.getIcfgInterpreter().interpret();
-		mLogger.debug("final results are " + predicates);
+		final IcfgInterpreter icfgInterpreter = new IcfgInterpreter(mLogger, tools,
+				icfg, IcfgInterpreter.allErrorLocations(icfg), domain, fluid,
+				icfgIpr -> dagIpr -> new FixpointLoopSummarizer(mLogger, domain, dagIpr),
+				icfgIpr -> dagIpr -> new TopInputCallSummarizer(tools, icfgIpr.procedureResourceCache(), dagIpr));
+		final Map<IcfgLocation, IPredicate> predicates = icfgInterpreter.interpret();
+		mLogger.debug("Final results are " + predicates);
 		reportResult(predicates);
 	}
 

@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
@@ -39,7 +41,9 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFlu
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagUtils;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ICallSummarizer;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -47,10 +51,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Interprets the dag of a single procedure.
- * Entered calls are processed by a given {@link IcfgInterpreter}.
- * Call summaries are computed by a given {@link ICallSummarizer}.
- * 
+ * Interprets the dag of a single procedure or loop.
+ *
  * @author schaetzc@tf.uni-freiburg.de
  */
 public class DagInterpreter {
@@ -59,21 +61,32 @@ public class DagInterpreter {
 	private final SymbolicTools mTools;
 	private final IDomain mDomain;
 	private final IFluid mFluid;
-	private final InterpreterResources mInterpreterResources;
 	private final TopsortCache mTopsortCache = new TopsortCache();
+	private final ILoopSummarizer mLoopSummarizer;
+	private final ICallSummarizer mCallSummarizer;
 
 	public DagInterpreter(final ILogger logger, final SymbolicTools tools, final IDomain domain, final IFluid fluid,
-			final InterpreterResources resources) {
+			final Function<DagInterpreter, ILoopSummarizer> loopSumFactory,
+			final Function<DagInterpreter, ICallSummarizer> callSumFactory) {
 		mLogger = logger;
 		mTools = tools;
 		mDomain = domain;
 		mFluid = fluid;
-		mInterpreterResources = resources;
+		mLoopSummarizer = loopSumFactory.apply(this);
+		mCallSummarizer = callSumFactory.apply(this);
+	}
+
+	public IPredicate interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
+			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
+		final MapBasedStorage sinkPredStorage = new MapBasedStorage(
+				Collections.singleton(RegexDagUtils.singleSinkLocation(dag, overlay)), mDomain, mTools, mLogger);
+		interpret(dag, overlay, initalInput, sinkPredStorage, new ErrorOnEnterCall());
+		return sinkPredStorage.getMap().values().iterator().next();
 	}
 
 	/**
 	 * Interprets a dag starting from its source node.
-	 * 
+	 *
 	 * @param dag         Dag to be interpreted
 	 * @param overlay     Overlay for the dag allowing to ignore some edges
 	 * @param initalInput Input for the dag's source node
@@ -81,89 +94,127 @@ public class DagInterpreter {
 	 *         If The overlay creates a dag with exactly one sink node
 	 *         then the returned output is the output of that sink node.
 	 */
-	public IPredicate interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
-			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
-		final List<RegexDagNode<IIcfgTransition<IcfgLocation>>> topologicalOrder = mTopsortCache.topsort(dag);
+	public void interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
+			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput,
+			final ILoiPredicateStorage loiStorage, final IEnterCallRegistrar enterCallRegr) {
+		final List<RegexDagNode<IIcfgTransition<IcfgLocation>>> topoOrder = mTopsortCache.topsort(dag);
 		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
-				new PriorityWorklist<>(topologicalOrder, mDomain::join);
+				new PriorityWorklist<>(topoOrder, mDomain::join);
 		worklist.add(dag.getSource(), initalInput);
-		IPredicate lastOutput = initalInput;
 		while (worklist.advance()) {
-			final RegexDagNode<IIcfgTransition<IcfgLocation>> currentNode = worklist.getWork();
-			final IPredicate currentOutput = interpretNode(currentNode, worklist.getInput());
-			overlay.successorsOf(currentNode).forEach(successor -> worklist.add(successor, currentOutput));
-			lastOutput = currentOutput;
+			final RegexDagNode<IIcfgTransition<IcfgLocation>> curNode = worklist.getWork();
+			final IPredicate curOutput = ipretNode(curNode, worklist.getInput(), loiStorage, enterCallRegr);
+			overlay.successorsOf(curNode).forEach(successor -> worklist.add(successor, curOutput));
 		}
-		return lastOutput;
 	}
 
-	private IPredicate interpretNode(final RegexDagNode<IIcfgTransition<IcfgLocation>> node, final IPredicate input) {
+	private IPredicate ipretNode(final RegexDagNode<IIcfgTransition<IcfgLocation>> node, final IPredicate input,
+			final ILoiPredicateStorage loiStorage, final IEnterCallRegistrar enterCallRegr) {
 		final IRegex<IIcfgTransition<IcfgLocation>> regex = node.getContent();
 		if (regex instanceof Epsilon) {
-			// nothing to do
 			return input;
 		} else if (regex instanceof Literal) {
-			return interpretTransition(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter(), input);
+			return ipretTrans(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter(),
+					input, loiStorage, enterCallRegr);
 		} else if (regex instanceof Star) {
-			return mInterpreterResources.getLoopSummarizer()
-					.summarize((Star<IIcfgTransition<IcfgLocation>>) regex, input);
+			return ipretLoop((Star<IIcfgTransition<IcfgLocation>>) regex, input, loiStorage);
 		} else {
 			throw new UnsupportedOperationException("Unexpected node type in dag: " + regex.getClass());
 		}
 	}
 
-	private IPredicate interpretTransition(final IIcfgTransition<IcfgLocation> transition, IPredicate input) {
-		// TODO move up? Also interpret before stars
+	private IPredicate ipretLoop(final Star<IIcfgTransition<IcfgLocation>> loop, final IPredicate input,
+			final ILoiPredicateStorage loiStorage) {
+		final IPredicate loopSummary = mLoopSummarizer.summarize(loop, input);
+		registerLoiPredsForLoop(loop, loopSummary, loiStorage);
+		return loopSummary;
+	}
+
+	private static void registerLoiPredsForLoop(final Star<IIcfgTransition<IcfgLocation>> loop,
+			final IPredicate loopSummary, final ILoiPredicateStorage loiStorage) {
+		final IcfgLocation loopPoint = loop.accept(new LoopPointVisitor());
+		loiStorage.storePredicateIfLoi(loopPoint, loopSummary);
+		// LOIs inside loops don't have to be considered.
+		// For each LOI we compute a path ending at that LOI. A path cannot end inside a loop.
+	}
+
+	private IPredicate ipretTrans(final IIcfgTransition<IcfgLocation> trans, IPredicate input,
+			final ILoiPredicateStorage loiStorage, final IEnterCallRegistrar enterCallRegistrar) {
+		// TODO move abstraction up? Also abstract before stars?
 		input = fluidAbstraction(input);
-		logInterpretTransition(transition, input);
-		if (transition instanceof CallReturnSummary) {
-			return interpretCallReturnSummary((CallReturnSummary) transition, input);
-		} else if (transition instanceof IIcfgCallTransition<?>) {
-			return interpretEnterCall((IIcfgCallTransition<IcfgLocation>) transition, input);
-		} else if (transition instanceof IIcfgInternalTransition) {
-			return interpretInternal((IIcfgInternalTransition<IcfgLocation>) transition, input);
-		} else {
-			// This case also includes LocationMarkerTransition. Markers should not be reachable in the overlay.
-			// Markers are only used to find nodes after compression and to construct the overlay.
-			throw new UnsupportedOperationException("Unexpected transition type: " + transition.getClass());
+		logIpretTransition(trans, input);
+		if (trans instanceof IIcfgCallTransition<?>) {
+			return ipretEnterCall((IIcfgCallTransition<IcfgLocation>) trans, input, enterCallRegistrar);
 		}
+		return ipretTransAndStoreLoiPred(trans, input, loiStorage);
 	}
 
-	private IPredicate interpretCallReturnSummary(final CallReturnSummary transition, final IPredicate input) {
-		final IPredicate summary = mInterpreterResources.getCallSummarzier().summarize(transition, input);
-		return mTools.postReturn(input, summary, transition.correspondingReturn());
-	}
-
-	private IPredicate interpretEnterCall(final IIcfgCallTransition<IcfgLocation> transition, final IPredicate input) {
-		final IPredicate calleeInput = mTools.postCall(input, transition);
-		mInterpreterResources.getIcfgInterpreter().registerEnterCall(transition.getSucceedingProcedure(), calleeInput);
-		// registerEnterCall() already stores predicates for LOIs
+	private IPredicate ipretEnterCall(final IIcfgCallTransition<IcfgLocation> trans, final IPredicate input,
+			final IEnterCallRegistrar enterCallRegistrar) {
+		final IPredicate calleeInput = mTools.postCall(input, trans);
+		enterCallRegistrar.registerEnterCall(trans.getSucceedingProcedure(), calleeInput);
+		// predicates for LOIs are stored once IcfgInterpreter enters the call
 		return calleeInput;
 	}
 
-	private IPredicate interpretInternal(final IIcfgInternalTransition<IcfgLocation> transition, final IPredicate input) {
-		final IPredicate output = mTools.post(input, transition);
-		logInterpretInternal(output);
-		mInterpreterResources.getIcfgInterpreter().storePredicateIfLoi(transition.getTarget(), output);
+	private IPredicate ipretTransAndStoreLoiPred(final IIcfgTransition<IcfgLocation> trans, final IPredicate input,
+			final ILoiPredicateStorage loiStorage) {
+		final IPredicate output;
+		if (trans instanceof CallReturnSummary) {
+			output = ipretCallReturnSummary((CallReturnSummary) trans, input);
+		} else if (trans instanceof IIcfgInternalTransition) {
+			output = ipretInternal((IIcfgInternalTransition<IcfgLocation>) trans, input);
+		} else {
+			// This case also includes LocationMarkerTransition. Markers should not be reachable in the overlay.
+			// Markers are only used to find nodes after compression and to construct the overlay.
+			throw new UnsupportedOperationException("Unexpected transition type: " + trans.getClass());
+		}
+		loiStorage.storePredicateIfLoi(trans.getTarget(), output);
 		return output;
 	}
 
-	private IPredicate fluidAbstraction(IPredicate predicate) {
-		mLogger.debug("Asking fluid if we should abstract");
-		if (mFluid.shallBeAbstracted(predicate)) {
-			predicate = mDomain.alpha(predicate);
-			mLogger.debug("Abstraction is %s", predicate);
+	private IPredicate ipretCallReturnSummary(final CallReturnSummary trans, final IPredicate input) {
+		final IPredicate summary = mCallSummarizer.summarize(trans, input);
+		final IPredicate output = mTools.postReturn(input, summary, trans.correspondingReturn());
+		logIpretCallReturnSummary(summary, output);
+		return output;
+	}
+
+	private IPredicate ipretInternal(final IIcfgInternalTransition<IcfgLocation> trans, final IPredicate input) {
+		final IPredicate output = mTools.post(input, trans);
+		logIpretInternal(output);
+		return output;
+	}
+
+	private IPredicate fluidAbstraction(IPredicate pred) {
+		logConsiderAbstraction();
+		if (mFluid.shallBeAbstracted(pred)) {
+			pred = mDomain.alpha(pred);
+			logAbstractionDone(pred);
 		}
-		return predicate;
+		return pred;
 	}
 
 	// log messages -------------------------------------------------------------------------------
 
-	private void logInterpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
+	private void logConsiderAbstraction() {
+		mLogger.debug("Asking fluid if we should abstract");
+	}
+
+	private void logAbstractionDone(final IPredicate abstractedPred) {
+		mLogger.debug("Abstraction is %s", abstractedPred);
+	}
+
+	private void logIpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
 		mLogger.debug("Interpreting transition %s with input %s", transition, input);
 	}
 
-	private void logInterpretInternal(final IPredicate output) {
+	private void logIpretInternal(final IPredicate output) {
 		mLogger.debug("Internal transition's output is %s", output);
+	}
+
+	private void logIpretCallReturnSummary(final IPredicate summary, final IPredicate output) {
+		mLogger.debug("Call return summary is %s", summary);
+		mLogger.debug("After \"call … := …\" was applied output is %s", output);
 	}
 }

@@ -33,7 +33,7 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.InterpreterResources;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.StarDagCache;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.FullOverlay;
@@ -48,14 +48,14 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 
 	private final ILogger mLogger;
 	private final IDomain mDomain;
-	private final InterpreterResources mInterpreterResources;
+	private final DagInterpreter mDagIpr;
 	private final StarDagCache mStarDagCache = new StarDagCache();
 	private final Map<Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate>, IPredicate> mCache;
 
-	public FixpointLoopSummarizer(final ILogger logger, final IDomain domain, final InterpreterResources resources) {
+	public FixpointLoopSummarizer(final ILogger logger, final IDomain domain, final DagInterpreter dagIpr) {
 		mLogger = Objects.requireNonNull(logger);
 		mDomain = Objects.requireNonNull(domain);
-		mInterpreterResources = Objects.requireNonNull(resources);
+		mDagIpr = Objects.requireNonNull(dagIpr);
 		mCache = new HashMap<>();
 	}
 
@@ -72,11 +72,12 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		logComputeSummary();
 		final IRegex<IIcfgTransition<IcfgLocation>> starredRegex = starAndInput.getFirst().getInner();
 		final RegexDag<IIcfgTransition<IcfgLocation>> dag = mStarDagCache.dagOf(starredRegex);
+		// TODO don't use full overlay as it may include enter calls
 		final IDagOverlay<IIcfgTransition<IcfgLocation>> fullOverlay = new FullOverlay<>();
 		IPredicate preState = starAndInput.getSecond();
 		IPredicate postState = null;
 		while (true) {
-			postState = mInterpreterResources.getDagInterpreter().interpret(dag, fullOverlay, preState);
+			postState = mDagIpr.interpret(dag, fullOverlay, preState);
 			if (mDomain.isSubsetEq(preState, postState)) {
 				break;
 			}

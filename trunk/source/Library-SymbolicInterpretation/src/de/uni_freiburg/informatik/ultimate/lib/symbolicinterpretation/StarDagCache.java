@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * Stores compressed {@link RegexDag}s for the content of star expressions.
  * Inside a RegexDag the very same star expression may appear multiple times, therefore, we can safe a lot
  * of work by caching the result of converting the star expression into a DAG and then compressing that DAG.
- * 
+ *
  * @author schaetzc@tf.uni-freiburg.de
  */
 public class StarDagCache {
@@ -50,16 +50,16 @@ public class StarDagCache {
 	private final RegexDagCompressor<IIcfgTransition<IcfgLocation>> mCompressor = new RegexDagCompressor<>();
 	private final Map<IRegex<IIcfgTransition<IcfgLocation>>, RegexDag<IIcfgTransition<IcfgLocation>>> mCache =
 			new HashMap<>();
-	
+
 	public RegexDag<IIcfgTransition<IcfgLocation>> dagOf(final IRegex<IIcfgTransition<IcfgLocation>> regex) {
 		return mCache.computeIfAbsent(regex, this::computeDagOf);
 	}
-	
+
 	private RegexDag<IIcfgTransition<IcfgLocation>> computeDagOf(final IRegex<IIcfgTransition<IcfgLocation>> regex) {
 		if (regex instanceof Star<?>) {
-			throw new AssertionError("Tried to compute RegexDag for star expression."
-					+ "Computing such a DAG is possible but probably not what you want."
-					+ "Either you forgot to caller .inner() on the star for which you want to compute a DAG"
+			throw new AssertionError("Tried to compute RegexDag for star expression. "
+					+ "Computing such a DAG is possible but probably not what you want. "
+					+ "Either you forgot to caller .inner() on the star for which you want to compute a DAG "
 					+ "or your regex is of the form ((expr)*)* which could be simplified to just (expr)*.");
 		}
 		mRegexToDag.resetDag();

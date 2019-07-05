@@ -27,86 +27,75 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFluid;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ICallSummarizer;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Interprets a whole interprocedural control flow graph (ICFG).
- * 
+ * Interprets an interprocedural control flow graph (ICFG) starting from its initial nodes.
+ *
  * @author schaetzc@tf.uni-freiburg.de
  */
-public class IcfgInterpreter {
+public class IcfgInterpreter implements IEnterCallRegistrar {
 
 	private final ILogger mLogger;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final CallGraph mCallGraph;
 	private final IWorklistWithInputs<String, IPredicate> mEnterCallWorklist;
-	private final Map<IcfgLocation, IPredicate> mPredicatesForLoi = new HashMap<>();
+	private final MapBasedStorage mLoiPredStorage;
 	private final SymbolicTools mTools;
-	private final IDomain mDomain;
-	private final InterpreterResources mInterpreterResources;
 	private final ProcedureResourceCache mProcResCache;
-	
-	/**
-	 * Creates a new interpreter assuming all error locations to be locations of interest.
-	 *
-	 * @see #interpret()
-	 */
-	public IcfgInterpreter(final ILogger logger, final SymbolicTools tools, final IIcfg<IcfgLocation> icfg,
-			final IDomain domain, final InterpreterResources resources) {
-		this(logger, tools, icfg, errorLocations(icfg), domain, resources);
-	}
-
-	private static Collection<IcfgLocation> errorLocations(final IIcfg<IcfgLocation> icfg) {
-		return icfg.getProcedureErrorNodes().values().stream().flatMap(Set::stream).collect(Collectors.toList());
-	}
+	private final DagInterpreter mDagInterpreter;
 
 	/**
 	 * Creates a new interpret using a custom set of locations of interest.
-	 * 
+	 *
 	 * @param locationsOfInterest Locations for which predicates shall be computed.
-	 * 
+	 *                            You probably want to use {@link #allErrorLocations(IIcfg)}}.
+	 *
 	 * @see #interpret()
 	 */
 	public IcfgInterpreter(final ILogger logger, final SymbolicTools tools,
 			final IIcfg<IcfgLocation> icfg, final Collection<IcfgLocation> locationsOfInterest,
-			final IDomain domain, final InterpreterResources resources) {
+			final IDomain domain, final IFluid fluid,
+			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
+			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory) {
 		mLogger = logger;
 		mTools = tools;
 		mIcfg = icfg;
-		mDomain = domain;
-		mInterpreterResources = resources;
 		logStartingSifa(locationsOfInterest);
+		mLoiPredStorage = new MapBasedStorage(locationsOfInterest, domain, tools, logger);
 		mEnterCallWorklist = new FifoWorklist<>(domain::join);
 		logBuildingCallGraph();
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
 		logCallGraphComputed();
 		mProcResCache = new ProcedureResourceCache(mCallGraph, icfg);
-		initPredicates(locationsOfInterest);
 		enqueInitial();
+		mDagInterpreter = new DagInterpreter(logger, tools, domain, fluid,
+				loopSumFactory.apply(this), callSumFactory.apply(this));
+	}
+
+	public static Collection<IcfgLocation> allErrorLocations(final IIcfg<IcfgLocation> icfg) {
+		return icfg.getProcedureErrorNodes().values().stream().flatMap(Set::stream).collect(Collectors.toList());
 	}
 
 	private void enqueInitial() {
 		final IPredicate top = mTools.top();
 		mCallGraph.initialProceduresOfInterest().stream()
-				.peek(proc -> mEnterCallWorklist.add(proc, top))
-				.map(mIcfg.getProcedureEntryNodes()::get)
-				.forEach(procEntry -> storePredicateIfLoi(procEntry, top));
-	}
-
-	private void initPredicates(final Collection<IcfgLocation> locationsOfInterest) {
-		final IPredicate bottom = mTools.bottom();
-		locationsOfInterest.forEach(loi -> mPredicatesForLoi.put(loi, bottom));
+				.forEach(proc -> mEnterCallWorklist.add(proc, top));
 	}
 
 	/**
@@ -123,33 +112,25 @@ public class IcfgInterpreter {
 			final String procedure = mEnterCallWorklist.getWork();
 			final IPredicate input = mEnterCallWorklist.getInput();
 			logEnterProcedure(procedure, input);
-			interpretLoisInProcedure(mProcResCache.resourcesOf(procedure), input);
+			interpretLoisInProcedure(procedure, input);
 		}
 		logFinalResults();
-		return mPredicatesForLoi;
+		return mLoiPredStorage.getMap();
 	}
 
-	private void interpretLoisInProcedure(final ProcedureResources resources, final IPredicate initialInput) {
-		mInterpreterResources.getDagInterpreter().interpret(
-				resources.getRegexDag(), resources.getDagOverlayPathToLoisAndEnterCalls(), initialInput);
+	private void interpretLoisInProcedure(final String procedure, final IPredicate initialInput) {
+		mLoiPredStorage.storePredicateIfLoi(mIcfg.getProcedureEntryNodes().get(procedure), initialInput);
+		final ProcedureResources resources = mProcResCache.resourcesOf(procedure);
+		mDagInterpreter.interpret(
+				resources.getRegexDag(), resources.getDagOverlayPathToLoisAndEnterCalls(), initialInput,
+				mLoiPredStorage, this);
 	}
 
+	@Override
 	public void registerEnterCall(final String callee, final IPredicate calleeInput) {
 		logRegisterEnterCall(callee, calleeInput);
 		mEnterCallWorklist.add(callee, calleeInput);
-		storePredicateIfLoi(mIcfg.getProcedureEntryNodes().get(callee), calleeInput);
-	}
-
-	public void storePredicateIfLoi(final IcfgLocation location, final IPredicate addPred) {
-		mPredicatesForLoi.computeIfPresent(location,
-				(loi, oldPred) -> joinLoiPredicate(loi, oldPred, addPred));
-	}
-
-	private IPredicate joinLoiPredicate(final IcfgLocation loi, final IPredicate oldPred, final IPredicate addPred) {
-		logBeforeRegisterLoi(loi, addPred);
-		final IPredicate newPred = mDomain.join(oldPred, addPred);
-		logAfterRegisterLoi(loi, addPred, newPred);
-		return newPred;
+		// input is stored as a LOI predicate once we actually enter the call
 	}
 
 	public CallGraph callGraph() {
@@ -164,6 +145,9 @@ public class IcfgInterpreter {
 
 	private void logStartingSifa(final Collection<IcfgLocation> locationsOfInterest) {
 		mLogger.info("Started Sifa with %d locations of interest", locationsOfInterest.size());
+		if (locationsOfInterest.isEmpty()) {
+			mLogger.warn("No location of interest given. Interpreter runs nevertheless. You may want to cancel.");
+		}
 	}
 
 	private void logBuildingCallGraph() {
@@ -182,37 +166,27 @@ public class IcfgInterpreter {
 
 	private void logFinalResults() {
 		mLogger.info("Interpretation finished");
-		if (mPredicatesForLoi.isEmpty()) {
+		final Map<IcfgLocation, IPredicate> loiToPred = mLoiPredStorage.getMap();
+		if (loiToPred.isEmpty()) {
 			mLogger.warn("No locations of interest were given");
 			return;
 		}
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Final predicates for locations of interest are:");
-			for (final Entry<IcfgLocation, IPredicate> entry : mPredicatesForLoi.entrySet()) {
+			for (final Entry<IcfgLocation, IPredicate> entry : loiToPred.entrySet()) {
 				mLogger.info("Location %s has predicate %s", entry.getKey(), entry.getValue());
 			}
 		}
 	}
 
 	private void logEnterProcedure(final String procedure, final IPredicate input) {
-		mLogger.info("Interpreting procedure %s with input of size %s", procedure, new DagSizePrinter(input.getFormula()));
+		mLogger.info("Interpreting procedure %s with input of size %s",
+				procedure, new DagSizePrinter(input.getFormula()));
 		mLogger.debug("Procedure's input is %s", input);
 	}
 
 	private void logRegisterEnterCall(final String callee, final IPredicate calleeInput) {
 		mLogger.debug("Call to procedure %s received the predicate %s", callee, calleeInput);
-	}
-
-	private void logBeforeRegisterLoi(final IcfgLocation loi, final IPredicate addPred) {
-		mLogger.debug("LOI %s received the predicate %s", loi, addPred);
-	}
-
-	private void logAfterRegisterLoi(final IcfgLocation loi, final IPredicate addedPred, final IPredicate newPred) {
-		if (addedPred == newPred) {
-			mLogger.debug("Updated predicate for LOI %s is identical", loi);
-		} else {
-			mLogger.debug("Updated predicate for LOI %s is %s", loi, newPred);
-		}
 	}
 
 }

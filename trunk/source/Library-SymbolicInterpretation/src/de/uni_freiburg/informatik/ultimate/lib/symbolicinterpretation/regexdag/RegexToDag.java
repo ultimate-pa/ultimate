@@ -40,6 +40,17 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Union;
 
+/**
+ * Converts a regex into a regex dag.
+ * A regex dag is a directed acyclic graph with exactly one source and one sink representing a regex.
+ * Concatenation is represented by a linear sequence of nodes.
+ * Union is represented by a fork/branch (and later by a join/merge).
+ * Stars are treated like literals and are represented by a single node.
+ *
+ * @author schaetzc@tf.uni-freiburg.de
+ *
+ * @param <L> Type of letters that are used inside regex literals
+ */
 public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDagNode<L>> {
 
 	private RegexDag<L> mDag;
@@ -64,14 +75,14 @@ public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDag
 	/**
 	 * Incorporates a given regex into the current DAG.
 	 * Use {@link #getDag()} to query the resulting DAG.
-	 * 
+	 *
 	 * @param regex Regex to be converted into a DAG
 	 * @return Reference to the last RegexDagNode created for the given regex.<br>
 	 *         For (a·b) this is a node containing the regex literal b.<br>
 	 *         For (a∪b) this is a join node containing the regex ε.<br>
 	 *         For (a)* this is a node containing the regex star (a)*.
 	 */
-	public RegexDagNode<L> add(IRegex<L> regex) {
+	public RegexDagNode<L> add(final IRegex<L> regex) {
 		// TODO works only when source and sink are epsilon.
 		// If DAG was modified (for instance compressed) this approach will produce wrong DAGs or even cycles.
 		final RegexDagNode<L> regexSink = regex.accept(this, mDag.getSource());
@@ -81,12 +92,12 @@ public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDag
 
 	/**
 	 * TODO remove star worklist. This Method is probably not needed.
-	 * 
+	 *
 	 * Retrieves the star expressions treated like literals since the last {@link #resetDagAndStars()}.
 	 * The list is free of duplicates. This returns a direct reference to the internal worklist;
 	 * it is ok to modify the list from the outside, but running {@link #add(IRegex)} may add something to the
 	 * worklist.
-	 * 
+	 *
 	 * @return Reference to the worklist of visited star expressions.
 	 */
 	public Queue<Star<L>> getStarWorklist() {
@@ -97,7 +108,7 @@ public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDag
 	 * Retrieves the DAG built from possibly multiple regexes.
 	 * Caution: The retrieved DAG is only a reference and may change due to subsequent calls to {@link #add(IRegex)}.
 	 * Call {@link #resetDag()} to prevent this class from changing the retrieved DAG in the future.
-	 * 
+	 *
 	 * @return The regex DAG built from all {@link #add(IRegex)} since the last {@link #resetDag()}.
 	 */
 	public RegexDag<L> getDag() {
