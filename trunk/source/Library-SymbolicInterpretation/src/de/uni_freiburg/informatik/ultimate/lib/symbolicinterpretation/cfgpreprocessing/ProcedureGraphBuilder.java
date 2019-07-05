@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgprepro
 
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Queue;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -47,6 +49,7 @@ public class ProcedureGraphBuilder {
 	private final IIcfg<IcfgLocation> mIcfg;
 	private ProcedureGraph mCurrentProcedureGraph;
 	private final Queue<IcfgLocation> mWork = new ArrayDeque<>();
+	private final Set<IcfgLocation> mVisited = new HashSet<>();
 
 	public ProcedureGraphBuilder(final IIcfg<IcfgLocation> icfg) {
 		mIcfg = icfg;
@@ -61,16 +64,21 @@ public class ProcedureGraphBuilder {
 	 *      enter the function and return normally.<br>
 	 *      Note that summary edges do not actually summarize the call.
 	 *      They are just there to point out, that we skipped the procedure.
-	 * <li> One error edge of type {@link IIcfgCallTransition} for the case in which we 
+	 * <li> One error edge of type {@link IIcfgCallTransition} for the case in which we
 	 *      enter the function but do not return due to errors in the callee or functions called by the callee.
 	 * </ul>
-	 * Cases in which called functions do not terminate are ignored.
+	 * Cases in which callees do not terminate are ignored.
+	 *
+	 * @param procedureName Name of the procedure for which a procedure graph shall be constructed
+	 * @param locationsOfInterest Locations to be included in the graph besides the procedure's entry and exit location
 	 */
 	public ProcedureGraph graphOfProcedure(final String procedureName,
 			final Collection<IcfgLocation> locationsOfInterest) {
 		mCurrentProcedureGraph = new ProcedureGraph(mIcfg, procedureName);
+		// make sure that LOIs exist, even if they don't have any incoming or outgoing edges
+		// (entry and exit are already added in the graph's constructor)
 		locationsOfInterest.forEach(mCurrentProcedureGraph::addNode);
-		mWork.clear();
+
 		mWork.add(mCurrentProcedureGraph.getExitNode());
 		mWork.addAll(locationsOfInterest);
 		while (!mWork.isEmpty()) {
@@ -78,13 +86,15 @@ public class ProcedureGraphBuilder {
 				processBottomUp(edge);
 			}
 		}
+		mVisited.clear();
+		mWork.clear();
 		return mCurrentProcedureGraph;
 	}
 
 	/**
 	 * Traverses the ICFG backwards and copies edges to the procedure graph.
-	 * Backwards processing allows to only include only required paths (for instance to the procedure's exit)
-	 * while ignoring dead ends in which we are not interested.
+	 * Backwards processing allows to only include required paths (for instance to the procedure's exit or
+	 * locations of interest) while ignoring dead ends in which we are not interested.
 	 */
 	@SuppressWarnings("unchecked")
 	private void processBottomUp(final IcfgEdge edge) {
@@ -120,7 +130,8 @@ public class ProcedureGraphBuilder {
 	}
 
 	private void addToWorklistIfNew(final IcfgLocation node) {
-		if (!mCurrentProcedureGraph.getNodes().contains(node)) {
+		if (!mVisited.contains(node)) {
+			mVisited.add(node);
 			mWork.add(node);
 		}
 	}

@@ -73,7 +73,7 @@ public class PathExpressionComputer<N, L> {
 	/**
 	 * As in Tarjan's paper, P(u,v) is a regex describing all paths from node with index u to node with index v. If an
 	 * entry is missing it has to be computed first.
-	 * 
+	 *
 	 * @see #mNodeToInt
 	 */
 	private final Map<Pair<Integer, Integer>, IRegex<L>> mP = new HashMap<>();
@@ -102,7 +102,11 @@ public class PathExpressionComputer<N, L> {
 	}
 
 	private Integer intOf(final N node) {
-		return mNodeToInt.get(node);
+		final Integer idx = mNodeToInt.get(node);
+		if (idx == null) {
+			throw new IllegalArgumentException("Tried to access node which is not in the graph: " + node);
+		}
+		return idx;
 	}
 
 	public IRegex<L> exprBetween(final N source, final N target) {
