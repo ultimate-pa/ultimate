@@ -1,0 +1,9 @@
+// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:; results:-1
+Input var3 is bool
+Input var4 is bool
+Input var5 is bool
+Input var6 is bool
+Input var7 is bool
+Input var8 is bool
+
+req1: Globally It is always the case that If "var3" holds, then "var4" eventually holds and is succeeded by "var5" where "var6" does not hold between "var7" and "var8"

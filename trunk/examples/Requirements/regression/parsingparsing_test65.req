@@ -1,0 +1,5 @@
+// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:; results:-1
+Input var3 is bool
+CONST time_at_least is 30.0
+
+req1: Globally It is always the case that once "var3" becomes satisfied, it holds for at least "time_at_least" time units

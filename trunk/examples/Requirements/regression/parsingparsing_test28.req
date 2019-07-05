@@ -1,0 +1,5 @@
+// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:; results:-1
+Input var3 is bool
+Input var4 is bool
+
+req1: Globally It is always the case that If "var3" holds, then "var4" eventually holds

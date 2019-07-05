@@ -1,0 +1,8 @@
+// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:; results:-1
+Input var1 is bool
+Input var2 is bool
+Input var3 is bool
+Input var5 is bool
+CONST time_at_least is 30.0
+
+req1: Between "var1" and "var2" It is always the case that If "var3" holds for at least "time_at_least" time units, then "var5" holds afterwards for at least "time_at_least" time units

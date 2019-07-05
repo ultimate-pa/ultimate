@@ -1,0 +1,6 @@
+// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:; results:-1
+Input var1 is bool
+Input var2 is bool
+Input var3 is bool
+
+req1: Between "var1" and "var2" It is always the case that "var3" holds
