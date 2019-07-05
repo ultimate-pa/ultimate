@@ -289,10 +289,8 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	public void logStats() {
-		if (mTrivialConsistent > 0) {
-			mLogger.info(String.format("%s checks, %s trivial consistent, %s non-trivial",
-					mGeneratedChecks + mTrivialConsistent, mTrivialConsistent, mGeneratedChecks));
-		}
+		mLogger.info(String.format("%s checks, %s trivial consistent, %s non-trivial",
+				mGeneratedChecks + mTrivialConsistent, mTrivialConsistent, mGeneratedChecks));
 		if (!PRINT_STATS) {
 			return;
 		}
