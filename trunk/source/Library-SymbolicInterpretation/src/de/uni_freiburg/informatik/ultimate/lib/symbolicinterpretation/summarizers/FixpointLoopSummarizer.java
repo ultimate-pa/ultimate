@@ -78,10 +78,16 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		IPredicate postState = null;
 		while (true) {
 			postState = mDagIpr.interpret(dag, fullOverlay, preState);
+			// workaround non-termination in "enter-call-in-loop-2.bpl".
+			// TODO really check isSubsetEq twice? Isn't there a better way?
 			if (mDomain.isSubsetEq(preState, postState)) {
 				break;
 			}
-			preState = mDomain.widen(preState, postState);
+			postState = mDomain.widen(preState, postState);
+			if (mDomain.isSubsetEq(preState, postState)) {
+				break;
+			}
+			preState = postState;
 		}
 		return postState;
 	}
