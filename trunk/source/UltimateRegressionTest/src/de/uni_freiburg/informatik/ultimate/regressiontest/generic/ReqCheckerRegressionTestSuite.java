@@ -39,10 +39,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AssertionsEnabledResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IFailedAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
@@ -138,8 +137,9 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 						throw new UnsupportedOperationException("Unsupported spec: " + spec);
 					}
 					results++;
-				} else if (result instanceof ExceptionOrErrorResult || result instanceof TimeoutResult
-						|| result instanceof IFailedAnalysisResult) {
+				} else if (result instanceof StatisticsResult || result instanceof AssertionsEnabledResult) {
+					continue;
+				} else {
 					mIsIrregular = true;
 					mNoResults = 0;
 					mVacuous = Collections.emptySet();

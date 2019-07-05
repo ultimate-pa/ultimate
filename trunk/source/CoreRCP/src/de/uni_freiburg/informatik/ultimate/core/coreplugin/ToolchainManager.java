@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.StoreObjec
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.GenericServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ProgressMonitorService;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AssertionsEnabledResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.PluginType;
@@ -62,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -319,8 +318,7 @@ public class ToolchainManager {
 			} finally {
 				final IResultService resultService = currentToolchainServices.getResultService();
 				if (VMUtils.areAssertionsEnabled()) {
-					resultService.reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
-							"Assertions are enabled", "Assertions are enabled", Severity.INFO));
+					resultService.reportResult(Activator.PLUGIN_ID, new AssertionsEnabledResult(Activator.PLUGIN_ID));
 				}
 
 				if (useBenchmark) {

@@ -46,7 +46,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
  */
 public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends AbstractResult implements IResultWithSeverity {
 
-	public enum AnnotationState { VALID, UNKNOWN, INVALID };
+	public enum AnnotationState {
+		VALID, UNKNOWN, INVALID
+	}
 
 	final IBacktranslationService mTranslatorSequence;
 
@@ -55,7 +57,6 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 	private final List<LoopFreeSegmentWithStatePair<ELEM, EXPR>> mSegmentsInvalid;
 
 	private final AnnotationState mAnnotationState;
-
 
 	/**
 	 * @param plugin
@@ -75,7 +76,8 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 	}
 
 	private AnnotationState determineAnnotationState(final List<LoopFreeSegment<ELEM>> segmentsValid,
-			final List<LoopFreeSegment<ELEM>> segmentsUnknown, final List<LoopFreeSegmentWithStatePair<ELEM, EXPR>> segmentsInvalid) {
+			final List<LoopFreeSegment<ELEM>> segmentsUnknown,
+			final List<LoopFreeSegmentWithStatePair<ELEM, EXPR>> segmentsInvalid) {
 		final AnnotationState result;
 		if (segmentsInvalid.isEmpty()) {
 			if (segmentsUnknown.isEmpty()) {
@@ -146,14 +148,14 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 	}
 
 	public static <E> String unknownSegmentToString(final LoopFreeSegment<E> segment) {
-		return "Insufficient resources for checking whether annotation is valid for " + segment  + ".";
+		return "Insufficient resources for checking whether annotation is valid for " + segment + ".";
 	}
 
 	public static <ELEM, E> String invalidSegmentToString(final LoopFreeSegmentWithStatePair<ELEM, E> segment,
 			final IBacktranslationService translation) {
-		return "Annotation is not valid for " + segment
-				+ ". One counterxample starts in " + translation.translateProgramStateToString(segment.getStateBefore())
-				+ " and ends in " + translation.translateProgramStateToString(segment.getStateAfter()) + ".";
+		return "Annotation is not valid for " + segment + ". One counterxample starts in "
+				+ translation.translateProgramStateToString(segment.getStateBefore()) + " and ends in "
+				+ translation.translateProgramStateToString(segment.getStateAfter()) + ".";
 	}
 
 	public static class LoopFreeSegment<E> {
@@ -262,7 +264,5 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 			return "check that " + mCheck.getPositiveMessage() + " at line " + getLocation().getStartLine();
 		}
 	}
-
-
 
 }
