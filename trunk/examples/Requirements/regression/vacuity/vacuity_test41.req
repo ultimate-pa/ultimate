@@ -1,0 +1,7 @@
+// #TestSpec: rt-inconsistent:; vacuous:req1; inconsistent:; results:-1
+Input var3 is bool
+CONST time_less_than is 20.0
+
+Constraint_assumption: Globally it is always the case that "!var3" holds
+
+req1: Globally It is always the case that once "var3" becomes satisfied, it holds for less than "time_less_than" time units

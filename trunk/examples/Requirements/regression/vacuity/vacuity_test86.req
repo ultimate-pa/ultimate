@@ -1,0 +1,9 @@
+// #TestSpec: rt-inconsistent:; vacuous:req1; inconsistent:; results:-1
+Input var1 is bool
+Input var2 is bool
+Input var3 is bool
+CONST time_every is 10.0
+
+Constraint_assumption: Globally it is always the case that "!var3" holds
+
+req1: After "var1" until "var2" It is always the case that "var3" holds at least every "time_every" time units

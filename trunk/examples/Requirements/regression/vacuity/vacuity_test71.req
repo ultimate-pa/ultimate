@@ -1,0 +1,9 @@
+// #TestSpec: rt-inconsistent:; vacuous:req1; inconsistent:; results:-1
+Input var1 is bool
+Input var3 is bool
+Input var5 is bool
+CONST MAX_TIME is 50.0
+
+Constraint_assumption: Globally it is always the case that "!var3" holds
+
+req1: After "var1" It is always the case that After "var3" holds for "MAX_TIME" time units, then "var5" holds
