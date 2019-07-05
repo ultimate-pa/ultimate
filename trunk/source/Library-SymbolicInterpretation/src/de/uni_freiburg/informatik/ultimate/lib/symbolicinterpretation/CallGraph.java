@@ -37,34 +37,42 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
+/**
+ * Detects which procedures have to be interpreted to reach a given set of locations of interest (LOIs).
+ * The call graph is only represented internally and cannot be accessed explicitly since we don't have to.
+ *
+ * @author schaetzc@tf.uni-freiburg.de
+ */
 public class CallGraph {
 
 	/**
-	 * Temporary mark for {@link #mSuccessorsOfInterest} used in {@link #mark(String, String)} to detect
-	 * cycles/recursion.
-	 * <p>
-	 * Cycle detection works as in Djikstra's DFS-based topological sorting, see
-	 * <a href="https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search">Wikipedia</a>.
+	 * Temporary mark for {@link #mSuccessorsOfInterest} used in {@link #mark(String, String)}
+	 * to detect cycles/recursion.
 	 * <p>
 	 * This mark has to be different from the usual marks. Usual marks are procedure names.
-	 * Procedure names cannot be empty.
+	 * Procedure names cannot be empty, therefore this mark does not collide with the usual marks.
 	 */
 	private static final String TMP_MARK_TO_DETECT_CYCLES = "";
 
 	private final IIcfg<IcfgLocation> mIcfg;
 
 	/**
+	 * Maps each procedure to the set of LOIs it contains directly.
 	 * Locations of interest (LOI) are locations inside procedures for which we want to compute predicates.
 	 */
 	private final HashRelation<String, IcfgLocation> mLOIsInsideProcedure = new HashRelation<>();
-
 	/**
 	 * Lists callers. This relation represents the call graph's directed edges backwards.
 	 * <p>
 	 * For procedures f, g: g Rel f iff f calls g.
 	 */
-	private final HashRelation<String, String> mPredecessors = new HashRelation<>();
-
+	private final HashRelation<String, String> mCalledBy = new HashRelation<>();
+	/**
+	 * Lists callers. This relation represents the call graph's directed edges forwards.
+	 * <p>
+	 * For procedures f, g: f Rel g iff f calls g.
+	 */
+	private final HashRelation<String, String> mCalls = new HashRelation<>();
 	/**
 	 * Lists callees which can be entered to reach a location of interest.
 	 * <p>
@@ -80,7 +88,8 @@ public class CallGraph {
 		mIcfg = icfg;
 		assignLOIsToProcedures(locationsOfInterest);
 		buildGraph();
-		markGraph();
+		computeSuccOfInterest();
+		checkNotRecursive();
 	}
 
 	private void assignLOIsToProcedures(final Collection<IcfgLocation> locationsOfInterest) {
@@ -94,35 +103,52 @@ public class CallGraph {
 	}
 
 	private void addCall(final IcfgEdge call) {
-		mPredecessors.addPair(call.getTarget().getProcedure(), call.getSource().getProcedure());
+		final String caller = call.getSource().getProcedure();
+		final String callee = call.getTarget().getProcedure();
+		mCalledBy.addPair(callee, caller);
+		mCalls.addPair(caller, callee);
 	}
 
-	private void markGraph() {
-		mLOIsInsideProcedure.getDomain().stream().forEach(this::mark);
+	private void computeSuccOfInterest() {
+		mLOIsInsideProcedure.getDomain().stream().forEach(this::markPredecessors);
 	}
 
-	private void mark(final String currentProcedure) {
-		if (!mSuccessorsOfInterest.addPair(currentProcedure, TMP_MARK_TO_DETECT_CYCLES)) {
+	private void markPredecessors(final String currentProcedure) {
+		mCalledBy.getImage(currentProcedure).stream()
+				// If a proc. was already marked accordingly its predecessors have to be already marked too.
+				.filter(predecessor -> mSuccessorsOfInterest.addPair(predecessor, currentProcedure))
+				.forEach(this::markPredecessors);
+	}
+
+	/**
+	 * Checks that the program part to be analyzed is non-recursive.
+	 * Cycle detection works as in Djikstra's DFS-based topological sorting, see
+	 * <a href="https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search">Wikipedia</a>.
+	 *
+	 * @throws IllegalArgumentException The program is recursive
+	 */
+	private void checkNotRecursive() {
+		initialProceduresOfInterest().stream().forEach(this::markSuccessors);
+	}
+
+	private void markSuccessors(final String procedure) {
+		if (!mSuccessorsOfInterest.addPair(procedure, TMP_MARK_TO_DETECT_CYCLES)) {
 			throw new IllegalArgumentException("Recursive programs are not supported.");
 		}
-		mPredecessors.getImage(currentProcedure).forEach(predecessor -> mark(predecessor, currentProcedure));
-		mSuccessorsOfInterest.removePair(currentProcedure, TMP_MARK_TO_DETECT_CYCLES);
-	}
-
-	private void mark(final String currentProcedure, final String mark) {
-		if (!mSuccessorsOfInterest.addPair(currentProcedure, mark)) {
-			// Was already marked accordingly, therefore predecessors have to be already marked too.
-			return;
-		}
-		mark(currentProcedure);
+		mCalls.getImage(procedure).forEach(this::markSuccessors);
+		mSuccessorsOfInterest.removePair(procedure, TMP_MARK_TO_DETECT_CYCLES);
 	}
 
 	public Collection<String> initialProceduresOfInterest() {
 		return mIcfg.getInitialNodes().stream()
 				.map(IcfgLocation::getProcedure)
-				.filter(procedure -> !mLOIsInsideProcedure.hasEmptyImage(procedure)
-						|| !mSuccessorsOfInterest.hasEmptyImage(procedure))
+				.filter(this::hasLoiOrSuccessorWithLoi)
 				.collect(Collectors.toList());
+	}
+
+	private boolean hasLoiOrSuccessorWithLoi(final String procedure) {
+		return !mLOIsInsideProcedure.hasEmptyImage(procedure)
+				|| !mSuccessorsOfInterest.hasEmptyImage(procedure);
 	}
 
 	public Set<IcfgLocation> locationsOfInterest(final String procedure) {
@@ -132,34 +158,5 @@ public class CallGraph {
 	public Set<String> successorsOfInterest(final String procedure) {
 		return mSuccessorsOfInterest.getImage(procedure);
 	}
+
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
