@@ -43,10 +43,10 @@ public class TopsortCache {
 
 	public List<RegexDagNode<IIcfgTransition<IcfgLocation>>> topsort(
 			final RegexDag<IIcfgTransition<IcfgLocation>> dag) {
-		return mCache.computeIfAbsent(dag, this::compute);
+		return mCache.computeIfAbsent(dag, TopsortCache::compute);
 	}
 
-	private List<RegexDagNode<IIcfgTransition<IcfgLocation>>> compute(
+	private static List<RegexDagNode<IIcfgTransition<IcfgLocation>>> compute(
 			final RegexDag<IIcfgTransition<IcfgLocation>> dag) {
 		return new TopologicalSorter<RegexDagNode<IIcfgTransition<IcfgLocation>>>(RegexDagNode::getOutgoingNodes)
 				.topologicalOrdering(dag.collectNodes())

@@ -31,10 +31,12 @@ import java.util.Map;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.StarDagCache;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.FullOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
@@ -51,9 +53,14 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 	private final DagInterpreter mDagIpr;
 	private final StarDagCache mStarDagCache = new StarDagCache();
 	private final Map<Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate>, IPredicate> mCache;
+	private final IProgressAwareTimer mTimer;
+	private final SymbolicTools mTools;
 
-	public FixpointLoopSummarizer(final ILogger logger, final IDomain domain, final DagInterpreter dagIpr) {
+	public FixpointLoopSummarizer(final ILogger logger, final IProgressAwareTimer timer, final SymbolicTools tools,
+			final IDomain domain, final DagInterpreter dagIpr) {
 		mLogger = Objects.requireNonNull(logger);
+		mTimer = timer;
+		mTools = tools;
 		mDomain = Objects.requireNonNull(domain);
 		mDagIpr = Objects.requireNonNull(dagIpr);
 		mCache = new HashMap<>();
@@ -69,7 +76,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 	}
 
 	private IPredicate summarizeInternal(final Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate> starAndInput) {
-		logComputeSummary();
+		mLogger.debug("Computing new loop summary for input " + starAndInput.getValue());
 		final IRegex<IIcfgTransition<IcfgLocation>> starredRegex = starAndInput.getFirst().getInner();
 		final RegexDag<IIcfgTransition<IcfgLocation>> dag = mStarDagCache.dagOf(starredRegex);
 		// TODO don't use full overlay as it may include enter calls
@@ -77,6 +84,11 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		IPredicate preState = starAndInput.getSecond();
 		IPredicate postState = null;
 		while (true) {
+			if (!mTimer.continueProcessing()) {
+				mLogger.warn("Timeout while computing loop summary. Using top as a loop summary.");
+				return mTools.top();
+			}
+
 			postState = mDagIpr.interpret(dag, fullOverlay, preState);
 			// workaround non-termination in "enter-call-in-loop-2.bpl".
 			// TODO really check isSubsetEq twice? Isn't there a better way?
@@ -92,7 +104,4 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		return postState;
 	}
 
-	private void logComputeSummary() {
-		mLogger.debug("Computing new summary using true as input");
-	}
 }

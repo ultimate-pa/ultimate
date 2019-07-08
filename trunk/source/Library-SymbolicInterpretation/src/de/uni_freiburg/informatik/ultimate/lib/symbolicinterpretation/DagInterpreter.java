@@ -30,7 +30,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
@@ -64,11 +66,14 @@ public class DagInterpreter {
 	private final TopsortCache mTopsortCache = new TopsortCache();
 	private final ILoopSummarizer mLoopSummarizer;
 	private final ICallSummarizer mCallSummarizer;
+	private final IProgressAwareTimer mTimer;
 
-	public DagInterpreter(final ILogger logger, final SymbolicTools tools, final IDomain domain, final IFluid fluid,
+	public DagInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SymbolicTools tools,
+			final IDomain domain, final IFluid fluid,
 			final Function<DagInterpreter, ILoopSummarizer> loopSumFactory,
 			final Function<DagInterpreter, ICallSummarizer> callSumFactory) {
 		mLogger = logger;
+		mTimer = timer;
 		mTools = tools;
 		mDomain = domain;
 		mFluid = fluid;
@@ -102,9 +107,17 @@ public class DagInterpreter {
 				new PriorityWorklist<>(topoOrder, mDomain::join);
 		worklist.add(dag.getSource(), initalInput);
 		while (worklist.advance()) {
+			respectTimeout();
 			final RegexDagNode<IIcfgTransition<IcfgLocation>> curNode = worklist.getWork();
 			final IPredicate curOutput = ipretNode(curNode, worklist.getInput(), loiStorage, enterCallRegr);
 			overlay.successorsOf(curNode).forEach(successor -> worklist.add(successor, curOutput));
+		}
+	}
+
+	private void respectTimeout() {
+		if (!mTimer.continueProcessing()) {
+			mLogger.warn("Timeout while interpreting dag");
+			throw new ToolchainCanceledException(getClass());
 		}
 	}
 

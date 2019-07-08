@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
@@ -78,12 +79,13 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	}
 
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
+		final IProgressMonitorService timer = mServices.getProgressMonitorService();
 		final SymbolicTools tools = new SymbolicTools(mServices, icfg);
 		final IDomain domain = new ExplicitValueDomain(mServices, tools);
 		final IFluid fluid = new LogSizeWrapperFluid(mLogger, new NeverFluid());
-		final IcfgInterpreter icfgInterpreter = new IcfgInterpreter(mLogger, tools,
+		final IcfgInterpreter icfgInterpreter = new IcfgInterpreter(mLogger, timer, tools,
 				icfg, IcfgInterpreter.allErrorLocations(icfg), domain, fluid,
-				icfgIpr -> dagIpr -> new FixpointLoopSummarizer(mLogger, domain, dagIpr),
+				icfgIpr -> dagIpr -> new FixpointLoopSummarizer(mLogger, timer, tools, domain, dagIpr),
 				icfgIpr -> dagIpr -> new TopInputCallSummarizer(tools, icfgIpr.procedureResourceCache(), dagIpr));
 		final Map<IcfgLocation, IPredicate> predicates = icfgInterpreter.interpret();
 		mLogger.debug("Final results are " + predicates);

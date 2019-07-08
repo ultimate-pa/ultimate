@@ -34,6 +34,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFluid;
@@ -68,7 +69,7 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 	 *
 	 * @see #interpret()
 	 */
-	public IcfgInterpreter(final ILogger logger, final SymbolicTools tools,
+	public IcfgInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SymbolicTools tools,
 			final IIcfg<IcfgLocation> icfg, final Collection<IcfgLocation> locationsOfInterest,
 			final IDomain domain, final IFluid fluid,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
@@ -84,7 +85,7 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 		logCallGraphComputed();
 		mProcResCache = new ProcedureResourceCache(mCallGraph, icfg);
 		enqueInitial();
-		mDagInterpreter = new DagInterpreter(logger, tools, domain, fluid,
+		mDagInterpreter = new DagInterpreter(logger, timer, tools, domain, fluid,
 				loopSumFactory.apply(this), callSumFactory.apply(this));
 	}
 
