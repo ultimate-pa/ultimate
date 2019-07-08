@@ -1,0 +1,10 @@
+// #TestSpec: rt-inconsistent:req1+req2; vacuous:; inconsistent:; results:-1
+CONST time_less_than is 20.0
+Input var4 is bool
+CONST time_at_least is 30.0
+Input var1 is bool
+
+
+
+req1: After "var1" It is always the case that once "var4" becomes satisfied, it holds for at least "time_at_least" time units
+req2: After "var1" It is always the case that once "!var4" becomes satisfied, it holds for less than "time_less_than" time units

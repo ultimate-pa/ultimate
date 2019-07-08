@@ -1,0 +1,10 @@
+// #TestSpec: rt-inconsistent:req1+req2; vacuous:; inconsistent:; results:-1
+Input var3 is bool
+Input var4 is bool
+CONST MAX_TIME is 50.0
+CONST time_at_least is 30.0
+
+
+
+req1: Globally It is always the case that If "var3" holds, then "var4" holds after at most "MAX_TIME" time units
+req2: Globally It is always the case that If "var3" holds, then "!var4" holds after at most "MAX_TIME" time units for at least "time_at_least" time units

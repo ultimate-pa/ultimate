@@ -1,0 +1,12 @@
+// #TestSpec: rt-inconsistent:req1+req2; vacuous:; inconsistent:; results:-1
+CONST time_less_than is 20.0
+Input var2 is bool
+Input var4 is bool
+Input var3 is bool
+CONST MAX_TIME is 50.0
+Input var1 is bool
+
+
+
+req1: After "var1" until "var2" It is always the case that once "var4" becomes satisfied, it holds for less than "time_less_than" time units
+req2: After "var1" until "var2" It is always the case that If "var3" holds, then "{S}" toggles "!var4" at most "MAX_TIME" time units later
