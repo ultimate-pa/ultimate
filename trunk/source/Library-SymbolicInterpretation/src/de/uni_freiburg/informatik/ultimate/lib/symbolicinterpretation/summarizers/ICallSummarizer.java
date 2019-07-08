@@ -30,8 +30,8 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreproc
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Used to compute summaries to skip procedure calls.
- * 
+ * Computes summaries to skip procedure calls.
+ *
  * @author schaetzc@tf.uni-freiburg.de
  */
 public interface ICallSummarizer {
@@ -39,7 +39,7 @@ public interface ICallSummarizer {
 	/**
 	 * Given an input and call (including execution of the callee's body and returning back to the caller),
 	 * computes an (over-approximated) output.
-	 * 
+	 *
 	 * @param callSumTrans Call to be completely summarized
 	 * @param input pre state for the call
 	 * @return Over-approximated post state

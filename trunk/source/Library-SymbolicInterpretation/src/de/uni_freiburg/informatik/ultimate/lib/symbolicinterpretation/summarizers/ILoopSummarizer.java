@@ -32,8 +32,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Used to compute summaries to skip loops.
- * 
+ * Computes summaries to skip loops.
+ *
  * @author schaetzc@tf.uni-freiburg.de
  */
 public interface ILoopSummarizer {

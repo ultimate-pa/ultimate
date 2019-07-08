@@ -55,6 +55,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
+ * Starts symbolic interpretation on an icfg.
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  */
@@ -114,29 +116,11 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
 
-	private boolean allPredicatesAreFalse(final Map<IcfgLocation, IPredicate> predicates) {
-		return predicates.values().stream().allMatch(this::isFalse);
+	private static boolean allPredicatesAreFalse(final Map<IcfgLocation, IPredicate> predicates) {
+		return predicates.values().stream().allMatch(SymbolicInterpretationObserver::isFalse);
 	}
 
-	private boolean isFalse(final IPredicate predicate) {
+	private static boolean isFalse(final IPredicate predicate) {
 		return SmtUtils.isFalse(predicate.getFormula());
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

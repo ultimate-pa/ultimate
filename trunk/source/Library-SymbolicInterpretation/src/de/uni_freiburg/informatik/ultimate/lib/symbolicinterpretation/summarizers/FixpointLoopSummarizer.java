@@ -46,6 +46,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Summarizes loops by iterating them until a fixpoint is reached.
+ * Fixpoint iteration works as in classical abstract interpretation.
+ * Widening is used to ensure that the iteration eventually reaches a fixpoint.
+ *
+ * @author schaetzc@tf.uni-freiburg.de
+ */
 public class FixpointLoopSummarizer implements ILoopSummarizer {
 
 	private final ILogger mLogger;
@@ -88,7 +95,9 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 				mLogger.warn("Timeout while computing loop summary. Using top as a loop summary.");
 				return mTools.top();
 			}
-
+			// TODO catch TimeoutException from dagInterpreter or pass a custom ProgressAwareTimer?
+			// ... one the other hand, the global timeout should always be greater than this object's timeout.
+			// A custom ProgressAwareTimer would be good anyways.
 			postState = mDagIpr.interpret(dag, fullOverlay, preState);
 			// workaround non-termination in "enter-call-in-loop-2.bpl".
 			// TODO really check isSubsetEq twice? Isn't there a better way?
