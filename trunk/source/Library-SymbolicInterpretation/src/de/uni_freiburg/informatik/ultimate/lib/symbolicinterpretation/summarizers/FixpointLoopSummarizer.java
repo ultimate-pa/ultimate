@@ -47,9 +47,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Summarizes loops by iterating them until a fixpoint is reached.
- * Fixpoint iteration works as in classical abstract interpretation.
- * Widening is used to ensure that the iteration eventually reaches a fixpoint.
+ * Summarizes loops by iterating them until a fixpoint is reached. Fixpoint iteration works as in classical abstract
+ * interpretation. Widening is used to ensure that the iteration eventually reaches a fixpoint.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
@@ -105,9 +104,6 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 				break;
 			}
 			postState = mDomain.widen(preState, postState);
-			if (mDomain.isSubsetEq(preState, postState)) {
-				break;
-			}
 			preState = postState;
 		}
 		return postState;
