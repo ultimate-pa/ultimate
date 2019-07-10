@@ -188,7 +188,7 @@ public class Req2BoogieTranslator {
 		mReq2Loc = mSymboltable.getLocations();
 		mUnitLocation = generateUnitLocation(patterns);
 		final List<Declaration> decls = new ArrayList<>();
-		decls.addAll(mSymboltable.constructVariableDeclarations());
+		decls.addAll(mSymboltable.constructDeclarations());
 
 		RtInconcistencyConditionGenerator rticGenerator;
 		try {
@@ -901,25 +901,8 @@ public class Req2BoogieTranslator {
 		final List<Statement> statements = new ArrayList<>();
 		statements.addAll(genInitialPhasesStmts(bl));
 		statements.addAll(genClockInitStmts());
-		statements.addAll(genConstInitStmts(bl, init));
 		statements.add(genWhileStmt(bl));
 		return statements.toArray(new Statement[statements.size()]);
-	}
-
-	private static List<Statement> genConstInitStmts(final BoogieLocation bl, final List<InitializationPattern> init) {
-		final List<InitializationPattern> constInits =
-				init.stream().filter(a -> a.getCategory() == VariableCategory.CONST).collect(Collectors.toList());
-		if (constInits.isEmpty()) {
-			return Collections.emptyList();
-		}
-		final List<Statement> statements = new ArrayList<>(constInits.size());
-		for (final InitializationPattern constInit : constInits) {
-			final String id = constInit.getId();
-			final Expression val = constInit.getExpression();
-			statements.add(genAssignmentStmt(bl, id, val));
-			statements.add(genAssignmentStmt(bl, ReqSymboltable.getPrimedVarId(id), val));
-		}
-		return statements;
 	}
 
 	/**
@@ -950,7 +933,6 @@ public class Req2BoogieTranslator {
 		modifiedVarsList.addAll(mSymboltable.getClockVars());
 		modifiedVarsList.addAll(mSymboltable.getPcVars());
 		modifiedVarsList.add(mSymboltable.getDeltaVarName());
-		modifiedVarsList.addAll(mSymboltable.getConstVars());
 		modifiedVarsList.addAll(mSymboltable.getStateVars());
 		modifiedVarsList.addAll(mSymboltable.getPrimedVars());
 		modifiedVarsList.addAll(mSymboltable.getEventVars());

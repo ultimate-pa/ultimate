@@ -15,6 +15,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -171,9 +175,15 @@ public class ReqSymboltable implements IReqSymbolExpressionTable {
 				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		mId2IdExpr.put(name, idExpr);
 		mId2VarLHS.put(name, new VariableLHS(loc, name));
-		if (!mPrimedVars.contains(name)) {
-			addVar(getPrimedVarId(name), type, source, mPrimedVars);
+		if (source instanceof InitializationPattern
+				&& ((InitializationPattern) source).getCategory() == VariableCategory.CONST) {
+			// consts do not need primed variables
+			return;
 		}
+		if (mPrimedVars.contains(name)) {
+			return;
+		}
+		addVar(getPrimedVarId(name), type, source, mPrimedVars);
 	}
 
 	private ILocation getLocation(final PatternType source) {
@@ -214,7 +224,7 @@ public class ReqSymboltable implements IReqSymbolExpressionTable {
 	public IdentifierExpression getIdentifierExpression(final String name) {
 		final IdentifierExpression idExpr = mId2IdExpr.get(name);
 		if (idExpr == null || idExpr.getType() == null) {
-			throw new AssertionError();
+			throw new AssertionError(name + " has no identifier expression or no type");
 		}
 		assert idExpr != null && idExpr.getType() != null;
 		return idExpr;
@@ -224,13 +234,13 @@ public class ReqSymboltable implements IReqSymbolExpressionTable {
 		return Collections.unmodifiableMap(mReq2Loc);
 	}
 
-	public List<Declaration> constructVariableDeclarations() {
+	public List<Declaration> constructDeclarations() {
 		final List<Declaration> decls = new ArrayList<>();
 
 		decls.add(constructVariableDeclaration(getDeltaVarName()));
 		decls.addAll(constructVariableDeclarations(mClockVars));
 		decls.addAll(constructVariableDeclarations(mPcVars));
-		decls.addAll(constructVariableDeclarations(mConstVars));
+		decls.addAll(constructConstDeclarations(mConstVars));
 		decls.addAll(constructVariableDeclarations(mStateVars));
 		decls.addAll(constructVariableDeclarations(mPrimedVars));
 		decls.addAll(constructVariableDeclarations(mEventVars));
@@ -243,6 +253,21 @@ public class ReqSymboltable implements IReqSymbolExpressionTable {
 		return varlist.stream()
 				.map(a -> new VariableDeclaration(a.getLocation(), EMPTY_ATTRIBUTES, new VarList[] { a }))
 				.collect(Collectors.toList());
+	}
+
+	private List<Declaration> constructConstDeclarations(final Collection<String> identifiers) {
+		final List<? extends VarList> varlists = constructVarLists(identifiers);
+		final List<Declaration> rtr = new ArrayList<>();
+		// add constant declarations
+		varlists.stream().map(a -> new ConstDeclaration(a.getLocation(), EMPTY_ATTRIBUTES, false, a, null, false))
+				.forEachOrdered(rtr::add);
+		// add axiom for each constant
+		for (final VarList varlist : varlists) {
+			for (final String id : varlist.getIdentifiers()) {
+				rtr.add(new Axiom(varlist.getLocation(), EMPTY_ATTRIBUTES, getConstAxiom(id)));
+			}
+		}
+		return rtr;
 	}
 
 	private Declaration constructVariableDeclaration(final String identifier) {
@@ -309,8 +334,10 @@ public class ReqSymboltable implements IReqSymbolExpressionTable {
 		return Collections.unmodifiableSet(mConstVars);
 	}
 
-	public Expression getConstValue(final String name) {
-		return mConst2Value.get(name);
+	private Expression getConstAxiom(final String name) {
+		final Expression value = mConst2Value.get(name);
+		final IdentifierExpression idExpr = mId2IdExpr.get(name);
+		return new BinaryExpression(value.getLoc(), value.getType(), Operator.COMPEQ, idExpr, value);
 	}
 
 	public Map<String, TypeErrorInfo> getTypeErrors() {
@@ -345,4 +372,5 @@ public class ReqSymboltable implements IReqSymbolExpressionTable {
 		}
 
 	}
+
 }

@@ -43,8 +43,10 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  * @see de.uni_freiburg.informatik.ultimate.lib.pea.CDD
+ * @deprecated Should be done directly in the pattern
  */
 
+@Deprecated
 public class PatternToPEA {
 	private final Trace2PeaCompiler mCompiler;
 	private final ILogger mLogger;

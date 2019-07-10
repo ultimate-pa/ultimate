@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.Map;
+import java.util.Set;
 
 public class RangeDecision extends Decision<RangeDecision> {
 	public static final int OP_LT = -2;
@@ -445,8 +446,8 @@ public class RangeDecision extends Decision<RangeDecision> {
 	}
 
 	@Override
-	public RangeDecision prime(final String ignore) {
-		if (ignore != null && mVar.equals(ignore)) {
+	public RangeDecision prime(final Set<String> ignoreIds) {
+		if (ignoreIds.contains(mVar)) {
 			return this;
 		}
 		final String primed = mVar + BooleanDecision.PRIME_SUFFIX;
@@ -456,12 +457,12 @@ public class RangeDecision extends Decision<RangeDecision> {
 	}
 
 	@Override
-	public RangeDecision unprime(final String ignore) {
-		if (ignore != null && mVar.equals(ignore)) {
+	public RangeDecision unprime(final Set<String> ignoreIds) {
+		if (ignoreIds.contains(mVar)) {
 			return this;
 		}
-		String unprimed = mVar;
 
+		String unprimed = mVar;
 		if (mVar.endsWith(BooleanDecision.PRIME_SUFFIX)) {
 			unprimed = mVar.substring(0, mVar.length() - 1);
 		}
@@ -469,16 +470,6 @@ public class RangeDecision extends Decision<RangeDecision> {
 		final int[] limits = mLimits.clone();
 
 		return new RangeDecision(unprimed, limits);
-	}
-
-	@Override
-	public RangeDecision unprime() {
-		return this.unprime(null);
-	}
-
-	@Override
-	public RangeDecision prime() {
-		return this.prime(null);
 	}
 
 	@Override

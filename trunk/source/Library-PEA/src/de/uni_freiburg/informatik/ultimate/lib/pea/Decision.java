@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * TODO : Documentation hoenicke.
@@ -95,18 +96,14 @@ public abstract class Decision<T extends Decision<T>> {
 	 *
 	 * @return the primed version of this Decision.
 	 */
-	public abstract T prime();
-
-	public abstract T prime(String ignore);
+	public abstract T prime(Set<String> ignoredIds);
 
 	/**
 	 * Create a Decision where primed variable names occur as unprimed versions.
 	 *
 	 * @return the unprimed version of this Decision.
 	 */
-	public abstract T unprime();
-
-	public abstract T unprime(String ignore);
+	public abstract T unprime(Set<String> ignoredIds);
 
 	public abstract String toString(int child);
 

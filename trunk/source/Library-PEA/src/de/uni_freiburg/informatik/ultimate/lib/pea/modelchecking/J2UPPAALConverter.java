@@ -320,9 +320,6 @@ public class J2UPPAALConverter {
 			// FileWriter writer = new FileWriter(file);
 			final String clockDeclaration = addDeclarationOfClocks(pea);
 
-			// First we need to simplify some guards
-			pea.simplifyGuards();
-
 			// Uppaal does not accept system names that are too long --< we use only a short version of the name
 			// int namelength = pea.getName().length();
 			// String shortName = pea.getName();

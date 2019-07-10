@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -145,7 +146,8 @@ public class PhaseEventAutomata implements Comparable<Object> {
 					if (sinv == CDD.FALSE) {
 						continue;
 					}
-					if (guard != CDD.TRUE && srcsinv.and(guard).and(sinv.prime()) == CDD.FALSE) {
+					if (guard != CDD.TRUE && srcsinv.and(guard).and(sinv.prime(Collections.emptySet())) == CDD.FALSE) {
+						// TODO: Overapproximating for BoogieDecisions because constants will become primed
 						continue;
 					}
 					final CDD cinv = t1.dest.clockInv.and(t2.dest.clockInv);
@@ -347,11 +349,6 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		mClocks.add(clock);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
 	@Override
 	public int compareTo(final Object o) {
 		return mName.compareTo(((PhaseEventAutomata) o).mName);

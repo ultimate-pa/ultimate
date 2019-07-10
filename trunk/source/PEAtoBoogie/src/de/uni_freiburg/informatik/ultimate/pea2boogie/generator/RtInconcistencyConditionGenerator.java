@@ -98,9 +98,9 @@ public class RtInconcistencyConditionGenerator {
 	private static final boolean SIMPLIFY_BEFORE_QELIM = false;
 	private static final boolean TRY_SOLVER_BEFORE_QELIM = false;
 	private static final boolean PRINT_STATS = true;
-	private static final String SOLVER_LOGFILE = null;
+	// private static final String SOLVER_LOGFILE = null;
 	private static final boolean PRINT_QUANTIFIED_FORMULAS = true;
-	// private static final String SOLVER_LOGFILE = "C:\\Users\\firefox\\Desktop\\result.smt2";
+	private static final String SOLVER_LOGFILE = "C:\\Users\\firefox\\Desktop\\result.smt2";
 
 	private final ReqSymboltable mReqSymboltable;
 	private final Term mPrimedInvariant;
@@ -141,6 +141,7 @@ public class RtInconcistencyConditionGenerator {
 		mManagedScript = new ManagedScript(services, mScript);
 		mTrue = mScript.term("true");
 		mFalse = mScript.term("false");
+
 		mBoogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, services, false);
 		mVars = mBoogie2Smt.getBoogie2SmtSymbolTable().getGlobalsMap();
 		mSeparateInvariantHandling = separateInvariantHandling;
@@ -157,7 +158,6 @@ public class RtInconcistencyConditionGenerator {
 		mQuantifiedQuery = 0;
 		mQelimQuery = 0;
 		mCddToSmt = new CddToSmt(services, peaResultUtil, mScript, mBoogie2Smt, boogieDeclarations, mReqSymboltable);
-		mReqSymboltable.getConstVars();
 
 		if (mSeparateInvariantHandling) {
 			mPrimedInvariant = constructPrimedStateInvariant(req2Automata);
@@ -329,7 +329,8 @@ public class RtInconcistencyConditionGenerator {
 		final List<Term> inner = new ArrayList<>();
 		for (final Transition trans : phase.getTransitions()) {
 			final Term guardTerm = mCddToSmt.toSmt(trans.getGuard());
-			final Term primedStInv = mCddToSmt.toSmt(trans.getDest().getStateInvariant().prime());
+			final Term primedStInv =
+					mCddToSmt.toSmt(trans.getDest().getStateInvariant().prime(mReqSymboltable.getConstVars()));
 			final Term strictInv = mCddToSmt
 					.toSmt(new StrictInvariant().genStrictInv(trans.getDest().getClockInvariant(), trans.getResets()));
 			inner.add(SmtUtils.and(mScript, guardTerm, primedStInv, strictInv));
@@ -360,37 +361,37 @@ public class RtInconcistencyConditionGenerator {
 				// this is not an invariant we want to consider
 				continue;
 			}
-			primedStateInvariants.put(entry.getKey(), entry.getValue().getPhases()[0].getStateInvariant().prime());
+			primedStateInvariants.put(entry.getKey(),
+					entry.getValue().getPhases()[0].getStateInvariant().prime(mReqSymboltable.getConstVars()));
 		}
 
 		// prepare const equalities
-		final List<Term> constEqs = new ArrayList<>();
-		for (final String constVar : mReqSymboltable.getConstVars()) {
-			final Expression constvalue = mReqSymboltable.getConstValue(constVar);
-			final Term valTerm = getRational(constvalue);
-			final Term varTerm = mCddToSmt.getTermVarTerm(constVar);
-			final Term varPrimedTerm = mCddToSmt.getTermVarTerm(ReqSymboltable.getPrimedVarId(constVar));
-			final Term constEq = mScript.term("=", valTerm, varTerm);
-			final Term constPrimedEq = mScript.term("=", valTerm, varPrimedTerm);
-			constEqs.add(constEq);
-			constEqs.add(constPrimedEq);
-		}
-
-		final Term constEqsTerm = SmtUtils.and(mScript, constEqs);
+		// final List<Term> constEqs = new ArrayList<>();
+		// for (final String constVar : mReqSymboltable.getConstVars()) {
+		// final Expression constvalue = mReqSymboltable.getConstValue(constVar);
+		// final Term valTerm = getRational(constvalue);
+		// final Term varTerm = mCddToSmt.getTermVarTerm(constVar);
+		// final Term varPrimedTerm = mCddToSmt.getTermVarTerm(ReqSymboltable.getPrimedVarId(constVar));
+		// final Term constEq = mScript.term("=", valTerm, varTerm);
+		// final Term constPrimedEq = mScript.term("=", valTerm, varPrimedTerm);
+		// constEqs.add(constEq);
+		// constEqs.add(constPrimedEq);
+		// }
+		//
+		// final Term constEqsTerm = SmtUtils.and(mScript, constEqs);
 
 		final Term result;
 		final Map<PatternType, Term> terms;
 		if (primedStateInvariants.isEmpty()) {
-			result = constEqsTerm;
-			terms = Collections.emptyMap();
+			return mTrue;
 		} else if (primedStateInvariants.size() == 1) {
 			final Entry<PatternType, CDD> entry = primedStateInvariants.entrySet().iterator().next();
-			result = SmtUtils.and(mScript, mCddToSmt.toSmt(entry.getValue()), constEqsTerm);
+			result = mCddToSmt.toSmt(entry.getValue());
 			terms = Collections.singletonMap(entry.getKey(), result);
 		} else {
 			terms = primedStateInvariants.entrySet().stream()
 					.collect(Collectors.toMap(Entry::getKey, a -> mCddToSmt.toSmt(a.getValue())));
-			result = SmtUtils.and(mScript, constEqsTerm, SmtUtils.and(mScript, terms.values()));
+			result = SmtUtils.and(mScript, terms.values());
 		}
 		return handleInconsistentStateInvariant(terms, simplify(handleInconsistentStateInvariant(terms, result)));
 	}

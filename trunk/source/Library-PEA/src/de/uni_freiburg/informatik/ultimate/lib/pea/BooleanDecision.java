@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
+import java.util.Set;
 import java.util.Vector;
 
 /**
@@ -39,17 +40,18 @@ public class BooleanDecision extends Decision<BooleanDecision> {
 
 	public static final String PRIME_SUFFIX = "'";
 
-	private static Vector<String> allVars = new Vector<>();
+	private static Vector<String> sAllVars = new Vector<>();
 
 	private final String mVar;
 	private int mGlobalIdx = -1;
+	private BooleanDecision mPrimeCache;
 
 	public BooleanDecision(final String v) {
-		mGlobalIdx = allVars.indexOf(v);
+		mGlobalIdx = sAllVars.indexOf(v);
 
 		if (mGlobalIdx < 0) {
-			allVars.add(v);
-			mGlobalIdx = allVars.indexOf(v);
+			sAllVars.add(v);
+			mGlobalIdx = sAllVars.indexOf(v);
 		}
 
 		mVar = v;
@@ -107,41 +109,26 @@ public class BooleanDecision extends Decision<BooleanDecision> {
 		throw new UnsupportedOperationException();
 	}
 
-	private BooleanDecision primeCache;
-
 	@Override
-	public BooleanDecision prime() {
-		return this.prime(null);
-	}
-
-	@Override
-	public BooleanDecision prime(final String ignore) {
-		if (mVar.equals(ignore)) {
-			return this;
+	public BooleanDecision prime(final Set<String> ignoreIds) {
+		if (mPrimeCache != null) {
+			return mPrimeCache;
 		}
-		if (primeCache != null) {
-			return primeCache;
+		if (ignoreIds.contains(mVar)) {
+			return this;
 		}
 		final String decision = mVar.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + BooleanDecision.PRIME_SUFFIX);
 
-		primeCache = new BooleanDecision(decision);
-		return primeCache;
-	}
-
-	// by Ami
-	@Override
-	public BooleanDecision unprime() {
-		return this.unprime(null);
+		mPrimeCache = new BooleanDecision(decision);
+		return mPrimeCache;
 	}
 
 	@Override
-	public BooleanDecision unprime(final String ignore) {
-		if (mVar.equals(ignore)) {
+	public BooleanDecision unprime(final Set<String> ignoreIds) {
+		if (ignoreIds.contains(mVar)) {
 			return this;
 		}
-		final String result = mVar.replaceAll("([a-zA-Z_])(\\w*)" + BooleanDecision.PRIME_SUFFIX, "$1$2"); // SR
-																											// 2010-08-02
-
+		final String result = mVar.replaceAll("([a-zA-Z_])(\\w*)" + BooleanDecision.PRIME_SUFFIX, "$1$2");
 		return (new BooleanDecision(result));
 	}
 

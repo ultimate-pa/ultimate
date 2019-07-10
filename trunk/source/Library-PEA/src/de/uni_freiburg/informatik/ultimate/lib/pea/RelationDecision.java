@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.armc.ARMCWriter.ARMCString;
 
 /**
@@ -147,14 +149,14 @@ public class RelationDecision extends BooleanDecision {
 	}
 
 	@Override
-	public RelationDecision prime() {
+	public RelationDecision prime(final Set<String> ignoreIds) {
 		final String expr1 = leftExpr.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + BooleanDecision.PRIME_SUFFIX);
 		final String expr2 = rightExpr.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + BooleanDecision.PRIME_SUFFIX);
 		return (new RelationDecision(expr1, op, expr2));
 	}
 
 	@Override
-	public RelationDecision unprime() {
+	public RelationDecision unprime(final Set<String> ignoreIds) {
 		String expr1 = leftExpr;
 		String expr2 = rightExpr;
 		if (leftExpr.endsWith(PRIME_SUFFIX)) {

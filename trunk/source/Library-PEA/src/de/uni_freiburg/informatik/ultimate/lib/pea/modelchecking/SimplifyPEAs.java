@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -100,9 +101,9 @@ public class SimplifyPEAs {
 
 		if (children != null) {
 			if (formula.getDecision() instanceof EventDecision
-			        && (events == null || events.contains(((EventDecision) formula.getDecision()).getEvent()))) {
-				final CDD formulaWithoutEvents = removeEventDecisions(children[0], events)
-				        .or(removeEventDecisions(children[1], events));
+					&& (events == null || events.contains(((EventDecision) formula.getDecision()).getEvent()))) {
+				final CDD formulaWithoutEvents =
+						removeEventDecisions(children[0], events).or(removeEventDecisions(children[1], events));
 				return formulaWithoutEvents;
 			} else {
 				final CDD[] newChildren = new CDD[children.length];
@@ -192,8 +193,8 @@ public class SimplifyPEAs {
 				for (final Transition trans : phase.getTransitions()) {
 					if (allFinals.contains(trans.getDest())) {
 						if (trans.getGuard().assume(assumption) == CDD.TRUE
-						        && trans.getDest().getStateInvariant() == CDD.TRUE
-						        && trans.getDest().getClockInvariant() == CDD.TRUE) {
+								&& trans.getDest().getStateInvariant() == CDD.TRUE
+								&& trans.getDest().getClockInvariant() == CDD.TRUE) {
 							notVisited.add(trans.getSrc());
 						}
 					}
@@ -201,7 +202,7 @@ public class SimplifyPEAs {
 			}
 		}
 		return new PEATestAutomaton(pea.getName(), pea.getPhases(), pea.getInit(), pea.getClocks(), pea.getVariables(),
-		        pea.getDeclarations(), allFinals.toArray(new Phase[allFinals.size()]));
+				pea.getDeclarations(), allFinals.toArray(new Phase[allFinals.size()]));
 	}
 
 	/**
@@ -225,7 +226,7 @@ public class SimplifyPEAs {
 		int initCounter = 0, finalCounter = 0;
 		for (int i = 0; i < phases.length; i++) {
 			newPhases.put(phases[i], new Phase(phases[i].getName(), phases[i].getStateInvariant(),
-			        phases[i].getClockInvariant(), phases[i].getStoppedClocks()));
+					phases[i].getClockInvariant(), phases[i].getStoppedClocks()));
 			if (oldInit.contains(phases[i])) {
 				init[initCounter++] = newPhases.get(phases[i]);
 			}
@@ -306,13 +307,13 @@ public class SimplifyPEAs {
 					}
 					// System.out.println("(" + phases[i]+ ")adde Transition mit Guard: " + masterGuard);
 					phases[i].addTransition(newPhases.get(masterTransition.getDest()), masterGuard,
-					        masterTransition.getResets());
+							masterTransition.getResets());
 				}
 
 			} else {
 				for (final Transition transition : transitions) {
 					phases[i].addTransition(newPhases.get(transition.getDest()), transition.getGuard(),
-					        transition.getResets());
+							transition.getResets());
 				}
 			}
 		}
@@ -363,7 +364,7 @@ public class SimplifyPEAs {
 		final Element formula = (Element) guard.getFirstChild();
 
 		if (formula.getNodeName().equals(XMLTags.FORMULATREE_TAG)
-		        && formula.getAttribute(XMLTags.OPERATOR_TAG).equals(XMLTags.OR_CONST)) {
+				&& formula.getAttribute(XMLTags.OPERATOR_TAG).equals(XMLTags.OR_CONST)) {
 			final NodeList formulaChilds = formula.getChildNodes();
 			final int formulaChildCount = formulaChilds.getLength();
 			for (int j = 0; j < formulaChildCount; j++) {
@@ -415,8 +416,8 @@ public class SimplifyPEAs {
 		final ArrayList<Phase> newPhases = new ArrayList<>();
 		final ArrayList<Phase> newFinalPhases = new ArrayList<>();
 		final Set<Phase> initPhases = new HashSet<>(Arrays.asList(automaton.getInit()));
-		final HashSet<Phase> finalPhases = automaton.getFinalPhases() != null
-		        ? new HashSet<>(Arrays.asList(automaton.getFinalPhases())) : null;
+		final HashSet<Phase> finalPhases =
+				automaton.getFinalPhases() != null ? new HashSet<>(Arrays.asList(automaton.getFinalPhases())) : null;
 
 		// Maps the old phases to new phases.
 		final HashMap<Phase, Phase> oldnewPhases = new HashMap<>();
@@ -436,7 +437,7 @@ public class SimplifyPEAs {
 				// }
 			} else {
 				final Phase newPhase = new Phase(phases[i].getName(), phases[i].getStateInvariant(),
-				        phases[i].getClockInvariant(), phases[i].getStoppedClocks());
+						phases[i].getClockInvariant(), phases[i].getStoppedClocks());
 				newPhases.add(newPhase);
 				oldnewPhases.put(phases[i], newPhase);
 				if (initPhases.contains(phases[i])) {
@@ -483,19 +484,19 @@ public class SimplifyPEAs {
 						clockInv = clockInv.assume(clockReset);
 					}
 
-					curPhase.addTransition(newDest,
-					        trans.getGuard().and(trans.getDest().getStateInvariant().prime()).and(clockInv),
-					        trans.getResets());
+					curPhase.addTransition(newDest, trans.getGuard()
+							.and(trans.getDest().getStateInvariant().prime(Collections.emptySet())).and(clockInv),
+							trans.getResets());
 				} else {
 					curPhase.addTransition(newDest, trans.getGuard(), trans.getResets());
 				}
 			}
 		}
 
-		final PEATestAutomaton pta = new PEATestAutomaton(automaton.getName(),
-				newPhases.toArray(new Phase[newPhases.size()]), newInit.toArray(new Phase[newInit.size()]),
-				automaton.getClocks(), automaton.getVariables(), automaton.getDeclarations(),
-				newFinalPhases.toArray(new Phase[newFinalPhases.size()]));
+		final PEATestAutomaton pta =
+				new PEATestAutomaton(automaton.getName(), newPhases.toArray(new Phase[newPhases.size()]),
+						newInit.toArray(new Phase[newInit.size()]), automaton.getClocks(), automaton.getVariables(),
+						automaton.getDeclarations(), newFinalPhases.toArray(new Phase[newFinalPhases.size()]));
 
 		// pta.dump();
 
@@ -617,11 +618,11 @@ public class SimplifyPEAs {
 
 			// Compile model-check formula and generate the appropriate automata.
 			if (formulafile != null) {
-				final Compiler compiler = new Compiler(ILogger.getLogger(SimplifyPEAs.DEFAULT_LOGGER),false);
+				final Compiler compiler = new Compiler(ILogger.getLogger(SimplifyPEAs.DEFAULT_LOGGER), false);
 				final ArrayList<PEATestAutomaton[]> peanetList = compiler.compile(formulafile, "");
 				if (peanetList.size() > 1) {
 					simplifier.logger.warn("The disjuncts in the normal form have to be checked independently.\n"
-					        + "I will only check the first disjunct.");
+							+ "I will only check the first disjunct.");
 				}
 
 				final PEATestAutomaton[] formulaPEAs = peanetList.get(0);
@@ -787,15 +788,15 @@ public class SimplifyPEAs {
 
 		} catch (final ArgException e) {
 			System.out.println("\nUsage: java pea.modelchecking.SimplifyPEAs " + " [OPTIONS] input-file output-file\n\n"
-			        + "OPTIONS:\n" + "    -f, --formula-file file     " + "Specifies an XML-file with a DC-formula.\n"
-			        + "    -w, --write-ta file         " + "Specifies an additional output-file for the "
-			        + "testautomaton.\n" + "    -t, --tcs                   "
-			        + "Outputs TCS (XML version) instead of PEA.\n" + "    -a, --armc3                 "
-			        + "Outputs TCS (ARMC3 version) instead of PEA.\n" + "    -p, --preserve-names        "
-			        + "Preserves the names of the product states.\n" + "    -m, --merge-transitions     "
-			        + "Tries to simplify formulae on several transitions.\n" + "                                "
-			        + "May lead to smaller output but very inefficient.\n" + "    -v, --version               "
-			        + "Outputs version number and terminates.\n");
+					+ "OPTIONS:\n" + "    -f, --formula-file file     " + "Specifies an XML-file with a DC-formula.\n"
+					+ "    -w, --write-ta file         " + "Specifies an additional output-file for the "
+					+ "testautomaton.\n" + "    -t, --tcs                   "
+					+ "Outputs TCS (XML version) instead of PEA.\n" + "    -a, --armc3                 "
+					+ "Outputs TCS (ARMC3 version) instead of PEA.\n" + "    -p, --preserve-names        "
+					+ "Preserves the names of the product states.\n" + "    -m, --merge-transitions     "
+					+ "Tries to simplify formulae on several transitions.\n" + "                                "
+					+ "May lead to smaller output but very inefficient.\n" + "    -v, --version               "
+					+ "Outputs version number and terminates.\n");
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}

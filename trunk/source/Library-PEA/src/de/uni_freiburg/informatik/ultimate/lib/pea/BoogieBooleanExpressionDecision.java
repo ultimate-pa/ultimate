@@ -6,6 +6,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
@@ -68,27 +69,15 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 	}
 
 	@Override
-	public BoogieBooleanExpressionDecision prime() {
-		return prime(null);
-	}
-
-	@Override
-	public BoogieBooleanExpressionDecision unprime() {
-		return unprime(null);
-	}
-
-	@Override
-	public BoogieBooleanExpressionDecision unprime(final String ignore) {
-		final BoogieRemovePrimeIdentifierTransformer bpit = new BoogieRemovePrimeIdentifierTransformer();
-		bpit.setIgnore(ignore);
+	public BoogieBooleanExpressionDecision unprime(final Set<String> ignoredIds) {
+		final BoogieRemovePrimeIdentifierTransformer bpit = new BoogieRemovePrimeIdentifierTransformer(ignoredIds);
 		final Expression primed = bpit.processExpression(mExpression);
 		return new BoogieBooleanExpressionDecision(primed);
 	}
 
 	@Override
-	public BoogieBooleanExpressionDecision prime(final String ignore) {
-		final BoogiePrimeIdentifierTransformer bpit = new BoogiePrimeIdentifierTransformer();
-		bpit.setIgnore(ignore);
+	public BoogieBooleanExpressionDecision prime(final Set<String> ignoredIds) {
+		final BoogiePrimeIdentifierTransformer bpit = new BoogiePrimeIdentifierTransformer(ignoredIds);
 		final Expression primed = bpit.processExpression(mExpression);
 		return new BoogieBooleanExpressionDecision(primed);
 	}
@@ -224,26 +213,24 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 	 *
 	 */
 	private static final class BoogiePrimeIdentifierTransformer extends BoogieTransformer {
-		private String mIgnore;
 
-		public void setIgnore(final String ignore) {
-			if (ignore != null) {
-				mIgnore = ignore;
-			}
+		private final Set<String> mIgnoredIds;
+
+		private BoogiePrimeIdentifierTransformer(final Set<String> ignoredIds) {
+			mIgnoredIds = ignoredIds;
 		}
 
 		@Override
 		protected Expression processExpression(final Expression expr) {
 			if (expr instanceof IdentifierExpression) {
-				if (mIgnore != null && ((IdentifierExpression) expr).getIdentifier().equals(mIgnore)) {
+				final String id = ((IdentifierExpression) expr).getIdentifier();
+				if (mIgnoredIds.contains(id)) {
 					return expr;
 				}
-				return new IdentifierExpression(expr.getLocation(),
-						((IdentifierExpression) expr).getIdentifier().replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + "'"));
+				return new IdentifierExpression(expr.getLocation(), id.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + "'"));
 			}
 			return super.processExpression(expr);
 		}
-
 	}
 
 	/**
@@ -251,22 +238,21 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 	 *
 	 */
 	private static final class BoogieRemovePrimeIdentifierTransformer extends BoogieTransformer {
-		private String mIgnore;
 
-		public void setIgnore(final String ignore) {
-			if (ignore != null) {
-				mIgnore = ignore;
-			}
+		private final Set<String> mIgnoredIds;
+
+		private BoogieRemovePrimeIdentifierTransformer(final Set<String> ignoredIds) {
+			mIgnoredIds = ignoredIds;
 		}
 
 		@Override
 		protected Expression processExpression(final Expression expr) {
 			if (expr instanceof IdentifierExpression) {
-				if (mIgnore != null && ((IdentifierExpression) expr).getIdentifier().equals(mIgnore)) {
+				final String id = ((IdentifierExpression) expr).getIdentifier();
+				if (mIgnoredIds.contains(id)) {
 					return expr;
 				}
-				return new IdentifierExpression(expr.getLocation(),
-						((IdentifierExpression) expr).getIdentifier().replaceAll("([a-zA-Z_])(\\w*)" + "'", "$1$2"));
+				return new IdentifierExpression(expr.getLocation(), id.replaceAll("([a-zA-Z_])(\\w*)" + "'", "$1$2"));
 			}
 			return super.processExpression(expr);
 		}

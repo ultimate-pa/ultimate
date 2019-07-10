@@ -23,6 +23,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.lib.pea.util.z.PrimeVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.pea.util.z.ZTerm;
 import de.uni_freiburg.informatik.ultimate.lib.pea.util.z.ZWrapper;
@@ -95,30 +97,6 @@ public final class ZDecision extends Decision<ZDecision> {
 	@Override
 	public int hashCode() {
 		return mPredicate.hashCode();
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public ZDecision prime() {
-		// String decision = predicate.replaceAll("([a-zA-Z_])(\\w*)", "$1$2'");
-		String decision = mPredicate;
-
-		try {
-			// decision = OZUtils.computePrimedPredicate(predicate);
-			final ZTerm predTerm = ZWrapper.INSTANCE.predicateToTerm(mPredicate);
-			final PrimeVisitor visitor = new PrimeVisitor();
-			// PrimeVisitor visitor = new PrimeVisitor();
-			// //visitor.accept(predTerm.getTerm());
-			predTerm.getTerm().accept(visitor);
-
-			decision = ZWrapper.INSTANCE.termToUnicode(predTerm);
-		} catch (final ParseException e) {
-			e.printStackTrace();
-		} catch (final InstantiationException e) {
-			e.printStackTrace();
-		}
-
-		return new ZDecision(decision);
 	}
 
 	public String getPredicate() {
@@ -313,17 +291,31 @@ public final class ZDecision extends Decision<ZDecision> {
 	}
 
 	@Override
-	public ZDecision unprime(final String ignore) {
-		return this.unprime();
+	public ZDecision prime(final Set<String> ignoreIds) {
+		// TODO: Totally ignores all the parameters
+		// String decision = predicate.replaceAll("([a-zA-Z_])(\\w*)", "$1$2'");
+		String decision = mPredicate;
+
+		try {
+			// decision = OZUtils.computePrimedPredicate(predicate);
+			final ZTerm predTerm = ZWrapper.INSTANCE.predicateToTerm(mPredicate);
+			final PrimeVisitor visitor = new PrimeVisitor();
+			// PrimeVisitor visitor = new PrimeVisitor();
+			// //visitor.accept(predTerm.getTerm());
+			predTerm.getTerm().accept(visitor);
+
+			decision = ZWrapper.INSTANCE.termToUnicode(predTerm);
+		} catch (final ParseException e) {
+			e.printStackTrace();
+		} catch (final InstantiationException e) {
+			e.printStackTrace();
+		}
+
+		return new ZDecision(decision);
 	}
 
 	@Override
-	public ZDecision prime(final String ignore) {
-		return this.prime();
-	}
-
-	@Override
-	public ZDecision unprime() {
+	public ZDecision unprime(final Set<String> ignoreIds) {
 		// String decision = predicate.replaceAll("([a-zA-Z_])(\\w*)", "$1$2'");
 		String decision = mPredicate;
 

@@ -106,22 +106,12 @@ public class EventDecision extends Decision<EventDecision> {
 	}
 
 	@Override
-	public EventDecision prime() {
+	public EventDecision prime(final Set<String> ignoreIds) {
 		return this;
 	}
 
 	@Override
-	public EventDecision unprime() {
-		return this;
-	}
-
-	@Override
-	public EventDecision prime(final String ignore) {
-		return this;
-	}
-
-	@Override
-	public EventDecision unprime(final String ignore) {
+	public EventDecision unprime(final Set<String> ignoreIds) {
 		return this;
 	}
 

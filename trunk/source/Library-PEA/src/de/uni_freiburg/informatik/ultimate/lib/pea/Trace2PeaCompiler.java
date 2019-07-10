@@ -58,8 +58,6 @@ public class Trace2PeaCompiler {
 	private static final String FINAL = "FINAL";
 	private static final String START = "START";
 
-	private static final String DEFAULT_LOGGER = "Trace2PEACompiler";
-
 	private ILogger mLogger = null;
 
 	private String mName;
@@ -90,31 +88,24 @@ public class Trace2PeaCompiler {
 
 	/* for ARMC export */
 	private HashMap<Transition, PhaseBits> mTrans2phases;
+	private final Set<String> mConstantIds;
 
 	/**
-	 * Initialises the Trace2PEACompiler object. Takes as parameter a string that defines the loggername for the built
-	 * in log4j logger. If the string is empty, the default name <code>Trace2PEACompiler</code> is used. An application
-	 * using a Trace2PEACompiler object has to make sure that the logger is initialised via
-	 * <code>PropertyConfigurator.configure()</code>.
+	 * Initializes the Trace2PEACompiler object.
 	 *
-	 * @param loggerName
-	 * @see ILogger
-	 * @see PropertyConfigurator
 	 */
-	public Trace2PeaCompiler(final ILogger logger, final String loggerName) {
+	public Trace2PeaCompiler(final ILogger logger, final Set<String> constantIds) {
 		mLogger = logger;
 
 		mAllPhases = new TreeMap<>();
 		mTodo = new LinkedList<>();
 
 		mTrans2phases = new HashMap<>();
+		mConstantIds = constantIds;
 	}
 
-	/**
-	 * Initialises the Trace2PEACompiler object with the default logger.
-	 */
 	public Trace2PeaCompiler(final ILogger logger) {
-		this(logger, Trace2PeaCompiler.DEFAULT_LOGGER);
+		this(logger, Collections.emptySet());
 	}
 
 	/**
@@ -411,7 +402,7 @@ public class Trace2PeaCompiler {
 			mAllPhases.put(destBits, dest);
 			mTodo.add(destBits);
 		}
-		guard = guard.assume(dest.getStateInvariant().prime());
+		guard = guard.assume(dest.getStateInvariant().prime(mConstantIds));
 		guard = guard.assume(src.getClockInvariant());
 
 		mLogger.debug("Creating transition to destination phase");
@@ -453,7 +444,7 @@ public class Trace2PeaCompiler {
 	 */
 	private void recursiveBuildTrans(final PhaseBits srcBits, final Phase src, final CDD guard, CDD stateInv,
 			final String[] resets, final int active, final int waiting, final int exactbound, final int p) {
-		if (guard.and(stateInv.prime()) == CDD.FALSE) {
+		if (guard.and(stateInv.prime(mConstantIds)) == CDD.FALSE) {
 			return;
 		}
 		mLogger.debug("recursiveBuildTrans: " + srcBits + "->" + new PhaseBits(active, exactbound, waiting) + " (" + p
@@ -492,8 +483,8 @@ public class Trace2PeaCompiler {
 			/*
 			 * Make sure that the phase can neither be kept nor entered.
 			 */
-			final CDD leave = guard
-					.and(mCEnter[p].or(mCKeep[p]).and(mCountertrace.getPhases()[p].getInvariant().prime()).negate());
+			final CDD leave = guard.and(mCEnter[p].or(mCKeep[p])
+					.and(mCountertrace.getPhases()[p].getInvariant().prime(mConstantIds)).negate());
 			if (leave != CDD.FALSE) {
 				recursiveBuildTrans(srcBits, src, leave, stateInv, resets, active, waiting, exactbound, p + 1);
 			}
@@ -690,7 +681,7 @@ public class Trace2PeaCompiler {
 
 			mLogger.debug("Trying to add transitions from start state");
 			start = new Phase(Trace2PeaCompiler.START + "_" + mName, CDD.TRUE, CDD.TRUE);
-			start.addTransition(start, mNoSyncEvent.prime(), new String[0]);
+			start.addTransition(start, mNoSyncEvent.prime(mConstantIds), new String[0]);
 			for (int i = 0; i < mCountertrace.getPhases().length; i++) {
 				if ((mCanPossiblySeep & 1 << i) == 0) {
 					break;
@@ -741,9 +732,9 @@ public class Trace2PeaCompiler {
 					 * only if the predicate of the first phase does not hold.
 					 */
 					start = new Phase("stinit", mCountertrace.getPhases()[0].getInvariant().negate(), CDD.TRUE);
-					start.addTransition(trans.dest, mNoSyncEvent.prime(), new String[0]);
+					start.addTransition(trans.dest, mNoSyncEvent.prime(mConstantIds), new String[0]);
 					/* for completeness add stutter-step edge */
-					start.addTransition(start, mNoSyncEvent.prime(), new String[0]);
+					start.addTransition(start, mNoSyncEvent.prime(mConstantIds), new String[0]);
 					mInit[i] = start;
 				} else {
 					/*
@@ -857,7 +848,7 @@ public class Trace2PeaCompiler {
 	private Phase buildExitSyncTransitions() {
 		final Phase exit = new Phase(Trace2PeaCompiler.FINAL + "_" + mName, CDD.TRUE, CDD.TRUE);
 		final String[] noResets = {};
-		exit.addTransition(exit, mNoSyncEvent.prime(), noResets);
+		exit.addTransition(exit, mNoSyncEvent.prime(mConstantIds), noResets);
 
 		CDD exitGuard = mExitSync;
 		if (mEntrySync != null) {
@@ -874,7 +865,7 @@ public class Trace2PeaCompiler {
 				guard = guard.negate();
 			}
 			if (guard != CDD.FALSE) {
-				final Transition t = ph.addTransition(exit, guard.and(exitGuard).prime(), noResets);
+				final Transition t = ph.addTransition(exit, guard.and(exitGuard).prime(mConstantIds), noResets);
 				mTrans2phases.put(t, new PhaseBits(0, 0, 0));
 			}
 		}

@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
@@ -633,11 +634,7 @@ public final class CDD {
 		return mDecision;
 	}
 
-	public CDD prime() {
-		return this.prime(null);
-	}
-
-	public CDD prime(final String ignore) {
+	public CDD prime(final Set<String> ignoredIds) {
 		if ((this == CDD.TRUE) || (this == CDD.FALSE)) {
 			return this;
 		}
@@ -652,10 +649,10 @@ public final class CDD {
 		final CDD[] newChildren = new CDD[children.length];
 
 		for (int i = 0; i < children.length; i++) {
-			newChildren[i] = children[i].prime();
+			newChildren[i] = children[i].prime(ignoredIds);
 		}
 
-		newDecision = ldecision.prime(ignore);
+		newDecision = ldecision.prime(ignoredIds);
 
 		mPrimeCache = CDD.create(newDecision, newChildren);
 		return mPrimeCache;
@@ -670,11 +667,7 @@ public final class CDD {
 				&& ((getChilds()[1] == CDD.TRUE) || (getChilds()[1] == CDD.FALSE));
 	}
 
-	public CDD unprime() {
-		return this.unprime(null);
-	}
-
-	public CDD unprime(final String ignore) {
+	public CDD unprime(final Set<String> ignoredIds) {
 		if ((this == CDD.TRUE) || (this == CDD.FALSE)) {
 			return this;
 		}
@@ -687,10 +680,10 @@ public final class CDD {
 
 		for (int i = 0; i < children.length; i++) {
 
-			newChildren[i] = children[i].unprime();
+			newChildren[i] = children[i].unprime(ignoredIds);
 		}
 
-		newDecision = decision.unprime(ignore);
+		newDecision = decision.unprime(ignoredIds);
 
 		return CDD.create(newDecision, newChildren);
 	}
