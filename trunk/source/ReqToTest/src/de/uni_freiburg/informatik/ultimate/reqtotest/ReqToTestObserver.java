@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.GraphToBoogie;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
-import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.reqtotest.req.Req2TestReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToDeclarations;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToInOut;
@@ -62,7 +62,7 @@ public class ReqToTestObserver extends BaseObserver {
 		}
 
 		final List<PatternType> rawPatterns = ((ObjectContainer<List<PatternType>>) root).getValue();
-		final ReqSymbolTable reqSymbolTable = new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
+		final Req2TestReqSymbolTable reqSymbolTable = new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
 		final BoogieDeclarations boogieDeclarations =
 				new BoogieDeclarations(reqSymbolTable.constructVariableDeclarations(), mLogger);
 		final Boogie2SMT boogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, mServices, false);

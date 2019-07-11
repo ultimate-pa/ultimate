@@ -29,7 +29,8 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		if (!(root instanceof ObjectContainer)) {
 			return false;
 		}
-		final List<PatternType> rawPatterns = (List<PatternType>) ((ObjectContainer) root).getValue();
+		@SuppressWarnings("unchecked")
+		final List<PatternType> rawPatterns = (List<PatternType>) ((ObjectContainer<?>) root).getValue();
 
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			return false;

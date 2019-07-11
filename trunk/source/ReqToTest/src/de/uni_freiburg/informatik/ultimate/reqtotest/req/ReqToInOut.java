@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 public class ReqToInOut {
 	
 	private final ILogger mLogger;
-	private final ReqSymbolTable mReqSymbolTable;
+	private final Req2TestReqSymbolTable mReqSymbolTable;
 
 	private final CddToSmt mCddToSmt;
 
@@ -34,7 +34,7 @@ public class ReqToInOut {
 	
 	private final boolean UNIVERSALITY_IS_DEFINITNG = false;
 	
-	public ReqToInOut(final ILogger logger, final ReqSymbolTable reqSymbolExpressionTable, CddToSmt cddToSmt){
+	public ReqToInOut(final ILogger logger, final Req2TestReqSymbolTable reqSymbolExpressionTable, CddToSmt cddToSmt){
 		mLogger = logger;
 		mReqSymbolTable = reqSymbolExpressionTable;
 		mCddToSmt = cddToSmt;

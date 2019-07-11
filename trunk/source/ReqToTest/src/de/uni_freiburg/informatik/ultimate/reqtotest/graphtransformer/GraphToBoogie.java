@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Express
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
-import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.reqtotest.req.Req2TestReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.TimedLabel;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -60,7 +60,7 @@ public class GraphToBoogie {
 	public static final String TEST_ORACLE_MARKER = "TEST_ORACLE_MARKER";
 		
 	private final ILogger mLogger;
-	private final ReqSymbolTable mSymbolTable;
+	private final Req2TestReqSymbolTable mSymbolTable;
 	
 	private final BoogieLocation mDummyLocation;
 	private final List<ReqGuardGraph> mRequirements;
@@ -75,7 +75,7 @@ public class GraphToBoogie {
 	private final AuxVarGen mThreeValuedAuxVarGen;
 	
 	public GraphToBoogie(final ILogger logger, final IUltimateServiceProvider services,
-			ReqSymbolTable symbolTable,  AuxVarGen threeValuedAuxVarGen, List<ReqGuardGraph> requirements,
+			Req2TestReqSymbolTable symbolTable,  AuxVarGen threeValuedAuxVarGen, List<ReqGuardGraph> requirements,
 			Script scipt, ManagedScript managedScipt) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;

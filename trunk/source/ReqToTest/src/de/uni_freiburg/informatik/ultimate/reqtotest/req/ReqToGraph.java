@@ -30,7 +30,7 @@ public class ReqToGraph {
 	private final ILogger mLogger;
 	
 	private final CddToSmt mCddToSmt;
-	private final ReqSymbolTable mReqSymbolTable;
+	private final Req2TestReqSymbolTable mReqSymbolTable;
 
 	private final AuxVarGen mThreeValuedAuxVarGen;
 	private final Script mScript;
@@ -40,7 +40,7 @@ public class ReqToGraph {
 	private final boolean UNIVERSALITY_IS_DEFINITNG = false;
 	
 	public ReqToGraph(final ILogger logger, AuxVarGen threeValuedAuxVarGen, Script script, CddToSmt cddToSmt,
-			ReqSymbolTable reqSymbolTable){
+			Req2TestReqSymbolTable reqSymbolTable){
 		mLogger = logger;
 		mThreeValuedAuxVarGen = threeValuedAuxVarGen;
 		mCddToSmt = cddToSmt;

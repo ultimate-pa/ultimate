@@ -270,9 +270,7 @@ public class Trace2PeaCompiler {
 				/*
 				 * We can only keep the state if event is not in forbid set.
 				 */
-				@SuppressWarnings("unchecked")
-				final Set<String> empty = Collections.EMPTY_SET;
-				@SuppressWarnings("unchecked")
+				final Set<String> empty = Collections.emptySet();
 				final Set<String> forbid = mCountertrace.getPhases()[p].getForbid();
 				final CDD atom = EventDecision.create(empty, forbid);
 				mKeep[p] = mKeep[p].and(atom);

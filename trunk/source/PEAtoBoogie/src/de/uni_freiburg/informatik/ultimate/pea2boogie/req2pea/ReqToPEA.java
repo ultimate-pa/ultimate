@@ -26,36 +26,78 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConverter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder.TypeErrorInfo;
 
 public class ReqToPEA {
 	private static final boolean ENABLE_DEBUG_LOGS = false;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final PeaResultUtil mResult;
+	private final Set<String> mConstIds;
+	private final Map<PatternType, PhaseEventAutomata> mPattern2Peas;
+	private final IReqSymbolTable mSymbolTable;
+	private final Map<String, TypeErrorInfo> mTypeErrors;
 
-	public ReqToPEA(final IUltimateServiceProvider services, final ILogger logger) {
+	public ReqToPEA(final IUltimateServiceProvider services, final ILogger logger,
+			final List<InitializationPattern> init, final List<PatternType> requirements,
+			final Map<String, Integer> id2bounds) {
 		mLogger = logger;
 		mServices = services;
 		mResult = new PeaResultUtil(mLogger, mServices);
+
+		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
+
+		for (final PatternType pattern : init) {
+			if (pattern instanceof InitializationPattern) {
+				builder.addInitPattern((InitializationPattern) pattern);
+			}
+		}
+
+		mConstIds = builder.getConstIds();
+		mPattern2Peas = generatePeas(requirements, id2bounds);
+
+		for (final Entry<PatternType, PhaseEventAutomata> entry : mPattern2Peas.entrySet()) {
+			builder.addPea(entry.getKey(), entry.getValue());
+		}
+
+		mSymbolTable = builder.constructSymbolTable();
+		mTypeErrors = builder.getTypeErrors();
 	}
 
-	public Map<PatternType, PhaseEventAutomata> genPEA(final List<PatternType> patterns,
+	public Map<PatternType, PhaseEventAutomata> getPattern2Peas() {
+		return Collections.unmodifiableMap(mPattern2Peas);
+	}
+
+	public IReqSymbolTable getSymboltable() {
+		return mSymbolTable;
+	}
+
+	public Map<String, TypeErrorInfo> getTypeErrors() {
+		return mTypeErrors;
+	}
+
+	private Map<PatternType, PhaseEventAutomata> generatePeas(final List<PatternType> patterns,
 			final Map<String, Integer> id2bounds) {
 		final Map<PatternType, PhaseEventAutomata> req2automata = new LinkedHashMap<>();
-		final PatternToPEA peaTrans = new PatternToPEA(mLogger);
+		final PatternToPEA peaTrans = new PatternToPEA(mLogger, mConstIds);
 		mLogger.info(String.format("Transforming %s requirements to PEAs", patterns.size()));
 
 		final Map<Class<?>, Integer> counter = new HashMap<>();
@@ -99,7 +141,7 @@ public class ReqToPEA {
 
 		PhaseEventAutomata pea = null;
 
-		final PatternToPEA peaTrans = new PatternToPEA(mLogger);
+		final PatternToPEA peaTrans = new PatternToPEA(mLogger, mConstIds);
 
 		for (final PatternType pat : patterns) {
 			if (pea == null) {
@@ -117,4 +159,5 @@ public class ReqToPEA {
 		final J2UPPAALConverter uppaalConverter = new J2UPPAALConverter();
 		uppaalConverter.writePEA2UppaalFile(xmlFilePath, pea);
 	}
+
 }

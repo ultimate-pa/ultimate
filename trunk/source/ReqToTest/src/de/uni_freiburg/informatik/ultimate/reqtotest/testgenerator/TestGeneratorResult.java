@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ReqGraphAnnotation;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ReqGraphOracleAnnotation;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
-import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.reqtotest.req.Req2TestReqSymbolTable;
 
 public class TestGeneratorResult implements IResult  {
 	
@@ -29,11 +29,11 @@ public class TestGeneratorResult implements IResult  {
 	private final List<List<ReqGraphAnnotation>> mStepsAnnotations;
 	private final List<Map<ReqGuardGraph, DirectTriggerDependency>> mDependenciesGraphNodes = new ArrayList<>();
 	private final AuxVarGen mAuxVarGen;
-	private final ReqSymbolTable mReqSymbolTable;
+	private final Req2TestReqSymbolTable mReqSymbolTable;
 	private final ReqGraphOracleAnnotation mOracleAnnotation;
 	
 	public TestGeneratorResult (ILogger logger, List<SystemState> testStates, List<List<ReqGraphAnnotation>> stepsAnnotations, 
-			ReqGraphOracleAnnotation oracleAnnotation, ReqSymbolTable reqSymbolTable, AuxVarGen auxVarGen) {
+			ReqGraphOracleAnnotation oracleAnnotation, Req2TestReqSymbolTable reqSymbolTable, AuxVarGen auxVarGen) {
 		mTestStates = testStates;
 		mStepsAnnotations = stepsAnnotations;
 		mAuxVarGen = auxVarGen;

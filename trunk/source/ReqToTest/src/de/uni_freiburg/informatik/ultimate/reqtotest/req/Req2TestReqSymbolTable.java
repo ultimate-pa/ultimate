@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
@@ -34,40 +35,40 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ITerm2ExpressionSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolExpressionTable;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.FakeBoogieVar;
 
-public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2ExpressionSymbolTable{
-	
+public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2ExpressionSymbolTable {
+
 	private static final Attribute[] EMPTY_ATTRIBUTES = new Attribute[0];
 
 	private final Map<String, BoogieType> mId2Type;
 	private final Map<String, IdentifierExpression> mId2IdExpr;
 	private final Map<String, Expression> mConst2Val;
-	
+
 	private final ILogger mLogger;
-	
+
 	private final Set<String> mStateVars;
 	private final Set<String> mConstVars;
-	
+
 	private final Set<String> mInputVars;
 	private final Set<String> mHiddenVars;
 	private final Set<String> mOutputVars;
 	private final Set<String> mAuxVars;
 	private final Set<String> mClockVars;
-	
+
 	private final ILocation mDummyLocation;
-	
-	public ReqSymbolTable(final ILogger logger) {
+
+	public Req2TestReqSymbolTable(final ILogger logger) {
 		mId2Type = new LinkedHashMap<>();
 		mId2IdExpr = new LinkedHashMap<>();
 		mConst2Val = new LinkedHashMap<>();
 
 		mLogger = logger;
-		
+
 		mStateVars = new LinkedHashSet<>();
 		mConstVars = new LinkedHashSet<>();
-		
+
 		mInputVars = new LinkedHashSet<>();
 		mHiddenVars = new LinkedHashSet<>();
 		mOutputVars = new LinkedHashSet<>();
@@ -76,7 +77,7 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 
 		mDummyLocation = new BoogieLocation("", -1, -1, -1, -1);
 	}
-	
+
 	public List<Declaration> constructVariableDeclarations() {
 		final List<Declaration> decls = new ArrayList<>();
 
@@ -87,69 +88,71 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 
 		return decls;
 	}
-	
-	public boolean isConstVar(String e) {
+
+	public boolean isConstVar(final String e) {
 		return mConstVars.contains(e);
 	}
-	
-	public boolean isInput(String e) {
+
+	public boolean isInput(final String e) {
 		return mInputVars.contains(e);
 	}
-	
-	public boolean isObservable(String e) {
+
+	public boolean isObservable(final String e) {
 		return isInput(e) || isOutput(e);
 	}
-	
-	public boolean isAuxVar(String v) {
+
+	public boolean isAuxVar(final String v) {
 		return mAuxVars.contains(v);
 	}
-	
-	public Set<String> getHiddenVars(){
+
+	public Set<String> getHiddenVars() {
 		return mHiddenVars;
 	}
-	
-	public Set<String> getOutputVars(){
+
+	public Set<String> getOutputVars() {
 		return mOutputVars;
 	}
-	
-	public Set<String> getInputVars(){
+
+	public Set<String> getInputVars() {
 		return mInputVars;
 	}
-	
-	public Set<String> getConstVars(){
+
+	@Override
+	public Set<String> getConstVars() {
 		return mConstVars;
 	}
-	
-	public Set<String> getAuxVars(){
+
+	public Set<String> getAuxVars() {
 		return mAuxVars;
 	}
-	
-	public Set<String> getClockVars(){
+
+	@Override
+	public Set<String> getClockVars() {
 		return mClockVars;
 	}
-	
-	public boolean isOutput(String ident) {
+
+	public boolean isOutput(final String ident) {
 		return mOutputVars.contains(ident);
 	}
-	
-	public void updateVariableCategoryInput(String name) {
+
+	public void updateVariableCategoryInput(final String name) {
 		mInputVars.add(name);
 		mOutputVars.remove(name);
 		mHiddenVars.remove(name);
 	}
-	
-	public void updateVariableCategoryOutput(String name) {
+
+	public void updateVariableCategoryOutput(final String name) {
 		mInputVars.remove(name);
 		mOutputVars.add(name);
 		mHiddenVars.remove(name);
 	}
-	
-	public void updateVariableCategoryHidden(String name) {
+
+	public void updateVariableCategoryHidden(final String name) {
 		mInputVars.remove(name);
 		mOutputVars.remove(name);
 		mHiddenVars.add(name);
 	}
-	
+
 	public void extractVariablesFromInit(final InitializationPattern init) {
 		final BoogiePrimitiveType type = toPrimitiveType(init.getType());
 		final String name = init.getId();
@@ -160,35 +163,35 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		if (init.getCategory() == VariableCategory.CONST) {
 			addVar(name, type, init, mConstVars);
 			mConst2Val.put(name, init.getExpression());
-		} else if (init.getCategory() == VariableCategory.IN){
+		} else if (init.getCategory() == VariableCategory.IN) {
 			addVar(name, type, init, mStateVars);
 			mInputVars.add(name);
-		} else if (init.getCategory() == VariableCategory.OUT){
+		} else if (init.getCategory() == VariableCategory.OUT) {
 			addVar(name, type, init, mStateVars);
 			mOutputVars.add(name);
-		} else if (init.getCategory() == VariableCategory.HIDDEN){
+		} else if (init.getCategory() == VariableCategory.HIDDEN) {
 			addVar(name, type, init, mStateVars);
 			mHiddenVars.add(name);
-		} 
+		}
 	}
-	
+
 	public List<Statement> constructConstantAssignments() {
 		final List<Statement> assignments = new ArrayList<>();
-		for(String name: mConstVars) {
-			assignments.add(new AssignmentStatement(mDummyLocation, 
-					new VariableLHS[] {new VariableLHS(mDummyLocation, name)}, new Expression[] {mConst2Val.get(name)}));
+		for (final String name : mConstVars) {
+			assignments.add(
+					new AssignmentStatement(mDummyLocation, new VariableLHS[] { new VariableLHS(mDummyLocation, name) },
+							new Expression[] { mConst2Val.get(name) }));
 		}
 		return assignments;
-		
+
 	}
-	
+
 	private List<Declaration> constructVariableDeclarations(final Collection<String> identifiers) {
 		final List<? extends VarList> varlist = constructVarLists(identifiers);
 		return varlist.stream()
 				.map(a -> new VariableDeclaration(a.getLocation(), EMPTY_ATTRIBUTES, new VarList[] { a }))
 				.collect(Collectors.toList());
 	}
-	
 
 	private List<? extends VarList> constructVarLists(final Collection<String> identifiers) {
 		if (identifiers.isEmpty()) {
@@ -196,7 +199,7 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		}
 		return identifiers.stream().map(this::constructVarlist).filter(a -> a != null).collect(Collectors.toList());
 	}
-	
+
 	private VarList constructVarlist(final String identifier) {
 		final BoogieType type = mId2Type.get(identifier);
 		final IdentifierExpression idExpr = mId2IdExpr.get(identifier);
@@ -205,8 +208,7 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		}
 		return new VarList(idExpr.getLocation(), new String[] { identifier }, type.toASTType(idExpr.getLocation()));
 	}
-	
-	
+
 	private static BoogiePrimitiveType toPrimitiveType(final String type) {
 		switch (type.toLowerCase()) {
 		case "bool":
@@ -219,17 +221,17 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 			return BoogieType.TYPE_ERROR;
 		}
 	}
-	
+
 	public void addAuxVar(final String name, final BoogieType type) {
 		mAuxVars.add(name);
-		addVar(name,type);
+		addVar(name, type);
 	}
-	
+
 	public void addClockVar(final String name, final BoogieType type) {
 		mClockVars.add(name);
-		addVar(name,type);
+		addVar(name, type);
 	}
-	
+
 	private void addVar(final String name, final BoogieType type, final PatternType source, final Set<String> kind) {
 		if (type == null && (!kind.contains(name) || !mId2Type.containsKey(name))) {
 			throw new AssertionError();
@@ -237,13 +239,13 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		if (kind != null) {
 			kind.add(name);
 		}
-		addVar(name,type);
+		addVar(name, type);
 	}
-	
+
 	private void addVar(final String name, final BoogieType type) {
 		final BoogieType old = mId2Type.put(name, type);
 		if (old != null && old != type) {
-			//addTypeError(name, new TypeErrorInfo(TypeErrorType.DUPLICATE_DECLARATION, source));
+			// addTypeError(name, new TypeErrorInfo(TypeErrorType.DUPLICATE_DECLARATION, source));
 			mId2Type.put(name, BoogieType.TYPE_ERROR);
 			return;
 		}
@@ -252,23 +254,22 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		mId2IdExpr.put(name, idExpr);
 	}
-	
 
 	@Override
-	public IdentifierExpression getIdentifierExpression(String name) {
+	public IdentifierExpression getIdentifierExpression(final String name) {
 		return mId2IdExpr.get(name);
 	}
 
 	@Override
-	public BoogieConst getProgramConst(ApplicationTerm term) {
+	public BoogieConst getProgramConst(final ApplicationTerm term) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public IProgramVar getProgramVar(TermVariable term) {
+	public IProgramVar getProgramVar(final TermVariable term) {
 		// According to interface specification null is always correct as every variable is a global one.
-		return new FakeBoogieVar(mId2Type.get(term.getName()), term.getName()); 
+		return new FakeBoogieVar(mId2Type.get(term.getName()), term.getName());
 	}
 
 	@Override
@@ -278,12 +279,72 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 	}
 
 	@Override
-	public ILocation getLocation(IProgramVar pv) {
+	public ILocation getLocation(final IProgramVar pv) {
 		return mDummyLocation;
 	}
 
 	@Override
-	public DeclarationInformation getDeclarationInformation(IProgramVar pv) {
+	public DeclarationInformation getDeclarationInformation(final IProgramVar pv) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getPcName(final PhaseEventAutomata automaton) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Set<String> getPrimedVars() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Set<String> getEventVars() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getDeltaVarName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public VariableLHS getVariableLhs(final String clockVar) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Collection<String> getStateVars() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getPrimedVarId(final String stateVar) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Collection<? extends String> getPcVars() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Collection<? extends Declaration> getDeclarations() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Map<PatternType, BoogieLocation> getLocations() {
 		// TODO Auto-generated method stub
 		return null;
 	}

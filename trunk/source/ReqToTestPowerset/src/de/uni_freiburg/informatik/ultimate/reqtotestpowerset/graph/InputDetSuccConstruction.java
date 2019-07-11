@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.reqtotest.req.Req2TestReqSymbolTable;
 
 public class InputDetSuccConstruction {
 	private final Script mScript;
@@ -35,7 +35,7 @@ public class InputDetSuccConstruction {
 	private SearchGraphTable mSGTable;
 	
 	public InputDetSuccConstruction(ManagedScript managedScript, IUltimateServiceProvider services,
-			ILogger logger, GuardGraph powersetAuto, Script script, ReqSymbolTable symboltable) {
+			ILogger logger, GuardGraph powersetAuto, Script script, Req2TestReqSymbolTable symboltable) {
 		mManagedScript = managedScript;
 		mServices = services;
 		mLogger = logger;
@@ -91,7 +91,7 @@ public class InputDetSuccConstruction {
 	}
 	
 	// mon1 : I and J and ....
-	private Set<Term> createMonomials(ReqSymbolTable sbt) {
+	private Set<Term> createMonomials(Req2TestReqSymbolTable sbt) {
 		HashMap<String, Set<Term>> inVarToTerms = inVarToTermMap(sbt.getInputVars());
 		Set<Term> result = new HashSet<>();
 		Set<Term> oldRes = new HashSet<>();

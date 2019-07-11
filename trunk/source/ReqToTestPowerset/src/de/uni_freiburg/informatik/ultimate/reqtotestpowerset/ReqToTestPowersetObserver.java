@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
-import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.reqtotest.req.Req2TestReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToDeclarations;
 import de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph.BuchiGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotestpowerset.graph.GuardGraph;
@@ -52,7 +52,7 @@ public class ReqToTestPowersetObserver extends BaseObserver {
 		}
 
 		final List<PatternType> rawPatterns = ((ObjectContainer<List<PatternType>>) root).getValue();
-		final ReqSymbolTable symbolTable = new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
+		final Req2TestReqSymbolTable symbolTable = new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
 		final BoogieDeclarations boogieDeclarations =
 				new BoogieDeclarations(symbolTable.constructVariableDeclarations(), mLogger);
 		final Boogie2SMT boogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, mServices, false);

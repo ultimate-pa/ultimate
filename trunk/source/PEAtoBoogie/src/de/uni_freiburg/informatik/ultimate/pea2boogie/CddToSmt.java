@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie;
 
-import java.util.Map;
-
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -49,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.SingleTermResult;
@@ -66,22 +65,20 @@ public class CddToSmt {
 	private final Script mScript;
 	private final Term mTrue;
 	private final Term mFalse;
-	private final Map<String, IProgramNonOldVar> mVars;
 	private final IIdentifierTranslator[] mIdentifierTranslators;
-	private final IReqSymbolExpressionTable mBoogieSymboltable;
+	private final IReqSymbolTable mReqSymboltable;
 	private final Boogie2SMT mBoogieToSmt;
 	private final PeaResultUtil mResultUtil;
 
-	public CddToSmt(final IUltimateServiceProvider services, final PeaResultUtil resultUtil,
-			final Script script, final Boogie2SMT boogieToSmt, final BoogieDeclarations boogieDeclarations,
-			final IReqSymbolExpressionTable symboltable) {
+	public CddToSmt(final IUltimateServiceProvider services, final PeaResultUtil resultUtil, final Script script,
+			final Boogie2SMT boogieToSmt, final BoogieDeclarations boogieDeclarations,
+			final IReqSymbolTable symboltable) {
 		mScript = script;
 		mTrue = mScript.term("true");
 		mFalse = mScript.term("false");
 		mBoogieToSmt = boogieToSmt;
-		mVars = mBoogieToSmt.getBoogie2SmtSymbolTable().getGlobalsMap();
 		mIdentifierTranslators = new IIdentifierTranslator[] { this::getSmtIdentifier };
-		mBoogieSymboltable = symboltable;
+		mReqSymboltable = symboltable;
 		mResultUtil = resultUtil;
 	}
 
@@ -227,15 +224,23 @@ public class CddToSmt {
 	}
 
 	public Term getTermVarTerm(final String name) {
-		final IProgramNonOldVar termVar = mVars.get(name);
-		return termVar.getTerm();
+		final IProgramNonOldVar programVar = mBoogieToSmt.getBoogie2SmtSymbolTable().getGlobalsMap().get(name);
+		if (programVar != null) {
+			return programVar.getTerm();
+		}
+
+		final BoogieConst programConst = mBoogieToSmt.getBoogie2SmtSymbolTable().getConstsMap().get(name);
+		if (programConst != null) {
+			return programConst.getTerm();
+		}
+		throw new AssertionError("Unknown symbol " + name);
 	}
 
 	private final class AddDeclarationInformationToIdentifiers extends GeneratedBoogieAstTransformer {
 
 		@Override
 		public Expression transform(final IdentifierExpression node) {
-			return mBoogieSymboltable.getIdentifierExpression(node.getIdentifier());
+			return mReqSymboltable.getIdentifierExpression(node.getIdentifier());
 		}
 
 	}

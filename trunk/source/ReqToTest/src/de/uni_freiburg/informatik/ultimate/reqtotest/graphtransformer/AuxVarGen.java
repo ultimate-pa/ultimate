@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
-import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.reqtotest.req.Req2TestReqSymbolTable;
 
 public class AuxVarGen {
 	
@@ -30,7 +30,7 @@ public class AuxVarGen {
 	private final Term mSmtTrue;
 	private final Term mSmtFalse;
 		
-	private final ReqSymbolTable mReqSymbolTable;
+	private final Req2TestReqSymbolTable mReqSymbolTable;
 	private final ILogger mLogger;
 	private final Script mScript;
 	
@@ -43,7 +43,7 @@ public class AuxVarGen {
 	private final Map<ReqGuardGraph,Term> mReqToDefineAnnotation;
 	private final Map<ReqGuardGraph,Term> mReqToNonDefineAnnotation;   
 	
-	public AuxVarGen(ILogger logger, Script script, ReqSymbolTable reqSymbolTable) {
+	public AuxVarGen(ILogger logger, Script script, Req2TestReqSymbolTable reqSymbolTable) {
 		mReqSymbolTable = reqSymbolTable;
 		mLogger = logger;
 		mScript = script;

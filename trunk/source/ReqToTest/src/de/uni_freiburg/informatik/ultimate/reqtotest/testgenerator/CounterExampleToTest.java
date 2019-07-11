@@ -29,16 +29,16 @@ import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.GraphToBoogie;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ReqGraphAnnotation;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.ReqGraphOracleAnnotation;
-import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.reqtotest.req.Req2TestReqSymbolTable;
 
 public class CounterExampleToTest {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final ReqSymbolTable mReqSymbolTable;
+	private final Req2TestReqSymbolTable mReqSymbolTable;
 	private final AuxVarGen mAuxVarGen;
 	
-	public CounterExampleToTest(ILogger logger, IUltimateServiceProvider services, ReqSymbolTable reqSymbolTable, 
+	public CounterExampleToTest(ILogger logger, IUltimateServiceProvider services, Req2TestReqSymbolTable reqSymbolTable, 
 			AuxVarGen auxVarGen) {
 		mLogger = logger;
 		mServices = services;

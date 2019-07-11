@@ -91,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator;
@@ -98,7 +99,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyC
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltable.TypeErrorInfo;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder.TypeErrorInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
 
@@ -129,7 +130,7 @@ public class Req2BoogieTranslator {
 
 	private final PeaResultUtil mPeaResultUtil;
 
-	private final ReqSymboltable mSymboltable;
+	private final IReqSymbolTable mSymboltable;
 	private final RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
 	private final boolean mSeparateInvariantHandling;
 
@@ -168,11 +169,13 @@ public class Req2BoogieTranslator {
 		final List<PatternType> requirements =
 				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
 
-		mReq2Automata = new ReqToPEA(mServices, mLogger).genPEA(requirements, genId2Bounds(init));
-		mSymboltable = new ReqSymboltable(mLogger, mReq2Automata, init);
+		final ReqToPEA req2pea = new ReqToPEA(mServices, mLogger, init, requirements, genId2Bounds(init));
 
-		if (!mSymboltable.getTypeErrors().isEmpty()) {
-			for (final Entry<String, TypeErrorInfo> entry : mSymboltable.getTypeErrors().entrySet()) {
+		mReq2Automata = req2pea.getPattern2Peas();
+		mSymboltable = req2pea.getSymboltable();
+
+		if (!req2pea.getTypeErrors().isEmpty()) {
+			for (final Entry<String, TypeErrorInfo> entry : req2pea.getTypeErrors().entrySet()) {
 				final String msg = entry.getValue().getType().toString() + " of " + entry.getKey();
 				mPeaResultUtil.typeError(entry.getValue().getSource(), msg);
 			}
@@ -188,7 +191,7 @@ public class Req2BoogieTranslator {
 		mReq2Loc = mSymboltable.getLocations();
 		mUnitLocation = generateUnitLocation(patterns);
 		final List<Declaration> decls = new ArrayList<>();
-		decls.addAll(mSymboltable.constructDeclarations());
+		decls.addAll(mSymboltable.getDeclarations());
 
 		RtInconcistencyConditionGenerator rticGenerator;
 		try {
@@ -578,7 +581,7 @@ public class Req2BoogieTranslator {
 
 	private AssignmentStatement genStateVarAssign(final String stateVar) {
 		final VariableLHS lhsVar = mSymboltable.getVariableLhs(stateVar);
-		final IdentifierExpression rhs = mSymboltable.getIdentifierExpression(ReqSymboltable.getPrimedVarId(stateVar));
+		final IdentifierExpression rhs = mSymboltable.getIdentifierExpression(mSymboltable.getPrimedVarId(stateVar));
 		return genAssignmentStmt(rhs.getLocation(), lhsVar, rhs);
 	}
 
@@ -620,7 +623,7 @@ public class Req2BoogieTranslator {
 		if (expr == null) {
 			if (mReportTrivialConsistency) {
 				final ILocation loc =
-						mSymboltable.getIdentifierExpression(ReqSymboltable.getPcName(subset[0].getValue())).getLoc();
+						mSymboltable.getIdentifierExpression(mSymboltable.getPcName(subset[0].getValue())).getLoc();
 				final AssertStatement fakeElem = createAssert(ExpressionFactory.createBooleanLiteral(loc, true), check,
 						"RTINCONSISTENT_" + getAssertLabel(subset));
 				mPeaResultUtil.intrinsicRtConsistencySuccess(fakeElem);
@@ -678,7 +681,7 @@ public class Req2BoogieTranslator {
 		for (int i = 0; i < phases.length; i++) {
 			final PhaseBits bits = phases[i].getPhaseBits();
 			if (bits == null || (bits.getActive() & 1 << pnr - 1) == 0) {
-				checkReached.add(genComparePhaseCounter(i, ReqSymboltable.getPcName(aut), bl));
+				checkReached.add(genComparePhaseCounter(i, mSymboltable.getPcName(aut), bl));
 			}
 		}
 		if (checkReached.isEmpty()) {
@@ -718,8 +721,8 @@ public class Req2BoogieTranslator {
 		stmtList.addAll(genDelay(bl));
 
 		for (final Entry<PatternType, PhaseEventAutomata> entry : mReq2Automata.entrySet()) {
-			stmtList.addAll(genInvariantGuards(entry.getKey(), entry.getValue(),
-					ReqSymboltable.getPcName(entry.getValue()), bl));
+			stmtList.addAll(
+					genInvariantGuards(entry.getKey(), entry.getValue(), mSymboltable.getPcName(entry.getValue()), bl));
 		}
 
 		stmtList.addAll(genChecksRTInconsistency(bl));
@@ -727,7 +730,7 @@ public class Req2BoogieTranslator {
 		stmtList.addAll(genCheckConsistency(bl));
 
 		for (final Entry<PatternType, PhaseEventAutomata> entry : mReq2Automata.entrySet()) {
-			stmtList.add(genOuterIfTransition(entry.getValue(), ReqSymboltable.getPcName(entry.getValue()), bl));
+			stmtList.add(genOuterIfTransition(entry.getValue(), mSymboltable.getPcName(entry.getValue()), bl));
 		}
 
 		stmtList.addAll(genStateVarsAssign());
@@ -840,7 +843,7 @@ public class Req2BoogieTranslator {
 				}
 			}
 		}
-		final String pcName = ReqSymboltable.getPcName(aut);
+		final String pcName = mSymboltable.getPcName(aut);
 		// construct or over initial phases
 		Expression acc = null;
 		for (int i = 0; i < phases.length; i++) {
@@ -866,7 +869,7 @@ public class Req2BoogieTranslator {
 		final List<Statement> stmts = new ArrayList<>();
 		for (final Entry<PatternType, PhaseEventAutomata> entry : mReq2Automata.entrySet()) {
 			final PhaseEventAutomata aut = entry.getValue();
-			final VariableLHS lhs = mSymboltable.getVariableLhs(ReqSymboltable.getPcName(aut));
+			final VariableLHS lhs = mSymboltable.getVariableLhs(mSymboltable.getPcName(aut));
 			stmts.add(new HavocStatement(lhs.getLocation(), new VariableLHS[] { lhs }));
 			stmts.add(new AssumeStatement(lhs.getLocation(), genPcExpr(aut)));
 		}

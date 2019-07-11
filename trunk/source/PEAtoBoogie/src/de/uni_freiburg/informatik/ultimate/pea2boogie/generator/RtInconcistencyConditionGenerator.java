@@ -41,13 +41,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -58,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -69,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclar
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -80,8 +74,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
@@ -102,7 +96,7 @@ public class RtInconcistencyConditionGenerator {
 	private static final boolean PRINT_QUANTIFIED_FORMULAS = true;
 	private static final String SOLVER_LOGFILE = "C:\\Users\\firefox\\Desktop\\result.smt2";
 
-	private final ReqSymboltable mReqSymboltable;
+	private final IReqSymbolTable mReqSymboltable;
 	private final Term mPrimedInvariant;
 	private final Script mScript;
 	private final Term mTrue;
@@ -117,7 +111,6 @@ public class RtInconcistencyConditionGenerator {
 
 	private final Map<Term, Term> mProjectionCache;
 	private final Map<Phase, Term> mPhaseTermCache;
-	private final Map<String, Term> mConstValueCache;
 
 	private int mQuantified;
 	private int mPlain;
@@ -128,10 +121,8 @@ public class RtInconcistencyConditionGenerator {
 	private int mQuantifiedQuery;
 	private int mQelimQuery;
 
-	private final PeaResultUtil mPeaResultUtil;
-
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
-			final PeaResultUtil peaResultUtil, final ReqSymboltable symboltable,
+			final PeaResultUtil peaResultUtil, final IReqSymbolTable symboltable,
 			final Map<PatternType, PhaseEventAutomata> req2Automata, final BoogieDeclarations boogieDeclarations,
 			final boolean separateInvariantHandling) throws InvariantInfeasibleException {
 		mReqSymboltable = symboltable;
@@ -147,8 +138,6 @@ public class RtInconcistencyConditionGenerator {
 		mSeparateInvariantHandling = separateInvariantHandling;
 		mPhaseTermCache = new HashMap<>();
 		mProjectionCache = new HashMap<>();
-		mConstValueCache = new HashMap<>();
-		mPeaResultUtil = peaResultUtil;
 		mQuantified = 0;
 		mPlain = 0;
 		mBeforeSize = 0;
@@ -232,7 +221,7 @@ public class RtInconcistencyConditionGenerator {
 			for (int j = 0; j < vector.length; j++) {
 				final PhaseEventAutomata automaton = automata[j];
 				final int phaseIndex = vector[j];
-				final String pcName = ReqSymboltable.getPcName(automaton);
+				final String pcName = mReqSymboltable.getPcName(automaton);
 				impliesLHS.add(genPCCompEQ(pcName, phaseIndex));
 				final Phase phase = automaton.getPhases()[phaseIndex];
 				final Term phaseDisjunction = getPhaseTerm(phase);
@@ -329,10 +318,11 @@ public class RtInconcistencyConditionGenerator {
 		final List<Term> inner = new ArrayList<>();
 		for (final Transition trans : phase.getTransitions()) {
 			final Term guardTerm = mCddToSmt.toSmt(trans.getGuard());
-			final Term primedStInv =
-					mCddToSmt.toSmt(trans.getDest().getStateInvariant().prime(mReqSymboltable.getConstVars()));
-			final Term strictInv = mCddToSmt
-					.toSmt(new StrictInvariant().genStrictInv(trans.getDest().getClockInvariant(), trans.getResets()));
+			final CDD cddPrimedStInv = trans.getDest().getStateInvariant().prime(mReqSymboltable.getConstVars());
+			final CDD cddStrictInv =
+					new StrictInvariant().genStrictInv(trans.getDest().getClockInvariant(), trans.getResets());
+			final Term primedStInv = mCddToSmt.toSmt(cddPrimedStInv);
+			final Term strictInv = mCddToSmt.toSmt(cddStrictInv);
 			inner.add(SmtUtils.and(mScript, guardTerm, primedStInv, strictInv));
 		}
 		return SmtUtils.or(mScript, inner);
@@ -394,22 +384,6 @@ public class RtInconcistencyConditionGenerator {
 			result = SmtUtils.and(mScript, terms.values());
 		}
 		return handleInconsistentStateInvariant(terms, simplify(handleInconsistentStateInvariant(terms, result)));
-	}
-
-	private Term getRational(final Expression constvalue) {
-		if (constvalue instanceof RealLiteral) {
-			final Rational rational = SmtUtils.toRational(((RealLiteral) constvalue).getValue());
-			return rational.toTerm(SmtSortUtils.getRealSort(mScript));
-		} else if (constvalue instanceof IntegerLiteral) {
-			final Rational rational = SmtUtils.toRational(((IntegerLiteral) constvalue).getValue());
-			return rational.toTerm(SmtSortUtils.getIntSort(mScript));
-		} else if (constvalue instanceof BooleanLiteral) {
-			if (((BooleanLiteral) constvalue).getValue()) {
-				return mTrue;
-			}
-			return mFalse;
-		}
-		throw new IllegalArgumentException("Expression is not constant, but " + constvalue.getClass().getSimpleName());
 	}
 
 	private Term handleInconsistentStateInvariant(final Map<PatternType, Term> terms, final Term invariant)
@@ -533,22 +507,6 @@ public class RtInconcistencyConditionGenerator {
 
 	private Term genPCCompEQ(final String pcName, final int phaseIndex) {
 		return SmtUtils.binaryEquality(mScript, getTermVarTerm(pcName), mScript.numeral(Integer.toString(phaseIndex)));
-	}
-
-	private static String str(final Term[] terms) {
-		return str(Arrays.stream(terms));
-	}
-
-	private static String str(final Collection<Term> terms) {
-		return str(terms.stream());
-	}
-
-	private static String str(final Term term) {
-		return term.toStringDirect();
-	}
-
-	private static String str(final Stream<Term> terms) {
-		return terms.map(RtInconcistencyConditionGenerator::str).collect(Collectors.joining(","));
 	}
 
 	public static final class InvariantInfeasibleException extends Exception {

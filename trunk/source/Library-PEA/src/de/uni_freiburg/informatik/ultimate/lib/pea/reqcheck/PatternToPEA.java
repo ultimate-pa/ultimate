@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
@@ -55,9 +57,9 @@ public class PatternToPEA {
 	// do not have the same names
 	private int mNameIndex = 0;
 
-	public PatternToPEA(final ILogger logger) {
+	public PatternToPEA(final ILogger logger, final Set<String> ignoredIds) {
 		mLogger = logger;
-		mCompiler = new Trace2PeaCompiler(logger);
+		mCompiler = new Trace2PeaCompiler(logger, ignoredIds);
 	}
 
 	public PhaseEventAutomata compile(final String id, final CounterTrace ct) {
