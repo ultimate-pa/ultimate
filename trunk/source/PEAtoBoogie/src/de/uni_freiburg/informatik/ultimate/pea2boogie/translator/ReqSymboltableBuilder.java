@@ -344,6 +344,10 @@ public class ReqSymboltableBuilder {
 			return mConstVars;
 		}
 
+		public Map<String, Expression> getConstToValue() {
+			return mConst2Value;
+		}
+
 		@Override
 		public String getPcName(final PhaseEventAutomata automaton) {
 			return ReqSymboltableBuilder.getPcName(automaton);

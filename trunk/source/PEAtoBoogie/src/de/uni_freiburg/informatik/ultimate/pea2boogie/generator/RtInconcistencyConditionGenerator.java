@@ -42,8 +42,12 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -60,10 +64,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -96,6 +102,8 @@ public class RtInconcistencyConditionGenerator {
 	private static final boolean PRINT_QUANTIFIED_FORMULAS = true;
 	private static final String SOLVER_LOGFILE = "C:\\Users\\firefox\\Desktop\\result.smt2";
 
+	private static final boolean PRINT_NON_TRIVIAL_CHECKS = true;
+
 	private final IReqSymbolTable mReqSymboltable;
 	private final Term mPrimedInvariant;
 	private final Script mScript;
@@ -120,6 +128,8 @@ public class RtInconcistencyConditionGenerator {
 	private int mGeneratedChecks;
 	private int mQuantifiedQuery;
 	private int mQelimQuery;
+
+	private final Substitution mConstInliner;
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final PeaResultUtil peaResultUtil, final IReqSymbolTable symboltable,
@@ -147,6 +157,8 @@ public class RtInconcistencyConditionGenerator {
 		mQuantifiedQuery = 0;
 		mQelimQuery = 0;
 		mCddToSmt = new CddToSmt(services, peaResultUtil, mScript, mBoogie2Smt, boogieDeclarations, mReqSymboltable);
+		final Map<Term, Term> constToValue = createConst2Value(mScript, mReqSymboltable, mBoogie2Smt);
+		mConstInliner = new Substitution(mScript, constToValue);
 
 		if (mSeparateInvariantHandling) {
 			mPrimedInvariant = constructPrimedStateInvariant(req2Automata);
@@ -154,6 +166,35 @@ public class RtInconcistencyConditionGenerator {
 		} else {
 			mPrimedInvariant = mTrue;
 		}
+	}
+
+	private static Map<Term, Term> createConst2Value(final Script script, final IReqSymbolTable reqSymboltable,
+			final Boogie2SMT boogieToSmt) {
+		final Map<String, Expression> constToValue = reqSymboltable.getConstToValue();
+		final Map<String, BoogieConst> boogieConsts = boogieToSmt.getBoogie2SmtSymbolTable().getConstsMap();
+
+		final Map<Term, Term> rtr = new HashMap<>();
+		for (final Entry<String, Expression> constEntry : constToValue.entrySet()) {
+			final BoogieConst programConst = boogieConsts.get(constEntry.getKey());
+			final Term value = literalToTerm(script, constEntry.getValue());
+			rtr.put(programConst.getTerm(), value);
+		}
+
+		return rtr;
+	}
+
+	private static Term literalToTerm(final Script script, final Expression expr) {
+		if (expr instanceof RealLiteral) {
+			return SmtUtils.toRational(((RealLiteral) expr).getValue()).toTerm(SmtSortUtils.getRealSort(script));
+		} else if (expr instanceof IntegerLiteral) {
+			return SmtUtils.toRational(((IntegerLiteral) expr).getValue()).toTerm(SmtSortUtils.getIntSort(script));
+		} else if (expr instanceof BooleanLiteral) {
+			if (((BooleanLiteral) expr).getValue()) {
+				return script.term("true");
+			}
+			return script.term("false");
+		}
+		throw new IllegalArgumentException(BoogiePrettyPrinter.print(expr) + " is no literal");
 	}
 
 	/**
@@ -251,6 +292,9 @@ public class RtInconcistencyConditionGenerator {
 		}
 		mGeneratedChecks++;
 		final Term finalCheck = SmtUtils.and(mScript, rtInconsistencyChecks);
+		if (PRINT_NON_TRIVIAL_CHECKS) {
+			mLogger.info("Adding non-trivial check: %s", finalCheck.toStringDirect());
+		}
 		return mBoogie2Smt.getTerm2Expression().translate(finalCheck);
 	}
 
@@ -332,6 +376,7 @@ public class RtInconcistencyConditionGenerator {
 		if (!SIMPLIFY_BEFORE_QELIM) {
 			return term;
 		}
+
 		mBeforeSize = mBeforeSize + new DAGSize().size(term);
 		final Term simplified = simplify(term);
 		mAfterSize = mAfterSize + new DAGSize().size(simplified);
@@ -427,7 +472,8 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private Term computeExistentialProjection(final Term term) {
-		final Term simplifiedTerm = simplifyAndLog(term);
+		final Term inlinedConstsTerm = inlineConsts(term);
+		final Term simplifiedTerm = simplifyAndLog(inlinedConstsTerm);
 		final Set<TermVariable> varsToRemove = getPrimedAndEventVars(simplifiedTerm.getFreeVars());
 		if (varsToRemove.isEmpty()) {
 			return term;
@@ -435,8 +481,8 @@ public class RtInconcistencyConditionGenerator {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Removing " + varsToRemove.size() + " variables");
 		}
-		final QuantifiedFormula quantifiedFormula =
-				(QuantifiedFormula) SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, varsToRemove, term);
+		final QuantifiedFormula quantifiedFormula = (QuantifiedFormula) SmtUtils.quantifier(mScript,
+				QuantifiedFormula.EXISTS, varsToRemove, simplifiedTerm);
 		if (TRY_SOLVER_BEFORE_QELIM && querySolverIsTrue(quantifiedFormula)) {
 			return mTrue;
 		}
@@ -462,6 +508,10 @@ public class RtInconcistencyConditionGenerator {
 		}
 
 		return afterQelimFormula;
+	}
+
+	private Term inlineConsts(final Term term) {
+		return mConstInliner.transform(term);
 	}
 
 	private boolean querySolverIsTrue(final Term term) {

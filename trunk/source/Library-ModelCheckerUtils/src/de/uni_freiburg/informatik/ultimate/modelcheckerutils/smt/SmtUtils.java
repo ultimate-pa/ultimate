@@ -200,7 +200,8 @@ public final class SmtUtils {
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
-			final Term context, final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
+			final Term context, final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique) {
 		final long startTime = System.nanoTime();
 		final long sizeBefore = new DAGSize().treesize(formula);
 		final Term simplified = simplify(script, formula, services, simplificationTechnique);
@@ -958,6 +959,10 @@ public final class SmtUtils {
 		return Util.or(script, terms.toArray(new Term[terms.size()]));
 	}
 
+	public static Term andWithExtendedLocalSimplification(final Script script, final Term... terms) {
+		return andWithExtendedLocalSimplification(script, Arrays.asList(terms));
+	}
+
 	public static Term andWithExtendedLocalSimplification(final Script script, final Collection<Term> terms) {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
@@ -1171,8 +1176,7 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Construct term but simplify it using lightweight simplification techniques if
-	 * applicable.
+	 * Construct term but simplify it using lightweight simplification techniques if applicable.
 	 */
 	public static Term termWithLocalSimplification(final Script script, final FunctionSymbol fun,
 			final Term... params) {
@@ -1181,13 +1185,11 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Construct term but simplify it using lightweight simplification techniques if
-	 * applicable.
+	 * Construct term but simplify it using lightweight simplification techniques if applicable.
 	 *
 	 * @param resultSort
-	 *            must be non-null if and only if we have an explicitly instantiated
-	 *            polymorphic FunctionSymbol, i.e., a function of the form (as
-	 *            <name> <sort>)
+	 *            must be non-null if and only if we have an explicitly instantiated polymorphic FunctionSymbol, i.e., a
+	 *            function of the form (as <name> <sort>)
 	 */
 	public static Term termWithLocalSimplification(final Script script, final String funcname,
 			final BigInteger[] indices, final Sort resultSort, final Term... params) {

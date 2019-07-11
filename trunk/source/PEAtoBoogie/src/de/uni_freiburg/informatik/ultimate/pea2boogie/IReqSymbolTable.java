@@ -6,6 +6,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
@@ -38,4 +39,6 @@ public interface IReqSymbolTable {
 	public Collection<? extends Declaration> getDeclarations();
 
 	public Map<PatternType, BoogieLocation> getLocations();
+
+	public Map<String, Expression> getConstToValue();
 }

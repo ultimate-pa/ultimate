@@ -349,4 +349,10 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 		return null;
 	}
 
+	@Override
+	public Map<String, Expression> getConstToValue() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
