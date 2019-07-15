@@ -98,11 +98,11 @@ public class RtInconcistencyConditionGenerator {
 	private static final boolean SIMPLIFY_BEFORE_QELIM = false;
 	private static final boolean TRY_SOLVER_BEFORE_QELIM = false;
 	private static final boolean PRINT_STATS = true;
-	// private static final String SOLVER_LOGFILE = null;
-	private static final boolean PRINT_QUANTIFIED_FORMULAS = true;
-	private static final String SOLVER_LOGFILE = "C:\\Users\\firefox\\Desktop\\result.smt2";
+	private static final String SOLVER_LOGFILE = null;
+	private static final boolean PRINT_QUANTIFIED_FORMULAS = false;
+	// private static final String SOLVER_LOGFILE = "C:\\Users\\firefox\\Desktop\\result.smt2";
 
-	private static final boolean PRINT_NON_TRIVIAL_CHECKS = true;
+	private static final boolean PRINT_NON_TRIVIAL_CHECKS = false;
 
 	private final IReqSymbolTable mReqSymboltable;
 	private final Term mPrimedInvariant;
@@ -210,7 +210,8 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	/**
-	 * Return true of this requirement should be used for generating rt-inconsistency checks.
+	 * Return true for this entry if it should not be considered for rt-inconsistency checks (i.e., if it does not
+	 * represent an invariant)
 	 *
 	 * @param entry
 	 * @return
@@ -218,16 +219,17 @@ public class RtInconcistencyConditionGenerator {
 	private boolean filterReqs(final Entry<PatternType, PhaseEventAutomata> entry) {
 		final Phase[] phases = entry.getValue().getPhases();
 		if (phases.length != 1) {
-			// this is not an invariant, take it
+			// this is not an invariant, filter it out
 			return true;
 		}
 		if (!ONLY_CONJUNCTIVE_INVARIANTS) {
+			// if we take all invariants, we are finished here
 			return false;
 		}
 		assert phases.length == 1;
 		final Term stateInv = mCddToSmt.toSmt(phases[0].getStateInvariant());
 		if (SmtUtils.getDisjuncts(stateInv).length != 1) {
-			// this is an invariant with a top-level disjunction, take it
+			// this is an invariant with a top-level disjunction, filter it out
 			return true;
 		}
 		return false;
