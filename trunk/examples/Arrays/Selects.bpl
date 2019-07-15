@@ -6,14 +6,15 @@
  */
 
 var a : [int]int;
-var i : int;
-var tmp : int;
+var i,j,tmp,tmp2 : int;
 
 
 procedure main() returns ()
-modifies a, tmp;
+modifies tmp, tmp2;
 {
   tmp := a[i];
+  tmp2 := a[j];
+  assert i == j ==> tmp == tmp2;
 }
 
 

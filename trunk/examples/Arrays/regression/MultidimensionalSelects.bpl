@@ -17,7 +17,7 @@ modifies a, tmp, tmp2;
 {
   tmp := a[i][j];
   tmp2 := a[j][i];
-  assert i==j ==> tmp == tmp2;
+  assert i == j ==> tmp == tmp2;
 }
 
 
