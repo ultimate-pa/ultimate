@@ -68,6 +68,12 @@ public interface IPolynomialTerm {
 	 * @return unmodifiable map where each variable (wrapped as Monomial) is mapped to its coefficient.
 	 */
 	Map<Monomial, Rational> getMonomial2Coefficient();
+	
+	/**
+	 * @return unmodifiable map where each variable itself is mapped to its coefficient.
+	 * Throws an error, when this representation is not available.
+	 */
+	Map<Term, Rational> getVariable2Coefficient();
 
 	/**
 	 * @return whether this polynomial term is just a constant

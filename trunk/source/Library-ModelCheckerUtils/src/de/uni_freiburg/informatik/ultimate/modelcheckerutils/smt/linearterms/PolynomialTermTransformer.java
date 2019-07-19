@@ -350,8 +350,6 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}
 	}
 
-	//TODO: PolynomialRelation
-
 	/**
 	 * Convert an array of {@link Term}s into an an array of {@link PolynomialTerm}s by
 	 * casting every single element. In case an element of the input is our

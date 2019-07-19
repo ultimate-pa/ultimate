@@ -261,6 +261,10 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	public Map<Monomial, Rational> getMonomial2Coefficient() {
 		return mAbstractVariable2Coefficient;
 	}
+	
+	public Map<Term, Rational> getVariable2Coefficient() {
+		throw new UnsupportedOperationException("This PolynomialTerm has no Map in this representation.");
+	}
 
 	/**
 	 * @return true iff var is a variable of this {@link PolynomialTerm} (i.e., if var is a variable of some
