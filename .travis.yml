@@ -48,3 +48,4 @@ notifications:
     on_failure: always
 
 sudo: false
+dist: trusty
