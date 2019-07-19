@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
+import java.util.Map.Entry;
+
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -42,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Bin
  */
 public class PolynomialRelation extends AbstractGeneralizedaAffineRelation<AbstractGeneralizedAffineTerm<Term>, Term> {
 
+	//TODO: Ask Matthias whether really only AffineTerm is allowed in the constructors.
 	public PolynomialRelation(final Script script, final AffineTerm term, final RelationSymbol relationSymbol) {
 		super(script, term, relationSymbol);
 	}
@@ -77,19 +80,32 @@ public class PolynomialRelation extends AbstractGeneralizedaAffineRelation<Abstr
 
 	@Override
 	protected Term getTheAbstractVarOfSubject(final Term subject) {
+		if (mAffineTerm.isAffine()) {
+			return getMonomialOfSubject(subject);
+		}else {
+			return getVarOfSubject(subject);
+		}
+	}
+	
+	/**
+	 * This implements getAbstractVarOfSubject in case that this Relation represents a truly polynomial relation.
+	 */
+	private Term getMonomialOfSubject(final Term subject) {
 		boolean subjectOccurred = false;
+		Term abstractVarOfSubject = null;
 		for (final Term concreteVar : mAffineTerm.getAbstractVariable2Coefficient().keySet()) {
-			if (concreteVar instanceof Monomial) {
-				//TODO
-				// we have to add code here, but we also want to return null if the subject occurs
-				// in several monomials
-				throw new UnsupportedOperationException();
-			} else {
-				if (concreteVar == subject) {
-					subjectOccurred = true;
-				} else {
+			for (final Entry<Term, Rational> var2exp : ((Monomial) concreteVar).getVariable2Exponent().entrySet()) {
+				if (var2exp.getKey() == subject) {
+					//TODO: Ask Matthias about higher exponents of variables
+					if (var2exp.getValue() != Rational.ONE || subjectOccurred) {
+						return null;
+					}else {
+						subjectOccurred = true;
+						abstractVarOfSubject = concreteVar;
+					}
+				}else {
 					final boolean subjectOccursAsSubterm = new SubtermPropertyChecker(x -> x == subject)
-							.isPropertySatisfied(concreteVar);
+							.isPropertySatisfied(var2exp.getKey());
 					if (subjectOccursAsSubterm) {
 						return null;
 					}
@@ -97,9 +113,39 @@ public class PolynomialRelation extends AbstractGeneralizedaAffineRelation<Abstr
 			}
 		}
 		if (!subjectOccurred) {
-			throw new AssertionError("superclass already chekced that subject is abstract var");
+			throw new AssertionError("superclass already checked that subject is abstract var");
 		}
-		return subject;
+		if (abstractVarOfSubject == null) {
+			throw new AssertionError("abstractVarOfSubject must always be assigned, when the subject occurs!");
+		}
+		return abstractVarOfSubject;
+	}
+	
+	/**
+	 * This implements getAbstractVarOfSubject in case that this is an affine Relation.
+	 */
+	private Term getVarOfSubject(final Term subject) {
+		boolean subjectOccurred = false;
+		Term abstractVarOfSubject = null;
+		for (final Term concreteVar : mAffineTerm.getAbstractVariable2Coefficient().keySet()) {
+			if (concreteVar == subject) {
+				subjectOccurred = true;
+				abstractVarOfSubject = concreteVar;
+			} else {
+				final boolean subjectOccursAsSubterm = new SubtermPropertyChecker(x -> x == subject)
+						.isPropertySatisfied(concreteVar);
+				if (subjectOccursAsSubterm) {
+					return null;
+				}
+			}
+		}
+		if (!subjectOccurred) {
+			throw new AssertionError("superclass already checked that subject is abstract var");
+		}
+		if (abstractVarOfSubject == null) {
+			throw new AssertionError("abstractVarOfSubject must always be assigned, when the subject occurs!");
+		}
+		return abstractVarOfSubject;
 	}
 
 //	public static PolynomialRelation convert(final Script script, final Term term,
