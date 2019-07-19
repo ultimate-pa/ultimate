@@ -273,7 +273,12 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 */
 	@Override
 	public boolean isVariable(final Term var) {
-		throw new UnsupportedOperationException();
+		for(Monomial mono : getMonomial2Coefficient().keySet()) {
+			if (mono.isVariable(var)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override

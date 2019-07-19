@@ -123,6 +123,14 @@ public class Monomial extends Term {
 	public Map<Term, Rational> getVariable2Exponent() {
 		return Collections.unmodifiableMap(mVariable2Exponent);
 	}
+	
+	/**
+	 * @return true iff var is a variable of this {@link Monomial}. Note that for returning true it is especially NOT
+	 *         sufficient if var occurs only as a subterm of some variable.
+	 */
+	public boolean isVariable(final Term var) {
+		return getVariable2Exponent().keySet().contains(var);
+	}
 
 	@Override
 	public Sort getSort() {
