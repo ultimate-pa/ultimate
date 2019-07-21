@@ -72,14 +72,14 @@ public class PolynomialTermUtils {
 		final BigInteger resultBigInt = BoogieUtils.euclideanMod(bvBigInt, numberOfValues);
 		return Rational.valueOf(resultBigInt, BigInteger.ONE);
 	}
-	
+
 	/**
 	 * Constructs an iterated SMT-Term (func ...(func arg[0] arg[1]) ... arg[n]) as determined by the arguments.
 	 */
-	public static Term constructIteratedTerm(final String functionSymbol, 
-									         final IPolynomialTerm[] polynomialArgs, 
+	public static Term constructIteratedTerm(final String functionSymbol,
+									         final IPolynomialTerm[] polynomialArgs,
 											 final Script script) {
-		
+
 		Term term = script.term(functionSymbol, polynomialArgs[0].toTerm(script),
 				   polynomialArgs[1].toTerm(script));
 		for (int i = 2; i < polynomialArgs.length; i++) {
@@ -90,7 +90,7 @@ public class PolynomialTermUtils {
 	}
 
 	/**
-	 * Generalized method for applying Modulo to the coefficients and the constant of 
+	 * Generalized method for applying Modulo to the coefficients and the constant of
 	 * {@link AffineTerm}s and {@link PolynomialTerm}s. The type parameter T refers either to
 	 * {@link AffineTerm} or {@link PolynomialTerm}. The type parameter MNL is a
 	 * {@link Term} for {@link AffineTerm}s and a {@link Monomial} for
@@ -135,30 +135,30 @@ public class PolynomialTermUtils {
 		}
 		return map;
 	}
-	
+
 	/**
 	 * It may occur, that the PolynomialTerm-class is used to represent a term, that could be represented by
 	 * the AffineTerm-class. Hence, this method checks, whether the term given by the map could be represented by the
 	 * AffineTerm-class.
 	 */
 	public static boolean isAffineMap(final Map<Monomial, Rational> map) {
-		for(Entry<Monomial, Rational> entry : map.entrySet()) {
+		for(final Entry<Monomial, Rational> entry : map.entrySet()) {
 			if (!entry.getKey().isLinear()) {
 				return false;
 			}
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Convert a map in <Monomial, Rational> Form to an equivalent map in <Term, Rational> Form if possible.
 	 */
 	public static Map<Term, Rational> convertToAffineMap(final Map<Monomial, Rational> map){
 		final Map<Term, Rational> affineMap = new HashMap<>();
-		for(Entry<Monomial, Rational> entry : map.entrySet()) {
-			Map<Term, Rational> monomialMap = entry.getKey().getVariable2Exponent();
+		for(final Entry<Monomial, Rational> entry : map.entrySet()) {
+			final Map<Term, Rational> monomialMap = entry.getKey().getVariable2Exponent();
 			assert monomialMap.size() == 1 : "Cannot convert to AffineMap.";
-			Term term = monomialMap.keySet().iterator().next();
+			final Term term = monomialMap.keySet().iterator().next();
 			affineMap.put(term, entry.getValue());
 		}
 		return shrinkMap(affineMap);
@@ -177,7 +177,7 @@ public class PolynomialTermUtils {
 	 * @param constructor
 	 *            Methods that constructs the term of type T.
 	 */
-	static <T extends IPolynomialTerm, MNL extends Term> T constructSum(
+	static <T extends AbstractGeneralizedAffineTerm<?>, MNL extends Term> T constructSum(
 			final Function<IPolynomialTerm, Map<MNL, Rational>> term2map,
 			final GeneralizedConstructor<MNL, T> constructor, final IPolynomialTerm... summands) {
 		final Sort sort = summands[0].getSort();

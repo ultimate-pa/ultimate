@@ -61,7 +61,14 @@ public class PolynomialRelation extends AbstractGeneralizedaAffineRelation<Abstr
 
 	@Override
 	protected AbstractGeneralizedAffineTerm<Term> sum(final AbstractGeneralizedAffineTerm<Term> op1, final AbstractGeneralizedAffineTerm<Term> op2) {
-		return AffineTerm.sum(op1, op2);
+		final AbstractGeneralizedAffineTerm<Term> result;
+		if (op1.isAffine() && op2.isAffine()) {
+			result = AffineTerm.sum(op1, op2);
+		} else {
+			final AbstractGeneralizedAffineTerm<?> polynomialSum = PolynomialTerm.sum(op1, op2);
+			result = (AbstractGeneralizedAffineTerm<Term>) polynomialSum;
+		}
+		return result;
 	}
 
 	@Override
@@ -86,7 +93,7 @@ public class PolynomialRelation extends AbstractGeneralizedaAffineRelation<Abstr
 			return getVarOfSubject(subject);
 		}
 	}
-	
+
 	/**
 	 * This implements getAbstractVarOfSubject in case that this Relation represents a truly polynomial relation.
 	 */
@@ -120,7 +127,7 @@ public class PolynomialRelation extends AbstractGeneralizedaAffineRelation<Abstr
 		}
 		return abstractVarOfSubject;
 	}
-	
+
 	/**
 	 * This implements getAbstractVarOfSubject in case that this is an affine Relation.
 	 */
