@@ -230,8 +230,7 @@ public class TypeSortTranslator {
 				throw new IllegalArgumentException("BoogieAST contains type errors.");
 			} else if (((BoogiePrimitiveType) boogieType).getTypeCode() > 0) {
 				final int bitvectorSize = ((BoogiePrimitiveType) boogieType).getTypeCode();
-				final BigInteger[] sortIndices = { BigInteger.valueOf(bitvectorSize) };
-				result = SmtSortUtils.getBitvectorSort(mScript, sortIndices);
+				result = SmtSortUtils.getBitvectorSort(mScript, bitvectorSize);
 			} else {
 				throw new IllegalArgumentException("Unsupported PrimitiveType " + boogieType);
 			}

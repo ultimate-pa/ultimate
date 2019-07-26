@@ -119,11 +119,6 @@ public final class SmtSortUtils {
 		return script.sort(BITVECTOR_SORT, new BigInteger[] { size });
 	}
 
-	@Deprecated
-	public static Sort getBitvectorSort(final Script script, final BigInteger[] sortIndices) {
-		return script.sort(BITVECTOR_SORT, sortIndices);
-	}
-
 	public static Sort getArraySort(final Script script, final Sort domainSort, final Sort rangeSort) {
 		return script.sort(ARRAY_SORT, domainSort, rangeSort);
 	}
