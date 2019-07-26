@@ -43,6 +43,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public interface ITransitionRelation {
 
+	/**
+	 * @return Set of {@link IProgramVar}s with the property that every variable
+	 *         that is not in the set does not change its value.
+	 */
 	Set<IProgramVar> getAssignedVars();
 
 	Map<IProgramVar, TermVariable> getInVars();
@@ -50,7 +54,7 @@ public interface ITransitionRelation {
 	Map<IProgramVar, TermVariable> getOutVars();
 
 	Set<IProgramConst> getNonTheoryConsts();
-	
+
 	default Set<IProgramFunction> getNonTheoryFunctions() {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
@@ -63,7 +67,7 @@ public interface ITransitionRelation {
 	boolean isHavocedOut(IProgramVar bv);
 
 	boolean isHavocedIn(IProgramVar bv);
-	
+
 	Set<TermVariable> getAuxVars();
 
 }
