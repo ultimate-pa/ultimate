@@ -79,8 +79,8 @@ public class NestedStoreSequenceTest {
 	@Test
 	public void test0() {
 
-		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(8) });
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 
 		mScript.declareFun("idx1", new Sort[0], bv32);
 		mScript.declareFun("val", new Sort[0], bv8);
@@ -103,8 +103,8 @@ public class NestedStoreSequenceTest {
 	@Test
 	public void test1() {
 
-		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(8) });
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 
 		mScript.declareFun("idx1", new Sort[0], bv32);
 		mScript.declareFun("idx2", new Sort[0], bv32);
@@ -132,8 +132,8 @@ public class NestedStoreSequenceTest {
 	@Test
 	public void test2() {
 
-		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(8) });
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 
 		mScript.declareFun("idx1", new Sort[0], bv32);
 		mScript.declareFun("idx2", new Sort[0], bv32);
@@ -162,8 +162,8 @@ public class NestedStoreSequenceTest {
 	@Test
 	public void test3() {
 
-		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(8) });
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 
 		mScript.declareFun("idx1", new Sort[0], bv32);
 		mScript.declareFun("idx2", new Sort[0], bv32);

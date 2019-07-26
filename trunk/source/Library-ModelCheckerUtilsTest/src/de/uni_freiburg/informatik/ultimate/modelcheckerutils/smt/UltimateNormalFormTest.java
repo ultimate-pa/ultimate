@@ -127,7 +127,7 @@ public class UltimateNormalFormTest {
 		mScript.reset();
 		mScript.setLogic(Logics.ALL);
 
-		final Sort bv32Sort = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[]{ BigInteger.valueOf(32) });
+		final Sort bv32Sort = SmtSortUtils.getBitvectorSort(mScript, 32);
 
 		mScript.declareFun("X", new Sort[0], bv32Sort);
 		final Term var = mScript.term("X");

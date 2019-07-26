@@ -114,8 +114,8 @@ public class MuensterbergBenchmark {
 	@Test
 	public void rajdeepIteration5wp() {
 
-		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(8) });
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 		final Sort array = SmtSortUtils.getArraySort(mScript, bv32, bv8);
 
 		mScript.declareFun("ULTIMATE.start_design_~nack.base", new Sort[0], bv32);
@@ -222,8 +222,8 @@ public class MuensterbergBenchmark {
 	 */
 	@Test
 	public void forester_heap_dll_optional() {
-		final Sort bv1 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(1) });
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv1 = SmtSortUtils.getBitvectorSort(mScript, 1);
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 		final Sort array = SmtSortUtils.getArraySort(mScript, bv32, bv1);
 		mScript.declareFun("main_~head~0.offset", new Sort[0], bv32);
 		mScript.declareFun("main_~head~0.base", new Sort[0], bv32);
@@ -238,8 +238,8 @@ public class MuensterbergBenchmark {
 
 	@Test
 	public void forester_heap_dll_01() {
-		final Sort bv1 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(1) });
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv1 = SmtSortUtils.getBitvectorSort(mScript, 1);
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 		final Sort array = SmtSortUtils.getArraySort(mScript, bv32, bv1);
 		mScript.declareFun("main_#t~malloc9.base", new Sort[0], bv32);
 		mScript.declareFun("main_~end~0.offset", new Sort[0], bv32);
@@ -255,8 +255,8 @@ public class MuensterbergBenchmark {
 
 	@Test
 	public void forester_heap_dll_simple_white_blue() {
-		final Sort bv1 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(1) });
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv1 = SmtSortUtils.getBitvectorSort(mScript, 1);
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 		final Sort array = SmtSortUtils.getArraySort(mScript, bv32, bv1);
 		mScript.declareFun("main_~x~0.offset", new Sort[0], bv32);
 		mScript.declareFun("main_~head~0.offset", new Sort[0], bv32);
@@ -272,7 +272,7 @@ public class MuensterbergBenchmark {
 
 	@Test
 	public void dllqueue01() {
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 		final Sort bv32Tobv32 = SmtSortUtils.getArraySort(mScript, bv32, bv32);
 		final Sort bv32Tobv32Tobv32 = SmtSortUtils.getArraySort(mScript, bv32, bv32Tobv32);
 
