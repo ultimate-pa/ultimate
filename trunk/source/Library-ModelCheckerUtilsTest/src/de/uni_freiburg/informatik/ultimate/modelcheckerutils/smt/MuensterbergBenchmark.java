@@ -68,7 +68,9 @@ public class MuensterbergBenchmark {
 
 	@BeforeClass
 	public static void beforeAllTests() {
-		mCsvWriter = new QuantifierEliminationTestCsvWriter(MuensterbergBenchmark.class.getSimpleName());
+		if (WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY) {
+			mCsvWriter = new QuantifierEliminationTestCsvWriter(MuensterbergBenchmark.class.getSimpleName());
+		}
 	}
 
 	@AfterClass
