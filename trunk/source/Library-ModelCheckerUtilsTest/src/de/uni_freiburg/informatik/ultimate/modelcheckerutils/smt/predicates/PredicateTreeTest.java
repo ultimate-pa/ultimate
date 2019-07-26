@@ -135,8 +135,8 @@ public class PredicateTreeTest {
 	 */
 	public void rajdeepIteration5wp() {
 
-		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(8) });
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 		final Sort array = SmtSortUtils.getArraySort(mScript, bv32, bv8);
 
 		mScript.declareFun("ULTIMATE.start_design_~nack.base", new Sort[0], bv32);
