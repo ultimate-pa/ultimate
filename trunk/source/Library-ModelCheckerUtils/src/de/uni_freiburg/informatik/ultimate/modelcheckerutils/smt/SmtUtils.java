@@ -1903,11 +1903,22 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Returns true iff the the boolean formulas formula1 and formula2 are equivalent w.r.t script.
+	 * Returns true iff the boolean formulas formula1 and formula2 are equivalent w.r.t script.
 	 */
 	public static boolean areFormulasEquivalent(final Term formula1, final Term formula2, final Script script) {
 		final Term notEq = binaryBooleanNotEquals(script, formula1, formula2);
 		return Util.checkSat(script, notEq) == LBool.UNSAT;
+	}
+
+	/**
+	 * Returns true iff the boolean formulas formula1 and formula2 are
+	 * equivalent under the given assumption w.r.t script.
+	 */
+	public static boolean areFormulasEquivalent(final Term formula1, final Term formula2, final Term assumption,
+			final Script script) {
+		final Term eq = binaryEquality(script, formula1, formula2);
+		final Term impl = implies(script, assumption, eq);
+		return Util.checkSat(script, not(script, impl)) == LBool.UNSAT;
 	}
 
 	/**
