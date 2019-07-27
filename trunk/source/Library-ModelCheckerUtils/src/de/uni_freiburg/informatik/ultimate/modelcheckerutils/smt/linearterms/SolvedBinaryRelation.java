@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
@@ -53,21 +55,15 @@ public class SolvedBinaryRelation {
 	private final Term mLeftHandSide;
 	private final Term mRightHandSide;
 	private final RelationSymbol mRelationSymbol;
-	private final Term mAdditionalAssumption;
-	private final AssumptionForSolvability mAssumptionForSolability;
+	private final Map<AssumptionForSolvability, Term> mAssumptionsMap;
 
 	public SolvedBinaryRelation(final Term leftHandSide, final Term rightHandSide, final RelationSymbol relationSymbol,
-			final Term additionalAssumption, final AssumptionForSolvability assumptionForSolability) {
+			final Map<AssumptionForSolvability, Term> assumptionsMap) {
 		super();
-		if ((additionalAssumption == null) != (assumptionForSolability == AssumptionForSolvability.NONE)) {
-			throw new IllegalArgumentException(
-					"Term additionalAssumption must be null iff we not have an assumptionForSolability");
-		}
 		mLeftHandSide = leftHandSide;
 		mRightHandSide = rightHandSide;
 		mRelationSymbol = relationSymbol;
-		mAdditionalAssumption = additionalAssumption;
-		mAssumptionForSolability = assumptionForSolability;
+		mAssumptionsMap = assumptionsMap;
 	}
 
 	/**
@@ -88,20 +84,13 @@ public class SolvedBinaryRelation {
 		return mRelationSymbol;
 	}
 
-	/**
-	 * @return Boolean {@link Term} that has to hold if this relation holds and null
-	 *         if there is no such assumption.
-	 */
-	public Term getAdditionalAssumption() {
-		return mAdditionalAssumption;
-	}
 
 	/**
-	 * @return Additional assumption that was necessary in order to solve the
-	 *         relation for subject x.
+	 * @return A map whose values are terms that represent the assumptions
+	 * under which the original relation is equivalent to the solved relation.
 	 */
-	public AssumptionForSolvability getAssumptionForSolability() {
-		return mAssumptionForSolability;
+	public Map<AssumptionForSolvability, Term> getAssumptionsMap() {
+		return mAssumptionsMap;
 	}
 
 	/**

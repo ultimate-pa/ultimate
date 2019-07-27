@@ -34,10 +34,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
@@ -88,7 +86,7 @@ public class AffineRelationTest {
 	@Test
 	public void relationIntDivDefault() throws NotAffineException {
 		final String inputSTR = "(= (+ 3 a) b )";
-		Assert.assertTrue(assumptionImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "a")));
 
 	}
@@ -96,7 +94,7 @@ public class AffineRelationTest {
 	@Test
 	public void relationIntDiv() throws NotAffineException {
 		final String inputSTR = "(= (* 3 a) b )";
-		Assert.assertTrue(assumptionImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "a")));
 
 	}
@@ -104,28 +102,28 @@ public class AffineRelationTest {
 	@Test
 	public void relationIntDiv2() throws NotAffineException {
 		final String inputSTR = "(= (* 3 a) (* 7 b) )";
-		Assert.assertTrue(assumptionImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "a")));
 	}
 
 	@Test
 	public void relationIntDiv3() throws NotAffineException {
 		final String inputSTR = "(= (* 3 a) (+ (* 7 b) (* 5 c)) )";
-		Assert.assertTrue(assumptionImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "a")));
 	}
 
 	@Test
 	public void relationIntDiv4() throws NotAffineException {
 		final String inputSTR = "(= (* 6 (+ 33 a)) (* 7 b) )";
-		Assert.assertTrue(assumptionImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "a")));
 	}
 
 	@Test
 	public void relationIntDiv51() throws NotAffineException {
 		final String inputSTR = "(>= (* 3 a) b )";
-		Assert.assertTrue(assumptionImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "a")));
 
 	}
@@ -133,7 +131,7 @@ public class AffineRelationTest {
 	@Test
 	public void relationIntDiv52() throws NotAffineException {
 		final String inputSTR = "(<= (* 3 a) b )";
-		Assert.assertTrue(assumptionImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "a")));
 
 	}
@@ -141,7 +139,7 @@ public class AffineRelationTest {
 	@Test
 	public void relationIntDiv6() throws NotAffineException {
 		final String inputSTR = "(not(= (* 3 a) b ))";
-		Assert.assertTrue(assumptionImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "a")));
 
 	}
@@ -149,7 +147,7 @@ public class AffineRelationTest {
 	@Test
 	public void relationIntDiv71() throws NotAffineException {
 		final String inputSTR = "(> (* 3 a) b )";
-		Assert.assertTrue(assumptionImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "a")));
 
 	}
@@ -157,7 +155,7 @@ public class AffineRelationTest {
 	@Test
 	public void relationIntDiv72() throws NotAffineException {
 		final String inputSTR = "(< (* 4 a) b )";
-		Assert.assertTrue(assumptionImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "a")));
 
 	}
@@ -170,22 +168,11 @@ public class AffineRelationTest {
 		return sbr;
 	}
 
-	private boolean assumptionImpliesEquality(final Term originalTerm, final SolvedBinaryRelation sbr) {
-		Term impli1 = sbr.relationToTerm(mScript);
-		Term impli2 = originalTerm;
-		if (sbr.getAdditionalAssumption() != null) {
-			impli1 = SmtUtils.implies(mScript, sbr.getAdditionalAssumption(), sbr.relationToTerm(mScript));
-			impli2 = SmtUtils.implies(mScript, sbr.getAdditionalAssumption(), originalTerm);
-		}
-		Term comp = mScript.term("=", impli1, impli2);
-		comp = mScript.term("not", comp);
-		final LBool sat = Util.checkSat(mScript, comp);
-		if (sat == LBool.UNSAT) {
-			return true;
-		} else {
-			return false;
-		}
-
+	private boolean assumptionsImplyEquality(final Term originalTerm, final SolvedBinaryRelation sbr) {
+		final Term impli1 = sbr.relationToTerm(mScript);
+		final Term impli2 = originalTerm;
+		return SmtUtils.areFormulasEquivalent(sbr.relationToTerm(mScript), originalTerm,
+				SmtUtils.and(mScript, sbr.getAssumptionsMap().values()), mScript);
 	}
 
 }
