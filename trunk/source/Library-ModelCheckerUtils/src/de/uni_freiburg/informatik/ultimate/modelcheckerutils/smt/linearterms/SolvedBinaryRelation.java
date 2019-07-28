@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Bin
 public class SolvedBinaryRelation {
 
 	public enum AssumptionForSolvability {
-		NONE, INTEGER_DIVISIBLE_BY_CONSTANT, REAL_DIVISOR_NOT_ZERO,
+		INTEGER_DIVISIBLE_BY_CONSTANT, REAL_DIVISOR_NOT_ZERO,
 	}
 
 	private final Term mLeftHandSide;
