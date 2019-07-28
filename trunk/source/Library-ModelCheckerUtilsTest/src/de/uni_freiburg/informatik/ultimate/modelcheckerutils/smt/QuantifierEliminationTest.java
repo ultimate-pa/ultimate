@@ -666,7 +666,7 @@ public class QuantifierEliminationTest {
 	public void applyDistributivity() {
 		mScript.declareFun("p", new Sort[] {SmtSortUtils.getIntSort(mMgdScript)}, SmtSortUtils.getBoolSort(mMgdScript));
 		final String formulaAsString = "(forall ((x Int)) (or (and (p x) (p (+ x 1))) (and (not (= x 7)) (not (= x 8)))))";
-		final String expectedResultAsString = "(not (= v (select b k)))";
+		final String expectedResultAsString = "(and (p 7) (p 8) (p 9))";
 		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
