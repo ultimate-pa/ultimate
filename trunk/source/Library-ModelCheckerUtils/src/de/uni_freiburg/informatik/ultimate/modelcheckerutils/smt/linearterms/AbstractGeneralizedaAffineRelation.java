@@ -338,9 +338,10 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
 				assumptionsMap);
 		final Term relationToTerm = result.relationToTerm(script);
-		if (additionalAssumption != null) {
-			assert script instanceof INonSolverScript || assumptionImpliesEquivalence(script, mOriginalTerm,
-					relationToTerm, additionalAssumption) != LBool.SAT : "transformation to AffineRelation unsound";
+		if (!assumptionsMap.isEmpty()) {
+			assert script instanceof INonSolverScript
+					|| assumptionImpliesEquivalence(script, mOriginalTerm, relationToTerm, assumptionsMap.entrySet()
+							.iterator().next().getValue()) != LBool.SAT : "transformation to AffineRelation unsound";
 		} else {
 			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
 					relationToTerm) != LBool.SAT : "transformation to AffineRelation unsound";
