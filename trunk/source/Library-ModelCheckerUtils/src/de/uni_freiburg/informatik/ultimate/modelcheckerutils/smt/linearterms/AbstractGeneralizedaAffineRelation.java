@@ -2,7 +2,9 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -266,7 +268,7 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 	 * variable does not occur in the term, or the variable is x, its sort is Int
 	 * and the term is 2x=1.)
 	 */
-	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) throws NotAffineException {
+	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) {
 		if (!isVariable(subject)) {
 			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
 				throw new UnsupportedOperationException("subject is not a variable");
@@ -301,25 +303,22 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 
 		final Term assumptionFreeRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 				coeffOfSubject);
-		AssumptionForSolvability assumptionForSolvability;
-		final Term additionalAssumption;
+		final Map<AssumptionForSolvability, Term> assumptionsMap;
 		final Term rhsTerm;
 		if (assumptionFreeRhsTerm == null) {
 			/*
 			 * Integer Division under a modulo assumption
 			 */
-			assumptionForSolvability = AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT;
 			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 					Rational.ONE);
 			final Term divTerm = SmtUtils.div(script, rhsTermWithoutDivision,
 					coeffOfSubject.toTerm(mAffineTerm.getSort()));
 			Term modTerm = SmtUtils.mod(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort()));
 			modTerm = SmtUtils.binaryEquality(script, modTerm, TermParseUtils.parseTerm(script, "0"));
-			additionalAssumption = modTerm;
+			assumptionsMap = Collections.singletonMap(AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT, modTerm);
 			rhsTerm = divTerm;
 		} else {
-			assumptionForSolvability = AssumptionForSolvability.NONE;
-			additionalAssumption = null;
+			assumptionsMap = Collections.emptyMap();
 			rhsTerm = assumptionFreeRhsTerm;
 		}
 
@@ -337,7 +336,7 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 		// other variables in the monomial
 
 		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
-				additionalAssumption, assumptionForSolvability);
+				assumptionsMap);
 		final Term relationToTerm = result.relationToTerm(script);
 		if (additionalAssumption != null) {
 			assert script instanceof INonSolverScript || assumptionImpliesEquivalence(script, mOriginalTerm,
