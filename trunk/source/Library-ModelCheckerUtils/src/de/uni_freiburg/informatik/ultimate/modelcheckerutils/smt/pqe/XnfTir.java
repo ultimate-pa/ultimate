@@ -35,7 +35,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -50,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AbstractGeneralizedaAffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryNumericRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -149,7 +148,6 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			if (!Arrays.asList(term.getFreeVars()).contains(eliminatee)) {
 				termsWithoutEliminatee.add(term);
 			} else {
-				ApplicationTerm eliminateeOnLhs;
 				TransformInequality transform;
 				if (quantifier == QuantifiedFormula.EXISTS) {
 					transform = TransformInequality.STRICT2NONSTRICT;
@@ -167,17 +165,14 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					// eliminatee occurs probably only in select
 					return null;
 				}
-				try {
-					eliminateeOnLhs = rel.onLeftHandSideOnly(mScript, eliminatee);
-				} catch (final NotAffineException e) {
-					// no chance to eliminate the variable
+				final SolvedBinaryRelation sbr = rel.solveForSubject(mScript, eliminatee);
+				if (sbr == null) {
 					return null;
 				}
-				if (!SmtUtils.occursAtMostAsLhs(eliminatee, eliminateeOnLhs)) {
-					// eliminatee occurs additionally in rhs e.g., inside a
-					// select or modulo term.
+				if (!sbr.getAssumptionsMap().isEmpty()) {
 					return null;
 				}
+				final Term eliminateeOnLhs = sbr.relationToTerm(mScript);
 				final BinaryNumericRelation bnr = BinaryNumericRelation.convert(eliminateeOnLhs);
 				switch (bnr.getRelationSymbol()) {
 				case DISTINCT:
