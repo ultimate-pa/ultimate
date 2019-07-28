@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SolvedBinaryRelation.AssumptionForSolvability;
 
 /**
  * Represents an term of the form ψ ▷ φ, where ψ and φ are
@@ -146,12 +145,13 @@ public class AffineRelation extends AbstractGeneralizedaAffineRelation<AffineTer
 	 * variable does not occur in the term, or the variable is x, its sort is Int
 	 * and the term is 2x=1.)
 	 */
+	@Deprecated
 	public ApplicationTerm onLeftHandSideOnly(final Script script, final Term var) throws NotAffineException {
 		final SolvedBinaryRelation res = solveForSubject(script, var);
 		if (res == null) {
 			throw new NotAffineException(NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
 		} else {
-			if (res.getAssumptionForSolability() != AssumptionForSolvability.NONE) {
+			if (!res.getAssumptionsMap().isEmpty()) {
 				throw new NotAffineException(NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
 			}
 			return (ApplicationTerm) res.relationToTerm(script);
@@ -162,17 +162,18 @@ public class AffineRelation extends AbstractGeneralizedaAffineRelation<AffineTer
 	 * WIP, This method is for testing purpose. It will replace onLeftHandSideOnly
 	 * later. TODO
 	 */
+	@Deprecated
 	public SolvedBinaryRelation nEWonLeftHandSideOnly(final Script script, final Term var) throws NotAffineException {
 		final SolvedBinaryRelation res = solveForSubject(script, var);
 		if (res == null) {
 			throw new NotAffineException(NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
 		} else {
-			if (res.getAssumptionForSolability() == AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT) {
-				return res;
-			}
-			if (res.getAssumptionForSolability() != AssumptionForSolvability.NONE) {
-				throw new NotAffineException(NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
-			}
+//			if (res.getAssumptionForSolability() == AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT) {
+//				return res;
+//			}
+//			if (res.getAssumptionForSolability() != AssumptionForSolvability.NONE) {
+//				throw new NotAffineException(NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
+//			}
 			return res;
 		}
 	}
