@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -158,6 +159,12 @@ public class EqualityInformation {
 			try {
 				final ApplicationTerm equality = affRel.onLeftHandSideOnly(script, givenTerm);
 				equalTerm = equality.getParameters()[1];
+				final SolvedBinaryRelation sbr = affRel.solveForSubject(script, givenTerm);
+				if (!sbr.getAssumptionsMap().isEmpty()) {
+					return null;
+				} else {
+					equalTerm = sbr.getRightHandSide();
+				}
 			} catch (final NotAffineException e) {
 				// no representation where var is on lhs
 				return null;
