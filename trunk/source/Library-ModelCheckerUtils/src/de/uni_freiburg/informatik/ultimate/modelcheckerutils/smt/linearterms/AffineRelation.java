@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -135,47 +134,6 @@ public class AffineRelation extends AbstractGeneralizedaAffineRelation<AffineTer
 		}
 		final RelationSymbol relationSymbol = bnr.getRelationSymbol();
 		return new AffineRelation(script, transformInequality, relationSymbol, affineLhs, affineRhs, term);
-	}
-
-	/**
-	 * Returns a term representation of this AffineRelation where the variable var
-	 * (note that in our AffineTerms the variables may be SMT terms like e.g., a
-	 * select term) is on the left hand side with coeffcient one. Throw a
-	 * NotAffineException if no such representation is possible (e.g, if the
-	 * variable does not occur in the term, or the variable is x, its sort is Int
-	 * and the term is 2x=1.)
-	 */
-	@Deprecated
-	public ApplicationTerm onLeftHandSideOnly(final Script script, final Term var) throws NotAffineException {
-		final SolvedBinaryRelation res = solveForSubject(script, var);
-		if (res == null) {
-			throw new NotAffineException(NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
-		} else {
-			if (!res.getAssumptionsMap().isEmpty()) {
-				throw new NotAffineException(NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
-			}
-			return (ApplicationTerm) res.relationToTerm(script);
-		}
-	}
-
-	/*
-	 * WIP, This method is for testing purpose. It will replace onLeftHandSideOnly
-	 * later. TODO
-	 */
-	@Deprecated
-	public SolvedBinaryRelation nEWonLeftHandSideOnly(final Script script, final Term var) throws NotAffineException {
-		final SolvedBinaryRelation res = solveForSubject(script, var);
-		if (res == null) {
-			throw new NotAffineException(NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
-		} else {
-//			if (res.getAssumptionForSolability() == AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT) {
-//				return res;
-//			}
-//			if (res.getAssumptionForSolability() != AssumptionForSolvability.NONE) {
-//				throw new NotAffineException(NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE);
-//			}
-			return res;
-		}
 	}
 
 }
