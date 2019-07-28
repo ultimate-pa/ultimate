@@ -164,7 +164,7 @@ public class AffineRelationTest {
 			throws NotAffineException {
 		final Term var = TermParseUtils.parseTerm(mScript, varString);
 		final SolvedBinaryRelation sbr = AffineRelation
-				.convert(mScript, TermParseUtils.parseTerm(mScript, termAsString)).nEWonLeftHandSideOnly(mScript, var);
+				.convert(mScript, TermParseUtils.parseTerm(mScript, termAsString)).solveForSubject(mScript, var);
 		return sbr;
 	}
 
