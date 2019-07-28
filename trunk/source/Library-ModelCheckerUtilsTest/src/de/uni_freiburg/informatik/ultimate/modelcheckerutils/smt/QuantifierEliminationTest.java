@@ -670,6 +670,15 @@ public class QuantifierEliminationTest {
 		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void infinityRestrictorDrop() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("main_#t~mem8", new Sort[0], intSort);
+		final String formulaAsString = "(exists ((x Int)) (> (* 11 x) 17))";
+		final String expectedResultAsString = "true";
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
 			final String formulaAsString) {

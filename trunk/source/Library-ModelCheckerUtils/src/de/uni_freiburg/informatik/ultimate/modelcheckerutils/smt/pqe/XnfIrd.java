@@ -29,12 +29,12 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -45,7 +45,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
@@ -132,16 +133,8 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 					// it might occur inside a function or array.
 					return null;
 				}
-				try {
-					final ApplicationTerm lhsonly = affineRelation.onLeftHandSideOnly(script, tv);
-					if (!SmtUtils.occursAtMostAsLhs(tv, lhsonly)) {
-						// eliminatee occurs additionally in rhs e.g., inside a
-						// select or modulo term.
-						return null;
-					}
-
-				} catch (final NotAffineException e) {
-					// unable to eliminate quantifier
+				final boolean solveabelWoCaseDist = isSolvableWithoutCaseDistinction(script, tv, affineRelation);
+				if (!solveabelWoCaseDist) {
 					return null;
 				}
 				final RelationSymbol relationSymbol = affineRelation.getRelationSymbol();
@@ -192,6 +185,28 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 			return null;
 		}
 		return paramsWithoutTv.toArray(new Term[paramsWithoutTv.size()]);
+	}
+
+	private static boolean isSolvableWithoutCaseDistinction(final Script script, final TermVariable tv,
+			final AffineRelation affineRelation) {
+		assert Arrays.equals(AssumptionForSolvability.values(), new AssumptionForSolvability[] {
+				AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT,
+				AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO }) : "A new value was added to enum and has to be considered here";
+		final SolvedBinaryRelation sbr = affineRelation.solveForSubject(script, tv);
+		if (sbr == null) {
+			return false;
+		} else {
+			if (sbr.getAssumptionsMap().isEmpty()) {
+				return true;
+			} else {
+				if (sbr.getAssumptionsMap().keySet()
+						.equals(Collections.singleton(AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT))) {
+					return true;
+				} else {
+					return false;
+				}
+			}
+		}
 	}
 
 	private static float underapproximateNumberOfDomainElements(final Sort sort) {
