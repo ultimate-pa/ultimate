@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.math.BigInteger;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -68,9 +67,7 @@ public class MuensterbergBenchmark {
 
 	@BeforeClass
 	public static void beforeAllTests() {
-		if (WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY) {
-			mCsvWriter = new QuantifierEliminationTestCsvWriter(MuensterbergBenchmark.class.getSimpleName());
-		}
+		mCsvWriter = new QuantifierEliminationTestCsvWriter(MuensterbergBenchmark.class.getSimpleName());
 	}
 
 	@AfterClass

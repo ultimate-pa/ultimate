@@ -36,8 +36,6 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
@@ -54,17 +52,18 @@ public class QuantifierEliminationTestCsvWriter {
 
 	private String mFilePath;
 	private final SimpleCsvProvider<String> mCsv;
-	private final Triple<PrintWriter, BufferedWriter, FileWriter> mPrintWriter;
 	private boolean mPrinted;
 	private long mCurrentEliminationStartTime;
 	private String[] mCurrentEliminationData;
+	private final String mTestfileId;
 
 	public QuantifierEliminationTestCsvWriter(final String testfileId) {
+		mTestfileId = testfileId;
 		final List<String> list =
 				Arrays.asList(new String[] { "TestId", "InputTreesize", "OutputTreesize", "Runtime" });
 		mCsv = new SimpleCsvProvider<>(list);
-		final String workingDirectory = System.getProperty("user.dir");
-		mPrintWriter = prepareFile(workingDirectory, testfileId);
+
+
 	}
 
 	public void reportEliminationBegin(final Term eliminationInput) {
@@ -72,7 +71,7 @@ public class QuantifierEliminationTestCsvWriter {
 		if (mCurrentEliminationData == null) {
 			mCurrentEliminationData = new String[4];
 			mCurrentEliminationData[0] = testId;
-			long treesize = new DAGSize().treesize(eliminationInput);
+			final long treesize = new DAGSize().treesize(eliminationInput);
 			assert mCurrentEliminationData[1] == null;
 			mCurrentEliminationData[1] = String.valueOf(treesize);
 			mCurrentEliminationStartTime = System.nanoTime();
@@ -80,7 +79,7 @@ public class QuantifierEliminationTestCsvWriter {
 			throw new AssertionError("Writing PQE benchmarks failed: old data");
 		}
 	}
-	
+
 	public void reportTestFinished() {
 		if (mCurrentEliminationData == null) {
 			// do nothing
@@ -97,7 +96,7 @@ public class QuantifierEliminationTestCsvWriter {
 	public void reportEliminationSuccess(final Term eliminationOutput) {
 		final String testId = ReflectionUtil.getCallerMethodName(4);
 		if (testId.equals(mCurrentEliminationData[0])) {
-			long treesize = new DAGSize().treesize(eliminationOutput);
+			final long treesize = new DAGSize().treesize(eliminationOutput);
 			assert mCurrentEliminationData[2] == null;
 			mCurrentEliminationData[2] = String.valueOf(treesize);
 			final long duration = computeDurationMiliseconds(mCurrentEliminationStartTime);
@@ -119,6 +118,8 @@ public class QuantifierEliminationTestCsvWriter {
 		if (mPrinted) {
 			throw new AssertionError("Writing PQE benchmarks failed: must not print same csv twice");
 		}
+		final String workingDirectory = System.getProperty("user.dir");
+		final Triple<PrintWriter, BufferedWriter, FileWriter> mPrintWriter = prepareFile(workingDirectory, mTestfileId);
 		mPrintWriter.getFirst().print(mCsv.toCsv(null, "\t", true));
 		mPrintWriter.getFirst().flush();
 		mPrintWriter.getSecond().flush();
