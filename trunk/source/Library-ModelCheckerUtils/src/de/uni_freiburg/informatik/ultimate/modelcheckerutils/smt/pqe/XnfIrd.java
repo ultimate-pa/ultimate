@@ -203,6 +203,9 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 			final BigInteger bitsize = sort.getRealSort().getIndices()[0];
 			return (float) Math.pow(2.0f, bitsize.doubleValue());
 		} else if (SmtSortUtils.isFloatingpointSort(sort)) {
+			// TODO 2019-07-27 Matthias: This is not correct the FloatingPoint
+			// theory does not have a value for each bitvector (e.g., there is
+			// only one NaN.
 			final BigInteger[] indices = sort.getRealSort().getIndices();
 			final BigInteger bitsize = indices[0].add(indices[1]);
 			return (float) Math.pow(2.0f, bitsize.doubleValue());
