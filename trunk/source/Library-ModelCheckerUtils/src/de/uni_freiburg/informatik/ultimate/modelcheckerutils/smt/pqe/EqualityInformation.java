@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -37,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsSubterm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -156,23 +154,11 @@ public class EqualityInformation {
 			final Term forbiddenTerm, final int i) {
 		if (affRel.isVariable(givenTerm)) {
 			Term equalTerm;
-			try {
-				final ApplicationTerm equality = affRel.onLeftHandSideOnly(script, givenTerm);
-				equalTerm = equality.getParameters()[1];
-				final SolvedBinaryRelation sbr = affRel.solveForSubject(script, givenTerm);
-				if (!sbr.getAssumptionsMap().isEmpty()) {
-					return null;
-				} else {
-					equalTerm = sbr.getRightHandSide();
-				}
-			} catch (final NotAffineException e) {
-				// no representation where var is on lhs
+			final SolvedBinaryRelation sbr = affRel.solveForSubject(script, givenTerm);
+			if (sbr == null || !sbr.getAssumptionsMap().isEmpty()) {
 				return null;
-			}
-			if (isSubterm(givenTerm, equalTerm)) {
-				// this case occurs e.g. if the given term also occurs
-				// in some select term
-				return null;
+			} else {
+				equalTerm = sbr.getRightHandSide();
 			}
 			if (forbiddenTerm != null && isSubterm(forbiddenTerm, equalTerm)) {
 				return null;
