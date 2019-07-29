@@ -23,7 +23,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Sol
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
-public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGeneralizedAffineTerm<AVAR>, AVAR extends Term> {
+public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGeneralizedAffineTerm<AVAR>, AVAR extends Term>
+		implements IBinaryRelation {
 
 	protected static final String NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE = "No affine representation where desired variable is on left hand side";
 	protected static final boolean TEMPORARY_POLYNOMIAL_TERM_TEST = false;

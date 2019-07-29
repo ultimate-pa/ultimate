@@ -26,17 +26,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
+import java.util.Collections;
+
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsSubterm;
 
 /**
  * Helper class that can be used to detect if a relation has certain form.
  *
- * @author Matthias Heizmann
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public abstract class BinaryRelation {
+public abstract class BinaryRelation implements IBinaryRelation {
 
 	public enum RelationSymbol {
 		EQ("="), DISTINCT("distinct"), LEQ("<="), GEQ(">="), LESS("<"), GREATER(">");
@@ -270,6 +273,28 @@ public abstract class BinaryRelation {
 	public Term getRhs() {
 		return mRhs;
 	}
+
+	@Override
+	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) {
+		if (getLhs().equals(subject)) {
+			if (new ContainsSubterm(subject).containsSubterm(getRhs())) {
+				return null;
+			} else {
+				return new SolvedBinaryRelation(subject, getRhs(), getRelationSymbol(), Collections.emptyMap());
+			}
+		} else if (getRhs().equals(subject)) {
+			if (new ContainsSubterm(subject).containsSubterm(getLhs())) {
+				return null;
+			} else {
+				return new SolvedBinaryRelation(subject, getLhs(), swapParameters(getRelationSymbol()),
+						Collections.emptyMap());
+			}
+		} else {
+			return null;
+		}
+	}
+
+
 
 	public static class NoRelationOfThisKindException extends Exception {
 
