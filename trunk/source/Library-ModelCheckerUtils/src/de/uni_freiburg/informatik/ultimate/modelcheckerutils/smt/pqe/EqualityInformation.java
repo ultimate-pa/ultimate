@@ -126,6 +126,8 @@ public class EqualityInformation {
 
 			final BinaryEqualityRelation ber = binaryRelations[i];
 			final EqualityInformation eqInfo = getEqinfo(givenTerm, ber, forbiddenTerm, i);
+			final SolvedBinaryRelation sbr = ber.solveForSubject(script, givenTerm);
+			assert (sbr == null) == (eqInfo == null) : "sbr: " + sbr + " eqInfo: " + eqInfo;
 			if (eqInfo != null) {
 				return eqInfo;
 			}
