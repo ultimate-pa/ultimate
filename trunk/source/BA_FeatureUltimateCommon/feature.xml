@@ -19,8 +19,8 @@
    </license>
 
    <requires>
-      <import plugin="org.apache.commons.io"/>
       <import plugin="org.eclipse.cdt.core" version="5.6.0" match="greaterOrEqual"/>
+      <import plugin="org.apache.commons.io"/>
       <import plugin="org.eclipse.core.runtime"/>
    </requires>
 
@@ -487,6 +487,27 @@
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.lib.pathexpressions"
          download-size="0"
          install-size="0"
          version="0.0.0"

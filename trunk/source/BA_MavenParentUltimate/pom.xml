@@ -533,7 +533,6 @@
         <module>../Library-LassoRanker</module>
         <module>../Library-Log4j2</module>
         <module>../Library-log4j</module>
-        <module>../Library-SymbolicInterpretation</module>
         <module>../Library-ModelCheckerUtils</module>
         <module>../Library-MSO</module>
         <module>../Library-ojAlgo</module>
@@ -544,11 +543,11 @@
         <module>../Library-Server</module>
         <module>../Library-SMTLIB</module>
         <module>../Library-srParse</module>
+        <module>../Library-SymbolicInterpretation</module>
         <module>../Library-UltimateCore</module>
         <module>../Library-UltimateModel</module>
         <module>../Library-UltimateUtil</module>
         <module>../Library-xerces</module>
-        <module>../SymbolicInterpretation</module>
         <module>../LTL2aut</module>
         <module>../PEAtoBoogie</module>
         <module>../RCFGBuilder</module>
@@ -562,6 +561,7 @@
         <module>../SMTSolverBridge</module>
         <module>../SpaceExParser</module>
         <module>../SyntaxChecker</module>
+		<module>../SymbolicInterpretation</module>
         <module>../TraceAbstractionConcurrent</module>
         <module>../TraceAbstraction</module>
         <module>../TraceAbstractionWithAFAs</module>
