@@ -26,32 +26,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Logs the size of a formula before asking another fluid whether to abstract or not.
+ * Always tells to abstract.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
-public class LogSizeWrapperFluid implements IFluid {
-
-	private final IFluid mFluid;
-	private final ILogger mLogger;
-
-	public LogSizeWrapperFluid(final ILogger logger, final IFluid fluid) {
-		mFluid = fluid;
-		mLogger = logger;
-	}
+public class AlwaysFluid implements IFluid {
 
 	@Override
 	public boolean shallBeAbstracted(final IPredicate predicate) {
-		final boolean applyAlpha = mFluid.shallBeAbstracted(predicate);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Formula with dag size %s %s be abstracted",
-					new DagSizePrinter(predicate.getFormula()), applyAlpha ? "will" : "won't");
-		}
-		return applyAlpha;
+		return true;
 	}
+
 }

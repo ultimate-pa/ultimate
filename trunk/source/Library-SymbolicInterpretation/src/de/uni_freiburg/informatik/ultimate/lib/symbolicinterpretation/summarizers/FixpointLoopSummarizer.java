@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarize
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -64,11 +63,11 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 
 	public FixpointLoopSummarizer(final ILogger logger, final IProgressAwareTimer timer, final SymbolicTools tools,
 			final IDomain domain, final DagInterpreter dagIpr) {
-		mLogger = Objects.requireNonNull(logger);
+		mLogger = logger;
 		mTimer = timer;
 		mTools = tools;
-		mDomain = Objects.requireNonNull(domain);
-		mDagIpr = Objects.requireNonNull(dagIpr);
+		mDomain = domain;
+		mDagIpr = dagIpr;
 		mCache = new HashMap<>();
 	}
 

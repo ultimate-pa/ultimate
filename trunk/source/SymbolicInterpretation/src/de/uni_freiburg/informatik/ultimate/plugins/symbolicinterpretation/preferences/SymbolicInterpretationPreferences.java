@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IntervalDomain;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.AlwaysFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
@@ -82,6 +83,7 @@ public class SymbolicInterpretationPreferences extends UltimatePreferenceInitial
 	public static final String DEFAULT_FLUID = NeverFluid.class.getSimpleName();
 	protected static final String[] VALUES_FLUID = {
 		NeverFluid.class.getSimpleName(),
+		AlwaysFluid.class.getSimpleName(),
 		LogSizeWrapperFluid.class.getSimpleName(),
 	};
 

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTo
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IntervalDomain;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.AlwaysFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
@@ -102,6 +103,8 @@ public class IcfgInterpreterBuilder {
 		final IFluid fluid;
 		if (NeverFluid.class.getSimpleName().equals(prefFluid)) {
 			fluid = new NeverFluid();
+		} else if (AlwaysFluid.class.getSimpleName().equals(prefFluid)) {
+			fluid = new AlwaysFluid();
 		} else if (LogSizeWrapperFluid.class.getSimpleName().equals(prefFluid)) {
 			final String prefInternFluid =
 					mPrefs.getString(SymbolicInterpretationPreferences.LABEL_LOGFLUID_INTERN_FLUID);

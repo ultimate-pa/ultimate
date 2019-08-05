@@ -127,6 +127,7 @@ public class DagInterpreter {
 		if (regex instanceof Epsilon) {
 			return input;
 		} else if (regex instanceof Literal) {
+			mLogger.warn("interpret " + regex);
 			return ipretTrans(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter(),
 					input, loiStorage, enterCallRegr);
 		} else if (regex instanceof Star) {
