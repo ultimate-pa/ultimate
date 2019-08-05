@@ -48,18 +48,18 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizer
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.IcfgInterpreterBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.SifaBuilder;
 
 /**
  * Description, values, and default values for sifa settings.
- * Use {@link IcfgInterpreterBuilder} to create a sifa interpreter using these settings.
+ * Use {@link SifaBuilder} to create a sifa interpreter using these settings.
  * <p>
- * When adding settings to this class you also have to adapt the methods in {@link IcfgInterpreterBuilder}.
+ * When adding settings to this class you also have to adapt the methods in {@link SifaBuilder}.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  */
-public class SymbolicInterpretationPreferences extends UltimatePreferenceInitializer {
+public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract Domain";
 	public static final String DEFAULT_ABSTRACT_DOMAIN = ExplicitValueDomain.class.getSimpleName();
@@ -112,7 +112,7 @@ public class SymbolicInterpretationPreferences extends UltimatePreferenceInitial
 	protected static final String[] VALUES_LOGFLUID_INTERN_FLUID_VALUES = filter(VALUES_FLUID,
 			value -> !LogSizeWrapperFluid.class.getSimpleName().equals(value));
 
-	public SymbolicInterpretationPreferences() {
+	public SifaPreferences() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
 

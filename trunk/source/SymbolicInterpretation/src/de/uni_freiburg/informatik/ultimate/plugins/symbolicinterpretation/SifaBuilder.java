@@ -48,23 +48,23 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizer
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.TopInputCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.preferences.SymbolicInterpretationPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.preferences.SifaPreferences;
 
 /**
- * Constructs a new sifa interpreter using the settings from {@link SymbolicInterpretationPreferences}.
+ * Constructs a new sifa interpreter using the settings from {@link SifaPreferences}.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
-public class IcfgInterpreterBuilder {
+public class SifaBuilder {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final IPreferenceProvider mPrefs;
 
-	public IcfgInterpreterBuilder(final IUltimateServiceProvider services, final ILogger logger) {
+	public SifaBuilder(final IUltimateServiceProvider services, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
-		mPrefs = SymbolicInterpretationPreferences.getPreferenceProvider(mServices);
+		mPrefs = SifaPreferences.getPreferenceProvider(mServices);
 	}
 
 	public IcfgInterpreter construct(final IIcfg<IcfgLocation> icfg) {
@@ -82,18 +82,18 @@ public class IcfgInterpreterBuilder {
 
 	private SymbolicTools constructTools(final IIcfg<IcfgLocation> icfg) {
 		return new SymbolicTools(mServices, icfg,
-			mPrefs.getEnum(SymbolicInterpretationPreferences.LABEL_SIMPLIFICATION, SymbolicInterpretationPreferences.CLASS_SIMPLIFICATION),
-			mPrefs.getEnum(SymbolicInterpretationPreferences.LABEL_XNF_CONVERSION, SymbolicInterpretationPreferences.CLASS_XNF_CONVERSION)
+			mPrefs.getEnum(SifaPreferences.LABEL_SIMPLIFICATION, SifaPreferences.CLASS_SIMPLIFICATION),
+			mPrefs.getEnum(SifaPreferences.LABEL_XNF_CONVERSION, SifaPreferences.CLASS_XNF_CONVERSION)
 		);
 
 	}
 
 	private IDomain constructDomain(final SymbolicTools tools) {
-		final String prefDomain = mPrefs.getString(SymbolicInterpretationPreferences.LABEL_ABSTRACT_DOMAIN);
+		final String prefDomain = mPrefs.getString(SifaPreferences.LABEL_ABSTRACT_DOMAIN);
 		final IDomain domain;
 		if (ExplicitValueDomain.class.getSimpleName().equals(prefDomain)) {
 			domain = new ExplicitValueDomain(mServices, tools,
-					mPrefs.getInt(SymbolicInterpretationPreferences.LABEL_EXPLVALDOM_PARALLEL_STATES));
+					mPrefs.getInt(SifaPreferences.LABEL_EXPLVALDOM_PARALLEL_STATES));
 		} else if (IntervalDomain.class.getSimpleName().equals(prefDomain)) {
 			domain = new IntervalDomain(mServices, tools);
 		} else {
@@ -103,7 +103,7 @@ public class IcfgInterpreterBuilder {
 	}
 
 	private IFluid constructFluid() {
-		final String prefFluid = mPrefs.getString(SymbolicInterpretationPreferences.LABEL_FLUID);
+		final String prefFluid = mPrefs.getString(SifaPreferences.LABEL_FLUID);
 		return constructFluid(prefFluid);
 	}
 
@@ -115,7 +115,7 @@ public class IcfgInterpreterBuilder {
 			fluid = new AlwaysFluid();
 		} else if (LogSizeWrapperFluid.class.getSimpleName().equals(prefFluid)) {
 			final String prefInternFluid =
-					mPrefs.getString(SymbolicInterpretationPreferences.LABEL_LOGFLUID_INTERN_FLUID);
+					mPrefs.getString(SifaPreferences.LABEL_LOGFLUID_INTERN_FLUID);
 			fluid = new LogSizeWrapperFluid(mLogger, constructFluid(prefInternFluid));
 		} else {
 			throw new IllegalArgumentException("Unknown fluid setting: " + prefFluid);
@@ -125,7 +125,7 @@ public class IcfgInterpreterBuilder {
 
 	private Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> constructLoopSummarizer(
 			final IProgressAwareTimer timer, final SymbolicTools tools, final IDomain domain) {
-		final String prefLoopSum = mPrefs.getString(SymbolicInterpretationPreferences.LABEL_LOOP_SUMMARIZER);
+		final String prefLoopSum = mPrefs.getString(SifaPreferences.LABEL_LOOP_SUMMARIZER);
 		if (FixpointLoopSummarizer.class.getSimpleName().equals(prefLoopSum)) {
 			return icfgIpr -> dagIpr -> new FixpointLoopSummarizer(mLogger, timer, tools, domain, dagIpr);
 		} else {
@@ -135,7 +135,7 @@ public class IcfgInterpreterBuilder {
 
 	private Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> constructCallSummarizer(
 			final SymbolicTools tools) {
-		final String prefCallSum = mPrefs.getString(SymbolicInterpretationPreferences.LABEL_CALL_SUMMARIZER);
+		final String prefCallSum = mPrefs.getString(SifaPreferences.LABEL_CALL_SUMMARIZER);
 		if (TopInputCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
 			return icfgIpr -> dagIpr -> new TopInputCallSummarizer(tools, icfgIpr.procedureResourceCache(), dagIpr);
 		} else {

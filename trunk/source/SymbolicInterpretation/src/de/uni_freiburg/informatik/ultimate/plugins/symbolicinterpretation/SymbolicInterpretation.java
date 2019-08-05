@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.preferences.SymbolicInterpretationPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.preferences.SifaPreferences;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -97,7 +97,7 @@ public class SymbolicInterpretation implements IAnalysis {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		return new SymbolicInterpretationPreferences();
+		return new SifaPreferences();
 	}
 
 	@Override
