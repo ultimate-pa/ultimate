@@ -172,6 +172,7 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 			mLogger.warn("No locations of interest were given");
 			return;
 		}
+		// Change this logging. Sifa PlugIn's observer already logs non-false predicates
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Final predicates for locations of interest are:");
 			for (final Entry<IcfgLocation, IPredicate> entry : loiToPred.entrySet()) {

@@ -37,17 +37,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.IcfgInterpreter;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.ExplicitValueDomain;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFluid;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.TopInputCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -81,14 +72,7 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	}
 
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
-		final IProgressMonitorService timer = mServices.getProgressMonitorService();
-		final SymbolicTools tools = new SymbolicTools(mServices, icfg);
-		final IDomain domain = new ExplicitValueDomain(mServices, tools);
-		final IFluid fluid = new LogSizeWrapperFluid(mLogger, new NeverFluid());
-		final IcfgInterpreter icfgInterpreter = new IcfgInterpreter(mLogger, timer, tools,
-				icfg, IcfgInterpreter.allErrorLocations(icfg), domain, fluid,
-				icfgIpr -> dagIpr -> new FixpointLoopSummarizer(mLogger, timer, tools, domain, dagIpr),
-				icfgIpr -> dagIpr -> new TopInputCallSummarizer(tools, icfgIpr.procedureResourceCache(), dagIpr));
+		final IcfgInterpreter icfgInterpreter = new IcfgInterpreterBuilder(mServices, mLogger).construct(icfg);
 		final Map<IcfgLocation, IPredicate> predicates = icfgInterpreter.interpret();
 		mLogger.debug("Final results are " + predicates);
 		reportResult(predicates);
@@ -96,9 +80,12 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 
 	private void reportResult(final Map<IcfgLocation, IPredicate> predicates) {
 		if (allPredicatesAreFalse(predicates)) {
+			final String allUnreach = "All locations of interest are guaranteed to be unreachable.";
+			mLogger.info(allUnreach);
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID, new AllSpecificationsHoldResult(
-					Activator.PLUGIN_ID, "All locations of interest are guaranteed to be unreachable."));
+					Activator.PLUGIN_ID, allUnreach));
 		} else {
+			mLogger.warn("Some locations of interest might be reachable, see reported results.");
 			predicates.entrySet().forEach(this::reportSingleResult);
 		}
 	}
