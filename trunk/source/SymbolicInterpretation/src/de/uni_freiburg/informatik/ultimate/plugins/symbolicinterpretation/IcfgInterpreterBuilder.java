@@ -114,15 +114,22 @@ public class IcfgInterpreterBuilder {
 
 	private Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> constructLoopSummarizer(
 			final IProgressAwareTimer timer, final SymbolicTools tools, final IDomain domain) {
-		// TODO use settings
-		return icfgIpr -> dagIpr -> new FixpointLoopSummarizer(mLogger, timer, tools, domain, dagIpr);
+		final String prefLoopSum = mPrefs.getString(SymbolicInterpretationPreferences.LABEL_LOOP_SUMMARIZER);
+		if (FixpointLoopSummarizer.class.getSimpleName().equals(prefLoopSum)) {
+			return icfgIpr -> dagIpr -> new FixpointLoopSummarizer(mLogger, timer, tools, domain, dagIpr);
+		} else {
+			throw new IllegalArgumentException("Unknown loop summarizer setting: " + prefLoopSum);
+		}
 	}
-
 
 	private Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> constructCallSummarizer(
 			final SymbolicTools tools) {
-		// TODO use settings
-		return icfgIpr -> dagIpr -> new TopInputCallSummarizer(tools, icfgIpr.procedureResourceCache(), dagIpr);
+		final String prefCallSum = mPrefs.getString(SymbolicInterpretationPreferences.LABEL_CALL_SUMMARIZER);
+		if (TopInputCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
+			return icfgIpr -> dagIpr -> new TopInputCallSummarizer(tools, icfgIpr.procedureResourceCache(), dagIpr);
+		} else {
+			throw new IllegalArgumentException("Unknown call summarizer setting: " + prefCallSum);
+		}
 	}
 
 }
