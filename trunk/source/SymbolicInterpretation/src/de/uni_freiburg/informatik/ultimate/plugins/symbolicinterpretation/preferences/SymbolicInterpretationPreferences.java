@@ -45,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogS
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.TopInputCallSummarizer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.IcfgInterpreterBuilder;
 
@@ -87,6 +89,17 @@ public class SymbolicInterpretationPreferences extends UltimatePreferenceInitial
 		LogSizeWrapperFluid.class.getSimpleName(),
 	};
 
+	public static final String LABEL_SIMPLIFICATION = "Simplification Technique";
+	public static final SimplificationTechnique DEFAULT_SIMPLIFICATION = SimplificationTechnique.SIMPLIFY_DDA;
+	protected static final SimplificationTechnique[] VALUES_SIMPLIFICATION = SimplificationTechnique.values();
+	public static final Class<SimplificationTechnique> CLASS_SIMPLIFICATION = SimplificationTechnique.class;
+
+	public static final String LABEL_XNF_CONVERSION = "Xnf Conversion Technique";
+	public static final XnfConversionTechnique DEFAULT_XNF_CONVERSION =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	protected static final XnfConversionTechnique[] VALUES_XNF_CONVERSION = XnfConversionTechnique.values();
+	public static final Class<XnfConversionTechnique> CLASS_XNF_CONVERSION = XnfConversionTechnique.class;
+
 	// ---- settings in containers ----
 
 	// settings specific to ExplicitValueDomain
@@ -121,7 +134,10 @@ public class SymbolicInterpretationPreferences extends UltimatePreferenceInitial
 			combo(LABEL_LOOP_SUMMARIZER, DEFAULT_LOOP_SUMMARIZER, VALUES_LOOP_SUMMARIZER),
 			combo(LABEL_CALL_SUMMARIZER, DEFAULT_CALL_SUMMARIZER, VALUES_CALL_SUMMARIZER),
 			combo(LABEL_FLUID, TOOLTIP_FLUID, DEFAULT_FLUID, VALUES_FLUID),
-			//combo(LABEL_, DEFAULT_, VALUES_),
+			//
+			combo(LABEL_SIMPLIFICATION, DEFAULT_SIMPLIFICATION, VALUES_SIMPLIFICATION),
+			combo(LABEL_XNF_CONVERSION, DEFAULT_XNF_CONVERSION, VALUES_XNF_CONVERSION),
+			//
 			containerExplValDom,
 			containerLogFluid,
 		};

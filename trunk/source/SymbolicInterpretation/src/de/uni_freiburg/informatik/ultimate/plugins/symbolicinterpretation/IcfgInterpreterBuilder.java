@@ -68,8 +68,8 @@ public class IcfgInterpreterBuilder {
 	}
 
 	public IcfgInterpreter construct(final IIcfg<IcfgLocation> icfg) {
-		final SymbolicTools tools = new SymbolicTools(mServices, icfg);
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService();
+		final SymbolicTools tools = constructTools(icfg);
 		final IDomain domain = constructDomain(tools);
 		final IFluid fluid = constructFluid();
 		final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSum =
@@ -78,6 +78,14 @@ public class IcfgInterpreterBuilder {
 				constructCallSummarizer(tools);
 		return new IcfgInterpreter(mLogger, timer, tools, icfg, IcfgInterpreter.allErrorLocations(icfg),
 				domain, fluid, loopSum, callSum);
+	}
+
+	private SymbolicTools constructTools(final IIcfg<IcfgLocation> icfg) {
+		return new SymbolicTools(mServices, icfg,
+			mPrefs.getEnum(SymbolicInterpretationPreferences.LABEL_SIMPLIFICATION, SymbolicInterpretationPreferences.CLASS_SIMPLIFICATION),
+			mPrefs.getEnum(SymbolicInterpretationPreferences.LABEL_XNF_CONVERSION, SymbolicInterpretationPreferences.CLASS_XNF_CONVERSION)
+		);
+
 	}
 
 	private IDomain constructDomain(final SymbolicTools tools) {

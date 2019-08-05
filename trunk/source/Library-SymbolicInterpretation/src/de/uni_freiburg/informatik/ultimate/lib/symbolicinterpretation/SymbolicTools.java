@@ -62,13 +62,14 @@ public class SymbolicTools {
 	private final IPredicate mTop;
 	private final IPredicate mBottom;
 
-	public SymbolicTools(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
+	public SymbolicTools(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
+			final SimplificationTechnique simplificationTech, final XnfConversionTechnique xnfConversionTech) {
 		mIcfg = icfg;
 		mMngdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final Script script = mMngdScript.getScript();
 		// TODO decide which techniques to use or use a setting
 		mFactory = new PredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable(),
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				simplificationTech, xnfConversionTech);
 		mTransformer = new PredicateTransformer<>(mMngdScript, new TermDomainOperationProvider(services, mMngdScript));
 		mTop = mFactory.newPredicate(script.term("true"));
 		mBottom = mFactory.newPredicate(script.term("false"));
