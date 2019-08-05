@@ -127,7 +127,6 @@ public class DagInterpreter {
 		if (regex instanceof Epsilon) {
 			return input;
 		} else if (regex instanceof Literal) {
-			mLogger.warn("interpret " + regex);
 			return ipretTrans(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter(),
 					input, loiStorage, enterCallRegr);
 		} else if (regex instanceof Star) {
@@ -216,19 +215,19 @@ public class DagInterpreter {
 	}
 
 	private void logAbstractionDone(final IPredicate abstractedPred) {
-		mLogger.debug("Abstraction is %s", abstractedPred);
+		mLogger.debug("Abstraction is %.60s…", abstractedPred);
 	}
 
 	private void logIpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
-		mLogger.debug("Interpreting transition %s with input %s", transition, input);
+		mLogger.debug("Interpreting transition %.60s… with input %.60s…", transition, input);
 	}
 
 	private void logIpretInternal(final IPredicate output) {
-		mLogger.debug("Internal transition's output is %s", output);
+		mLogger.debug("Internal transition's output is %.60s…", output);
 	}
 
 	private void logIpretCallReturnSummary(final IPredicate summary, final IPredicate output) {
-		mLogger.debug("Call return summary is %s", summary);
-		mLogger.debug("After \"call … := …\" was applied output is %s", output);
+		mLogger.debug("Call return summary is %.60s…", summary);
+		mLogger.debug("After \"call … := …\" was applied output is %.60s…", output);
 	}
 }

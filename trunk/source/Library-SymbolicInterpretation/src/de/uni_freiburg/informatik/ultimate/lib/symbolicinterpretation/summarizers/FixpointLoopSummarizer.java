@@ -81,7 +81,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 	}
 
 	private IPredicate summarizeInternal(final Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate> starAndInput) {
-		mLogger.debug("Computing new loop summary for input " + starAndInput.getValue());
+		mLogger.debug("Computing new loop summary for input %.60s…", starAndInput.getValue());
 		final IRegex<IIcfgTransition<IcfgLocation>> starredRegex = starAndInput.getFirst().getInner();
 		final RegexDag<IIcfgTransition<IcfgLocation>> dag = mStarDagCache.dagOf(starredRegex);
 		// Enter calls are dead ends, therefore the inner regex of (…)* cannot contain enter calls
