@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.IcfgInterp
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
@@ -54,6 +55,8 @@ public class IcfgInterpreterBuilder {
 		if (ExplicitValueDomain.class.getSimpleName().equals(prefDomain)) {
 			domain = new ExplicitValueDomain(mServices, tools,
 					mPrefs.getInt(SymbolicInterpretationPreferences.LABEL_EXPLVALDOM_PARALLEL_STATES));
+		} else if (IntervalDomain.class.getSimpleName().equals(prefDomain)) {
+			domain = new IntervalDomain(mServices, tools);
 		} else {
 			throw new IllegalArgumentException("Unknown domain setting: " + prefDomain);
 		}

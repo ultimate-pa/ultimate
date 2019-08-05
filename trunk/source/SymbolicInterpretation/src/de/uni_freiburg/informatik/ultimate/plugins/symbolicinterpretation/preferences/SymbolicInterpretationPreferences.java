@@ -39,30 +39,36 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.ExplicitValueDomain;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.TopInputCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.IcfgInterpreterBuilder;
 
 /**
+ * Description, values, and default values for sifa settings.
+ * Use {@link IcfgInterpreterBuilder} to create a sifa interpreter using these settings.
+ * <p>
+ * When adding settings to this class you also have to adapt the methods in {@link IcfgInterpreterBuilder}.
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  */
 public class SymbolicInterpretationPreferences extends UltimatePreferenceInitializer {
 
-	// TODO use values from IcfgInterpreterBuilder so that library doesn't depend on Ultimate-PlugIn
-
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract Domain";
 	public static final String DEFAULT_ABSTRACT_DOMAIN = ExplicitValueDomain.class.getSimpleName();
 	protected static final String[] VALUES_ABSTRACT_DOMAIN = {
 		ExplicitValueDomain.class.getSimpleName(),
+		IntervalDomain.class.getSimpleName(),
 	};
 
 	public static final String LABEL_LOOP_SUMMARIZER = "Loop Summarizer";
 	public static final String DEFAULT_LOOP_SUMMARIZER = FixpointLoopSummarizer.class.getSimpleName();
 	protected static final String[] VALUES_LOOP_SUMMARIZER = {
-			FixpointLoopSummarizer.class.getSimpleName(),
+		FixpointLoopSummarizer.class.getSimpleName(),
 	};
 
 	public static final String LABEL_CALL_SUMMARIZER = "Call Summarizer";
@@ -76,7 +82,7 @@ public class SymbolicInterpretationPreferences extends UltimatePreferenceInitial
 	public static final String DEFAULT_FLUID = NeverFluid.class.getSimpleName();
 	protected static final String[] VALUES_FLUID = {
 		NeverFluid.class.getSimpleName(),
-		// LogSizeWrapperFluid + NeverFluid
+		LogSizeWrapperFluid.class.getSimpleName(),
 	};
 
 	// ---- settings in containers ----
