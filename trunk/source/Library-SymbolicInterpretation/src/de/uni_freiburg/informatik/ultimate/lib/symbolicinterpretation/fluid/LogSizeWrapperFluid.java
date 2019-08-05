@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -49,9 +50,20 @@ public class LogSizeWrapperFluid implements IFluid {
 	public boolean shallBeAbstracted(final IPredicate predicate) {
 		final boolean applyAlpha = mFluid.shallBeAbstracted(predicate);
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Formula with dag size %s %s be abstracted",
-					new DagSizePrinter(predicate.getFormula()), applyAlpha ? "will" : "won't");
+			mLogger.debug("Predicate has dag size %s and %d disjunct(s). Abstraction %s be applied.",
+					new DagSizePrinter(predicate.getFormula()),
+					numberOfDisjuncts(predicate),
+					applyAlpha ? "will" : "won't");
 		}
 		return applyAlpha;
 	}
+
+	private int numberOfDisjuncts(final IPredicate predicate) {
+		final boolean includeSubterms = true;
+		return new ApplicationTermFinder("or", includeSubterms)
+				.findMatchingSubterms(predicate.getFormula()).stream()
+				.mapToInt(orTerm -> orTerm.getParameters().length)
+				.sum();
+	}
+
 }
