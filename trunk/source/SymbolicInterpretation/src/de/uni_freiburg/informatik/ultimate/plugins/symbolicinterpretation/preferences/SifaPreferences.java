@@ -90,7 +90,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	};
 
 	public static final String LABEL_SIMPLIFICATION = "Simplification Technique";
-	public static final SimplificationTechnique DEFAULT_SIMPLIFICATION = SimplificationTechnique.SIMPLIFY_DDA;
+	public static final SimplificationTechnique DEFAULT_SIMPLIFICATION = SimplificationTechnique.NONE;
 	protected static final SimplificationTechnique[] VALUES_SIMPLIFICATION = SimplificationTechnique.values();
 	public static final Class<SimplificationTechnique> CLASS_SIMPLIFICATION = SimplificationTechnique.class;
 
