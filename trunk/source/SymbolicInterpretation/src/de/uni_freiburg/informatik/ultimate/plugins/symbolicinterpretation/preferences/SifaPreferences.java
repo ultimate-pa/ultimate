@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.Int
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.AlwaysFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.SizeLimitFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.TopInputCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -85,6 +86,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	public static final String DEFAULT_FLUID = NeverFluid.class.getSimpleName();
 	protected static final String[] VALUES_FLUID = {
 		NeverFluid.class.getSimpleName(),
+		SizeLimitFluid.class.getSimpleName(),
 		AlwaysFluid.class.getSimpleName(),
 		LogSizeWrapperFluid.class.getSimpleName(),
 	};
@@ -112,6 +114,14 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	protected static final String[] VALUES_LOGFLUID_INTERN_FLUID_VALUES = filter(VALUES_FLUID,
 			value -> !LogSizeWrapperFluid.class.getSimpleName().equals(value));
 
+	// settings specific to SizeLimitFluid
+	public static final String LABEL_SIZELIMITFLUID_MAX_DAGSIZE= "Abstract when formula's dag size exceeds\n"
+			+ "(negative numbers disable this limit)";
+	public static final int DEFAULT_SIZELIMITFLUID_MAX_DAGSIZE = -1;
+	public static final String LABEL_SIZELIMITFLUID_MAX_DISJUNCTS= "Abstract when formula has more disjuncts than\n"
+			+ "(negative numbers disable this limit)";
+	public static final int DEFAULT_SIZELIMITFLUID_MAX_DISJUNCTS = 8;
+
 	public SifaPreferences() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
@@ -129,6 +139,11 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 		containerLogFluid.addItem(combo(LABEL_LOGFLUID_INTERN_FLUID,
 				DEFAULT_LOGFLUID_INTERN_FLUID, VALUES_LOGFLUID_INTERN_FLUID_VALUES));
 
+		final UltimatePreferenceItemContainer containerSizeLimitFluid =
+				new UltimatePreferenceItemContainer(SizeLimitFluid.class.getSimpleName());
+		containerSizeLimitFluid.addItem(integer(LABEL_SIZELIMITFLUID_MAX_DAGSIZE, DEFAULT_SIZELIMITFLUID_MAX_DAGSIZE));
+		containerSizeLimitFluid.addItem(integer(LABEL_SIZELIMITFLUID_MAX_DISJUNCTS, DEFAULT_SIZELIMITFLUID_MAX_DISJUNCTS));
+
 		return new BaseUltimatePreferenceItem[] {
 			combo(LABEL_ABSTRACT_DOMAIN, DEFAULT_ABSTRACT_DOMAIN, VALUES_ABSTRACT_DOMAIN),
 			combo(LABEL_LOOP_SUMMARIZER, DEFAULT_LOOP_SUMMARIZER, VALUES_LOOP_SUMMARIZER),
@@ -140,6 +155,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 			//
 			containerExplValDom,
 			containerLogFluid,
+			containerSizeLimitFluid,
 		};
 	}
 
@@ -155,6 +171,10 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 			final T defaultValue, final T[] values) {
 		return new UltimatePreferenceItem<>(
 				label, defaultValue, PreferenceType.Combo, tooltip, false, values, null);
+	}
+
+	private static UltimatePreferenceItem<Integer> integer(final String label, final int defaultValue) {
+		return integer(label, defaultValue, Integer.MIN_VALUE, Integer.MAX_VALUE);
 	}
 
 	private static UltimatePreferenceItem<Integer> integer(final String label, final int defaultValue,

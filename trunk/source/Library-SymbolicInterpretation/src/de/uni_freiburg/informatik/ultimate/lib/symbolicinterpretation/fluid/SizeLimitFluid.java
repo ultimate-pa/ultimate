@@ -26,35 +26,54 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
-/**
- * Logs the size of a formula before asking another fluid whether to abstract or not.
- *
- * @author schaetzc@tf.uni-freiburg.de
- */
-public class LogSizeWrapperFluid implements IFluid {
+public class SizeLimitFluid implements IFluid {
 
-	private final IFluid mFluid;
-	private final ILogger mLogger;
+	private final int mMaxDagSize;
+	private final int mMaxDisjuncts;
 
-	public LogSizeWrapperFluid(final ILogger logger, final IFluid fluid) {
-		mFluid = fluid;
-		mLogger = logger;
+	/**
+	 * Creates a new fluid.
+	 * Negative values for limits disable the corresponding limit.
+	 *
+	 * @param maxDagSize Abstract when formula has dag size strictly greater than this
+	 * @param maxDisjuncts Abstract when formula has strictly more disjuncts than this
+	 */
+	public SizeLimitFluid(final int maxDagSize, final int maxDisjuncts) {
+		mMaxDagSize = maxDagSize;
+		mMaxDisjuncts = maxDisjuncts;
 	}
 
 	@Override
 	public boolean shallBeAbstracted(final IPredicate predicate) {
-		final boolean applyAlpha = mFluid.shallBeAbstracted(predicate);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Predicate has dag size %s and %d disjunct(s). Abstraction %s be applied.",
-					new DagSizePrinter(predicate.getFormula()),
-					SizeLimitFluid.numberOfDisjuncts(predicate.getFormula()),
-					applyAlpha ? "will" : "won't");
+		final Term term = predicate.getFormula();
+		return exceedsDagSizeLimit(term) || exceedsDisjunctLimit(term);
+	}
+
+	private boolean exceedsDagSizeLimit(final Term term) {
+		if (mMaxDagSize < 0) {
+			return false;
 		}
-		return applyAlpha;
+		return new DAGSize().size(term) > mMaxDagSize;
+	}
+
+	private boolean exceedsDisjunctLimit(final Term term) {
+		if (mMaxDisjuncts < 0) {
+			return false;
+		}
+		return numberOfDisjuncts(term) > mMaxDisjuncts;
+	}
+
+	public static int numberOfDisjuncts(final Term term) {
+		final boolean includeSubterms = true;
+		return new ApplicationTermFinder("or", includeSubterms)
+				.findMatchingSubterms(term).stream()
+				.mapToInt(orTerm -> orTerm.getParameters().length)
+				.sum();
 	}
 
 }

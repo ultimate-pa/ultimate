@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.Alwa
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.SizeLimitFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
@@ -111,6 +112,10 @@ public class SifaBuilder {
 		final IFluid fluid;
 		if (NeverFluid.class.getSimpleName().equals(prefFluid)) {
 			fluid = new NeverFluid();
+		} else if (SizeLimitFluid.class.getSimpleName().equals(prefFluid)) {
+			fluid = new SizeLimitFluid(
+					mPrefs.getInt(SifaPreferences.LABEL_SIZELIMITFLUID_MAX_DAGSIZE),
+					mPrefs.getInt(SifaPreferences.LABEL_SIZELIMITFLUID_MAX_DISJUNCTS));
 		} else if (AlwaysFluid.class.getSimpleName().equals(prefFluid)) {
 			fluid = new AlwaysFluid();
 		} else if (LogSizeWrapperFluid.class.getSimpleName().equals(prefFluid)) {
