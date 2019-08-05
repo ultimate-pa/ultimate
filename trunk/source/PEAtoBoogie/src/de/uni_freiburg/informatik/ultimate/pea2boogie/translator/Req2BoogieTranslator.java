@@ -27,18 +27,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.translator;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
@@ -70,9 +67,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -87,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
@@ -99,7 +92,6 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyC
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder.TypeErrorInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
 
@@ -115,7 +107,6 @@ public class Req2BoogieTranslator {
 
 	private final Unit mUnit;
 	private final Map<PatternType, PhaseEventAutomata> mReq2Automata;
-	private final Map<PatternType, BoogieLocation> mReq2Loc;
 	private final BoogieLocation mUnitLocation;
 
 	private final boolean mCheckVacuity;
@@ -169,26 +160,20 @@ public class Req2BoogieTranslator {
 		final List<PatternType> requirements =
 				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
 
-		final ReqToPEA req2pea = new ReqToPEA(mServices, mLogger, init, requirements, genId2Bounds(init));
+		final ReqToPEA req2pea = new ReqToPEA(mServices, mLogger, init, requirements);
+
+		if (req2pea.hasErrors()) {
+			mUnitLocation = null;
+			mRtInconcistencyConditionGenerator = null;
+			mUnit = null;
+			mReq2Automata = null;
+			mSymboltable = null;
+			return;
+		}
 
 		mReq2Automata = req2pea.getPattern2Peas();
 		mSymboltable = req2pea.getSymboltable();
 
-		if (!req2pea.getTypeErrors().isEmpty()) {
-			for (final Entry<String, TypeErrorInfo> entry : req2pea.getTypeErrors().entrySet()) {
-				final String msg = entry.getValue().getType().toString() + " of " + entry.getKey();
-				mPeaResultUtil.typeError(entry.getValue().getSource(), msg);
-			}
-
-			mServices.getProgressMonitorService().cancelToolchain();
-			mReq2Loc = null;
-			mUnitLocation = null;
-			mRtInconcistencyConditionGenerator = null;
-			mUnit = null;
-			return;
-		}
-
-		mReq2Loc = mSymboltable.getLocations();
 		mUnitLocation = generateUnitLocation(patterns);
 		final List<Declaration> decls = new ArrayList<>();
 		decls.addAll(mSymboltable.getDeclarations());
@@ -222,46 +207,6 @@ public class Req2BoogieTranslator {
 		new PatternContainer(patternList).annotate(mUnit);
 	}
 
-	private Map<String, Integer> genId2Bounds(final List<InitializationPattern> inits) {
-		final Map<String, Integer> rtr = new HashMap<>();
-		final Predicate<InitializationPattern> pred = a -> {
-			final BoogiePrimitiveType type = toPrimitiveTypeNoError(a.getType());
-			return type == BoogieType.TYPE_INT || type == BoogieType.TYPE_REAL;
-		};
-		final Iterator<InitializationPattern> iter =
-				inits.stream().filter(a -> a.getCategory() == VariableCategory.CONST).filter(pred).iterator();
-		while (iter.hasNext()) {
-			final InitializationPattern init = iter.next();
-			final Expression expr = init.getExpression();
-			final Integer val;
-			if (expr instanceof RealLiteral) {
-				val = tryParseInt(init, ((RealLiteral) expr).getValue());
-			} else if (expr instanceof IntegerLiteral) {
-				val = tryParseInt(init, ((IntegerLiteral) expr).getValue());
-			} else {
-				val = null;
-				mPeaResultUtil.syntaxError(mReq2Loc.get(init),
-						"Cannot convert CONST with expression " + BoogiePrettyPrinter.print(expr) + " to duration");
-			}
-			if (val == null) {
-				continue;
-			}
-			rtr.put(init.getId(), val);
-		}
-		return rtr;
-	}
-
-	private Integer tryParseInt(final PatternType pattern, final String val) {
-		try {
-			return new BigDecimal(val).toBigIntegerExact().intValueExact();
-		} catch (NumberFormatException | ArithmeticException ex) {
-			mPeaResultUtil.syntaxError(mReq2Loc.get(pattern),
-					"Cannot convert CONST with value " + val + " to duration (must be integer)");
-			return null;
-		}
-
-	}
-
 	private static BoogieLocation generateUnitLocation(final List<PatternType> patterns) {
 		// TODO: Add locations to pattern type to generate meaningful boogie locations
 		return new BoogieLocation("", -1, -1, -1, -1);
@@ -269,19 +214,6 @@ public class Req2BoogieTranslator {
 
 	public Unit getUnit() {
 		return mUnit;
-	}
-
-	private static BoogiePrimitiveType toPrimitiveTypeNoError(final String type) {
-		switch (type.toLowerCase()) {
-		case "bool":
-			return BoogieType.TYPE_BOOL;
-		case "real":
-			return BoogieType.TYPE_REAL;
-		case "int":
-			return BoogieType.TYPE_INT;
-		default:
-			return BoogieType.TYPE_ERROR;
-		}
 	}
 
 	/**

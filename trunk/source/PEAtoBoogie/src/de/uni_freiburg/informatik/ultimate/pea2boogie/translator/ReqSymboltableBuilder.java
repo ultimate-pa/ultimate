@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.translator;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -48,9 +49,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -60,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHashRelation;
 
 /**
  *
@@ -69,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 public class ReqSymboltableBuilder {
 
 	private final ILogger mLogger;
-	private final Map<String, TypeErrorInfo> mId2TypeErrors;
+	private final LinkedHashRelation<String, ErrorInfo> mId2Errors;
 	private final Map<String, BoogieType> mId2Type;
 	private final Map<String, IdentifierExpression> mId2IdExpr;
 	private final Map<String, VariableLHS> mId2VarLHS;
@@ -80,11 +85,12 @@ public class ReqSymboltableBuilder {
 	private final Set<String> mPcVars;
 	private final Set<String> mClockVars;
 	private final Map<String, Expression> mConst2Value;
+	private final Map<String, Integer> mId2Bounds;
 	private final Map<PatternType, BoogieLocation> mReq2Loc;
 
 	public ReqSymboltableBuilder(final ILogger logger) {
 		mLogger = logger;
-		mId2TypeErrors = new LinkedHashMap<>();
+		mId2Errors = new LinkedHashRelation<>();
 		mId2Type = new LinkedHashMap<>();
 		mId2IdExpr = new LinkedHashMap<>();
 		mId2VarLHS = new LinkedHashMap<>();
@@ -98,6 +104,7 @@ public class ReqSymboltableBuilder {
 
 		mReq2Loc = new LinkedHashMap<>();
 		mConst2Value = new LinkedHashMap<>();
+		mId2Bounds = new LinkedHashMap<>();
 
 	}
 
@@ -105,7 +112,7 @@ public class ReqSymboltableBuilder {
 		final BoogiePrimitiveType type = toPrimitiveType(initPattern.getType());
 		final String name = initPattern.getId();
 		if (type == BoogieType.TYPE_ERROR) {
-			addTypeError(name, new TypeErrorInfo(TypeErrorType.NONE_TYPE, initPattern));
+			addErrorError(name, new ErrorInfo(ErrorType.NONE_TYPE, initPattern));
 			return;
 		}
 
@@ -114,8 +121,10 @@ public class ReqSymboltableBuilder {
 		} else {
 			addVar(name, type, initPattern, mConstVars);
 			mConst2Value.put(name, initPattern.getExpression());
+			if (type == BoogieType.TYPE_INT || type == BoogieType.TYPE_REAL) {
+				addId2Bounds(initPattern);
+			}
 		}
-
 	}
 
 	public void addPea(final PatternType pattern, final PhaseEventAutomata pea) {
@@ -141,7 +150,7 @@ public class ReqSymboltableBuilder {
 				addVar(name, BoogieType.TYPE_BOOL, pattern, mEventVars);
 				break;
 			default:
-				addTypeError(name, new TypeErrorInfo(TypeErrorType.UNKNOWN_TYPE, pattern));
+				addErrorError(name, new ErrorInfo(ErrorType.UNKNOWN_TYPE, pattern));
 				break;
 			}
 		}
@@ -157,17 +166,49 @@ public class ReqSymboltableBuilder {
 		return mConstVars;
 	}
 
-	public Map<String, TypeErrorInfo> getTypeErrors() {
-		return mId2TypeErrors;
+	public Map<String, Integer> getId2Bounds() {
+		return mId2Bounds;
 	}
 
-	private void addTypeError(final String name, final TypeErrorInfo typeErrorInfo) {
-		final TypeErrorInfo oldTypeError = mId2TypeErrors.put(name, typeErrorInfo);
-		if (oldTypeError != null) {
-			mId2TypeErrors.put(name, oldTypeError.merge(typeErrorInfo));
-			mLogger.error("Additional type error " + typeErrorInfo.mType + " for " + name);
+	public Set<Entry<String, ErrorInfo>> getErrors() {
+		return Collections.unmodifiableSet(mId2Errors.entrySet());
+	}
+
+	private void addErrorError(final String name, final ErrorInfo typeErrorInfo) {
+		if (mId2Errors.addPair(name, typeErrorInfo)) {
+			mLogger.error(typeErrorInfo.mType + " for " + name);
+		}
+	}
+
+	private void addId2Bounds(final InitializationPattern init) {
+
+		final Expression expr = init.getExpression();
+		final Integer val;
+		if (expr instanceof RealLiteral) {
+			val = tryParseInt(init, ((RealLiteral) expr).getValue());
+		} else if (expr instanceof IntegerLiteral) {
+			val = tryParseInt(init, ((IntegerLiteral) expr).getValue());
 		} else {
-			mLogger.error("Type error " + typeErrorInfo.mType + " for " + name);
+			val = null;
+			addErrorError(init.getId(), new ErrorInfo(ErrorType.SYNTAX_ERROR, init,
+					"Cannot convert CONST with expression " + BoogiePrettyPrinter.print(expr) + " to duration"));
+		}
+		if (val == null) {
+			return;
+		}
+		mId2Bounds.put(init.getId(), val);
+	}
+
+	private Integer tryParseInt(final PatternType pattern, final String val) {
+		try {
+			return new BigDecimal(val).toBigIntegerExact().intValueExact();
+		} catch (final NumberFormatException ex) {
+			addErrorError(pattern.getId(),
+					new ErrorInfo(ErrorType.SYNTAX_ERROR, pattern, "Cannot convert CONST with value " + val
+							+ " to duration (must be integer literal or non-fractional real literal)"));
+			return null;
+		} catch (final ArithmeticException ex) {
+			return null;
 		}
 	}
 
@@ -182,7 +223,7 @@ public class ReqSymboltableBuilder {
 
 		final BoogieType old = mId2Type.put(name, type);
 		if (old != null && old != type) {
-			addTypeError(name, new TypeErrorInfo(TypeErrorType.DUPLICATE_DECLARATION, source));
+			addErrorError(name, new ErrorInfo(ErrorType.DUPLICATE_DECLARATION, source));
 			mId2Type.put(name, BoogieType.TYPE_ERROR);
 			return;
 		}
@@ -207,7 +248,7 @@ public class ReqSymboltableBuilder {
 		if (mId2Type.containsKey(name)) {
 			return;
 		}
-		addTypeError(name, new TypeErrorInfo(TypeErrorType.MISSING_DECLARATION, source));
+		addErrorError(name, new ErrorInfo(ErrorType.MISSING_DECLARATION, source));
 	}
 
 	private ILocation getLocation(final PatternType source) {
@@ -344,6 +385,7 @@ public class ReqSymboltableBuilder {
 			return mConstVars;
 		}
 
+		@Override
 		public Map<String, Expression> getConstToValue() {
 			return mConst2Value;
 		}
@@ -423,31 +465,39 @@ public class ReqSymboltableBuilder {
 
 	}
 
-	public enum TypeErrorType {
-		DUPLICATE_DECLARATION, UNKNOWN_TYPE, NO_DURATION_EXPRESSION, NO_DURATION_VALUE, NONE_TYPE, MISSING_DECLARATION
+	public enum ErrorType {
+		DUPLICATE_DECLARATION, UNKNOWN_TYPE, NO_DURATION_EXPRESSION, NO_DURATION_VALUE, NONE_TYPE, MISSING_DECLARATION,
+		SYNTAX_ERROR
 	}
 
-	public static final class TypeErrorInfo {
+	public static final class ErrorInfo {
 
-		private final TypeErrorType mType;
+		private final ErrorType mType;
 		private final PatternType mSource;
+		private final String mMessage;
 
-		public TypeErrorInfo(final TypeErrorType type, final PatternType req) {
+		public ErrorInfo(final ErrorType type, final PatternType req) {
 			mType = type;
 			mSource = req;
+			mMessage = null;
 		}
 
-		public TypeErrorInfo merge(final TypeErrorInfo oldTypeError) {
-			// TODO What should happen if we have more than one type error in one location?
-			return this;
+		public ErrorInfo(final ErrorType type, final PatternType req, final String message) {
+			mType = type;
+			mSource = req;
+			mMessage = message;
 		}
 
 		public PatternType getSource() {
 			return mSource;
 		}
 
-		public TypeErrorType getType() {
+		public ErrorType getType() {
 			return mType;
+		}
+
+		public String getMessage() {
+			return mMessage;
 		}
 
 	}
