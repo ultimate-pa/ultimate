@@ -85,7 +85,7 @@ public class DagInterpreter {
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
 		final MapBasedStorage sinkPredStorage = new MapBasedStorage(
 				Collections.singleton(RegexDagUtils.singleSinkLocation(dag, overlay)), mDomain, mTools, mLogger);
-		interpret(dag, overlay, initalInput, sinkPredStorage, new ErrorOnEnterCall());
+		interpret(dag, overlay, initalInput, sinkPredStorage, ErrorOnEnterCall.instance());
 		return sinkPredStorage.getMap().values().iterator().next();
 	}
 

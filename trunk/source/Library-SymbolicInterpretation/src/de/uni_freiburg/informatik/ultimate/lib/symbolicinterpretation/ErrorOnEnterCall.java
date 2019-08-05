@@ -36,6 +36,18 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  */
 public class ErrorOnEnterCall implements IEnterCallRegistrar {
 
+	private static final ErrorOnEnterCall sInstance = new ErrorOnEnterCall();
+
+	public static ErrorOnEnterCall instance() {
+		return sInstance;
+	}
+
+	/**
+	 * Use {@link #instance()} instead.
+	 */
+	private ErrorOnEnterCall() {
+	}
+
 	@Override
 	public void registerEnterCall(final String callee, final IPredicate calleeInput) {
 		throw new AssertionError(String.format("Did not expect any enter calls "
