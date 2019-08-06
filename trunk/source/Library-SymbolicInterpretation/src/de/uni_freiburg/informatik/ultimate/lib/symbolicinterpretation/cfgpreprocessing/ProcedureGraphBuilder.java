@@ -58,14 +58,18 @@ public class ProcedureGraphBuilder {
 	/**
 	 * Constructs a procedure graph for a given procedure.
 	 * The resulting procedure graph is labeled with edges and nodes from its ICFG.
-	 * Each call inside the procedure is represented by two edges as already done in the ICFG:
+	 * Inside the procedure each calls are represented as follows:
 	 * <ul>
-	 * <li> One summary edge of type {@link CallReturnSummary} for the case in which we
-	 *      enter the function and return normally.<br>
-	 *      Note that summary edges do not actually summarize the call.
-	 *      They are just there to point out, that we skipped the procedure.
-	 * <li> One error edge of type {@link IIcfgCallTransition} for the case in which we
-	 *      enter the function but do not return due to errors in the callee or functions called by the callee.
+	 *   <li> Calls to implemented procedures are represented by two edges.
+	 *     <ul>
+	 *       <li> One summary edge of type {@link CallReturnSummary} for the case in which we
+	 *            enter the function and return normally.<br>
+	 *            Note that summary edges do not actually summarize the call.
+	 *            They are just there to point out, that we skipped the procedure.
+	 *       <li> One error edge of type {@link IIcfgCallTransition} for the case in which we
+	 *            enter the function but do not return due to errors in the callee or functions called by the callee.
+	 *     </ul>
+	 *   <li> Calls to unimplemented procedures are represented by the original summary edge from the icfg.
 	 * </ul>
 	 * Cases in which callees do not terminate are ignored.
 	 *
@@ -126,7 +130,11 @@ public class ProcedureGraphBuilder {
 	}
 
 	private void processCallSummary(final IIcfgSummaryTransition<IcfgLocation> callSummaryEdge) {
-		// nothing to do, we insert our own summary based on the return transition
+		if (callSummaryEdge.calledProcedureHasImplementation()) {
+			// nothing to do, we insert our own summary based on the return transition
+			return;
+		}
+		mCurrentProcedureGraph.addEdge(callSummaryEdge.getSource(), callSummaryEdge, callSummaryEdge.getTarget());
 	}
 
 	private void addToWorklistIfNew(final IcfgLocation node) {
