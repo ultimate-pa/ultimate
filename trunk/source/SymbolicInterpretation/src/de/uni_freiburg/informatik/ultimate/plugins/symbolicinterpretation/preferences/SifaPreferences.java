@@ -83,7 +83,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_FLUID = "Fluid";
 	public static final String TOOLTIP_FLUID = "Decides when to apply abstraction";
-	public static final String DEFAULT_FLUID = NeverFluid.class.getSimpleName();
+	public static final String DEFAULT_FLUID = SizeLimitFluid.class.getSimpleName();
 	protected static final String[] VALUES_FLUID = {
 		NeverFluid.class.getSimpleName(),
 		SizeLimitFluid.class.getSimpleName(),
@@ -108,9 +108,9 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_EXPLVALDOM_PARALLEL_STATES = "Parallel States";
 	public static final int DEFAULT_EXPLVALDOM_PARALLEL_STATES = 2;
 
-	// settings specific to LoggerFluid
+	// settings specific to LogSizeWrapperFluid
 	public static final String LABEL_LOGFLUID_INTERN_FLUID = "Intern Fluid";
-	public static final String DEFAULT_LOGFLUID_INTERN_FLUID = NeverFluid.class.getSimpleName();
+	public static final String DEFAULT_LOGFLUID_INTERN_FLUID = DEFAULT_FLUID;
 	protected static final String[] VALUES_LOGFLUID_INTERN_FLUID_VALUES = filter(VALUES_FLUID,
 			value -> !LogSizeWrapperFluid.class.getSimpleName().equals(value));
 
