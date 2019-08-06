@@ -98,8 +98,6 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
-		mLogger.warn(taPrefs.dumpPath());
-
 		final CfgSmtToolkit csToolkit = petrifiedIcfg.getCfgSmtToolkit();
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(),
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
