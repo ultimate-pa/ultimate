@@ -63,20 +63,19 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * Class contains static auxiliary methods
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class DangerInvariantUtils {
-
 
 	private DangerInvariantUtils() {
 		// do not instanciate
 	}
 
 	/**
-	 * Given a predicate predec and all its successors (as a HashRelation
-	 * from IActions to IPredicates) succs. Check if every state that satisfies
-	 * predec has some successor state.
+	 * Given a predicate predec and all its successors (as a HashRelation from IActions to IPredicates) succs. Check if
+	 * every state that satisfies predec has some successor state.
 	 *
 	 * @param mgdScript
 	 * @param services
@@ -85,16 +84,19 @@ public class DangerInvariantUtils {
 	 * @param logger
 	 * @return
 	 */
-	public static Validity eachStateHasSuccessor(final IPredicate predec,
-			final HashRelation<IAction, IPredicate> succs, final ManagedScript mgdScript, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit, final BasicPredicateFactory predicateFactory, final ILogger logger) {
-		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<Term, IPredicate, TransFormula>(
-				mgdScript, new TermDomainOperationProvider(services, mgdScript));
-		final Collection<IPredicate> predecessors = new ArrayList<IPredicate>();
+	public static Validity eachStateHasSuccessor(final IPredicate predec, final HashRelation<IAction, IPredicate> succs,
+			final ManagedScript mgdScript, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+			final BasicPredicateFactory predicateFactory, final ILogger logger) {
+		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
+				new PredicateTransformer<>(mgdScript,
+						new TermDomainOperationProvider(services, mgdScript));
+		final Collection<IPredicate> predecessors = new ArrayList<>();
 		for (final Entry<IAction, IPredicate> entry : succs.entrySet()) {
-			final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt, entry.getKey().getTransformula(), entry.getValue(), services);
+			final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
+					entry.getKey().getTransformula(), entry.getValue(), services);
 			predecessors.add(predicateFactory.newPredicate(pre));
 		}
-		final IPredicate disjunction = predicateFactory.or(true, predecessors);
+		final IPredicate disjunction = predicateFactory.or(SimplificationTechnique.SIMPLIFY_DDA, predecessors);
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity result = mic.checkImplication(predec, false, disjunction, false);
 		return result;
@@ -107,7 +109,6 @@ public class DangerInvariantUtils {
 		final LBool lbool = SmtUtils.checkSatTerm(mgdScript.getScript(), pred.getClosedFormula());
 		return IHoareTripleChecker.convertLBool2Validity(lbool);
 	}
-
 
 	private static Term constructPreInternal(final ILogger logger, final BasicPredicateFactory predicateFactory,
 			final CfgSmtToolkit csToolkit, final PredicateTransformer<Term, IPredicate, TransFormula> pt,

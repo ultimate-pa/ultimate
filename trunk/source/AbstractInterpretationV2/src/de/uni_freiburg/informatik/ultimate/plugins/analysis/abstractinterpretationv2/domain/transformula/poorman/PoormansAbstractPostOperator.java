@@ -126,8 +126,7 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
 
 		final Term stateAsTerm = oldstate.getTerm(mManagedScript.getScript());
-		final BasicPredicateFactory pf = new BasicPredicateFactory(mServices, mManagedScript, mIcfgSymbolTable,
-				SimplificationTechnique.SIMPLIFY_QUICK, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final BasicPredicateFactory pf = new BasicPredicateFactory(mServices, mManagedScript, mIcfgSymbolTable);
 		final IPredicate predFromState = pf.newPredicate(stateAsTerm);
 		final Term spTerm = predicateTransformer.strongestPostcondition(predFromState, transition.getTransformula());
 		final Term spNoQuantTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript,

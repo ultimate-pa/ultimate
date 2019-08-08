@@ -108,7 +108,7 @@ public class PredicateFactoryForInterpolantAutomata
 
 	@Override
 	public IPredicate merge(final Collection<IPredicate> states) {
-		return mPredicateFactory.or(false, states);
+		return mPredicateFactory.or(states);
 	}
 
 	@Override
@@ -166,9 +166,8 @@ public class PredicateFactoryForInterpolantAutomata
 	}
 
 	@Override
-	public IPredicate getBlackContent(IPredicate content) {
+	public IPredicate getBlackContent(final IPredicate content) {
 		return mPredicateFactory.newDebugPredicate("Black: " + content);
 	}
-	
-	
+
 }

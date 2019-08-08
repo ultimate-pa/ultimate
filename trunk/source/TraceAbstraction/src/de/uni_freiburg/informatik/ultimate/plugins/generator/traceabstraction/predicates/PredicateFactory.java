@@ -54,7 +54,7 @@ public class PredicateFactory extends BasicPredicateFactory {
 	public PredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IIcfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
-		super(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
+		super(services, mgdScript, symbolTable);
 	}
 
 	public PredicateWithHistory newPredicateWithHistory(final IcfgLocation pp, final Term term,

@@ -272,7 +272,7 @@ public class BinaryStatePredicateManager {
 		}
 		IPredicate unseededOrRankDecrease;
 
-		unseededOrRankDecrease = mPredicateFactory.or(false, unseededPredicate, mRankDecreaseAndBound);
+		unseededOrRankDecrease = mPredicateFactory.or(unseededPredicate, mRankDecreaseAndBound);
 
 		if (siConjunctionIsTrue) {
 			mHonda = unseededOrRankDecrease;
@@ -484,7 +484,7 @@ public class BinaryStatePredicateManager {
 			disjuncts[i] = mPredicateFactory.and(conjuncts);
 		}
 
-		final IPredicate result = mPredicateFactory.or(false, disjuncts);
+		final IPredicate result = mPredicateFactory.or(disjuncts);
 		return result;
 	}
 

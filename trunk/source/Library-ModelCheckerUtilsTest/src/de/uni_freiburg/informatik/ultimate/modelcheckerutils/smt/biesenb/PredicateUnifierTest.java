@@ -95,8 +95,7 @@ public class PredicateUnifierTest {
 		mTwo = mScript.numeral(String.valueOf(2));
 		mThree = mScript.numeral(String.valueOf(3));
 
-		mBasicFactory = new BasicPredicateFactory(mServices, mMgdScript, mTable, SimplificationTechnique.NONE,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mBasicFactory = new BasicPredicateFactory(mServices, mMgdScript, mTable);
 	}
 
 	@Test

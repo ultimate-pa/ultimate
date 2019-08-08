@@ -103,7 +103,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 		if (someElement instanceof ISLPredicate) {
 			final IcfgLocation pp = ((ISLPredicate) someElement).getProgramPoint();
 			if (mHoareAnnotationProgramPoints.contains(pp)) {
-				Term disjuntion = mPredicateFactory.or(false, states).getFormula();
+				Term disjuntion = mPredicateFactory.or(states).getFormula();
 				disjuntion = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(disjuntion);
 				return mPredicateFactory.newSPredicate(pp, disjuntion);
 			}
@@ -114,7 +114,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 				assert false : "minimize empty set???";
 				return mPredicateFactory.newMLDontCarePredicate(pps);
 			}
-			final Term disjunction = mPredicateFactory.or(false, states).getFormula();
+			final Term disjunction = mPredicateFactory.or(states).getFormula();
 			return mPredicateFactory.newMLPredicate(pps, disjunction);
 		} else {
 			throw new AssertionError("unknown predicate");
@@ -156,8 +156,8 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 
 	@Override
 	public IPredicate getContentOnPetriNet2FiniteAutomaton(final Marking<?, IPredicate> marking) {
-		final IcfgLocation[] programPoints = marking.stream().map(x -> ((SPredicate) x).getProgramPoint())
-				.toArray(IcfgLocation[]::new);
+		final IcfgLocation[] programPoints =
+				marking.stream().map(x -> ((SPredicate) x).getProgramPoint()).toArray(IcfgLocation[]::new);
 		return mPredicateFactory.newMLDontCarePredicate(programPoints);
 	}
 

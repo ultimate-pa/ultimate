@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
@@ -141,29 +142,29 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 	public IPredicate intersection(final IPredicate state1, final IPredicate state2) {
 		/*
 		 * TODO: add a mode with all don't care predicates --> for when we do not want to produce a model and thus can
-		 *  save the time
+		 * save the time
 		 */
 
 		final Set<HcPredicateSymbol> state1PredSymbols = new HashSet<>();
 		state1PredSymbols.addAll(((HCPredicate) state1).getHcPredicateSymbols());
-//		assert state1PredSymbols.size() == 1 : "what does this mean??";
+		// assert state1PredSymbols.size() == 1 : "what does this mean??";
 
-//		final Term conjoinedFormula = mSimplifier.getSimplifiedTerm(
-//				SmtUtils.and(mBackendSmtSolverScript.getScript(), state1.getFormula(), state2.getFormula()));
+		// final Term conjoinedFormula = mSimplifier.getSimplifiedTerm(
+		// SmtUtils.and(mBackendSmtSolverScript.getScript(), state1.getFormula(), state2.getFormula()));
 		final IPredicate conjoinedPred = mPredicateFactory.and(state1, state2);
 
 		if (mPredicateFactory.isDontCare(conjoinedPred)) {
 			return mPredicateFactory.newPredicate(state1PredSymbols, conjoinedPred.getFormula(),
-				Collections.emptyList());
-//			return conjoinedPred;
+					Collections.emptyList());
+			// return conjoinedPred;
 		}
 
-		final Term conjoinedFormula = new CommuhashNormalForm(mServices, mMgdScript.getScript())
-				.transform(conjoinedPred.getFormula());
+		final Term conjoinedFormula =
+				new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(conjoinedPred.getFormula());
 
-//		final Set<IPredicate> ps = new HashSet<>();
-//		ps.add(state1);
-//		ps.add(state2);
+		// final Set<IPredicate> ps = new HashSet<>();
+		// ps.add(state1);
+		// ps.add(state2);
 
 		return mPredicateFactory.newPredicate(state1PredSymbols, conjoinedFormula,
 				Arrays.asList(state1.getFormula().getFreeVars()));
@@ -181,27 +182,27 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		states.stream().filter(s -> s instanceof HCPredicate)
 				.forEach(hcp -> mergedLocations.addAll(((HCPredicate) hcp).getHcPredicateSymbols()));
 
-		final IPredicate mergedPred = mPredicateFactory.or(true, states);
+		final IPredicate mergedPred = mPredicateFactory.or(SimplificationTechnique.SIMPLIFY_DDA, states);
 		final Term mergedFormula = mergedPred.getFormula();
 
-//		Term mergedFormula = mMgdScript.getScript().term("false");
+		// Term mergedFormula = mMgdScript.getScript().term("false");
 
-//		List<TermVariable> varsForHcPred = null;
+		// List<TermVariable> varsForHcPred = null;
 
-//		for (final IPredicate pred : states) {
-//			if (mPredicateFactory.isDontCare(pred)) {
-//				return pred;
-//			}
+		// for (final IPredicate pred : states) {
+		// if (mPredicateFactory.isDontCare(pred)) {
+		// return pred;
+		// }
 
-//			if (pred instanceof HCPredicate) {
-//				mergedLocations.addAll(((HCPredicate) pred).getHcPredicateSymbols());
-//				assert varsForHcPred == null || varsForHcPred.equals(((HCPredicate) pred).getSignature()) : "merging "
-//						+ "predicates with a different signature. Does that make sense??";
-//				varsForHcPred = ((HCPredicate) pred).getSignature();
-//			}
-//			mergedFormula = mSimplifier.getSimplifiedTerm(
-//					SmtUtils.or(mMgdScript.getScript(), mergedFormula, pred.getFormula()));
-//		}
+		// if (pred instanceof HCPredicate) {
+		// mergedLocations.addAll(((HCPredicate) pred).getHcPredicateSymbols());
+		// assert varsForHcPred == null || varsForHcPred.equals(((HCPredicate) pred).getSignature()) : "merging "
+		// + "predicates with a different signature. Does that make sense??";
+		// varsForHcPred = ((HCPredicate) pred).getSignature();
+		// }
+		// mergedFormula = mSimplifier.getSimplifiedTerm(
+		// SmtUtils.or(mMgdScript.getScript(), mergedFormula, pred.getFormula()));
+		// }
 		if (mergedLocations.isEmpty()) {
 			return mPredicateFactory.newPredicate(mergedFormula);
 		} else if (mPredicateFactory.isDontCare(mergedFormula)) {

@@ -650,8 +650,7 @@ public final class TransFormulaUtils {
 		assert result.getBranchEncoders().isEmpty() : "result check not applicable with branch encoders";
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
 				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
-		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable,
-				simplificationTechnique, xnfConversionTechnique);
+		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
 		Term resultComposition = pt.strongestPostcondition(truePredicate, result);
 		resultComposition =
@@ -807,8 +806,7 @@ public final class TransFormulaUtils {
 		assert result.getBranchEncoders().isEmpty() : "result check not applicable with branch encoders";
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
 				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
-		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable,
-				simplificationTechnique, xnfConversionTechnique);
+		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
 		Term resultComposition = pt.strongestPostcondition(truePredicate, result);
 		resultComposition =

@@ -102,9 +102,8 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
 			final IUltimateServiceProvider services) {
 		super(name, rootNode, csToolkit, predicateFactory, traceAbstractionBenchmarks, taPrefs, errorLocs, services);
-		mPredicateUnifier = new PredicateUnifier(mLogger, services, csToolkit.getManagedScript(),
-				predicateFactory, rootNode.getCfgSmtToolkit().getSymbolTable(), mSimplificationTechnique,
-				mXnfConversionTechnique,
+		mPredicateUnifier = new PredicateUnifier(mLogger, services, csToolkit.getManagedScript(), predicateFactory,
+				rootNode.getCfgSmtToolkit().getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
 				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("true")),
 				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("false")));
 	}
@@ -199,8 +198,9 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 		}
 		assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
 
-		final RAFA_Determination<LETTER> determination = new RAFA_Determination<LETTER>(
-				new AutomataLibraryServices(mServices), alternatingAutomatonUnion, mCsToolkit, mPredicateUnifier, mPredicateFactoryInterpolantAutomata);
+		final RAFA_Determination<LETTER> determination =
+				new RAFA_Determination<>(new AutomataLibraryServices(mServices), alternatingAutomatonUnion,
+						mCsToolkit, mPredicateUnifier, mPredicateFactoryInterpolantAutomata);
 		mInterpolAutomaton = determination.getResult();
 		try {
 			assert new Accepts<>(new AutomataLibraryServices(mServices), mInterpolAutomaton, (NestedWord<LETTER>) trace)
@@ -602,7 +602,7 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 			}
 		}
 		if (bex.getNextConjunctExpression() != null) {
-			pred = mPredicateFactory.or(false, pred, bexToPredicate(bex.getNextConjunctExpression(), states));
+			pred = mPredicateFactory.or(pred, bexToPredicate(bex.getNextConjunctExpression(), states));
 		}
 		return pred;
 	}

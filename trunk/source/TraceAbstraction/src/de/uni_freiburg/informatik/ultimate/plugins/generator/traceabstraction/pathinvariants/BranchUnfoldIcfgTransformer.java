@@ -160,7 +160,7 @@ public final class BranchUnfoldIcfgTransformer {
 			for (final IcfgLocation newLoc : mOldLoc2NewLoc.getImage(oldLoc)) {
 				preds.add(hoareAnnotation.get(newLoc));
 			}
-			result.put(oldLoc, mPredicateFactory.or(false, preds));
+			result.put(oldLoc, mPredicateFactory.or(preds));
 
 		}
 		mInputIcfg = null;

@@ -89,7 +89,7 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 		mTermToPredicate = new HashMap<>();
 
 		mBasicPredicateFactory = new BasicPredicateFactory(services, csToolkit.getManagedScript(), 
-				csToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
+				csToolkit.getSymbolTable());
 
 		csToolkit.getManagedScript().lock(this);
 		final Term trueTerm = csToolkit.getManagedScript().term(this, "true");

@@ -164,23 +164,24 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		mErrorPrecondition = tracePredicates.getPrecondition();
 		mPredicates = collectPredicates(tracePredicates);
 		mLogger.info("Constructing danger automaton with " + mPredicates.size() + " predicates.");
-		mPt = new PredicateTransformer<>(
-				csToolkit.getManagedScript(), new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
+		mPt = new PredicateTransformer<>(csToolkit.getManagedScript(),
+				new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
 		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mCsTookit, false);
 
 		{
 			final IValueConstruction<Pair<IPredicate, LETTER>, Term> valueConstruction =
 					new IValueConstruction<Pair<IPredicate, LETTER>, Term>() {
-				@Override
-				public Term constructValue(final Pair<IPredicate, LETTER> key) {
-					final Term wp = mPt.weakestPrecondition(predicateFactory.not(key.getFirst()), key.getSecond().getTransformula());
-					final Term wpLessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
-							csToolkit.getManagedScript(), wp, SimplificationTechnique.SIMPLIFY_DDA,
-							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-					final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wpLessQuantifiers);
-					return pre;
-				}
-			};
+						@Override
+						public Term constructValue(final Pair<IPredicate, LETTER> key) {
+							final Term wp = mPt.weakestPrecondition(predicateFactory.not(key.getFirst()),
+									key.getSecond().getTransformula());
+							final Term wpLessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices,
+									mLogger, csToolkit.getManagedScript(), wp, SimplificationTechnique.SIMPLIFY_DDA,
+									XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+							final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wpLessQuantifiers);
+							return pre;
+						}
+					};
 			mPreInternalCc = new ConstructionCache<>(valueConstruction);
 		}
 
@@ -199,22 +200,23 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			mIntersectionWithPreInternalCc = new ConstructionCache<>(valueConstruction);
 		}
 
-
-		final NestedWordAutomaton<LETTER, IPredicate> optimizedResult = constructDangerAutomaton(new AutomataLibraryServices(services), mLogger, predicateFactory,
-				internalPredicateUnifier, csToolkit, predicateFactoryForAutomaton, abstraction, mPredicates, true);
-//		final NestedWordAutomaton<LETTER, IPredicate> unoptimizedResult = constructDangerAutomaton(
-//				new AutomataLibraryServices(services), mLogger, predicateFactory, internalPredicateUnifier, csToolkit,
-//				predicateFactoryForAutomaton, abstraction, mPredicates, false);
-//		try {
-//			final Boolean languageIsEquivalent = new IsEquivalent<LETTER, IPredicate>(
-//					new AutomataLibraryServices(services), new PredicateFactoryResultChecking(predicateFactory), optimizedResult, unoptimizedResult)
-//							.getResult();
-//			if (!languageIsEquivalent) {
-//				throw new AssertionError("language not equivalent");
-//			}
-//		} catch (final AutomataLibraryException e) {
-//			throw new AssertionError(e);
-//		}
+		final NestedWordAutomaton<LETTER, IPredicate> optimizedResult = constructDangerAutomaton(
+				new AutomataLibraryServices(services), mLogger, predicateFactory, internalPredicateUnifier, csToolkit,
+				predicateFactoryForAutomaton, abstraction, mPredicates, true);
+		// final NestedWordAutomaton<LETTER, IPredicate> unoptimizedResult = constructDangerAutomaton(
+		// new AutomataLibraryServices(services), mLogger, predicateFactory, internalPredicateUnifier, csToolkit,
+		// predicateFactoryForAutomaton, abstraction, mPredicates, false);
+		// try {
+		// final Boolean languageIsEquivalent = new IsEquivalent<LETTER, IPredicate>(
+		// new AutomataLibraryServices(services), new PredicateFactoryResultChecking(predicateFactory), optimizedResult,
+		// unoptimizedResult)
+		// .getResult();
+		// if (!languageIsEquivalent) {
+		// throw new AssertionError("language not equivalent");
+		// }
+		// } catch (final AutomataLibraryException e) {
+		// throw new AssertionError(e);
+		// }
 		mResult = optimizedResult;
 	}
 
@@ -247,16 +249,18 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			final ILogger logger, final PredicateFactory predicateFactory,
 			final PredicateUnificationMechanism predicateUnifier, final CfgSmtToolkit csToolkit,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryForAutomaton,
-			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final Set<IPredicate> predicates, final boolean constructMinimalCover) {
+			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final Set<IPredicate> predicates,
+			final boolean constructMinimalCover) {
 		final HashRelation<IPredicate, IPredicate> abstState2dangStates = new HashRelation<>();
 		final ConstructionCache<Pair<IPredicate, Set<IPredicate>>, IPredicate> disjunctionProvider;
 		{
-			final IValueConstruction<Pair<IPredicate, Set<IPredicate>>, IPredicate> valueConstruction = new IValueConstruction<Pair<IPredicate, Set<IPredicate>>, IPredicate>() {
-				@Override
-				public IPredicate constructValue(final Pair<IPredicate, Set<IPredicate>> key) {
-					return predicateFactory.or(false, key.getSecond());
-				}
-			};
+			final IValueConstruction<Pair<IPredicate, Set<IPredicate>>, IPredicate> valueConstruction =
+					new IValueConstruction<Pair<IPredicate, Set<IPredicate>>, IPredicate>() {
+						@Override
+						public IPredicate constructValue(final Pair<IPredicate, Set<IPredicate>> key) {
+							return predicateFactory.or(key.getSecond());
+						}
+					};
 			disjunctionProvider = new ConstructionCache<>(valueConstruction);
 		}
 		final IncrementalImplicationChecker ic =
@@ -264,42 +268,42 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 
 		final ConstructionCache<HashRelation<LETTER, IPredicate>, Set<IPredicate>> coveredPredicatesProvider;
 		{
-			final IValueConstruction<HashRelation<LETTER, IPredicate>, Set<IPredicate>> valueConstruction = new IValueConstruction<HashRelation<LETTER,IPredicate>, Set<IPredicate>>() {
+			final IValueConstruction<HashRelation<LETTER, IPredicate>, Set<IPredicate>> valueConstruction =
+					new IValueConstruction<HashRelation<LETTER, IPredicate>, Set<IPredicate>>() {
 
-				@Override
-				public Set<IPredicate> constructValue(final HashRelation<LETTER, IPredicate> constrainers) {
-					final Set<Term> programStatesWithSucc_Term = new HashSet<>();
-					for (final Entry<LETTER, IPredicate> entry : constrainers.entrySet()) {
-						final Term pre = mPreInternalCc.getOrConstruct(new Pair<IPredicate, LETTER>(entry.getValue(), entry.getKey()));
-						programStatesWithSucc_Term.add(pre);
-					}
-					final IPredicate programStatesWithSucc_Pred = predicateFactory
-							.newPredicate(SmtUtils.or(csToolkit.getManagedScript().getScript(), programStatesWithSucc_Term));
-
-					final Set<IPredicate> coveredPredicates = new HashSet<>();
-					try {
-						for (final IPredicate candidate : predicates) {
-							if (!coveredPredicates.contains(candidate)) {
-								final Validity icres = ic.checkImplication(candidate, programStatesWithSucc_Pred);
-								if (icres == Validity.VALID) {
-									//coveredPredicates.add(candidate);
-									coveredPredicates.addAll(mPredicateUnifier.getCoverageRelation().getCoveredPredicates(candidate));
-								}
+						@Override
+						public Set<IPredicate> constructValue(final HashRelation<LETTER, IPredicate> constrainers) {
+							final Set<Term> programStatesWithSucc_Term = new HashSet<>();
+							for (final Entry<LETTER, IPredicate> entry : constrainers.entrySet()) {
+								final Term pre = mPreInternalCc
+										.getOrConstruct(new Pair<>(entry.getValue(), entry.getKey()));
+								programStatesWithSucc_Term.add(pre);
 							}
+							final IPredicate programStatesWithSucc_Pred = predicateFactory.newPredicate(
+									SmtUtils.or(csToolkit.getManagedScript().getScript(), programStatesWithSucc_Term));
+
+							final Set<IPredicate> coveredPredicates = new HashSet<>();
+							try {
+								for (final IPredicate candidate : predicates) {
+									if (!coveredPredicates.contains(candidate)) {
+										final Validity icres =
+												ic.checkImplication(candidate, programStatesWithSucc_Pred);
+										if (icres == Validity.VALID) {
+											// coveredPredicates.add(candidate);
+											coveredPredicates.addAll(mPredicateUnifier.getCoverageRelation()
+													.getCoveredPredicates(candidate));
+										}
+									}
+								}
+							} finally {
+								ic.releaseLock();
+							}
+							return coveredPredicates;
 						}
-					} finally {
-						ic.releaseLock();
-					}
-					return coveredPredicates;
-				}
-			};
+					};
 			coveredPredicatesProvider = new ConstructionCache<>(valueConstruction);
 
 		}
-
-
-
-
 
 		final Queue<IPredicate> worklist = new ArrayDeque<>();
 
@@ -317,13 +321,13 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<>(
 				csToolkit.getManagedScript(), new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
 
-
 		while (!worklist.isEmpty()) {
 			final IPredicate state = worklist.poll();
 			for (final IncomingInternalTransition<LETTER, IPredicate> in : abstraction.internalPredecessors(state)) {
 				final IPredicate pred = in.getPred();
-				Set<IPredicate> coveredPredicates = getCoveredPredicates(logger, predicateFactory, csToolkit,
-						abstraction, abstState2dangStates, disjunctionProvider, predicates, pt, ic, pred, coveredPredicatesProvider);
+				Set<IPredicate> coveredPredicates =
+						getCoveredPredicates(logger, predicateFactory, csToolkit, abstraction, abstState2dangStates,
+								disjunctionProvider, predicates, pt, ic, pred, coveredPredicatesProvider);
 				if (coveredPredicates.isEmpty()) {
 					continue;
 					// no need to proceed in this iteration, a state labeled with false will not help us
@@ -334,7 +338,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 									mPredicateUnifier.getCoverageRelation().getPartialComperator())
 							.collect(Collectors.toSet());
 					if (minimalCover.size() < coveredPredicates.size()) {
-//						mLogger.warn("can save " + (coveredPredicates.size() - minimalCover.size()) + " predicates");
+						// mLogger.warn("can save " + (coveredPredicates.size() - minimalCover.size()) + " predicates");
 						coveredPredicates = minimalCover;
 					}
 				}
@@ -365,13 +369,18 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 					}
 
 					for (final IPredicate covered : coveredPredicates) {
-						for (final OutgoingInternalTransition<LETTER, IPredicate> out : abstraction.internalSuccessors(pred)) {
+						for (final OutgoingInternalTransition<LETTER, IPredicate> out : abstraction
+								.internalSuccessors(pred)) {
 							for (final IPredicate succInDanger : abstState2dangStates.getImage(out.getSucc())) {
-								final LBool isContributing = mIntersectionWithPreInternalCc.getOrConstruct(new Triple<IPredicate, LETTER, IPredicate>(covered, out.getLetter(), succInDanger));
+								final LBool isContributing = mIntersectionWithPreInternalCc
+										.getOrConstruct(new Triple<>(covered,
+												out.getLetter(), succInDanger));
 								if (isContributing == LBool.SAT) {
-									result.addInternalTransition(disjunctionProvider.getOrConstruct(new Pair<>(pred, Collections.singleton(covered))),
-											out.getLetter(),
-											disjunctionProvider.getOrConstruct(new Pair<>(out.getSucc(), Collections.singleton(succInDanger))));
+									result.addInternalTransition(
+											disjunctionProvider
+													.getOrConstruct(new Pair<>(pred, Collections.singleton(covered))),
+											out.getLetter(), disjunctionProvider.getOrConstruct(
+													new Pair<>(out.getSucc(), Collections.singleton(succInDanger))));
 								}
 							}
 						}
@@ -389,7 +398,8 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			final HashRelation<IPredicate, IPredicate> abstState2dangStates,
 			final ConstructionCache<Pair<IPredicate, Set<IPredicate>>, IPredicate> disjunctionProvider,
 			final Set<IPredicate> predicates, final PredicateTransformer<Term, IPredicate, TransFormula> pt,
-			final IncrementalImplicationChecker ic, final IPredicate pred, final ConstructionCache<HashRelation<LETTER, IPredicate>, Set<IPredicate>> coveredPredicatesProvider) {
+			final IncrementalImplicationChecker ic, final IPredicate pred,
+			final ConstructionCache<HashRelation<LETTER, IPredicate>, Set<IPredicate>> coveredPredicatesProvider) {
 
 		final HashRelation<LETTER, IPredicate> constrainers = new HashRelation<>();
 		for (final OutgoingInternalTransition<LETTER, IPredicate> out : abstraction.internalSuccessors(pred)) {
@@ -434,8 +444,9 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		return newState;
 	}
 
-	/* add outgoing transitions to all successors that finally contributed
-	 *(i.e., where the intersection of pre with the abstract state is not empty)
+	/*
+	 * add outgoing transitions to all successors that finally contributed (i.e., where the intersection of pre with the
+	 * abstract state is not empty)
 	 */
 	private void addOutgoingTransitionsToContributingStates(final ILogger logger,
 			final PredicateFactory predicateFactory, final CfgSmtToolkit csToolkit,
@@ -454,7 +465,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			assert result.getStates().contains(succInDanger);
 			final LBool checkSatRes;
 			checkSatRes = mIntersectionWithPreInternalCc.getOrConstruct(
-					new Triple<IPredicate, LETTER, IPredicate>(newState, out.getLetter(), succInDanger));
+					new Triple<>(newState, out.getLetter(), succInDanger));
 			if (checkSatRes != LBool.UNSAT) {
 				// edge probably (result might be unknown) contributed, so we add it
 				result.addInternalTransition(newState, out.getLetter(), succInDanger);
@@ -464,14 +475,13 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 	}
 
 	/**
-	 * Check if the intersection between "predecessor and pre("successor",st)
-	 * is satisfiable.
+	 * Check if the intersection between "predecessor and pre("successor",st) is satisfiable.
 	 */
 	private LBool checkIntersectionWithPre(final ILogger logger, final PredicateFactory predicateFactory,
 			final CfgSmtToolkit csToolkit, final PredicateTransformer<Term, IPredicate, TransFormula> pt,
 			final IPredicate predecessor, final OutgoingInternalTransition<LETTER, IPredicate> out,
 			final IPredicate successor) {
-		final Term pre = mPreInternalCc.getOrConstruct(new Pair<IPredicate, LETTER>(successor, out.getLetter()));
+		final Term pre = mPreInternalCc.getOrConstruct(new Pair<>(successor, out.getLetter()));
 		final Term conjunction = SmtUtils.and(csToolkit.getManagedScript().getScript(),
 				Arrays.asList(new Term[] { pre, predecessor.getFormula() }));
 		final LBool checkSatRes = SmtUtils.checkSatTerm(csToolkit.getManagedScript().getScript(), conjunction);
@@ -490,16 +500,15 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		return disjunctionProvider.getOrConstruct(new Pair<>(succInAbstraction, succDisjunctionInDanger));
 	}
 
-
-
 	private TracePredicates constructPredicates(final ILogger logger, final PredicateFactory predicateFactory,
 			final PredicateUnificationMechanism pum, final CfgSmtToolkit csToolkit,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfgSymbolTable symbolTable, final NestedWord<LETTER> trace, final IPredicateUnifier predicateUnifier) throws AssertionError {
-		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(predicateFactory,
-				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, trace, null,
-				pum.getTruePredicate(), null, pum.getTruePredicate(),
-				simplificationTechnique, xnfConversionTechnique, symbolTable);
+			final IIcfgSymbolTable symbolTable, final NestedWord<LETTER> trace,
+			final IPredicateUnifier predicateUnifier) throws AssertionError {
+		final IterativePredicateTransformer ipt =
+				new IterativePredicateTransformer(predicateFactory, csToolkit.getManagedScript(),
+						csToolkit.getModifiableGlobalsTable(), mServices, trace, null, pum.getTruePredicate(), null,
+						pum.getTruePredicate(), simplificationTechnique, xnfConversionTechnique, symbolTable);
 		final List<IPredicatePostprocessor> postprocessors = new ArrayList<>();
 		final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(mServices, logger,
 				csToolkit.getManagedScript(), predicateFactory, simplificationTechnique, xnfConversionTechnique);

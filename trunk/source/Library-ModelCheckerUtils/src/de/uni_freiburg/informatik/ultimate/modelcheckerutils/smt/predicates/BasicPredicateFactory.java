@@ -29,25 +29,26 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Factory for construction of {@link IPredicate}s that can also construct
- * nontrivial predicates.
+ * Factory for construction of {@link IPredicate}s that can also construct nontrivial predicates.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -59,44 +60,20 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 
 	protected final IIcfgSymbolTable mSymbolTable;
 	protected final Script mScript;
-	protected final SimplificationTechnique mSimplificationTechnique;
-	protected final XnfConversionTechnique mXnfConversionTechnique;
-
 
 	protected final IUltimateServiceProvider mServices;
 	protected final ManagedScript mMgdScript;
 	protected final ILogger mLogger;
 
 	public BasicPredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IIcfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final IIcfgSymbolTable symbolTable) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mSymbolTable = symbolTable;
 		mMgdScript = mgdScript;
 		mScript = mgdScript.getScript();
-		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 	}
-
-	/**
-	 * Returns true iff each free variables corresponds to a BoogieVar or will be quantified. Throws an Exception
-	 * otherwise.
-	 */
-	private boolean checkIfValidPredicate(final Term term, final Set<TermVariable> quantifiedVariables) {
-		for (final TermVariable tv : term.getFreeVars()) {
-			final IProgramVar bv = mSymbolTable.getProgramVar(tv);
-			if (bv == null) {
-				if (!quantifiedVariables.contains(tv)) {
-					throw new AssertionError("Variable " + tv + " does not corresponds to a BoogieVar, and is"
-							+ " not quantified, hence this formula cannot" + " define a predicate: " + term);
-				}
-			}
-		}
-		return true;
-	}
-
 
 	public BasicPredicate newPredicate(final Term term) {
 		assert term == mDontCareTerm
@@ -144,44 +121,50 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 		return newPredicate(andTerm(preds, st));
 	}
 
-	public IPredicate or(final boolean withSimplifyDDA, final IPredicate... preds) {
-		return newPredicate(orTerm(withSimplifyDDA, Arrays.asList(preds)));
+	public IPredicate or(final IPredicate... preds) {
+		return or(Arrays.asList(preds));
 	}
 
-	public IPredicate or(final boolean withSimplifyDDA, final Collection<IPredicate> preds) {
-		return newPredicate(orTerm(withSimplifyDDA, preds));
+	public IPredicate or(final SimplificationTechnique st, final IPredicate... preds) {
+		return newPredicate(orTerm(Arrays.asList(preds), st));
+	}
+
+	public IPredicate or(final Collection<IPredicate> preds) {
+		return newPredicate(orTerm(preds, SimplificationTechnique.NONE));
+	}
+
+	public IPredicate or(final SimplificationTechnique st, final Collection<IPredicate> preds) {
+		return newPredicate(orTerm(preds, st));
 	}
 
 	public IPredicate not(final IPredicate p) {
 		return newPredicate(notTerm(p));
 	}
 
-	private Term orTerm(final boolean withSimplifyDDA, final Collection<IPredicate> preds) {
-		Term term = mScript.term("false");
-		for (final IPredicate p : preds) {
-			if (isDontCare(p)) {
-				return mDontCareTerm;
-			}
-			term = SmtUtils.or(mScript, term, p.getFormula());
-		}
-		if (withSimplifyDDA) {
-			term = SmtUtils.simplify(mMgdScript, term, mServices, mSimplificationTechnique);
-		}
-		return term;
+	private Term orTerm(final Collection<IPredicate> preds, final SimplificationTechnique st) {
+		return xJunctTerm(preds, st, SmtUtils::or, this::getFalse);
 	}
 
 	private Term andTerm(final Collection<IPredicate> preds, final SimplificationTechnique st) {
-		Term term = mScript.term("true");
-		for (final IPredicate p : preds) {
-			if (isDontCare(p)) {
-				return mDontCareTerm;
-			}
-			term = SmtUtils.and(mScript, term, p.getFormula());
+		return xJunctTerm(preds, st, SmtUtils::and, this::getTrue);
+	}
+
+	private Term xJunctTerm(final Collection<IPredicate> preds, final SimplificationTechnique st,
+			final BiFunction<Script, Collection<Term>, Term> funCreateXJunct,
+			final Supplier<Term> funGetNeutralElement) {
+		final List<Term> terms = preds.stream().map(p -> p.getFormula()).collect(Collectors.toList());
+		if (terms.stream().anyMatch(this::isDontCare)) {
+			return mDontCareTerm;
 		}
+		if (terms.isEmpty()) {
+			return funGetNeutralElement.get();
+		}
+
+		final Term xJunct = funCreateXJunct.apply(mScript, terms);
 		if (st != SimplificationTechnique.NONE) {
-			return SmtUtils.simplify(mMgdScript, term, mServices, st);
+			return SmtUtils.simplify(mMgdScript, xJunct, mServices, st);
 		}
-		return term;
+		return xJunct;
 	}
 
 	private Term notTerm(final IPredicate p) {
@@ -189,6 +172,14 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 			return mDontCareTerm;
 		}
 		return SmtUtils.not(mScript, p.getFormula());
+	}
+
+	private Term getTrue() {
+		return mScript.term("true");
+	}
+
+	private Term getFalse() {
+		return mScript.term("false");
 	}
 
 }

@@ -92,8 +92,7 @@ public class SymbolicTools {
 	}
 
 	/**
-	 * Assigns arguments to parameters of the callee.
-	 * Also handles globals and old vars.
+	 * Assigns arguments to parameters of the callee. Also handles globals and old vars.
 	 */
 	public IPredicate postCall(final IPredicate input, final IIcfgCallTransition<IcfgLocation> transition) {
 		final CfgSmtToolkit toolkit = mIcfg.getCfgSmtToolkit();
@@ -105,8 +104,7 @@ public class SymbolicTools {
 	}
 
 	/**
-	 * Assigns the return values from the callee to local variables of the caller.
-	 * Also handles globals and old vars.
+	 * Assigns the return values from the callee to local variables of the caller. Also handles globals and old vars.
 	 */
 	public IPredicate postReturn(final IPredicate inputBeforeCall, final IPredicate inputBeforeReturn,
 			final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnTransition) {
@@ -128,7 +126,7 @@ public class SymbolicTools {
 
 	public IPredicate or(final IPredicate... operands) {
 		// TODO use a setting for simplification
-		return mFactory.or(true, operands);
+		return mFactory.or(SimplificationTechnique.SIMPLIFY_DDA, operands);
 	}
 
 	public IPredicate or(final Term... operands) {

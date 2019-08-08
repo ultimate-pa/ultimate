@@ -391,7 +391,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	protected IPredicate getOrConstructPredicateForDisjunction(final Set<IPredicate> minimalSubset,
 			final HashMap<IPredicate, Validity> impliedPredicates,
 			final HashMap<IPredicate, Validity> expliedPredicates) {
-		final IPredicate or = mPredicateFactory.or(false, minimalSubset);
+		final IPredicate or = mPredicateFactory.or(minimalSubset);
 		return getOrConstructPredicate(or.getFormula(), impliedPredicates, expliedPredicates, or);
 	}
 

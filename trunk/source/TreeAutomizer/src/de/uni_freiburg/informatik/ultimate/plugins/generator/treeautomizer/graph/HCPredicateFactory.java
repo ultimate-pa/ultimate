@@ -76,7 +76,7 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 	public HCPredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final HcSymbolTable symbolTable,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
-		super(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
+		super(services, mgdScript, symbolTable);
 		mMgdScript = mgdScript;
 		mHCSymbolTable = symbolTable;
 
