@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -157,11 +158,8 @@ public class SymbolicTools {
 			return true;
 		}
 		final LBool result = SmtUtils.checkSatTerm(mMngdScript.getScript(), pred.getClosedFormula());
-		try {
-			return !satAsBool(result);
-		} catch (final IllegalArgumentException iae) {
-			throw new UnsupportedOperationException("Solver couldn't decide unsatisfiability for\n" + pred, iae);
-		}
+		return !satAsBool(result).orElseThrow(() -> new UnsupportedOperationException(
+				"Solver couldn't decide unsatisfiability for\n" + pred));
 	}
 
 	public boolean implies(final IPredicate p1, final IPredicate p2) {
@@ -173,22 +171,18 @@ public class SymbolicTools {
 		final Term negImplTerm =
 				SmtUtils.not(script, SmtUtils.implies(script, p1.getClosedFormula(), p2.getClosedFormula()));
 		final LBool result = SmtUtils.checkSatTerm(script, negImplTerm);
-		try {
-			return !satAsBool(result);
-		} catch (final IllegalArgumentException iae) {
-			throw new UnsupportedOperationException(
-					"Solver couldn't decide satisfiability for\n" + p1 + "\nimplies\n" + p2, iae);
-		}
+		return !satAsBool(result).orElseThrow(() -> new UnsupportedOperationException(
+				"Solver couldn't decide satisfiability for\n" + p1 + "\nimplies\n" + p2));
 	}
 
-	private boolean satAsBool(final LBool solverResult) {
+	private Optional<Boolean> satAsBool(final LBool solverResult) {
 		switch (solverResult) {
 		case SAT:
-			return true;
+			return Optional.of(true);
 		case UNSAT:
-			return false;
+			return Optional.of(false);
 		case UNKNOWN:
-			throw new IllegalArgumentException("Cannot convert to boolean: " + solverResult);
+			return Optional.empty();
 		default:
 			throw new AssertionError("Missing case: " + solverResult);
 		}
