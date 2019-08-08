@@ -83,9 +83,7 @@ public class SifaBuilder {
 
 	private SymbolicTools constructTools(final IIcfg<IcfgLocation> icfg) {
 		return new SymbolicTools(mServices, icfg,
-			mPrefs.getEnum(SifaPreferences.LABEL_SIMPLIFICATION, SifaPreferences.CLASS_SIMPLIFICATION),
-			mPrefs.getEnum(SifaPreferences.LABEL_XNF_CONVERSION, SifaPreferences.CLASS_XNF_CONVERSION)
-		);
+			mPrefs.getEnum(SifaPreferences.LABEL_SIMPLIFICATION, SifaPreferences.CLASS_SIMPLIFICATION));
 
 	}
 

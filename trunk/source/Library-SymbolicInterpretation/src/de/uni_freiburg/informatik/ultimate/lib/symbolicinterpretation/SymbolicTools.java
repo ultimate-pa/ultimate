@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
@@ -62,13 +61,14 @@ public class SymbolicTools {
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mTransformer;
 	private final IPredicate mTop;
 	private final IPredicate mBottom;
+	private final SimplificationTechnique mSimplification;
 
 	public SymbolicTools(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
-			final SimplificationTechnique simplificationTech, final XnfConversionTechnique xnfConversionTech) {
+			final SimplificationTechnique simplification) {
 		mIcfg = icfg;
+		mSimplification = simplification;
 		mMngdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final Script script = mMngdScript.getScript();
-		// TODO decide which techniques to use or use a setting
 		mFactory = new PredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable());
 		mTransformer = new PredicateTransformer<>(mMngdScript, new TermDomainOperationProvider(services, mMngdScript));
 		mTop = mFactory.newPredicate(script.term("true"));
@@ -125,8 +125,8 @@ public class SymbolicTools {
 	}
 
 	public IPredicate or(final IPredicate... operands) {
-		// TODO use a setting for simplification
-		return mFactory.or(SimplificationTechnique.SIMPLIFY_DDA, operands);
+		// TODO be consistent with other or() methods and don't use mSimplification?
+		return mFactory.or(mSimplification, operands);
 	}
 
 	public IPredicate or(final Term... operands) {
@@ -138,9 +138,8 @@ public class SymbolicTools {
 	}
 
 	public IPredicate and(final IPredicate... operands) {
-		// TODO use a setting for simplification
-		final SimplificationTechnique simplification = SimplificationTechnique.SIMPLIFY_QUICK;
-		return mFactory.and(simplification, operands);
+		// TODO be consistent with other and() methods and don't use mSimplification?
+		return mFactory.and(mSimplification, operands);
 	}
 
 	public IPredicate and(final Term... operands) {
