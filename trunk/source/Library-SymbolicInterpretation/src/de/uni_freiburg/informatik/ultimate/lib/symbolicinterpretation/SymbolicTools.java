@@ -159,7 +159,11 @@ public class SymbolicTools {
 			return true;
 		}
 		final LBool result = SmtUtils.checkSatTerm(mMngdScript.getScript(), pred.getClosedFormula());
-		return !satAsBool(result);
+		try {
+			return !satAsBool(result);
+		} catch (final IllegalArgumentException iae) {
+			throw new UnsupportedOperationException("Solver couldn't decide unsatisfiability for\n" + pred, iae);
+		}
 	}
 
 	public boolean implies(final IPredicate p1, final IPredicate p2) {
@@ -171,7 +175,12 @@ public class SymbolicTools {
 		final Term negImplTerm =
 				SmtUtils.not(script, SmtUtils.implies(script, p1.getClosedFormula(), p2.getClosedFormula()));
 		final LBool result = SmtUtils.checkSatTerm(script, negImplTerm);
-		return !satAsBool(result);
+		try {
+			return !satAsBool(result);
+		} catch (final IllegalArgumentException iae) {
+			throw new UnsupportedOperationException(
+					"Solver couldn't decide satisfiability for\n" + p1 + "\nimplies\n" + p2, iae);
+		}
 	}
 
 	private boolean satAsBool(final LBool solverResult) {
@@ -181,9 +190,9 @@ public class SymbolicTools {
 		case UNSAT:
 			return false;
 		case UNKNOWN:
-			throw new UnsupportedOperationException("Abstraction of intricate predicate not yet implemented");
+			throw new IllegalArgumentException("Cannot convert to boolean: " + solverResult);
 		default:
-			throw new UnsupportedOperationException("Missing case: " + solverResult);
+			throw new AssertionError("Missing case: " + solverResult);
 		}
 	}
 

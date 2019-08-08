@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 
 /**
  * Abstract Domain for Symbolic Interpretation with Fluid Abstractions (Sifa).
- * 
+ *
  * @author schaetzc@tf.uni-freiburg.de
  *
  * @param <ABS_STATE> Type of the abstract states of this domain. Should be fixed for subclasses.
@@ -45,7 +45,7 @@ public interface IDomain {
 	 * The join of two abstract states is similar their union, that is, logical disjunction (∨). However, the exact
 	 * union might not be expressible as an abstract state, therefore the join may over-approximate the union
 	 * similar to α(p1 ∨ p2).
-	 * 
+	 *
 	 * @param first p1
 	 * @param second p2
 	 * @return Join j of p1 and p2 such that (p1 ∨ p2) → j.
@@ -58,7 +58,7 @@ public interface IDomain {
 	 * Widening is similar to {@link #join(IPredicate, IPredicate)} with the additional property  that on any infinite
 	 * sequence p1, p2, p3, ... the sequence w1, w2, w3, ... with w1 = p1 and wi = widen(w(i-1), pi) reaches a fixpoint,
 	 * that is, wi = w(i+1) = w(i+2) = ... for some i.
-	 * 
+	 *
 	 * @param old Old abstract state to be widened by widenWith
 	 * @param widenWith New abstract state extending old
 	 * @return Widened abstract state
@@ -72,6 +72,8 @@ public interface IDomain {
 	 *
 	 * @param pred Predicate to be checked
 	 * @return The predicate is unsatisfiable, that is, equivalent to false
+	 *
+	 * TODO consider removing this function. As of 2019-08-06 we don't need it
 	 */
 	boolean isBottom(IPredicate pred);
 
@@ -81,7 +83,7 @@ public interface IDomain {
 	 * <p>
 	 * The check has to be precise and has always to terminate. This is only possible since the
 	 * input is an abstract state and not an arbitrary predicate.
-	 * 
+	 *
 	 * @param subset p1
 	 * @param superset p2
 	 * @return p1 → p2

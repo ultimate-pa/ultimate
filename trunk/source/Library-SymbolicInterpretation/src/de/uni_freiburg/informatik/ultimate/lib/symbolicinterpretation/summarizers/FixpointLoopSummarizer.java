@@ -94,6 +94,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 				return mTools.top();
 			}
 			postState = mDagIpr.interpret(dag, fullOverlay, preState);
+			//postState = mDomain.alpha(postState);
 			if (mDomain.isSubsetEq(postState, preState)) {
 				break;
 			}
