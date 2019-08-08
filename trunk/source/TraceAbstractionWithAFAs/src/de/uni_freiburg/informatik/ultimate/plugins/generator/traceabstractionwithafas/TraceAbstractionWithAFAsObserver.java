@@ -91,7 +91,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 		final CfgSmtToolkit csToolkit = rootAnnot.getCfgSmtToolkit();
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(),
-				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+				csToolkit.getSymbolTable());
 		final TraceAbstractionBenchmarks taBenchmarks = new TraceAbstractionBenchmarks(rootAnnot);
 
 		final Map<String, Set<BoogieIcfgLocation>> proc2errNodes = rootAnnot.getProcedureErrorNodes();

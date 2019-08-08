@@ -78,8 +78,7 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCurrentCounterExample = currentCounterexample;
 		mBoogie2Smt = csToolkit;
-		mPredicateFactory = new PredicateFactory(services, mBoogie2Smt, symbolTable, simplificationTechnique,
-				xnfConversionTechnique);
+		mPredicateFactory = new PredicateFactory(services, mBoogie2Smt, symbolTable);
 
 		mResult = getPathProgramAutomaton(oldAbstraction, predUnifier, emptyStackFactory);
 	}

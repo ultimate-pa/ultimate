@@ -100,7 +100,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 		final CfgSmtToolkit csToolkit = petrifiedIcfg.getCfgSmtToolkit();
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(),
-				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+				csToolkit.getSymbolTable());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(petrifiedIcfg);
 		final Set<IcfgLocation> threadErrorLocations;
 		if (csToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {

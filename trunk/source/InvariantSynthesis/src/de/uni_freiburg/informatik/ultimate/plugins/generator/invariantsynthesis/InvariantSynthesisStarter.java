@@ -115,7 +115,7 @@ public class InvariantSynthesisStarter {
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mgdScript,
-				icfg.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique);
+				icfg.getCfgSmtToolkit().getSymbolTable());
 		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices, mgdScript, predicateFactory,
 				icfg.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique);
 

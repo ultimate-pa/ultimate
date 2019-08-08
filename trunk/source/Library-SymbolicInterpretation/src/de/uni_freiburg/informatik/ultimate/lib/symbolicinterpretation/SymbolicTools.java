@@ -69,8 +69,7 @@ public class SymbolicTools {
 		mMngdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final Script script = mMngdScript.getScript();
 		// TODO decide which techniques to use or use a setting
-		mFactory = new PredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable(),
-				simplificationTech, xnfConversionTech);
+		mFactory = new PredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable());
 		mTransformer = new PredicateTransformer<>(mMngdScript, new TermDomainOperationProvider(services, mMngdScript));
 		mTop = mFactory.newPredicate(script.term("true"));
 		mBottom = mFactory.newPredicate(script.term("false"));

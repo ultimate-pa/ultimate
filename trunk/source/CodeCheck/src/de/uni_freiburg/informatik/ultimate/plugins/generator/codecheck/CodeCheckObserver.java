@@ -177,8 +177,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		readPreferencePage();
 		mOriginalRoot = root;
 		mCsToolkit = mOriginalRoot.getCfgSmtToolkit();
-		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable(),
-				SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
+		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable());
 
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(CodeCheckPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER)) {

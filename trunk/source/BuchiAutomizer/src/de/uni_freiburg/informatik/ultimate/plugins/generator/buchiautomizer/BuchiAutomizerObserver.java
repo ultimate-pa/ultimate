@@ -134,8 +134,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit());
 		final PredicateFactory predicateFactory =
 				new PredicateFactory(mServices, icfg.getCfgSmtToolkit().getManagedScript(),
-						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable(),
-						taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable());
 
 		final BuchiCegarLoop<?> bcl = new BuchiCegarLoop<>(icfg, icfg.getCfgSmtToolkit(), rankVarConstructor,
 				predicateFactory, taPrefs, mServices, witnessAutomaton);

@@ -135,8 +135,7 @@ public class LassoRankerStarter {
 		mCsToolkit = mIcfg.getCfgSmtToolkit();
 		mRankVarConstructor = new RankVarConstructor(mIcfg.getCfgSmtToolkit());
 		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(),
-				mRankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable(), mSimplificationTechnique,
-				mXnfConversionTechnique);
+				mRankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable());
 
 		AbstractLassoExtractor<IIcfgTransition<IcfgLocation>> lassoExtractor;
 		try {
