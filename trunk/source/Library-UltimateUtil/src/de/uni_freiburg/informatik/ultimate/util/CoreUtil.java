@@ -166,16 +166,13 @@ public class CoreUtil {
 		} else {
 			// just assume linux: ELF format executable used by Linux start with 7f454c46
 			funLooksLikeExectuable = f -> {
-				final byte[] firstBytes = new byte[8];
+				final byte[] firstBytes = new byte[4];
 				try {
 					final FileInputStream input = new FileInputStream(f);
 					input.read(firstBytes);
 					input.close();
-					if (firstBytes[0] == 0x7f && firstBytes[1] == 0x45 && firstBytes[1] == 0x4c
-							&& firstBytes[1] == 0x46) {
-						return true;
-					}
-					return false;
+					return firstBytes[0] == 0x7f && firstBytes[1] == 0x45 && firstBytes[2] == 0x4c
+							&& firstBytes[3] == 0x46;
 				} catch (final Exception e) {
 					return false;
 				}
