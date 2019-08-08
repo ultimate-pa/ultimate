@@ -137,9 +137,9 @@ public class CoreUtil {
 	/**
 	 * Traverses the OS' PATH and searches for a file that fulfills the following conditions.
 	 * <ul>
-	 * <li>It is named <name>,
+	 * <li>The filename starts with {@code <name>},
 	 * <li>the current process is allowed to execute it,
-	 * <li>it looks like some known executable binary.
+	 * <li>it looks like some known executable binary (i.e., has the right magic numbers in the beginning).
 	 * </ul>
 	 */
 	public static File findExecutableBinaryOnPath(final String name) {
