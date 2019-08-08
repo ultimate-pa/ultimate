@@ -74,7 +74,7 @@ public class SifaBuilder {
 		final IDomain domain = constructDomain(tools);
 		final IFluid fluid = constructFluid();
 		final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSum =
-				constructLoopSummarizer(timer, tools, domain);
+				constructLoopSummarizer(timer, tools, domain, fluid);
 		final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSum =
 				constructCallSummarizer(tools);
 		return new IcfgInterpreter(mLogger, timer, tools, icfg, IcfgInterpreter.allErrorLocations(icfg),
@@ -129,10 +129,12 @@ public class SifaBuilder {
 	}
 
 	private Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> constructLoopSummarizer(
-			final IProgressAwareTimer timer, final SymbolicTools tools, final IDomain domain) {
+			final IProgressAwareTimer timer, final SymbolicTools tools, final IDomain domain, final IFluid fluid) {
 		final String prefLoopSum = mPrefs.getString(SifaPreferences.LABEL_LOOP_SUMMARIZER);
+		final boolean trySolverFirst = mPrefs.getBoolean(SifaPreferences.LABEL_TRY_SOLVER_BEFORE_ENFORCING_ABSTRACTION);
 		if (FixpointLoopSummarizer.class.getSimpleName().equals(prefLoopSum)) {
-			return icfgIpr -> dagIpr -> new FixpointLoopSummarizer(mLogger, timer, tools, domain, dagIpr);
+			return icfgIpr -> dagIpr -> new FixpointLoopSummarizer(
+					mLogger, timer, tools, domain, fluid, dagIpr, trySolverFirst);
 		} else {
 			throw new IllegalArgumentException("Unknown loop summarizer setting: " + prefLoopSum);
 		}

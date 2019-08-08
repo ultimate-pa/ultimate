@@ -152,27 +152,25 @@ public class SymbolicTools {
 		return mFactory.newPredicate(SmtUtils.and(mMngdScript.getScript(), operands));
 	}
 
-	public boolean isFalse(final IPredicate pred) {
+	public Optional<Boolean> isFalse(final IPredicate pred) {
 		// TODO: Use unifier instead of costly SMT check
 		if (mBottom.equals(pred)) {
-			return true;
+			return Optional.of(true);
 		}
 		final LBool result = SmtUtils.checkSatTerm(mMngdScript.getScript(), pred.getClosedFormula());
-		return !satAsBool(result).orElseThrow(() -> new UnsupportedOperationException(
-				"Solver couldn't decide unsatisfiability for\n" + pred));
+		return satAsBool(result).map(b -> !b);
 	}
 
-	public boolean implies(final IPredicate p1, final IPredicate p2) {
+	public Optional<Boolean> implies(final IPredicate p1, final IPredicate p2) {
 		// TODO: Use unifier instead of costly SMT check
 		if (p1.equals(p2)) {
-			return true;
+			return Optional.of(true);
 		}
 		final Script script = mMngdScript.getScript();
 		final Term negImplTerm =
 				SmtUtils.not(script, SmtUtils.implies(script, p1.getClosedFormula(), p2.getClosedFormula()));
 		final LBool result = SmtUtils.checkSatTerm(script, negImplTerm);
-		return !satAsBool(result).orElseThrow(() -> new UnsupportedOperationException(
-				"Solver couldn't decide satisfiability for\n" + p1 + "\nimplies\n" + p2));
+		return satAsBool(result).map(b -> !b);
 	}
 
 	private Optional<Boolean> satAsBool(final LBool solverResult) {

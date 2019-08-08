@@ -58,13 +58,15 @@ public class IntervalDomain implements IDomain {
 	@Override
 	public boolean isBottom(final IPredicate pred) {
 		// TODO do not use SMT solver
-		return mTools.isFalse(pred);
+		return mTools.isFalse(pred).orElseThrow(() -> new UnsupportedOperationException(
+				"Solver couldn't decide unsatisfiability for\n" + pred));
 	}
 
 	@Override
 	public boolean isSubsetEq(final IPredicate subset, final IPredicate superset) {
 		// TODO do not use SMT solver
-		return mTools.implies(subset, superset);
+		return mTools.implies(subset, superset).orElseThrow(() -> new UnsupportedOperationException(
+				"Solver couldn't decide satisfiability for\n" + subset + "\nimplies\n" + superset));
 	}
 
 	@Override
