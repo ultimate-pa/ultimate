@@ -148,35 +148,10 @@ public class CoreUtil {
 			// Check for Windows executable:
 			// Windows uses the Portable Executable format, which should always start with the magic number 4d5a
 			// (ASCII characters MZ)
-			funLooksLikeExectuable = f -> {
-				final byte[] firstBytes = new byte[4];
-				try {
-					final FileInputStream input = new FileInputStream(f);
-					input.read(firstBytes);
-					input.close();
-
-					if (firstBytes[0] == 0x4d && firstBytes[1] == 0x5a) {
-						return true;
-					}
-					return false;
-				} catch (final Exception e) {
-					return false;
-				}
-			};
+			funLooksLikeExectuable = f -> hasMagicNumber(f, new byte[]{0x4d, 0x5a});
 		} else {
 			// just assume linux: ELF format executable used by Linux start with 7f454c46
-			funLooksLikeExectuable = f -> {
-				final byte[] firstBytes = new byte[4];
-				try {
-					final FileInputStream input = new FileInputStream(f);
-					input.read(firstBytes);
-					input.close();
-					return firstBytes[0] == 0x7f && firstBytes[1] == 0x45 && firstBytes[2] == 0x4c
-							&& firstBytes[3] == 0x46;
-				} catch (final Exception e) {
-					return false;
-				}
-			};
+			funLooksLikeExectuable = f -> hasMagicNumber(f, new byte[]{0x7f, 0x45, 0x4c, 0x46});
 		}
 
 		for (final String dirname : System.getenv("PATH").split(File.pathSeparator)) {
@@ -191,6 +166,16 @@ public class CoreUtil {
 			}
 		}
 		return null;
+	}
+
+	private static boolean hasMagicNumber(final File file, final byte[] magicNumber) {
+		try (final FileInputStream input = new FileInputStream(file)) {
+			final byte[] firstBytes = new byte[magicNumber.length];
+			input.read(firstBytes);
+			return Arrays.equals(firstBytes, magicNumber);
+		} catch (final Exception e) {
+			return false;
+		}
 	}
 
 	public static File writeFile(final File file, final String content) throws IOException {
