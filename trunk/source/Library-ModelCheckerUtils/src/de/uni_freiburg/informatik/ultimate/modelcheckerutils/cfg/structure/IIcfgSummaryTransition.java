@@ -27,21 +27,19 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 /**
- * Edge in an IIcfg that represents the call of a procedure, including execution
- * of the procedure, returning to the caller and update of the left hand side of
- * a call statement. These transitions are used to model a procedure that is
+ * Edge in an IIcfg that represents the call of a procedure, including execution of the procedure, returning to the
+ * caller and update of the left hand side of a call statement. These transitions are used to model a procedure that is
  * given by a specification but not by an implementation.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IIcfgSummaryTransition<LOC extends IcfgLocation> extends IIcfgInternalTransition<LOC>, IInternalAction {
+public interface IIcfgSummaryTransition<LOC extends IcfgLocation>
+		extends IIcfgInternalTransition<LOC>, IInternalAction {
 
 	/**
 	 *
-	 * @return true iff the procedure has not only a (possibly empty) specification
-	 *         but also an implementation.
+	 * @return true iff the procedure has not only a (possibly empty) specification but also an implementation.
 	 */
 	boolean calledProcedureHasImplementation();
-	// just for grouping
 }
