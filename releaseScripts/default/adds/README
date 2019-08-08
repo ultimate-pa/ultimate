@@ -16,9 +16,11 @@ Christian Schilling (schillic@informatik.uni-freiburg.de)
 This archive also contains binaries for the following theorem provers.
  * Z3 (https://github.com/Z3Prover/z3) 
    - Linux (z3)
-     z3-4.8.3-master-fb1287155 (2018-11-18)
+     z3-4.8.6-master-e95045368 (2019-08-06)
+     
+     
    - Windows (z3.exe)
-     master f699ac0353a57cdd0622b0071babfbfad7b8463a (2018-11-06)
+     z3-4.8.6 64Bit master e95045368 (2019-08-06)
 
  * CVC4 (http://cvc4.cs.nyu.edu/)
    - Linux 
