@@ -145,13 +145,13 @@ public class CoreUtil {
 	public static File findExecutableBinaryOnPath(final String name) {
 		final Predicate<File> funLooksLikeExectuable;
 		if (CoreUtil.OS_IS_WINDOWS) {
-			// Check for Windows executable:
-			// Windows uses the Portable Executable format, which should always start with the magic number 4d5a
-			// (ASCII characters MZ)
-			funLooksLikeExectuable = f -> hasMagicNumber(f, new byte[]{0x4d, 0x5a});
+			// Windows uses the Portable Executable format starting with 0x4d5a (ASCII characters MZ)
+			final byte[] exeMagicNumber = {'M', 'Z'};
+			funLooksLikeExectuable = f -> hasMagicNumber(f, exeMagicNumber);
 		} else {
-			// just assume linux: ELF format executable used by Linux start with 7f454c46
-			funLooksLikeExectuable = f -> hasMagicNumber(f, new byte[]{0x7f, 0x45, 0x4c, 0x46});
+			// Just assume Linux: ELF format executables start with 0x7f454c46 (ASCII characters <DEL>ELF)
+			final byte[] elfMagicNumber = {0x7f, 'E', 'L', 'F'};
+			funLooksLikeExectuable = f -> hasMagicNumber(f, elfMagicNumber);
 		}
 
 		for (final String dirname : System.getenv("PATH").split(File.pathSeparator)) {
