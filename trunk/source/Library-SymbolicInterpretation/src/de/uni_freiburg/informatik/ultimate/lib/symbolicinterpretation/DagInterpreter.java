@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
@@ -83,21 +83,24 @@ public class DagInterpreter {
 
 	public IPredicate interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
-		final MapBasedStorage sinkPredStorage = new MapBasedStorage(
-				Collections.singleton(RegexDagUtils.singleSinkLocation(dag, overlay)), mDomain, mTools, mLogger);
+		final Collection<IcfgLocation> sinkLocations = RegexDagUtils.sinkLocations(dag, overlay);
+		if (sinkLocations.size() == 0) {
+			// can happen, for instance if the procedure consists of "f() { label: goto label; }"
+			mLogger.warn("A function never reaches its return");
+			return mTools.bottom();
+		} else if (sinkLocations.size() > 1) {
+			throw new IllegalArgumentException("Expected one sink location but dag had " + sinkLocations.size());
+		}
+		final MapBasedStorage sinkPredStorage = new MapBasedStorage(sinkLocations, mDomain, mTools, mLogger);
 		interpret(dag, overlay, initalInput, sinkPredStorage, ErrorOnEnterCall.instance());
 		return sinkPredStorage.getMap().values().iterator().next();
 	}
 
 	/**
-	 * Interprets a dag starting from its source node.
-	 *
-	 * @param dag         Dag to be interpreted
-	 * @param overlay     Overlay for the dag allowing to ignore some edges
-	 * @param initalInput Input for the dag's source node
-	 * @return Last computed output.
-	 *         If The overlay creates a dag with exactly one sink node
-	 *         then the returned output is the output of that sink node.
+	 * Interprets a dag starting from its source node using only edges from the overlay.
+	 * Results can be read from the given ILoiPredicateStorage.
+	 * Calls are not entered but only registered in the given IEnterCallRegistrar.
+	 * Registered calls should be processed after this function returns.
 	 */
 	public void interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput,
