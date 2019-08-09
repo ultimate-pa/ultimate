@@ -132,29 +132,27 @@ public class SymbolicTools {
 	}
 
 	public IPredicate or(final IPredicate... operands) {
-		// TODO be consistent with other or() methods and don't use mSimplification?
 		return mFactory.or(mSimplification, operands);
 	}
 
 	public IPredicate or(final Term... operands) {
-		return mFactory.newPredicate(SmtUtils.or(mMngdScript.getScript(), operands));
+		return mFactory.orT(mSimplification, operands);
 	}
 
 	public IPredicate or(final Collection<Term> operands) {
-		return mFactory.newPredicate(SmtUtils.or(mMngdScript.getScript(), operands));
+		return mFactory.orT(mSimplification, operands);
 	}
 
 	public IPredicate and(final IPredicate... operands) {
-		// TODO be consistent with other and() methods and don't use mSimplification?
 		return mFactory.and(mSimplification, operands);
 	}
 
 	public IPredicate and(final Term... operands) {
-		return mFactory.newPredicate(SmtUtils.and(mMngdScript.getScript(), operands));
+		return mFactory.andT(mSimplification, operands);
 	}
 
 	public IPredicate and(final Collection<Term> operands) {
-		return mFactory.newPredicate(SmtUtils.and(mMngdScript.getScript(), operands));
+		return mFactory.andT(mSimplification, operands);
 	}
 
 	public Optional<Boolean> isFalse(final IPredicate pred) {
