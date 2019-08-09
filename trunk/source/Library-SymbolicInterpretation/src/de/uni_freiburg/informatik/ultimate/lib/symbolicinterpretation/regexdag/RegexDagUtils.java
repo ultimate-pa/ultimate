@@ -54,9 +54,6 @@ public class RegexDagUtils {
 	 */
 	public static Set<IcfgLocation> sinkLocations(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay) {
-
-		// TODO fix overlay usage. Overlay may have multiple sinks. Sink from overlay my be different than sink from dag
-
 		final Set<IcfgLocation> sinkLocs = new HashSet<>();
 		final Queue<RegexDagNode<IIcfgTransition<IcfgLocation>>> worklist = new ArrayDeque<>();
 		worklist.addAll(overlay.sinks(dag));
