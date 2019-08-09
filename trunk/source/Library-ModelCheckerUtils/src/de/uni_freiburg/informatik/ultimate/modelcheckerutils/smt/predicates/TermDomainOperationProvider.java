@@ -43,13 +43,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 /**
  * Term domain operations that are needed for {@link PredicateTransformer}
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class TermDomainOperationProvider implements IDomainSpecificOperationProvider<Term, IPredicate, TransFormula> {
-	private final ManagedScript mMgdScript;
-	private final IUltimateServiceProvider mServices;
+	protected final ManagedScript mMgdScript;
+	protected final IUltimateServiceProvider mServices;
 
 	public TermDomainOperationProvider(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		mServices = services;
@@ -78,8 +78,8 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 
 	@Override
 	public Term renameVariables(final Map<Term, Term> substitutionForTransFormula, final Term constraint) {
-		final Term renamedTransFormula = new SubstitutionWithLocalSimplification(mMgdScript,
-				substitutionForTransFormula).transform(constraint);
+		final Term renamedTransFormula =
+				new SubstitutionWithLocalSimplification(mMgdScript, substitutionForTransFormula).transform(constraint);
 		return renamedTransFormula;
 	}
 
@@ -111,8 +111,8 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 	private Term constructQuantifiedFormula(final int quantifier, final Set<TermVariable> varsToQuantify,
 			final Term term) {
 		final Term quantified = SmtUtils.quantifier(mMgdScript.getScript(), quantifier, varsToQuantify, term);
-		final Term pushed = new QuantifierPusher(mMgdScript, mServices, false, PqeTechniques.ONLY_DER)
-				.transform(quantified);
+		final Term pushed =
+				new QuantifierPusher(mMgdScript, mServices, false, PqeTechniques.ONLY_DER).transform(quantified);
 		return pushed;
 	}
 

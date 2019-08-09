@@ -28,11 +28,15 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -40,8 +44,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
@@ -70,7 +76,8 @@ public class SymbolicTools {
 		mMngdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final Script script = mMngdScript.getScript();
 		mFactory = new PredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable());
-		mTransformer = new PredicateTransformer<>(mMngdScript, new TermDomainOperationProvider(services, mMngdScript));
+		mTransformer = new PredicateTransformer<>(mMngdScript,
+				new EliminatingTermDomainOperationProvider(services, mMngdScript));
 		mTop = mFactory.newPredicate(script.term("true"));
 		mBottom = mFactory.newPredicate(script.term("false"));
 	}
@@ -171,7 +178,7 @@ public class SymbolicTools {
 		return satAsBool(result).map(b -> !b);
 	}
 
-	private Optional<Boolean> satAsBool(final LBool solverResult) {
+	private static Optional<Boolean> satAsBool(final LBool solverResult) {
 		switch (solverResult) {
 		case SAT:
 			return Optional.of(true);
@@ -182,6 +189,45 @@ public class SymbolicTools {
 		default:
 			throw new AssertionError("Missing case: " + solverResult);
 		}
+	}
+
+	/**
+	 * A {@link TermDomainOperationProvider} for {@link PredicateTransformer} that tries to eliminate all quantifiers
+	 * during projection.
+	 *
+	 * It also logs only warning messages for PQE to avoid polluting the log.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	private static final class EliminatingTermDomainOperationProvider extends TermDomainOperationProvider {
+
+		private final ILogger mPQELogger;
+
+		public EliminatingTermDomainOperationProvider(final IUltimateServiceProvider services,
+				final ManagedScript mgdScript) {
+			super(services, mgdScript);
+			mPQELogger = services.getLoggingService().getLogger(EliminatingTermDomainOperationProvider.class);
+			mPQELogger.setLevel(LogLevel.WARN);
+		}
+
+		@Override
+		public Term projectExistentially(final Set<TermVariable> varsToProjectAway, final Term constraint) {
+			return constructQuantifiedFormula(Script.EXISTS, varsToProjectAway, constraint);
+		}
+
+		@Override
+		public Term projectUniversally(final Set<TermVariable> varsToProjectAway, final Term constraint) {
+			return constructQuantifiedFormula(Script.FORALL, varsToProjectAway, constraint);
+		}
+
+		private Term constructQuantifiedFormula(final int quantifier, final Set<TermVariable> varsToQuantify,
+				final Term term) {
+			return PartialQuantifierElimination.quantifier(mServices, mPQELogger, mMgdScript,
+					SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+					quantifier, varsToQuantify, term);
+		}
+
 	}
 
 }
