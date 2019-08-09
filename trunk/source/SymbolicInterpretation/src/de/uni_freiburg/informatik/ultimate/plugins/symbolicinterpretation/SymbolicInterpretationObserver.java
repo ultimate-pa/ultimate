@@ -90,6 +90,8 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 		}
 	}
 
+	// TODO use solver/domain to check for unsat. instead of checking for a "false" literal
+
 	private void reportSingleResult(final Map.Entry<IcfgLocation, IPredicate> loiPred) {
 		final IResult result;
 		if (isFalse(loiPred.getValue())) {
@@ -98,7 +100,8 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 			result = new UnprovableResult<>(Activator.PLUGIN_ID, loiPred.getKey(),
 					mServices.getBacktranslationService(),
 					IcfgProgramExecution.create(Collections.emptyList(), Collections.emptyMap()),
-					"Interpreter reached this location of interest. Location might be reachable.");
+					"Interpreter reached this location of interest. Location might be reachable. Predicate is\n"
+					+ loiPred.getValue());
 		}
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
