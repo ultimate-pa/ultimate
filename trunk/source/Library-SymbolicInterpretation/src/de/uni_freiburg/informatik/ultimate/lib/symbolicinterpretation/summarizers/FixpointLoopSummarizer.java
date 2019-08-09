@@ -109,7 +109,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 			//      in case preState and postState are both abstracted
 			Optional<Boolean> isSubsetEq = Optional.empty();
 			if (mTrySolverBeforeEnforcingAbstraction) {
-				mTools.implies(postState, preState);
+				isSubsetEq = mTools.implies(postState, preState);
 			}
 			if (!isSubsetEq.isPresent()) {
 				// TODO don't abstract already abstracted states again
@@ -122,7 +122,8 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 			}
 			preState = mDomain.widen(preState, postState);
 		}
-		return postState;
+		// not postState because postState ⊆ preState
+		return preState;
 	}
 
 }
