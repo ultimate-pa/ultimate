@@ -112,7 +112,7 @@ public class Loop {
 	 */
 	public Term updateVars(final Term t, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars) {
-		if (SmtUtils.isFalse(t)) {
+		if (SmtUtils.isFalseLiteral(t)) {
 			return t;
 		}
 

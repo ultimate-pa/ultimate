@@ -224,7 +224,7 @@ public class QuantifierEliminationTest {
 		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mLogger.info("Result: " + result);
-		Assert.assertTrue(!SmtUtils.isTrue(result));
+		Assert.assertTrue(!SmtUtils.isTrueLiteral(result));
 	}
 
 	@Test
@@ -240,7 +240,7 @@ public class QuantifierEliminationTest {
 
 		final LBool checkSatResult = SmtUtils.checkSatTerm(mScript, mScript.term("distinct", mScript.term("true"), formulaAsTerm));
 		Assert.assertTrue(checkSatResult == LBool.UNSAT);
-		Assert.assertTrue(SmtUtils.isTrue(result));
+		Assert.assertTrue(SmtUtils.isTrueLiteral(result));
 	}
 
 	@Test

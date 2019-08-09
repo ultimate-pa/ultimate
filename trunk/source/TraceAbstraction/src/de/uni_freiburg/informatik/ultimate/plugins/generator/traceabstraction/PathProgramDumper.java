@@ -659,7 +659,7 @@ public class PathProgramDumper {
 			}
 			havoc = new HavocStatement(constructNewLocation(), identifiers);
 		}
-		if (!SmtUtils.isTrue(guardTerm)) {
+		if (!SmtUtils.isTrueLiteral(guardTerm)) {
 			statements.add(assume);
 		}
 		if (!su.getUpdatedVars().isEmpty()) {

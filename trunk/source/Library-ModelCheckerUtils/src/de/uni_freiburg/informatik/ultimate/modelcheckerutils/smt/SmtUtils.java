@@ -647,13 +647,13 @@ public final class SmtUtils {
 	 * Returns the equality ("=" lhs rhs), but checks if one of the arguments is true/false and simplifies accordingly.
 	 */
 	private static Term booleanEquality(final Script script, final Term lhs, final Term rhs) {
-		if (isTrue(lhs)) {
+		if (isTrueLiteral(lhs)) {
 			return rhs;
-		} else if (isFalse(lhs)) {
+		} else if (isFalseLiteral(lhs)) {
 			return SmtUtils.not(script, rhs);
-		} else if (isTrue(rhs)) {
+		} else if (isTrueLiteral(rhs)) {
 			return lhs;
-		} else if (isFalse(rhs)) {
+		} else if (isFalseLiteral(rhs)) {
 			return SmtUtils.not(script, lhs);
 		} else {
 			return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
@@ -833,20 +833,19 @@ public final class SmtUtils {
 		return false;
 	}
 
-	public static boolean isFalse(final Term term) {
-		if (term instanceof ApplicationTerm) {
-			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			final FunctionSymbol fun = appTerm.getFunction();
-			return "false".equals(fun.getApplicationString());
-		}
-		return false;
+	public static boolean isFalseLiteral(final Term term) {
+		return isLiteral("false", term);
 	}
 
-	public static boolean isTrue(final Term term) {
+	public static boolean isTrueLiteral(final Term term) {
+		return isLiteral("true", term);
+	}
+
+	private static boolean isLiteral(final String literal, final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			final FunctionSymbol fun = appTerm.getFunction();
-			return "true".equals(fun.getApplicationString());
+			return fun.getParameterSorts().length == 0 && literal.equals(fun.getApplicationString());
 		}
 		return false;
 	}
@@ -889,7 +888,7 @@ public final class SmtUtils {
 	 *         parameters.
 	 */
 	public static boolean isAtomicFormula(final Term term) {
-		if (isTrue(term) || isFalse(term) || isConstant(term)) {
+		if (isTrueLiteral(term) || isFalseLiteral(term) || isConstant(term)) {
 			return true;
 		}
 		if (term instanceof ApplicationTerm) {
@@ -968,8 +967,8 @@ public final class SmtUtils {
 		final Set<Term> negativeJuncts = new HashSet<>();
 		final InnerDualJunctTracker idjt = new InnerDualJunctTracker();
 		final String connective = "and";
-		final Predicate<Term> isNeutral = SmtUtils::isTrue;
-		final Predicate<Term> isAbsorbing = SmtUtils::isFalse;
+		final Predicate<Term> isNeutral = SmtUtils::isTrueLiteral;
+		final Predicate<Term> isAbsorbing = SmtUtils::isFalseLiteral;
 		final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective, isNeutral,
 				isAbsorbing, terms, resultJuncts, negativeJuncts, idjt);
 		if (resultIsAbsorbingElement) {
@@ -1026,8 +1025,8 @@ public final class SmtUtils {
 		final Set<Term> negativeJuncts = new HashSet<>();
 		final InnerDualJunctTracker idjt = new InnerDualJunctTracker();
 		final String connective = "or";
-		final Predicate<Term> isNeutral = SmtUtils::isFalse;
-		final Predicate<Term> isAbsorbing = SmtUtils::isTrue;
+		final Predicate<Term> isNeutral = SmtUtils::isFalseLiteral;
+		final Predicate<Term> isAbsorbing = SmtUtils::isTrueLiteral;
 		final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective, isNeutral,
 				isAbsorbing, terms, resultJuncts, negativeJuncts, idjt);
 		if (resultIsAbsorbingElement) {

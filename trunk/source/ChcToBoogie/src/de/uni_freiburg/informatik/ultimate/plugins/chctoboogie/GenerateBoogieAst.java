@@ -131,7 +131,7 @@ public class GenerateBoogieAst {
 		List<Statement> nondetSwitch = null;
 
 		for (final HornClause hornClause : hornClausesForHeadPred) {
-			if (SmtUtils.isFalse(hornClause.getConstraintFormula())) {
+			if (SmtUtils.isFalseLiteral(hornClause.getConstraintFormula())) {
 				// branch with an "assume false" --> can be skipped
 				continue;
 			}

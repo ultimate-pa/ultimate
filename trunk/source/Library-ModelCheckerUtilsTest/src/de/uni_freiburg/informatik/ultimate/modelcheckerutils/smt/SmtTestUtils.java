@@ -69,7 +69,7 @@ public class SmtTestUtils {
 	}
 
 	public static boolean isSyntacticallyEquivalentToTrue(final Term term) {
-		return SmtUtils.isTrue(term);
+		return SmtUtils.isTrueLiteral(term);
 	}
 
 }

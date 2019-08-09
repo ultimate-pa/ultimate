@@ -75,7 +75,7 @@ public class PowersetConstruction {
 				int fromIndex = getNodeIndex(v, w.getLabel(), auto2Nodes.size());
 				int toIndex = getNodeIndex(vl, wl.getLabel(), auto2Nodes.size());
 				conjTerm = SmtUtils.and(mScript, X, Y);
-				if (!SmtUtils.isFalse(conjTerm))
+				if (!SmtUtils.isFalseLiteral(conjTerm))
 					mProductAutStates.get(fromIndex).connectOutgoing(mProductAutStates.get(toIndex), conjTerm);
 					mProductAutStates.get(0).incEdges();
 			}

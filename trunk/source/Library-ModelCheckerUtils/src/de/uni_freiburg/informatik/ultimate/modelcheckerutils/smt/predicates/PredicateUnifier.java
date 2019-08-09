@@ -349,8 +349,8 @@ public class PredicateUnifier implements IPredicateUnifier {
 			return pc.getEquivalantLeqQuantifiedPredicate();
 		}
 		final IPredicate result;
-		assert !SmtUtils.isTrue(commuNF) : "illegal predicate: true";
-		assert !SmtUtils.isFalse(commuNF) : "illegal predicate: false";
+		assert !SmtUtils.isTrueLiteral(commuNF) : "illegal predicate: true";
+		assert !SmtUtils.isFalseLiteral(commuNF) : "illegal predicate: false";
 		assert !mTerm2Predicates.containsKey(commuNF);
 		final Term simplifiedTerm;
 		if (pc.isIntricatePredicate()) {

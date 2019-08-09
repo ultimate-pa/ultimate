@@ -170,7 +170,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 			if (isInductiveSelfloop) {
 				return Validity.VALID;
 			}
-			if (SmtUtils.isFalse(succ.getFormula())) {
+			if (SmtUtils.isFalseLiteral(succ.getFormula())) {
 				final Validity toFalse = sdecToFalse(preLin, preHier, act);
 				if (toFalse == null) {
 					// we are unable to determine validity with SD checks

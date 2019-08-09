@@ -91,9 +91,9 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 				if (quantifier == QuantifiedFormula.EXISTS) {
 					final Term simplified =
 							isSuperfluousConjunction(mScript, connectedTerms, freeVarsOfConnectedTerms, eliminatees);
-					if (SmtUtils.isTrue(simplified)) {
+					if (SmtUtils.isTrueLiteral(simplified)) {
 						isSuperfluous = true;
-					} else if (SmtUtils.isFalse(simplified)) {
+					} else if (SmtUtils.isFalseLiteral(simplified)) {
 						return new Term[] { simplified };
 					} else if (simplified == null) {
 						isSuperfluous = false;
@@ -103,9 +103,9 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 				} else if (quantifier == QuantifiedFormula.FORALL) {
 					final Term simplified =
 							isSuperfluousDisjunction(mScript, connectedTerms, freeVarsOfConnectedTerms, eliminatees);
-					if (SmtUtils.isFalse(simplified)) {
+					if (SmtUtils.isFalseLiteral(simplified)) {
 						isSuperfluous = true;
-					} else if (SmtUtils.isTrue(simplified)) {
+					} else if (SmtUtils.isTrueLiteral(simplified)) {
 						return new Term[] { simplified };
 					} else if (simplified == null) {
 						isSuperfluous = false;

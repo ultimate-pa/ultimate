@@ -1158,10 +1158,10 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 	}
 
 	public EvalResult evaluate(final Script script, final Term term) {
-		if (isBottom() || SmtUtils.isTrue(term)) {
+		if (isBottom() || SmtUtils.isTrueLiteral(term)) {
 			return EvalResult.TRUE;
 		}
-		if (SmtUtils.isFalse(term)) {
+		if (SmtUtils.isFalseLiteral(term)) {
 			return EvalResult.FALSE;
 		}
 		OctagonRelation octRel;

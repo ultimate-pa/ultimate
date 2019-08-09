@@ -321,7 +321,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		final NestedWord<LETTER> stem = mCounterexample.getStem().getWord();
 		try {
 			final UnmodifiableTransFormula stemTF = computeTF(stem, SIMPLIFY_STEM_AND_LOOP, true, false);
-			if (SmtUtils.isFalse(stemTF.getFormula())) {
+			if (SmtUtils.isFalseLiteral(stemTF.getFormula())) {
 				throw new AssertionError("stemTF is false but stem analysis said: feasible");
 			}
 			return stemTF;
@@ -339,7 +339,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		final NestedWord<LETTER> loop = mCounterexample.getLoop().getWord();
 		try {
 			final UnmodifiableTransFormula loopTF = computeTF(loop, SIMPLIFY_STEM_AND_LOOP, true, false);
-			if (SmtUtils.isFalse(loopTF.getFormula())) {
+			if (SmtUtils.isFalseLiteral(loopTF.getFormula())) {
 				throw new AssertionError("loopTF is false but loop analysis said: feasible");
 			}
 			return loopTF;

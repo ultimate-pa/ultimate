@@ -113,16 +113,16 @@ public class SimplifyBdd {
 
 		final Term low = bddToTerm(d.low(), atoms);
 		final Term high = bddToTerm(d.high(), atoms);
-		if (SmtUtils.isFalse(low) && SmtUtils.isFalse(high)) {
+		if (SmtUtils.isFalseLiteral(low) && SmtUtils.isFalseLiteral(high)) {
 			return low;
-		} else if (SmtUtils.isFalse(high)) {
-			if (SmtUtils.isTrue(low)) {
+		} else if (SmtUtils.isFalseLiteral(high)) {
+			if (SmtUtils.isTrueLiteral(low)) {
 				return mScript.term("not", atoms.get(d.var()));
 			} else {
 				return mScript.term("and", mScript.term("not", atoms.get(d.var())), low);
 			}
-		} else if (SmtUtils.isFalse(low)) {
-			if (SmtUtils.isTrue(high)) {
+		} else if (SmtUtils.isFalseLiteral(low)) {
+			if (SmtUtils.isTrueLiteral(high)) {
 				return atoms.get(d.var());
 			} else {
 				return mScript.term("and", atoms.get(d.var()), high);

@@ -193,8 +193,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		mPathCounter.clear();
 		mNewPathCounter.clear();
 
-		if (mAcceleratedLoops.contains(loop) || SmtUtils.isTrue(loop.getFormula().getFormula())
-				|| SmtUtils.isFalse(loop.getFormula().getFormula())) {
+		if (mAcceleratedLoops.contains(loop) || SmtUtils.isTrueLiteral(loop.getFormula().getFormula())
+				|| SmtUtils.isFalseLiteral(loop.getFormula().getFormula())) {
 			return;
 		}
 

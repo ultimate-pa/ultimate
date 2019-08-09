@@ -187,7 +187,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			return Script.LBool.UNKNOWN;
 		}
 
-		if (SmtUtils.isFalse(ps1.getFormula()) || SmtUtils.isTrue(ps2.getFormula())) {
+		if (SmtUtils.isFalseLiteral(ps1.getFormula()) || SmtUtils.isTrueLiteral(ps2.getFormula())) {
 			mTrivialSatQueries++;
 			mManagedScript.unlock(this);
 			return Script.LBool.UNSAT;
@@ -236,7 +236,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			return Script.LBool.UNKNOWN;
 		}
 
-		if (SmtUtils.isFalse(ps1.getFormula()) || SmtUtils.isTrue(ps2.getFormula())) {
+		if (SmtUtils.isFalseLiteral(ps1.getFormula()) || SmtUtils.isTrueLiteral(ps2.getFormula())) {
 			mTrivialSatQueries++;
 			mManagedScript.unlock(this);
 			return Script.LBool.UNSAT;
@@ -300,8 +300,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			return Script.LBool.UNKNOWN;
 		}
 
-		if (SmtUtils.isFalse(ps1.getFormula()) || SmtUtils.isFalse(psk.getFormula())
-				|| SmtUtils.isTrue(ps2.getFormula())) {
+		if (SmtUtils.isFalseLiteral(ps1.getFormula()) || SmtUtils.isFalseLiteral(psk.getFormula())
+				|| SmtUtils.isTrueLiteral(ps2.getFormula())) {
 			mTrivialSatQueries++;
 			mManagedScript.unlock(this);
 			return Script.LBool.UNSAT;

@@ -496,12 +496,12 @@ public class PartialQuantifierElimination {
 				newXjunctsOuter[i] =
 						applyEliminationInner(script, quantifier, localEliminatees, oldXjunctsOuter[i], elimination);
 				if (quantifier == QuantifiedFormula.EXISTS) {
-					if (SmtUtils.isTrue(newXjunctsOuter[i])) {
+					if (SmtUtils.isTrueLiteral(newXjunctsOuter[i])) {
 						eliminatees.clear();
 						return script.term("true");
 					}
 				} else if (quantifier == QuantifiedFormula.FORALL) {
-					if (SmtUtils.isFalse(newXjunctsOuter[i])) {
+					if (SmtUtils.isFalseLiteral(newXjunctsOuter[i])) {
 						eliminatees.clear();
 						return script.term("false");
 					}

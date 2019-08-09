@@ -398,10 +398,10 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 
 	private static Boolean getBooleanValue(final Term term) {
 		Boolean result;
-		if (SmtUtils.isTrue(term)) {
+		if (SmtUtils.isTrueLiteral(term)) {
 			result = Boolean.TRUE;
 		} else {
-			if (SmtUtils.isFalse(term)) {
+			if (SmtUtils.isFalseLiteral(term)) {
 				result = Boolean.FALSE;
 			} else {
 				throw new AssertionError();

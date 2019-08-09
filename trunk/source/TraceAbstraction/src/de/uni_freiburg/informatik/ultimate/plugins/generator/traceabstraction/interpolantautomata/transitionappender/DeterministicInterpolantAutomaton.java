@@ -123,7 +123,7 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 		mResPred2InputPreds.addPair(initialState, initialState);
 
 		if (initialState != mIaTrueState) {
-			assert SmtUtils.isTrue(mIaTrueState.getFormula());
+			assert SmtUtils.isTrueLiteral(mIaTrueState.getFormula());
 			mAlreadyConstructedAutomaton.addState(false, false, mIaTrueState);
 		}
 		assert mIaFalseState.getFormula().toString().equals("false");

@@ -397,7 +397,7 @@ public class TreeAutomizerCEGAR {
 		states.addAll(mAbstraction.getStates());
 		for (final IPredicate pred : states) {
 
-			if (SmtUtils.isFalse(pred.getFormula())) {
+			if (SmtUtils.isFalseLiteral(pred.getFormula())) {
 				mAbstraction.removeState(pred);
 			}
 		}

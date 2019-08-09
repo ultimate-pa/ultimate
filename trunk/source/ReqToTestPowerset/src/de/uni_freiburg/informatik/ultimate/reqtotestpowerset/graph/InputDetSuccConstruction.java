@@ -132,7 +132,7 @@ public class InputDetSuccConstruction {
 		
 		for (GuardGraph neighbour : givenNode.getOutgoingNodes()) {
 			if (!(givenNode.getOutgoingEdgeLabel(neighbour) == null)) {
-				if (!SmtUtils.isFalse(SmtUtils.and(mScript, givenNode.getOutgoingEdgeLabel(neighbour), givenMonomial))) {
+				if (!SmtUtils.isFalseLiteral(SmtUtils.and(mScript, givenNode.getOutgoingEdgeLabel(neighbour), givenMonomial))) {
 					result.add(neighbour);
 				} 
 			}

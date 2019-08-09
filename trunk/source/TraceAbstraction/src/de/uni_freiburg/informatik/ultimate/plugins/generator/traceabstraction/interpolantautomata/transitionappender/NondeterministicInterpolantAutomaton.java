@@ -84,9 +84,9 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 		mSecondChance = secondChance;
 		final Collection<IPredicate> allPredicates = inputInterpolantAutomaton.getStates();
 
-		assert SmtUtils.isTrue(mIaTrueState.getFormula());
+		assert SmtUtils.isTrueLiteral(mIaTrueState.getFormula());
 		assert allPredicates.contains(mIaTrueState);
-		assert SmtUtils.isFalse(mIaFalseState.getFormula());
+		assert SmtUtils.isFalseLiteral(mIaFalseState.getFormula());
 		assert isFalsePresent(allPredicates);
 
 		mNonTrivialPredicates = new HashSet<>();

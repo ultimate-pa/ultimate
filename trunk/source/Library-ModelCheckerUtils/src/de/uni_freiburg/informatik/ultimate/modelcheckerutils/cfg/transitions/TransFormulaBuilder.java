@@ -308,7 +308,7 @@ public class TransFormulaBuilder {
 		}
 		final Term formula = new Substitution(script.getScript(), substitutionMapping).transform(pred.getFormula());
 		final Infeasibility infeasibility;
-		if (SmtUtils.isFalse(pred.getFormula())) {
+		if (SmtUtils.isFalseLiteral(pred.getFormula())) {
 			infeasibility = Infeasibility.INFEASIBLE;
 		} else {
 			infeasibility = Infeasibility.NOT_DETERMINED;

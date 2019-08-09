@@ -63,12 +63,12 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 
 	@Override
 	public boolean isConstraintUnsatisfiable(final Term constraint) {
-		return SmtUtils.isFalse(constraint);
+		return SmtUtils.isFalseLiteral(constraint);
 	}
 
 	@Override
 	public boolean isConstraintValid(final Term constraint) {
-		return SmtUtils.isTrue(constraint);
+		return SmtUtils.isTrueLiteral(constraint);
 	}
 
 	@Override

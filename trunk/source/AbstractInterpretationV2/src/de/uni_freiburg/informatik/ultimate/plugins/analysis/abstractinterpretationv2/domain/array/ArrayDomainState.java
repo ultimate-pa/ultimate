@@ -1043,7 +1043,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		}
 		final Term valueConstraints = SmtUtils.filterFormula(getSubTerm(),
 				Collections.singleton(value.getTermVariable()), mToolkit.getScript());
-		return SmtUtils.isTrue(valueConstraints);
+		return SmtUtils.isTrueLiteral(valueConstraints);
 
 	}
 

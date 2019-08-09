@@ -147,10 +147,10 @@ public class ArrayIndexEqualityManager {
 	private void checkEqualityStatusViaSolver(final int mQuantifier, final ThreeValuedEquivalenceRelation<Term> tver,
 			final IncrementalPlicationChecker iea, final Term index1, final Term index2) throws AssertionError {
 		final Term eq = SmtUtils.binaryEquality(mMgdScript.getScript(), index1, index2);
-		if (SmtUtils.isTrue(eq)) {
+		if (SmtUtils.isTrueLiteral(eq)) {
 			reportEquality(index1, index2);
 			assert !tver.isInconsistent() : "inconsistent equality information";
-		} else if (SmtUtils.isFalse(eq)) {
+		} else if (SmtUtils.isFalseLiteral(eq)) {
 			tver.reportDisequality(index1, index2);
 			assert !tver.isInconsistent() : "inconsistent equality information";
 		} else {

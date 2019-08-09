@@ -185,7 +185,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		if (term instanceof TermVariable) {
 			return false;
 		}
-		if (SmtUtils.isTrue(term) || SmtUtils.isFalse(term)) {
+		if (SmtUtils.isTrueLiteral(term) || SmtUtils.isFalseLiteral(term)) {
 			return true;
 		}
 		if (term instanceof ConstantTerm) {

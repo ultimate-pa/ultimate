@@ -110,6 +110,6 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	private static boolean isFalse(final IPredicate predicate) {
 		// TODO use isBottom(alpha(predicate)) from Domain as a fail fast test
 		// … or even as the only test (in that case adapt the log messages to point out inaccuracy)
-		return SmtUtils.isFalse(predicate.getFormula());
+		return SmtUtils.isFalseLiteral(predicate.getFormula());
 	}
 }

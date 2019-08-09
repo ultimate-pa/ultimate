@@ -162,7 +162,7 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER> implements IInterpo
 	 * @return {@code true} iff the formula of this predicate is syntactically equivalent to {@code false}
 	 */
 	private static boolean isFalsePredicate(final IPredicate predicate) {
-		return SmtUtils.isFalse(predicate.getFormula());
+		return SmtUtils.isFalseLiteral(predicate.getFormula());
 	}
 
 	/**

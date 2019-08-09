@@ -199,7 +199,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 			if (currentEdge.getTransformula().getAssignedVars().contains(var)) {
 				if (!currentEdge.getTransformula().getInVars().containsKey(var)
-						&& SmtUtils.isTrue(currentEdge.getTransformula().getFormula())) {
+						&& SmtUtils.isTrueLiteral(currentEdge.getTransformula().getFormula())) {
 					// we have a (simple) havoc
 					return true;
 				} else {

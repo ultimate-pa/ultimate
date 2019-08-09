@@ -166,11 +166,11 @@ public final class MappedTerm2Expression implements Serializable {
 		}
 		final IBoogieType type = mTypeSortTranslator.getType(symb.getReturnSort());
 		if (symb.getParameterSorts().length == 0) {
-			if (SmtUtils.isTrue(term)) {
+			if (SmtUtils.isTrueLiteral(term)) {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(SmtSortUtils.getBoolSort(mScript));
 				return new BooleanLiteral(null, booleanType, true);
 			}
-			if (SmtUtils.isFalse(term)) {
+			if (SmtUtils.isFalseLiteral(term)) {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(SmtSortUtils.getBoolSort(mScript));
 				return new BooleanLiteral(null, booleanType, false);
 			}
