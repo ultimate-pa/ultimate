@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
+<benchmark tool="ultimateautomizer" timelimit="900s" hardtimelimit="900s" memlimit="8GB" cpuCores="2">
+ 
+  <rundefinition name="Sifa">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/SifaC.xml</option>
+	<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </rundefinition>
+    
+  <tasks name="ReachSafety32">
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-BitVectors.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-ControlFlow.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-ECA.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Floats.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Heap.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Loops.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-ProductLines.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Recursive.set</includesfile>
+    <includesfile>../../../trunk/examples/svcomp/ReachSafety-Sequentialized.set</includesfile>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+  </tasks>
+
+  <tasks name="ReachSafety64">
+    <includesfile>../../../trunk/examples/svcomp/Systems_DeviceDriversLinux64_ReachSafety.set</includesfile>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+  </tasks>
+
+</benchmark>
