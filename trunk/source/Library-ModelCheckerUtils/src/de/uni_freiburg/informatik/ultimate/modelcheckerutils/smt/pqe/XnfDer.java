@@ -27,23 +27,34 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
@@ -60,6 +71,8 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class XnfDer extends XjunctPartialQuantifierElimination {
+
+	private final static boolean EXTENDED_DEBUG_OUTPUT = false;
 
 	public XnfDer(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services);
@@ -82,6 +95,26 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 
 	@Override
 	public Term[] tryToEliminate(final int quantifier, final Term[] dualJuncts, final Set<TermVariable> eliminatees) {
+		final ArrayList<TermVariable> eliminateesBefore = new ArrayList<>(eliminatees);
+		final HashSet<TermVariable> copyOfeliminatees = new HashSet<>(eliminatees);
+		final Term[] resultAtoms = tryToEliminate_EqInfoBased(quantifier, dualJuncts, eliminatees);
+		final Term[] resultAtomsSbr_Based = tryToEliminate_SbrBased(quantifier, dualJuncts, copyOfeliminatees);
+		assert (eliminatees.equals(copyOfeliminatees)) : "old " + eliminatees + " new " + copyOfeliminatees;
+		if (EXTENDED_DEBUG_OUTPUT) {
+			final List<TermVariable> eliminateesAfter = eliminateesBefore.stream().filter(x -> !eliminatees.contains(x))
+					.collect(Collectors.toList());
+			final String message = "Applied " + getAcronym() + " to " + dualJuncts.length + " "
+					+ QuantifierUtils.getNameOfDualJuncts(quantifier) + " and " + eliminateesBefore.size()
+					+ "eliminatees: " + eliminateesBefore + " removed "
+					+ (eliminateesAfter.isEmpty() ? "nothing" : eliminateesAfter);
+			mLogger.info(message);
+		}
+		return resultAtoms;
+	}
+
+	private Term[] tryToEliminate_EqInfoBased(final int quantifier, final Term[] dualJuncts,
+			final Set<TermVariable> eliminatees) {
+
 		Term[] resultAtoms = dualJuncts;
 		boolean someVariableWasEliminated;
 		// an elimination may allow further eliminations
@@ -113,6 +146,147 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		return resultAtoms;
 	}
 
+	private Term[] tryToEliminate_SbrBased(final int quantifier, final Term[] dualJuncts,
+			final Set<TermVariable> eliminatees) {
+		LinkedHashMap<Term, AffineRelation> term2relation = new LinkedHashMap<>();
+		for (final Term dualJunct : dualJuncts) {
+			term2relation.put(dualJunct, null);
+		}
+
+		boolean someVariableWasEliminated;
+		// an elimination may allow further eliminations
+		// repeat the following until no variable was eliminated
+		Set<TermVariable> freeVarsInResultAtoms = SmtUtils.getFreeVars(term2relation.keySet());
+		do {
+			someVariableWasEliminated = false;
+			final Iterator<TermVariable> it = eliminatees.iterator();
+			while (it.hasNext()) {
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(this.getClass(), "eliminating " + eliminatees.size()
+							+ " quantified variables from " + dualJuncts.length + " xjuncts");
+				}
+				final TermVariable tv = it.next();
+				if (!freeVarsInResultAtoms.contains(tv)) {
+					// case where var does not occur
+					it.remove();
+					continue;
+				}
+				final LinkedHashMap<Term, AffineRelation> withoutTv = tryToEliminateOneVar(mScript, quantifier,
+						term2relation, tv);
+				if (withoutTv != null) {
+					term2relation = withoutTv;
+					freeVarsInResultAtoms = SmtUtils.getFreeVars(term2relation.keySet());
+					it.remove();
+					someVariableWasEliminated = true;
+				}
+			}
+		} while (someVariableWasEliminated);
+		return term2relation.keySet().toArray(new Term[term2relation.keySet().size()]);
+	}
+
+	private LinkedHashMap<Term, AffineRelation> tryToEliminateOneVar(final Script script, final int quantifier,
+			final LinkedHashMap<Term, AffineRelation> term2relation, final TermVariable tv) {
+		// returns probably map in the future
+		final SolvedBinaryRelation sbr = tryToSolveWithoutAssumptionsAndUpdateEntries(script, quantifier, term2relation,
+				tv);
+		if (sbr != null) {
+			return replace(script, term2relation, sbr);
+		} else {
+			return null;
+		}
+	}
+
+	private SolvedBinaryRelation tryToSolveWithoutAssumptionsAndUpdateEntries(final Script script, final int quantifier,
+			final LinkedHashMap<Term, AffineRelation> term2relation, final TermVariable tv) {
+		for (final Entry<Term, AffineRelation> entry : term2relation.entrySet()) {
+			if (Arrays.asList(entry.getKey().getFreeVars()).contains(tv)) {
+				SolvedBinaryRelation sbr;
+				sbr = tryToSolveAndUpdateEntry(script, quantifier, tv, entry);
+				if (sbr != null && sbr.getAssumptionsMap().isEmpty()) {
+					return sbr;
+				}
+			}
+		}
+		return null;
+	}
+
+
+	private LinkedHashMap<Term, AffineRelation> replace(final Script script,
+			final LinkedHashMap<Term, AffineRelation> term2relation, final SolvedBinaryRelation sbr) {
+		final Map<Term, Term> substitutionMapping =
+				Collections.singletonMap(sbr.getLeftHandSide(), sbr.getRightHandSide());
+		final LinkedHashMap<Term, AffineRelation> result = new LinkedHashMap<>();
+		for (final Entry<Term, AffineRelation> entry : term2relation.entrySet()) {
+			if (Arrays.asList(entry.getKey().getFreeVars()).contains(sbr.getLeftHandSide())) {
+				final Substitution substitution = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
+					final Term replaced = substituteAndNormalize(substitution, entry.getKey());
+					assert UltimateNormalFormUtils
+					.respectsUltimateNormalForm(replaced) : "Term not in UltimateNormalForm";
+					result.put(replaced, null);
+			} else {
+				result.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return result;
+	}
+
+	private SolvedBinaryRelation tryToSolveAndUpdateEntry(final Script script, final int quantifier,
+			final TermVariable tv, final Entry<Term, AffineRelation> entry) {
+		final SolvedBinaryRelation sbr;
+		if (entry.getValue() != null) {
+			// cached AffineRelation available
+			if (!isDerRelation(quantifier, entry.getValue().getRelationSymbol())) {
+				sbr = null;
+			} else {
+				sbr = entry.getValue().solveForSubject(script, tv);
+			}
+		} else {
+			// no cached AffineRelation available
+			final BinaryEqualityRelation ber = BinaryEqualityRelation.convert(entry.getKey());
+			if (ber == null) {
+				return null;
+			}
+			if (!isDerRelation(quantifier, ber.getRelationSymbol())) {
+				sbr = null;
+			} else {
+				final SolvedBinaryRelation sber = ber.solveForSubject(script, tv);
+				if (sber != null) {
+					sbr = sber;
+				} else {
+					final AffineRelation affRel = AffineRelation.convert(script, entry.getKey());
+					if (affRel == null) {
+						sbr = null;
+					} else {
+						entry.setValue(affRel);
+						sbr = affRel.solveForSubject(script, tv);
+					}
+				}
+			}
+		}
+		return sbr;
+	}
+
+	private static boolean isDerRelation(final int quantifier, final RelationSymbol relationSymbol) {
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			return relationSymbol == RelationSymbol.EQ;
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			return relationSymbol == RelationSymbol.DISTINCT;
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+	}
+
+	private SolvedBinaryRelation solveForTvBer(final Script script, final Term key, final TermVariable tv) {
+		final BinaryEqualityRelation ber = BinaryEqualityRelation.convert(key);
+		final SolvedBinaryRelation res;
+		if (ber == null) {
+			res = null;
+		} else {
+			res = ber.solveForSubject(script, tv);
+		}
+		return res;
+	}
+
 	/**
 	 * TODO: revise documentation Try to eliminate the variables vars in term. Let vars = {x_1,...,x_n} and term = φ.
 	 * Returns a term that is equivalent to ∃x_1,...,∃x_n φ, but were variables are removed. Successfully removed
@@ -120,7 +294,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	 *
 	 * @param logger
 	 */
-	public Term[] derSimple(final Script script, final int quantifier, final Term[] inputAtoms, final TermVariable tv,
+	private Term[] derSimple(final Script script, final int quantifier, final Term[] inputAtoms, final TermVariable tv,
 			final ILogger logger) {
 		final Term[] resultAtoms;
 		final EqualityInformation eqInfo = EqualityInformation.getEqinfo(script, tv, inputAtoms, null, quantifier);
