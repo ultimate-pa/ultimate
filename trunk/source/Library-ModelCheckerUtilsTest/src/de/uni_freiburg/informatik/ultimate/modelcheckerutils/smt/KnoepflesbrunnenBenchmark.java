@@ -51,12 +51,14 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  *
  */
 public class KnoepflesbrunnenBenchmark {
+
 	/**
 	 * Warning: each test will overwrite the SMT script of the preceding test.
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 	private static final long TEST_TIMEOUT_MILLISECONDS = 60_000;
+	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 
 	private IUltimateServiceProvider mServices;
@@ -83,11 +85,11 @@ public class KnoepflesbrunnenBenchmark {
 
 	@Before
 	public void setUp() throws FileNotFoundException {
-		mServices = UltimateMocks.createUltimateServiceProviderMock();
+		mServices = UltimateMocks.createUltimateServiceProviderMock(LOG_LEVEL);
 		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TEST_TIMEOUT_MILLISECONDS);
 		mLogger = mServices.getLoggingService().getLogger("lol");
 
-		final Script solverInstance = UltimateMocks.createSolver(SOLVER_COMMAND, LogLevel.INFO);
+		final Script solverInstance = UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL);
 		if (WRITE_SMT_SCRIPTS_TO_FILE) {
 			mScript = new LoggingScript(solverInstance, "QuantifierEliminationTest.smt2", true);
 		} else {
