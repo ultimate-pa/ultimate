@@ -33,9 +33,9 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionComputer;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.ProcedureGraphBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.LocationMarkerTransition;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.ProcedureGraph;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.ProcedureGraphBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.BackwardClosedOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 
 /**
  * Resources like dag and overlays for a single procedure.
- * 
+ *
  * @author schaetzc@tf.uni-freiburg.de
  */
 public class ProcedureResources {
@@ -62,8 +62,8 @@ public class ProcedureResources {
 
 		// TODO split this function into sub-functions
 
-		final ProcedureGraph procedureGraph =
-				new ProcedureGraphBuilder(icfg).graphOfProcedure(procedure, locationsOfInterest);
+		final ProcedureGraph procedureGraph = new ProcedureGraphBuilder(icfg)
+				.graphOfProcedure(procedure, locationsOfInterest, enterCallsOfInterest);
 		final Map<String, IcfgLocation> procedureEntryNodes = icfg.getProcedureEntryNodes();
 		final IcfgLocation entry = procedureGraph.getEntryNode();
 		final PathExpressionComputer<IcfgLocation,IIcfgTransition<IcfgLocation>> peComputer =

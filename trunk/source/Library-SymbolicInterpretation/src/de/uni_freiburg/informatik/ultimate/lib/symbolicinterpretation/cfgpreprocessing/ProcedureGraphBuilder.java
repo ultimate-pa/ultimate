@@ -58,30 +58,45 @@ public class ProcedureGraphBuilder {
 	/**
 	 * Constructs a procedure graph for a given procedure.
 	 * The resulting procedure graph is labeled with edges and nodes from its ICFG.
-	 * Inside the procedure each calls are represented as follows:
+	 * Only relevant parts are included. Relevant parts are
 	 * <ul>
-	 *   <li> Calls to implemented procedures are represented by two edges.
+	 *   <li> The procedure's entry node
+	 *   <li> The procedure's exit node
+	 *   <li> {@code locationsOfInterest}
+	 *   <li> {@code enterCallsOfInterest}
+	 *   <li> Everything connecting any of the above nodes
+	 * </ul>
+	 * <p>
+	 * Inside the procedure graph calls are represented as follows:
+	 * <ul>
+	 *   <li> Calls to implemented procedures are represented by up to two edges.
 	 *     <ul>
 	 *       <li> One summary edge of type {@link CallReturnSummary} for the case in which we
 	 *            enter the function and return normally.<br>
 	 *            Note that summary edges do not actually summarize the call.
 	 *            They are just there to point out, that we skipped the procedure.
-	 *       <li> One error edge of type {@link IIcfgCallTransition} for the case in which we
+	 *       <li> If requested by {@code enterCallsOfInterest}:
+	 *            One error edge of type {@link IIcfgCallTransition} for the case in which we
 	 *            enter the function but do not return due to errors in the callee or functions called by the callee.
 	 *     </ul>
 	 *   <li> Calls to unimplemented procedures are represented by the original summary edge from the icfg.
 	 * </ul>
-	 * Cases in which callees do not terminate are ignored.
+	 * Cases in which callees do not terminate are not treated specially.
 	 *
 	 * @param procedureName Name of the procedure for which a procedure graph shall be constructed
-	 * @param locationsOfInterest Locations to be included in the graph besides the procedure's entry and exit location
+	 * @param locationsOfInterest Locations to be included in the graph
+	 *                            besides the procedure's entry and exit location and connections between them.
+	 * @param enterCallsOfInterest Names of the callees for which dead-end edges should be inserted
+	 *                             modelling entering the callee without returning due to an error
 	 */
 	public ProcedureGraph graphOfProcedure(final String procedureName,
-			final Collection<IcfgLocation> locationsOfInterest) {
+			final Collection<IcfgLocation> locationsOfInterest,
+			final Collection<String> enterCallsOfInterest) {
 		mCurrentProcedureGraph = new ProcedureGraph(mIcfg, procedureName);
 		// make sure that LOIs exist, even if they don't have any incoming or outgoing edges
 		// (entry and exit are already added in the graph's constructor)
 		locationsOfInterest.forEach(mCurrentProcedureGraph::addNode);
+		enterCallsOfInterest.forEach(callee -> copyEnterCallEdges(procedureName, callee));
 
 		mWork.add(mCurrentProcedureGraph.getExitNode());
 		mWork.addAll(locationsOfInterest);
@@ -93,6 +108,19 @@ public class ProcedureGraphBuilder {
 		mVisited.clear();
 		mWork.clear();
 		return mCurrentProcedureGraph;
+	}
+
+	@SuppressWarnings("unchecked")
+	private void copyEnterCallEdges(final String caller, final String callee) {
+		mIcfg.getProcedureEntryNodes().get(callee).getIncomingEdges().stream()
+			.filter(incomingEdge -> incomingEdge instanceof IIcfgCallTransition<?>)
+			.map(callEdge -> (IIcfgCallTransition<IcfgLocation>) callEdge)
+			.filter(callEdge -> caller.equals(callEdge.getPrecedingProcedure()))
+			// Dead end edge representing the possibility to enter the callee without returning due to an error
+			.peek(this::copyEdge)
+			.map(IIcfgTransition::getSource)
+			.forEach(this::addToWorklistIfNew);
+		// Call summaries are added later if needed
 	}
 
 	/**
@@ -118,10 +146,9 @@ public class ProcedureGraphBuilder {
 		final IIcfgCallTransition<IcfgLocation> correspondingCallEdge = returnEdge.getCorrespondingCall();
 		final IcfgLocation correspondingSource = correspondingCallEdge.getSource();
 		addToWorklistIfNew(correspondingSource);
-		// Dead end edge representing the possibility to enter the callee without returning due to an error
-		copyEdge(correspondingCallEdge);
 		// Summary representing entering, executing the body, and returning from the callee in one step
 		mCurrentProcedureGraph.addEdge(correspondingSource, new CallReturnSummary(returnEdge), returnEdge.getTarget());
+		// Enter calls are only added if needed, see #copyEnterCallEdges
 	}
 
 	private void processCall(final IIcfgCallTransition<IcfgLocation> callEdge) {
