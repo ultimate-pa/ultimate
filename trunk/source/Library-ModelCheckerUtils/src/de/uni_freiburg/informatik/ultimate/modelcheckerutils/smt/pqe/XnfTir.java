@@ -230,6 +230,10 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		} else {
 			resultAtoms.add(bi.computeAdDisjunction());
 			final Term tmp = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, resultAtoms);
+			// TODO 2018-08-11 Matthias: Do not convert to XNF because this
+			// will also affect all input xjuncts
+			// In once introduced this as a workaround when the input was
+			// already in XNF.
 			Term disjunction;
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				disjunction = SmtUtils.toDnf(mServices, mMgdScript, tmp, mXnfConversionTechnique);
