@@ -60,6 +60,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.prefer
  */
 public class SifaBuilder {
 
+	public static class SifaComponents {
+		private final IcfgInterpreter mIcfgInterpreter;
+		private final IRelationChecker mRelationChecker;
+		public SifaComponents(final IcfgInterpreter icfgInterpreter, final IRelationChecker relationChecker) {
+			mIcfgInterpreter = icfgInterpreter;
+			mRelationChecker = relationChecker;
+		}
+		public IcfgInterpreter getIcfgInterpreter() {
+			return mIcfgInterpreter;
+		}
+		public IRelationChecker getRelationChecker() {
+			return mRelationChecker;
+		}
+	}
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final IPreferenceProvider mPrefs;
@@ -70,17 +85,19 @@ public class SifaBuilder {
 		mPrefs = SifaPreferences.getPreferenceProvider(mServices);
 	}
 
-	public IcfgInterpreter construct(final IIcfg<IcfgLocation> icfg) {
+	public SifaComponents construct(final IIcfg<IcfgLocation> icfg) {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService();
 		final SymbolicTools tools = constructTools(icfg);
 		final IDomain domain = constructDomain(tools);
+		final IRelationChecker relationChecker = constructRelationChecker(tools, domain);
 		final IFluid fluid = constructFluid();
 		final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSum =
-				constructLoopSummarizer(timer, tools, domain, fluid);
+				constructLoopSummarizer(timer, tools, domain, fluid, relationChecker);
 		final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSum =
 				constructCallSummarizer(tools);
-		return new IcfgInterpreter(mLogger, timer, tools, icfg, IcfgInterpreter.allErrorLocations(icfg),
-				domain, fluid, loopSum, callSum);
+		final IcfgInterpreter icfgInterpreter = new IcfgInterpreter(mLogger, timer, tools, icfg,
+				IcfgInterpreter.allErrorLocations(icfg), domain, fluid, loopSum, callSum);
+		return new SifaComponents(icfgInterpreter, relationChecker);
 	}
 
 	private SymbolicTools constructTools(final IIcfg<IcfgLocation> icfg) {
@@ -129,11 +146,12 @@ public class SifaBuilder {
 	}
 
 	private Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> constructLoopSummarizer(
-			final IProgressAwareTimer timer, final SymbolicTools tools, final IDomain domain, final IFluid fluid) {
+			final IProgressAwareTimer timer, final SymbolicTools tools, final IDomain domain, final IFluid fluid,
+			final IRelationChecker relationChecker) {
 		final String prefLoopSum = mPrefs.getString(SifaPreferences.LABEL_LOOP_SUMMARIZER);
 		if (FixpointLoopSummarizer.class.getSimpleName().equals(prefLoopSum)) {
 			return icfgIpr -> dagIpr -> new FixpointLoopSummarizer(
-					mLogger, timer, tools, domain, fluid, dagIpr, constructRelationChecker(tools, domain));
+					mLogger, timer, tools, domain, fluid, dagIpr, relationChecker);
 		} else {
 			throw new IllegalArgumentException("Unknown loop summarizer setting: " + prefLoopSum);
 		}

@@ -38,12 +38,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.IcfgInterpreter;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.relationchecker.IRelationChecker.LhsRelRhs;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.SifaBuilder.SifaComponents;
 
 /**
  * Starts symbolic interpretation on an icfg.
@@ -55,6 +55,7 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private SifaComponents mSifaComponents;
 
 	public SymbolicInterpretationObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
@@ -72,47 +73,46 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	}
 
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
-		final IcfgInterpreter icfgInterpreter = new SifaBuilder(mServices, mLogger).construct(icfg);
-		final Map<IcfgLocation, IPredicate> predicates = icfgInterpreter.interpret();
+		mSifaComponents = new SifaBuilder(mServices, mLogger).construct(icfg);
+		final Map<IcfgLocation, IPredicate> predicates = mSifaComponents.getIcfgInterpreter().interpret();
 		mLogger.debug("Final results are " + predicates);
-		reportResult(predicates);
+		reportResults(predicates);
 	}
 
-	private void reportResult(final Map<IcfgLocation, IPredicate> predicates) {
-		if (allPredicatesAreFalse(predicates)) {
-			final String allUnreach = "All locations of interest are guaranteed to be unreachable.";
-			mLogger.info(allUnreach);
-			mServices.getResultService().reportResult(Activator.PLUGIN_ID, new AllSpecificationsHoldResult(
-					Activator.PLUGIN_ID, allUnreach));
+	private void reportResults(final Map<IcfgLocation, IPredicate> predicates) {
+		boolean allSafe = true;
+		for (final Map.Entry<IcfgLocation, IPredicate> loiPred : predicates.entrySet()) {
+			allSafe &= reportSingleResult(loiPred);
+		}
+		if (allSafe) {
+			mLogger.info("✔ All locations of interest are guaranteed to be unreachable.");
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+					new AllSpecificationsHoldResult(Activator.PLUGIN_ID, ""));
 		} else {
-			mLogger.warn("Some locations of interest might be reachable, see reported results.");
-			predicates.entrySet().forEach(this::reportSingleResult);
+			mLogger.info("✘ Some locations of interest might be reachable, see reported results.");
 		}
 	}
 
-	// TODO use solver/domain to check for unsat. instead of checking for a "false" literal
-
-	private void reportSingleResult(final Map.Entry<IcfgLocation, IPredicate> loiPred) {
+	/**
+	 * @return The given location is safe, that is its predicate is bottom.
+	 */
+	private boolean reportSingleResult(final Map.Entry<IcfgLocation, IPredicate> loiPred) {
+		final LhsRelRhs predEqBottom = mSifaComponents.getRelationChecker().isEqBottom(loiPred.getValue());
 		final IResult result;
-		if (isFalse(loiPred.getValue())) {
+		if (predEqBottom.isTrue()) {
 			result = new PositiveResult<>(Activator.PLUGIN_ID, loiPred.getKey(), mServices.getBacktranslationService());
 		} else {
+			String msg = "Over-approximation of reachable states at this location is " + loiPred.getValue();
+			if (predEqBottom.wasAbstracted()) {
+				msg += "\nFinal emptiness check over-approximated again to " + predEqBottom.getLhs();
+			}
 			result = new UnprovableResult<>(Activator.PLUGIN_ID, loiPred.getKey(),
 					mServices.getBacktranslationService(),
-					IcfgProgramExecution.create(Collections.emptyList(), Collections.emptyMap()),
-					"Interpreter reached this location of interest. Location might be reachable. Predicate is\n"
-					+ loiPred.getValue());
+					IcfgProgramExecution.create(Collections.emptyList(), Collections.emptyMap()), msg);
 		}
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
+		return predEqBottom.isTrue();
 	}
 
-	private static boolean allPredicatesAreFalse(final Map<IcfgLocation, IPredicate> predicates) {
-		return predicates.values().stream().allMatch(SymbolicInterpretationObserver::isFalse);
-	}
 
-	private static boolean isFalse(final IPredicate predicate) {
-		// TODO use isBottom(alpha(predicate)) from Domain as a fail fast test
-		// … or even as the only test (in that case adapt the log messages to point out inaccuracy)
-		return SmtUtils.isFalseLiteral(predicate.getFormula());
-	}
 }
