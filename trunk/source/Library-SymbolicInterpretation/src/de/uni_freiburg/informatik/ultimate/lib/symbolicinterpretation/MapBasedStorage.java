@@ -68,6 +68,8 @@ public class MapBasedStorage implements ILoiPredicateStorage {
 
 	private IPredicate joinLoiPredicate(final IcfgLocation loi, final IPredicate oldPred, final IPredicate addPred) {
 		logBeforeRegisterLoi(loi, addPred);
+		// TODO really use domain? join should require two abstracted states. States are not abstracted at the moment.
+		// alternative: mTools.or(...)
 		final IPredicate newPred = mDomain.join(oldPred, addPred);
 		logAfterRegisterLoi(loi, addPred, newPred);
 		return newPred;
