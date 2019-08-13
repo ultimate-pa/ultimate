@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFlu
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.SizeLimitFluid;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.relationchecker.IRelationChecker;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.relationchecker.SolverAlphaSolverError;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
@@ -129,10 +131,9 @@ public class SifaBuilder {
 	private Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> constructLoopSummarizer(
 			final IProgressAwareTimer timer, final SymbolicTools tools, final IDomain domain, final IFluid fluid) {
 		final String prefLoopSum = mPrefs.getString(SifaPreferences.LABEL_LOOP_SUMMARIZER);
-		final boolean trySolverFirst = mPrefs.getBoolean(SifaPreferences.LABEL_TRY_SOLVER_BEFORE_ENFORCING_ABSTRACTION);
 		if (FixpointLoopSummarizer.class.getSimpleName().equals(prefLoopSum)) {
 			return icfgIpr -> dagIpr -> new FixpointLoopSummarizer(
-					mLogger, timer, tools, domain, fluid, dagIpr, trySolverFirst);
+					mLogger, timer, tools, domain, fluid, dagIpr, constructRelationChecker(tools, domain));
 		} else {
 			throw new IllegalArgumentException("Unknown loop summarizer setting: " + prefLoopSum);
 		}
@@ -146,6 +147,11 @@ public class SifaBuilder {
 		} else {
 			throw new IllegalArgumentException("Unknown call summarizer setting: " + prefCallSum);
 		}
+	}
+
+	private IRelationChecker constructRelationChecker(final SymbolicTools tools, final IDomain domain) {
+		// TODO add and use setting
+		return new SolverAlphaSolverError(tools, domain);
 	}
 
 }

@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarize
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -42,6 +41,8 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFlu
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.FullOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.relationchecker.IRelationChecker;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.relationchecker.IRelationChecker.LhsRelRhs;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -63,11 +64,11 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 	private final DagInterpreter mDagIpr;
 	private final StarDagCache mStarDagCache = new StarDagCache();
 	private final Map<Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate>, IPredicate> mCache;
-	private final boolean mTrySolverBeforeEnforcingAbstraction;
+	private final IRelationChecker mRelationChecker;
 
 	public FixpointLoopSummarizer(final ILogger logger, final IProgressAwareTimer timer, final SymbolicTools tools,
 			final IDomain domain, final IFluid fluid, final DagInterpreter dagIpr,
-			final boolean trySolverBeforeEnforcingAbstraction) {
+			final IRelationChecker relationChecker) {
 		mLogger = logger;
 		mTimer = timer;
 		mTools = tools;
@@ -75,7 +76,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		mFluid = fluid;
 		mDagIpr = dagIpr;
 		mCache = new HashMap<>();
-		mTrySolverBeforeEnforcingAbstraction = trySolverBeforeEnforcingAbstraction;
+		mRelationChecker = relationChecker;
 	}
 
 	@Override
@@ -105,19 +106,10 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 			if (mFluid.shallBeAbstracted(postState)) {
 				postState = mDomain.alpha(postState);
 			}
-			// TODO remember which states are abstracted and apply IDomain.isSubsetEq directly
-			//      in case preState and postState are both abstracted
-			Optional<Boolean> isSubsetEq = Optional.empty();
-			if (mTrySolverBeforeEnforcingAbstraction) {
-				isSubsetEq = mTools.implies(postState, preState);
-			}
-			if (!isSubsetEq.isPresent()) {
-				// TODO don't abstract already abstracted states again
-				preState = mDomain.alpha(postState);
-				postState = mDomain.alpha(postState);
-				isSubsetEq = Optional.of(mDomain.isSubsetEq(postState, preState));
-			}
-			if (isSubsetEq.get()) {
+			final LhsRelRhs postSubsetEqPre = mRelationChecker.isSubsetEq(postState, preState);
+			postState = postSubsetEqPre.getLhs();
+			preState = postSubsetEqPre.getRhs();
+			if (postSubsetEqPre.isTrue()) {
 				break;
 			}
 			preState = mDomain.widen(preState, postState);

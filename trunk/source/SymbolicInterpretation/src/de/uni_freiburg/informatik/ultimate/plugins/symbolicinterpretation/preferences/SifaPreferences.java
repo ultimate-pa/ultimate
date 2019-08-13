@@ -102,6 +102,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	protected static final XnfConversionTechnique[] VALUES_XNF_CONVERSION = XnfConversionTechnique.values();
 	public static final Class<XnfConversionTechnique> CLASS_XNF_CONVERSION = XnfConversionTechnique.class;
 
+	/*
 	public static final String LABEL_TRY_SOLVER_BEFORE_ENFORCING_ABSTRACTION = "Try solver before enforcing abstraction";
 	public static final String TOOLTIP_TRY_SOLVER_BEFORE_ENFORCING_ABSTRACTION =
 			"Domain's methods to check unsatisfiabilty and implications require abstraction.\n" +
@@ -109,6 +110,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 			"When using a solver instead of these methods we could get around enforcing abstraction.\n" +
 			"In case the solver returns UNKNOW we still have to abstract\n";
 	public static final boolean DEFAULT_TRY_SOLVER_BEFORE_ENFORCING_ABSTRACTION = true;
+	 */
 
 	// ---- settings in containers ----
 
@@ -161,9 +163,6 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 			combo(LABEL_SIMPLIFICATION, DEFAULT_SIMPLIFICATION, VALUES_SIMPLIFICATION),
 			// TODO remove unused setting
 			combo(LABEL_XNF_CONVERSION, DEFAULT_XNF_CONVERSION, VALUES_XNF_CONVERSION),
-			//
-			bool(LABEL_TRY_SOLVER_BEFORE_ENFORCING_ABSTRACTION, TOOLTIP_TRY_SOLVER_BEFORE_ENFORCING_ABSTRACTION,
-					DEFAULT_TRY_SOLVER_BEFORE_ENFORCING_ABSTRACTION),
 			//
 			containerExplValDom,
 			containerLogFluid,
