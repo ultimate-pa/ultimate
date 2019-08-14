@@ -54,14 +54,14 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-public class MSODIntAutomataTest {
+public class MSODIntOperationsTest {
 
 	private IUltimateServiceProvider mServiceProvider;
 	private AutomataLibraryServices mServices;
 	private Script mScript;
 	private ILogger mLogger;
 
-	MSODAutomatonFactory factory;
+	MSODOperations mMSODOperations = new MSODIntOperations();
 
 	@Rule
 	public final ExpectedException mNoException = ExpectedException.none();
@@ -80,7 +80,7 @@ public class MSODIntAutomataTest {
 	private void test(final Boolean result, final MSODAlphabetSymbol[] symbols,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 
-		final NestedWord<MSODAlphabetSymbol> word = NestedWord.nestedWord(new Word<MSODAlphabetSymbol>(symbols));
+		final NestedWord<MSODAlphabetSymbol> word = NestedWord.nestedWord(new Word<>(symbols));
 		final Accepts<MSODAlphabetSymbol, String> accepts = new Accepts<>(mServices, automaton, word);
 
 		mLogger.info("Word: " + word);
@@ -105,54 +105,54 @@ public class MSODIntAutomataTest {
 		// -1 < 0
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, c));
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// -3 < 0
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, c));
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// -3 < -2
 		c = Rational.valueOf(-2, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, c));
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// 0 < 0
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { x1 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, c));
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// -1 < -2
 		c = Rational.valueOf(-2, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x1 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, c));
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// x < c AND c > 0
 
 		// 0 < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { x1 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, c));
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// -3 < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, c));
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// 2 < 3
 		c = Rational.valueOf(3, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, c));
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// 1 < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x1 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, c));
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// 3 < 2
 		c = Rational.valueOf(2, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, c));
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
 	}
 
 	@Test
@@ -174,187 +174,185 @@ public class MSODIntAutomataTest {
 		// 1 - 2 < 0
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 2 - 4 < 0
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy10, xy00, xy00, xy00, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 1 - 4 < -2
 		c = Rational.valueOf(-2, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy00, xy00, xy00, xy00, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 2 - 1 < 0
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy10 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 1 - 1 < -3
 		c = Rational.valueOf(-3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy11 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
-		
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// x - y < c AND x > 0 AND y > 0 AND c > 0
 
 		// 1 - 1 < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy11 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 1 - 2 < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 3 - 2 < 2
 		c = Rational.valueOf(2, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy01, xy00, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 2 - 1 < 3
 		c = Rational.valueOf(3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 2 - 1 < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy10 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 4 - 1 < 2
 		c = Rational.valueOf(2, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy00, xy00, xy00, xy00, xy10 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
-		
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// x - y < c AND x <= 0 AND y <= 0 AND c <= 0
 
 		// -1 - 0 < 0
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-				
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// - 2 - (-1) < 0
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy01, xy00, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-				
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// -5 - (-2) < -2
 		c = Rational.valueOf(-2, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy01, xy00, xy00, xy00, xy00, xy00, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-				
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// -1 - (-2) < 0
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy10, xy00, xy01 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-				
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// -2 - (-2) < -3
 		c = Rational.valueOf(-3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy11 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// x - y < c AND x <= 0 AND y <= 0 AND c > 0
 
 		// 0 - 0 < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy11 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// -1 - (-1) < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy11 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// -3 - (-2) < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy01, xy00, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 0 - (-1) < 2
 		c = Rational.valueOf(2, 1);
 		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// -2 - (-4) < 3
 		c = Rational.valueOf(3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy10, xy00, xy00, xy00, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// -2 - (-3) < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy10, xy00, xy01 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 0 - (-3) < 2
 		c = Rational.valueOf(2, 1);
 		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy00, xy00, xy00, xy00, xy01 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// x - y < c AND x > 0 AND y <= 0 AND c > 0
-		
+
 		// 1 - 0 < 2
 		c = Rational.valueOf(2, 1);
 		symbols = new MSODAlphabetSymbol[] { xy01, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 1 - (-2) < 4
 		c = Rational.valueOf(4, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy00, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 2 - (-1) < 4
 		c = Rational.valueOf(4, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy01, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 1 - (-1) < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy01 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 1 - 0 < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy01, xy10 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 1 - (-2) < 3
 		c = Rational.valueOf(3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy00, xy01 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// x - y < c AND x <= 0 AND y > 0 AND c <= 0
-				
+
 		// 0 - 1 < 0
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { xy10, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 0 - 3 < 0
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy00, xy00, xy00, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// -3 - 1 < -3
 		c = Rational.valueOf(-3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy00, xy00, xy00, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// -2 - 2 < -3
 		c = Rational.valueOf(-3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy01, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 		// 0 - 1 < -1
 		c = Rational.valueOf(-1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy10, xy01 };
-		test(false, symbols, MSODIntAutomatonFactory.strictIneqAutomaton(mServices, x, y, c));
-		
+		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
 	}
-	
+
 	@Test
 	public void strictNegIneqAutomaton() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
@@ -371,56 +369,56 @@ public class MSODIntAutomataTest {
 		// -1 < 0
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.strictNegIneqAutomaton(mServices, x, c));
+		test(true, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// -3 < 0
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.strictNegIneqAutomaton(mServices, x, c));
+		test(true, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// -3 < -2
 		c = Rational.valueOf(-2, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.strictNegIneqAutomaton(mServices, x, c));
+		test(true, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// 0 < 0
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { x1 };
-		test(false, symbols, MSODIntAutomatonFactory.strictNegIneqAutomaton(mServices, x, c));
+		test(false, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// -1 < -2
 		c = Rational.valueOf(-2, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x1 };
-		test(false, symbols, MSODIntAutomatonFactory.strictNegIneqAutomaton(mServices, x, c));
+		test(false, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// -x < c AND c > 0
 
 		// 0 < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { x1 };
-		test(true, symbols, MSODIntAutomatonFactory.strictNegIneqAutomaton(mServices, x, c));
+		test(true, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// -3 < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.strictNegIneqAutomaton(mServices, x, c));
+		test(true, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// 2 < 3
 		c = Rational.valueOf(3, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.strictNegIneqAutomaton(mServices, x, c));
+		test(true, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// 1 < 1
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x1 };
-		test(false, symbols, MSODIntAutomatonFactory.strictNegIneqAutomaton(mServices, x, c));
+		test(false, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// 3 < 2
 		c = Rational.valueOf(2, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x0, x1 };
-		test(false, symbols, MSODIntAutomatonFactory.strictNegIneqAutomaton(mServices, x, c));
+		test(false, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 	}
-	
+
 	@Test
 	public void constElementAutomaton() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
@@ -437,74 +435,74 @@ public class MSODIntAutomataTest {
 		// 0 element { 0 }
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { x1 };
-		test(true, symbols, MSODIntAutomatonFactory.constElementAutomaton(mServices, c, x));
+		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 0 element { 0, 3 }
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { x1, x0, x0, x0, x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.constElementAutomaton(mServices, c, x));
+		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// -3 element { -3 }
 		c = Rational.valueOf(-3, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.constElementAutomaton(mServices, c, x));
+		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// -3 element { -3, 0, 4 }
 		c = Rational.valueOf(-3, 1);
 		symbols = new MSODAlphabetSymbol[] { x1, x0, x0, x0, x0, x0, x1, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.constElementAutomaton(mServices, c, x));
+		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 0 element { }
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] {};
-		test(false, symbols, MSODIntAutomatonFactory.constElementAutomaton(mServices, c, x));
+		test(false, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 0 element { -1, 1 }
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x1, x1 };
-		test(false, symbols, MSODIntAutomatonFactory.constElementAutomaton(mServices, c, x));
+		test(false, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// -2 element { -1, 1 }
 		c = Rational.valueOf(-2, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x1, x1 };
-		test(false, symbols, MSODIntAutomatonFactory.constElementAutomaton(mServices, c, x));
+		test(false, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// c element x AND c > 0
 
 		// 1 element { 1 }
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.constElementAutomaton(mServices, c, x));
+		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 1 element { 1, 3 }
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x1, x0, x0, x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.constElementAutomaton(mServices, c, x));
+		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 3 element { 3 }
 		c = Rational.valueOf(3, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.constElementAutomaton(mServices, c, x));
+		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 3 element { 0, 3, 4 }
 		c = Rational.valueOf(3, 1);
 		symbols = new MSODAlphabetSymbol[] { x1, x0, x0, x0, x0, x1, x0, x1 };
-		test(true, symbols, MSODIntAutomatonFactory.constElementAutomaton(mServices, c, x));
+		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 1 element { }
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] {};
-		test(false, symbols, MSODIntAutomatonFactory.constElementAutomaton(mServices, c, x));
+		test(false, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 1 element { -1, 2 }
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x0, x1, x1 };
-		test(false, symbols, MSODIntAutomatonFactory.constElementAutomaton(mServices, c, x));
+		test(false, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 2 element { -1, 1 }
 		c = Rational.valueOf(2, 1);
 		symbols = new MSODAlphabetSymbol[] { x0, x1, x1 };
-		test(false, symbols, MSODIntAutomatonFactory.constElementAutomaton(mServices, c, x));
+		test(false, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
 	}
 
 	@Test
@@ -526,108 +524,108 @@ public class MSODIntAutomataTest {
 		// 0 + 0 element { 0 }
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { xy11 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 0 + (-1) element { -1 }
 		c = Rational.valueOf(-1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// -1 + 1 element { 0 }
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// -3 + 0 element { -3 }
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy00, xy00, xy11 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 0 + (-3) element { -3 }
 		c = Rational.valueOf(-3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy00, xy00, xy00, xy00, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// -3 + 3 element { 0 }
 		c = Rational.valueOf(3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy00, xy00, xy00, xy00, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// x + c element y AND x + c > 0 AND x > 0
 
 		// 1 + 0 element { 1 }
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy11 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 2 + (-1) element { 1 }
 		c = Rational.valueOf(-1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 1 + 1 element { 2 }
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 3 + 0 element { 3 }
 		c = Rational.valueOf(0, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy00, xy11 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 4 + (-3) element { 1 }
 		c = Rational.valueOf(-3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy00, xy00, xy00, xy00, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 1 + 3 element { 4 }
 		c = Rational.valueOf(3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy00, xy00, xy00, xy00, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// x + c element y AND x + c <= 0 AND x > 0
 
 		// 1 + (-1) element { 0 }
 		c = Rational.valueOf(-1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy01, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 3 + (-3) element { 0 }
 		c = Rational.valueOf(-3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy00, xy00, xy00, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 2 + (-3) element { -1 }
 		c = Rational.valueOf(-3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy01, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 1 + (-3) element { -2 }
 		c = Rational.valueOf(-3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy00, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// x + c element y AND x + c > 0 AND x <= 0
 
 		// 0 + 1 element { 1 }
 		c = Rational.valueOf(1, 1);
 		symbols = new MSODAlphabetSymbol[] { xy10, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// -2 + 3 element { 1 }
 		c = Rational.valueOf(3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy00, xy10 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// -1 + 3 element { 2 }
 		c = Rational.valueOf(3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy10, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 0 + 3 element { 3 }
 		c = Rational.valueOf(3, 1);
 		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy00, xy00, xy00, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.elementAutomaton(mServices, x, c, y));
+		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
 	}
 
 	@Test
@@ -647,31 +645,31 @@ public class MSODIntAutomataTest {
 
 		// { } strictSubsetInt { 0 }
 		symbols = new MSODAlphabetSymbol[] { xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.strictSubsetAutomaton(mServices, x, y));
+		test(true, symbols, mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
 		// { 0 } strictSubsetInt { 0, 1 }
 		symbols = new MSODAlphabetSymbol[] { xy11, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.strictSubsetAutomaton(mServices, x, y));
+		test(true, symbols, mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
 		// { -1, 2 } strictSubsetInt { -2, -1, 0, 2 }
 		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy11, xy11, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.strictSubsetAutomaton(mServices, x, y));
+		test(true, symbols, mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
 		// { 0, 1 } strictSubsetInt { 0 }
 		symbols = new MSODAlphabetSymbol[] { xy11, xy10 };
-		test(false, symbols, MSODIntAutomatonFactory.strictSubsetAutomaton(mServices, x, y));
+		test(false, symbols, mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
 		// { } strictSubsetInt { }
 		symbols = new MSODAlphabetSymbol[] { xy00 };
-		test(false, symbols, MSODIntAutomatonFactory.strictSubsetAutomaton(mServices, x, y));
+		test(false, symbols, mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
 		// { -1, 3 } strictSubsetInt { -1, 3 }
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy11, xy00, xy00, xy11 };
-		test(false, symbols, MSODIntAutomatonFactory.strictSubsetAutomaton(mServices, x, y));
+		test(false, symbols, mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
 		// { -2, 3 } strictSubsetInt { 2, 3 }
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy01, xy10, xy11 };
-		test(false, symbols, MSODIntAutomatonFactory.strictSubsetAutomaton(mServices, x, y));
+		test(false, symbols, mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 	}
 
 	@Test
@@ -691,38 +689,38 @@ public class MSODIntAutomataTest {
 
 		// { } nonStrictSubsetInt { }
 		symbols = new MSODAlphabetSymbol[] {};
-		test(true, symbols, MSODIntAutomatonFactory.subsetAutomaton(mServices, x, y));
+		test(true, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { } nonStrictSubsetInt { 0 }
 		symbols = new MSODAlphabetSymbol[] { xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.subsetAutomaton(mServices, x, y));
+		test(true, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { 0 } nonStrictSubsetInt { 0 }
 		symbols = new MSODAlphabetSymbol[] { xy11 };
-		test(true, symbols, MSODIntAutomatonFactory.subsetAutomaton(mServices, x, y));
+		test(true, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { 0 } nonStrictSubsetInt { 0, 1 }
 		symbols = new MSODAlphabetSymbol[] { xy11, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.subsetAutomaton(mServices, x, y));
+		test(true, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { -1, 3 } nonStrictSubsetInt { -1, 3 }
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy11, xy00, xy00, xy11 };
-		test(true, symbols, MSODIntAutomatonFactory.subsetAutomaton(mServices, x, y));
+		test(true, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { -1, 2 } nonStrictSubsetInt { -2, -1, 0, 2 }
 		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy11, xy11, xy01 };
-		test(true, symbols, MSODIntAutomatonFactory.subsetAutomaton(mServices, x, y));
+		test(true, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { 0, 1 } nonStrictSubsetInt { 0 }
 		symbols = new MSODAlphabetSymbol[] { xy11, xy10 };
-		test(false, symbols, MSODIntAutomatonFactory.subsetAutomaton(mServices, x, y));
+		test(false, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { -2 } nonStrictSubsetInt { }
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy10 };
-		test(false, symbols, MSODIntAutomatonFactory.subsetAutomaton(mServices, x, y));
+		test(false, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { -2, 3 } nonStrictSubsetInt { 2, 3 }
 		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy01, xy10, xy11 };
-		test(false, symbols, MSODIntAutomatonFactory.subsetAutomaton(mServices, x, y));
+		test(false, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
 	}
 }
