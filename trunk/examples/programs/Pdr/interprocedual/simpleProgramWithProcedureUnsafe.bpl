@@ -1,4 +1,4 @@
-// #Safe
+// #Unsafe
 /* 
  * Simple Program for Checking PDRs interprocedual capabilities
  *

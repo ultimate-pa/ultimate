@@ -1,6 +1,7 @@
-// #Safe
+// #Unsafe
 /* 
  * Simple Program for Checking PDRs interprocedual capabilities
+ * Here we need interplants as the loop makes PDR not terminate.
  *
  */
 
@@ -17,7 +18,11 @@ procedure main() returns ()
 modifies y;
 {
     var x : int;
+	x := 0;
     assume (y == x);
-    call inc();
-    assert (y = x + 1);
+	while (y < 10) {
+		call inc();
+		x := x + 1;
+	}
+    assert (x == 10);
 }
