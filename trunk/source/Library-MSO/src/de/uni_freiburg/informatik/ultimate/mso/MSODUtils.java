@@ -285,7 +285,7 @@ public final class MSODUtils {
 	/**
 	 * Returns a map which holds all terms and their values parsed from given word.
 	 */
-	public static Map<Term, Term> parseMoNatDiffToTerm(final Script script, final Word<MSODAlphabetSymbol> word,
+	public static Map<Term, Term> parseMSODNatToTerm(final Script script, final Word<MSODAlphabetSymbol> word,
 			final Term... terms) {
 
 		final Map<Term, Term> result = new HashMap<>();
@@ -325,7 +325,7 @@ public final class MSODUtils {
 	/**
 	 * TODO:
 	 */
-	public static Map<Term, Term> parseMSODiffIntToTerm(final Script script, final Word<MSODAlphabetSymbol> word,
+	public static Map<Term, Term> parseMSODIntToTerm(final Script script, final Word<MSODAlphabetSymbol> word,
 			final Term... terms) {
 
 		final Map<Term, Term> result = new HashMap<>();

@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public abstract class MSODOperations {
@@ -310,4 +311,12 @@ public abstract class MSODOperations {
 		return new NestedWordAutomatonFilteredStates<>(services, nwaReachableStates, automaton.getStates(),
 				automaton.getInitialStates(), finals);
 	}
+
+	/**
+	 * TODO Comment.
+	 *
+	 * @throws AutomataOperationCanceledException
+	 */
+	public abstract Map<Term, Term> getResult(final Script script, final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException;
 }

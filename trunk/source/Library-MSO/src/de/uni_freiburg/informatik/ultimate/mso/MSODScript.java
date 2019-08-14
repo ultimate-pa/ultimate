@@ -128,44 +128,31 @@ public class MSODScript extends NoopScript {
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		mLogger.info("INPUT: " + mAssertionTerm);
+		LBool result = LBool.UNKNOWN;
 
 		try {
 
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = traversePostOrder(mAssertionTerm);
+			mModel = mMSODOperations.getResult(this, mAutomataLibrarayServices, automaton);
 
-			final IsEmpty<MSODAlphabetSymbol, String> isEmpty = new IsEmpty<>(mAutomataLibrarayServices, automaton);
-
-			if (!isEmpty.getResult()) {
-				final NestedRun<MSODAlphabetSymbol, String> run = isEmpty.getNestedRun();
-				final NestedWord<MSODAlphabetSymbol> word = run.getWord();
-
-				final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
-
-				if (mMSODOperations instanceof MSODNatOperations) {
-					mModel = MSODUtils.parseMoNatDiffToTerm(this, word, terms);
-				}
-
-				if (mMSODOperations instanceof MSODIntOperations) {
-					mModel = MSODUtils.parseMSODiffIntToTerm(this, word, terms);
-				}
+			if (!mModel.isEmpty()) {
+				result = LBool.SAT;
 
 				mLogger.info("RESULT: SAT");
 				mLogger.info("MODEL: " + mModel);
 				mLogger.info(automatonToString(automaton, Format.ATS));
+			} else {
+				result = LBool.UNSAT;
 
-				return LBool.SAT;
+				mLogger.info("RESULT: UNSAT");
+				mLogger.info(automatonToString(automaton, Format.ATS));
 			}
-
-			mLogger.info("RESULT: UNSAT");
-			mLogger.info(automatonToString(automaton, Format.ATS));
-
-			return LBool.UNSAT;
 
 		} catch (final Exception e) {
 			mLogger.info(e);
 		}
 
-		return LBool.UNKNOWN;
+		return result;
 	}
 
 	@Override

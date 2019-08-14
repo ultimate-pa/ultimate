@@ -10,10 +10,15 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
@@ -1030,5 +1035,29 @@ public class MSODIntOperations extends MSODOperations {
 		}
 
 		return alphabetSymbols;
+	}
+
+	/**
+	 * TODO Comment.
+	 *
+	 * @throws AutomataOperationCanceledException
+	 */
+	@Override
+	public Map<Term, Term> getResult(final Script script, final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
+
+		Map<Term, Term> result = new HashMap<>();
+
+		final IsEmpty<MSODAlphabetSymbol, String> isEmpty = new IsEmpty<>(services, automaton);
+
+		if (!isEmpty.getResult()) {
+			final NestedRun<MSODAlphabetSymbol, String> run = isEmpty.getNestedRun();
+			final NestedWord<MSODAlphabetSymbol> word = run.getWord();
+
+			final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
+			result = MSODUtils.parseMSODIntToTerm(script, word, terms);
+		}
+
+		return result;
 	}
 }
