@@ -680,6 +680,26 @@ public class QuantifierEliminationTest {
 		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void derIntegerDivisibilityExists() {
+		mScript.declareFun("p", new Sort[] {SmtSortUtils.getIntSort(mMgdScript)}, SmtSortUtils.getBoolSort(mMgdScript));
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String formulaAsString = "(exists ((x Int)) (and (p x) (= (* 2 x) y)))";
+		final String expectedResultAsString = "(and (= 0 (mod y 2)) (p (div y 2)))";
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void derIntegerDivisibilityForall() {
+		mScript.declareFun("p", new Sort[] {SmtSortUtils.getIntSort(mMgdScript)}, SmtSortUtils.getBoolSort(mMgdScript));
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String formulaAsString = "(forall ((x Int)) (or (p x) (not (= (* 2 x) y))))";
+		final String expectedResultAsString = "(or (not (= 0 (mod y 2))) (p (div y 2)))";
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
 			final String formulaAsString) {
