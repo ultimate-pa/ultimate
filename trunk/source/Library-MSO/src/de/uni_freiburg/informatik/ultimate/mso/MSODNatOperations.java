@@ -6,14 +6,10 @@ package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -167,7 +163,7 @@ public class MSODNatOperations extends MSODOperations {
 	}
 
 	/**
-	 * Constructs an automaton that represents "X nonStrictSubsetInt Y".
+	 * Constructs an automaton that represents "X subsetInt Y".
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
@@ -269,41 +265,6 @@ public class MSODNatOperations extends MSODOperations {
 		addConstPart(automaton, c, x0, x1, x0, x1, x1);
 
 		return automaton;
-	}
-
-	/**
-	 * Constructs a copy of the given automaton with the extended or reduced alphabet.
-	 */
-	@Override
-	public NestedWordAutomaton<MSODAlphabetSymbol, String> reconstruct(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<MSODAlphabetSymbol> alphabet,
-			final boolean isExtended) {
-
-		final NestedWordAutomaton<MSODAlphabetSymbol, String> result;
-
-		result = MSODOperations.emptyAutomaton(services);
-		result.getAlphabet().addAll(alphabet);
-
-		for (final String state : automaton.getStates()) {
-			result.addState(automaton.isInitial(state), automaton.isFinal(state), state);
-		}
-
-		for (final String state : automaton.getStates()) {
-
-			for (final OutgoingInternalTransition<MSODAlphabetSymbol, String> transition : automaton
-					.internalSuccessors(state)) {
-
-				final Iterator<MSODAlphabetSymbol> itMatches =
-						isExtended ? alphabet.stream().filter(e -> e.contains(transition.getLetter())).iterator()
-								: alphabet.stream().filter(e -> transition.getLetter().contains(e)).iterator();
-
-				while (itMatches.hasNext()) {
-					result.addInternalTransition(state, itMatches.next(), transition.getSucc());
-				}
-			}
-		}
-
-		return result;
 	}
 
 	/**

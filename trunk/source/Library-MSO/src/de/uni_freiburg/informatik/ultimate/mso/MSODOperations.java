@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,10 +17,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public abstract class MSODOperations {
 
-	public MSODOperations() {
-
-	}
-
 	/**
 	 * Constructs an empty automaton.
 	 */
@@ -34,22 +31,6 @@ public abstract class MSODOperations {
 	}
 
 	/**
-	 * Constructs an automaton that represents "false".
-	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
-			falseAutomaton(final AutomataLibraryServices services) {
-
-		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
-		final MSODAlphabetSymbol symbol = new MSODAlphabetSymbol();
-		automaton.getAlphabet().add(symbol);
-
-		automaton.addState(true, false, "init");
-		automaton.addInternalTransition("init", symbol, "init");
-
-		return automaton;
-	}
-
-	/**
 	 * Constructs an automaton that represents "true".
 	 */
 	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
@@ -60,6 +41,22 @@ public abstract class MSODOperations {
 		automaton.getAlphabet().add(symbol);
 
 		automaton.addState(true, true, "init");
+		automaton.addInternalTransition("init", symbol, "init");
+
+		return automaton;
+	}
+
+	/**
+	 * Constructs an automaton that represents "false".
+	 */
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
+			falseAutomaton(final AutomataLibraryServices services) {
+
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		final MSODAlphabetSymbol symbol = new MSODAlphabetSymbol();
+		automaton.getAlphabet().add(symbol);
+
+		automaton.addState(true, false, "init");
 		automaton.addInternalTransition("init", symbol, "init");
 
 		return automaton;
@@ -125,6 +122,8 @@ public abstract class MSODOperations {
 			strictIneqAutomaton(final AutomataLibraryServices services, final Term x, final Rational c);
 
 	/**
+	 * TODO Find bug in this automaton.
+	 *
 	 * Constructs an automaton that represents "x-y < c".
 	 *
 	 * @throws IllegalArgumentException
@@ -153,7 +152,7 @@ public abstract class MSODOperations {
 			strictSubsetAutomaton(final AutomataLibraryServices services, final Term x, final Term y);
 
 	/**
-	 * Constructs an automaton that represents "X nonStrictSubsetInt Y".
+	 * Constructs an automaton that represents "X subsetInt Y".
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
@@ -181,10 +180,39 @@ public abstract class MSODOperations {
 			constElementAutomaton(final AutomataLibraryServices services, final Rational c, final Term x);
 
 	/**
+	 * TODO Check if there is any difference between Nat and Int.
+	 *
 	 * Constructs a copy of the given automaton with the extended or reduced alphabet.
 	 */
-	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String> reconstruct(final AutomataLibraryServices services,
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> reconstruct(final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<MSODAlphabetSymbol> alphabet,
-			final boolean isExtended);
+			final boolean isExtended) {
+
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> result;
+
+		result = MSODOperations.emptyAutomaton(services);
+		result.getAlphabet().addAll(alphabet);
+
+		for (final String state : automaton.getStates()) {
+			result.addState(automaton.isInitial(state), automaton.isFinal(state), state);
+		}
+
+		for (final String state : automaton.getStates()) {
+
+			for (final OutgoingInternalTransition<MSODAlphabetSymbol, String> transition : automaton
+					.internalSuccessors(state)) {
+
+				final Iterator<MSODAlphabetSymbol> itMatches =
+						isExtended ? alphabet.stream().filter(e -> e.contains(transition.getLetter())).iterator()
+								: alphabet.stream().filter(e -> transition.getLetter().contains(e)).iterator();
+
+				while (itMatches.hasNext()) {
+					result.addInternalTransition(state, itMatches.next(), transition.getSucc());
+				}
+			}
+		}
+
+		return result;
+	}
 
 }
