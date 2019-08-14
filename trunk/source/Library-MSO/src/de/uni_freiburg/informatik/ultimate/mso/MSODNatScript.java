@@ -318,12 +318,6 @@ public class MSODNatScript extends NoopScript {
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processExists(final QuantifiedFormula term)
 			throws Exception {
 
-		/*
-		 * final ManagedScript managedScript = new ManagedScript(mUltimateServiceProvider, this); final Term subformula
-		 * = SmtUtils.toCnf(mUltimateServiceProvider, managedScript, term.getSubformula(),
-		 * XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION); mLogger.info("CNF: " + subformula);
-		 */
-
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getSubformula());
 		mLogger.info("Construct ∃ φ: " + term);
 
@@ -437,6 +431,8 @@ public class MSODNatScript extends NoopScript {
 			result = new Intersect<>(mAutomataLibrarayServices, new MSODStringFactory(), result, tmp).getResult();
 		}
 
+		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
+
 		return result;
 	}
 
@@ -446,15 +442,6 @@ public class MSODNatScript extends NoopScript {
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processDisjunction(final ApplicationTerm term)
 			throws Exception {
-
-		/*
-		 * final Term[] terms = new Term[term.getParameters().length]; for (int i = 0; i < term.getParameters().length;
-		 * i++) terms[i] = SmtUtils.not(this, term.getParameters()[i]);
-		 *
-		 * final Term conjunction = SmtUtils.not(this, SmtUtils.and(this, terms));
-		 *
-		 * return traversePostOrder(conjunction);
-		 */
 
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getParameters()[0]);
 		mLogger.info("Construct φ and ψ (0): " + term);
@@ -471,6 +458,8 @@ public class MSODNatScript extends NoopScript {
 
 			result = new Union<>(mAutomataLibrarayServices, new MSODStringFactory(), result, tmp).getResult();
 		}
+
+		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
 
 		return result;
 	}
@@ -535,6 +524,8 @@ public class MSODNatScript extends NoopScript {
 	 *
 	 * @throws NotAffineException
 	 *             if construction of {@link AffineRelation} fails.
+	 *
+	 * @throws AutomataLibraryException
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processLessOrLessEqual(final ApplicationTerm term)
 			throws NotAffineException, AutomataLibraryException {
@@ -613,6 +604,8 @@ public class MSODNatScript extends NoopScript {
 
 	/**
 	 * Returns automaton that represents "t element X".
+	 *
+	 * @throws AutomataLibraryException
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processElement(final ApplicationTerm term)
 			throws AutomataLibraryException {
