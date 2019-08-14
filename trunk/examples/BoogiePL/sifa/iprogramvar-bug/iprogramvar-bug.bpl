@@ -11,12 +11,11 @@
 
 
 procedure ULTIMATE.start() {
-    call __VERIFIER_assert((if f() then 1 else 0));
+    call p((if f() then 1 else 0));
 }
 
-procedure __VERIFIER_assert(i: int) {
+procedure p(i: int) {
 	assert false;
 }
 
 function { :overapproximation "f" } f() returns (out : bool);
-
