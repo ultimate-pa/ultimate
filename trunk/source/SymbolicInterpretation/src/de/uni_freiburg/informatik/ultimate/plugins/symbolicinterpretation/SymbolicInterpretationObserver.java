@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.relationchecker.IRelationChecker.LhsRelRhs;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain.ResultForAlteredInputs;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -97,7 +97,7 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	 * @return The given location is safe, that is its predicate is bottom.
 	 */
 	private boolean reportSingleResult(final Map.Entry<IcfgLocation, IPredicate> loiPred) {
-		final LhsRelRhs predEqBottom = mSifaComponents.getRelationChecker().isEqBottom(loiPred.getValue());
+		final ResultForAlteredInputs predEqBottom = mSifaComponents.getDomain().isEqBottom(loiPred.getValue());
 		final IResult result;
 		if (predEqBottom.isTrue()) {
 			result = new PositiveResult<>(Activator.PLUGIN_ID, loiPred.getKey(), mServices.getBacktranslationService());

@@ -38,6 +38,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  * for the abstracted states such that succeding computations have to be performed with the abstracted
  * states instead, therefore the (possibly altered) inputs are returned by each check.
  *
+ * @deprecated  Replaced by relation checks in {@link IDomain}.
+ *              Still kept for copy-pasting parts of this deprecated code when needed in the new code
+ *
  * @author schaetzc@tf.uni-freiburg.de
  */
 public interface IRelationChecker {

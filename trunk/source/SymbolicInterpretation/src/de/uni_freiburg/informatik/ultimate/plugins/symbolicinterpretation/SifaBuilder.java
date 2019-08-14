@@ -43,8 +43,6 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFlu
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.SizeLimitFluid;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.relationchecker.IRelationChecker;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.relationchecker.SolverAlphaSolverError;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
@@ -62,16 +60,16 @@ public class SifaBuilder {
 
 	public static class SifaComponents {
 		private final IcfgInterpreter mIcfgInterpreter;
-		private final IRelationChecker mRelationChecker;
-		public SifaComponents(final IcfgInterpreter icfgInterpreter, final IRelationChecker relationChecker) {
+		private final IDomain mDomain;
+		public SifaComponents(final IcfgInterpreter icfgInterpreter, final IDomain domain) {
 			mIcfgInterpreter = icfgInterpreter;
-			mRelationChecker = relationChecker;
+			mDomain = domain;
 		}
 		public IcfgInterpreter getIcfgInterpreter() {
 			return mIcfgInterpreter;
 		}
-		public IRelationChecker getRelationChecker() {
-			return mRelationChecker;
+		public IDomain getDomain() {
+			return mDomain;
 		}
 	}
 
@@ -89,15 +87,14 @@ public class SifaBuilder {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService();
 		final SymbolicTools tools = constructTools(icfg);
 		final IDomain domain = constructDomain(tools);
-		final IRelationChecker relationChecker = constructRelationChecker(tools, domain);
 		final IFluid fluid = constructFluid();
 		final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSum =
-				constructLoopSummarizer(timer, tools, domain, fluid, relationChecker);
+				constructLoopSummarizer(timer, tools, domain, fluid);
 		final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSum =
 				constructCallSummarizer(tools);
 		final IcfgInterpreter icfgInterpreter = new IcfgInterpreter(mLogger, timer, tools, icfg,
 				IcfgInterpreter.allErrorLocations(icfg), domain, fluid, loopSum, callSum);
-		return new SifaComponents(icfgInterpreter, relationChecker);
+		return new SifaComponents(icfgInterpreter, domain);
 	}
 
 	private SymbolicTools constructTools(final IIcfg<IcfgLocation> icfg) {
@@ -146,12 +143,11 @@ public class SifaBuilder {
 	}
 
 	private Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> constructLoopSummarizer(
-			final IProgressAwareTimer timer, final SymbolicTools tools, final IDomain domain, final IFluid fluid,
-			final IRelationChecker relationChecker) {
+			final IProgressAwareTimer timer, final SymbolicTools tools, final IDomain domain, final IFluid fluid) {
 		final String prefLoopSum = mPrefs.getString(SifaPreferences.LABEL_LOOP_SUMMARIZER);
 		if (FixpointLoopSummarizer.class.getSimpleName().equals(prefLoopSum)) {
 			return icfgIpr -> dagIpr -> new FixpointLoopSummarizer(
-					mLogger, timer, tools, domain, fluid, dagIpr, relationChecker);
+					mLogger, timer, tools, domain, fluid, dagIpr);
 		} else {
 			throw new IllegalArgumentException("Unknown loop summarizer setting: " + prefLoopSum);
 		}
@@ -165,11 +161,6 @@ public class SifaBuilder {
 		} else {
 			throw new IllegalArgumentException("Unknown call summarizer setting: " + prefCallSum);
 		}
-	}
-
-	private IRelationChecker constructRelationChecker(final SymbolicTools tools, final IDomain domain) {
-		// TODO add and use setting
-		return new SolverAlphaSolverError(tools, domain);
 	}
 
 }

@@ -37,12 +37,11 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.DagInterpr
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.StarDagCache;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain.ResultForAlteredInputs;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.FullOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.relationchecker.IRelationChecker;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.relationchecker.IRelationChecker.LhsRelRhs;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -64,11 +63,9 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 	private final DagInterpreter mDagIpr;
 	private final StarDagCache mStarDagCache = new StarDagCache();
 	private final Map<Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate>, IPredicate> mCache;
-	private final IRelationChecker mRelationChecker;
 
 	public FixpointLoopSummarizer(final ILogger logger, final IProgressAwareTimer timer, final SymbolicTools tools,
-			final IDomain domain, final IFluid fluid, final DagInterpreter dagIpr,
-			final IRelationChecker relationChecker) {
+			final IDomain domain, final IFluid fluid, final DagInterpreter dagIpr) {
 		mLogger = logger;
 		mTimer = timer;
 		mTools = tools;
@@ -76,7 +73,6 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		mFluid = fluid;
 		mDagIpr = dagIpr;
 		mCache = new HashMap<>();
-		mRelationChecker = relationChecker;
 	}
 
 	@Override
@@ -106,7 +102,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 			if (mFluid.shallBeAbstracted(postState)) {
 				postState = mDomain.alpha(postState);
 			}
-			final LhsRelRhs postSubsetEqPre = mRelationChecker.isSubsetEq(postState, preState);
+			final ResultForAlteredInputs postSubsetEqPre = mDomain.isSubsetEq(postState, preState);
 			postState = postSubsetEqPre.getLhs();
 			preState = postSubsetEqPre.getRhs();
 			if (postSubsetEqPre.isTrue()) {

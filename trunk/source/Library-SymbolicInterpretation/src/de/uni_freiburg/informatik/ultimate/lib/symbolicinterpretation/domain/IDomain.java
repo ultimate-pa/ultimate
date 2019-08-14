@@ -26,25 +26,74 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain;
 
+import java.util.function.Function;
+
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Abstract Domain for Symbolic Interpretation with Fluid Abstractions (Sifa).
+ * Unlike abstract domains from abstract interpretation this type of domain does not have a dedicated state
+ * representation forcing us to abstract after every step. Operators of this domain type work with any state,
+ * even with un-abstracted states that are not of the domain specific form.
  *
  * @author schaetzc@tf.uni-freiburg.de
- *
- * @param <ABS_STATE> Type of the abstract states of this domain. Should be fixed for subclasses.
  */
 public interface IDomain {
 
-	// special symbols for copy-pasting: ∀ ¬ ⇒ ⇏ ≢ ≡ α ∪ ∨
+	// special symbols for copy-pasting: ∀ ¬ ⇒ ⇏ ≢ ≡ α ∪ ∨ ⊆ ⊇
+
+	/**
+	 * Represents the result of an relation check as {@link IDomain#isEqBottom(IPredicate)} or
+	 * {@link IDomain#isSubsetEq(IPredicate, IPredicate)}}.
+	 * Since relation checks may over-approximate their inputs results are not only a boolean (here {@link #isTrue()}})
+	 * but also include the actually used (that is, possibly over-approximated) inputs.
+	 *
+	 * @author schaetzc@tf.uni-freiburg.de
+	 */
+	public static class ResultForAlteredInputs {
+		protected IPredicate mLhs;
+		protected IPredicate mRhs;
+		protected boolean mResult;
+		protected boolean mAbstracted;
+		public ResultForAlteredInputs(final IPredicate lhs, final IPredicate rhs) {
+			this(lhs, rhs, false, false);
+		}
+		public ResultForAlteredInputs(final IPredicate lhs, final IPredicate rhs,
+				final boolean result, final boolean abstracted) {
+			mLhs = lhs;
+			mRhs = rhs;
+			mResult = result;
+			mAbstracted = abstracted;
+		}
+		public IPredicate getLhs() {
+			return mLhs;
+		}
+		public IPredicate getRhs() {
+			return mRhs;
+		}
+		public boolean isTrue() {
+			return mResult;
+		}
+		public boolean wasAbstracted() {
+			return mAbstracted;
+		}
+		protected void abstractLhs(final Function<IPredicate, IPredicate> alpha) {
+			mAbstracted = true;
+			mLhs = alpha.apply(mLhs);
+		}
+		protected void abstractLhsAndRhs(final Function<IPredicate, IPredicate> alpha) {
+			mAbstracted = true;
+			mLhs = alpha.apply(mLhs);
+			mRhs = alpha.apply(mRhs);
+		}
+	}
 
 	/**
 	 * Joins two abstract states.
+	 * The join of two abstract states is an over-approximation of their union, that is, logical disjunction (∨).
 	 * <p>
-	 * The join of two abstract states is similar their union, that is, logical disjunction (∨). However, the exact
-	 * union might not be expressible as an abstract state, therefore the join may over-approximate the union
-	 * similar to α(p1 ∨ p2).
+	 * Whether or not to over-approximate is up to the implementation at each call. This may return an arbitrary
+	 * predicate. A domain-specific normal form is not required.
 	 *
 	 * @param first p1
 	 * @param second p2
@@ -58,6 +107,8 @@ public interface IDomain {
 	 * Widening is similar to {@link #join(IPredicate, IPredicate)} with the additional property  that on any infinite
 	 * sequence p1, p2, p3, ... the sequence w1, w2, w3, ... with w1 = p1 and wi = widen(w(i-1), pi) reaches a fixpoint,
 	 * that is, wi = w(i+1) = w(i+2) = ... for some i.
+	 * <p>
+	 * This may return an arbitrary predicate. A domain-specific normal form is not required.
 	 *
 	 * @param old Old abstract state to be widened by widenWith
 	 * @param widenWith New abstract state extending old
@@ -67,28 +118,33 @@ public interface IDomain {
 
 	/**
 	 * Checks unsatisfiability.
-	 * The check has to be precise and has always to terminate. This is only possible since the
-	 * input is an abstract state and not an arbitrary predicate.
+	 * Ideally, this checks whether the set of concrete states described by predicate p is empty.
+	 * However, this may do the check for an over-approximation p# ⊇ p instead.
+	 * <p>
+	 * The actual check has to be precise and has to terminate. This is only possible since this operator
+	 * is allowed to over-approximate the input.
 	 *
-	 * @param pred Predicate to be checked
-	 * @return The predicate is unsatisfiable, that is, equivalent to false
-	 *
-	 * TODO consider removing this function. As of 2019-08-06 we don't need it
+	 * @param pred Predicate p to be checked, left-hand side (lhs) of the relation check
+	 * @return p# is unsatisfiable, that is, equivalent to false<br>
+	 *         where p# ⊇ p is some left-hand side (lhs) over-approximating p
 	 */
-	boolean isBottom(IPredicate pred);
+	ResultForAlteredInputs isEqBottom(IPredicate pred);
 
 	/**
-	 * Checks whether the set of concrete states described by predicate p1 is a subset of or equal to the set of
-	 * concrete states described by predicate p2, that is p1 → p2.
+	 * Checks subset relations.
+	 * Ideally, this checks whether the set of concrete states described by predicate p1 is a subset of or equal to
+	 * the set of concrete states described by predicate p2, that is p1 → p2.
+	 * However, this may do the check for over-approximations p1# ⊇ p1 and p2# ⊇ p2 instead.
 	 * <p>
-	 * The check has to be precise and has always to terminate. This is only possible since the
-	 * input is an abstract state and not an arbitrary predicate.
+	 * The actual check has to be precise and has to terminate. This is only possible since this operator
+	 * is allowed to over-approximate both inputs.
 	 *
-	 * @param subset p1
-	 * @param superset p2
-	 * @return p1 → p2
+	 * @param subset p1, left-hand side (lhs) of the relation check
+	 * @param superset p2, right-hand side (rhs) of the relation check
+	 * @return p1# → p2#, that is, p1# ⊆ p2#<br>
+	 *         where p1# ⊇ p1 and p2# ⊇ p2 are the altered inputs over-approximating p1 and p2
 	 */
-	boolean isSubsetEq(final IPredicate subset, final IPredicate superset);
+	ResultForAlteredInputs isSubsetEq(final IPredicate subset, final IPredicate superset);
 
 	/**
 	 * Abstracts a predicate by over-approximating, that is ∀ p : p → α(p).

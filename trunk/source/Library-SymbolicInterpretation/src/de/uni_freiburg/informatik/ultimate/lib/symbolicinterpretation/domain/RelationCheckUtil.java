@@ -24,91 +24,62 @@
  * licensors of the ULTIMATE Library-SymbolicInterpretation plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.relationchecker;
+package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain;
 
 import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain.ResultForAlteredInputs;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Tries to check relations using the solver.
- * In case of UNKNOWN results abstracts the operands applies the solver a second time.
- * Throws an exception in case the second solver call returns UNKNOWN too.
- *
- * @deprecated  Replaced by relation checks in {@link IDomain}.
- *              Still kept for copy-pasting parts of this deprecated code when needed in the new code
+ * Common approaches to implement {@link IDomain#isEqBottom(IPredicate)}
+ * and {@link IDomain#isSubsetEq(IPredicate, IPredicate)}.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
-public class SolverAlphaSolverError implements IRelationChecker {
+public class RelationCheckUtil {
 
-	private final SymbolicTools mTools;
-	private final IDomain mDomain;
-
-	public SolverAlphaSolverError(final SymbolicTools tools, final IDomain domain) {
-		mTools = tools;
-		mDomain = domain;
-	}
-
-	@Override
-	public LhsRelRhs isEqBottom(final IPredicate pred) {
-		final LhsRelRhs result = new LhsRelRhs(pred, mTools.bottom());
+	public static ResultForAlteredInputs isEqBottom_SolverAlphaSolver(
+			final SymbolicTools tools, final IDomain domain, final IPredicate pred) {
+		final ResultForAlteredInputs result = new ResultForAlteredInputs(pred, tools.bottom());
 		for (int attempt = 0; attempt < 2; ++attempt) {
 			if (SmtUtils.isFalseLiteral(result.mLhs.getFormula())) {
 				result.mResult = true;
 				return result;
 			}
-			final Optional<Boolean> solverResult = mTools.isFalse(result.mLhs);
+			final Optional<Boolean> solverResult = tools.isFalse(result.mLhs);
 			if (solverResult.isPresent()) {
 				result.mResult = solverResult.get();
 				return result;
 			}
-			result.abstractLhs(mDomain::alpha);
+			result.abstractLhs(domain::alpha);
 		}
 		throw new UnsupportedOperationException(String.format(
 				"Solver couldn't answer isBottom for\noriginal:\n%s\nabstracted:\n%s",
 				pred, result.mLhs));
 	}
 
-	@Override
-	public LhsRelRhs isSubsetEq(final IPredicate left, final IPredicate right) {
-		final LhsRelRhs result = new LhsRelRhs(left, right);
+	public static ResultForAlteredInputs isSubsetEq_SolverAlphaSolver(
+			final SymbolicTools tools, final IDomain domain, final IPredicate left, final IPredicate right) {
+		final ResultForAlteredInputs result = new ResultForAlteredInputs(left, right);
 		for (int attempt = 0; attempt < 2; ++attempt) {
 			if (SmtUtils.isFalseLiteral(result.mLhs.getFormula()) || result.mLhs.equals(result.mRhs)) {
 				result.mResult = true;
 				return result;
 			}
-			final Optional<Boolean> solverResult = mTools.implies(result.mLhs, result.mRhs);
+			final Optional<Boolean> solverResult = tools.implies(result.mLhs, result.mRhs);
 			if (solverResult.isPresent()) {
 				result.mResult = solverResult.get();
 				return result;
 			}
 			// TODO maybe abstracting one side per attempt is also possible. Think about it carefully.
-			result.abstractLhsAndRhs(mDomain::alpha);
+			result.abstractLhsAndRhs(domain::alpha);
 		}
 		throw new UnsupportedOperationException(String.format(
 				"Solver couldn't answer isSubsetEq for\noriginal:\n%s\n%s\nabstracted:\n%s\n%s",
 				left, right, result.mLhs, result.mRhs));
-	}
-
-	@Override
-	public boolean underapproxIsBottom(IPredicate pred) {
-		for (int attempt = 0; attempt < 2; ++attempt) {
-			if (SmtUtils.isFalseLiteral(pred.getFormula())) {
-				return true;
-			}
-			pred = mDomain.alpha(pred);
-		}
-		return false;
-	}
-
-	@Override
-	public boolean underapproxIsSubsetEq(final IPredicate left, final IPredicate right) {
-		// TODO consider using abstraction when this method is needed
-		return left.getClosedFormula().equals(right.getClosedFormula()) || underapproxIsBottom(left);
 	}
 
 }
