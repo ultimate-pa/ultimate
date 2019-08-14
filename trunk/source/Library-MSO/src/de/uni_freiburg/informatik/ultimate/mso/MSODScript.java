@@ -93,22 +93,22 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Not
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-public class MSODNatScript extends NoopScript {
+public class MSODScript extends NoopScript {
 
 	private final IUltimateServiceProvider mUltimateServiceProvider;
 	private final AutomataLibraryServices mAutomataLibrarayServices;
-	private final MSODOperations mAutomatonFactory;
+	private final MSODOperations mMSODOperations;
 	public final ILogger mLogger;
 	private Term mAssertionTerm;
 	private Map<Term, Term> mModel;
 
-	public MSODNatScript(final IUltimateServiceProvider services, final ILogger logger,
+	public MSODScript(final IUltimateServiceProvider services, final ILogger logger,
 			final MSODOperations automatonFactory) {
 		mUltimateServiceProvider = services;
 		mAutomataLibrarayServices = new AutomataLibraryServices(services);
 		mLogger = logger;
 
-		mAutomatonFactory = automatonFactory;
+		mMSODOperations = automatonFactory;
 	}
 
 	@Override
@@ -143,34 +143,17 @@ public class MSODNatScript extends NoopScript {
 
 				final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
 
-				if (mAutomatonFactory instanceof MSODNatOperations) {
+				if (mMSODOperations instanceof MSODNatOperations) {
 					mModel = MSODUtils.parseMoNatDiffToTerm(this, word, terms);
 				}
 
-				if (mAutomatonFactory instanceof MSODIntOperations) {
+				if (mMSODOperations instanceof MSODIntOperations) {
 					mModel = MSODUtils.parseMSODiffIntToTerm(this, word, terms);
 				}
 
 				mLogger.info("RESULT: SAT");
 				mLogger.info("MODEL: " + mModel);
 				mLogger.info(automatonToString(automaton, Format.ATS));
-
-				// // Test Automaton with int numbers
-				// mLogger.info("------------------------------------Test---------------------------------");
-				// Rational c = Rational.valueOf(1, 1);
-				// Term x = SmtUtils.buildNewConstant(this, "a", "Int");
-				// Term y = SmtUtils.buildNewConstant(this, "b", "Int");
-				//
-				// mLogger.info(automatonToString(
-				// MoNatDiffAutomatonFactory.testCompleteAutomaton(mAutomataLibrarayServices, x, y, c),
-				// Format.ATS));
-				//
-				// mLogger.info(
-				// automatonToString(new MinimizeSevpa<>(mAutomataLibrarayServices, new MoNatDiffStringFactory(),
-				// MoNatDiffAutomatonFactory.testCompleteAutomaton(mAutomataLibrarayServices, x, y, c))
-				// .getResult(),
-				// Format.ATS));
-				// mLogger.info("------------------------------------Test-Ende---------------------------------");
 
 				return LBool.SAT;
 			}
@@ -345,7 +328,7 @@ public class MSODNatScript extends NoopScript {
 
 		Set<MSODAlphabetSymbol> reducedAlphabet;
 		reducedAlphabet = MSODUtils.createAlphabet(freeVars.toArray(new Term[0]));
-		result = mAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, reducedAlphabet, false);
+		result = mMSODOperations.reconstruct(mAutomataLibrarayServices, result, reducedAlphabet, false);
 		result = makeStatesFinal(result, additionalFinals);
 
 		return result;
@@ -381,27 +364,7 @@ public class MSODNatScript extends NoopScript {
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getParameters()[0]);
 		mLogger.info("Construct not φ: " + term);
 
-		result = new Complement<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
-		if (result.getAlphabet().isEmpty()) {
-			return result;
-		}
-
-		final Set<Term> intVars = new HashSet<>(result.getAlphabet().iterator().next().getMap().keySet());
-		intVars.removeIf(o -> !MSODUtils.isIntVariable(o));
-
-		for (final Term intVar : intVars) {
-			INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton;
-			varAutomaton = MSODOperations.intVariableAutomaton(mAutomataLibrarayServices, intVar);
-			varAutomaton =
-					mAutomatonFactory.reconstruct(mAutomataLibrarayServices, varAutomaton, result.getAlphabet(), true);
-
-			result = new Intersect<>(mAutomataLibrarayServices, new MSODStringFactory(), result, varAutomaton)
-					.getResult();
-		}
-
-		// TODO: Find best place for minimization.
-		final INestedWordAutomaton<MSODAlphabetSymbol, String> minimized;
-		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
+		result = mMSODOperations.complement(mAutomataLibrarayServices, result);
 
 		return result;
 	}
@@ -425,10 +388,10 @@ public class MSODNatScript extends NoopScript {
 			Set<MSODAlphabetSymbol> symbols;
 			symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
 
-			result = mAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, symbols, true);
-			tmp = mAutomatonFactory.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
+			result = mMSODOperations.reconstruct(mAutomataLibrarayServices, result, symbols, true);
+			tmp = mMSODOperations.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
 
-			result = new Intersect<>(mAutomataLibrarayServices, new MSODStringFactory(), result, tmp).getResult();
+			result = mMSODOperations.intersect(mAutomataLibrarayServices, result, tmp);
 		}
 
 		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
@@ -453,13 +416,11 @@ public class MSODNatScript extends NoopScript {
 			Set<MSODAlphabetSymbol> symbols;
 			symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
 
-			result = mAutomatonFactory.reconstruct(mAutomataLibrarayServices, result, symbols, true);
-			tmp = mAutomatonFactory.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
+			result = mMSODOperations.reconstruct(mAutomataLibrarayServices, result, symbols, true);
+			tmp = mMSODOperations.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
 
-			result = new Union<>(mAutomataLibrarayServices, new MSODStringFactory(), result, tmp).getResult();
+			result = mMSODOperations.union(mAutomataLibrarayServices, result, tmp);
 		}
-
-		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
 
 		return result;
 	}
@@ -540,12 +501,12 @@ public class MSODNatScript extends NoopScript {
 
 			if (var.getValue().equals(Rational.ONE)) {
 				mLogger.info("Construct x < c: " + term);
-				return mAutomatonFactory.strictIneqAutomaton(mAutomataLibrarayServices, var.getKey(), constant);
+				return mMSODOperations.strictIneqAutomaton(mAutomataLibrarayServices, var.getKey(), constant);
 			}
 
 			if (var.getValue().equals(Rational.MONE)) {
 				mLogger.info("Construct -x < c: " + term);
-				return mAutomatonFactory.strictNegIneqAutomaton(mAutomataLibrarayServices, var.getKey(), constant);
+				return mMSODOperations.strictNegIneqAutomaton(mAutomataLibrarayServices, var.getKey(), constant);
 			}
 		}
 
@@ -561,12 +522,12 @@ public class MSODNatScript extends NoopScript {
 			}
 
 			if (var1.getValue().equals(Rational.ONE)) {
-				return mAutomatonFactory.strictIneqAutomaton(mAutomataLibrarayServices, var1.getKey(), var2.getKey(),
+				return mMSODOperations.strictIneqAutomaton(mAutomataLibrarayServices, var1.getKey(), var2.getKey(),
 						constant);
 			}
 
 			if (var2.getValue().equals(Rational.ONE)) {
-				return mAutomatonFactory.strictIneqAutomaton(mAutomataLibrarayServices, var2.getKey(), var1.getKey(),
+				return mMSODOperations.strictIneqAutomaton(mAutomataLibrarayServices, var2.getKey(), var1.getKey(),
 						constant);
 			}
 		}
@@ -584,7 +545,7 @@ public class MSODNatScript extends NoopScript {
 			throw new IllegalArgumentException("StrictSubset must have exactly two parameters.");
 		}
 
-		return mAutomatonFactory.strictSubsetAutomaton(mAutomataLibrarayServices, term.getParameters()[0],
+		return mMSODOperations.strictSubsetAutomaton(mAutomataLibrarayServices, term.getParameters()[0],
 				term.getParameters()[1]);
 	}
 
@@ -598,7 +559,7 @@ public class MSODNatScript extends NoopScript {
 			throw new IllegalArgumentException("Subset must have exactly two parameters.");
 		}
 
-		return mAutomatonFactory.subsetAutomaton(mAutomataLibrarayServices, term.getParameters()[0],
+		return mMSODOperations.subsetAutomaton(mAutomataLibrarayServices, term.getParameters()[0],
 				term.getParameters()[1]);
 	}
 
@@ -624,8 +585,7 @@ public class MSODNatScript extends NoopScript {
 
 		if (variables.size() == 0) {
 			mLogger.info("Construct c element X: " + term);
-			return mAutomatonFactory.constElementAutomaton(mAutomataLibrarayServices, constant,
-					term.getParameters()[1]);
+			return mMSODOperations.constElementAutomaton(mAutomataLibrarayServices, constant, term.getParameters()[1]);
 		}
 
 		if (variables.size() == 1) {
@@ -636,7 +596,7 @@ public class MSODNatScript extends NoopScript {
 				throw new IllegalArgumentException("Invalid input.");
 			}
 
-			return mAutomatonFactory.elementAutomaton(mAutomataLibrarayServices, var.getKey(), constant,
+			return mMSODOperations.elementAutomaton(mAutomataLibrarayServices, var.getKey(), constant,
 					term.getParameters()[1]);
 		}
 
@@ -670,7 +630,7 @@ public class MSODNatScript extends NoopScript {
 	 *             if construction of {@link IsEmpty} fails.
 	 */
 	private void checkEmptiness(final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
-			throws AutomataOperationCanceledException {
+			throws AutomataLibraryException {
 
 		final IsEmpty<MSODAlphabetSymbol, String> isEmpty = new IsEmpty<>(mAutomataLibrarayServices, automaton);
 

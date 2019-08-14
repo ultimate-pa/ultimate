@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateElimina
 import de.uni_freiburg.informatik.ultimate.mso.MSODIntOperations;
 import de.uni_freiburg.informatik.ultimate.mso.MSODIntWeakOperations;
 import de.uni_freiburg.informatik.ultimate.mso.MSODNatOperations;
-import de.uni_freiburg.informatik.ultimate.mso.MSODNatScript;
+import de.uni_freiburg.informatik.ultimate.mso.MSODScript;
 import de.uni_freiburg.informatik.ultimate.mso.MSODNatWeakOperations;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
@@ -232,25 +232,25 @@ public class SmtParser implements ISource {
 
 			case MSODNatWeak: {
 				mLogger.info("MSODNatWeak");
-				script = new MSODNatScript(mServices, mLogger, new MSODNatWeakOperations());
+				script = new MSODScript(mServices, mLogger, new MSODNatWeakOperations());
 			}
 				break;
 
 			case MSODNat: {
 				mLogger.info("MSODNat");
-				script = new MSODNatScript(mServices, mLogger, new MSODNatOperations());
+				script = new MSODScript(mServices, mLogger, new MSODNatOperations());
 			}
 				break;
 
 			case MSODIntWeak: {
 				mLogger.info("MSODIntWeak");
-				script = new MSODNatScript(mServices, mLogger, new MSODIntWeakOperations());
+				script = new MSODScript(mServices, mLogger, new MSODIntWeakOperations());
 			}
 				break;
 
 			case MSODInt: {
 				mLogger.info("MSODInt");
-				script = new MSODNatScript(mServices, mLogger, new MSODIntOperations());
+				script = new MSODScript(mServices, mLogger, new MSODIntOperations());
 			}
 				break;
 
