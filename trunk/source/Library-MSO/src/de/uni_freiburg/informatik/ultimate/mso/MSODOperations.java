@@ -10,11 +10,13 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -287,5 +289,25 @@ public abstract class MSODOperations {
 				new MinimizeSevpa<>(services, new MSODStringFactory(), automaton).getResult();
 
 		return result;
+	}
+
+	/**
+	 * Returns a automaton where also the given states are final.
+	 *
+	 * @throws AutomataOperationCanceledException
+	 *             if construction of {@link NestedWordAutomatonReachableStates} fails.
+	 */
+	public INestedWordAutomaton<MSODAlphabetSymbol, String> makeStatesFinal(final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<String> states)
+			throws AutomataLibraryException {
+
+		NestedWordAutomatonReachableStates<MSODAlphabetSymbol, String> nwaReachableStates;
+		nwaReachableStates = new NestedWordAutomatonReachableStates<>(services, automaton);
+
+		final Set<String> finals = new HashSet<>(automaton.getFinalStates());
+		finals.addAll(states);
+
+		return new NestedWordAutomatonFilteredStates<>(services, nwaReachableStates, automaton.getStates(),
+				automaton.getInitialStates(), finals);
 	}
 }

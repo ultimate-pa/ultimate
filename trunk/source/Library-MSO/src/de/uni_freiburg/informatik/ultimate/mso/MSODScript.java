@@ -47,13 +47,11 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -329,7 +327,7 @@ public class MSODScript extends NoopScript {
 		Set<MSODAlphabetSymbol> reducedAlphabet;
 		reducedAlphabet = MSODUtils.createAlphabet(freeVars.toArray(new Term[0]));
 		result = mMSODOperations.reconstruct(mAutomataLibrarayServices, result, reducedAlphabet, false);
-		result = makeStatesFinal(result, additionalFinals);
+		result = mMSODOperations.makeStatesFinal(mAutomataLibrarayServices, result, additionalFinals);
 
 		return result;
 	}
@@ -601,26 +599,6 @@ public class MSODScript extends NoopScript {
 		}
 
 		throw new IllegalArgumentException("Invalid input.");
-	}
-
-	/**
-	 * Returns a automaton where also the given states are final.
-	 *
-	 * @throws AutomataOperationCanceledException
-	 *             if construction of {@link NestedWordAutomatonReachableStates} fails.
-	 */
-	private INestedWordAutomaton<MSODAlphabetSymbol, String>
-			makeStatesFinal(final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<String> states)
-					throws AutomataOperationCanceledException {
-
-		NestedWordAutomatonReachableStates<MSODAlphabetSymbol, String> nwaReachableStates;
-		nwaReachableStates = new NestedWordAutomatonReachableStates<>(mAutomataLibrarayServices, automaton);
-
-		final Set<String> finals = new HashSet<>(automaton.getFinalStates());
-		finals.addAll(states);
-
-		return new NestedWordAutomatonFilteredStates<>(mAutomataLibrarayServices, nwaReachableStates,
-				automaton.getStates(), automaton.getInitialStates(), finals);
 	}
 
 	/**
