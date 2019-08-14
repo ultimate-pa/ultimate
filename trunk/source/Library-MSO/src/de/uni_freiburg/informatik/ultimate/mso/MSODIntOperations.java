@@ -22,38 +22,37 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * TODO: Check inputs.
- * 
+ *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
 
 /**
  * TODO:
- * 
- * 1. Find meaningful names for the automata representing only one case of the
- * complete automaton. 2. Test all (new) Int automata. 3. Note: Some methods are
- * redundant to the ones in MoNatDiffAutomatonFactory (even though some are
- * shortened by the use of createAlphabet) including: emptyAutomaton,
- * trueAutomaton, falseAutomaton, intVariableAutomaton, reconstruct,
- * createAlphabet, strictSubsetAutomaton, nonStrictSubsetAutomaton 4.
- * nonStrictSubset changed such that actually no transition is needed to be
- * accepting.
- * 
+ *
+ * 1. Find meaningful names for the automata representing only one case of the complete automaton. 2. Test all (new) Int
+ * automata. 3. Note: Some methods are redundant to the ones in MoNatDiffAutomatonFactory (even though some are
+ * shortened by the use of createAlphabet) including: emptyAutomaton, trueAutomaton, falseAutomaton,
+ * intVariableAutomaton, reconstruct, createAlphabet, strictSubsetAutomaton, nonStrictSubsetAutomaton 4. nonStrictSubset
+ * changed such that actually no transition is needed to be accepting.
+ *
  */
 
-public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
+public class MSODIntOperations extends MSODOperations {
 
 	/**
 	 * Constructs an automaton that represents "x < c".
-	 * 
+	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type Int.
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAutomaton(
-			final AutomataLibraryServices services, final Term x, final Rational constant) {
+	@Override
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAutomaton(final AutomataLibraryServices services,
+			final Term x, final Rational constant) {
 
-		if (!MSODUtils.isIntVariable(x))
+		if (!MSODUtils.isIntVariable(x)) {
 			throw new IllegalArgumentException("Input x must be an Int variable.");
+		}
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
 
@@ -112,11 +111,13 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 	 * Constructs an automaton that represents "-x < c".
 	 *
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> strictNegIneqAutomaton(
-			final AutomataLibraryServices services, final Term x, final Rational constant) {
+	@Override
+	public NestedWordAutomaton<MSODAlphabetSymbol, String>
+			strictNegIneqAutomaton(final AutomataLibraryServices services, final Term x, final Rational constant) {
 
-		if (!MSODUtils.isIntVariable(x))
+		if (!MSODUtils.isIntVariable(x)) {
 			throw new IllegalArgumentException("Input x must be an Int variable.");
+		}
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
 
@@ -175,15 +176,17 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 
 	/**
 	 * Constructs an automaton that represents "c element X".
-	 * 
+	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type SetOfInt.
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> constElementAutomaton(
-			final AutomataLibraryServices services, final Rational constant, final Term x) {
+	@Override
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> constElementAutomaton(final AutomataLibraryServices services,
+			final Rational constant, final Term x) {
 
-		if (!MSODUtils.isSetOfIntVariable(x))
+		if (!MSODUtils.isSetOfIntVariable(x)) {
 			throw new IllegalArgumentException("Input x must be a SetOfInt variable.");
+		}
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
 
@@ -232,19 +235,20 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 
 	/**
 	 * Constructs an automaton that represents "x+c element Y".
-	 * 
+	 *
 	 * @throws AutomataLibraryException
 	 *             if construction of {@link Union} fails
-	 * 
+	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int respectively SetOfInt.
 	 */
-	public static INestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomaton(
-			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
-			throws AutomataLibraryException {
+	@Override
+	public INestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomaton(final AutomataLibraryServices services,
+			final Term x, final Rational constant, final Term y) throws AutomataLibraryException {
 
-		if (!MSODUtils.isIntVariable(x) || !MSODUtils.isSetOfIntVariable(y))
+		if (!MSODUtils.isIntVariable(x) || !MSODUtils.isSetOfIntVariable(y)) {
 			throw new IllegalArgumentException("Input x, y must be Int respectively SetOfInt variables.");
+		}
 
 		INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = elementAutomatonPartOne(services, x, constant, y);
 
@@ -432,8 +436,9 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
-		if (c >= 0)
+		if (c >= 0) {
 			return automaton;
+		}
 
 		automaton.addState(true, false, "init");
 		automaton.addState(false, true, "final");
@@ -510,8 +515,9 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
-		if (c <= 0)
+		if (c <= 0) {
 			return automaton;
+		}
 
 		automaton.addState(true, false, "init");
 		automaton.addState(false, true, "final");
@@ -573,15 +579,17 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 
 	/**
 	 * Constructs an automaton that represents "X strictSubsetInt Y".
-	 * 
+	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> strictSubsetAutomaton(
-			final AutomataLibraryServices services, final Term x, final Term y) {
+	@Override
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> strictSubsetAutomaton(final AutomataLibraryServices services,
+			final Term x, final Term y) {
 
-		if (!MSODUtils.isSetOfIntVariable(x) || !MSODUtils.isSetOfIntVariable(y))
+		if (!MSODUtils.isSetOfIntVariable(x) || !MSODUtils.isSetOfIntVariable(y)) {
 			throw new IllegalArgumentException("Input x, y must be SetOfInt variables.");
+		}
 
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
 		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
@@ -608,15 +616,17 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 
 	/**
 	 * Constructs an automaton that represents "X nonStrictSubsetInt Y".
-	 * 
+	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> subsetAutomaton(
-			final AutomataLibraryServices services, final Term x, final Term y) {
+	@Override
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> subsetAutomaton(final AutomataLibraryServices services,
+			final Term x, final Term y) {
 
-		if (!MSODUtils.isSetOfIntVariable(x) || !MSODUtils.isSetOfIntVariable(y))
+		if (!MSODUtils.isSetOfIntVariable(x) || !MSODUtils.isSetOfIntVariable(y)) {
 			throw new IllegalArgumentException("Input x, y must be SetOfInt variables.");
+		}
 
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
 		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
@@ -635,25 +645,25 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 	}
 
 	/**
-	 * Constructs an automaton that represents x - y < c. The automaton consists of
-	 * four parts, one for each of the following case distinctions: x,y < 0; x,y >=
-	 * 0; x < 0, y >= 0 and x >= 0, y < 0.
-	 * 
+	 * Constructs an automaton that represents x - y < c. The automaton consists of four parts, one for each of the
+	 * following case distinctions: x,y < 0; x,y >= 0; x < 0, y >= 0 and x >= 0, y < 0.
+	 *
 	 * @throws AutomataLibraryException
 	 *             if construction of {@link Union} fails
-	 * 
+	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int.
 	 */
-	public static INestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAutomaton(
-			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant)
-			throws AutomataLibraryException {
+	@Override
+	public INestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAutomaton(final AutomataLibraryServices services,
+			final Term x, final Term y, final Rational constant) throws AutomataLibraryException {
 
-		if (!MSODUtils.isIntVariable(x) || !MSODUtils.isIntVariable(y))
+		if (!MSODUtils.isIntVariable(x) || !MSODUtils.isIntVariable(y)) {
 			throw new IllegalArgumentException("Input x, y must be Int variables.");
+		}
 
-		INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = strictIneqAtomatonPartOne(services, x, y,
-				constant);
+		INestedWordAutomaton<MSODAlphabetSymbol, String> automaton =
+				strictIneqAtomatonPartOne(services, x, y, constant);
 
 		automaton = new Union<>(services, new MSODStringFactory(), automaton,
 				strictIneqAtomatonPartTwo(services, x, y, constant)).getResult();
@@ -846,8 +856,9 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
-		if (c <= 0)
+		if (c <= 0) {
 			return automaton;
+		}
 
 		automaton.addState(true, false, "init");
 		automaton.addState(false, true, "final");
@@ -877,8 +888,9 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 					automaton.addState(false, false, state);
 					automaton.addInternalTransition(predInner, xy00, state);
 
-					if (j % 2 != 0)
+					if (j % 2 != 0) {
 						automaton.addInternalTransition(state, xy10, "final");
+					}
 
 					predInner = state;
 				}
@@ -894,8 +906,9 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 					automaton.addState(false, false, state);
 					automaton.addInternalTransition(predInner, xy00, state);
 
-					if (j % 2 != 0)
+					if (j % 2 != 0) {
 						automaton.addInternalTransition(state, xy01, "final");
+					}
 
 					predInner = state;
 				}
@@ -923,8 +936,9 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
-		if (c > 0)
+		if (c > 0) {
 			return automaton;
+		}
 
 		automaton.addState(true, false, "init");
 		automaton.addState(false, true, "final");
@@ -943,7 +957,7 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 
 			final String state1 = "s" + i + "_1";
 			automaton.addState(false, false, state1);
-			
+
 			final String state2 = "s" + i + "_2";
 			automaton.addState(false, false, state2);
 			automaton.addInternalTransition(state1, xy00, state2);
@@ -975,7 +989,7 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 
 					predInner = state;
 				}
-				
+
 				automaton.addInternalTransition(predInner, xy10, "final");
 			}
 
@@ -986,29 +1000,30 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 	}
 
 	/**
-	 * Constructs a copy of the given automaton with the extended or reduced
-	 * alphabet.
+	 * Constructs a copy of the given automaton with the extended or reduced alphabet.
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> reconstruct(final AutomataLibraryServices services,
+	@Override
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> reconstruct(final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<MSODAlphabetSymbol> alphabet,
 			final boolean isExtended) {
 
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> result;
 
-		result = MSODNatAutomatonFactory.emptyAutomaton(services);
+		result = MSODOperations.emptyAutomaton(services);
 		result.getAlphabet().addAll(alphabet);
 
-		for (final String state : automaton.getStates())
+		for (final String state : automaton.getStates()) {
 			result.addState(automaton.isInitial(state), automaton.isFinal(state), state);
+		}
 
 		for (final String state : automaton.getStates()) {
 
 			for (final OutgoingInternalTransition<MSODAlphabetSymbol, String> transition : automaton
 					.internalSuccessors(state)) {
 
-				final Iterator<MSODAlphabetSymbol> itMatches = isExtended
-						? alphabet.stream().filter(e -> e.contains(transition.getLetter())).iterator()
-						: alphabet.stream().filter(e -> transition.getLetter().contains(e)).iterator();
+				final Iterator<MSODAlphabetSymbol> itMatches =
+						isExtended ? alphabet.stream().filter(e -> e.contains(transition.getLetter())).iterator()
+								: alphabet.stream().filter(e -> transition.getLetter().contains(e)).iterator();
 
 				while (itMatches.hasNext()) {
 					result.addInternalTransition(state, itMatches.next(), transition.getSucc());
@@ -1022,9 +1037,9 @@ public class MSODIntAutomatonFactory extends MSODAutomatonFactory {
 	/**
 	 * TODO: Move to MoNatDiffAlphabetSymbol
 	 */
-	public static Map<String, MSODAlphabetSymbol> createAlphabet(
-			final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Term... terms) {
-		final Map<String, MSODAlphabetSymbol> alphabetSymbols = new HashMap<String, MSODAlphabetSymbol>();
+	public static Map<String, MSODAlphabetSymbol>
+			createAlphabet(final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Term... terms) {
+		final Map<String, MSODAlphabetSymbol> alphabetSymbols = new HashMap<>();
 
 		// Deal with all other term length
 

@@ -55,7 +55,11 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ExceptionThrowingParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateEliminator;
-import de.uni_freiburg.informatik.ultimate.mso.MSODIntScript;
+import de.uni_freiburg.informatik.ultimate.mso.MSODIntOperations;
+import de.uni_freiburg.informatik.ultimate.mso.MSODIntWeakOperations;
+import de.uni_freiburg.informatik.ultimate.mso.MSODNatOperations;
+import de.uni_freiburg.informatik.ultimate.mso.MSODNatScript;
+import de.uni_freiburg.informatik.ultimate.mso.MSODNatWeakOperations;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
@@ -197,12 +201,9 @@ public class SmtParser implements ISource {
 			return;
 		}
 
-
-
 		final Script script;
 		switch (smtParserMode) {
-		case GenericSmtSolver:
-		{
+		case GenericSmtSolver: {
 			mLogger.info("Running solver on smt file");
 			// if (useExternalSolver) {
 			// mLogger.info("Starting external SMT solver with command " + commandExternalSolver);
@@ -223,12 +224,42 @@ public class SmtParser implements ISource {
 			// }
 		}
 			break;
+
 		case MsoSolver: {
-			mLogger.info("Running our experimental MSO solver on input file");
-			// script = new MoNatDiffScript(mServices, mLogger);
-			script = new MSODIntScript(mServices, mLogger);
+			mLogger.info("Running our experimental MSO solver on input file using ...");
+
+			switch (msoLogic) {
+
+			case MSODNatWeak: {
+				mLogger.info("MSODNatWeak");
+				script = new MSODNatScript(mServices, mLogger, new MSODNatWeakOperations());
+			}
+				break;
+
+			case MSODNat: {
+				mLogger.info("MSODNat");
+				script = new MSODNatScript(mServices, mLogger, new MSODNatOperations());
+			}
+				break;
+
+			case MSODIntWeak: {
+				mLogger.info("MSODIntWeak");
+				script = new MSODNatScript(mServices, mLogger, new MSODIntWeakOperations());
+			}
+				break;
+
+			case MSODInt: {
+				mLogger.info("MSODInt");
+				script = new MSODNatScript(mServices, mLogger, new MSODIntOperations());
+			}
+				break;
+
+			default:
+				throw new AssertionError("unknown value " + msoLogic);
+			}
 		}
 			break;
+
 		case UltimateEliminator: {
 			mLogger.info("Running UltimateEliminator on input file");
 			final ILogger solverLogger = mServices.getLoggingService().getLoggerForExternalTool("SolverLogger");
@@ -265,12 +296,11 @@ public class SmtParser implements ISource {
 			throw new AssertionError("unknown value " + smtParserMode);
 		}
 
-
 		// mLogger.info("Executing SMT file " + file.getAbsolutePath());
 
 		final OptionMap optionMap = new OptionMap(logProxy, true);
 
-		if (smtParserMode == SmtParserMode.UltimateTreeAutomizer || smtParserMode == smtParserMode.UltimateEliminator) {
+		if (smtParserMode == SmtParserMode.UltimateTreeAutomizer || smtParserMode == SmtParserMode.UltimateEliminator) {
 			// crash in Horn solver mode if parsing fails
 			optionMap.set(":continue-on-error", false);
 			optionMap.set(":print-success", false);
@@ -286,7 +316,7 @@ public class SmtParser implements ISource {
 		} catch (final SMTLIBException exc) {
 			mLogger.info("Failed while executing SMT file " + file.getAbsolutePath());
 			mLogger.info("SMTLIBException " + exc.getMessage());
-//			parseEnv.printError(exc.getMessage());
+			// parseEnv.printError(exc.getMessage());
 			throw exc;
 		} finally {
 			script.exit();
@@ -317,7 +347,7 @@ public class SmtParser implements ISource {
 		} catch (final SMTLIBException exc) {
 			mLogger.info("Failed while writing SMT file " + outputFilename);
 			mLogger.error("SMTLIBException " + exc.getMessage());
-//			parseEnv2.printError(exc.getMessage());
+			// parseEnv2.printError(exc.getMessage());
 		}
 	}
 
