@@ -168,6 +168,7 @@ public class MSODIntWeakOperationsTest {
 		mLogger.info("--------------------------------------------------");
 		mLogger.info("Testing strictIneqAutomaton ...");
 		MSODAlphabetSymbol[] symbols;
+		int[] xValues;
 		Rational c;
 
 		final Term x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
@@ -178,9 +179,10 @@ public class MSODIntWeakOperationsTest {
 
 		// -1 < 0
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x1 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
-		test(true, getWord(x, new int[] { -1 }), mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		xValues = new int[] { -1 };
+		// symbols = new MSODAlphabetSymbol[] { x0, x0, x1 };
+		// test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		test(true, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// -3 < 0
 		c = Rational.valueOf(0, 1);
@@ -235,6 +237,7 @@ public class MSODIntWeakOperationsTest {
 		mLogger.info("--------------------------------------------------");
 		mLogger.info("Testing strictIneqAutomaton ...");
 		MSODAlphabetSymbol[] symbols;
+		int[] xValues, yValues;
 		Rational c;
 
 		final Term x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
@@ -248,7 +251,8 @@ public class MSODIntWeakOperationsTest {
 
 		// 1 - 2 < 0
 		c = Rational.valueOf(0, 1);
-		final int[] xValues = { 1 }, yValues = { 2 };
+		xValues = new int[] { 1 };
+		yValues = new int[] { 2 };
 		// symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy01 };
 		// test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
