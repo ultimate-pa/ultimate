@@ -23,23 +23,23 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
+ * TODO: Comment.
+ *
  * TODO: Check inputs.
+ *
+ * TODO: Find meaningful names for the automata representing only one case of the complete automaton.
+ *
+ * TODO: Test all (new) Int automata.
+ *
+ * TODO: Note: Some methods are redundant to the ones in MoNatDiffAutomatonFactory (even though some are shortened by
+ * the use of createAlphabet) including: emptyAutomaton, trueAutomaton, falseAutomaton, intVariableAutomaton,
+ * reconstruct, createAlphabet, strictSubsetAutomaton, nonStrictSubsetAutomaton
+ *
+ * TODO: nonStrictSubset changed such that actually no transition is needed to be accepting.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-
-/**
- * TODO:
- *
- * 1. Find meaningful names for the automata representing only one case of the complete automaton. 2. Test all (new) Int
- * automata. 3. Note: Some methods are redundant to the ones in MoNatDiffAutomatonFactory (even though some are
- * shortened by the use of createAlphabet) including: emptyAutomaton, trueAutomaton, falseAutomaton,
- * intVariableAutomaton, reconstruct, createAlphabet, strictSubsetAutomaton, nonStrictSubsetAutomaton 4. nonStrictSubset
- * changed such that actually no transition is needed to be accepting.
- *
- */
-
 public class MSODIntOperations extends MSODOperations {
 
 	/**
@@ -1001,40 +1001,6 @@ public class MSODIntOperations extends MSODOperations {
 		}
 
 		return automaton;
-	}
-
-	/**
-	 * TODO: Move to MoNatDiffAlphabetSymbol
-	 */
-	public static Map<String, MSODAlphabetSymbol>
-			createAlphabet(final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Term... terms) {
-		final Map<String, MSODAlphabetSymbol> alphabetSymbols = new HashMap<>();
-
-		// Deal with all other term length
-
-		if (terms.length == 1) {
-			final MSODAlphabetSymbol x0, x1;
-			x0 = new MSODAlphabetSymbol(terms[0], false);
-			x1 = new MSODAlphabetSymbol(terms[0], true);
-			alphabetSymbols.put("x0", x0);
-			alphabetSymbols.put("x1", x1);
-			automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
-		}
-
-		if (terms.length == 2) {
-			final MSODAlphabetSymbol xy00, xy01, xy10, xy11;
-			xy00 = new MSODAlphabetSymbol(new Term[] { terms[0], terms[1] }, new boolean[] { false, false });
-			xy01 = new MSODAlphabetSymbol(new Term[] { terms[0], terms[1] }, new boolean[] { false, true });
-			xy10 = new MSODAlphabetSymbol(new Term[] { terms[0], terms[1] }, new boolean[] { true, false });
-			xy11 = new MSODAlphabetSymbol(new Term[] { terms[0], terms[1] }, new boolean[] { true, true });
-			alphabetSymbols.put("xy00", xy00);
-			alphabetSymbols.put("xy01", xy01);
-			alphabetSymbols.put("xy10", xy10);
-			alphabetSymbols.put("xy11", xy11);
-			automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
-		}
-
-		return alphabetSymbols;
 	}
 
 	/**
