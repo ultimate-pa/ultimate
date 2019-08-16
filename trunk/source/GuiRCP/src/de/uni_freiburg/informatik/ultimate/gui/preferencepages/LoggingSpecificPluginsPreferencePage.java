@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 
+import java.util.Arrays;
 import java.util.StringTokenizer;
 
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -113,18 +114,17 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 		if (plugins == null) {
 			return new String[0];
 		}
-
-		final String[] return_list = new String[plugins.length];
-
+		Arrays.sort(plugins);
+		final String[] rtr = new String[plugins.length];
 		for (int i = 0; i < plugins.length; i++) {
-			return_list[i] = plugins[i] + "=<LOG LEVEL>";
+			rtr[i] = plugins[i] + "=<LOG LEVEL>";
 		}
-		return return_list;
+		return rtr;
 	}
 
 	private static String[] convert(final String preferenceValue) {
-		final StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
-				CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
+		final StringTokenizer tokenizer =
+				new StringTokenizer(preferenceValue, CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
 		final int tokenCount = tokenizer.countTokens();
 		final String[] elements = new String[tokenCount];
 		for (int i = 0; i < tokenCount; i++) {
