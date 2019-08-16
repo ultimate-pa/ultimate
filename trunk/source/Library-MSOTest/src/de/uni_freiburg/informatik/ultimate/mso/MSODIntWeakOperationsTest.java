@@ -79,18 +79,6 @@ public class MSODIntWeakOperationsTest {
 		mScript.declareSort("SetOfInt", 0);
 	}
 
-	private void test(final Boolean result, final MSODAlphabetSymbol[] symbols,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
-
-		final NestedWord<MSODAlphabetSymbol> word = NestedWord.nestedWord(new Word<>(symbols));
-		final Accepts<MSODAlphabetSymbol, String> accepts = new Accepts<>(mServices, automaton, word);
-
-		mLogger.info("Word: " + word);
-		mLogger.info("Result: " + result + " / " + accepts.getResult());
-
-		Assert.assertEquals(result, accepts.getResult());
-	}
-
 	private void test(final Boolean result, final NestedWord<MSODAlphabetSymbol> word,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 
@@ -167,270 +155,314 @@ public class MSODIntWeakOperationsTest {
 	public void strictIneqAutomaton() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
 		mLogger.info("Testing strictIneqAutomaton ...");
-		MSODAlphabetSymbol[] symbols;
 		int[] xValues;
 		Rational c;
-
 		final Term x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
-		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
-		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
 
-		// x < c AND c <= 0
+		// Test Cases for x < c AND c <= 0
 
 		// -1 < 0
 		c = Rational.valueOf(0, 1);
 		xValues = new int[] { -1 };
-		// symbols = new MSODAlphabetSymbol[] { x0, x0, x1 };
-		// test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
 		test(true, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// -3 < 0
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		xValues = new int[] { -3 };
+		test(true, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// -3 < -2
 		c = Rational.valueOf(-2, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		xValues = new int[] { -3 };
+		test(true, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// 0 < 0
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { x1 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		xValues = new int[] { 0 };
+		test(false, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// -1 < -2
 		c = Rational.valueOf(-2, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x1 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		xValues = new int[] { -1 };
+		test(false, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
-		// x < c AND c > 0
+		// Test Cases for: x < c AND c > 0
 
 		// 0 < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { x1 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		xValues = new int[] { 0 };
+		test(true, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// -3 < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		xValues = new int[] { -3 };
+		test(true, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// 2 < 3
 		c = Rational.valueOf(3, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x1 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		xValues = new int[] { 2 };
+		test(true, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// 1 < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x1 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		xValues = new int[] { 1 };
+		test(false, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
 
 		// 3 < 2
 		c = Rational.valueOf(2, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		xValues = new int[] { 3 };
+		test(false, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
+
 	}
 
 	@Test
 	public void strictIneqAutomatonXYC() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
 		mLogger.info("Testing strictIneqAutomaton ...");
-		MSODAlphabetSymbol[] symbols;
+
 		int[] xValues, yValues;
 		Rational c;
-
 		final Term x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
 		final Term y = mScript.variable("y", SmtSortUtils.getIntSort(mScript));
-		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
-		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
-		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
-		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(x, y, true, true);
 
-		// x - y < c AND x > 0 AND y > 0 AND c <= 0
+
+		// Test Cases for x - y < c AND x > 0 AND y > 0 AND c <= 0
 
 		// 1 - 2 < 0
 		c = Rational.valueOf(0, 1);
 		xValues = new int[] { 1 };
 		yValues = new int[] { 2 };
-		// symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy01 };
-		// test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 2 - 4 < 0
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy10, xy00, xy00, xy00, xy01 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 2 };
+		yValues = new int[] { 4 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 1 - 4 < -2
 		c = Rational.valueOf(-2, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy00, xy00, xy00, xy00, xy01 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 1 };
+		yValues = new int[] { 4 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 2 - 1 < 0
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy10 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 2 };
+		yValues = new int[] { 1 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 1 - 1 < -3
 		c = Rational.valueOf(-3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy11 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 1 };
+		yValues = new int[] { 1 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
-		// x - y < c AND x > 0 AND y > 0 AND c > 0
+
+		// Test Cases for x - y < c AND x > 0 AND y > 0 AND c > 0
 
 		// 1 - 1 < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy11 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 1 };
+		yValues = new int[] { 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 1 - 2 < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy01 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 1 };
+		yValues = new int[] { 2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 3 - 2 < 2
 		c = Rational.valueOf(2, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy01, xy00, xy10 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 3 };
+		yValues = new int[] { 2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 2 - 1 < 3
 		c = Rational.valueOf(3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy10 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 2 };
+		yValues = new int[] { 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 2 - 1 < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy10 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 2 };
+		yValues = new int[] { 1 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 4 - 1 < 2
 		c = Rational.valueOf(2, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy00, xy00, xy00, xy00, xy10 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 4 };
+		yValues = new int[] { 1 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
-		// x - y < c AND x <= 0 AND y <= 0 AND c <= 0
+
+		// Test Cases for x - y < c AND x <= 0 AND y <= 0 AND c <= 0
 
 		// -1 - 0 < 0
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy10 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { -1 };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// - 2 - (-1) < 0
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy01, xy00, xy10 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { -2 };
+		yValues = new int[] { -1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// -5 - (-2) < -2
 		c = Rational.valueOf(-2, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy01, xy00, xy00, xy00, xy00, xy00, xy10 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { -5 };
+		yValues = new int[] { -2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// -1 - (-2) < 0
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy10, xy00, xy01 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { -1 };
+		yValues = new int[] { -2 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// -2 - (-2) < -3
 		c = Rational.valueOf(-3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy11 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { -2 };
+		yValues = new int[] { -2 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
-		// x - y < c AND x <= 0 AND y <= 0 AND c > 0
+
+		// Test cases for x - y < c AND x <= 0 AND y <= 0 AND c > 0
 
 		// 0 - 0 < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy11 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 0 };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// -1 - (-1) < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy11 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { -1 };
+		yValues = new int[] { -1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// -3 - (-2) < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy01, xy00, xy10 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { -3 };
+		yValues = new int[] { -2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 0 - (-1) < 2
 		c = Rational.valueOf(2, 1);
-		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy01 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 0 };
+		yValues = new int[] { -1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// -2 - (-4) < 3
 		c = Rational.valueOf(3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy10, xy00, xy00, xy00, xy01 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { -2 };
+		yValues = new int[] { -4 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// -2 - (-3) < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy10, xy00, xy01 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { -2 };
+		yValues = new int[] { -3 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 0 - (-3) < 2
 		c = Rational.valueOf(2, 1);
-		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy00, xy00, xy00, xy00, xy01 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 0 };
+		yValues = new int[] { -3 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
-		// x - y < c AND x > 0 AND y <= 0 AND c > 0
+		// Test Cases for x - y < c AND x > 0 AND y <= 0 AND c > 0
 
 		// 1 - 0 < 2
 		c = Rational.valueOf(2, 1);
-		symbols = new MSODAlphabetSymbol[] { xy01, xy10 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 1 };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 1 - (-2) < 4
 		c = Rational.valueOf(4, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy00, xy01 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 1 };
+		yValues = new int[] { -2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 2 - (-1) < 4
 		c = Rational.valueOf(4, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy01, xy10 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 2 };
+		yValues = new int[] { -1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 1 - (-1) < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy01 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 1 };
+		yValues = new int[] { -1 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 1 - 0 < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy01, xy10 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 1 };
+		yValues = new int[] { 0 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 1 - (-2) < 3
 		c = Rational.valueOf(3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy00, xy01 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 1 };
+		yValues = new int[] { -2 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
-		// x - y < c AND x <= 0 AND y > 0 AND c <= 0
+
+		// Test Cases for x - y < c AND x <= 0 AND y > 0 AND c <= 0
 
 		// 0 - 1 < 0
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { xy10, xy01 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 0 };
+		yValues = new int[] { 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 0 - 3 < 0
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy00, xy00, xy00, xy01 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 0 };
+		yValues = new int[] { 3 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// -3 - 1 < -3
 		c = Rational.valueOf(-3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy00, xy00, xy00, xy10 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { -3 };
+		yValues = new int[] { 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// -2 - 2 < -3
 		c = Rational.valueOf(-3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy01, xy10 };
-		test(true, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { -2 };
+		yValues = new int[] { 2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 		// 0 - 1 < -1
 		c = Rational.valueOf(-1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy10, xy01 };
-		test(false, symbols, mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		xValues = new int[] { 0 };
+		yValues = new int[] { 1 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -7 - 8 < -5
+		c = Rational.valueOf(-5, 1);
+		xValues = new int[] { -7 };
+		yValues = new int[] { 8 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -6 - 5 < -1
+		c = Rational.valueOf(-1, 1);
+		xValues = new int[] { -6 };
+		yValues = new int[] { 5 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -6 - 6 < -1
+		c = Rational.valueOf(-1, 1);
+		xValues = new int[] { -6 };
+		yValues = new int[] { 6 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
 	}
 
@@ -438,370 +470,397 @@ public class MSODIntWeakOperationsTest {
 	public void strictNegIneqAutomaton() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
 		mLogger.info("Testing strictNegIneqAutomaton ...");
-		MSODAlphabetSymbol[] symbols;
 		Rational c;
-
+		int[] xValues;
 		final Term x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
-		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
-		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
 
-		// -x < c AND c <= 0
+
+		// Test Cases for -x < c AND c <= 0
 
 		// -1 < 0
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x1 };
-		test(true, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+		xValues = new int[] { 1 };
+		test(true, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// -3 < 0
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+		xValues = new int[] { 3 };
+		test(true, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// -3 < -2
 		c = Rational.valueOf(-2, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+		xValues = new int[] { 3 };
+		test(true, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// 0 < 0
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { x1 };
-		test(false, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+		xValues = new int[] { 0 };
+		test(false, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// -1 < -2
 		c = Rational.valueOf(-2, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x1 };
-		test(false, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+		xValues = new int[] { 1 };
+		test(false, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
-		// -x < c AND c > 0
+		// Test Cases for -x < c AND c > 0
 
 		// 0 < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { x1 };
-		test(true, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+		xValues = new int[] { 0 };
+		test(true, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// -3 < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+		xValues = new int[] { 3 };
+		test(true, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// 2 < 3
 		c = Rational.valueOf(3, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x1 };
-		test(true, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+		xValues = new int[] { -2 };
+		test(true, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// 1 < 1
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x1 };
-		test(false, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+		xValues = new int[] { -1 };
+		test(false, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 
 		// 3 < 2
 		c = Rational.valueOf(2, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x0, x1 };
-		test(false, symbols, mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+		xValues = new int[] { -3 };
+		test(false, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 	}
 
 	@Test
 	public void strictSubsetAutomaton() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
 		mLogger.info("Testing strictSubsetAutomaton ...");
-		MSODAlphabetSymbol[] symbols;
 
+		int[] xValues;
+		int[] yValues;
 		final Term x = mScript.variable("x", MSODUtils.getSetOfIntSort(mScript));
 		final Term y = mScript.variable("y", MSODUtils.getSetOfIntSort(mScript));
-		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
-		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
-		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
-		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(x, y, true, true);
 
-		// x strictSubsetInt y
+
+		// <test Cases for x strictSubsetInt y
 
 		// { } strictSubsetInt { 0 }
-		symbols = new MSODAlphabetSymbol[] { xy01 };
-		test(true, symbols, mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+		xValues = new int[] {  };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
 		// { 0 } strictSubsetInt { 0, 1 }
-		symbols = new MSODAlphabetSymbol[] { xy11, xy01 };
-		test(true, symbols, mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+		xValues = new int[] { 0 };
+		yValues = new int[] { 0, 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
 		// { -1, 2 } strictSubsetInt { -2, -1, 0, 2 }
-		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy11, xy11, xy01 };
-		test(true, symbols, mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+		xValues = new int[] { -1, 2 };
+		yValues = new int[] { 0, -1, 2, -2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
 		// { 0, 1 } strictSubsetInt { 0 }
-		symbols = new MSODAlphabetSymbol[] { xy11, xy10 };
-		test(false, symbols, mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+		xValues = new int[] { 0, 1 };
+		yValues = new int[] { 0 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
 		// { } strictSubsetInt { }
-		symbols = new MSODAlphabetSymbol[] { xy00 };
-		test(false, symbols, mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+		xValues = new int[] {  };
+		yValues = new int[] {  };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
 		// { -1, 3 } strictSubsetInt { -1, 3 }
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy11, xy00, xy00, xy11 };
-		test(false, symbols, mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+		xValues = new int[] { -1, 3 };
+		yValues = new int[] { -1, 3 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
 		// { -2, 3 } strictSubsetInt { 2, 3 }
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy01, xy10, xy11 };
-		test(false, symbols, mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+		xValues = new int[] { -2, 3 };
+		yValues = new int[] { 2, 3 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 	}
 
 	@Test
 	public void subsetAutomaton() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
 		mLogger.info("Testing subsetAutomaton ...");
-		MSODAlphabetSymbol[] symbols;
 
+		int[] xValues;
+		int[] yValues;
 		final Term x = mScript.variable("x", MSODUtils.getSetOfIntSort(mScript));
 		final Term y = mScript.variable("y", MSODUtils.getSetOfIntSort(mScript));
-		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
-		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
-		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
-		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(x, y, true, true);
 
-		// x nonStrictSubsetInt y
+
+		// Test Cases for x nonStrictSubsetInt y
 
 		// { } nonStrictSubsetInt { }
-		symbols = new MSODAlphabetSymbol[] {};
-		test(true, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
+		xValues = new int[] {  };
+		yValues = new int[] {  };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { } nonStrictSubsetInt { 0 }
-		symbols = new MSODAlphabetSymbol[] { xy01 };
-		test(true, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
+		xValues = new int[] {  };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { 0 } nonStrictSubsetInt { 0 }
-		symbols = new MSODAlphabetSymbol[] { xy11 };
-		test(true, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
+		xValues = new int[] { 0 };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { 0 } nonStrictSubsetInt { 0, 1 }
-		symbols = new MSODAlphabetSymbol[] { xy11, xy01 };
-		test(true, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
+		xValues = new int[] { 0 };
+		yValues = new int[] { 0, 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { -1, 3 } nonStrictSubsetInt { -1, 3 }
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy11, xy00, xy00, xy11 };
-		test(true, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
+		xValues = new int[] { -1, 3 };
+		yValues = new int[] { -1, 3 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { -1, 2 } nonStrictSubsetInt { -2, -1, 0, 2 }
-		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy11, xy11, xy01 };
-		test(true, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
+		xValues = new int[] { -1, 2 };
+		yValues = new int[] { 0, -1, 2, -2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { 0, 1 } nonStrictSubsetInt { 0 }
-		symbols = new MSODAlphabetSymbol[] { xy11, xy10 };
-		test(false, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
+		xValues = new int[] { 0, 1 };
+		yValues = new int[] { 0 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { -2 } nonStrictSubsetInt { }
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy10 };
-		test(false, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
+		xValues = new int[] { -2 };
+		yValues = new int[] {  };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { -2, 3 } nonStrictSubsetInt { 2, 3 }
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy01, xy10, xy11 };
-		test(false, symbols, mMSODOperations.subsetAutomaton(mServices, x, y));
+		xValues = new int[] { -2, 3 };
+		yValues = new int[] { 2, 3 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 	}
 
 	@Test
 	public void elementAutomaton() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
 		mLogger.info("Testing elementAutomaton ...");
-		MSODAlphabetSymbol[] symbols;
-		Rational c;
 
+		Rational c;
+		int[] xValues;
+		int[] yValues;
 		final Term x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
 		final Term y = mScript.variable("y", MSODUtils.getSetOfIntSort(mScript));
-		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
-		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
-		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
-		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(x, y, true, true);
 
-		// x + c element y AND x + c <= 0 AND x <= 0
+
+		// Test Cases for x + c element y AND x + c <= 0 AND x <= 0
 
 		// 0 + 0 element { 0 }
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { xy11 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 0 };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 0 + (-1) element { -1 }
 		c = Rational.valueOf(-1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy01 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 0 };
+		yValues = new int[] { -1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// -1 + 1 element { 0 }
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy10 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { -1 };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// -3 + 0 element { -3 }
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy00, xy00, xy11 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { -3 };
+		yValues = new int[] { -3 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 0 + (-3) element { -3 }
 		c = Rational.valueOf(-3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy00, xy00, xy00, xy00, xy01 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 0 };
+		yValues = new int[] { -3 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// -3 + 3 element { 0 }
 		c = Rational.valueOf(3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy00, xy00, xy00, xy00, xy10 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { -3 };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
-		// x + c element y AND x + c > 0 AND x > 0
+		// Test Cases for x + c element y AND x + c > 0 AND x > 0
 
 		// 1 + 0 element { 1 }
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy11 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 1 };
+		yValues = new int[] { 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 2 + (-1) element { 1 }
 		c = Rational.valueOf(-1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy10 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 2 };
+		yValues = new int[] { 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 1 + 1 element { 2 }
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy01 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 1 };
+		yValues = new int[] { 2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 3 + 0 element { 3 }
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy00, xy00, xy00, xy11 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 3 };
+		yValues = new int[] { 3 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 4 + (-3) element { 1 }
 		c = Rational.valueOf(-3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy00, xy00, xy00, xy00, xy10 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 4 };
+		yValues = new int[] { 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 1 + 3 element { 4 }
 		c = Rational.valueOf(3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy00, xy00, xy00, xy00, xy01 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 1 };
+		yValues = new int[] { 4 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
-		// x + c element y AND x + c <= 0 AND x > 0
+		// Test Cases for x + c element y AND x + c <= 0 AND x > 0
 
 		// 1 + (-1) element { 0 }
 		c = Rational.valueOf(-1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy01, xy10 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 1 };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 3 + (-3) element { 0 }
 		c = Rational.valueOf(-3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy01, xy00, xy00, xy00, xy00, xy10 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 3 };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 2 + (-3) element { -1 }
 		c = Rational.valueOf(-3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy01, xy10 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 2 };
+		yValues = new int[] { -1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 1 + (-3) element { -2 }
 		c = Rational.valueOf(-3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy10, xy00, xy00, xy01 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 1 };
+		yValues = new int[] { -2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
-		// x + c element y AND x + c > 0 AND x <= 0
+		// Test Cases for x + c element y AND x + c > 0 AND x <= 0
 
 		// 0 + 1 element { 1 }
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { xy10, xy01 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 0 };
+		yValues = new int[] { 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// -2 + 3 element { 1 }
 		c = Rational.valueOf(3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy01, xy00, xy00, xy10 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { -2 };
+		yValues = new int[] { 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// -1 + 3 element { 2 }
 		c = Rational.valueOf(3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy00, xy00, xy10, xy01 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { -1 };
+		yValues = new int[] { 2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 
 		// 0 + 3 element { 3 }
 		c = Rational.valueOf(3, 1);
-		symbols = new MSODAlphabetSymbol[] { xy10, xy00, xy00, xy00, xy00, xy01 };
-		test(true, symbols, mMSODOperations.elementAutomaton(mServices, x, c, y));
+		xValues = new int[] { 0 };
+		yValues = new int[] { 3 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 	}
 
 	@Test
 	public void constElementAutomaton() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
 		mLogger.info("Testing constElementAutomaton ...");
-		MSODAlphabetSymbol[] symbols;
+
 		Rational c;
-
+		int[] xValues;
 		final Term x = mScript.variable("x", MSODUtils.getSetOfIntSort(mScript));
-		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
-		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
 
-		// c element x AND c <= 0
+
+		// Test Cases for c element x AND c <= 0
 
 		// 0 element { 0 }
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { x1 };
-		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
+		xValues = new int[] { 0 };
+		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 0 element { 0, 3 }
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { x1, x0, x0, x0, x0, x1 };
-		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
+		xValues = new int[] { 0, 3 };
+		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// -3 element { -3 }
 		c = Rational.valueOf(-3, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
+		xValues = new int[] { -3 };
+		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// -3 element { -3, 0, 4 }
 		c = Rational.valueOf(-3, 1);
-		symbols = new MSODAlphabetSymbol[] { x1, x0, x0, x0, x0, x0, x1, x1 };
-		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
+		xValues = new int[] { 0, -3, 4 };
+		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 0 element { }
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] {};
-		test(false, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
+		xValues = new int[] {  };
+		test(false, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 0 element { -1, 1 }
 		c = Rational.valueOf(0, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x1, x1 };
-		test(false, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
+		xValues = new int[] { 1, -1 };
+		test(false, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// -2 element { -1, 1 }
 		c = Rational.valueOf(-2, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x1, x1 };
-		test(false, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
+		xValues = new int[] { 1, -1 };
+		test(false, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 
-		// c element x AND c > 0
+		// Test Cases for c element x AND c > 0
 
 		// 1 element { 1 }
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x1 };
-		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
+		xValues = new int[] { 1 };
+		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 1 element { 1, 3 }
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x1, x0, x0, x0, x1 };
-		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
+		xValues = new int[] { 1, 3 };
+		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 3 element { 3 }
 		c = Rational.valueOf(3, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x0, x0, x0, x1 };
-		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
+		xValues = new int[] { 3 };
+		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 3 element { 0, 3, 4 }
 		c = Rational.valueOf(3, 1);
-		symbols = new MSODAlphabetSymbol[] { x1, x0, x0, x0, x0, x1, x0, x1 };
-		test(true, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
+		xValues = new int[] { 0, 3, 4 };
+		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 1 element { }
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] {};
-		test(false, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
+		xValues = new int[] {  };
+		test(false, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 1 element { -1, 2 }
 		c = Rational.valueOf(1, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x0, x1, x1 };
-		test(false, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
+		xValues = new int[] { -1, 2 };
+		test(false, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 
 		// 2 element { -1, 1 }
 		c = Rational.valueOf(2, 1);
-		symbols = new MSODAlphabetSymbol[] { x0, x1, x1 };
-		test(false, symbols, mMSODOperations.constElementAutomaton(mServices, c, x));
+		xValues = new int[] { 1, -1 };
+		test(false, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 	}
 }
