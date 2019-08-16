@@ -132,6 +132,8 @@ public class MSODScript extends NoopScript {
 		try {
 
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = traversePostOrder(mAssertionTerm);
+
+			mLogger.info(automatonToString(automaton, Format.ATS));
 			mModel = mMSODOperations.getResult(this, mAutomataLibrarayServices, automaton);
 
 			if (!mModel.isEmpty()) {
@@ -139,12 +141,10 @@ public class MSODScript extends NoopScript {
 
 				mLogger.info("RESULT: SAT");
 				mLogger.info("MODEL: " + mModel);
-				mLogger.info(automatonToString(automaton, Format.ATS));
 			} else {
 				result = LBool.UNSAT;
 
 				mLogger.info("RESULT: UNSAT");
-				mLogger.info(automatonToString(automaton, Format.ATS));
 			}
 
 		} catch (final Exception e) {
@@ -288,21 +288,39 @@ public class MSODScript extends NoopScript {
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getSubformula());
 		mLogger.info("Construct ∃ φ: " + term);
 
+		mLogger.info("QUANTIFIED VARIABLES: " + Arrays.toString(term.getVariables()));
+		mLogger.info("FREE VARIABLES: " + Arrays.toString(result.getAlphabet().iterator().next().getTerms()));
+
+		boolean isFreeSetOfIntVariableContained = false;
+		for (final Term var : result.getAlphabet().iterator().next().getTerms()) {
+			mLogger.info("CHECKING: " + var);
+			if (MSODUtils.isFreeSetOfIntVariable(var)) {
+				isFreeSetOfIntVariableContained = true;
+				mLogger.info("FOUND FREE SET OF INT VARIABLE. SKIP ADDITIONAL FINAL STATES.");
+				break;
+			}
+		}
+
 		final Term[] quantifiedVariables = term.getVariables();
-		final Set<MSODAlphabetSymbol> zeros =
-				MSODUtils.allMatchesAlphabet(result.getAlphabet(), false, quantifiedVariables);
-		final Set<MSODAlphabetSymbol> ones =
-				MSODUtils.allMatchesAlphabet(result.getAlphabet(), true, quantifiedVariables);
-
 		final Set<String> additionalFinals = new HashSet<>();
-		final Queue<String> states = new LinkedList<>(result.getFinalStates());
 
-		while (!states.isEmpty()) {
-			final Set<String> preds = MSODUtils.hierarchicalPredecessorsIncoming(result, states.poll(), zeros);
+		if (!isFreeSetOfIntVariableContained) {
 
-			for (final String pred : preds) {
-				if (!result.isFinal(pred) && additionalFinals.add(pred)) {
-					states.add(pred);
+			final Set<MSODAlphabetSymbol> zeros =
+					MSODUtils.allMatchesAlphabet(result.getAlphabet(), false, quantifiedVariables);
+
+			// final Set<MSODAlphabetSymbol> ones = MSODUtils.allMatchesAlphabet(result.getAlphabet(), true,
+			// quantifiedVariables);
+
+			final Queue<String> states = new LinkedList<>(result.getFinalStates());
+
+			while (!states.isEmpty()) {
+				final Set<String> preds = MSODUtils.hierarchicalPredecessorsIncoming(result, states.poll(), zeros);
+
+				for (final String pred : preds) {
+					if (!result.isFinal(pred) && additionalFinals.add(pred)) {
+						states.add(pred);
+					}
 				}
 			}
 		}
@@ -310,10 +328,12 @@ public class MSODScript extends NoopScript {
 		final Set<Term> freeVars = new HashSet<>(result.getAlphabet().iterator().next().getMap().keySet());
 		freeVars.removeAll(Arrays.asList(quantifiedVariables));
 
-		Set<MSODAlphabetSymbol> reducedAlphabet;
-		reducedAlphabet = MSODUtils.createAlphabet(freeVars.toArray(new Term[0]));
+		final Set<MSODAlphabetSymbol> reducedAlphabet = MSODUtils.createAlphabet(freeVars.toArray(new Term[0]));
 		result = mMSODOperations.reconstruct(mAutomataLibrarayServices, result, reducedAlphabet, false);
-		result = mMSODOperations.makeStatesFinal(mAutomataLibrarayServices, result, additionalFinals);
+
+		if (!isFreeSetOfIntVariableContained) {
+			result = mMSODOperations.makeStatesFinal(mAutomataLibrarayServices, result, additionalFinals);
+		}
 
 		return result;
 	}
@@ -574,13 +594,13 @@ public class MSODScript extends NoopScript {
 
 		if (variables.size() == 1) {
 			mLogger.info("Construct x+c element Y: " + term);
-			final Entry<Term, Rational> var = variables.entrySet().iterator().next();
+			final Entry<Term, Rational> variable = variables.entrySet().iterator().next();
 
-			if (!var.getValue().equals(Rational.ONE)) {
+			if (!variable.getValue().equals(Rational.ONE)) {
 				throw new IllegalArgumentException("Invalid input.");
 			}
 
-			return mMSODOperations.elementAutomaton(mAutomataLibrarayServices, var.getKey(), constant,
+			return mMSODOperations.elementAutomaton(mAutomataLibrarayServices, variable.getKey(), constant,
 					term.getParameters()[1]);
 		}
 

@@ -69,12 +69,12 @@ public class MSODStringFactory implements IIntersectionStateFactory<String>, IUn
 
 	@Override
 	public String intersectBuchi(final String state1, final String state2, final int track) {
-		throw new UnsupportedOperationException("Not implemented yet.");
+		return newString();
 	}
 
 	@Override
 	public String buchiComplementFkv(final LevelRankingState<?, String> complementState) {
-		throw new UnsupportedOperationException("Not implemented yet.");
+		return newString();
 	}
 
 	/**
