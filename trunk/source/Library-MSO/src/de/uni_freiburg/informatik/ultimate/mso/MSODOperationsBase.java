@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-public abstract class MSODOperations {
+public abstract class MSODOperationsBase {
 
 	/**
 	 * Constructs an empty automaton.
@@ -198,7 +198,7 @@ public abstract class MSODOperations {
 
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> result;
 
-		result = MSODOperations.emptyAutomaton(services);
+		result = MSODOperationsBase.emptyAutomaton(services);
 		result.getAlphabet().addAll(alphabet);
 
 		for (final String state : automaton.getStates()) {
@@ -319,4 +319,5 @@ public abstract class MSODOperations {
 	 */
 	public abstract Map<Term, Term> getResult(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException;
+
 }

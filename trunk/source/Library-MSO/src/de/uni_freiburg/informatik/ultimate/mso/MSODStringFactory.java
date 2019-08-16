@@ -9,7 +9,10 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
@@ -22,7 +25,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFact
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
 public class MSODStringFactory implements IIntersectionStateFactory<String>, IUnionStateFactory<String>,
-		ISinkStateFactory<String>, IDeterminizeStateFactory<String>, IMinimizationStateFactory<String> {
+		ISinkStateFactory<String>, IDeterminizeStateFactory<String>, IMinimizationStateFactory<String>,
+		IBuchiIntersectStateFactory<String>, IBuchiComplementFkvStateFactory<String> {
 
 	static final String EMPTY = "€";
 	static final String STATE = "q";
@@ -61,6 +65,16 @@ public class MSODStringFactory implements IIntersectionStateFactory<String>, IUn
 	@Override
 	public String merge(final Collection<String> states) {
 		return newString();
+	}
+
+	@Override
+	public String intersectBuchi(final String state1, final String state2, final int track) {
+		throw new UnsupportedOperationException("Not implemented yet.");
+	}
+
+	@Override
+	public String buchiComplementFkv(final LevelRankingState<?, String> complementState) {
+		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 
 	/**

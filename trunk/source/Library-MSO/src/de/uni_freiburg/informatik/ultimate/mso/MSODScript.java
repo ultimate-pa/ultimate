@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Comple
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -95,13 +94,13 @@ public class MSODScript extends NoopScript {
 
 	private final IUltimateServiceProvider mUltimateServiceProvider;
 	private final AutomataLibraryServices mAutomataLibrarayServices;
-	private final MSODOperations mMSODOperations;
+	private final MSODOperationsBase mMSODOperations;
 	public final ILogger mLogger;
 	private Term mAssertionTerm;
 	private Map<Term, Term> mModel;
 
 	public MSODScript(final IUltimateServiceProvider services, final ILogger logger,
-			final MSODOperations automatonFactory) {
+			final MSODOperationsBase automatonFactory) {
 		mUltimateServiceProvider = services;
 		mAutomataLibrarayServices = new AutomataLibraryServices(services);
 		mLogger = logger;
@@ -325,7 +324,7 @@ public class MSODScript extends NoopScript {
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processTrue() {
 		mLogger.info("Construct true");
 
-		return MSODOperations.trueAutomaton(mAutomataLibrarayServices);
+		return MSODOperationsBase.trueAutomaton(mAutomataLibrarayServices);
 	}
 
 	/**
@@ -334,7 +333,7 @@ public class MSODScript extends NoopScript {
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processFalse() {
 		mLogger.info("Construct false");
 
-		return MSODOperations.falseAutomaton(mAutomataLibrarayServices);
+		return MSODOperationsBase.falseAutomaton(mAutomataLibrarayServices);
 	}
 
 	/**
@@ -379,7 +378,7 @@ public class MSODScript extends NoopScript {
 			result = mMSODOperations.intersect(mAutomataLibrarayServices, result, tmp);
 		}
 
-		result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
+		// result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
 
 		return result;
 	}
