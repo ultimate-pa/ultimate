@@ -262,13 +262,11 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 	}
 
 	/**
-	 * Returns a term representation of this AffineRelation where the variable var
-	 * (note that in our AffineTerms the variables may be SMT terms like e.g., a
-	 * select term) is on the left hand side with coeffcient one. Throw a
-	 * NotAffineException if no such representation is possible (e.g, if the
-	 * variable does not occur in the term, or the variable is x, its sort is Int
-	 * and the term is 2x=1.)
+	 * Returns a {@link SolvedBinaryRelation} that is equivalent to this
+	 * PolynomialRelation or null if we cannot find such a
+	 * {@link SolvedBinaryRelation}.
 	 */
+	@Override
 	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) {
 		if (!isVariable(subject)) {
 			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
