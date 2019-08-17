@@ -67,7 +67,7 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 
 	@Override
 	protected void setThePreference(final String[] items) {
-		final StringBuffer buffer = new StringBuffer();
+		final StringBuilder buffer = new StringBuilder();
 		for (int i = 0; i < items.length; i++) {
 			buffer.append(items[i]);
 			buffer.append(CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
@@ -77,8 +77,7 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 
 	@Override
 	protected String getInfoContent(final List detailList) {
-		final String response = CorePreferenceInitializer.ALL_PLUGINS_PRESENT;
-		final StringBuffer invalidPluginIds = new StringBuffer();
+		final StringBuilder invalidPluginIds = new StringBuilder();
 		invalidPluginIds.append(CorePreferenceInitializer.PLUGINS_NOT_PRESENT);
 		boolean error = false;
 		for (final String line : detailList.getItems()) {
@@ -91,10 +90,10 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 		if (error) {
 			return invalidPluginIds.toString();
 		}
-		return response;
+		return CorePreferenceInitializer.ALL_PLUGINS_PRESENT;
 	}
 
-	private boolean isActivePluginId(final String pluginId) {
+	private static boolean isActivePluginId(final String pluginId) {
 		// hack until this class is auto-generated
 		final String[] plugins = UltimateCore.getPluginNames();
 		boolean retVal = false;
