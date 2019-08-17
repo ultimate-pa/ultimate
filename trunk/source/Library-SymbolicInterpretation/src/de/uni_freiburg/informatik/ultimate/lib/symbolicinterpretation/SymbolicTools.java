@@ -68,16 +68,24 @@ public class SymbolicTools {
 	private final IPredicate mTop;
 	private final IPredicate mBottom;
 	private final SimplificationTechnique mSimplification;
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mPQELogger;
 
 	public SymbolicTools(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final SimplificationTechnique simplification) {
 		mIcfg = icfg;
+		mServices = services;
+
+		// create PQE logger with custom log level
+		mPQELogger = services.getLoggingService().getLogger(getClass().getName() + ".PQE");
+		mPQELogger.setLevel(LogLevel.WARN);
+
 		mSimplification = simplification;
 		mMngdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final Script script = mMngdScript.getScript();
 		mFactory = new PredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable());
 		mTransformer = new PredicateTransformer<>(mMngdScript,
-				new EliminatingTermDomainOperationProvider(services, mMngdScript));
+				new EliminatingTermDomainOperationProvider(services, mPQELogger, mMngdScript));
 		mTop = mFactory.newPredicate(script.term("true"));
 		mBottom = mFactory.newPredicate(script.term("false"));
 	}
@@ -104,10 +112,21 @@ public class SymbolicTools {
 	public IPredicate postCall(final IPredicate input, final IIcfgCallTransition<IcfgLocation> transition) {
 		final CfgSmtToolkit toolkit = mIcfg.getCfgSmtToolkit();
 		final String calledProcedure = transition.getSucceedingProcedure();
-		return mFactory.newPredicate(mTransformer.strongestPostconditionCall(input, transition.getLocalVarsAssignment(),
+		final Term sp = mTransformer.strongestPostconditionCall(input, transition.getLocalVarsAssignment(),
 				toolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(calledProcedure),
 				toolkit.getOldVarsAssignmentCache().getOldVarsAssignment(calledProcedure),
-				toolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProcedure)));
+				toolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProcedure));
+		Term predicateTerm;
+		if (transition.getTransformula().getAuxVars().isEmpty()) {
+			predicateTerm = sp;
+		} else {
+			// 2018-08-17 DD:
+			// Temporary workaround for aux-var in transition issue: remove it afterwards through ex. proj.
+			predicateTerm = PartialQuantifierElimination.quantifier(mServices, mPQELogger, mMngdScript, mSimplification,
+					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, Script.EXISTS,
+					transition.getTransformula().getAuxVars(), sp);
+		}
+		return mFactory.newPredicate(predicateTerm);
 	}
 
 	/**
@@ -202,11 +221,10 @@ public class SymbolicTools {
 
 		private final ILogger mPQELogger;
 
-		public EliminatingTermDomainOperationProvider(final IUltimateServiceProvider services,
+		public EliminatingTermDomainOperationProvider(final IUltimateServiceProvider services, final ILogger logger,
 				final ManagedScript mgdScript) {
 			super(services, mgdScript);
-			mPQELogger = services.getLoggingService().getLogger(EliminatingTermDomainOperationProvider.class);
-			mPQELogger.setLevel(LogLevel.WARN);
+			mPQELogger = logger;
 		}
 
 		@Override
