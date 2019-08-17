@@ -86,17 +86,11 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 			return constraint;
 		}
 		final Set<TermVariable> varsToProject = new HashSet<>();
-		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction =
-				new IValueConstruction<IProgramVar, TermVariable>() {
-
-					@Override
-					public TermVariable constructValue(final IProgramVar pv) {
-						final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
-						varsToProject.add(result);
-						return result;
-					}
-
-				};
+		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = pv -> {
+			final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
+			varsToProject.add(result);
+			return result;
+		};
 		final ConstructionCache<IProgramVar, TermVariable> termVariablesForPredecessor =
 				new ConstructionCache<>(substituentConstruction);
 
@@ -351,17 +345,11 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 		private PreRenaming(final P p, final R tf) {
 			mVarsToProject = new HashSet<>();
-			final IValueConstruction<IProgramVar, TermVariable> substituentConstruction =
-					new IValueConstruction<IProgramVar, TermVariable>() {
-
-						@Override
-						public TermVariable constructValue(final IProgramVar pv) {
-							final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
-							mVarsToProject.add(result);
-							return result;
-						}
-
-					};
+			final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = pv -> {
+				final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
+				mVarsToProject.add(result);
+				return result;
+			};
 
 			final ConstructionCache<IProgramVar, TermVariable> termVariablesForSuccessor =
 					new ConstructionCache<>(substituentConstruction);
