@@ -130,7 +130,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		for (final ApplicationTerm constInFomula : constantsInFormula) {
 			if (!constInFomula.getFunction().isIntern()) {
 				consistent &= nonTheoryConstantTerms.contains(constInFomula);
-				assert consistent : "not in const set";
+				assert consistent : "not in const set: " + constInFomula;
 			}
 		}
 		return consistent;
