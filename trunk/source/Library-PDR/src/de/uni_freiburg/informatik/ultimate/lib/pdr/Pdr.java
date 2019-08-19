@@ -69,12 +69,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
@@ -347,21 +347,23 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					mLogger.debug("PP:");
 					mLogger.debug("  " + new IcfgLocationIterator<>(mPpIcfg).asStream()
 							.map(a -> a.getDebugIdentifier().toString()).collect(Collectors.joining(",")));
+					mLogger.debug("Error is not reachable.");
 				}
-				mLogger.debug("Error is not reachable.");
 				mInterpolants = computeInterpolants();
+
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Interpolants are");
 					int i = 0;
-					mLogger.debug("true");
+					mLogger.debug("{true}");
 					for (final LETTER letter : mTrace) {
 						mLogger.debug(letter);
+
 						if (i != mTrace.size() - 1) {
-							mLogger.debug(mInterpolants[i]);
+							mLogger.debug("%s {%s}", letter.getTarget(), mInterpolants[i]);
 						}
 						++i;
 					}
-					mLogger.debug("false");
+					mLogger.debug("{false}");
 				}
 				return LBool.UNSAT;
 			}
@@ -546,7 +548,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 					final UnmodifiableTransFormula tr = returnTrans.getAssignmentOfReturn();
 					final UnmodifiableTransFormula ta = returnTrans.getLocalVarsAssignmentOfCall();
-						
+
 					final LBool res = PredicateUtils.isInductiveHelper(mScript.getScript(), predecessorPre,
 							not(toBeBlocked), procFormula, modifiableGlobalsPred, modifiableGlobalsSucc);
 					// result = checkSatReturn(predecessorFrame, preHier, returnTrans, toBeBlocked);
@@ -750,14 +752,16 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				SimplificationTechnique.SIMPLIFY_DDA, procTfs);
 
 		final UnmodifiableTransFormula procTfCallReturn = TransFormulaUtils.sequentialCompositionWithCallAndReturn(
-				mScript, true, false, false, returnTrans.getLocalVarsAssignmentOfCall(), oldVarAssignments,
+				mScript, true, true, false, returnTrans.getLocalVarsAssignmentOfCall(), oldVarAssignments,
 				globalVarsAssignments, procTf, returnTrans.getTransformula(), mLogger, mServices,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA,
 				mSymbolTable, modifiableGlobals);
 
 		// why no corresponding variable?!
 		// updateFrames(mPredicateUnifier.getOrConstructPredicate(procTf.getFormula()), returnLoc, mLevel);
-		
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("New transformula for %s is %s", procedureTrace, procTfCallReturn);
+		}
 		return new Pair<>(procedureTrace, procTfCallReturn);
 
 	}
