@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.R
 
 /**
  * Stores compressed {@link RegexDag}s for the content of star expressions.
- * Inside a RegexDag the very same star expression may appear multiple times, therefore, we can safe a lot
+ * Inside a RegexDag the very same star expression may appear multiple times, therefore, we can save a lot
  * of work by caching the result of converting the star expression into a DAG and then compressing that DAG.
  *
  * @author schaetzc@tf.uni-freiburg.de
@@ -59,7 +59,7 @@ public class StarDagCache {
 		if (regex instanceof Star<?>) {
 			throw new AssertionError("Tried to compute RegexDag for star expression. "
 					+ "Computing such a DAG is possible but probably not what you want. "
-					+ "Either you forgot to caller .inner() on the star for which you want to compute a DAG "
+					+ "Either you forgot to call .inner() on the star for which you want to compute a DAG "
 					+ "or your regex is of the form ((expr)*)* which could be simplified to just (expr)*.");
 		}
 		mRegexToDag.resetDag();
