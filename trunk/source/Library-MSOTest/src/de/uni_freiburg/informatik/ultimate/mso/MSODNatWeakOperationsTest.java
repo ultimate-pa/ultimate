@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -119,10 +119,12 @@ public final class MSODNatWeakOperationsTest {
 
 		int size = 0;
 		for (int i = 0; i < values1.length; i++) {
+			assert(values1[i] >= 0);
 			size = values1[i] + 1 > size ? values1[i] + 1 : size;
 		}
 
 		for (int i = 0; i < values2.length; i++) {
+			assert(values2[i] >= 0);
 			size = values2[i] + 1 > size ? values2[i] + 1 : size;
 		}
 
@@ -140,11 +142,11 @@ public final class MSODNatWeakOperationsTest {
 		return NestedWord.nestedWord(new Word<>(symbols));
 	}
 
-
 	@Test
 	public void strictIneqAutomaton() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
 		mLogger.info("Testing strictIneqAutomaton ...");
+
 		int[] xValues;
 		Rational c;
 		final Term x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
@@ -242,7 +244,6 @@ public final class MSODNatWeakOperationsTest {
 		test(true, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
 	}
 
-	// TODO: (E) Add test cases for strictSubsetAutomaton.
 	@Test
 	public void strictSubsetAutomaton() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
@@ -260,51 +261,198 @@ public final class MSODNatWeakOperationsTest {
 		yValues = new int[] { 0 };
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
+		// { 3, 4 } strictSubsetInt { 1, 3, 4, 8 }
+		xValues = new int[] { 3, 4 };
+		yValues = new int[] { 1, 3, 4, 8 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+
+		// { 2, 5 } strictSubsetInt { 2, 5, 6, 7}
+		xValues = new int[] { 2, 5 };
+		yValues = new int[] { 2, 5, 6, 7 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
 		// { 1 } strictSubsetInt { 0 }
 		xValues = new int[] { 1 };
 		yValues = new int[] { 0 };
 		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
+		// { 1, 3, 7} strictSubsetInt { 1, 2, 3, 7}
+		xValues = new int[] { 1, 3, 7 };
+		yValues = new int[] { 1, 2, 3, 7 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+
+		// { 0, 1, 4, 6  } strictSubsetInt { 0, 1, 4 }
+		xValues = new int[] { 0, 1, 4, 6 };
+		yValues = new int[] { 0, 1, 4 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+
+		// { 2, 3, 5  } strictSubsetInt { 2, 3, 5 }
+		xValues = new int[] { 2, 3, 5 };
+		yValues = new int[] { 2, 3, 5 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+
 	}
 
-	// TODO: (E) Add test cases for subsetAutomaton.
 	@Test
 	public void subsetAutomaton() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
 		mLogger.info("Testing subsetAutomaton ...");
 
-		final int[] xValues;
-		final int[] yValues;
+		int[] xValues;
+		int[] yValues;
 		final Term x = mScript.variable("x", MSODUtils.getSetOfIntSort(mScript));
 		final Term y = mScript.variable("y", MSODUtils.getSetOfIntSort(mScript));
 
+		// Test Cases for x strictSubsetInt y
+
+		// { } subsetInt { 0 }false
+		xValues = new int[] {  };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+
+		// { 3, 4 } subsetInt { 1, 3, 4, 8 }
+		xValues = new int[] { 3, 4 };
+		yValues = new int[] { 1, 3, 4, 8 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+
+		// { 2, 5 } subsetInt { 2, 5, 6, 7}
+		xValues = new int[] { 2, 5 };
+		yValues = new int[] { 2, 5, 6, 7 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+
+		// { 1 } subsetInt { 0 }
+		xValues = new int[] { 1 };
+		yValues = new int[] { 0 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+
+		// { 1, 3, 7} subsetInt { 1, 2, 3, 7}
+		xValues = new int[] { 1, 3, 7 };
+		yValues = new int[] { 1, 2, 3, 7 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+
+		// { 0, 1, 4, 6  } subsetInt { 0, 1, 4 }
+		xValues = new int[] { 0, 1, 4, 6 };
+		yValues = new int[] { 0, 1, 4 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+
+		// { 2, 3, 5 } subsetInt { 2, 3, 5 }
+		xValues = new int[] { 1, 3, 5 };
+		yValues = new int[] { 1, 3, 5 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+
+		// { 0 } subsetInt {  }
+		xValues = new int[] { 0 };
+		yValues = new int[] {  };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+
+		// { 5 } subsetInt {  }
+		xValues = new int[] { 5 };
+		yValues = new int[] {  };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 	}
 
-	// TODO: (E) Add test cases for elementAutomaton.
 	@Test
 	public void elementAutomaton() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
 		mLogger.info("Testing elementAutomaton ...");
 
-		final Rational c;
-		final int[] xValues;
-		final int[] yValues;
+		Rational c;
+		int[] xValues;
+		int[] yValues;
 		final Term x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
 		final Term y = mScript.variable("y", MSODUtils.getSetOfIntSort(mScript));
 
+		// 0 + 0 element { 0 }
+		c = Rational.valueOf(0, 1);
+		xValues = new int[] { 0 };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
+
+		// 0 + 1 element { 1 }
+		c = Rational.valueOf(1, 1);
+		xValues = new int[] { 0 };
+		yValues = new int[] { 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
+
+		// 0 + 3 element { 2 }
+		c = Rational.valueOf(3, 1);
+		xValues = new int[] { 0 };
+		yValues = new int[] { 2 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
+
+		// 2 + 4 element { 2, 4, 6 }
+		c = Rational.valueOf(4, 1);
+		xValues = new int[] { 2 };
+		yValues = new int[] { 2, 4, 6 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
+
+		// 3 + 1 element { 0, 1, 2, 3 }
+		c = Rational.valueOf(1, 1);
+		xValues = new int[] { 3 };
+		yValues = new int[] { 0, 1, 2, 3 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
+
+		// 2 + 2 element { 0, 4, 7 }
+		c = Rational.valueOf(2, 1);
+		xValues = new int[] { 2 };
+		yValues = new int[] { 0, 4, 7 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
 	}
 
-	// TODO: (E) Add test cases for constElementAutomaton.
 	@Test
 	public void constElementAutomaton() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
 		mLogger.info("Testing constElementAutomaton ...");
 
-		final Rational c;
-		final int[] xValues;
+		Rational c;
+		int[] xValues;
 		final Term x = mScript.variable("x", MSODUtils.getSetOfIntSort(mScript));
 
+		// Test Cases for c element x
+
+		// 0 element { 0 }
+		c = Rational.valueOf(0, 1);
+		xValues = new int[] { 0 };
+		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+
+		// 0 element { 0, 3 }
+		c = Rational.valueOf(0, 1);
+		xValues = new int[] { 0, 3 };
+		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+
+		// 3 element { 0, 3, 4 }
+		c = Rational.valueOf(3, 1);
+		xValues = new int[] { 0, 3, 4 };
+		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+
+		// 0 element { }
+		c = Rational.valueOf(0, 1);
+		xValues = new int[] {};
+		test(false, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+
+		// 0 element { 1 }
+		c = Rational.valueOf(0, 1);
+		xValues = new int[] { 1 };
+		test(false, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+
+		// 2 element { 1, 3 }
+		c = Rational.valueOf(2, 1);
+		xValues = new int[] { 1, 3 };
+		test(false, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+
+		// 1 element { 1 }
+		c = Rational.valueOf(1, 1);
+		xValues = new int[] { 1 };
+		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+
+		// 1 element { 1, 3 }
+		c = Rational.valueOf(1, 1);
+		xValues = new int[] { 1, 3 };
+		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+
+		// 1 element { }
+		c = Rational.valueOf(1, 1);
+		xValues = new int[] {};
+		test(false, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
 	}
 }
-

@@ -382,7 +382,6 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 
 		String pred = "init";
 		for (int i = 0; i < Math.abs(c) + 2; i++) {
-			//final int n = (int) (0.5 * i + 0.5);
 			String state0 = pred;
 
 			if (i > 0) {
@@ -393,11 +392,6 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 
 			final String state1 = "s" + i + "_1";
 			automaton.addState(false, false, state1);
-
-			//final String state2 = "s" + i + "_2";
-			//automaton.addState(false, false, state2);
-			//automaton.addInternalTransition(state1, xy00, state2);
-			//automaton.addInternalTransition(state2, xy00, state1);
 
 			if (i % 2 == 0) {
 				automaton.addInternalTransition(state0, xy10, state1);
@@ -411,11 +405,12 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 					predInner = state;
 				}
 
+				// TODO: (E) rename states "endLoop" and "loop"
 				automaton.addInternalTransition(predInner, xy01, "final");
 
-				automaton.addState(false, false, "end_loop" + i);
-				automaton.addInternalTransition(predInner, xy00, "end_loop" + i);
-				automaton.addInternalTransition("end_loop" + i, xy00, predInner);
+				automaton.addState(false, false, "endLoop" + i);
+				automaton.addInternalTransition(predInner, xy00, "endLoop" + i);
+				automaton.addInternalTransition("endLoop" + i, xy00, predInner);
 			}
 
 			if (i % 2 != 0) {
