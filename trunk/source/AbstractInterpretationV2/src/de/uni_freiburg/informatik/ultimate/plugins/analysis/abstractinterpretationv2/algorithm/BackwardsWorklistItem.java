@@ -33,9 +33,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractTransformer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**

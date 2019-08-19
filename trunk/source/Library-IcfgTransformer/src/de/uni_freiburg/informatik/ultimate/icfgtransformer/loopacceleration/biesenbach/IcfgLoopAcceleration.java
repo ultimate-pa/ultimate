@@ -36,10 +36,10 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * A {@link IIcfgTransformer} that accelerates the first loop if finds and creates a new accelerated {@link IIcfg}.

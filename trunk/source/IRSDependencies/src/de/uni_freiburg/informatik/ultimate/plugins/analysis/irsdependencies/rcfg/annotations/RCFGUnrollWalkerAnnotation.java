@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations;
 
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 public class RCFGUnrollWalkerAnnotation extends IRSDependenciesAnnotation {
 

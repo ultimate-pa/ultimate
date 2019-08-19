@@ -29,13 +29,13 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagCompressor;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexToDag;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * Stores compressed {@link RegexDag}s for the content of star expressions.

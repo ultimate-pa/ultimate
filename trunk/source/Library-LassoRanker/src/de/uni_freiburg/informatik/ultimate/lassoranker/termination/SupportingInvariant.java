@@ -28,10 +28,10 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 
 /**

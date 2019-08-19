@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Stores predicates for locations of interest (LOIs).

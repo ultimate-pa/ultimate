@@ -27,9 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 
 /**
  * This domain does exactly nothing. It can be used to test various aspects of the framework.

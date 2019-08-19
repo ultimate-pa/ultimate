@@ -27,9 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * A preprocessor takes a {@link ModifiableTransFormula} and returns a {@link ModifiableTransFormula}.

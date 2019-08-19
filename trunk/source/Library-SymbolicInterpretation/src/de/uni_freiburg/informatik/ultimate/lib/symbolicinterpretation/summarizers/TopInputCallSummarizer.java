@@ -29,12 +29,12 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarize
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResourceCache;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.CallReturnSummary;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Computes call summaries ignoring the actual call's input and using only true as an input.

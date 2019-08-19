@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer;
 import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.TypeSortTranslator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
@@ -11,8 +13,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * A simulating implementation of {@link IProgramVar}.

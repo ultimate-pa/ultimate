@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 
 /**
  * An edge in the abstract reachability graph maintained by Kojak.

@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Concatenation;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.EmptySet;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
@@ -35,8 +37,6 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegexVisit
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Union;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * Returns the loop point of a starred regex over the alphabet {@code IIcfgTransition<IcfgLocation>}.

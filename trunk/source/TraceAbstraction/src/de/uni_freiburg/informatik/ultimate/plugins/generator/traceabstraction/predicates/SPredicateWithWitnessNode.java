@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class SPredicateWithWitnessNode extends SPredicate {

@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * Abstract Superclass for lasso extraction. Can be removed if there is only one class that implements this.

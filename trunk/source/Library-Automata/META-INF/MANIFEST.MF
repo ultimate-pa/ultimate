@@ -298,4 +298,4 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: src/de/uni_freiburg/informatik/ultimate/automata/petrinet/petruchio/petruchio.jar,
                   src/de/uni_freiburg/informatik/ultimate/automata/nestedword/operations/optncsb/trove-3.0.3.jar,
  .
-Import-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure
+Import-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure

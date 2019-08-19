@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 
 public class AppHyperEdge extends AppEdge {
 

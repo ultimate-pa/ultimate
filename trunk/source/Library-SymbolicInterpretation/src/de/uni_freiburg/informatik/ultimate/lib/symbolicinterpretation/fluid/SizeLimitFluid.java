@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 public class SizeLimitFluid implements IFluid {

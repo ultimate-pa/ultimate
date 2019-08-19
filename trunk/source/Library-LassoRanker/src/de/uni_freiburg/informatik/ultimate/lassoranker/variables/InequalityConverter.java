@@ -34,12 +34,12 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransform
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermIsNotAffineException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.UnknownFunctionException;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 
 /**
  * Generate a list of LinearInequality instances from a formula in disjunctive normal form

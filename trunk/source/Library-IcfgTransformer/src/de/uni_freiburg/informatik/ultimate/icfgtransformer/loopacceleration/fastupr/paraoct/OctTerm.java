@@ -29,10 +29,10 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fas
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 public abstract class OctTerm {
 

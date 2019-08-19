@@ -52,10 +52,10 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClauseAST;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Term2Expression;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.TypeSortTranslator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugin.chctoboogie.preferences.ChcToBoogiePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 

@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccept
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GeneralizedBuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 
 /**
  * This is only used to fix the counterexample in the experiments

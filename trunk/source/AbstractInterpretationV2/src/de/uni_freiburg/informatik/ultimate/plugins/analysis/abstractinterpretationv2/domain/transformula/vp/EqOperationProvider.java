@@ -31,12 +31,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqDisjunctiveConstraint;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.EqNode;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IDomainSpecificOperationProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqDisjunctiveConstraint;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IDomainSpecificOperationProvider;
 
 /**
  *

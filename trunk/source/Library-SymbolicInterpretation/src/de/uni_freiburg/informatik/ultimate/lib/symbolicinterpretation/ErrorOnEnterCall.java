@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Throws an exception or error when used to register an enter call transition.

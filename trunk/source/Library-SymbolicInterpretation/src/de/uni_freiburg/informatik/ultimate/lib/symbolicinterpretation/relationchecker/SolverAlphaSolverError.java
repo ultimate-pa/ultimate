@@ -28,10 +28,10 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.relationc
 
 import java.util.Optional;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Tries to check relations using the solver.

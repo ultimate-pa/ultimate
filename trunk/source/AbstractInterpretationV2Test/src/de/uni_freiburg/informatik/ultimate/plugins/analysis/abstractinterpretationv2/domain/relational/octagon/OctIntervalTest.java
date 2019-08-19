@@ -5,9 +5,9 @@ import java.math.BigInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator.EvalResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator.EvalResult;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 
 public class OctIntervalTest {
 

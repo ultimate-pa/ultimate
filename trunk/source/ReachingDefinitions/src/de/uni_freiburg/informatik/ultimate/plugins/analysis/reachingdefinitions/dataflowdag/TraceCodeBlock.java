@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class TraceCodeBlock {

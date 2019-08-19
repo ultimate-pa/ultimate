@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.emptinesscheck;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 
 public interface IEmptinessCheck {

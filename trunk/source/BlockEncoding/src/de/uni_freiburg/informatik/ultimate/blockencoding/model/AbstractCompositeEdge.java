@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingSta
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * Basic abstract class for composite edges (Conjunction or Disjunction),

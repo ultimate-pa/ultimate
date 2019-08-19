@@ -37,14 +37,14 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 
 
 /**
@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
  * the TransFormula.
  * 
  * @author Jan Leike
- * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula
+ * @see de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula
  */
 public class LinearTransition implements Serializable {
 	private static final long serialVersionUID = 8925538198614759883L;

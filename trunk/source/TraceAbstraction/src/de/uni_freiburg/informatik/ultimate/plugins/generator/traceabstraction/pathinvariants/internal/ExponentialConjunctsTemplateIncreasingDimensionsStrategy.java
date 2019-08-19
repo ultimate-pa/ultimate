@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 public class ExponentialConjunctsTemplateIncreasingDimensionsStrategy
 		extends AbstractTemplateIncreasingDimensionsStrategy {

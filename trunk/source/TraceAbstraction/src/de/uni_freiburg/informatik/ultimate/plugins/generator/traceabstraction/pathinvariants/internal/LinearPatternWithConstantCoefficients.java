@@ -13,10 +13,10 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * This class represents a linear inequality without free coefficients (i.e. variables) which need to be determined during constraint solving.

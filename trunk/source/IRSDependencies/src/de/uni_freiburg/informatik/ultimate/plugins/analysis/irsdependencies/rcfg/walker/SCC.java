@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 public class SCC implements Iterable<IcfgLocation> {
 	private final HashSet<IcfgLocation> mVertices;

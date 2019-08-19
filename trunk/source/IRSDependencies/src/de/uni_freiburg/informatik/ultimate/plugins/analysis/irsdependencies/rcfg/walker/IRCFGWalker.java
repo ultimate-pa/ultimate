@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcf
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 
 public interface IRCFGWalker
 {

@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.VPStatistics;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.VPStatistics;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;

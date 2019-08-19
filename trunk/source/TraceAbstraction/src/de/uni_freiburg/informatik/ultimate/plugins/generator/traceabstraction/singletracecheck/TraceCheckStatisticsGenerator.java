@@ -29,10 +29,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils.FormulaSize;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ContainsQuantifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils.FormulaSize;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;

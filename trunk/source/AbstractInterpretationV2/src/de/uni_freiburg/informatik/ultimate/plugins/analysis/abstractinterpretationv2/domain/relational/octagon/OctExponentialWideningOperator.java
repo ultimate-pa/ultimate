@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.util.function.BiFunction;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 
 /**
  * Widening operator for octagons that increases values a binary exponential backoff.

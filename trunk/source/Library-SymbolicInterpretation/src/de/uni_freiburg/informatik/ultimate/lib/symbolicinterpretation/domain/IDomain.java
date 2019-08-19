@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain;
 
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Abstract Domain for Symbolic Interpretation with Fluid Abstractions (Sifa).

@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 
 /**
  * Implementation of IRelevanceInformation that supports the non-flow-sensitive

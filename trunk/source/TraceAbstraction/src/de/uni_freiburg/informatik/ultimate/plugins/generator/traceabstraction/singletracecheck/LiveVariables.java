@@ -33,8 +33,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashSet;
 
 /**

@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.relationc
 
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Checks relations between abstract states such as {@code  σ = ⊥} or {@code  σ1 ⊆ σ2}.

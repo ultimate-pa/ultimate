@@ -39,11 +39,11 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctio
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.PiecewiseRankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**

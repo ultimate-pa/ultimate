@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 
 /**
  *

@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Always tells not to abstract.

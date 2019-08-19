@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.CallReturnSummary;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Computes summaries to skip procedure calls.

@@ -26,11 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**

@@ -38,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.AlwaysFluid;
@@ -46,8 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.Neve
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.SizeLimitFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.TopInputCallSummarizer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.SifaBuilder;
 

@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * An oracle deciding when to apply abstraction to predicates. Fluids are related to abstract domains. The difference is

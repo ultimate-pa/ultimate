@@ -33,7 +33,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.FakeBoogieVar;
 import de.uni_freiburg.informatik.ultimate.test.mocks.ConsoleLogger;
 

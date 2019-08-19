@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 
 public abstract class RCFGEdgeAnnotation extends AbstractAnnotations{
 

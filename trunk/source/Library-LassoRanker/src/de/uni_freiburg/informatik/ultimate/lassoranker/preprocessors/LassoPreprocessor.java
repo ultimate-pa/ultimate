@@ -32,8 +32,8 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 
 
 /**
