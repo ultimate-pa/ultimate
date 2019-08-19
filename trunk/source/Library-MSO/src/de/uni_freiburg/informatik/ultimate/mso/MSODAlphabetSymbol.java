@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * TODO: Comment.
+ * Represents a MSOD-alphabet symbol. Each MSOD-alphabet symbol has a HashMap of term-value pairs.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -93,7 +93,7 @@ public class MSODAlphabetSymbol {
 	/**
 	 * Adds the given variable to this alphabet symbol.
 	 *
-	 * @throws InvalidParameterException
+	 * @throws IllegalArgumentException
 	 *             if term is not of type Int or SetOfInt.
 	 */
 	public void add(final Term term, final boolean value) {
@@ -130,7 +130,7 @@ public class MSODAlphabetSymbol {
 	}
 
 	/*
-	 * TODO: Comment.
+	 * Returns a set with terms that match the given sorts.
 	 */
 	public Set<Term> containsSort(final Set<String> sorts) {
 		final Set<Term> result = new HashSet<>();
@@ -183,13 +183,15 @@ public class MSODAlphabetSymbol {
 	}
 
 	/**
-	 * TODO: Comment.
+	 * @deprecated
+	 *
+	 * TODO: Function should probably be removed. Deal with term length. Function mixes up different functionalities.
 	 */
+	@Deprecated
 	public static Map<String, MSODAlphabetSymbol>
 			createAlphabet(final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Term... terms) {
 		final Map<String, MSODAlphabetSymbol> alphabetSymbols = new HashMap<>();
 
-		// Deal with all other term length
 		if (terms.length == 1) {
 			final MSODAlphabetSymbol x0, x1;
 			x0 = new MSODAlphabetSymbol(terms[0], false);
