@@ -80,11 +80,13 @@ public class Return extends CodeBlock implements IIcfgReturnTransition<IcfgLocat
 		return "#" + getSerialNumber() + "#" + "return;";
 	}
 
+	@Visualizable
 	@Override
 	public UnmodifiableTransFormula getAssignmentOfReturn() {
 		return getTransformula();
 	}
 
+	@Visualizable
 	@Override
 	public UnmodifiableTransFormula getLocalVarsAssignmentOfCall() {
 		return getCorrespondingCall().getLocalVarsAssignment();
