@@ -544,10 +544,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					final IPredicate preHier = mPredicateUnifier
 							.getOrConstructPredicate(mPredTrans.pre(callerFrame.get(level).getSecond(), procFormula));
 
-					// final UnmodifiableTransFormula tr = returnTrans.getAssignmentOfReturn();
-					// final UnmodifiableTransFormula ta =
-					// returnTrans.getLocalVarsAssignmentOfCall();
-
+					final UnmodifiableTransFormula tr = returnTrans.getAssignmentOfReturn();
+					final UnmodifiableTransFormula ta = returnTrans.getLocalVarsAssignmentOfCall();
+						
 					final LBool res = PredicateUtils.isInductiveHelper(mScript.getScript(), predecessorPre,
 							not(toBeBlocked), procFormula, modifiableGlobalsPred, modifiableGlobalsSucc);
 					// result = checkSatReturn(predecessorFrame, preHier, returnTrans, toBeBlocked);
@@ -756,6 +755,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA,
 				mSymbolTable, modifiableGlobals);
 
+		// why no corresponding variable?!
+		// updateFrames(mPredicateUnifier.getOrConstructPredicate(procTf.getFormula()), returnLoc, mLevel);
+		
 		return new Pair<>(procedureTrace, procTfCallReturn);
 
 	}
