@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain;
 
+import java.util.Objects;
 import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -36,20 +37,33 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
  * (known as TOP in abstract interpretation). Bounds cannot be NaN.
  * Single NaN values can be represented using the empty interval.
  * Point intervals behave like regular Rationals, even for the special values like infinity.
- *
- * TODO document that many methods (e.g. division, complement) return the least over-approximation
- * TODO test methods
+ * <p>
+ * If not stated otherwise arithmetic methods in this class return the least over-approximation.
+ * That is, for two intervals lhsInput and rhsInput and a function f
+ * result = lhsInput.f(rhsInput) is the least interval such that result ⊇ {l | l ∊ lhsInput, r ∊ rhsInput, f(l,r)}.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
-public class Interval {
+public final class Interval {
 
+	/**
+	 * The interval containing everything.
+	 * Top intervals are unified, so {@code someInterval == TOP} can be used instead of {@link #isTop()}.
+	 */
 	public static final Interval TOP = new Interval(Rational.NEGATIVE_INFINITY, Rational.POSITIVE_INFINITY);
+	/**
+	 * The empty interval containing nothing.
+	 * Bottom intervals are unified, so {@code someInterval == BOTTOM} can be used instead of {@link #isBottom()}.
+	 */
 	public static final Interval BOTTOM = new Interval(Rational.ONE, Rational.ZERO);
+	/** The point interval containing only 0. */
 	public static final Interval ZERO = new Interval(Rational.ZERO);
+	/** The point interval containing only 1. */
 	public static final Interval ONE = new Interval(Rational.ONE);
 
+	/** Lower bound of this interval, inclusive. */
 	private final Rational mLower;
+	/** Upper bound of this interval, inclusive. */
 	private final Rational mUpper;
 
 	private Interval(final Rational point) {
@@ -66,12 +80,10 @@ public class Interval {
 	}
 
 	public static Interval of(final Rational lower, final Rational upper) {
-		// filter out illegal values
-		if (isNan(lower) || isNan(upper)) {
+		// filter out illegal values and unify often used intervals
+		if (isNan(lower) || isNan(upper) || lower.compareTo(upper) > 0) {
 			return BOTTOM;
-		}
-		// unify often used intervals
-		if (isNegInf(lower) && isPosInf(upper)) {
+		} else if (isNegInf(lower) && isPosInf(upper)) {
 			return TOP;
 		}
 		return new Interval(lower, upper);
@@ -86,11 +98,12 @@ public class Interval {
 	}
 
 	public boolean isBottom() {
-		return this == BOTTOM || mLower.compareTo(mUpper) > 0;
+		assert (this == BOTTOM) == (mLower.compareTo(mUpper) > 0) : "Empty interval was not unified";
+		return this == BOTTOM;
 	}
 
 	public boolean isPoint() {
-		return mLower.compareTo(mUpper) == 0;
+		return mLower.equals(mUpper);
 	}
 
 	public boolean containsZero() {
@@ -98,7 +111,8 @@ public class Interval {
 	}
 
 	public boolean isTop() {
-		return this == TOP || mLower.compareTo(Rational.NEGATIVE_INFINITY) == 0;
+		assert (this == TOP) == (isNegInf(mLower) && isPosInf(mUpper)) : "Top interval was not unified";
+		return this == TOP;
 	}
 
 	public Interval add(final Interval rhs) {
@@ -132,9 +146,26 @@ public class Interval {
 		return Interval.of(min(min(ll, lu), min(ul, uu)),  max(max(ll, lu), max(ul, uu)));
 	}
 
-	public Interval setMinus(final Interval rhs) {
-		// TODO implement if needed
-		return rhs; // over-approximation
+	public SatisfyingInputs satisfyEqual(final Interval rhs) {
+		return new SatisfyingInputs(intersect(rhs));
+	}
+
+	public SatisfyingInputs satisfyDistinct(final Interval rhs) {
+		if (isPoint() && rhs.isPoint() && mLower.equals(rhs.mLower)) {
+			return new SatisfyingInputs(BOTTOM);
+		}
+		return new SatisfyingInputs(this, rhs);
+	}
+
+	public SatisfyingInputs satisfyLessOrEqual(final Interval rhs) {
+		return new SatisfyingInputs(
+			Interval.of(mLower, min(mUpper, rhs.mUpper)),
+			Interval.of(max(rhs.mLower, mLower), rhs.mUpper)
+		);
+	}
+
+	public SatisfyingInputs satisfyGreaterOrEqual(final Interval rhs) {
+		return rhs.satisfyLessOrEqual(this).swap();
 	}
 
 	public Interval union(final Interval rhs) {
@@ -159,6 +190,34 @@ public class Interval {
 	}
 
 	// TODO implement modulo, euclidean division and so on
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(mLower, mUpper);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj == null) {
+			return false;
+		} else if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final Interval other = (Interval) obj;
+		// this would return false for two different empty intervals (for instance [1,0] and [2,1])
+		// but since BOTTOM is unified this is not a problem
+		return Objects.equals(mLower, other.mLower) && Objects.equals(mUpper, other.mUpper);
+	}
+
+	@Override
+	public String toString() {
+		if (isBottom()) {
+			return "∅";
+		}
+		return String.format("[%s, %s]", mLower, mUpper);
+	}
 
 	// helper methods for single Rational values.
 	// TODO Consider moving these methods to SmtUtils or some other global util class
@@ -189,6 +248,56 @@ public class Interval {
 			return Rational.NAN;
 		}
 		return r1.compareTo(r2) < 0 ? r1 : r2;
+	}
+
+	/**
+	 * Given two intervals lhsInput and rhsInput and a relation R, represents the following two intervals:
+	 * <ul>
+	 * <li> lhs is the least interval such that lhs ⊇ {l | l ∊ lhsInput, r ∊ rhsInput, l R r}
+	 * <li> rhs is the least interval such that rhs ⊇ {r | l ∊ lhsInput, r ∊ rhsInput, l R r}
+	 * </ul>
+	 *
+	 * @author schaetzc@tf.uni-freiburg.de
+	 */
+	public static class SatisfyingInputs {
+		private final Interval mLhs;
+		private final Interval mRhs;
+		public SatisfyingInputs(final Interval lhsAndRhs) {
+			this(lhsAndRhs, lhsAndRhs);
+		}
+		public SatisfyingInputs(final Interval lhs, final Interval rhs) {
+			mLhs = lhs;
+			mRhs = rhs;
+		}
+		protected SatisfyingInputs swap() {
+			return new SatisfyingInputs(mRhs, mLhs);
+		}
+		public Interval getLhs() {
+			return mLhs;
+		}
+		public Interval getRhs() {
+			return mRhs;
+		}
+		@Override
+		public int hashCode() {
+			return Objects.hash(mLhs, mRhs);
+		}
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			} else if (obj == null) {
+				return false;
+			} else if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final SatisfyingInputs other = (SatisfyingInputs) obj;
+			return Objects.equals(mLhs, other.mLhs) && Objects.equals(mRhs, other.mRhs);
+		}
+		@Override
+		public String toString() {
+			return String.format("%s R %s", mLhs, mRhs);
+		}
 	}
 
 }
