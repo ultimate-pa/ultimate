@@ -302,6 +302,18 @@ public final class MSODUtils {
 	/**
 	 * Returns a map which holds all terms and their values parsed from given word.
 	 */
+	public static Map<Term, Term> parseMSODNatToTerm(final Script script, final Word<MSODAlphabetSymbol> word) {
+
+		if (word.length() <= 0) {
+			return new HashMap<>();
+		}
+
+		return parseMSODNatToTerm(script, word, word.getSymbol(0).getTerms());
+	}
+
+	/**
+	 * Returns a map which holds all terms and their values parsed from given word.
+	 */
 	public static Map<Term, Term> parseMSODNatToTerm(final Script script, final Word<MSODAlphabetSymbol> word,
 			final Term... terms) {
 
@@ -326,8 +338,7 @@ public final class MSODUtils {
 			if (SmtSortUtils.isIntSort(term.getSort())) {
 				assert (values.get(term) != null && values.get(term).size() == 1);
 
-				final BigInteger value =
-						values.get(term) != null ? values.get(term).iterator().next() : BigInteger.ZERO;
+				final BigInteger value = values.get(term).iterator().next();
 				result.put(term, SmtUtils.constructIntValue(script, value));
 			}
 
@@ -340,7 +351,19 @@ public final class MSODUtils {
 	}
 
 	/**
-	 * TODO:
+	 * Returns a map which holds all terms and their values parsed from given word.
+	 */
+	public static Map<Term, Term> parseMSODIntToTerm(final Script script, final Word<MSODAlphabetSymbol> word) {
+
+		if (word.length() <= 0) {
+			return new HashMap<>();
+		}
+
+		return parseMSODIntToTerm(script, word, word.getSymbol(0).getTerms());
+	}
+
+	/**
+	 * Returns a map which holds all terms and their values parsed from given word.
 	 */
 	public static Map<Term, Term> parseMSODIntToTerm(final Script script, final Word<MSODAlphabetSymbol> word,
 			final Term... terms) {
@@ -370,8 +393,7 @@ public final class MSODUtils {
 			if (SmtSortUtils.isIntSort(term.getSort())) {
 				assert (values.get(term) != null && values.get(term).size() == 1);
 
-				final BigInteger value =
-						values.get(term) != null ? values.get(term).iterator().next() : BigInteger.ZERO;
+				final BigInteger value = values.get(term).iterator().next();
 				result.put(term, SmtUtils.constructIntValue(script, value));
 			}
 

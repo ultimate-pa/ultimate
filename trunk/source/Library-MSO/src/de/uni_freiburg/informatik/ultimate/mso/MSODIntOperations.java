@@ -126,8 +126,7 @@ public class MSODIntOperations extends MSODIntOperationsBase {
 			final NestedWord<MSODAlphabetSymbol> stem = word.getStem();
 			final NestedWord<MSODAlphabetSymbol> loop = word.getLoop();
 
-			final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
-			result = MSODUtils.parseMSODIntToTerm(script, stem, terms);
+			result = MSODUtils.parseMSODIntToTerm(script, stem);
 		}
 
 		return result;

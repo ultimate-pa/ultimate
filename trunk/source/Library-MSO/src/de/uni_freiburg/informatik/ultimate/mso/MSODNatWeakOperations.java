@@ -112,8 +112,7 @@ public final class MSODNatWeakOperations extends MSODNatOperationsBase {
 		final NestedWord<MSODAlphabetSymbol> word = getWord(script, services, automaton);
 
 		if (word != null) {
-			final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
-			result = MSODUtils.parseMSODNatToTerm(script, word, terms);
+			result = MSODUtils.parseMSODNatToTerm(script, word);
 		}
 
 		return result;

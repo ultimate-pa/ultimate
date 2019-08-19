@@ -118,8 +118,7 @@ public class MSODNatOperations extends MSODNatOperationsBase {
 			final NestedWord<MSODAlphabetSymbol> stem = word.getStem();
 			final NestedWord<MSODAlphabetSymbol> loop = word.getLoop();
 
-			final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
-			result = MSODUtils.parseMSODNatToTerm(script, stem, terms);
+			result = MSODUtils.parseMSODNatToTerm(script, stem);
 		}
 
 		return result;
