@@ -381,8 +381,8 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 		automaton.addInternalTransition("final", xy00, "final");
 
 		String pred = "init";
-		for (int i = 0; i < 2 * Math.abs(c) + 1; i++) {
-			final int n = (int) (0.5 * i + 0.5);
+		for (int i = 0; i < Math.abs(c) + 2; i++) {
+			//final int n = (int) (0.5 * i + 0.5);
 			String state0 = pred;
 
 			if (i > 0) {
@@ -394,16 +394,16 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 			final String state1 = "s" + i + "_1";
 			automaton.addState(false, false, state1);
 
-			final String state2 = "s" + i + "_2";
-			automaton.addState(false, false, state2);
-			automaton.addInternalTransition(state1, xy00, state2);
-			automaton.addInternalTransition(state2, xy00, state1);
+			//final String state2 = "s" + i + "_2";
+			//automaton.addState(false, false, state2);
+			//automaton.addInternalTransition(state1, xy00, state2);
+			//automaton.addInternalTransition(state2, xy00, state1);
 
 			if (i % 2 == 0) {
 				automaton.addInternalTransition(state0, xy10, state1);
 
 				String predInner = state1;
-				for (int j = 0; j < 2 * (Math.abs(c) - 2 * n); j++) {
+				for (int j = 0; j < 2 * (Math.abs(c) - i); j++) {
 					final String state = "c" + i + "_" + j;
 					automaton.addState(false, false, state);
 					automaton.addInternalTransition(predInner, xy00, state);
@@ -412,13 +412,17 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 				}
 
 				automaton.addInternalTransition(predInner, xy01, "final");
+
+				automaton.addState(false, false, "end_loop" + i);
+				automaton.addInternalTransition(predInner, xy00, "end_loop" + i);
+				automaton.addInternalTransition("end_loop" + i, xy00, predInner);
 			}
 
 			if (i % 2 != 0) {
 				automaton.addInternalTransition(state0, xy01, state1);
 
 				String predInner = state1;
-				for (int j = 0; j < 2 * (Math.abs(c) - 2 * n); j++) {
+				for (int j = 0; j < 2 * (Math.abs(c) - i); j++) {
 					final String state = "c" + i + "_" + j;
 					automaton.addState(false, false, state);
 					automaton.addInternalTransition(predInner, xy00, state);
@@ -427,9 +431,19 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 				}
 
 				automaton.addInternalTransition(predInner, xy10, "final");
+				automaton.addState(false, false, "endLoop" + i);
+				automaton.addInternalTransition(predInner, xy00, "endLoop" + i);
+				automaton.addInternalTransition("endLoop" + i, xy00, predInner);
 			}
 
 			pred = state0;
+
+			if (i == Math.abs(c)) {
+				automaton.addState(false, false, "loop");
+				automaton.addInternalTransition(pred, xy00, "loop");
+				automaton.addInternalTransition("loop", xy00, pred);
+			}
+
 		}
 
 		return automaton;
