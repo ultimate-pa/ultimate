@@ -63,6 +63,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChange
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -576,5 +577,10 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 	@Override
 	public void store(final IToolchainStorage storage) {
 		storage.putStorable(STORE_KEY, this);
+	}
+
+	@Override
+	public void setLogLevel(final Class<?> clazz, final LogLevel level) {
+		throw new UnsupportedOperationException();
 	}
 }

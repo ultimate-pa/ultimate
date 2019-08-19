@@ -36,12 +36,11 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XjunctPartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XnfDer;
@@ -316,7 +315,7 @@ public class QuantifierPusher extends TermTransformer {
 					SmtUtils.quantifier(mScript, quantifier, eliminatees, resultOuterParams[offset]);
 			offset++;
 		}
-		final ILogger logger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
+		final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
 		logger.info("Applying distributivity, recursing on " + resultOuterParams.length + " terms");
 
 		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, quantifier, resultOuterParams);

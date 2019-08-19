@@ -96,4 +96,9 @@ final class LoggingServiceMock implements ILoggingService {
 	public void store(final IToolchainStorage storage) {
 		// do nothing
 	}
+
+	@Override
+	public void setLogLevel(final Class<?> clazz, final LogLevel level) {
+		// do nothing
+	}
 }

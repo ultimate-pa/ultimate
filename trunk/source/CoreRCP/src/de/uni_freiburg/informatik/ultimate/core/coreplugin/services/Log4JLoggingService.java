@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.LogfileException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -392,6 +393,11 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		}
 	}
 
+	@Override
+	public void setLogLevel(final Class<?> clazz, final LogLevel level) {
+		mSettingsLogger2LogLevel.put(getPluginLoggerName(clazz.getName()), Level.toLevel(level.toString()));
+	}
+
 	private final class RefreshingPreferenceChangeListener implements IPreferenceChangeListener {
 
 		@Override
@@ -463,4 +469,5 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 			return true;
 		}
 	}
+
 }
