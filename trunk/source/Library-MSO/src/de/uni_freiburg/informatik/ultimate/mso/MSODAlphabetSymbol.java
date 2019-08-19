@@ -78,7 +78,16 @@ public class MSODAlphabetSymbol {
 	 * Returns the terms contained in this alphabet symbol.
 	 */
 	public final Term[] getTerms() {
-		return mMap.keySet().toArray(new Term[0]);
+		final Set<Entry<Term, Boolean>> entrySet = mMap.entrySet();
+		final Term[] result = new Term[entrySet.size()];
+
+		int i = 0;
+		for (final Entry<Term, Boolean> entry : entrySet) {
+			result[i] = entry.getKey();
+			i++;
+		}
+
+		return result;
 	}
 
 	/**
@@ -118,6 +127,21 @@ public class MSODAlphabetSymbol {
 		}
 
 		return true;
+	}
+
+	/*
+	 * TODO: Comment.
+	 */
+	public Set<Term> containsSort(final Set<String> sorts) {
+		final Set<Term> result = new HashSet<>();
+
+		for (final Term term : getTerms()) {
+			if (sorts.contains(term.getSort().getName())) {
+				result.add(term);
+			}
+		}
+
+		return result;
 	}
 
 	/**

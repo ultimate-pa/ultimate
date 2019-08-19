@@ -5,6 +5,7 @@
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -40,7 +41,7 @@ public final class MSODUtils {
 	public static Sort getSetOfIntSort(final Script script) {
 		return script.sort(SET_OF_INT_SORT);
 	}
-	
+
 	/**
 	 * TODO: Comment.
 	 */
@@ -49,8 +50,7 @@ public final class MSODUtils {
 	}
 
 	/**
-	 * Returns a set of integer constant that respects the UltimateNormalForm. See
-	 * {@link UltimateNormalFormUtils}.
+	 * Returns a set of integer constant that respects the UltimateNormalForm. See {@link UltimateNormalFormUtils}.
 	 */
 	public static Term constructSetOfIntValue(final Script script, final Set<BigInteger> numbers) {
 		final Set<Term> terms = new HashSet<>();
@@ -59,8 +59,7 @@ public final class MSODUtils {
 			terms.add(SmtUtils.constructIntValue(script, number));
 		}
 
-		return MSODUtils.getSetOfIntSort(script).getTheory().constant(terms,
-				MSODUtils.getSetOfIntSort(script));
+		return MSODUtils.getSetOfIntSort(script).getTheory().constant(terms, MSODUtils.getSetOfIntSort(script));
 	}
 
 	/**
@@ -167,11 +166,10 @@ public final class MSODUtils {
 	}
 
 	/**
-	 * Returns the alphabet for the given variable names. Alphabet symbols are
-	 * mapped to its string representation.
+	 * Returns the alphabet for the given variable names. Alphabet symbols are mapped to its string representation.
 	 */
 	public static Map<String, MSODAlphabetSymbol> createAlphabet(final Term term) {
-		final Map<String, MSODAlphabetSymbol> symbols = new HashMap<String, MSODAlphabetSymbol>();
+		final Map<String, MSODAlphabetSymbol> symbols = new HashMap<>();
 
 		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(term, false);
 		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(term, true);
@@ -183,11 +181,10 @@ public final class MSODUtils {
 	}
 
 	/**
-	 * Returns the alphabet for the given variable names. Alphabet symbols are
-	 * mapped to its string representation.
+	 * Returns the alphabet for the given variable names. Alphabet symbols are mapped to its string representation.
 	 */
 	public static Map<String, MSODAlphabetSymbol> createAlphabet(final Term term1, final Term term2) {
-		final Map<String, MSODAlphabetSymbol> symbols = new HashMap<String, MSODAlphabetSymbol>();
+		final Map<String, MSODAlphabetSymbol> symbols = new HashMap<>();
 
 		final Term[] terms = { term1, term2 };
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(terms, new boolean[] { false, false });
@@ -223,8 +220,7 @@ public final class MSODUtils {
 	}
 
 	/**
-	 * Returns the alphabet symbols where all but the excluded variables match the
-	 * given value.
+	 * Returns the alphabet symbols where all but the excluded variables match the given value.
 	 */
 	public static Set<MSODAlphabetSymbol> allMatchesAlphabet(final Set<MSODAlphabetSymbol> symbols, final Boolean value,
 			final Term... excludedTerms) {
@@ -240,9 +236,30 @@ public final class MSODUtils {
 		return matches;
 	}
 
+	/*
+	 * TODO: Comment.
+	 */
+	public static Set<Term> containsSort(final Set<MSODAlphabetSymbol> symbols, final String sort) {
+
+		return containsSort(symbols, new HashSet<>(Arrays.asList(sort)));
+	}
+
+	/*
+	 * TODO: Comment.
+	 */
+	public static Set<Term> containsSort(final Set<MSODAlphabetSymbol> symbols, final Set<String> sorts) {
+		final Set<Term> result = new HashSet<>();
+
+		for (final MSODAlphabetSymbol symbol : symbols) {
+			result.addAll(symbol.containsSort(sorts));
+		}
+
+		return result;
+	}
+
 	/**
-	 * Returns the successors which are directly reachable with the given symbols
-	 * from the given state in the given automaton.
+	 * Returns the successors which are directly reachable with the given symbols from the given state in the given
+	 * automaton.
 	 */
 	public static Set<String> hierarchicalSuccessorsOutgoing(
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final String state,
@@ -262,8 +279,8 @@ public final class MSODUtils {
 	}
 
 	/**
-	 * Returns the predecessors which are directly reachable with the given symbols
-	 * from the given state in the given automaton.
+	 * Returns the predecessors which are directly reachable with the given symbols from the given state in the given
+	 * automaton.
 	 */
 	public static Set<String> hierarchicalPredecessorsIncoming(
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final String state,
@@ -309,8 +326,8 @@ public final class MSODUtils {
 			if (SmtSortUtils.isIntSort(term.getSort())) {
 				assert (values.get(term) != null && values.get(term).size() == 1);
 
-				final BigInteger value = values.get(term) != null ? values.get(term).iterator().next()
-						: BigInteger.ZERO;
+				final BigInteger value =
+						values.get(term) != null ? values.get(term).iterator().next() : BigInteger.ZERO;
 				result.put(term, SmtUtils.constructIntValue(script, value));
 			}
 
@@ -340,9 +357,9 @@ public final class MSODUtils {
 
 			for (final Term term : terms) {
 				if (symbol.getMap().get(term)) {
-					if (i % 2 == 0)
+					if (i % 2 == 0) {
 						values.get(term).add(BigInteger.valueOf(-i / 2));
-					else {
+					} else {
 						values.get(term).add(BigInteger.valueOf((i + 1) / 2));
 					}
 				}
@@ -353,8 +370,8 @@ public final class MSODUtils {
 			if (SmtSortUtils.isIntSort(term.getSort())) {
 				assert (values.get(term) != null && values.get(term).size() == 1);
 
-				final BigInteger value = values.get(term) != null ? values.get(term).iterator().next()
-						: BigInteger.ZERO;
+				final BigInteger value =
+						values.get(term) != null ? values.get(term).iterator().next() : BigInteger.ZERO;
 				result.put(term, SmtUtils.constructIntValue(script, value));
 			}
 

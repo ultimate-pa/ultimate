@@ -55,11 +55,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AbstractGeneralizedaAffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AbstractGeneralizedaAffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
@@ -288,31 +288,14 @@ public class MSODScript extends NoopScript {
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getSubformula());
 		mLogger.info("Construct ∃ φ: " + term);
 
-		mLogger.info("QUANTIFIED VARIABLES: " + Arrays.toString(term.getVariables()));
-		mLogger.info("FREE VARIABLES: " + Arrays.toString(result.getAlphabet().iterator().next().getTerms()));
-
-		boolean isFreeSetOfIntVariableContained = false;
-		for (final Term var : result.getAlphabet().iterator().next().getTerms()) {
-			mLogger.info("CHECKING: " + var);
-			if (MSODUtils.isFreeSetOfIntVariable(var)) {
-				isFreeSetOfIntVariableContained = true;
-				mLogger.info("FOUND FREE SET OF INT VARIABLE. SKIP ADDITIONAL FINAL STATES.");
-				break;
-			}
-		}
-
 		final Term[] quantifiedVariables = term.getVariables();
-		final Set<String> additionalFinals = new HashSet<>();
 
-		if (!isFreeSetOfIntVariableContained) {
-
+		if (MSODUtils.containsSort(result.getAlphabet(), MSODUtils.getSetOfIntSort(this).getName()).isEmpty()) {
 			final Set<MSODAlphabetSymbol> zeros =
 					MSODUtils.allMatchesAlphabet(result.getAlphabet(), false, quantifiedVariables);
 
-			// final Set<MSODAlphabetSymbol> ones = MSODUtils.allMatchesAlphabet(result.getAlphabet(), true,
-			// quantifiedVariables);
-
 			final Queue<String> states = new LinkedList<>(result.getFinalStates());
+			final Set<String> additionalFinals = new HashSet<>();
 
 			while (!states.isEmpty()) {
 				final Set<String> preds = MSODUtils.hierarchicalPredecessorsIncoming(result, states.poll(), zeros);
@@ -323,6 +306,8 @@ public class MSODScript extends NoopScript {
 					}
 				}
 			}
+
+			result = mMSODOperations.makeStatesFinal(mAutomataLibrarayServices, result, additionalFinals);
 		}
 
 		final Set<Term> freeVars = new HashSet<>(result.getAlphabet().iterator().next().getMap().keySet());
@@ -330,10 +315,6 @@ public class MSODScript extends NoopScript {
 
 		final Set<MSODAlphabetSymbol> reducedAlphabet = MSODUtils.createAlphabet(freeVars.toArray(new Term[0]));
 		result = mMSODOperations.reconstruct(mAutomataLibrarayServices, result, reducedAlphabet, false);
-
-		if (!isFreeSetOfIntVariableContained) {
-			result = mMSODOperations.makeStatesFinal(mAutomataLibrarayServices, result, additionalFinals);
-		}
 
 		return result;
 	}
