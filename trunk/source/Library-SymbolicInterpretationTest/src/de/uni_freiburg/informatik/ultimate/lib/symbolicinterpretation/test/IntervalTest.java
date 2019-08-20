@@ -41,6 +41,20 @@ public class IntervalTest {
 	// TODO test arithmetic operations like +, -, ... in detail
 
 	@Test
+	public void testUnification() {
+		Assert.assertSame(Interval.TOP, interval("-inf, inf"));
+		Assert.assertSame(Interval.BOTTOM, interval("-4, -5"));
+		Assert.assertSame(Interval.BOTTOM, interval("456/7, 455/7"));
+	}
+
+	@Test
+	public void testNegate() {
+		Assert.assertEquals(interval("-10/3, -3"), interval("3, 10/3").negate());
+		Assert.assertEquals(interval("-5, 2"), interval("-2, 5").negate());
+		Assert.assertEquals(Interval.TOP, Interval.TOP.negate());
+	}
+
+	@Test
 	public void testAdd() {
 		Assert.assertEquals(interval("-3, 7"), interval("-2, 5").add(interval("-1, 2")));
 	}

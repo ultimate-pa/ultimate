@@ -115,6 +115,10 @@ public final class Interval {
 		return this == TOP;
 	}
 
+	public Interval negate() {
+		return Interval.of(mUpper.negate(), mLower.negate());
+	}
+
 	public Interval add(final Interval rhs) {
 		// [a, b] + [c, d] = [a + c, b + d]
 		return Interval.of(mLower.add(rhs.mLower), mUpper.add(rhs.mUpper));
