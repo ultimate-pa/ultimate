@@ -89,6 +89,14 @@ public final class Interval {
 		return new Interval(lower, upper);
 	}
 
+	public boolean hasLower() {
+		return mLower.isRational();
+	}
+
+	public boolean hasUpper() {
+		return mUpper.isRational();
+	}
+
 	public Rational getLower() {
 		return mLower;
 	}

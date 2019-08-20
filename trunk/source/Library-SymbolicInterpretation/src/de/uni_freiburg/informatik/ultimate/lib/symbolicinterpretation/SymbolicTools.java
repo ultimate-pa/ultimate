@@ -32,6 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -47,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscri
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -140,6 +140,17 @@ public class SymbolicTools {
 				returnTransition.getTransformula(), returnTransition.getCorrespondingCall().getTransformula(),
 				toolkit.getOldVarsAssignmentCache().getOldVarsAssignment(callee),
 				toolkit.getModifiableGlobalsTable().getModifiedBoogieVars(callee)));
+	}
+
+	public Term[] dnfDisjuncts(final IPredicate pred) {
+		// TODO consider using QuantifierPusher to push quantifiers as inward as possible
+
+		// you can ensure that there are no let terms by using the unletter, but there should not be any let terms
+		// final Term unletedTerm = new FormulaUnLet().transform(pred.getFormula());
+
+		final Term dnf = SmtUtils.toDnf(mServices, mMngdScript, pred.getFormula(),
+				SmtUtils.XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		return SmtUtils.getDisjuncts(dnf);
 	}
 
 	public IPredicate top() {

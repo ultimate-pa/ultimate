@@ -26,13 +26,30 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class IntervalDomain implements IDomain {
 
@@ -55,7 +72,6 @@ public class IntervalDomain implements IDomain {
 		return mTools.top();
 	}
 
-
 	@Override
 	public ResultForAlteredInputs isEqBottom(final IPredicate pred) {
 		return RelationCheckUtil.isEqBottom_SolverAlphaSolver(mTools, this, pred);
@@ -68,16 +84,165 @@ public class IntervalDomain implements IDomain {
 
 	@Override
 	public IPredicate alpha(final IPredicate pred) {
-		// TODO consider using QuantifierPusher to push quantifiers as inward as possible
-		final Term dnf = SmtUtils.toDnf(mServices, mTools.getManagedScript(), pred.getFormula(),
-				SmtUtils.XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final DnfToExplicitValue rewriter = new DnfToExplicitValue(mServices, mTools);
-		final Term[] rewrittenDisjuncts = Arrays.stream(SmtUtils.getDisjuncts(dnf))
-				.map(rewriter::transform)
-				.toArray(Term[]::new);
-		//return mTools.or(joinAccordingToMax(rewrittenDisjuncts));
-		// TODO return value
-		return null;
+		final Term[] dnfDisjuncts = mTools.dnfDisjuncts(pred);
+		final List<Map<TermVariable, Interval>> dnfIntervals = new ArrayList<>(dnfDisjuncts.length);
+		for (final Term dnfDisjunct : dnfDisjuncts) {
+			dnfIntervals.add(dnfDisjunctToIntervals(dnfDisjunct));
+		}
+		// TODO do join disjuncts if there are too many
+		return mTools.or(dnfIntervals.stream().map(this::intervalsToTerm).collect(Collectors.toList()));
 	}
 
+	private Map<TermVariable, Interval> dnfDisjunctToIntervals(final Term dnfDisjunct) {
+
+		final List<SolvedBinaryRelation> solvedRelations = dnfDisjunctToSolvedRelations(dnfDisjunct);
+		Collections.sort(solvedRelations, new CompareNumberOfFreeVariablesInRhs(solvedRelations));
+
+		final IProgressAwareTimer timer = mServices.getProgressMonitorService();
+		final Map<TermVariable, Interval> varToInterval = new HashMap<>();
+		boolean updated = true;
+		while (updated) {
+			// TODO limit max iterations by constant or percentual timeout and return varToInterval as is
+			if (!timer.continueProcessing()) {
+				// TODO log a warning
+				throw new ToolchainCanceledException(getClass());
+			}
+			updated = false;
+			for (final SolvedBinaryRelation rel : solvedRelations) {
+				updated |= updateInterval(varToInterval, rel);
+			}
+		}
+		return varToInterval;
+	}
+
+	private List<SolvedBinaryRelation> dnfDisjunctToSolvedRelations(final Term dnfDisjunct) {
+		final List<SolvedBinaryRelation> solvedRelations = new ArrayList<>();
+		for (final Term conjunct : SmtUtils.getConjuncts(dnfDisjunct)) {
+			solvedRelations.addAll(solveForAllSubjects(conjunct));
+		}
+		return solvedRelations;
+	}
+
+	private Collection<SolvedBinaryRelation> solveForAllSubjects(final Term term) {
+		final AffineRelation affineRel = AffineRelation.convert(mTools.getScript(), term);
+		if (affineRel == null) {
+			return Collections.emptyList();
+		}
+		final Collection<SolvedBinaryRelation> result = new ArrayList<>();
+		for (final TermVariable subject : term.getFreeVars()) {
+			final SolvedBinaryRelation solved = affineRel.solveForSubject(mTools.getScript(), subject);
+			if (solved != null) {
+				result.add(solved);
+			}
+		}
+		return result;
+	}
+
+	public static class CompareNumberOfFreeVariablesInRhs implements Comparator<SolvedBinaryRelation> {
+
+		private final Map<SolvedBinaryRelation, Integer> mNumberOfFreeVarsInRhs;
+
+		public CompareNumberOfFreeVariablesInRhs(final Collection<SolvedBinaryRelation> relations) {
+			// pre-compute values since each .getFreeVars() would traverse the whole term again
+			mNumberOfFreeVarsInRhs = relations.stream()
+					.collect(Collectors.toMap(key -> key, key -> key.getRightHandSide().getFreeVars().length));
+		}
+		@Override
+		public int compare(final SolvedBinaryRelation left, final SolvedBinaryRelation right) {
+			return mNumberOfFreeVarsInRhs.get(left).compareTo(mNumberOfFreeVarsInRhs.get(right));
+		}
+	}
+
+	private boolean updateInterval(final Map<TermVariable, Interval> scope, final SolvedBinaryRelation relation) {
+		final Map<AssumptionForSolvability, Term> assumptions = relation.getAssumptionsMap();
+		if (assumptions.entrySet().stream().anyMatch(assumption -> !isAssumptionValid(assumption, scope))) {
+			// cannot use solved relation because of invalid assumption
+			return false;
+		}
+		assert relation.getLeftHandSide() instanceof TermVariable;
+		final TermVariable subject = (TermVariable) relation.getLeftHandSide();
+		final Interval oldValue = scope.getOrDefault(subject, Interval.TOP);
+		final Interval newValue = updatedLhsForRelation(
+				oldValue, relation.getRelationSymbol(), TermToInterval.evaluate(relation.getRightHandSide(), scope));
+		if (oldValue.equals(newValue)) {
+			return false;
+		}
+		scope.put(subject, newValue);
+		return true;
+	}
+
+	private Interval updatedLhsForRelation(final Interval lhs, final RelationSymbol relSym, final Interval rhs) {
+		switch (relSym) {
+		case DISTINCT:
+			return lhs.satisfyDistinct(rhs).getLhs();
+		case EQ:
+			return lhs.satisfyEqual(rhs).getLhs();
+		case GEQ:
+		case GREATER:
+			return lhs.satisfyGreaterOrEqual(rhs).getLhs();
+		case LEQ:
+		case LESS:
+			return lhs.satisfyLessOrEqual(rhs).getLhs();
+		default:
+			throw new AssertionError("Missing case for " + relSym);
+		}
+	}
+
+	private boolean isAssumptionValid(final Entry<AssumptionForSolvability, Term> assumption,
+			final Map<TermVariable, Interval> scope) {
+		switch (assumption.getKey()) {
+		case INTEGER_DIVISIBLE_BY_CONSTANT:
+			return isIntDivisibleByConst(assumption.getValue(), scope);
+		case REAL_DIVISOR_NOT_ZERO:
+			return isRealDivisorNotZero(assumption.getValue(), scope);
+		default:
+			throw new AssertionError("Missing case for " + assumption.getKey());
+		}
+	}
+
+	private boolean isIntDivisibleByConst(final Term assumption, final Map<TermVariable, Interval> scope) {
+		// TODO implement check for things like (= (% x 7) 0)
+		// safe over-approximation for the moment
+		return false;
+	}
+
+	private boolean isRealDivisorNotZero(final Term assumption, final Map<TermVariable, Interval> scope) {
+		// TODO term is probably not only the variable, but something like (distinct x 0)
+		//      cannot say at the moment since REAL_DIVISOR_NOT_ZERO seems to be unused so far
+		assert assumption instanceof TermVariable;
+		return !scope.getOrDefault(assumption, Interval.TOP).containsZero();
+	}
+
+	private Term intervalsToTerm(final Map<TermVariable, Interval> mapVarsToVals) {
+		final Script script = mTools.getScript();
+		final Collection<Term> conjunction = new ArrayList<>(2 * mapVarsToVals.size());
+		for (final Entry<TermVariable, Interval> varAndVal : mapVarsToVals.entrySet()) {
+			final TermVariable var = varAndVal.getKey();
+			final Interval val = varAndVal.getValue();
+			if (val.hasLower()) {
+				conjunction.add(SmtUtils.geq(script, var, boundFor(var, val.getLower())));
+			}
+			if (val.hasUpper()) {
+				conjunction.add(SmtUtils.leq(script, var, boundFor(var, val.getUpper())));
+			}
+		}
+		return SmtUtils.and(script, conjunction);
+	}
+
+	private Term boundFor(final TermVariable variable, final Rational bound) {
+		return SmtUtils.rational2Term(mTools.getScript(), bound, variable.getSort());
+	}
+
+
 }
+
+
+
+
+
+
+
+
+
+
+

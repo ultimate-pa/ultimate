@@ -84,15 +84,8 @@ public class ExplicitValueDomain implements IDomain {
 
 	@Override
 	public IPredicate alpha(final IPredicate pred) {
-		// TODO consider using QuantifierPusher to push quantifiers as inwards as possible
-
-		// you can ensure that there are no let terms by using the unletter, but there should not be any let terms
-		// final Term unletedTerm = new FormulaUnLet().transform(pred.getFormula());
-
-		final Term dnf = SmtUtils.toDnf(mServices, mTools.getManagedScript(), pred.getFormula(),
-				SmtUtils.XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final DnfToExplicitValue rewriter = new DnfToExplicitValue(mServices, mTools);
-		final Term[] rewrittenDisjuncts = Arrays.stream(SmtUtils.getDisjuncts(dnf))
+		final Term[] rewrittenDisjuncts = Arrays.stream(mTools.dnfDisjuncts(pred))
 				.map(rewriter::transform)
 				.toArray(Term[]::new);
 		// TODO use a more strict normal form, where assignments have a variable on the left and a number on the right?
