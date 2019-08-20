@@ -1,3 +1,6 @@
+/**
+ * TODO: Copyright.
+ */
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.util.HashSet;
@@ -17,12 +20,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-@Deprecated
-public abstract class MSODOperationsBase {
+/**
+ * TODO: Comment.
+ *
+ * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
+ * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
+ */
+public abstract class MSODAutomataOperations {
 
 	/**
 	 * Constructs an empty automaton.
@@ -35,38 +42,6 @@ public abstract class MSODOperationsBase {
 		final StringFactory stringFactory = new StringFactory();
 
 		return new NestedWordAutomaton<>(services, vpAlphabet, stringFactory);
-	}
-
-	/**
-	 * Constructs an automaton that represents "true".
-	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
-			trueAutomaton(final AutomataLibraryServices services) {
-
-		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
-		final MSODAlphabetSymbol symbol = new MSODAlphabetSymbol();
-		automaton.getAlphabet().add(symbol);
-
-		automaton.addState(true, true, "init");
-		automaton.addInternalTransition("init", symbol, "init");
-
-		return automaton;
-	}
-
-	/**
-	 * Constructs an automaton that represents "false".
-	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
-			falseAutomaton(final AutomataLibraryServices services) {
-
-		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
-		final MSODAlphabetSymbol symbol = new MSODAlphabetSymbol();
-		automaton.getAlphabet().add(symbol);
-
-		automaton.addState(true, false, "init");
-		automaton.addInternalTransition("init", symbol, "init");
-
-		return automaton;
 	}
 
 	/**
@@ -97,97 +72,7 @@ public abstract class MSODOperationsBase {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} which is constructed from the given {@link INestedWordAutomaton}.
-	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> nwa(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) {
-
-		final NestedWordAutomaton<MSODAlphabetSymbol, String> result = emptyAutomaton(services);
-		result.getAlphabet().addAll(automaton.getAlphabet());
-
-		for (final String state : automaton.getStates()) {
-			result.addState(automaton.isInitial(state), automaton.isFinal(state), state);
-		}
-
-		for (final String state : automaton.getStates()) {
-			for (final OutgoingInternalTransition<MSODAlphabetSymbol, String> transition : automaton
-					.internalSuccessors(state)) {
-				result.addInternalTransition(state, transition.getLetter(), transition.getSucc());
-			}
-		}
-
-		return result;
-	}
-
-	/**
-	 * Constructs an automaton that represents "x < c".
-	 *
-	 * @throws IllegalArgumentException
-	 *             if x is not of type Int or c is less than 0.
-	 */
-	public abstract NestedWordAutomaton<MSODAlphabetSymbol, String>
-			strictIneqAutomaton(final AutomataLibraryServices services, final Term x, final Rational c);
-
-	/**
-	 * TODO Find bug in this automaton.
-	 *
-	 * Constructs an automaton that represents "x-y < c".
-	 *
-	 * @throws IllegalArgumentException
-	 *             if x, y are not of type Int or c is less than 0.
-	 */
-	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String>
-			strictIneqAutomaton(final AutomataLibraryServices services, final Term x, final Term y, final Rational c)
-					throws AutomataLibraryException;
-
-	/**
-	 * Constructs an automaton that represents "-x < c".
-	 *
-	 * @throws IllegalArgumentException
-	 *             if x is not of type Int or c is less than 0.
-	 */
-	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String>
-			strictNegIneqAutomaton(final AutomataLibraryServices services, final Term x, final Rational c);
-
-	/**
-	 * Constructs an automaton that represents "X strictSubsetInt Y".
-	 *
-	 * @throws IllegalArgumentException
-	 *             if x, y are not of type SetOfInt.
-	 */
-	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String>
-			strictSubsetAutomaton(final AutomataLibraryServices services, final Term x, final Term y);
-
-	/**
-	 * Constructs an automaton that represents "X subsetInt Y".
-	 *
-	 * @throws IllegalArgumentException
-	 *             if x, y are not of type SetOfInt.
-	 */
-	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String>
-			subsetAutomaton(final AutomataLibraryServices services, final Term x, final Term y);
-
-	/**
-	 * Constructs an automaton that represents "x+c element Y".
-	 *
-	 * @throws IllegalArgumentException
-	 *             if x, y are not of type Int, SetOfInt or c is smaller than 0.
-	 */
-	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String>
-			elementAutomaton(final AutomataLibraryServices services, final Term x, final Rational c, final Term y)
-					throws AutomataLibraryException;
-
-	/**
-	 * Constructs an automaton that represents "c element X".
-	 *
-	 * @throws IllegalArgumentException
-	 *             if x is not of type SetOfInt or c is smaller than 0.
-	 */
-	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String>
-			constElementAutomaton(final AutomataLibraryServices services, final Rational c, final Term x);
-
-	/**
-	 * TODO Check if there is any difference between Nat and Int.
+	 * TODO: Check if there is any difference between Nat and Int.
 	 *
 	 * Constructs a copy of the given automaton with the extended or reduced alphabet.
 	 */
@@ -223,7 +108,10 @@ public abstract class MSODOperationsBase {
 	}
 
 	/**
-	 * TODO Comment.
+	 * TODO: Comment.
+	 *
+	 * @throws AutomataLibraryException
+	 *             if construction of {@link Complement} or {@link Union} fails
 	 */
 	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String> complement(final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException;
@@ -244,16 +132,19 @@ public abstract class MSODOperationsBase {
 	}
 
 	/**
-	 * TODO Comment.
+	 * TODO: Comment.
+	 *
+	 * @throws AutomataLibraryException
+	 *             if construction of {@link Intersect} fails
 	 */
 	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String> intersect(final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton1,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton2) throws AutomataLibraryException;
 
 	/**
-	 * TODO Comment.
+	 * TODO: Comment.
 	 *
-	 * @throws AutomataOperationCanceledException
+	 * @throws AutomataLibraryException
 	 */
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> minimize(final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
@@ -285,9 +176,10 @@ public abstract class MSODOperationsBase {
 	}
 
 	/**
-	 * TODO Comment.
+	 * TODO: Comment.
 	 *
-	 * @throws AutomataOperationCanceledException
+	 * @throws AutomataLibraryException
+	 *             if {@link IsEmpty} fails
 	 */
 	public abstract Map<Term, Term> getResult(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException;

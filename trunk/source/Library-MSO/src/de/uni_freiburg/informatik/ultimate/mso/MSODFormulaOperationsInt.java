@@ -1,3 +1,4 @@
+// TODO: Copyright.
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.util.Arrays;
@@ -11,12 +12,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-@Deprecated
-public abstract class MSODIntOperationsBase extends MSODOperationsBase {
+/**
+ * TODO: Comment.
+ *
+ * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
+ * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
+ */
+public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 	/**
-	 * Constructs an automaton that represents "x < c".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type Int.
 	 */
@@ -82,14 +86,16 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 	}
 
 	/**
-	 * Constructs an automaton that represents x-y < c. The automaton consists of four parts, one for each of the
-	 * following case distinctions: x < 0 && y < 0; x >= 0 && y >= 0; x < 0 && y >= 0; x >= 0 && y < 0.
+	 * The automaton consists of four parts, one for each of the following case distinctions:
+	 * <ul>
+	 * <li>x < 0 &and; y < 0
+	 * <li>x >= 0 &and; y >= 0
+	 * <li>x < 0 &and; y >= 0
+	 * <li>x >= 0 &and; y < 0
+	 * </ul>
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int.
-	 *
-	 * @throws AutomataLibraryException
-	 *             if construction of {@link Union} fails
 	 */
 	@Override
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAutomaton(final AutomataLibraryServices services,
@@ -117,7 +123,7 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 	/**
 	 * TODO: Comment.
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartOne(
+	private static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartOne(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -200,7 +206,7 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 	/**
 	 * TODO: Comment.
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartTwo(
+	private static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartTwo(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -280,7 +286,7 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 	/**
 	 * TODO: Comment.
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartThree(
+	private static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartThree(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -360,7 +366,7 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 	/**
 	 * TODO: Comment.
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartFour(
+	private static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartFour(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -446,8 +452,6 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 	}
 
 	/**
-	 * Constructs an automaton that represents "-x < c".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int.
 	 */
@@ -515,8 +519,6 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 	}
 
 	/**
-	 * Constructs an automaton that represents "X strictSubsetInt Y".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
 	 */
@@ -552,8 +554,6 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 	}
 
 	/**
-	 * Constructs an automaton that represents "X subsetInt Y".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
 	 */
@@ -582,11 +582,6 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 	}
 
 	/**
-	 * Constructs an automaton that represents "x+c element Y".
-	 *
-	 * @throws AutomataLibraryException
-	 *             if construction of {@link Union} fails
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int respectively SetOfInt.
 	 */
@@ -926,8 +921,6 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 	}
 
 	/**
-	 * Constructs an automaton that represents "c element X".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type SetOfInt.
 	 */
@@ -983,5 +976,4 @@ public abstract class MSODIntOperationsBase extends MSODOperationsBase {
 
 		return automaton;
 	}
-
 }

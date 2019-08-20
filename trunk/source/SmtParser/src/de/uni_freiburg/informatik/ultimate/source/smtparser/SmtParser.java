@@ -44,10 +44,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ExceptionThrowingParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateEliminator;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -55,11 +55,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.mso.MSODIntOperations;
-import de.uni_freiburg.informatik.ultimate.mso.MSODIntWeakOperations;
-import de.uni_freiburg.informatik.ultimate.mso.MSODNatOperations;
+import de.uni_freiburg.informatik.ultimate.mso.MSODAutomataOperationsBuchi;
+import de.uni_freiburg.informatik.ultimate.mso.MSODAutomataOperationsWeak;
+import de.uni_freiburg.informatik.ultimate.mso.MSODFormulaOperationsInt;
+import de.uni_freiburg.informatik.ultimate.mso.MSODFormulaOperationsNat;
+import de.uni_freiburg.informatik.ultimate.mso.MSODOperations;
 import de.uni_freiburg.informatik.ultimate.mso.MSODScript;
-import de.uni_freiburg.informatik.ultimate.mso.MSODNatWeakOperations;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
@@ -232,25 +233,29 @@ public class SmtParser implements ISource {
 
 			case MSODNatWeak: {
 				mLogger.info("MSODNatWeak");
-				script = new MSODScript(mServices, mLogger, new MSODNatWeakOperations());
+				script = new MSODScript(mServices, mLogger,
+						new MSODOperations(new MSODFormulaOperationsNat(), new MSODAutomataOperationsWeak()));
 			}
 				break;
 
 			case MSODNat: {
 				mLogger.info("MSODNat");
-				script = new MSODScript(mServices, mLogger, new MSODNatOperations());
+				script = new MSODScript(mServices, mLogger,
+						new MSODOperations(new MSODFormulaOperationsNat(), new MSODAutomataOperationsBuchi()));
 			}
 				break;
 
 			case MSODIntWeak: {
 				mLogger.info("MSODIntWeak");
-				script = new MSODScript(mServices, mLogger, new MSODIntWeakOperations());
+				script = new MSODScript(mServices, mLogger,
+						new MSODOperations(new MSODFormulaOperationsInt(), new MSODAutomataOperationsWeak()));
 			}
 				break;
 
 			case MSODInt: {
 				mLogger.info("MSODInt");
-				script = new MSODScript(mServices, mLogger, new MSODIntOperations());
+				script = new MSODScript(mServices, mLogger,
+						new MSODOperations(new MSODFormulaOperationsInt(), new MSODAutomataOperationsBuchi()));
 			}
 				break;
 

@@ -1,7 +1,6 @@
 /**
  * TODO: Copyright.
  */
-
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.util.HashMap;
@@ -11,7 +10,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -27,11 +25,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-@Deprecated
-public final class MSODIntWeakOperations extends MSODIntOperationsBase {
+public class MSODAutomataOperationsWeak extends MSODAutomataOperations {
 
 	/**
-	 * TODO Comment.
+	 * TODO: Comment.
 	 */
 	@Override
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> complement(final AutomataLibraryServices services,
@@ -63,7 +60,7 @@ public final class MSODIntWeakOperations extends MSODIntOperationsBase {
 	}
 
 	/**
-	 * TODO Comment.
+	 * TODO: Comment.
 	 */
 	@Override
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> intersect(final AutomataLibraryServices services,
@@ -79,9 +76,7 @@ public final class MSODIntWeakOperations extends MSODIntOperationsBase {
 	}
 
 	/**
-	 * TODO Comment.
-	 *
-	 * @throws AutomataOperationCanceledException
+	 * TODO: Comment.
 	 */
 	public NestedWord<MSODAlphabetSymbol> getWord(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
@@ -93,15 +88,15 @@ public final class MSODIntWeakOperations extends MSODIntOperationsBase {
 		if (!isEmpty.getResult()) {
 			final NestedRun<MSODAlphabetSymbol, String> run = isEmpty.getNestedRun();
 			result = run.getWord();
+
+			// throw new IllegalArgumentException("RUN: '" + run.toString() + "'");
 		}
 
 		return result;
 	}
 
 	/**
-	 * TODO Comment.
-	 *
-	 * @throws AutomataOperationCanceledException
+	 * TODO: Comment.
 	 */
 	@Override
 	public Map<Term, Term> getResult(final Script script, final AutomataLibraryServices services,
@@ -111,7 +106,7 @@ public final class MSODIntWeakOperations extends MSODIntOperationsBase {
 		final NestedWord<MSODAlphabetSymbol> word = getWord(script, services, automaton);
 
 		if (word != null) {
-			result = MSODUtils.parseMSODIntToTerm(script, word);
+			result = MSODUtils.parseMSODNatToTerm(script, word);
 		}
 
 		return result;

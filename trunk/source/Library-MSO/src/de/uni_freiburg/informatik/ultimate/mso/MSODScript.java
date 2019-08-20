@@ -84,6 +84,18 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *            SmtUtils.toCnf(mUltimateServiceProvider, managedScript, mAssertionTerm,
  *            XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
  *
+ *            TODO: Check inputs.
+ *
+ *            TODO: Find meaningful names for the automata representing only one case of the complete automaton.
+ *
+ *            TODO: Test all (new) Int automata.
+ *
+ *            TODO: Note: Some methods are redundant to the ones in MoNatDiffAutomatonFactory (even though some are
+ *            shortened by the use of createAlphabet) including: emptyAutomaton, trueAutomaton, falseAutomaton,
+ *            intVariableAutomaton, reconstruct, createAlphabet, strictSubsetAutomaton, nonStrictSubsetAutomaton
+ *
+ *            TODO: nonStrictSubset changed such that actually no transition is needed to be accepting.
+ *
  * @Solved {@link Union} does not ensure that Int variables are set exactly once.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -94,13 +106,13 @@ public class MSODScript extends NoopScript {
 
 	private final IUltimateServiceProvider mUltimateServiceProvider;
 	private final AutomataLibraryServices mAutomataLibrarayServices;
-	private final MSODOperationsBase mMSODOperations;
+	private final MSODOperations mMSODOperations;
 	public final ILogger mLogger;
 	private Term mAssertionTerm;
 	private Map<Term, Term> mModel;
 
 	public MSODScript(final IUltimateServiceProvider services, final ILogger logger,
-			final MSODOperationsBase automatonFactory) {
+			final MSODOperations automatonFactory) {
 		mUltimateServiceProvider = services;
 		mAutomataLibrarayServices = new AutomataLibraryServices(services);
 		mLogger = logger;
@@ -325,7 +337,7 @@ public class MSODScript extends NoopScript {
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processTrue() {
 		mLogger.info("Construct true");
 
-		return MSODOperationsBase.trueAutomaton(mAutomataLibrarayServices);
+		return mMSODOperations.trueAutomaton(mAutomataLibrarayServices);
 	}
 
 	/**
@@ -334,7 +346,7 @@ public class MSODScript extends NoopScript {
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processFalse() {
 		mLogger.info("Construct false");
 
-		return MSODOperationsBase.falseAutomaton(mAutomataLibrarayServices);
+		return mMSODOperations.falseAutomaton(mAutomataLibrarayServices);
 	}
 
 	/**

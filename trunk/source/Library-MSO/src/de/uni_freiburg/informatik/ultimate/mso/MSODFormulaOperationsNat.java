@@ -1,3 +1,5 @@
+// TODO: Copyright.
+
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.util.Arrays;
@@ -8,12 +10,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-@Deprecated
-public abstract class MSODNatOperationsBase extends MSODOperationsBase {
+/**
+ * TODO: Comment.
+ *
+ * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
+ * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
+ */
+public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 
 	/**
-	 * Constructs an automaton that represents "x < c".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type Int or c is less than 0.
 	 */
@@ -42,8 +47,6 @@ public abstract class MSODNatOperationsBase extends MSODOperationsBase {
 	}
 
 	/**
-	 * Constructs an automaton that represents "x-y < c".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int or c is less than 0.
 	 */
@@ -81,8 +84,6 @@ public abstract class MSODNatOperationsBase extends MSODOperationsBase {
 	}
 
 	/**
-	 * Constructs an automaton that represents "-x < c".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type Int or c is less than 0.
 	 */
@@ -118,8 +119,6 @@ public abstract class MSODNatOperationsBase extends MSODOperationsBase {
 	}
 
 	/**
-	 * Constructs an automaton that represents "X strictSubsetInt Y".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
 	 */
@@ -152,8 +151,6 @@ public abstract class MSODNatOperationsBase extends MSODOperationsBase {
 	}
 
 	/**
-	 * Constructs an automaton that represents "X subsetInt Y".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
 	 */
@@ -186,8 +183,6 @@ public abstract class MSODNatOperationsBase extends MSODOperationsBase {
 	}
 
 	/**
-	 * Constructs an automaton that represents "x+c element Y".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int, SetOfInt or c is smaller than 0.
 	 */
@@ -224,8 +219,6 @@ public abstract class MSODNatOperationsBase extends MSODOperationsBase {
 	}
 
 	/**
-	 * Constructs an automaton that represents "c element X".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type SetOfInt or c is smaller than 0.
 	 */
@@ -312,5 +305,4 @@ public abstract class MSODNatOperationsBase extends MSODOperationsBase {
 			automaton.addInternalTransition(state, stateToFinal, "final");
 		}
 	}
-
 }

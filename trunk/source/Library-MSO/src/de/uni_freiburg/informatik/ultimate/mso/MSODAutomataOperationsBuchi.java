@@ -1,7 +1,6 @@
 /**
  * TODO: Copyright.
  */
-
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.util.HashMap;
@@ -13,22 +12,22 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * TODO: Comment.
- *
+ * 
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-@Deprecated
-public final class MSODIntWeakOperations extends MSODIntOperationsBase {
+public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 
 	/**
 	 * TODO Comment.
@@ -38,7 +37,7 @@ public final class MSODIntWeakOperations extends MSODIntOperationsBase {
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result =
-				new Complement<>(services, new MSODStringFactory(), automaton).getResult();
+				new BuchiComplementFKV<>(services, new MSODStringFactory(), automaton).getResult();
 
 		result = minimize(services, result);
 
@@ -71,7 +70,7 @@ public final class MSODIntWeakOperations extends MSODIntOperationsBase {
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton2) throws AutomataLibraryException {
 
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result =
-				new Intersect<>(services, new MSODStringFactory(), automaton1, automaton2).getResult();
+				new BuchiIntersect<>(services, new MSODStringFactory(), automaton1, automaton2).getResult();
 
 		result = minimize(services, result);
 
@@ -81,18 +80,21 @@ public final class MSODIntWeakOperations extends MSODIntOperationsBase {
 	/**
 	 * TODO Comment.
 	 *
-	 * @throws AutomataOperationCanceledException
+	 * @throws AutomataLibraryException
+	 *             if {@link BuchiIsEmpty} fails
 	 */
-	public NestedWord<MSODAlphabetSymbol> getWord(final Script script, final AutomataLibraryServices services,
+	public NestedLassoWord<MSODAlphabetSymbol> getWord(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 
-		NestedWord<MSODAlphabetSymbol> result = null;
+		NestedLassoWord<MSODAlphabetSymbol> result = null;
 
-		final IsEmpty<MSODAlphabetSymbol, String> isEmpty = new IsEmpty<>(services, automaton);
+		final BuchiIsEmpty<MSODAlphabetSymbol, String> isEmpty = new BuchiIsEmpty<>(services, automaton);
 
 		if (!isEmpty.getResult()) {
-			final NestedRun<MSODAlphabetSymbol, String> run = isEmpty.getNestedRun();
-			result = run.getWord();
+			final NestedLassoRun<MSODAlphabetSymbol, String> run = isEmpty.getAcceptingNestedLassoRun();
+			result = run.getNestedLassoWord();
+
+			// throw new IllegalArgumentException(result.toString());
 		}
 
 		return result;
@@ -108,10 +110,13 @@ public final class MSODIntWeakOperations extends MSODIntOperationsBase {
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 
 		Map<Term, Term> result = new HashMap<>();
-		final NestedWord<MSODAlphabetSymbol> word = getWord(script, services, automaton);
+		final NestedLassoWord<MSODAlphabetSymbol> word = getWord(script, services, automaton);
 
 		if (word != null) {
-			result = MSODUtils.parseMSODIntToTerm(script, word);
+			final NestedWord<MSODAlphabetSymbol> stem = word.getStem();
+			final NestedWord<MSODAlphabetSymbol> loop = word.getLoop();
+
+			result = MSODUtils.parseMSODNatToTerm(script, stem);
 		}
 
 		return result;
