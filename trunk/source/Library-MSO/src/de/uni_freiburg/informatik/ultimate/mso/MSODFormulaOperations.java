@@ -18,8 +18,7 @@ public abstract class MSODFormulaOperations {
 	/**
 	 * Constructs an empty automaton.
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
-			emptyAutomaton(final AutomataLibraryServices services) {
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> emptyAutomaton(final AutomataLibraryServices services) {
 
 		final Set<MSODAlphabetSymbol> alphabet = new HashSet<>();
 		final VpAlphabet<MSODAlphabetSymbol> vpAlphabet = new VpAlphabet<>(alphabet);
@@ -31,8 +30,7 @@ public abstract class MSODFormulaOperations {
 	/**
 	 * Constructs an automaton that represents "true".
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
-			trueAutomaton(final AutomataLibraryServices services) {
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> trueAutomaton(final AutomataLibraryServices services) {
 
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		final MSODAlphabetSymbol symbol = new MSODAlphabetSymbol();
@@ -47,8 +45,7 @@ public abstract class MSODFormulaOperations {
 	/**
 	 * Constructs an automaton that represents "false".
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
-			falseAutomaton(final AutomataLibraryServices services) {
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> falseAutomaton(final AutomataLibraryServices services) {
 
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		final MSODAlphabetSymbol symbol = new MSODAlphabetSymbol();

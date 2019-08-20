@@ -63,7 +63,8 @@ public class MSODIntWeakOperationsTest {
 	private Script mScript;
 	private ILogger mLogger;
 
-	MSODOperationsBase mMSODOperations = new MSODIntWeakOperations();
+	MSODOperations mMSODOperations =
+			new MSODOperations(new MSODFormulaOperationsInt(), new MSODAutomataOperationsWeak());
 
 	@Rule
 	public final ExpectedException mNoException = ExpectedException.none();

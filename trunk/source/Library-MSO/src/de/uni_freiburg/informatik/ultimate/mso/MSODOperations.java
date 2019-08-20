@@ -25,12 +25,12 @@ public final class MSODOperations {
 
 	public NestedWordAutomaton<MSODAlphabetSymbol, String> trueAutomaton(final AutomataLibraryServices services) {
 
-		return MSODFormulaOperations.trueAutomaton(services);
+		return mFormulaOperations.trueAutomaton(services);
 	}
 
 	public NestedWordAutomaton<MSODAlphabetSymbol, String> falseAutomaton(final AutomataLibraryServices services) {
 
-		return MSODFormulaOperations.falseAutomaton(services);
+		return mFormulaOperations.falseAutomaton(services);
 	}
 
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAutomaton(final AutomataLibraryServices services,

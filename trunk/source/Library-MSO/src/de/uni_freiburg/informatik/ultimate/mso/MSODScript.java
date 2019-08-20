@@ -40,16 +40,12 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -111,13 +107,12 @@ public class MSODScript extends NoopScript {
 	private Term mAssertionTerm;
 	private Map<Term, Term> mModel;
 
-	public MSODScript(final IUltimateServiceProvider services, final ILogger logger,
-			final MSODOperations automatonFactory) {
+	public MSODScript(final IUltimateServiceProvider services, final ILogger logger, final MSODOperations operations) {
 		mUltimateServiceProvider = services;
 		mAutomataLibrarayServices = new AutomataLibraryServices(services);
 		mLogger = logger;
 
-		mMSODOperations = automatonFactory;
+		mMSODOperations = operations;
 	}
 
 	@Override
@@ -598,23 +593,6 @@ public class MSODScript extends NoopScript {
 		}
 
 		throw new IllegalArgumentException("Invalid input.");
-	}
-
-	/**
-	 * Checks if the language of the given automaton is empty.
-	 *
-	 * @throws AutomataOperationCanceledException
-	 *             if construction of {@link IsEmpty} fails.
-	 */
-	private void checkEmptiness(final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
-			throws AutomataLibraryException {
-
-		final IsEmpty<MSODAlphabetSymbol, String> isEmpty = new IsEmpty<>(mAutomataLibrarayServices, automaton);
-
-		if (!isEmpty.getResult()) {
-			final NestedRun<MSODAlphabetSymbol, String> run = isEmpty.getNestedRun();
-			final NestedWord<MSODAlphabetSymbol> word = run.getWord();
-		}
 	}
 
 	/**

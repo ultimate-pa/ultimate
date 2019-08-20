@@ -63,7 +63,8 @@ public final class MSODNatWeakOperationsTest {
 	private Script mScript;
 	private ILogger mLogger;
 
-	MSODOperationsBase mMSODOperations = new MSODNatWeakOperations();
+	MSODOperations mMSODOperations =
+			new MSODOperations(new MSODFormulaOperationsNat(), new MSODAutomataOperationsWeak());
 
 	@Rule
 	public final ExpectedException mNoException = ExpectedException.none();
@@ -119,12 +120,12 @@ public final class MSODNatWeakOperationsTest {
 
 		int size = 0;
 		for (int i = 0; i < values1.length; i++) {
-			assert(values1[i] >= 0);
+			assert (values1[i] >= 0);
 			size = values1[i] + 1 > size ? values1[i] + 1 : size;
 		}
 
 		for (int i = 0; i < values2.length; i++) {
-			assert(values2[i] >= 0);
+			assert (values2[i] >= 0);
 			size = values2[i] + 1 > size ? values2[i] + 1 : size;
 		}
 
@@ -150,7 +151,6 @@ public final class MSODNatWeakOperationsTest {
 		int[] xValues;
 		Rational c;
 		final Term x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
-
 
 		// Test Cases for x < c
 
@@ -257,7 +257,7 @@ public final class MSODNatWeakOperationsTest {
 		// Test Cases for x strictSubsetInt y
 
 		// { } strictSubsetInt { 0 }
-		xValues = new int[] {  };
+		xValues = new int[] {};
 		yValues = new int[] { 0 };
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
@@ -281,12 +281,12 @@ public final class MSODNatWeakOperationsTest {
 		yValues = new int[] { 1, 2, 3, 7 };
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
-		// { 0, 1, 4, 6  } strictSubsetInt { 0, 1, 4 }
+		// { 0, 1, 4, 6 } strictSubsetInt { 0, 1, 4 }
 		xValues = new int[] { 0, 1, 4, 6 };
 		yValues = new int[] { 0, 1, 4 };
 		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
-		// { 2, 3, 5  } strictSubsetInt { 2, 3, 5 }
+		// { 2, 3, 5 } strictSubsetInt { 2, 3, 5 }
 		xValues = new int[] { 2, 3, 5 };
 		yValues = new int[] { 2, 3, 5 };
 		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
@@ -306,7 +306,7 @@ public final class MSODNatWeakOperationsTest {
 		// Test Cases for x strictSubsetInt y
 
 		// { } subsetInt { 0 }false
-		xValues = new int[] {  };
+		xValues = new int[] {};
 		yValues = new int[] { 0 };
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 
@@ -330,7 +330,7 @@ public final class MSODNatWeakOperationsTest {
 		yValues = new int[] { 1, 2, 3, 7 };
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 
-		// { 0, 1, 4, 6  } subsetInt { 0, 1, 4 }
+		// { 0, 1, 4, 6 } subsetInt { 0, 1, 4 }
 		xValues = new int[] { 0, 1, 4, 6 };
 		yValues = new int[] { 0, 1, 4 };
 		test(false, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
@@ -340,14 +340,14 @@ public final class MSODNatWeakOperationsTest {
 		yValues = new int[] { 1, 3, 5 };
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 
-		// { 0 } subsetInt {  }
+		// { 0 } subsetInt { }
 		xValues = new int[] { 0 };
-		yValues = new int[] {  };
+		yValues = new int[] {};
 		test(false, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 
-		// { 5 } subsetInt {  }
+		// { 5 } subsetInt { }
 		xValues = new int[] { 5 };
-		yValues = new int[] {  };
+		yValues = new int[] {};
 		test(false, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 	}
 

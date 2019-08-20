@@ -123,7 +123,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	/**
 	 * TODO: Comment.
 	 */
-	private static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartOne(
+	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartOne(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -206,7 +206,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	/**
 	 * TODO: Comment.
 	 */
-	private static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartTwo(
+	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartTwo(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -286,7 +286,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	/**
 	 * TODO: Comment.
 	 */
-	private static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartThree(
+	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartThree(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -366,7 +366,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	/**
 	 * TODO: Comment.
 	 */
-	private static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartFour(
+	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartFour(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -610,7 +610,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	/**
 	 * TODO: Comment.
 	 */
-	private static NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartOne(
+	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartOne(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
 			throws AutomataLibraryException {
 
@@ -686,7 +686,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	/**
 	 * TODO: Comment.
 	 */
-	private static NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartTwo(
+	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartTwo(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
 			throws AutomataLibraryException {
 
@@ -765,7 +765,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	/**
 	 * TODO: Comment.
 	 */
-	private static NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartThree(
+	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartThree(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
 			throws AutomataLibraryException {
 
@@ -844,7 +844,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	/**
 	 * TODO: Comment.
 	 */
-	private static NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartFour(
+	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartFour(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
 			throws AutomataLibraryException {
 

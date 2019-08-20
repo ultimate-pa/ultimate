@@ -34,8 +34,7 @@ public abstract class MSODAutomataOperations {
 	/**
 	 * Constructs an empty automaton.
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
-			emptyAutomaton(final AutomataLibraryServices services) {
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> emptyAutomaton(final AutomataLibraryServices services) {
 
 		final Set<MSODAlphabetSymbol> alphabet = new HashSet<>();
 		final VpAlphabet<MSODAlphabetSymbol> vpAlphabet = new VpAlphabet<>(alphabet);
@@ -50,8 +49,8 @@ public abstract class MSODAutomataOperations {
 	 * @throws IllegalArgumentException
 	 *             if x is not of type Int.
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
-			intVariableAutomaton(final AutomataLibraryServices services, final Term x) {
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> intVariableAutomaton(final AutomataLibraryServices services,
+			final Term x) {
 
 		if (!MSODUtils.isIntVariable(x)) {
 			throw new IllegalArgumentException("Input x must be an Int variable.");
@@ -82,7 +81,7 @@ public abstract class MSODAutomataOperations {
 
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> result;
 
-		result = MSODOperationsBase.emptyAutomaton(services);
+		result = emptyAutomaton(services);
 		result.getAlphabet().addAll(alphabet);
 
 		for (final String state : automaton.getStates()) {
