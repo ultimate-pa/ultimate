@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimate.mso;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -23,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * TODO: Comment.
- * 
+ *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
@@ -117,6 +118,62 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 			final NestedWord<MSODAlphabetSymbol> loop = word.getLoop();
 
 			result = MSODUtils.parseMSODNatToTerm(script, stem);
+		}
+
+		return result;
+	}
+
+	/**
+	 * TODO Comment.
+	 *
+	 * @throws AutomataOperationCanceledException
+	 */
+	// @Override
+	public Map<Term, Term> getResultNew(final Script script, final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
+
+		final Map<Term, Term> result = new HashMap<>();
+		final NestedLassoWord<MSODAlphabetSymbol> word = getWord(script, services, automaton);
+
+		if (word != null) {
+			final NestedWord<MSODAlphabetSymbol> stem = word.getStem();
+			final NestedWord<MSODAlphabetSymbol> loop = word.getLoop();
+
+			if (automaton.getAlphabet().isEmpty()) {
+				// TODO: Deal with empty alphabet.
+			}
+
+			final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
+			final Map<Term, Set<Integer>> stemIndices = new HashMap<>();
+
+			for (final Term term : terms) {
+				stemIndices.put(term, new HashSet<>());
+			}
+
+			for (int i = 0; i < stem.length(); i++) {
+				final MSODAlphabetSymbol symbol = stem.getSymbol(i);
+				for (final Entry<Term, Boolean> entry : symbol.getMap().entrySet()) {
+					if (entry.getValue()) {
+						stemIndices.get(entry.getKey()).add(i);
+					}
+				}
+			}
+
+			final Map<Term, Set<Integer>> loopIndices = new HashMap<>();
+
+			for (final Term term : terms) {
+				loopIndices.put(term, new HashSet<>());
+			}
+
+			for (int i = 0; i < loop.length(); i++) {
+				final MSODAlphabetSymbol symbol = stem.getSymbol(i);
+				for (final Entry<Term, Boolean> entry : symbol.getMap().entrySet()) {
+					if (entry.getValue()) {
+						loopIndices.get(entry.getKey()).add(i);
+					}
+				}
+			}
+
 		}
 
 		return result;
