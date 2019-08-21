@@ -4,10 +4,22 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
+/**
+ * {scope}, it is always the case that if "P" holds, then "S", previously held and was preceded by "T"
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class PrecedenceChain21Pattern extends PatternType {
 
 	public PrecedenceChain21Pattern(final SrParseScope scope, final String id, final List<CDD> cdds,
@@ -17,13 +29,38 @@ public class PrecedenceChain21Pattern extends PatternType {
 
 	@Override
 	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
-		final CDD p_cdd = getCdds().get(2);
-		final CDD q_cdd = getScope().getCdd1();
-		final CDD r_cdd = getScope().getCdd2();
-		final CDD s_cdd = getCdds().get(1);
-		final CDD t_cdd = getCdds().get(0);
+		final CDD[] cdds = getCddsAsArray();
+		assert cdds.length == 3;
 
-		return peaTrans.precedenceChainPattern21(getId(), p_cdd, q_cdd, r_cdd, s_cdd, t_cdd, getScope().toString());
+		final SrParseScope scope = getScope();
+		// note: Q and R are reserved for scope, cdds are parsed in reverse order
+		final CDD P = cdds[2];
+		final CDD S = cdds[1];
+		final CDD T = cdds[0];
+
+		// final CDD Q = scope.getCdd1();
+		// final CDD R = scope.getCdd2();
+
+		final CounterTrace ct;
+		if (scope instanceof SrParseScopeGlob) {
+			ct = counterTrace(phase(S.negate()), phase(S.and(T.negate())), phase(T.negate()), phase(P), phaseT());
+		} else if (scope instanceof SrParseScopeBefore) {
+			ct = counterTrace(phaseT());
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+		} else if (scope instanceof SrParseScopeAfterUntil) {
+			ct = counterTrace(phaseT());
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+		} else if (scope instanceof SrParseScopeAfter) {
+			ct = counterTrace(phaseT());
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+		} else if (scope instanceof SrParseScopeBetween) {
+			ct = counterTrace(phaseT());
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+		} else {
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+		}
+
+		return compile(peaTrans, ct);
 	}
 
 	@Override
