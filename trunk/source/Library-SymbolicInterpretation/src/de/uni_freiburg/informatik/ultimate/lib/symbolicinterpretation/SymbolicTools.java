@@ -103,7 +103,7 @@ public class SymbolicTools {
 	}
 
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
-		return mFactory.newPredicate(mTransformer.strongestPostcondition(input, transition.getTransformula()));
+		return predicate(mTransformer.strongestPostcondition(input, transition.getTransformula()));
 	}
 
 	/**
@@ -126,7 +126,7 @@ public class SymbolicTools {
 					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, Script.EXISTS,
 					transition.getTransformula().getAuxVars(), sp);
 		}
-		return mFactory.newPredicate(predicateTerm);
+		return predicate(predicateTerm);
 	}
 
 	/**
@@ -136,7 +136,7 @@ public class SymbolicTools {
 			final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnTransition) {
 		final CfgSmtToolkit toolkit = mIcfg.getCfgSmtToolkit();
 		final String callee = returnTransition.getPrecedingProcedure();
-		return mFactory.newPredicate(mTransformer.strongestPostconditionReturn(inputBeforeReturn, inputBeforeCall,
+		return predicate(mTransformer.strongestPostconditionReturn(inputBeforeReturn, inputBeforeCall,
 				returnTransition.getTransformula(), returnTransition.getCorrespondingCall().getTransformula(),
 				toolkit.getOldVarsAssignmentCache().getOldVarsAssignment(callee),
 				toolkit.getModifiableGlobalsTable().getModifiedBoogieVars(callee)));
@@ -159,6 +159,10 @@ public class SymbolicTools {
 
 	public IPredicate bottom() {
 		return mBottom;
+	}
+
+	public IPredicate predicate(final Term term) {
+		return mFactory.newPredicate(term);
 	}
 
 	public IPredicate or(final IPredicate... operands) {
