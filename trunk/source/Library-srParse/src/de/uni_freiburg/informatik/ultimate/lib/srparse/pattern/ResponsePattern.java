@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
 /**
- * "{scope}, it is always the case that if "P" holds, then "S" eventually holds."
+ * "{scope}, it is always the case that if "P" holds, then "S" eventually holds"
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -54,14 +54,14 @@ public class ResponsePattern extends PatternType {
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des
 			// intervalls gelten
-			throw new PatternScopeNotImplemented(scope.getClass(), getClass())
 			ct = counterTrace(phaseT());
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		} else if (scope instanceof SrParseScopeAfter) {
 			// (¬(true;|Q|;true;|P ∧ ¬S|;|¬S|)) -> true
 			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des
 			// intervalls gelten
-			throw new PatternScopeNotImplemented(scope.getClass(), getClass())
 			ct = counterTrace(phaseT());
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();

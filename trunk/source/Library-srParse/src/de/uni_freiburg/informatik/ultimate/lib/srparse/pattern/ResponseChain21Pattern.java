@@ -9,7 +9,9 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 /**
- * {scope}, it is always the case that if "" holds and is succeeded by "P", then "S" eventually holds after "Tcd .".
+ * TODO: fix description
+ *
+ * {scope}, it is always the case that if "" holds and is succeeded by "P", then "S" eventually holds after "T"
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
