@@ -4,10 +4,22 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
+/**
+ * "{scope}, it is always the case that if P holds, then S eventually holds."
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class ResponsePattern extends PatternType {
 	public ResponsePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
@@ -16,11 +28,49 @@ public class ResponsePattern extends PatternType {
 
 	@Override
 	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
-		final CDD p_cdd = getCdds().get(1);
-		final CDD q_cdd = getScope().getCdd1();
-		final CDD r_cdd = getScope().getCdd2();
-		final CDD s_cdd = getCdds().get(0);
-		return peaTrans.responsePattern(getId(), p_cdd, q_cdd, r_cdd, s_cdd, getScope().toString());
+		final CDD[] cdds = getCddsAsArray();
+		assert cdds.length == 2;
+
+		final SrParseScope scope = getScope();
+		// note: Q and R are reserved for scope, cdds are parsed in reverse order
+		final CDD S = cdds[0];
+		final CDD P = cdds[1];
+
+		final CounterTrace ct;
+
+		if (scope instanceof SrParseScopeGlob) {
+			// Globally, it is always the case that if P holds then S eventually holds.
+			// (¬(true;|P ∧ ¬S|;|¬S|)) -> true
+			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des
+			// intervalls gelten
+			// TODO: Das leads-to scheint falsch
+			ct = counterTrace(phaseT(), phase(P.and(S.negate())), phase(S.negate()), phaseT());
+		} else if (scope instanceof SrParseScopeBefore) {
+			// Before Q, it is always the case that if P holds then S eventually holds.
+			// ¬(|¬Q|;|P ∧ ¬S ∧ ¬Q|;|¬S ∧ ¬Q|;|Q|; true)
+			final CDD R = scope.getCdd2();
+			ct = counterTrace(phase(R.negate()), phase(P.and(R.negate()).and(S.negate())),
+					phase(S.negate().and(R.negate())), phase(R), phaseT());
+		} else if (scope instanceof SrParseScopeAfterUntil) {
+			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des
+			// intervalls gelten
+			// TODO: responsePattern until: method incomplete
+			ct = counterTrace(phaseT());
+		} else if (scope instanceof SrParseScopeAfter) {
+			// (¬(true;|Q|;true;|P ∧ ¬S|;|¬S|)) -> true
+			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des
+			// intervalls gelten
+			// TODO: responsePattern after: method incomplete
+			ct = counterTrace(phaseT());
+		} else if (scope instanceof SrParseScopeBetween) {
+			final CDD Q = scope.getCdd1();
+			final CDD R = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()),
+					phase(P.and(R.negate()).and(S.negate())), phase(R.negate().and(S.negate())), phase(R), phaseT());
+		} else {
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+		}
+		return compile(peaTrans, ct);
 	}
 
 	@Override
