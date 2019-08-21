@@ -4,10 +4,23 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
+/**
+ * {scope}, it is always the case that once "P" becomes satisfied, it holds for less than "c1" time units
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class MaxDurationPattern extends PatternType {
 	public MaxDurationPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
@@ -16,12 +29,47 @@ public class MaxDurationPattern extends PatternType {
 
 	@Override
 	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
-		final CDD p_cdd = getCdds().get(0);
-		final CDD q_cdd = getScope().getCdd1();
-		final CDD r_cdd = getScope().getCdd2();
+		final CDD[] cdds = getCddsAsArray();
+		final int[] durations = getDurationsAsIntArray(id2bounds);
+		assert cdds.length == 1 && durations.length == 1;
 
-		return peaTrans.maxDurationPattern(getId(), p_cdd, q_cdd, r_cdd, parseDuration(getDuration().get(0), id2bounds),
-				getScope().toString());
+		final SrParseScope scope = getScope();
+		// note: Q and R are reserved for scope, cdds are parsed in reverse order
+		final CDD P = cdds[0];
+		final int c1 = durations[0];
+
+		// final CDD Q = scope.getCdd1();
+		// final CDD R = scope.getCdd2();
+
+		final CounterTrace ct;
+		if (scope instanceof SrParseScopeGlob) {
+			ct = counterTrace(phaseT(),
+					// phase(P.negate()),
+					phase(P, BoundTypes.GREATEREQUAL, c1), phaseT());
+		} else if (scope instanceof SrParseScopeBefore) {
+			final CDD R = scope.getCdd2();
+			ct = counterTrace(phase(R.negate()), phase(R.negate().and(P.negate())),
+					phase(P.and(R.negate()), BoundTypes.GREATEREQUAL, c1), phaseT());
+		} else if (scope instanceof SrParseScopeAfterUntil) {
+			final CDD Q = scope.getCdd1();
+			final CDD R = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()),
+					// phase(P.negate().and(R.negate())),
+					phase(P.and(R.negate()), BoundTypes.GREATEREQUAL, c1), phaseT());
+		} else if (scope instanceof SrParseScopeAfter) {
+			final CDD Q = scope.getCdd1();
+			ct = counterTrace(phaseT(), phase(Q), phaseT(), phase(P.negate()), phase(P, BoundTypes.GREATEREQUAL, c1),
+					phaseT());
+		} else if (scope instanceof SrParseScopeBetween) {
+			final CDD Q = scope.getCdd1();
+			final CDD R = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()),
+					phase(P.and(R.negate()), BoundTypes.GREATEREQUAL, c1), phase(R.negate()), phase(R), phaseT());
+		} else {
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+		}
+
+		return compile(peaTrans, ct);
 	}
 
 	@Override
