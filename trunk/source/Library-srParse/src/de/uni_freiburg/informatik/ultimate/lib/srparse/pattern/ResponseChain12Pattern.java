@@ -4,10 +4,17 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
+/**
+ * {scope}, it is always the case that if "P" holds, then "S" eventually holds and is succeeded by "T".
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class ResponseChain12Pattern extends PatternType {
 	public ResponseChain12Pattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
@@ -16,13 +23,22 @@ public class ResponseChain12Pattern extends PatternType {
 
 	@Override
 	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
-		final CDD p_cdd = getCdds().get(2);
-		final CDD q_cdd = getScope().getCdd1();
-		final CDD r_cdd = getScope().getCdd2();
-		final CDD s_cdd = getCdds().get(1);
-		final CDD t_cdd = getCdds().get(0);
+		final CDD[] cdds = getCddsAsArray();
+		assert cdds.length == 3;
 
-		return peaTrans.responseChainPattern12(getId(), p_cdd, q_cdd, r_cdd, s_cdd, t_cdd, getScope().toString());
+		final SrParseScope scope = getScope();
+		final CDD P = cdds[2];
+		final CDD S = cdds[1];
+		final CDD T = cdds[0];
+
+		// TODO: responseChainPattern12: method incomplete
+		final CounterTrace ct;
+		final CDD Q = scope.getCdd1();
+		final CDD R = scope.getCdd2();
+		counterTrace(phaseT());
+
+		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+
 	}
 
 	@Override
