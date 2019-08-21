@@ -8,6 +8,13 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
+/**
+ * {scope}, if "R" holds, then there is at least one execution sequence such that "S" holds after at most "c1" time
+ * units
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class BndPossResponsePattern extends PatternType {
 
 	public BndPossResponsePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
