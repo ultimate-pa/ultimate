@@ -712,9 +712,8 @@ public class PatternToPEA {
 			mNameIndex++;
 			return ctA;
 		} else if (scope.contains("until")) {
-			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
-
-					phaseTrue(), new CounterTrace.DCPhase(Q.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
+			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { phaseTrue(),
+					new CounterTrace.DCPhase(Q.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 					new CounterTrace.DCPhase(P.and(R.negate()), CounterTrace.BOUND_GREATER, timebound),
 					new CounterTrace.DCPhase(S.negate().and(R.negate())), phaseTrue() });
 			ctA = mCompiler.compile(id + "_inv" + mNameIndex, ct);
