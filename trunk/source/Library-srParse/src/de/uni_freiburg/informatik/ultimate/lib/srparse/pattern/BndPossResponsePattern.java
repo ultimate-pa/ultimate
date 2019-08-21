@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
  * units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- *
+ * 
  */
 public class BndPossResponsePattern extends PatternType {
 
