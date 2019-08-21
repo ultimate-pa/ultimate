@@ -13,9 +13,10 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
-
 /*
- *  * {scope}, it is never the case that "S" holds.
+ * {scope}, it is never the case that "P" holds
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class InstAbsPattern extends PatternType {
 	public InstAbsPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
@@ -26,6 +27,16 @@ public class InstAbsPattern extends PatternType {
 	// erwartet cdds rückwärts
 	@Override
 	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
+		final CDD[] cdds = getCddsAsArray();
+		final int[] durations = getDurationsAsIntArray(id2bounds);
+		assert cdds.length == 2 && durations.length == 1;
+
+		final SrParseScope scope = getScope();
+		// note: Q and R are reserved for scope, cdds are parsed in reverse order
+		final CDD P = cdds[0];
+
+		final CDD Q = scope.getCdd1();
+		final CDD R = scope.getCdd2();
 
 		// Case: GLOBALLY
 		if (getScope() instanceof SrParseScopeGlob) {
