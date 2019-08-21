@@ -8,6 +8,12 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
+/**
+ * {scope}, it is always the case that if "" holds and is succeeded by "P", then "S" eventually holds after "Tcd .".
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class ResponseChain21Pattern extends PatternType {
 	public ResponseChain21Pattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
@@ -16,12 +22,47 @@ public class ResponseChain21Pattern extends PatternType {
 
 	@Override
 	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
+		// TODO: Complete refactoring
+		// final CDD[] cdds = getCddsAsArray();
+		// assert cdds.length == 3
+		//
+		// final SrParseScope scope = getScope();
+		// final CDD P = cdds[2];
+		// final CDD S = cdds[1];
+		// final CDD T = cdds[0];
+		//
+		// final CounterTrace ct;
+		//
+		// if (scope instanceof SrParseScopeGlob) {
+		// ct = counterTrace(phaseT());
+		// } else if (scope instanceof SrParseScopeBefore) {
+		// final CDD Q = scope.getCdd1();
+		// final CDD R = scope.getCdd2();
+		// ct = counterTrace(phase(R.negate()), phase(S.and(R.negate()).and(T.negate())), phase(R.negate()),
+		// phase(T.and(R.negate())), phase(P.negate().and(R.negate())), phase(R), phaseT());
+		// } else if (scope instanceof SrParseScopeAfterUntil) {
+		// ct = counterTrace(phaseT());
+		// } else if (scope instanceof SrParseScopeAfter) {
+		// ct = counterTrace(phaseT());
+		// } else if (scope instanceof SrParseScopeBetween) {
+		// final CDD Q = scope.getCdd1();
+		// final CDD R = scope.getCdd2();
+		// ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()),
+		// phase(S.and(R.negate()).and(T.negate())), phase(R.negate()), phase(T.and(R.negate())),
+		// phase(P.negate().and(R.negate())), phase(R), phaseT());
+		// } else {
+		// throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+		// }
+		//
+		// return compile(peaTrans, ct);
+
 		final CDD p_cdd = getCdds().get(2);
 		final CDD q_cdd = getScope().getCdd1();
 		final CDD r_cdd = getScope().getCdd2();
 		final CDD s_cdd = getCdds().get(1);
 		final CDD t_cdd = getCdds().get(0);
 
+		// Klappt noch gar nicht
 		return peaTrans.responseChainPattern21(getId(), p_cdd, q_cdd, r_cdd, s_cdd, t_cdd, getScope().toString());
 	}
 
