@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.SifaBu
 public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract Domain";
-	public static final String DEFAULT_ABSTRACT_DOMAIN = ExplicitValueDomain.class.getSimpleName();
+	public static final String DEFAULT_ABSTRACT_DOMAIN = IntervalDomain.class.getSimpleName();
 	protected static final String[] VALUES_ABSTRACT_DOMAIN = {
 		ExplicitValueDomain.class.getSimpleName(),
 		IntervalDomain.class.getSimpleName(),
