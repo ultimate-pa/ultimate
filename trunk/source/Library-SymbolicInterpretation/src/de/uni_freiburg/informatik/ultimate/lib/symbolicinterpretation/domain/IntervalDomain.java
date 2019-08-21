@@ -201,16 +201,19 @@ public class IntervalDomain implements IDomain {
 	}
 
 	private boolean isIntDivisibleByConst(final Term assumption, final Map<TermVariable, Interval> scope) {
-		// TODO implement check for things like (= (% x 7) 0)
-		// safe over-approximation for the moment
+		// TODO assumptions are a work in progress in for SolvedBinaryRelation.
+		// In the future we have to check for things like (= (% x 7) 0).
+		// For now we use the safe over-approximation:
 		return false;
 	}
 
 	private boolean isRealDivisorNotZero(final Term assumption, final Map<TermVariable, Interval> scope) {
-		// TODO term is probably not only the variable, but something like (distinct x 0)
-		//      cannot say at the moment since REAL_DIVISOR_NOT_ZERO seems to be unused so far
-		assert assumption instanceof TermVariable;
-		return !scope.getOrDefault(assumption, Interval.TOP).containsZero();
+		// TODO assumptions are a work in progress in for SolvedBinaryRelation.
+		// In the future we have to check for things like (distinct x 0).
+		// For now we use the safe over-approximation:
+		return false;
+		// Correct check would be something like:
+		// return !scope.getOrDefault((TermVariable) divisor, Interval.TOP).containsZero();
 	}
 
 	private Term intervalsToTerm(final Map<TermVariable, Interval> mapVarsToVals) {
