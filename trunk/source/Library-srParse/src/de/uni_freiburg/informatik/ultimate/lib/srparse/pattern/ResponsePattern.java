@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
 /**
- * "{scope}, it is always the case that if P holds, then S eventually holds."
+ * "{scope}, it is always the case that if "P" holds, then "S" eventually holds."
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
