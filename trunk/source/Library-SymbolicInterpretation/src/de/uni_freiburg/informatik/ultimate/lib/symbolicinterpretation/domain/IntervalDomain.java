@@ -31,9 +31,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.WeakHashMap;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -51,11 +55,16 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
+// TODO consider splitting dedicated abstract states into classes IntervalDnf and IntervalConjunction
 public class IntervalDomain implements IDomain {
 
 	private final ILogger mLogger;
 	private final SymbolicTools mTools;
 	private final Supplier<IProgressAwareTimer> mTermToIntervalTimeout;
+	// TODO use a setting instead of a constant
+	private final int maxDisjuncts = 2;
+	private final WeakHashMap<IPredicate, Collection<Map<TermVariable, Interval>>> mPredToIntervalCache =
+			new WeakHashMap<>();
 
 	public IntervalDomain(final ILogger logger, final SymbolicTools tools,
 			final Supplier<IProgressAwareTimer> termToIntervalTimeout) {
@@ -63,16 +72,27 @@ public class IntervalDomain implements IDomain {
 		mLogger = logger;
 		mTermToIntervalTimeout = termToIntervalTimeout;
 	}
+
 	@Override
-	public IPredicate join(final IPredicate first, final IPredicate second) {
-		// TODO Auto-generated method stub
-		return mTools.or(first, second);
+	public IPredicate join(final IPredicate lhs, final IPredicate rhs) {
+		// TODO using return mTools.or(lhs, rhs) is still an option.
+		//      Should we use it sometimes (for instance when inputs are not already cached as intervalDnfs)?
+		Collection<Map<TermVariable, Interval>> joinedIntervalDnf = new ArrayList<>();
+		joinedIntervalDnf.addAll(toIntervals(lhs));
+		joinedIntervalDnf.addAll(toIntervals(rhs));
+		if (joinedIntervalDnf.size() > maxDisjuncts) {
+			joinedIntervalDnf = Collections.singleton(joinToSingleConjunction(joinedIntervalDnf));
+		}
+		return toPredicate(joinedIntervalDnf);
 	}
 
 	@Override
 	public IPredicate widen(final IPredicate old, final IPredicate widenWith) {
-		// TODO Auto-generated method stub
-		return mTools.top();
+		// TODO widen cartesian product instead of joining everything into one state
+		//      as long as cartesian product doesn't execeed limit for parallel states
+		final Map<TermVariable, Interval> oldItvlConjunction = joinToSingleConjunction(toIntervals(old));
+		final Map<TermVariable, Interval> widenWithItvlConjunction = joinToSingleConjunction(toIntervals(widenWith));
+		return toPredicate(widen(oldItvlConjunction, widenWithItvlConjunction));
 	}
 
 	@Override
@@ -87,6 +107,62 @@ public class IntervalDomain implements IDomain {
 
 	@Override
 	public IPredicate alpha(final IPredicate pred) {
+		final Collection<Map<TermVariable, Interval>> intervalDnf = toIntervals(pred);
+		return toPredicate(intervalDnf);
+	}
+
+	private Map<TermVariable, Interval> joinToSingleConjunction(
+			final Collection<Map<TermVariable, Interval>> intervalDnf) {
+		return intervalDnf.stream().reduce(this::join).orElse(Collections.emptyMap());
+	}
+
+	private Map<TermVariable, Interval> join(
+			final Map<TermVariable, Interval> lhs, final Map<TermVariable, Interval> rhs) {
+		return merge(Interval::union, lhs, rhs);
+	}
+
+	private Map<TermVariable, Interval> widen(
+			final Map<TermVariable, Interval> old, final Map<TermVariable, Interval> widenWith) {
+		return merge(Interval::widen, old, widenWith);
+	}
+
+	private Map<TermVariable, Interval> merge(final BiFunction<Interval, Interval, Interval> mergeOperation,
+			final Map<TermVariable, Interval> lhs, final Map<TermVariable, Interval> rhs) {
+		final Collection<TermVariable> allVars = new HashSet<>();
+		allVars.addAll(lhs.keySet());
+		allVars.addAll(rhs.keySet());
+		final Map<TermVariable, Interval> join = new HashMap<>();
+		for (final TermVariable var : allVars) {
+			final Interval joinedValue = mergeOperation.apply(lhs.getOrDefault(var, Interval.TOP), rhs.getOrDefault(var, Interval.TOP));
+			if (!joinedValue.isTop()) {
+				join.put(var, joinedValue);
+			}
+		}
+		return join;
+	}
+
+	private IPredicate toPredicate(final Map<TermVariable, Interval> intervalConjunction) {
+		return mTools.predicate(intervalsToTerm(intervalConjunction));
+	}
+	private IPredicate toPredicate(final Collection<Map<TermVariable, Interval>> intervalDnf) {
+		return mTools.or(intervalDnf.stream().map(this::intervalsToTerm).collect(Collectors.toList()));
+	}
+
+	private Collection<Map<TermVariable, Interval>> toIntervals(final IPredicate pred) {
+		final Collection<Map<TermVariable, Interval>> itvlDnf = mPredToIntervalCache.computeIfAbsent(pred, this::toIntervalsInternal);
+		mLogger.debug("Interval abstraction of %s is %s", pred, itvlDnf);
+		return itvlDnf;
+	}
+
+	/**
+	 * Over-approximate a predicate by intervals.
+	 * @param pred Predicate to be converted
+	 * @return Interval over-approximation of the given predicate in DNF.
+	 *         The outer collection represents a disjunction.
+	 *         Each map represents a conjunction of the form (key1 ∊ value1) ∧ (key2 ∊ value2) ∧ ….
+	 *         Variables without mappings are unbound and can assume any value.
+	 */
+	private Collection<Map<TermVariable, Interval>> toIntervalsInternal(final IPredicate pred) {
 		final IProgressAwareTimer timer = mTermToIntervalTimeout.get();
 		final Term[] dnfDisjunctsAsTerms = mTools.dnfDisjuncts(pred);
 		final List<Map<TermVariable, Interval>> dnfDisjunctsAsIntervals = new ArrayList<>(dnfDisjunctsAsTerms.length);
@@ -94,18 +170,20 @@ public class IntervalDomain implements IDomain {
 			if (!timer.continueProcessing()) {
 				mLogger.warn("Interval domain alpha timed out before all disjuncts were processed. "
 						+ "Continuing with top.");
-				// the empty disjunction is true
-				dnfDisjunctsAsIntervals.clear();
+				// empty conjunction (the inner map) is true
+				return Collections.singleton(Collections.emptyMap());
 			}
-			dnfDisjunctsAsIntervals.add(dnfDisjunctToIntervals(dnfDisjunct, timer));
+			dnfDisjunctToIntervals(dnfDisjunct, timer).ifPresent(dnfDisjunctsAsIntervals::add);
 		}
-		mLogger.debug("Interval abstraction is %s", dnfDisjunctsAsIntervals);
 		// TODO join disjuncts if there are too many of them
-		return mTools.or(dnfDisjunctsAsIntervals.stream().map(this::intervalsToTerm).collect(Collectors.toList()));
+		return Collections.unmodifiableCollection(dnfDisjunctsAsIntervals);
 	}
 
-	private Map<TermVariable, Interval> dnfDisjunctToIntervals(final Term dnfDisjunct, final IProgressAwareTimer timer) {
-
+	private Optional<Map<TermVariable, Interval>> dnfDisjunctToIntervals(final Term dnfDisjunct, final IProgressAwareTimer timer) {
+		// TODO improve check to also find trivial cases like "(and true false)" instead of just "false"
+		if (SmtUtils.isFalseLiteral(dnfDisjunct)) {
+			return Optional.empty();
+		}
 		final List<SolvedBinaryRelation> solvedRelations = dnfDisjunctToSolvedRelations(dnfDisjunct);
 		Collections.sort(solvedRelations, new CompareNumberOfFreeVariablesInRhs(solvedRelations));
 
@@ -115,16 +193,16 @@ public class IntervalDomain implements IDomain {
 			if (!timer.continueProcessing()) {
 				mLogger.warn("Term to interval evaluator loop timed out before fixpoint was reached. "
 						+ "Continuing with non-optimal over-approximation.");
-				// further iterations will make the abstract state more precise
+				// further iterations will make the abstract state only more precise
 				// current state is a legit over-approximation
-				return varToInterval;
+				break;
 			}
 			updated = false;
 			for (final SolvedBinaryRelation rel : solvedRelations) {
 				updated |= updateInterval(varToInterval, rel);
 			}
 		}
-		return varToInterval;
+		return Optional.of(Collections.unmodifiableMap(varToInterval));
 	}
 
 	private List<SolvedBinaryRelation> dnfDisjunctToSolvedRelations(final Term dnfDisjunct) {

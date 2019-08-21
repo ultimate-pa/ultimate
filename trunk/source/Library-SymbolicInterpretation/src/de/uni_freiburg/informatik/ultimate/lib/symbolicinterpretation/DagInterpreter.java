@@ -235,7 +235,7 @@ public class DagInterpreter {
 	}
 
 	private void logIpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
-		mLogger.debug("Interpreting transition %.60s… with input %.60s…", transition, input);
+		mLogger.debug("→ Interpreting transition %.60s… with input %.60s…", transition, input);
 	}
 
 	private void logIpretInternal(final IPredicate output) {

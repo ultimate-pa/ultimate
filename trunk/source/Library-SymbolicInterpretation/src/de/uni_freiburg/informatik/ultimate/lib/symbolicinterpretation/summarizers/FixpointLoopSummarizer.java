@@ -87,7 +87,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 	}
 
 	private IPredicate summarizeInternal(final Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate> starAndInput) {
-		mLogger.debug("Computing new loop summary for input %.60s…", starAndInput.getValue());
+		mLogger.debug("⟲ Computing new loop summary for input %.60s…", starAndInput.getValue());
 		final IProgressAwareTimer timer = mFixpointIterationTimeout.get();
 
 		final IRegex<IIcfgTransition<IcfgLocation>> starredRegex = starAndInput.getFirst().getInner();
@@ -98,7 +98,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		IPredicate postState = null;
 		while (true) {
 			if (!timer.continueProcessing()) {
-				mLogger.warn("Timeout while computing loop summary. Using TOP as summary.");
+				mLogger.warn("⟲ Timeout while computing loop summary. Using TOP as summary.");
 				return mTools.top();
 			}
 			postState = mDagIpr.interpret(dag, fullOverlay, preState);
@@ -114,6 +114,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 			preState = mDomain.widen(preState, postState);
 		}
 		// not postState because postState ⊆ preState
+		mLogger.debug("⟲ Loop summary is %s", preState);
 		return preState;
 	}
 

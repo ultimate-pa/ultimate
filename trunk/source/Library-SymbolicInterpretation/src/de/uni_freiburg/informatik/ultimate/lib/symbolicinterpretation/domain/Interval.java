@@ -184,6 +184,13 @@ public final class Interval {
 		return Interval.of(min(mLower, rhs.mLower), max(mUpper, rhs.mUpper));
 	}
 
+	public Interval widen(final Interval rhs) {
+		return Interval.of(
+			rhs.mLower.compareTo(mLower) < 0 ? Rational.NEGATIVE_INFINITY : mLower,
+			mUpper.compareTo(rhs.mUpper) < 0 ?  mUpper : Rational.POSITIVE_INFINITY
+		);
+	}
+
 	public Interval intersect(final Interval rhs) {
 		return Interval.of(max(mLower, rhs.mLower), min(mUpper, rhs.mUpper));
 	}

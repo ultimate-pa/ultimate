@@ -161,7 +161,7 @@ public class TermToInterval {
 		final Term[] letValues = term.getValues();
 		assert letVariables.length == letValues.length : "Number of variables and values does not match: " + term;
 		for (int letIndex = 0; letIndex < letVariables.length; ++letIndex) {
-			// TODO ignore varaibels which whose values cannot be represented by intervals
+			// TODO ignore variables whose values cannot be represented by intervals
 			innerScope.put(letVariables[letIndex], evaluate(letValues[letIndex], outerScope));
 		}
 		return evaluate(term.getSubTerm(), innerScope);
