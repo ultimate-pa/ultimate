@@ -83,10 +83,9 @@ public class SifaBuilder {
 		mPrefs = SifaPreferences.getPreferenceProvider(mServices);
 	}
 
-	public SifaComponents construct(final IIcfg<IcfgLocation> icfg) {
-		final IProgressAwareTimer timer = mServices.getProgressMonitorService();
+	public SifaComponents construct(final IIcfg<IcfgLocation> icfg, final IProgressAwareTimer timer) {
 		final SymbolicTools tools = constructTools(icfg);
-		final IDomain domain = constructDomain(tools);
+		final IDomain domain = constructDomain(tools, timer);
 		final IFluid fluid = constructFluid();
 		final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSum =
 				constructLoopSummarizer(timer, tools, domain, fluid);
@@ -103,14 +102,14 @@ public class SifaBuilder {
 
 	}
 
-	private IDomain constructDomain(final SymbolicTools tools) {
+	private IDomain constructDomain(final SymbolicTools tools, final IProgressAwareTimer timer) {
 		final String prefDomain = mPrefs.getString(SifaPreferences.LABEL_ABSTRACT_DOMAIN);
 		final IDomain domain;
 		if (ExplicitValueDomain.class.getSimpleName().equals(prefDomain)) {
 			domain = new ExplicitValueDomain(mServices, tools,
 					mPrefs.getInt(SifaPreferences.LABEL_EXPLVALDOM_PARALLEL_STATES));
 		} else if (IntervalDomain.class.getSimpleName().equals(prefDomain)) {
-			domain = new IntervalDomain(mServices, tools);
+			domain = new IntervalDomain(mServices, mLogger, tools, () -> timer);
 		} else {
 			throw new IllegalArgumentException("Unknown domain setting: " + prefDomain);
 		}

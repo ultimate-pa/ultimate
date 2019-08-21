@@ -34,9 +34,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
@@ -54,11 +55,16 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class IntervalDomain implements IDomain {
 
 	private final SymbolicTools mTools;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final Supplier<IProgressAwareTimer> mTermToIntervalTimeout;
 
-	public IntervalDomain(final IUltimateServiceProvider services, final SymbolicTools tools) {
+	public IntervalDomain(final IUltimateServiceProvider services, final ILogger logger, final SymbolicTools tools,
+			final Supplier<IProgressAwareTimer> termToIntervalTimeout) {
 		mTools = tools;
+		mLogger = logger;
 		mServices = services;
+		mTermToIntervalTimeout = termToIntervalTimeout;
 	}
 	@Override
 	public IPredicate join(final IPredicate first, final IPredicate second) {
@@ -84,28 +90,37 @@ public class IntervalDomain implements IDomain {
 
 	@Override
 	public IPredicate alpha(final IPredicate pred) {
-		final Term[] dnfDisjuncts = mTools.dnfDisjuncts(pred);
-		final List<Map<TermVariable, Interval>> dnfIntervals = new ArrayList<>(dnfDisjuncts.length);
-		for (final Term dnfDisjunct : dnfDisjuncts) {
-			dnfIntervals.add(dnfDisjunctToIntervals(dnfDisjunct));
+		final IProgressAwareTimer timer = mTermToIntervalTimeout.get();
+		final Term[] dnfDisjunctsAsTerms = mTools.dnfDisjuncts(pred);
+		final List<Map<TermVariable, Interval>> dnfDisjunctsAsIntervals = new ArrayList<>(dnfDisjunctsAsTerms.length);
+		for (final Term dnfDisjunct : dnfDisjunctsAsTerms) {
+			if (!timer.continueProcessing()) {
+				mLogger.warn("Interval domain alpha timed out before all disjuncts were processed. "
+						+ "Continue with TOP.");
+				// the empty disjunction is true
+				dnfDisjunctsAsIntervals.clear();
+			}
+			dnfDisjunctsAsIntervals.add(dnfDisjunctToIntervals(dnfDisjunct, timer));
 		}
-		// TODO do join disjuncts if there are too many
-		return mTools.or(dnfIntervals.stream().map(this::intervalsToTerm).collect(Collectors.toList()));
+		mLogger.debug("Interval abstraction is %s", dnfDisjunctsAsTerms);
+		// TODO join disjuncts if there are too many of them
+		return mTools.or(dnfDisjunctsAsIntervals.stream().map(this::intervalsToTerm).collect(Collectors.toList()));
 	}
 
-	private Map<TermVariable, Interval> dnfDisjunctToIntervals(final Term dnfDisjunct) {
+	private Map<TermVariable, Interval> dnfDisjunctToIntervals(final Term dnfDisjunct, final IProgressAwareTimer timer) {
 
 		final List<SolvedBinaryRelation> solvedRelations = dnfDisjunctToSolvedRelations(dnfDisjunct);
 		Collections.sort(solvedRelations, new CompareNumberOfFreeVariablesInRhs(solvedRelations));
 
-		final IProgressAwareTimer timer = mServices.getProgressMonitorService();
 		final Map<TermVariable, Interval> varToInterval = new HashMap<>();
 		boolean updated = true;
 		while (updated) {
-			// TODO limit max iterations by constant or percentual timeout and return varToInterval as is
 			if (!timer.continueProcessing()) {
-				// TODO log a warning
-				throw new ToolchainCanceledException(getClass());
+				mLogger.warn("Term to interval evaluator loop timed out before fixpoint was reached. "
+						+ "Continue with non-optimal over-approximation.");
+				// further iterations will make the abstract state more precise
+				// current state is a legit over-approximation
+				return varToInterval;
 			}
 			updated = false;
 			for (final SolvedBinaryRelation rel : solvedRelations) {
