@@ -54,13 +54,13 @@ public class ResponsePattern extends PatternType {
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des
 			// intervalls gelten
-			// TODO: responsePattern until: method incomplete
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass())
 			ct = counterTrace(phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			// (¬(true;|Q|;true;|P ∧ ¬S|;|¬S|)) -> true
 			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des
 			// intervalls gelten
-			// TODO: responsePattern after: method incomplete
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass())
 			ct = counterTrace(phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD Q = scope.getCdd1();
