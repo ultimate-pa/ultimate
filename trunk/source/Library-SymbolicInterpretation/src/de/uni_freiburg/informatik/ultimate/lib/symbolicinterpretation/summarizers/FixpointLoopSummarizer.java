@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarize
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -56,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class FixpointLoopSummarizer implements ILoopSummarizer {
 
 	private final ILogger mLogger;
-	private final IProgressAwareTimer mTimer;
+	private final Supplier<IProgressAwareTimer> mFixpointIterationTimeout;
 	private final SymbolicTools mTools;
 	private final IDomain mDomain;
 	private final IFluid mFluid;
@@ -64,10 +65,10 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 	private final StarDagCache mStarDagCache = new StarDagCache();
 	private final Map<Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate>, IPredicate> mCache;
 
-	public FixpointLoopSummarizer(final ILogger logger, final IProgressAwareTimer timer, final SymbolicTools tools,
-			final IDomain domain, final IFluid fluid, final DagInterpreter dagIpr) {
+	public FixpointLoopSummarizer(final ILogger logger, final Supplier<IProgressAwareTimer> fixpointIterationTimeout,
+			final SymbolicTools tools, final IDomain domain, final IFluid fluid, final DagInterpreter dagIpr) {
 		mLogger = logger;
-		mTimer = timer;
+		mFixpointIterationTimeout = fixpointIterationTimeout;
 		mTools = tools;
 		mDomain = domain;
 		mFluid = fluid;
@@ -87,6 +88,8 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 
 	private IPredicate summarizeInternal(final Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate> starAndInput) {
 		mLogger.debug("Computing new loop summary for input %.60s…", starAndInput.getValue());
+		final IProgressAwareTimer timer = mFixpointIterationTimeout.get();
+
 		final IRegex<IIcfgTransition<IcfgLocation>> starredRegex = starAndInput.getFirst().getInner();
 		final RegexDag<IIcfgTransition<IcfgLocation>> dag = mStarDagCache.dagOf(starredRegex);
 		// Enter calls are dead ends, therefore the inner regex of (…)* cannot contain enter calls
@@ -94,8 +97,8 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		IPredicate preState = starAndInput.getSecond();
 		IPredicate postState = null;
 		while (true) {
-			if (!mTimer.continueProcessing()) {
-				mLogger.warn("Timeout while computing loop summary. Using top as a loop summary.");
+			if (!timer.continueProcessing()) {
+				mLogger.warn("Timeout while computing loop summary. Using TOP as summary.");
 				return mTools.top();
 			}
 			postState = mDagIpr.interpret(dag, fullOverlay, preState);

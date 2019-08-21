@@ -146,7 +146,7 @@ public class SifaBuilder {
 		final String prefLoopSum = mPrefs.getString(SifaPreferences.LABEL_LOOP_SUMMARIZER);
 		if (FixpointLoopSummarizer.class.getSimpleName().equals(prefLoopSum)) {
 			return icfgIpr -> dagIpr -> new FixpointLoopSummarizer(
-					mLogger, timer, tools, domain, fluid, dagIpr);
+					mLogger, () -> timer, tools, domain, fluid, dagIpr);
 		} else {
 			throw new IllegalArgumentException("Unknown loop summarizer setting: " + prefLoopSum);
 		}
