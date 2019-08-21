@@ -1,5 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+/**
+ * {scope}, it is always the case that if "P" holds, then "Q" eventually holds and is succeeded by "R", where "S" does not hold between "T" and "U"
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 import java.util.List;
 import java.util.Map;
 
