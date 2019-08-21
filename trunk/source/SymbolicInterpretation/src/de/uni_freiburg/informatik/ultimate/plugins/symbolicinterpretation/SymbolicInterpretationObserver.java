@@ -75,7 +75,6 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
 		mSifaComponents = new SifaBuilder(mServices, mLogger).construct(icfg, mServices.getProgressMonitorService());
 		final Map<IcfgLocation, IPredicate> predicates = mSifaComponents.getIcfgInterpreter().interpret();
-		mLogger.debug("Final results are " + predicates);
 		reportResults(predicates);
 	}
 

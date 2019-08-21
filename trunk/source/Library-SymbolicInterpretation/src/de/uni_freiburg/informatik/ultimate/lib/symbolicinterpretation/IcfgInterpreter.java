@@ -176,7 +176,7 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Final predicates for locations of interest are:");
 			for (final Entry<IcfgLocation, IPredicate> entry : loiToPred.entrySet()) {
-				mLogger.info("Location %s has predicate %s", entry.getKey(), entry.getValue());
+				mLogger.info("Reachable states at location %s satisfy %s", entry.getKey(), entry.getValue());
 			}
 		}
 	}
