@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
 /**
- * {scope}, it is always the case that if "R" holds, then "S" holds for at least "c1" time units.
+ * {scope}, it is always the case that if "R" holds, then "S" holds for at least "c1" time units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -30,7 +30,6 @@ public class BndInvariancePattern extends PatternType {
 
 	@Override
 	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
-
 		final CDD[] cdds = getCddsAsArray();
 		final int[] durations = getDurationsAsIntArray(id2bounds);
 		assert cdds.length == 2 && durations.length == 1;
@@ -66,6 +65,7 @@ public class BndInvariancePattern extends PatternType {
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
+
 		return compile(peaTrans, ct);
 	}
 
