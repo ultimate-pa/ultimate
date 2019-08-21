@@ -38,5 +38,19 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
  */
 public interface ILoopSummarizer {
 
+	/**
+	 * Computes a loop summary for a given starred regex and its input.
+	 * <p>
+	 * A loop summary over-approximates the states obtained by executing the loop body arbitrarily often
+	 * (this includes never). In other words:
+	 * <pre>
+	 * summarize((inner)*, input) ⊇ input ∪ post(input, inner) ∪ post(post(input, inner), inner) ∪ …
+	 * </pre>
+	 * <p>
+	 *
+	 * @param regex A regex of the form {@code (inner)*}
+	 * @param input Input before executing {@code inner}
+	 * @return A loop summary
+	 */
 	IPredicate summarize(Star<IIcfgTransition<IcfgLocation>> regex, IPredicate input);
 }
