@@ -96,13 +96,13 @@ public class IntervalDomain implements IDomain {
 		for (final Term dnfDisjunct : dnfDisjunctsAsTerms) {
 			if (!timer.continueProcessing()) {
 				mLogger.warn("Interval domain alpha timed out before all disjuncts were processed. "
-						+ "Continue with TOP.");
+						+ "Continuing with top.");
 				// the empty disjunction is true
 				dnfDisjunctsAsIntervals.clear();
 			}
 			dnfDisjunctsAsIntervals.add(dnfDisjunctToIntervals(dnfDisjunct, timer));
 		}
-		mLogger.debug("Interval abstraction is %s", dnfDisjunctsAsTerms);
+		mLogger.debug("Interval abstraction is %s", dnfDisjunctsAsIntervals);
 		// TODO join disjuncts if there are too many of them
 		return mTools.or(dnfDisjunctsAsIntervals.stream().map(this::intervalsToTerm).collect(Collectors.toList()));
 	}
@@ -117,7 +117,7 @@ public class IntervalDomain implements IDomain {
 		while (updated) {
 			if (!timer.continueProcessing()) {
 				mLogger.warn("Term to interval evaluator loop timed out before fixpoint was reached. "
-						+ "Continue with non-optimal over-approximation.");
+						+ "Continuing with non-optimal over-approximation.");
 				// further iterations will make the abstract state more precise
 				// current state is a legit over-approximation
 				return varToInterval;

@@ -118,6 +118,7 @@ public class DagInterpreter {
 	}
 
 	private void respectTimeout() {
+		// TODO return over-approximation instead of throwing an exception?
 		if (!mTimer.continueProcessing()) {
 			mLogger.warn("Timeout while interpreting dag");
 			throw new ToolchainCanceledException(getClass());
@@ -205,16 +206,28 @@ public class DagInterpreter {
 	private IPredicate fluidAbstraction(IPredicate pred) {
 		logConsiderAbstraction();
 		if (mFluid.shallBeAbstracted(pred)) {
+			logFluidAbstractionYes();
 			pred = mDomain.alpha(pred);
 			logAbstractionDone(pred);
+		} else {
+			logFluidAbstractionNo();
 		}
 		return pred;
 	}
+
 
 	// log messages -------------------------------------------------------------------------------
 
 	private void logConsiderAbstraction() {
 		mLogger.debug("Asking fluid if we should abstract");
+	}
+
+	private void logFluidAbstractionYes() {
+		mLogger.debug("Fluid: Yes, abstract");
+	}
+
+	private void logFluidAbstractionNo() {
+		mLogger.debug("Fluid: No, don't abstract");
 	}
 
 	private void logAbstractionDone(final IPredicate abstractedPred) {
