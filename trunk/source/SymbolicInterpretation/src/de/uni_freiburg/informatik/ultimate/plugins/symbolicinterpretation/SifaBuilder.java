@@ -106,10 +106,10 @@ public class SifaBuilder {
 		final String prefDomain = mPrefs.getString(SifaPreferences.LABEL_ABSTRACT_DOMAIN);
 		final IDomain domain;
 		if (ExplicitValueDomain.class.getSimpleName().equals(prefDomain)) {
-			domain = new ExplicitValueDomain(mServices, tools,
+			domain = new ExplicitValueDomain(tools,
 					mPrefs.getInt(SifaPreferences.LABEL_EXPLVALDOM_PARALLEL_STATES));
 		} else if (IntervalDomain.class.getSimpleName().equals(prefDomain)) {
-			domain = new IntervalDomain(mServices, mLogger, tools, () -> timer);
+			domain = new IntervalDomain(mLogger, tools, () -> timer);
 		} else {
 			throw new IllegalArgumentException("Unknown domain setting: " + prefDomain);
 		}

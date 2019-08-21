@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain;
 
 import java.util.Arrays;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -47,7 +46,7 @@ public class DnfToExplicitValue extends TermTransformer {
 
 	private final Term mTrue;
 
-	public DnfToExplicitValue(final IUltimateServiceProvider services, final SymbolicTools tools) {
+	public DnfToExplicitValue(final SymbolicTools tools) {
 		mTrue = tools.top().getFormula();
 	}
 

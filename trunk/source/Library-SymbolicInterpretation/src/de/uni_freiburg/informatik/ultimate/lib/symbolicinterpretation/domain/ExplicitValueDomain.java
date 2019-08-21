@@ -33,7 +33,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
@@ -49,13 +48,11 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class ExplicitValueDomain implements IDomain {
 
 	private final SymbolicTools mTools;
-	private final IUltimateServiceProvider mServices;
 	private final int mMaxDisjuncts;
 
-	public ExplicitValueDomain(final IUltimateServiceProvider services, final SymbolicTools tools,
+	public ExplicitValueDomain(final SymbolicTools tools,
 			final int maxDisjuncts) {
 		mTools = tools;
-		mServices = services;
 		mMaxDisjuncts = maxDisjuncts;
 	}
 
@@ -84,7 +81,7 @@ public class ExplicitValueDomain implements IDomain {
 
 	@Override
 	public IPredicate alpha(final IPredicate pred) {
-		final DnfToExplicitValue rewriter = new DnfToExplicitValue(mServices, mTools);
+		final DnfToExplicitValue rewriter = new DnfToExplicitValue(mTools);
 		final Term[] rewrittenDisjuncts = Arrays.stream(mTools.dnfDisjuncts(pred))
 				.map(rewriter::transform)
 				.toArray(Term[]::new);

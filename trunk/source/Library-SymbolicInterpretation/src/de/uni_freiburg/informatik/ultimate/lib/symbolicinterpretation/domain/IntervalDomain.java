@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
@@ -54,16 +53,14 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class IntervalDomain implements IDomain {
 
-	private final SymbolicTools mTools;
 	private final ILogger mLogger;
-	private final IUltimateServiceProvider mServices;
+	private final SymbolicTools mTools;
 	private final Supplier<IProgressAwareTimer> mTermToIntervalTimeout;
 
-	public IntervalDomain(final IUltimateServiceProvider services, final ILogger logger, final SymbolicTools tools,
+	public IntervalDomain(final ILogger logger, final SymbolicTools tools,
 			final Supplier<IProgressAwareTimer> termToIntervalTimeout) {
 		mTools = tools;
 		mLogger = logger;
-		mServices = services;
 		mTermToIntervalTimeout = termToIntervalTimeout;
 	}
 	@Override
