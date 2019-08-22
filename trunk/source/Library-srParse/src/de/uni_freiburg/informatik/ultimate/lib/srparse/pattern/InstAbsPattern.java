@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
@@ -13,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
-/*
+/**
  * {scope}, it is never the case that "P" holds
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -24,7 +25,6 @@ public class InstAbsPattern extends PatternType {
 		super(scope, id, cdds, durations);
 	}
 
-	// erwartet cdds rückwärts
 	@Override
 	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
 		final CDD[] cdds = getCddsAsArray();
@@ -32,80 +32,33 @@ public class InstAbsPattern extends PatternType {
 		assert cdds.length == 2 && durations.length == 1;
 
 		final SrParseScope scope = getScope();
+
 		// note: Q and R are reserved for scope, cdds are parsed in reverse order
 		final CDD P = cdds[0];
+		final CDD S = cdds[1];
 
 		final CDD Q = scope.getCdd1();
 		final CDD R = scope.getCdd2();
 
-		// Case: GLOBALLY
-		if (getScope() instanceof SrParseScopeGlob) {
-			if (getCdds().size() != 1) {
-				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
-				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
-			}
-
-			final CDD p_cdd = getCdds().get(0); // für Duration Calculus muß das als CDD gegeben sein
-			final CDD q_cdd = DEFAULT_Q;
-			final CDD r_cdd = DEFAULT_R;
-
-			return peaTrans.absencePattern(getId(), p_cdd, q_cdd, r_cdd, getScope().toString());
+		final CounterTrace ct;
+		if (scope instanceof SrParseScopeGlob) {
+			ct = counterTrace(phaseT(), phase(P), phaseT());
+		} else if (scope instanceof SrParseScopeBefore) {
+			ct = counterTrace(new CounterTrace.DCPhase(S.negate()), new CounterTrace.DCPhase(P.and(S.negate())),
+					new CounterTrace.DCPhase(S.negate()), phaseT());
+		} else if (scope instanceof SrParseScopeAfterUntil) {
+			ct = counterTrace(phaseT(), new CounterTrace.DCPhase(Q.and(R.negate())),
+					new CounterTrace.DCPhase(R.negate()), new CounterTrace.DCPhase(P.and(R.negate())), phaseT());
+		} else if (scope instanceof SrParseScopeAfter) {
+			ct = counterTrace(phaseT(), phase(Q), phaseT(), phase(P), phaseT());
+		} else if (scope instanceof SrParseScopeBetween) {
+			ct = counterTrace(phaseT(), new CounterTrace.DCPhase(Q.and(R.negate())),
+					new CounterTrace.DCPhase(R.negate()), new CounterTrace.DCPhase(P.and(R.negate())),
+					new CounterTrace.DCPhase(R.negate()), phase(R), phaseT());
+		} else {
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
-		// CASE: BEFORE R
-		else if (getScope() instanceof SrParseScopeBefore) {
-			if (getCdds().size() != 2) {
-				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
-				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
-			}
-
-			final CDD p_cdd = getCdds().get(0); // für Duration Calculus muß das als CDD gegeben sein
-			final CDD q_cdd = DEFAULT_Q;
-			final CDD r_cdd = getCdds().get(1);
-
-			return peaTrans.absencePattern(getId(), p_cdd, q_cdd, r_cdd, getScope().toString());
-
-		}
-		// CASE: AFTER Q UNTIL R
-		else if (getScope() instanceof SrParseScopeAfterUntil) {
-			if (getCdds().size() != 1) {
-				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
-				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
-			}
-
-			final CDD p_cdd = getCdds().get(0);
-			final CDD q_cdd = getScope().getCdd1();
-			final CDD r_cdd = getScope().getCdd2();
-
-			return peaTrans.absencePattern(getId(), p_cdd, q_cdd, r_cdd, getScope().toString());
-
-		}
-		// CASE: AFTER Q
-		else if (getScope() instanceof SrParseScopeAfter) {
-			if (getCdds().size() != 1) {
-				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
-				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
-			}
-			final CDD p_cdd = getCdds().get(0); // für Duration Calculus muß das als CDD gegeben sein
-			final CDD q_cdd = getScope().getCdd1();
-			final CDD r_cdd = DEFAULT_R;
-
-			return peaTrans.absencePattern(getId(), p_cdd, q_cdd, r_cdd, getScope().toString());
-		}
-		// CASE: BETWEEN Q AND R
-		else if (getScope() instanceof SrParseScopeBetween) {
-			if (getCdds().size() != 1) {
-				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
-				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
-			}
-
-			final CDD p_cdd = getCdds().get(0); // für Duration Calculus muß das als CDD gegeben sein
-			final CDD q_cdd = getScope().getCdd1();
-			final CDD r_cdd = getScope().getCdd2();
-
-			return peaTrans.absencePattern(getId(), p_cdd, q_cdd, r_cdd, getScope().toString());
-			// return this.getFormulaInLTL();
-		}
-		throw new UnsupportedOperationException();
+		return compile(peaTrans, ct);
 	}
 
 	@Override
