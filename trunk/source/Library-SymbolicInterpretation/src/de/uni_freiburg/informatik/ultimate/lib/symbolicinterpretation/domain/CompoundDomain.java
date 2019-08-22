@@ -105,7 +105,7 @@ public class CompoundDomain implements IDomain {
 			(result.isTrueForAbstraction() ? trueResults : falseResults).add(result);
 		}
 		// TODO offer different settings for picking an answer, for instance
-		// [X] prefer true (current setting)
+		// [X] prefer true (current approach)
 		//       Faster convergence in fixpoint iteration
 		//       (but not necessarily less precise than other methods?)
 		// [_] majority voting

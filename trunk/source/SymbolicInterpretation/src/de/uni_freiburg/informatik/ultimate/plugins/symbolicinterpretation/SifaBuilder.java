@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation;
 
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -37,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IntervalDomain;
@@ -104,16 +107,33 @@ public class SifaBuilder {
 
 	private IDomain constructDomain(final SymbolicTools tools, final IProgressAwareTimer timer) {
 		final String prefDomain = mPrefs.getString(SifaPreferences.LABEL_ABSTRACT_DOMAIN);
-		final IDomain domain;
-		if (ExplicitValueDomain.class.getSimpleName().equals(prefDomain)) {
-			domain = new ExplicitValueDomain(tools,
-					mPrefs.getInt(SifaPreferences.LABEL_EXPLVALDOM_PARALLEL_STATES));
-		} else if (IntervalDomain.class.getSimpleName().equals(prefDomain)) {
-			domain = new IntervalDomain(mLogger, tools, () -> timer);
+		if (CompoundDomain.class.getSimpleName().equals(prefDomain)) {
+			final List<IDomain> subdomains = SifaPreferences.SubdomainValidator
+					.subdomains(mPrefs.getString(SifaPreferences.LABEL_COMPOUNDDOM_SUBDOM))
+					.map(subDomName -> constructNonCompoundDomain(subDomName, tools, timer))
+					.collect(Collectors.toList());
+			return new CompoundDomain(tools, subdomains);
+
 		} else {
-			throw new IllegalArgumentException("Unknown domain setting: " + prefDomain);
+			return constructNonCompoundDomain(prefDomain, tools, timer);
+		}
+	}
+
+	private IDomain constructNonCompoundDomain(final String domainName,
+			final SymbolicTools tools, final IProgressAwareTimer timer) {
+		final IDomain domain;
+		if (ExplicitValueDomain.class.getSimpleName().equals(domainName)) {
+			domain = new ExplicitValueDomain(tools,
+					mPrefs.getInt(SifaPreferences.LABEL_EXPLVALDOM_MAX_PARALLEL_STATES));
+		} else if (IntervalDomain.class.getSimpleName().equals(domainName)) {
+			domain = new IntervalDomain(mLogger, tools,
+					mPrefs.getInt(SifaPreferences.LABEL_INTERVALDOM_MAX_PARALLEL_STATES),
+					() -> timer);
+		} else {
+			throw new IllegalArgumentException("Unknown domain setting: " + domainName);
 		}
 		return domain;
+
 	}
 
 	private IFluid constructFluid() {

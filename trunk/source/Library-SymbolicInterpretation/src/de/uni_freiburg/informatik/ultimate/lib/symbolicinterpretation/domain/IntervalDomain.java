@@ -60,13 +60,13 @@ public class IntervalDomain implements IDomain {
 
 	private final ILogger mLogger;
 	private final SymbolicTools mTools;
+	private final int mMaxDisjuncts = 2;
 	private final Supplier<IProgressAwareTimer> mTermToIntervalTimeout;
-	// TODO use a setting instead of a constant
-	private final int maxDisjuncts = 2;
+
 	private final WeakHashMap<IPredicate, Collection<Map<TermVariable, Interval>>> mPredToIntervalCache =
 			new WeakHashMap<>();
 
-	public IntervalDomain(final ILogger logger, final SymbolicTools tools,
+	public IntervalDomain(final ILogger logger, final SymbolicTools tools, final int maxDisjuncts,
 			final Supplier<IProgressAwareTimer> termToIntervalTimeout) {
 		mTools = tools;
 		mLogger = logger;
@@ -80,7 +80,7 @@ public class IntervalDomain implements IDomain {
 		Collection<Map<TermVariable, Interval>> joinedIntervalDnf = new ArrayList<>();
 		joinedIntervalDnf.addAll(toIntervals(lhs));
 		joinedIntervalDnf.addAll(toIntervals(rhs));
-		if (joinedIntervalDnf.size() > maxDisjuncts) {
+		if (joinedIntervalDnf.size() > mMaxDisjuncts) {
 			joinedIntervalDnf = Collections.singleton(joinToSingleConjunction(joinedIntervalDnf));
 		}
 		return toPredicate(joinedIntervalDnf);
@@ -89,7 +89,7 @@ public class IntervalDomain implements IDomain {
 	@Override
 	public IPredicate widen(final IPredicate old, final IPredicate widenWith) {
 		// TODO widen cartesian product instead of joining everything into one state
-		//      as long as cartesian product doesn't execeed limit for parallel states
+		//      as long as cartesian product doesn't exceed limit for parallel states
 		final Map<TermVariable, Interval> oldItvlConjunction = joinToSingleConjunction(toIntervals(old));
 		final Map<TermVariable, Interval> widenWithItvlConjunction = joinToSingleConjunction(toIntervals(widenWith));
 		return toPredicate(widen(oldItvlConjunction, widenWithItvlConjunction));
@@ -133,7 +133,8 @@ public class IntervalDomain implements IDomain {
 		allVars.addAll(rhs.keySet());
 		final Map<TermVariable, Interval> join = new HashMap<>();
 		for (final TermVariable var : allVars) {
-			final Interval joinedValue = mergeOperation.apply(lhs.getOrDefault(var, Interval.TOP), rhs.getOrDefault(var, Interval.TOP));
+			final Interval joinedValue = mergeOperation
+					.apply(lhs.getOrDefault(var, Interval.TOP), rhs.getOrDefault(var, Interval.TOP));
 			if (!joinedValue.isTop()) {
 				join.put(var, joinedValue);
 			}
@@ -149,7 +150,8 @@ public class IntervalDomain implements IDomain {
 	}
 
 	private Collection<Map<TermVariable, Interval>> toIntervals(final IPredicate pred) {
-		final Collection<Map<TermVariable, Interval>> itvlDnf = mPredToIntervalCache.computeIfAbsent(pred, this::toIntervalsInternal);
+		final Collection<Map<TermVariable, Interval>> itvlDnf = mPredToIntervalCache
+				.computeIfAbsent(pred, this::toIntervalsInternal);
 		mLogger.debug("Interval abstraction of %s is %s", pred, itvlDnf);
 		return itvlDnf;
 	}
@@ -179,7 +181,8 @@ public class IntervalDomain implements IDomain {
 		return Collections.unmodifiableCollection(dnfDisjunctsAsIntervals);
 	}
 
-	private Optional<Map<TermVariable, Interval>> dnfDisjunctToIntervals(final Term dnfDisjunct, final IProgressAwareTimer timer) {
+	private Optional<Map<TermVariable, Interval>> dnfDisjunctToIntervals(
+			final Term dnfDisjunct, final IProgressAwareTimer timer) {
 		// TODO improve check to also find trivial cases like "(and true false)" instead of just "false"
 		if (SmtUtils.isFalseLiteral(dnfDisjunct)) {
 			return Optional.empty();

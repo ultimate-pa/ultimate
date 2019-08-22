@@ -50,8 +50,7 @@ public class ExplicitValueDomain implements IDomain {
 	private final SymbolicTools mTools;
 	private final int mMaxDisjuncts;
 
-	public ExplicitValueDomain(final SymbolicTools tools,
-			final int maxDisjuncts) {
+	public ExplicitValueDomain(final SymbolicTools tools, final int maxDisjuncts) {
 		mTools = tools;
 		mMaxDisjuncts = maxDisjuncts;
 	}

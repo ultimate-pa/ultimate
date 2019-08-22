@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.prefe
 
 import java.util.Arrays;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
@@ -40,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.AlwaysFluid;
@@ -63,10 +66,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.SifaBu
 public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract Domain";
-	public static final String DEFAULT_ABSTRACT_DOMAIN = IntervalDomain.class.getSimpleName();
+	public static final String DEFAULT_ABSTRACT_DOMAIN = CompoundDomain.class.getSimpleName();
 	protected static final String[] VALUES_ABSTRACT_DOMAIN = {
 		ExplicitValueDomain.class.getSimpleName(),
 		IntervalDomain.class.getSimpleName(),
+		CompoundDomain.class.getSimpleName(),
 	};
 
 	public static final String LABEL_LOOP_SUMMARIZER = "Loop Summarizer";
@@ -115,8 +119,40 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	// ---- settings in containers ----
 
 	// settings specific to ExplicitValueDomain
-	public static final String LABEL_EXPLVALDOM_PARALLEL_STATES = "Parallel States";
-	public static final int DEFAULT_EXPLVALDOM_PARALLEL_STATES = 2;
+	public static final String LABEL_EXPLVALDOM_MAX_PARALLEL_STATES = "Max. Parallel Explicit Values";
+	public static final int DEFAULT_EXPLVALDOM_MAX_PARALLEL_STATES = 2;
+
+	// settings specific to IntervalDomain
+	public static final String LABEL_INTERVALDOM_MAX_PARALLEL_STATES = "Max. Parallel Intervals";
+	public static final int DEFAULT_INTERVALDOM_MAX_PARALLEL_STATES = 2;
+
+	// settings specific to CompoundDomain
+	public static final String LABEL_COMPOUNDDOM_SUBDOM = "Intern domains";
+	public static final String DEFAULT_COMPOUNDDOM_SUBDOM =
+			ExplicitValueDomain.class.getSimpleName() + ";" + IntervalDomain.class.getSimpleName();
+	protected static final String[] CHOICES_COMPOUNDDOM_SUBDOM = filter(VALUES_ABSTRACT_DOMAIN,
+			value -> !CompoundDomain.class.getSimpleName().equals(value));
+	public static final String TOOLTIP_COMPOUNDDOM_SUBDOM = "List subdomains separated by `;`. Valid subdomains are\n"
+			+ String.join("\n", CHOICES_COMPOUNDDOM_SUBDOM);
+	public static class SubdomainValidator implements IUltimatePreferenceItemValidator<String> {
+		public static Stream<String> subdomains(final String setting) {
+			return Arrays.stream(setting.split(";"));
+		}
+		@Override
+		public boolean isValid(final String setting) {
+			return subdomains(setting).allMatch(SubdomainValidator::isValidSubDom);
+		}
+		private static boolean isValidSubDom(final String token) {
+			return Arrays.stream(CHOICES_COMPOUNDDOM_SUBDOM).anyMatch(validChoice -> validChoice.equals(token));
+		}
+		@Override
+		public String getInvalidValueErrorMessage(final String setting) {
+			return subdomains(setting)
+					.filter(subdom -> !isValidSubDom(subdom))
+					.map(subdom -> String.format("Not a valid subdomain: %s", subdom))
+					.collect(Collectors.joining("\n"));
+		}
+	}
 
 	// settings specific to LogSizeWrapperFluid
 	public static final String LABEL_LOGFLUID_INTERN_FLUID = "Intern Fluid";
@@ -141,8 +177,18 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 		final UltimatePreferenceItemContainer containerExplValDom =
 				new UltimatePreferenceItemContainer(ExplicitValueDomain.class.getSimpleName());
-		containerExplValDom.addItem(integer(LABEL_EXPLVALDOM_PARALLEL_STATES,
-				DEFAULT_EXPLVALDOM_PARALLEL_STATES, 1, Integer.MAX_VALUE));
+		containerExplValDom.addItem(integer(LABEL_EXPLVALDOM_MAX_PARALLEL_STATES,
+				DEFAULT_EXPLVALDOM_MAX_PARALLEL_STATES, 1, Integer.MAX_VALUE));
+
+		final UltimatePreferenceItemContainer containerIntervalDom =
+				new UltimatePreferenceItemContainer(IntervalDomain.class.getSimpleName());
+		containerIntervalDom.addItem(integer(LABEL_INTERVALDOM_MAX_PARALLEL_STATES,
+				DEFAULT_INTERVALDOM_MAX_PARALLEL_STATES, 1, Integer.MAX_VALUE));
+
+		final UltimatePreferenceItemContainer containerCompoundDom =
+				new UltimatePreferenceItemContainer(CompoundDomain.class.getSimpleName());
+		containerCompoundDom.addItem(string(LABEL_COMPOUNDDOM_SUBDOM, TOOLTIP_COMPOUNDDOM_SUBDOM,
+				DEFAULT_COMPOUNDDOM_SUBDOM, new SubdomainValidator()));
 
 		final UltimatePreferenceItemContainer containerLogFluid =
 				new UltimatePreferenceItemContainer(LogSizeWrapperFluid.class.getSimpleName());
@@ -165,6 +211,8 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 			combo(LABEL_XNF_CONVERSION, DEFAULT_XNF_CONVERSION, VALUES_XNF_CONVERSION),
 			//
 			containerExplValDom,
+			containerIntervalDom,
+			containerCompoundDom,
 			containerLogFluid,
 			containerSizeLimitFluid,
 		};
@@ -192,6 +240,12 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 			final int min, final int max) {
 		return new UltimatePreferenceItem<>(label, defaultValue,
 				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(min, max));
+	}
+
+	private static UltimatePreferenceItem<String> string(
+			final String label, final String tooltip, final String defaultValue,
+			final IUltimatePreferenceItemValidator<String> validator) {
+		return new UltimatePreferenceItem<>(label, defaultValue, tooltip, PreferenceType.String, validator);
 	}
 
 	private static UltimatePreferenceItem<Boolean> bool(
