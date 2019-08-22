@@ -123,6 +123,14 @@ public class MSODAlphabetSymbol {
 	/*
 	 * Returns a set with terms that match the given sorts.
 	 */
+	public Set<Term> containsSort(final String sort) {
+
+		return containsSort(new HashSet<>(Arrays.asList(sort)));
+	}
+
+	/*
+	 * Returns a set with terms that match the given sorts.
+	 */
 	public Set<Term> containsSort(final Set<String> sorts) {
 		final Set<Term> result = new HashSet<>();
 
