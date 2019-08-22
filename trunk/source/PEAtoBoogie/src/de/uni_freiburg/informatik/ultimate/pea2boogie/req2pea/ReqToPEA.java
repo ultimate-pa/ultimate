@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConverter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
@@ -53,7 +52,6 @@ public class ReqToPEA {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final PeaResultUtil mResultUtil;
-	private final Set<String> mConstIds;
 	private final Map<PatternType, PhaseEventAutomata> mPattern2Peas;
 	private final IReqSymbolTable mSymbolTable;
 	private final boolean mHasErrors;
@@ -71,7 +69,6 @@ public class ReqToPEA {
 				builder.addInitPattern((InitializationPattern) pattern);
 			}
 		}
-		mConstIds = builder.getConstIds();
 		final Map<String, Integer> id2bounds = builder.getId2Bounds();
 		mPattern2Peas = generatePeas(requirements, id2bounds);
 
@@ -104,7 +101,6 @@ public class ReqToPEA {
 	private Map<PatternType, PhaseEventAutomata> generatePeas(final List<PatternType> patterns,
 			final Map<String, Integer> id2bounds) {
 		final Map<PatternType, PhaseEventAutomata> req2automata = new LinkedHashMap<>();
-		final Trace2PeaCompiler peaTrans = new Trace2PeaCompiler(mLogger, mConstIds);
 		mLogger.info(String.format("Transforming %s requirements to PEAs", patterns.size()));
 
 		final Map<Class<?>, Integer> counter = new HashMap<>();
@@ -117,7 +113,7 @@ public class ReqToPEA {
 					mLogger.info("Transforming " + pat.getId());
 				}
 				counter.compute(pat.getClass(), (a, b) -> b == null ? 1 : b + 1);
-				pea = pat.transformToPea(peaTrans, id2bounds);
+				pea = pat.transformToPea(mLogger, id2bounds);
 			} catch (final Exception ex) {
 				final String reason = ex.getMessage() == null ? ex.getClass().toString() : ex.getMessage();
 				mResultUtil.transformationError(pat, reason);
@@ -148,14 +144,12 @@ public class ReqToPEA {
 
 		PhaseEventAutomata pea = null;
 
-		final Trace2PeaCompiler peaTrans = new Trace2PeaCompiler(mLogger, mConstIds);
-
 		for (final PatternType pat : patterns) {
 			if (pea == null) {
-				pea = pat.transformToPea(peaTrans, id2bounds);
+				pea = pat.transformToPea(mLogger, id2bounds);
 
 			} else {
-				final PhaseEventAutomata pea2 = pat.transformToPea(peaTrans, id2bounds);
+				final PhaseEventAutomata pea2 = pat.transformToPea(mLogger, id2bounds);
 				if (pea2 == null) {
 					continue;
 				}

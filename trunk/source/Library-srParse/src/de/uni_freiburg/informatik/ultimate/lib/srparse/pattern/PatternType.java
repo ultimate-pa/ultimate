@@ -4,13 +4,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompilerStateless;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 public abstract class PatternType {
@@ -69,14 +70,14 @@ public abstract class PatternType {
 
 	public abstract PatternType rename(String newName);
 
-	public PhaseEventAutomata transformToPea(final Trace2PeaCompiler peaCompiler,
-			final Map<String, Integer> id2bounds) {
+	public PhaseEventAutomata transformToPea(final ILogger logger, final Map<String, Integer> id2bounds) {
 		if (mPea == null) {
 			final CDD[] cdds = getCddsAsArray();
 			final int[] durations = getDurationsAsIntArray(id2bounds);
 			final CounterTrace ct = transform(cdds, durations);
-			mPea = peaCompiler.compile(getId() + "_" + createPeaSuffix(), ct);
-
+			final String name = getId() + "_" + createPeaSuffix();
+			final Trace2PeaCompilerStateless compiler = new Trace2PeaCompilerStateless(logger, name, ct);
+			mPea = compiler.getResult();
 		}
 		return mPea;
 	}
