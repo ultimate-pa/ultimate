@@ -703,6 +703,16 @@ public class QuantifierEliminationTest {
 		final String expectedResultAsString = "(or (not (= 0 (mod y 2))) (p (div y 2)))";
 		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+	
+	@Test
+	public void fruitOfTheForest() {
+//		mScript.declareFun("p", new Sort[] {SmtSortUtils.getIntSort(mMgdScript)}, SmtSortUtils.getBoolSort(mMgdScript));
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("b", new Sort[0], intSort);
+		final String formulaAsString = "(exists ((a Int)) (and (> (* 4 a) b ) (< a 3) (< b 12)))";
+		final String expectedResultAsString = "(and (< b 12) (exists ((a Int)) (and (< a 3) (> (* 4 a) b))))";
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
 
 
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
