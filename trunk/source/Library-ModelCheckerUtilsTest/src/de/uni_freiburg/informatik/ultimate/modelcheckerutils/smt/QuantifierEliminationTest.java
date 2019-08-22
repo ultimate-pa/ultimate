@@ -703,10 +703,13 @@ public class QuantifierEliminationTest {
 		final String expectedResultAsString = "(or (not (= 0 (mod y 2))) (p (div y 2)))";
 		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	
-	@Test
+
+	/**
+	 * 20190822 Matthias: @Test commented because this is not (yet) a regression
+	 * test but only used to discuss a bug
+	 */
+//	@Test
 	public void fruitOfTheForest() {
-//		mScript.declareFun("p", new Sort[] {SmtSortUtils.getIntSort(mMgdScript)}, SmtSortUtils.getBoolSort(mMgdScript));
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("b", new Sort[0], intSort);
 		final String formulaAsString = "(exists ((a Int)) (and (> (* 4 a) b ) (< a 3) (< b 12)))";
