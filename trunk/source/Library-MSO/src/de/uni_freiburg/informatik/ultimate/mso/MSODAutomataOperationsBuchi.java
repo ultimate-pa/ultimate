@@ -148,7 +148,7 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 				// TODO: Deal with empty alphabet.
 			}
 
-			final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
+			final Set<Term> terms = automaton.getAlphabet().iterator().next().getTerms();
 
 			// Collect all stem indices at which the value is 1.
 			final Map<Term, Set<Integer>> stemIndices = new HashMap<>();

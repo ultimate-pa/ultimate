@@ -77,17 +77,8 @@ public class MSODAlphabetSymbol {
 	/**
 	 * Returns the terms contained in this alphabet symbol.
 	 */
-	public final Term[] getTerms() {
-		final Set<Entry<Term, Boolean>> entrySet = mMap.entrySet();
-		final Term[] result = new Term[entrySet.size()];
-
-		int i = 0;
-		for (final Entry<Term, Boolean> entry : entrySet) {
-			result[i] = entry.getKey();
-			i++;
-		}
-
-		return result;
+	public final Set<Term> getTerms() {
+		return mMap.keySet();
 	}
 
 	/**
@@ -185,7 +176,8 @@ public class MSODAlphabetSymbol {
 	/**
 	 * @deprecated
 	 *
-	 * TODO: Function should probably be removed. Deal with term length. Function mixes up different functionalities.
+	 * 			TODO: Function should probably be removed. Deal with term length. Function mixes up different
+	 *             functionalities.
 	 */
 	@Deprecated
 	public static Map<String, MSODAlphabetSymbol>
