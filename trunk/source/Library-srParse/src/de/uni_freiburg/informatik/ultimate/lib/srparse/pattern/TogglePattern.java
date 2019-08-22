@@ -27,12 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
@@ -49,8 +46,7 @@ public class TogglePattern extends PatternType {
 	}
 
 	@Override
-	protected PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
-		final CDD[] cdds = getCddsAsArray();
+	protected CounterTrace transform(final CDD[] cdds, final int[] durations) {
 		assert cdds.length == 3;
 
 		final SrParseScope scope = getScope();
@@ -61,7 +57,7 @@ public class TogglePattern extends PatternType {
 		if (scope instanceof SrParseScopeGlob) {
 			final CounterTrace ct = counterTrace(phaseT(), phase(P.and(S)), phase(P.negate()),
 					phase(P.negate().and(T.negate())), phaseT());
-			return compile(peaTrans, ct);
+			return ct;
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}

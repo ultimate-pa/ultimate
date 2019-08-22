@@ -1,12 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 /**
@@ -22,20 +19,13 @@ public class ResponseChain12Pattern extends PatternType {
 	}
 
 	@Override
-	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
-		final CDD[] cdds = getCddsAsArray();
+	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
 		assert cdds.length == 3;
 
 		final SrParseScope scope = getScope();
 		final CDD P = cdds[2];
 		final CDD S = cdds[1];
 		final CDD T = cdds[0];
-
-		// TODO: responseChainPattern12: method incomplete
-		final CounterTrace ct;
-		final CDD Q = scope.getCdd1();
-		final CDD R = scope.getCdd2();
-		counterTrace(phaseT());
 
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 

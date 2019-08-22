@@ -1,12 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
@@ -27,7 +24,7 @@ public class ResponseChain21Pattern extends PatternType {
 	}
 
 	@Override
-	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
+	public CounterTrace transform(CDD[] cdds, int[] durations) {
 		final SrParseScope scope = getScope();
 		final CDD P = getCdds().get(2);
 		final CDD R = scope.getCdd2();
@@ -38,13 +35,13 @@ public class ResponseChain21Pattern extends PatternType {
 			final CounterTrace ct = counterTrace(phase(R.negate()), phase(S.and(R.negate()).and(T.negate())),
 					phase(R.negate()), phase(T.and(R.negate())), phase(P.negate().and(R.negate())), phase(R), phaseT());
 
-			return compile(peaTrans, ct);
+			return ct;
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD Q = getScope().getCdd1();
 			final CounterTrace ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()),
 					phase(S.and(R.negate()).and(T.negate())), phase(R.negate()), phase(T.and(R.negate())),
 					phase(P.negate().and(R.negate())), phase(R), phaseT());
-			return compile(peaTrans, ct);
+			return ct;
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}

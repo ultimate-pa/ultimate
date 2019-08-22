@@ -1,13 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
@@ -29,9 +26,7 @@ public class BndResponsePatternUT extends PatternType {
 	}
 
 	@Override
-	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
-		final CDD[] cdds = getCddsAsArray();
-		final int[] durations = getDurationsAsIntArray(id2bounds);
+	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
 		assert cdds.length == 2 && durations.length == 1;
 
 		final SrParseScope scope = getScope();
@@ -43,24 +38,24 @@ public class BndResponsePatternUT extends PatternType {
 		if (scope instanceof SrParseScopeGlob) {
 			final CounterTrace ct = counterTrace(phaseT(), phase(R.and(S.negate())),
 					phase(S.negate(), BoundTypes.GREATER, c1), phaseT());
-			return compile(peaTrans, ct);
+			return ct;
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD P = scope.getCdd1();
 			final CounterTrace ct = counterTrace(phase(P.negate()), phase(P.negate().and(R).and(S.negate())),
 					phase(S.negate().and(P.negate()), BoundTypes.GREATEREQUAL, c1), phaseT());
-			return compile(peaTrans, ct);
+			return ct;
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
 			final CounterTrace ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
 					phase(R.and(Q.negate()).and(S.negate())),
 					phase(S.negate().and(Q.negate()), BoundTypes.GREATEREQUAL, c1), phaseT());
-			return compile(peaTrans, ct);
+			return ct;
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
 			final CounterTrace ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R.and(S.negate())),
 					phase(S.negate(), BoundTypes.GREATEREQUAL, c1), phaseT());
-			return compile(peaTrans, ct);
+			return ct;
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
@@ -68,7 +63,7 @@ public class BndResponsePatternUT extends PatternType {
 					phase(R.and(Q.negate()).and(S.negate())),
 					phase(S.negate().and(Q.negate()), BoundTypes.GREATEREQUAL, c1), phase(Q.negate()), phase(Q),
 					phaseT());
-			return compile(peaTrans, ct);
+			return ct;
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}

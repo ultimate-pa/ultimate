@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConverter;
-import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
@@ -104,7 +104,7 @@ public class ReqToPEA {
 	private Map<PatternType, PhaseEventAutomata> generatePeas(final List<PatternType> patterns,
 			final Map<String, Integer> id2bounds) {
 		final Map<PatternType, PhaseEventAutomata> req2automata = new LinkedHashMap<>();
-		final PatternToPEA peaTrans = new PatternToPEA(mLogger, mConstIds);
+		final Trace2PeaCompiler peaTrans = new Trace2PeaCompiler(mLogger, mConstIds);
 		mLogger.info(String.format("Transforming %s requirements to PEAs", patterns.size()));
 
 		final Map<Class<?>, Integer> counter = new HashMap<>();
@@ -148,7 +148,7 @@ public class ReqToPEA {
 
 		PhaseEventAutomata pea = null;
 
-		final PatternToPEA peaTrans = new PatternToPEA(mLogger, mConstIds);
+		final Trace2PeaCompiler peaTrans = new Trace2PeaCompiler(mLogger, mConstIds);
 
 		for (final PatternType pat : patterns) {
 			if (pea == null) {

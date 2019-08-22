@@ -1,13 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
@@ -29,9 +26,7 @@ public class BndEntryConditionPattern extends PatternType {
 	}
 
 	@Override
-	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
-		final CDD[] cdds = getCddsAsArray();
-		final int[] durations = getDurationsAsIntArray(id2bounds);
+	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
 		assert cdds.length == 2 && durations.length == 1;
 
 		final SrParseScope scope = getScope();
@@ -65,7 +60,7 @@ public class BndEntryConditionPattern extends PatternType {
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
-		return compile(peaTrans, ct);
+		return ct;
 	}
 
 	@Override
