@@ -3,8 +3,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.mso;
 
+import java.math.BigInteger;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -19,6 +22,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiInters
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -106,30 +111,30 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 	 *
 	 * @throws AutomataOperationCanceledException
 	 */
-	@Override
-	public Map<Term, Term> getResult(final Script script, final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
-
-		Map<Term, Term> result = new HashMap<>();
-		final NestedLassoWord<MSODAlphabetSymbol> word = getWord(script, services, automaton);
-
-		if (word != null) {
-			final NestedWord<MSODAlphabetSymbol> stem = word.getStem();
-			final NestedWord<MSODAlphabetSymbol> loop = word.getLoop();
-
-			result = MSODUtils.parseMSODNatToTerm(script, stem);
-		}
-
-		return result;
-	}
+	// @Override
+	// public Map<Term, Term> getResult(final Script script, final AutomataLibraryServices services,
+	// final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
+	//
+	// Map<Term, Term> result = new HashMap<>();
+	// final NestedLassoWord<MSODAlphabetSymbol> word = getWord(script, services, automaton);
+	//
+	// if (word != null) {
+	// final NestedWord<MSODAlphabetSymbol> stem = word.getStem();
+	// final NestedWord<MSODAlphabetSymbol> loop = word.getLoop();
+	//
+	// result = MSODUtils.parseMSODNatToTerm(script, stem);
+	// }
+	//
+	// return result;
+	// }
 
 	/**
 	 * TODO Comment.
 	 *
 	 * @throws AutomataOperationCanceledException
 	 */
-	// @Override
-	public Map<Term, Term> getResultNew(final Script script, final AutomataLibraryServices services,
+	@Override
+	public Map<Term, Term> getResult(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 
 		final Map<Term, Term> result = new HashMap<>();
@@ -144,6 +149,8 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 			}
 
 			final Term[] terms = automaton.getAlphabet().iterator().next().getTerms();
+
+			// Collect all stem indices at which the value is 1.
 			final Map<Term, Set<Integer>> stemIndices = new HashMap<>();
 
 			for (final Term term : terms) {
@@ -159,6 +166,7 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 				}
 			}
 
+			// Collect all loop indices at which the value is 1.
 			final Map<Term, Set<Integer>> loopIndices = new HashMap<>();
 
 			for (final Term term : terms) {
@@ -166,7 +174,7 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 			}
 
 			for (int i = 0; i < loop.length(); i++) {
-				final MSODAlphabetSymbol symbol = stem.getSymbol(i);
+				final MSODAlphabetSymbol symbol = loop.getSymbol(i);
 				for (final Entry<Term, Boolean> entry : symbol.getMap().entrySet()) {
 					if (entry.getValue()) {
 						loopIndices.get(entry.getKey()).add(i);
@@ -174,8 +182,58 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 				}
 			}
 
-		}
+			// TODO: Construct result term.
+			for (final Term term : terms) {
+				Term stemTerm = null;
+				Term loopTerm = null;
 
+				// Deal with variables of type Int.
+				if (SmtSortUtils.isIntSort(term.getSort())) {
+					if (stemIndices.get(term).size() != 1 || loopIndices.get(term).size() != 0) {
+						throw new IllegalArgumentException("This is not a valid Integer representation!");
+					}
+					final Term value = SmtUtils.constructIntValue(script,
+							BigInteger.valueOf(stemIndices.get(term).iterator().next()));
+					result.put(term, value);
+					// Deal with variables of other type.
+				} else {
+					final Term newSetTerm = script.variable(term.toString() + "_elem", SmtSortUtils.getIntSort(script));
+					Term resultTerm = null;
+					final Iterator<Integer> itStem = stemIndices.get(term).iterator();
+					final Iterator<Integer> itLoop = loopIndices.get(term).iterator();
+
+					while (itStem.hasNext()) {
+						final Term value = SmtUtils.constructIntValue(script, BigInteger.valueOf(itStem.next()));
+						final Term eqTerm = SmtUtils.binaryEquality(script, newSetTerm, value);
+						if (stemTerm == null) {
+							stemTerm = eqTerm;
+						}
+						stemTerm = SmtUtils.or(script, eqTerm, stemTerm);
+					}
+
+					final int lastStemIndex = Collections.max(stemIndices.get(term));
+					final int lastLoopIndex = Collections.max(loopIndices.get(term));
+
+					// exclude numbers already occurring in the stem
+					final Term t1 = SmtUtils.minus(script, newSetTerm,
+							SmtUtils.constructIntValue(script, BigInteger.valueOf(lastStemIndex)));
+					final Term t2 = SmtUtils.greater(script, t1, SmtUtils.constructIntValue(script, BigInteger.ZERO));
+					final Term t3 = SmtUtils.mod(script, t1,
+							SmtUtils.constructIntValue(script, BigInteger.valueOf(lastLoopIndex)));
+					final Term test = t3;
+					while (itLoop.hasNext()) {
+						loopTerm = SmtUtils.and(script, t2, SmtUtils.binaryEquality(script, t3,
+								SmtUtils.constructIntValue(script, BigInteger.valueOf(itLoop.next() - 1))));
+
+					}
+					resultTerm = SmtUtils.or(script, stemTerm, loopTerm);
+
+					result.put(term, resultTerm);
+				}
+
+			}
+
+		}
 		return result;
 	}
 

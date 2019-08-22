@@ -127,6 +127,23 @@ public abstract class MSODAutomataOperations {
 
 		result = minimize(services, result);
 
+		if (result.getAlphabet().isEmpty()) {
+			return result;
+		}
+
+		// Find all Int variables contained in the alphabet.
+		final Set<Term> intVars = new HashSet<>(result.getAlphabet().iterator().next().getMap().keySet());
+		intVars.removeIf(o -> !MSODUtils.isIntVariable(o));
+
+		// Intersect with an automaton that ensures that each Int variable is matched to exactly one value.
+		for (final Term intVar : intVars) {
+			INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton;
+			varAutomaton = intVariableAutomaton(services, intVar);
+			varAutomaton = reconstruct(services, varAutomaton, result.getAlphabet(), true);
+
+			result = intersect(services, result, varAutomaton);
+		}
+
 		return result;
 	}
 

@@ -14,7 +14,7 @@
 
 ;(assert (exists ((x Int)) (and (< (- y x) 0) (< (- x z) 0))))
 ;(assert (element x I))
-;(assert (= x 1))
+(assert (= x 1))
 ;(assert (element (- 7) I))
 ;(assert (element 1 I))
 ;(assert (element 7 I))
@@ -23,14 +23,5 @@
 ;(assert (and (< x 0) (element (- 11) I)))
 ;(assert (not (element 2 I)))
 
-(assert (element 1 I))
-(push)
 (check-sat)
-(assert (element 2 I))
-(check-sat)
-(pop)
-(check-sat)
-;(assert (not (element x I)))
-;(assert (= x (- 9)))
-;(check-sat)
-;(get-value (x J I y))
+
