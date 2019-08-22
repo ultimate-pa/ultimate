@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -132,7 +133,7 @@ public abstract class MSODAutomataOperations {
 		}
 
 		// Find all Int variables contained in the alphabet.
-		final Set<Term> intVars = result.getAlphabet().iterator().next().containsSort(MSODUtils.SET_OF_INT_SORT);
+		final Set<Term> intVars = result.getAlphabet().iterator().next().containsSort(SmtSortUtils.INT_SORT);
 
 		// Intersect with an automaton that ensures that each Int variable is matched to exactly one value.
 		for (final Term intVar : intVars) {
