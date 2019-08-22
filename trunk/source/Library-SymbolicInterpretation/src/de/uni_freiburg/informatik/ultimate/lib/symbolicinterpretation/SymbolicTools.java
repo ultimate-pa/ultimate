@@ -169,11 +169,15 @@ public class SymbolicTools {
 		return mFactory.or(mSimplification, operands);
 	}
 
-	public IPredicate or(final Term... operands) {
+	public IPredicate or(final Collection<IPredicate> operands) {
+		return mFactory.or(mSimplification, operands);
+	}
+
+	public IPredicate orT(final Term... operands) {
 		return mFactory.orT(mSimplification, operands);
 	}
 
-	public IPredicate or(final Collection<Term> operands) {
+	public IPredicate orT(final Collection<Term> operands) {
 		return mFactory.orT(mSimplification, operands);
 	}
 
@@ -181,11 +185,15 @@ public class SymbolicTools {
 		return mFactory.and(mSimplification, operands);
 	}
 
-	public IPredicate and(final Term... operands) {
+	public IPredicate and(final Collection<IPredicate> operands) {
+		return mFactory.and(mSimplification, operands);
+	}
+
+	public IPredicate andT(final Term... operands) {
 		return mFactory.andT(mSimplification, operands);
 	}
 
-	public IPredicate and(final Collection<Term> operands) {
+	public IPredicate andT(final Collection<Term> operands) {
 		return mFactory.andT(mSimplification, operands);
 	}
 

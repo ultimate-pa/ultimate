@@ -86,11 +86,11 @@ public class ExplicitValueDomain implements IDomain {
 				.map(rewriter::transform)
 				.toArray(Term[]::new);
 		// TODO use a more strict normal form, where assignments have a variable on the left and a number on the right?
-		return mTools.or(joinAccordingToMax(rewrittenDisjuncts));
+		return mTools.orT(joinAccordingToMax(rewrittenDisjuncts));
 	}
 
 	private IPredicate joinAccordingToMax(final IPredicate dnfPredicate) {
-		return mTools.or(joinAccordingToMax(SmtUtils.getDisjuncts(dnfPredicate.getFormula())));
+		return mTools.orT(joinAccordingToMax(SmtUtils.getDisjuncts(dnfPredicate.getFormula())));
 	}
 
 	private Term[] joinAccordingToMax(final Term[] disjuncts) {
@@ -116,7 +116,7 @@ public class ExplicitValueDomain implements IDomain {
 	}
 
 	private Term mapToConjunction(final Map<Term, Term> equalities) {
-		return mTools.and(equalities.entrySet().stream().map(this::entryToEq).toArray(Term[]::new)).getFormula();
+		return mTools.andT(equalities.entrySet().stream().map(this::entryToEq).toArray(Term[]::new)).getFormula();
 	}
 
 	private Term entryToEq(final Map.Entry<Term, Term> entry) {

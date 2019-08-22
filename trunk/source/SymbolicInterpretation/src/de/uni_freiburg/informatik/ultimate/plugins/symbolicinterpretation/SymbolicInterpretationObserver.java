@@ -98,7 +98,7 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	private boolean reportSingleResult(final Map.Entry<IcfgLocation, IPredicate> loiPred) {
 		final ResultForAlteredInputs predEqBottom = mSifaComponents.getDomain().isEqBottom(loiPred.getValue());
 		final IResult result;
-		if (predEqBottom.isTrue()) {
+		if (predEqBottom.isTrueForAbstraction()) {
 			result = new PositiveResult<>(Activator.PLUGIN_ID, loiPred.getKey(), mServices.getBacktranslationService());
 		} else {
 			String msg = "Over-approximation of reachable states at this location is " + loiPred.getValue();
@@ -110,7 +110,7 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 					IcfgProgramExecution.create(Collections.emptyList(), Collections.emptyMap()), msg);
 		}
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
-		return predEqBottom.isTrue();
+		return predEqBottom.isTrueForAbstraction();
 	}
 
 

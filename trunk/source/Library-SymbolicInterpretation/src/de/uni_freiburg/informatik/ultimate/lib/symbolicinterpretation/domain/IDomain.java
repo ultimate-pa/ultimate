@@ -44,9 +44,9 @@ public interface IDomain {
 
 	/**
 	 * Represents the result of an relation check as {@link IDomain#isEqBottom(IPredicate)} or
-	 * {@link IDomain#isSubsetEq(IPredicate, IPredicate)}}.
-	 * Since relation checks may over-approximate their inputs results are not only a boolean (here {@link #isTrue()}})
-	 * but also include the actually used (that is, possibly over-approximated) inputs.
+	 * {@link IDomain#isSubsetEq(IPredicate, IPredicate)}}.  Since relation checks may over-approximate their inputs,
+	 * results are not only a boolean (here {@link #isTrueForAbstraction()}}) but also include the actually used
+	 * (that is, possibly over-approximated) inputs.
 	 *
 	 * @author schaetzc@tf.uni-freiburg.de
 	 */
@@ -65,15 +65,26 @@ public interface IDomain {
 			mResult = result;
 			mAbstracted = abstracted;
 		}
+		/** @return The left-hand side of the queried check or an over-approximation if {@link #wasAbstracted()} */
 		public IPredicate getLhs() {
 			return mLhs;
 		}
+		/** @return The right-hand side of the queried check or an over-approximation if {@link #wasAbstracted()} */
 		public IPredicate getRhs() {
 			return mRhs;
 		}
-		public boolean isTrue() {
+		/**
+		 * @return {@code someCheck(this.getLhs(), this.getRhs())} (mathematically speaking)
+		 *         where {@code someCheck(originalLhs, originalRhs)} is the procedure returning this result object.
+		 */
+		public boolean isTrueForAbstraction() {
 			return mResult;
 		}
+		/**
+		 * @return The queried check could not be performed on the given inputs.
+		 *         The check was done for over-approximations of the given inputs.
+		 *         The altered inputs can be obtained from {@link #getLhs()} and {@link #getRhs()}.
+		 */
 		public boolean wasAbstracted() {
 			return mAbstracted;
 		}
@@ -95,11 +106,11 @@ public interface IDomain {
 	 * Whether or not to over-approximate is up to the implementation at each call. This may return an arbitrary
 	 * predicate. A domain-specific normal form is not required.
 	 *
-	 * @param first p1
-	 * @param second p2
+	 * @param lhs Left-hand side of the join p1
+	 * @param rhs Right-hand side of the join p2
 	 * @return Join j of p1 and p2 such that (p1 ∨ p2) → j.
 	 */
-	IPredicate join(IPredicate first, IPredicate second);
+	IPredicate join(IPredicate lhs, IPredicate rhs);
 
 	/**
 	 * Widens one abstract state by another one.

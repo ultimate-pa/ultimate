@@ -145,7 +145,7 @@ public class IntervalDomain implements IDomain {
 		return mTools.predicate(intervalsToTerm(intervalConjunction));
 	}
 	private IPredicate toPredicate(final Collection<Map<TermVariable, Interval>> intervalDnf) {
-		return mTools.or(intervalDnf.stream().map(this::intervalsToTerm).collect(Collectors.toList()));
+		return mTools.orT(intervalDnf.stream().map(this::intervalsToTerm).collect(Collectors.toList()));
 	}
 
 	private Collection<Map<TermVariable, Interval>> toIntervals(final IPredicate pred) {

@@ -108,7 +108,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 			final ResultForAlteredInputs postSubsetEqPre = mDomain.isSubsetEq(postState, preState);
 			postState = postSubsetEqPre.getLhs();
 			preState = postSubsetEqPre.getRhs();
-			if (postSubsetEqPre.isTrue()) {
+			if (postSubsetEqPre.isTrueForAbstraction()) {
 				break;
 			}
 			preState = mDomain.widen(preState, postState);
