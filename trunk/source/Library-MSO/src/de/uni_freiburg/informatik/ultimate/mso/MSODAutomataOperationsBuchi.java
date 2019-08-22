@@ -219,18 +219,17 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 							SmtUtils.constructIntValue(script, BigInteger.valueOf(lastStemIndex)));
 					final Term t2 = SmtUtils.greater(script, t1, SmtUtils.constructIntValue(script, BigInteger.ZERO));
 					final Term t3 = SmtUtils.mod(script, t1,
-							SmtUtils.constructIntValue(script, BigInteger.valueOf(lastLoopIndex)));
-					final Term test = t3;
+							SmtUtils.constructIntValue(script, BigInteger.valueOf(lastLoopIndex + 1)));
 					while (itLoop.hasNext()) {
-						loopTerm = SmtUtils.and(script, t2, SmtUtils.binaryEquality(script, t3,
-								SmtUtils.constructIntValue(script, BigInteger.valueOf(itLoop.next() - 1))));
+						loopTerm = SmtUtils.and(script, t2,
+								SmtUtils.binaryEquality(script, t3, SmtUtils.constructIntValue(script,
+										BigInteger.valueOf((itLoop.next() + 1) % (lastLoopIndex + 1)))));
 
 					}
 					resultTerm = SmtUtils.or(script, stemTerm, loopTerm);
 
 					result.put(term, resultTerm);
 				}
-
 			}
 
 		}
