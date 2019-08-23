@@ -76,7 +76,8 @@ public abstract class PatternType {
 			final int[] durations = getDurationsAsIntArray(id2bounds);
 			final CounterTrace ct = transform(cdds, durations);
 			final String name = getId() + "_" + createPeaSuffix();
-			final Trace2PeaCompilerStateless compiler = new Trace2PeaCompilerStateless(logger, name, ct);
+			final Trace2PeaCompilerStateless compiler =
+					new Trace2PeaCompilerStateless(logger, name, ct, id2bounds.keySet());
 			mPea = compiler.getResult();
 		}
 		return mPea;

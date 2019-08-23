@@ -98,8 +98,8 @@ public class Trace2PeaCompilerStateless {
 	 *            The countertrace the phase event automaton is constructed for.
 	 *
 	 */
-	public Trace2PeaCompilerStateless(final ILogger logger, final Set<String> constantIds, final String name,
-			final CounterTrace counterTrace) {
+	public Trace2PeaCompilerStateless(final ILogger logger, final String name, final CounterTrace counterTrace,
+			final Set<String> constantIds) {
 		mLogger = logger;
 
 		mAllPhases = new TreeMap<>();
@@ -123,10 +123,6 @@ public class Trace2PeaCompilerStateless {
 		mMissingEvents = null;
 		mSpec = false;
 		mResult = buildAut();
-	}
-
-	public Trace2PeaCompilerStateless(final ILogger logger, final String name, final CounterTrace counterTrace) {
-		this(logger, Collections.emptySet(), name, counterTrace);
 	}
 
 	public PhaseEventAutomata getResult() {
