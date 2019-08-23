@@ -126,7 +126,8 @@ public class SmtSymbols {
 	 */
 	public void transferSymbols(final Script script) {
 		final TermTransferrer tt = new TermTransferrer(script);
-		final LBool quickCheckAxioms = script.assertTerm(tt.transform(mAxioms.getClosedFormula()));
+		final Term transferredAxiom = tt.transform(mAxioms.getClosedFormula());
+		final LBool quickCheckAxioms = script.assertTerm(transferredAxiom);
 		assert quickCheckAxioms != LBool.UNSAT : "Axioms are inconsistent";
 		for (final Entry<String, SmtFunctionDefinition> entry : mSmtFunctions2SmtFunctionDefinitions.entrySet()) {
 			entry.getValue().defineOrDeclareFunction(script, tt);
