@@ -203,7 +203,13 @@ public class IntervalDomain implements IDomain {
 			}
 			updated = false;
 			for (final SolvedBinaryRelation rel : solvedRelations) {
-				updated |= updateInterval(varToInterval, rel);
+				final Optional<Interval> updatedLhsInterval = updatedLhsInterval(varToInterval, rel);
+				if (!updatedLhsInterval.isPresent()) {
+					continue;
+				} else if (updatedLhsInterval.get().isBottom()) {
+					return Optional.empty();
+				}
+				updated = true;
 			}
 		}
 		return Optional.of(Collections.unmodifiableMap(varToInterval));
@@ -247,11 +253,17 @@ public class IntervalDomain implements IDomain {
 		}
 	}
 
-	private boolean updateInterval(final Map<TermVariable, Interval> scope, final SolvedBinaryRelation relation) {
+	/**
+	 * Evaluates a relation and updates the lhs's interval value in the scope if the value changed
+	 * compared to the old value.
+	 * @return New value of the lhs (already in updated in the scope) or nothing if the value didn't change
+	 */
+	private Optional<Interval> updatedLhsInterval(
+			final Map<TermVariable, Interval> scope, final SolvedBinaryRelation relation) {
 		final Map<AssumptionForSolvability, Term> assumptions = relation.getAssumptionsMap();
 		if (assumptions.entrySet().stream().anyMatch(assumption -> !isAssumptionValid(assumption, scope))) {
 			// cannot use solved relation because of invalid assumption
-			return false;
+			return Optional.empty();
 		}
 		assert relation.getLeftHandSide() instanceof TermVariable;
 		final TermVariable subject = (TermVariable) relation.getLeftHandSide();
@@ -259,10 +271,10 @@ public class IntervalDomain implements IDomain {
 		final Interval newValue = updatedLhsForRelation(
 				oldValue, relation.getRelationSymbol(), TermToInterval.evaluate(relation.getRightHandSide(), scope));
 		if (oldValue.equals(newValue)) {
-			return false;
+			return Optional.empty();
 		}
 		scope.put(subject, newValue);
-		return true;
+		return Optional.of(newValue);
 	}
 
 	private Interval updatedLhsForRelation(final Interval lhs, final RelationSymbol relSym, final Interval rhs) {
