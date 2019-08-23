@@ -71,8 +71,8 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Icfg
 		if (mPostOperator == null) {
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
-			final Supplier<IntervalDomainState> topStateSupplier = () -> createTopState();
-			final Supplier<IntervalDomainState> bottomStateSupplier = () -> createBottomState();
+			final Supplier<IntervalDomainState> topStateSupplier = this::createTopState;
+			final Supplier<IntervalDomainState> bottomStateSupplier = this::createBottomState;
 			mPostOperator = new IntervalPostOperator(mLogger, maxParallelStates, topStateSupplier, bottomStateSupplier);
 		}
 		return mPostOperator;
