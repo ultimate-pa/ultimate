@@ -182,13 +182,13 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 	}
 
 	private void logEnterProcedure(final String procedure, final IPredicate input) {
-		mLogger.info("Interpreting procedure %s with input of size %s",
+		mLogger.info("Interpreting procedure %s with input of size %s for LOIs",
 				procedure, new DagSizePrinter(input.getFormula()));
 		mLogger.debug("Procedure's input is %s", input);
 	}
 
 	private void logRegisterEnterCall(final String callee, final IPredicate calleeInput) {
-		mLogger.debug("Call to procedure %s received the predicate %s", callee, calleeInput);
+		mLogger.debug("Call to procedure %s received the input %s", callee, calleeInput);
 	}
 
 }

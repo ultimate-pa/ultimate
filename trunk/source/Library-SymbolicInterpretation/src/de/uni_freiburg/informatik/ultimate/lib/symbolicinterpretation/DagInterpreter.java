@@ -180,11 +180,11 @@ public class DagInterpreter {
 
 	private IPredicate ipretEnterCall(final IIcfgCallTransition<IcfgLocation> trans, final IPredicate input,
 			final IEnterCallRegistrar enterCallRegistrar) {
-		logIpretEnterCall();
+		logRegisterEnterCall();
 		final IPredicate calleeInput = mTools.postCall(input, trans);
 		enterCallRegistrar.registerEnterCall(trans.getSucceedingProcedure(), calleeInput);
 		// predicates for LOIs are stored once IcfgInterpreter enters the call
-		logIpretEnterCallDone();
+		logRegisterEnterCallDone();
 		return calleeInput;
 	}
 
@@ -237,12 +237,12 @@ public class DagInterpreter {
 
 	private void logWorklistEntry(
 			final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist) {
-		mLogger.debug("●  Next worklist item is %s with input %s",
+		mLogger.debug("●  Processing next worklist item %s with input %s",
 				worklist.getWork().getContent(), worklist.getInput());
 	}
 
 	private void logWorklistEntryDone(final IPredicate curOutput) {
-		// TODO Auto-generated method stub
+		mLogger.debug("Output of worklist entry is %s", curOutput);
 	}
 	private void logConsiderAbstraction() {
 		mLogger.debug("Asking fluid if we should abstract");
@@ -276,12 +276,13 @@ public class DagInterpreter {
 		mLogger.debug("⟲  Loop summarizer finished");
 	}
 
-	private void logIpretEnterCall() {
-		mLogger.debug("↯  Enter call in search for errors");
+	private void logRegisterEnterCall() {
+		mLogger.debug("Register enter call for later");
 	}
 
-	private void logIpretEnterCallDone() {
-		mLogger.debug("↯  Evaluated potential errors in call");
+	private void logRegisterEnterCallDone() {
+		// nothing to do
+		// log message could be relevant if we interpreted registered entered calls immediately
 	}
 
 	private void logIpretCallReturn() {
