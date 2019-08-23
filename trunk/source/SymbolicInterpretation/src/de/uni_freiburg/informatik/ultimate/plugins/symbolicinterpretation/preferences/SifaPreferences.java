@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogS
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.SizeLimitFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ReUseSupersetCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.TopInputCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.SifaBuilder;
@@ -83,6 +84,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	public static final String DEFAULT_CALL_SUMMARIZER = TopInputCallSummarizer.class.getSimpleName();
 	protected static final String[] VALUES_CALL_SUMMARIZER = {
 		TopInputCallSummarizer.class.getSimpleName(),
+		ReUseSupersetCallSummarizer.class.getSimpleName(),
 	};
 
 	public static final String LABEL_FLUID = "Fluid";

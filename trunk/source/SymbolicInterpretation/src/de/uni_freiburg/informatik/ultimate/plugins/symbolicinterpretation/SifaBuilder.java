@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.Size
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ReUseSupersetCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.TopInputCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.preferences.SifaPreferences;
 
@@ -93,7 +94,7 @@ public class SifaBuilder {
 		final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSum =
 				constructLoopSummarizer(timer, tools, domain, fluid);
 		final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSum =
-				constructCallSummarizer(tools);
+				constructCallSummarizer(tools, domain);
 		final IcfgInterpreter icfgInterpreter = new IcfgInterpreter(mLogger, timer, tools, icfg,
 				IcfgInterpreter.allErrorLocations(icfg), domain, fluid, loopSum, callSum);
 		return new SifaComponents(icfgInterpreter, domain);
@@ -173,10 +174,13 @@ public class SifaBuilder {
 	}
 
 	private Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> constructCallSummarizer(
-			final SymbolicTools tools) {
+			final SymbolicTools tools, final IDomain domain) {
 		final String prefCallSum = mPrefs.getString(SifaPreferences.LABEL_CALL_SUMMARIZER);
 		if (TopInputCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
 			return icfgIpr -> dagIpr -> new TopInputCallSummarizer(tools, icfgIpr.procedureResourceCache(), dagIpr);
+		} else if (ReUseSupersetCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
+			return icfgIpr -> dagIpr -> new ReUseSupersetCallSummarizer(
+					tools, domain, icfgIpr.procedureResourceCache(), dagIpr);
 		} else {
 			throw new IllegalArgumentException("Unknown call summarizer setting: " + prefCallSum);
 		}
