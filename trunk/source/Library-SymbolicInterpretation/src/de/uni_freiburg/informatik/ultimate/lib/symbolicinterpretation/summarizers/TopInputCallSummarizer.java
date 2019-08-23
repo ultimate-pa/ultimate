@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.DagInterpr
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResourceCache;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.CallReturnSummary;
 
 /**
  * Computes call summaries ignoring the actual call's input and using only true as an input.
@@ -58,8 +57,8 @@ public class TopInputCallSummarizer implements ICallSummarizer {
 	}
 
 	@Override
-	public IPredicate summarize(final CallReturnSummary callSumTrans, final IPredicate unusedInput) {
-		return mProcToSummary.computeIfAbsent(callSumTrans.calledProcedure(), this::computeTopSummary);
+	public IPredicate summarize(final String callee, final IPredicate unusedInput) {
+		return mProcToSummary.computeIfAbsent(callee, this::computeTopSummary);
 	}
 
 	private IPredicate computeTopSummary(final String procedure) {

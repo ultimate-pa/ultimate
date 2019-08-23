@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreprocessing.CallReturnSummary;
 
 /**
  * Computes summaries to skip procedure calls.
@@ -37,12 +36,14 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreproc
 public interface ICallSummarizer {
 
 	/**
-	 * Given an input and call (including execution of the callee's body and returning back to the caller),
-	 * computes an (over-approximated) output.
+	 * Given an input and procedure name, computes an (over-approximated) output.
 	 *
-	 * @param callSumTrans Call to be completely summarized
-	 * @param input pre state for the call
-	 * @return Over-approximated post state
+	 * @param callee Name of the called procedure
+	 * @param inputAfterCall State when starting to execute the procedure body.
+	 *                       The arguments from the caller are already assigned to the callee's parameters.
+	 *                       There are no local variable of the caller left in the state.
+	 * @return Over-approximated output before the return statement.
+	 *         The callee's return values still have to be assigned to the caller's local variables.
 	 */
-	IPredicate summarize(CallReturnSummary callSumTrans, IPredicate input);
+	IPredicate summarize(String callee, IPredicate inputAfterCall);
 }

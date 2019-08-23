@@ -205,12 +205,13 @@ public class DagInterpreter {
 	}
 
 	private IPredicate ipretCallReturnSummary(final CallReturnSummary trans, final IPredicate input) {
-		logIpretCallReturn();
-		final IPredicate summary = mCallSummarizer.summarize(trans, input);
-		logIpretCallReturnObtainedSummary(summary);
-		final IPredicate output = mTools.postReturn(input, summary, trans.correspondingReturn());
-		logIpretCallReturnDone();
-		return output;
+		final IPredicate inputAfterCall = mTools.postCall(input, trans.correspondingCall());
+		logIpretCallReturnQuery(inputAfterCall);
+		final IPredicate summary = mCallSummarizer
+				.summarize(trans.correspondingCall().getSucceedingProcedure(), inputAfterCall);
+		logIpretCallReturnApply(summary);
+		final IPredicate outputAfterReturn = mTools.postReturn(input, summary, trans.correspondingReturn());
+		return outputAfterReturn;
 	}
 
 	private IPredicate ipretInternal(final IIcfgInternalTransition<IcfgLocation> trans, final IPredicate input) {
@@ -285,15 +286,11 @@ public class DagInterpreter {
 		// log message could be relevant if we interpreted registered entered calls immediately
 	}
 
-	private void logIpretCallReturn() {
-		mLogger.debug("⇵  Using call summarizer");
+	private void logIpretCallReturnQuery(final IPredicate inputAfterCall) {
+		mLogger.debug("⇵  Requesting call summary for input after call %s", inputAfterCall);
 	}
 
-	private void logIpretCallReturnObtainedSummary(final IPredicate summary) {
-		mLogger.debug("⇵  Obtained call return summary %s", summary);
-	}
-
-	private void logIpretCallReturnDone() {
-		mLogger.debug("⇵  Applied call summary");
+	private void logIpretCallReturnApply(final IPredicate summary) {
+		mLogger.debug("⇵  Apply call summary %s", summary);
 	}
 }
