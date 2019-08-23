@@ -84,11 +84,11 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 			allSafe &= reportSingleResult(loiPred);
 		}
 		if (allSafe) {
-			mLogger.info("✔ All locations of interest are guaranteed to be unreachable.");
+			mLogger.info("✔ All error locations are guaranteed to be unreachable.");
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 					new AllSpecificationsHoldResult(Activator.PLUGIN_ID, ""));
 		} else {
-			mLogger.info("✘ Some locations of interest might be reachable, see reported results.");
+			mLogger.info("✘ Some error locations might be reachable, see reported results.");
 		}
 	}
 
