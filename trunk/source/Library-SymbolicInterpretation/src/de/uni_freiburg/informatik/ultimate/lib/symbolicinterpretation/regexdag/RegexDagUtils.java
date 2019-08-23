@@ -35,6 +35,7 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.EmptySet;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
@@ -94,9 +95,9 @@ public class RegexDagUtils {
 	 * <p>
 	 * ✱ In the ICFG the nodes are program locations. However, in the DAG the nodes are transitions between
 	 * two locations (a simple transition), one location (a loop), or no location (an epsilon node used
-	 * to model forks and joins in the program flow). The function {@code getLocationInStartPointDirection}
-	 * returns the location closer to the starting nodes for cases in which there are multiple IcfgLocations
-	 * per RegexDagNode.
+	 * to model forks and joins in the program flow, or an empty set regex node).
+	 * The function {@code getLocationInStartPointDirection} returns the location closer to the starting nodes
+	 * for cases in which there are multiple IcfgLocations per RegexDagNode.
 	 *
 	 * @param dag Dag to be searched
 	 * @param startPoints Starting points for the search. Ideally no starting point can reach another
@@ -125,7 +126,7 @@ public class RegexDagUtils {
 				resultLocs.add(getLocationInStartPointDirection.apply(icfgTransition));
 			} else if (regex instanceof Star<?>) {
 				resultLocs.add(regex.accept(new LoopPointVisitor<>()));
-			} else if (regex instanceof Epsilon<?>) {
+			} else if (regex instanceof Epsilon<?> || regex instanceof EmptySet<?>) {
 				worklist.addAll(getNodesInSeachDirection.apply(node));
 			} else {
 				throw new AssertionError("Illegal regex type in RegexDag: " + regex);
