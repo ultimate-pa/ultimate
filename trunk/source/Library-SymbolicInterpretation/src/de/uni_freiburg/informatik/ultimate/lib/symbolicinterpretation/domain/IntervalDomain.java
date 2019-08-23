@@ -60,7 +60,7 @@ public class IntervalDomain implements IDomain {
 
 	private final ILogger mLogger;
 	private final SymbolicTools mTools;
-	private final int mMaxDisjuncts = 2;
+	private final int mMaxDisjuncts;
 	private final Supplier<IProgressAwareTimer> mTermToIntervalTimeout;
 
 	private final WeakHashMap<IPredicate, Collection<Map<TermVariable, Interval>>> mPredToIntervalCache =
@@ -70,6 +70,7 @@ public class IntervalDomain implements IDomain {
 			final Supplier<IProgressAwareTimer> termToIntervalTimeout) {
 		mTools = tools;
 		mLogger = logger;
+		mMaxDisjuncts = maxDisjuncts;
 		mTermToIntervalTimeout = termToIntervalTimeout;
 	}
 
