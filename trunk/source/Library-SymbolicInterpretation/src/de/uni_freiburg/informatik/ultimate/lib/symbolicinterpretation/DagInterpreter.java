@@ -81,8 +81,15 @@ public class DagInterpreter {
 		mCallSummarizer = callSumFactory.apply(this);
 	}
 
+	/**
+	 * Interprets DAGs which have exactly one sink location.
+	 * Interpretation starts at
+	 *
+	 * @return Value of the sink location after interpreting the DAG
+	 */
 	public IPredicate interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
+
 		final Collection<IcfgLocation> sinkLocations = RegexDagUtils.sinkLocations(dag, overlay);
 		if (sinkLocations.size() == 0) {
 			// can happen, for instance if the procedure consists of "f() { label: goto label; }"
@@ -97,7 +104,7 @@ public class DagInterpreter {
 	}
 
 	/**
-	 * Interprets a dag starting from its source node using only edges from the overlay.
+	 * Interprets a DAG starting from its source node using only edges from the overlay.
 	 * Results can be read from the given ILoiPredicateStorage.
 	 * Calls are not entered but only registered in the given IEnterCallRegistrar.
 	 * Registered calls should be processed after this function returns.
@@ -105,14 +112,24 @@ public class DagInterpreter {
 	public void interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput,
 			final ILoiPredicateStorage loiStorage, final IEnterCallRegistrar enterCallRegr) {
+
 		final List<RegexDagNode<IIcfgTransition<IcfgLocation>>> topoOrder = mTopsortCache.topsort(dag);
+		// TODO should we use fluid and IDomain.alpha after join in worklist?
 		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
 				new PriorityWorklist<>(topoOrder, mDomain::join);
+
+		// TODO don't use dag.getSource() -- use overlay.getSources()
+		// final Collection<RegexDagNode<IIcfgTransition<IcfgLocation>>> source = overlay.sources(dag);
 		worklist.add(dag.getSource(), initalInput);
+
 		while (worklist.advance()) {
 			respectTimeout();
+			logWorklistEntry(worklist);
 			final RegexDagNode<IIcfgTransition<IcfgLocation>> curNode = worklist.getWork();
-			final IPredicate curOutput = ipretNode(curNode, worklist.getInput(), loiStorage, enterCallRegr);
+			// TODO alternatively abstract outputs before putting them into the worklist
+			final IPredicate curInput = fluidAbstraction(worklist.getInput());
+			final IPredicate curOutput = ipretNode(curNode, curInput, loiStorage, enterCallRegr);
+			logWorklistEntryDone(curOutput);
 			overlay.successorsOf(curNode).forEach(successor -> worklist.add(successor, curOutput));
 		}
 	}
@@ -142,8 +159,10 @@ public class DagInterpreter {
 
 	private IPredicate ipretLoop(final Star<IIcfgTransition<IcfgLocation>> loop, final IPredicate input,
 			final ILoiPredicateStorage loiStorage) {
+		logIpretLoop();
 		final IPredicate loopSummary = mLoopSummarizer.summarize(loop, input);
 		registerLoiPredsForLoop(loop, loopSummary, loiStorage);
+		logIpretLoopDone();
 		return loopSummary;
 	}
 
@@ -155,11 +174,8 @@ public class DagInterpreter {
 		// For each LOI we compute a path ending at that LOI. A path cannot end inside a loop.
 	}
 
-	private IPredicate ipretTrans(final IIcfgTransition<IcfgLocation> trans, IPredicate input,
+	private IPredicate ipretTrans(final IIcfgTransition<IcfgLocation> trans, final IPredicate input,
 			final ILoiPredicateStorage loiStorage, final IEnterCallRegistrar enterCallRegistrar) {
-		// TODO move abstraction up? Also abstract before stars?
-		input = fluidAbstraction(input);
-		logIpretTransition(trans, input);
 		if (trans instanceof IIcfgCallTransition<?>) {
 			return ipretEnterCall((IIcfgCallTransition<IcfgLocation>) trans, input, enterCallRegistrar);
 		}
@@ -168,9 +184,11 @@ public class DagInterpreter {
 
 	private IPredicate ipretEnterCall(final IIcfgCallTransition<IcfgLocation> trans, final IPredicate input,
 			final IEnterCallRegistrar enterCallRegistrar) {
+		logIpretEnterCall();
 		final IPredicate calleeInput = mTools.postCall(input, trans);
 		enterCallRegistrar.registerEnterCall(trans.getSucceedingProcedure(), calleeInput);
 		// predicates for LOIs are stored once IcfgInterpreter enters the call
+		logIpretEnterCallDone();
 		return calleeInput;
 	}
 
@@ -191,15 +209,18 @@ public class DagInterpreter {
 	}
 
 	private IPredicate ipretCallReturnSummary(final CallReturnSummary trans, final IPredicate input) {
+		logIpretCallReturn();
 		final IPredicate summary = mCallSummarizer.summarize(trans, input);
+		logIpretCallReturnObtainedSummary(summary);
 		final IPredicate output = mTools.postReturn(input, summary, trans.correspondingReturn());
-		logIpretCallReturnSummary(summary, output);
+		logIpretCallReturnDone();
 		return output;
 	}
 
 	private IPredicate ipretInternal(final IIcfgInternalTransition<IcfgLocation> trans, final IPredicate input) {
+		logIpretInternal();
 		final IPredicate output = mTools.post(input, trans);
-		logIpretInternal(output);
+		logIpretInternalDone();
 		return output;
 	}
 
@@ -208,7 +229,7 @@ public class DagInterpreter {
 		if (mFluid.shallBeAbstracted(pred)) {
 			logFluidAbstractionYes();
 			pred = mDomain.alpha(pred);
-			logAbstractionDone(pred);
+			logFluidAbstractionDone(pred);
 		} else {
 			logFluidAbstractionNo();
 		}
@@ -218,6 +239,15 @@ public class DagInterpreter {
 
 	// log messages -------------------------------------------------------------------------------
 
+	private void logWorklistEntry(
+			final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist) {
+		mLogger.debug("●  Next worklist item is %s with input %s",
+				worklist.getWork().getContent(), worklist.getInput());
+	}
+
+	private void logWorklistEntryDone(final IPredicate curOutput) {
+		// TODO Auto-generated method stub
+	}
 	private void logConsiderAbstraction() {
 		mLogger.debug("Asking fluid if we should abstract");
 	}
@@ -230,20 +260,43 @@ public class DagInterpreter {
 		mLogger.debug("Fluid: No, don't abstract");
 	}
 
-	private void logAbstractionDone(final IPredicate abstractedPred) {
-		mLogger.debug("Abstraction is %.60s…", abstractedPred);
+	private void logFluidAbstractionDone(final IPredicate abstractedPred) {
+		mLogger.debug("Fluid abstraction is %s", abstractedPred);
 	}
 
-	private void logIpretTransition(final IIcfgTransition<IcfgLocation> transition, final IPredicate input) {
-		mLogger.debug("→ Interpreting transition %.60s… with input %.60s…", transition, input);
+	private void logIpretInternal() {
+		mLogger.debug("→  Interpreting internal transition");
 	}
 
-	private void logIpretInternal(final IPredicate output) {
-		mLogger.debug("Internal transition's output is %.60s…", output);
+	private void logIpretInternalDone() {
+		mLogger.debug("→  Internal transition interpreted");
 	}
 
-	private void logIpretCallReturnSummary(final IPredicate summary, final IPredicate output) {
-		mLogger.debug("Call return summary is %.60s…", summary);
-		mLogger.debug("After \"call … := …\" was applied output is %.60s…", output);
+	private void logIpretLoop() {
+		mLogger.debug("⟲  Using loop summarizer");
+	}
+
+	private void logIpretLoopDone() {
+		mLogger.debug("⟲  Loop summarizer finished");
+	}
+
+	private void logIpretEnterCall() {
+		mLogger.debug("↯  Enter call in search for errors");
+	}
+
+	private void logIpretEnterCallDone() {
+		mLogger.debug("↯  Evaluated potential errors in call");
+	}
+
+	private void logIpretCallReturn() {
+		mLogger.debug("⇵  Using call summarizer");
+	}
+
+	private void logIpretCallReturnObtainedSummary(final IPredicate summary) {
+		mLogger.debug("⇵  Obtained call return summary %s", summary);
+	}
+
+	private void logIpretCallReturnDone() {
+		mLogger.debug("⇵  Applied call summary");
 	}
 }

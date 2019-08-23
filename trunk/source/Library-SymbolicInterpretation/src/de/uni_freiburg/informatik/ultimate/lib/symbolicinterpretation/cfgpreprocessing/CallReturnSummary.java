@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
  * <li> Executing its body without errors and with guaranteed termination
  * <li> Returning from the procedure. This includes assigning its return values to local variables of the caller.
  * </ul>
- * 
+ *
  * @author schaetzc@tf.uni-freiburg.de
  */
 public class CallReturnSummary implements IIcfgInternalTransition<IcfgLocation> {
@@ -92,12 +92,17 @@ public class CallReturnSummary implements IIcfgInternalTransition<IcfgLocation> 
 	public String calledProcedure() {
 		return mReturn.getPrecedingProcedure();
 	}
-	
+
 	public IIcfgCallTransition<IcfgLocation> correspondingCall() {
 		return mReturn.getCorrespondingCall();
 	}
 
 	public IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> correspondingReturn() {
 		return mReturn;
+	}
+
+	@Override
+	public String toString() {
+		return "CallReturnSummary for callee " + calledProcedure();
 	}
 }
