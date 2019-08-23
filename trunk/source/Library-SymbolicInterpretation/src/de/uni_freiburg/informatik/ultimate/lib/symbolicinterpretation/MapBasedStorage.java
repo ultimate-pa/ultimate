@@ -69,7 +69,7 @@ public class MapBasedStorage implements ILoiPredicateStorage {
 	private IPredicate joinLoiPredicate(final IcfgLocation loi, final IPredicate oldPred, final IPredicate addPred) {
 		logBeforeRegisterLoi(loi, addPred);
 		final IPredicate newPred = mDomain.join(oldPred, addPred);
-		logAfterRegisterLoi(loi, addPred, newPred);
+		logRegisterLoiDone(loi, addPred, newPred);
 		return newPred;
 	}
 
@@ -77,14 +77,14 @@ public class MapBasedStorage implements ILoiPredicateStorage {
 	// LOIs from this class are different from the user's LOIs, for instance in a ICallSummarizer
 
 	private void logBeforeRegisterLoi(final IcfgLocation loi, final IPredicate addPred) {
-		mLogger.debug("LOI %.60s… received the predicate %.60s…", loi, addPred);
+		mLogger.debug("LOI %s received the predicate %s", loi, addPred);
 	}
 
-	private void logAfterRegisterLoi(final IcfgLocation loi, final IPredicate addedPred, final IPredicate newPred) {
+	private void logRegisterLoiDone(final IcfgLocation loi, final IPredicate addedPred, final IPredicate newPred) {
 		if (addedPred == newPred) {
-			mLogger.debug("Updated predicate for LOI %.60s… is identical", loi);
+			mLogger.debug("Updated predicate for LOI %s is identical", loi);
 		} else {
-			mLogger.debug("Updated predicate for LOI %.60s… is %.60s…", loi, newPred);
+			mLogger.debug("Updated predicate for LOI %s is %s", loi, newPred);
 		}
 	}
 
