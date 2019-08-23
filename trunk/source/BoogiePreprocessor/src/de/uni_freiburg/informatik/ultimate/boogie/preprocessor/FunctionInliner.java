@@ -28,9 +28,13 @@
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.CachingBoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -51,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -68,67 +73,11 @@ public class FunctionInliner extends CachingBoogieTransformer implements IUnmana
 	/**
 	 * A map containing the functions that should be inlined. The key is the function name.
 	 */
-	HashMap<String, FunctionDeclaration> inlinedFunctions;
+	private Map<String, FunctionDeclaration> mInlinedFunctions;
 	/**
 	 * The current scope containing the renamings and names used.
 	 */
-	Scope currentScope;
-
-	/**
-	 * The information for a scope in which renamings may take place.
-	 *
-	 * @author hoenicke
-	 */
-	private class Scope {
-		/**
-		 * A renaming is a map from identifier name to expression.
-		 */
-		private final HashMap<String, Expression> renamings;
-		/**
-		 * The variable names used in the current scope and which therefore should not be reused in inlined functions.
-		 */
-		private final HashSet<String> declaredName;
-		/**
-		 * The parent scope.
-		 */
-		Scope parent;
-
-		public Scope() {
-			parent = null;
-			renamings = new HashMap<>();
-			declaredName = new HashSet<>();
-		}
-
-		public Scope(final Scope par) {
-			parent = par;
-			renamings = new HashMap<>(par.renamings);
-			declaredName = new HashSet<>(par.declaredName);
-		}
-
-		public Scope getParent() {
-			return parent;
-		}
-
-		public void addRenaming(final String name, final Expression expr) {
-			renamings.put(name, expr);
-		}
-
-		public Expression lookupRenaming(final String name) {
-			// we only need to check current scope, since we clone
-			// renamings when creating a new scope.
-			return renamings.get(name);
-		}
-
-		public boolean clashes(final String name) {
-			// we only need to check current scope, since we clone
-			// declaredName when creating a new scope.
-			return declaredName.contains(name);
-		}
-
-		public void declareName(final String name) {
-			declaredName.add(name);
-		}
-	}
+	private Scope mCurrentScope;
 
 	@Override
 	/**
@@ -137,80 +86,91 @@ public class FunctionInliner extends CachingBoogieTransformer implements IUnmana
 	 */
 	public boolean process(final IElement root) {
 		// Check if node is the first node of the AST.
-		if (root instanceof Unit) {
-			final Unit unit = (Unit) root;
-			final List<Declaration> newDeclarations = new ArrayList<>();
-			inlinedFunctions = new HashMap<>();
-
-			// Process all declarations, copying them and replacing function
-			// declarations (removing inlined functions, removing bodies of
-			// other functions and adding axioms).
-			// It also collects inlined function in the hash map
-			// inlinedFunctions.
-			for (final Declaration decl : unit.getDeclarations()) {
-				if (decl instanceof FunctionDeclaration) {
-					final FunctionDeclaration fdecl = (FunctionDeclaration) decl;
-					if (fdecl.getBody() == null) {
-						newDeclarations.add(fdecl);
-						continue;
-					}
-					boolean inlined = false;
-					for (final Attribute attr : fdecl.getAttributes()) {
-						if (attr instanceof NamedAttribute) {
-							final NamedAttribute nattr = (NamedAttribute) attr;
-							final Expression[] val = nattr.getValues();
-							if (nattr.getName().equals("inline") && val.length == 1
-									&& (val[0] instanceof BooleanLiteral) && ((BooleanLiteral) val[0]).getValue()) {
-								inlined = true;
-								inlinedFunctions.put(fdecl.getIdentifier(), fdecl);
-							}
-						}
-					}
-					if (!inlined) {
-						final List<Expression> params = new ArrayList<>();
-						int anonctr = 0;
-						for (final VarList vl : fdecl.getInParams()) {
-							if (vl.getIdentifiers().length == 0) {
-								params.add(new IdentifierExpression(vl.getLocation(), vl.getType().getBoogieType(),
-										"#" + (anonctr++), new DeclarationInformation(StorageClass.QUANTIFIED, null)));
-							} else {
-								for (final String i : vl.getIdentifiers()) {
-									params.add(new IdentifierExpression(vl.getLocation(), vl.getType().getBoogieType(),
-											i, new DeclarationInformation(StorageClass.QUANTIFIED, null)));
-								}
-							}
-						}
-						final Expression[] funcParams = params.toArray(new Expression[params.size()]);
-						final Expression funcApp = new FunctionApplication(fdecl.getLocation(),
-								fdecl.getOutParam().getType().getBoogieType(), fdecl.getIdentifier(), funcParams);
-						final Trigger funcTrigger = new Trigger(fdecl.getLocation(), new Expression[] { funcApp });
-						final Expression funcEq = new BinaryExpression(fdecl.getLocation(), BoogieType.TYPE_BOOL,
-								BinaryExpression.Operator.COMPEQ, funcApp, fdecl.getBody());
-						final Expression funcDecl = new QuantifierExpression(fdecl.getLocation(), BoogieType.TYPE_BOOL,
-								true, fdecl.getTypeParams(), fdecl.getInParams(), new Attribute[] { funcTrigger },
-								funcEq);
-						final Axiom fdeclAxiom = new Axiom(fdecl.getLocation(), new Attribute[0], funcDecl);
-						newDeclarations.add(new FunctionDeclaration(fdecl.getLocation(), fdecl.getAttributes(),
-								fdecl.getIdentifier(), fdecl.getTypeParams(), fdecl.getInParams(),
-								fdecl.getOutParam()));
-						newDeclarations.add(fdeclAxiom);
-					}
-				} else {
-					newDeclarations.add(decl);
-				}
-			}
-			// create the outer scope.
-			currentScope = new Scope();
-			// process all declarations, which does the inlining.
-			for (int i = 0; i < newDeclarations.size(); i++) {
-				newDeclarations.set(i, processDeclaration(newDeclarations.get(i)));
-			}
-			currentScope = null;
-			inlinedFunctions = null;
-			unit.setDeclarations(newDeclarations.toArray(new Declaration[newDeclarations.size()]));
-			return false;
+		if (!(root instanceof Unit)) {
+			return true;
 		}
-		return true;
+		final Unit unit = (Unit) root;
+		final List<Declaration> newDeclarations = new ArrayList<>();
+		mInlinedFunctions = new HashMap<>();
+
+		// Process all declarations, copying them and replacing function
+		// declarations (removing inlined functions, removing bodies of
+		// other functions and adding axioms).
+		// It also collects inlined function in the hash map
+		// inlinedFunctions.
+		for (final Declaration decl : unit.getDeclarations()) {
+			if (decl instanceof FunctionDeclaration) {
+				final FunctionDeclaration fdecl = (FunctionDeclaration) decl;
+				if (fdecl.getBody() == null) {
+					newDeclarations.add(fdecl);
+					continue;
+				}
+				if (hasFunctionInlineAttr(fdecl)) {
+					continue;
+				}
+
+				final List<Expression> params = new ArrayList<>();
+				int anonctr = 0;
+				for (final VarList vl : fdecl.getInParams()) {
+					if (vl.getIdentifiers().length == 0) {
+						params.add(new IdentifierExpression(vl.getLocation(), vl.getType().getBoogieType(),
+								"#" + anonctr++, new DeclarationInformation(StorageClass.QUANTIFIED, null)));
+					} else {
+						for (final String i : vl.getIdentifiers()) {
+							params.add(new IdentifierExpression(vl.getLocation(), vl.getType().getBoogieType(), i,
+									new DeclarationInformation(StorageClass.QUANTIFIED, null)));
+						}
+					}
+				}
+				final Expression[] funcParams = params.toArray(new Expression[params.size()]);
+				final Expression funcApp = new FunctionApplication(fdecl.getLocation(),
+						fdecl.getOutParam().getType().getBoogieType(), fdecl.getIdentifier(), funcParams);
+				final Trigger funcTrigger = new Trigger(fdecl.getLocation(), new Expression[] { funcApp });
+				final Expression funcEq = new BinaryExpression(fdecl.getLocation(), BoogieType.TYPE_BOOL,
+						BinaryExpression.Operator.COMPEQ, funcApp, fdecl.getBody());
+				final Expression funcDecl = new QuantifierExpression(fdecl.getLocation(), BoogieType.TYPE_BOOL, true,
+						fdecl.getTypeParams(), fdecl.getInParams(), new Attribute[] { funcTrigger }, funcEq);
+				final Axiom fdeclAxiom = new Axiom(fdecl.getLocation(), new Attribute[0], funcDecl);
+				newDeclarations.add(new FunctionDeclaration(fdecl.getLocation(), fdecl.getAttributes(),
+						fdecl.getIdentifier(), fdecl.getTypeParams(), fdecl.getInParams(), fdecl.getOutParam()));
+				newDeclarations.add(fdeclAxiom);
+			} else {
+				newDeclarations.add(decl);
+			}
+		}
+		// create the outer scope.
+		mCurrentScope = new Scope();
+		// process all declarations, which does the inlining.
+		for (int i = 0; i < newDeclarations.size(); i++) {
+			newDeclarations.set(i, processDeclaration(newDeclarations.get(i)));
+		}
+		mCurrentScope = null;
+		mInlinedFunctions = null;
+		unit.setDeclarations(newDeclarations.toArray(new Declaration[newDeclarations.size()]));
+		return false;
+	}
+
+	private boolean hasFunctionInlineAttr(final FunctionDeclaration fdecl) {
+		for (final Attribute attr : fdecl.getAttributes()) {
+			if (attr instanceof NamedAttribute) {
+				final NamedAttribute nattr = (NamedAttribute) attr;
+				final Expression[] val = nattr.getValues();
+				if (!"inline".equals(nattr.getName())) {
+					continue;
+				}
+				if (val.length != 1 || !(val[0] instanceof BooleanLiteral)) {
+					throw new RuntimeException("inline attribute with wrong parameters: "
+							+ Arrays.stream(val).map(BoogiePrettyPrinter::print).collect(Collectors.joining(", "))
+							+ " (should be only 1 and of type bool)");
+				}
+				if (((BooleanLiteral) val[0]).getValue()) {
+					mInlinedFunctions.put(fdecl.getIdentifier(), fdecl);
+					return true;
+				}
+				return false;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -220,9 +180,9 @@ public class FunctionInliner extends CachingBoogieTransformer implements IUnmana
 	 */
 	protected Declaration processDeclaration(final Declaration d) {
 		if (d instanceof FunctionDeclaration || d instanceof Procedure) {
-			currentScope = new Scope(currentScope);
+			mCurrentScope = new Scope(mCurrentScope);
 			final Declaration result = super.processDeclaration(d);
-			currentScope = currentScope.getParent();
+			mCurrentScope = mCurrentScope.getParent();
 			return result;
 		}
 		return super.processDeclaration(d);
@@ -233,9 +193,9 @@ public class FunctionInliner extends CachingBoogieTransformer implements IUnmana
 	 * Process a body. This creates new scope for storing local variables.
 	 */
 	protected Body processBody(final Body b) {
-		currentScope = new Scope(currentScope);
+		mCurrentScope = new Scope(mCurrentScope);
 		final Body result = super.processBody(b);
-		currentScope = currentScope.getParent();
+		mCurrentScope = mCurrentScope.getParent();
 		return result;
 	}
 
@@ -245,7 +205,7 @@ public class FunctionInliner extends CachingBoogieTransformer implements IUnmana
 	 */
 	public VarList processVarList(final VarList vl) {
 		for (final String name : vl.getIdentifiers()) {
-			currentScope.declareName(name);
+			mCurrentScope.declareName(name);
 		}
 		return super.processVarList(vl);
 	}
@@ -261,7 +221,7 @@ public class FunctionInliner extends CachingBoogieTransformer implements IUnmana
 		if (expr instanceof IdentifierExpression) {
 			// rename identifiers according to the renaming map in the scope.
 			final String name = ((IdentifierExpression) expr).getIdentifier();
-			final Expression renamed = currentScope.lookupRenaming(name);
+			final Expression renamed = mCurrentScope.lookupRenaming(name);
 			if (renamed != null) {
 				newExpr = renamed;
 			}
@@ -269,9 +229,9 @@ public class FunctionInliner extends CachingBoogieTransformer implements IUnmana
 			// inline function applications
 			final FunctionApplication app = (FunctionApplication) expr;
 			final String name = app.getIdentifier();
-			if (inlinedFunctions.containsKey(name)) {
-				currentScope = new Scope(currentScope);
-				final FunctionDeclaration fdecl = inlinedFunctions.get(name);
+			if (mInlinedFunctions.containsKey(name)) {
+				mCurrentScope = new Scope(mCurrentScope);
+				final FunctionDeclaration fdecl = mInlinedFunctions.get(name);
 				final Expression[] args = app.getArguments();
 				int pnr = 0;
 				for (final VarList vl : fdecl.getInParams()) {
@@ -279,35 +239,35 @@ public class FunctionInliner extends CachingBoogieTransformer implements IUnmana
 						pnr++;
 					} else {
 						for (final String i : vl.getIdentifiers()) {
-							currentScope.addRenaming(i, processExpression(args[pnr++]));
+							mCurrentScope.addRenaming(i, processExpression(args[pnr++]));
 						}
 					}
 				}
 				final Expression newBody = processExpression(fdecl.getBody());
-				currentScope = currentScope.getParent();
+				mCurrentScope = mCurrentScope.getParent();
 				newExpr = newBody;
 			}
 		} else if (expr instanceof QuantifierExpression) {
 			// check that quantified variables are unique
 			final QuantifierExpression qexpr = (QuantifierExpression) expr;
-			currentScope = new Scope(currentScope);
+			mCurrentScope = new Scope(mCurrentScope);
 			final VarList[] vl = qexpr.getParameters();
 			VarList[] newVl = vl;
 			for (int vlNr = 0; vlNr < vl.length; vlNr++) {
 				final String[] ids = vl[vlNr].getIdentifiers();
 				String[] newIds = ids;
 				for (int idNr = 0; idNr < ids.length; idNr++) {
-					if (currentScope.clashes(ids[idNr])) {
+					if (mCurrentScope.clashes(ids[idNr])) {
 						if (newIds == ids) {
 							newIds = ids.clone();
 						}
 						int ctr = 0;
 						String newname;
 						do {
-							newname = ids[idNr] + "$" + (ctr++);
-						} while (currentScope.clashes(newname));
+							newname = ids[idNr] + "$" + ctr++;
+						} while (mCurrentScope.clashes(newname));
 						newIds[idNr] = newname;
-						currentScope.addRenaming(ids[idNr],
+						mCurrentScope.addRenaming(ids[idNr],
 								new IdentifierExpression(vl[vlNr].getLocation(), vl[vlNr].getType().getBoogieType(),
 										newname, new DeclarationInformation(StorageClass.QUANTIFIED, null)));
 					}
@@ -322,7 +282,7 @@ public class FunctionInliner extends CachingBoogieTransformer implements IUnmana
 			newVl = processVarLists(newVl);
 			final Expression subform = processExpression(qexpr.getSubformula());
 			final Attribute[] attrs = processAttributes(qexpr.getAttributes());
-			currentScope = currentScope.getParent();
+			mCurrentScope = mCurrentScope.getParent();
 			if (vl == newVl && subform == qexpr.getSubformula() && attrs == qexpr.getAttributes()) {
 				return expr;
 			}
@@ -350,5 +310,61 @@ public class FunctionInliner extends CachingBoogieTransformer implements IUnmana
 	public boolean performedChanges() {
 		// TODO Replace with a decent implementation!
 		return false;
+	}
+
+	/**
+	 * The information for a scope in which renamings may take place.
+	 *
+	 * @author hoenicke
+	 */
+	private static final class Scope {
+		/**
+		 * A renaming is a map from identifier name to expression.
+		 */
+		private final Map<String, Expression> mRenamings;
+		/**
+		 * The variable names used in the current scope and which therefore should not be reused in inlined functions.
+		 */
+		private final Set<String> mDeclaredName;
+		/**
+		 * The parent scope.
+		 */
+		private final Scope mParent;
+
+		public Scope() {
+			mParent = null;
+			mRenamings = new HashMap<>();
+			mDeclaredName = new HashSet<>();
+		}
+
+		public Scope(final Scope par) {
+			mParent = par;
+			mRenamings = new HashMap<>(par.mRenamings);
+			mDeclaredName = new HashSet<>(par.mDeclaredName);
+		}
+
+		public Scope getParent() {
+			return mParent;
+		}
+
+		public void addRenaming(final String name, final Expression expr) {
+			mRenamings.put(name, expr);
+		}
+
+		public Expression lookupRenaming(final String name) {
+			// we only need to check current scope, since we clone
+			// renamings when creating a new scope.
+			return mRenamings.get(name);
+		}
+
+		public boolean clashes(final String name) {
+			// we only need to check current scope, since we clone
+			// declaredName when creating a new scope.
+			return mDeclaredName.contains(name);
+		}
+
+		public void declareName(final String name) {
+			mDeclaredName.add(name);
+		}
 	}
 }
