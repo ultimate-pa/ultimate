@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -113,14 +112,11 @@ public class DagInterpreter {
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput,
 			final ILoiPredicateStorage loiStorage, final IEnterCallRegistrar enterCallRegr) {
 
-		final List<RegexDagNode<IIcfgTransition<IcfgLocation>>> topoOrder = mTopsortCache.topsort(dag);
 		// TODO should we use fluid and IDomain.alpha after join in worklist?
 		final IWorklistWithInputs<RegexDagNode<IIcfgTransition<IcfgLocation>>, IPredicate> worklist =
-				new PriorityWorklist<>(topoOrder, mDomain::join);
+				new PriorityWorklist<>(mTopsortCache.topsort(dag), mDomain::join);
 
-		// TODO don't use dag.getSource() -- use overlay.getSources()
-		// final Collection<RegexDagNode<IIcfgTransition<IcfgLocation>>> source = overlay.sources(dag);
-		worklist.add(dag.getSource(), initalInput);
+		overlay.sources(dag).forEach(source -> worklist.add(source, initalInput));
 
 		while (worklist.advance()) {
 			respectTimeout();
@@ -168,7 +164,7 @@ public class DagInterpreter {
 
 	private static void registerLoiPredsForLoop(final Star<IIcfgTransition<IcfgLocation>> loop,
 			final IPredicate loopSummary, final ILoiPredicateStorage loiStorage) {
-		final IcfgLocation loopPoint = loop.accept(new LoopPointVisitor());
+		final IcfgLocation loopPoint = loop.accept(new LoopPointVisitor<>());
 		loiStorage.storePredicateIfLoi(loopPoint, loopSummary);
 		// LOIs inside loops don't have to be considered.
 		// For each LOI we compute a path ending at that LOI. A path cannot end inside a loop.

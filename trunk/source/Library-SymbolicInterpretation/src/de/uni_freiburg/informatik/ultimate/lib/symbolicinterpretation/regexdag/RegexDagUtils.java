@@ -27,12 +27,15 @@
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
@@ -40,35 +43,95 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.LoopPointV
 
 public class RegexDagUtils {
 
-	public static IcfgLocation singleSinkLocation(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
+	/** @see #sourceLocations(RegexDag, IDagOverlay) */
+	public static IcfgLocation singleSourceLocation(
+			final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay) {
-		final Set<IcfgLocation> sinkLocations = sinkLocations(dag, overlay);
-		if (sinkLocations.size() != 1) {
-			throw new IllegalArgumentException("Expected one sink location but found " + sinkLocations.size());
+
+		return getOnly(sinkLocations(dag, overlay));
+	}
+
+	/** @see #nextLocations(RegexDag, Collection, Function, Function) */
+	public static Set<IcfgLocation> sourceLocations(
+			final RegexDag<IIcfgTransition<IcfgLocation>> dag,
+			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay) {
+
+		return nextLocations(dag, overlay.sinks(dag), IIcfgTransition::getSource, overlay::successorsOf);
+	}
+
+	/** @see #sinkLocations(RegexDag, IDagOverlay) */
+	public static IcfgLocation singleSinkLocation(
+			final RegexDag<IIcfgTransition<IcfgLocation>> dag,
+			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay) {
+
+		return getOnly(sinkLocations(dag, overlay));
+	}
+
+	/** @see #nextLocations(RegexDag, Collection, Function, Function) */
+	public static Set<IcfgLocation> sinkLocations(
+			final RegexDag<IIcfgTransition<IcfgLocation>> dag,
+			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay) {
+
+		return nextLocations(dag, overlay.sinks(dag), IIcfgTransition::getTarget, overlay::predecessorsOf);
+	}
+
+	private static IcfgLocation getOnly(final Set<IcfgLocation> locations) {
+		if (locations.size() != 1) {
+			throw new IllegalArgumentException("Expected one location but found " + locations.size());
 		}
-		return sinkLocations.iterator().next();
+		return locations.iterator().next();
 	}
 
 	/**
-	 * Returns IcfgLocations having a path to the dag's sink on which no other IcfgLocation occurs.
+	 *
+	 * Searches the IcfgLocations next to a given set of DAG nodes.
+	 * IcfgLocation L is included if and only if there is a path …
+	 * <ul>
+	 * <li> starting at one of given DAG nodes
+	 * <li> ending at a RegexDagNode such that node's IcfgLocation closer to the starting nodes is L ✱
+	 * <li> visiting only RegexDagNodes without locations (that is, epsilon) in between
+	 * </ul>
+	 * <p>
+	 * ✱ In the ICFG the nodes are program locations. However, in the DAG the nodes are transitions between
+	 * two locations (a simple transition), one location (a loop), or no location (an epsilon node used
+	 * to model forks and joins in the program flow). The function {@code getLocationInStartPointDirection}
+	 * returns the location closer to the starting nodes for cases in which there are multiple IcfgLocations
+	 * per RegexDagNode.
+	 *
+	 * @param dag Dag to be searched
+	 * @param startPoints Starting points for the search. Ideally no starting point can reach another
+	 *                    starting point using {@code getNodesInSeachDirection}.
+	 * @param getLocationInStartPointDirection See ✱
+	 * @param getNodesInSeachDirection Search direction, can also be used to respect DAG overlays
+	 * @return IcfgLocations corresponding to the starting nodes in search direction
+	 *
+	 * @param <T> Abbreviation for long type – this method isn't supposed to be actually generic
 	 */
-	public static Set<IcfgLocation> sinkLocations(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
-			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay) {
-		final Set<IcfgLocation> sinkLocs = new HashSet<>();
-		final Queue<RegexDagNode<IIcfgTransition<IcfgLocation>>> worklist = new ArrayDeque<>();
-		worklist.addAll(overlay.sinks(dag));
+	private static <T extends IIcfgTransition<IcfgLocation>> Set<IcfgLocation> nextLocations(
+			final RegexDag<T> dag, final Collection<RegexDagNode<T>> startPoints,
+			final Function<T, IcfgLocation> getLocationInStartPointDirection,
+			final Function<RegexDagNode<T>, Collection<RegexDagNode<T>>> getNodesInSeachDirection) {
+
+		final Set<IcfgLocation> resultLocs = new HashSet<>();
+
+		final Queue<RegexDagNode<T>> worklist = new ArrayDeque<>();
+		worklist.addAll(startPoints);
+
 		while (!worklist.isEmpty()) {
-			final RegexDagNode<IIcfgTransition<IcfgLocation>> node = worklist.remove();
-			final IRegex<IIcfgTransition<IcfgLocation>> regex = node.getContent();
+			final RegexDagNode<T> node = worklist.remove();
+			final IRegex<T> regex = node.getContent();
 			if (regex instanceof Literal<?>) {
-				sinkLocs.add(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter().getTarget());
+				final T icfgTransition = ((Literal<T>) regex).getLetter();
+				resultLocs.add(getLocationInStartPointDirection.apply(icfgTransition));
 			} else if (regex instanceof Star<?>) {
-				sinkLocs.add(regex.accept(new LoopPointVisitor()));
+				resultLocs.add(regex.accept(new LoopPointVisitor<>()));
+			} else if (regex instanceof Epsilon<?>) {
+				worklist.addAll(getNodesInSeachDirection.apply(node));
 			} else {
-				worklist.addAll(node.getIncomingNodes());
+				throw new AssertionError("Illegal regex type in RegexDag: " + regex);
 			}
 		}
-		return sinkLocs;
+		return resultLocs;
 	}
 
 }

@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Union;
 
 /**
- * Returns the loop point of a starred regex over the alphabet {@code IIcfgTransition<IcfgLocation>}.
+ * Returns the loop point of a starred regex over the alphabet {@code T}.
  * The loop point is the location at which the loop starts and ends.
  * The regex has to be simple and unambiguous as defined in Tarjan's 1981 paper
  * <a href="https://dl.acm.org/citation.cfm?id=322273">Fast Algorithms for Solving Path Problems</a>.
@@ -47,24 +47,27 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Union;
  * <p>
  * This visitor must be applied to a star.
  *
+ * @param <T> Abbreviation for long type – this class isn't supposed to be actually generic
+ *
  * @author schaetzc@tf.uni-freiburg.de
  */
-public class LoopPointVisitor implements IRegexVisitor<IIcfgTransition<IcfgLocation>, IcfgLocation, Void> {
+public class LoopPointVisitor<T extends IIcfgTransition<IcfgLocation>>
+		implements IRegexVisitor<T, IcfgLocation, Void> {
 
 	@Override
-	public IcfgLocation visit(final Star<IIcfgTransition<IcfgLocation>> star, final Void argument) {
+	public IcfgLocation visit(final Star<T> star, final Void argument) {
 		return star.getInner().accept(this);
 	}
 
 	@Override
-	public IcfgLocation visit(final Union<IIcfgTransition<IcfgLocation>> union, final Void argument) {
+	public IcfgLocation visit(final Union<T> union, final Void argument) {
 		final IcfgLocation loopPoint = union.getFirst().accept(this);
 		assert Objects.equals(loopPoint, union.getSecond().accept(this)) : "Loop points differ";
 		return loopPoint;
 	}
 
 	@Override
-	public IcfgLocation visit(final Concatenation<IIcfgTransition<IcfgLocation>> concatenation, final Void argument) {
+	public IcfgLocation visit(final Concatenation<T> concatenation, final Void argument) {
 		// optional (hard to implement and slow):
 		// assert that c.getFirst() starts at location at which c.getSecond() ends
 		final IcfgLocation loopPoint = concatenation.getFirst().accept(this);
@@ -76,17 +79,17 @@ public class LoopPointVisitor implements IRegexVisitor<IIcfgTransition<IcfgLocat
 	}
 
 	@Override
-	public IcfgLocation visit(final Literal<IIcfgTransition<IcfgLocation>> literal, final Void argument) {
+	public IcfgLocation visit(final Literal<T> literal, final Void argument) {
 		return literal.getLetter().getSource();
 	}
 
 	@Override
-	public IcfgLocation visit(final Epsilon<IIcfgTransition<IcfgLocation>> epsilon, final Void argument) {
+	public IcfgLocation visit(final Epsilon<T> epsilon, final Void argument) {
 		return null;
 	}
 
 	@Override
-	public IcfgLocation visit(final EmptySet<IIcfgTransition<IcfgLocation>> emptySet, final Void argument) {
+	public IcfgLocation visit(final EmptySet<T> emptySet, final Void argument) {
 		throw new IllegalArgumentException("Loop contained ∅");
 	}
 
