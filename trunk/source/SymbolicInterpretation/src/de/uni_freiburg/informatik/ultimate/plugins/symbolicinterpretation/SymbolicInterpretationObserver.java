@@ -75,6 +75,12 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
 		mSifaComponents = new SifaBuilder(mServices, mLogger).construct(icfg, mServices.getProgressMonitorService());
 		final Map<IcfgLocation, IPredicate> predicates = mSifaComponents.getIcfgInterpreter().interpret();
+		// TODO: create result object that provides predicate map and IStatisticsDataProvider implementation
+		// TODO: create StatisticsResults from IStatisticsDataProvider by
+		// creating StatisticsData obj
+		// aggregating IStatisticsDataProvider instance therein
+		// calling createCsvProvider() on StatisticsData obj
+		// create StatisticsResults from csvprovider
 		reportResults(predicates);
 	}
 
@@ -112,6 +118,5 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		return predEqBottom.isTrueForAbstraction();
 	}
-
 
 }
