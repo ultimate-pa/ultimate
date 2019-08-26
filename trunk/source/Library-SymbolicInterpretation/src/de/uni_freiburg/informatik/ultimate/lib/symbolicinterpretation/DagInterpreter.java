@@ -126,6 +126,7 @@ public class DagInterpreter {
 			final IPredicate curInput = fluidAbstraction(worklist.getInput());
 			final IPredicate curOutput = ipretNode(curNode, curInput, loiStorage, enterCallRegr);
 			logWorklistEntryDone(curOutput);
+			// TODO check if curOutput is bottom and exit early
 			overlay.successorsOf(curNode).forEach(successor -> worklist.add(successor, curOutput));
 		}
 	}
