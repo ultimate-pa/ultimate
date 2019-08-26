@@ -163,7 +163,6 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	 * @param name
 	 * @param icfg
 	 * @param csToolkit
-	 * @param traceAbstractionBenchmarks
 	 * @param taPrefs
 	 * @param errorLocs
 	 * @param interpolation
@@ -171,10 +170,9 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	 * @param services
 	 */
 	public CegarLoopSWBnonRecursive(final DebugIdentifier name, final IIcfg<?> icfg, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks traceAbstractionBenchmarks,
-			final TAPreferences taPrefs, final Collection<IcfgLocation> errorLocs,
-			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
-			final IUltimateServiceProvider services) {
+			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final Collection<IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
+			final boolean computeHoareAnnotation, final IUltimateServiceProvider services) {
 		super(name, icfg, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services);
 		mErrorPathHistory = new ArrayList<>();

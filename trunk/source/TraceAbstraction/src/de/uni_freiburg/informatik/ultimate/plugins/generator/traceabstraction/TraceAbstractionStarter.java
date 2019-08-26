@@ -325,8 +325,8 @@ public class TraceAbstractionStarter {
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final boolean computeHoareAnnotation) {
 		final BasicCegarLoop<? extends IIcfgTransition<?>> basicCegarLoop =
-				constructCegarLoop(name, root, taPrefs, csToolkit, predicateFactory, taBenchmark, errorLocs,
-						rawFloydHoareAutomataFromFile, computeHoareAnnotation);
+				constructCegarLoop(name, root, taPrefs, csToolkit, predicateFactory, errorLocs, rawFloydHoareAutomataFromFile,
+						computeHoareAnnotation);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
 
 		final Result result = basicCegarLoop.iterate();
@@ -365,8 +365,7 @@ public class TraceAbstractionStarter {
 
 	private BasicCegarLoop<?> constructCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> root,
 			final TAPreferences taPrefs, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
-			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
+			final Collection<IcfgLocation> errorLocs, final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final boolean computeHoareAnnotation) {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
@@ -374,8 +373,8 @@ public class TraceAbstractionStarter {
 		BasicCegarLoop<IIcfgTransition<?>> result;
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
-				result = new CegarLoopSWBnonRecursive<>(name, root, csToolkit, predicateFactory, taBenchmark, taPrefs,
-						errorLocs, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices);
+				result = new CegarLoopSWBnonRecursive<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices);
 			} else {
 				switch (taPrefs.getFloydHoareAutomataReuse()) {
 				case EAGER:
