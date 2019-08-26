@@ -22,7 +22,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib;
 import de.uni_freiburg.informatik.ultimate.logic.*;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 import com.github.jhoenicke.javacup.runtime.Symbol;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
+import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
 
 parser Parser;
 option symbols = LexerSymbols;
@@ -37,8 +37,8 @@ parser code {:
 	
 	public void report_error(String s, Object sym) {
 		String location;
-		if (sym instanceof MySymbolFactory.LineColumnSymbol) {
-			MySymbolFactory.LineColumnSymbol bsym = (MySymbolFactory.LineColumnSymbol) sym;
+		if (sym instanceof SimpleSymbolFactory.LineColumnSymbol) {
+			SimpleSymbolFactory.LineColumnSymbol bsym = (SimpleSymbolFactory.LineColumnSymbol) sym;
 			location = bsym.getLocation();
 	    } else if ((sym instanceof Symbol) 
 	    	       && ((Symbol)sym).sym == LexerSymbols.EOF) {

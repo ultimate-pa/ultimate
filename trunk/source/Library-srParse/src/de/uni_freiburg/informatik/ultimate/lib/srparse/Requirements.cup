@@ -6,6 +6,7 @@ import java.io.Reader;
 import java.math.BigDecimal;
 
 import com.github.jhoenicke.javacup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -78,8 +79,8 @@ parser code {:
 	@Override
 	public void report_error(final String s, final Object sym) {
 		String location;
-		if (sym instanceof MySymbolFactory.LineColumnSymbol) {
-			final MySymbolFactory.LineColumnSymbol bsym = (MySymbolFactory.LineColumnSymbol) sym;
+		if (sym instanceof SimpleSymbolFactory.LineColumnSymbol) {
+			final SimpleSymbolFactory.LineColumnSymbol bsym = (SimpleSymbolFactory.LineColumnSymbol) sym;
 			location = bsym.getLocation();
 		} else if ((sym instanceof Symbol) && ((Symbol) sym).sym == ReqSymbols.EOF) {
 			location = "EOF";

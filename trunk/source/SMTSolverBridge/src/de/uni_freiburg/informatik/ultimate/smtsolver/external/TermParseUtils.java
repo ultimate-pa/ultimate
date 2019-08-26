@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 
+import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
 import com.github.jhoenicke.javacup.runtime.Symbol;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -58,7 +59,7 @@ public class TermParseUtils {
 	 */
 	public static Term parseTerm(final Script script, final String string) {
 
-		final MySymbolFactory symfactory = new MySymbolFactory();
+		final SimpleSymbolFactory symfactory = new SimpleSymbolFactory();
 		final Lexer lexer = new Lexer(new StringReader(string));
 		lexer.setSymbolFactory(symfactory);
 

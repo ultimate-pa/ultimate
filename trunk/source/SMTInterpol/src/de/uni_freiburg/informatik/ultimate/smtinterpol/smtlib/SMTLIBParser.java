@@ -22,18 +22,19 @@ import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.IParser;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 
 public class SMTLIBParser implements IParser {
 
 	@Override
-	public int run(Script script, String filename, OptionMap options) {
+	public int run(final Script script, String filename, final OptionMap options) {
 		try {
-			final MySymbolFactory symfactory = new MySymbolFactory();
+			final SimpleSymbolFactory symfactory = new SimpleSymbolFactory();
 			Reader reader;
 			if (filename == null) {
 				filename = "<stdin>";
@@ -50,7 +51,7 @@ public class SMTLIBParser implements IParser {
 			final Term[] interpolants = parser.benchmark.check();
 			if (interpolants != null) {
 				for (int i = 0; i < interpolants.length; ++i) {
-					System.out.println("Interpolant "+i+": "+interpolants[i]);
+					System.out.println("Interpolant " + i + ": " + interpolants[i]);
 				}
 			}
 			parser.benchmark.close();

@@ -32,6 +32,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
+import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
+
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -40,10 +42,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.FrontEndOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 
 public class ParseEnvironment {
-	final Script      mScript;
+	final Script mScript;
 	private File mCwd = null;
 	// What to do when script exits
 	private ExitHook mExitHook;
@@ -51,16 +52,15 @@ public class ParseEnvironment {
 	private Deque<Long> mTiming;
 
 	private final FrontEndOptions mOptions;
-	
+
 	private Lexer mLexer = null;
 	private boolean mVersion25 = true;
 
-	public ParseEnvironment(Script script, OptionMap options) {
+	public ParseEnvironment(final Script script, final OptionMap options) {
 		this(script, null, options);
 	}
-	
-	public ParseEnvironment(Script script, ExitHook exit,
-			OptionMap options) {
+
+	public ParseEnvironment(final Script script, final ExitHook exit, final OptionMap options) {
 		mScript = script;
 		mExitHook = exit;
 		mOptions = options.getFrontEndOptions();
@@ -68,12 +68,12 @@ public class ParseEnvironment {
 			throw new IllegalArgumentException("Front End not active!");
 		}
 	}
-	
+
 	public Script getScript() {
 		return mScript;
 	}
 
-	static boolean convertSexp(StringBuilder sb, Object o, int level) {
+	static boolean convertSexp(final StringBuilder sb, final Object o, final int level) {
 		if (o instanceof Object[]) {
 			if (Config.RESULTS_ONE_PER_LINE && level > 0) {
 				sb.append(System.getProperty("line.separator"));
@@ -82,7 +82,7 @@ public class ParseEnvironment {
 				}
 			}
 			sb.append('(');
-			final Object[] array = (Object[])o;
+			final Object[] array = (Object[]) o;
 			boolean subarray = false;
 			String sep = "";
 			for (final Object el : array) {
@@ -103,8 +103,8 @@ public class ParseEnvironment {
 		}
 		return false;
 	}
-	
-	public void parseScript(String filename) throws SMTLIBException {
+
+	public void parseScript(final String filename) throws SMTLIBException {
 		final File oldcwd = mCwd;
 		Reader reader = null;
 		boolean closeReader = false;
@@ -141,10 +141,9 @@ public class ParseEnvironment {
 			}
 		}
 	}
-	
-	public void parseStream(Reader reader, String streamname)
-	    throws SMTLIBException {
-		final MySymbolFactory symfactory = new MySymbolFactory();
+
+	public void parseStream(final Reader reader, final String streamname) throws SMTLIBException {
+		final SimpleSymbolFactory symfactory = new SimpleSymbolFactory();
 		final Lexer last = mLexer;
 		mLexer = new Lexer(reader);
 		mLexer.setSymbolFactory(symfactory);
@@ -160,8 +159,8 @@ public class ParseEnvironment {
 			mLexer = last;
 		}
 	}
-	
-	public void include(String filename) throws SMTLIBException {
+
+	public void include(final String filename) throws SMTLIBException {
 		final ExitHook oldexit = mExitHook;
 		mExitHook = new ExitHook() {
 			@Override
@@ -174,7 +173,7 @@ public class ParseEnvironment {
 		mCwd = oldcwd;
 		mExitHook = oldexit;
 	}
-	
+
 	public void printSuccess() {
 		if (mOptions.isPrintSuccess()) {
 			final PrintWriter out = mOptions.getOutChannel();
@@ -182,8 +181,8 @@ public class ParseEnvironment {
 			out.flush();
 		}
 	}
-	
-	public void printError(String message) {
+
+	public void printError(final String message) {
 		final PrintWriter out = mOptions.getOutChannel();
 		out.print("(error \"");
 		out.print(message);
@@ -193,14 +192,13 @@ public class ParseEnvironment {
 			System.exit(1);
 		}
 	}
-	
-	public void printValues(Map<Term, Term> values) {
+
+	public void printValues(final Map<Term, Term> values) {
 		final PrintTerm pt = new PrintTerm();
 		final PrintWriter out = mOptions.getOutChannel();
 		out.print('(');
 		String sep = "";
-		final String itemSep = Config.RESULTS_ONE_PER_LINE 
-				? System.getProperty("line.separator") + " " : " "; 
+		final String itemSep = Config.RESULTS_ONE_PER_LINE ? System.getProperty("line.separator") + " " : " ";
 		for (final Map.Entry<Term, Term> me : values.entrySet()) {
 			out.print(sep);
 			out.print('(');
@@ -213,8 +211,8 @@ public class ParseEnvironment {
 		out.println(')');
 		out.flush();
 	}
-	
-	public void printResponse(Object response) {
+
+	public void printResponse(final Object response) {
 		final PrintWriter out = mOptions.getOutChannel();
 		if (!mOptions.isPrintTermsCSE()) {
 			if (response instanceof Term) {
@@ -223,7 +221,7 @@ public class ParseEnvironment {
 				out.flush();
 				return;
 			} else if (response instanceof Term[]) {
-				printTermResponse((Term[])response);
+				printTermResponse((Term[]) response);
 				out.flush();
 				return;
 			}
@@ -246,8 +244,8 @@ public class ParseEnvironment {
 		}
 		out.flush();
 	}
-	
-	public void printInfoResponse(String info, Object response) {
+
+	public void printInfoResponse(final String info, final Object response) {
 		final PrintWriter out = mOptions.getOutChannel();
 		final StringBuilder sb = new StringBuilder();
 		sb.append('(').append(info).append(' ');
@@ -255,21 +253,21 @@ public class ParseEnvironment {
 		out.println(sb.append(')').toString());
 		out.flush();
 	}
-	
+
 	/**
-	 * Direct printing of a term array response.  This function is introduced to
-	 * satisfy the requirement of the SMTLIB standard for the get-assertions
-	 * command.  We have to print the terms "as they are asserted", i.e.,
-	 * without introducing let terms via cse.
-	 * @param response The response to print.
+	 * Direct printing of a term array response. This function is introduced to satisfy the requirement of the SMTLIB
+	 * standard for the get-assertions command. We have to print the terms "as they are asserted", i.e., without
+	 * introducing let terms via cse.
+	 *
+	 * @param response
+	 *            The response to print.
 	 */
-	public void printTermResponse(Term[] response) {
+	public void printTermResponse(final Term[] response) {
 		final StringBuilder sb = new StringBuilder();
 		final PrintTerm pt = new PrintTerm();
 		sb.append('(');
 		String sep = "";
-		final String itemSep = Config.RESULTS_ONE_PER_LINE 
-				? System.getProperty("line.separator") + " " : " ";
+		final String itemSep = Config.RESULTS_ONE_PER_LINE ? System.getProperty("line.separator") + " " : " ";
 		for (final Term t : response) {
 			sb.append(sep);
 			pt.append(sb, t);
@@ -288,8 +286,8 @@ public class ParseEnvironment {
 			mExitHook.exitHook();
 		}
 	}
-	
-	public void setInfo(String info, Object value) {
+
+	public void setInfo(final String info, final Object value) {
 		if (info.equals(":smt-lib-version")) {
 			final String svalue = String.valueOf(value);
 			if ("2.5".equals(svalue) || "2.6".equals(svalue)) {
@@ -310,8 +308,8 @@ public class ParseEnvironment {
 		}
 		mScript.setInfo(info, value);
 	}
-	
-	public Object getInfo(String info) {
+
+	public Object getInfo(final String info) {
 		if (info.equals(":error-behavior")) {
 			return mOptions.continueOnError() ? "continued-execution" : "immediate-exit";
 		}
@@ -320,12 +318,12 @@ public class ParseEnvironment {
 
 	public void startTiming() {
 		if (mTiming == null) {
-			mTiming = new ArrayDeque<Long>();
+			mTiming = new ArrayDeque<>();
 		}
 		mOptions.getOutChannel().print('(');
 		mTiming.push(System.nanoTime());
 	}
-	
+
 	public void endTiming() {
 		final long old = mTiming.pop();
 		final long duration = System.nanoTime() - old;
@@ -334,7 +332,7 @@ public class ParseEnvironment {
 		mOptions.getOutChannel().println();
 		mOptions.getOutChannel().flush();
 	}
-	
+
 	public boolean isContinueOnError() {
 		return mOptions.continueOnError();
 	}

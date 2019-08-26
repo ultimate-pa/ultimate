@@ -25,7 +25,7 @@ import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import com.github.jhoenicke.javacup.runtime.Symbol;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
+import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
 import java.util.Map;
 
 parser Parser;
@@ -40,8 +40,8 @@ parser code {:
 
 	public void report_error(String s, Object sym) {
 		String location;
-		if (sym instanceof MySymbolFactory.LineColumnSymbol) {
-			MySymbolFactory.LineColumnSymbol bsym = (MySymbolFactory.LineColumnSymbol) sym;
+		if (sym instanceof SimpleSymbolFactory.LineColumnSymbol) {
+			SimpleSymbolFactory.LineColumnSymbol bsym = (SimpleSymbolFactory.LineColumnSymbol) sym;
 			location = bsym.getLocation();
 		} else if ((sym instanceof Symbol)
 				   && ((Symbol)sym).sym == LexerSymbols.EOF) {

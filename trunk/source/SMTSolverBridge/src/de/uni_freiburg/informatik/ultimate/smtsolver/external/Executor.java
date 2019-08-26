@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
 import com.github.jhoenicke.javacup.runtime.Symbol;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -97,7 +98,7 @@ class Executor {
 
 		mStdErr = mProcess.getErrorStream();
 
-		final MySymbolFactory symfactory = new MySymbolFactory();
+		final SimpleSymbolFactory symfactory = new SimpleSymbolFactory();
 		mLexer = new Lexer(new InputStreamReader(stdout));
 		mLexer.setSymbolFactory(symfactory);
 

@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import com.github.jhoenicke.javacup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 /**
@@ -22,10 +23,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 %{
   private StringBuffer string = new StringBuffer();
-  private MySymbolFactory symFactory;
+  private SimpleSymbolFactory symFactory;
   private UnifyHash<BigInteger> bignumbers = new UnifyHash<BigInteger>();
   
-  public void setSymbolFactory(MySymbolFactory factory) {
+  public void setSymbolFactory(SimpleSymbolFactory factory) {
     symFactory = factory;
   }
 
