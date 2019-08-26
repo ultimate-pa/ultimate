@@ -61,11 +61,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuan
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubtermPropertyChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -92,6 +92,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author heizmann@informatik.uni-freiburg.de
  */
 public final class TransFormulaUtils {
+
+	public static final String AUX_VARS_IN_CALL_TF = "auxVars in callTf";
+	public static final String TRANS_FORMULA_OF_RETURN_MUST_NOT_CONTAIN_AUX_VARS = "TransFormula of return must not contain auxVars";
+	public static final String OLD_VAR_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS = "oldVarAssignments must not contain auxVars";
+	public static final String GLOBAL_VARS_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS = "globalVarsAssignments must not contain auxVars";
 
 	private TransFormulaUtils() {
 		// do not instantiate utility class
@@ -698,6 +703,20 @@ public final class TransFormulaUtils {
 			final UnmodifiableTransFormula returnTf, final ILogger logger, final IUltimateServiceProvider services,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final IIcfgSymbolTable symbolTable, final Set<IProgramNonOldVar> modifiableGlobalsOfCallee) {
+		if (!callTf.getAuxVars().isEmpty()) {
+			throw new UnsupportedOperationException(TransFormulaUtils.AUX_VARS_IN_CALL_TF);
+		}
+		if (!returnTf.getAuxVars().isEmpty()) {
+			throw new AssertionError(TransFormulaUtils.TRANS_FORMULA_OF_RETURN_MUST_NOT_CONTAIN_AUX_VARS);
+		}
+		if (!oldVarsAssignment.getAuxVars().isEmpty()) {
+			throw new AssertionError(TransFormulaUtils.OLD_VAR_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
+		}
+		if (!globalVarsAssignment.getAuxVars().isEmpty()) {
+			throw new AssertionError(TransFormulaUtils.GLOBAL_VARS_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
+		}
+
+
 		logger.debug("sequential composition (call/return) with" + (simplify ? "" : "out") + " formula simplification");
 		final UnmodifiableTransFormula composition =
 				sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
