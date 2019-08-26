@@ -1,4 +1,27 @@
 ------------------------------------------------------------------------
+CUP version jh-javacup 1.x
+
+New feature by Yoav Sternberg:
+
+The new keyword after reduce defines code that is executed whenever a
+production rule is reduced.  The arrays symbols contains all terminal
+and non-terminal symbols of the current production rule.  RESULT can
+be used to access and modify the value of the nonterminal created by
+the production rule. Example usage:
+
+  after reduce {:
+    int lineNumber = symbols[0].left + 1;
+    if (RESULT instanceof AST_Node) {
+       ((AST_Node) RESULT).lineNumber = lineNumber
+    }
+  :}
+
+------------------------------------------------------------------------
+CUP version jh-javacup 1.0
+
+First Maven release.
+
+------------------------------------------------------------------------
 CUP version 0.12joho 20110608
 
 Efficient support for proxy rules.  A proxy rule is a production where the

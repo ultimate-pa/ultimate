@@ -100,6 +100,8 @@ ident = ([:jletter:] | "_" ) ([:jletterdigit:] | [:jletter:] | "_" )*
   "nonassoc"    { return symbol("NONASSOC",NONASSOC,yytext()); }
   "extends"     { return symbol("EXTENDS",EXTENDS,yytext());   }
   "super"       { return symbol("SUPER",SUPER,yytext());       }
+  "after"       { return symbol("AFTER",AFTER,yytext());       }
+  "reduce"      { return symbol("REDUCE",REDUCE,yytext());     }
   {ident}       { return symbol("ID",ID,yytext());             }
   
 }

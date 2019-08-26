@@ -198,20 +198,20 @@ terminal
 terminal String
   PACKAGE, IMPORT, CODE, ACTION, PARSER, TERMINAL, NON, NONTERMINAL, INIT, 
   SCAN, WITH, START, PRECEDENCE, LEFT, RIGHT, NONASSOC, SUPER, EXTENDS, 
-  OPTION;
+  AFTER, REDUCE, OPTION;
 
 terminal String  ID, CODE_STRING;
 
 non terminal
   package_spec, parser_spec,
-  option_spec, option_list, option_, action_code_part, 
-  code_parts, code_part, 
-  parser_code_part, start_spec, 
-  import_spec, init_code, scan_code, symbol, 
-  terminal_non_terminal, decl_symbol_list, new_symbol_id,  
+  option_spec, option_list, option_, action_code_part,
+  code_parts, code_part,
+  parser_code_part, start_spec,
+  import_spec, init_code, scan_code, after_reduce_code, symbol,
+  terminal_non_terminal, decl_symbol_list, new_symbol_id,
   preced, assoc, precterminal_list, precterminal_id,
   production, rhs_list, rhs;
-  
+
 non terminal Grammar spec;
 
 non terminal String  symbol_id, label_id, robust_id;
@@ -220,15 +220,15 @@ non terminal StringBuilder multipart_id, import_id, type_id,
 non terminal symbol wild_symbol_id;
 
 non terminal production_part prod_part;
-non terminal symbol prod_precedence; 
+non terminal symbol prod_precedence;
 
-/*----------------------------------------------------------------*/ 
+/*----------------------------------------------------------------*/
 
 start with spec;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-spec ::= 
+spec ::=
 	package_spec
 	import_spec*
 	code_parts
@@ -238,12 +238,12 @@ spec ::=
 	production+
         {: RESULT = grammar; :}
 	|
-	/* error recovery assuming something went wrong before symbols 
+	/* error recovery assuming something went wrong before symbols
 	   and we have TERMINAL or NON TERMINAL to sync on.  if we get
-	   an error after that, we recover inside symbol_list or 
-	   production_list 
+	   an error after that, we recover inside symbol_list or
+	   production_list
 	*/
-	error 
+	error
 	symbol+
 	preced*
 	start_spec
@@ -251,9 +251,9 @@ spec ::=
         {: RESULT = grammar; :}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-package_spec ::= 
+package_spec ::=
 	PACKAGE	multipart_id:id SEMI
 	{:
 	  /* save the package name */
@@ -263,11 +263,11 @@ package_spec ::=
 	/* empty */
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
 import_spec ::=
 	IMPORT import_id:id SEMI
-	{: 
+	{:
 	  /* save this import on the imports list */
 	  parser.emit.import_list.add(id.toString());
 	:}
@@ -278,13 +278,13 @@ import_spec ::=
 // (we check in the part action to make sure we don't have 2 of any part)
 code_part ::=
     option_spec | parser_spec |
-	action_code_part | parser_code_part | init_code | scan_code ;
-code_parts ::= 
+	action_code_part | parser_code_part | init_code | scan_code | after_reduce_code;
+code_parts ::=
 	| code_parts code_part;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-parser_spec ::= 
+parser_spec ::=
 	  PARSER multipart_id:name SEMI
          {: parser.main.setOption("parser", name.toString()); :}
 	| PARSER multipart_id:name LT typearglist:types GT SEMI
@@ -295,12 +295,12 @@ parser_spec ::=
 
 option_spec ::= OPTION option_list SEMI;
 option_list ::= option_list COMMA option_ | option_;
-option_ ::= robust_id:opt {: parser.main.setOption(opt); :} 
+option_ ::= robust_id:opt {: parser.main.setOption(opt); :}
 	| robust_id:opt EQUALS robust_id:val
           {: parser.main.setOption(opt, val); :};
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-action_code_part ::= 
+action_code_part ::=
 	ACTION CODE CODE_STRING:user_code SEMI?
 	{:
 	  if (parser.emit.action_code!=null)
@@ -310,9 +310,9 @@ action_code_part ::=
 	:}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-parser_code_part ::= 
+parser_code_part ::=
 	PARSER CODE CODE_STRING:user_code SEMI?
 	{:
 	  if (parser.emit.parser_code!=null)
@@ -322,11 +322,11 @@ parser_code_part ::=
 	:}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-init_code ::= 
+init_code ::=
 	INIT WITH CODE_STRING:user_code SEMI?
-	{: 
+	{:
 	  if (parser.emit.init_code!=null)
 	    ErrorManager.getManager().emit_warning("Redundant init code (skipping)");
 	  else /* save the user code */
@@ -334,15 +334,27 @@ init_code ::=
 	:}
 	;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
 scan_code ::=
 	SCAN WITH CODE_STRING:user_code SEMI?
-	{: 
+	{:
 	  if (parser.emit.scan_code!=null)
 	    ErrorManager.getManager().emit_warning("Redundant scan code (skipping)");
 	  else /* save the user code */
 	    parser.emit.scan_code = user_code;
+	:}
+	;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
+
+after_reduce_code ::=
+	AFTER REDUCE CODE_STRING:user_code SEMI?
+	{:
+	  if (parser.emit.after_reduce_code!=null)
+	    ErrorManager.getManager().emit_warning("Redundant after reduce code (skipping)");
+	  else /* save the user code */
+	    parser.emit.after_reduce_code = user_code;
 	:}
 	;
 
@@ -588,6 +600,8 @@ symbol_id ::=
 	| LEFT
 	| RIGHT
 	| NONASSOC
+	| AFTER
+	| REDUCE
 	;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */ 
@@ -611,6 +625,8 @@ robust_id ::= /* all ids that aren't reserved words in Java */
 	| LEFT
 	| RIGHT
 	| NONASSOC
+	| AFTER
+	| REDUCE
 	| error
 	{:
 		ErrorManager.getManager().emit_error("Illegal use of reserved word");

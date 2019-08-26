@@ -1,4 +1,4 @@
-<project name="javacup" default ="dist" basedir=".">
+<project name="javacup" default ="dist" basedir="." xmlns:artifact="antlib:org.apache.maven.artifact.ant" >
   <property name="etc"       location="etc"       />
   <property name="bin"       location="bin"       />
   <property name="lib"       location="lib"       />
@@ -87,5 +87,119 @@
         <arg value="${cup}/parser.cup" />
     </java>  
     
+  </target>
+
+  <target name="javadoc">
+    <javadoc access="protected" author="true"
+	     classpath="${bootstrap}"
+	     destdir="javadoc"
+	     Doctitle="Java Cup Public API"
+	     nodeprecated="false"
+	     nodeprecatedlist="false"
+	     noindex="false"
+	     nonavbar="false"
+	     notree="false"
+	     source="1.8"
+	     splitindex="true"
+	     use="true"
+	     version="true"
+	     Windowtitle="Java Cup Public API">
+      <fileset dir="." defaultexcludes="yes">
+        <include name="src/${package}/runtime/**" />
+      </fileset>
+    </javadoc>
+    <echo message="Generated JavaDOC API under ${basedir}/javadoc/index.html" />
+  </target>
+
+  <!-- Create a source jar -->
+  <target name="dist_src" depends="javadoc">
+    <mkdir dir="${dist}"/>
+    <jar destfile="${dist}/${jar}-sources.jar">
+      <zipfileset dir="." prefix="jh-javacup-${version}">
+        <include name="src/**" />
+        <include name="cup/**" />
+        <include name="flex/**" />
+        <include name="META-INF/**" />
+        <include name="JFlex.jar" />
+        <include name="build.xml" />
+        <include name="pom_template.xml" />
+        <include name="manual.html" />
+        <include name="cup_logo.gif" />
+        <include name="changelog.txt" />
+	<include name="README.md" />
+      </zipfileset>
+    </jar>
+    <jar destfile="${dist}/${jar}-javadoc.jar">
+      <zipfileset dir="javadoc" />
+    </jar>
+  </target>
+
+  <path id="maven-ant-tasks.classpath" path="maven-ant-tasks-2.1.3.jar" />
+  <typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="antlib:org.apache.maven.artifact.ant" classpathref="maven-ant-tasks.classpath" />
+
+  <!-- Defined maven snapshots and staging repository id and url -->
+  <property name="ossrh-snapshots-repository-url"
+            value="https://oss.sonatype.org/content/repositories/snapshots" />
+  <property name="ossrh-staging-repository-url"
+            value="https://oss.sonatype.org/service/local/staging/deploy/maven2" />
+
+  <!-- There server id in the Maven settings.xml -->
+  <property name="ossrh-server-id" value="ossrh" />
+
+  <target name="maven" depends="dist,dist_src">
+    <echo>
+Uploading artifacts using ~/.m2/settings.xml. I hope you have the
+permissions to do this.
+    </echo>
+
+    <copy file="pom_template.xml" tofile="${dist}/pom.xml"/>
+    <replace file="${dist}/pom.xml" token="VERSION" value="${version}"/>
+
+     <!-- Sign and deploy the artifacts. -->
+    <artifact:mvn>
+      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+      <arg value="-Durl=${ossrh-staging-repository-url}" />
+      <arg value="-DrepositoryId=${ossrh-server-id}" />
+      <arg value="-DpomFile=${dist}/pom.xml" />
+      <arg value="-Dfile=${dist}/${jar}.jar" />
+      <arg value="-Pgpg" />
+    </artifact:mvn>
+    <artifact:mvn>
+      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+      <arg value="-Durl=${ossrh-staging-repository-url}" />
+      <arg value="-DrepositoryId=${ossrh-server-id}" />
+      <arg value="-DpomFile=${dist}/pom.xml" />
+      <arg value="-Dfile=${dist}/${runtimejar}.jar" />
+      <arg value="-Pgpg" />
+      <arg value="-Dclassifier=runtime" />
+    </artifact:mvn>
+    <artifact:mvn>
+      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+      <arg value="-Durl=${ossrh-staging-repository-url}" />
+      <arg value="-DrepositoryId=${ossrh-server-id}" />
+      <arg value="-DpomFile=${dist}/pom.xml" />
+      <arg value="-Dfile=${dist}/${jar}-sources.jar" />
+      <arg value="-Dclassifier=sources" />
+      <arg value="-Pgpg" />
+    </artifact:mvn>
+    <artifact:mvn>
+      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+      <arg value="-Durl=${ossrh-staging-repository-url}" />
+      <arg value="-DrepositoryId=${ossrh-server-id}" />
+      <arg value="-DpomFile=${dist}/pom.xml" />
+      <arg value="-Dfile=${dist}/${jar}-javadoc.jar" />
+      <arg value="-Dclassifier=javadoc" />
+      <arg value="-Pgpg" />
+    </artifact:mvn>
+
+    <echo>
+Log into https://oss.sonatype.org as jhoenicke.
+Click "Staging Repository", scroll down to com.github.jhoenicke...
+Select it, check contents.
+Click Close above the list of repositories.
+Click Refresh (after a few seconds).
+Click Release.
+    </echo>
+
   </target>
 </project>
