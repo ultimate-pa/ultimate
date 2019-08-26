@@ -78,11 +78,11 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 		mTools = tools;
 		mIcfg = icfg;
 		logStartingSifa(locationsOfInterest);
-		mLoiPredStorage = new MapBasedStorage(locationsOfInterest, domain, tools, logger);
-		mEnterCallWorklist = new FifoWorklist<>(domain::join);
 		logBuildingCallGraph();
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
 		logCallGraphComputed();
+		mLoiPredStorage = new MapBasedStorage(locationsOfInterest, domain, tools, logger);
+		mEnterCallWorklist = new PriorityWorklist<>(mCallGraph.relevantProceduresTopsorted(), domain::join);
 		mProcResCache = new ProcedureResourceCache(mCallGraph, icfg);
 		enqueInitial();
 		mDagInterpreter = new DagInterpreter(logger, timer, tools, domain, fluid,
@@ -108,7 +108,6 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 	 */
 	public Map<IcfgLocation, IPredicate> interpret() {
 		logStartingInterpretation();
-		// TODO use topological order?
 		while (mEnterCallWorklist.advance()) {
 			final String procedure = mEnterCallWorklist.getWork();
 			final IPredicate input = mEnterCallWorklist.getInput();

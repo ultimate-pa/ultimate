@@ -41,7 +41,6 @@ import java.util.function.Function;
  * Utility class for topological sorting of DAGs.
  *
  * @param <V> Type of the graph's nodes.
- * @param <L> Type of the graph's edge labels.
  *
  * @author schaetzc@tf.uni-freiburg.de
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -107,7 +106,7 @@ public class TopologicalSorter<V> {
 			throw new GraphCycleException();
 		} else if (mUnmarkedNodes.contains(node)) {
 			markTemporarily(node);
-			for (V successorNode : mSuccesorsOf.apply(node)) {
+			for (final V successorNode : mSuccesorsOf.apply(node)) {
 				visit(successorNode);
 			}
 			markPermanently(node);

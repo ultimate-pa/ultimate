@@ -26,7 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.TopologicalSorter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -45,20 +51,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class CallGraph {
 
-	/**
-	 * Temporary mark for {@link #mSuccessorsOfInterest} used in {@link #mark(String, String)}
-	 * to detect cycles/recursion.
-	 * <p>
-	 * This mark has to be different from the usual marks. Usual marks are procedure names.
-	 * Procedure names cannot be empty, therefore this mark does not collide with the usual marks.
-	 */
-	private static final String TMP_MARK_TO_DETECT_CYCLES = "";
-
 	private final IIcfg<IcfgLocation> mIcfg;
 
 	/**
 	 * Maps each procedure to the set of LOIs it contains directly.
 	 * Locations of interest (LOI) are locations inside procedures for which we want to compute predicates.
+	 * <p>
+	 * The domain of this relation is the set of all procedures in the icfg.
 	 */
 	private final HashRelation<String, IcfgLocation> mLOIsInsideProcedure = new HashRelation<>();
 	/**
@@ -83,13 +82,19 @@ public class CallGraph {
 	 * </ul>
 	 */
 	private final HashRelation<String, String> mSuccessorsOfInterest = new HashRelation<>();
+	/**
+	 * Relevant procedures in topological order.
+	 * Procedure p is relevant iff p is in {@link #initialProceduresOfInterest()}
+	 * or there is another relevant procedure calling p.
+	 */
+	private List<String> mTopsortRelevant;
 
 	public CallGraph(final IIcfg<IcfgLocation> icfg, final Collection<IcfgLocation> locationsOfInterest) {
 		mIcfg = icfg;
 		assignLOIsToProcedures(locationsOfInterest);
 		buildGraph();
 		computeSuccOfInterest();
-		checkNotRecursive();
+		topsortRelevant();
 	}
 
 	private void assignLOIsToProcedures(final Collection<IcfgLocation> locationsOfInterest) {
@@ -120,23 +125,31 @@ public class CallGraph {
 				.forEach(this::markPredecessors);
 	}
 
-	/**
-	 * Checks that the program part to be analyzed is non-recursive.
-	 * Cycle detection works as in Djikstra's DFS-based topological sorting, see
-	 * <a href="https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search">Wikipedia</a>.
-	 *
-	 * @throws IllegalArgumentException The program is recursive
-	 */
-	private void checkNotRecursive() {
-		initialProceduresOfInterest().stream().forEach(this::markSuccessors);
-	}
 
-	private void markSuccessors(final String procedure) {
-		if (!mSuccessorsOfInterest.addPair(procedure, TMP_MARK_TO_DETECT_CYCLES)) {
+	private void topsortRelevant() {
+		final Optional<List<String>> topologicalOrdering = new TopologicalSorter<>(mCalls::getImage)
+				.topologicalOrdering(callClosure(initialProceduresOfInterest()));
+		if (!topologicalOrdering.isPresent()) {
 			throw new IllegalArgumentException("Recursive programs are not supported.");
 		}
-		mCalls.getImage(procedure).forEach(this::markSuccessors);
-		mSuccessorsOfInterest.removePair(procedure, TMP_MARK_TO_DETECT_CYCLES);
+		mTopsortRelevant = topologicalOrdering.get();
+	}
+
+	/**
+	 * Computes the smallest closed set under the {@link #mCalls} relation for a given set of procedure names.
+	 * @param procedures Set S
+	 * @return The smallest set S' ⊇ S such that ∀ e1,e2 : (e1∊S' ∧ e1 calls e2) → e2∊S'
+	 */
+	private Set<String> callClosure(final Collection<String> procedures) {
+		final Deque<String> work = new ArrayDeque<>(procedures);
+		final Set<String> closure = new HashSet<>();
+		while (!work.isEmpty()) {
+			final String next = work.remove();
+			if (closure.add(next)) {
+				work.addAll(mCalls.getImage(next));
+			}
+		}
+		return closure;
 	}
 
 	public Collection<String> initialProceduresOfInterest() {
@@ -159,4 +172,7 @@ public class CallGraph {
 		return mSuccessorsOfInterest.getImage(procedure);
 	}
 
+	public List<String> relevantProceduresTopsorted() {
+		return mTopsortRelevant;
+	}
 }
