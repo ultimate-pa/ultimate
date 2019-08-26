@@ -63,6 +63,10 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
  *
  */
 public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITransitionRelation> {
+	private static final String AUX_VARS_IN_CALL_TF = "auxVars in callTf";
+	private static final String TRANS_FORMULA_OF_RETURN_MUST_NOT_CONTAIN_AUX_VARS = "TransFormula of return must not contain auxVars";
+	private static final String OLD_VAR_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS = "oldVarAssignments must not contain auxVars";
+	private static final String GLOBAL_VARS_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS = "globalVarsAssignments must not contain auxVars";
 	private final ManagedScript mMgdScript;
 	private final IDomainSpecificOperationProvider<C, P, R> mOperationProvider;
 
@@ -132,6 +136,15 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 	public C strongestPostconditionCall(final P callPred, final R localVarAssignments, final R globalVarAssignments,
 			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure) {
+		if (!localVarAssignments.getAuxVars().isEmpty()) {
+			throw new UnsupportedOperationException(AUX_VARS_IN_CALL_TF);
+		}
+		if (!globalVarAssignments.getAuxVars().isEmpty()) {
+			throw new AssertionError(GLOBAL_VARS_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
+		}
+		if (!oldVarAssignments.getAuxVars().isEmpty()) {
+			throw new AssertionError(OLD_VAR_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
+		}
 
 		final CallReturnPyramideInstanceProvider crpip =
 				new CallReturnPyramideInstanceProvider(mMgdScript, Collections.emptySet(),
@@ -155,6 +168,10 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 	public C modularPostconditionCall(final P callPred, final R globalVarAssignments,
 			final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure) {
 
+		if (!globalVarAssignments.getAuxVars().isEmpty()) {
+			throw new AssertionError(GLOBAL_VARS_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
+		}
+
 		final CallReturnPyramideInstanceProvider crpip =
 				new CallReturnPyramideInstanceProvider(mMgdScript, Collections.emptySet(), Collections.emptySet(),
 						modifiableGlobalsOfCalledProcedure, Instance.AFTER_CALL);
@@ -168,6 +185,16 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 	public C strongestPostconditionReturn(final P returnPred, final P callPred, final R returnTF, final R callTF,
 			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobals) {
+
+		if (!callTF.getAuxVars().isEmpty()) {
+			throw new UnsupportedOperationException(AUX_VARS_IN_CALL_TF);
+		}
+		if (!returnTF.getAuxVars().isEmpty()) {
+			throw new AssertionError(TRANS_FORMULA_OF_RETURN_MUST_NOT_CONTAIN_AUX_VARS);
+		}
+		if (!oldVarAssignments.getAuxVars().isEmpty()) {
+			throw new AssertionError(OLD_VAR_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
+		}
 
 		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript,
 				returnTF.getAssignedVars(), callTF.getAssignedVars(), modifiableGlobals, Instance.AFTER_RETURN);
@@ -205,6 +232,16 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 	public C weakestPreconditionCall(final P callSucc, final R callTF, final R globalVarsAssignments,
 			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobals) {
+		if (!callTF.getAuxVars().isEmpty()) {
+			throw new UnsupportedOperationException(AUX_VARS_IN_CALL_TF);
+		}
+		if (!globalVarsAssignments.getAuxVars().isEmpty()) {
+			throw new AssertionError(GLOBAL_VARS_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
+		}
+		if (!oldVarAssignments.getAuxVars().isEmpty()) {
+			throw new AssertionError(OLD_VAR_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
+		}
+
 
 		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript,
 				Collections.emptySet(), callTF.getAssignedVars(), modifiableGlobals, Instance.BEFORE_CALL);
@@ -224,6 +261,15 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 	public C weakestPreconditionReturn(final P returnSucc, final P callPred, final R returnTF, final R callTF,
 			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobals) {
+		if (!callTF.getAuxVars().isEmpty()) {
+			throw new UnsupportedOperationException(AUX_VARS_IN_CALL_TF);
+		}
+		if (!returnTF.getAuxVars().isEmpty()) {
+			throw new AssertionError(TRANS_FORMULA_OF_RETURN_MUST_NOT_CONTAIN_AUX_VARS);
+		}
+		if (!oldVarAssignments.getAuxVars().isEmpty()) {
+			throw new AssertionError(OLD_VAR_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
+		}
 
 		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript,
 				returnTF.getAssignedVars(), callTF.getAssignedVars(), modifiableGlobals, Instance.BEFORE_RETURN);
@@ -264,6 +310,15 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 	public C preCall(final P callSucc, final R callTF, final R globalVarsAssignments, final R oldVarAssignments,
 			final Set<IProgramNonOldVar> modifiableGlobals) {
+		if (!callTF.getAuxVars().isEmpty()) {
+			throw new UnsupportedOperationException(AUX_VARS_IN_CALL_TF);
+		}
+		if (!globalVarsAssignments.getAuxVars().isEmpty()) {
+			throw new AssertionError(GLOBAL_VARS_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
+		}
+		if (!oldVarAssignments.getAuxVars().isEmpty()) {
+			throw new AssertionError(OLD_VAR_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
+		}
 
 		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript,
 				Collections.emptySet(), callTF.getAssignedVars(), modifiableGlobals, Instance.BEFORE_CALL);
@@ -281,6 +336,15 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 	public C preReturn(final P returnSucc, final P callPred, final R returnTF, final R callTF,
 			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobals) {
+		if (!callTF.getAuxVars().isEmpty()) {
+			throw new UnsupportedOperationException(AUX_VARS_IN_CALL_TF);
+		}
+		if (!returnTF.getAuxVars().isEmpty()) {
+			throw new AssertionError(TRANS_FORMULA_OF_RETURN_MUST_NOT_CONTAIN_AUX_VARS);
+		}
+		if (!oldVarAssignments.getAuxVars().isEmpty()) {
+			throw new AssertionError(OLD_VAR_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
+		}
 
 		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript,
 				returnTF.getAssignedVars(), callTF.getAssignedVars(), modifiableGlobals, Instance.BEFORE_RETURN);
