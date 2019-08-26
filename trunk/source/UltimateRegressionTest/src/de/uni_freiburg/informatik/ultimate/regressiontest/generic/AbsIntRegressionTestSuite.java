@@ -47,7 +47,6 @@ public class AbsIntRegressionTestSuite extends AbstractRegressionTestSuite {
 		mTimeout = DEFAULT_TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/programs/abstractInterpretation/");
 		mFiletypesToConsider = new String[] { ".bpl" };
-		mIncludeFilterRegex = ".*Sifa.*";
 		// mExcludeFilterRegex = ".*((open)|(oct)|(non_taipan)|(non_con)|(all)).*";
 	}
 
