@@ -33,6 +33,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -43,7 +44,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain.ResultForAlteredInputs;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.plugins.symbolicinterpretation.SifaBuilder.SifaComponents;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * Starts symbolic interpretation on an icfg.
@@ -75,13 +78,16 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
 		mSifaComponents = new SifaBuilder(mServices, mLogger).construct(icfg, mServices.getProgressMonitorService());
 		final Map<IcfgLocation, IPredicate> predicates = mSifaComponents.getIcfgInterpreter().interpret();
-		// TODO: create result object that provides predicate map and IStatisticsDataProvider implementation
-		// TODO: create StatisticsResults from IStatisticsDataProvider by
-		// creating StatisticsData obj
-		// aggregating IStatisticsDataProvider instance therein
-		// calling createCsvProvider() on StatisticsData obj
-		// create StatisticsResults from csvprovider
+		reportStats(mSifaComponents.getStats());
 		reportResults(predicates);
+	}
+
+	private void reportStats(final SifaStats stats) {
+		final StatisticsData csvProvider = new StatisticsData();
+		final String shortDescription = "Symbolic Interpretation With Fluid Abstractions";
+		csvProvider.aggregateBenchmarkData(stats);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_ID, shortDescription, csvProvider));
 	}
 
 	private void reportResults(final Map<IcfgLocation, IPredicate> predicates) {
@@ -99,7 +105,7 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	}
 
 	/**
-	 * @return The given location is safe, that is its predicate is bottom.
+	 * @return The given location is safe, that is, its predicate is bottom.
 	 */
 	private boolean reportSingleResult(final Map.Entry<IcfgLocation, IPredicate> loiPred) {
 		final ResultForAlteredInputs predEqBottom = mSifaComponents.getDomain().isEqBottom(loiPred.getValue());

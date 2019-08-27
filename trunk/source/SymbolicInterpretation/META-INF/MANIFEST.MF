@@ -9,6 +9,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.pathexpressions,
  de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation,
- de.uni_freiburg.informatik.ultimate.lib.smtlib
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.util
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

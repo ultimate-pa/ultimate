@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.DagSizePrin
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFluid;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
 
@@ -52,6 +53,8 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizer
  */
 public class IcfgInterpreter implements IEnterCallRegistrar {
 
+	private final SifaStats mStats;
+
 	private final ILogger mLogger;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final CallGraph mCallGraph;
@@ -61,6 +64,8 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 	private final ProcedureResourceCache mProcResCache;
 	private final DagInterpreter mDagInterpreter;
 
+	// TODO create
+
 	/**
 	 * Creates a new interpret using a custom set of locations of interest.
 	 *
@@ -69,11 +74,19 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 	 *
 	 * @see #interpret()
 	 */
-	public IcfgInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SymbolicTools tools,
-			final IIcfg<IcfgLocation> icfg, final Collection<IcfgLocation> locationsOfInterest,
-			final IDomain domain, final IFluid fluid,
+	public IcfgInterpreter(
+			final ILogger logger,
+			final IProgressAwareTimer timer,
+			final SifaStats stats,
+			final SymbolicTools tools,
+			final IIcfg<IcfgLocation> icfg,
+			final Collection<IcfgLocation> locationsOfInterest,
+			final IDomain domain,
+			final IFluid fluid,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory) {
+		mStats = stats;
+		mStats.start(SifaStats.Key.OVERALL_TIME);
 		mLogger = logger;
 		mTools = tools;
 		mIcfg = icfg;
@@ -87,6 +100,7 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 		enqueInitial();
 		mDagInterpreter = new DagInterpreter(logger, timer, tools, domain, fluid,
 				loopSumFactory.apply(this), callSumFactory.apply(this));
+		mStats.stop(SifaStats.Key.OVERALL_TIME);
 	}
 
 	public static Collection<IcfgLocation> allErrorLocations(final IIcfg<IcfgLocation> icfg) {
@@ -107,14 +121,17 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 	 *         over-approximating the program states at these locations
 	 */
 	public Map<IcfgLocation, IPredicate> interpret() {
+		mStats.start(SifaStats.Key.OVERALL_TIME);
 		logStartingInterpretation();
 		while (mEnterCallWorklist.advance()) {
 			final String procedure = mEnterCallWorklist.getWork();
 			final IPredicate input = mEnterCallWorklist.getInput();
 			logEnterProcedure(procedure, input);
+			mStats.increment(SifaStats.Key.ENTERED_PROCEDURES);
 			interpretLoisInProcedure(procedure, input);
 		}
 		logFinalResults();
+		mStats.stop(SifaStats.Key.OVERALL_TIME);
 		return mLoiPredStorage.getMap();
 	}
 

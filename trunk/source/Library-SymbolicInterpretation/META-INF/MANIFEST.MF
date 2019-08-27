@@ -18,4 +18,5 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation,
  de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid,
  de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag,
  de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.relationchecker,
+ de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics,
  de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers

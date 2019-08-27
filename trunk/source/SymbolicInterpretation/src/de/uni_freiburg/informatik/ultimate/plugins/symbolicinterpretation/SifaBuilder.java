@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFlu
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.SizeLimitFluid;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
@@ -65,15 +66,20 @@ public class SifaBuilder {
 	public static class SifaComponents {
 		private final IcfgInterpreter mIcfgInterpreter;
 		private final IDomain mDomain;
-		public SifaComponents(final IcfgInterpreter icfgInterpreter, final IDomain domain) {
+		private final SifaStats mStats;
+		public SifaComponents(final IcfgInterpreter icfgInterpreter, final IDomain domain, final SifaStats stats) {
 			mIcfgInterpreter = icfgInterpreter;
 			mDomain = domain;
+			mStats = stats;
 		}
 		public IcfgInterpreter getIcfgInterpreter() {
 			return mIcfgInterpreter;
 		}
 		public IDomain getDomain() {
 			return mDomain;
+		}
+		public SifaStats getStats() {
+			return mStats;
 		}
 	}
 
@@ -88,6 +94,8 @@ public class SifaBuilder {
 	}
 
 	public SifaComponents construct(final IIcfg<IcfgLocation> icfg, final IProgressAwareTimer timer) {
+		final SifaStats stats = new SifaStats();
+		// TODO pass stats to all components
 		final SymbolicTools tools = constructTools(icfg);
 		final IDomain domain = constructDomain(tools, timer);
 		final IFluid fluid = constructFluid();
@@ -95,9 +103,9 @@ public class SifaBuilder {
 				constructLoopSummarizer(timer, tools, domain, fluid);
 		final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSum =
 				constructCallSummarizer(tools, domain);
-		final IcfgInterpreter icfgInterpreter = new IcfgInterpreter(mLogger, timer, tools, icfg,
+		final IcfgInterpreter icfgInterpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg,
 				IcfgInterpreter.allErrorLocations(icfg), domain, fluid, loopSum, callSum);
-		return new SifaComponents(icfgInterpreter, domain);
+		return new SifaComponents(icfgInterpreter, domain, stats);
 	}
 
 	private SymbolicTools constructTools(final IIcfg<IcfgLocation> icfg) {
