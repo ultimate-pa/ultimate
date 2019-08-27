@@ -29,7 +29,11 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
- * A Petri net transition interface.
+ * Interface for Petri net transitions.
+ * Provides the letter of the alphabet that is labeled to the transition.
+ * Predecessor and successor places are obtained from the Petri net. See
+ * {@link IPetriNetSuccessorProvider#getPredecessors(ITransition)} and
+ * {@link IPetriNetSuccessorProvider#getSuccessors(ITransition)}.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
