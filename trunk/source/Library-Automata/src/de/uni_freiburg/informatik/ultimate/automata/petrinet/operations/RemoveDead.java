@@ -95,7 +95,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		mOperand = operand;
 		mFinPre = finPre;
 		mVitalTransitions = vitalTransitions();
-		mResult = new CopySubnet<>(services, mOperand, mVitalTransitions).getResult();
+		mResult = CopySubnet.copy(services, mOperand, mVitalTransitions);
 	}
 
 	private Set<ITransition<LETTER, PLACE>> vitalTransitions()

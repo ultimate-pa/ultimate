@@ -109,7 +109,7 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 		super(services);
 		mOperand = operand;
 		mReachableTransitions = reachableTransitions == null ? reachableTransitions() : reachableTransitions;
-		mResult = new CopySubnet<>(services, mOperand, mReachableTransitions).getResult();
+		mResult = CopySubnet.copy(services, mOperand, mReachableTransitions);
 	}
 
 	private Set<ITransition<LETTER, PLACE>> reachableTransitions()

@@ -51,24 +51,64 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
  */
 public class CopySubnet<LETTER, PLACE> {
 
-	private final IPetriNet<LETTER, PLACE> mOperand;
+	/** The Petri Net for which we copy partially to create a sub-net. */
+	private final IPetriNet<LETTER, PLACE> mSuperNet;
 	private final Set<ITransition<LETTER, PLACE>> mTransitionSubset;
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
 	/**
-	 * Copy a net partially, creating a sub-net.
-	 * 
-	 * @param services services for logging and so on
-	 * @param operand Petri net N to be copied partially
+	 * Copies a net partially, creating a sub-net.
+	 * The sub-net is defined in terms of transitions.
+	 * Places that are no longer required are excluded automatically.
+	 *
+	 * @param <LETTER> Type of the transition labels in the old and new petri net
+	 * @param <PLACE> Type of the places in the old and new petri net
+	 * @param services Services for logging and so on
+	 * @param superNet Petri net N to be copied partially
+	 * @param transitionSubset Subset of transitions of net N forming the transitions of sub-net N'
+	 * @param newAlphabet New alphabet of sub-net N'.
+	 *                    The new alphabet can be a subset or superset of the old alphabet,
+	 *                    however, all labels from {@code transitionSubset} have to be included.
+	 * @return Subnet N'
+	 */
+	public static <LETTER, PLACE> BoundedPetriNet<LETTER, PLACE> copy(final AutomataLibraryServices services,
+			final IPetriNet<LETTER, PLACE> superNet, final Set<ITransition<LETTER, PLACE>> transitionSubset,
+			final Set<LETTER> newAlphabet) {
+		return new CopySubnet<>(services, superNet, transitionSubset, newAlphabet).getResult();
+	}
+
+	/**
+	 * Copies a net partially, creating a sub-net.
+	 * The sub-net is defined in terms of transitions.
+	 * Places that are no longer required are excluded automatically.
+	 * The alphabet stays the same, even if some letters are no longer used.
+	 *
+	 * @param <LETTER> Type of the transition labels in the old and new petri net
+	 * @param <PLACE> Type of the places in the old and new petri net
+	 * @param services Services for logging and so on
+	 * @param superNet Petri net N to be copied partially
+	 * @param transitionSubset Subset of transitions of net N forming the transitions of sub-net N'
+	 * @return Subnet N'
+	 */
+	public static <LETTER, PLACE> BoundedPetriNet<LETTER, PLACE> copy(final AutomataLibraryServices services,
+			final IPetriNet<LETTER, PLACE> superNet, final Set<ITransition<LETTER, PLACE>> transitionSubset) {
+		return copy(services, superNet, transitionSubset, superNet.getAlphabet());
+	}
+
+	/**
+	 * Copies a net partially, creating a sub-net.
+	 *
+	 * @param services Services for logging and so on
+	 * @param superNet Petri net N to be copied partially
 	 * @param transitionSubset Subset of transitions of net N forming the transitions of sub-net N'
 	 */
-	public CopySubnet(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand,
-			final Set<ITransition<LETTER, PLACE>> transitionSubset) {
-		mOperand = operand;
+	private CopySubnet(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> superNet,
+			final Set<ITransition<LETTER, PLACE>> transitionSubset, final Set<LETTER> newAlphabet) {
+		mSuperNet = superNet;
 		mTransitionSubset = transitionSubset;
 
 		final boolean constantTokenAmount = false;
-		mResult = new BoundedPetriNet<>(services, operand.getAlphabet(), constantTokenAmount);
+		mResult = new BoundedPetriNet<>(services, newAlphabet, constantTokenAmount);
 		copySubnet();
 	}
 
@@ -87,17 +127,17 @@ public class CopySubnet<LETTER, PLACE> {
 		mTransitionSubset.forEach(this::rebuildTransition);
 	}
 
-	private void rebuildPlace(PLACE place) {
-		final boolean isInitial = mOperand.getInitialPlaces().contains(place);
-		final boolean isAccepting = mOperand.getAcceptingPlaces().contains(place);
+	private void rebuildPlace(final PLACE place) {
+		final boolean isInitial = mSuperNet.getInitialPlaces().contains(place);
+		final boolean isAccepting = mSuperNet.getAcceptingPlaces().contains(place);
 		mResult.addPlace(place, isInitial, isAccepting);
 	}
 
-	private void rebuildTransition(ITransition<LETTER, PLACE> trans) {
-		final Set<PLACE> succ = SetOperations.intersection(mOperand.getSuccessors(trans), mResult.getPlaces());
-		mResult.addTransition(trans.getSymbol(), mOperand.getPredecessors(trans), succ);
+	private void rebuildTransition(final ITransition<LETTER, PLACE> trans) {
+		final Set<PLACE> succ = SetOperations.intersection(mSuperNet.getSuccessors(trans), mResult.getPlaces());
+		mResult.addTransition(trans.getSymbol(), mSuperNet.getPredecessors(trans), succ);
 	}
-	
+
 	/**
 	 * Returns a the required places in a sub-net N' of a Petri net N.
 	 * Sub-net N' has the same places as N, but only some transitions.
@@ -106,17 +146,17 @@ public class CopySubnet<LETTER, PLACE> {
 	 * p is predecessor of some transition in N',
 	 * or p is accepting and successor of some transition in N',
 	 * or p is accepting and initial in N'.
-	 * 
+	 *
 	 * @param net Petri net N
 	 * @param transitionSubset transitions of N'
 	 * @return required places in N'
-	 * 
+	 *
 	 * @return Superset of the required places
 	 */
 	private Set<PLACE> requiredPlaces() {
 		final Set<PLACE> requiredPlaces = new HashSet<>();
 		for (final ITransition<LETTER, PLACE> trans : mTransitionSubset) {
-			requiredPlaces.addAll(mOperand.getPredecessors(trans));
+			requiredPlaces.addAll(mSuperNet.getPredecessors(trans));
 			// successor places are only required
 			// if they are predecessors of another reachable transition
 			// or if they are accepting
@@ -126,18 +166,18 @@ public class CopySubnet<LETTER, PLACE> {
 		alwaysAcceptingPlaces().forEach(requiredPlaces::add);
 		return requiredPlaces;
 	}
-	
+
 	/**
 	 * Returns all accepting places that are also a successor of at least one transition
 	 * from a given set of transition.
-	 * 
+	 *
 	 * @return Successor places of T' that are also accepting
 	 */
 	private Stream<PLACE> acceptingSuccPlaces() {
-		return mOperand.getAcceptingPlaces().stream().filter(
-				accPlace -> SetOperations.intersecting(mOperand.getPredecessors(accPlace), mTransitionSubset));
+		return mSuperNet.getAcceptingPlaces().stream().filter(
+				accPlace -> SetOperations.intersecting(mSuperNet.getPredecessors(accPlace), mTransitionSubset));
 	}
-	
+
 	/**
 	 * Returns all places that are accepting, initial, and not connected to any transition
 	 * in a sub-net N' of a Petri net N. Sub-net N' has the same places as N, but only some transitions.
@@ -149,10 +189,10 @@ public class CopySubnet<LETTER, PLACE> {
 	 * @return subset of the always accepting places in N'
 	 */
 	private Stream<PLACE> alwaysAcceptingPlaces() {
-		return acceptingInitialPlaces(mOperand).filter(
-				accIniPlace -> SetOperations.disjoint(mOperand.getSuccessors(accIniPlace), mTransitionSubset));
+		return acceptingInitialPlaces(mSuperNet).filter(
+				accIniPlace -> SetOperations.disjoint(mSuperNet.getSuccessors(accIniPlace), mTransitionSubset));
 	}
-	
+
 	/**
 	 * Returns all places that are accepting and initial.
 	 *
