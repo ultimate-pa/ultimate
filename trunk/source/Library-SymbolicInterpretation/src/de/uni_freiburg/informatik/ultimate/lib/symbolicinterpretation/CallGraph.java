@@ -125,7 +125,6 @@ public class CallGraph {
 				.forEach(this::markPredecessors);
 	}
 
-
 	private void topsortRelevant() {
 		final Optional<List<String>> topologicalOrdering = new TopologicalSorter<>(mCalls::getImage)
 				.topologicalOrdering(callClosure(initialProceduresOfInterest()));
