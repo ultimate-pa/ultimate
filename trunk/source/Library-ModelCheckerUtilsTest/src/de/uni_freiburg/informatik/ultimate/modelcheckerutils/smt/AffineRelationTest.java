@@ -31,13 +31,17 @@ import org.junit.Before;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -83,7 +87,6 @@ public class AffineRelationTest {
 	public void tearDown() {
 		mScript.exit();
 	}
-	// TODO write tests for quantifier elimination
 
 	@Test
 	public void relationIntDivDefault() throws NotAffineException {
@@ -162,6 +165,92 @@ public class AffineRelationTest {
 
 	}
 
+	// tests for quantifier elimination (TIR)
+	@Test // Test for Bugfix Strict2Nonstrict transformation TODO
+	public void greaterTIR() throws NotAffineException {
+		final String inputSTR = "(exists ((a Int)) 	(and (> (* 4 a) b )	(< a 3) (< b 12)	)		)";
+		final Term outputTERM = parseAndElim(inputSTR);
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, outputTERM, inputSTR));
+		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
+
+	}
+
+	@Test
+	public void lessTIR() throws NotAffineException {
+		final String inputSTR = "(exists ((a Int)) 	(and (> (* 4 a) b )	(< a 3) (< b 12)	)		)";
+		final Term outputTERM = parseAndElim(inputSTR);
+		Assert.assertTrue(
+				SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR), outputTERM, mScript));
+		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
+
+	}
+
+	@Test
+	public void greaterEqTIR() throws NotAffineException {
+		final String inputSTR = "(exists ((a Int)) 	(and (>= (* 4 a) b )	(< a 3) (< b 12)	)		)";
+		final Term outputTERM = parseAndElim(inputSTR);
+		Assert.assertTrue(
+				SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR), outputTERM, mScript));
+		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
+
+	}
+
+	@Test
+	public void lessEqTIR() throws NotAffineException {
+		final String inputSTR = "(exists ((a Int)) 	(and (>= (* 4 a) b )	(< a 3) (< b 12)	)		)";
+		final Term outputTERM = parseAndElim(inputSTR);
+		Assert.assertTrue(
+				SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR), outputTERM, mScript));
+		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
+
+	}
+
+	@Test // Test for Bugfix Strict2Nonstrict transformation TODO
+	public void greaterTIRNegativeCoef() throws NotAffineException {
+		final String inputSTR = "(exists ((a Int)) 	(and (> (* (- 4) a) b )	(< a 3) (< b 12)	)		)";
+		final Term outputTERM = parseAndElim(inputSTR);
+		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, outputTERM, inputSTR));
+		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
+
+	}
+
+	@Test
+	public void lessTIRNegativeCoef() throws NotAffineException {
+		final String inputSTR = "(exists ((a Int)) 	(and (> (* (- 4) a) b )	(< a 3) (< b 12)	)		)";
+		final Term outputTERM = parseAndElim(inputSTR);
+		Assert.assertTrue(
+				SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR), outputTERM, mScript));
+		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
+
+	}
+
+	@Test
+	public void greaterEqTIRNegativeCoef() throws NotAffineException {
+		final String inputSTR = "(exists ((a Int)) 	(and (>= (* (- 4) a) b )	(< a 3) (< b 12)	)		)";
+		final Term outputTERM = parseAndElim(inputSTR);
+		Assert.assertTrue(
+				SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR), outputTERM, mScript));
+		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
+
+	}
+
+	@Test
+	public void lessEqTIRNegativeCoef() throws NotAffineException {
+		final String inputSTR = "(exists ((a Int)) 	(and (>= (* (- 4) a) b )	(< a 3) (< b 12)	)		)";
+		final Term outputTERM = parseAndElim(inputSTR);
+		Assert.assertTrue(
+				SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR), outputTERM, mScript));
+		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
+
+	}
+
+	public Term parseAndElim(final String formulaAsString) {
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, null, mMgdScript, formulaAsTerm,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		return result;
+	}
+
 	private SolvedBinaryRelation affRelOnLeftHandSide(final String termAsString, final String varString)
 			throws NotAffineException {
 		final Term var = TermParseUtils.parseTerm(mScript, varString);
@@ -171,10 +260,7 @@ public class AffineRelationTest {
 	}
 
 	private boolean assumptionsImplyEquality(final Term originalTerm, final SolvedBinaryRelation sbr) {
-		final Term impli1 = sbr.relationToTerm(mScript);
-		final Term impli2 = originalTerm;
 		return SmtUtils.areFormulasEquivalent(sbr.relationToTerm(mScript), originalTerm,
 				SmtUtils.and(mScript, sbr.getAssumptionsMap().values()), mScript);
 	}
-
 }

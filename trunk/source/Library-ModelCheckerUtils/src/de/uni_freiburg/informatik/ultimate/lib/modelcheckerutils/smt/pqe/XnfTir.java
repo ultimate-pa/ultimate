@@ -42,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Ex
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AbstractGeneralizedaAffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AbstractGeneralizedaAffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -89,8 +89,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	@Override
 	public Term[] tryToEliminate(final int quantifier, final Term[] inputConjuncts,
 			final Set<TermVariable> eliminatees) {
-		final Term inputConjunction =
-				QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, Arrays.asList(inputConjuncts));
+		final Term inputConjunction = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
+				Arrays.asList(inputConjuncts));
 		List<Term> currentDisjuncts = new ArrayList<>(Arrays.asList(inputConjunction));
 		final Iterator<TermVariable> it = eliminatees.iterator();
 		while (it.hasNext()) {
@@ -120,8 +120,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			currentDisjuncts = nextDisjuncts;
 		}
 		final Term[] resultDisjuncts = currentDisjuncts.toArray(new Term[currentDisjuncts.size()]);
-		final Term resultDisjunction =
-				QuantifierUtils.applyCorrespondingFiniteConnective(mScript, quantifier, resultDisjuncts);
+		final Term resultDisjunction = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, quantifier,
+				resultDisjuncts);
 		return new Term[] { resultDisjunction };
 	}
 
@@ -132,7 +132,9 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		// Following lines used for debugging - remove them
 		// Term term = SmtUtils.or(mScript, (Collection<Term>) result);
 		// term = SmtUtils.simplify(mScript, term, mServices);
-		// result = Arrays.asList(PartialQuantifierElimination.getXjunctsOuter(quantifier, term));
+		// result =
+		// Arrays.asList(PartialQuantifierElimination.getXjunctsOuter(quantifier,
+		// term));
 		//
 		return result;
 	}
@@ -170,7 +172,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					return null;
 				}
 				if (!sbr.getAssumptionsMap().isEmpty()) {
-					return null;
+					// return null;
 				}
 				final Term eliminateeOnLhs = sbr.relationToTerm(mScript);
 				final BinaryNumericRelation bnr = BinaryNumericRelation.convert(eliminateeOnLhs);
