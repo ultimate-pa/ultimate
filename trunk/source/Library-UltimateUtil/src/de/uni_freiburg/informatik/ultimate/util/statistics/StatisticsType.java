@@ -7,17 +7,7 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 
-/**
- * TODO document
- *
- * schaetzc: Seems like this class is only abstract to make it harder to use this class in the wrong way.
- * Methods like {@link StatisticsData#aggregateBenchmarkData(IStatisticsDataProvider)} assume that StatisticsType
- * are always singletons.
- * To me it seems like we could cope without all the singleton subclasses and use regular StatisticsType objects
- * instead if we implemented equals() and used equals instead of == in StatisticsData (and possible few other
- * locations).
- */
-public abstract class StatisticsType<T extends Enum<T> & IStatisticsElement> implements IStatisticsType {
+public class StatisticsType<T extends Enum<T> & IStatisticsElement> implements IStatisticsType {
 
 	/** consider using {@link Aggregate#intAdd(Object, Object)} instead */
 	public static final Function<Object, Function<Object, Object>> INTEGER_ADDITION =
