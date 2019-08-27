@@ -93,7 +93,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class TransFormulaUtils {
 
-	public static final String AUX_VARS_IN_CALL_TF = "auxVars in callTf";
 	public static final String TRANS_FORMULA_OF_RETURN_MUST_NOT_CONTAIN_AUX_VARS = "TransFormula of return must not contain auxVars";
 	public static final String OLD_VAR_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS = "oldVarAssignments must not contain auxVars";
 	public static final String GLOBAL_VARS_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS = "globalVarsAssignments must not contain auxVars";
@@ -703,9 +702,9 @@ public final class TransFormulaUtils {
 			final UnmodifiableTransFormula returnTf, final ILogger logger, final IUltimateServiceProvider services,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final IIcfgSymbolTable symbolTable, final Set<IProgramNonOldVar> modifiableGlobalsOfCallee) {
-		if (!callTf.getAuxVars().isEmpty()) {
-			throw new UnsupportedOperationException(TransFormulaUtils.AUX_VARS_IN_CALL_TF);
-		}
+//		if (!callTf.getAuxVars().isEmpty()) {
+//			throw new UnsupportedOperationException(TransFormulaUtils.AUX_VARS_IN_CALL_TF);
+//		}
 		if (!returnTf.getAuxVars().isEmpty()) {
 			throw new AssertionError(TransFormulaUtils.TRANS_FORMULA_OF_RETURN_MUST_NOT_CONTAIN_AUX_VARS);
 		}

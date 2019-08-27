@@ -153,14 +153,8 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 		final C result = mOperationProvider.constructConjunction(
 				toList(localVarAssignmentsTerm, oldVarsAssignmentTerm, globalVarsAssignmentTerm, callPredTerm));
-		Set<TermVariable> varsToProjectAway;
-		if (localVarAssignments.getAuxVars().isEmpty()) {
-			varsToProjectAway = crpip.getFreshTermVariables();
-		} else {
-			varsToProjectAway = new HashSet<>(crpip.getFreshTermVariables());
-			varsToProjectAway.addAll(localVarAssignments.getAuxVars());
-		}
-		return mOperationProvider.projectExistentially(crpip.getFreshTermVariables(), result);
+		return mOperationProvider
+				.projectExistentially(addAuxVarsOfCall(localVarAssignments, crpip.getFreshTermVariables()), result);
 	}
 
 	/**
@@ -186,10 +180,6 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 	public C strongestPostconditionReturn(final P returnPred, final P callPred, final R returnTF, final R callTF,
 			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobals) {
-
-		if (!callTF.getAuxVars().isEmpty()) {
-			throw new UnsupportedOperationException(TransFormulaUtils.AUX_VARS_IN_CALL_TF);
-		}
 		if (!returnTF.getAuxVars().isEmpty()) {
 			throw new AssertionError(TransFormulaUtils.TRANS_FORMULA_OF_RETURN_MUST_NOT_CONTAIN_AUX_VARS);
 		}
@@ -209,8 +199,10 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 		final C result = mOperationProvider.constructConjunction(
 				toList(callTfTerm, oldVarsAssignmentTerm, returnTfTerm, callPredTerm, returnPredTerm));
-		return mOperationProvider.projectExistentially(crpip.getFreshTermVariables(), result);
+		return mOperationProvider.projectExistentially(addAuxVarsOfCall(callTF, crpip.getFreshTermVariables()), result);
 	}
+
+
 
 	public C weakestPrecondition(final P p, final R tf) {
 		final C constraint = mOperationProvider.getConstraint(p);
@@ -233,9 +225,6 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 	public C weakestPreconditionCall(final P callSucc, final R callTF, final R globalVarsAssignments,
 			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobals) {
-		if (!callTF.getAuxVars().isEmpty()) {
-			throw new UnsupportedOperationException(TransFormulaUtils.AUX_VARS_IN_CALL_TF);
-		}
 		if (!globalVarsAssignments.getAuxVars().isEmpty()) {
 			throw new AssertionError(TransFormulaUtils.GLOBAL_VARS_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
 		}
@@ -257,14 +246,11 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 				mOperationProvider.constructDisjunction(toList(mOperationProvider.constructNegation(callTfTerm),
 						mOperationProvider.constructNegation(oldVarsAssignmentTerm),
 						mOperationProvider.constructNegation(globalVarsAssignmentTerm), callSuccTerm));
-		return mOperationProvider.projectUniversally(crpip.getFreshTermVariables(), result);
+		return mOperationProvider.projectUniversally(addAuxVarsOfCall(callTF, crpip.getFreshTermVariables()), result);
 	}
 
 	public C weakestPreconditionReturn(final P returnSucc, final P callPred, final R returnTF, final R callTF,
 			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobals) {
-		if (!callTF.getAuxVars().isEmpty()) {
-			throw new UnsupportedOperationException(TransFormulaUtils.AUX_VARS_IN_CALL_TF);
-		}
 		if (!returnTF.getAuxVars().isEmpty()) {
 			throw new AssertionError(TransFormulaUtils.TRANS_FORMULA_OF_RETURN_MUST_NOT_CONTAIN_AUX_VARS);
 		}
@@ -287,7 +273,7 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 						mOperationProvider.constructNegation(oldVarsAssignmentTerm),
 						mOperationProvider.constructNegation(returnTfTerm),
 						mOperationProvider.constructNegation(callPredTerm), returnSuccTerm));
-		return mOperationProvider.projectUniversally(crpip.getFreshTermVariables(), result);
+		return mOperationProvider.projectUniversally(addAuxVarsOfCall(callTF, crpip.getFreshTermVariables()), result);
 	}
 
 	public C pre(final P p, final R tf) {
@@ -311,9 +297,6 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 	public C preCall(final P callSucc, final R callTF, final R globalVarsAssignments, final R oldVarAssignments,
 			final Set<IProgramNonOldVar> modifiableGlobals) {
-		if (!callTF.getAuxVars().isEmpty()) {
-			throw new UnsupportedOperationException(TransFormulaUtils.AUX_VARS_IN_CALL_TF);
-		}
 		if (!globalVarsAssignments.getAuxVars().isEmpty()) {
 			throw new AssertionError(TransFormulaUtils.GLOBAL_VARS_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
 		}
@@ -332,14 +315,11 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 		final C result = mOperationProvider.constructConjunction(
 				toList(callTfTerm, oldVarsAssignmentTerm, globalVarsAssignmentTerm, callSuccTerm));
-		return mOperationProvider.projectExistentially(crpip.getFreshTermVariables(), result);
+		return mOperationProvider.projectExistentially(addAuxVarsOfCall(callTF, crpip.getFreshTermVariables()), result);
 	}
 
 	public C preReturn(final P returnSucc, final P callPred, final R returnTF, final R callTF,
 			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobals) {
-		if (!callTF.getAuxVars().isEmpty()) {
-			throw new UnsupportedOperationException(TransFormulaUtils.AUX_VARS_IN_CALL_TF);
-		}
 		if (!returnTF.getAuxVars().isEmpty()) {
 			throw new AssertionError(TransFormulaUtils.TRANS_FORMULA_OF_RETURN_MUST_NOT_CONTAIN_AUX_VARS);
 		}
@@ -359,7 +339,7 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 		final C result = mOperationProvider.constructConjunction(
 				toList(callTfTerm, oldVarsAssignmentTerm, returnTfTerm, callPredTerm, returnSuccTerm));
-		return mOperationProvider.projectExistentially(crpip.getFreshTermVariables(), result);
+		return mOperationProvider.projectExistentially(addAuxVarsOfCall(callTF, crpip.getFreshTermVariables()), result);
 	}
 
 	private C renamePredicateToInstance(final P p, final Instance instance,
@@ -385,6 +365,17 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 		final C result = mOperationProvider.renameVariables(substitutionMapping,
 				mOperationProvider.getConstraintFromTransitionRelation(tf));
 		return result;
+	}
+
+	private Set<TermVariable> addAuxVarsOfCall(final R callTF, final Set<TermVariable> inputVarsToProjectAway) {
+		Set<TermVariable> resultingVarsToProjectAway;
+		if (callTF.getAuxVars().isEmpty()) {
+			resultingVarsToProjectAway = inputVarsToProjectAway;
+		} else {
+			resultingVarsToProjectAway = new HashSet<>(inputVarsToProjectAway);
+			resultingVarsToProjectAway.addAll(callTF.getAuxVars());
+		}
+		return resultingVarsToProjectAway;
 	}
 
 	@SafeVarargs
