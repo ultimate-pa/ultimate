@@ -21,7 +21,7 @@ public class StatisticsType<T extends Enum<T> & IStatisticsElement> implements I
 	};
 	/** consider using {@link Aggregate#doubleAdd(Object, Object)} instead */
 	public static final Function<Object, Function<Object, Object>> DOUBLE_ADDITION = x -> y -> (Double) x + (Double) y;
-	/** consider using {@link Aggregate#statsDataAggregate(Object, Object)} instead */
+	/** consider using {@link Aggregate#statisticsDataAggregate(Object, Object)} instead */
 	public static final Function<Object, Function<Object, Object>> STATISTICS_DATA_AGGREGATION = x -> y -> {
 		((StatisticsData) x).aggregateBenchmarkData((StatisticsData) y);
 		return x;

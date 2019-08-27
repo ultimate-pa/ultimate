@@ -42,7 +42,7 @@ public final class Aggregate {
 		// objects of this class have no use ==> forbid construction
 	}
 
-	public static StatisticsData statsDataAggregate(final Object lhsStatsData, final Object rhsStatsData) {
+	public static StatisticsData statisticsDataAggregate(final Object lhsStatsData, final Object rhsStatsData) {
 		((StatisticsData) lhsStatsData).aggregateBenchmarkData((StatisticsData) rhsStatsData);
 		return (StatisticsData) lhsStatsData;
 	}
