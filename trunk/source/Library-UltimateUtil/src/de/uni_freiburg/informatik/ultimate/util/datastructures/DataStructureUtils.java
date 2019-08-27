@@ -171,6 +171,13 @@ public class DataStructureUtils {
 		return getSomeCommonElement(set1, set2).isPresent();
 	}
 
+	/**
+	 * @return Both sets are disjunct
+	 */
+	public static <T> boolean haveEmptyIntersection(final Set<T> set1, final Set<T> set2) {
+		return !getSomeCommonElement(set1, set2).isPresent();
+	}
+
 	public static <E> String prettyPrint(final Set<E> set) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Set: \n");

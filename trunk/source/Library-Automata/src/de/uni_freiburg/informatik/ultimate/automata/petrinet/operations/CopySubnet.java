@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
 
 /**
@@ -174,8 +175,8 @@ public class CopySubnet<LETTER, PLACE> {
 	 * @return Successor places of T' that are also accepting
 	 */
 	private Stream<PLACE> acceptingSuccPlaces() {
-		return mSuperNet.getAcceptingPlaces().stream().filter(
-				accPlace -> SetOperations.intersecting(mSuperNet.getPredecessors(accPlace), mTransitionSubset));
+		return mSuperNet.getAcceptingPlaces().stream().filter(accPlace -> DataStructureUtils.haveNonEmptyIntersection(
+					mSuperNet.getPredecessors(accPlace), mTransitionSubset));
 	}
 
 	/**
@@ -189,8 +190,8 @@ public class CopySubnet<LETTER, PLACE> {
 	 * @return subset of the always accepting places in N'
 	 */
 	private Stream<PLACE> alwaysAcceptingPlaces() {
-		return acceptingInitialPlaces(mSuperNet).filter(
-				accIniPlace -> SetOperations.disjoint(mSuperNet.getSuccessors(accIniPlace), mTransitionSubset));
+		return acceptingInitialPlaces(mSuperNet).filter(accIniPlace -> DataStructureUtils.haveEmptyIntersection(
+				mSuperNet.getSuccessors(accIniPlace), mTransitionSubset));
 	}
 
 	/**
