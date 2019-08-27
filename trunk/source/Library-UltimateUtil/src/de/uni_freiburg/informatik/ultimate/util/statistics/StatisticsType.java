@@ -71,16 +71,13 @@ public class StatisticsType<T extends Enum<T> & IStatisticsElement> implements I
 	public static <T extends Enum<T> & IStatisticsElement> String prettyprintBenchmarkData(
 			final Collection<String> keys, final Class<T> keyType, final IStatisticsDataProvider benchmarkData) {
 		final StringBuilder sb = new StringBuilder();
-		boolean first = true;
+		String delimiter = "";
 		for (final String key : keys) {
-			if (first) {
-				first = false;
-			} else {
-				sb.append(", ");
-			}
+			sb.append(delimiter);
 			final Object value = benchmarkData.getValue(key);
 			final T keyE = Enum.valueOf(keyType, key);
 			sb.append(keyE.prettyprint(value));
+			delimiter = ", ";
 		}
 		return sb.toString();
 	}
