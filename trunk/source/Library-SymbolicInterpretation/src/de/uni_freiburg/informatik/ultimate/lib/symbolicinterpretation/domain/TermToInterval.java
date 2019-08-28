@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * <li> 1 evaluates to [1, 1].
  * <li> 1 + 2 evaluates to [3, 3].
  * <li> x evaluates to the given interval for x or [-inf, inf] if no interval was given for this variable.
- * <li> TODO document what happends for terms of non-numeric sort
+ * <li> evaluating 1 == 2 throws an exception
  * </ul>
  *
  * @author schaetzc@tf.uni-freiburg.de
