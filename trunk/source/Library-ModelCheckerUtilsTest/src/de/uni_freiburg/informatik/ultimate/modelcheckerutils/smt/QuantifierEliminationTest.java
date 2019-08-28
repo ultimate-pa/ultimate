@@ -705,10 +705,26 @@ public class QuantifierEliminationTest {
 	}
 
 	/**
+	 * 20190828 Matthias: @Test commented because this shows a bug.
+	 * Might not be a good regression test for revealing this bug.
+	 */
+//	@Test
+	public void bugInSolveForSubject20190828() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("lo", new Sort[0], intSort);
+		mScript.declareFun("hi", new Sort[0], intSort);
+		final String formulaAsString = "(forall ((x Int)) (or (< x hi) (< (* (- 4) x) (- lo))))";
+		final String expectedResultAsString = "";
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+
+	/**
 	 * 20190822 Matthias: @Test commented because this is not (yet) a regression
 	 * test but only used to discuss a bug
 	 */
-//	@Test
+	@Test
 	public void fruitOfTheForest() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("b", new Sort[0], intSort);
