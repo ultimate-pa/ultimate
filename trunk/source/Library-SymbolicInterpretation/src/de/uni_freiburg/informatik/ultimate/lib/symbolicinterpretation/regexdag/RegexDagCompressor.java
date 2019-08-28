@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 /**
  * Compresses RegexDags by merging nodes while conserving the DAG's language.
  * Use {@link #compress(RegexDag)} to compress a single DAG in-place.
- * 
+ *
  * @author schaetzc@tf.uni-freiburg.de
  *
  * @param <L> Type of letters that are used inside regex literals
@@ -76,8 +76,8 @@ public class RegexDagCompressor<L> {
 	 *      Compressing two equivalent (but different) DAGs can yield different (but equivalent) results.
 	 * </ul>
 	 * However, the compression is idempotent. In other words, compressing an already compressed DAG again has no effect.
-	 * 
-	 * 
+	 *
+	 *
 	 * @param dag DAG to be compressed in-place
 	 * @return The same DAG (now compressed)
 	 */
@@ -92,7 +92,7 @@ public class RegexDagCompressor<L> {
 		return mDag;
 	}
 
-	private void searchAndMerge(RegexDagNode<L> startNode,
+	private void searchAndMerge(final RegexDagNode<L> startNode,
 			final Function<RegexDagNode<L>, Collection<RegexDagNode<L>>> neighborsInSearchDirection,
 			final Function<RegexDagNode<L>, Collection<RegexDagNode<L>>> neighborsInOtherDirection) {
 		final Set<RegexDagNode<L>> visited = new HashSet<>();
@@ -125,7 +125,7 @@ public class RegexDagCompressor<L> {
 		mMergetable.computeIfAbsent(node.getContent(), key -> new LinkedHashSet<>()).add(node);
 	}
 
-	private RegexDagNode<L> groupToSingleNode(Map.Entry<IRegex<L>, Set<RegexDagNode<L>>> labelToMergeGroup) {
+	private RegexDagNode<L> groupToSingleNode(final Map.Entry<IRegex<L>, Set<RegexDagNode<L>>> labelToMergeGroup) {
 		if (labelToMergeGroup.getValue().size() == 1) {
 			return labelToMergeGroup.getValue().iterator().next();
 		}
@@ -147,7 +147,7 @@ public class RegexDagCompressor<L> {
 	 * Unlinks the pray node from all its neighbors but not vice verca, that is,
 	 * the prey node still has references to its former neighbors
 	 * but the neighbors don't have references to the prey node.
-	 * 
+	 *
 	 * @param predator Node surviving the merge
 	 * @param prey Node to be consumed by the predator
 	 */
@@ -158,7 +158,7 @@ public class RegexDagCompressor<L> {
 		prey.getOutgoingNodes().stream().forEach(out -> out.removeIncoming(prey));
 		// no need to delete prey's references to incoming and outgoing nodes -- prey is deleted anyway
 
-		Set<RegexDagNode<L>> ignore = new HashSet<>(predator.getIncomingNodes());
+		final Set<RegexDagNode<L>> ignore = new HashSet<>(predator.getIncomingNodes());
 		ignore.add(predator);
 		prey.getIncomingNodes().stream().filter(n -> !ignore.contains(n)).forEach(predator::connectIncoming);
 		ignore.clear();

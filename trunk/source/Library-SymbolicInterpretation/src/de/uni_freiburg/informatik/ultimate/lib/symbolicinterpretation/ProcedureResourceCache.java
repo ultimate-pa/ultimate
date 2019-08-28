@@ -31,14 +31,17 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.SifaStats;
 
 public class ProcedureResourceCache {
 
+	private final SifaStats mStats;
 	private final CallGraph mCallGraph;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final Map<String, ProcedureResources> mProcResources = new HashMap<>();
 
-	public ProcedureResourceCache(final CallGraph callGraph, final IIcfg<IcfgLocation> icfg) {
+	public ProcedureResourceCache(final SifaStats stats, final CallGraph callGraph, final IIcfg<IcfgLocation> icfg) {
+		mStats = stats;
 		mCallGraph = callGraph;
 		mIcfg = icfg;
 	}
@@ -48,7 +51,8 @@ public class ProcedureResourceCache {
 	}
 
 	private ProcedureResources computeProcResources(final String procedure) {
-		return new ProcedureResources(mIcfg, procedure, mCallGraph.locationsOfInterest(procedure),
+		return new ProcedureResources(mStats, mIcfg, procedure,
+				mCallGraph.locationsOfInterest(procedure),
 				mCallGraph.successorsOfInterest(procedure));
 	}
 }

@@ -42,9 +42,10 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.cfgpreproc
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.BackwardClosedOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagCompressor;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexToDag;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.RegexStatUtils;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.SifaStats;
 
 /**
  * Resources like dag and overlays for a single procedure.
@@ -57,37 +58,41 @@ public class ProcedureResources {
 	private final BackwardClosedOverlay<IIcfgTransition<IcfgLocation>> mDagOverlayPathToReturn;
 	private final BackwardClosedOverlay<IIcfgTransition<IcfgLocation>> mDagOverlayPathToLOIsAndEnterCalls;
 
-	public ProcedureResources(final IIcfg<IcfgLocation> icfg, final String procedure,
+	public ProcedureResources(final SifaStats stats, final IIcfg<IcfgLocation> icfg, final String procedure,
 			final Collection<IcfgLocation> locationsOfInterest, final Collection<String> enterCallsOfInterest) {
 
 		// TODO split this function into sub-functions
 
-		final ProcedureGraph procedureGraph = new ProcedureGraphBuilder(icfg)
+		final ProcedureGraph procedureGraph = new ProcedureGraphBuilder(stats, icfg)
 				.graphOfProcedure(procedure, locationsOfInterest, enterCallsOfInterest);
 		final Map<String, IcfgLocation> procedureEntryNodes = icfg.getProcedureEntryNodes();
 		final IcfgLocation entry = procedureGraph.getEntryNode();
 		final PathExpressionComputer<IcfgLocation,IIcfgTransition<IcfgLocation>> peComputer =
-				new PathExpressionComputer<>(procedureGraph);
-		final RegexToDag<IIcfgTransition<IcfgLocation>> regexToDag = new RegexToDag<>();
+				RegexStatUtils.createPEComputer(stats, procedureGraph);
+		final RegexToDag<IIcfgTransition<IcfgLocation>> regexToDag = RegexStatUtils.createRegexToDag(stats);
 
 		final Collection<RegexDagNode<IIcfgTransition<IcfgLocation>>> loisAndEnterCallMarkers = new ArrayList<>(
 				locationsOfInterest.size() + enterCallsOfInterest.size());
 		locationsOfInterest.stream()
 				.peek(loi -> assertLoiFromSameProcedure(procedure, loi))
-				.map(loi -> markRegex(peComputer.exprBetween(entry, loi), loi))
-				.map(regexToDag::add)
+				.map(loi -> markRegex(RegexStatUtils.exprBetween(stats, peComputer, entry, loi), loi))
+				.map(regex -> RegexStatUtils.addToDag(stats, regexToDag, regex))
 				.forEach(loisAndEnterCallMarkers::add);
 		enterCallsOfInterest.stream()
 				.map(procedureEntryNodes::get)
-				.map(procEntry -> markRegex(peComputer.exprBetween(entry, procEntry), procEntry))
-				.map(regexToDag::add)
+				.map(procEntry -> markRegex(RegexStatUtils.exprBetween(stats, peComputer, entry, procEntry), procEntry))
+				.map(regex -> RegexStatUtils.addToDag(stats, regexToDag, regex))
 				.forEach(loisAndEnterCallMarkers::add);
 
-		final RegexDagNode<IIcfgTransition<IcfgLocation>> returnDagNode = regexToDag.add(markRegex(
-					peComputer.exprBetween(entry, procedureGraph.getExitNode()), procedureGraph.getExitNode()));
+		final RegexDagNode<IIcfgTransition<IcfgLocation>> returnDagNode = RegexStatUtils.addToDag(stats, regexToDag,
+			markRegex(
+				RegexStatUtils.exprBetween(stats, peComputer, entry, procedureGraph.getExitNode()),
+				procedureGraph.getExitNode()
+			)
+		);
 
-		mRegexDag = regexToDag.getDag();
-		new RegexDagCompressor<IIcfgTransition<IcfgLocation>>().compress(mRegexDag);
+		mRegexDag = RegexStatUtils.getDag(stats, regexToDag);
+		RegexStatUtils.compress(stats, mRegexDag);
 
 		mDagOverlayPathToLOIsAndEnterCalls = new BackwardClosedOverlay<>();
 		// loiDagNodes and enterCallDagNodes are computed before dag compression,

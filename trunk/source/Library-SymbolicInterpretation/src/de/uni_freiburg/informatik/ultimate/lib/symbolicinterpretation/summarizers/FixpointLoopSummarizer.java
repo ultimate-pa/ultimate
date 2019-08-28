@@ -64,7 +64,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 	private final IDomain mDomain;
 	private final IFluid mFluid;
 	private final DagInterpreter mDagIpr;
-	private final StarDagCache mStarDagCache = new StarDagCache();
+	private final StarDagCache mStarDagCache;
 	private final Map<Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate>, IPredicate> mCache;
 
 	public FixpointLoopSummarizer(final SifaStats stats, final ILogger logger,
@@ -77,6 +77,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		mDomain = domain;
 		mFluid = fluid;
 		mDagIpr = dagIpr;
+		mStarDagCache = new StarDagCache(stats);
 		mCache = new HashMap<>();
 	}
 

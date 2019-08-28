@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.SifaStats;
 
 /**
  * @see #graphOfProcedure(String, Collection)
@@ -46,12 +47,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  */
 public class ProcedureGraphBuilder {
 
+	private final SifaStats mStats;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private ProcedureGraph mCurrentProcedureGraph;
 	private final Queue<IcfgLocation> mWork = new ArrayDeque<>();
 	private final Set<IcfgLocation> mVisited = new HashSet<>();
 
-	public ProcedureGraphBuilder(final IIcfg<IcfgLocation> icfg) {
+	public ProcedureGraphBuilder(final SifaStats stats, final IIcfg<IcfgLocation> icfg) {
+		mStats = stats;
 		mIcfg = icfg;
 	}
 
@@ -92,6 +95,9 @@ public class ProcedureGraphBuilder {
 	public ProcedureGraph graphOfProcedure(final String procedureName,
 			final Collection<IcfgLocation> locationsOfInterest,
 			final Collection<String> enterCallsOfInterest) {
+
+		mStats.start(SifaStats.Key.PROCEDURE_GRAPH_BUILDER_TIME);
+
 		mCurrentProcedureGraph = new ProcedureGraph(mIcfg, procedureName);
 		// make sure that LOIs exist, even if they don't have any incoming or outgoing edges
 		// (entry and exit are already added in the graph's constructor)
@@ -107,6 +113,9 @@ public class ProcedureGraphBuilder {
 		}
 		mVisited.clear();
 		mWork.clear();
+
+		mStats.stop(SifaStats.Key.PROCEDURE_GRAPH_BUILDER_TIME);
+
 		return mCurrentProcedureGraph;
 	}
 

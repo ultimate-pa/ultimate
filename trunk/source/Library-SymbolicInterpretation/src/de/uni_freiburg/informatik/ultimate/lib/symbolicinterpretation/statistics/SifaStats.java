@@ -115,7 +115,11 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 	}
 
 	public void increment(final Key intCounterId) {
-		mIntCounters.put(intCounterId, mIntCounters.getOrDefault(intCounterId, 0) + 1);
+		add(intCounterId, 1);
+	}
+
+	public void add(final Key intCounterId, final int summand) {
+		mIntCounters.put(intCounterId, mIntCounters.getOrDefault(intCounterId, 0) + summand);
 	}
 
 	@Override
@@ -178,9 +182,20 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		/** Time spent to compute completely new call summaries in case of cache misses. */
 		CALL_SUMMARIZER_NEW_COMPUTATION_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
 
-		// TODO statistics for regex computation and compression?
-		// problem: regex is a standalone lib and should not depend on this lib
-		// ==> Create statistics classes for these two and incorporate their statistics here
+		PROCEDURE_GRAPH_BUILDER_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+
+		/** Time spent computing path expressions (= regexes) from graphs. */
+		PATH_EXPR_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+
+		/** Time spent converting regexes into dags. */
+		REGEX_TO_DAG_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+
+		/** Time spent compressing RegexDags. This can include multiple compression runs on different dags. */
+		DAG_COMPRESSION_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		/** Sum of number of nodes in processed RegexDags before compression. */
+		DAG_COMPRESSION_PROCESSED_NODES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+		/** Sum of number of nodes in processed RegexDags after compression. */
+		DAG_COMPRESSION_RETAINED_NODES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
 		;
 
 		private final Class<?> mDataType;

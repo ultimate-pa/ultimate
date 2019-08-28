@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagCompressor;
-import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexToDag;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.RegexStatUtils;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.SifaStats;
 
 /**
  * Stores compressed {@link RegexDag}s for the content of star expressions.
@@ -46,10 +46,13 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.R
  */
 public class StarDagCache {
 
-	private final RegexToDag<IIcfgTransition<IcfgLocation>> mRegexToDag = new RegexToDag<>();
-	private final RegexDagCompressor<IIcfgTransition<IcfgLocation>> mCompressor = new RegexDagCompressor<>();
+	private final SifaStats mStats;
 	private final Map<IRegex<IIcfgTransition<IcfgLocation>>, RegexDag<IIcfgTransition<IcfgLocation>>> mCache =
 			new HashMap<>();
+
+	public StarDagCache(final SifaStats stats) {
+		mStats = stats;
+	}
 
 	public RegexDag<IIcfgTransition<IcfgLocation>> dagOf(final IRegex<IIcfgTransition<IcfgLocation>> regex) {
 		return mCache.computeIfAbsent(regex, this::computeDagOf);
@@ -62,10 +65,6 @@ public class StarDagCache {
 					+ "Either you forgot to call .inner() on the star for which you want to compute a DAG "
 					+ "or your regex is of the form ((expr)*)* which could be simplified to just (expr)*.");
 		}
-		mRegexToDag.resetDag();
-		mRegexToDag.add(regex);
-		final RegexDag<IIcfgTransition<IcfgLocation>> dag = mRegexToDag.getDag();
-		mCompressor.compress(dag);
-		return dag;
+		return RegexStatUtils.compress(mStats, RegexStatUtils.regexToDag(mStats, regex));
 	}
 }
