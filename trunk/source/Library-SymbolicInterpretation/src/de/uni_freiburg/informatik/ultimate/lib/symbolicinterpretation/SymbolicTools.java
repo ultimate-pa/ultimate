@@ -69,13 +69,14 @@ public class SymbolicTools {
 	private final IPredicate mTop;
 	private final IPredicate mBottom;
 	private final SimplificationTechnique mSimplification;
+	private final XnfConversionTechnique mXnfConversion;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mPQELogger;
 	private final SifaStats mStats;
 
-	// TODO add XNF conversion technique as parameter and use that parameter everywhere instead of constants
 	public SymbolicTools(final IUltimateServiceProvider services, final SifaStats stats,
-			final IIcfg<IcfgLocation> icfg, final SimplificationTechnique simplification) {
+			final IIcfg<IcfgLocation> icfg, final SimplificationTechnique simplification,
+			final XnfConversionTechnique xnfConversion) {
 		mServices = services;
 		mStats = stats;
 		mIcfg = icfg;
@@ -85,6 +86,7 @@ public class SymbolicTools {
 		mPQELogger.setLevel(LogLevel.WARN);
 
 		mSimplification = simplification;
+		mXnfConversion = xnfConversion;
 		mMngdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final Script script = mMngdScript.getScript();
 		mFactory = new PredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable());
@@ -133,7 +135,7 @@ public class SymbolicTools {
 			// 2018-08-17 DD:
 			// Temporary workaround for aux-var in transition issue: remove it afterwards through ex. proj.
 			predicateTerm = PartialQuantifierElimination.quantifier(mServices, mPQELogger, mMngdScript, mSimplification,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, Script.EXISTS,
+					mXnfConversion, Script.EXISTS,
 					transition.getTransformula().getAuxVars(), sp);
 		}
 		mStats.stop(SifaStats.Key.TOOLS_POST_CALL_TIME);
@@ -164,8 +166,7 @@ public class SymbolicTools {
 		// you can ensure that there are no let terms by using the unletter, but there should not be any let terms
 		// final Term unletedTerm = new FormulaUnLet().transform(pred.getFormula());
 
-		final Term dnf = SmtUtils.toDnf(mServices, mMngdScript, pred.getFormula(),
-				SmtUtils.XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term dnf = SmtUtils.toDnf(mServices, mMngdScript, pred.getFormula(), mXnfConversion);
 		return SmtUtils.getDisjuncts(dnf);
 	}
 
@@ -280,8 +281,7 @@ public class SymbolicTools {
 				final Term term) {
 			mStats.start(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
 			final Term result = PartialQuantifierElimination.quantifier(mServices, mPQELogger, mMgdScript,
-					SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-					quantifier, varsToQuantify, term);
+					SimplificationTechnique.NONE, mXnfConversion, quantifier, varsToQuantify, term);
 			mStats.stop(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
 			return result;
 		}
