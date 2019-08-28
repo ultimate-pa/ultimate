@@ -64,8 +64,6 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 	private final ProcedureResourceCache mProcResCache;
 	private final DagInterpreter mDagInterpreter;
 
-	// TODO create
-
 	/**
 	 * Creates a new interpret using a custom set of locations of interest.
 	 *

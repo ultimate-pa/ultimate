@@ -163,23 +163,24 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		DOMAIN_ISBOTTOM_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
 
 		LOOP_SUMMARIZER_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
-		LOOP_SUMMARIZER_CACHE_HITS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
 		LOOP_SUMMARIZER_CACHE_MISSES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
 		/** Time spent to obtain loop summaries, including the time to look search the cache and re-use existing summaries. */
 		LOOP_SUMMARIZER_OVERALL_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
 		/** Time spent to compute completely new loop summaries in case of cache misses. */
-		LOOP_SUMMARIZER_COMPUTATION_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		LOOP_SUMMARIZER_NEW_COMPUTATION_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		/** Overall number of iterations. This statistic is specific to FixpointLoopSummerizer. */
+		LOOP_SUMMARIZER_FIXPOINT_ITERATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
 
 		CALL_SUMMARIZER_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
-		CALL_SUMMARIZER_CACHE_HITS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
 		CALL_SUMMARIZER_CACHE_MISSES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
 		/** Time spent to obtain call summaries, including the time to look search the cache and re-use existing summaries. */
 		CALL_SUMMARIZER_OVERALL_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
 		/** Time spent to compute completely new call summaries in case of cache misses. */
-		CALL_SUMMARIZER_COMPUTATION_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		CALL_SUMMARIZER_NEW_COMPUTATION_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
 
-		/** Time used to compute regular expressions for procedures and loops. */
-		REGEX_COMPUTATION_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		// TODO statistics for regex computation and compression?
+		// problem: regex is a standalone lib and should not depend on this lib
+		// ==> Create statistics classes for these two and incorporate their statistics here
 		;
 
 		private final Class<?> mDataType;

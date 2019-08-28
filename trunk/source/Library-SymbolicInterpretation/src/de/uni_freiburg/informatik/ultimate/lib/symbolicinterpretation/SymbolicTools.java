@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscri
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -70,11 +71,14 @@ public class SymbolicTools {
 	private final SimplificationTechnique mSimplification;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mPQELogger;
+	private final SifaStats mStats;
 
-	public SymbolicTools(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
-			final SimplificationTechnique simplification) {
-		mIcfg = icfg;
+	// TODO add XNF conversion technique as parameter and use that parameter everywhere instead of constants
+	public SymbolicTools(final IUltimateServiceProvider services, final SifaStats stats,
+			final IIcfg<IcfgLocation> icfg, final SimplificationTechnique simplification) {
 		mServices = services;
+		mStats = stats;
+		mIcfg = icfg;
 
 		// create PQE logger with custom log level
 		mPQELogger = services.getLoggingService().getLogger(getClass().getName() + ".PQE");
@@ -103,13 +107,19 @@ public class SymbolicTools {
 	}
 
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
-		return predicate(mTransformer.strongestPostcondition(input, transition.getTransformula()));
+		mStats.start(SifaStats.Key.TOOLS_POST_TIME);
+		mStats.increment(SifaStats.Key.TOOLS_POST_APPLICATIONS);
+		final IPredicate postState = predicate(mTransformer.strongestPostcondition(input, transition.getTransformula()));
+		mStats.stop(SifaStats.Key.TOOLS_POST_TIME);
+		return postState;
 	}
 
 	/**
 	 * Assigns arguments to parameters of the callee. Also handles globals and old vars.
 	 */
 	public IPredicate postCall(final IPredicate input, final IIcfgCallTransition<IcfgLocation> transition) {
+		mStats.start(SifaStats.Key.TOOLS_POST_CALL_TIME);
+		mStats.increment(SifaStats.Key.TOOLS_POST_CALL_APPLICATIONS);
 		final CfgSmtToolkit toolkit = mIcfg.getCfgSmtToolkit();
 		final String calledProcedure = transition.getSucceedingProcedure();
 		final Term sp = mTransformer.strongestPostconditionCall(input, transition.getLocalVarsAssignment(),
@@ -126,6 +136,7 @@ public class SymbolicTools {
 					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, Script.EXISTS,
 					transition.getTransformula().getAuxVars(), sp);
 		}
+		mStats.stop(SifaStats.Key.TOOLS_POST_CALL_TIME);
 		return predicate(predicateTerm);
 	}
 
@@ -134,12 +145,17 @@ public class SymbolicTools {
 	 */
 	public IPredicate postReturn(final IPredicate inputBeforeCall, final IPredicate inputBeforeReturn,
 			final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnTransition) {
+		mStats.start(SifaStats.Key.TOOLS_POST_RETURN_TIME);
+		mStats.increment(SifaStats.Key.TOOLS_POST_RETURN_APPLICATIONS);
 		final CfgSmtToolkit toolkit = mIcfg.getCfgSmtToolkit();
 		final String callee = returnTransition.getPrecedingProcedure();
-		return predicate(mTransformer.strongestPostconditionReturn(inputBeforeReturn, inputBeforeCall,
+		final IPredicate postState = predicate(mTransformer.strongestPostconditionReturn(
+				inputBeforeReturn, inputBeforeCall,
 				returnTransition.getTransformula(), returnTransition.getCorrespondingCall().getTransformula(),
 				toolkit.getOldVarsAssignmentCache().getOldVarsAssignment(callee),
 				toolkit.getModifiableGlobalsTable().getModifiedBoogieVars(callee)));
+		mStats.stop(SifaStats.Key.TOOLS_POST_RETURN_TIME);
+		return postState;
 	}
 
 	public Term[] dnfDisjuncts(final IPredicate pred) {
@@ -240,7 +256,7 @@ public class SymbolicTools {
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
-	private static final class EliminatingTermDomainOperationProvider extends TermDomainOperationProvider {
+	private final class EliminatingTermDomainOperationProvider extends TermDomainOperationProvider {
 
 		private final ILogger mPQELogger;
 
@@ -262,9 +278,12 @@ public class SymbolicTools {
 
 		private Term constructQuantifiedFormula(final int quantifier, final Set<TermVariable> varsToQuantify,
 				final Term term) {
-			return PartialQuantifierElimination.quantifier(mServices, mPQELogger, mMgdScript,
+			mStats.start(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
+			final Term result = PartialQuantifierElimination.quantifier(mServices, mPQELogger, mMgdScript,
 					SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 					quantifier, varsToQuantify, term);
+			mStats.stop(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
+			return result;
 		}
 
 	}

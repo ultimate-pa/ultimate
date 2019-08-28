@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.DagInterpr
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResourceCache;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureResources;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.SifaStats;
 
 /**
  * Computes call summaries ignoring the actual call's input and using only true as an input.
@@ -43,14 +44,16 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTo
  */
 public class TopInputCallSummarizer implements ICallSummarizer {
 
+	private final SifaStats mStats;
 	private final SymbolicTools mTools;
 	private final ProcedureResourceCache mProcResCache;
 	private final DagInterpreter mDagIpreter;
 
 	private final Map<String, IPredicate> mProcToSummary = new HashMap<>();
 
-	public TopInputCallSummarizer(final SymbolicTools tools, final ProcedureResourceCache procResCache,
-			final DagInterpreter dagIpreter) {
+	public TopInputCallSummarizer(final SifaStats stats, final SymbolicTools tools,
+			final ProcedureResourceCache procResCache, final DagInterpreter dagIpreter) {
+		mStats = stats;
 		mTools = tools;
 		mProcResCache = procResCache;
 		mDagIpreter = dagIpreter;
@@ -58,11 +61,24 @@ public class TopInputCallSummarizer implements ICallSummarizer {
 
 	@Override
 	public IPredicate summarize(final String callee, final IPredicate unusedInput) {
-		return mProcToSummary.computeIfAbsent(callee, this::computeTopSummary);
+		mStats.start(SifaStats.Key.CALL_SUMMARIZER_OVERALL_TIME);
+		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_APPLICATIONS);
+
+		final IPredicate result = mProcToSummary.computeIfAbsent(callee, this::computeTopSummary);
+
+		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_OVERALL_TIME);
+		return result;
 	}
 
 	private IPredicate computeTopSummary(final String procedure) {
+		mStats.start(SifaStats.Key.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
+		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_CACHE_MISSES);
+
 		final ProcedureResources res = mProcResCache.resourcesOf(procedure);
-		return mDagIpreter.interpret(res.getRegexDag(), res.getDagOverlayPathToReturn(), mTools.top());
+		final IPredicate result = mDagIpreter.interpret(
+				res.getRegexDag(), res.getDagOverlayPathToReturn(), mTools.top());
+
+		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
+		return result;
 	}
 }

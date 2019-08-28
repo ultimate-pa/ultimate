@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.Com
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.ExplicitValueDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IntervalDomain;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.StatsWrapperDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.AlwaysFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
@@ -95,23 +96,28 @@ public class SifaBuilder {
 
 	public SifaComponents construct(final IIcfg<IcfgLocation> icfg, final IProgressAwareTimer timer) {
 		final SifaStats stats = new SifaStats();
-		// TODO pass stats to all components
-		final SymbolicTools tools = constructTools(icfg);
-		final IDomain domain = constructDomain(tools, timer);
+		final SymbolicTools tools = constructTools(stats, icfg);
+		final IDomain domain = constructStatsDomain(stats, tools, timer);
+		// TODO stats for fluid?
 		final IFluid fluid = constructFluid();
 		final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSum =
-				constructLoopSummarizer(timer, tools, domain, fluid);
+				constructLoopSummarizer(stats, timer, tools, domain, fluid);
 		final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSum =
-				constructCallSummarizer(tools, domain);
+				constructCallSummarizer(stats, tools, domain);
 		final IcfgInterpreter icfgInterpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg,
 				IcfgInterpreter.allErrorLocations(icfg), domain, fluid, loopSum, callSum);
 		return new SifaComponents(icfgInterpreter, domain, stats);
 	}
 
-	private SymbolicTools constructTools(final IIcfg<IcfgLocation> icfg) {
-		return new SymbolicTools(mServices, icfg,
+	private SymbolicTools constructTools(final SifaStats stats, final IIcfg<IcfgLocation> icfg) {
+		return new SymbolicTools(mServices, stats, icfg,
 			mPrefs.getEnum(SifaPreferences.LABEL_SIMPLIFICATION, SifaPreferences.CLASS_SIMPLIFICATION));
 
+	}
+
+	private IDomain constructStatsDomain(final SifaStats stats, final SymbolicTools tools,
+			final IProgressAwareTimer timer) {
+		return new StatsWrapperDomain(stats, constructDomain(tools, timer));
 	}
 
 	private IDomain constructDomain(final SymbolicTools tools, final IProgressAwareTimer timer) {
@@ -171,24 +177,26 @@ public class SifaBuilder {
 	}
 
 	private Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> constructLoopSummarizer(
-			final IProgressAwareTimer timer, final SymbolicTools tools, final IDomain domain, final IFluid fluid) {
+			final SifaStats stats, final IProgressAwareTimer timer, final SymbolicTools tools,
+			final IDomain domain, final IFluid fluid) {
 		final String prefLoopSum = mPrefs.getString(SifaPreferences.LABEL_LOOP_SUMMARIZER);
 		if (FixpointLoopSummarizer.class.getSimpleName().equals(prefLoopSum)) {
 			return icfgIpr -> dagIpr -> new FixpointLoopSummarizer(
-					mLogger, () -> timer, tools, domain, fluid, dagIpr);
+					stats, mLogger, () -> timer, tools, domain, fluid, dagIpr);
 		} else {
 			throw new IllegalArgumentException("Unknown loop summarizer setting: " + prefLoopSum);
 		}
 	}
 
 	private Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> constructCallSummarizer(
-			final SymbolicTools tools, final IDomain domain) {
+			final SifaStats stats, final SymbolicTools tools, final IDomain domain) {
 		final String prefCallSum = mPrefs.getString(SifaPreferences.LABEL_CALL_SUMMARIZER);
 		if (TopInputCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
-			return icfgIpr -> dagIpr -> new TopInputCallSummarizer(tools, icfgIpr.procedureResourceCache(), dagIpr);
+			return icfgIpr -> dagIpr -> new TopInputCallSummarizer(
+					stats, tools, icfgIpr.procedureResourceCache(), dagIpr);
 		} else if (ReUseSupersetCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
 			return icfgIpr -> dagIpr -> new ReUseSupersetCallSummarizer(
-					tools, domain, icfgIpr.procedureResourceCache(), dagIpr);
+					stats, tools, domain, icfgIpr.procedureResourceCache(), dagIpr);
 		} else {
 			throw new IllegalArgumentException("Unknown call summarizer setting: " + prefCallSum);
 		}

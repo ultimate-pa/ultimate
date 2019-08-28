@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFlu
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.FullOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.IDagOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -56,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class FixpointLoopSummarizer implements ILoopSummarizer {
 
+	private final SifaStats mStats;
 	private final ILogger mLogger;
 	private final Supplier<IProgressAwareTimer> mFixpointIterationTimeout;
 	private final SymbolicTools mTools;
@@ -65,8 +67,10 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 	private final StarDagCache mStarDagCache = new StarDagCache();
 	private final Map<Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate>, IPredicate> mCache;
 
-	public FixpointLoopSummarizer(final ILogger logger, final Supplier<IProgressAwareTimer> fixpointIterationTimeout,
-			final SymbolicTools tools, final IDomain domain, final IFluid fluid, final DagInterpreter dagIpr) {
+	public FixpointLoopSummarizer(final SifaStats stats, final ILogger logger,
+			final Supplier<IProgressAwareTimer> fixpointIterationTimeout, final SymbolicTools tools,
+			final IDomain domain, final IFluid fluid, final DagInterpreter dagIpr) {
+		mStats = stats;
 		mLogger = logger;
 		mFixpointIterationTimeout = fixpointIterationTimeout;
 		mTools = tools;
@@ -78,15 +82,24 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 
 	@Override
 	public IPredicate summarize(final Star<IIcfgTransition<IcfgLocation>> regex, final IPredicate input) {
+		mStats.start(SifaStats.Key.LOOP_SUMMARIZER_OVERALL_TIME);
+		mStats.increment(SifaStats.Key.LOOP_SUMMARIZER_APPLICATIONS);
+
 		final Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate> key = new Pair<>(regex, input);
 		// TODO consider using cache more, for instance if loop is the same but
 		// - input is a subset of a known input
 		// - input is a superset of a known input, but a subset of any input from the iteration sequence.
 		// Such re-use strategies work well as a WrapperLoopSummarzier
-		return mCache.computeIfAbsent(key, this::summarizeInternal);
+		final IPredicate result = mCache.computeIfAbsent(key, this::summarizeInternal);
+
+		mStats.stop(SifaStats.Key.LOOP_SUMMARIZER_OVERALL_TIME);
+		return result;
 	}
 
 	private IPredicate summarizeInternal(final Pair<Star<IIcfgTransition<IcfgLocation>>, IPredicate> starAndInput) {
+		mStats.start(SifaStats.Key.LOOP_SUMMARIZER_NEW_COMPUTATION_TIME);
+		mStats.increment(SifaStats.Key.LOOP_SUMMARIZER_CACHE_MISSES);
+
 		final IProgressAwareTimer timer = mFixpointIterationTimeout.get();
 
 		final IRegex<IIcfgTransition<IcfgLocation>> starredRegex = starAndInput.getFirst().getInner();
@@ -100,6 +113,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 				mLogger.warn("Timeout while computing loop summary. Using TOP as summary.");
 				return mTools.top();
 			}
+			mStats.increment(SifaStats.Key.LOOP_SUMMARIZER_FIXPOINT_ITERATIONS);
 			postState = mDagIpr.interpret(dag, fullOverlay, preState);
 			if (mFluid.shallBeAbstracted(postState)) {
 				postState = mDomain.alpha(postState);
@@ -112,6 +126,9 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 			}
 			preState = mDomain.widen(preState, postState);
 		}
+
+		mStats.stop(SifaStats.Key.LOOP_SUMMARIZER_NEW_COMPUTATION_TIME);
+
 		// not postState because postState ⊆ preState
 		return preState;
 	}

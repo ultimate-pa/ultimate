@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.ProcedureR
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDomain.ResultForAlteredInputs;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.SifaStats;
 
 /**
  * Re-uses call summaries whenever possible.
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.domain.IDo
 // TODO consider implementing this summarizer as a wrapper for other call summarizers
 public class ReUseSupersetCallSummarizer implements ICallSummarizer {
 
+	private final SifaStats mStats;
 	private final SymbolicTools mTools;
 	private final IDomain mDomain;
 	private final ProcedureResourceCache mProcResCache;
@@ -53,8 +55,9 @@ public class ReUseSupersetCallSummarizer implements ICallSummarizer {
 	/** Maps each procedure (name) to its summary cache. */
 	private final Map<String, SummaryCache> mSummaryCache = new HashMap<>();
 
-	public ReUseSupersetCallSummarizer(final SymbolicTools tools, final IDomain domain,
+	public ReUseSupersetCallSummarizer(final SifaStats stats, final SymbolicTools tools, final IDomain domain,
 			final ProcedureResourceCache procResCache, final DagInterpreter dagIpreter) {
+		mStats = stats;
 		mTools = tools;
 		mDomain = domain;
 		mProcResCache = procResCache;
@@ -63,8 +66,14 @@ public class ReUseSupersetCallSummarizer implements ICallSummarizer {
 
 	@Override
 	public IPredicate summarize(final String callee, final IPredicate inputAfterCall) {
-		return mSummaryCache.computeIfAbsent(callee, unused -> new SummaryCache())
+		mStats.start(SifaStats.Key.CALL_SUMMARIZER_OVERALL_TIME);
+		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_APPLICATIONS);
+
+		final IPredicate result = mSummaryCache.computeIfAbsent(callee, unused -> new SummaryCache())
 				.reUseOrCompute(inputAfterCall, this::isSubsetEq, () -> computeSummary(callee, inputAfterCall), mTools);
+
+		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_OVERALL_TIME);
+		return result;
 	}
 
 	private boolean isSubsetEq(final IPredicate subset, final IPredicate superset) {
@@ -73,8 +82,15 @@ public class ReUseSupersetCallSummarizer implements ICallSummarizer {
 	}
 
 	private IPredicate computeSummary(final String callee, final IPredicate inputAfterCall) {
+		mStats.start(SifaStats.Key.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
+		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_CACHE_MISSES);
+
 		final ProcedureResources res = mProcResCache.resourcesOf(callee);
-		return mDagIpreter.interpret(res.getRegexDag(), res.getDagOverlayPathToReturn(), inputAfterCall);
+		final IPredicate result = mDagIpreter.interpret(
+				res.getRegexDag(), res.getDagOverlayPathToReturn(), inputAfterCall);
+
+		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
+		return result;
 	}
 }
 
