@@ -26,11 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag;
 
-import java.util.ArrayDeque;
-import java.util.HashSet;
-import java.util.Queue;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Concatenation;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.EmptySet;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
@@ -54,18 +49,9 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Union;
 public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDagNode<L>> {
 
 	private RegexDag<L> mDag;
-	private Set<Star<L>> mVisitedStars;
-	private Queue<Star<L>> mStarWorklist;
 
 	public RegexToDag() {
-		resetDagAndStars();
-	}
-
-	// TODO remove, see getStarWorklist
-	public final void resetDagAndStars() {
 		resetDag();
-		mVisitedStars = new HashSet<>();
-		mStarWorklist = new ArrayDeque<>();
 	}
 
 	public final void resetDag() {
@@ -88,20 +74,6 @@ public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDag
 		final RegexDagNode<L> regexSink = regex.accept(this, mDag.getSource());
 		regexSink.connectOutgoing(mDag.getSink());
 		return regexSink;
-	}
-
-	/**
-	 * TODO remove star worklist. This Method is probably not needed.
-	 *
-	 * Retrieves the star expressions treated like literals since the last {@link #resetDagAndStars()}.
-	 * The list is free of duplicates. This returns a direct reference to the internal worklist;
-	 * it is ok to modify the list from the outside, but running {@link #add(IRegex)} may add something to the
-	 * worklist.
-	 *
-	 * @return Reference to the worklist of visited star expressions.
-	 */
-	public Queue<Star<L>> getStarWorklist() {
-		return mStarWorklist;
 	}
 
 	/**
@@ -130,9 +102,6 @@ public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDag
 
 	@Override
 	public RegexDagNode<L> visit(final Star<L> star, final RegexDagNode<L> parent) {
-		if (mVisitedStars.add(star)) {
-			mStarWorklist.add(star);
-		}
 		return appendAsNode(star, parent);
 	}
 
