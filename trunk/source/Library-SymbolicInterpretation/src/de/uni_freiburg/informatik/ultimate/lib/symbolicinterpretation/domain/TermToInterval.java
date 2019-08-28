@@ -107,7 +107,7 @@ public class TermToInterval {
 		} else if (arity == 1) {
 			return handleUnaryFunction(term, scope);
 		} else {
-			return handleNAryFunction(term, scope);
+			return handleGEq2AryFunction(term, scope);
 		}
 	}
 
@@ -121,8 +121,29 @@ public class TermToInterval {
 		}
 	}
 
-	private static Interval handleNAryFunction(final ApplicationTerm term, final Map<TermVariable, Interval> scope) {
-		// TODO support if-then-else terms (simply union both possible results?)
+	/** Evaluates functions of arity greater or equal 2. */
+	private static Interval handleGEq2AryFunction(final ApplicationTerm term, final Map<TermVariable, Interval> scope) {
+		if ("ite".equals(term.getFunction())) {
+			return handleIfThenElseFunction(term, scope);
+		} else {
+			return handleLeftAssociativeFunction(term, scope);
+		}
+	}
+
+	private static Interval handleIfThenElseFunction(final ApplicationTerm term,
+			final Map<TermVariable, Interval> scope) {
+		final Term[] iteParams = term.getParameters();
+		assert "ite".equals(term.getFunction()) : "Expected ite term but found " + term;
+		assert iteParams.length == 3 : "Expected 3 parameters for ite term but found " + term;
+		// TODO evaluate condition (condition is boolean, but we only support numeric types in intervals)
+		// For now we ignore the condition and over-approximate
+		final Interval iteThenResult = evaluate(iteParams[1], scope);
+		final Interval iteElseResult = evaluate(iteParams[2], scope);
+		return iteThenResult.union(iteElseResult);
+	}
+
+	private static Interval handleLeftAssociativeFunction(final ApplicationTerm term,
+			final Map<TermVariable, Interval> scope) {
 		final BiFunction<Interval, Interval, Interval> leftAssociativeOp =
 				intervalOpForSmtFunc(term.getFunction().getName());
 		if (leftAssociativeOp == null) {
