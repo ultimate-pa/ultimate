@@ -209,7 +209,6 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 			combo(LABEL_FLUID, TOOLTIP_FLUID, DEFAULT_FLUID, VALUES_FLUID),
 			//
 			combo(LABEL_SIMPLIFICATION, DEFAULT_SIMPLIFICATION, VALUES_SIMPLIFICATION),
-			// TODO remove unused setting
 			combo(LABEL_XNF_CONVERSION, DEFAULT_XNF_CONVERSION, VALUES_XNF_CONVERSION),
 			//
 			containerExplValDom,
