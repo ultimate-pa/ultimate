@@ -90,7 +90,7 @@ public class DagInterpreter {
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
 
 		final Collection<IcfgLocation> sinkLocations = RegexDagUtils.sinkLocations(dag, overlay);
-		if (sinkLocations.size() == 0) {
+		if (sinkLocations.isEmpty()) {
 			// can happen, for instance if the procedure consists of "f() { label: goto label; }"
 			mLogger.warn("A function never reaches its return");
 			return mTools.bottom();
