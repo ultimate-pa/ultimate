@@ -54,13 +54,13 @@ public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDag
 		resetDag();
 	}
 
-	public final void resetDag() {
+	private final void resetDag() {
 		mDag = new RegexDag<>(RegexDagNode.makeEpsilon(), RegexDagNode.makeEpsilon());
 	}
 
 	/**
 	 * Incorporates a given regex into the current DAG.
-	 * Use {@link #getDag()} to query the resulting DAG.
+	 * Use {@link #getDagAndReset()} to query the resulting DAG.
 	 *
 	 * @param regex Regex to be converted into a DAG
 	 * @return Reference to the last RegexDagNode created for the given regex.<br>
@@ -69,22 +69,24 @@ public class RegexToDag<L> implements IRegexVisitor<L, RegexDagNode<L>, RegexDag
 	 *         For (a)* this is a node containing the regex star (a)*.
 	 */
 	public RegexDagNode<L> add(final IRegex<L> regex) {
-		// TODO works only when source and sink are epsilon.
+		// Warning: Works only when source and sink are epsilon.
 		// If DAG was modified (for instance compressed) this approach will produce wrong DAGs or even cycles.
+		// Therefore we always clear reset dag when giving a reference to the outside world.
+		// Alternatively we could copy, but there so far there is no use case for add() getDag() add() getDagAndReset()
 		final RegexDagNode<L> regexSink = regex.accept(this, mDag.getSource());
 		regexSink.connectOutgoing(mDag.getSink());
 		return regexSink;
 	}
 
 	/**
-	 * Retrieves the DAG built from possibly multiple regexes.
-	 * Caution: The retrieved DAG is only a reference and may change due to subsequent calls to {@link #add(IRegex)}.
-	 * Call {@link #resetDag()} to prevent this class from changing the retrieved DAG in the future.
+	 * Retrieves the DAG built from possibly multiple regexes and clears this object's intern state.
 	 *
 	 * @return The regex DAG built from all {@link #add(IRegex)} since the last {@link #resetDag()}.
 	 */
-	public RegexDag<L> getDag() {
-		return mDag;
+	public RegexDag<L> getDagAndReset() {
+		final RegexDag<L> result = mDag;
+		resetDag();
+		return result;
 	}
 
 	@Override

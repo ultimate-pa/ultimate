@@ -88,19 +88,19 @@ public final class RegexStatUtils {
 		return result;
 	}
 
-	/** @see RegexToDag#getDag() */
-	public static <L> RegexDag<L> getDag(final SifaStats stats,
+	/** @see RegexToDag#getDagAndReset() */
+	public static <L> RegexDag<L> getDagAndReset(final SifaStats stats,
 			final RegexToDag<L> regexToDag) {
 
 		stats.start(SifaStats.Key.REGEX_TO_DAG_TIME);
-		final RegexDag<L> result = regexToDag.getDag();
+		final RegexDag<L> result = regexToDag.getDagAndReset();
 		stats.stop(SifaStats.Key.REGEX_TO_DAG_TIME);
 		return result;
 	}
 
 	/**
 	 * Creates a {@link RegexToDag}, adds a single regex using {@link RegexToDag#add(IRegex)},
-	 * and then returns the dag given {@link RegexToDag#getDag()}.
+	 * and then returns the dag given {@link RegexToDag#getDagAndReset()}.
 	 */
 	public static <L> RegexDag<L> regexToDag(final SifaStats stats,
 			final IRegex<L> regex) {
@@ -108,7 +108,7 @@ public final class RegexStatUtils {
 		stats.start(SifaStats.Key.REGEX_TO_DAG_TIME);
 		final RegexToDag<L> regexToDag = new RegexToDag<>();
 		regexToDag.add(regex);
-		final RegexDag<L> result = regexToDag.getDag();
+		final RegexDag<L> result = regexToDag.getDagAndReset();
 		stats.stop(SifaStats.Key.REGEX_TO_DAG_TIME);
 		return result;
 	}

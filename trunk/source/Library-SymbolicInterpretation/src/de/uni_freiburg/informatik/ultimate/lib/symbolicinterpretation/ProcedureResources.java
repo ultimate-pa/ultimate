@@ -91,7 +91,7 @@ public class ProcedureResources {
 			)
 		);
 
-		mRegexDag = RegexStatUtils.getDag(stats, regexToDag);
+		mRegexDag = RegexStatUtils.getDagAndReset(stats, regexToDag);
 		RegexStatUtils.compress(stats, mRegexDag);
 
 		mDagOverlayPathToLOIsAndEnterCalls = new BackwardClosedOverlay<>();

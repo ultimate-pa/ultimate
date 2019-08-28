@@ -61,7 +61,7 @@ public class RegexToDagTest {
 		for (final IRegex<String> re : regexesToBeAdded) {
 			re2dag.add(re);
 		}
-		RegexDagTestUtils.assertEq(nodesExpected, edgesExpected, re2dag.getDag());
+		RegexDagTestUtils.assertEq(nodesExpected, edgesExpected, re2dag.getDagAndReset());
 	}
 
 	private static final IRegex<String> ε = Regex.epsilon();
