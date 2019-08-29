@@ -1,0 +1,20 @@
+#Thu Aug 29 17:38:40 CEST 2019
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Abstract\ Domain=CompoundDomain
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Abstract\ when\ formula\ has\ more\ disjuncts\ than\n(negative\ numbers\ disable\ this\ limit)=8
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Abstract\ when\ formula's\ dag\ size\ exceeds\n(negative\ numbers\ disable\ this\ limit)=-1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Call\ Summarizer=TopInputCallSummarizer
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Fluid=SizeLimitFluid
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Intern\ Fluid=SizeLimitFluid
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Intern\ domains=ExplicitValueDomain;IntervalDomain
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Loop\ Summarizer=FixpointLoopSummarizer
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Explicit\ Values=2
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Intervals=2
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Simplification\ Technique=NONE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Xnf\ Conversion\ Technique=BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
+@de.uni_freiburg.informatik.ultimate.plugins.sifa=0.1.24
+file_export_version=3.0
+#Thu Aug 29 17:38:40 CEST 2019
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+file_export_version=3.0
