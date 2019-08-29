@@ -1,3 +1,4 @@
+//#Safe
 procedure main() {
 	var b : bool;
 	var r : real;

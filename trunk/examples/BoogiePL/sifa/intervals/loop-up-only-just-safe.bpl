@@ -1,3 +1,4 @@
+//#Safe
 procedure main() {
 	var i : real;
 	while (i <= 999.0) {

@@ -1,3 +1,4 @@
+//#Safe
 procedure main() {
 	var i : int;
 	assume false;

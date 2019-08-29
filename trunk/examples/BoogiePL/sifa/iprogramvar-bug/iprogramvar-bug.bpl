@@ -1,3 +1,5 @@
+//#Unsafe
+
 // Minimal example to reproduce the bug
 // AssertionError: No corresponding IProgramVar for …
 //

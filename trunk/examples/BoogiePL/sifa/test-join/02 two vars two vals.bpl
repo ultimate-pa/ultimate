@@ -1,3 +1,4 @@
+//#Safe
 // set block encoding to single statement to test join
 procedure f() returns ()
 {
