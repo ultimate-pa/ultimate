@@ -543,7 +543,7 @@
         <module>../Library-Server</module>
         <module>../Library-SMTLIB</module>
         <module>../Library-srParse</module>
-        <module>../Library-SymbolicInterpretation</module>
+        <module>../Library-Sifa</module>
         <module>../Library-UltimateCore</module>
         <module>../Library-UltimateModel</module>
         <module>../Library-UltimateUtil</module>
@@ -561,7 +561,7 @@
         <module>../SMTSolverBridge</module>
         <module>../SpaceExParser</module>
         <module>../SyntaxChecker</module>
-		<module>../SymbolicInterpretation</module>
+		<module>../Sifa</module>
         <module>../TraceAbstractionConcurrent</module>
         <module>../TraceAbstraction</module>
         <module>../TraceAbstractionWithAFAs</module>
@@ -655,7 +655,7 @@
 				<module>../Library-UltimateTestTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-PathExpressionsTest</module>
-				<module>../Library-SymbolicInterpretationTest</module>
+				<module>../Library-SifaTest</module>
 				<module>../SMTInterpolTest</module>
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
