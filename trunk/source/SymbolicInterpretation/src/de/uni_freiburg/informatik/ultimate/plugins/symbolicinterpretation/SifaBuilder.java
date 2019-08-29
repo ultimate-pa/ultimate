@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.IFlu
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.NeverFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.SizeLimitFluid;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.fluid.StatsWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.FixpointLoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ICallSummarizer;
@@ -98,8 +99,7 @@ public class SifaBuilder {
 		final SifaStats stats = new SifaStats();
 		final SymbolicTools tools = constructTools(stats, icfg);
 		final IDomain domain = constructStatsDomain(stats, tools, timer);
-		// TODO stats for fluid?
-		final IFluid fluid = constructFluid();
+		final IFluid fluid = constructStatsFluid(stats);
 		final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSum =
 				constructLoopSummarizer(stats, timer, tools, domain, fluid);
 		final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSum =
@@ -151,9 +151,9 @@ public class SifaBuilder {
 
 	}
 
-	private IFluid constructFluid() {
+	private IFluid constructStatsFluid(final SifaStats stats) {
 		final String prefFluid = mPrefs.getString(SifaPreferences.LABEL_FLUID);
-		return constructFluid(prefFluid);
+		return new StatsWrapperFluid(stats, constructFluid(prefFluid));
 	}
 
 	private IFluid constructFluid(final String prefFluid) {

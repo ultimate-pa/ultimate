@@ -155,6 +155,13 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		TOOLS_POST_RETURN_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
 		TOOLS_QUANTIFIERELIM_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
 
+		/** Overall time spent answering queries. */
+		FLUID_QUERY_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		/** Number of queries to fluid. */
+		FLUID_QUERIES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+		/** Number of queries to fluid answered with "yes, abstract the state". */
+		FLUID_YES_ANSWERS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+
 		DOMAIN_JOIN_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
 		DOMAIN_JOIN_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
 		DOMAIN_ALPHA_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
