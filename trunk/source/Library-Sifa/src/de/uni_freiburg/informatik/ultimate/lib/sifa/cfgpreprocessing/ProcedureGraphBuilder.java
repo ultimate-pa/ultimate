@@ -171,6 +171,7 @@ public class ProcedureGraphBuilder {
 			return;
 		}
 		mCurrentProcedureGraph.addEdge(callSummaryEdge.getSource(), callSummaryEdge, callSummaryEdge.getTarget());
+		addToWorklistIfNew(callSummaryEdge.getSource());
 	}
 
 	private void addToWorklistIfNew(final IcfgLocation node) {
