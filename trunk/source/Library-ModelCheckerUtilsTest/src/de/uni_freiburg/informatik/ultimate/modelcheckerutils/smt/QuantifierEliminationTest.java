@@ -719,12 +719,22 @@ public class QuantifierEliminationTest {
 	}
 
 
+	@Test
+	public void someTirIntegerModuloCase01() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("lo", new Sort[0], intSort);
+		mScript.declareFun("hi", new Sort[0], intSort);
+		final String formulaAsString = "(forall ((x Int)) (or (< lo x) (< (* 4 x) hi)))";
+		final String expectedResultAsString = "(< lo (+ (div (+ hi (- 1)) 4) 1))";
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 
 	/**
 	 * 20190822 Matthias: @Test commented because this is not (yet) a regression
 	 * test but only used to discuss a bug
 	 */
-	@Test
+//	@Test
 	public void fruitOfTheForest() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("b", new Sort[0], intSort);
