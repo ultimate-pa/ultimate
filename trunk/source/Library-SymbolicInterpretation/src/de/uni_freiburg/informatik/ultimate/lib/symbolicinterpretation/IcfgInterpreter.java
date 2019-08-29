@@ -96,7 +96,7 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 		mEnterCallWorklist = new PriorityWorklist<>(mCallGraph.relevantProceduresTopsorted(), domain::join);
 		mProcResCache = new ProcedureResourceCache(stats, mCallGraph, icfg);
 		enqueInitial();
-		mDagInterpreter = new DagInterpreter(logger, timer, tools, domain, fluid,
+		mDagInterpreter = new DagInterpreter(logger, stats, timer, tools, domain, fluid,
 				loopSumFactory.apply(this), callSumFactory.apply(this));
 		mStats.stop(SifaStats.Key.OVERALL_TIME);
 	}
@@ -125,7 +125,7 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 			final String procedure = mEnterCallWorklist.getWork();
 			final IPredicate input = mEnterCallWorklist.getInput();
 			logEnterProcedure(procedure, input);
-			mStats.increment(SifaStats.Key.ENTERED_PROCEDURES);
+			mStats.increment(SifaStats.Key.ICFG_INTERPRETER_ENTERED_PROCEDURES);
 			interpretLoisInProcedure(procedure, input);
 		}
 		logFinalResults();

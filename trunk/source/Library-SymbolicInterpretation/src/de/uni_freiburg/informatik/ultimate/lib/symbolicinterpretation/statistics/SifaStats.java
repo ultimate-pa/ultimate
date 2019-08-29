@@ -144,8 +144,12 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		// TODO use pre-defined objects instead of repeated triplets (class, aggregate, prettyPrint)
 
 		OVERALL_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+
 		/** Number of procedures entered (excluding CallReturnSummaries) during interpretation of the icfg. */
-		ENTERED_PROCEDURES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+		ICFG_INTERPRETER_ENTERED_PROCEDURES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+
+		DAG_INTERPRETER_EARLY_EXIT_QUERIES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+		DAG_INTERPRETER_EARLY_EXITS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
 
 		TOOLS_POST_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
 		TOOLS_POST_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),

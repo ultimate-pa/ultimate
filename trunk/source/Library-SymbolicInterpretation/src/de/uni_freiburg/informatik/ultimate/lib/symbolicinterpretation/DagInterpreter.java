@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.I
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagNode;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.regexdag.RegexDagUtils;
+import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizers.ILoopSummarizer;
 
@@ -59,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.summarizer
 public class DagInterpreter {
 
 	private final ILogger mLogger;
+	private final SifaStats mStats;
 	private final SymbolicTools mTools;
 	private final IDomain mDomain;
 	private final IFluid mFluid;
@@ -67,11 +69,12 @@ public class DagInterpreter {
 	private final ICallSummarizer mCallSummarizer;
 	private final IProgressAwareTimer mTimer;
 
-	public DagInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SymbolicTools tools,
-			final IDomain domain, final IFluid fluid,
+	public DagInterpreter(final ILogger logger, final SifaStats stats, final IProgressAwareTimer timer,
+			final SymbolicTools tools, final IDomain domain, final IFluid fluid,
 			final Function<DagInterpreter, ILoopSummarizer> loopSumFactory,
 			final Function<DagInterpreter, ICallSummarizer> callSumFactory) {
 		mLogger = logger;
+		mStats = stats;
 		mTimer = timer;
 		mTools = tools;
 		mDomain = domain;
@@ -126,9 +129,24 @@ public class DagInterpreter {
 			final IPredicate curInput = fluidAbstraction(worklist.getInput());
 			final IPredicate curOutput = ipretNode(curNode, curInput, loiStorage, enterCallRegr);
 			logWorklistEntryDone(curOutput);
-			// TODO check if curOutput is bottom and exit early
+			if (earlyExitAfterStep(overlay, curNode, curOutput)) {
+				continue;
+			}
 			overlay.successorsOf(curNode).forEach(successor -> worklist.add(successor, curOutput));
 		}
+	}
+
+	private boolean earlyExitAfterStep(final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay,
+			final RegexDagNode<IIcfgTransition<IcfgLocation>> curNode, final IPredicate curOutput) {
+		mStats.increment(SifaStats.Key.DAG_INTERPRETER_EARLY_EXIT_QUERIES);
+		// frequent check would probably be more expensive than continued interpretation ==> check only before branches
+		final boolean exit = overlay.successorsOf(curNode).size() > 1
+				&& mDomain.isEqBottom(curOutput).isTrueForAbstraction();
+		if (exit) {
+			mStats.increment(SifaStats.Key.DAG_INTERPRETER_EARLY_EXITS);
+			logEarlyExitAfterStep();
+		}
+		return exit;
 	}
 
 	private void respectTimeout() {
@@ -246,6 +264,11 @@ public class DagInterpreter {
 	private void logWorklistEntryDone(final IPredicate curOutput) {
 		mLogger.debug("Output of worklist entry is %s", curOutput);
 	}
+
+	private void logEarlyExitAfterStep() {
+		mLogger.debug("Ignoring successors of the last worklist entry as its output was bottom.");
+	}
+
 	private void logConsiderAbstraction() {
 		mLogger.debug("Asking fluid if we should abstract");
 	}
