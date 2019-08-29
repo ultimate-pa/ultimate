@@ -124,22 +124,12 @@ public class SymbolicTools {
 		mStats.increment(SifaStats.Key.TOOLS_POST_CALL_APPLICATIONS);
 		final CfgSmtToolkit toolkit = mIcfg.getCfgSmtToolkit();
 		final String calledProcedure = transition.getSucceedingProcedure();
-		final Term sp = mTransformer.strongestPostconditionCall(input, transition.getLocalVarsAssignment(),
+		final Term postState = mTransformer.strongestPostconditionCall(input, transition.getLocalVarsAssignment(),
 				toolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(calledProcedure),
 				toolkit.getOldVarsAssignmentCache().getOldVarsAssignment(calledProcedure),
 				toolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProcedure));
-		Term predicateTerm;
-		if (transition.getTransformula().getAuxVars().isEmpty()) {
-			predicateTerm = sp;
-		} else {
-			// 2018-08-17 DD:
-			// Temporary workaround for aux-var in transition issue: remove it afterwards through ex. proj.
-			predicateTerm = PartialQuantifierElimination.quantifier(mServices, mPQELogger, mMngdScript, mSimplification,
-					mXnfConversion, Script.EXISTS,
-					transition.getTransformula().getAuxVars(), sp);
-		}
 		mStats.stop(SifaStats.Key.TOOLS_POST_CALL_TIME);
-		return predicate(predicateTerm);
+		return predicate(postState);
 	}
 
 	/**
