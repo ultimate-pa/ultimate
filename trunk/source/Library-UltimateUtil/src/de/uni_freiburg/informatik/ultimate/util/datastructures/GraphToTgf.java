@@ -34,6 +34,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IDirectedGraph;
+import de.uni_freiburg.informatik.ultimate.util.TgfBuilder;
 
 /**
  * Converts an {@link IDirectedGraph} into a string using the Trivial Graph Format (TGF) file format.
@@ -43,10 +44,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IDirectedGraph;
  * Some implementations of {@linkplain IDirectedGraph} can represent edges non-symmetrically, that is
  * a node U can have successor V not having U as a predecessor. To show such issues the generated TGF
  * represents directed edges by <i>forward</i> edges and (hopefully anti-parallel) <i>backward</i> edges.
- * 
+ *
  * @author schaetzc@tf.uni-freiburg.de
  *
  * @param <N> Type of the graph nodes
+ *
+ * @see TgfBuilder Can be used to convert anything into TGF format manually without having to create an IDirectedGraph
  */
 public class GraphToTgf<N extends IDirectedGraph<N, ?>> {
 
@@ -76,11 +79,11 @@ public class GraphToTgf<N extends IDirectedGraph<N, ?>> {
 	/**
 	 * Returns the trivial graph format (TGF) representation of all weakly connected components visited by
 	 * {@link #includeComponentOf(IDirectedGraph)}.
-	 * 
+	 *
 	 * @return String in TGF format representing a graph
 	 */
 	public String getTgf() {
-		return mTgfNodes + "#\n" + mTgfEdges; 
+		return mTgfNodes + "#\n" + mTgfEdges;
 	}
 
 	/**
@@ -88,7 +91,7 @@ public class GraphToTgf<N extends IDirectedGraph<N, ?>> {
 	 * The TGF can be retrieved using {@link #getTgf()}.
 	 * <p>
 	 * This method is idempotent; calling it twice on the same component does not change anything.
-	 * 
+	 *
 	 * @param startingNode Node whose connected component will be included
 	 * @return This converter to allow chaining multiple calls
 	 */

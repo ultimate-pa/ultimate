@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.util.TgfBuilder;
 
 /**
  *
@@ -98,7 +99,7 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 
 	Class<LOC> getLocationClass();
 
-	public default String graphStructureToString() {
+	default String graphStructureToString() {
 		final StringBuilder sb = new StringBuilder();
 		for (final Entry<String, Map<DebugIdentifier, LOC>> entry : getProgramPoints().entrySet()) {
 			for (final Entry<DebugIdentifier, LOC> innerEntry : entry.getValue().entrySet()) {
@@ -116,4 +117,28 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 		}
 		return sb.toString();
 	}
+
+	/**
+	 * Converts this Interprocedural Control Flow Graph (ICFG) into the plain text file format
+	 * "Trivial Graph Format" (TGF). TGF files can be used to get a visual representation of this ICFG
+	 * using graph visualization software.
+	 *
+	 * @return This ICFG in Trivial Graph Format (TGF)
+	 *
+	 * @author schaetzc@tf.uni-freiburg.de
+	 */
+	default String graphStructureToTgf() {
+		final TgfBuilder<IcfgLocation> tgfBuilder = new TgfBuilder<>();
+		for (final Entry<String, Map<DebugIdentifier, LOC>> entry : getProgramPoints().entrySet()) {
+			for (final Entry<DebugIdentifier, LOC> innerEntry : entry.getValue().entrySet()) {
+				final LOC sourceNode = innerEntry.getValue();
+				tgfBuilder.addDisconnectedNode(sourceNode);
+				for (final IcfgEdge edge : sourceNode.getOutgoingEdges()) {
+					tgfBuilder.addEdge(sourceNode, edge, edge.getTarget());
+				}
+			}
+		}
+		return tgfBuilder.toString();
+	}
+
 }
