@@ -42,8 +42,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 
 /**
- * @see #graphOfProcedure(String, Collection)
+ * Creates {@link ProcedureGraph}s from ICFGs.
+ *
  * @author schaetzc@tf.uni-freiburg.de
+ *
+ * @see #graphOfProcedure(String, Collection)
  */
 public class ProcedureGraphBuilder {
 

@@ -65,11 +65,15 @@ public interface IDomain {
 			mResult = result;
 			mAbstracted = abstracted;
 		}
-		/** @return The left-hand side of the queried check or an over-approximation if {@link #wasAbstracted()} */
+		/**
+		 * @return The left-hand side of the queried check or an over-approximation if {@link #wasAbstracted()}
+		 */
 		public IPredicate getLhs() {
 			return mLhs;
 		}
-		/** @return The right-hand side of the queried check or an over-approximation if {@link #wasAbstracted()} */
+		/**
+		 * @return The right-hand side of the queried check or an over-approximation if {@link #wasAbstracted()}
+		 */
 		public IPredicate getRhs() {
 			return mRhs;
 		}

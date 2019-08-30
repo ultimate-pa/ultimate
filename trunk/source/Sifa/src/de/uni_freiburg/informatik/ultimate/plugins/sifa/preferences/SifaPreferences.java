@@ -67,30 +67,30 @@ import de.uni_freiburg.informatik.ultimate.plugins.sifa.SifaBuilder;
 public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract Domain";
-	public static final String DEFAULT_ABSTRACT_DOMAIN = CompoundDomain.class.getSimpleName();
-	protected static final String[] VALUES_ABSTRACT_DOMAIN = {
+	private static final String DEFAULT_ABSTRACT_DOMAIN = CompoundDomain.class.getSimpleName();
+	private static final String[] VALUES_ABSTRACT_DOMAIN = {
 		ExplicitValueDomain.class.getSimpleName(),
 		IntervalDomain.class.getSimpleName(),
 		CompoundDomain.class.getSimpleName(),
 	};
 
 	public static final String LABEL_LOOP_SUMMARIZER = "Loop Summarizer";
-	public static final String DEFAULT_LOOP_SUMMARIZER = FixpointLoopSummarizer.class.getSimpleName();
-	protected static final String[] VALUES_LOOP_SUMMARIZER = {
+	private static final String DEFAULT_LOOP_SUMMARIZER = FixpointLoopSummarizer.class.getSimpleName();
+	private static final String[] VALUES_LOOP_SUMMARIZER = {
 		FixpointLoopSummarizer.class.getSimpleName(),
 	};
 
 	public static final String LABEL_CALL_SUMMARIZER = "Call Summarizer";
-	public static final String DEFAULT_CALL_SUMMARIZER = TopInputCallSummarizer.class.getSimpleName();
-	protected static final String[] VALUES_CALL_SUMMARIZER = {
+	private static final String DEFAULT_CALL_SUMMARIZER = TopInputCallSummarizer.class.getSimpleName();
+	private static final String[] VALUES_CALL_SUMMARIZER = {
 		TopInputCallSummarizer.class.getSimpleName(),
 		ReUseSupersetCallSummarizer.class.getSimpleName(),
 	};
 
 	public static final String LABEL_FLUID = "Fluid";
-	public static final String TOOLTIP_FLUID = "Decides when to apply abstraction";
-	public static final String DEFAULT_FLUID = SizeLimitFluid.class.getSimpleName();
-	protected static final String[] VALUES_FLUID = {
+	private static final String TOOLTIP_FLUID = "Decides when to apply abstraction";
+	private static final String DEFAULT_FLUID = SizeLimitFluid.class.getSimpleName();
+	private static final String[] VALUES_FLUID = {
 		NeverFluid.class.getSimpleName(),
 		SizeLimitFluid.class.getSimpleName(),
 		AlwaysFluid.class.getSimpleName(),
@@ -98,43 +98,33 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	};
 
 	public static final String LABEL_SIMPLIFICATION = "Simplification Technique";
-	public static final SimplificationTechnique DEFAULT_SIMPLIFICATION = SimplificationTechnique.NONE;
-	protected static final SimplificationTechnique[] VALUES_SIMPLIFICATION = SimplificationTechnique.values();
+	private static final SimplificationTechnique DEFAULT_SIMPLIFICATION = SimplificationTechnique.NONE;
+	private static final SimplificationTechnique[] VALUES_SIMPLIFICATION = SimplificationTechnique.values();
 	public static final Class<SimplificationTechnique> CLASS_SIMPLIFICATION = SimplificationTechnique.class;
 
 	public static final String LABEL_XNF_CONVERSION = "Xnf Conversion Technique";
-	public static final XnfConversionTechnique DEFAULT_XNF_CONVERSION =
+	private static final XnfConversionTechnique DEFAULT_XNF_CONVERSION =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-	protected static final XnfConversionTechnique[] VALUES_XNF_CONVERSION = XnfConversionTechnique.values();
+	private static final XnfConversionTechnique[] VALUES_XNF_CONVERSION = XnfConversionTechnique.values();
 	public static final Class<XnfConversionTechnique> CLASS_XNF_CONVERSION = XnfConversionTechnique.class;
-
-	/*
-	public static final String LABEL_TRY_SOLVER_BEFORE_ENFORCING_ABSTRACTION = "Try solver before enforcing abstraction";
-	public static final String TOOLTIP_TRY_SOLVER_BEFORE_ENFORCING_ABSTRACTION =
-			"Domain's methods to check unsatisfiabilty and implications require abstraction.\n" +
-			"The abstraction is applied indepently of the fluid because we cannot use these methods otherwise.\n" +
-			"When using a solver instead of these methods we could get around enforcing abstraction.\n" +
-			"In case the solver returns UNKNOW we still have to abstract\n";
-	public static final boolean DEFAULT_TRY_SOLVER_BEFORE_ENFORCING_ABSTRACTION = true;
-	 */
 
 	// ---- settings in containers ----
 
 	// settings specific to ExplicitValueDomain
 	public static final String LABEL_EXPLVALDOM_MAX_PARALLEL_STATES = "Max. Parallel Explicit Values";
-	public static final int DEFAULT_EXPLVALDOM_MAX_PARALLEL_STATES = 2;
+	private static final int DEFAULT_EXPLVALDOM_MAX_PARALLEL_STATES = 2;
 
 	// settings specific to IntervalDomain
 	public static final String LABEL_INTERVALDOM_MAX_PARALLEL_STATES = "Max. Parallel Intervals";
-	public static final int DEFAULT_INTERVALDOM_MAX_PARALLEL_STATES = 2;
+	private static final int DEFAULT_INTERVALDOM_MAX_PARALLEL_STATES = 2;
 
 	// settings specific to CompoundDomain
 	public static final String LABEL_COMPOUNDDOM_SUBDOM = "Intern domains";
-	public static final String DEFAULT_COMPOUNDDOM_SUBDOM =
+	private static final String DEFAULT_COMPOUNDDOM_SUBDOM =
 			ExplicitValueDomain.class.getSimpleName() + ";" + IntervalDomain.class.getSimpleName();
-	protected static final String[] CHOICES_COMPOUNDDOM_SUBDOM = filter(VALUES_ABSTRACT_DOMAIN,
+	private static final String[] CHOICES_COMPOUNDDOM_SUBDOM = filter(VALUES_ABSTRACT_DOMAIN,
 			value -> !CompoundDomain.class.getSimpleName().equals(value));
-	public static final String TOOLTIP_COMPOUNDDOM_SUBDOM = "List subdomains separated by `;`. Valid subdomains are\n"
+	private static final String TOOLTIP_COMPOUNDDOM_SUBDOM = "List subdomains separated by `;`. Valid subdomains are\n"
 			+ String.join("\n", CHOICES_COMPOUNDDOM_SUBDOM);
 	public static class SubdomainValidator implements IUltimatePreferenceItemValidator<String> {
 		public static Stream<String> subdomains(final String setting) {
@@ -158,17 +148,25 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	// settings specific to LogSizeWrapperFluid
 	public static final String LABEL_LOGFLUID_INTERN_FLUID = "Intern Fluid";
-	public static final String DEFAULT_LOGFLUID_INTERN_FLUID = DEFAULT_FLUID;
-	protected static final String[] VALUES_LOGFLUID_INTERN_FLUID_VALUES = filter(VALUES_FLUID,
+	private static final String DEFAULT_LOGFLUID_INTERN_FLUID = DEFAULT_FLUID;
+	private static final String[] VALUES_LOGFLUID_INTERN_FLUID_VALUES = filter(VALUES_FLUID,
 			value -> !LogSizeWrapperFluid.class.getSimpleName().equals(value));
 
 	// settings specific to SizeLimitFluid
 	public static final String LABEL_SIZELIMITFLUID_MAX_DAGSIZE= "Abstract when formula's dag size exceeds\n"
 			+ "(negative numbers disable this limit)";
-	public static final int DEFAULT_SIZELIMITFLUID_MAX_DAGSIZE = -1;
+	private static final int DEFAULT_SIZELIMITFLUID_MAX_DAGSIZE = -1;
+
 	public static final String LABEL_SIZELIMITFLUID_MAX_DISJUNCTS= "Abstract when formula has more disjuncts than\n"
 			+ "(negative numbers disable this limit)";
-	public static final int DEFAULT_SIZELIMITFLUID_MAX_DISJUNCTS = 8;
+	private static final int DEFAULT_SIZELIMITFLUID_MAX_DISJUNCTS = 8;
+
+
+
+
+	// ↑ Members ----- ↓ Methods ---------------------------------------------
+
+
 
 	public SifaPreferences() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);

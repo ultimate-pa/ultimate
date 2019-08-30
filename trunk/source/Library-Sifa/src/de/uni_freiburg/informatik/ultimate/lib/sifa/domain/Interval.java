@@ -270,7 +270,7 @@ public final class Interval {
 	}
 
 	/**
-	 * Given two intervals lhsInput and rhsInput and a relation R, represents the following two intervals:
+	 * Given two intervals lhsInput and rhsInput and a relation R, represents the following two intervals.
 	 * <ul>
 	 * <li> lhs is the least interval such that lhs ⊇ {l | l ∊ lhsInput, r ∊ rhsInput, l R r}
 	 * <li> rhs is the least interval such that rhs ⊇ {r | l ∊ lhsInput, r ∊ rhsInput, l R r}

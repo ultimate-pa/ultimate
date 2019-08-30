@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Represents in one transition:
+ * Represents in one transition the following sequence.
  * <ul>
  * <li> Entering a called procedure. This includes assigning arguments to its parameters.
  * <li> Executing its body without errors and with guaranteed termination

@@ -207,7 +207,7 @@ public class SymbolicTools {
 	public Optional<Boolean> isFalse(final IPredicate pred) {
 		// TODO: Use unifier instead of costly SMT check
 		if (mBottom.equals(pred)) {
-			return Optional.of(true);
+			return Optional.of(Boolean.TRUE);
 		}
 		final LBool result = SmtUtils.checkSatTerm(mMngdScript.getScript(), pred.getClosedFormula());
 		return satAsBool(result).map(b -> !b);
@@ -216,7 +216,7 @@ public class SymbolicTools {
 	public Optional<Boolean> implies(final IPredicate p1, final IPredicate p2) {
 		// TODO: Use unifier instead of costly SMT check
 		if (p1.equals(p2)) {
-			return Optional.of(true);
+			return Optional.of(Boolean.TRUE);
 		}
 		final Script script = mMngdScript.getScript();
 		final Term negImplTerm =
@@ -228,9 +228,9 @@ public class SymbolicTools {
 	private static Optional<Boolean> satAsBool(final LBool solverResult) {
 		switch (solverResult) {
 		case SAT:
-			return Optional.of(true);
+			return Optional.of(Boolean.TRUE);
 		case UNSAT:
-			return Optional.of(false);
+			return Optional.of(Boolean.FALSE);
 		case UNKNOWN:
 			return Optional.empty();
 		default:
@@ -245,7 +245,6 @@ public class SymbolicTools {
 	 * It also logs only warning messages for PQE to avoid polluting the log.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
 	 */
 	private final class EliminatingTermDomainOperationProvider extends TermDomainOperationProvider {
 
@@ -259,16 +258,15 @@ public class SymbolicTools {
 
 		@Override
 		public Term projectExistentially(final Set<TermVariable> varsToProjectAway, final Term constraint) {
-			return constructQuantifiedFormula(Script.EXISTS, varsToProjectAway, constraint);
+			return newQuantifier(Script.EXISTS, varsToProjectAway, constraint);
 		}
 
 		@Override
 		public Term projectUniversally(final Set<TermVariable> varsToProjectAway, final Term constraint) {
-			return constructQuantifiedFormula(Script.FORALL, varsToProjectAway, constraint);
+			return newQuantifier(Script.FORALL, varsToProjectAway, constraint);
 		}
 
-		private Term constructQuantifiedFormula(final int quantifier, final Set<TermVariable> varsToQuantify,
-				final Term term) {
+		private Term newQuantifier(final int quantifier, final Set<TermVariable> varsToQuantify, final Term term) {
 			mStats.start(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
 			final Term result = PartialQuantifierElimination.quantifier(mServices, mPQELogger, mMgdScript,
 					SimplificationTechnique.NONE, mXnfConversion, quantifier, varsToQuantify, term);

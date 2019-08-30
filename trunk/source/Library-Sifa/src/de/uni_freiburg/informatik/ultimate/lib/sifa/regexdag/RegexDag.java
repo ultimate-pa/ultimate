@@ -38,16 +38,30 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.GraphToTgf;
  * A DAG with exactly one source and exactly one sink representing a set of regexes.
  * Source and sink can be the same node.
  *
- * @see RegexDagNode
- * 
  * @author schaetzc@tf.uni-freiburg.de
- * 
+ *
  * @param <L> Type of letters that are used inside regex literals
+ *
+ * @see RegexDagNode
  */
 public class RegexDag<L> {
 
 	private RegexDagNode<L> mSource;
 	private RegexDagNode<L> mSink;
+
+	/** Creates a DAG with a single node which acts as both, the source and the sink. */
+	public RegexDag(final RegexDagNode<L> sourceAndSink) {
+		this(sourceAndSink, sourceAndSink);
+	}
+
+	/**
+	 * Creates a DAG with a source node and a sink node.
+	 * Does <b>not</b> automatically connect both nodes.
+	 */
+	public RegexDag(final RegexDagNode<L> source, final RegexDagNode<L> sink) {
+		mSource = source;
+		mSink = sink;
+	}
 
 	/** Creates a DAG representing the empty word ε. */
 	public static <L> RegexDag<L> makeEpsilon() {
@@ -68,20 +82,6 @@ public class RegexDag<L> {
 		return new RegexDag<>(new RegexDagNode<>(sourceSinkLabel));
 	}
 
-	/** Creates a DAG with a single node which acts as both, the source and the sink. */
-	public RegexDag(final RegexDagNode<L> sourceAndSink) {
-		this(sourceAndSink, sourceAndSink);
-	}
-
-	/**
-	 * Creates a DAG with a source node and a sink node.
-	 * Does <b>not</b> automatically connect both nodes.
-	 */
-	public RegexDag(final RegexDagNode<L> source, final RegexDagNode<L> sink) {
-		mSource = source;
-		mSink = sink;
-	}
-
 	public RegexDagNode<L> getSource() {
 		return mSource;
 	}
@@ -98,6 +98,7 @@ public class RegexDag<L> {
 		mSink = sink;
 	}
 
+	@Override
 	public String toString() {
 		return new GraphToTgf<>(mSource).includeComponentOf(mSink).getTgf();
 	}

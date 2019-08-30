@@ -34,18 +34,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
-public class ErrorOnEnterCall implements IEnterCallRegistrar {
+public final class ErrorOnEnterCall implements IEnterCallRegistrar {
 
 	private static final ErrorOnEnterCall sInstance = new ErrorOnEnterCall();
 
-	public static ErrorOnEnterCall instance() {
-		return sInstance;
+	/** Use {@link #instance()} instead. */
+	private ErrorOnEnterCall() {
 	}
 
-	/**
-	 * Use {@link #instance()} instead.
-	 */
-	private ErrorOnEnterCall() {
+	public static ErrorOnEnterCall instance() {
+		return sInstance;
 	}
 
 	@Override

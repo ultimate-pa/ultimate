@@ -42,7 +42,11 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.LoopPointVisitor;
 
-public class RegexDagUtils {
+public final class RegexDagUtils {
+
+	private RegexDagUtils() {
+		// objects of this class have no purpose
+	}
 
 	/** @see #sourceLocations(RegexDag, IDagOverlay) */
 	public static IcfgLocation singleSourceLocation(
@@ -57,7 +61,7 @@ public class RegexDagUtils {
 			final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay) {
 
-		return nextLocations(dag, overlay.sinks(dag), IIcfgTransition::getSource, overlay::successorsOf);
+		return nextLocations(overlay.sinks(dag), IIcfgTransition::getSource, overlay::successorsOf);
 	}
 
 	/** @see #sinkLocations(RegexDag, IDagOverlay) */
@@ -73,7 +77,7 @@ public class RegexDagUtils {
 			final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay) {
 
-		return nextLocations(dag, overlay.sinks(dag), IIcfgTransition::getTarget, overlay::predecessorsOf);
+		return nextLocations(overlay.sinks(dag), IIcfgTransition::getTarget, overlay::predecessorsOf);
 	}
 
 	private static IcfgLocation getOnly(final Set<IcfgLocation> locations) {
@@ -99,17 +103,17 @@ public class RegexDagUtils {
 	 * The function {@code getLocationInStartPointDirection} returns the location closer to the starting nodes
 	 * for cases in which there are multiple IcfgLocations per RegexDagNode.
 	 *
-	 * @param dag Dag to be searched
+	 * @param <T> Abbreviation for long type – this method isn't supposed to be actually generic
+	 *
 	 * @param startPoints Starting points for the search. Ideally no starting point can reach another
 	 *                    starting point using {@code getNodesInSeachDirection}.
 	 * @param getLocationInStartPointDirection See ✱
 	 * @param getNodesInSeachDirection Search direction, can also be used to respect DAG overlays
-	 * @return IcfgLocations corresponding to the starting nodes in search direction
 	 *
-	 * @param <T> Abbreviation for long type – this method isn't supposed to be actually generic
+	 * @return IcfgLocations corresponding to the starting nodes in search direction
 	 */
 	private static <T extends IIcfgTransition<IcfgLocation>> Set<IcfgLocation> nextLocations(
-			final RegexDag<T> dag, final Collection<RegexDagNode<T>> startPoints,
+			final Collection<RegexDagNode<T>> startPoints,
 			final Function<T, IcfgLocation> getLocationInStartPointDirection,
 			final Function<RegexDagNode<T>, Collection<RegexDagNode<T>>> getNodesInSeachDirection) {
 

@@ -87,6 +87,16 @@ public class IntervalDomain implements IDomain {
 		return toPredicate(joinedIntervalDnf);
 	}
 
+	private Map<TermVariable, Interval> join(
+			final Map<TermVariable, Interval> lhs, final Map<TermVariable, Interval> rhs) {
+		return merge(Interval::union, lhs, rhs);
+	}
+
+	private Map<TermVariable, Interval> joinToSingleConjunction(
+			final Collection<Map<TermVariable, Interval>> intervalDnf) {
+		return intervalDnf.stream().reduce(this::join).orElse(Collections.emptyMap());
+	}
+
 	@Override
 	public IPredicate widen(final IPredicate old, final IPredicate widenWith) {
 		// TODO widen cartesian product instead of joining everything into one state
@@ -94,6 +104,11 @@ public class IntervalDomain implements IDomain {
 		final Map<TermVariable, Interval> oldItvlConjunction = joinToSingleConjunction(toIntervals(old));
 		final Map<TermVariable, Interval> widenWithItvlConjunction = joinToSingleConjunction(toIntervals(widenWith));
 		return toPredicate(widen(oldItvlConjunction, widenWithItvlConjunction));
+	}
+
+	private static Map<TermVariable, Interval> widen(
+			final Map<TermVariable, Interval> old, final Map<TermVariable, Interval> widenWith) {
+		return merge(Interval::widen, old, widenWith);
 	}
 
 	@Override
@@ -112,22 +127,7 @@ public class IntervalDomain implements IDomain {
 		return toPredicate(intervalDnf);
 	}
 
-	private Map<TermVariable, Interval> joinToSingleConjunction(
-			final Collection<Map<TermVariable, Interval>> intervalDnf) {
-		return intervalDnf.stream().reduce(this::join).orElse(Collections.emptyMap());
-	}
-
-	private Map<TermVariable, Interval> join(
-			final Map<TermVariable, Interval> lhs, final Map<TermVariable, Interval> rhs) {
-		return merge(Interval::union, lhs, rhs);
-	}
-
-	private Map<TermVariable, Interval> widen(
-			final Map<TermVariable, Interval> old, final Map<TermVariable, Interval> widenWith) {
-		return merge(Interval::widen, old, widenWith);
-	}
-
-	private Map<TermVariable, Interval> merge(final BiFunction<Interval, Interval, Interval> mergeOperation,
+	private static Map<TermVariable, Interval> merge(final BiFunction<Interval, Interval, Interval> mergeOperation,
 			final Map<TermVariable, Interval> lhs, final Map<TermVariable, Interval> rhs) {
 		final Collection<TermVariable> allVars = new HashSet<>();
 		allVars.addAll(lhs.keySet());

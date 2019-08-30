@@ -54,7 +54,11 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
-public class TermToInterval {
+public final class TermToInterval {
+
+	private TermToInterval() {
+		// objects of this class have no purpose
+	}
 
 	// TODO should we use caching as in TermTransformer? (when implementing, watch out for changing scopes)
 
@@ -97,9 +101,30 @@ public class TermToInterval {
 		return Interval.TOP;
 	}
 
+	private static Interval evaluate(final TermVariable term, final Map<TermVariable, Interval> scope) {
+		return scope.getOrDefault(term, Interval.TOP);
+	}
+
 	private static Interval evaluate(final AnnotatedTerm term, final Map<TermVariable, Interval> scope) {
 		// TODO are there any annotations we have to consider?
 		return evaluate(term.getSubterm(), scope);
+	}
+
+	private static Interval evaluate(final LetTerm term, final Map<TermVariable, Interval> outerScope) {
+		// IScopedMap could be used with an intermediate map, but using a completely new map is easier
+		final HashMap<TermVariable, Interval> innerScope = new HashMap<>(outerScope);
+		final TermVariable[] letVariables = term.getVariables();
+		final Term[] letValues = term.getValues();
+		assert letVariables.length == letValues.length : "Number of variables and values does not match: " + term;
+		for (int letIndex = 0; letIndex < letVariables.length; ++letIndex) {
+			// TODO ignore variables whose values cannot be represented by intervals
+			innerScope.put(letVariables[letIndex], evaluate(letValues[letIndex], outerScope));
+		}
+		return evaluate(term.getSubTerm(), innerScope);
+	}
+
+	private static Interval evaluate(final QuantifiedFormula term, final Map<TermVariable, Interval> scope) {
+		throw new UnsupportedOperationException("Bool cannot be expressed as an interval.");
 	}
 
 	private static Interval evaluate(final ApplicationTerm term, final Map<TermVariable, Interval> scope) {
@@ -179,27 +204,6 @@ public class TermToInterval {
 		default:
 			return null;
 		}
-	}
-
-	private static Interval evaluate(final LetTerm term, final Map<TermVariable, Interval> outerScope) {
-		// IScopedMap could be used with an intermediate map, but using a completely is easier
-		final HashMap<TermVariable, Interval> innerScope = new HashMap<>(outerScope);
-		final TermVariable[] letVariables = term.getVariables();
-		final Term[] letValues = term.getValues();
-		assert letVariables.length == letValues.length : "Number of variables and values does not match: " + term;
-		for (int letIndex = 0; letIndex < letVariables.length; ++letIndex) {
-			// TODO ignore variables whose values cannot be represented by intervals
-			innerScope.put(letVariables[letIndex], evaluate(letValues[letIndex], outerScope));
-		}
-		return evaluate(term.getSubTerm(), innerScope);
-	}
-
-	private static Interval evaluate(final QuantifiedFormula term, final Map<TermVariable, Interval> scope) {
-		throw new UnsupportedOperationException("Bool cannot be expressed as an interval.");
-	}
-
-	private static Interval evaluate(final TermVariable term, final Map<TermVariable, Interval> scope) {
-		return scope.getOrDefault(term, Interval.TOP);
 	}
 
 }

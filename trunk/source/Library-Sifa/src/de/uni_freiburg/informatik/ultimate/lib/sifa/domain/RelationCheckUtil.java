@@ -39,7 +39,11 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain.ResultForAlte
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
-public class RelationCheckUtil {
+public final class RelationCheckUtil {
+
+	private RelationCheckUtil() {
+		// objects of this class have no purpose
+	}
 
 	public static ResultForAlteredInputs isEqBottom_SolverAlphaSolver(
 			final SymbolicTools tools, final IDomain domain, final IPredicate pred) {
@@ -57,7 +61,7 @@ public class RelationCheckUtil {
 			result.abstractLhs(domain::alpha);
 		}
 		throw new UnsupportedOperationException(String.format(
-				"Solver couldn't answer isBottom for\noriginal:\n%s\nabstracted:\n%s",
+				"Solver couldn't answer isBottom for%noriginal:%n%s%nabstracted:%n%s",
 				pred, result.mLhs));
 	}
 
@@ -78,7 +82,7 @@ public class RelationCheckUtil {
 			result.abstractLhsAndRhs(domain::alpha);
 		}
 		throw new UnsupportedOperationException(String.format(
-				"Solver couldn't answer isSubsetEq for\noriginal:\n%s\n%s\nabstracted:\n%s\n%s",
+				"Solver couldn't answer isSubsetEq for%noriginal:%n%s%n%s%nabstracted:%n%s%n%s",
 				left, right, result.mLhs, result.mRhs));
 	}
 

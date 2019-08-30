@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 
 /**
  * Node of a {@link RegexDag}.
- * 
+ *
  * @author schaetzc@tf.uni-freiburg.de
  *
  * @param <L> Type of letters that are used inside regex literals
@@ -49,16 +49,16 @@ public class RegexDagNode<L> extends ModifiableDirectedGraph<RegexDagNode<L>> {
 	 */
 	private final IRegex<L> mContent;
 
+	public RegexDagNode(final IRegex<L> content) {
+		mContent = content;
+	}
+
 	/**
 	 * Create a DAG node whose content is the empty word ε.
 	 * ε-nodes are often used as forks and joins since ε is the neutral argument of concatenation.
 	 */
 	public static <L> RegexDagNode<L> makeEpsilon() {
 		return new RegexDagNode<>(Regex.epsilon());
-	}
-
-	public RegexDagNode(final IRegex<L> content) {
-		mContent = content;
 	}
 
 	public boolean isEpsilon() {

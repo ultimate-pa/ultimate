@@ -47,9 +47,9 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Union;
  * <p>
  * This visitor must be applied to a star.
  *
- * @param <T> Abbreviation for long type – this class isn't supposed to be actually generic
- *
  * @author schaetzc@tf.uni-freiburg.de
+ *
+ * @param <T> Abbreviation for long type – this class isn't supposed to be actually generic
  */
 public class LoopPointVisitor<T extends IIcfgTransition<IcfgLocation>>
 		implements IRegexVisitor<T, IcfgLocation, Void> {

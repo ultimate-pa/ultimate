@@ -224,13 +224,12 @@ public class DagInterpreter {
 	}
 
 	private IPredicate ipretCallReturnSummary(final CallReturnSummary trans, final IPredicate input) {
-		final IPredicate inputAfterCall = mTools.postCall(input, trans.correspondingCall());
+		final IIcfgCallTransition<IcfgLocation> call = trans.correspondingCall();
+		final IPredicate inputAfterCall = mTools.postCall(input, call);
 		logIpretCallReturnQuery(inputAfterCall);
-		final IPredicate summary = mCallSummarizer
-				.summarize(trans.correspondingCall().getSucceedingProcedure(), inputAfterCall);
+		final IPredicate summary = mCallSummarizer.summarize(call.getSucceedingProcedure(), inputAfterCall);
 		logIpretCallReturnApply(summary);
-		final IPredicate outputAfterReturn = mTools.postReturn(input, summary, trans.correspondingReturn());
-		return outputAfterReturn;
+		return mTools.postReturn(input, summary, trans.correspondingReturn());
 	}
 
 	private IPredicate ipretInternal(final IIcfgInternalTransition<IcfgLocation> trans, final IPredicate input) {
@@ -305,7 +304,7 @@ public class DagInterpreter {
 		mLogger.debug("Register enter call for later");
 	}
 
-	private void logRegisterEnterCallDone() {
+	private static void logRegisterEnterCallDone() {
 		// nothing to do
 		// log message could be relevant if we interpreted registered entered calls immediately
 	}

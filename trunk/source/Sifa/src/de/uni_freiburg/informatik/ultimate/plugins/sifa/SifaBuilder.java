@@ -65,26 +65,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.sifa.preferences.SifaPreferen
  */
 public class SifaBuilder {
 
-	public static class SifaComponents {
-		private final IcfgInterpreter mIcfgInterpreter;
-		private final IDomain mDomain;
-		private final SifaStats mStats;
-		public SifaComponents(final IcfgInterpreter icfgInterpreter, final IDomain domain, final SifaStats stats) {
-			mIcfgInterpreter = icfgInterpreter;
-			mDomain = domain;
-			mStats = stats;
-		}
-		public IcfgInterpreter getIcfgInterpreter() {
-			return mIcfgInterpreter;
-		}
-		public IDomain getDomain() {
-			return mDomain;
-		}
-		public SifaStats getStats() {
-			return mStats;
-		}
-	}
-
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final IPreferenceProvider mPrefs;
@@ -202,4 +182,29 @@ public class SifaBuilder {
 		}
 	}
 
+	/**
+	 * Sifa is divided into components – this class stores the main component {@link #getIcfgInterpreter()}
+	 * and gives access to some intern components which are useful after interpretation.
+	 *
+	 * @author schaetzc@tf.uni-freiburg.de
+	 */
+	public static class SifaComponents {
+		private final IcfgInterpreter mIcfgInterpreter;
+		private final IDomain mDomain;
+		private final SifaStats mStats;
+		public SifaComponents(final IcfgInterpreter icfgInterpreter, final IDomain domain, final SifaStats stats) {
+			mIcfgInterpreter = icfgInterpreter;
+			mDomain = domain;
+			mStats = stats;
+		}
+		public IcfgInterpreter getIcfgInterpreter() {
+			return mIcfgInterpreter;
+		}
+		public IDomain getDomain() {
+			return mDomain;
+		}
+		public SifaStats getStats() {
+			return mStats;
+		}
+	}
 }

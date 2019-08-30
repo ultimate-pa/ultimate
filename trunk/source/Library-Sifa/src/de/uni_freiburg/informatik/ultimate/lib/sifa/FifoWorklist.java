@@ -36,7 +36,7 @@ import java.util.function.BiFunction;
  * FIFO queue which saves pairs of generic entries (W, I) where W is called <i>work</i> I is called <i>input</i>.
  * Work entries can be in queue at most once. When adding an already queued work entry again (with a possible
  * different input) the old and the new input are merged using a user-specified merge function.
- * 
+ *
  * @author schaetzc@tf.uni-freiburg.de
  *
  * @param <W> Type of the work entries
@@ -63,7 +63,7 @@ public class FifoWorklist<W, I> implements IWorklistWithInputs<W, I> {
 	 * Adds or updates an entry.
 	 * If {@code work} is already queued, its old and new input are merged and its position is kept.
 	 * If {@code work} is new to this queue, adds it to the tail.
-	 * 
+	 *
 	 * @param work Work entry
 	 * @param addInput Input for work entry
 	 */
@@ -77,7 +77,7 @@ public class FifoWorklist<W, I> implements IWorklistWithInputs<W, I> {
 	 * The removed entry can be queried with {@link #getWork()} and {@link #getInput()}.
 	 * <p>
 	 * Calling advance on an empty worklist has no effect.
-	 * 
+	 *
 	 * @return The queue contained at least one entry, the head was removed.
 	 */
 	@Override
