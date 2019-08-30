@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.FixpointLoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ILoopSummarizer;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.InterpretCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ReUseSupersetCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.TopInputCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.plugins.sifa.preferences.SifaPreferences;
@@ -174,12 +175,20 @@ public class SifaBuilder {
 		if (TopInputCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
 			return icfgIpr -> dagIpr -> new TopInputCallSummarizer(
 					stats, tools, icfgIpr.procedureResourceCache(), dagIpr);
+		} else if (InterpretCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
+			return constructIprCallSummarizer(stats);
 		} else if (ReUseSupersetCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
-			return icfgIpr -> dagIpr -> new ReUseSupersetCallSummarizer(
-					stats, tools, domain, icfgIpr.procedureResourceCache(), dagIpr);
+			final SifaStats ignoreNestedStats = new SifaStats();
+			return icfgIpr -> dagIpr -> new ReUseSupersetCallSummarizer(stats, tools, domain,
+					constructIprCallSummarizer(ignoreNestedStats).apply(icfgIpr).apply(dagIpr));
 		} else {
 			throw new IllegalArgumentException("Unknown call summarizer setting: " + prefCallSum);
 		}
+	}
+
+	private static Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> constructIprCallSummarizer(
+			final SifaStats stats) {
+		return icfgIpr -> dagIpr -> new InterpretCallSummarizer(stats, icfgIpr.procedureResourceCache(), dagIpr);
 	}
 
 	/**

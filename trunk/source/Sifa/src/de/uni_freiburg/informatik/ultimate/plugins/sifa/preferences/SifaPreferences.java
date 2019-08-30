@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.LogSizeWrapperFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.NeverFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.SizeLimitFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.FixpointLoopSummarizer;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.InterpretCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ReUseSupersetCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.TopInputCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.plugins.sifa.Activator;
@@ -84,6 +85,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static final String DEFAULT_CALL_SUMMARIZER = TopInputCallSummarizer.class.getSimpleName();
 	private static final String[] VALUES_CALL_SUMMARIZER = {
 		TopInputCallSummarizer.class.getSimpleName(),
+		InterpretCallSummarizer.class.getSimpleName(),
 		ReUseSupersetCallSummarizer.class.getSimpleName(),
 	};
 

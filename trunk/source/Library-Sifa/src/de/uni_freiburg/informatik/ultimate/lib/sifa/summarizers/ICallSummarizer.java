@@ -41,7 +41,7 @@ public interface ICallSummarizer {
 	 * @param callee Name of the called procedure
 	 * @param inputAfterCall State when starting to execute the procedure body.
 	 *                       The arguments from the caller are already assigned to the callee's parameters.
-	 *                       There are no local variable of the caller left in the state.
+	 *                       There are no local variables of the caller left in the state.
 	 * @return Over-approximated output before the return statement.
 	 *         The callee's return values still have to be assigned to the caller's local variables.
 	 */

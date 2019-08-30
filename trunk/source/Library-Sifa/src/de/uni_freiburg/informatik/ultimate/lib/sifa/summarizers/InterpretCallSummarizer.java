@@ -26,59 +26,41 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain.ResultForAlteredInputs;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.ProcedureResourceCache;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.ProcedureResources;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 
 /**
- * Computes summaries using another call summarizer, but caches and re-uses call summaries whenever possible.
+ * Always computes a new call summary by interpreting the callee's path expression
+ * from its entry node to its exit node.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
-public class ReUseSupersetCallSummarizer implements ICallSummarizer {
+public class InterpretCallSummarizer implements ICallSummarizer {
 
 	private final SifaStats mStats;
-	private final SymbolicTools mTools;
-	private final IDomain mDomain;
-	private final ICallSummarizer mSummarizer;
+	private final ProcedureResourceCache mProcResCache;
+	private final DagInterpreter mDagIpreter;
 
-	/** Maps each procedure (name) to its summary cache. */
-	private final Map<String, SummaryCache> mSummaryCache = new HashMap<>();
-
-	public ReUseSupersetCallSummarizer(final SifaStats stats, final SymbolicTools tools, final IDomain domain,
-			final ICallSummarizer summarizer) {
+	public InterpretCallSummarizer(
+			final SifaStats stats, final ProcedureResourceCache procResCache, final DagInterpreter dagIpreter) {
 		mStats = stats;
-		mTools = tools;
-		mDomain = domain;
-		mSummarizer = summarizer;
+		mProcResCache = procResCache;
+		mDagIpreter = dagIpreter;
 	}
 
 	@Override
 	public IPredicate summarize(final String callee, final IPredicate inputAfterCall) {
-		mStats.start(SifaStats.Key.CALL_SUMMARIZER_OVERALL_TIME);
-		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_APPLICATIONS);
+		mStats.start(SifaStats.Key.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
+		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_CACHE_MISSES);
 
-		final IPredicate result = mSummaryCache
-				.computeIfAbsent(callee, unused -> new SummaryCache())
-				.reUseOrCompute(inputAfterCall, this::isSubsetEq,
-						() -> mSummarizer.summarize(callee, inputAfterCall), mTools);
+		final ProcedureResources res = mProcResCache.resourcesOf(callee);
+		final IPredicate result = mDagIpreter.interpret(
+				res.getRegexDag(), res.getDagOverlayPathToReturn(), inputAfterCall);
 
-		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_OVERALL_TIME);
+		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);
 		return result;
 	}
-
-	private boolean isSubsetEq(final IPredicate subset, final IPredicate superset) {
-		final ResultForAlteredInputs subsetEq = mDomain.isSubsetEq(subset, superset);
-		return subsetEq.isTrueForAbstraction() && subsetEq.getRhs() == superset;
-	}
 }
-
-
-
-
-
