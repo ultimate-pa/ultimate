@@ -69,8 +69,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierSequence.QuantifiedVariables;
@@ -161,7 +161,7 @@ public class Statements2TransFormula {
 		mTransFormulaBuilder = new TransFormulaBuilder(null, null, false, null, true, null, false);
 		mAuxVars = new HashSet<>();
 		mAssumes = mScript.term("true");
-		mConstOnlyIdentifierTranslator = mBoogie2SMT.new ConstOnlyIdentifierTranslator();
+		mConstOnlyIdentifierTranslator = mBoogie2SMT.createConstOnlyIdentifierTranslator();
 		if (COMPUTE_ASSERTS) {
 			mAsserts = mScript.term("true");
 		}
@@ -684,8 +684,9 @@ public class Statements2TransFormula {
 				throw new UnsupportedOperationException("support for alternating quantifiers not yet implemented");
 			}
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
-			for(final TermVariable tv : qvs.get(0).getVariables()) {
-				final TermVariable newTv = mMgdScript.constructFreshTermVariable("skolemized_" + tv.getName(), tv.getSort());
+			for (final TermVariable tv : qvs.get(0).getVariables()) {
+				final TermVariable newTv =
+						mMgdScript.constructFreshTermVariable("skolemized_" + tv.getName(), tv.getSort());
 				substitutionMapping.put(tv, newTv);
 				auxVars.add(newTv);
 			}

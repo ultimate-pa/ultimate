@@ -132,17 +132,17 @@ public class TransFormulaAdder {
 
 	private static ForkSmtArguments constructForkSmtArguments(final ForkStatement st, final Boogie2SMT boogie2smt) {
 		final IIdentifierTranslator[] identifierTranslators = new IIdentifierTranslator[] {
-				boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.new ConstOnlyIdentifierTranslator() };
-		final MultiTermResult threadId = boogie2smt.getExpression2Term().translateToTerms(identifierTranslators,
-				st.getThreadID());
+				boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.createConstOnlyIdentifierTranslator() };
+		final MultiTermResult threadId =
+				boogie2smt.getExpression2Term().translateToTerms(identifierTranslators, st.getThreadID());
 		if (!threadId.getAuxiliaryVars().isEmpty()) {
 			throw new UnsupportedOperationException("auxvars not yet supported");
 		}
 		if (!threadId.getOverappoximations().isEmpty()) {
 			throw new UnsupportedOperationException("overapproximations not yet supported");
 		}
-		final MultiTermResult procedureArguments = boogie2smt.getExpression2Term().translateToTerms(identifierTranslators,
-				st.getArguments());
+		final MultiTermResult procedureArguments =
+				boogie2smt.getExpression2Term().translateToTerms(identifierTranslators, st.getArguments());
 		if (!procedureArguments.getAuxiliaryVars().isEmpty()) {
 			throw new UnsupportedOperationException("auxvars not yet supported");
 		}
@@ -154,9 +154,9 @@ public class TransFormulaAdder {
 
 	private static JoinSmtArguments constructJoinSmtArguments(final JoinStatement st, final Boogie2SMT boogie2smt) {
 		final IIdentifierTranslator[] identifierTranslators = new IIdentifierTranslator[] {
-				boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.new ConstOnlyIdentifierTranslator() };
-		final MultiTermResult threadId = boogie2smt.getExpression2Term().translateToTerms(identifierTranslators,
-				st.getThreadID());
+				boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.createConstOnlyIdentifierTranslator() };
+		final MultiTermResult threadId =
+				boogie2smt.getExpression2Term().translateToTerms(identifierTranslators, st.getThreadID());
 		if (!threadId.getAuxiliaryVars().isEmpty()) {
 			throw new UnsupportedOperationException("auxvars not yet supported");
 		}

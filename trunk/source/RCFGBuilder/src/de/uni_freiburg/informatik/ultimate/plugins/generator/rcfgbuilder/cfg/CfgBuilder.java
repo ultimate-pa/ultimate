@@ -87,6 +87,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2S
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ConcurrencyInformation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
@@ -102,15 +103,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.OrdinaryDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureEntryDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier.ProcedureErrorType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorWithCheckDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureExitDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureFinalDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier.ProcedureErrorType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -316,8 +317,8 @@ public class CfgBuilder {
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 				fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 
-		return SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings, dumpUsatCoreTrackBenchmark,
-				dumpMainTrackBenchmark, logicForExternalSolver, "CfgBuilderScript");
+		return new HistoryRecordingScript(SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings,
+				dumpUsatCoreTrackBenchmark, dumpMainTrackBenchmark, logicForExternalSolver, "CfgBuilderScript"));
 	}
 
 	private static Expression getNegation(final Expression expr) {
@@ -436,7 +437,7 @@ public class CfgBuilder {
 
 	private static boolean isOverapproximation(final Statement st) {
 		final Overapprox oa = Overapprox.getAnnotation(st);
-		return (oa != null);
+		return oa != null;
 	}
 
 	/**
@@ -460,14 +461,14 @@ public class CfgBuilder {
 				final Procedure proc = entry.getValue();
 				final Body body = proc.getBody();
 				for (final Statement st : body.getBlock()) {
-					if ((st instanceof ForkStatement)) {
+					if (st instanceof ForkStatement) {
 						hasSomeForkStatement = true;
 					} else if (st instanceof GotoStatement) {
 						allGotoTargets.addAll(Arrays.asList(((GotoStatement) st).getLabels()));
-					} else if ((st instanceof AssignmentStatement) || (st instanceof AssumeStatement)
-							|| (st instanceof HavocStatement) || (st instanceof Label) || (st instanceof JoinStatement)
-							|| (st instanceof CallStatement) || (st instanceof ReturnStatement)
-							|| (st instanceof AssertStatement) || (st instanceof AtomicStatement)) {
+					} else if (st instanceof AssignmentStatement || st instanceof AssumeStatement
+							|| st instanceof HavocStatement || st instanceof Label || st instanceof JoinStatement
+							|| st instanceof CallStatement || st instanceof ReturnStatement
+							|| st instanceof AssertStatement || st instanceof AtomicStatement) {
 						// do nothing
 					} else {
 						throw new UnsupportedOperationException(
@@ -676,8 +677,7 @@ public class CfgBuilder {
 						// do nothing
 					} else {
 						it.remove();
-						final List<IcfgEdge> outgoingEdges =
-								new ArrayList<>(entry.getValue().getOutgoingEdges());
+						final List<IcfgEdge> outgoingEdges = new ArrayList<>(entry.getValue().getOutgoingEdges());
 						for (final IcfgEdge outEdge : outgoingEdges) {
 							outEdge.disconnectSource();
 							outEdge.disconnectTarget();
@@ -804,7 +804,7 @@ public class CfgBuilder {
 		private boolean statementIsControlFlowDead(final boolean lastStatementWasControlFlowDead,
 				final Statement lastStmt, final Statement st, final Set<String> allGotoTargets) {
 			final boolean lastStatementWasGotoOrReturn =
-					(lastStmt instanceof GotoStatement || lastStmt instanceof ReturnStatement);
+					lastStmt instanceof GotoStatement || lastStmt instanceof ReturnStatement;
 			if (lastStatementWasControlFlowDead || lastStatementWasGotoOrReturn) {
 				if (st instanceof Label) {
 					final Label label = (Label) st;
@@ -1267,7 +1267,7 @@ public class CfgBuilder {
 				throw new UnsupportedOperationException(
 						"In an atomic block calls to procedures that have an implementation are not allowed.");
 			}
-			final boolean nonFreeRequiresIsEmpty = (requiresNonFree == null || requiresNonFree.isEmpty());
+			final boolean nonFreeRequiresIsEmpty = requiresNonFree == null || requiresNonFree.isEmpty();
 			if (mAtomicMode && !nonFreeRequiresIsEmpty) {
 				throw new UnsupportedOperationException(
 						"In an atomic block calls to procedures that have a non-empty set of non-free requires clauses are not (yet) allowed.");
@@ -1454,8 +1454,8 @@ public class CfgBuilder {
 			mAtomicMode = true;
 			for (int i = 0; i < atomicStatement.getBody().length; i++) {
 				final Statement st = atomicStatement.getBody()[i];
-				if (st instanceof AssignmentStatement || (st instanceof AssumeStatement)
-						|| (st instanceof HavocStatement)) {
+				if (st instanceof AssignmentStatement || st instanceof AssumeStatement
+						|| st instanceof HavocStatement) {
 					processAssuAssiHavoStatement(st, Origin.IMPLEMENTATION);
 				} else if (st instanceof CallStatement) {
 					final CallStatement callStatement = (CallStatement) st;
@@ -1468,7 +1468,7 @@ public class CfgBuilder {
 						throw new UnsupportedOperationException(
 								"In an atomic block, calls to procedures that have an implementation are not allowed.");
 					}
-					final boolean nonFreeRequiresIsEmpty = (requiresNonFree == null || requiresNonFree.isEmpty());
+					final boolean nonFreeRequiresIsEmpty = requiresNonFree == null || requiresNonFree.isEmpty();
 					if (mAtomicMode && !nonFreeRequiresIsEmpty) {
 						throw new UnsupportedOperationException(
 								"In an atomic block, calls to procedures that have a non-empty set of non-free requires clauses are not (yet) allowed.");
@@ -1477,7 +1477,7 @@ public class CfgBuilder {
 				} else if (st instanceof GotoStatement) {
 					final GotoStatement gotoStatement = (GotoStatement) st;
 					final Statement nextStatement = atomicStatement.getBody()[i + 1];
-					if (gotoStatement.getLabels().length == 1 && (nextStatement instanceof Label)
+					if (gotoStatement.getLabels().length == 1 && nextStatement instanceof Label
 							&& ((Label) nextStatement).getName().equals(gotoStatement.getLabels()[0])) {
 						// do nothing, we can skip goto and label
 					} else {

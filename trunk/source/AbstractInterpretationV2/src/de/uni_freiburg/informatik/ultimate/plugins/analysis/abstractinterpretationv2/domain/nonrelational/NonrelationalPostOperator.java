@@ -57,9 +57,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.MappedTerm2Expression;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -331,7 +331,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			final Expression inExpression = args[i];
 
 			final IIdentifierTranslator[] translators = new IIdentifierTranslator[] { new SimpleTranslator(),
-					mBoogie2Smt.new ConstOnlyIdentifierTranslator() };
+					mBoogie2Smt.createConstOnlyIdentifierTranslator() };
 
 			final Term expressionTerm =
 					mBoogie2Smt.getExpression2Term().translateToTerm(translators, inExpression).getTerm();

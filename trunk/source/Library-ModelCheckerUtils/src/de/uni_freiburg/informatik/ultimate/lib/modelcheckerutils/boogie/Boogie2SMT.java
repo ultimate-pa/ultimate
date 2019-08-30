@@ -97,13 +97,8 @@ public class Boogie2SMT {
 					mOperationTranslator, mScript);
 		}
 
-		final List<Term> axiomList = new ArrayList<>(boogieDeclarations.getAxioms().size());
-		script.echo(new QuotedObject("Start declaration of axioms"));
-		for (final Axiom decl : boogieDeclarations.getAxioms()) {
-			final Term term = declareAxiom(decl, mExpression2Term);
-			axiomList.add(term);
-		}
-		script.echo(new QuotedObject("Finished declaration of axioms"));
+		final List<Term> axiomList =
+				declareAxioms(boogieDeclarations, script, mExpression2Term, mBoogie2SmtSymbolTable);
 		final TermVarsProc tvp =
 				TermVarsProc.computeTermVarsProc(SmtUtils.and(script, axiomList), script, mBoogie2SmtSymbolTable);
 		assert tvp.getVars().isEmpty() : "axioms must not have variables";
@@ -114,6 +109,22 @@ public class Boogie2SMT {
 				new Statements2TransFormula(this, mServices, mExpression2Term, simplePartialSkolemization);
 		mTerm2Expression = new Term2Expression(mTypeSortTranslator, mBoogie2SmtSymbolTable, mScript);
 
+	}
+
+	private static List<Term> declareAxioms(final BoogieDeclarations boogieDeclarations, final Script script,
+			final Expression2Term expression2Term, final Boogie2SmtSymbolTable boogie2SmtSymbolTable) {
+		final List<Term> axiomList = new ArrayList<>(boogieDeclarations.getAxioms().size());
+		script.echo(new QuotedObject("Start declaration of axioms"));
+		for (final Axiom decl : boogieDeclarations.getAxioms()) {
+			final ConstOnlyIdentifierTranslator coit = new ConstOnlyIdentifierTranslator(boogie2SmtSymbolTable);
+			final IIdentifierTranslator[] its = new IIdentifierTranslator[] { coit };
+			final Term closedTerm = expression2Term.translateToTerm(its, decl.getFormula()).getTerm();
+			script.assertTerm(closedTerm);
+			final Term term = closedTerm;
+			axiomList.add(term);
+		}
+		script.echo(new QuotedObject("Finished declaration of axioms"));
+		return axiomList;
 	}
 
 	public Script getScript() {
@@ -156,12 +167,8 @@ public class Boogie2SMT {
 		return mSmtSymbols;
 	}
 
-	private Term declareAxiom(final Axiom ax, final Expression2Term expression2term) {
-		final ConstOnlyIdentifierTranslator coit = new ConstOnlyIdentifierTranslator();
-		final IIdentifierTranslator[] its = new IIdentifierTranslator[] { coit };
-		final Term closedTerm = expression2term.translateToTerm(its, ax.getFormula()).getTerm();
-		mScript.getScript().assertTerm(closedTerm);
-		return closedTerm;
+	public ConstOnlyIdentifierTranslator createConstOnlyIdentifierTranslator() {
+		return new ConstOnlyIdentifierTranslator(mBoogie2SmtSymbolTable);
 	}
 
 	public static void reportUnsupportedSyntax(final BoogieASTNode astNode, final String longDescription,
@@ -172,11 +179,13 @@ public class Boogie2SMT {
 		services.getProgressMonitorService().cancelToolchain();
 	}
 
-	public class ConstOnlyIdentifierTranslator implements IIdentifierTranslator {
+	public static final class ConstOnlyIdentifierTranslator implements IIdentifierTranslator {
 
 		private final Set<BoogieConst> mNonTheoryConsts = new HashSet<>();
+		private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 
-		public ConstOnlyIdentifierTranslator() {
+		public ConstOnlyIdentifierTranslator(final Boogie2SmtSymbolTable boogie2SmtSymbolTable) {
+			mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
 		}
 
 		@Override
