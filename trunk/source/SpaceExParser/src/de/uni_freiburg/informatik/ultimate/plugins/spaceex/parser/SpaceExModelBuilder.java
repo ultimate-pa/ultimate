@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtSymbols;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
@@ -159,7 +159,7 @@ public class SpaceExModelBuilder {
 				Collections.singletonMap(HybridTranslatorConstants.PROC_NAME, Collections.emptyList());
 		final Map<String, List<ILocalProgramVar>> outParams = inParams;
 		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, defaultTable, procedures, inParams, outParams,
-				new IcfgEdgeFactory(new SerialProvider()), null, new SmtSymbols(script));
+				new IcfgEdgeFactory(new SerialProvider()), null, new SmtFunctionsAndAxioms(script));
 	}
 
 	public BasicIcfg<IcfgLocation> getModel() {

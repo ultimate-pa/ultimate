@@ -240,7 +240,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(services, prefs.getSolverMode(),
 					solverSettings, false, false, prefs.getLogicForExternalSolver(), filename);
 			mgdScriptTc = new ManagedScript(services, tcSolver);
-			icfgContainer.getCfgSmtToolkit().getSmtSymbols().transferSymbols(tcSolver);
+			icfgContainer.getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferSymbols(tcSolver);
 		} else {
 			mgdScriptTc = prefs.getCfgSmtToolkit().getManagedScript();
 		}

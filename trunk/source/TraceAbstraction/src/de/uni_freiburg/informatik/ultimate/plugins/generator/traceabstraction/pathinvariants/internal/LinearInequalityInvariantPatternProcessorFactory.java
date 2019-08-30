@@ -33,7 +33,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtSymbols;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
@@ -67,7 +67,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	private final boolean mSynthesizeEntryPattern;
 	private final KindOfInvariant mKindOfInvariant;
 	private final SolverSettings mSolverSettings;
-	private final SmtSymbols mSmtSymbols;
+	private final SmtFunctionsAndAxioms mSmtSymbols;
 	private final Map<IcfgLocation, IPredicate> mLoc2underApprox;
 	private final Map<IcfgLocation, IPredicate> mLoc2overApprox;
 
@@ -98,7 +98,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
 			final boolean useNonlinerConstraints, final boolean useUnsatCores, final SolverSettings solverSettings,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final SmtSymbols smtSymbols, final Map<IcfgLocation, IPredicate> loc2underApprox,
+			final SmtFunctionsAndAxioms smtSymbols, final Map<IcfgLocation, IPredicate> loc2underApprox,
 			final Map<IcfgLocation, IPredicate> loc2overApprox, final boolean synthesizeEntryPattern,
 			final KindOfInvariant kindOfInvariant) {
 		mServices = services;

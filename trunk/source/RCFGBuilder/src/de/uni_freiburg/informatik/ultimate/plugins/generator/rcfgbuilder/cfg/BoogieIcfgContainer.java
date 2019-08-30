@@ -121,7 +121,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 				mgScript, mBoogie2smt.getBoogie2SmtSymbolTable(), procs,
 				mBoogie2smt.getBoogie2SmtSymbolTable().getProc2InParams(),
 				mBoogie2smt.getBoogie2SmtSymbolTable().getProc2OutParams(), new IcfgEdgeFactory(serialprovider),
-				concurInfo, mBoogie2SMT.getSmtSymbols());
+				concurInfo, mBoogie2SMT.getSmtFunctionsAndAxioms());
 		mCodeBlockFactory = new CodeBlockFactory(services, mgScript, mCfgSmtToolkit,
 				mBoogie2SMT.getBoogie2SmtSymbolTable(), serialprovider);
 		mPayload = new Payload();

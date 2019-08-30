@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionDefinition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtSymbols;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
@@ -424,9 +424,9 @@ public class QuantifierEliminationTest {
 		final Sort[] paramSorts = new Sort[] { arrayFromIntToIntToInt, SmtSortUtils.getIntSort(mMgdScript) };
 		final Sort resultSort = arrayFromIntToIntToInt;
 		final String functionDefinitionAsString = "(store a i ((as const (Array Int Int)) 0))";
-		final SmtFunctionDefinition additionalFunction = SmtFunctionDefinition.create(mScript,
+		final SmtFunctionDefinition additionalFunction = SmtFunctionDefinition.createFromString(mScript,
 				"~initToZeroAtPointerBaseAddress~int", functionDefinitionAsString, paramIds, paramSorts, resultSort);
-		final SmtSymbols smtSymbols = new SmtSymbols(mScript).addFunction(mScript, additionalFunction);
+		final SmtFunctionsAndAxioms smtSymbols = new SmtFunctionsAndAxioms(mScript).addFunction(mScript, additionalFunction);
 
 		mScript.declareFun("b", new Sort[0], arrayFromIntToIntToInt);
 		mScript.declareFun("j", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));

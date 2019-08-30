@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.MotzkinTransformation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtSymbols;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -277,7 +277,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param underApprox
 	 */
 	public LinearInequalityInvariantPatternProcessor(final IUltimateServiceProvider services,
-			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit, final SmtSymbols smtSymbols,
+			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit, final SmtFunctionsAndAxioms smtSymbols,
 			final Script solver, final List<IcfgLocation> locations, final List<IcfgInternalTransition> transitions,
 			final IPredicate precondition, final IPredicate postcondition, final IcfgLocation startLocation,
 			final Set<IcfgLocation> errorLocations,

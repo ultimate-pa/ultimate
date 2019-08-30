@@ -100,7 +100,7 @@ public class ProcedureMultiplier {
 		final Map<String, List<ILocalProgramVar>> inParams = new HashMap<>(icfg.getCfgSmtToolkit().getInParams());
 		final Map<String, List<ILocalProgramVar>> outParams = new HashMap<>(icfg.getCfgSmtToolkit().getOutParams());
 		final Set<String> procedures = new HashSet<>(icfg.getCfgSmtToolkit().getProcedures());
-		final SmtSymbols smtSymbols = icfg.getCfgSmtToolkit().getSmtSymbols();
+		final SmtFunctionsAndAxioms smtSymbols = icfg.getCfgSmtToolkit().getSmtFunctionsAndAxioms();
 		final DefaultIcfgSymbolTable symbolTable = new DefaultIcfgSymbolTable(icfg.getCfgSmtToolkit().getSymbolTable(),
 				procedures);
 		final ManagedScript managedScript = icfg.getCfgSmtToolkit().getManagedScript();

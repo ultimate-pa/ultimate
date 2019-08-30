@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtSymbols;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -294,7 +294,7 @@ public final class TraceCheckUtils {
 	 * Use {@link TermClassifier} to classify set of {@link Term}s that belong to a trace, and return the
 	 * {@link TermClassifier}. TODO: Maybe also check local vars assignment and global vars assignment?
 	 */
-	public static TermClassifier classifyTermsInTrace(final Word<? extends IAction> word, final SmtSymbols smtSymbols) {
+	public static TermClassifier classifyTermsInTrace(final Word<? extends IAction> word, final SmtFunctionsAndAxioms smtSymbols) {
 
 		final TermClassifier cs = new TermClassifier();
 		smtSymbols.classify(cs);

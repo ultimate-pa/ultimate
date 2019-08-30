@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransform
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtSymbols;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
@@ -69,7 +69,7 @@ public class CachedTransFormulaLinearizer {
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final SmtSymbols mSmtSymbols;
+	private final SmtFunctionsAndAxioms mSmtSymbols;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final CfgSmtToolkit mCsToolkit;
 	private final Map<UnmodifiableTransFormula, LinearTransition> mCache;
@@ -84,7 +84,7 @@ public class CachedTransFormulaLinearizer {
 	 * @author Matthias Heizmann
 	 */
 	public CachedTransFormulaLinearizer(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final SmtSymbols smtSymbols, final SimplificationTechnique simplificationTechnique,
+			final SmtFunctionsAndAxioms smtSymbols, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;

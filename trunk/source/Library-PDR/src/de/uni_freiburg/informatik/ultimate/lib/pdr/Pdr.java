@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -188,7 +187,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 		mScript = createSolver(mServices, mCsToolkit);
 		mPredTrans = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
-		mAxioms = mPredicateUnifier.getOrConstructPredicate(mCsToolkit.getSmtSymbols().getAxioms());
+		mAxioms = mPredicateUnifier.getOrConstructPredicate(mCsToolkit.getSmtFunctionsAndAxioms().getAxioms());
 
 		mTruePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("true"));
 		mFalsePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("false"));
@@ -216,7 +215,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		}
 	}
 
-	private final LBool pdrPreprocessing(IIcfg<? extends IcfgLocation> icfg) {
+	private final LBool pdrPreprocessing(final IIcfg<? extends IcfgLocation> icfg) {
 
 		final Set<? extends IcfgLocation> init = icfg.getInitialNodes();
 		final Set<? extends IcfgLocation> error = IcfgUtils.getErrorLocations(mPpIcfg);
@@ -243,7 +242,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			}
 		}
 
-		final ArrayDeque<ProofObligation> firstPos = new ArrayDeque<ProofObligation>();
+		final ArrayDeque<ProofObligation> firstPos = new ArrayDeque<>();
 		/**
 		 * Generate the initial proof-obligations
 		 */
@@ -261,11 +260,11 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 	/**
 	 * Main loop of PDR
-	 * 
+	 *
 	 * @param icfg
 	 * @return
 	 */
-	private LBool computePdr(IIcfg<? extends IcfgLocation> icfg, final Deque<ProofObligation> firstPos) {
+	private LBool computePdr(final IIcfg<? extends IcfgLocation> icfg, final Deque<ProofObligation> firstPos) {
 
 		final Set<? extends IcfgLocation> init = icfg.getInitialNodes();
 		final Set<? extends IcfgLocation> error = IcfgUtils.getErrorLocations(mPpIcfg);
@@ -304,7 +303,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			/**
 			 * Initialize new level.
 			 */
-			final Deque<ProofObligation> proofObligations = new ArrayDeque<ProofObligation>(firstPos);
+			final Deque<ProofObligation> proofObligations = new ArrayDeque<>(firstPos);
 			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> trace : mGlobalFrames.entrySet()) {
 				trace.getValue().add(new Pair<>(ChangedFrame.U, mAxioms));
 			}
@@ -546,7 +545,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		final Map<Term, Term> reverseMappingPrePred = new HashMap<>();
 		final Map<Term, Term> reverseMappingPreTrans = new HashMap<>();
 		final Map<IProgramVar, TermVariable> outVarsTrans =
-				new HashMap<IProgramVar, TermVariable>(predecessorTransition.getTransformula().getOutVars());
+				new HashMap<>(predecessorTransition.getTransformula().getOutVars());
 		/*
 		 * Replace vars with primed vars in prePred
 		 */
@@ -962,7 +961,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				SolverBuilder.constructSolverSettings(SolverMode.Internal_SMTInterpol, false, null);
 		final Script script = SolverBuilder.buildAndInitializeSolver(services, SolverMode.Internal_SMTInterpol,
 				solverSettings, false, false, Logics.ALL.toString(), "PdrSolver");
-		csToolkit.getSmtSymbols().transferSymbols(script);
+		csToolkit.getSmtFunctionsAndAxioms().transferSymbols(script);
 		return new ManagedScript(services, script);
 	}
 

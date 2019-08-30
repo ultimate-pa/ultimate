@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 University of Freiburg
+ *
+ * This file is part of the ULTIMATE ModelCheckerUtils Library.
+ *
+ * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
 import java.util.Arrays;
@@ -20,38 +46,55 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class SmtFunctionDefinition {
+public final class SmtFunctionDefinition implements ISmtDeclarable {
 
 	private final String mId;
 	private final String[] mParamIds;
 	private final Sort[] mParamSorts;
 	private final Sort mResultSort;
-	private final Term mDefinition;
+	private final Term mFunctionDefinition;
 
 	private Term[] mParamVars;
 
 	/**
 	 * Define a SMT function without body.
 	 */
-	private SmtFunctionDefinition(final String smtID, final Sort[] paramSorts, final Sort resultSort) {
+	public SmtFunctionDefinition(final String smtID, final Sort[] paramSorts, final Sort resultSort) {
 		this(smtID, null, paramSorts, resultSort, null);
 	}
 
 	/**
 	 * Define a SMT function with body.
 	 */
-	private SmtFunctionDefinition(final String smtID, final String[] paramIds, final Sort[] paramSorts,
+	public SmtFunctionDefinition(final String smtID, final String[] paramIds, final Sort[] paramSorts,
 			final Sort resultSort, final Term subformula) {
 		mId = Objects.requireNonNull(smtID);
 		mParamSorts = Objects.requireNonNull(paramSorts);
 		mResultSort = Objects.requireNonNull(resultSort);
 		mParamIds = paramIds;
-		mDefinition = subformula;
+		mFunctionDefinition = subformula;
+	}
+
+	public static SmtFunctionDefinition createFromScriptDefineFun(final String fun, final TermVariable[] params,
+			final Sort resultSort, final Term definition) {
+		final String[] paramIds = new String[params.length];
+		final Sort[] paramSorts = new Sort[params.length];
+		for (int i = 0; i < params.length; ++i) {
+			paramIds[i] = params[i].getName();
+			paramSorts[i] = params[i].getSort();
+		}
+		return new SmtFunctionDefinition(fun, paramIds, paramSorts, resultSort, definition);
+	}
+
+	public static SmtFunctionDefinition createFromScriptDeclareFun(final String fun, final Sort[] paramSorts,
+			final Sort resultSort) {
+		return new SmtFunctionDefinition(fun, paramSorts, resultSort);
 	}
 
 	/**
-	 * Create an {@link SmtFunctionDefinition} from Strings and Sorts using {@link TermParseUtils}. Useful during
-	 * testing or during processing :smtdefined attributes in Boogie code.
+	 * Create an {@link SmtFunctionDefinition} from Strings and Sorts using {@link TermParseUtils}.
+	 * 
+	 * Only use this method during testing or to process <code>:smtdefined</code> attributes from Boogie.
 	 *
 	 * @param script
 	 *            A script instance.
@@ -65,9 +108,10 @@ public final class SmtFunctionDefinition {
 	 *            The sort of the parameters.
 	 * @param resultSort
 	 *            The sort of the function return value.
+	 * @return An {@link SmtFunctionDefinition} representing a function declaration or definition.
 	 */
-	public static SmtFunctionDefinition create(final Script script, final String smtFunName, final String smtFunBody,
-			final String[] paramIds, final Sort[] paramSorts, final Sort resultSort) {
+	public static SmtFunctionDefinition createFromString(final Script script, final String smtFunName,
+			final String smtFunBody, final String[] paramIds, final Sort[] paramSorts, final Sort resultSort) {
 		if (smtFunBody == null) {
 			return new SmtFunctionDefinition(smtFunName, paramSorts, resultSort);
 		}
@@ -100,38 +144,48 @@ public final class SmtFunctionDefinition {
 		return new SmtFunctionDefinition(smtFunName, paramIds, paramSorts, resultSort, bodyTerm);
 	}
 
-	public void defineOrDeclareFunction(final Script script, final TermTransferrer tt) {
+	public void defineOrDeclare(final Script script, final TermTransferrer tt) {
 		final Sort[] newParamSorts = tt.transferSorts(mParamSorts);
 		final Sort newResultSort = tt.transferSort(mResultSort);
-		final SmtFunctionDefinition newFunDef;
-		if (mDefinition != null) {
-			final Term newDefinition = tt.transform(mDefinition);
+		final ISmtDeclarable newFunDef;
+		if (mFunctionDefinition != null) {
+			final Term newDefinition = tt.transform(mFunctionDefinition);
 			newFunDef = new SmtFunctionDefinition(mId, mParamIds, newParamSorts, newResultSort, newDefinition);
 		} else {
 			newFunDef = new SmtFunctionDefinition(mId, newParamSorts, newResultSort);
 		}
-		newFunDef.defineOrDeclareFunction(script);
+		newFunDef.defineOrDeclare(script);
 	}
 
-	public void defineOrDeclareFunction(final Script script) {
-		if (mDefinition == null) {
+	/**
+	 * Define or declare this object in the supplied script.
+	 * 
+	 * If the function has a body, this function will first declare parameters with
+	 * {@link Script#variable(String, Sort)}, and then define the whole function with
+	 * {@link Script#defineFun(String, TermVariable[], Sort, Term)}.
+	 * 
+	 * If the function does not have a body, it will be declared using {@link Script#declareFun(String, Sort[], Sort)}.
+	 */
+	@Override
+	public void defineOrDeclare(final Script script) {
+		if (mFunctionDefinition == null) {
 			script.declareFun(mId, mParamSorts, mResultSort);
 		} else {
 			final TermVariable[] params = new TermVariable[mParamSorts.length];
 			for (int i = 0; i < mParamSorts.length; ++i) {
 				if (mParamIds[i] == null) {
-					throw new IllegalSmtFunctionUsageException(
+					throw new ISmtDeclarable.IllegalSmtDeclarableUsageException(
 							"Unnamed parameter in function declaration together with "
 									+ Boogie2SmtSymbolTable.ID_SMTDEFINED + " attribute");
 				}
 				params[i] = script.variable(mParamIds[i], mParamSorts[i]);
 			}
-			script.defineFun(mId, params, mResultSort, mDefinition);
+			script.defineFun(mId, params, mResultSort, mFunctionDefinition);
 		}
 	}
 
 	public Term getDefinition() {
-		return mDefinition;
+		return mFunctionDefinition;
 	}
 
 	public String getName() {
@@ -158,29 +212,18 @@ public final class SmtFunctionDefinition {
 	}
 
 	private Term[] computeParamVars() {
-		if (mDefinition == null) {
-			throw new IllegalSmtFunctionUsageException("Cannot compute parameter vars if there is no body");
+		if (mFunctionDefinition == null) {
+			throw new ISmtDeclarable.IllegalSmtDeclarableUsageException(
+					"Cannot compute parameter vars if there is no body");
 		}
 
 		final Map<String, TermVariable> freeVars = new HashMap<>();
-		Arrays.stream(mDefinition.getFreeVars()).forEach(a -> freeVars.put(a.getName(), a));
+		Arrays.stream(mFunctionDefinition.getFreeVars()).forEach(a -> freeVars.put(a.getName(), a));
 		mParamVars = new Term[mParamIds.length];
 		for (int i = 0; i < mParamIds.length; ++i) {
 			mParamVars[i] = freeVars.get(mParamIds[i]);
 		}
 		return mParamVars;
-	}
-
-	/**
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 */
-	public static final class IllegalSmtFunctionUsageException extends RuntimeException {
-
-		private static final long serialVersionUID = 1L;
-
-		public IllegalSmtFunctionUsageException(final String msg) {
-			super(msg);
-		}
 	}
 
 }

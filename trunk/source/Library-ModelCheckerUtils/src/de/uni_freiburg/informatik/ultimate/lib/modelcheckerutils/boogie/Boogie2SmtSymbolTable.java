@@ -57,8 +57,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ISmtDeclarable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ISmtDeclarable.IllegalSmtDeclarableUsageException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionDefinition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionDefinition.IllegalSmtFunctionUsageException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -320,7 +321,7 @@ public class Boogie2SmtSymbolTable
 		} else {
 			smtID = attributeDefinedIdentifier;
 			if (smtDefinedBody != null) {
-				throw new IllegalSmtFunctionUsageException(
+				throw new ISmtDeclarable.IllegalSmtDeclarableUsageException(
 						id + " has " + ID_SMTDEFINED + " and " + ID_BUILTIN + " attributes");
 			}
 		}
@@ -354,9 +355,9 @@ public class Boogie2SmtSymbolTable
 		final Sort resultSort = mTypeSortTranslator.getSort(resultType, funcdecl);
 		if (attributeDefinedIdentifier == null) {
 			// no builtin function, we have to declare it
-			final SmtFunctionDefinition smtFunctionDefinition = SmtFunctionDefinition.create(mScript.getScript(), smtID,
+			final SmtFunctionDefinition smtFunctionDefinition = SmtFunctionDefinition.createFromString(mScript.getScript(), smtID,
 					smtDefinedBody, paramIds, paramSorts, resultSort);
-			smtFunctionDefinition.defineOrDeclareFunction(mScript.getScript());
+			smtFunctionDefinition.defineOrDeclare(mScript.getScript());
 			mSmtFunction2SmtFunctionDefinition.put(smtID, smtFunctionDefinition);
 
 		}

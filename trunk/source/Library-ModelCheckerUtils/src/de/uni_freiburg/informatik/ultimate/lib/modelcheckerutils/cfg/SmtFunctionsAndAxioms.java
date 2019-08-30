@@ -47,12 +47,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 /**
- * {@link SmtSymbols} contains axioms and SMT function symbols created throughout a toolchain.
+ * {@link SmtFunctionsAndAxioms} contains axioms and SMT function symbols created throughout a toolchain.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class SmtSymbols {
+public class SmtFunctionsAndAxioms {
 
 	public static final int HARDCODED_SERIALNUMBER_FOR_AXIOMS = 0;
 
@@ -60,28 +60,29 @@ public class SmtSymbols {
 	private final Map<String, SmtFunctionDefinition> mSmtFunctions2SmtFunctionDefinitions;
 
 	/**
-	 * Create an empty {@link SmtSymbols} instance.
+	 * Create an empty {@link SmtFunctionsAndAxioms} instance.
 	 */
-	public SmtSymbols(final Script script) {
+	public SmtFunctionsAndAxioms(final Script script) {
 		this(script.term("true"), new String[0], Collections.emptyMap());
 	}
 
 	/**
-	 * Create a {@link SmtSymbols} instance with axioms defined in a single term together with the procedures in which
-	 * they were defined (if any), and a map from defined function names to {@link SmtFunctionDefinition} instances were
-	 * each entry represents a defined SMT function.
+	 * Create a {@link SmtFunctionsAndAxioms} instance with axioms defined in a single term together with the procedures
+	 * in which they were defined (if any), and a map from defined function names to {@link SmtFunctionDefinition}
+	 * instances were each entry represents a defined SMT function.
 	 */
-	public SmtSymbols(final Term axioms, final String[] defininingProcedures,
+	public SmtFunctionsAndAxioms(final Term axioms, final String[] defininingProcedures,
 			final Map<String, SmtFunctionDefinition> smtFun2SmtFunDef) {
 		this(new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, defininingProcedures, axioms, Collections.emptySet(),
 				axioms), smtFun2SmtFunDef);
 	}
 
 	/**
-	 * Create a {@link SmtSymbols} instance with axioms defined by an {@link IPredicate} and a map from defined function
-	 * names to {@link SmtFunctionDefinition} instances were each entry represents a defined SMT function.
+	 * Create a {@link SmtFunctionsAndAxioms} instance with axioms defined by an {@link IPredicate} and a map from
+	 * defined function names to {@link SmtFunctionDefinition} instances were each entry represents a defined SMT
+	 * function.
 	 */
-	public SmtSymbols(final IPredicate axioms, final Map<String, SmtFunctionDefinition> smtFun2SmtFunDef) {
+	public SmtFunctionsAndAxioms(final IPredicate axioms, final Map<String, SmtFunctionDefinition> smtFun2SmtFunDef) {
 		mAxioms = Objects.requireNonNull(axioms);
 		mSmtFunctions2SmtFunctionDefinitions = Objects.requireNonNull(smtFun2SmtFunDef);
 		assert axioms.getClosedFormula() == axioms.getFormula() : "Axioms are not closed";
@@ -91,35 +92,37 @@ public class SmtSymbols {
 	}
 
 	/**
-	 * Create a new {@link SmtSymbols} instance with an additional axiom without corresponding procedure.
+	 * Create a new {@link SmtFunctionsAndAxioms} instance with an additional axiom without corresponding procedure.
 	 *
 	 * Also asserts the new axiom in the supplied script.
 	 *
 	 */
-	public SmtSymbols addAxiom(final Script script, final Term additionalAxioms) {
+	public SmtFunctionsAndAxioms addAxiom(final Script script, final Term additionalAxioms) {
 		final Term newAxioms = SmtUtils.and(script, mAxioms.getClosedFormula(), additionalAxioms);
 		final LBool quickCheckAxioms = script.assertTerm(additionalAxioms);
+		// TODO: Use an Ultimate result to report inconsistent axioms; we do not want to disallow inconsistent axioms,
+		// we just want to be informed about them.
 		assert quickCheckAxioms != LBool.UNSAT : "Axioms are inconsistent";
 		final IPredicate newAxiomsPred = new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, new String[0],
 				additionalAxioms, Collections.emptySet(), newAxioms);
-		return new SmtSymbols(newAxiomsPred, mSmtFunctions2SmtFunctionDefinitions);
+		return new SmtFunctionsAndAxioms(newAxiomsPred, mSmtFunctions2SmtFunctionDefinitions);
 	}
 
 	/**
-	 * Create a new {@link SmtSymbols} instance with an additional function declaration.
+	 * Create a new {@link SmtFunctionsAndAxioms} instance with an additional function declaration or definition.
 	 *
-	 * Also define the function in the supplied script.
+	 * Also define or declare the function in the supplied script.
 	 *
 	 */
-	public SmtSymbols addFunction(final Script script, final SmtFunctionDefinition additionalFunction) {
+	public SmtFunctionsAndAxioms addFunction(final Script script, final SmtFunctionDefinition additionalFunction) {
 		final Map<String, SmtFunctionDefinition> map = new LinkedHashMap<>(mSmtFunctions2SmtFunctionDefinitions);
 		map.put(additionalFunction.getName(), additionalFunction);
-		additionalFunction.defineOrDeclareFunction(script);
-		return new SmtSymbols(mAxioms, map);
+		additionalFunction.defineOrDeclare(script);
+		return new SmtFunctionsAndAxioms(mAxioms, map);
 	}
 
 	/**
-	 * Define all symbols defined by this SmtSymbols in a fresh script (by asserting or defining)
+	 * Define all symbols defined by this {@link SmtFunctionsAndAxioms} in a fresh script (by asserting or defining)
 	 *
 	 * @param script
 	 *            the new script.
@@ -128,15 +131,18 @@ public class SmtSymbols {
 		final TermTransferrer tt = new TermTransferrer(script);
 		final Term transferredAxiom = tt.transform(mAxioms.getClosedFormula());
 		final LBool quickCheckAxioms = script.assertTerm(transferredAxiom);
+		// TODO: Use an Ultimate result to report inconsistent axioms; we do not want to disallow inconsistent axioms,
+		// we just want to be informed about them.
 		assert quickCheckAxioms != LBool.UNSAT : "Axioms are inconsistent";
 		for (final Entry<String, SmtFunctionDefinition> entry : mSmtFunctions2SmtFunctionDefinitions.entrySet()) {
-			entry.getValue().defineOrDeclareFunction(script, tt);
+			entry.getValue().defineOrDeclare(script, tt);
 		}
 
 	}
 
 	/**
-	 * Apply a {@link TermClassifier} to all axioms and function bodies defined by this {@link SmtSymbols} instance.
+	 * Apply a {@link TermClassifier} to all axioms and function bodies defined by this {@link SmtFunctionsAndAxioms}
+	 * instance.
 	 */
 	public void classify(final TermClassifier cs) {
 		cs.checkTerm(mAxioms.getFormula());
@@ -149,8 +155,8 @@ public class SmtSymbols {
 	}
 
 	/**
-	 * Replace all function applications of the supplied term that are contained in this {@link SmtSymbols} instance
-	 * with their bodies.
+	 * Replace all function applications of the supplied term that are contained in this {@link SmtFunctionsAndAxioms}
+	 * instance with their bodies.
 	 *
 	 * TODO: Also inline axioms.
 	 */

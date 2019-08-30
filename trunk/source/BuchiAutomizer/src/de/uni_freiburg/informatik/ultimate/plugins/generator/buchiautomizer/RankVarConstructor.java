@@ -91,7 +91,7 @@ public class RankVarConstructor {
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
 		mCfgSmtToolkitWithRankVariables = new CfgSmtToolkit(modifiableGlobalsTable, csToolkit.getManagedScript(),
 				newSymbolTable, csToolkit.getProcedures(), csToolkit.getInParams(), csToolkit.getOutParams(),
-				csToolkit.getIcfgEdgeFactory(), csToolkit.getConcurrencyInformation(), csToolkit.getSmtSymbols());
+				csToolkit.getIcfgEdgeFactory(), csToolkit.getConcurrencyInformation(), csToolkit.getSmtFunctionsAndAxioms());
 	}
 
 	/**

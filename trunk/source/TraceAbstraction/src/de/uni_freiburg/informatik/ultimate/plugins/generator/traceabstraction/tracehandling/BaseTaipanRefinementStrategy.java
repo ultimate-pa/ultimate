@@ -364,7 +364,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		final Script solver = SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings,
 				false, false, logicForExternalSolver, "TraceCheck_Iteration" + taskIdentifier);
 		final ManagedScript result = new ManagedScript(services, solver);
-		prefs.getCfgSmtToolkit().getSmtSymbols().transferSymbols(solver);
+		prefs.getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferSymbols(solver);
 		return result;
 	}
 

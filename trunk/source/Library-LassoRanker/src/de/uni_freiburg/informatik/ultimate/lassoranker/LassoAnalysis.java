@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.Ran
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtSymbols;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTPrettyPrinter;
@@ -135,7 +135,7 @@ public class LassoAnalysis {
 	/**
 	 * The axioms regarding the transitions' constants
 	 */
-	protected final SmtSymbols mSmtSymbols;
+	protected final SmtFunctionsAndAxioms mSmtSymbols;
 
 	/**
 	 * The current preferences
@@ -198,7 +198,7 @@ public class LassoAnalysis {
 	 */
 	public LassoAnalysis(final CfgSmtToolkit csToolkit, final UnmodifiableTransFormula stemTransition,
 			final UnmodifiableTransFormula loopTransition, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
-			final SmtSymbols smtSymbols, final ILassoRankerPreferences preferences,
+			final SmtFunctionsAndAxioms smtSymbols, final ILassoRankerPreferences preferences,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) throws TermException {
 		mServices = services;
@@ -254,7 +254,7 @@ public class LassoAnalysis {
 	 */
 	public LassoAnalysis(final CfgSmtToolkit csToolkit, final IIcfgSymbolTable symbolTable,
 			final UnmodifiableTransFormula loop, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
-			final SmtSymbols symbols, final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
+			final SmtFunctionsAndAxioms symbols, final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) throws TermException, FileNotFoundException {
 		this(csToolkit, null, loop, modifiableGlobalsAtHonda, symbols, preferences, services, simplificationTechnique,
 				xnfConversionTechnique);

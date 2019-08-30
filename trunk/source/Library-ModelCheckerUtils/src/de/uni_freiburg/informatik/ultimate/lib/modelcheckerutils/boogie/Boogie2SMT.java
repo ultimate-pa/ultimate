@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxRes
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtSymbols;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -68,7 +68,7 @@ public class Boogie2SMT {
 
 	private final Statements2TransFormula mStatements2TransFormula;
 
-	private final SmtSymbols mSmtSymbols;
+	private final SmtFunctionsAndAxioms mSmtSymbols;
 
 	private final IUltimateServiceProvider mServices;
 
@@ -107,7 +107,7 @@ public class Boogie2SMT {
 		final TermVarsProc tvp =
 				TermVarsProc.computeTermVarsProc(SmtUtils.and(script, axiomList), script, mBoogie2SmtSymbolTable);
 		assert tvp.getVars().isEmpty() : "axioms must not have variables";
-		mSmtSymbols = new SmtSymbols(tvp.getClosedFormula(), tvp.getProcedures(),
+		mSmtSymbols = new SmtFunctionsAndAxioms(tvp.getClosedFormula(), tvp.getProcedures(),
 				mBoogie2SmtSymbolTable.getSmtFunction2SmtFunctionDefinition());
 
 		mStatements2TransFormula =
@@ -152,7 +152,7 @@ public class Boogie2SMT {
 		return mTypeSortTranslator;
 	}
 
-	public SmtSymbols getSmtSymbols() {
+	public SmtFunctionsAndAxioms getSmtFunctionsAndAxioms() {
 		return mSmtSymbols;
 	}
 

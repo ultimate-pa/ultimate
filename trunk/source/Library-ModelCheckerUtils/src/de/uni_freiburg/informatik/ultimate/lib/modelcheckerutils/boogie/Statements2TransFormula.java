@@ -193,7 +193,7 @@ public class Statements2TransFormula {
 		} else {
 			formula = mAssumes;
 		}
-		formula = mBoogie2SMT.getSmtSymbols().inline(mScript, formula);
+		formula = mBoogie2SMT.getSmtFunctionsAndAxioms().inline(mScript, formula);
 
 		Infeasibility infeasibility = null;
 		if (simplify) {

@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtSymbols;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -61,7 +61,7 @@ public class AddSymbols extends TransitionPreprocessor {
 	 * @param smtSymbols
 	 *            the axioms that should be added to stem and loop
 	 */
-	public AddSymbols(final ReplacementVarFactory replacementVarFactory, final SmtSymbols smtSymbols) {
+	public AddSymbols(final ReplacementVarFactory replacementVarFactory, final SmtFunctionsAndAxioms smtSymbols) {
 		mReplacementVarFactory = replacementVarFactory;
 		final Term axioms = smtSymbols.getAxioms().getFormula();
 		mAxioms = SmtUtils.getConjuncts(axioms);

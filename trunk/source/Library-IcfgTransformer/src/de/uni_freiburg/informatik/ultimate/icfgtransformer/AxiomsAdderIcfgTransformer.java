@@ -4,7 +4,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.IdentityTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtSymbols;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -28,8 +28,8 @@ public class AxiomsAdderIcfgTransformer<INLOC extends IcfgLocation, OUTLOC exten
 		final CfgSmtToolkit inputCfgCsToolkit = inputCfg.getCfgSmtToolkit();
 		final ManagedScript mgdScript = inputCfgCsToolkit.getManagedScript();
 
-		final SmtSymbols newSmtSymbols =
-				inputCfgCsToolkit.getSmtSymbols().addAxiom(mgdScript.getScript(), additionalAxioms);
+		final SmtFunctionsAndAxioms newSmtSymbols =
+				inputCfgCsToolkit.getSmtFunctionsAndAxioms().addAxiom(mgdScript.getScript(), additionalAxioms);
 
 		final CfgSmtToolkit newToolkit = new CfgSmtToolkit(inputCfgCsToolkit.getModifiableGlobalsTable(), mgdScript,
 				inputCfgCsToolkit.getSymbolTable(), inputCfgCsToolkit.getProcedures(), inputCfgCsToolkit.getInParams(),

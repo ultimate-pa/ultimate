@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConve
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtSymbols;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -182,7 +182,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
 	private NonTerminationArgument mNonterminationArgument;
 
-	private final SmtSymbols mSmtSymbols;
+	private final SmtFunctionsAndAxioms mSmtSymbols;
 	private final IUltimateServiceProvider mServices;
 	private final boolean mRemoveSuperfluousSupportingInvariants = true;
 
@@ -208,7 +208,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
 	public LassoCheck(final InterpolationTechnique interpolation, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final SmtSymbols smtSymbols,
+			final ModifiableGlobalsTable modifiableGlobalsTable, final SmtFunctionsAndAxioms smtSymbols,
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<LETTER, IPredicate> counterexample,
 			final String lassoCheckIdentifier, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,

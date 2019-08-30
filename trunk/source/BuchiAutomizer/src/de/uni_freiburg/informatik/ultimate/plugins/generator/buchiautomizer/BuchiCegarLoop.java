@@ -471,7 +471,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 				mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
 				lassoCheck = new LassoCheck<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
 						mCsToolkitWithRankVars.getSymbolTable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
-						mIcfg.getCfgSmtToolkit().getSmtSymbols(), mBinaryStatePredicateManager, mCounterexample,
+						mIcfg.getCfgSmtToolkit().getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager, mCounterexample,
 						generateLassoCheckIdentifier(), mServices, mSimplificationTechnique, mXnfConversionTechnique,
 						mRefinementStrategyFactory, mAbstraction, taskIdentifier, mBenchmarkGenerator);
 				if (lassoCheck.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
@@ -487,7 +487,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 					lassoCheck = new LassoCheck<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
 							mIcfg.getCfgSmtToolkit().getSymbolTable(),
 							mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
-							mIcfg.getCfgSmtToolkit().getSmtSymbols(), mBinaryStatePredicateManager, mCounterexample,
+							mIcfg.getCfgSmtToolkit().getSmtFunctionsAndAxioms(), mBinaryStatePredicateManager, mCounterexample,
 							generateLassoCheckIdentifier(), mServices, mSimplificationTechnique, mXnfConversionTechnique,
 							mRefinementStrategyFactory, mAbstraction, unwindingTaskIdentifier, mBenchmarkGenerator);
 				}

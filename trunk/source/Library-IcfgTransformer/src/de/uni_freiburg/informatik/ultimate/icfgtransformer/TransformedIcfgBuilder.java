@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfg
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionDefinition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtSymbols;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
@@ -340,7 +340,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 		}
 
-		final SmtSymbols transformedSymbols = transformSmtSymbols(oldToolkit.getSmtSymbols());
+		final SmtFunctionsAndAxioms transformedSymbols = transformSmtFunctionsAndAxioms(oldToolkit.getSmtFunctionsAndAxioms());
 		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(newModifiedGlobals, oldToolkit.getManagedScript(),
 				newSymbolTable, oldToolkit.getProcedures(), oldToolkit.getInParams(), oldToolkit.getOutParams(),
 				oldToolkit.getIcfgEdgeFactory(), oldToolkit.getConcurrencyInformation(), transformedSymbols);
@@ -501,7 +501,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		return null;
 	}
 
-	private SmtSymbols transformSmtSymbols(final SmtSymbols smtSymbols) {
+	private SmtFunctionsAndAxioms transformSmtFunctionsAndAxioms(final SmtFunctionsAndAxioms smtSymbols) {
 		// TODO: Transfer defined SMT functions
 		final Map<String, SmtFunctionDefinition> transformedSmtFunctions = Collections.emptyMap();
 		final AxiomTransformationResult translationResult = mTransformer.transform(smtSymbols.getAxioms());
@@ -510,7 +510,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		}
 
 		if (mAdditionalAxioms.isEmpty()) {
-			return new SmtSymbols(translationResult.getAxiom(), transformedSmtFunctions);
+			return new SmtFunctionsAndAxioms(translationResult.getAxiom(), transformedSmtFunctions);
 		}
 
 		final List<Term> newAxiomsClosed =
@@ -519,7 +519,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 		final ManagedScript mMgdScript = mOriginalIcfg.getCfgSmtToolkit().getManagedScript();
 		final Term newAxioms = SmtUtils.and(mMgdScript.getScript(), newAxiomsClosed);
-		return new SmtSymbols(newAxioms, new String[0], transformedSmtFunctions);
+		return new SmtFunctionsAndAxioms(newAxioms, new String[0], transformedSmtFunctions);
 	}
 
 }

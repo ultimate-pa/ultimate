@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.Pie
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingTemplate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtSymbols;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -170,7 +170,7 @@ public class LassoRankerStarter {
 		UnmodifiableTransFormula loopTf = constructTransformula(mLoop);
 		loopTf = tvr.renameVars(loopTf, "Loop");
 
-		final SmtSymbols smtSymbols = mIcfg.getCfgSmtToolkit().getSmtSymbols();
+		final SmtFunctionsAndAxioms smtSymbols = mIcfg.getCfgSmtToolkit().getSmtFunctionsAndAxioms();
 		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda =
 				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(mHonda.getProcedure());
 

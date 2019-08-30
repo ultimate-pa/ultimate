@@ -73,7 +73,7 @@ public class WalrusRefinementStrategy<LETTER extends IIcfgTransition<?>>
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
 		final TermClassifier tc =
-				TraceCheckUtils.classifyTermsInTrace(mCounterexample.getWord(), mCsToolkit.getSmtSymbols());
+				TraceCheckUtils.classifyTermsInTrace(mCounterexample.getWord(), mCsToolkit.getSmtFunctionsAndAxioms());
 		if (RefinementStrategyUtils.hasNoFloats(tc)) {
 			list.add(Track.CVC4_FPBP);
 		} else if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {

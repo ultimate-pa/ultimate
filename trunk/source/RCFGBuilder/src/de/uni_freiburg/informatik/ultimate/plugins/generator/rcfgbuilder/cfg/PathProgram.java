@@ -242,7 +242,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			final CfgSmtToolkit newCfgSmtToolkit =
 					new CfgSmtToolkit(newModGlobTable, oldCfgSmtToolkit.getManagedScript(), mSymbolTable, mProcedures,
 							oldCfgSmtToolkit.getInParams(), oldCfgSmtToolkit.getOutParams(),
-							oldCfgSmtToolkit.getIcfgEdgeFactory(), null, oldCfgSmtToolkit.getSmtSymbols());
+							oldCfgSmtToolkit.getIcfgEdgeFactory(), null, oldCfgSmtToolkit.getSmtFunctionsAndAxioms());
 
 			final PathProgram pp = new PathProgram(nonNullIdentifier, newCfgSmtToolkit, mProgramPoints, mProcEntries,
 					mProcExits, mProcError, mInitialNodes, mLoopLocations);

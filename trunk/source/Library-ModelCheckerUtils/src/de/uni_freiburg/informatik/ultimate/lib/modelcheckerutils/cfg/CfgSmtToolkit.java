@@ -53,13 +53,13 @@ public class CfgSmtToolkit {
 	private final Map<String, List<ILocalProgramVar>> mOutParams;
 	private final IcfgEdgeFactory mIcfgEdgeFactory;
 	private final ConcurrencyInformation mConcurrencyInformation;
-	private final SmtSymbols mSmtSymbols;
+	private final SmtFunctionsAndAxioms mSmtFunctionsAndAxioms;
 
 	public CfgSmtToolkit(final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript managedScript,
 			final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final Map<String, List<ILocalProgramVar>> inParams, final Map<String, List<ILocalProgramVar>> outParams,
 			final IcfgEdgeFactory icfgEdgeFactory, final ConcurrencyInformation concurInfo,
-			final SmtSymbols smtSymbols) {
+			final SmtFunctionsAndAxioms smtFunctionsAndAxioms) {
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
 		mModifiableGlobalsTable = modifiableGlobalsTable;
@@ -69,7 +69,7 @@ public class CfgSmtToolkit {
 		mOutParams = outParams;
 		mIcfgEdgeFactory = icfgEdgeFactory;
 		mConcurrencyInformation = concurInfo;
-		mSmtSymbols = smtSymbols;
+		mSmtFunctionsAndAxioms = smtFunctionsAndAxioms;
 	}
 
 	public ManagedScript getManagedScript() {
@@ -88,8 +88,8 @@ public class CfgSmtToolkit {
 		return mSymbolTable;
 	}
 
-	public SmtSymbols getSmtSymbols() {
-		return mSmtSymbols;
+	public SmtFunctionsAndAxioms getSmtFunctionsAndAxioms() {
+		return mSmtFunctionsAndAxioms;
 	}
 
 	public Set<String> getProcedures() {

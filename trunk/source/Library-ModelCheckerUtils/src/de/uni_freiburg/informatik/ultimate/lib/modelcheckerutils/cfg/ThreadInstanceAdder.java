@@ -477,7 +477,7 @@ public class ThreadInstanceAdder {
 		return new CfgSmtToolkit(new ModifiableGlobalsTable(proc2Globals), cfgSmtToolkit.getManagedScript(),
 				newSymbolTable, cfgSmtToolkit.getProcedures(), cfgSmtToolkit.getInParams(),
 				cfgSmtToolkit.getOutParams(), cfgSmtToolkit.getIcfgEdgeFactory(), concurrencyInformation,
-				cfgSmtToolkit.getSmtSymbols());
+				cfgSmtToolkit.getSmtFunctionsAndAxioms());
 	}
 
 	private static void addVar(final IProgramNonOldVar var, final DefaultIcfgSymbolTable newSymbolTable,

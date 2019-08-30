@@ -416,7 +416,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		final Script solver = SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings,
 				false, false, logicForExternalSolver, "TraceCheck_Iteration" + mTaskIdentifier);
 		final ManagedScript result = new ManagedScript(services, solver);
-		prefs.getIcfgContainer().getCfgSmtToolkit().getSmtSymbols().transferSymbols(solver);
+		prefs.getIcfgContainer().getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferSymbols(solver);
 		return result;
 	}
 
