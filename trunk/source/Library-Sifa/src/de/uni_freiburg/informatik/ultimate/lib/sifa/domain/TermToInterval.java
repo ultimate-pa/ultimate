@@ -113,7 +113,7 @@ public class TermToInterval {
 
 	private static Interval handleUnaryFunction(final ApplicationTerm term, final Map<TermVariable, Interval> scope) {
 		assert term.getParameters().length == 1 : "Expected unary function but found " + term;
-		if ("-".equals(term.getFunction().getName())) {
+		if (isFunction("-", term)) {
 			final Term param = term.getParameters()[0];
 			return evaluate(param, scope).negate();
 		} else {
@@ -123,7 +123,7 @@ public class TermToInterval {
 
 	/** Evaluates functions of arity greater or equal 2. */
 	private static Interval handleGEq2AryFunction(final ApplicationTerm term, final Map<TermVariable, Interval> scope) {
-		if ("ite".equals(term.getFunction())) {
+		if (isFunction("ite", term)) {
 			return handleIfThenElseFunction(term, scope);
 		} else {
 			return handleLeftAssociativeFunction(term, scope);
@@ -133,13 +133,17 @@ public class TermToInterval {
 	private static Interval handleIfThenElseFunction(final ApplicationTerm term,
 			final Map<TermVariable, Interval> scope) {
 		final Term[] iteParams = term.getParameters();
-		assert "ite".equals(term.getFunction()) : "Expected ite term but found " + term;
+		assert isFunction("ite", term) : "Expected ite term but found " + term;
 		assert iteParams.length == 3 : "Expected 3 parameters for ite term but found " + term;
 		// TODO evaluate condition (condition is boolean, but we only support numeric types in intervals)
 		// For now we ignore the condition and over-approximate
 		final Interval iteThenResult = evaluate(iteParams[1], scope);
 		final Interval iteElseResult = evaluate(iteParams[2], scope);
 		return iteThenResult.union(iteElseResult);
+	}
+
+	private static boolean isFunction(final String functionName, final ApplicationTerm term) {
+		return functionName.equals(term.getFunction().getName());
 	}
 
 	private static Interval handleLeftAssociativeFunction(final ApplicationTerm term,
