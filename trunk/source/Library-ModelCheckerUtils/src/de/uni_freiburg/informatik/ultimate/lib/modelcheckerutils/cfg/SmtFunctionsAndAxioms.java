@@ -67,6 +67,14 @@ public class SmtFunctionsAndAxioms {
 	}
 
 	/**
+	 * Create an {@link SmtFunctionsAndAxioms} instance without axioms but with all function symbols recorded by
+	 * {@link HistoryRecordingScript}.
+	 */
+	public SmtFunctionsAndAxioms(final HistoryRecordingScript script) {
+		this(script.term("true"), new String[0], script.getFunctionDefinitionHistory());
+	}
+
+	/**
 	 * Create a {@link SmtFunctionsAndAxioms} instance with axioms defined in a single term together with the procedures
 	 * in which they were defined (if any), and a map from defined function names to {@link SmtFunctionDefinition}
 	 * instances were each entry represents a defined SMT function.
@@ -129,14 +137,14 @@ public class SmtFunctionsAndAxioms {
 	 */
 	public void transferSymbols(final Script script) {
 		final TermTransferrer tt = new TermTransferrer(script);
+		for (final Entry<String, SmtFunctionDefinition> entry : mSmtFunctions2SmtFunctionDefinitions.entrySet()) {
+			entry.getValue().defineOrDeclare(script, tt);
+		}
 		final Term transferredAxiom = tt.transform(mAxioms.getClosedFormula());
 		final LBool quickCheckAxioms = script.assertTerm(transferredAxiom);
 		// TODO: Use an Ultimate result to report inconsistent axioms; we do not want to disallow inconsistent axioms,
 		// we just want to be informed about them.
 		assert quickCheckAxioms != LBool.UNSAT : "Axioms are inconsistent";
-		for (final Entry<String, SmtFunctionDefinition> entry : mSmtFunctions2SmtFunctionDefinitions.entrySet()) {
-			entry.getValue().defineOrDeclare(script, tt);
-		}
 
 	}
 
