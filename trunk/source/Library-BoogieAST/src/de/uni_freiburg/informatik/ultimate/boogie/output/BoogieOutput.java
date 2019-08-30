@@ -836,6 +836,7 @@ public class BoogieOutput {
 			final CallStatement call = (CallStatement) s;
 			String comma;
 			sb.append("call ");
+			appendAttributes(sb, call.getAttributes());
 			if (call.isForall()) {
 				sb.append("forall ");
 			}
@@ -875,7 +876,7 @@ public class BoogieOutput {
 			}
 			sb.append(");");
 		} else if (s instanceof JoinStatement) {
-			final JoinStatement join = (JoinStatement)s;
+			final JoinStatement join = (JoinStatement) s;
 			String comma = "";
 			sb.append("join ");
 			for (final Expression threadId : join.getThreadID()) {
@@ -960,20 +961,16 @@ public class BoogieOutput {
 	}
 
 	/*
-
+	 * 
 	 * Print statement.
 	 *
-	 * @param s
-	 *            the statement to print.
-	 * @param indent
-	 *            the current indent level.
+	 * @param s the statement to print.
+	 * 
+	 * @param indent the current indent level.
 	 *
-	public void printStatement(final Statement s, final String indent) {
-		final StringBuilder sb = new StringBuilder();
-		appendStatement(sb, s, indent);
-		mWriter.print(sb.toString());
-	}
-	*/
+	 * public void printStatement(final Statement s, final String indent) { final StringBuilder sb = new
+	 * StringBuilder(); appendStatement(sb, s, indent); mWriter.print(sb.toString()); }
+	 */
 
 	/**
 	 * Append left hand side.

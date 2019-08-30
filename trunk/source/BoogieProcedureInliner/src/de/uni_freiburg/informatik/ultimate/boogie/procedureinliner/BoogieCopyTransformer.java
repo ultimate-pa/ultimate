@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
@@ -68,21 +69,21 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 /**
- * Modification of the BoogieTransformer,
- * which guarantees to return new instances for statements and expressions.
+ * Modification of the BoogieTransformer, which guarantees to return new instances for statements and expressions.
  *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class BoogieCopyTransformer extends BoogieTransformer {
 
-
 	@Override
 	protected Statement processStatement(final Statement stat) {
 		Statement newStat;
 		if (stat instanceof AssertStatement) {
-			final Expression expr = ((AssertStatement) stat).getFormula();
+			final AssertStatement assertStmt = (AssertStatement) stat;
+			final Expression expr = assertStmt.getFormula();
 			final Expression newExpr = processExpression(expr);
-			newStat = new AssertStatement(stat.getLocation(), newExpr);
+			final Attribute[] newAttr = processAttributes(assertStmt.getAttributes());
+			newStat = new AssertStatement(stat.getLocation(), (NamedAttribute[]) newAttr, newExpr);
 		} else if (stat instanceof AssignmentStatement) {
 			final AssignmentStatement assign = (AssignmentStatement) stat;
 			final LeftHandSide[] lhs = assign.getLhs();
@@ -91,9 +92,11 @@ public class BoogieCopyTransformer extends BoogieTransformer {
 			final Expression[] newRhs = processExpressions(rhs);
 			newStat = new AssignmentStatement(stat.getLocation(), newLhs, newRhs);
 		} else if (stat instanceof AssumeStatement) {
-			final Expression expr = ((AssumeStatement) stat).getFormula();
+			final AssumeStatement assumeStmt = (AssumeStatement) stat;
+			final Expression expr = assumeStmt.getFormula();
 			final Expression newExpr = processExpression(expr);
-			newStat = new AssumeStatement(stat.getLocation(), newExpr);
+			final Attribute[] newAttr = processAttributes(assumeStmt.getAttributes());
+			newStat = new AssumeStatement(stat.getLocation(), (NamedAttribute[]) newAttr, newExpr);
 		} else if (stat instanceof HavocStatement) {
 			final HavocStatement havoc = (HavocStatement) stat;
 			final VariableLHS[] ids = havoc.getIdentifiers();
@@ -105,7 +108,8 @@ public class BoogieCopyTransformer extends BoogieTransformer {
 			final Expression[] newArgs = processExpressions(args);
 			final VariableLHS[] lhs = call.getLhs();
 			final VariableLHS[] newLhs = processVariableLHSs(lhs);
-			newStat = new CallStatement(call.getLocation(), call.isForall(), newLhs, call.getMethodName(), newArgs);
+			newStat = new CallStatement(call.getLocation(), call.getAttributes(), call.isForall(), newLhs,
+					call.getMethodName(), newArgs);
 		} else if (stat instanceof IfStatement) {
 			final IfStatement ifstmt = (IfStatement) stat;
 			final Expression cond = ifstmt.getCondition();
@@ -141,7 +145,7 @@ public class BoogieCopyTransformer extends BoogieTransformer {
 		} else if (stat instanceof GotoStatement) {
 			final GotoStatement gs = (GotoStatement) stat;
 			newStat = new GotoStatement(gs.getLocation(), gs.getLabels());
-		}  else if (stat instanceof ForkStatement) {
+		} else if (stat instanceof ForkStatement) {
 			final ForkStatement forkstmt = (ForkStatement) stat;
 			final Expression[] threadId = forkstmt.getThreadID();
 			final String procName = forkstmt.getProcedureName();
@@ -149,7 +153,7 @@ public class BoogieCopyTransformer extends BoogieTransformer {
 			final Expression[] newThreadId = processExpressions(threadId);
 			final Expression[] newArguments = processExpressions(arguments);
 			newStat = new ForkStatement(forkstmt.getLoc(), newThreadId, procName, newArguments);
-		}  else if (stat instanceof JoinStatement) {
+		} else if (stat instanceof JoinStatement) {
 			final JoinStatement joinstmt = (JoinStatement) stat;
 			final Expression[] threadId = joinstmt.getThreadID();
 			final VariableLHS[] lhs = joinstmt.getLhs();
@@ -223,7 +227,7 @@ public class BoogieCopyTransformer extends BoogieTransformer {
 			newExpr = new StructAccessExpression(sae.getLocation(), struct, sae.getField());
 		} else if (expr instanceof BooleanLiteral) {
 			final BooleanLiteral bl = (BooleanLiteral) expr;
-			newExpr = new BooleanLiteral(bl.getLocation(), bl.getType(),bl.getValue());
+			newExpr = new BooleanLiteral(bl.getLocation(), bl.getType(), bl.getValue());
 		} else if (expr instanceof IntegerLiteral) {
 			final IntegerLiteral il = (IntegerLiteral) expr;
 			newExpr = new IntegerLiteral(il.getLocation(), il.getType(), il.getValue());

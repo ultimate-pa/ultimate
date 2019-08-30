@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
+import java.util.Arrays;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
@@ -356,10 +358,12 @@ public abstract class BoogieTransformer {
 	protected Statement processStatement(final Statement statement) {
 		Statement newStatement = null;
 		if (statement instanceof AssertStatement) {
-			final Expression expr = ((AssertStatement) statement).getFormula();
+			final AssertStatement assertStmt = (AssertStatement) statement;
+			final Expression expr = assertStmt.getFormula();
 			final Expression newExpr = processExpression(expr);
-			if (expr != newExpr) {
-				newStatement = new AssertStatement(statement.getLocation(), newExpr);
+			final Attribute[] newAttr = processAttributes(assertStmt.getAttributes());
+			if (expr != newExpr || assertStmt.getAttributes() != newAttr) {
+				newStatement = new AssertStatement(statement.getLocation(), (NamedAttribute[]) newAttr, newExpr);
 			}
 		} else if (statement instanceof AssignmentStatement) {
 			final AssignmentStatement assign = (AssignmentStatement) statement;
@@ -371,10 +375,12 @@ public abstract class BoogieTransformer {
 				newStatement = new AssignmentStatement(statement.getLocation(), newLhs, newRhs);
 			}
 		} else if (statement instanceof AssumeStatement) {
+			final AssumeStatement assumeStmt = (AssumeStatement) statement;
 			final Expression expr = ((AssumeStatement) statement).getFormula();
 			final Expression newExpr = processExpression(expr);
-			if (expr != newExpr) {
-				newStatement = new AssumeStatement(statement.getLocation(), newExpr);
+			final Attribute[] newAttr = processAttributes(assumeStmt.getAttributes());
+			if (expr != newExpr || assumeStmt.getAttributes() != newAttr) {
+				newStatement = new AssumeStatement(statement.getLocation(), (NamedAttribute[]) newAttr, newExpr);
 			}
 		} else if (statement instanceof HavocStatement) {
 			final HavocStatement havoc = (HavocStatement) statement;
@@ -389,9 +395,10 @@ public abstract class BoogieTransformer {
 			final Expression[] newArgs = processExpressions(args);
 			final VariableLHS[] lhs = call.getLhs();
 			final VariableLHS[] newLhs = processVariableLHSs(lhs);
-			if (args != newArgs || lhs != newLhs) {
-				newStatement =
-						new CallStatement(call.getLocation(), call.isForall(), newLhs, call.getMethodName(), newArgs);
+			final Attribute[] newAttr = processAttributes(call.getAttributes());
+			if (args != newArgs || lhs != newLhs || newAttr != call.getAttributes()) {
+				newStatement = new CallStatement(call.getLocation(), (NamedAttribute[]) newAttr, call.isForall(),
+						newLhs, call.getMethodName(), newArgs);
 			}
 		} else if (statement instanceof IfStatement) {
 			final IfStatement ifstmt = (IfStatement) statement;
@@ -606,19 +613,20 @@ public abstract class BoogieTransformer {
 	 *            the attribute to process.
 	 * @return processed attribute.
 	 */
-	protected Attribute processAttribute(final Attribute attr) {
-		Attribute newAttr = null;
+	@SuppressWarnings("unchecked")
+	protected <T extends Attribute> T processAttribute(final T attr) {
+		T newAttr = null;
 		if (attr instanceof Trigger) {
 			final Expression[] exprs = ((Trigger) attr).getTriggers();
 			final Expression[] newExprs = processExpressions(exprs);
 			if (newExprs != exprs) {
-				return new Trigger(attr.getLocation(), newExprs);
+				return (T) new Trigger(attr.getLocation(), newExprs);
 			}
 		} else if (attr instanceof NamedAttribute) {
 			final Expression[] exprs = ((NamedAttribute) attr).getValues();
 			final Expression[] newExprs = processExpressions(exprs);
 			if (newExprs != exprs) {
-				newAttr = new NamedAttribute(attr.getLocation(), ((NamedAttribute) attr).getName(), newExprs);
+				newAttr = (T) new NamedAttribute(attr.getLocation(), ((NamedAttribute) attr).getName(), newExprs);
 			}
 		}
 		if (newAttr == null) {
@@ -636,9 +644,10 @@ public abstract class BoogieTransformer {
 	 *            the attributes to process.
 	 * @return processed attributes.
 	 */
-	protected Attribute[] processAttributes(final Attribute[] attributes) {
+	protected <T extends Attribute> T[] processAttributes(final T[] attributes) {
 		boolean changed = false;
-		final Attribute[] newAttrs = new Attribute[attributes.length];
+
+		final T[] newAttrs = Arrays.copyOf(attributes, attributes.length);
 		for (int i = 0; i < attributes.length; i++) {
 			newAttrs[i] = processAttribute(attributes[i]);
 			if (newAttrs[i] != attributes[i]) {

@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 /**
  * Like {@link BoogieVisitor}, but visits each Expression only once.
  *
- * Implementation note: We catch the visit calls before they are done by super.process..
- * That way we don't need to use Caching BoogieVisitor either.
+ * Implementation note: We catch the visit calls before they are done by super.process.. That way we don't need to use
+ * Caching BoogieVisitor either.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -102,13 +102,13 @@ public class BoogieOnceVisitor extends BoogieVisitor {
 	}
 
 	@Override
-	protected Attribute processAttribute(final Attribute attr) {
+	protected <T extends Attribute> T processAttribute(final T attr) {
 		BoogieASTNode result = mCache.get(attr);
 		if (result == null) {
 			result = super.processAttribute(attr);
 			mCache.put(attr, result);
 		}
-		return (Attribute) result;
+		return (T) result;
 	}
 
 	@Override

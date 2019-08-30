@@ -424,6 +424,7 @@ Statement ::=
 	     * the side-effects of the procedure call occur.
 	     */
 	    CallStatement }
+	    attributes : ?NamedAttribute[]
 	    /**
 	     * True if this is a forall procedure call.
 	     * In Boogie there are special forall procedure calls. See the

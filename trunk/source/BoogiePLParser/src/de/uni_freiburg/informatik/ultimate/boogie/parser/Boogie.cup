@@ -733,12 +733,12 @@ stmt ::=
 	| joinStmt:s
 	;
 callStmt ::= 
-      CALL:x ID:m LPAR:y exprCommaStar:e RPAR SEMI
-	  {: RESULT = new CallStatement(getLocation(x$,e$), false, new VariableLHS[0], m, e.toArray(new Expression[e.size()])); :}
-	| CALL:x varCommaPlus:ass COLONEQUALS ID:m LPAR exprCommaStar:p RPAR SEMI
-	  {: RESULT = new CallStatement(getLocation(x$,p$), false, ass.toArray(new VariableLHS[ass.size()]), m, p.toArray(new Expression[p.size()])); :}
-	| CALL:x FORALL:z ID:m LPAR wildcardExprCommaStar:e RPAR SEMI
-	  {: RESULT = new CallStatement(getLocation(x$,e$), true, new VariableLHS[0], m, e.toArray(new Expression[e.size()])); :}
+      CALL:x attributes:attr ID:m LPAR:y exprCommaStar:e RPAR SEMI
+	  {: RESULT = new CallStatement(getLocation(x$,e$), attr, false, new VariableLHS[0], m, e.toArray(new Expression[e.size()])); :}
+	| CALL:x attributes:attr varCommaPlus:ass COLONEQUALS ID:m LPAR exprCommaStar:p RPAR SEMI
+	  {: RESULT = new CallStatement(getLocation(x$,p$), attr, false, ass.toArray(new VariableLHS[ass.size()]), m, p.toArray(new Expression[p.size()])); :}
+	| CALL:x attributes:attr FORALL:z ID:m LPAR wildcardExprCommaStar:e RPAR SEMI
+	  {: RESULT = new CallStatement(getLocation(x$,e$), attr, true, new VariableLHS[0], m, e.toArray(new Expression[e.size()])); :}
 	;
 	/* Example: fork 5 someProcedure(firstArg, true); */ 
 forkStmt ::=

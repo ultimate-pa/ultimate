@@ -207,8 +207,7 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 		} else if (statement instanceof AtomicStatement) {
 			visit((AtomicStatement) statement);
 		} else {
-			throw new UnsupportedOperationException(
-					String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, statement.getClass()));
+			throw new UnsupportedOperationException(String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, statement.getClass()));
 		}
 
 		return super.processStatement(statement);
@@ -217,7 +216,7 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 	protected void visit(final WhileStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
-	
+
 	protected void visit(final AtomicStatement statment) {
 		// empty because it may be overridden (but does not have to)
 	}
@@ -245,11 +244,11 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 	protected void visit(final CallStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
-	
+
 	protected void visit(final ForkStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
-	
+
 	protected void visit(final JoinStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
@@ -329,7 +328,7 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 	}
 
 	@Override
-	protected Attribute processAttribute(final Attribute attr) {
+	protected <T extends Attribute> T processAttribute(final T attr) {
 		if (attr instanceof NamedAttribute) {
 			visit((NamedAttribute) attr);
 		} else if (attr instanceof Trigger) {
