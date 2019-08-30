@@ -759,7 +759,7 @@ public class PathProgramDumper {
 
 		public FakeBoogie2SmtSymbolTable(final ManagedScript script, final TypeSortTranslator typeSortTranslator,
 				final IIcfgSymbolTable symbolTable, final BoogieDeclarations boogieDeclarations) {
-			super(boogieDeclarations, script, typeSortTranslator, Collections.emptySet());
+			super(boogieDeclarations, script, typeSortTranslator);
 			mIIcfgSymbolTable = symbolTable;
 		}
 

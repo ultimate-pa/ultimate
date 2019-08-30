@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -83,7 +82,7 @@ public class Boogie2SMT {
 			mTypeSortTranslator = new TypeSortTranslatorBitvectorWorkaround(boogieDeclarations.getTypeDeclarations(),
 					mScript.getScript(), mServices);
 			mBoogie2SmtSymbolTable =
-					new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator, Collections.emptySet());
+					new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
 			// TODO: add concurIdVars to mBoogie2SmtSymbolTable
 			mOperationTranslator =
 					new BitvectorWorkaroundOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
@@ -93,7 +92,7 @@ public class Boogie2SMT {
 			mTypeSortTranslator =
 					new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), mScript.getScript(), mServices);
 			mBoogie2SmtSymbolTable =
-					new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator, Collections.emptySet());
+					new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
 
 			mOperationTranslator = new DefaultOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
 			mExpression2Term = new Expression2Term(mServices, mScript.getScript(), mTypeSortTranslator,

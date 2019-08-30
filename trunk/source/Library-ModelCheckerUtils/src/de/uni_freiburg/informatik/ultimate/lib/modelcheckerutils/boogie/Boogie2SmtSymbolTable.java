@@ -118,7 +118,6 @@ public class Boogie2SmtSymbolTable
 	private final Map<IProgramVar, DeclarationInformation> mBoogieVar2DeclarationInformation = new HashMap<>();
 	private final Map<IProgramVar, BoogieASTNode> mBoogieVar2AstNode = new HashMap<>();
 	private final Map<ApplicationTerm, BoogieConst> mSmtConst2BoogieConst = new HashMap<>();
-	private final Set<IProgramNonOldVar> mCfgAuxVars;
 
 	private final Map<String, String> mBoogieFunction2SmtFunction = new HashMap<>();
 	private final Map<String, String> mSmtFunction2BoogieFunction = new HashMap<>();
@@ -128,19 +127,11 @@ public class Boogie2SmtSymbolTable
 	private final DefaultIcfgSymbolTable mICfgSymbolTable = new DefaultIcfgSymbolTable();
 
 	public Boogie2SmtSymbolTable(final BoogieDeclarations boogieDeclarations, final ManagedScript script,
-			final TypeSortTranslator typeSortTranslator, final Set<IProgramNonOldVar> cfgAuxVars) {
+			final TypeSortTranslator typeSortTranslator) {
 		super();
 		mScript = script;
 		mTypeSortTranslator = typeSortTranslator;
 		mBoogieDeclarations = boogieDeclarations;
-		mCfgAuxVars = cfgAuxVars;
-
-		for (final IProgramVar cfgAuxVar : cfgAuxVars) {
-			final BoogieASTNode someAstNode =
-					boogieDeclarations.getProcImplementation().entrySet().iterator().next().getValue();
-			mICfgSymbolTable.add(cfgAuxVar);
-			mBoogieVar2AstNode.put(cfgAuxVar, someAstNode);
-		}
 
 		mScript.lock(this);
 		mScript.echo(this, new QuotedObject("Start declaration of constants"));
@@ -531,7 +522,7 @@ public class Boogie2SmtSymbolTable
 			declInfoInParam = new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procId);
 			declInfoOutParam = new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, procId);
 		} else {
-			assert (isSpecAndImpl(spec, impl));
+			assert isSpecAndImpl(spec, impl);
 			// implementation is given in a separate declaration, in this case
 			// we consider all in/out-params as implementation variables
 			declInfoInParam = new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procId);
@@ -720,11 +711,6 @@ public class Boogie2SmtSymbolTable
 		}
 		for (final String procId : mImplementationInParam.keySet()) {
 			procedures.add(procId);
-		}
-		for (final String procId : procedures) {
-			for (final IProgramNonOldVar var : mCfgAuxVars) {
-				result.addPair(procId, var);
-			}
 		}
 
 		return result;
