@@ -172,7 +172,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					return null;
 				}
 				if (!sbr.getAssumptionsMap().isEmpty()) {
-					// return null;
+					 return null;
 				}
 				final Term eliminateeOnLhs = sbr.relationToTerm(mScript);
 				final BinaryNumericRelation bnr = BinaryNumericRelation.convert(eliminateeOnLhs);
