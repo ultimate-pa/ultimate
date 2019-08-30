@@ -33,24 +33,20 @@ public final class SmtFunctionDefinition {
 	/**
 	 * Define a SMT function without body.
 	 */
-	public SmtFunctionDefinition(final String smtID, final Sort[] paramSorts, final Sort resultSort) {
-		mId = Objects.requireNonNull(smtID);
-		mParamSorts = Objects.requireNonNull(paramSorts);
-		mResultSort = Objects.requireNonNull(resultSort);
-		mParamIds = null;
-		mDefinition = null;
+	private SmtFunctionDefinition(final String smtID, final Sort[] paramSorts, final Sort resultSort) {
+		this(smtID, null, paramSorts, resultSort, null);
 	}
 
 	/**
 	 * Define a SMT function with body.
 	 */
-	public SmtFunctionDefinition(final String smtID, final String[] paramIds, final Sort[] paramSorts,
+	private SmtFunctionDefinition(final String smtID, final String[] paramIds, final Sort[] paramSorts,
 			final Sort resultSort, final Term subformula) {
 		mId = Objects.requireNonNull(smtID);
 		mParamSorts = Objects.requireNonNull(paramSorts);
 		mResultSort = Objects.requireNonNull(resultSort);
-		mParamIds = Objects.requireNonNull(paramIds);
-		mDefinition = Objects.requireNonNull(subformula);
+		mParamIds = paramIds;
+		mDefinition = subformula;
 	}
 
 	/**

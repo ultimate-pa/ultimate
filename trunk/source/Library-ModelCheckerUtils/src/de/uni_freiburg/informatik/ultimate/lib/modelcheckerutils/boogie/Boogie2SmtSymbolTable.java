@@ -467,28 +467,6 @@ public class Boogie2SmtSymbolTable
 		return mIcfgSymbolTable.getLocals(proc);
 	}
 
-	/**
-	 * Return all local variables, input parameters and output parameters for a given procedure.
-	 */
-	public Map<String, LocalBoogieVar> getLocalsMap(final String procedurename) {
-		final Map<String, LocalBoogieVar> rtr = new HashMap<>();
-		addLocals(rtr, mImplementationLocals, procedurename);
-		addLocals(rtr, mImplementationInParam, procedurename);
-		addLocals(rtr, mImplementationOutParam, procedurename);
-		return rtr;
-	}
-
-	private static <T extends IProgramVar> void addLocals(final Map<String, LocalBoogieVar> current,
-			final Map<String, Map<String, T>> toAdd, final String procedurename) {
-		final Map<String, T> map = toAdd.get(procedurename);
-		if (map == null) {
-			return;
-		}
-		for (final Entry<String, T> entry : map.entrySet()) {
-			current.put(entry.getKey(), (LocalBoogieVar) entry.getValue());
-		}
-	}
-
 	@Override
 	public Set<IProgramConst> getConstants() {
 		return mIcfgSymbolTable.getConstants();
