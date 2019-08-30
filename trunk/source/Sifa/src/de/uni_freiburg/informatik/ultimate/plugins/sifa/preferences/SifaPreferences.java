@@ -82,7 +82,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	};
 
 	public static final String LABEL_CALL_SUMMARIZER = "Call Summarizer";
-	private static final String DEFAULT_CALL_SUMMARIZER = TopInputCallSummarizer.class.getSimpleName();
+	private static final String DEFAULT_CALL_SUMMARIZER = ReUseSupersetCallSummarizer.class.getSimpleName();
 	private static final String[] VALUES_CALL_SUMMARIZER = {
 		TopInputCallSummarizer.class.getSimpleName(),
 		InterpretCallSummarizer.class.getSimpleName(),
