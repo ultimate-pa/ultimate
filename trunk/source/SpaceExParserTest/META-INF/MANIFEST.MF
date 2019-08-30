@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: SpaceExParserTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.test
 Bundle-Version: 0.1.24
-Fragment-Host: de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser;bundle-version="0.0.1"
+Fragment-Host: de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.test
 Import-Package: org.junit

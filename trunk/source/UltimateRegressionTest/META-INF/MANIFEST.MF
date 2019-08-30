@@ -27,8 +27,8 @@ Require-Bundle: org.junit,
  de.uni_freiburg.informatik.ultimate.source.smtparser,
  de.uni_freiburg.informatik.ultimate.reqparser,
  de.uni_freiburg.informatik.ultimate.pea2boogie,
- de.uni_freiburg.informatik.ultimate.lib.sifa;bundle-version="0.1.24",
- de.uni_freiburg.informatik.ultimate.plugins.sifa;bundle-version="0.1.24"
+ de.uni_freiburg.informatik.ultimate.lib.sifa,
+ de.uni_freiburg.informatik.ultimate.plugins.sifa
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
