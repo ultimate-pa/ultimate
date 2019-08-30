@@ -124,7 +124,7 @@ public class Boogie2SmtSymbolTable
 	private final Map<String, SmtFunctionDefinition> mSmtFunction2SmtFunctionDefinition = new HashMap<>();
 	private final Map<String, Map<String, Expression[]>> mBoogieFunction2Attributes = new HashMap<>();
 
-	private final DefaultIcfgSymbolTable mICfgSymbolTable = new DefaultIcfgSymbolTable();
+	private final DefaultIcfgSymbolTable mIcfgSymbolTable = new DefaultIcfgSymbolTable();
 
 	public Boogie2SmtSymbolTable(final BoogieDeclarations boogieDeclarations, final ManagedScript script,
 			final TypeSortTranslator typeSortTranslator) {
@@ -246,7 +246,7 @@ public class Boogie2SmtSymbolTable
 
 	@Override
 	public IProgramVar getProgramVar(final TermVariable tv) {
-		return mICfgSymbolTable.getProgramVar(tv);
+		return mIcfgSymbolTable.getProgramVar(tv);
 	}
 
 	@Override
@@ -277,7 +277,7 @@ public class Boogie2SmtSymbolTable
 				final BoogieConst previousValue = mConstants.put(constId, boogieConst);
 				assert previousValue == null : "constant already contained";
 				mSmtConst2BoogieConst.put(constant, boogieConst);
-				mICfgSymbolTable.add(boogieConst);
+				mIcfgSymbolTable.add(boogieConst);
 				return;
 			}
 		}
@@ -290,7 +290,7 @@ public class Boogie2SmtSymbolTable
 			final BoogieConst previousValue = mConstants.put(constId, boogieConst);
 			assert previousValue == null : "constant already contained";
 			mSmtConst2BoogieConst.put(constant, boogieConst);
-			mICfgSymbolTable.add(boogieConst);
+			mIcfgSymbolTable.add(boogieConst);
 		}
 	}
 
@@ -301,7 +301,7 @@ public class Boogie2SmtSymbolTable
 
 	@Override
 	public BoogieConst getProgramConst(final ApplicationTerm smtConstant) {
-		return (BoogieConst) mICfgSymbolTable.getProgramConst(smtConstant);
+		return (BoogieConst) mIcfgSymbolTable.getProgramConst(smtConstant);
 	}
 
 	public Map<String, Expression[]> getAttributes(final String boogieFunctionId) {
@@ -443,7 +443,7 @@ public class Boogie2SmtSymbolTable
 
 	@Override
 	public Set<IProgramNonOldVar> getGlobals() {
-		return Collections.unmodifiableSet(mICfgSymbolTable.getGlobals());
+		return mIcfgSymbolTable.getGlobals();
 	}
 
 	/**
@@ -464,7 +464,7 @@ public class Boogie2SmtSymbolTable
 
 	@Override
 	public Set<ILocalProgramVar> getLocals(final String proc) {
-		return Collections.unmodifiableSet(mICfgSymbolTable.getLocals(proc));
+		return mIcfgSymbolTable.getLocals(proc);
 	}
 
 	/**
@@ -491,7 +491,7 @@ public class Boogie2SmtSymbolTable
 
 	@Override
 	public Set<IProgramConst> getConstants() {
-		return Collections.unmodifiableSet(mICfgSymbolTable.getConstants());
+		return mIcfgSymbolTable.getConstants();
 	}
 
 	/**
@@ -654,7 +654,7 @@ public class Boogie2SmtSymbolTable
 		mSmtVar2BoogieVar.put(termVariable, bv);
 		mBoogieVar2DeclarationInformation.put(bv, declarationInformation);
 		mBoogieVar2AstNode.put(bv, varList);
-		mICfgSymbolTable.add(bv);
+		mIcfgSymbolTable.add(bv);
 		return bv;
 	}
 
@@ -681,7 +681,7 @@ public class Boogie2SmtSymbolTable
 		mBoogieVar2DeclarationInformation.put(oldVar, declarationInformation);
 		mBoogieVar2AstNode.put(oldVar, varlist);
 
-		mICfgSymbolTable.add(nonOldVar);
+		mIcfgSymbolTable.add(nonOldVar);
 		return nonOldVar;
 	}
 
