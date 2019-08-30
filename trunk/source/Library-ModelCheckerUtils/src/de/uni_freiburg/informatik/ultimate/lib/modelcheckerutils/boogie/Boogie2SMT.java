@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -49,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Main class for the translation from Boogie to SMT. Constructs other Objects needed for this translation.
+ * Main class for the translation from Boogie to SMT. Constructs other objects needed for this translation.
  *
  * @author Matthias Heizmann
  *
@@ -77,44 +78,41 @@ public class Boogie2SMT {
 		mServices = services;
 		mBoogieDeclarations = boogieDeclarations;
 		mScript = maScript;
+		final Script script = mScript.getScript();
 
 		if (bitvectorInsteadOfInt) {
 			mTypeSortTranslator = new TypeSortTranslatorBitvectorWorkaround(boogieDeclarations.getTypeDeclarations(),
-					mScript.getScript(), mServices);
-			mBoogie2SmtSymbolTable =
-					new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
+					script, mServices);
+			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
 			// TODO: add concurIdVars to mBoogie2SmtSymbolTable
-			mOperationTranslator =
-					new BitvectorWorkaroundOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
-			mExpression2Term = new Expression2Term(mServices, mScript.getScript(), mTypeSortTranslator,
-					mBoogie2SmtSymbolTable, mOperationTranslator, mScript);
+			mOperationTranslator = new BitvectorWorkaroundOperationTranslator(mBoogie2SmtSymbolTable, script);
+			mExpression2Term = new Expression2Term(mServices, script, mTypeSortTranslator, mBoogie2SmtSymbolTable,
+					mOperationTranslator, mScript);
 		} else {
-			mTypeSortTranslator =
-					new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), mScript.getScript(), mServices);
-			mBoogie2SmtSymbolTable =
-					new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
+			mTypeSortTranslator = new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), script, mServices);
+			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
 
-			mOperationTranslator = new DefaultOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
-			mExpression2Term = new Expression2Term(mServices, mScript.getScript(), mTypeSortTranslator,
-					mBoogie2SmtSymbolTable, mOperationTranslator, mScript);
+			mOperationTranslator = new DefaultOperationTranslator(mBoogie2SmtSymbolTable, script);
+			mExpression2Term = new Expression2Term(mServices, script, mTypeSortTranslator, mBoogie2SmtSymbolTable,
+					mOperationTranslator, mScript);
 		}
 
-		final ArrayList<Term> axiomList = new ArrayList<>(boogieDeclarations.getAxioms().size());
-		mScript.getScript().echo(new QuotedObject("Start declaration of axioms"));
+		final List<Term> axiomList = new ArrayList<>(boogieDeclarations.getAxioms().size());
+		script.echo(new QuotedObject("Start declaration of axioms"));
 		for (final Axiom decl : boogieDeclarations.getAxioms()) {
 			final Term term = declareAxiom(decl, mExpression2Term);
 			axiomList.add(term);
 		}
-		mScript.getScript().echo(new QuotedObject("Finished declaration of axioms"));
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(SmtUtils.and(mScript.getScript(), axiomList),
-				maScript.getScript(), mBoogie2SmtSymbolTable);
+		script.echo(new QuotedObject("Finished declaration of axioms"));
+		final TermVarsProc tvp =
+				TermVarsProc.computeTermVarsProc(SmtUtils.and(script, axiomList), script, mBoogie2SmtSymbolTable);
 		assert tvp.getVars().isEmpty() : "axioms must not have variables";
 		mSmtSymbols = new SmtSymbols(tvp.getClosedFormula(), tvp.getProcedures(),
 				mBoogie2SmtSymbolTable.getSmtFunction2SmtFunctionDefinition());
 
 		mStatements2TransFormula =
 				new Statements2TransFormula(this, mServices, mExpression2Term, simplePartialSkolemization);
-		mTerm2Expression = new Term2Expression(mTypeSortTranslator, mBoogie2SmtSymbolTable, maScript);
+		mTerm2Expression = new Term2Expression(mTypeSortTranslator, mBoogie2SmtSymbolTable, mScript);
 
 	}
 

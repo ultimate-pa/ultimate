@@ -128,7 +128,6 @@ public class Boogie2SmtSymbolTable
 
 	public Boogie2SmtSymbolTable(final BoogieDeclarations boogieDeclarations, final ManagedScript script,
 			final TypeSortTranslator typeSortTranslator) {
-		super();
 		mScript = script;
 		mTypeSortTranslator = typeSortTranslator;
 		mBoogieDeclarations = boogieDeclarations;
@@ -202,35 +201,28 @@ public class Boogie2SmtSymbolTable
 	@Override
 	public IProgramVar getBoogieVar(final String varId, final DeclarationInformation declarationInformation,
 			final boolean inOldContext) {
-		final IProgramVar result;
 		final StorageClass storageClass = declarationInformation.getStorageClass();
 		final String procedure = declarationInformation.getProcedure();
 		switch (storageClass) {
 		case GLOBAL:
 			if (inOldContext) {
-				result = mOldGlobals.get(varId);
-			} else {
-				result = mGlobals.get(varId);
+				return mOldGlobals.get(varId);
 			}
-			break;
+			return mGlobals.get(varId);
 		case PROC_FUNC_INPARAM:
 		case IMPLEMENTATION_INPARAM:
-			result = get(varId, procedure, mImplementationInParam);
-			break;
+			return get(varId, procedure, mImplementationInParam);
 		case PROC_FUNC_OUTPARAM:
 		case IMPLEMENTATION_OUTPARAM:
-			result = get(varId, procedure, mImplementationOutParam);
-			break;
+			return get(varId, procedure, mImplementationOutParam);
 		case LOCAL:
-			result = get(varId, procedure, mImplementationLocals);
-			break;
+			return get(varId, procedure, mImplementationLocals);
 		case IMPLEMENTATION:
 		case PROC_FUNC:
 		case QUANTIFIED:
 		default:
-			throw new AssertionError("inappropriate decl info");
+			throw new AssertionError("inappropriate decl info " + declarationInformation);
 		}
-		return result;
 	}
 
 	/**
@@ -255,7 +247,6 @@ public class Boogie2SmtSymbolTable
 	@Override
 	public IProgramVar getProgramVar(final TermVariable tv) {
 		return mICfgSymbolTable.getProgramVar(tv);
-		// return mSmtVar2BoogieVar.get(tv);
 	}
 
 	@Override
@@ -269,20 +260,17 @@ public class Boogie2SmtSymbolTable
 
 	private void declareConstants(final ConstDeclaration constdecl) {
 		final VarList varlist = constdecl.getVarList();
-		final Sort[] paramTypes = new Sort[0];
 		final IBoogieType iType = varlist.getType().getBoogieType();
-		final Sort sort = mTypeSortTranslator.getSort(iType, varlist);
-
 		final Map<String, Expression[]> attributes = extractAttributes(constdecl);
 		if (attributes != null) {
 			final String attributeDefinedIdentifier = checkForAttributeDefinedIdentifier(attributes, ID_BUILTIN);
 			if (attributeDefinedIdentifier != null) {
-				final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
 				if (varlist.getIdentifiers().length > 1) {
 					throw new IllegalArgumentException(
 							"if builtin identifier is " + "used we support only one constant per const declaration");
 				}
 				final String constId = varlist.getIdentifiers()[0];
+				final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
 				final ApplicationTerm constant =
 						(ApplicationTerm) mScript.term(this, attributeDefinedIdentifier, indices, null);
 				final BoogieConst boogieConst = new BoogieConst(constId, iType, constant, true);
@@ -293,6 +281,8 @@ public class Boogie2SmtSymbolTable
 				return;
 			}
 		}
+		final Sort[] paramTypes = new Sort[0];
+		final Sort sort = mTypeSortTranslator.getSort(iType, varlist);
 		for (final String constId : varlist.getIdentifiers()) {
 			mScript.declareFun(this, constId, paramTypes, sort);
 			final ApplicationTerm constant = (ApplicationTerm) mScript.term(this, constId);
@@ -544,7 +534,7 @@ public class Boogie2SmtSymbolTable
 
 	}
 
-	public void declareSpec(final Procedure spec) {
+	private void declareSpec(final Procedure spec) {
 		assert isSpecification(spec) : "no specification";
 		assert !isImplementation(spec) : "is implementation";
 		final String procId = spec.getIdentifier();
@@ -735,16 +725,15 @@ public class Boogie2SmtSymbolTable
 	@Override
 	public Set<ApplicationTerm> computeAllDefaultConstants() {
 		final Set<ApplicationTerm> rtr = new LinkedHashSet<>();
-		final Function<IProgramVar, ApplicationTerm> fun = a -> a.getDefaultConstant();
+		final Function<IProgramVar, ApplicationTerm> fun = IProgramVar::getDefaultConstant;
 		getAll(mSpecificationInParam, fun).forEachOrdered(rtr::add);
 		getAll(mSpecificationOutParam, fun).forEachOrdered(rtr::add);
 		getAll(mImplementationInParam, fun).forEachOrdered(rtr::add);
 		getAll(mImplementationOutParam, fun).forEachOrdered(rtr::add);
 		mImplementationLocals.entrySet().stream().flatMap(a -> a.getValue().entrySet().stream())
 				.map(a -> fun.apply(a.getValue())).forEachOrdered(rtr::add);
-		mProc2InParams.entrySet().stream().flatMap(a -> a.getValue().stream()).map(a -> fun.apply(a))
-				.forEachOrdered(rtr::add);
-		mProc2OutParams.entrySet().stream().flatMap(a -> a.getValue().stream()).map(a -> fun.apply(a))
+		mProc2InParams.entrySet().stream().flatMap(a -> a.getValue().stream()).map(fun::apply).forEachOrdered(rtr::add);
+		mProc2OutParams.entrySet().stream().flatMap(a -> a.getValue().stream()).map(fun::apply)
 				.forEachOrdered(rtr::add);
 		mGlobals.entrySet().stream().map(a -> fun.apply(a.getValue())).forEachOrdered(rtr::add);
 		mOldGlobals.entrySet().stream().map(a -> fun.apply(a.getValue())).forEachOrdered(rtr::add);
