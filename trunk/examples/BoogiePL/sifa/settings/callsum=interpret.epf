@@ -1,0 +1,4 @@
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Call\ Summarizer=InterpretCallSummarizer
+@de.uni_freiburg.informatik.ultimate.plugins.sifa=0.1.24
+file_export_version=3.0
