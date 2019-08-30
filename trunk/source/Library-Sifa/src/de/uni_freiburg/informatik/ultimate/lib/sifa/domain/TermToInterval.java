@@ -58,6 +58,8 @@ public class TermToInterval {
 
 	// TODO should we use caching as in TermTransformer? (when implementing, watch out for changing scopes)
 
+	// TODO use quantifier elimination in here or in IntervalDomain as post(x := x / y) introduces quantifiers
+
 	/**
 	 * Evaluates a term using interval arithmetic.
 	 * @param term The term to be evaluated
