@@ -40,6 +40,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
+ * {@link HistoryRecordingScript} is a {@link WrapperScript} that tracks definitions and declarations of functions,
+ * sorts and variables of the underlying {@link Script} instance in the order of their occurence as
+ * {@link ISmtDeclarable}.
+ * 
+ * {@link ISmtDeclarable} can be used to initialize a new solver instance with the same functions, sorts and variables.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -114,6 +119,10 @@ public final class HistoryRecordingScript extends WrapperScript {
 		mHistory.add(declarable);
 	}
 
+	/**
+	 * @return A map from function name to {@link SmtFunctionDefinition} in the order of declaration or definition in
+	 *         the underlying script. The map does not update when the underlying script changes.
+	 */
 	public Map<String, SmtFunctionDefinition> getFunctionDefinitionHistory() {
 		final Map<String, SmtFunctionDefinition> rtr = new LinkedHashMap<>();
 		mHistory.stream().filter(a -> a instanceof SmtFunctionDefinition).forEachOrdered(a -> {

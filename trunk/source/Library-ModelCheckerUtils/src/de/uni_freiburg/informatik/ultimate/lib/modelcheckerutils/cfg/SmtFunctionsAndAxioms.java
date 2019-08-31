@@ -34,10 +34,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.NonDeclaringTermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TermClassifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -50,6 +50,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
  * {@link SmtFunctionsAndAxioms} contains axioms and SMT function symbols created throughout a toolchain.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * 
+ *         TODO: Extend {@link HistoryRecordingScript} to be able to create a nicer term transferrer
  *
  */
 public class SmtFunctionsAndAxioms {
@@ -136,10 +138,10 @@ public class SmtFunctionsAndAxioms {
 	 *            the new script.
 	 */
 	public void transferSymbols(final Script script) {
-		final TermTransferrer tt = new TermTransferrer(script);
 		for (final Entry<String, SmtFunctionDefinition> entry : mSmtFunctions2SmtFunctionDefinitions.entrySet()) {
-			entry.getValue().defineOrDeclare(script, tt);
+			entry.getValue().defineOrDeclare(script);
 		}
+		final NonDeclaringTermTransferrer tt = new NonDeclaringTermTransferrer(script);
 		final Term transferredAxiom = tt.transform(mAxioms.getClosedFormula());
 		final LBool quickCheckAxioms = script.assertTerm(transferredAxiom);
 		// TODO: Use an Ultimate result to report inconsistent axioms; we do not want to disallow inconsistent axioms,

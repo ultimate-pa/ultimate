@@ -103,13 +103,11 @@ public class Boogie2SMT {
 		final TermVarsProc tvp =
 				TermVarsProc.computeTermVarsProc(SmtUtils.and(script, axiomList), script, mBoogie2SmtSymbolTable);
 		assert tvp.getVars().isEmpty() : "axioms must not have variables";
-		if (script instanceof HistoryRecordingScript) {
-			mSmtFunctionsAndAxioms = new SmtFunctionsAndAxioms(tvp.getClosedFormula(), tvp.getProcedures(),
-					((HistoryRecordingScript) script).getFunctionDefinitionHistory());
-		} else {
-			mSmtFunctionsAndAxioms = new SmtFunctionsAndAxioms(tvp.getClosedFormula(), tvp.getProcedures(),
-					mBoogie2SmtSymbolTable.getSmtFunction2SmtFunctionDefinition());
+		if (!(script instanceof HistoryRecordingScript)) {
+			throw new AssertionError("need HistoryRecordingScript");
 		}
+		mSmtFunctionsAndAxioms = new SmtFunctionsAndAxioms(tvp.getClosedFormula(), tvp.getProcedures(),
+				((HistoryRecordingScript) script).getFunctionDefinitionHistory());
 
 		mStatements2TransFormula =
 				new Statements2TransFormula(this, mServices, mExpression2Term, simplePartialSkolemization);

@@ -54,6 +54,7 @@ public class TermTransferrer extends TermTransformer {
 	public enum TransferMode {
 		ASSUME_DECLARED, DECLARE, UNSUPPORTED_LOGIC
 	}
+
 	private final boolean mApplyLocalSimplifications;
 
 	protected final Script mScript;
@@ -67,9 +68,7 @@ public class TermTransferrer extends TermTransformer {
 	}
 
 	public TermTransferrer(final Script script) {
-		mScript = script;
-		mTransferMapping = Collections.emptyMap();
-		mApplyLocalSimplifications = false;
+		this(script, Collections.emptyMap(), false);
 	}
 
 	public TermTransferrer(final Script script, final Map<Term, Term> transferMapping,
@@ -154,10 +153,9 @@ public class TermTransferrer extends TermTransformer {
 		Term result;
 		final FunctionSymbol fsymb = appTerm.getFunction();
 		/*
-		 * Note that resultSort must be non-null if and only if we have an explicitly
-		 * instantiated polymorphic FunctionSymbol, i.e., a function of the form (as
-		 * <name> <sort>). Otherwise mScript.term(..) will fail.
-		 * Note that for mScript.declareFun(..) we still need the transferred result sort (see below).
+		 * Note that resultSort must be non-null if and only if we have an explicitly instantiated polymorphic
+		 * FunctionSymbol, i.e., a function of the form (as <name> <sort>). Otherwise mScript.term(..) will fail. Note
+		 * that for mScript.declareFun(..) we still need the transferred result sort (see below).
 		 */
 		final Sort resultSort = fsymb.isReturnOverload() ? transferSort(fsymb.getReturnSort()) : null;
 		try {
@@ -185,7 +183,6 @@ public class TermTransferrer extends TermTransformer {
 	@Override
 	public void postConvertLet(final LetTerm oldLet, final Term[] newValues, final Term newBody) {
 		throw new UnsupportedOperationException("not yet implemented");
-		// Term result = mScript.let(vars, newValues, newBody);
 	}
 
 	@Override

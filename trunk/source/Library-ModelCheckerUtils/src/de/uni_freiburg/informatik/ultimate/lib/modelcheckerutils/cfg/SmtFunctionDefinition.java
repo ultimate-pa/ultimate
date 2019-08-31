@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.NonDeclaringTermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -144,19 +144,6 @@ public final class SmtFunctionDefinition implements ISmtDeclarable {
 		return new SmtFunctionDefinition(smtFunName, paramIds, paramSorts, resultSort, bodyTerm);
 	}
 
-	public void defineOrDeclare(final Script script, final TermTransferrer tt) {
-		final Sort[] newParamSorts = tt.transferSorts(mParamSorts);
-		final Sort newResultSort = tt.transferSort(mResultSort);
-		final ISmtDeclarable newFunDef;
-		if (mFunctionDefinition != null) {
-			final Term newDefinition = tt.transform(mFunctionDefinition);
-			newFunDef = new SmtFunctionDefinition(mId, mParamIds, newParamSorts, newResultSort, newDefinition);
-		} else {
-			newFunDef = new SmtFunctionDefinition(mId, newParamSorts, newResultSort);
-		}
-		newFunDef.defineOrDeclare(script);
-	}
-
 	/**
 	 * Define or declare this object in the supplied script.
 	 * 
@@ -168,8 +155,11 @@ public final class SmtFunctionDefinition implements ISmtDeclarable {
 	 */
 	@Override
 	public void defineOrDeclare(final Script script) {
+		final NonDeclaringTermTransferrer tt = new NonDeclaringTermTransferrer(script);
+		final Sort[] newParamSorts = tt.transferSorts(mParamSorts);
+		final Sort newResultSort = tt.transferSort(mResultSort);
 		if (mFunctionDefinition == null) {
-			script.declareFun(mId, mParamSorts, mResultSort);
+			script.declareFun(mId, newParamSorts, newResultSort);
 		} else {
 			final TermVariable[] params = new TermVariable[mParamSorts.length];
 			for (int i = 0; i < mParamSorts.length; ++i) {
@@ -178,9 +168,10 @@ public final class SmtFunctionDefinition implements ISmtDeclarable {
 							"Unnamed parameter in function declaration together with "
 									+ Boogie2SmtSymbolTable.ID_SMTDEFINED + " attribute");
 				}
-				params[i] = script.variable(mParamIds[i], mParamSorts[i]);
+				params[i] = script.variable(mParamIds[i], newParamSorts[i]);
 			}
-			script.defineFun(mId, params, mResultSort, mFunctionDefinition);
+			final Term fundef = new NonDeclaringTermTransferrer(script).transform(mFunctionDefinition);
+			script.defineFun(mId, params, newResultSort, fundef);
 		}
 	}
 

@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ISmtDeclarable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ISmtDeclarable.IllegalSmtDeclarableUsageException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionDefinition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
@@ -122,7 +121,6 @@ public class Boogie2SmtSymbolTable
 
 	private final Map<String, String> mBoogieFunction2SmtFunction = new HashMap<>();
 	private final Map<String, String> mSmtFunction2BoogieFunction = new HashMap<>();
-	private final Map<String, SmtFunctionDefinition> mSmtFunction2SmtFunctionDefinition = new HashMap<>();
 	private final Map<String, Map<String, Expression[]>> mBoogieFunction2Attributes = new HashMap<>();
 
 	private final DefaultIcfgSymbolTable mIcfgSymbolTable = new DefaultIcfgSymbolTable();
@@ -355,11 +353,9 @@ public class Boogie2SmtSymbolTable
 		final Sort resultSort = mTypeSortTranslator.getSort(resultType, funcdecl);
 		if (attributeDefinedIdentifier == null) {
 			// no builtin function, we have to declare it
-			final SmtFunctionDefinition smtFunctionDefinition = SmtFunctionDefinition.createFromString(mScript.getScript(), smtID,
-					smtDefinedBody, paramIds, paramSorts, resultSort);
+			final SmtFunctionDefinition smtFunctionDefinition = SmtFunctionDefinition
+					.createFromString(mScript.getScript(), smtID, smtDefinedBody, paramIds, paramSorts, resultSort);
 			smtFunctionDefinition.defineOrDeclare(mScript.getScript());
-			mSmtFunction2SmtFunctionDefinition.put(smtID, smtFunctionDefinition);
-
 		}
 		mBoogieFunction2SmtFunction.put(id, smtID);
 		mSmtFunction2BoogieFunction.put(smtID, id);
@@ -424,10 +420,6 @@ public class Boogie2SmtSymbolTable
 
 	public Map<String, String> getBoogieFunction2SmtFunction() {
 		return Collections.unmodifiableMap(mBoogieFunction2SmtFunction);
-	}
-
-	public Map<String, SmtFunctionDefinition> getSmtFunction2SmtFunctionDefinition() {
-		return Collections.unmodifiableMap(mSmtFunction2SmtFunctionDefinition);
 	}
 
 	private void declareGlobalVariables(final VariableDeclaration vardecl) {

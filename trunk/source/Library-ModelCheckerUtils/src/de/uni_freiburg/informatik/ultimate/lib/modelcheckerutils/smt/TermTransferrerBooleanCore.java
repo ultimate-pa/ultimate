@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
-import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
 /**
  * Variant of TermTransferrer that transfers only the boolean structure of a term. Each relation of non-boolean
@@ -60,25 +59,22 @@ public class TermTransferrerBooleanCore extends TermTransferrer {
 		super(script);
 		mAuxiliaryTerm = constructAuxiliaryTerm();
 		mFreshTermCounter = 0;
-		final IValueConstruction<Term, Term> valueComputation = new IValueConstruction<Term, Term>() {
-
-			@Override
-			public Term constructValue(final Term key) {
-				final String name = FRESH_TERM_PREFIX + mFreshTermCounter;
-				mFreshTermCounter++;
-				mScript.declareFun(name, new Sort[0], SmtSortUtils.getBoolSort(mScript));
-				final Term value = mScript.term(name);
-				mBacktransferMapping.put(value, key);
-				return value;
-			}
-		};
-		mConstructionCache = new ConstructionCache<>(valueComputation);
+		mConstructionCache = new ConstructionCache<>(this::constructTerm);
 	}
 
-	public Term constructAuxiliaryTerm() {
+	private Term constructAuxiliaryTerm() {
 		final String name = this.getClass().getCanonicalName() + "_AUX";
 		mScript.declareFun(name, new Sort[0], SmtSortUtils.getBoolSort(mScript));
 		return mScript.term(name);
+	}
+
+	private Term constructTerm(final Term key) {
+		final String name = FRESH_TERM_PREFIX + mFreshTermCounter;
+		mFreshTermCounter++;
+		mScript.declareFun(name, new Sort[0], SmtSortUtils.getBoolSort(mScript));
+		final Term value = mScript.term(name);
+		mBacktransferMapping.put(value, key);
+		return value;
 	}
 
 	@Override
