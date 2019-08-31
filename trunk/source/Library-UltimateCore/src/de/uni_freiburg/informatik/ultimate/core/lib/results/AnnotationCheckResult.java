@@ -153,7 +153,7 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 
 	public static <ELEM, E> String invalidSegmentToString(final LoopFreeSegmentWithStatePair<ELEM, E> segment,
 			final IBacktranslationService translation) {
-		return "Annotation is not valid for " + segment + ". One counterxample starts in "
+		return "Annotation is not valid for " + segment + ". One counterexample starts in "
 				+ translation.translateProgramStateToString(segment.getStateBefore()) + " and ends in "
 				+ translation.translateProgramStateToString(segment.getStateAfter()) + ".";
 	}
