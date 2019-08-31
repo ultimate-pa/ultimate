@@ -39,6 +39,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.parallel.Tuple;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
@@ -72,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 /**
  * TODO: Documentation
  * 
@@ -98,22 +100,18 @@ public class PetriNetLargeBlockEncoding {
 		mServices = services;
 		mManagedScript = cfgSmtToolkit.getManagedScript();
 		mEdgeFactory = cfgSmtToolkit.getIcfgEdgeFactory();
-		BranchingProcess<IIcfgTransition<?>, IPredicate> bp = new FinitePrefix<>(new AutomataLibraryServices(services),
-				petriNet).getResult();
-		mCoEnabledRelation = computeCoEnabledRelation(petriNet, bp);
-		BoundedPetriNet<IIcfgTransition<?>, IPredicate> result2 = sequenceRule(services, petriNet);
-		BoundedPetriNet<IIcfgTransition<?>, IPredicate> result1 = choiceRule(services, result2);
-		BranchingProcess<IIcfgTransition<?>, IPredicate> bp2 = new FinitePrefix<>(new AutomataLibraryServices(services),
-				result1).getResult();
-		mCoEnabledRelation = computeCoEnabledRelation(result1, bp2);
-			if (result1.equals(result2)) {
-				mLogger.info("nothing changed.");
+		BoundedPetriNet<IIcfgTransition<?>, IPredicate> result1 = choiceRule(services, petriNet);
+		for (int i = 0; i < 3; i++) {
+			BoundedPetriNet<IIcfgTransition<?>, IPredicate>result2 = sequenceRule(services, result1);
+			result1 = choiceRule(services, result2);
 		}
-		mResult = result2;
+		mResult = result1;
 	}
 
-	private BoundedPetriNet<IIcfgTransition<?>, IPredicate> choiceRule(IUltimateServiceProvider services, BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet) {
+	private BoundedPetriNet<IIcfgTransition<?>, IPredicate> choiceRule(IUltimateServiceProvider services, BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		Collection<ITransition<IIcfgTransition<?>, IPredicate>> transitions = petriNet.getTransitions();
+		List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> meltingStack = new ArrayList<>();
 		for (ITransition<IIcfgTransition<?>, IPredicate> t1 : transitions) {
 			Set<IPredicate> t1PostSet = petriNet.getSuccessors(t1);
 			for (IPredicate place : t1PostSet) {
@@ -129,25 +127,25 @@ public class PetriNetLargeBlockEncoding {
 							IIcfgTransitionsToRemove.add(t1.getSymbol());
 							IIcfgTransitionsToRemove.add(t2.getSymbol());
 							IcfgEdge meltedIcfgEdge = constructParallelComposition(t1.getSymbol().getSource(), t2.getSymbol().getTarget(), IIcfgTransitionsToRemove);
-							// Create subnet without the edges t1, t2.
-							BoundedPetriNet<IIcfgTransition<?>, IPredicate> newNet = copyPetriNetWithModification(services, petriNet, t1, t2, meltedIcfgEdge);
-							petriNet = newNet;
-							return choiceRule(services, petriNet);
+							// Create new element of meltingStack.
+							Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element = 
+									new Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>(meltedIcfgEdge, t1, t2);
+							meltingStack.add(element);
 						}
 					}
 				}
 			}
 		}
-		return petriNet;
+		BoundedPetriNet<IIcfgTransition<?>, IPredicate> newNet = copyPetriNetWithModification(services, petriNet, meltingStack);
+		return newNet;
 	}
 
 	
 	private BoundedPetriNet<IIcfgTransition<?>, IPredicate> sequenceRule(IUltimateServiceProvider services, BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet) 
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		int i = 0;
 		Collection<ITransition<IIcfgTransition<?>, IPredicate>> transitions = petriNet.getTransitions();
+		List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> meltingStack = new ArrayList<>();
 		for (ITransition<IIcfgTransition<?>, IPredicate> t1 : transitions) {
-			i++;
 			Set<IPredicate> t1PostSet = petriNet.getSuccessors(t1);
 			if (t1PostSet.size() == 1) {
 				for (IPredicate state : t1PostSet) {
@@ -156,18 +154,11 @@ public class PetriNetLargeBlockEncoding {
 							if (petriNet.getPredecessors(t2).size() == 1 && petriNet.getSuccessors(state).size() == 1) {
 								boolean moverCheck = isMover(t1, t2, petriNet);
 								if (moverCheck && onlyInternal(t1.getSymbol()) && onlyInternal(t2.getSymbol())) {
-									IIcfgTransition<?> meltedIcfgEdge = constructSequentialComposition(t1.getSymbol().getSource(), t2.getSymbol().getTarget(), t1.getSymbol(), t2.getSymbol());
-									//petriNet.addTransition(meltedIcfgEdge, petriNet.getPredecessors(t1), petriNet.getSuccessors(t2));
-									mLogger.info("number of transitions old net: " + petriNet.getTransitions().size());
-									Set<ITransition<IIcfgTransition<?>, IPredicate>> transitionsToRemove = new HashSet<>();
-									transitionsToRemove.add(t1);
-									transitionsToRemove.add(t2);
-									BoundedPetriNet<IIcfgTransition<?>, IPredicate> newNet = copyPetriNetWithModification(services, petriNet, t1, t2, meltedIcfgEdge);
-									petriNet = newNet;
-									BranchingProcess<IIcfgTransition<?>, IPredicate> bp2 = new FinitePrefix<>(new AutomataLibraryServices(services),
-											petriNet).getResult();
-									mCoEnabledRelation = computeCoEnabledRelation(petriNet, bp2);
-									return sequenceRule(services, petriNet);
+									IcfgEdge meltedIcfgEdge = constructSequentialComposition(t1.getSymbol().getSource(), t2.getSymbol().getTarget(), t1.getSymbol(), t2.getSymbol());
+									//create new element of the meltingStack.
+									Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element = 
+											new Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>(meltedIcfgEdge, t1, t2);
+									meltingStack.add(element);
 									}
 								}
 							}
@@ -175,41 +166,47 @@ public class PetriNetLargeBlockEncoding {
 					}
 				}
 			}
-		mLogger.info("t1 checked: " + i);
-		return petriNet;
+		BoundedPetriNet<IIcfgTransition<?>, IPredicate> newNet = copyPetriNetWithModification(services, petriNet, meltingStack);
+		return newNet;
 	}
-
+	
 	private BoundedPetriNet<IIcfgTransition<?>, IPredicate> copyPetriNetWithModification(IUltimateServiceProvider services,
-			BoundedPetriNet<IIcfgTransition<?>,IPredicate> petriNet, ITransition<IIcfgTransition<?>, IPredicate> transitionToRemove1,
-			ITransition<IIcfgTransition<?>, IPredicate> transitionToRemove2, IIcfgTransition<?> meltedIcfgEdge) {
+			BoundedPetriNet<IIcfgTransition<?>,IPredicate> petriNet,
+			List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> meltingStack)
+					throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		Set<IIcfgTransition<?>> newAlphabet = new HashSet<IIcfgTransition<?>>();
 		Collection<ITransition<IIcfgTransition<?>, IPredicate>> transitionsToKeep = petriNet.getTransitions();
-		transitionsToKeep.remove(transitionToRemove1);
-		transitionsToKeep.remove(transitionToRemove2);
+		for (Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> triplet : meltingStack) {
+			newAlphabet.add(triplet.getFirst());
+			transitionsToKeep.remove(triplet.getSecond());
+			transitionsToKeep.remove(triplet.getThird());
+		}
 		Set<ITransition<IIcfgTransition<?>, IPredicate>> mySet = new HashSet<ITransition<IIcfgTransition<?>, IPredicate>>();
 		mySet.addAll(transitionsToKeep);
 		for (ITransition<IIcfgTransition<?>, IPredicate> transition : transitionsToKeep) {
 			newAlphabet.add(transition.getSymbol());
 		}
-		newAlphabet.add(meltedIcfgEdge);
-		mySet.remove(transitionToRemove1);
-		mySet.remove(transitionToRemove2);
 		BoundedPetriNet<IIcfgTransition<?>, IPredicate> newNet = CopySubnet.copy(new AutomataLibraryServices(services), petriNet,
 				mySet, newAlphabet);
 		// Add preset of transitionToRemove1 and postset of transitionToRemove2.
-		for (IPredicate place : petriNet.getPredecessors(transitionToRemove1)) {
-			if (!newNet.getPlaces().contains(place)) {
-				newNet.addPlace(place, petriNet.getInitialPlaces().contains(place), petriNet.getAcceptingPlaces().contains(place));
+		for (Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> triplet : meltingStack) {
+			for (IPredicate place : petriNet.getPredecessors(triplet.getSecond())) {
+				if (!newNet.getPlaces().contains(place)) {
+					newNet.addPlace(place, petriNet.getInitialPlaces().contains(place), petriNet.getAcceptingPlaces().contains(place));
+				}
 			}
-		}
-		for (IPredicate place : petriNet.getSuccessors(transitionToRemove2)) {
-			if (!newNet.getPlaces().contains(place)) {
-				newNet.addPlace(place, petriNet.getInitialPlaces().contains(place), petriNet.getAcceptingPlaces().contains(place));
+			for (IPredicate place : petriNet.getSuccessors(triplet.getThird())) {
+				if (!newNet.getPlaces().contains(place)) {
+					newNet.addPlace(place, petriNet.getInitialPlaces().contains(place), petriNet.getAcceptingPlaces().contains(place));
+				}
 			}
+			newNet.addTransition(triplet.getFirst(), petriNet.getPredecessors(triplet.getSecond()), petriNet.getSuccessors(triplet.getThird()));
+		mLogger.info("number of transitions new net: " + newNet.getTransitions().size() + " transition1 predecessors: in net? " + newNet.getPlaces().containsAll(petriNet.getPredecessors(triplet.getSecond()))
+		+ " transition2 successors: " + newNet.getPlaces().containsAll(petriNet.getPredecessors(triplet.getThird())));
 		}
-		newNet.addTransition(meltedIcfgEdge, petriNet.getPredecessors(transitionToRemove1), petriNet.getSuccessors(transitionToRemove2));
-		mLogger.info("number of transitions new net: " + newNet.getTransitions().size() + " transition1 predecessors: in net? " + newNet.getPlaces().containsAll(petriNet.getPredecessors(transitionToRemove1))
-		+ " transition2 successors: " + newNet.getPlaces().containsAll(petriNet.getPredecessors(transitionToRemove2)));
+		BranchingProcess<IIcfgTransition<?>, IPredicate> bp2 = new FinitePrefix<>(new AutomataLibraryServices(services),
+				newNet).getResult();
+		mCoEnabledRelation = computeCoEnabledRelation(newNet, bp2);
 		return newNet;
 	}
 
