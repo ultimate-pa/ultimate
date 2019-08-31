@@ -645,6 +645,9 @@ public abstract class BoogieTransformer {
 	 * @return processed attributes.
 	 */
 	protected <T extends Attribute> T[] processAttributes(final T[] attributes) {
+		if (attributes == null) {
+			return attributes;
+		}
 		boolean changed = false;
 
 		final T[] newAttrs = Arrays.copyOf(attributes, attributes.length);
