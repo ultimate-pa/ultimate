@@ -228,14 +228,14 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	 */
 	public Transition<LETTER, PLACE> addTransition(final LETTER letter, final Set<PLACE> preds,
 			final Set<PLACE> succs) {
-		assert mAlphabet.contains(letter) : "Letter not from alphabet: " + letter;
+		assert mAlphabet.contains(letter) : "Letter not in alphabet: " + letter;
 		final Transition<LETTER, PLACE> transition = new Transition<>(letter, preds, succs, mTransitions.size());
 		for (final PLACE predPlace : preds) {
-			assert mPlaces.contains(predPlace) : "Place not from net: " + predPlace;
+			assert mPlaces.contains(predPlace) : "Place not in net: " + predPlace;
 			mSuccessors.addPair(predPlace, transition);
 		}
 		for (final PLACE succPlace : succs) {
-			assert mPlaces.contains(succPlace) : "Place not from net: " + succPlace;
+			assert mPlaces.contains(succPlace) : "Place not in net: " + succPlace;
 			mPredecessors.addPair(succPlace, transition);
 		}
 		mTransitions.add(transition);
