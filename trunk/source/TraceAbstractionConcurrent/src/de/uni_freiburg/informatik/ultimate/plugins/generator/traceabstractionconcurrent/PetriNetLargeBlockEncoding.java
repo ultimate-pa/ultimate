@@ -100,6 +100,9 @@ public class PetriNetLargeBlockEncoding {
 		mServices = services;
 		mManagedScript = cfgSmtToolkit.getManagedScript();
 		mEdgeFactory = cfgSmtToolkit.getIcfgEdgeFactory();
+		BranchingProcess<IIcfgTransition<?>, IPredicate> bp = new FinitePrefix<>(new AutomataLibraryServices(services),
+				petriNet).getResult();
+		mCoEnabledRelation = computeCoEnabledRelation(petriNet, bp);
 		BoundedPetriNet<IIcfgTransition<?>, IPredicate> result1 = choiceRule(services, petriNet);
 		for (int i = 0; i < 3; i++) {
 		BoundedPetriNet<IIcfgTransition<?>, IPredicate> result2 = sequenceRule(services, result1);
@@ -131,13 +134,14 @@ public class PetriNetLargeBlockEncoding {
 							Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element = 
 									new Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>(meltedIcfgEdge, t1, t2);
 							meltingStack.add(element);
+							BoundedPetriNet<IIcfgTransition<?>, IPredicate> newNet = copyPetriNetWithModification(services, petriNet, meltingStack);
+							return choiceRule(services, newNet);
 						}
 					}
 				}
 			}
 		}
-		BoundedPetriNet<IIcfgTransition<?>, IPredicate> newNet = copyPetriNetWithModification(services, petriNet, meltingStack);
-		return newNet;
+		return petriNet;
 	}
 
 	
