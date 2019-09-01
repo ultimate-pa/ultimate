@@ -102,8 +102,8 @@ public class PetriNetLargeBlockEncoding {
 		mEdgeFactory = cfgSmtToolkit.getIcfgEdgeFactory();
 		BoundedPetriNet<IIcfgTransition<?>, IPredicate> result1 = choiceRule(services, petriNet);
 		for (int i = 0; i < 3; i++) {
-			BoundedPetriNet<IIcfgTransition<?>, IPredicate>result2 = sequenceRule(services, result1);
-			result1 = choiceRule(services, result2);
+		BoundedPetriNet<IIcfgTransition<?>, IPredicate> result2 = sequenceRule(services, result1);
+		result1 = choiceRule(services, result2);
 		}
 		mResult = result1;
 	}
@@ -151,9 +151,10 @@ public class PetriNetLargeBlockEncoding {
 				for (IPredicate state : t1PostSet) {
 					if (petriNet.getPredecessors(state).size() == 1) {
 						for (ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet.getSuccessors(state)) {
-							if (petriNet.getPredecessors(t2).size() == 1 && petriNet.getSuccessors(state).size() == 1) {
+							if (petriNet.getPredecessors(t2).size() == 1 && petriNet.getSuccessors(state).size() == 1 && !petriNet.getSuccessors(t2).contains(state)) {
 								boolean moverCheck = isMover(t1, t2, petriNet);
 								if (moverCheck && onlyInternal(t1.getSymbol()) && onlyInternal(t2.getSymbol())) {
+									mLogger.info("Element added to the stack.");
 									IcfgEdge meltedIcfgEdge = constructSequentialComposition(t1.getSymbol().getSource(), t2.getSymbol().getTarget(), t1.getSymbol(), t2.getSymbol());
 									//create new element of the meltingStack.
 									Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element = 
@@ -175,7 +176,15 @@ public class PetriNetLargeBlockEncoding {
 			List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> meltingStack)
 					throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		Set<IIcfgTransition<?>> newAlphabet = new HashSet<IIcfgTransition<?>>();
-		Collection<ITransition<IIcfgTransition<?>, IPredicate>> transitionsToKeep = petriNet.getTransitions();
+		//Collection<ITransition<IIcfgTransition<?>, IPredicate>> transitionsToKeep = petriNet.getTransitions();
+		Collection<ITransition<IIcfgTransition<?>, IPredicate>> transitionsToKeep = new ArrayList<>();
+		for (Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> triplet : meltingStack) {
+			petriNet.getAlphabet().add(triplet.getFirst());
+			petriNet.addTransition(triplet.getFirst(), petriNet.getPredecessors(triplet.getSecond()), petriNet.getSuccessors(triplet.getThird()));
+		}
+		for (ITransition<IIcfgTransition<?>, IPredicate> transition : petriNet.getTransitions()) {
+			transitionsToKeep.add(transition);
+		}
 		for (Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> triplet : meltingStack) {
 			newAlphabet.add(triplet.getFirst());
 			transitionsToKeep.remove(triplet.getSecond());
@@ -195,14 +204,6 @@ public class PetriNetLargeBlockEncoding {
 					newNet.addPlace(place, petriNet.getInitialPlaces().contains(place), petriNet.getAcceptingPlaces().contains(place));
 				}
 			}
-			for (IPredicate place : petriNet.getSuccessors(triplet.getThird())) {
-				if (!newNet.getPlaces().contains(place)) {
-					newNet.addPlace(place, petriNet.getInitialPlaces().contains(place), petriNet.getAcceptingPlaces().contains(place));
-				}
-			}
-			newNet.addTransition(triplet.getFirst(), petriNet.getPredecessors(triplet.getSecond()), petriNet.getSuccessors(triplet.getThird()));
-		mLogger.info("number of transitions new net: " + newNet.getTransitions().size() + " transition1 predecessors: in net? " + newNet.getPlaces().containsAll(petriNet.getPredecessors(triplet.getSecond()))
-		+ " transition2 successors: " + newNet.getPlaces().containsAll(petriNet.getPredecessors(triplet.getThird())));
 		}
 		BranchingProcess<IIcfgTransition<?>, IPredicate> bp2 = new FinitePrefix<>(new AutomataLibraryServices(services),
 				newNet).getResult();
@@ -255,10 +256,13 @@ public class PetriNetLargeBlockEncoding {
 
 boolean isMover(ITransition<IIcfgTransition<?>, IPredicate> t1, ITransition<IIcfgTransition<?>, IPredicate> t2, IPetriNet<IIcfgTransition<?>, IPredicate> petriNet) {
 	// Filter which elements of coEnabledRelation are relevant.
-	HashRelation<ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> coEnabledTransitions = new HashRelation<>();
+	List<ITransition<IIcfgTransition<?>, IPredicate>> coEnabledTransitions = new ArrayList<>();
 	for (Entry<ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element : mCoEnabledRelation) {
 		if (element.getKey() == t1) {
-			coEnabledTransitions.addPair(element.getKey(), element.getValue());
+			coEnabledTransitions.add(element.getValue());
+		}
+		if (element.getValue() == t1) {
+			coEnabledTransitions.add(element.getKey());
 		}
 	}
 	if (coEnabledTransitions.size() == 0) {
@@ -272,33 +276,28 @@ boolean isMover(ITransition<IIcfgTransition<?>, IPredicate> t1, ITransition<IIcf
 	Set<IProgramVar> usedVarsT2 = t2.getSymbol().getTransformula().getInVars().keySet();
 	boolean check1 = true;
 	boolean check2 = true;
-	for (Entry<ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element: coEnabledTransitions) {
+	for (ITransition<IIcfgTransition<?>, IPredicate> t3: coEnabledTransitions) {
 		// Filter all coEnabled elements t3 and extract the used and modified variables.
-		ITransition<IIcfgTransition<?>, IPredicate> t3 = element.getValue();
 		Set<IProgramVar> modifiedVarsT3 = t3.getSymbol().getTransformula().getAssignedVars();
 		Set<IProgramVar> usedVarsT3 = t3.getSymbol().getTransformula().getInVars().keySet();
 		for (IProgramVar var : modifiedVarsT3) {
 			if (usedVarsT1.contains(var) || modifiedVarsT1.contains(var)) {
 				check1 = false;
-				break;
 			}
 			if (usedVarsT2.contains(var) || modifiedVarsT2.contains(var)) {
 				check2 = false;
-				break;
 			}
 		}
-		for (IProgramVar var : modifiedVarsT1) {
-			if (usedVarsT3.contains(var) || check1 == false) {
+		for (IProgramVar var : usedVarsT3) {
+			if (modifiedVarsT1.contains(var) || check1 == false) {
 				check1 = false;
-				break;
-				}
 			}
-		for (IProgramVar var : modifiedVarsT2) {
-			if (usedVarsT3.contains(var) || check2 == false) {
+			if (modifiedVarsT2.contains(var) || check2 == false) {
 				check2 = false;
 				break;
 				}
 			}
+
 	}
 	if (!check1 && !check2) {	
 		return false;
