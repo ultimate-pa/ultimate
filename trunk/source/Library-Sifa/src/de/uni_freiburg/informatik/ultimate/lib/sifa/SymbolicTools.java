@@ -33,6 +33,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -74,16 +75,16 @@ public class SymbolicTools {
 	private final ILogger mPQELogger;
 	private final SifaStats mStats;
 
-	public SymbolicTools(final IUltimateServiceProvider services, final SifaStats stats,
-			final IIcfg<IcfgLocation> icfg, final SimplificationTechnique simplification,
-			final XnfConversionTechnique xnfConversion) {
+	public SymbolicTools(final IUltimateServiceProvider services, final SifaStats stats, final IIcfg<IcfgLocation> icfg,
+			final SimplificationTechnique simplification, final XnfConversionTechnique xnfConversion) {
 		mServices = services;
 		mStats = stats;
 		mIcfg = icfg;
 
-		// create PQE logger with custom log level
+		// create PQE logger with custom log level and silence ModelCheckerUtils logger
 		mPQELogger = services.getLoggingService().getLogger(getClass().getName() + ".PQE");
 		mPQELogger.setLevel(LogLevel.WARN);
+		mServices.getLoggingService().setLogLevel(ModelCheckerUtils.PLUGIN_ID, LogLevel.WARN);
 
 		mSimplification = simplification;
 		mXnfConversion = xnfConversion;
@@ -111,7 +112,8 @@ public class SymbolicTools {
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
 		mStats.start(SifaStats.Key.TOOLS_POST_TIME);
 		mStats.increment(SifaStats.Key.TOOLS_POST_APPLICATIONS);
-		final IPredicate postState = predicate(mTransformer.strongestPostcondition(input, transition.getTransformula()));
+		final IPredicate postState =
+				predicate(mTransformer.strongestPostcondition(input, transition.getTransformula()));
 		mStats.stop(SifaStats.Key.TOOLS_POST_TIME);
 		return postState;
 	}
@@ -141,11 +143,11 @@ public class SymbolicTools {
 		mStats.increment(SifaStats.Key.TOOLS_POST_RETURN_APPLICATIONS);
 		final CfgSmtToolkit toolkit = mIcfg.getCfgSmtToolkit();
 		final String callee = returnTransition.getPrecedingProcedure();
-		final IPredicate postState = predicate(mTransformer.strongestPostconditionReturn(
-				inputBeforeReturn, inputBeforeCall,
-				returnTransition.getTransformula(), returnTransition.getCorrespondingCall().getTransformula(),
-				toolkit.getOldVarsAssignmentCache().getOldVarsAssignment(callee),
-				toolkit.getModifiableGlobalsTable().getModifiedBoogieVars(callee)));
+		final IPredicate postState =
+				predicate(mTransformer.strongestPostconditionReturn(inputBeforeReturn, inputBeforeCall,
+						returnTransition.getTransformula(), returnTransition.getCorrespondingCall().getTransformula(),
+						toolkit.getOldVarsAssignmentCache().getOldVarsAssignment(callee),
+						toolkit.getModifiableGlobalsTable().getModifiedBoogieVars(callee)));
 		mStats.stop(SifaStats.Key.TOOLS_POST_RETURN_TIME);
 		return postState;
 	}
