@@ -4,7 +4,8 @@ Bundle-Name: Library-ModelCheckerUtils
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils
 Bundle-Version: 0.1.24
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint,
+Export-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg,
