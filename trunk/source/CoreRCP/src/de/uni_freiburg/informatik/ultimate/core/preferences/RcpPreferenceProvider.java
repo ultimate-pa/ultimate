@@ -323,6 +323,24 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 	}
 
 	@Override
+	public String getSingleLinePreferenceString() {
+		final StringBuilder sb = new StringBuilder();
+		try {
+			final IEclipsePreferences instancePrefs = getInstance();
+			final IEclipsePreferences defaultPrefs = getDefault();
+			final String delim = " ♦ ";
+			for (final String prefKey : defaultPrefs.keys()) {
+				final Object activeValue = instancePrefs.get(prefKey, defaultPrefs.get(prefKey, null));
+				sb.append(prefKey).append('=').append(activeValue).append(delim);
+			}
+			sb.setLength(Math.max(0, sb.length() - delim.length()));
+		} catch (final BackingStoreException e) {
+			throw new PreferenceException(mPluginID, e);
+		}
+		return sb.toString();
+	}
+
+	@Override
 	public String toString() {
 		return mPluginID + " UltimatePreferenceStore";
 	}

@@ -173,4 +173,9 @@ public class PreferenceLayer implements IPreferenceProvider {
 		return mBacking;
 	}
 
+	@Override
+	public String getSingleLinePreferenceString() {
+		throw new UnsupportedOperationException("Overlays do not support showing all available settings");
+	}
+
 }
