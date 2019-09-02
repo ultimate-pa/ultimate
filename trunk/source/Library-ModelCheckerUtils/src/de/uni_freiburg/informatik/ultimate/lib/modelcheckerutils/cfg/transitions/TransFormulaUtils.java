@@ -1152,6 +1152,38 @@ public final class TransFormulaUtils {
 		return builder.finishConstruction(mgdScript);
 	}
 
+
+	/**
+	 * Checks if for a pair of {@link UnmodifiableTransFormula}s (lhs,rhs) if lhs
+	 * implies rhs, i.e., if the relation represented by lhs is a subset of the
+	 * relation by rhs.
+	 *
+	 * FIXME 20190902 Matthias: WARNING this method does not yet provide correct
+	 * results! I will fix the method in the next days.
+	 *
+	 * @param mgdScript
+	 *            {@link ManagedScript} that is not locked.
+	 * @return UNSAT if the implication holds, SAT if the implication does not hold,
+	 *         UNKNOWN if the SMT solver was unable to check satisfiability.
+	 */
+	public static LBool checkImplication(final UnmodifiableTransFormula lhs, final UnmodifiableTransFormula rhs,
+			final ManagedScript mgdScript) {
+		if (!lhs.getAuxVars().isEmpty()) {
+			throw new UnsupportedOperationException();
+		}
+		if (!rhs.getAuxVars().isEmpty()) {
+			throw new UnsupportedOperationException();
+		}
+		mgdScript.lock(lhs);
+		mgdScript.push(lhs, 1);
+		mgdScript.assertTerm(lhs, lhs.getClosedFormula());
+		mgdScript.assertTerm(lhs, SmtUtils.not(mgdScript.getScript(), rhs.getClosedFormula()));
+		final LBool result = mgdScript.checkSat(lhs);
+		mgdScript.pop(lhs, 1);
+		mgdScript.unlock(lhs);
+		return result;
+	}
+
 	/**
 	 * Attempts to find the IProgramVarOrConst that corresponds to the given term in the given TransFormula.
 	 *
