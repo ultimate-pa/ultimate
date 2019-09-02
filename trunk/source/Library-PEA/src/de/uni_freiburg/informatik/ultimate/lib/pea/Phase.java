@@ -36,15 +36,10 @@ public class Phase implements Comparable<Phase> {
     int nr;
 
     // SR 2010-07-09
-    public boolean isKernel;
+    private boolean isKernel;
     public boolean isInit;
-    public boolean isEntry;
-    public boolean isExit;
-    public boolean isVisited;
-    public boolean isDlSuspect;
-    public boolean haslDl = true;
-    public int flags;
-    public CDD dlCheck;
+    private boolean isEntry;
+    private boolean isExit;
     private final Vector<Transition> incomming;
     String name;
     CDD stateInv;
@@ -65,15 +60,11 @@ public class Phase implements Comparable<Phase> {
         this.clockInv = clockInv;
         transitions = new ArrayList<>();
         this.stoppedClocks = stoppedClocks;
-        dlCheck = clockInv;
 
         isKernel = false;
         isInit = false;
         isEntry = false;
         isExit = false;
-        isVisited = false;
-        isDlSuspect = false;
-        flags = 0;
         incomming = new Vector<>();
     }
 
