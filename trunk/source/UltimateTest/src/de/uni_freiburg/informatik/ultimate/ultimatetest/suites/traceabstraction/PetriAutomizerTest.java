@@ -75,6 +75,7 @@ public class PetriAutomizerTest extends AbstractTraceAbstractionTestSuite {
 	 */
 	private static final String[] mSettings = {
 		"automizer/PetriAutomizer-default.epf",
+		"automizer/PetriAutomizer-lbe.epf",
 	};
 
 	/**
