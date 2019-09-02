@@ -66,11 +66,19 @@ public interface ILoggingService {
 
 	/**
 	 * Set log level for logger requested by clazz for the duration of this toolchain.
-	 * 
+	 *
 	 * @param clazz
 	 * @param level
 	 */
 	void setLogLevel(Class<?> clazz, LogLevel level);
+
+	/**
+	 * Set log level for logger with id <code>id</code> for the duration of this toolchain.
+	 *
+	 * @param clazz
+	 * @param level
+	 */
+	void setLogLevel(String id, LogLevel level);
 
 	/**
 	 * Gets the correct logger for an asking external tool This method should be called by all external tools that want

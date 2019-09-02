@@ -583,4 +583,9 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 	public void setLogLevel(final Class<?> clazz, final LogLevel level) {
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public void setLogLevel(final String id, final LogLevel level) {
+		throw new UnsupportedOperationException();
+	}
 }

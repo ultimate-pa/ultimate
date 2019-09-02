@@ -101,4 +101,9 @@ final class LoggingServiceMock implements ILoggingService {
 	public void setLogLevel(final Class<?> clazz, final LogLevel level) {
 		// do nothing
 	}
+
+	@Override
+	public void setLogLevel(final String id, final LogLevel level) {
+		// do nothing
+	}
 }

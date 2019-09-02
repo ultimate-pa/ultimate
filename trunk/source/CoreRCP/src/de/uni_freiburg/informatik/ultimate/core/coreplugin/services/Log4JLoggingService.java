@@ -395,7 +395,12 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 	@Override
 	public void setLogLevel(final Class<?> clazz, final LogLevel level) {
-		mSettingsLogger2LogLevel.put(getPluginLoggerName(clazz.getName()), Level.toLevel(level.toString()));
+		setLogLevel(clazz.getName(), level);
+	}
+
+	@Override
+	public void setLogLevel(final String id, final LogLevel level) {
+		mSettingsLogger2LogLevel.put(getPluginLoggerName(id), Level.toLevel(level.toString()));
 	}
 
 	private final class RefreshingPreferenceChangeListener implements IPreferenceChangeListener {
