@@ -296,6 +296,10 @@ public final class TAPreferences {
 		return mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_ORDER);
 	}
 
+	public boolean useLbeInConcurrentAnalysis() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LBE_CONCURRENCY);
+	}
+
 	public SimplificationTechnique getSimplificationTechnique() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_SIMPLIFICATION_TECHNIQUE,
 				SimplificationTechnique.class);

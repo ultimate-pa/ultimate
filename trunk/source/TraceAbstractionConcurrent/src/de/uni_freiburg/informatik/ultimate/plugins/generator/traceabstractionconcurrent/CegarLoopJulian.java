@@ -97,7 +97,6 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 	private static final boolean USE_ON_DEMAND_RESULT = false;
 
-	private static final boolean USE_LARGE_BLOCK_ENCODING = false;
 
 	private BranchingProcess<LETTER, IPredicate> mUnfolding;
 	public int mCoRelationQueries = 0;
@@ -138,15 +137,15 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 						+ " procedure (this is the procedure where all executions start)");
 			}
 			final boolean addThreadUsageMonitors = false;
-			BoundedPetriNet<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices, mIcfg,
+			final BoundedPetriNet<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices, mIcfg,
 					mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
-			if (USE_LARGE_BLOCK_ENCODING) {
-				PetriNetLargeBlockEncoding pnlbe = new PetriNetLargeBlockEncoding(mServices, mIcfg.getCfgSmtToolkit(),
+			if (mPref.useLbeInConcurrentAnalysis()) {
+				final PetriNetLargeBlockEncoding pnlbe = new PetriNetLargeBlockEncoding(mServices, mIcfg.getCfgSmtToolkit(),
 						(BoundedPetriNet<IIcfgTransition<?>, IPredicate>) cfg);
-				BoundedPetriNet<LETTER, IPredicate> lbecfg = (BoundedPetriNet<LETTER, IPredicate>) pnlbe.getResult();
-				mAbstraction = (IAutomaton<LETTER, IPredicate>) lbecfg;
+				final BoundedPetriNet<LETTER, IPredicate> lbecfg = (BoundedPetriNet<LETTER, IPredicate>) pnlbe.getResult();
+				mAbstraction = lbecfg;
 			} else {
-				mAbstraction = (IAutomaton<LETTER, IPredicate>) cfg;
+				mAbstraction = cfg;
 			}
 		}
 

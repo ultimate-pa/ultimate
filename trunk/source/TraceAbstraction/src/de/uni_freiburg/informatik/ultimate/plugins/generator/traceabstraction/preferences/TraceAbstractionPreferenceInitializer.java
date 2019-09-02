@@ -78,6 +78,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "amount of iterations occured. 0 disables this limit.";
 	private static final int DEF_USERLIMIT_ITERATIONS = 1_000_000;
 
+	public static final String LABEL_LBE_CONCURRENCY = "Use large block encoding in concurrent analysis";
+	private static final boolean DEF_LBE_CONCURRENCY = false;
+
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_ALL_ERRORS_AT_ONCE = "Stop after first violation was found";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
@@ -337,6 +340,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						new String[] { VALUE_KMM, VALUE_EVR, VALUE_EVR_MARK }),
 				new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_UNFOLDING2NET, DEF_UNFOLDING2NET, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_LBE_CONCURRENCY, DEF_LBE_CONCURRENCY, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ABSINT_MODE, DEF_ABSINT_MODE, PreferenceType.Combo,
 						AbstractInterpretationMode.values()),
 				new UltimatePreferenceItem<>(LABEL_ABSINT_ALWAYS_REFINE, DEF_ABSINT_ALWAYS_REFINE,
