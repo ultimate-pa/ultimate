@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 Nico Hauff (hauffn@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * Copyright (C) 2018 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtilsTest Library.
@@ -188,7 +190,7 @@ public final class MSODNatWeakOperationsTest {
 
 		// Test Cases for x - y < c
 
-		// 1 - 2 < 0
+		// 0 - 0 < 0
 		c = Rational.valueOf(0, 1);
 		xValues = new int[] { 0 };
 		yValues = new int[] { 0 };
@@ -303,9 +305,9 @@ public final class MSODNatWeakOperationsTest {
 		final Term x = mScript.variable("x", MSODUtils.getSetOfIntSort(mScript));
 		final Term y = mScript.variable("y", MSODUtils.getSetOfIntSort(mScript));
 
-		// Test Cases for x strictSubsetInt y
+		// Test Cases for x subsetInt y
 
-		// { } subsetInt { 0 }false
+		// { } subsetInt { 0 }
 		xValues = new int[] {};
 		yValues = new int[] { 0 };
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));

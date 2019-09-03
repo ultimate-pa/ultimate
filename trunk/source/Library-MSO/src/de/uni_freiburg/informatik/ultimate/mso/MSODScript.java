@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2018 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 Nico Hauff (hauffn@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * Copyright (C) 2018 University of Freiburg
  *
  * This file is part of the ULTIMATE MSO Library package.
