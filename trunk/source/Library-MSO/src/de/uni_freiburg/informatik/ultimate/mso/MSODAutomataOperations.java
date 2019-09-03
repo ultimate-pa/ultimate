@@ -21,7 +21,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -190,14 +189,4 @@ public abstract class MSODAutomataOperations {
 		return new NestedWordAutomatonFilteredStates<>(services, nwaReachableStates, automaton.getStates(),
 				automaton.getInitialStates(), finals);
 	}
-
-	/**
-	 * TODO: Comment.
-	 *
-	 * @throws AutomataLibraryException
-	 *             if {@link IsEmpty} fails
-	 */
-	public abstract Map<Term, Term> getResult(final Script script, final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException;
-
 }

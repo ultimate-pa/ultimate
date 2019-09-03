@@ -33,6 +33,7 @@
 ;(assert (exists ((x Int)) (exists ((y Int)) (and (< x 3) (< (- y z) 3)))))
 
 (assert (and (not (< x 2)) (< y 2) (not (< y 1)) (element x S) (element y S)))
+;(assert (and (not (> x 0)) (< y 0) (element x S) (element y S)))
 ;(assert (not (element 0 S)))
 
 ;(assert (exists ((x Int)) (not (element (+ x 0) S))))
