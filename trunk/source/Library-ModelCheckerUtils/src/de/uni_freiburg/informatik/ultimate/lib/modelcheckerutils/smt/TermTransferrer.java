@@ -30,9 +30,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -58,14 +56,9 @@ public class TermTransferrer extends TermTransformer {
 	private final boolean mApplyLocalSimplifications;
 
 	protected final Script mScript;
-	private final Set<Sort> mDeclaredSorts = new HashSet<>();
 
 	protected final Map<Term, Term> mBacktransferMapping = new HashMap<>();
 	protected final Map<Term, Term> mTransferMapping;
-
-	public Map<Term, Term> getBacktranferMapping() {
-		return mBacktransferMapping;
-	}
 
 	public TermTransferrer(final Script script) {
 		this(script, Collections.emptyMap(), false);
@@ -76,6 +69,10 @@ public class TermTransferrer extends TermTransformer {
 		mScript = script;
 		mTransferMapping = transferMapping;
 		mApplyLocalSimplifications = applyLocalSimplifications;
+	}
+
+	public Map<Term, Term> getBacktranferMapping() {
+		return mBacktransferMapping;
 	}
 
 	@Override
