@@ -7,7 +7,6 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
@@ -30,7 +29,6 @@ public class InstAbsPattern extends PatternType {
 
 		// note: Q and R are reserved for scope, cdds are parsed in reverse order
 		final CDD P = cdds[0];
-		// final CDD S = cdds[1];
 
 		final CDD Q = scope.getCdd1();
 		final CDD R = scope.getCdd2();
@@ -38,8 +36,6 @@ public class InstAbsPattern extends PatternType {
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlob) {
 			ct = counterTrace(phaseT(), phase(P), phaseT());
-		} else if (scope instanceof SrParseScopeBefore) {
-			ct = counterTrace(phase(S.negate()), phase(P.and(S.negate())), phase(S.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()), phase(P.and(R.negate())),
 					phaseT());
