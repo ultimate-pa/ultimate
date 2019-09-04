@@ -311,7 +311,7 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 					Rational.ONE);
 			rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
 			// EQ and DISTINCT need Modulo Assumption
-			if ((mRelationSymbol.equals(mRelationSymbol.EQ)) || (mRelationSymbol.equals(mRelationSymbol.DISTINCT))) {
+			if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
 				Term modTerm = SmtUtils.mod(script, rhsTermWithoutDivision,
 						coeffOfSubject.toTerm(mAffineTerm.getSort()));
 				modTerm = SmtUtils.binaryEquality(script, modTerm, TermParseUtils.parseTerm(script, "0"));
