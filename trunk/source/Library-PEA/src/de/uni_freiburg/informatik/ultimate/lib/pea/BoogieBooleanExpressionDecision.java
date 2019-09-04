@@ -98,7 +98,13 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 
 	@Override
 	public String toTexString(final int child) {
-		throw new UnsupportedOperationException();
+		final Expression exp;
+		if (child == 0) {
+			exp = mExpression;
+		} else {
+			exp = new UnaryExpression(null, UnaryExpression.Operator.LOGICNEG, mExpression);
+		}
+		return BoogiePrettyPrinter.print(exp);
 	}
 
 	@Override
