@@ -47,7 +47,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 
 	/**
-	 * TODO Comment.
+	 * Returns an {@link INestedWordAutomaton} that represents the MSOD-Büchi-complement of the two given automata. The
+	 * MSOD-Büchi-complement performs the Büchi-complement of two automata and additionally ensures that Integer
+	 * variables are represented correctly in the resulting automaton.
+	 *
+	 * @throws AutomataLibraryException
+	 *             if construction of {@link BuchiComplementFKV} fails
 	 */
 	@Override
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> complement(final AutomataLibraryServices services,
@@ -78,7 +83,10 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 	}
 
 	/**
-	 * TODO Comment.
+	 * Returns an {@link INestedWordAutomaton} that represents the intersection of the two given automata.
+	 *
+	 * @throws AutomataLibraryException
+	 *             if construction of {@link BuchiIntersect} fails
 	 */
 	@Override
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> intersect(final AutomataLibraryServices services,

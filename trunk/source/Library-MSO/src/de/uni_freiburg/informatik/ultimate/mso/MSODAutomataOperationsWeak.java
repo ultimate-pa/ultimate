@@ -47,7 +47,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class MSODAutomataOperationsWeak extends MSODAutomataOperations {
 
 	/**
-	 * TODO: Comment.
+	 * Returns an {@link INestedWordAutomaton} that represents the MSOD-complement of the two given automata. The
+	 * MSOD-complement performs the complement of two automata and additionally ensures that Integer variables are
+	 * represented correctly in the resulting automaton.
+	 *
+	 * @throws AutomataLibraryException
+	 *             if construction of {@link Complement} fails
 	 */
 	@Override
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> complement(final AutomataLibraryServices services,
@@ -79,7 +84,10 @@ public class MSODAutomataOperationsWeak extends MSODAutomataOperations {
 	}
 
 	/**
-	 * TODO: Comment.
+	 * Returns an {@link INestedWordAutomaton} that represents the intersection of the two given automata.
+	 *
+	 * @throws AutomataLibraryException
+	 *             if construction of {@link Intersect} fails
 	 */
 	@Override
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> intersect(final AutomataLibraryServices services,

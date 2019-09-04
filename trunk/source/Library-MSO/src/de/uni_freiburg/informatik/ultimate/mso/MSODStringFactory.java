@@ -102,7 +102,7 @@ public class MSODStringFactory implements IIntersectionStateFactory<String>, IUn
 	}
 
 	/**
-	 * TODO: Returns an unique string.
+	 * Returns an unique string.
 	 */
 	private String newString() {
 		final StringBuilder builder = new StringBuilder();

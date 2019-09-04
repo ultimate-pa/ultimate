@@ -158,7 +158,10 @@ public final class MSODOperations {
 	}
 
 	/**
-	 * TODO: Comment.
+	 * Returns a {@link NestedWord} accepted by the given automaton, or null if language of automaton is empty.
+	 *
+	 * @throws AutomataLibraryException
+	 *             if {@link IsEmpty} fails
 	 */
 	public NestedWord<MSODAlphabetSymbol> getWordWeak(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
@@ -176,7 +179,7 @@ public final class MSODOperations {
 	}
 
 	/**
-	 * TODO Comment.
+	 * Returns a {@link NestedLassoWord} accepted by the given automaton, or null if language of automaton is empty.
 	 *
 	 * @throws AutomataLibraryException
 	 *             if {@link BuchiIsEmpty} fails
@@ -191,16 +194,13 @@ public final class MSODOperations {
 		if (!isEmpty.getResult()) {
 			final NestedLassoRun<MSODAlphabetSymbol, String> run = isEmpty.getAcceptingNestedLassoRun();
 			result = run.getNestedLassoWord();
-
-			// throw new IllegalArgumentException(result.toString());
 		}
 
 		return result;
 	}
 
 	/**
-	 * TODO: Comment.
-	 *
+	 * Returns the Int resp. SetOfInt values (natural numbers only) encoded in the given word, represented as a HashMap.
 	 */
 	public Map<Term, Set<Integer>> getNumbersNat(final Script script, final Set<Term> terms,
 			final NestedWord<MSODAlphabetSymbol> word) {
@@ -224,8 +224,7 @@ public final class MSODOperations {
 	}
 
 	/**
-	 * TODO: Comment.
-	 *
+	 * Returns the Int resp. SetOfInt values encoded in the given word, represented as a HashMap.
 	 */
 	public Map<Term, Set<Integer>> getNumbersInt(final Script script, final Set<Term> terms,
 			final NestedWord<MSODAlphabetSymbol> word) {
@@ -252,6 +251,11 @@ public final class MSODOperations {
 		return result;
 	}
 
+	/**
+	 * TODO: Comment.
+	 * 
+	 * @throws AutomataLibraryException
+	 */
 	public Map<Term, Term> getResult(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 		if (mFormulaOperations instanceof MSODFormulaOperationsNat
@@ -273,6 +277,11 @@ public final class MSODOperations {
 		return null;
 	}
 
+	/**
+	 * TODO: Comment.
+	 * 
+	 * @throws AutomataLibraryException
+	 */
 	public Map<Term, Term> getResultNatWeak(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 		final Map<Term, Term> result = new HashMap<>();
@@ -330,6 +339,11 @@ public final class MSODOperations {
 		return result;
 	}
 
+	/**
+	 * TODO: Comment.
+	 * 
+	 * @throws AutomataLibraryException
+	 */
 	public Map<Term, Term> getResultIntWeak(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 		final Map<Term, Term> result = new HashMap<>();
@@ -387,6 +401,11 @@ public final class MSODOperations {
 		return result;
 	}
 
+	/**
+	 * TODO: Comment.
+	 * 
+	 * @throws AutomataLibraryException
+	 */
 	public Map<Term, Term> getResultNatBuchi(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 		final Map<Term, Term> result = new HashMap<>();
@@ -474,6 +493,11 @@ public final class MSODOperations {
 		return result;
 	}
 
+	/**
+	 * TODO: Comment.
+	 * 
+	 * @throws AutomataLibraryException
+	 */
 	public Map<Term, Term> getResultIntBuchi(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 		final Map<Term, Term> result = new HashMap<>();
@@ -593,7 +617,6 @@ public final class MSODOperations {
 						} else {
 							loopTerm = t;
 						}
-
 					}
 
 					// Deal with all combinations of possibly empty Terms
