@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * TODO: Comment.
+ * TODO: Comment Class.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -252,8 +252,10 @@ public final class MSODOperations {
 	}
 
 	/**
-	 * TODO: Comment.
-	 * 
+	 * Returns a satisfying SMTLIB model for the MSOD-formula represented by the given automata or null if no such model
+	 * exists. Each combination of Finite Automata resp. Büchi Automata with Natural numbers resp. Integer numbers
+	 * requires its own getResult method.
+	 *
 	 * @throws AutomataLibraryException
 	 */
 	public Map<Term, Term> getResult(final Script script, final AutomataLibraryServices services,
@@ -278,9 +280,12 @@ public final class MSODOperations {
 	}
 
 	/**
-	 * TODO: Comment.
-	 * 
+	 * Returns a satisfying SMTLIB model for the MSOD-formula represented by the given automata or null if no such model
+	 * exists. Should only be used with finite automata and MSOD-formulas on Natural Numbers.
+	 *
 	 * @throws AutomataLibraryException
+	 * @throws UnsupportedOperationException
+	 *             if representation of Integer variable is corrupted
 	 */
 	public Map<Term, Term> getResultNatWeak(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
@@ -288,6 +293,9 @@ public final class MSODOperations {
 		final NestedWord<MSODAlphabetSymbol> word = getWordWeak(script, services, automaton);
 
 		if (word != null) {
+
+			// TODO: Deal with empty model in case no free variable exists in the formula.
+
 			if (automaton.getAlphabet().isEmpty()) {
 				// TODO: Deal with empty alphabet.
 			}
@@ -303,8 +311,7 @@ public final class MSODOperations {
 				// Deal with variables of type Int.
 				if (SmtSortUtils.isIntSort(term.getSort())) {
 					if (numbers.get(term).size() != 1) {
-						// TODO: Use correct exception type.
-						throw new IllegalArgumentException("This is not a valid Integer representation!");
+						throw new UnsupportedOperationException("This is not a valid Integer representation!");
 					}
 					// Construct a term that represents the according Int value.
 					final Term value =
@@ -340,9 +347,12 @@ public final class MSODOperations {
 	}
 
 	/**
-	 * TODO: Comment.
-	 * 
+	 * Returns a satisfying SMTLIB model for the MSOD-formula represented by the given automata or null if no such model
+	 * exists. Should only be used with finite automata and MSOD-formulas on Integer Numbers.
+	 *
 	 * @throws AutomataLibraryException
+	 * @throws UnsupportedOperationException
+	 *             if representation of Integer variable is corrupted
 	 */
 	public Map<Term, Term> getResultIntWeak(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
@@ -350,6 +360,9 @@ public final class MSODOperations {
 		final NestedWord<MSODAlphabetSymbol> word = getWordWeak(script, services, automaton);
 
 		if (word != null) {
+
+			// TODO: Deal with empty model in case no free variable exists in the formula.
+
 			if (automaton.getAlphabet().isEmpty()) {
 				// TODO: Deal with empty alphabet.
 			}
@@ -365,8 +378,7 @@ public final class MSODOperations {
 				// Deal with variables of type Int.
 				if (SmtSortUtils.isIntSort(term.getSort())) {
 					if (numbers.get(term).size() != 1) {
-						// TODO: Use correct exception type.
-						throw new IllegalArgumentException("This is not a valid Integer representation!");
+						throw new UnsupportedOperationException("This is not a valid Integer representation!");
 					}
 					// Construct a term that represents the according Int value.
 					final Term value =
@@ -402,9 +414,12 @@ public final class MSODOperations {
 	}
 
 	/**
-	 * TODO: Comment.
-	 * 
+	 * Returns a satisfying SMTLIB model for the MSOD-formula represented by the given automata or null if no such model
+	 * exists. Should only be used with Büchi automata and MSOD-formulas on Natural Number.
+	 *
 	 * @throws AutomataLibraryException
+	 * @throws UnsupportedOperationException
+	 *             if representation of Integer variable is corrupted
 	 */
 	public Map<Term, Term> getResultNatBuchi(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
@@ -412,6 +427,11 @@ public final class MSODOperations {
 		final NestedLassoWord<MSODAlphabetSymbol> word = getWordBuchi(script, services, automaton);
 
 		if (word != null) {
+			// TODO: Deal with empty model in case no free variable exists in the formula.
+			if (word.getStem().getSymbol(0).toString() == "empty"
+					|| word.getLoop().getSymbol(0).toString() == "empty") {
+				throw new UnsupportedOperationException("EMPTY");
+			}
 			if (automaton.getAlphabet().isEmpty()) {
 				// TODO: Deal with empty alphabet.
 			}
@@ -431,8 +451,7 @@ public final class MSODOperations {
 				// Deal with variables of type Int.
 				if (SmtSortUtils.isIntSort(term.getSort())) {
 					if (stemIndices.get(term).size() != 1 || loopIndices.get(term).size() != 0) {
-						// TODO: Use correct exception type.
-						throw new IllegalArgumentException("This is not a valid Integer representation!");
+						throw new UnsupportedOperationException("This is not a valid Integer representation!");
 					}
 					// Construct a term that represents the according Int value.
 					final Term value = SmtUtils.constructIntValue(script,
@@ -494,9 +513,12 @@ public final class MSODOperations {
 	}
 
 	/**
-	 * TODO: Comment.
-	 * 
+	 * Returns a satisfying SMTLIB model for the MSOD-formula represented by the given automata or null if no such model
+	 * exists. Should only be used with Büchi automata and MSOD-formulas on Integer Number.
+	 *
 	 * @throws AutomataLibraryException
+	 * @throws UnsupportedOperationException
+	 *             if representation of Integer variable is corrupted
 	 */
 	public Map<Term, Term> getResultIntBuchi(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
@@ -504,6 +526,9 @@ public final class MSODOperations {
 		final NestedLassoWord<MSODAlphabetSymbol> word = getWordBuchi(script, services, automaton);
 
 		if (word != null) {
+
+			// TODO: Deal with empty model in case no free variable exists in the formula.
+
 			if (automaton.getAlphabet().isEmpty()) {
 				// TODO: Deal with empty alphabet.
 			}
@@ -545,8 +570,7 @@ public final class MSODOperations {
 				// Deal with variables of type Int.
 				if (SmtSortUtils.isIntSort(term.getSort())) {
 					if (stemNumbers.get(term).size() != 1 || loopNumbers.get(term).size() != 0) {
-						// TODO: Use correct exception type.
-						throw new IllegalArgumentException("This is not a valid Integer representation!");
+						throw new UnsupportedOperationException("This is not a valid Integer representation!");
 					}
 					// Construct a term that represents the according Int value.
 					final Term value = SmtUtils.constructIntValue(script,
@@ -627,7 +651,7 @@ public final class MSODOperations {
 					} else if (loopTerm == null) {
 						result.put(term, stemTerm);
 					} else {
-						// TODO: Deal with notation of empty set.
+						// In case of an empty set, the condition for an element to be in the set is set to "false".
 						result.put(term, term.getTheory().mFalse);
 					}
 				}

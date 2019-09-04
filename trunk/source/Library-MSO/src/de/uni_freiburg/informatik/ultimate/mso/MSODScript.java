@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
@@ -68,33 +67,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * @Questions How to use SmtUtils.toCNF()? (Might be helpful for dealing with disjunction, implication, equality)
- *
- *            One-transitions in {@link #processExists} are not needed?.
- *
- *            Why is {@link SmtUtils#geq} not usable in {@link #processEqual}, {@link #processGreater}?
- *
- *            Model is not always minimal e.g. (assert (element 9 I))?
- *
- *            final INestedWordAutomaton<MoNatDiffAlphabetSymbol, String> minimized = new
- *            MinimizeSevpa<>(AutomataLibrarayServices, new StringFactory(), automaton).getResult();
- *
- *            SmtUtils.toCnf(mUltimateServiceProvider, managedScript, mAssertionTerm,
- *            XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
- *
- *            TODO: Check inputs.
- *
- *            TODO: Find meaningful names for the automata representing only one case of the complete automaton.
- *
- *            TODO: Test all (new) Int automata.
- *
- *            TODO: Note: Some methods are redundant to the ones in MoNatDiffAutomatonFactory (even though some are
- *            shortened by the use of createAlphabet) including: emptyAutomaton, trueAutomaton, falseAutomaton,
- *            intVariableAutomaton, reconstruct, createAlphabet, strictSubsetAutomaton, nonStrictSubsetAutomaton
- *
- *            TODO: nonStrictSubset changed such that actually no transition is needed to be accepting.
- *
- * @Solved {@link Union} does not ensure that Int variables are set exactly once.
+ * TODO: Comment Class TODO: Check inputs.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)

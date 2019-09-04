@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * TODO: Comment.
+ * TODO: Comment Class.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -447,12 +447,11 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 					predInner = state;
 				}
 
-				// TODO: (E) rename states "endLoop" and "loop"
 				automaton.addInternalTransition(predInner, xy01, "final");
 
-				automaton.addState(false, false, "endLoop" + i);
-				automaton.addInternalTransition(predInner, xy00, "endLoop" + i);
-				automaton.addInternalTransition("endLoop" + i, xy00, predInner);
+				automaton.addState(false, false, "l_1_" + i);
+				automaton.addInternalTransition(predInner, xy00, "l_1_" + i);
+				automaton.addInternalTransition("l_1_" + i, xy00, predInner);
 			}
 
 			if (i % 2 != 0) {
@@ -468,17 +467,17 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 				}
 
 				automaton.addInternalTransition(predInner, xy10, "final");
-				automaton.addState(false, false, "endLoop" + i);
-				automaton.addInternalTransition(predInner, xy00, "endLoop" + i);
-				automaton.addInternalTransition("endLoop" + i, xy00, predInner);
+				automaton.addState(false, false, "l_1_" + i);
+				automaton.addInternalTransition(predInner, xy00, "l_1_" + i);
+				automaton.addInternalTransition("l_1_" + i, xy00, predInner);
 			}
 
 			pred = state0;
 
 			if (i == Math.abs(c)) {
-				automaton.addState(false, false, "loop");
-				automaton.addInternalTransition(pred, xy00, "loop");
-				automaton.addInternalTransition("loop", xy00, pred);
+				automaton.addState(false, false, "l_0");
+				automaton.addInternalTransition(pred, xy00, "l_0");
+				automaton.addInternalTransition("l_0", xy00, pred);
 			}
 
 		}
@@ -976,7 +975,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 	/**
 	 * Returns a {@link NestedWordAutomaton} representing an element relation of the form " c ∈ X".
-	 * 
+	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type SetOfInt.
 	 */

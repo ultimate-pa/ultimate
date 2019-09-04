@@ -14,7 +14,7 @@
 
 
 ;(assert (exists ((x Int) (< x 0)))) Parser checken
-;(assert (exists ((x Int)) (< x 1)))
+(assert (exists ((x Int)) (< x 1)))
 ;(assert (< z 2))
 ;(assert (=> (< x 5) (< y 4) (< z 3)))
 ;(assert (=> (< x 1) (< y 2)))
@@ -39,7 +39,7 @@
 ;(assert (exists ((x Int)) (not (element (+ x 0) S))))
 ;(assert (< x 3))
 
-(assert (< (- x) 0))
+;(assert (< (- x) 0))
 
 ;(assert (not (element (+ x 0) S)))
 

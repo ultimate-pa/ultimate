@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * TODO: Comment.
+ * TODO: Comment Class.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -259,7 +259,7 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 
 	/**
 	 * Returns a {@link NestedWordAutomaton} representing an element relation of the form " c ∈ X".
-	 * 
+	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type SetOfInt or c is smaller than 0.
 	 */

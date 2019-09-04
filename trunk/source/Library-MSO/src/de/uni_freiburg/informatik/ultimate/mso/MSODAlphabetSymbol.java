@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -203,41 +202,5 @@ public class MSODAlphabetSymbol {
 
 		final MSODAlphabetSymbol other = (MSODAlphabetSymbol) obj;
 		return mMap.equals(other.mMap);
-	}
-
-	/**
-	 * @deprecated
-	 *
-	 * 			TODO: Function should probably be removed. Deal with term length. Function mixes up different
-	 *             functionalities.
-	 */
-	@Deprecated
-	public static Map<String, MSODAlphabetSymbol>
-			createAlphabet(final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Term... terms) {
-		final Map<String, MSODAlphabetSymbol> alphabetSymbols = new HashMap<>();
-
-		if (terms.length == 1) {
-			final MSODAlphabetSymbol x0, x1;
-			x0 = new MSODAlphabetSymbol(terms[0], false);
-			x1 = new MSODAlphabetSymbol(terms[0], true);
-			alphabetSymbols.put("x0", x0);
-			alphabetSymbols.put("x1", x1);
-			automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
-		}
-
-		if (terms.length == 2) {
-			final MSODAlphabetSymbol xy00, xy01, xy10, xy11;
-			xy00 = new MSODAlphabetSymbol(new Term[] { terms[0], terms[1] }, new boolean[] { false, false });
-			xy01 = new MSODAlphabetSymbol(new Term[] { terms[0], terms[1] }, new boolean[] { false, true });
-			xy10 = new MSODAlphabetSymbol(new Term[] { terms[0], terms[1] }, new boolean[] { true, false });
-			xy11 = new MSODAlphabetSymbol(new Term[] { terms[0], terms[1] }, new boolean[] { true, true });
-			alphabetSymbols.put("xy00", xy00);
-			alphabetSymbols.put("xy01", xy01);
-			alphabetSymbols.put("xy10", xy10);
-			alphabetSymbols.put("xy11", xy11);
-			automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
-		}
-
-		return alphabetSymbols;
 	}
 }

@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * TODO: Comment.
- *
+ * Simplify handling of {@link Sort}s and {@link MSODAlphabetSymbol} used in MSOD-logic.
+ * 
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
@@ -165,8 +165,6 @@ public final class MSODUtils {
 
 	/**
 	 * Returns the alphabet for the given variable names.
-	 *
-	 * TODO: Check input.
 	 */
 	public static Set<MSODAlphabetSymbol> createAlphabet(final Term[] terms) {
 		final Set<MSODAlphabetSymbol> symbols = new HashSet<>();
@@ -261,7 +259,7 @@ public final class MSODUtils {
 	}
 
 	/*
-	 * TODO: Comment.
+	 * Returns all Terms included in the given symbol which match the given sort.
 	 */
 	public static Set<Term> containsSort(final Set<MSODAlphabetSymbol> symbols, final String sort) {
 
@@ -269,7 +267,7 @@ public final class MSODUtils {
 	}
 
 	/*
-	 * TODO: Comment.
+	 * Returns all Terms included in the given symbol which match one of the given sorts.
 	 */
 	public static Set<Term> containsSort(final Set<MSODAlphabetSymbol> symbols, final Set<String> sorts) {
 		final Set<Term> result = new HashSet<>();
