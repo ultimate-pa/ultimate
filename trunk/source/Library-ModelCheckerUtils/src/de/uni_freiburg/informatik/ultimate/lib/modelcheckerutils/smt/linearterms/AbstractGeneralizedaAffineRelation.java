@@ -305,42 +305,13 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 		final Term assumptionFreeRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 				coeffOfSubject);
 		Map<AssumptionForSolvability, Term> assumptionsMap = Collections.emptyMap();
-		Term rhsTerm = assumptionFreeRhsTerm;
+		Term rhsTerm;
 		if (assumptionFreeRhsTerm == null) {
 			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 					Rational.ONE);
-			// Integer Division
-
-			// Default DivTerm
-			rhsTerm = SmtUtils.div(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort()));
-
-			switch (mRelationSymbol) {
-			case LESS:
-				// k*x < t is equivalent to x < (t-1 div k)+1 for positive k
-				if (!coeffOfSubject.isNegative()) {
-					rhsTerm = constructRHSTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.ONE);
-				} else if (coeffOfSubject.isNegative()) {
-					// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
-					rhsTerm = constructRHSTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.MONE);
-				}
-				break;
-			case GREATER:
-				// k*x > t is equivalent to x > (t div k) for all k
-				break;
-			case GEQ:
-				// k*x >= t is equivalent to x >= (t - 1 div k) + 1 for positive k
-				if (!coeffOfSubject.isNegative()) {
-					rhsTerm = constructRHSTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.ONE);
-				} else if (coeffOfSubject.isNegative()) {
-					// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
-					rhsTerm = constructRHSTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.MONE);
-				}
-				break;
-			case LEQ:
-				// k*x <= t is equivalent to x <= (t div k) for positive k
-				break;
-			default:
-				// EQ and DISTINCT need Modulo Assumption
+			rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
+			// EQ and DISTINCT need Modulo Assumption
+			if ((mRelationSymbol.equals(mRelationSymbol.EQ)) || (mRelationSymbol.equals(mRelationSymbol.DISTINCT))) {
 				Term modTerm = SmtUtils.mod(script, rhsTermWithoutDivision,
 						coeffOfSubject.toTerm(mAffineTerm.getSort()));
 				modTerm = SmtUtils.binaryEquality(script, modTerm, TermParseUtils.parseTerm(script, "0"));
@@ -377,7 +348,53 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 		return result;
 	}
 
-	private Term constructRHSTerm(final Script script, Term rhsTermWithoutDivision, final Rational coeffOfSubject,
+	private Term integerDivision(final Script script, final Rational coeffOfSubject,
+			final Term rhsTermWithoutDivision) {
+		// Default DivTerm
+		Term divTerm = SmtUtils.div(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort()));
+		// change DivTerm according to the given relation symbol
+		switch (mRelationSymbol) {
+		case LESS:
+			// k*x < t is equivalent to x < (t-1 div k)+1 for positive k
+			if (!coeffOfSubject.isNegative()) {
+				divTerm = constructDivTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.ONE);
+			} else if (coeffOfSubject.isNegative()) {
+				// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
+				divTerm = constructDivTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.MONE);
+			}
+			break;
+		case GREATER:
+			// k*x > t is equivalent to x > (t div k) for all k
+			break;
+		case LEQ:
+			// k*x <= t is equivalent to x <= (t div k) for positive k
+			break;
+		case GEQ:
+			// k*x >= t is equivalent to x >= (t - 1 div k) + 1 for positive k
+			if (!coeffOfSubject.isNegative()) {
+				divTerm = constructDivTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.ONE);
+			} else if (coeffOfSubject.isNegative()) {
+				// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
+				divTerm = constructDivTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.MONE);
+			}
+			break;
+		case EQ:
+			// Default DivTerm with modulo Assumption
+			break;
+		case DISTINCT:
+			// Default DivTerm with modulo Assumption
+			break;
+		default:
+			throw new AssertionError("unknown relation symbol: " + mRelationSymbol);
+		}
+		return divTerm;
+	}
+
+	/*
+	 * construct DivTerm for LESS and GEQ case, where the default divTerm can't be
+	 * used. "secondRat" depends on the sign of the coefficient.
+	 */
+	private Term constructDivTerm(final Script script, Term rhsTermWithoutDivision, final Rational coeffOfSubject,
 			final Rational secondRat) {
 		rhsTermWithoutDivision = SmtUtils.sum(script, mAffineTerm.getSort(), rhsTermWithoutDivision,
 				SmtUtils.rational2Term(script, Rational.MONE, mAffineTerm.getSort()));

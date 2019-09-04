@@ -32,12 +32,8 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
@@ -90,163 +86,73 @@ public class AffineRelationTest {
 	@Test
 	public void relationIntDivDefault() throws NotAffineException {
 		final String inputSTR = "(= (+ 7 x) y )";
-		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "x")));
 
 	}
 
 	@Test
-	public void relationIntDiv() throws NotAffineException {
+	public void relationIntDivEQ() throws NotAffineException {
 		final String inputSTR = "(= (* 7 x) y )";
-		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "x")));
 
 	}
 
 	@Test
-	public void relationIntDiv2() throws NotAffineException {
+	public void relationIntDivEQ2() throws NotAffineException {
 		final String inputSTR = "(= (* 3 x) (* 7 y) )";
-		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "x")));
 	}
 
 	@Test
-	public void relationIntDiv3() throws NotAffineException {
+	public void relationIntDivEQ3() throws NotAffineException {
 		final String inputSTR = "(= (* 3 x) (+ (* 7 y) (* 5 z)) )";
-		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "x")));
 	}
 
 	@Test
-	public void relationIntDiv4() throws NotAffineException {
-		// testen 33 für a terminiert nicht
+	public void relationIntDivEQ4() throws NotAffineException {
 		final String inputSTR = "(= (* 6 (+ y x)) (* 7 z) )";
-		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "x")));
 	}
 
 	@Test
-	public void relationIntDiv51() throws NotAffineException {
+	public void relationIntDivGEQ() throws NotAffineException {
 		final String inputSTR = "(>= (* 3 x) lo )";
-		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "x")));
-
 	}
 
 	@Test
-	public void relationIntDiv52() throws NotAffineException {
+	public void relationIntDivLEQ() throws NotAffineException {
 		final String inputSTR = "(<= (* 3 x) hi )";
-		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "x")));
-
 	}
 
 	@Test
-	public void relationIntDiv6() throws NotAffineException {
+	public void relationIntDivDISTINCT() throws NotAffineException {
 		final String inputSTR = "(not(= (* 3 x) y ))";
-		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "x")));
-
 	}
 
 	@Test
-	public void relationIntDiv71() throws NotAffineException {
+	public void relationIntDivGREATER() throws NotAffineException {
 		final String inputSTR = "(> (* 3 x) lo )";
-		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "x")));
-
 	}
 
 	@Test
-	public void relationIntDiv72() throws NotAffineException {
+	public void relationIntDivLESS() throws NotAffineException {
 		final String inputSTR = "(< (* 4 x) hi )";
-		Assert.assertTrue(assumptionsImplyEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				affRelOnLeftHandSide(inputSTR, "x")));
-
-	}
-
-	@Test
-	public void greaterTIR() throws NotAffineException {
-		final String inputSTR = "(exists ((x Int)) 	(and (> (* 7 x) lo ) (> hi x)))";
-		final Term outputTERM = parseAndElim(inputSTR);
-		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, outputTERM, inputSTR));
-		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
-	}
-
-	@Test
-	public void lessTIR() throws NotAffineException {
-		final String inputSTR = "(exists ((x Int)) 	(and (< (* 7 x) hi ) (< lo x)))";
-		final Term outputTERM = parseAndElim(inputSTR);
-		Assert.assertTrue(
-				SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR), outputTERM, mScript));
-		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
-
-	}
-
-	@Test
-	public void greaterEqTIR() throws NotAffineException {
-		final String inputSTR = "(forall ((x Int)) 	(or (>= (* 7 x) lo ) (> hi x)))";
-		final Term outputTERM = parseAndElim(inputSTR);
-		Assert.assertTrue(
-				SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR), outputTERM, mScript));
-		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
-
-	}
-
-	@Test
-	public void lessEqTIR() throws NotAffineException {
-		final String inputSTR = "(forall ((x Int)) 	(or (<= (* 7 x) hi ) (< lo x)))";
-		final Term outputTERM = parseAndElim(inputSTR);
-		Assert.assertTrue(
-				SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR), outputTERM, mScript));
-		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
-
-	}
-
-	@Test
-	public void greaterTIRNegativeCoef() throws NotAffineException {
-		final String inputSTR = "(exists ((x Int)) 	(and (> (* (- 7) x) lo ) (< lo x)))";
-		final Term outputTERM = parseAndElim(inputSTR);
-		Assert.assertTrue(SmtTestUtils.areLogicallyEquivalent(mScript, outputTERM, inputSTR));
-		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
-
-	}
-
-	@Test
-	public void lessTIRNegativeCoef() throws NotAffineException {
-		final String inputSTR = "(exists ((x Int)) 	(and (< (* (- 7) x) lo ) (> hi x)))";
-		final Term outputTERM = parseAndElim(inputSTR);
-		Assert.assertTrue(
-				SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR), outputTERM, mScript));
-		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
-
-	}
-
-	@Test
-	public void greaterEqTIRNegativeCoef() throws NotAffineException {
-		final String inputSTR = "(forall ((x Int)) 	(or (>= (* (- 7) x) lo ) (> x lo)))";
-		final Term outputTERM = parseAndElim(inputSTR);
-		Assert.assertTrue(
-				SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR), outputTERM, mScript));
-		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
-
-	}
-
-	@Test
-	public void lessEqTIRNegativeCoef() throws NotAffineException {
-		final String inputSTR = "(forall ((x Int)) 	(or (<= (* (- 7) x) hi ) (> hi x)))";
-		final Term outputTERM = parseAndElim(inputSTR);
-		Assert.assertTrue(
-				SmtUtils.areFormulasEquivalent(TermParseUtils.parseTerm(mScript, inputSTR), outputTERM, mScript));
-		Assert.assertTrue(QuantifierUtils.isQuantifierFree(outputTERM));
-
-	}
-
-	public Term parseAndElim(final String formulaAsString) {
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, null, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		return result;
 	}
 
 	private SolvedBinaryRelation affRelOnLeftHandSide(final String termAsString, final String varString)
@@ -257,8 +163,14 @@ public class AffineRelationTest {
 		return sbr;
 	}
 
-	private boolean assumptionsImplyEquality(final Term originalTerm, final SolvedBinaryRelation sbr) {
-		return SmtUtils.areFormulasEquivalent(sbr.relationToTerm(mScript), originalTerm,
-				SmtUtils.and(mScript, sbr.getAssumptionsMap().values()), mScript);
+	private boolean assumptionsImpliesEquality(final Term originalTerm, final SolvedBinaryRelation sbr) {
+		if (sbr.getAssumptionsMap().isEmpty()) {
+			return SmtUtils.areFormulasEquivalent(sbr.relationToTerm(mScript), originalTerm, mScript);
+		} else {
+			final Term disJ = SmtUtils.not(mScript, SmtUtils.and(mScript, sbr.getAssumptionsMap().values()));
+			final Term impli1 = SmtUtils.or(mScript, disJ, sbr.relationToTerm(mScript));
+			final Term impli2 = SmtUtils.or(mScript, disJ, originalTerm);
+			return SmtUtils.areFormulasEquivalent(impli1, impli2, mScript);
+		}
 	}
 }
