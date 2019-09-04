@@ -24,13 +24,13 @@ public class InstAbsPattern extends PatternType {
 
 	@Override
 	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 2 && durations.length == 1;
+		assert cdds.length == 1 && durations.length == 0;
 
 		final SrParseScope scope = getScope();
 
 		// note: Q and R are reserved for scope, cdds are parsed in reverse order
 		final CDD P = cdds[0];
-		final CDD S = cdds[1];
+		// final CDD S = cdds[1];
 
 		final CDD Q = scope.getCdd1();
 		final CDD R = scope.getCdd2();
@@ -39,17 +39,15 @@ public class InstAbsPattern extends PatternType {
 		if (scope instanceof SrParseScopeGlob) {
 			ct = counterTrace(phaseT(), phase(P), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
-			ct = counterTrace(new CounterTrace.DCPhase(S.negate()), new CounterTrace.DCPhase(P.and(S.negate())),
-					new CounterTrace.DCPhase(S.negate()), phaseT());
+			ct = counterTrace(phase(S.negate()), phase(P.and(S.negate())), phase(S.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
-			ct = counterTrace(phaseT(), new CounterTrace.DCPhase(Q.and(R.negate())),
-					new CounterTrace.DCPhase(R.negate()), new CounterTrace.DCPhase(P.and(R.negate())), phaseT());
+			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()), phase(P.and(R.negate())),
+					phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			ct = counterTrace(phaseT(), phase(Q), phaseT(), phase(P), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
-			ct = counterTrace(phaseT(), new CounterTrace.DCPhase(Q.and(R.negate())),
-					new CounterTrace.DCPhase(R.negate()), new CounterTrace.DCPhase(P.and(R.negate())),
-					new CounterTrace.DCPhase(R.negate()), phase(R), phaseT());
+			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()), phase(P.and(R.negate())),
+					phase(R.negate()), phase(R), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}

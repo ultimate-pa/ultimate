@@ -111,7 +111,7 @@ public class BoogieRequirementsParserTestAllPatterns {
 	/**
 	 * Struct transporting data for one test case
 	 */
-	private static final class Testpurpose {
+	public static final class Testpurpose {
 		public final String mTestString;
 		public final Class<?> mScopeClazz;
 		public final String mPatternName;
