@@ -79,6 +79,24 @@ public class IntervalTest {
 	}
 
 	@Test
+	public void testWiden() {
+		// constant left bound (widen right, if at all)
+		Assert.assertEquals(interval("2, 5"), interval("2, 5").widen(interval("2, 4")));
+		Assert.assertEquals(interval("2, 5"), interval("2, 5").widen(interval("2, 5")));
+		Assert.assertEquals(interval("2, inf"), interval("2, 5").widen(interval("2, 6")));
+
+		// constant right bound (widen left, if at all)
+		Assert.assertEquals(interval("2, 5"), interval("2, 5").widen(interval("3, 5")));
+		Assert.assertEquals(interval("2, 5"), interval("2, 5").widen(interval("2, 5")));
+		Assert.assertEquals(interval("-inf, 5"), interval("2, 5").widen(interval("1, 5")));
+
+		// strict subset
+		Assert.assertEquals(interval("-4, 0"), interval("-4, 0").widen(interval("-2, -1")));
+		// widen in both directions
+		Assert.assertEquals(interval("-inf, inf"), interval("-4, 0").widen(interval("-123, 1/5000")));
+	}
+
+	@Test
 	public void testSatEqual() {
 		checkRelationPredefinedInputs(Interval::satisfyEqual,
 				"2,3", "2,3",
@@ -152,7 +170,7 @@ public class IntervalTest {
 		}
 		final String[] lowAndHighBound = interval.split(", *");
 		if (lowAndHighBound.length < 1 || 2 < lowAndHighBound.length) {
-			throw new IllegalArgumentException("Cannot parse rational: " + interval);
+			throw new IllegalArgumentException("Cannot parse interval: " + interval);
 		}
 		final Rational lowBound = rational(lowAndHighBound[0]);
 		if (lowAndHighBound.length == 1) {

@@ -187,7 +187,7 @@ public final class Interval {
 	public Interval widen(final Interval rhs) {
 		return Interval.of(
 			rhs.mLower.compareTo(mLower) < 0 ? Rational.NEGATIVE_INFINITY : mLower,
-			mUpper.compareTo(rhs.mUpper) < 0 ?  mUpper : Rational.POSITIVE_INFINITY
+			mUpper.compareTo(rhs.mUpper) < 0 ? Rational.POSITIVE_INFINITY : mUpper
 		);
 	}
 
