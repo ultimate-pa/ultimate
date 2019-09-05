@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttran
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -37,15 +37,17 @@ public interface ISmtDeclarable {
 
 	/**
 	 * Define or declare this object in the supplied script.
-	 * 
+	 *
 	 * @param script
 	 */
 	void defineOrDeclare(Script script);
 
+	String getName();
+
 	/**
 	 * A {@link RuntimeException} that signals that an SmtDeclarable cannot be declared or defined because information
 	 * is missing.
-	 * 
+	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 */
 	public final class IllegalSmtDeclarableUsageException extends RuntimeException {

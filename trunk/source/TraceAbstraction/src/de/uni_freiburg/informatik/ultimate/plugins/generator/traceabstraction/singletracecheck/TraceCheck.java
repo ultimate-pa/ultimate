@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -48,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscri
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
@@ -223,7 +224,8 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 				}
 			} else {
 				if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
-					managedScriptTc.echo(mTraceCheckLock, new QuotedObject("Trace is feasible, we will do another trace check, this time with branch encoders."));
+					managedScriptTc.echo(mTraceCheckLock, new QuotedObject(
+							"Trace is feasible, we will do another trace check, this time with branch encoders."));
 					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches();
 					if (icfgProgramExecution != null) {
 						providesIcfgProgramExecution = true;
@@ -270,10 +272,8 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 	 */
 	protected FeasibilityCheckResult checkTrace() {
 		lockAndPrepareSolverForTraceCheck();
-		final boolean transferToDifferentScript = mTcSmtManager != mCfgManagedScript;
 		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
-		mNsb = new NestedSsaBuilder(mTrace, mTcSmtManager, mNestedFormulas, mCsToolkit.getModifiableGlobalsTable(),
-				mLogger, transferToDifferentScript);
+		mNsb = new NestedSsaBuilder(mTrace, mTcSmtManager, mCsToolkit, mNestedFormulas, mLogger);
 		final NestedFormulas<Term, Term> ssa = mNsb.getSsa();
 		mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
 
@@ -305,7 +305,8 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 				result = new FeasibilityCheckResult(LBool.UNKNOWN, new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT,
 						null, ExceptionHandlingCategory.KNOWN_IGNORE), true);
 			} else {
-				result = new FeasibilityCheckResult(LBool.UNKNOWN, TraceCheckReasonUnknown.constructReasonUnknown(e), true);
+				result = new FeasibilityCheckResult(LBool.UNKNOWN, TraceCheckReasonUnknown.constructReasonUnknown(e),
+						true);
 			}
 		} finally {
 			mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
@@ -369,14 +370,20 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 				}
 			}
 		}
+
+		final Function<Term, Term> funGetValue;
+		if (mCfgManagedScript != mTcSmtManager) {
+			funGetValue = a -> new TermTransferrer(mTcSmtManager.getScript(), mCfgManagedScript.getScript())
+					.transform(getValue(a));
+		} else {
+			funGetValue = this::getValue;
+		}
+
 		for (final IProgramVar bv : nsb.getIndexedVarRepresentative().keySet()) {
 			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
 				for (final Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
 					final Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
-					Term valueT = getValue(indexedVar);
-					if (mCfgManagedScript != mTcSmtManager) {
-						valueT = new TermTransferrer(mCfgManagedScript.getScript()).transform(valueT);
-					}
+					final Term valueT = funGetValue.apply(indexedVar);
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
 				}
 			}

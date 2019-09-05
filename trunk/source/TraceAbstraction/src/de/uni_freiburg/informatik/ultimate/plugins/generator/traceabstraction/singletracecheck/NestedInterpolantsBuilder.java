@@ -47,13 +47,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubtermPropertyChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateNormalFormUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer;
@@ -159,11 +158,11 @@ public class NestedInterpolantsBuilder {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 		if (mMgdScriptTc != mgdScriptCfg) {
-			mConst2RepTvSubst = new TermTransferrer(mMgdScriptCfg.getScript(), const2RepTv, true);
+			mConst2RepTvSubst =
+					new TermTransferrer(mMgdScriptTc.getScript(), mMgdScriptCfg.getScript(), const2RepTv, true);
 		} else {
 			mConst2RepTvSubst = new SubstitutionWithLocalSimplification(mMgdScriptCfg, const2RepTv);
 		}
-
 
 		computeCraigInterpolants();
 		traceCheck.cleanupAndUnlockSolver();
@@ -676,7 +675,8 @@ public class NestedInterpolantsBuilder {
 		private Term constructImplication() {
 			final Term arraysDistinct = mMgdScriptCfg.getScript().term("distinct", mFirstArray, mSecondArray);
 			final Term firstSelect = SmtUtils.select(mMgdScriptCfg.getScript(), mFirstArray, mReplacementTermVariable);
-			final Term secondSelect = SmtUtils.select(mMgdScriptCfg.getScript(), mSecondArray, mReplacementTermVariable);
+			final Term secondSelect =
+					SmtUtils.select(mMgdScriptCfg.getScript(), mSecondArray, mReplacementTermVariable);
 			final Term selectDistinct = mMgdScriptCfg.getScript().term("distinct", firstSelect, secondSelect);
 			final Term implication = Util.implies(mMgdScriptCfg.getScript(), arraysDistinct, selectDistinct);
 			return implication;

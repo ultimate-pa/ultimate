@@ -43,10 +43,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ExceptionThrowingParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateEliminator;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
@@ -64,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.mso.MSODScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtInterpolLogProxyWrapper;
 import de.uni_freiburg.informatik.ultimate.source.smtparser.SmtParserPreferenceInitializer.MsoLogic;
 import de.uni_freiburg.informatik.ultimate.source.smtparser.SmtParserPreferenceInitializer.SmtParserMode;
@@ -267,24 +267,24 @@ public class SmtParser implements ISource {
 
 		case UltimateEliminator: {
 			mLogger.info("Running UltimateEliminator on input file");
-			final ILogger solverLogger = mServices.getLoggingService().getLoggerForExternalTool("SolverLogger");
 			final String command = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getString(SmtParserPreferenceInitializer.LABEL_ExtSolverCommand);
-			solverLogger.setLevel(LogLevel.INFO);
-			mLogger.setLevel(LogLevel.INFO);
-			Script backEnd;
+					.getString(SmtParserPreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND);
+
+			SolverSettings solverSettings;
 			if (command.isEmpty()) {
-				backEnd = SolverBuilder.createSMTInterpol(mServices);
+				solverSettings = SolverBuilder.constructSolverSettings(SolverMode.Internal_SMTInterpol, false, "");
 			} else {
-				backEnd = new Scriptor(command, solverLogger, mServices, "External");
+				solverSettings = SolverBuilder.constructSolverSettings(SolverMode.External_DefaultMode, false, command);
 			}
+
 			final String folderOfDumpedFile = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getString(SmtParserPreferenceInitializer.LABEL_SmtDumpPath);
+					.getString(SmtParserPreferenceInitializer.LABEL_SMT_DUMP_PATH);
 			if (!folderOfDumpedFile.isEmpty()) {
-				final String fullPathOfDumpedFile =
-						folderOfDumpedFile + "/" + "UltimateEliminatorBackEndSolverInput.smt2";
-				backEnd = SolverBuilder.wrapScriptWithLoggingScript(backEnd, solverLogger, fullPathOfDumpedFile);
+				solverSettings = solverSettings.enableDumpSmtScriptToFile(folderOfDumpedFile,
+						"UltimateEliminatorBackEndSolverInput.smt2");
 			}
+
+			final Script backEnd = SolverBuilder.buildScript(mServices, solverSettings);
 			script = new UltimateEliminator(mServices, mLogger, backEnd);
 		}
 			break;

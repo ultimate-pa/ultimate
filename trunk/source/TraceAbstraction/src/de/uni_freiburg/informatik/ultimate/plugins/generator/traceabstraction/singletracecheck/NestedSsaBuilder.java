@@ -36,6 +36,7 @@ import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -92,7 +93,7 @@ public class NestedSsaBuilder {
 
 	private final ILogger mLogger;
 
-	private final Script mScript;
+	private final Script mTcScript;
 
 	/**
 	 * Map global BoogieVar bv to the constant bv_j that represents bv at the moment.
@@ -143,19 +144,18 @@ public class NestedSsaBuilder {
 	 */
 	private final MultiElementCounter<TermVariable> mConstForTvCounter = new MultiElementCounter<>();
 
-	public NestedSsaBuilder(final NestedWord<? extends IAction> trace, final ManagedScript managedScript,
-			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nestedTransFormulas,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final ILogger logger,
-			final boolean transferToScriptNeeded) {
+	public NestedSsaBuilder(final NestedWord<? extends IAction> trace, final ManagedScript managedTcScript,
+			final CfgSmtToolkit cfgSmtToolkit,
+			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nestedTransFormulas, final ILogger logger) {
 		mLogger = logger;
-		mScript = managedScript.getScript();
+		mTcScript = managedTcScript.getScript();
 		mFormulas = nestedTransFormulas;
-		mModGlobVarManager = modifiableGlobalsTable;
+		mModGlobVarManager = cfgSmtToolkit.getModifiableGlobalsTable();
 		mSsa = new ModifiableNestedFormulas<>(trace, new TreeMap<Integer, Term>());
 		mVariable2Constant = new ModifiableNestedFormulas<>(trace, new TreeMap<Integer, Map<Term, Term>>());
-		mTransferToScriptNeeded = transferToScriptNeeded;
+		mTransferToScriptNeeded = managedTcScript != cfgSmtToolkit.getManagedScript();
 		if (mTransferToScriptNeeded) {
-			mTermTransferrer = new TermTransferrer(mScript);
+			mTermTransferrer = new TermTransferrer(cfgSmtToolkit.getManagedScript().getScript(), mTcScript);
 		} else {
 			mTermTransferrer = null;
 		}
@@ -463,7 +463,7 @@ public class NestedSsaBuilder {
 		} else {
 			final Sort sort = transferToCurrentScriptIfNecessary(bv.getTermVariable()).getSort();
 			constant = PredicateUtils.getIndexedConstant(bv.getGloballyUniqueId(), sort, index, mIndexedConstants,
-					mScript);
+					mTcScript);
 		}
 		index2constant.put(index, constant);
 		return constant;
@@ -559,8 +559,8 @@ public class NestedSsaBuilder {
 			for (TermVariable tv : mTF.getBranchEncoders()) {
 				tv = transferToCurrentScriptIfNecessary(tv);
 				final String name = branchEncoderConstantName(tv, currentPos);
-				mScript.declareFun(name, new Sort[0], tv.getSort());
-				mSubstitutionMapping.put(tv, mScript.term(name));
+				mTcScript.declareFun(name, new Sort[0], tv.getSort());
+				mSubstitutionMapping.put(tv, mTcScript.term(name));
 			}
 		}
 
@@ -579,8 +579,8 @@ public class NestedSsaBuilder {
 			final Integer newIndex = mConstForTvCounter.increment(tv);
 			final String name = SmtUtils.removeSmtQuoteCharacters(tv.getName()) + "_fresh_" + newIndex;
 			final Sort resultSort = tv.getSort();
-			mScript.declareFun(name, new Sort[0], resultSort);
-			return mScript.term(name);
+			mTcScript.declareFun(name, new Sort[0], resultSort);
+			return mTcScript.term(name);
 		}
 
 		public void versionPredicate() {
@@ -593,7 +593,7 @@ public class NestedSsaBuilder {
 		}
 
 		public Term getVersioneeredTerm() {
-			final Substitution subst = new Substitution(mScript, mSubstitutionMapping);
+			final Substitution subst = new Substitution(mTcScript, mSubstitutionMapping);
 			final Term result = subst.transform(mFormula);
 			assert result.getFreeVars().length == 0 : "free vars in versioneered term: " + result.getFreeVars();
 			return result;

@@ -68,9 +68,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.SmtFunctionDefinition;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.TransitiveClosure;
@@ -340,7 +339,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 		}
 
-		final SmtFunctionsAndAxioms transformedSymbols = transformSmtFunctionsAndAxioms(oldToolkit.getSmtFunctionsAndAxioms());
+		final SmtFunctionsAndAxioms transformedSymbols =
+				transformSmtFunctionsAndAxioms(oldToolkit.getSmtFunctionsAndAxioms());
 		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(newModifiedGlobals, oldToolkit.getManagedScript(),
 				newSymbolTable, oldToolkit.getProcedures(), oldToolkit.getInParams(), oldToolkit.getOutParams(),
 				oldToolkit.getIcfgEdgeFactory(), oldToolkit.getConcurrencyInformation(), transformedSymbols);
@@ -503,23 +503,23 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 	private SmtFunctionsAndAxioms transformSmtFunctionsAndAxioms(final SmtFunctionsAndAxioms smtSymbols) {
 		// TODO: Transfer defined SMT functions
-		final Map<String, SmtFunctionDefinition> transformedSmtFunctions = Collections.emptyMap();
 		final AxiomTransformationResult translationResult = mTransformer.transform(smtSymbols.getAxioms());
+
 		if (translationResult.isOverapproximation()) {
 			throw new UnsupportedOperationException("overapproximation of axioms is not yet supported");
 		}
 
+		final Script script = mOriginalIcfg.getCfgSmtToolkit().getManagedScript().getScript();
 		if (mAdditionalAxioms.isEmpty()) {
-			return new SmtFunctionsAndAxioms(translationResult.getAxiom(), transformedSmtFunctions);
+			return new SmtFunctionsAndAxioms(translationResult.getAxiom(), script);
 		}
 
 		final List<Term> newAxiomsClosed =
 				mAdditionalAxioms.stream().map(a -> a.getClosedFormula()).collect(Collectors.toList());
 		newAxiomsClosed.add(translationResult.getAxiom().getClosedFormula());
 
-		final ManagedScript mMgdScript = mOriginalIcfg.getCfgSmtToolkit().getManagedScript();
-		final Term newAxioms = SmtUtils.and(mMgdScript.getScript(), newAxiomsClosed);
-		return new SmtFunctionsAndAxioms(newAxioms, new String[0], transformedSmtFunctions);
+		final Term newAxioms = SmtUtils.and(script, newAxiomsClosed);
+		return new SmtFunctionsAndAxioms(newAxioms, new String[0], script);
 	}
 
 }

@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
@@ -294,10 +294,11 @@ public final class TraceCheckUtils {
 	 * Use {@link TermClassifier} to classify set of {@link Term}s that belong to a trace, and return the
 	 * {@link TermClassifier}. TODO: Maybe also check local vars assignment and global vars assignment?
 	 */
-	public static TermClassifier classifyTermsInTrace(final Word<? extends IAction> word, final SmtFunctionsAndAxioms smtSymbols) {
+	public static TermClassifier classifyTermsInTrace(final Word<? extends IAction> word,
+			final SmtFunctionsAndAxioms smtSymbols) {
 
 		final TermClassifier cs = new TermClassifier();
-		smtSymbols.classify(cs);
+		cs.checkTerm(smtSymbols.getAxioms().getFormula());
 		for (final IAction action : word) {
 			if (action instanceof IInternalAction) {
 				cs.checkTerm(((IInternalAction) action).getTransformula().getFormula());

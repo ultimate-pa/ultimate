@@ -106,8 +106,7 @@ public class Boogie2SMT {
 		if (!(script instanceof HistoryRecordingScript)) {
 			throw new AssertionError("need HistoryRecordingScript");
 		}
-		mSmtFunctionsAndAxioms = new SmtFunctionsAndAxioms(tvp.getClosedFormula(), tvp.getProcedures(),
-				((HistoryRecordingScript) script).getFunctionDefinitionHistory());
+		mSmtFunctionsAndAxioms = new SmtFunctionsAndAxioms(tvp.getClosedFormula(), tvp.getProcedures(), script);
 
 		mStatements2TransFormula =
 				new Statements2TransFormula(this, mServices, mExpression2Term, simplePartialSkolemization);

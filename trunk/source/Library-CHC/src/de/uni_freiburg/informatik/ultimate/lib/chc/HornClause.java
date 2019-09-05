@@ -12,7 +12,6 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -20,29 +19,27 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * This is our internal representation of a Horn clause. A Horn clause consists
- * of
+ * This is our internal representation of a Horn clause. A Horn clause consists of
  * <ul>
- * <li> a body with
- *  <ul>
- *   <li> n uninterpreted predicate symbols (n >= 0)
- *   <li> a transition formula
- *  </ul>
- * <li> a head with either
- *  <ul>
- *   <li> an uninterpreted predicate symbol  or
- *   <li> false
- *  </ul>
- * <li> a mapping that assigns each of the argument positions of the uninterpreted predicate a free variable in the
- *   transition formula
+ * <li>a body with
+ * <ul>
+ * <li>n uninterpreted predicate symbols (n >= 0)
+ * <li>a transition formula
+ * </ul>
+ * <li>a head with either
+ * <ul>
+ * <li>an uninterpreted predicate symbol or
+ * <li>false
+ * </ul>
+ * <li>a mapping that assigns each of the argument positions of the uninterpreted predicate a free variable in the
+ * transition formula
  * </ul>
  * <p>
  * This class stores Horn clauses in a certain normal form:
  * <ul>
- *  <li> The arguments of the head predicate are a list of variables, which are determined by the argument position and
- *    the sort of that argument in the head predicate's signature.
- *      E.g. for two head predicates with the same signature, we have the same arguments.
- *      This also means that the arguments of head predicates never repeat (like "(P x x)").
+ * <li>The arguments of the head predicate are a list of variables, which are determined by the argument position and
+ * the sort of that argument in the head predicate's signature. E.g. for two head predicates with the same signature, we
+ * have the same arguments. This also means that the arguments of head predicates never repeat (like "(P x x)").
  * </ul>
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -55,9 +52,8 @@ public class HornClause implements IRankedLetter {
 	private final List<List<Term>> mBodyPredToArgs;
 
 	/**
-	 * Stores for the predicate symbol in the head at every argument position of
-	 * the represented atom, which TermVariable in the transition formula
-	 * represents that argument in the represented atom.
+	 * Stores for the predicate symbol in the head at every argument position of the represented atom, which
+	 * TermVariable in the transition formula represents that argument in the represented atom.
 	 */
 	private final List<HcHeadVar> mHeadPredVariables;
 	private final HcPredicateSymbol mHeadPredicate;
@@ -69,8 +65,8 @@ public class HornClause implements IRankedLetter {
 	private final boolean mHeadIsFalse;
 
 	/**
-	 * Variables occurring in the body. We will quantify over these and those occurring in the head.
-	 * (this includes "auxVars", i.e., variables occurring in the constraint only.
+	 * Variables occurring in the body. We will quantify over these and those occurring in the head. (this includes
+	 * "auxVars", i.e., variables occurring in the constraint only.
 	 *
 	 * EDIT: note that this may also contain HcBodyAuxVars, which at the moment do not inherit form HcBodyVars
 	 */
@@ -93,29 +89,24 @@ public class HornClause implements IRankedLetter {
 	 */
 	public HornClause(final ManagedScript mgdScript, final HcSymbolTable hcSymbolTable, final Term constraint,
 			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArguments,
-			final Set<HcVar> bodyVars
-			) {
+			final Set<HcVar> bodyVars) {
 		this(mgdScript, hcSymbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToArguments,
 				bodyVars, false);
 	}
 
 	public HornClause(final ManagedScript mgdScript, final HcSymbolTable hcSymbolTable, final Term constraint,
-			final HcPredicateSymbol headPred, final List<HcHeadVar> headVars,
-			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArguments,
-			final Set<HcVar> bodyVars
-			) {
+			final HcPredicateSymbol headPred, final List<HcHeadVar> headVars, final List<HcPredicateSymbol> bodyPreds,
+			final List<List<Term>> bodyPredToArguments, final Set<HcVar> bodyVars) {
 		this(mgdScript, hcSymbolTable, constraint, headPred, headVars, bodyPreds, bodyPredToArguments, bodyVars, false);
 		assert headPred != null : "use other constructor for '... -> False' case";
 	}
 
 	/**
-	 * Constructor for a Horn clause of the form b1 /\ ... /\ bn /\ constraint
-	 * --> h. Where b1 .. bn, and h, are uninterpreted predicates and constraint
-	 * is a Term.
+	 * Constructor for a Horn clause of the form b1 /\ ... /\ bn /\ constraint --> h. Where b1 .. bn, and h, are
+	 * uninterpreted predicates and constraint is a Term.
 	 *
 	 * @param script
-	 *            The script that will be used in TreeAutomizer (not the
-	 *            HornClauseParserScript)
+	 *            The script that will be used in TreeAutomizer (not the HornClauseParserScript)
 	 * @param symbolTable
 	 * @param constraint
 	 * @param headPred
@@ -126,10 +117,8 @@ public class HornClause implements IRankedLetter {
 	 *            dummy parameter to allow for an extra constructor
 	 */
 	private HornClause(final ManagedScript script, final HcSymbolTable symbolTable, final Term constraint,
-			final HcPredicateSymbol headPred, final List<HcHeadVar> headVars,
-			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArgs,
-			final Set<HcVar> bodyVars,
-			final boolean dummy) {
+			final HcPredicateSymbol headPred, final List<HcHeadVar> headVars, final List<HcPredicateSymbol> bodyPreds,
+			final List<List<Term>> bodyPredToArgs, final Set<HcVar> bodyVars, final boolean dummy) {
 
 		mHornClauseSymbolTable = symbolTable;
 
@@ -190,7 +179,6 @@ public class HornClause implements IRankedLetter {
 		return mComment != null;
 	}
 
-
 	public String debugString() {
 		if (mFormula == null) {
 			return "unintialized HornClause";
@@ -210,18 +198,17 @@ public class HornClause implements IRankedLetter {
 			}
 		}
 
-
 		String body;
 		{
 			final StringBuilder bodySb = new StringBuilder();
 			for (int i = 0; i < mBodyPredToArgs.size(); ++i) {
 				bodySb.append(" ");
 				bodySb.append(mBodyPreds.get(i));
-				bodySb.append(mBodyPredToArgs.get(i).stream()
-						.map(t -> new Substitution(mHornClauseSymbolTable.getManagedScript(),
-								prettyVariableSubstitution).transform(t))
+				bodySb.append(mBodyPredToArgs.get(i).stream().map(
+						t -> new Substitution(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution)
+								.transform(t))
 						.collect(Collectors.toList()));
-//				bodySb.append(")");
+				// bodySb.append(")");
 			}
 			body = bodySb.toString();
 			if (body.length() > 0) {
@@ -233,19 +220,17 @@ public class HornClause implements IRankedLetter {
 
 		final String head;
 		{
-			final String headPred = mHeadIsFalse ? "false" : mHeadPredicate.getName() ;
-			head = headPred + mHeadPredVariables.stream()
-						.map(t -> new Substitution(mHornClauseSymbolTable.getManagedScript(),
-								prettyVariableSubstitution).transform(t.getTermVariable()))
-						.collect(Collectors.toList());
+			final String headPred = mHeadIsFalse ? "false" : mHeadPredicate.getName();
+			head = headPred
+					+ mHeadPredVariables.stream()
+							.map(t -> new Substitution(mHornClauseSymbolTable.getManagedScript(),
+									prettyVariableSubstitution).transform(t.getTermVariable()))
+							.collect(Collectors.toList());
 		}
-		return String.format("%s(%s) /\\ (%s) --> %s",
-				hasComment() ? (getComment() + "| ") : "" ,
-						body,
-						new Substitution(mHornClauseSymbolTable.getManagedScript(),
-								prettyVariableSubstitution)
+		return String.format("%s(%s) /\\ (%s) --> %s", hasComment() ? (getComment() + "| ") : "", body,
+				new Substitution(mHornClauseSymbolTable.getManagedScript(), prettyVariableSubstitution)
 						.transform(mFormula).toString(),
-						head);
+				head);
 	}
 
 	@Override
@@ -268,8 +253,8 @@ public class HornClause implements IRankedLetter {
 
 	/**
 	 * Retrieve the variables that occur free in the clause body (as an argument in a body predicate and/or in the
-	 * constraint). However, exempt the variables that are arguments of the head predicate.
-	 * (these variables roughly correspond to the primed variables in a transition formula..)
+	 * constraint). However, exempt the variables that are arguments of the head predicate. (these variables roughly
+	 * correspond to the primed variables in a transition formula..)
 	 *
 	 * @return
 	 */
@@ -284,28 +269,24 @@ public class HornClause implements IRankedLetter {
 	 * @return a complete Horn constraint as it can be asserted in an (assert ..) term in smtlib.
 	 */
 	public Term constructFormula(final ManagedScript mgdScript, final boolean nameAssertedTerms) {
-		final TermTransferrer termTransferrer = new TermTransferrer(mgdScript.getScript());
 
 		final TermVariable[] qVars;
 		final List<TermVariable> headVars;
 		{
 			final List<HcHeadVar> headVarList = getTermVariablesForHeadPred();
 			final Set<HcVar> bodyVars = getBodyVariables();
-			headVars = headVarList.stream()
-					.map(hv -> (TermVariable) termTransferrer.transform(hv.getTermVariable()))
-					.collect(Collectors.toList());
+			headVars = headVarList.stream().map(hv -> hv.getTermVariable()).collect(Collectors.toList());
 
 			final List<TermVariable> qVarsList = new ArrayList<>();
 			qVarsList.addAll(headVars);
-			bodyVars.forEach(bv -> qVarsList.add((TermVariable) termTransferrer.transform(bv.getTermVariable())));
+			bodyVars.forEach(bv -> qVarsList.add(bv.getTermVariable()));
 			qVars = qVarsList.toArray(new TermVariable[qVarsList.size()]);
 		}
 
 		mgdScript.lock(this);
 
-		final Term head = isHeadFalse() ?
-				mgdScript.term(this, "false") :
-					mgdScript.term(this, getHeadPredicate().getName(), headVars.toArray(new Term[headVars.size()]));
+		final Term head = isHeadFalse() ? mgdScript.term(this, "false")
+				: mgdScript.term(this, getHeadPredicate().getName(), headVars.toArray(new Term[headVars.size()]));
 
 		final Term tail;
 		{
@@ -314,13 +295,12 @@ public class HornClause implements IRankedLetter {
 			// applications of uninterpreted predicates
 			for (int bodyPredIndex = 0; bodyPredIndex < getNoBodyPredicates(); bodyPredIndex++) {
 				final HcPredicateSymbol bpsym = getBodyPredicates().get(bodyPredIndex);
-				final List<Term> args = getBodyPredToArgs().get(bodyPredIndex).stream()
-						.map(termTransferrer::transform).collect(Collectors.toList());
+				final List<Term> args = getBodyPredToArgs().get(bodyPredIndex).stream().collect(Collectors.toList());
 				conjuncts.add(mgdScript.term(this, bpsym.getName(), args.toArray(new Term[args.size()])));
 			}
 
 			// constraint
-			conjuncts.add(termTransferrer.transform(getConstraintFormula()));
+			conjuncts.add(getConstraintFormula());
 
 			tail = SmtUtils.and(mgdScript.getScript(), conjuncts);
 		}
@@ -330,9 +310,9 @@ public class HornClause implements IRankedLetter {
 		final Term result;
 		if (qVars.length == 0) {
 			result = clause;
-	 	} else {
-	 		result = mgdScript.getScript().quantifier(QuantifiedFormula.FORALL, qVars, clause);
-	 	}
+		} else {
+			result = mgdScript.getScript().quantifier(QuantifiedFormula.FORALL, qVars, clause);
+		}
 
 		Term resultFinal;
 		if (nameAssertedTerms) {

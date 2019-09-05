@@ -33,6 +33,7 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateNormalFormUtils;
+import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -45,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class SmtFunctionDefinition implements ISmtDeclarable {
+public final class DeclarableFunctionSymbol implements ISmtDeclarable {
 
 	private final String mId;
 	private final String[] mParamIds;
@@ -58,14 +59,14 @@ public final class SmtFunctionDefinition implements ISmtDeclarable {
 	/**
 	 * Define a SMT function without body.
 	 */
-	public SmtFunctionDefinition(final String smtID, final Sort[] paramSorts, final Sort resultSort) {
+	public DeclarableFunctionSymbol(final String smtID, final Sort[] paramSorts, final Sort resultSort) {
 		this(smtID, null, paramSorts, resultSort, null);
 	}
 
 	/**
 	 * Define a SMT function with body.
 	 */
-	public SmtFunctionDefinition(final String smtID, final String[] paramIds, final Sort[] paramSorts,
+	public DeclarableFunctionSymbol(final String smtID, final String[] paramIds, final Sort[] paramSorts,
 			final Sort resultSort, final Term subformula) {
 		mId = Objects.requireNonNull(smtID);
 		mParamSorts = Objects.requireNonNull(paramSorts);
@@ -74,7 +75,7 @@ public final class SmtFunctionDefinition implements ISmtDeclarable {
 		mFunctionDefinition = subformula;
 	}
 
-	public static SmtFunctionDefinition createFromScriptDefineFun(final String fun, final TermVariable[] params,
+	public static DeclarableFunctionSymbol createFromScriptDefineFun(final String fun, final TermVariable[] params,
 			final Sort resultSort, final Term definition) {
 		final String[] paramIds = new String[params.length];
 		final Sort[] paramSorts = new Sort[params.length];
@@ -82,17 +83,17 @@ public final class SmtFunctionDefinition implements ISmtDeclarable {
 			paramIds[i] = params[i].getName();
 			paramSorts[i] = params[i].getSort();
 		}
-		return new SmtFunctionDefinition(fun, paramIds, paramSorts, resultSort, definition);
+		return new DeclarableFunctionSymbol(fun, paramIds, paramSorts, resultSort, definition);
 	}
 
-	public static SmtFunctionDefinition createFromScriptDeclareFun(final String fun, final Sort[] paramSorts,
+	public static DeclarableFunctionSymbol createFromScriptDeclareFun(final String fun, final Sort[] paramSorts,
 			final Sort resultSort) {
-		return new SmtFunctionDefinition(fun, paramSorts, resultSort);
+		return new DeclarableFunctionSymbol(fun, paramSorts, resultSort);
 	}
 
 	/**
-	 * Create an {@link SmtFunctionDefinition} from Strings and Sorts using {@link TermParseUtils}.
-	 * 
+	 * Create an {@link DeclarableFunctionSymbol} from Strings and Sorts using {@link TermParseUtils}.
+	 *
 	 * Only use this method during testing or to process <code>:smtdefined</code> attributes from Boogie.
 	 *
 	 * @param script
@@ -107,12 +108,12 @@ public final class SmtFunctionDefinition implements ISmtDeclarable {
 	 *            The sort of the parameters.
 	 * @param resultSort
 	 *            The sort of the function return value.
-	 * @return An {@link SmtFunctionDefinition} representing a function declaration or definition.
+	 * @return An {@link DeclarableFunctionSymbol} representing a function declaration or definition.
 	 */
-	public static SmtFunctionDefinition createFromString(final Script script, final String smtFunName,
+	public static DeclarableFunctionSymbol createFromString(final Script script, final String smtFunName,
 			final String smtFunBody, final String[] paramIds, final Sort[] paramSorts, final Sort resultSort) {
 		if (smtFunBody == null) {
-			return new SmtFunctionDefinition(smtFunName, paramSorts, resultSort);
+			return new DeclarableFunctionSymbol(smtFunName, paramSorts, resultSort);
 		}
 
 		final Term bodyTerm;
@@ -140,16 +141,16 @@ public final class SmtFunctionDefinition implements ISmtDeclarable {
 			assert UltimateNormalFormUtils
 					.respectsUltimateNormalForm(bodyTerm) : "SMT function body not in Ultimate normal form";
 		}
-		return new SmtFunctionDefinition(smtFunName, paramIds, paramSorts, resultSort, bodyTerm);
+		return new DeclarableFunctionSymbol(smtFunName, paramIds, paramSorts, resultSort, bodyTerm);
 	}
 
 	/**
 	 * Define or declare this object in the supplied script.
-	 * 
+	 *
 	 * If the function has a body, this function will first declare parameters with
 	 * {@link Script#variable(String, Sort)}, and then define the whole function with
 	 * {@link Script#defineFun(String, TermVariable[], Sort, Term)}.
-	 * 
+	 *
 	 * If the function does not have a body, it will be declared using {@link Script#declareFun(String, Sort[], Sort)}.
 	 */
 	@Override
@@ -178,6 +179,7 @@ public final class SmtFunctionDefinition implements ISmtDeclarable {
 		return mFunctionDefinition;
 	}
 
+	@Override
 	public String getName() {
 		return mId;
 	}
@@ -214,6 +216,19 @@ public final class SmtFunctionDefinition implements ISmtDeclarable {
 			mParamVars[i] = freeVars.get(mParamIds[i]);
 		}
 		return mParamVars;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuffer sb = new StringBuffer();
+		final String name = PrintTerm.quoteIdentifier(mId);
+		sb.append('(').append(name);
+		for (final Sort s : mParamSorts) {
+			sb.append(' ').append(s);
+		}
+		sb.append(' ').append(mResultSort);
+		sb.append(')');
+		return sb.toString();
 	}
 
 }

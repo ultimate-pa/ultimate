@@ -47,17 +47,17 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 public class TermTransferrerBooleanCore extends TermTransferrer {
 
 	/**
-	 * Auxiliary term that is used in the "recurse phase" to mark non-boolean subterms. Later, in the
-	 * "construction phase" we identify literals as the {@link ApplicationTerm}s that have an argument that was replaced
-	 * by the auxiliary term.
+	 * Auxiliary term that is used in the "recurse phase" to mark non-boolean subterms. Later, in the "construction
+	 * phase" we identify literals as the {@link ApplicationTerm}s that have an argument that was replaced by the
+	 * auxiliary term.
 	 */
 	private final Term mAuxiliaryTerm;
 	private static final String FRESH_TERM_PREFIX = "FBV_";
 	private int mFreshTermCounter;
 	private final ConstructionCache<Term, Term> mConstructionCache;
 
-	public TermTransferrerBooleanCore(final Script script) {
-		super(script);
+	public TermTransferrerBooleanCore(final Script oldScript, final Script newScript) {
+		super(oldScript, newScript);
 		mAuxiliaryTerm = constructAuxiliaryTerm();
 		mFreshTermCounter = 0;
 		mConstructionCache = new ConstructionCache<>(this::constructTerm);
@@ -65,15 +65,15 @@ public class TermTransferrerBooleanCore extends TermTransferrer {
 
 	private Term constructAuxiliaryTerm() {
 		final String name = this.getClass().getCanonicalName() + "_AUX";
-		mScript.declareFun(name, new Sort[0], SmtSortUtils.getBoolSort(mScript));
-		return mScript.term(name);
+		mNewScript.declareFun(name, new Sort[0], SmtSortUtils.getBoolSort(mNewScript));
+		return mNewScript.term(name);
 	}
 
 	private Term constructTerm(final Term key) {
 		final String name = FRESH_TERM_PREFIX + mFreshTermCounter;
 		mFreshTermCounter++;
-		mScript.declareFun(name, new Sort[0], SmtSortUtils.getBoolSort(mScript));
-		final Term value = mScript.term(name);
+		mNewScript.declareFun(name, new Sort[0], SmtSortUtils.getBoolSort(mNewScript));
+		final Term value = mNewScript.term(name);
 		mBacktransferMapping.put(value, key);
 		return value;
 	}

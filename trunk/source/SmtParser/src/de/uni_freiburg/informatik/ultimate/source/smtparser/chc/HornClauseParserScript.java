@@ -138,7 +138,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 
 		mParsedHornClauses = new ArrayList<>();
 
-		mSymbolTable = new HcSymbolTable(mBackendSmtSolver);
+		mSymbolTable = new HcSymbolTable(this, mBackendSmtSolver);
 
 		mSimplificationStack = new Stack<>();
 
@@ -401,7 +401,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 			return true;
 		}
 
-		final TermTransferrer ttf = new TermTransferrer(mBackendSmtSolver.getScript());
+		final TermTransferrer ttf = new TermTransferrer(this, mBackendSmtSolver.getScript());
 		final Term unl1 = new FormulaUnLet(UnletType.SMTLIB).unlet(t1);
 		final Term unl2 = new FormulaUnLet(UnletType.SMTLIB).unlet(t2);
 

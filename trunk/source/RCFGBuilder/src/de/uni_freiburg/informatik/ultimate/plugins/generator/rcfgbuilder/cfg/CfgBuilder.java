@@ -114,7 +114,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuild
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
@@ -317,8 +316,8 @@ public class CfgBuilder {
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 				fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 
-		return new HistoryRecordingScript(SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings,
-				dumpUsatCoreTrackBenchmark, dumpMainTrackBenchmark, logicForExternalSolver, "CfgBuilderScript"));
+		return SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings, dumpUsatCoreTrackBenchmark,
+				dumpMainTrackBenchmark, logicForExternalSolver, "CfgBuilderScript");
 	}
 
 	private static Expression getNegation(final Expression expr) {

@@ -51,9 +51,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Body of a Horn clause according to our grammar for Horn clauses in SMTLib2.
- * Confusing terminology-warning:
- * Once the Horn clause is fixed (we make no more derivations in the grammar), we also call this the head.
+ * Body of a Horn clause according to our grammar for Horn clauses in SMTLib2. Confusing terminology-warning: Once the
+ * Horn clause is fixed (we make no more derivations in the grammar), we also call this the head.
  *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -74,6 +73,7 @@ public class HornClauseHead {
 
 	/***
 	 * Add literal to the cobody.
+	 * 
 	 * @param literal
 	 */
 	public void addPredicateToBody(final ApplicationTerm literal) {
@@ -82,6 +82,7 @@ public class HornClauseHead {
 
 	/***
 	 * Convert the body to a HornClause.
+	 * 
 	 * @param solverScript
 	 * @param symbolTable
 	 * @return
@@ -90,48 +91,38 @@ public class HornClauseHead {
 			final Script parserScript) {
 
 		/*
-		 *  register all HornClausePredicateSymbols --> this must be done before term transferral, because it declares
-		 *  the functions in the solverScript
+		 * register all HornClausePredicateSymbols --> this must be done before term transferral, because it declares
+		 * the functions in the solverScript
 		 */
-		final HcPredicateSymbol headSymbol = mHead == null ? null :
-			symbolTable.getOrConstructHornClausePredicateSymbol(mHead);
+		final HcPredicateSymbol headSymbol =
+				mHead == null ? null : symbolTable.getOrConstructHornClausePredicateSymbol(mHead);
 		final List<HcPredicateSymbol> bodySymbols = mBody.getPredicates(symbolTable);
-
 
 		// transfer all terms
 		{
-			final TermTransferrer termTransferrer = new TermTransferrer(solverScript.getScript());
+			final TermTransferrer termTransferrer = new TermTransferrer(parserScript, solverScript.getScript());
 			mHead = mHead == null ? null : (ApplicationTerm) termTransferrer.transform(mHead);
 			mBody.transformTerms(termTransferrer::transform);
 		}
 
 		final Set<HcVar> bodyVars = normalizeVariables(symbolTable, solverScript);
 
-
 		final List<List<Term>> bodyArgs = mBody.getPredicateToVars(symbolTable);
 
 		if (mHead == null) {
-			return new HornClause(solverScript, symbolTable,
-				getTransitionFormula(solverScript.getScript()),
-				bodySymbols,
-				bodyArgs,
-				bodyVars);
+			return new HornClause(solverScript, symbolTable, getTransitionFormula(solverScript.getScript()),
+					bodySymbols, bodyArgs, bodyVars);
 		}
 
 		final List<HcHeadVar> headVars = symbolTable.getHcHeadVarsForPredSym(headSymbol, false);
 
-		return new HornClause(solverScript, symbolTable,
-				getTransitionFormula(solverScript.getScript()),
-				headSymbol,
-				headVars,
-				bodySymbols,
-				bodyArgs,
-				bodyVars);
+		return new HornClause(solverScript, symbolTable, getTransitionFormula(solverScript.getScript()), headSymbol,
+				headVars, bodySymbols, bodyArgs, bodyVars);
 	}
 
 	/**
-	 * Bring the head predicate's arguments into normal form.
-	 * (The variables are normalized according to their argument position and sort)
+	 * Bring the head predicate's arguments into normal form. (The variables are normalized according to their argument
+	 * position and sort)
 	 *
 	 * @param symbolTable
 	 * @param script
@@ -140,9 +131,8 @@ public class HornClauseHead {
 	private Set<HcVar> normalizeVariables(final HcSymbolTable symbolTable, final ManagedScript solverScript) {
 
 		final Set<HcVar> bodyVars = new HashSet<>();
-		final HcPredicateSymbol headPredSymbolName = mHead == null ?
-							symbolTable.getFalseHornClausePredicateSymbol() :
-							symbolTable.getOrConstructHornClausePredicateSymbol(mHead);
+		final HcPredicateSymbol headPredSymbolName = mHead == null ? symbolTable.getFalseHornClausePredicateSymbol()
+				: symbolTable.getOrConstructHornClausePredicateSymbol(mHead);
 
 		// normalize head variables
 		final Map<Term, Term> subs = new HashMap<>();
@@ -168,8 +158,7 @@ public class HornClauseHead {
 				continue;
 			}
 
-			final HcBodyVar bodyVar = symbolTable.getOrConstructBodyVar(headPredSymbolName,
-					counter++, tv.getSort());
+			final HcBodyVar bodyVar = symbolTable.getOrConstructBodyVar(headPredSymbolName, counter++, tv.getSort());
 
 			subs.put(tv, bodyVar.getTermVariable());
 			bodyVars.add(bodyVar);
@@ -181,14 +170,15 @@ public class HornClauseHead {
 
 	/***
 	 * Set the head literal of the body.
+	 * 
 	 * @param literal
 	 * @return
 	 */
 	public boolean setHead(final ApplicationTerm literal) {
 		if (mHead == null) {
 			assert Arrays.asList(literal.getParameters()).stream().allMatch(p -> p instanceof TermVariable);
-			assert Arrays.asList(literal.getParameters()).stream().collect(Collectors.toSet()).size()
-				== literal.getParameters().length;
+			assert Arrays.asList(literal.getParameters()).stream().collect(Collectors.toSet())
+					.size() == literal.getParameters().length;
 			mHead = literal;
 			return true;
 		} else {
@@ -198,6 +188,7 @@ public class HornClauseHead {
 
 	/***
 	 * Add the transition formula to the cobody (can be called several times).
+	 * 
 	 * @param formula
 	 */
 	public void addTransitionFormula(final Term formula) {
@@ -211,6 +202,7 @@ public class HornClauseHead {
 
 	/***
 	 * Get the transition formula.
+	 * 
 	 * @param script
 	 * @return
 	 */

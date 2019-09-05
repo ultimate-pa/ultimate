@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.ISmtDeclarable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.SmtFunctionDefinition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.DeclarableFunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -353,7 +353,7 @@ public class Boogie2SmtSymbolTable
 		final Sort resultSort = mTypeSortTranslator.getSort(resultType, funcdecl);
 		if (attributeDefinedIdentifier == null) {
 			// no builtin function, we have to declare it
-			final SmtFunctionDefinition smtFunctionDefinition = SmtFunctionDefinition
+			final DeclarableFunctionSymbol smtFunctionDefinition = DeclarableFunctionSymbol
 					.createFromString(mScript.getScript(), smtID, smtDefinedBody, paramIds, paramSorts, resultSort);
 			smtFunctionDefinition.defineOrDeclare(mScript.getScript());
 		}

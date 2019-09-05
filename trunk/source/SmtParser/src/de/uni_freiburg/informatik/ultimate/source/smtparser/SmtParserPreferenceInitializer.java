@@ -104,9 +104,9 @@ public class SmtParserPreferenceInitializer extends UltimatePreferenceInitialize
 	 * labels for the settings
 	 */
 	public static final String LABEL_Solver = "SMT solver";
-	public static final String LABEL_ExtSolverCommand = "Command for external solver";
+	public static final String LABEL_EXTERNAL_SOLVER_COMMAND = "Command for external solver";
 	public static final String LABEL_ExtSolverLogic = "Logic for external solver";
-	public static final String LABEL_SmtDumpPath = "Dump smtlib scripts to";
+	public static final String LABEL_SMT_DUMP_PATH = "Dump smtlib scripts to";
 	public static final String LABEL_AutomataDumpPath = "Dump automata to";
 	public static final String LABEL_MinimizationAlgorithm = "Type of minimization to use";
 
@@ -143,9 +143,9 @@ public class SmtParserPreferenceInitializer extends UltimatePreferenceInitialize
 				new UltimatePreferenceItem<>(LABEL_DoLocalSimplifications, DEF_DoLocalSimplifications,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_Solver, DEF_Solver, PreferenceType.Combo, SolverMode.values()),
-				new UltimatePreferenceItem<>(LABEL_ExtSolverCommand, DEF_ExtSolverCommand, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_EXTERNAL_SOLVER_COMMAND, DEF_ExtSolverCommand, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_SmtDumpPath, DEF_SmtDumpPath, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_SMT_DUMP_PATH, DEF_SmtDumpPath, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_AutomataDumpPath, DEF_AutomataDumpPath, PreferenceType.String),
 				// new UltimatePreferenceItem<TaMinimization>(LABEL_MinimizationAlgorithm, DEF_MinimizationAlgorithm,
 				// PreferenceType.Combo, TaMinimization.values()),

@@ -38,10 +38,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.ChcCategoryInfo;
@@ -85,7 +84,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class IcfgToChcObserver implements IUnmanagedObserver {
+public class IcfgToChcObserver extends BaseObserver {
 
 	private static final String ASSERTIONVIOLATEDVARNAME = "V";
 	private final ILogger mLogger;
@@ -113,21 +112,6 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 		mProcToVarList = new LinkedHashMap<>();
 
 		mTermVarToProgVar = new LinkedHashMap<>();
-	}
-
-	@Override
-	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
-		// no initialization needed
-	}
-
-	@Override
-	public void finish() throws Throwable {
-		// not needed
-	}
-
-	@Override
-	public boolean performedChanges() {
-		return false;
 	}
 
 	public IElement getModel() {
@@ -218,10 +202,8 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 		assert resultChcs.stream().allMatch(chc -> chc.constructFormula(mMgdScript, false).getFreeVars().length == 0);
 
-		final HornAnnot annot =
-				new HornAnnot(mIcfg.getIdentifier(), mMgdScript, mHcSymbolTable, new ArrayList<>(resultChcs), true,
-						chcCategoryInfo);
-
+		final HornAnnot annot = new HornAnnot(mIcfg.getIdentifier(), mMgdScript, mHcSymbolTable,
+				new ArrayList<>(resultChcs), true, chcCategoryInfo);
 
 		mResult = HornClauseAST.create(annot);
 		ModelUtils.copyAnnotations(mIcfg, mResult);
@@ -311,8 +293,8 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 						// add equality var = old(var)
 						if (!pv.isOldvar()) {
-							if (!mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable()
-									.getModifiedBoogieVars(proc).contains(pv)) {
+							if (!mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable().getModifiedBoogieVars(proc)
+									.contains(pv)) {
 								// not modified --> skip
 								continue;
 							}
@@ -320,8 +302,8 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 									pv.getTermVariable(), ((IProgramNonOldVar) pv).getOldVar().getTermVariable()));
 							substitutionMapping.put(pv.getTermVariable(), headVar.getTermVariable());
 						} else if (pv.isOldvar()) {
-							if (!mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable()
-									.getModifiedBoogieVars(proc).contains(((IProgramOldVar) pv).getNonOldVar())) {
+							if (!mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable().getModifiedBoogieVars(proc)
+									.contains(((IProgramOldVar) pv).getNonOldVar())) {
 								// not modified --> skip
 								continue;
 							}
@@ -391,9 +373,8 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 				throw new UnsupportedOperationException("implement this");
 			}
 
-			final HornClause chc =
-					new HornClause(mMgdScript, mHcSymbolTable, constraint,
-							Collections.singletonList(bodyPred), Collections.singletonList(firstPredArgs), bodyVars);
+			final HornClause chc = new HornClause(mMgdScript, mHcSymbolTable, constraint,
+					Collections.singletonList(bodyPred), Collections.singletonList(firstPredArgs), bodyVars);
 
 			chc.setComment("Type: entryProcExit(..., V) /\\ V -> false");
 			resultChcs.add(chc);
@@ -652,11 +633,10 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 
 	@Deprecated
 	private void updateLogicWrtConstraint(final Term term) {
-//		mTermClassifier.checkTerm(term);
+		// mTermClassifier.checkTerm(term);
 	}
 
-	private boolean assertNoFreeVars(final List<HcHeadVar> headVars, final Set<HcVar> bodyVars,
-			final Term constraint) {
+	private boolean assertNoFreeVars(final List<HcHeadVar> headVars, final Set<HcVar> bodyVars, final Term constraint) {
 		// compute all variables that only occur in the
 		final Set<TermVariable> auxVars = new LinkedHashSet<>();
 		auxVars.addAll(Arrays.asList(constraint.getFreeVars()));
@@ -924,7 +904,6 @@ public class IcfgToChcObserver implements IUnmanagedObserver {
 			constraintOrAssertionViolated =
 					SmtUtils.or(mMgdScript.getScript(), assertionViolatedHeadVar.getTermVariable(), constraint);
 		}
-
 
 		assert assertNoFreeVars(headVars, bodyVars, constraintOrAssertionViolated);
 

@@ -63,13 +63,13 @@ public class HCGBuilderHelper {
 					.getEnum(SmtParserPreferenceInitializer.LABEL_Solver, SolverMode.class);
 
 			final String commandExternalSolver = prefs
-					.getString(SmtParserPreferenceInitializer.LABEL_ExtSolverCommand);
+					.getString(SmtParserPreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND);
 
 			mLogicForExternalSolver = prefs
 					.getString(SmtParserPreferenceInitializer.LABEL_ExtSolverLogic);
 
 			final String dumpPath = prefs.getString(
-					SmtParserPreferenceInitializer.LABEL_SmtDumpPath);
+					SmtParserPreferenceInitializer.LABEL_SMT_DUMP_PATH);
 			final boolean dumpScript = !dumpPath.isEmpty();
 
 			final boolean fakeNonIncrementalSolver = false;

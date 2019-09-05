@@ -27,11 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.ISmtDeclarable.IllegalSmtDeclarableUsageException;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -52,38 +54,37 @@ import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
 public final class HistoryRecordingScript extends WrapperScript {
 
 	private final Deque<ISmtDeclarable> mHistory;
+	private final Map<String, ISmtDeclarable> mSymbolTable;
 
 	public HistoryRecordingScript(final Script script) {
 		super(script);
 		mHistory = new ArrayDeque<>();
+		mSymbolTable = new Hashtable<>();
 	}
 
 	@Override
 	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
 			throws SMTLIBException {
 		super.defineFun(fun, params, resultSort, definition);
-		insert(SmtFunctionDefinition.createFromScriptDefineFun(fun, params, resultSort, definition));
+		insert(DeclarableFunctionSymbol.createFromScriptDefineFun(fun, params, resultSort, definition));
 	}
 
 	@Override
 	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition) {
 		super.defineSort(sort, sortParams, definition);
-	}
-
-	@Override
-	public TermVariable variable(final String varname, final Sort sort) {
-		return super.variable(varname, sort);
+		insert(DeclarableSortSymbol.createFromScriptDefineSort(sort, sortParams, definition));
 	}
 
 	@Override
 	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) {
 		super.declareFun(fun, paramSorts, resultSort);
-		insert(SmtFunctionDefinition.createFromScriptDeclareFun(fun, paramSorts, resultSort));
+		insert(DeclarableFunctionSymbol.createFromScriptDeclareFun(fun, paramSorts, resultSort));
 	}
 
 	@Override
 	public void declareSort(final String sort, final int arity) {
 		super.declareSort(sort, arity);
+		insert(DeclarableSortSymbol.createFromScriptDeclareSort(sort, arity));
 	}
 
 	@Override
@@ -97,7 +98,7 @@ public final class HistoryRecordingScript extends WrapperScript {
 	@Override
 	public void pop(final int levels) {
 		super.pop(levels);
-		final Iterator<ISmtDeclarable> iter = mHistory.descendingIterator();
+		final Iterator<ISmtDeclarable> iter = mHistory.iterator();
 		int markerCount = 0;
 		for (int i = 0; i < levels; ++i) {
 			while (iter.hasNext()) {
@@ -108,15 +109,17 @@ public final class HistoryRecordingScript extends WrapperScript {
 					markerCount++;
 					break;
 				}
+				final ISmtDeclarable old = mSymbolTable.remove(current.getName());
+				assert old != null;
 			}
 		}
-		if (markerCount != levels) {
-			throw new AssertionError("Found not enough markers!");
-		}
+		assert markerCount == levels;
 	}
 
 	private void insert(final ISmtDeclarable declarable) {
-		mHistory.add(declarable);
+		mHistory.push(declarable);
+		final ISmtDeclarable old = mSymbolTable.put(declarable.getName(), declarable);
+		assert old == null;
 	}
 
 	/**
@@ -131,7 +134,7 @@ public final class HistoryRecordingScript extends WrapperScript {
 	 *            The {@link Script} instance that will receive all definitions and declarations known to this
 	 *            {@link Script}.
 	 */
-	public void transferHistory(final Script script) {
+	public void transferHistoryFromRecord(final Script script) {
 		for (final ISmtDeclarable elem : mHistory) {
 			if (elem instanceof StackMarker) {
 				script.push(1);
@@ -142,16 +145,59 @@ public final class HistoryRecordingScript extends WrapperScript {
 	}
 
 	/**
-	 * @return A map from function name to {@link SmtFunctionDefinition} in the order of declaration or definition in
-	 *         the underlying script. The map does not update when the underlying script changes.
+	 * Transfers the history from one {@link Script} instance to another.
+	 *
+	 * This method will unwrap a {@link HistoryRecordingScript} from the oldScript {@link Script} instance and then
+	 * transfer the history to the newScript {@link Script} instance.
+	 *
+	 * If oldScript has no {@link HistoryRecordingScript} instance, an {@link IllegalSmtDeclarableUsageException} is
+	 * thrown.
+	 *
+	 * @param oldScript
+	 *            The script from which the history should be transferred.
+	 * @param newScript
+	 *            The script instance to which the history should be transferred.
+	 * @see #transferHistoryFromRecord(Script)
 	 */
-	public Map<String, SmtFunctionDefinition> getFunctionDefinitionHistory() {
-		final Map<String, SmtFunctionDefinition> rtr = new LinkedHashMap<>();
-		mHistory.stream().filter(a -> a instanceof SmtFunctionDefinition).forEachOrdered(a -> {
-			final SmtFunctionDefinition def = (SmtFunctionDefinition) a;
-			rtr.put(def.getName(), def);
-		});
-		return rtr;
+	public static void transferHistoryFromRecord(final Script oldScript, final Script newScript) {
+		final HistoryRecordingScript hrScript = extractHistoryRecordingScript(oldScript);
+		if (hrScript == null) {
+			throw new IllegalSmtDeclarableUsageException(
+					"There is no " + HistoryRecordingScript.class + " script in " + oldScript);
+		}
+		hrScript.transferHistoryFromRecord(newScript);
+	}
+
+	/**
+	 * Try to unwrap the first {@link HistoryRecordingScript} instance from the stack of {@link Script}s represented by
+	 * script.
+	 *
+	 * @param script
+	 *            The (potential) stack of scripts
+	 * @return A {@link HistoryRecordingScript} instance or null
+	 */
+	public static HistoryRecordingScript extractHistoryRecordingScript(final Script script) {
+		if (script instanceof HistoryRecordingScript) {
+			return ((HistoryRecordingScript) script);
+		}
+		if (script instanceof WrapperScript) {
+			return ((WrapperScript) script).findBacking(HistoryRecordingScript.class);
+		}
+		return null;
+	}
+
+	/**
+	 * @return A map from symbol name to {@link ISmtDeclarable} in an arbitrary order.
+	 *
+	 *         The map does update when the underlying script changes.
+	 */
+	public Map<String, ISmtDeclarable> getSymbolTable() {
+		return Collections.unmodifiableMap(mSymbolTable);
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + ": " + mHistory;
 	}
 
 	private static final class StackMarker implements ISmtDeclarable {
@@ -162,6 +208,16 @@ public final class HistoryRecordingScript extends WrapperScript {
 		public void defineOrDeclare(final Script script) {
 			throw new UnsupportedOperationException(
 					getClass().getName() + " only marks stacks, it cannot be defined or declared");
+		}
+
+		@Override
+		public String getName() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String toString() {
+			return "StackMarker";
 		}
 
 	}
