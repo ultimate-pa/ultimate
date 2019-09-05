@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 
 /**
  * Represents the type (data type + aggregation function + pretty printer) of an {@link IStatisticsElement}.
@@ -60,11 +61,11 @@ public enum KeyType {
 	;
 
 	private final Class<?> mDataType;
-	private final BiFunction<Object, Object, Object> mAggregate;
+	private final BinaryOperator<Object> mAggregate;
 	private final BiFunction<String, Object, String> mPrettyPrinter;
 
 	KeyType(final Class<?> dataType,
-			final BiFunction<Object, Object, Object> aggregate,
+			final BinaryOperator<Object> aggregate,
 			final BiFunction<String, Object, String> prettyprinter) {
 		mDataType = dataType;
 		mAggregate = aggregate;

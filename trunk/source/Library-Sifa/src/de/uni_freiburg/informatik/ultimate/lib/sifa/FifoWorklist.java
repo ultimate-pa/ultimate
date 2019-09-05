@@ -30,7 +30,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 
 /**
  * FIFO queue which saves pairs of generic entries (W, I) where W is called <i>work</i> I is called <i>input</i>.
@@ -44,7 +44,7 @@ import java.util.function.BiFunction;
  */
 public class FifoWorklist<W, I> implements IWorklistWithInputs<W, I> {
 
-	private final BiFunction<I, I, I> mMergeFunction;
+	private final BinaryOperator<I> mMergeFunction;
 	private final Map<W, I> mWorklist = new LinkedHashMap<>();
 	private Entry<W, I> mRemovedEntry;
 
@@ -55,7 +55,7 @@ public class FifoWorklist<W, I> implements IWorklistWithInputs<W, I> {
 	 *                      new input from the already enqueued input and the to be enqueued input.
 	 *                      The form is {@code (oldInput, newInput) -> mergedInput}.
 	 */
-	public FifoWorklist(final BiFunction<I, I, I> mergeFunction) {
+	public FifoWorklist(final BinaryOperator<I> mergeFunction) {
 		mMergeFunction = mergeFunction;
 	}
 

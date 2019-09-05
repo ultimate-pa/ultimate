@@ -30,7 +30,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -175,7 +175,7 @@ public final class TermToInterval {
 
 	private static Interval handleLeftAssociativeFunction(final ApplicationTerm term,
 			final Map<TermVariable, Interval> scope) {
-		final BiFunction<Interval, Interval, Interval> leftAssociativeOp =
+		final BinaryOperator<Interval> leftAssociativeOp =
 				intervalOpForSmtFunc(term.getFunction().getName());
 		if (leftAssociativeOp == null) {
 			return Interval.TOP;
@@ -191,7 +191,7 @@ public final class TermToInterval {
 		return accumulator;
 	}
 
-	private static BiFunction<Interval, Interval, Interval> intervalOpForSmtFunc(final String functionName) {
+	private static BinaryOperator<Interval> intervalOpForSmtFunc(final String functionName) {
 		switch (functionName) {
 		case "+":
 			return Interval::add;

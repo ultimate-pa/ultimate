@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
 /**
@@ -60,7 +60,7 @@ public class PriorityWorklist<W, I> implements IWorklistWithInputs<W, I> {
 	private final PriorityQueue<Integer> mWorklistOfIndices = new PriorityQueue<>();
 	/** For each entry in {@link #mWorklistOfIndices} map the work items to their inputs. */
 	private final Map<Integer, I> mInputsForElemsInWorklist = new HashMap<>();
-	private final BiFunction<I, I, I> mMergeFunction;
+	private final BinaryOperator<I> mMergeFunction;
 	/** Work component from entry last retrieved by {@link #advance()}. */
 	private W mCurrentWork;
 	/** Input component from entry last retrieved by {@link #advance()}. */
@@ -74,7 +74,7 @@ public class PriorityWorklist<W, I> implements IWorklistWithInputs<W, I> {
 	 * @param mergeFunction
 	 *            Function used to merge two inputs when an already enqueued work entry is added again.
 	 */
-	public PriorityWorklist(final List<W> order, final BiFunction<I, I, I> mergeFunction) {
+	public PriorityWorklist(final List<W> order, final BinaryOperator<I> mergeFunction) {
 		mIdxToWork = order;
 		order.forEach(node -> mWorkToIdx.put(node, mWorkToIdx.size()));
 		mMergeFunction = mergeFunction;
