@@ -31,10 +31,10 @@ public class StatisticsType<T extends Enum<T> & IStatisticsElement> implements I
 	/** consider using {@link PrettyPrint#dataSpaceKey(String, Object)} instead */
 	public static final Function<String, Function<Object, String>> DATA_BEFORE_KEY =
 			key -> data -> String.valueOf(data) + ' ' + key;
-	/** consider using {@link PrettyPrint#timeFromNanosSpaceKey(String, Object)} instead */
+	/** consider using {@link PrettyPrint#dataAsTime(java.util.function.BiFunction)} instead */
 	public static final Function<String, Function<Object, String>> NANOS_BEFORE_KEY =
 			key -> time -> prettyprintNanoseconds((Long) time) + " " + key;
-	/** consider using {@link PrettyPrint#keyColonTimeFromNanos(String, Object)} instead */
+	/** consider using {@link PrettyPrint#dataAsTime(java.util.function.BiFunction)} instead */
 	public static final Function<String, Function<Object, String>> KEY_BEFORE_NANOS =
 			key -> time -> key + ": " + prettyprintNanoseconds((Long) time);
 	/** consider using {@link Aggregate#intMax(Object, Object)} instead */

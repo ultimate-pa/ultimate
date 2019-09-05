@@ -30,13 +30,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.function.BiFunction;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.Aggregate;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
@@ -141,107 +139,95 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 	}
 
 	public enum Key implements IStatisticsElement {
-		// TODO use pre-defined objects instead of repeated triplets (class, aggregate, prettyPrint)
-
-		OVERALL_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		OVERALL_TIME(KeyType.TIMER),
 
 		/** Number of procedures entered (excluding CallReturnSummaries) during interpretation of the icfg. */
-		ICFG_INTERPRETER_ENTERED_PROCEDURES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+		ICFG_INTERPRETER_ENTERED_PROCEDURES(KeyType.COUNTER),
 
-		DAG_INTERPRETER_EARLY_EXIT_QUERIES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
-		DAG_INTERPRETER_EARLY_EXITS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+		DAG_INTERPRETER_EARLY_EXIT_QUERIES(KeyType.COUNTER),
+		DAG_INTERPRETER_EARLY_EXITS(KeyType.COUNTER),
 
-		TOOLS_POST_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
-		TOOLS_POST_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
-		TOOLS_POST_CALL_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
-		TOOLS_POST_CALL_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
-		TOOLS_POST_RETURN_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
-		TOOLS_POST_RETURN_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
-		TOOLS_QUANTIFIERELIM_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		TOOLS_POST_APPLICATIONS(KeyType.COUNTER),
+		TOOLS_POST_TIME(KeyType.TIMER),
+		TOOLS_POST_CALL_APPLICATIONS(KeyType.COUNTER),
+		TOOLS_POST_CALL_TIME(KeyType.TIMER),
+		TOOLS_POST_RETURN_APPLICATIONS(KeyType.COUNTER),
+		TOOLS_POST_RETURN_TIME(KeyType.TIMER),
+		TOOLS_QUANTIFIERELIM_TIME(KeyType.TIMER),
 
 		/** Overall time spent answering queries. */
-		FLUID_QUERY_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		FLUID_QUERY_TIME(KeyType.TIMER),
 		/** Number of queries to fluid. */
-		FLUID_QUERIES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+		FLUID_QUERIES(KeyType.COUNTER),
 		/** Number of queries to fluid answered with "yes, abstract the state". */
-		FLUID_YES_ANSWERS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+		FLUID_YES_ANSWERS(KeyType.COUNTER),
 
-		DOMAIN_JOIN_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
-		DOMAIN_JOIN_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
-		DOMAIN_ALPHA_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
-		DOMAIN_ALPHA_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
-		DOMAIN_WIDEN_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
-		DOMAIN_WIDEN_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
-		DOMAIN_ISSUBSETEQ_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
-		DOMAIN_ISSUBSETEQ_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
-		DOMAIN_ISBOTTOM_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
-		DOMAIN_ISBOTTOM_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		DOMAIN_JOIN_APPLICATIONS(KeyType.COUNTER),
+		DOMAIN_JOIN_TIME(KeyType.TIMER),
+		DOMAIN_ALPHA_APPLICATIONS(KeyType.COUNTER),
+		DOMAIN_ALPHA_TIME(KeyType.TIMER),
+		DOMAIN_WIDEN_APPLICATIONS(KeyType.COUNTER),
+		DOMAIN_WIDEN_TIME(KeyType.TIMER),
+		DOMAIN_ISSUBSETEQ_APPLICATIONS(KeyType.COUNTER),
+		DOMAIN_ISSUBSETEQ_TIME(KeyType.TIMER),
+		DOMAIN_ISBOTTOM_APPLICATIONS(KeyType.COUNTER),
+		DOMAIN_ISBOTTOM_TIME(KeyType.TIMER),
 
-		LOOP_SUMMARIZER_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
-		LOOP_SUMMARIZER_CACHE_MISSES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+		LOOP_SUMMARIZER_APPLICATIONS(KeyType.COUNTER),
+		LOOP_SUMMARIZER_CACHE_MISSES(KeyType.COUNTER),
 		/** Time spent to obtain loop summaries, including the time to look search the cache and re-use existing summaries. */
-		LOOP_SUMMARIZER_OVERALL_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		LOOP_SUMMARIZER_OVERALL_TIME(KeyType.TIMER),
 		/** Time spent to compute completely new loop summaries in case of cache misses. */
-		LOOP_SUMMARIZER_NEW_COMPUTATION_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		LOOP_SUMMARIZER_NEW_COMPUTATION_TIME(KeyType.TIMER),
 		/** Overall number of iterations. This statistic is specific to FixpointLoopSummerizer. */
-		LOOP_SUMMARIZER_FIXPOINT_ITERATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+		LOOP_SUMMARIZER_FIXPOINT_ITERATIONS(KeyType.COUNTER),
 
-		CALL_SUMMARIZER_APPLICATIONS(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
-		CALL_SUMMARIZER_CACHE_MISSES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+		CALL_SUMMARIZER_APPLICATIONS(KeyType.COUNTER),
+		CALL_SUMMARIZER_CACHE_MISSES(KeyType.COUNTER),
 		/** Time spent to obtain call summaries, including the time to look search the cache and re-use existing summaries. */
-		CALL_SUMMARIZER_OVERALL_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		CALL_SUMMARIZER_OVERALL_TIME(KeyType.TIMER),
 		/** Time spent to compute completely new call summaries in case of cache misses. */
-		CALL_SUMMARIZER_NEW_COMPUTATION_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		CALL_SUMMARIZER_NEW_COMPUTATION_TIME(KeyType.TIMER),
 
-		PROCEDURE_GRAPH_BUILDER_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		PROCEDURE_GRAPH_BUILDER_TIME(KeyType.TIMER),
 
 		/** Time spent computing path expressions (= regexes) from graphs. */
-		PATH_EXPR_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		PATH_EXPR_TIME(KeyType.TIMER),
 
 		/** Time spent converting regexes into dags. */
-		REGEX_TO_DAG_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		REGEX_TO_DAG_TIME(KeyType.TIMER),
 
 		/** Time spent compressing RegexDags. This can include multiple compression runs on different dags. */
-		DAG_COMPRESSION_TIME(Long.class, Aggregate::longAdd, PrettyPrint::timeFromNanosSpaceKey),
+		DAG_COMPRESSION_TIME(KeyType.TIMER),
 		/** Sum of number of nodes in processed RegexDags before compression. */
-		DAG_COMPRESSION_PROCESSED_NODES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+		DAG_COMPRESSION_PROCESSED_NODES(KeyType.COUNTER),
 		/** Sum of number of nodes in processed RegexDags after compression. */
-		DAG_COMPRESSION_RETAINED_NODES(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
+		DAG_COMPRESSION_RETAINED_NODES(KeyType.COUNTER),
 		;
 
-		private final Class<?> mDataType;
-		private final BiFunction<Object, Object, Object> mAggregate;
-		private final BiFunction<String, Object, String> mPrettyprinter;
+		private final KeyType mType;
 
-		Key(final Class<?> dataType,
-				final BiFunction<Object, Object, Object> aggregate,
-				final BiFunction<String, Object, String> prettyprinter) {
-			mDataType = dataType;
-			mAggregate = aggregate;
-			mPrettyprinter = prettyprinter;
+		Key(final KeyType type) {
+			mType = type;
 		}
 
 		@Override
 		public Class<?> getDataType() {
-			return mDataType;
+			return mType.getDataType();
 		}
 
 		@Override
 		public Object aggregate(final Object lhs, final Object rhs) {
-			return mAggregate.apply(lhs, rhs);
+			return mType.aggregate(lhs, rhs);
 		}
 
 		@Override
 		public String prettyprint(final Object data) {
-			return mPrettyprinter.apply(name(), data);
+			return mType.prettyPrint(name(), data);
 		}
 
 		public boolean isStopwatch() {
-			return name().endsWith("_TIME");
-		}
-
-		public boolean isIntCounter() {
-			return !isStopwatch();
+			return mType == KeyType.TIMER;
 		}
 	}
 }

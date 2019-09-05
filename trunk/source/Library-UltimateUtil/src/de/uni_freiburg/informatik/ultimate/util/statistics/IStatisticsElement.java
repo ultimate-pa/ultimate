@@ -27,15 +27,16 @@
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
 /**
- * @author Matthias Heizmann
+ * TODO consider rewriting this interface as mentioned in {@link KeyType}.
  *
+ * @author Matthias Heizmann
  */
 public interface IStatisticsElement {
 
-	public Class<?> getDataType();
+	Class<?> getDataType();
 
-	public Object aggregate(Object o1, Object o2);
+	Object aggregate(Object o1, Object o2);
 
-	public String prettyprint(Object o);
+	String prettyprint(Object o);
 
 }

@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
-import java.util.Locale;
+import java.util.function.BiFunction;
 
 /**
  * Functions to pretty print statistics defined by a single {@link IStatisticsElement}.
@@ -50,15 +50,16 @@ public final class PrettyPrint {
 		return String.format("%s: %s", key, data);
 	}
 
-	public static String timeFromNanosSpaceKey(final String key, final Object longData) {
-		return String.format("%s %s", nanosToTime(longData), key);
+	/**
+	 * Wraps another pretty printer to represent time data (given as nano seconds) in a way
+	 * such that the user can recognize the data as time.
+	 *
+	 * @param pprinter Pretty printer to be wrapped
+	 * @return Pretty printer printing times by interpreting the data as nano seconds first
+	 */
+	public static BiFunction<String, Object, String> dataAsTime(final BiFunction<String, Object, String> pprinter) {
+		// having the unit in the field name rather than in the data makes processing easier
+		return (key, data) -> pprinter.apply(key + "[ms]", Math.round((long) data * 1e-6));
 	}
 
-	public static String keyColonTimeFromNanos(final String key, final Object longData) {
-		return String.format("%s: %s", key, nanosToTime(longData));
-	}
-
-	private static String nanosToTime(final Object nanosAsLong) {
-		return String.format(Locale.US, "%.1fs", (long) nanosAsLong / 1e9);
-	}
 }
