@@ -55,8 +55,8 @@ import java.util.function.BiFunction;
  * @author schaetzc@tf.uni-freiburg.de
  */
 public enum KeyType {
-	COUNTER(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey),
-	TIMER(Long.class, Aggregate::longAdd, PrettyPrint.dataAsTime(PrettyPrint::dataSpaceKey)),
+	COUNTER(Integer.class, Aggregate::intAdd, PrettyPrint::keyColonData),
+	TIMER(Long.class, Aggregate::longAdd, PrettyPrint.dataAsTime(PrettyPrint::keyColonData)),
 	;
 
 	private final Class<?> mDataType;
