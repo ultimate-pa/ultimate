@@ -56,14 +56,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
@@ -94,12 +91,7 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.Se
  *
  * @author Matthias Heizmann
  */
-public class LoggingScriptForNonIncrementalBenchmarks implements Script {
-
-	/**
-	 * The actual script.
-	 */
-	protected final Script mScript;
+public class LoggingScriptForNonIncrementalBenchmarks extends WrapperScript {
 
 	/**
 	 * The auxiliary class to print terms and sorts.
@@ -113,8 +105,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 
 	public LoggingScriptForNonIncrementalBenchmarks(final Script script, final String baseFilename,
 			final String directory) {
-		super();
-		mScript = script;
+		super(script);
 		mBaseFilename = baseFilename;
 		mDirectory = directory;
 		mCommandStack = new LinkedList<>();
@@ -122,7 +113,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	}
 
 	protected LinkedList<ArrayList<ISmtCommand<?>>> deepCopyOfCommandStack() {
-		final LinkedList<ArrayList<ISmtCommand<?>>> result = new LinkedList<ArrayList<ISmtCommand<?>>>();
+		final LinkedList<ArrayList<ISmtCommand<?>>> result = new LinkedList<>();
 		for (final ArrayList<ISmtCommand<?>> al : mCommandStack) {
 			result.add(new ArrayList<ISmtCommand<?>>());
 			for (final ISmtCommand<?> command : al) {
@@ -141,7 +132,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mCommandStack.add(new ArrayList<>());
 	}
 
-	private void printCommandStack(final PrintWriter pw, final List<ArrayList<ISmtCommand<?>>> commandStack) {
+	private static void printCommandStack(final PrintWriter pw, final List<ArrayList<ISmtCommand<?>>> commandStack) {
 		for (final ArrayList<ISmtCommand<?>> al : commandStack) {
 			for (final ISmtCommand<?> command : al) {
 				pw.print(command.toString() + System.lineSeparator());
@@ -167,7 +158,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		return file;
 	}
 
-	private final Term formatTerm(final Term input) {
+	private final static Term formatTerm(final Term input) {
 		// return mLetter == null ? input : new FormulaLet().let(input);
 		return input;
 	}
@@ -484,88 +475,6 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	}
 
 	@Override
-	public Sort sort(final String sortname, final Sort... params) throws SMTLIBException {
-		return mScript.sort(sortname, params);
-	}
-
-	@Override
-	public Sort sort(final String sortname, final BigInteger[] indices, final Sort... params) throws SMTLIBException {
-		return mScript.sort(sortname, indices, params);
-	}
-
-	@Override
-	public Term term(final String funcname, final Term... params) throws SMTLIBException {
-		return mScript.term(funcname, params);
-	}
-
-	@Override
-	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params)
-			throws SMTLIBException {
-		return mScript.term(funcname, indices, returnSort, params);
-	}
-
-	@Override
-	public TermVariable variable(final String varname, final Sort sort) throws SMTLIBException {
-		return mScript.variable(varname, sort);
-	}
-
-	@Override
-	public Term quantifier(final int quantor, final TermVariable[] vars, final Term body, final Term[]... patterns)
-			throws SMTLIBException {
-		return mScript.quantifier(quantor, vars, body, patterns);
-	}
-
-	@Override
-	public Term let(final TermVariable[] vars, final Term[] values, final Term body) throws SMTLIBException {
-		return mScript.let(vars, values, body);
-	}
-
-	@Override
-	public Term annotate(final Term t, final Annotation... annotations) throws SMTLIBException {
-		return mScript.annotate(t, annotations);
-	}
-
-	@Override
-	public Term numeral(final String num) throws SMTLIBException {
-		return mScript.numeral(num);
-	}
-
-	@Override
-	public Term numeral(final BigInteger num) throws SMTLIBException {
-		return mScript.numeral(num);
-	}
-
-	@Override
-	public Term decimal(final String decimal) throws SMTLIBException {
-		return mScript.decimal(decimal);
-	}
-
-	@Override
-	public Term decimal(final BigDecimal decimal) throws SMTLIBException {
-		return mScript.decimal(decimal);
-	}
-
-	@Override
-	public Term string(final String str) throws SMTLIBException {
-		return mScript.string(str);
-	}
-
-	@Override
-	public Term hexadecimal(final String hex) throws SMTLIBException {
-		return mScript.hexadecimal(hex);
-	}
-
-	@Override
-	public Term binary(final String bin) throws SMTLIBException {
-		return mScript.binary(bin);
-	}
-
-	@Override
-	public Sort[] sortVariables(final String... names) throws SMTLIBException {
-		return mScript.sortVariables(names);
-	}
-
-	@Override
 	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
 		final StringWriter sw = new StringWriter();
 		final PrintWriter mPw = new PrintWriter(sw);
@@ -620,12 +529,12 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 
 	@Override
 	public QuotedObject echo(final QuotedObject msg) {
-		 final StringWriter sw = new StringWriter();
-		 final PrintWriter mPw = new PrintWriter(sw);
-		 mPw.print("(echo ");
-		 mPw.print(msg);
-		 mPw.println(')');
-		 addToCurrentAssertionStack(new EchoCommand(msg));
+		final StringWriter sw = new StringWriter();
+		final PrintWriter mPw = new PrintWriter(sw);
+		mPw.print("(echo ");
+		mPw.print(msg);
+		mPw.println(')');
+		addToCurrentAssertionStack(new EchoCommand(msg));
 		return mScript.echo(msg);
 	}
 

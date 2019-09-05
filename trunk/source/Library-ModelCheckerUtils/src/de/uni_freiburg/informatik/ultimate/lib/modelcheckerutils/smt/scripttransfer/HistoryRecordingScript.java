@@ -43,9 +43,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * {@link HistoryRecordingScript} is a {@link WrapperScript} that tracks definitions and declarations of functions,
  * sorts and variables of the underlying {@link Script} instance in the order of their occurence as
  * {@link ISmtDeclarable}.
- * 
+ *
  * {@link ISmtDeclarable} can be used to initialize a new solver instance with the same functions, sorts and variables.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -117,6 +117,28 @@ public final class HistoryRecordingScript extends WrapperScript {
 
 	private void insert(final ISmtDeclarable declarable) {
 		mHistory.add(declarable);
+	}
+
+	/**
+	 * Transfers the history from this {@link Script} instance to the given one. This means that all declarations and
+	 * definitions recorded by this {@link Script} instance will be redone on the supplied {@link Script} instance,
+	 * including {@link Script#push(int)} and {@link Script#pop(int)} operations.
+	 *
+	 * Note: If the other {@link Script} instance already has a state, this might lead to confusing results or even
+	 * crashes (e.g., if symbols are defined twice).
+	 *
+	 * @param script
+	 *            The {@link Script} instance that will receive all definitions and declarations known to this
+	 *            {@link Script}.
+	 */
+	public void transferHistory(final Script script) {
+		for (final ISmtDeclarable elem : mHistory) {
+			if (elem instanceof StackMarker) {
+				script.push(1);
+				continue;
+			}
+			elem.defineOrDeclare(script);
+		}
 	}
 
 	/**
