@@ -115,18 +115,17 @@ public class MSODScript extends NoopScript {
 
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = traversePostOrder(mAssertionTerm);
 
-			mLogger.info(automatonToString(automaton, Format.ATS));
+			// mLogger.info(automatonToString(automaton, Format.ATS));
 			mModel = mMSODOperations.getResult(this, mAutomataLibrarayServices, automaton);
 
-			if (!mModel.isEmpty()) {
+			if (mModel == null) {
+				result = LBool.UNSAT;
+				// mLogger.info("RESULT: UNSAT");
+			} else {
 				result = LBool.SAT;
 
-				mLogger.info("RESULT: SAT");
-				mLogger.info("MODEL: " + mModel);
-			} else {
-				result = LBool.UNSAT;
-
-				mLogger.info("RESULT: UNSAT");
+				// mLogger.info("RESULT: SAT");
+				// mLogger.info("MODEL: " + mModel);
 			}
 
 		} catch (final Exception e) {

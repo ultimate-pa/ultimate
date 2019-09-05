@@ -342,8 +342,9 @@ public final class MSODOperations {
 					}
 				}
 			}
+			return result;
 		}
-		return result;
+		return null;
 	}
 
 	/**
@@ -409,8 +410,9 @@ public final class MSODOperations {
 					}
 				}
 			}
+			return result;
 		}
-		return result;
+		return null;
 	}
 
 	/**
@@ -461,7 +463,7 @@ public final class MSODOperations {
 					// Deal with variables of type SetOfInt.
 				} else {
 					final Term setTerm = script.variable(term.toString(), SmtSortUtils.getIntSort(script));
-					final Term resultTerm = null;
+					// final Term resultTerm = null;
 					final Iterator<Integer> itStem = stemIndices.get(term).iterator();
 					final Iterator<Integer> itLoop = loopIndices.get(term).iterator();
 
@@ -477,22 +479,30 @@ public final class MSODOperations {
 					}
 
 					final int stemLength = stem.length();
-					final int maxLoopIndex = Collections.max(loopIndices.get(term));
 
-					// Calculate representation of numbers in the loop based on the length of the stem.
-					final Term minusTerm = SmtUtils.minus(script, setTerm,
-							SmtUtils.constructIntValue(script, BigInteger.valueOf(stemLength - 1)));
-					final Term greaterTerm =
-							SmtUtils.greater(script, minusTerm, SmtUtils.constructIntValue(script, BigInteger.ZERO));
-					final Term modTerm = SmtUtils.mod(script, minusTerm,
-							SmtUtils.constructIntValue(script, BigInteger.valueOf(maxLoopIndex + 1)));
+					if (itLoop.hasNext()) {
+						final int maxLoopIndex = Collections.max(loopIndices.get(term));
 
-					// Construct term to represent conditions for numbers encoded in the loop.
-					while (itLoop.hasNext()) {
-						result.put(term, resultTerm);
-						loopTerm = SmtUtils.and(script, greaterTerm,
-								SmtUtils.binaryEquality(script, modTerm, SmtUtils.constructIntValue(script,
-										BigInteger.valueOf((itLoop.next() + 1) % (maxLoopIndex + 1)))));
+						// Calculate representation of numbers in the loop based on the length of the stem.
+						final Term minusTerm = SmtUtils.minus(script, setTerm,
+								SmtUtils.constructIntValue(script, BigInteger.valueOf(stemLength - 1)));
+						final Term greaterTerm = SmtUtils.greater(script, minusTerm,
+								SmtUtils.constructIntValue(script, BigInteger.ZERO));
+						final Term modTerm = SmtUtils.mod(script, minusTerm,
+								SmtUtils.constructIntValue(script, BigInteger.valueOf(maxLoopIndex + 1)));
+
+						// Construct term to represent conditions for numbers encoded in the loop.
+						while (itLoop.hasNext()) {
+							if (loopTerm != null) {
+								loopTerm = SmtUtils.or(script, loopTerm,
+										SmtUtils.binaryEquality(script, modTerm, SmtUtils.constructIntValue(script,
+												BigInteger.valueOf((itLoop.next() + 1) % (maxLoopIndex + 1)))));
+							} else {
+								loopTerm = SmtUtils.binaryEquality(script, modTerm, SmtUtils.constructIntValue(script,
+										BigInteger.valueOf((itLoop.next() + 1) % (maxLoopIndex + 1))));
+							}
+						}
+						loopTerm = SmtUtils.and(script, greaterTerm, loopTerm);
 					}
 
 					// Deal with all combinations of possibly empty Terms
@@ -508,8 +518,9 @@ public final class MSODOperations {
 					}
 				}
 			}
+			return result;
 		}
-		return result;
+		return null;
 	}
 
 	/**
@@ -605,41 +616,46 @@ public final class MSODOperations {
 						stemNumberNeg = -stemNumberPos + 1;
 					}
 
+					// TODO: Deal with empty collection.
+
 					// Get the min resp. max values of the loop.
-					final int maxLoopNumber = Collections.max(loopNumbers.get(term));
-					final int minLoopNumber = Collections.max(loopNumbers.get(term));
+					if (itLoop.hasNext()) {
+						final int maxLoopNumber = Collections.max(loopNumbers.get(term));
 
-					// Calculate representation of numbers in the loop based on the length of the stem.
-					final Term minusTermPos = SmtUtils.minus(script, setTerm,
-							SmtUtils.constructIntValue(script, BigInteger.valueOf(stemNumberPos)));
-					final Term minusTermNeg = SmtUtils.minus(script, setTerm,
-							SmtUtils.constructIntValue(script, BigInteger.valueOf(stemNumberNeg)));
-					final Term greaterTermPos =
-							SmtUtils.greater(script, minusTermPos, SmtUtils.constructIntValue(script, BigInteger.ZERO));
-					final Term lessTermNeg =
-							SmtUtils.less(script, minusTermNeg, SmtUtils.constructIntValue(script, BigInteger.ZERO));
-					final Term modTermPos = SmtUtils.mod(script, minusTermPos,
-							SmtUtils.constructIntValue(script, BigInteger.valueOf(maxLoopNumber)));
-					final Term modTermNeg = SmtUtils.mod(script, minusTermNeg,
-							SmtUtils.constructIntValue(script, BigInteger.valueOf(Math.abs(minLoopNumber))));
+						final int minLoopNumber = Collections.min(loopNumbers.get(term));
 
-					// Construct term for set condition depending on the sign of the number.
-					while (itLoop.hasNext()) {
-						final int value = itLoop.next();
-						Term t = null;
-						if (value > 0) {
-							t = SmtUtils.and(script, greaterTermPos,
-									SmtUtils.binaryEquality(script, modTermPos, SmtUtils.constructIntValue(script,
-											BigInteger.valueOf((value + 1) % (maxLoopNumber)))));
-						} else {
-							t = SmtUtils.and(script, lessTermNeg,
-									SmtUtils.binaryEquality(script, modTermNeg, SmtUtils.constructIntValue(script,
-											BigInteger.valueOf((value + 1) % (Math.abs(minLoopNumber))))));
-						}
-						if (loopTerm != null) {
-							loopTerm = SmtUtils.or(script, loopTerm, t);
-						} else {
-							loopTerm = t;
+						// Calculate representation of numbers in the loop based on the length of the stem.
+						final Term minusTermPos = SmtUtils.minus(script, setTerm,
+								SmtUtils.constructIntValue(script, BigInteger.valueOf(stemNumberPos)));
+						final Term minusTermNeg = SmtUtils.minus(script, setTerm,
+								SmtUtils.constructIntValue(script, BigInteger.valueOf(stemNumberNeg)));
+						final Term greaterTermPos = SmtUtils.greater(script, minusTermPos,
+								SmtUtils.constructIntValue(script, BigInteger.ZERO));
+						final Term lessTermNeg = SmtUtils.less(script, minusTermNeg,
+								SmtUtils.constructIntValue(script, BigInteger.ZERO));
+						final Term modTermPos = SmtUtils.mod(script, minusTermPos,
+								SmtUtils.constructIntValue(script, BigInteger.valueOf(maxLoopNumber)));
+						final Term modTermNeg = SmtUtils.mod(script, minusTermNeg,
+								SmtUtils.constructIntValue(script, BigInteger.valueOf(Math.abs(minLoopNumber))));
+
+						// Construct term for set condition depending on the sign of the number.
+						while (itLoop.hasNext()) {
+							final int value = itLoop.next();
+							Term t = null;
+							if (value > 0) {
+								t = SmtUtils.and(script, greaterTermPos,
+										SmtUtils.binaryEquality(script, modTermPos, SmtUtils.constructIntValue(script,
+												BigInteger.valueOf((value + 1) % (maxLoopNumber)))));
+							} else {
+								t = SmtUtils.and(script, lessTermNeg,
+										SmtUtils.binaryEquality(script, modTermNeg, SmtUtils.constructIntValue(script,
+												BigInteger.valueOf((value + 1) % (Math.abs(minLoopNumber))))));
+							}
+							if (loopTerm != null) {
+								loopTerm = SmtUtils.or(script, loopTerm, t);
+							} else {
+								loopTerm = t;
+							}
 						}
 					}
 
@@ -656,7 +672,8 @@ public final class MSODOperations {
 					}
 				}
 			}
+			return result;
 		}
-		return result;
+		return null;
 	}
 }
