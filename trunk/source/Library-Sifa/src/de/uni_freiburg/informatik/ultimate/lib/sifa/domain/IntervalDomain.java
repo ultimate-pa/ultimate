@@ -167,6 +167,7 @@ public class IntervalDomain implements IDomain {
 	 */
 	private Collection<Map<TermVariable, Interval>> toIntervalsInternal(final IPredicate pred) {
 		final IProgressAwareTimer timer = mTermToIntervalTimeout.get();
+		// TODO consider removing boolean sub-terms before computing DNF as we don't use the boolean terms anyways
 		final Term[] dnfDisjunctsAsTerms = mTools.dnfDisjuncts(pred);
 		final List<Map<TermVariable, Interval>> dnfDisjunctsAsIntervals = new ArrayList<>(dnfDisjunctsAsTerms.length);
 		for (final Term dnfDisjunct : dnfDisjunctsAsTerms) {
