@@ -294,7 +294,7 @@ public class SmtParser implements ISource {
 					new HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver(mServices, "smtParserBackendSolver");
 			script = new HornClauseParserScript(mServices, mLogger, file.getName(), caibss.getScript(),
 					// "ALL", caibss.getSolverSettings());
-					caibss.getLogicForExternalSolver(), caibss.getSolverSettings());
+					caibss.getLogicForExternalSolver());
 		}
 			break;
 		default:

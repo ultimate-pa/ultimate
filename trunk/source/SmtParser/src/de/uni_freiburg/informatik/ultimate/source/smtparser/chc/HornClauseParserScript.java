@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtil
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SkolemNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -99,7 +98,6 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	 */
 	private final ManagedScript mBackendSmtSolver;
 	private final String mLogic;
-	private final SolverSettings mSolverSettings;
 	private final HashSet<String> mDeclaredPredicateSymbols;
 	private final List<HornClause> mParsedHornClauses;
 	private final HcSymbolTable mSymbolTable;
@@ -127,13 +125,12 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	private final IPreferenceProvider mPreferences;
 
 	public HornClauseParserScript(final IUltimateServiceProvider services, final ILogger logger, final String filename,
-			final ManagedScript smtSolverScript, final String logic, final SolverSettings settings) {
+			final ManagedScript smtSolverScript, final String logic) {
 		mServices = services;
 		mLogger = logger;
 		mFilename = filename;
 		mBackendSmtSolver = smtSolverScript;
 		mLogic = logic;
-		mSolverSettings = settings;
 		setupBackendSolver();
 		mDeclaredPredicateSymbols = new HashSet<>();
 
@@ -155,9 +152,8 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	public IElement getHornClauses() {
 		mFinished = true;
 		mSymbolTable.finishConstruction();
-		final HornAnnot annot =
-				new HornAnnot(mFilename, mBackendSmtSolver, mSymbolTable, mParsedHornClauses, mSawCheckSat,
-						new ChcCategoryInfo(Logics.ALL, true));
+		final HornAnnot annot = new HornAnnot(mFilename, mBackendSmtSolver, mSymbolTable, mParsedHornClauses,
+				mSawCheckSat, new ChcCategoryInfo(Logics.ALL, true));
 		return HornClauseAST.create(annot);
 	}
 
