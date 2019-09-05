@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
 
 /**
  * Wrapper for an SMT solver that makes sure that the solver does not have to deal with quantifiers. The idea of this

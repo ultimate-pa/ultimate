@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
 
 /**
  * Script that wraps an existing Script but has additional checks for the construction of Terms. Whenever a Term is

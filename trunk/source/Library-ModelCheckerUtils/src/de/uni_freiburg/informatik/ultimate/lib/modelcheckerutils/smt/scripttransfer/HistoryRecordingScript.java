@@ -32,12 +32,12 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.WrapperScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
 
 /**
  * {@link HistoryRecordingScript} is a {@link WrapperScript} that tracks definitions and declarations of functions,
