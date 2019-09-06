@@ -236,7 +236,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			// will also affect all input xjuncts
 			// In once introduced this as a workaround when the input was
 			// already in XNF.
-			Term disjunction;
+			final Term disjunction;
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				disjunction = SmtUtils.toDnf(mServices, mMgdScript, tmp, mXnfConversionTechnique);
 			} else if (quantifier == QuantifiedFormula.FORALL) {
