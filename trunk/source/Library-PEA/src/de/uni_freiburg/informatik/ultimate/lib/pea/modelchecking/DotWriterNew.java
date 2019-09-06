@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 
-public class DotWriter {
+public class DotWriterNew {
 
 	public static String node(final String nodeId, final String attrList) {
 		String result = "";
@@ -42,7 +42,15 @@ public class DotWriter {
 			final String clock = phase.getClockInvariant().toString();
 			final String predicate = phase.getStateInvariant().toString();
 
-			dot += location + " [label=\"" + location + "\\n" + predicate + "\\n" + clock + "\"];" + "\n";
+			String table = "";
+
+			table += "<<table border=\"0\">" + "<tr><td><b>" + location + "</b></td></tr>";
+			table += "<tr><td><font COLOR=\"#1f78b4\">" + predicate + "</font></td></tr>";
+			table += "<tr><td><font COLOR=\"#b2df8a\">" + clock + "</font></td></tr>";
+			table += "</table>>";
+
+			// dot += location + " [label=\"" + location + "\\n" + predicate + "\\n" + clock + "\"];" + "\n";
+			dot += location + " [label=" + table + "];" + "\n";
 
 			for (final Transition transition : phase.getTransitions()) {
 				final String src = transition.getSrc().getName();
