@@ -29,10 +29,12 @@
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -52,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * TODO: Comment Class.
@@ -292,59 +295,37 @@ public final class MSODOperations {
 		final Map<Term, Term> result = new HashMap<>();
 		final NestedWord<MSODAlphabetSymbol> word = getWordWeak(script, services, automaton);
 
-		if (word != null) {
-
-			// TODO: Deal with empty model in case no free variable exists in the formula.
-
-			if (automaton.getAlphabet().isEmpty()) {
-				// TODO: Deal with empty alphabet.
-			}
-			final Set<Term> terms = automaton.getAlphabet().iterator().next().getTerms();
-
-			// Get all numbers that are encoded in the word.
-			final Map<Term, Set<Integer>> numbers = getNumbersNat(script, terms, word);
-
-			// Construct result term.
-			for (final Term term : terms) {
-				Term stemTerm = null;
-
-				// Deal with variables of type Int.
-				if (SmtSortUtils.isIntSort(term.getSort())) {
-					if (numbers.get(term).size() != 1) {
-						throw new UnsupportedOperationException("This is not a valid Integer representation!");
-					}
-					// Construct a term that represents the according Int value.
-					final Term value =
-							SmtUtils.constructIntValue(script, BigInteger.valueOf(numbers.get(term).iterator().next()));
-					result.put(term, value);
-
-					// Deal with variables of type SetOfInt.
-				} else {
-					final Term setTerm = script.variable(term.toString(), SmtSortUtils.getIntSort(script));
-					final Iterator<Integer> itStem = numbers.get(term).iterator();
-
-					// Construct a term for each element in the set and build a disjunction of the form
-					// "(variableName = value1) or (variableName = value2) or ... ".
-					while (itStem.hasNext()) {
-						final Term value = SmtUtils.constructIntValue(script, BigInteger.valueOf(itStem.next()));
-						final Term eqTerm = SmtUtils.binaryEquality(script, setTerm, value);
-						if (stemTerm == null) {
-							stemTerm = eqTerm;
-						}
-						stemTerm = SmtUtils.or(script, eqTerm, stemTerm);
-					}
-
-					// In case of an empty set, the condition for an element to be in the set is set to "false".
-					if (stemTerm == null) {
-						result.put(term, term.getTheory().mFalse);
-					} else {
-						result.put(term, stemTerm);
-					}
-				}
-			}
-			return result;
+		if (word == null) {
+			return null;
 		}
-		return null;
+
+		// TODO: Deal with empty model in case no free variable exists in the formula.
+
+		if (automaton.getAlphabet().isEmpty()) {
+			// TODO: Deal with empty alphabet.
+		}
+		final Set<Term> terms = automaton.getAlphabet().iterator().next().getTerms();
+
+		// Get all numbers that are encoded in the word.
+		final Map<Term, Set<Integer>> numbers = getNumbersNat(script, terms, word);
+
+		// Construct result term.
+		for (final Term term : terms) {
+			Term stemTerm = null;
+
+			// Get consecutive numbers and construct disjunction representing the conditions for numbers encoded in
+			// the stem.
+			final Set<Pair<Integer, Integer>> consStemNumbers = getRangeOfConsecutiveNumbers(numbers.get(term));
+			stemTerm = createStemTerm(script, term, consStemNumbers);
+
+			// In case of an empty set, the condition for an element to be in the set is set to "false".
+			if (stemTerm == null) {
+				result.put(term, term.getTheory().mFalse);
+			} else {
+				result.put(term, stemTerm);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -429,9 +410,10 @@ public final class MSODOperations {
 		final NestedLassoWord<MSODAlphabetSymbol> word = getWordBuchi(script, services, automaton);
 
 		if (word != null) {
-			// TODO: Deal with empty model in case no free variable exists in the formula.
+
 			if (word.getStem().getSymbol(0).toString() == "empty"
 					|| word.getLoop().getSymbol(0).toString() == "empty") {
+				// TODO: Deal with empty model in case no free variable exists in the formula.
 				throw new UnsupportedOperationException("EMPTY");
 			}
 			if (automaton.getAlphabet().isEmpty()) {
@@ -450,77 +432,30 @@ public final class MSODOperations {
 				Term stemTerm = null;
 				Term loopTerm = null;
 
-				// Deal with variables of type Int.
-				if (SmtSortUtils.isIntSort(term.getSort())) {
-					if (stemIndices.get(term).size() != 1 || loopIndices.get(term).size() != 0) {
-						throw new UnsupportedOperationException("This is not a valid Integer representation!");
-					}
-					// Construct a term that represents the according Int value.
-					final Term value = SmtUtils.constructIntValue(script,
-							BigInteger.valueOf(stemIndices.get(term).iterator().next()));
-					result.put(term, value);
+				// Get consecutive numbers and construct disjunction representing the conditions for numbers encoded in
+				// the stem.
+				final Set<Pair<Integer, Integer>> consStemNumbers = getRangeOfConsecutiveNumbers(stemIndices.get(term));
+				stemTerm = createStemTerm(script, term, consStemNumbers);
 
-					// Deal with variables of type SetOfInt.
+				// Get consecutive numbers and construct disjunction representing the conditions for numbers encoded in
+				// the loop.
+				final Set<Pair<Integer, Integer>> consLoopNumbers = getRangeOfConsecutiveNumbers(loopIndices.get(term));
+				loopTerm = createLoopTerm(script, term, consLoopNumbers, stem.length() - 1);
+
+				// Deal with all combinations of possibly empty Terms
+				if (stemTerm != null && loopTerm != null) {
+					result.put(term, SmtUtils.or(script, stemTerm, loopTerm));
+				} else if (stemTerm == null) {
+					result.put(term, loopTerm);
+				} else if (loopTerm == null) {
+					result.put(term, stemTerm);
 				} else {
-					final Term setTerm = script.variable(term.toString(), SmtSortUtils.getIntSort(script));
-					// final Term resultTerm = null;
-					final Iterator<Integer> itStem = stemIndices.get(term).iterator();
-					final Iterator<Integer> itLoop = loopIndices.get(term).iterator();
-
-					// Construct a term for each element in the set encoded in the stem and build a disjunction of the
-					// form "(variableName = value1) or (variableName = value2) or ... ".
-					while (itStem.hasNext()) {
-						final Term value = SmtUtils.constructIntValue(script, BigInteger.valueOf(itStem.next()));
-						final Term eqTerm = SmtUtils.binaryEquality(script, setTerm, value);
-						if (stemTerm == null) {
-							stemTerm = eqTerm;
-						}
-						stemTerm = SmtUtils.or(script, eqTerm, stemTerm);
-					}
-
-					final int stemLength = stem.length();
-
-					if (itLoop.hasNext()) {
-						final int maxLoopIndex = Collections.max(loopIndices.get(term));
-
-						// Calculate representation of numbers in the loop based on the length of the stem.
-						final Term minusTerm = SmtUtils.minus(script, setTerm,
-								SmtUtils.constructIntValue(script, BigInteger.valueOf(stemLength - 1)));
-						final Term greaterTerm = SmtUtils.greater(script, minusTerm,
-								SmtUtils.constructIntValue(script, BigInteger.ZERO));
-						final Term modTerm = SmtUtils.mod(script, minusTerm,
-								SmtUtils.constructIntValue(script, BigInteger.valueOf(maxLoopIndex + 1)));
-
-						// Construct term to represent conditions for numbers encoded in the loop.
-						while (itLoop.hasNext()) {
-							if (loopTerm != null) {
-								loopTerm = SmtUtils.or(script, loopTerm,
-										SmtUtils.binaryEquality(script, modTerm, SmtUtils.constructIntValue(script,
-												BigInteger.valueOf((itLoop.next() + 1) % (maxLoopIndex + 1)))));
-							} else {
-								loopTerm = SmtUtils.binaryEquality(script, modTerm, SmtUtils.constructIntValue(script,
-										BigInteger.valueOf((itLoop.next() + 1) % (maxLoopIndex + 1))));
-							}
-						}
-						loopTerm = SmtUtils.and(script, greaterTerm, loopTerm);
-					}
-
-					// Deal with all combinations of possibly empty Terms
-					if (stemTerm != null && loopTerm != null) {
-						result.put(term, SmtUtils.or(script, stemTerm, loopTerm));
-					} else if (stemTerm == null) {
-						result.put(term, loopTerm);
-					} else if (loopTerm == null) {
-						result.put(term, stemTerm);
-					} else {
-						// In case of an empty set, the condition for an element to be in the set is set to "false".
-						result.put(term, term.getTheory().mFalse);
-					}
+					// In case of an empty set, the condition for an element to be in the set is set to "false".
+					result.put(term, term.getTheory().mFalse);
 				}
 			}
-			return result;
 		}
-		return null;
+		return result;
 	}
 
 	/**
@@ -676,4 +611,128 @@ public final class MSODOperations {
 		}
 		return null;
 	}
+
+	// Returns the range of consecutive numbers in the given array as a set of arrays. Each array in the result contains
+	// the start resp. end number of one series of consecutive numbers.
+	public Set<Pair<Integer, Integer>> getRangeOfConsecutiveNumbers(final Set<Integer> num) {
+
+		final List<Integer> numbers = new ArrayList<>();
+		numbers.addAll(num);
+		numbers.sort(null);
+
+		final Set<Pair<Integer, Integer>> result = new HashSet<>();
+		Integer start = null;
+		Integer end = null;
+
+		for (int i = 0; i < numbers.size(); i++) {
+			if (i == 0) {
+				start = numbers.get(i);
+				end = numbers.get(i);
+			} else {
+				if (numbers.get(i) - end == 1) {
+					end = numbers.get(i);
+				} else {
+					result.add(new Pair<>(start, end));
+					start = numbers.get(i);
+					end = numbers.get(i);
+				}
+			}
+			if (i == numbers.size() - 1) {
+				result.add(new Pair<>(start, end));
+			}
+		}
+		return result;
+	}
+
+	// Constructs a disjunction of terms corresponding to the given set of consecutive numbers derived from the stem.
+	public Term createStemTerm(final Script script, final Term term, final Set<Pair<Integer, Integer>> numbers) {
+		final Iterator<Pair<Integer, Integer>> it = numbers.iterator();
+		Term result = null;
+
+		if (SmtSortUtils.isIntSort(term.getSort()) && numbers.size() != 1) {
+			throw new InternalError("The Integer representation is corrupted!");
+		}
+
+		while (it.hasNext()) {
+			final Pair<Integer, Integer> pair = it.next();
+			Term t;
+			final Integer start = pair.getFirst();
+			final Integer end = pair.getSecond();
+			final Term setTerm = script.variable(term.toString(), SmtSortUtils.getIntSort(script));
+
+			// If pair represents a single number, construct term of the form "variable = value"
+			if (start == end) {
+				t = SmtUtils.binaryEquality(script, setTerm,
+						SmtUtils.constructIntValue(script, BigInteger.valueOf(start)));
+			} else {
+				// If pair represents a series of numbers, construct a term of the form
+				// "(variable >=startValue) && (variable <= endValue)"
+				final Term t1 =
+						SmtUtils.geq(script, setTerm, SmtUtils.constructIntValue(script, BigInteger.valueOf(start)));
+				final Term t2 =
+						SmtUtils.leq(script, setTerm, SmtUtils.constructIntValue(script, BigInteger.valueOf(end)));
+				t = SmtUtils.and(script, t1, t2);
+			}
+			result = (result != null) ? SmtUtils.or(script, result, t) : t;
+		}
+		return result;
+	}
+
+	// Constructs a disjunction of terms corresponding to the given set of consecutive numbers derived from the loop.
+	public Term createLoopTerm(final Script script, final Term term, final Set<Pair<Integer, Integer>> loopNumbers,
+			final Integer maxStemNumber) {
+
+		if (SmtSortUtils.isIntSort(term.getSort()) && !loopNumbers.isEmpty()) {
+			throw new InternalError("Integer representation is corrupted!");
+		}
+		// Loop contains only zeros, no further loop term needed.
+		if (loopNumbers.isEmpty()) {
+			return null;
+		}
+
+		final Term setTerm = script.variable(term.toString(), SmtSortUtils.getIntSort(script));
+		final Iterator<Pair<Integer, Integer>> it = loopNumbers.iterator();
+		// Term to exclude numbers already dealt with in the stem.
+		final Term t1 = SmtUtils.geq(script, setTerm,
+				SmtUtils.constructIntValue(script, BigInteger.valueOf(maxStemNumber + 1)));
+
+		// Loop contains only ones. Only need to exclude already dealt with in the stem.
+		if (loopNumbers.size() == 1) {
+			return t1;
+		}
+
+		Integer maxLoopNumber = 0;
+		for (final Pair<Integer, Integer> pair : loopNumbers) {
+			maxLoopNumber = (pair.getSecond() > maxLoopNumber) ? pair.getSecond() : maxLoopNumber;
+		}
+
+		// Modulo Term
+
+		final Term t2 = SmtUtils.mod(script, setTerm,
+				SmtUtils.constructIntValue(script, BigInteger.valueOf(maxLoopNumber + 1)));
+
+		Term result = null;
+		// Construct Modulo Terms.
+		while (it.hasNext()) {
+			final Pair<Integer, Integer> pair = loopNumbers.iterator().next();
+			final Integer start = pair.getFirst();
+			final Integer end = pair.getSecond();
+			Term t;
+
+			// If pair represents a single number, construct term of the form "modTerm = value"
+			if (start == end) {
+				t = SmtUtils.binaryEquality(script, t2, SmtUtils.constructIntValue(script, BigInteger.valueOf(start)));
+			} else {
+				final Term lower =
+						SmtUtils.geq(script, t2, SmtUtils.constructIntValue(script, BigInteger.valueOf(start)));
+				final Term upper =
+						SmtUtils.leq(script, t2, SmtUtils.constructIntValue(script, BigInteger.valueOf(end)));
+				t = SmtUtils.and(script, lower, upper);
+			}
+			result = (result != null) ? SmtUtils.or(script, result, t) : t;
+		}
+
+		return result;
+	}
+
 }
