@@ -707,7 +707,7 @@ public final class CDD {
 	 *            true, if disjunctions need to be parenthesised.
 	 */
 	public String toString(final boolean needsParens) {
-		return toString("general", needsParens);
+		return toString("boogie", needsParens);
 	}
 
 	/**

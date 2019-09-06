@@ -87,13 +87,13 @@ public class BooleanDecision extends Decision<BooleanDecision> {
 	}
 
 	@Override
-	public String toBoogieString(final int child) {
-		return toString(child);
+	public String toTexString(final int child) {
+		return (child == 0) ? mVar : (" \\neg " + mVar);
 	}
 
 	@Override
-	public String toTexString(final int child) {
-		return (child == 0) ? mVar : (" \\neg " + mVar);
+	public String toBoogieString(final int child) {
+		return toString(child);
 	}
 
 	@Override

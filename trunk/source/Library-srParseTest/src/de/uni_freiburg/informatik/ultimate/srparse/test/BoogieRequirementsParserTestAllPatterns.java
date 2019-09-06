@@ -74,8 +74,9 @@ public class BoogieRequirementsParserTestAllPatterns {
 		final Class<?>[] scopezz = new Class<?>[] { SrParseScopeGlob.class, SrParseScopeBefore.class,
 				SrParseScopeAfter.class, SrParseScopeBetween.class };
 
-		final String[] pattern = new String[] { "it is never the case that \"y >= 5\" holds",
-				"it is always the case that \"y >= 5\" holds",
+		final String[] pattern = new String[] {
+				"it is always the case that if \"A\" holds then \"!C\" holds for at least 2 time units",
+				"it is never the case that \"y >= 5\" holds", "it is always the case that \"y >= 5\" holds",
 				"transitions to states in which \"y >= 5\" holds occur at most twice",
 				"it is always the case that if \"y >= 5\" holds, then \"y <= 5\" previously held",
 				// timed
@@ -86,9 +87,10 @@ public class BoogieRequirementsParserTestAllPatterns {
 				"it is always the case that if \"y >= 5\" holds, then \"y <= 5\" holds for at least 2000 time units",
 				"it is always the case that after \"y >= 5\" holds for 2000 time units, then \"y <= 5\" holds",
 				"it is always the case that if \"y <= 5\" holds then \"y >= 5\" holds as well" };
-		final String[] patternNames = new String[] { "InstAbsPattern", "UniversalityPattern", "BndExistencePattern",
-				"PrecedencePattern", "MinDurationPattern", "MaxDurationPattern", "BndReccurrencePattern",
-				"BndResponsePatternUT", "BndInvariancePattern", "BndEntryConditionPattern", "InvariantPattern" };
+		final String[] patternNames = new String[] { "FuckOffPattern", "InstAbsPattern", "UniversalityPattern",
+				"BndExistencePattern", "PrecedencePattern", "MinDurationPattern", "MaxDurationPattern",
+				"BndReccurrencePattern", "BndResponsePatternUT", "BndInvariancePattern", "BndEntryConditionPattern",
+				"InvariantPattern" };
 
 		for (int i = 0; i < scope.length; i++) {
 			for (int j = 0; j < pattern.length; j++) {

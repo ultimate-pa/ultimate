@@ -334,6 +334,11 @@ public class RangeDecision extends Decision<RangeDecision> {
 	}
 
 	@Override
+	public String toTexString(final int childs) {
+		return getInfixString(mVar, " \\leq ", " < ", " \\geq ", " > ", " == ", " \\land ", childs);
+	}
+
+	@Override
 	public String toBoogieString(final int child) {
 		return getInfixString(mVar, " <= ", " < ", " >= ", " > ", " == ", " && ", child);
 	}
@@ -358,11 +363,6 @@ public class RangeDecision extends Decision<RangeDecision> {
 		}
 
 		return getInfixString(var, " <= ", " < ", " >= ", " > ", " == ", " && ", childs);
-	}
-
-	@Override
-	public String toTexString(final int childs) {
-		return getInfixString(mVar, " \\leq ", " < ", " \\geq ", " > ", " == ", " \\land ", childs);
 	}
 
 	private String getInfixString(final String var, final String leqOp, final String leOp, final String geqOp,

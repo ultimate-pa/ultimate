@@ -108,12 +108,12 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 	}
 
 	@Override
-	public String toUppaalString(final int child) {
+	public String toBoogieString(final int child) {
 		return toString(child);
 	}
 
 	@Override
-	public String toBoogieString(final int child) {
+	public String toUppaalString(final int child) {
 		return toString(child);
 	}
 

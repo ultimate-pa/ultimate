@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DOTWriter;
+import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.srparse.test.BoogieRequirementsParserTestAllPatterns.Testpurpose;
@@ -35,8 +35,9 @@ public class BoogieRequirementsPeaToDot {
 		mLogger = mServiceProvider.getLoggingService().getLogger("");
 
 		final List<String> strings = getPatterns();
+		final String str = strings.get(5);
 
-		final String str = strings.get(35);
+		mLogger.info("PATTERN: " + str);
 
 		final StringReader stringReader = new StringReader(str);
 		final ReqParser reqParser = new ReqParser(mServiceProvider,
@@ -46,9 +47,7 @@ public class BoogieRequirementsPeaToDot {
 
 		final PhaseEventAutomata pea = patterns[0].transformToPea(mLogger, new HashMap<String, Integer>());
 
-		final DOTWriter dotWriter = new DOTWriter("/home/ubuntu/Schreibtisch/graph.dot", pea);
-		dotWriter.write();
-
+		DotWriter.write("/home/ubuntu/Schreibtisch/graph.dot", true, pea, mLogger);
 	}
 
 	private List<String> getPatterns() {

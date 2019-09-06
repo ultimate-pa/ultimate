@@ -111,9 +111,9 @@ public abstract class Decision<T extends Decision<T>> {
 
 	public abstract String toTexString(int child);
 
-	public abstract String toUppaalString(int child);
-
 	public abstract String toBoogieString(int child);
+
+	public abstract String toUppaalString(int child);
 
 	public abstract String toUppaalStringDOM(int child);
 

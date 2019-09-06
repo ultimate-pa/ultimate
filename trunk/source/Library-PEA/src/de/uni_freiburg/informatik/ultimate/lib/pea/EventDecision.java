@@ -84,6 +84,11 @@ public class EventDecision extends Decision<EventDecision> {
 	}
 
 	@Override
+	public String toTexString(final int child) {
+		return (child == 0) ? mEvent : ("\\neg" + mEvent);
+	}
+
+	@Override
 	public String toBoogieString(final int child) {
 		return (child == 0) ? mEvent : ("!" + mEvent);
 	}
@@ -96,6 +101,11 @@ public class EventDecision extends Decision<EventDecision> {
 	@Override
 	public String toUppaalStringDOM(final int child) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public String getVar() {
+		return "";
 	}
 
 	/**
@@ -113,16 +123,6 @@ public class EventDecision extends Decision<EventDecision> {
 	@Override
 	public EventDecision unprime(final Set<String> ignoreIds) {
 		return this;
-	}
-
-	@Override
-	public String toTexString(final int child) {
-		return (child == 0) ? mEvent : ("\\neg" + mEvent);
-	}
-
-	@Override
-	public String getVar() {
-		return "";
 	}
 
 	@Override

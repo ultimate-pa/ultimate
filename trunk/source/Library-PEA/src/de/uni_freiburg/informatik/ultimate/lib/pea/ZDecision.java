@@ -109,6 +109,11 @@ public final class ZDecision extends Decision<ZDecision> {
 	}
 
 	@Override
+	public String toSmtString(final int child) {
+		return toString(child);
+	}
+
+	@Override
 	public String toTexString(final int child) {
 		return toString(child);
 	}
@@ -116,11 +121,6 @@ public final class ZDecision extends Decision<ZDecision> {
 	@Override
 	public String toBoogieString(final int child) {
 		return (child == 0) ? mPredicate : ("!" + mPredicate);
-	}
-
-	@Override
-	public String toSmtString(final int child) {
-		return toString(child);
 	}
 
 	@Override
