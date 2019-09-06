@@ -20,7 +20,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
 public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGeneralizedAffineTerm<AVAR>, AVAR extends Term>
@@ -302,11 +301,11 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 			}
 		}
 
-		final Term assumptionFreeRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
+		final Term simpliySolvableRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 				coeffOfSubject);
-		Map<AssumptionForSolvability, Term> assumptionsMap = Collections.emptyMap();
-		Term rhsTerm;
-		if (assumptionFreeRhsTerm == null) {
+		final Map<AssumptionForSolvability, Term> assumptionsMap;
+		final Term rhsTerm;
+		if (simpliySolvableRhsTerm == null) {
 			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 					Rational.ONE);
 			rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
@@ -314,12 +313,16 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 			if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
 				Term modTerm = SmtUtils.mod(script, rhsTermWithoutDivision,
 						coeffOfSubject.toTerm(mAffineTerm.getSort()));
-				modTerm = SmtUtils.binaryEquality(script, modTerm, TermParseUtils.parseTerm(script, "0"));
+				modTerm = SmtUtils.binaryEquality(script, modTerm, SmtUtils.constructIntValue(script, BigInteger.ZERO));
 				assumptionsMap = Collections.singletonMap(AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT,
 						modTerm);
+			} else {
+				// cases LEQ, LESS, GREATER, GEQ
+				assumptionsMap = Collections.emptyMap();
 			}
 		} else {
-			rhsTerm = assumptionFreeRhsTerm;
+			rhsTerm = simpliySolvableRhsTerm;
+			assumptionsMap = Collections.emptyMap();
 		}
 
 		final RelationSymbol resultRelationSymbol;
