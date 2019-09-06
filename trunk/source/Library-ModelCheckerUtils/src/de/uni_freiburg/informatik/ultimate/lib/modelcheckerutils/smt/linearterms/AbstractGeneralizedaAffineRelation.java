@@ -351,38 +351,42 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 	private Term integerDivision(final Script script, final Rational coeffOfSubject,
 			final Term rhsTermWithoutDivision) {
 		// Default DivTerm
-		Term divTerm = SmtUtils.div(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort()));
+		final Term divTerm;
 		// change DivTerm according to the given relation symbol
 		switch (mRelationSymbol) {
 		case LESS:
-			// k*x < t is equivalent to x < (t-1 div k)+1 for positive k
 			if (!coeffOfSubject.isNegative()) {
+				// k*x < t is equivalent to x < (t-1 div k)+1 for positive k
 				divTerm = constructDivTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.ONE);
-			} else if (coeffOfSubject.isNegative()) {
+			} else {
 				// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
 				divTerm = constructDivTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.MONE);
 			}
 			break;
 		case GREATER:
 			// k*x > t is equivalent to x > (t div k) for all k
+			divTerm = SmtUtils.div(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort()));
 			break;
 		case LEQ:
 			// k*x <= t is equivalent to x <= (t div k) for positive k
+			divTerm = SmtUtils.div(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort()));
 			break;
 		case GEQ:
-			// k*x >= t is equivalent to x >= (t - 1 div k) + 1 for positive k
 			if (!coeffOfSubject.isNegative()) {
+				// k*x >= t is equivalent to x >= (t - 1 div k) + 1 for positive k
 				divTerm = constructDivTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.ONE);
-			} else if (coeffOfSubject.isNegative()) {
+			} else {
 				// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
 				divTerm = constructDivTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.MONE);
 			}
 			break;
 		case EQ:
 			// Default DivTerm with modulo Assumption
+			divTerm = SmtUtils.div(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort()));
 			break;
 		case DISTINCT:
 			// Default DivTerm with modulo Assumption
+			divTerm = SmtUtils.div(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort()));
 			break;
 		default:
 			throw new AssertionError("unknown relation symbol: " + mRelationSymbol);
