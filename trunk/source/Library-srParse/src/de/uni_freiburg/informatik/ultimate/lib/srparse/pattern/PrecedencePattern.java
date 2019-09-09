@@ -26,7 +26,7 @@ public class PrecedencePattern extends PatternType {
 
 	@Override
 	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 1;
+		assert cdds.length == 2;
 
 		final SrParseScope scope = getScope();
 		// note: Q and R are reserved for scope, cdds are parsed in reverse order
