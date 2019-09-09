@@ -303,12 +303,12 @@ function getResultTemplate(res)
 
         var div = document.createElement('div');
         div.className = 'font-bold';
-        div.innerHTML = decode_utf8(res.shortDesc);
+        div.innerHTML = res.shortDesc;
         el.appendChild(div);
         
         div = document.createElement('div');
         div.className = 'msg-text';
-        div.innerHTML = decode_utf8(htmlEncode(res.longDesc));
+        div.innerHTML = res.longDesc;
         el.appendChild(div);
         
       msg.appendChild(el);
@@ -389,24 +389,7 @@ function wait(ms)
       if ((new Date().getTime() - start) > ms) break;
     }
 }
-function encode_utf8(s)
-{
-  return unescape(encodeURIComponent(s));
-}
 
-function decode_utf8(s)
-{
-  return decodeURIComponent(unescape(s));
-}
-
-function htmlEncode(value){
-  return $('<div />').text(value).html().replace(/(\r\n|\n|\r)/gm,"<br />").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;");
-}
-
-function htmlDecode(value){
-  return $('<div />').html(value).text();
-}
-  
 function S_GET(id)
 {
   var a = new RegExp(id+"=([^&#=]*)");
