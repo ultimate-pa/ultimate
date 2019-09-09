@@ -540,9 +540,7 @@ public class FunctionHandler {
 					mExprResultTransformer, loc, main.dispatch(node.getReturnValue()), node.getReturnValue());
 
 			// functions cannot return arrays but only pointers
-			returnValue = mCHandler.decayArrayToPointer(returnValue, loc, node.getReturnValue());
-			returnValue = mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(returnValue, loc,
-					node.getReturnValue());
+			returnValue = mExprResultTransformer.transformDecaySwitchRexBoolToInt(returnValue, loc, node.getReturnValue());
 
 			// do some implicit casts
 			final CType functionResultType = mProcedureManager.getCurrentProcedureInfo().getCType().getResultType();
@@ -575,7 +573,7 @@ public class FunctionHandler {
 
 				// Ugly workaround: Apply the conversion to the result of the
 				// dispatched argument. On should first construct a copy of returnValueSwitched
-				returnValue = mExprResultTransformer.convert(loc, returnValue, functionResultType);
+				returnValue = mExprResultTransformer.performImplicitConversion(returnValue, functionResultType, loc);
 
 				resultBuilder.addAllIncludingLrValue(returnValue);
 
@@ -640,7 +638,7 @@ public class FunctionHandler {
 				// dispatch all arguments
 				for (final IASTInitializerClause arg : arguments) {
 					final ExpressionResult argRes =
-							mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, arg);
+							mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arg);
 					resultBuilder.addAllExceptLrValue(argRes);
 				}
 				return resultBuilder.build();
@@ -675,8 +673,7 @@ public class FunctionHandler {
 		final ExpressionResultBuilder functionCallExpressionResultBuilder = new ExpressionResultBuilder();
 		for (int i = 0; i < arguments.length; i++) {
 			final IASTInitializerClause inParam = arguments[i];
-			ExpressionResult in =
-					mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main, loc, inParam);
+			ExpressionResult in = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, inParam);
 
 			if (in.getLrValue().getValue() == null) {
 				final String msg = "Incorrect or invalid in-parameter! " + loc.toString();
@@ -700,7 +697,7 @@ public class FunctionHandler {
 				if (expectedParamType instanceof CPrimitive
 						&& ((CPrimitive) expectedParamType).getGeneralType() == CPrimitiveCategory.INTTYPE
 						|| expectedParamType instanceof CEnum) {
-					in = mExprResultTransformer.rexBoolToIntIfNecessary(in, loc);
+					in = mExprResultTransformer.rexBoolToInt(in, loc);
 				}
 				if (expectedParamType instanceof CFunction) {
 					// workaround - better: make this conversion already in declaration
@@ -711,7 +708,7 @@ public class FunctionHandler {
 					expectedParamType = new CPointer(((CArray) expectedParamType).getValueType());
 				}
 				// implicit casts
-				in = mExprResultTransformer.convert(loc, in, expectedParamType);
+				in = mExprResultTransformer.performImplicitConversion(in, expectedParamType, loc);
 			}
 
 			translatedParams.add(in.getLrValue().getValue());
@@ -1134,7 +1131,7 @@ public class FunctionHandler {
 		return functionCallERB.build();
 	}
 
-	private boolean isSvcompAtomicallyExecutedFunction(final String methodName) {
+	private static boolean isSvcompAtomicallyExecutedFunction(final String methodName) {
 		return methodName.startsWith("__VERIFIER_atomic_") && !methodName.equals("__VERIFIER_atomic_begin")
 				&& !methodName.equals("__VERIFIER_atomic_end");
 	}

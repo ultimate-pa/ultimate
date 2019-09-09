@@ -31,6 +31,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -78,6 +79,46 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public class ExpressionResultTransformer {
 
+	public enum Transformation {
+		/**
+		 * @see ExpressionResultTransformer#switchToRValue(ExpressionResult, ILocation, IASTNode)
+		 */
+		SWITCH_TO_RVALUE((ert, expr, ttype, loc, hook) -> ert.switchToRValue(expr, loc, hook)),
+
+		/**
+		 * @see ExpressionResultTransformer#rexBoolToInt(ExpressionResult, ILocation)
+		 */
+		REX_BOOL_TO_INT((ert, expr, ttype, loc, hook) -> ert.rexBoolToInt(expr, loc)),
+
+		/**
+		 * @see ExpressionResultTransformer#rexIntToBool(ExpressionResult, ILocation)
+		 */
+		REX_INT_TO_BOOL((ert, expr, ttype, loc, hook) -> ert.rexIntToBool(expr, loc)),
+
+		/**
+		 * @see ExpressionResultTransformer#decayArrayToPointer(ExpressionResult, ILocation, IASTNode)
+		 */
+		DECAY_ARRAY_TO_POINTER((ert, expr, ttype, loc, hook) -> ert.decayArrayToPointer(expr, loc, hook)),
+
+		/**
+		 * @see ExpressionResultTransformer#performImplicitConversion(ExpressionResult, CType, ILocation)
+		 */
+		IMPLICIT_CONVERSION((ert, expr, ttype, loc, hook) -> ert.performImplicitConversion(expr, ttype, loc)),
+
+		/**
+		 * @see ExpressionResultTransformer#convertNullPointerConstantToPointer(ExpressionResult, CType, ILocation)
+		 */
+		CONVERT_NULL_POINTER_TO_CONSTANT(
+				(ert, expr, ttype, loc, hook) -> ert.convertNullPointerConstantToPointer(expr, ttype, loc));
+
+		private ITransformationFunction mFun;
+
+		Transformation(final ITransformationFunction fun) {
+			mFun = Objects.requireNonNull(fun);
+		}
+
+	}
+
 	private final CHandler mCHandler;
 	private final MemoryHandler mMemoryHandler;
 	private final StructHandler mStructHandler;
@@ -101,64 +142,105 @@ public class ExpressionResultTransformer {
 		mTypeSizeAndOffsetComputer = typeAndOffsetComputer;
 	}
 
-	/**
-	 * Dispatch a function argument and do conversions that are applied to all function arguments:
-	 * <ul>
-	 * <li>dispatch
-	 * <li>decayArrayToPointer
-	 * <li>switchToRValueIfNecessary
-	 * </ul>
-	 */
-	public ExpressionResult dispatchDecaySwitchToRValueFunctionArgument(final IDispatcher main, final ILocation loc,
-			final IASTInitializerClause initClause) {
-		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(initClause);
-		final ExpressionResult converted = mCHandler.decayArrayToPointer(dispatched, loc, initClause);
-		return switchToRValueAndRexBoolToIntIfNecessary(converted, loc, initClause);
+	private ExpressionResult transform(final ExpressionResult expr, final CType targetCType, final ILocation loc,
+			final IASTNode hook, final Transformation... transformations) {
+		if (transformations == null || transformations.length == 0) {
+			return expr;
+		}
+
+		ExpressionResult result = expr;
+		for (final Transformation transformation : transformations) {
+			if (transformation == null) {
+				throw new IllegalArgumentException("transformation cannot be null");
+			}
+			result = transformation.mFun.apply(this, result, targetCType, loc, hook);
+		}
+		return result;
 	}
 
 	/**
 	 * Dispatch a function argument and do conversions that are applied to all function arguments:
 	 * <ul>
 	 * <li>dispatch
-	 * <li>decayArrayToPointer
-	 * <li>switchToRValueIfNecessary
-	 * <li>convert
+	 * <li>DECAY_ARRAY_TO_POINTER
+	 * <li>SWITCH_TO_RVALUE
+	 * <li>REX_BOOL_TO_INT
 	 * </ul>
-	 *
-	 * @param newTypeRaw
 	 */
-	public ExpressionResult dispatchDecaySwitchToRValueConvertFunctionArgument(final IDispatcher main,
-			final ILocation loc, final IASTInitializerClause initClause, final CType newTypeRaw) {
-		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(initClause);
-		final ExpressionResult converted = mCHandler.decayArrayToPointer(dispatched, loc, initClause);
-		final ExpressionResult switched = switchToRValueIfNecessary(converted, loc, initClause);
-		return convert(loc, switched, newTypeRaw);
+	public ExpressionResult transformDispatchDecaySwitchRexBoolToInt(final IDispatcher main, final ILocation loc,
+			final IASTInitializerClause hook) {
+		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(hook);
+		return transform(dispatched, null, loc, hook, Transformation.DECAY_ARRAY_TO_POINTER,
+				Transformation.SWITCH_TO_RVALUE, Transformation.REX_BOOL_TO_INT);
 	}
 
-	public ExpressionResult switchToRValueAndRexBoolToIntIfNecessary(final ExpressionResult old, final ILocation loc,
-			final IASTNode hook) {
-		final ExpressionResult switchResult = switchToRValueIfNecessary(old, loc, hook);
-		return rexBoolToIntIfNecessary(switchResult, loc);
+	/**
+	 * Dispatch a function argument and do conversions that are applied to all function arguments:
+	 * <ul>
+	 * <li>dispatch
+	 * <li>DECAY_ARRAY_TO_POINTER
+	 * <li>SWITCH_TO_RVALUE
+	 * <li>IMPLICIT_CONVERSION
+	 * </ul>
+	 */
+	public ExpressionResult transformDispatchDecaySwitchImplicitConversion(final IDispatcher main, final ILocation loc,
+			final IASTInitializerClause hook, final CType newTypeRaw) {
+		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(hook);
+		return transform(dispatched, newTypeRaw, loc, hook, Transformation.DECAY_ARRAY_TO_POINTER,
+				Transformation.SWITCH_TO_RVALUE, Transformation.IMPLICIT_CONVERSION);
 	}
 
-	public ExpressionResult switchToRValueAndRexIntToBoolIfNecessary(final ExpressionResult old, final ILocation loc,
-			final IASTNode hook) {
-		final ExpressionResult switchResult = switchToRValueIfNecessary(old, loc, hook);
-		return rexIntToBoolIfNecessary(switchResult, loc);
+	public ExpressionResult transformDispatchSwitchRexBoolToInt(final IDispatcher main, final ILocation loc,
+			final IASTInitializerClause hook) {
+		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(hook);
+		return transform(dispatched, null, loc, hook, Transformation.SWITCH_TO_RVALUE, Transformation.REX_BOOL_TO_INT);
 	}
 
-	public ExpressionResult switchToRValueIfNecessary(final ExpressionResult old, final ILocation loc,
-			final IASTNode hook) {
+	public ExpressionResult transformDispatchSwitchRexBoolToInt(final IDispatcher main, final ILocation loc,
+			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression node) {
+		final IASTNode hook = main.getAcslHook();
+		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(node, hook);
+		return transform(dispatched, null, loc, hook, Transformation.SWITCH_TO_RVALUE, Transformation.REX_BOOL_TO_INT);
+	}
 
+	public ExpressionResult transformDispatchSwitchRexIntToBool(final IDispatcher main, final ILocation loc,
+			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression node) {
+		final IASTNode hook = main.getAcslHook();
+		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(node, hook);
+		return transform(dispatched, null, loc, hook, Transformation.SWITCH_TO_RVALUE, Transformation.REX_INT_TO_BOOL);
+	}
+
+	public ExpressionResult transformDecaySwitchRexBoolToInt(final ExpressionResult expr, final ILocation loc,
+			final IASTNode hook) {
+		return transform(expr, null, loc, hook, Transformation.DECAY_ARRAY_TO_POINTER, Transformation.SWITCH_TO_RVALUE,
+				Transformation.REX_BOOL_TO_INT);
+	}
+
+	public ExpressionResult transformDecaySwitch(final ExpressionResult expr, final ILocation loc,
+			final IASTNode hook) {
+		return transform(expr, null, loc, hook, Transformation.DECAY_ARRAY_TO_POINTER, Transformation.SWITCH_TO_RVALUE);
+	}
+
+	public ExpressionResult transformSwitchRexBoolToInt(final ExpressionResult expr, final ILocation loc,
+			final IASTNode hook) {
+		return transform(expr, null, loc, hook, Transformation.SWITCH_TO_RVALUE, Transformation.REX_BOOL_TO_INT);
+	}
+
+	public ExpressionResult transformSwitchRexIntToBool(final ExpressionResult expr, final ILocation loc,
+			final IASTNode hook) {
+		return transform(expr, null, loc, hook, Transformation.SWITCH_TO_RVALUE, Transformation.REX_INT_TO_BOOL);
+	}
+
+	public ExpressionResult switchToRValue(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {
 		final ExpressionResult result;
-		if (old.getLrValue() == null) {
-			return old;
-		} else if (old.getLrValue() instanceof RValue) {
-			final ExpressionResult replaced = replaceCFunctionByCPointer(old);
+		if (expr.getLrValue() == null) {
+			return expr;
+		} else if (expr.getLrValue() instanceof RValue) {
+			final ExpressionResult replaced = replaceCFunctionByCPointer(expr);
 			return replaceEnumByInt(replaced);
-		} else if (old.getLrValue() instanceof LocalLValue) {
-			final CType underlyingType = old.getLrValue().getCType().getUnderlyingType();
-			mCHandler.moveArrayAndStructIdsOnHeap(loc, underlyingType, old.getLrValue().getValue(), old.getAuxVars(),
+		} else if (expr.getLrValue() instanceof LocalLValue) {
+			final CType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
+			mCHandler.moveArrayAndStructIdsOnHeap(loc, underlyingType, expr.getLrValue().getValue(), expr.getAuxVars(),
 					hook);
 
 			final CType resultType;
@@ -171,12 +253,12 @@ public class ExpressionResultTransformer {
 			} else {
 				resultType = underlyingType;
 			}
-			final RValue newRVal = new RValue(((LocalLValue) old.getLrValue()).getValue(), resultType,
-					old.getLrValue().isBoogieBool());
-			result = new ExpressionResultBuilder(old).setOrResetLrValue(newRVal).build();
-		} else if (old.getLrValue() instanceof HeapLValue) {
-			final HeapLValue hlv = (HeapLValue) old.getLrValue();
-			CType underlyingType = old.getLrValue().getCType().getUnderlyingType();
+			final RValue newRVal = new RValue(((LocalLValue) expr.getLrValue()).getValue(), resultType,
+					expr.getLrValue().isBoogieBool());
+			result = new ExpressionResultBuilder(expr).setOrResetLrValue(newRVal).build();
+		} else if (expr.getLrValue() instanceof HeapLValue) {
+			final HeapLValue hlv = (HeapLValue) expr.getLrValue();
+			CType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
 			if (underlyingType instanceof CEnum) {
 				underlyingType = new CPrimitive(CPrimitives.INT);
 			}
@@ -185,27 +267,27 @@ public class ExpressionResultTransformer {
 			if (underlyingType instanceof CPrimitive) {
 				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType, hook);
 				newValue = (RValue) rex.getLrValue();
-				result = new ExpressionResultBuilder().addAllExceptLrValue(old, rex).setLrValue(newValue).build();
+				result = new ExpressionResultBuilder().addAllExceptLrValue(expr, rex).setLrValue(newValue).build();
 			} else if (underlyingType instanceof CPointer) {
 				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType, hook);
 				newValue = (RValue) rex.getLrValue();
-				result = new ExpressionResultBuilder().addAllExceptLrValue(old, rex).setLrValue(newValue).build();
+				result = new ExpressionResultBuilder().addAllExceptLrValue(expr, rex).setLrValue(newValue).build();
 			} else if (underlyingType instanceof CArray) {
 				final CArray cArray = (CArray) underlyingType;
 				newValue = new RValue(hlv.getAddress(), new CPointer(cArray.getValueType()), false, false);
-				result = new ExpressionResultBuilder().addAllExceptLrValue(old).setLrValue(newValue).build();
+				result = new ExpressionResultBuilder().addAllExceptLrValue(expr).setLrValue(newValue).build();
 			} else if (underlyingType instanceof CEnum) {
 				throw new AssertionError("handled above");
 			} else if (underlyingType instanceof CStructOrUnion) {
 				final ExpressionResult rex =
-						readStructFromHeap(old, loc, hlv.getAddress(), (CStructOrUnion) underlyingType, hook);
+						readStructFromHeap(expr, loc, hlv.getAddress(), (CStructOrUnion) underlyingType, hook);
 				newValue = (RValue) rex.getLrValue();
-				result = new ExpressionResultBuilder().addAllExceptLrValue(old, rex).setLrValue(newValue).build();
+				result = new ExpressionResultBuilder().addAllExceptLrValue(expr, rex).setLrValue(newValue).build();
 			} else if (underlyingType instanceof CNamed) {
 				throw new AssertionError("This should not be the case as we took the underlying type.");
 			} else if (underlyingType instanceof CFunction) {
 				newValue = new RValue(hlv.getAddress(), new CPointer(underlyingType), false, false);
-				result = new ExpressionResultBuilder().addAllExceptLrValue(old).setLrValue(newValue).build();
+				result = new ExpressionResultBuilder().addAllExceptLrValue(expr).setLrValue(newValue).build();
 			} else {
 				throw new UnsupportedSyntaxException(loc, "..");
 			}
@@ -232,7 +314,7 @@ public class ExpressionResultTransformer {
 	 * @return A result whose value is a StructConstructor and whose statements make the necessary calls to fill the
 	 *         items inside the StructConstructor correctly
 	 */
-	ExpressionResult readStructFromHeap(final ExpressionResult old, final ILocation loc,
+	private ExpressionResult readStructFromHeap(final ExpressionResult old, final ILocation loc,
 			final Expression structOnHeapAddress, final CStructOrUnion structType, final IASTNode hook) {
 
 		final Expression startAddress = structOnHeapAddress;
@@ -304,8 +386,8 @@ public class ExpressionResultTransformer {
 				}
 
 				final Expression offsetSum = mExprTrans.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-						currentStructOffset, mExprTrans.getCTypeOfPointerComponents(), innerStructOffset.getAddressOffsetAsExpression(loc),
-						mExprTrans.getCTypeOfPointerComponents());
+						currentStructOffset, mExprTrans.getCTypeOfPointerComponents(),
+						innerStructOffset.getAddressOffsetAsExpression(loc), mExprTrans.getCTypeOfPointerComponents());
 				final Expression innerStructAddress =
 						MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, offsetSum, loc);
 
@@ -353,8 +435,8 @@ public class ExpressionResultTransformer {
 	 *
 	 * @return
 	 */
-	ExpressionResult readArrayFromHeap(final ExpressionResult old, final ILocation loc, final Expression address,
-			final CArray arrayType, final IASTNode hook) {
+	private ExpressionResult readArrayFromHeap(final ExpressionResult old, final ILocation loc,
+			final Expression address, final CArray arrayType, final IASTNode hook) {
 		final CType arrayValueType = arrayType.getValueType().getUnderlyingType();
 		if (arrayValueType instanceof CArray) {
 			throw new UnsupportedSyntaxException(loc,
@@ -450,7 +532,7 @@ public class ExpressionResultTransformer {
 	 * int <code>x</code> of form <code>y ? 1 : 0</code> becomes <code>!y ? 1 : 0</code> /** int <code>x</code> becomes
 	 * <code>x == 0 ? 1 : 0</code>
 	 */
-	public ExpressionResult rexIntToBoolIfNecessary(final ExpressionResult old, final ILocation loc) {
+	public ExpressionResult rexIntToBool(final ExpressionResult old, final ILocation loc) {
 		if (!(old.getLrValue() instanceof RValue)) {
 			throw new UnsupportedOperationException("only RValue can switch");
 		}
@@ -465,7 +547,7 @@ public class ExpressionResultTransformer {
 	 * boolean <code>p</code> becomes <code>!p ? 1 : 0</code>
 	 *
 	 */
-	public ExpressionResult rexBoolToIntIfNecessary(final ExpressionResult old, final ILocation loc) {
+	public ExpressionResult rexBoolToInt(final ExpressionResult old, final ILocation loc) {
 		if (old.getLrValue() == null) {
 			/*
 			 * This ExpressionResult does not have a value (for example it may be the translation of a call to a void
@@ -485,10 +567,10 @@ public class ExpressionResultTransformer {
 		return old;
 	}
 
-	public ExpressionResult makeRepresentationReadyForConversionAndRexBoolToIntIfNecessary(final ExpressionResult expr,
-			final CHandler main, final ILocation loc, final CType targetCType, final IASTNode hook) {
-		final ExpressionResult readyExpr = makeRepresentationReadyForConversion(expr, main, loc, targetCType, hook);
-		return rexBoolToIntIfNecessary(readyExpr, loc);
+	public ExpressionResult makeRepresentationReadyForConversionAndRexBoolToInt(final ExpressionResult expr,
+			final ILocation loc, final CType targetCType, final IASTNode hook) {
+		final ExpressionResult readyExpr = makeRepresentationReadyForConversion(expr, loc, targetCType, hook);
+		return rexBoolToInt(readyExpr, loc);
 	}
 
 	/**
@@ -496,16 +578,16 @@ public class ExpressionResultTransformer {
 	 * targetCType. If the targetCType is a pointer or a primitive type and the type of this expression result is an
 	 * {@link CArray} the array is decayed to a pointer, otherwise we just switch to an RValue.
 	 */
-	public ExpressionResult makeRepresentationReadyForConversion(final ExpressionResult expr, final CHandler main,
-			final ILocation loc, final CType targetCType, final IASTNode hook) {
+	public ExpressionResult makeRepresentationReadyForConversion(final ExpressionResult expr, final ILocation loc,
+			final CType targetCType, final IASTNode hook) {
 		if (expr.getLrValue().getCType().getUnderlyingType() instanceof CArray
 				&& (targetCType.getUnderlyingType() instanceof CPointer
 						|| targetCType.getUnderlyingType() instanceof CPrimitive)) {
 			final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(expr);
-			final RValue decayed = main.decayArrayLrValToPointer(loc, expr.getLrValue(), hook);
+			final RValue decayed = mCHandler.decayArrayLrValToPointer(loc, expr.getLrValue(), hook);
 			return erb.setLrValue(decayed).build();
 		}
-		return switchToRValueIfNecessary(expr, loc, hook);
+		return switchToRValue(expr, loc, hook);
 	}
 
 	/**
@@ -549,6 +631,27 @@ public class ExpressionResultTransformer {
 	}
 
 	/**
+	 * If the {@link CType} of is a {@link CArray}, we will return a new {@link ExpressionResult} in which the
+	 * representation was switched from array to pointer. Otherwise this object is returned (without any modifications).
+	 *
+	 * Triggers that the array is moved on heap, if necessary.
+	 *
+	 * (this can be used for example for function parameters, when an array is passed by reference (which is the
+	 * standard case).)
+	 *
+	 */
+	public ExpressionResult decayArrayToPointer(final ExpressionResult result, final ILocation loc,
+			final IASTNode hook) {
+		if (result.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
+			final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+			resultBuilder.addAllExceptLrValue(result);
+			resultBuilder.setLrValue(mCHandler.decayArrayLrValToPointer(loc, result.getLrValue(), hook));
+			return resultBuilder.build();
+		}
+		return result;
+	}
+
+	/**
 	 * Handle implicit conversions according to Section 6.3 of C11.
 	 *
 	 * See also {@link ExpressionTranslation#usualArithmeticConversions(ILocation, ExpressionResult, ExpressionResult)}.
@@ -558,14 +661,15 @@ public class ExpressionResultTransformer {
 	 * {@link ExpressionResult} and add additional objects (statements, auxVars, etc.).
 	 *
 	 */
-	public ExpressionResult convert(final ILocation loc, final ExpressionResult expr, final CType newTypeRaw) {
+	public ExpressionResult performImplicitConversion(final ExpressionResult expr, final CType targetCType,
+			final ILocation loc) {
 		final RValue rValIn = (RValue) expr.getLrValue();
-		final CType newType = newTypeRaw.getUnderlyingType();
+		final CType newType = targetCType.getUnderlyingType();
 
 		final CType oldType = rValIn.getCType().getUnderlyingType();
 
 		final BoogieType oldBoogieType = (BoogieType) expr.getLrValue().getValue().getType();
-		final BoogieType newBoogieType = mTypeHandler.getBoogieTypeForCType(newTypeRaw);
+		final BoogieType newBoogieType = mTypeHandler.getBoogieTypeForCType(targetCType);
 
 		if (TypeHandler.areMatchingTypes(newType, oldType) && oldBoogieType.equals(newBoogieType)) {
 			// types are already identical -- nothing to do
@@ -757,6 +861,29 @@ public class ExpressionResultTransformer {
 			throw new UnsupportedSyntaxException(loc, "conversion from CStruct not implemented.");
 		}
 		throw new AssertionError("unknown type " + newType);
+	}
+
+	/**
+	 * Convert a null pointer constant into a pointer a given pointer type. A null pointer constant can be (at least in
+	 * our translation) a "0" that has integer type or something that has pointer type. TODO 2018-11-17 Matthias: I
+	 * think we need this method an cannot apply the usual conversion since the usual restrictions for
+	 * pointer-to-pointer conversions might be too strict. Furthermore, if (in the future) we take the type information
+	 * from eclipse CDT we might be immediately able to identify the correct type of a "0" in the code.
+	 *
+	 */
+	public ExpressionResult convertNullPointerConstantToPointer(final ExpressionResult nullPointerConstant,
+			final CType desiredResultType, final ILocation loc) {
+		if (nullPointerConstant.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
+			return mExprTrans.convertIntToPointer(loc, nullPointerConstant, (CPointer) desiredResultType);
+		}
+		assert nullPointerConstant.getLrValue().getCType().getUnderlyingType() instanceof CPointer;
+		return nullPointerConstant;
+	}
+
+	@FunctionalInterface
+	private interface ITransformationFunction {
+		ExpressionResult apply(final ExpressionResultTransformer ert, final ExpressionResult expr,
+				final CType targetCType, final ILocation loc, final IASTNode hook);
 	}
 
 }

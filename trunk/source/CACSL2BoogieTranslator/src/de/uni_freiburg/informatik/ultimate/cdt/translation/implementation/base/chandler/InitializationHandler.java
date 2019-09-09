@@ -1237,7 +1237,7 @@ public class InitializationHandler {
 
 		final ExpressionResult er = first.getRootExpressionResult();
 		final ExpressionResult expressionResultSwitched = mExprResultTransformer
-				.makeRepresentationReadyForConversionAndRexBoolToIntIfNecessary(er, mCHandler, loc, targetCType, hook);
+				.makeRepresentationReadyForConversionAndRexBoolToInt(er, loc, targetCType, hook);
 
 		// TODO: 2018-09-05 Matthias: The following workaround may now be not required any more.
 		// 2017-11-19 Matthias: introduced workaround to omit conversion
@@ -1245,7 +1245,7 @@ public class InitializationHandler {
 			// omit conversion
 			return expressionResultSwitched;
 		}
-		return mExprResultTransformer.convert(loc, expressionResultSwitched, targetCType);
+		return mExprResultTransformer.performImplicitConversion(expressionResultSwitched, targetCType, loc);
 
 	}
 

@@ -237,7 +237,7 @@ public class CTranslationUtil {
 			 * Note: C11 6.5.17.2, footnote: A comma operator does not yield an lvalue. --> thus we can immediately
 			 * switch to rvalue here
 			 */
-			newResult.addAllExceptLrValue(transformer.switchToRValueIfNecessary(elem, loc, hook));
+			newResult.addAllExceptLrValue(transformer.switchToRValue(elem, loc, hook));
 		}
 		newResult.setLrValue(listResult.getLast().getLrValue());
 		return newResult.build();

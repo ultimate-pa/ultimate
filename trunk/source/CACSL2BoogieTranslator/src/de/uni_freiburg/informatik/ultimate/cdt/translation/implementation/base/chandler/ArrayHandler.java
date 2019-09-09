@@ -111,9 +111,7 @@ public class ArrayHandler {
 	public ExpressionResult handleArraySubscriptExpression(final IDispatcher main, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final IASTArraySubscriptExpression node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
-
-		ExpressionResult subscript = (ExpressionResult) main.dispatch(node.getArgument());
-		subscript = mExprResultTransformer.switchToRValueAndRexBoolToIntIfNecessary(subscript, loc, node);
+		ExpressionResult subscript = mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getArgument());
 		assert subscript.getLrValue().getCType().isIntegerType();
 
 		ExpressionResult leftExpRes = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
@@ -132,7 +130,7 @@ public class ArrayHandler {
 		final ExpressionResultBuilder result = new ExpressionResultBuilder();
 		if (cTypeLeft instanceof CPointer) {
 			// if p is a pointer, then p[42] is equivalent to *(p + 42)
-			leftExpRes = mExprResultTransformer.switchToRValueIfNecessary(leftExpRes, loc, node);
+			leftExpRes = mExprResultTransformer.switchToRValue(leftExpRes, loc, node);
 			assert cTypeLeft.equals(leftExpRes.getLrValue().getCType());
 			final Expression oldAddress = leftExpRes.getLrValue().getValue();
 			final RValue integer = (RValue) subscript.getLrValue();
