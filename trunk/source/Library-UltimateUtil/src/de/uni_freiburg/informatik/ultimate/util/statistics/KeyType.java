@@ -58,6 +58,7 @@ import java.util.function.BinaryOperator;
 public enum KeyType {
 	COUNTER(Integer.class, Aggregate::intAdd, PrettyPrint::keyColonData),
 	TIMER(Long.class, Aggregate::longAdd, PrettyPrint.dataAsTime(PrettyPrint::keyColonData)),
+	MAX_TIMER(Long.class, Aggregate::longMax, PrettyPrint.dataAsTime(PrettyPrint::keyColonData)),
 	;
 
 	private final Class<?> mDataType;

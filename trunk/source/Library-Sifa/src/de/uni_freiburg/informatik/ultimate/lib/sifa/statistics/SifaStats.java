@@ -41,6 +41,12 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 /**
  * Statistics for Sifa.
  * <p>
+ * Sifa doesn't use the Ultimate's common statistics classes as intended as we would have to create and
+ * return new statistics objects at too many places. In Sifa there is only one statistics object which does
+ * <i>not</i> use the aggregation functions. Aggregation is done in-place inside the statistics object.
+ * This is not pretty, but prettier than the alternative of returning a pair (actual result + statistics)
+ * at every other function.
+ * <p>
  * Stopwatches in this class can be nested like parenthesis, that is stopwatch {@code s} can be used as in
  * {@code start(s); start(s); stop(s); stop(s);}. The measured time is the time between the first {@code start}
  * and its corresponding {@code stop}.
@@ -53,6 +59,7 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 
 	private final Map<Key, Integer> mStopwatchNestingLevels = new EnumMap<>(Key.class);
 	private final Map<Key, Integer> mIntCounters = new EnumMap<>(Key.class);
+	private final Map<Key, MaxTimerData> mMaxTimerData = new EnumMap<>(Key.class);
 
 	@Override
 	public void start(final String stopwatchName) {
@@ -86,6 +93,23 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		mStopwatchNestingLevels.put(stopwatchId, nestingLevel - 1);
 	}
 
+	public void startMax(final Key stopwatchId) {
+		start(stopwatchId);
+	}
+
+	public void stopMax(final Key stopwatchId) {
+		stop(stopwatchId);
+		final long totalTime;
+		try {
+			totalTime = getElapsedTime(stopwatchId.name());
+		} catch (final StopwatchStillRunningException e) {
+			// support nesting only when needed -- at the moment we don't need it
+			throw new AssertionError("Clock still runing after it was stopped. Nesting MaxTimers not supported yet.");
+		}
+		final MaxTimerData old = mMaxTimerData.computeIfAbsent(stopwatchId, key -> new MaxTimerData());
+		old.mMaxTime = Math.max(old.mMaxTime, totalTime - old.mTotalTime);
+		old.mTotalTime = totalTime;
+	}
 
 	@Override
 	public Object getValue(final String keyName) {
@@ -93,7 +117,9 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 	}
 
 	public Object getValue(final Key keyId) {
-		if (keyId.isStopwatch()) {
+		if (keyId.isMaxTimer()) {
+			return mMaxTimerData.computeIfAbsent(keyId, key -> new MaxTimerData()).mMaxTime;
+		} else if (keyId.isStopwatch()) {
 			return valueOfStopwatch(keyId);
 		} else {
 			return valueOfIntCounter(keyId);
@@ -132,6 +158,7 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 
 	@Override
 	public String[] getStopwatches() {
+		// TODO add max timers
 		return Arrays.stream(Key.values())
 				.filter(Key::isStopwatch)
 				.map(Enum::name)
@@ -153,7 +180,9 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		TOOLS_POST_CALL_TIME(KeyType.TIMER),
 		TOOLS_POST_RETURN_APPLICATIONS(KeyType.COUNTER),
 		TOOLS_POST_RETURN_TIME(KeyType.TIMER),
+		TOOLS_QUANTIFIERELIM_APPLICATIONS(KeyType.COUNTER),
 		TOOLS_QUANTIFIERELIM_TIME(KeyType.TIMER),
+		TOOLS_QUANTIFIERELIM_MAX_TIME(KeyType.MAX_TIMER),
 
 		/** Overall time spent answering queries. */
 		FLUID_QUERY_TIME(KeyType.TIMER),
@@ -226,8 +255,17 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 			return mType.prettyPrint(name(), data);
 		}
 
-		public boolean isStopwatch() {
-			return mType == KeyType.TIMER;
+		public boolean isMaxTimer() {
+			return mType == KeyType.MAX_TIMER;
 		}
+
+		public boolean isStopwatch() {
+			return mType == KeyType.TIMER || mType == KeyType.MAX_TIMER;
+		}
+	}
+
+	private static class MaxTimerData {
+		private long mTotalTime;
+		private long mMaxTime;
 	}
 }

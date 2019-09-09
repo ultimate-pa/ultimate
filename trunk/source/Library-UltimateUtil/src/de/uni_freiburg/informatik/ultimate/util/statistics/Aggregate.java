@@ -59,6 +59,10 @@ public final class Aggregate {
 		return (long) lhsLong + (long) rhsLong;
 	}
 
+	public static Long longMax(final Object lhsLong, final Object rhsLong) {
+		return Math.max((long) lhsLong, (long) rhsLong);
+	}
+
 	public static Double doubleAdd(final Object lhsDouble, final Object rhsDouble) {
 		return (double) lhsDouble + (double) rhsDouble;
 	}

@@ -269,10 +269,13 @@ public class SymbolicTools {
 		}
 
 		private Term newQuantifier(final int quantifier, final Set<TermVariable> varsToQuantify, final Term term) {
+			mStats.increment(SifaStats.Key.TOOLS_QUANTIFIERELIM_APPLICATIONS);
+			mStats.startMax(SifaStats.Key.TOOLS_QUANTIFIERELIM_MAX_TIME);
 			mStats.start(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
 			final Term result = PartialQuantifierElimination.quantifier(mServices, mPQELogger, mMgdScript,
 					SimplificationTechnique.NONE, mXnfConversion, quantifier, varsToQuantify, term);
 			mStats.stop(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
+			mStats.stopMax(SifaStats.Key.TOOLS_QUANTIFIERELIM_MAX_TIME);
 			return result;
 		}
 
