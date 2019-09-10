@@ -692,114 +692,11 @@ public class CHandler {
 			return handleRelationalOperators(loc, node.getOperator(), rl, rr);
 		}
 
-		case IASTBinaryExpression.op_logicalAnd: {
-			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexIntToBool(leftOperand, loc, node);
-			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexIntToBool(rightOperand, loc, node);
-
-			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-			// // NOTE: no rr.stmt
-			builder.addAllExceptLrValue(rl);
-			// NOTE: do not unconditionally add rr.stmt as it may be short-circuited
-			builder.addDeclarations(rr.getDeclarations());
-			builder.addAuxVars(rr.getAuxVars());
-			builder.addOverapprox(rr.getOverapprs());
-
-			if (rr.getStatements().isEmpty()) {
-				// no statements in right operands, hence no side effects in
-				// operand
-				// we can directly combine operands with LOGICAND
-				final RValue newRVal = new RValue(
-						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
-								rl.getLrValue().getValue(), rr.getLrValue().getValue()),
-						new CPrimitive(CPrimitive.CPrimitives.INT), true);
-
-				builder.setLrValue(newRVal);
-				return builder.build();
-			}
-			// create and add tmp var #t~AND~UID
-			final CPrimitive intType = new CPrimitive(CPrimitives.INT);
-			final AuxVarInfo resNameAuxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, intType,
-					new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.SHORTCIRCUIT);
-			builder.addDeclaration(resNameAuxvar.getVarDec());
-			builder.addAuxVar(resNameAuxvar);
-			final RValue tmpRval = new RValue(resNameAuxvar.getExp(), intType, true);
-			final RValue resRval = tmpRval;
-			// #t~AND~UID = left
-
-			final AssignmentStatement aStat = StatementFactory.constructAssignmentStatement(loc,
-					new LeftHandSide[] { resNameAuxvar.getLhs() }, new Expression[] { rl.getLrValue().getValue() });
-			for (final Overapprox overapprItem : builder.getOverappr()) {
-				overapprItem.annotate(aStat);
-			}
-			builder.addStatement(aStat);
-			// if (#t~AND~UID) {#t~AND~UID = right;}
-			final ArrayList<Statement> outerThenPart = new ArrayList<>();
-			outerThenPart.addAll(rr.getStatements());
-
-			outerThenPart.add(StatementFactory.constructAssignmentStatement(loc,
-					new LeftHandSide[] { resNameAuxvar.getLhs() }, new Expression[] { rr.getLrValue().getValue() }));
-			final IfStatement ifStatement = new IfStatement(loc, tmpRval.getValue(),
-					outerThenPart.toArray(new Statement[outerThenPart.size()]), new Statement[0]);
-			// stmt.add(ifStatement);
-			builder.addStatement(ifStatement);
-			builder.setLrValue(resRval);
-			return builder.build();
-			// return new ExpressionResult(stmt, resRval, decl, auxVars, overappr);
-		}
+		case IASTBinaryExpression.op_logicalAnd:
 		case IASTBinaryExpression.op_logicalOr: {
 			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexIntToBool(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexIntToBool(rightOperand, loc, node);
-
-			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-
-			// // NOTE: no rr.stmt
-			builder.addAllExceptLrValue(rl);
-			// NOTE: do not unconditionally add rr.stmt as it may be short-circuited
-			builder.addDeclarations(rr.getDeclarations());
-			builder.addAuxVars(rr.getAuxVars());
-			builder.addOverapprox(rr.getOverapprs());
-
-			if (rr.getStatements().isEmpty()) {
-				// no auxVar in operands, hence no side effects in operands
-				// we can directly combine operands with LOGICOR
-				final RValue resultValue = new RValue(
-						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICOR,
-								rl.getLrValue().getValue(), rr.getLrValue().getValue()),
-						new CPrimitive(CPrimitive.CPrimitives.INT), true);
-				builder.setLrValue(resultValue);
-				return builder.build();
-
-			}
-			// create and add tmp var #t~OR~UID
-			final CPrimitive intType = new CPrimitive(CPrimitives.INT);
-			final AuxVarInfo resNameAuxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, intType,
-					new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.SHORTCIRCUIT);
-			builder.addDeclaration(resNameAuxvar.getVarDec());
-			builder.addAuxVar(resNameAuxvar);
-
-			final RValue tmpRval = new RValue(resNameAuxvar.getExp(), intType, true);
-			final RValue resRval = tmpRval;
-			// #t~OR~UID = left
-			final AssignmentStatement aStat = StatementFactory.constructAssignmentStatement(loc,
-					new LeftHandSide[] { resNameAuxvar.getLhs() }, new Expression[] { rl.getLrValue().getValue() });
-			for (final Overapprox overapproxItem : builder.getOverappr()) {
-				overapproxItem.annotate(aStat);
-			}
-			builder.addStatement(aStat);
-			// if (#t~OR~UID) {} else {#t~OR~UID = right;}
-			final ArrayList<Statement> outerElsePart = new ArrayList<>();
-			outerElsePart.addAll(rr.getStatements());
-
-			outerElsePart.add(StatementFactory.constructAssignmentStatement(loc,
-					new LeftHandSide[] { resNameAuxvar.getLhs() }, new Expression[] { rr.getLrValue().getValue() }));
-			final IfStatement ifStatement = new IfStatement(loc, tmpRval.getValue(), new Statement[0],
-					outerElsePart.toArray(new Statement[outerElsePart.size()]));
-			for (final Overapprox overapprItem : builder.getOverappr()) {
-				overapprItem.annotate(ifStatement);
-			}
-			builder.addStatement(ifStatement);
-			builder.setLrValue(resRval);
-			return builder.build();
+			return handleAndOrOperators(loc, node.getOperator(), rl, rr);
 		}
 		case IASTBinaryExpression.op_modulo:
 		case IASTBinaryExpression.op_multiply:
@@ -817,10 +714,8 @@ public class CHandler {
 		}
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_minus: {
-			assert !(leftOperand.getLrValue().getCType() instanceof CArray) || node
-					.getOperator() == IASTBinaryExpression.op_plus : "subtraction is not allowed in pointer arithmetic, right?";
-			assert !(rightOperand.getLrValue().getCType() instanceof CArray) || node
-					.getOperator() == IASTBinaryExpression.op_plus : "subtraction is not allowed in pointer arithmetic, right?";
+			assert checkSubstractPointerArith(node, leftOperand,
+					rightOperand) : "subtraction is not allowed in pointer arithmetic, right?";
 
 			// if we are "adding" arrays, they must be treated as pointers
 			final ExpressionResult rl = mExprResultTransformer.transformDecaySwitchRexBoolToInt(leftOperand, loc, node);
@@ -831,11 +726,8 @@ public class CHandler {
 		}
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_minusAssign: {
-			// if we are "adding" arrays, they must be treated as pointers
-			assert !(leftOperand.getLrValue().getCType() instanceof CArray) || node
-					.getOperator() == IASTBinaryExpression.op_plus : "subtraction is not allowed in pointer arithmetic, right?";
-			assert !(rightOperand.getLrValue().getCType() instanceof CArray) || node
-					.getOperator() == IASTBinaryExpression.op_plus : "subtraction is not allowed in pointer arithmetic, right?";
+			assert checkSubstractPointerArith(node, leftOperand,
+					rightOperand) : "subtraction is not allowed in pointer arithmetic, right?";
 
 			final ExpressionResult rl = mExprResultTransformer.transformDecaySwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr =
@@ -873,6 +765,83 @@ public class CHandler {
 			final String msg = "Unknown or unsupported unary operation";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
+	}
+
+	private static boolean checkSubstractPointerArith(final IASTBinaryExpression node,
+			final ExpressionResult leftOperand, final ExpressionResult rightOperand) {
+		if (!(leftOperand.getLrValue().getCType() instanceof CArray)
+				|| node.getOperator() == IASTBinaryExpression.op_plus) {
+			return true;
+		}
+		return !(rightOperand.getLrValue().getCType() instanceof CArray)
+				|| node.getOperator() == IASTBinaryExpression.op_plus;
+	}
+
+	private Result handleAndOrOperators(final ILocation loc, final int operator, final ExpressionResult rl,
+			final ExpressionResult rr) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+
+		// // NOTE: no rr.stmt
+		builder.addAllExceptLrValue(rl);
+
+		// NOTE: do not unconditionally add rr.stmt as it may be short-circuited
+		builder.addDeclarations(rr.getDeclarations());
+		builder.addAuxVars(rr.getAuxVars());
+		builder.addOverapprox(rr.getOverapprs());
+
+		final BinaryExpression.Operator boogieOp;
+		if (operator == IASTBinaryExpression.op_logicalOr) {
+			boogieOp = BinaryExpression.Operator.LOGICOR;
+		} else if (operator == IASTBinaryExpression.op_logicalAnd) {
+			boogieOp = BinaryExpression.Operator.LOGICAND;
+		} else {
+			throw new IllegalArgumentException("Wrong binary operator " + operator);
+		}
+
+		if (rr.getStatements().isEmpty()) {
+			// no statements in right operands, hence no side effects in operand
+			// we can directly combine operands with LOGICAND/OR
+			final RValue newRVal =
+					new RValue(ExpressionFactory.newBinaryExpression(loc, boogieOp, rl.getLrValue().getValue(),
+							rr.getLrValue().getValue()), new CPrimitive(CPrimitive.CPrimitives.INT), true);
+
+			builder.setLrValue(newRVal);
+			return builder.build();
+		}
+
+		// there are side effects, we have to handle them
+		// create and add shortcircuit "auxvar #t~SHORT~UID"
+		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
+		final AuxVarInfo auxvarInfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, intType,
+				new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.SHORTCIRCUIT);
+		builder.addDeclaration(auxvarInfo.getVarDec());
+		builder.addAuxVar(auxvarInfo);
+		final RValue auxvarRval = new RValue(auxvarInfo.getExp(), intType, true);
+
+		// add auxvar assignment "#t~SHORT~UID = left"
+		final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc,
+				new LeftHandSide[] { auxvarInfo.getLhs() }, new Expression[] { rl.getLrValue().getValue() });
+		builder.addStatementAndAnnotateOverapprox(assignStmt);
+
+		final Statement[] thenPart;
+		final Statement[] elsePart;
+		final List<Statement> tmpList = new ArrayList<>();
+		tmpList.addAll(rr.getStatements());
+		tmpList.add(StatementFactory.constructAssignmentStatement(loc, new LeftHandSide[] { auxvarInfo.getLhs() },
+				new Expression[] { rr.getLrValue().getValue() }));
+		if (boogieOp == Operator.LOGICAND) {
+			// generate "if (#t~SHORT~UID) {#t~SHORT~UID = right;}"
+			thenPart = tmpList.toArray(new Statement[tmpList.size()]);
+			elsePart = new Statement[0];
+		} else {
+			// generate "if (#t~SHORT~UID) {} else {#t~SHORT~UID = right;}"
+			thenPart = new Statement[0];
+			elsePart = tmpList.toArray(new Statement[tmpList.size()]);
+		}
+		final IfStatement ifStatement = new IfStatement(loc, auxvarRval.getValue(), thenPart, elsePart);
+		builder.addStatementAndAnnotateOverapprox(ifStatement);
+		builder.setLrValue(auxvarRval);
+		return builder.build();
 	}
 
 	public Result visit(final IDispatcher main, final IASTBreakStatement node) {

@@ -101,6 +101,21 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
+	public ExpressionResultBuilder addStatementAndAnnotateOverapprox(final Statement stm) {
+		for (final Overapprox overapprox : mOverappr) {
+			overapprox.annotate(stm);
+		}
+		mStatements.add(stm);
+		return this;
+	}
+
+	public <T extends Statement> ExpressionResultBuilder addStatementsAndAnnotateOverapprox(final Collection<T> stms) {
+		for (final T stm : stms) {
+			addStatementAndAnnotateOverapprox(stm);
+		}
+		return this;
+	}
+
 	public ExpressionResultBuilder addDeclaration(final Declaration stm) {
 		mDeclarations.add(stm);
 		return this;
