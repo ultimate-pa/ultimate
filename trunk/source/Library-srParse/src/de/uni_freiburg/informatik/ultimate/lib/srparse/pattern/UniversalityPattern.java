@@ -27,8 +27,6 @@ public class UniversalityPattern extends PatternType {
 
 	@Override
 	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 1 && durations.length == 0;
-
 		final SrParseScope scope = getScope();
 		final CDD S = cdds[0];
 
@@ -79,5 +77,15 @@ public class UniversalityPattern extends PatternType {
 	@Override
 	public PatternType rename(final String newName) {
 		return new UniversalityPattern(getScope(), newName, getCdds(), getDuration());
+	}
+
+	@Override
+	protected int getExpectedCddSize() {
+		return 1;
+	}
+
+	@Override
+	protected int getExpectedDurationSize() {
+		return 0;
 	}
 }

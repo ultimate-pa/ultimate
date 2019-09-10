@@ -93,7 +93,7 @@ public class InitializationPattern extends PatternType {
 	}
 
 	@Override
-	protected CounterTrace transform(CDD[] cdds, int[] durations) {
+	protected CounterTrace transform(final CDD[] cdds, final int[] durations) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -154,5 +154,15 @@ public class InitializationPattern extends PatternType {
 	@Override
 	public PatternType rename(final String newName) {
 		return new InitializationPattern(newName, getType(), getCategory(), getExpression());
+	}
+
+	@Override
+	protected int getExpectedCddSize() {
+		return 0;
+	}
+
+	@Override
+	protected int getExpectedDurationSize() {
+		return 0;
 	}
 }

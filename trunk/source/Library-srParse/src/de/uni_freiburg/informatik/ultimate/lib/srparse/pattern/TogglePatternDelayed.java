@@ -48,8 +48,6 @@ public class TogglePatternDelayed extends PatternType {
 
 	@Override
 	protected CounterTrace transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 3 && durations.length == 1;
-
 		final SrParseScope scope = getScope();
 		final CDD S = cdds[0];
 		final CDD P = cdds[1];
@@ -57,8 +55,8 @@ public class TogglePatternDelayed extends PatternType {
 		final int c1 = durations[0];
 
 		if (scope instanceof SrParseScopeGlob) {
-			return counterTrace(phaseT(), phase(P.and(S)),
-					phase(P.negate(), BoundTypes.GREATEREQUAL, c1), phase(P.negate().and(T.negate())), phaseT());
+			return counterTrace(phaseT(), phase(P.and(S)), phase(P.negate(), BoundTypes.GREATEREQUAL, c1),
+					phase(P.negate().and(T.negate())), phaseT());
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
@@ -88,7 +86,16 @@ public class TogglePatternDelayed extends PatternType {
 	@Override
 	public PatternType rename(final String newName) {
 		return new TogglePatternDelayed(getScope(), newName, getCdds(), getDuration());
+	}
 
+	@Override
+	protected int getExpectedCddSize() {
+		return 3;
+	}
+
+	@Override
+	protected int getExpectedDurationSize() {
+		return 1;
 	}
 
 }

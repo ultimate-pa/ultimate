@@ -26,8 +26,6 @@ public class BndExistencePattern extends PatternType {
 
 	@Override
 	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 1;
-
 		final SrParseScope scope = getScope();
 		// note: Q and R are reserved for scope, cdds are parsed in reverse order
 		final CDD P = cdds[0];
@@ -81,5 +79,15 @@ public class BndExistencePattern extends PatternType {
 	@Override
 	public PatternType rename(final String newName) {
 		return new BndExistencePattern(getScope(), newName, getCdds(), getDuration());
+	}
+
+	@Override
+	protected int getExpectedCddSize() {
+		return 1;
+	}
+
+	@Override
+	protected int getExpectedDurationSize() {
+		return 0;
 	}
 }

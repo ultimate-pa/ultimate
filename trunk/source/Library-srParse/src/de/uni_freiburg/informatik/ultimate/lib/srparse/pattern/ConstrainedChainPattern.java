@@ -20,7 +20,7 @@ public class ConstrainedChainPattern extends PatternType {
 	}
 
 	@Override
-	public CounterTrace transform(CDD[] cdds, int[] durations) {
+	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -53,5 +53,15 @@ public class ConstrainedChainPattern extends PatternType {
 	@Override
 	public PatternType rename(final String newName) {
 		return new ConstrainedChainPattern(getScope(), newName, getCdds(), getDuration());
+	}
+
+	@Override
+	protected int getExpectedCddSize() {
+		return 6;
+	}
+
+	@Override
+	protected int getExpectedDurationSize() {
+		return 0;
 	}
 }

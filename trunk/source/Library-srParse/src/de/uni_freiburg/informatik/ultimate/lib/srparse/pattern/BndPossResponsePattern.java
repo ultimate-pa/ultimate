@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
  * units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class BndPossResponsePattern extends PatternType {
 
@@ -21,7 +21,7 @@ public class BndPossResponsePattern extends PatternType {
 	}
 
 	@Override
-	public CounterTrace transform(CDD[] cdds, int[] durations) {
+	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -48,5 +48,15 @@ public class BndPossResponsePattern extends PatternType {
 	@Override
 	public PatternType rename(final String newName) {
 		return new BndPossResponsePattern(getScope(), newName, getCdds(), getDuration());
+	}
+
+	@Override
+	protected int getExpectedCddSize() {
+		return 2;
+	}
+
+	@Override
+	protected int getExpectedDurationSize() {
+		return 1;
 	}
 }

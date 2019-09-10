@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
-/*
+/**
  * {scope}, if "R" holds, then there is at least one execution sequence such that "S" eventually holds
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -18,7 +18,7 @@ public class PossibilityPattern extends PatternType {
 	}
 
 	@Override
-	public CounterTrace transform(CDD[] cdds, int[] durations) {
+	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
 		throw new PatternScopeNotImplemented(getScope().getClass(), getClass());
 	}
 
@@ -43,5 +43,15 @@ public class PossibilityPattern extends PatternType {
 	@Override
 	public PatternType rename(final String newName) {
 		return new PossibilityPattern(getScope(), newName, getCdds(), getDuration());
+	}
+
+	@Override
+	protected int getExpectedCddSize() {
+		return 2;
+	}
+
+	@Override
+	protected int getExpectedDurationSize() {
+		return 0;
 	}
 }

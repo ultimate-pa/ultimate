@@ -26,8 +26,6 @@ public class PrecedenceChain12Pattern extends PatternType {
 
 	@Override
 	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 3;
-
 		final SrParseScope scope = getScope();
 		// note: Q and R are reserved for scope, cdds are parsed in reverse order
 		final CDD P = cdds[2];
@@ -87,5 +85,15 @@ public class PrecedenceChain12Pattern extends PatternType {
 	@Override
 	public PatternType rename(final String newName) {
 		return new PrecedenceChain12Pattern(getScope(), newName, getCdds(), getDuration());
+	}
+
+	@Override
+	protected int getExpectedCddSize() {
+		return 3;
+	}
+
+	@Override
+	protected int getExpectedDurationSize() {
+		return 0;
 	}
 }

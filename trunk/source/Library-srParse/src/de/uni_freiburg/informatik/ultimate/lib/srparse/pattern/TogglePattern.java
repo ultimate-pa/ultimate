@@ -47,8 +47,6 @@ public class TogglePattern extends PatternType {
 
 	@Override
 	protected CounterTrace transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 3;
-
 		final SrParseScope scope = getScope();
 		final CDD S = cdds[0];
 		final CDD P = cdds[1];
@@ -85,7 +83,16 @@ public class TogglePattern extends PatternType {
 	@Override
 	public PatternType rename(final String newName) {
 		return new TogglePattern(getScope(), newName, getCdds(), getDuration());
+	}
 
+	@Override
+	protected int getExpectedCddSize() {
+		return 3;
+	}
+
+	@Override
+	protected int getExpectedDurationSize() {
+		return 0;
 	}
 
 }

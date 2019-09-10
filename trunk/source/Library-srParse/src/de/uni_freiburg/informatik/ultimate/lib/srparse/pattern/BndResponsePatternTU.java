@@ -49,8 +49,6 @@ public class BndResponsePatternTU extends PatternType {
 
 	@Override
 	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 2 && durations.length == 1;
-
 		final SrParseScope scope = getScope();
 		// note: P and Q are reserved for scope, cdds are parsed in reverse order
 		final CDD R = cdds[1];
@@ -88,5 +86,15 @@ public class BndResponsePatternTU extends PatternType {
 	@Override
 	public PatternType rename(final String newName) {
 		return new BndResponsePatternTU(getScope(), newName, getCdds(), getDuration());
+	}
+
+	@Override
+	protected int getExpectedCddSize() {
+		return 2;
+	}
+
+	@Override
+	protected int getExpectedDurationSize() {
+		return 1;
 	}
 }

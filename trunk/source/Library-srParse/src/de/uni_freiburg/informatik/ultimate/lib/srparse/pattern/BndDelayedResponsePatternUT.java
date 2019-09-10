@@ -92,4 +92,14 @@ public class BndDelayedResponsePatternUT extends PatternType {
 	public PatternType rename(final String newName) {
 		return new BndDelayedResponsePatternUT(getScope(), newName, getCdds(), getDuration());
 	}
+
+	@Override
+	protected int getExpectedCddSize() {
+		return 2;
+	}
+
+	@Override
+	protected int getExpectedDurationSize() {
+		return 2;
+	}
 }

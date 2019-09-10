@@ -66,14 +66,15 @@ public abstract class PatternType {
 		return mScope;
 	}
 
-	protected abstract CounterTrace transform(CDD[] cdds, int[] durations);
-
 	public abstract PatternType rename(String newName);
 
 	public PhaseEventAutomata transformToPea(final ILogger logger, final Map<String, Integer> id2bounds) {
 		if (mPea == null) {
 			final CDD[] cdds = getCddsAsArray();
 			final int[] durations = getDurationsAsIntArray(id2bounds);
+			assert cdds.length == getExpectedCddSize() : "Wrong number of observables for pattern " + getPatternName();
+			assert durations.length == getExpectedDurationSize() : "Wrong number of durations for pattern "
+					+ getPatternName();
 			final CounterTrace ct = transform(cdds, durations);
 			final String name = getId() + "_" + createPeaSuffix();
 			final Trace2PeaCompilerStateless compiler =
@@ -81,6 +82,16 @@ public abstract class PatternType {
 			mPea = compiler.getResult();
 		}
 		return mPea;
+	}
+
+	protected abstract CounterTrace transform(CDD[] cdds, int[] durations);
+
+	protected abstract int getExpectedCddSize();
+
+	protected abstract int getExpectedDurationSize();
+
+	protected String getPatternName() {
+		return getClass().getSimpleName();
 	}
 
 	protected int parseDuration(final String duration, final Map<String, Integer> id2bounds) {
@@ -100,18 +111,6 @@ public abstract class PatternType {
 			}
 			return actualDuration;
 		}
-	}
-
-	private String createPeaSuffix() {
-		final String suffix;
-		if (mScope == null) {
-			suffix = "NoScope";
-		} else {
-			// remove SrParseScope from scope class name
-			suffix = mScope.getClass().getSimpleName().substring(12);
-		}
-		final String className = getClass().getSimpleName();
-		return suffix + "_" + className.replaceAll("Pattern", "");
 	}
 
 	protected static CounterTrace counterTrace(final CounterTrace.DCPhase... phases) {
@@ -156,6 +155,18 @@ public abstract class PatternType {
 
 	protected static CDD cddT() {
 		return CDD.TRUE;
+	}
+
+	private String createPeaSuffix() {
+		final String suffix;
+		if (mScope == null) {
+			suffix = "NoScope";
+		} else {
+			// remove SrParseScope from scope class name
+			suffix = mScope.getClass().getSimpleName().substring(12);
+		}
+		final String className = getClass().getSimpleName();
+		return suffix + "_" + className.replaceAll("Pattern", "");
 	}
 
 	@Override

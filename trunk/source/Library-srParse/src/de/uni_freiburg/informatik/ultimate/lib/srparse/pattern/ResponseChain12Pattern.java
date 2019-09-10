@@ -20,15 +20,11 @@ public class ResponseChain12Pattern extends PatternType {
 
 	@Override
 	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 3;
-
 		final SrParseScope scope = getScope();
 		final CDD P = cdds[2];
 		final CDD S = cdds[1];
 		final CDD T = cdds[0];
-
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
-
 	}
 
 	@Override
@@ -54,5 +50,15 @@ public class ResponseChain12Pattern extends PatternType {
 	@Override
 	public PatternType rename(final String newName) {
 		return new ResponseChain12Pattern(getScope(), newName, getCdds(), getDuration());
+	}
+
+	@Override
+	protected int getExpectedCddSize() {
+		return 3;
+	}
+
+	@Override
+	protected int getExpectedDurationSize() {
+		return 0;
 	}
 }

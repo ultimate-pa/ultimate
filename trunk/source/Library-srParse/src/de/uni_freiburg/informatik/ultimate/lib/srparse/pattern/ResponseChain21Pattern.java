@@ -24,7 +24,7 @@ public class ResponseChain21Pattern extends PatternType {
 	}
 
 	@Override
-	public CounterTrace transform(CDD[] cdds, int[] durations) {
+	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
 		final SrParseScope scope = getScope();
 		final CDD P = getCdds().get(2);
 		final CDD R = scope.getCdd2();
@@ -71,5 +71,15 @@ public class ResponseChain21Pattern extends PatternType {
 	@Override
 	public PatternType rename(final String newName) {
 		return new ResponseChain21Pattern(getScope(), newName, getCdds(), getDuration());
+	}
+
+	@Override
+	protected int getExpectedCddSize() {
+		return 4;
+	}
+
+	@Override
+	protected int getExpectedDurationSize() {
+		return 0;
 	}
 }
