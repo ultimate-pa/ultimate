@@ -50,7 +50,7 @@ public class LoggingScript implements Script {
 	 * The auxiliary class to print terms and sorts.
 	 */
 	private final PrintTerm mTermPrinter = new PrintTerm();
-
+	
 	/**
 	 * Common subexpression elimination support if requeste by user. Will be
 	 * <code>null</code> if cse should not be performed.
@@ -62,31 +62,13 @@ public class LoggingScript implements Script {
 	 * are not supported, e.g., checkSat always returns unknown.  Furthermore,
 	 * common subexpression elimination is not used in the output.
 	 * @param file      The name of the logging file (should end in .smt2).
-	 * @param autoFlush Automatically flush the output stream after every
+	 * @param autoFlush Automatically flush the output stream after every 
 	 *                  command.
 	 * @throws FileNotFoundException If the file cannot be opened.
 	 */
-	public LoggingScript(final String file, final boolean autoFlush)
+	public LoggingScript(String file, boolean autoFlush)
 		throws FileNotFoundException {
 		this (new NoopScript(), file, autoFlush);
-	}
-
-	/**
-	 * Create a new script logging the commands by the user.  Most commands
-	 * are not supported, e.g., checkSat always returns unknown.
-	 * This constructor can be used to set up
-	 * logging using common subexpression elimination.
-	 *
-	 * @param file      The name of the logging file (should end in .smt2).
-	 * @param autoFlush Automatically flush the output stream after every
-	 *                  command.
-	 * @param useCSE    Use common subexpression elimination in output
-	 *                  (introduces let terms)
-	 * @throws FileNotFoundException If the file cannot be opened.
-	 */
-	public LoggingScript(final String file, final boolean autoFlush, final boolean useCSE)
-			throws FileNotFoundException {
-		this (new NoopScript(), file, autoFlush, useCSE);
 	}
 
 	/**
@@ -99,7 +81,7 @@ public class LoggingScript implements Script {
 	 *                  command.
 	 * @throws FileNotFoundException If the file cannot be opened.
 	 */
-	public LoggingScript(final Script script, final String file, final boolean autoFlush)
+	public LoggingScript(Script script, String file, boolean autoFlush)
 		throws FileNotFoundException {
 		this(script, file, autoFlush, false);
 	}
@@ -116,8 +98,8 @@ public class LoggingScript implements Script {
 	 *                  (introduces let terms)
 	 * @throws FileNotFoundException If the file cannot be opened.
 	 */
-	public LoggingScript(final Script script, final String file, final boolean autoFlush,
-			final boolean useCSE)
+	public LoggingScript(Script script, String file, boolean autoFlush,
+			boolean useCSE)
 		throws FileNotFoundException {
 		mScript = script;
 		OutputStream out;
@@ -133,26 +115,26 @@ public class LoggingScript implements Script {
 		mLetter = useCSE ? new FormulaLet() : null;
 	}
 
-	private final Term formatTerm(final Term input) {
+	private final Term formatTerm(Term input) {
 		return mLetter == null ? input : new FormulaLet().let(input);
 	}
 
 	@Override
-	public void setLogic(final String logic)
+	public void setLogic(String logic)
 		throws UnsupportedOperationException, SMTLIBException {
 		mPw.println("(set-logic " + logic + ")");
 		mScript.setLogic(logic);
 	}
-
+	
 	@Override
-	public void setLogic(final Logics logic)
+	public void setLogic(Logics logic)
 		throws UnsupportedOperationException, SMTLIBException {
 		mPw.println("(set-logic " + logic.name() + ")");
 		mScript.setLogic(logic);
 	}
 
 	@Override
-	public void setOption(final String opt, final Object value)
+	public void setOption(String opt, Object value)
 		throws UnsupportedOperationException, SMTLIBException {
 		mPw.print("(set-option ");
 		mPw.print(opt);
@@ -163,7 +145,7 @@ public class LoggingScript implements Script {
 	}
 
 	@Override
-	public void setInfo(final String info, final Object value) {
+	public void setInfo(String info, Object value) {
 		mPw.print("(set-info ");
 		mPw.print(info);
 		mPw.print(' ');
@@ -173,7 +155,7 @@ public class LoggingScript implements Script {
 	}
 
 	@Override
-	public void declareSort(final String sort, final int arity) throws SMTLIBException {
+	public void declareSort(String sort, int arity) throws SMTLIBException {
 		mPw.print("(declare-sort ");
 		mPw.print(PrintTerm.quoteIdentifier(sort));
 		mPw.print(' ');
@@ -183,7 +165,7 @@ public class LoggingScript implements Script {
 	}
 
 	@Override
-	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition)
+	public void defineSort(String sort, Sort[] sortParams, Sort definition)
 		throws SMTLIBException {
 		mPw.print("(define-sort ");
 		mPw.print(PrintTerm.quoteIdentifier(sort));
@@ -201,7 +183,7 @@ public class LoggingScript implements Script {
 	}
 
 	@Override
-	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort)
+	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort)
 		throws SMTLIBException {
 		mPw.print("(declare-fun ");
 		mPw.print(PrintTerm.quoteIdentifier(fun));
@@ -219,8 +201,8 @@ public class LoggingScript implements Script {
 	}
 
 	@Override
-	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort,
-			final Term definition) throws SMTLIBException {
+	public void defineFun(String fun, TermVariable[] params, Sort resultSort,
+			Term definition) throws SMTLIBException {
 		mPw.print("(define-fun ");
 		mPw.print(PrintTerm.quoteIdentifier(fun));
 		mPw.print(" (");
@@ -242,19 +224,19 @@ public class LoggingScript implements Script {
 	}
 
 	@Override
-	public void push(final int levels) throws SMTLIBException {
+	public void push(int levels) throws SMTLIBException {
 		mPw.println("(push " + levels + ")");
 		mScript.push(levels);
 	}
 
 	@Override
-	public void pop(final int levels) throws SMTLIBException {
+	public void pop(int levels) throws SMTLIBException {
 		mPw.println("(pop " + levels + ")");
 		mScript.pop(levels);
 	}
 
 	@Override
-	public LBool assertTerm(final Term term) throws SMTLIBException {
+	public LBool assertTerm(Term term) throws SMTLIBException {
 		mPw.print("(assert ");
 		mTermPrinter.append(mPw, formatTerm(term));
 		mPw.println(")");
@@ -266,9 +248,9 @@ public class LoggingScript implements Script {
 		mPw.println("(check-sat)");
 		return mScript.checkSat();
 	}
-
+	
 	@Override
-	public LBool checkSatAssuming(final Term... assumptions) throws SMTLIBException {
+	public LBool checkSatAssuming(Term... assumptions) throws SMTLIBException {
 		mPw.print("(check-sat-assuming (");
 		String sep = "";
 		for (final Term t : assumptions) {
@@ -301,7 +283,7 @@ public class LoggingScript implements Script {
 	}
 
 	@Override
-	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException,
+	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException,
 			UnsupportedOperationException {
 		mPw.print("(get-value (");
 		String sep = "";
@@ -322,19 +304,19 @@ public class LoggingScript implements Script {
 	}
 
 	@Override
-	public Object getOption(final String opt) throws UnsupportedOperationException {
+	public Object getOption(String opt) throws UnsupportedOperationException {
 		mPw.println("(get-option " + opt + ")");
 		return mScript.getOption(opt);
 	}
 
 	@Override
-	public Object getInfo(final String info) throws UnsupportedOperationException {
+	public Object getInfo(String info) throws UnsupportedOperationException {
 		mPw.println("(get-info " + info + ")");
 		return mScript.getInfo(info);
 	}
 
 	@Override
-	public Term simplify(final Term term) throws SMTLIBException {
+	public Term simplify(Term term) throws SMTLIBException {
 		mPw.print("(simplify ");
 		mTermPrinter.append(mPw, term);
 		mPw.println(")");
@@ -348,7 +330,7 @@ public class LoggingScript implements Script {
 	}
 
 	@Override
-	public Term[] getInterpolants(final Term[] partition) throws SMTLIBException,
+	public Term[] getInterpolants(Term[] partition) throws SMTLIBException,
 			UnsupportedOperationException {
 		mPw.print("(get-interpolants");
 		for (final Term t : partition) {
@@ -358,12 +340,12 @@ public class LoggingScript implements Script {
 		mPw.println(')');
 		return mScript.getInterpolants(partition);
 	}
-
+	
 	// [a,b,c], [0,1,0] -> a (b) c
 	//  c
 	// a b
 	@Override
-	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
+	public Term[] getInterpolants(Term[] partition, int[] startOfSubtree)
 		throws SMTLIBException,	UnsupportedOperationException {
 		mPw.print("(get-interpolants ");
 		mTermPrinter.append(mPw, partition[0]);
@@ -392,88 +374,88 @@ public class LoggingScript implements Script {
 	}
 
 	@Override
-	public Sort sort(final String sortname, final Sort... params) throws SMTLIBException {
+	public Sort sort(String sortname, Sort... params) throws SMTLIBException {
 		return mScript.sort(sortname, params);
 	}
 
 	@Override
-	public Sort sort(final String sortname, final BigInteger[] indices, final Sort... params)
+	public Sort sort(String sortname, BigInteger[] indices, Sort... params)
 		throws SMTLIBException {
 		return mScript.sort(sortname, indices, params);
 	}
 
 	@Override
-	public Term term(final String funcname, final Term... params) throws SMTLIBException {
+	public Term term(String funcname, Term... params) throws SMTLIBException {
 		return mScript.term(funcname, params);
 	}
 
 	@Override
-	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort,
-			final Term... params) throws SMTLIBException {
+	public Term term(String funcname, BigInteger[] indices, Sort returnSort,
+			Term... params) throws SMTLIBException {
 		return mScript.term(funcname, indices, returnSort, params);
 	}
 
 	@Override
-	public TermVariable variable(final String varname, final Sort sort)
+	public TermVariable variable(String varname, Sort sort)
 		throws SMTLIBException {
 		return mScript.variable(varname, sort);
 	}
 
 	@Override
-	public Term quantifier(final int quantor, final TermVariable[] vars, final Term body,
-			final Term[]... patterns) throws SMTLIBException {
+	public Term quantifier(int quantor, TermVariable[] vars, Term body,
+			Term[]... patterns) throws SMTLIBException {
 		return mScript.quantifier(quantor, vars, body, patterns);
 	}
 
 	@Override
-	public Term let(final TermVariable[] vars, final Term[] values, final Term body)
+	public Term let(TermVariable[] vars, Term[] values, Term body)
 		throws SMTLIBException {
 		return mScript.let(vars, values, body);
 	}
 
 	@Override
-	public Term annotate(final Term t, final Annotation... annotations)
+	public Term annotate(Term t, Annotation... annotations)
 		throws SMTLIBException {
 		return mScript.annotate(t, annotations);
 	}
 
 	@Override
-	public Term numeral(final String num) throws SMTLIBException {
+	public Term numeral(String num) throws SMTLIBException {
 		return mScript.numeral(num);
 	}
 
 	@Override
-	public Term numeral(final BigInteger num) throws SMTLIBException {
+	public Term numeral(BigInteger num) throws SMTLIBException {
 		return mScript.numeral(num);
 	}
 
 	@Override
-	public Term decimal(final String decimal) throws SMTLIBException {
+	public Term decimal(String decimal) throws SMTLIBException {
 		return mScript.decimal(decimal);
 	}
 
 	@Override
-	public Term decimal(final BigDecimal decimal) throws SMTLIBException {
+	public Term decimal(BigDecimal decimal) throws SMTLIBException {
 		return mScript.decimal(decimal);
 	}
 
 	@Override
-	public Term string(final String str) throws SMTLIBException {
+	public Term string(String str) throws SMTLIBException {
 		return mScript.string(str);
 	}
 
 	@Override
-	public Term hexadecimal(final String hex) throws SMTLIBException {
+	public Term hexadecimal(String hex) throws SMTLIBException {
 		return mScript.hexadecimal(hex);
 	}
 
 	@Override
-	public Term binary(final String bin) throws SMTLIBException {
+	public Term binary(String bin) throws SMTLIBException {
 		return mScript.binary(bin);
 	}
 
 	@Override
-	public Sort[] sortVariables(final String... names) throws SMTLIBException {
+	public Sort[] sortVariables(String... names) throws SMTLIBException {
 		return mScript.sortVariables(names);
 	}
 
@@ -485,7 +467,7 @@ public class LoggingScript implements Script {
 	}
 
 	@Override
-	public Iterable<Term[]> checkAllsat(final Term[] predicates)
+	public Iterable<Term[]> checkAllsat(Term[] predicates)
 		throws SMTLIBException,	UnsupportedOperationException {
 		final PrintTerm pt = new PrintTerm();
 		mPw.print("(check-allsat (");
@@ -500,7 +482,7 @@ public class LoggingScript implements Script {
 	}
 
 	@Override
-	public Term[] findImpliedEquality(final Term[] x, final Term[] y) {
+	public Term[] findImpliedEquality(Term[] x, Term[] y) {
 		final PrintTerm pt = new PrintTerm();
 		mPw.print("(find-implied-equality (");
 		String spacer = "";
@@ -519,22 +501,22 @@ public class LoggingScript implements Script {
 		mPw.println("))");
 		return mScript.findImpliedEquality(x, y);
 	}
-
+	
 	@Override
-	public QuotedObject echo(final QuotedObject msg) {
+	public QuotedObject echo(QuotedObject msg) {
 		mPw.print("(echo ");
 		mPw.print(msg);
 		mPw.println(')');
 		return mScript.echo(msg);
 	}
-
+	
 	/**
 	 * Write a comment to the generated SMTLIB dump file.  Note that this
 	 * function is only available in the LoggingScript and not in the interface
 	 * {@link Script} since it only makes sense for logging and not for solving.
 	 * @param comment The comment to write to the dump file.
 	 */
-	public void comment(final String comment) {
+	public void comment(String comment) {
 		mPw.print("; ");
 		mPw.println(comment);
 	}
