@@ -2,7 +2,10 @@
 (set-option :produce-unsat-cores true)
 (set-logic ALIA)
 (set-info :source |
-Example that we used to test our support for unsat cores.
+Example that tests our support for unsat cores.
+Since the formula 'potato' is on the assertion stack, the quantifier 
+elimination replaces the formula 'leek' by false. We detect that 'potato' 
+supported the quantifier elimination and add it to the unsatisfiable core.
 2019-06-21, Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 |)
 (set-info :license "https://creativecommons.org/licenses/by/4.0/")
