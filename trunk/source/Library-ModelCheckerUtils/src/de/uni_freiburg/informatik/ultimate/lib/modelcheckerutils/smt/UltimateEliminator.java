@@ -30,6 +30,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -180,6 +184,8 @@ public class UltimateEliminator extends WrapperScript {
 			}
 		}
 		mLogger.info("Computed result: " + result);
+		final IResult ultimateOutput = constructResult("check-sat", String.valueOf(result));
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, ultimateOutput );
 		return result;
 
 	}
@@ -193,6 +199,8 @@ public class UltimateEliminator extends WrapperScript {
 			final Set<Term> result = new HashSet<>();
 			result.addAll(qos.getAdditionalUnsatCoreContent());
 			result.addAll(Arrays.asList(uc));
+			final IResult ultimateOutput = constructResult("get-unsat-core", String.valueOf(result));
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, ultimateOutput );
 			return result.toArray(new Term[result.size()]);
 		}
 		throw new AssertionError("Unsat-core only available in combination with QuantifierOverapproximatingSolver");
@@ -211,4 +219,27 @@ public class UltimateEliminator extends WrapperScript {
 		}
 		return mScript.annotate(t, annotations);
 	}
+
+	@Override
+	public Term simplify(final Term term) throws SMTLIBException {
+		final Term letFree = new FormulaUnLet().transform(term);
+		final Term annotationFree = new AnnotationRemover().transform(letFree);
+		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(annotationFree);
+		final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, unf,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final IResult result = constructResult("simplify", String.valueOf(lessQuantifier));
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result );
+		return lessQuantifier;
+	}
+
+	private IResult constructResult(final String command, final String response) {
+		final String shortDescription = "Response to " + command + " command";
+		final String longDescription = "Response to " + command + " command is: " + response;
+		final Severity severity = Severity.INFO;
+		final IResult ultimateOutput = new GenericResult(Activator.PLUGIN_ID, shortDescription, longDescription,
+				severity);
+		return ultimateOutput;
+	}
+	
+	
 }
