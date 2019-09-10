@@ -125,7 +125,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		THROW_EXCEPTION, CONTINUE
 	}
 
-	private static final boolean USE_INTERPOLATION = true;
+	private static final boolean USE_INTERPOLATION = false;
 	private static final boolean USE_ICFGBUILDER_SOLVER = true;
 
 	/**
@@ -375,6 +375,11 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		mLogger.debug("Begin Blocking Phase: on Level: " + mLevel);
 
 		while (!proofObligations.isEmpty()) {
+
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("# of proof-obligations: " + proofObligations.size());
+			}
+
 			final ProofObligation proofObligation = proofObligations.pop();
 			final IPredicate toBeBlocked = proofObligation.getToBeBlocked();
 			final IcfgLocation location = proofObligation.getLocation();
@@ -385,9 +390,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				mLogger.debug("predecessors: " + location.getIncomingNodes());
 			}
 			for (final IcfgEdge predecessorTransition : location.getIncomingEdges()) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Predecessor Transition: " + predecessorTransition);
-				}
 				final IcfgLocation predecessor = predecessorTransition.getSource();
 				final IPredicate predecessorFrame = mGlobalFrames.get(predecessor).get(level - 1).getSecond();
 				final Triple<IPredicate, IAction, IPredicate> query =
@@ -409,6 +411,14 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
 							.getModifiedBoogieVars(predecessorTransition.getPrecedingProcedure());
 					final UnmodifiableTransFormula predTF = predecessorTransition.getTransformula();
+					/*
+					 * Check frame /\ transtion /\ proofobligation' for satisfiability) Note: the query says
+					 * not(proof-obligation) because of the nature of isInductiveHelper.
+					 */
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(String.format("Checking %s and %s and %s for satisfiability", predecessorFrame,
+								predecessorTransition, toBeBlocked));
+					}
 					final LBool res = PredicateUtils.isInductiveHelper(mScript.getScript(), predecessorFrame,
 							not(toBeBlocked), predTF, modifiableGlobals, modifiableGlobals);
 
@@ -450,7 +460,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 								// final List<IPredicate> predsForDumbPeople = new ArrayList<>();
 								// predsForDumbPeople.add(not(interpolant));
 								// predsForDumbPeople.add(mPredicateUnifier.getOrConstructPredicate(toBeBlocked));
-								updateFrames(interpolant, location, level);
+								final Term pred = SmtUtils.and(mScript.getScript(), not(interpolant).getFormula(),
+										toBeBlocked.getFormula());
+								updateFrames(mPredicateUnifier.getOrConstructPredicate(pred), location, level);
 							} else {
 								updateFrames(toBeBlocked, location, level);
 							}
@@ -524,6 +536,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					predecessorTransition.getTransformula(), frameAndTrans));
 		}
 
+		Term equalities = mTruePred.getFormula();
+
 		final IPredicate frameAndTransPred = mPredicateUnifier.getOrConstructPredicate(frameAndTrans);
 
 		final Set<IProgramVar> ppVars = prePred.getVars();
@@ -540,7 +554,15 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			substitutionMappingPrePred.put(var.getDefaultConstant(), var.getPrimedConstant());
 			reverseMappingPrePred.put(var.getPrimedConstant(), var.getTermVariable());
 		}
+		final ArrayList<Term> tfConstants = new ArrayList<Term>();
+		final ArrayList<Term> tfConstantsPrimed = new ArrayList<Term>();
+		for (final IProgramVar outVar : outVarsTrans.keySet()) {
+			tfConstants.add(outVar.getDefaultConstant());
+			tfConstantsPrimed.add(outVar.getPrimedConstant());
+		}
 
+		equalities = SmtUtils.and(mScript.getScript(), equalities,
+				SmtUtils.pairwiseEquality(mScript.getScript(), tfConstants, tfConstantsPrimed));
 		/*
 		 * Replace outVars with primed constants in frame /\ pred.
 		 */
@@ -554,8 +576,10 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		final Term transformedPrePred =
 				new Substitution(mScript, substitutionMappingPrePred).transform(prePred.getClosedFormula());
 
-		final Term transformedTrans =
+		Term transformedTrans =
 				new Substitution(mScript, substitutionMappingTrans).transform(frameAndTransPred.getClosedFormula());
+		transformedTrans = SmtUtils.and(mScript.getScript(), transformedTrans, equalities);
+		
 
 		final Pair<LBool, Term> interpolPair =
 				SmtUtils.interpolateBinary(mScript.getScript(), transformedTrans, transformedPrePred);
@@ -567,7 +591,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		if (interpolPair.getFirst() == LBool.SAT) {
 			throw new AssertionError(
 					String.format("Wrong interpolation query (is sat): Renamed FrameAndTrans: %s Renamed Pre: %s",
-							transformedTrans, frameAndTransPred.getClosedFormula()));
+							transformedTrans, transformedPrePred));
 		}
 
 		// TODO: The interpolant is now full of variables that are constants and primed
@@ -623,7 +647,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	private void updateFrames(final IPredicate toBeBlocked, final IcfgLocation location, final int level) {
 		for (int i = 0; i <= level; i++) {
 			IPredicate fTerm = mGlobalFrames.get(location).get(i).getSecond();
-			final IPredicate negToBeBlocked = mPredicateUnifier.getPredicateFactory().not(toBeBlocked);
+			final IPredicate negToBeBlocked = not(toBeBlocked);
 			fTerm = mPredicateUnifier.getPredicateFactory().and(fTerm, negToBeBlocked);
 			fTerm = mPredicateUnifier.getOrConstructPredicate(fTerm);
 			mGlobalFrames.get(location).set(i, new Pair<>(ChangedFrame.C, fTerm));
