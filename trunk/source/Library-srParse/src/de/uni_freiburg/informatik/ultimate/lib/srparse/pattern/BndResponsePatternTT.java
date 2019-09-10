@@ -76,11 +76,11 @@ public class BndResponsePatternTT extends PatternType {
 			sb.append(getScope());
 		}
 		sb.append("it is always the case that if \"");
-		sb.append(getCdds().get(0).toBoogieString());
+		sb.append(getCdds().get(1).toBoogieString());
 		sb.append("\" holds for at least \"");
 		sb.append(getDuration().get(0));
 		sb.append("\" time units, then \"");
-		sb.append(getCdds().get(1).toBoogieString());
+		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds afterwards for at least \"");
 		sb.append(getDuration().get(1));
 		sb.append("\" time units");

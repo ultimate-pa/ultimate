@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.MaxDurationPatter
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.MinDurationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PossibilityPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedenceChain12Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedenceChain21Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedencePattern;
@@ -227,9 +228,11 @@ opattern ::= IF expression:p HOLDS COMMA? THEN expression:q PREVIOUSLY HELD
   			| IF expression:p HOLDS AND IS SUCCEEDED BY expression:q COMMA? THEN expression:r EVENTUALLY HOLDS AFTER expression:s
 				{: RESULT = new PatternBuilder(); RESULT.setType(ResponseChain21Pattern.class); RESULT.addCdd(s,r,q,p); :}
   			| IF expression:p HOLDS COMMA? THEN expression:q EVENTUALLY HOLDS AND IS SUCCEEDED BY expression:r WHERE expression:s DOES NOT HOLD BETWEEN expression:t AND expression:u
-				{: RESULT = new PatternBuilder(); RESULT.setType(ConstrainedChainPattern.class); RESULT.addCdd(u,s,t,r,q,p); :}
+				{: RESULT = new PatternBuilder(); RESULT.setType(ConstrainedChainPattern.class); RESULT.addCdd(u,t,s,r,q,p); :}
 			| IF expression:p HOLDS COMMA? THEN expression:s TOGGLES expression:t
       			{: RESULT = new PatternBuilder(); RESULT.setType(TogglePattern.class); RESULT.addCdd(p,s,t); :}
+			| IF expression:p HOLDS COMMA? THEN THERE IS AT LEAST ONE EXECUTION SEQUENCE SUCH THAT expression:q EVENTUALLY HOLDS
+				{: RESULT = new PatternBuilder().setType(PossibilityPattern.class).addCdd(p,q); :}
   			;
   
 rtpattern ::= ONCE expression:p BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST duration:d

@@ -83,7 +83,7 @@ public class BndDelayedResponsePatternUT extends PatternType {
 		sb.append("\" holds after at most \"");
 		sb.append(getDuration().get(0));
 		sb.append("\" time units for at least \"");
-		sb.append(getDuration().get(2));
+		sb.append(getDuration().get(1));
 		sb.append("\" time units");
 		return sb.toString();
 	}

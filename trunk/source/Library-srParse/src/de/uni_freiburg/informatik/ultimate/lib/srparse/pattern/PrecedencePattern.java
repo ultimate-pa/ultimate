@@ -71,7 +71,7 @@ public class PrecedencePattern extends PatternType {
 		sb.append(getCdds().get(1).toBoogieString());
 		sb.append("\" holds, then \"");
 		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\", previously held");
+		sb.append("\" previously held");
 		return sb.toString();
 	}
 

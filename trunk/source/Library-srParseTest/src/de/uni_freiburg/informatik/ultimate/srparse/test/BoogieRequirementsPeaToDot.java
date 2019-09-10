@@ -34,6 +34,23 @@ public class BoogieRequirementsPeaToDot {
 		mServiceProvider = UltimateMocks.createUltimateServiceProviderMock(LogLevel.DEBUG);
 		mLogger = mServiceProvider.getLoggingService().getLogger("");
 
+	}
+
+	private static List<String> getPatterns() {
+		final List<String> result = new ArrayList<>();
+
+		for (final Object[] objects : BoogieRequirementsParserTestAllPatterns.data()) {
+			assert (objects.length == 1);
+
+			final String string = ((Testpurpose) objects[0]).mTestString;
+			result.add(string);
+		}
+
+		return result;
+	}
+
+	@Test
+	public void testDot() throws Exception {
 		final List<String> strings = getPatterns();
 		final String str = strings.get(5);
 
@@ -48,23 +65,5 @@ public class BoogieRequirementsPeaToDot {
 		final PhaseEventAutomata pea = patterns[0].transformToPea(mLogger, new HashMap<String, Integer>());
 
 		DotWriterNew.write("/home/ubuntu/Schreibtisch/graph.dot", true, pea, mLogger);
-	}
-
-	private List<String> getPatterns() {
-		final List<String> result = new ArrayList<>();
-
-		for (final Object[] objects : BoogieRequirementsParserTestAllPatterns.data()) {
-			assert (objects.length == 1);
-
-			final String string = ((Testpurpose) objects[0]).mTestString;
-			result.add(string);
-		}
-
-		return result;
-	}
-
-	@Test
-	public void test() {
-		mLogger.info("hello world");
 	}
 }

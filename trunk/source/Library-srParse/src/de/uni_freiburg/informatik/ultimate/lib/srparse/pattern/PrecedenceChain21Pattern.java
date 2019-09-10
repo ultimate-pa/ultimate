@@ -71,7 +71,7 @@ public class PrecedenceChain21Pattern extends PatternType {
 		sb.append(getCdds().get(2).toBoogieString());
 		sb.append("\" holds, then \"");
 		sb.append(getCdds().get(1).toBoogieString());
-		sb.append("\", previously held and was preceded by \"");
+		sb.append("\" previously held and was preceded by \"");
 		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\"");
 		return sb.toString();

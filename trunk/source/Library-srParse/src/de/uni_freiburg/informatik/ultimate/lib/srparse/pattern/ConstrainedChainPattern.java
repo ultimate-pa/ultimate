@@ -40,7 +40,7 @@ public class ConstrainedChainPattern extends PatternType {
 		sb.append(getCdds().get(4).toBoogieString());
 		sb.append("\" eventually holds and is succeeded by \"");
 		sb.append(getCdds().get(3).toBoogieString());
-		sb.append("\", where \"");
+		sb.append("\" where \"");
 		sb.append(getCdds().get(2).toBoogieString());
 		sb.append("\" does not hold between \"");
 		sb.append(getCdds().get(1).toBoogieString());
