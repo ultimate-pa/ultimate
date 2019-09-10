@@ -35,7 +35,7 @@ public class BndPossResponsePattern extends PatternType {
 		if (getScope() != null) {
 			sb.append(getScope());
 		}
-		sb.append("if \"");
+		sb.append("it is always the case that if \"");
 		sb.append(getCdds().get(1).toBoogieString());
 		sb.append("\" holds, then there is at least one execution sequence such that \"");
 		sb.append(getCdds().get(0).toBoogieString());
