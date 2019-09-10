@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
@@ -15,8 +14,6 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompilerStateless;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 public abstract class PatternType {
-	protected static final CDD DEFAULT_Q = BooleanDecision.create("Q");
-	protected static final CDD DEFAULT_R = BooleanDecision.create("R");
 
 	// contains all CDDs from the pattern in reverse order
 	private final List<CDD> mCdds;
@@ -86,9 +83,9 @@ public abstract class PatternType {
 
 	protected abstract CounterTrace transform(CDD[] cdds, int[] durations);
 
-	protected abstract int getExpectedCddSize();
+	public abstract int getExpectedCddSize();
 
-	protected abstract int getExpectedDurationSize();
+	public abstract int getExpectedDurationSize();
 
 	protected String getPatternName() {
 		return getClass().getSimpleName();

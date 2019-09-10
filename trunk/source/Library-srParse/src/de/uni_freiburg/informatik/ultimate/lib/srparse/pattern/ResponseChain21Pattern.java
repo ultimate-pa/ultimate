@@ -74,12 +74,12 @@ public class ResponseChain21Pattern extends PatternType {
 	}
 
 	@Override
-	protected int getExpectedCddSize() {
+	public int getExpectedCddSize() {
 		return 4;
 	}
 
 	@Override
-	protected int getExpectedDurationSize() {
+	public int getExpectedDurationSize() {
 		return 0;
 	}
 }

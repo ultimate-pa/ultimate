@@ -81,12 +81,12 @@ public class BndReccurrencePattern extends PatternType {
 	}
 
 	@Override
-	protected int getExpectedCddSize() {
+	public int getExpectedCddSize() {
 		return 1;
 	}
 
 	@Override
-	protected int getExpectedDurationSize() {
+	public int getExpectedDurationSize() {
 		return 1;
 	}
 }

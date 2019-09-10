@@ -83,12 +83,12 @@ public class PrecedenceChain21Pattern extends PatternType {
 	}
 
 	@Override
-	protected int getExpectedCddSize() {
+	public int getExpectedCddSize() {
 		return 3;
 	}
 
 	@Override
-	protected int getExpectedDurationSize() {
+	public int getExpectedDurationSize() {
 		return 0;
 	}
 }

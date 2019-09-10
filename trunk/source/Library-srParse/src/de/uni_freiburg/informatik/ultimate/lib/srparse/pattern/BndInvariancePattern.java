@@ -88,12 +88,12 @@ public class BndInvariancePattern extends PatternType {
 	}
 
 	@Override
-	protected int getExpectedCddSize() {
+	public int getExpectedCddSize() {
 		return 2;
 	}
 
 	@Override
-	protected int getExpectedDurationSize() {
+	public int getExpectedDurationSize() {
 		return 1;
 	}
 }

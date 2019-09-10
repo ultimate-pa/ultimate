@@ -20,6 +20,21 @@ public abstract class SrParseScope {
 		return mCdd2;
 	}
 
+	/**
+	 *
+	 * @return number of available observables
+	 */
+	public int getSize() {
+		int i = 0;
+		if (mCdd1 != null) {
+			i++;
+		}
+		if (mCdd2 != null) {
+			i++;
+		}
+		return i;
+	}
+
 	@Override
 	public abstract String toString();
 
