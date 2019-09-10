@@ -1203,7 +1203,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			return false;
 		}
 
-		if (!ReflectionUtil.classImplementsInterface(clazz, IOperation.class)) {
+		if (!ReflectionUtil.isClassImplementingInterface(clazz, IOperation.class)) {
 			return false;
 		}
 

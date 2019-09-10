@@ -36,54 +36,118 @@ public class ReflectionutilsTest {
 
 	@Test
 	public void loadInterfaceImplementingClasses() {
-		Set<Class<?>> classes = Collections.emptySet();
+		Set<Class<? extends ITestInterface>> classes = Collections.emptySet();
 		try {
 			classes = ReflectionUtil.getClassesImplementingInterfaceFromFolder(ITestInterface.class);
 		} catch (final Throwable e) {
 			e.printStackTrace();
 		}
-		Assert.assertTrue("", classes.contains(TestInterfaceImplementation.class));
+		Assert.assertTrue(classes == null ? "[]" : classes.toString(),
+				classes.contains(TestInterfaceImplementation.class));
 	}
 
 	@Test
 	public void instantiateStaticInnerClass() {
 		ITestInterface instance = null;
 		try {
-			instance = ReflectionUtil.instantiate(TestInterfaceImplementationStatic.class);
+			instance = ReflectionUtil.instantiateClass(TestInterfaceImplementationStatic.class);
 		} catch (final Throwable e) {
 			e.printStackTrace();
 		}
-		Assert.assertTrue("", instance != null);
+		Assert.assertTrue("instance is null", instance != null);
 	}
 
 	@Test
 	public void instantiateNonStaticInnerClass() {
 		ITestInterface instance = null;
 		try {
-			instance = ReflectionUtil.instantiate(TestInterfaceImplementation.class);
+			instance = ReflectionUtil.instantiateClass(TestInterfaceImplementation.class);
 		} catch (final Throwable e) {
 			e.printStackTrace();
 		}
-		Assert.assertTrue("", instance != null);
+		Assert.assertTrue("instance is null", instance != null);
+	}
+
+	@Test
+	public void instantiateWithParamsTwoInt() {
+		ITestInterface instance = null;
+		try {
+			instance = ReflectionUtil.instantiateClass(TestInterfaceImplManyConstructors.class, 1, 2, 3);
+		} catch (final Throwable e) {
+			e.printStackTrace();
+		}
+		Assert.assertTrue("instance is null", instance != null);
+		Assert.assertTrue("instance is null", "IntIntInt".equals(instance.doIt()));
+	}
+
+	@Test
+	public void instantiateWithParamsOneObject() {
+		ITestInterface instance = null;
+		try {
+			instance = ReflectionUtil.instantiateClass(TestInterfaceImplManyConstructors.class, new Object());
+		} catch (final Throwable e) {
+			e.printStackTrace();
+		}
+		Assert.assertTrue("instance is null", instance != null);
+		Assert.assertTrue("instance is null", "Object".equals(instance.doIt()));
+	}
+
+	@Test
+	public void instantiateWithParamsOneNull() {
+		ITestInterface instance = null;
+		try {
+			instance = ReflectionUtil.instantiateClass(TestInterfaceImplManyConstructors.class, new Object[] { null });
+		} catch (final Throwable e) {
+			e.printStackTrace();
+		}
+		Assert.assertTrue("instance is null", instance != null);
+		Assert.assertTrue("instance is null", "Object".equals(instance.doIt()));
 	}
 
 	public interface ITestInterface {
-		public void doIt();
+		public String doIt();
 	}
 
 	public class TestInterfaceImplementation implements ITestInterface {
 
 		@Override
-		public void doIt() {
-			System.out.println("Doing it");
+		public String doIt() {
+			return "Doing it";
 		}
 	}
 
 	public static class TestInterfaceImplementationStatic implements ITestInterface {
 
 		@Override
-		public void doIt() {
-			System.out.println("Doing it");
+		public String doIt() {
+			return "Doing it statically";
 		}
+	}
+
+	public static class TestInterfaceImplManyConstructors implements ITestInterface {
+
+		private final String mMsg;
+
+		public TestInterfaceImplManyConstructors(final Object x) {
+			mMsg = "Object";
+		}
+
+		public TestInterfaceImplManyConstructors(final Object x, final int y) {
+			mMsg = "ObjectInt";
+		}
+
+		public TestInterfaceImplManyConstructors(final int x, final int y) {
+			mMsg = "IntInt";
+		}
+
+		public TestInterfaceImplManyConstructors(final int x, final int y, final int z) {
+			mMsg = "IntIntInt";
+		}
+
+		@Override
+		public String doIt() {
+			return mMsg;
+		}
+
 	}
 }
