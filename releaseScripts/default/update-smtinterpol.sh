@@ -84,6 +84,8 @@ if git apply --check --directory=trunk/source/ "$dir_smtinterpol/smtinterpol.dif
 	git commit -a -m"Updated SMTInterpol to $smtinterpol_cur"
 else
 	echo "Problems applying the patch, please check manually"
+    echo "git apply --check --directory=trunk/source/ $dir_smtinterpol/smtinterpol.diff failed"
+    echo "Commit message should be: Updated SMTInterpol to $smtinterpol_cur"
 	echo "Patch file is $dir_smtinterpol/smtinterpol.diff"
 fi
 
