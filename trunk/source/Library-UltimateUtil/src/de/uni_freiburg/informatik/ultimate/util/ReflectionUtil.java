@@ -142,8 +142,13 @@ public class ReflectionUtil {
 			return Collections.emptySet();
 		}
 
+		final List<ClassLoader> loaders = getClassLoaders(anchorClazz);
 		for (final File file : files) {
-			final Class<? extends T> clazz = retrieveClassFromFile(packageName, file, anchorClazz);
+			if (!file.getName().endsWith(".class")) {
+				continue;
+			}
+			@SuppressWarnings("unchecked")
+			final Class<? extends T> clazz = (Class<? extends T>) getClassFromFile(packageName, file, loaders);
 			if (clazz == null) {
 				continue;
 			}
@@ -276,7 +281,7 @@ public class ReflectionUtil {
 
 	/**
 	 * Return the filenames of the files specified by the given resource URL. We use the classloader to get the URL of
-	 * this folder. We support only URLs with protocol <i>file</i>.
+	 * this folder. We support only URLs with protocol <i>file</i> or <i>bundleresource</i>.
 	 */
 	private static Collection<File> getFilesFromDirectoryResource(final ClassLoader loader, final URL url) {
 		final String protocol = url.getProtocol();
@@ -312,32 +317,47 @@ public class ReflectionUtil {
 		return Modifier.isAbstract(clazz.getModifiers());
 	}
 
-	private static <T> Class<? extends T> retrieveClassFromFile(final String packageName, final File file,
-			final Class<T> interfaceClazz) {
-		if (!file.getName().endsWith(".class")) {
-			return null;
-		}
-		@SuppressWarnings("unchecked")
-		final Class<? extends T> clazz = (Class<? extends T>) getClassFromFile(packageName, file);
-		if (clazz == null) {
-			return null;
-		}
-		return clazz;
+	private static Class<?> getClassFromFile(final String packageName, final File file) {
+		return getClassFromFile(packageName, file, Collections.emptyList());
 	}
 
-	private static Class<?> getClassFromFile(final String packageName, final File file) {
+	private static Class<?> getClassFromFile(final String packageName, final File file,
+			final Collection<ClassLoader> loaders) {
 		final String qualifiedName = getQualifiedNameFromFile(packageName, file);
-		return getClassFromQualifiedName(qualifiedName);
+		if (loaders.isEmpty()) {
+			return getClassFromQualifiedName(qualifiedName);
+		}
+		for (final ClassLoader loader : loaders) {
+			final Class<?> clazz = getClassFromQualifiedName(qualifiedName, loader);
+			if (clazz != null) {
+				return clazz;
+			}
+		}
+		throw new ReflectionUtilException("Could not extract Class<?> from qualified name " + qualifiedName);
 	}
 
 	/**
 	 * Create a {@link Class} instance from a fully qualified name
 	 */
-	public static Class<?> getClassFromQualifiedName(final String qualifiedName) {
+	private static Class<?> getClassFromQualifiedName(final String qualifiedName) {
 		try {
 			return Class.forName(qualifiedName);
 		} catch (final ClassNotFoundException e) {
 			throw new ReflectionUtilException("Could not extract Class<?> from qualified name " + qualifiedName, e);
+		}
+	}
+
+	/**
+	 * Create a {@link Class} instance from a fully qualified name and a given classloader. Do not throw an exception,
+	 * but let the caller do that.
+	 *
+	 * @param loader
+	 */
+	private static Class<?> getClassFromQualifiedName(final String qualifiedName, final ClassLoader loader) {
+		try {
+			return Class.forName(qualifiedName, true, loader);
+		} catch (final ClassNotFoundException e) {
+			return null;
 		}
 	}
 
@@ -375,10 +395,24 @@ public class ReflectionUtil {
 		return loader;
 	}
 
+	private static List<ClassLoader> getClassLoaders(final Class<?> clazz) {
+		final List<ClassLoader> rtr = new ArrayList<>();
+		ClassLoader loader = clazz.getClassLoader();
+		if (loader == null) {
+			// Try the bootstrap classloader - obtained from the ultimate parent of the System Class Loader.
+			loader = ClassLoader.getSystemClassLoader();
+		}
+		while (loader != null) {
+			rtr.add(loader);
+			loader = loader.getParent();
+		}
+		return rtr;
+	}
+
 	/**
 	 * Return the contents of the folder from which this class was loaded.
 	 */
-	public static Collection<File> getFolderContentsFromClass(final Class<?> clazz) {
+	private static Collection<File> getFolderContentsFromClass(final Class<?> clazz) {
 		if (clazz == null) {
 			return null;
 		}
@@ -401,35 +435,6 @@ public class ReflectionUtil {
 		final List<File> rtr = new ArrayList<>();
 		while (resourceUrlsIter.hasMoreElements()) {
 			final URL resourceUrl = resourceUrlsIter.nextElement();
-
-			// if ("file".equals(resourceUrl.getProtocol())) {
-			// InputStream in = null;
-			// try {
-			// in = resourceUrl.openStream();
-			// if (in != null) {
-			// final BufferedReader br = new BufferedReader(new InputStreamReader(in));
-			// String resource = br.readLine();
-			// while (resource != null) {
-			// filenames.add(packagePath + File.separator + resource);
-			// resource = br.readLine();
-			// }
-			// }
-			// } catch (final IOException e) {
-			// throw new ReflectionUtilException("Could not read from or open stream for resource " + resourceUrl
-			// + " after already reading " + filenames.size() + " files", e);
-			// } finally {
-			// if (in != null) {
-			// try {
-			// in.close();
-			// } catch (final IOException e) {
-			// throw new ReflectionUtilException(
-			// "Expcetion during closing of resource input stream " + resourceUrl, e);
-			// }
-			// }
-			// }
-			// } else {
-			//
-			// }
 			rtr.addAll(getFilesFromDirectoryResource(loader, resourceUrl));
 		}
 		return rtr;
