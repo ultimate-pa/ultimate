@@ -29,11 +29,14 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterm
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubtermPropertyChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AbstractGeneralizedAffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 
 /**
@@ -42,19 +45,34 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class PolynomialRelation extends AbstractGeneralizedaAffineRelation<AbstractGeneralizedAffineTerm<Term>, Term> {
+public class PolynomialRelation extends AbstractGeneralizedAffineRelation<AbstractGeneralizedAffineTerm<Term>, Term> {
 
-	//TODO: Ask Matthias whether really only AffineTerm is allowed in the constructors.
-	public PolynomialRelation(final Script script, final AffineTerm term, final RelationSymbol relationSymbol) {
-		super(script, term, relationSymbol);
+	public PolynomialRelation(final Script script, final AbstractGeneralizedAffineTerm<?> term, final RelationSymbol relationSymbol) {
+		super(script, checkThenCast(term), relationSymbol);
 	}
-
+	
 	public PolynomialRelation(final Script script, final TransformInequality transformInequality,
-			final RelationSymbol relationSymbol, final AffineTerm affineLhs, final AffineTerm affineRhs,
-			final Term term) {
-		super(script, transformInequality, relationSymbol, affineLhs, affineRhs, term);
+			final RelationSymbol relationSymbol, final AbstractGeneralizedAffineTerm<?> polyLhs, 
+			final AbstractGeneralizedAffineTerm<?> polyRhs, final Term term) {
+		super(script, transformInequality, relationSymbol, checkThenCast(polyLhs), checkThenCast(polyRhs), term);
 	}
 
+	/**
+	 * Given a AbstractGeneralizedAffineTerm, check whether it is of Type AffineTerm and PolynomialTerm.
+	 * If yes, cast it (UNSAFE) and return the result, throw an exception otherwise.
+	 */
+	private static AbstractGeneralizedAffineTerm<Term> checkThenCast(AbstractGeneralizedAffineTerm<?> poly){
+		if (!(poly instanceof AffineTerm || poly instanceof PolynomialTerm)) {
+			throw new IllegalArgumentException("PolynomialRelation accepts only AffineTerm and PolynomialTerm as internal terms.");
+		}
+		return unsafeCast(poly);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private static AbstractGeneralizedAffineTerm<Term> unsafeCast(AbstractGeneralizedAffineTerm<?> poly) {
+		return (AbstractGeneralizedAffineTerm<Term>) poly;
+	}
+	
 //	static AffineTerm transformToAffineTerm(final Script script, final Term term) {
 //		return (AffineTerm) new AffineTermTransformer(script).transform(term);
 //	}
@@ -66,14 +84,21 @@ public class PolynomialRelation extends AbstractGeneralizedaAffineRelation<Abstr
 			result = AffineTerm.sum(op1, op2);
 		} else {
 			final AbstractGeneralizedAffineTerm<?> polynomialSum = PolynomialTerm.sum(op1, op2);
-			result = (AbstractGeneralizedAffineTerm<Term>) polynomialSum;
+			result = unsafeCast(polynomialSum);
 		}
 		return result;
 	}
 
 	@Override
 	protected AbstractGeneralizedAffineTerm<Term> mul(final AbstractGeneralizedAffineTerm<Term> op, final Rational r) {
-		return AffineTerm.mul(op, r);
+		final AbstractGeneralizedAffineTerm<Term> result;
+		if (op.isAffine()) {
+			result = AffineTerm.mul(op, r);
+		} else {
+			final AbstractGeneralizedAffineTerm<?> polynomialSum = PolynomialTerm.mul(op, r);
+			result = unsafeCast(polynomialSum);
+		}
+		return result;
 	}
 
 	@Override
@@ -88,9 +113,9 @@ public class PolynomialRelation extends AbstractGeneralizedaAffineRelation<Abstr
 	@Override
 	protected Term getTheAbstractVarOfSubject(final Term subject) {
 		if (mAffineTerm.isAffine()) {
-			return getMonomialOfSubject(subject);
-		}else {
 			return getVarOfSubject(subject);
+		}else {
+			return getMonomialOfSubject(subject);
 		}
 	}
 
@@ -155,21 +180,29 @@ public class PolynomialRelation extends AbstractGeneralizedaAffineRelation<Abstr
 		return abstractVarOfSubject;
 	}
 
-//	public static PolynomialRelation convert(final Script script, final Term term,
-//			final TransformInequality transformInequality) {
-//		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
-//		if (bnr == null) {
-//			return null;
-//		}
-//		final Term lhs = bnr.getLhs();
-//		final Term rhs = bnr.getRhs();
-//		final AffineTerm affineLhs = transformToAffineTerm(script, lhs);
-//		final AffineTerm affineRhs = transformToAffineTerm(script, rhs);
-//		if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
-//			return null;
-//		}
-//		final RelationSymbol relationSymbol = bnr.getRelationSymbol();
-//		return new PolynomialRelation(script, transformInequality, relationSymbol, affineLhs, affineRhs, term);
-//	}
+	public static PolynomialRelation convert(final Script script, final Term term) {
+		return convert(script, term, TransformInequality.NO_TRANFORMATION);
+	}
+	
+	public static PolynomialRelation convert(final Script script, final Term term,
+			final TransformInequality transformInequality) {
+		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
+		if (bnr == null) {
+			return null;
+		}
+		final Term lhs = bnr.getLhs();
+		final Term rhs = bnr.getRhs();
+		final AbstractGeneralizedAffineTerm<?> polyLhs = transformToPolynomialTerm(script, lhs);
+		final AbstractGeneralizedAffineTerm<?> polyRhs = transformToPolynomialTerm(script, rhs);
+		if (polyLhs.isErrorTerm() || polyRhs.isErrorTerm()) {
+			return null;
+		}
+		final RelationSymbol relationSymbol = bnr.getRelationSymbol();
+		return new PolynomialRelation(script, transformInequality, relationSymbol, polyLhs, polyRhs, term);
+	}
+
+	static AbstractGeneralizedAffineTerm<?> transformToPolynomialTerm(final Script script, final Term term) {
+		return (AbstractGeneralizedAffineTerm<?>) new PolynomialTermTransformer(script).transform(term);
+	}
 
 }

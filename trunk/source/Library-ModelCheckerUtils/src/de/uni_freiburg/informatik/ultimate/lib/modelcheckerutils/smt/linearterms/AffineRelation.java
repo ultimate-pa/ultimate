@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  *
  * @author Matthias Heizmann, Max Barth
  */
-public class AffineRelation extends AbstractGeneralizedaAffineRelation<AffineTerm, Term> {
+public class AffineRelation extends AbstractGeneralizedAffineRelation<AffineTerm, Term> {
 
 	public AffineRelation(final Script script, final AffineTerm term, final RelationSymbol relationSymbol) {
 		super(script, term, relationSymbol);

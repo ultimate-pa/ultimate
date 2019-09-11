@@ -124,13 +124,14 @@ public class PolynomialTermUtils {
 
 	/**
 	 * Returns a shrinked version of a map if possible. Returns the given map otherwise.
+	 * @param <K>
 	 */
-	public static <MNL extends Term> Map<MNL, Rational> shrinkMap(final Map<MNL, Rational> map) {
+	public static <K, V> Map<K, V> shrinkMap(final Map<K, V> map) {
 		if (map.size() == 0) {
 			return Collections.emptyMap();
 		}
 		else if (map.size() == 1) {
-			final Entry<MNL, Rational> entry = map.entrySet().iterator().next();
+			final Entry<K, V> entry = map.entrySet().iterator().next();
 			return Collections.singletonMap(entry.getKey(), entry.getValue());
 		}
 		return map;

@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterm
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -22,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
-public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGeneralizedAffineTerm<AVAR>, AVAR extends Term>
+public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGeneralizedAffineTerm<AVAR>, AVAR extends Term>
 		implements IBinaryRelation {
 
 	protected static final String NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE = "No affine representation where desired variable is on left hand side";
@@ -51,7 +52,7 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 	 *
 	 * Resulting relation is then <code><term> <symbol> 0</code>.
 	 */
-	public AbstractGeneralizedaAffineRelation(final Script script, final AGAT term,
+	public AbstractGeneralizedAffineRelation(final Script script, final AGAT term,
 			final RelationSymbol relationSymbol) {
 		mAffineTerm = Objects.requireNonNull(term);
 		mRelationSymbol = relationSymbol;
@@ -65,7 +66,7 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 		}
 	}
 
-	protected AbstractGeneralizedaAffineRelation(final Script script, final TransformInequality transformInequality,
+	protected AbstractGeneralizedAffineRelation(final Script script, final TransformInequality transformInequality,
 			final RelationSymbol relationSymbol, final AGAT affineLhs, final AGAT affineRhs, final Term originalTerm) {
 		mOriginalTerm = originalTerm;
 		final AGAT difference = sum(affineLhs, mul(affineRhs, Rational.MONE));
@@ -303,8 +304,8 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 
 		final Term simpliySolvableRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 				coeffOfSubject);
-		final Map<AssumptionForSolvability, Term> assumptionsMap;
-		final Term rhsTerm;
+		Map<AssumptionForSolvability, Term> assumptionsMap;
+		Term rhsTerm;
 		if (simpliySolvableRhsTerm == null) {
 			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 					Rational.ONE);
@@ -334,9 +335,43 @@ public abstract class AbstractGeneralizedaAffineRelation<AGAT extends AbstractGe
 		}
 
 		// TODO 2019-06-10 Matthias:
-		// Add here some code for polynominals where we have to try to divide by the
+		// Add here some code for polynomials where we have to try to divide by the
 		// other variables in the monomial
-
+		if (abstractVarOfSubject instanceof Monomial) {
+			Map<AssumptionForSolvability, Term> assumptionsMapTwo = new HashMap<>();
+			for (final Entry<AssumptionForSolvability, Term> assu2term : assumptionsMap.entrySet()) {
+				assumptionsMapTwo.put(assu2term.getKey(), assu2term.getValue());
+			}
+			for (final Entry<Term, Rational> var2exp : ((Monomial) abstractVarOfSubject).getVariable2Exponent().entrySet()) {
+				if (var2exp.getKey() == subject) {
+					//do nothing
+				}else {
+					//TODO: Bitvector sort, Integer Sort. I think for Integer Sort we need more types of Assumptions.
+					if (SmtSortUtils.isRealSort(mAffineTerm.getSort())){
+						assert var2exp.getValue().isIntegral();
+						// TODO: Ask Matthias about whether it is to be expected that the implementation of isintegral changes.
+						// Because then this could be made easier.
+						final int exponent = var2exp.getValue().numerator().divide(var2exp.getValue().denominator()).intValue();
+						final Term power;
+						if (exponent > 2) {
+							final Term[] factors = new Term[exponent];
+							for (int i = 0; i < exponent; i++) {
+								factors[i] = var2exp.getKey();
+							}
+							power = SmtUtils.mul(script, mAffineTerm.getSort(), factors);
+						}else {
+							power = var2exp.getKey();
+						}
+						final Term invPower = script.term("/", Rational.ONE.toTerm(mAffineTerm.getSort()), power);
+						assumptionsMapTwo.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO, var2exp.getKey());
+						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower);
+					}
+				}
+			}
+			//I know Matthias did a useful implementation of a Map for this but I can't remember the name or the location...
+			assumptionsMap = PolynomialTermUtils.shrinkMap(assumptionsMapTwo);
+		}
+		
 		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
 				assumptionsMap);
 		final Term relationToTerm = result.relationToTerm(script);
