@@ -137,7 +137,7 @@ public class CoreUtil {
 	/**
 	 * Traverses the OS' PATH and searches for a file that fulfills the following conditions.
 	 * <ul>
-	 * <li>The filename starts with {@code <name>},
+	 * <li>The filename starts with {@code <name>} (Windows) or is {@code <name>} (other platforms),
 	 * <li>the current process is allowed to execute it,
 	 * <li>it looks like some known executable binary (i.e., has the right magic numbers in the beginning).
 	 * </ul>
@@ -146,12 +146,12 @@ public class CoreUtil {
 		final Predicate<File> funLooksLikeExectuable;
 		if (CoreUtil.OS_IS_WINDOWS) {
 			// Windows uses the Portable Executable format starting with 0x4d5a (ASCII characters MZ)
-			final byte[] exeMagicNumber = {'M', 'Z'};
+			final byte[] exeMagicNumber = { 'M', 'Z' };
 			funLooksLikeExectuable = f -> hasMagicNumber(f, exeMagicNumber);
 		} else {
 			// Just assume Linux: ELF format executables start with 0x7f454c46 (ASCII characters <DEL>ELF)
-			final byte[] elfMagicNumber = {0x7f, 'E', 'L', 'F'};
-			funLooksLikeExectuable = f -> hasMagicNumber(f, elfMagicNumber);
+			final byte[] elfMagicNumber = { 0x7f, 'E', 'L', 'F' };
+			funLooksLikeExectuable = f -> f.getName().equals(name) && hasMagicNumber(f, elfMagicNumber);
 		}
 
 		for (final String dirname : System.getenv("PATH").split(File.pathSeparator)) {
