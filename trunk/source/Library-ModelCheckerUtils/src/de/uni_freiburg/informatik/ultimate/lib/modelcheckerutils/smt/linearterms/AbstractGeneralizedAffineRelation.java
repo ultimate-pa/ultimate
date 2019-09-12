@@ -364,7 +364,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 						}
 						final Term invPower = script.term("/", Rational.ONE.toTerm(mAffineTerm.getSort()), power);
 						assumptionsMapTwo.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO, 
-											  var2exp.getKey());
+											  SmtUtils.not(script, SmtUtils.binaryEquality(script, var2exp.getKey(), 
+													  		          Rational.ZERO.toTerm(mAffineTerm.getSort()))));
 						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower, rhsTerm);
 					}
 				}
