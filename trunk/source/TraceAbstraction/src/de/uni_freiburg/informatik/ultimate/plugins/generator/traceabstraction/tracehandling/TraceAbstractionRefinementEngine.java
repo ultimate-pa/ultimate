@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation.InterpolantConsolidationBenchmarkGenerator;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs an interpolant automaton.<br>
@@ -103,9 +102,5 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 	@Override
 	public boolean somePerfectSequenceFound() {
 		return mStrategy.somePerfectSequenceFound();
-	}
-
-	public InterpolantConsolidationBenchmarkGenerator getInterpolantConsolidationStatistics() {
-		return mStrategy.getInterpolantConsolidationStatistics();
 	}
 }

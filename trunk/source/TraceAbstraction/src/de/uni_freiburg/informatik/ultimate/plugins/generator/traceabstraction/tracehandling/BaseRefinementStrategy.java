@@ -112,19 +112,19 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 	 *
 	 * @return {@code true} iff there is another {@link TraceCheck} available and should be used
 	 */
-	public abstract boolean hasNextTraceCheck();
+	protected abstract boolean hasNextTraceCheck();
 
 	/**
 	 * Changes the {@link TraceCheck}.<br>
 	 * Throws a {@link NoSuchElementException} if there is no next {@link TraceCheck}; use {@link #hasNextTraceCheck()}
 	 * to check this.
 	 */
-	public abstract void nextTraceCheck();
+	protected abstract void nextTraceCheck();
 
 	/**
 	 * @return The trace checker of the current combination.
 	 */
-	public abstract ITraceCheck getTraceCheck();
+	protected abstract ITraceCheck getTraceCheck();
 
 	/**
 	 * A user should use this method whenever new interpolants have been computed (or the computation has failed). The
@@ -136,7 +136,7 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 	 *            imperfect interpolant sequences constructed so far
 	 * @return {@code true} iff there is another {@link IInterpolantGenerator} available and should be used
 	 */
-	public abstract boolean hasNextInterpolantGenerator(List<TracePredicates> perfectIpps,
+	protected abstract boolean hasNextInterpolantGenerator(List<TracePredicates> perfectIpps,
 			List<TracePredicates> imperfectIpps);
 
 	/**
@@ -144,14 +144,14 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 	 * Throws a {@link NoSuchElementException} if there is no next {@link IInterpolantGenerator}; use
 	 * {@link #hasNextInterpolantGenerator(List, List)} to check this.
 	 */
-	public abstract void nextInterpolantGenerator();
+	protected abstract void nextInterpolantGenerator();
 
 	/**
 	 * This method must only be called if the {@link TraceCheck} returns {@code UNSAT}.
 	 *
 	 * @return The interpolant generator of the current combination.
 	 */
-	public abstract IInterpolantGenerator<LETTER> getInterpolantGenerator();
+	protected abstract IInterpolantGenerator<LETTER> getInterpolantGenerator();
 
 	/**
 	 * @param perfectIpps
@@ -160,7 +160,7 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 	 *            sequences of imperfect interpolants
 	 * @return an interpolant automaton builder
 	 */
-	public abstract IInterpolantAutomatonBuilder<LETTER, IPredicate>
+	protected abstract IInterpolantAutomatonBuilder<LETTER, IPredicate>
 			getInterpolantAutomatonBuilder(List<TracePredicates> perfectIpps, List<TracePredicates> imperfectIpps);
 
 	/**
@@ -172,7 +172,7 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 	 * @return Object that encapsulates which exceptions are blacklisted.
 	 * @see RefinementStrategyExceptionBlacklist
 	 */
-	public abstract RefinementStrategyExceptionBlacklist getExceptionBlacklist();
+	protected abstract RefinementStrategyExceptionBlacklist getExceptionBlacklist();
 
 	public abstract RefinementEngineStatisticsGenerator getRefinementEngineStatistics();
 

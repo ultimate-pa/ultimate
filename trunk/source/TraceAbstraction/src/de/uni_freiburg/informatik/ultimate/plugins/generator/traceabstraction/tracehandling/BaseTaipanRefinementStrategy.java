@@ -361,8 +361,8 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
-		final Script solver = SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings,
-				false, false, logicForExternalSolver, "TraceCheck_Iteration" + taskIdentifier);
+		final Script solver = SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings, false, false,
+				logicForExternalSolver, "TraceCheck_Iteration" + taskIdentifier);
 		final ManagedScript result = new ManagedScript(services, solver);
 		prefs.getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferSymbols(solver);
 		return result;
@@ -443,5 +443,9 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		 * CVC4 with interpolant generation.
 		 */
 		CVC4_IG,
+		/**
+		 * SIFA
+		 */
+		SIFA
 	}
 }
