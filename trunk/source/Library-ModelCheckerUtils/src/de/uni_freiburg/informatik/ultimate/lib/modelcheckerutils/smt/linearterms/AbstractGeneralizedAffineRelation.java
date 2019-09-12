@@ -364,11 +364,11 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 						}
 						final Term invPower = script.term("/", Rational.ONE.toTerm(mAffineTerm.getSort()), power);
 						assumptionsMapTwo.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO, var2exp.getKey());
-						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower);
+						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower, rhsTerm);
 					}
 				}
 			}
-			//I know Matthias did a useful implementation of a Map for this but I can't remember the name or the location...
+			//TODO: Use Matthias' implementation
 			assumptionsMap = PolynomialTermUtils.shrinkMap(assumptionsMapTwo);
 		}
 		
