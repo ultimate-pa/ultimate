@@ -363,7 +363,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 							power = var2exp.getKey();
 						}
 						final Term invPower = script.term("/", Rational.ONE.toTerm(mAffineTerm.getSort()), power);
-						assumptionsMapTwo.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO, var2exp.getKey());
+						assumptionsMapTwo.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO, 
+											  var2exp.getKey());
 						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower, rhsTerm);
 					}
 				}
@@ -461,7 +462,11 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			} else {
 				final Rational newCoeff = entry.getValue().div(coeffOfAbstractVar);
 				if (newCoeff.isIntegral() || SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
-					rhsSummands.add(product(script, newCoeff.negate(), entry.getKey()));
+					if (entry.getKey() instanceof Monomial) {
+						rhsSummands.add(product(script, newCoeff.negate(), ((Monomial) entry.getKey()).toTerm(script)));
+					}else {
+						rhsSummands.add(product(script, newCoeff.negate(), entry.getKey()));
+					}
 				} else {
 					if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
 						throw new UnsupportedOperationException(
