@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterm
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialTermUtils.GeneralizedConstructor;
@@ -183,8 +185,21 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 */
 	public static AbstractGeneralizedAffineTerm<?> sum(final IPolynomialTerm... summands) {
 		final GeneralizedConstructor<Monomial, AbstractGeneralizedAffineTerm<?>> constructor = PolynomialTerm::minimalRepresentation;
-		return PolynomialTermUtils.constructSum(x -> ((PolynomialTerm) x).getMonomial2Coefficient(), constructor,
+		return PolynomialTermUtils.constructSum(PolynomialTerm::termWrapper, constructor,
 				summands);
+	}
+	
+	private static Map<Monomial, Rational> termWrapper(IPolynomialTerm poly) {
+		if (poly.isAffine()) {
+			final Map<Monomial, Rational> map = new HashMap<>();
+			for (Entry<Term, Rational> var2coeff : ((AffineTerm) poly).getVariable2Coefficient().entrySet()) {
+				map.put(new Monomial(var2coeff.getKey(), Rational.ONE), var2coeff.getValue());
+			}
+			//TODO: Replace by Matthias' implementation
+			return PolynomialTermUtils.shrinkMap(map);
+		}else {
+			return ((PolynomialTerm) poly).getMonomial2Coefficient();
+		}
 	}
 
 	/**

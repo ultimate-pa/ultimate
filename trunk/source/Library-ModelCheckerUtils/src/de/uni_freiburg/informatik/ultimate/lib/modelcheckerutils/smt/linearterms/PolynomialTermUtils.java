@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
@@ -175,6 +176,8 @@ public class PolynomialTermUtils {
 	 * @param term2map
 	 *            {@link Function} that returns for a given T the Map<MNL,Rational>
 	 *            map.
+	 * @param wrapper
+	 * 			  {
 	 * @param constructor
 	 *            Methods that constructs the term of type T.
 	 */

@@ -346,6 +346,24 @@ public class PolynomialTest {
 		Assert.assertTrue(resultIsCorrect);
 		Assert.assertTrue(result instanceof AffineTerm);
 	}
+	
+	/**
+	 * Test addition of AffineTerm and a PolynomialTerm.
+	 */
+	@Test
+	public void polynomialTermTest15() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String formulaAsString = "(+ (* 2 x) (* y y))";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mLogger.info("Input: " + formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final Term resultAsTerm = result.toTerm(mScript);
+		mLogger.info("Output: " + resultAsTerm);
+		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
+		Assert.assertTrue(resultIsCorrect);
+	}
 
 	private static boolean areEquivalent(final Script script, final Term formulaAsTerm, final Term resultAsTerm) {
 		final Term equality = SmtUtils.binaryEquality(script, formulaAsTerm, resultAsTerm);

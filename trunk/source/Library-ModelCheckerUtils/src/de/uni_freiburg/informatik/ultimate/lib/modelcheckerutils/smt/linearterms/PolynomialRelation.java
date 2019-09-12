@@ -72,10 +72,6 @@ public class PolynomialRelation extends AbstractGeneralizedAffineRelation<Abstra
 	private static AbstractGeneralizedAffineTerm<Term> unsafeCast(AbstractGeneralizedAffineTerm<?> poly) {
 		return (AbstractGeneralizedAffineTerm<Term>) poly;
 	}
-	
-//	static AffineTerm transformToAffineTerm(final Script script, final Term term) {
-//		return (AffineTerm) new AffineTermTransformer(script).transform(term);
-//	}
 
 	@Override
 	protected AbstractGeneralizedAffineTerm<Term> sum(final AbstractGeneralizedAffineTerm<Term> op1, final AbstractGeneralizedAffineTerm<Term> op2) {
@@ -105,10 +101,6 @@ public class PolynomialRelation extends AbstractGeneralizedAffineRelation<Abstra
 	protected AffineTerm constructConstant(final Sort s, final Rational r) {
 		return AffineTerm.constructConstant(s, r);
 	}
-
-//	public static PolynomialRelation convert(final Script script, final Term term) {
-//		return convert(script, term, TransformInequality.NO_TRANFORMATION);
-//	}
 
 	@Override
 	protected Term getTheAbstractVarOfSubject(final Term subject) {
@@ -202,7 +194,12 @@ public class PolynomialRelation extends AbstractGeneralizedAffineRelation<Abstra
 	}
 
 	static AbstractGeneralizedAffineTerm<?> transformToPolynomialTerm(final Script script, final Term term) {
-		return (AbstractGeneralizedAffineTerm<?>) new PolynomialTermTransformer(script).transform(term);
+		AffineTerm affTerm = (AffineTerm) new AffineTermTransformer(script).transform(term);
+		if (affTerm.isErrorTerm()) {
+			return (AbstractGeneralizedAffineTerm<?>) new PolynomialTermTransformer(script).transform(term);
+		}else {
+			return affTerm;
+		}
 	}
 
 }
