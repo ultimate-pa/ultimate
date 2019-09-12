@@ -121,10 +121,23 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationRealDivEQ5() throws NotAffineException {
+	public void relationRealDivPolyEQ5() throws NotAffineException {
 		final String inputSTR = "(= (* 6.0 (* y x)) (+ 3.0 (* z z)))";
 		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				polyRelOnLeftHandSide(inputSTR, "x")));
+	}
+	
+	@Test
+	public void relationRealDivPolyEQ6() throws NotAffineException {
+		final String inputSTR = "(= (* z (+ 6.0 (* (* y y) x))) (+ 3.0 (* z z)))";
+		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+				polyRelOnLeftHandSide(inputSTR, "x")));
+	}
+	
+	@Test
+	public void relationRealDivPolyMultipleSubjectsEQ7() throws NotAffineException {
+		final String inputSTR = "(= (* z (+ 6.0 (* (* x y) x))) (+ 3.0 (* z z)))";
+		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "x"));
 	}
 	
 	@Test

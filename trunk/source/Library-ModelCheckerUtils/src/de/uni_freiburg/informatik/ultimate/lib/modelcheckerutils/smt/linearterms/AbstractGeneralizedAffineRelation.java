@@ -189,9 +189,10 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 	}
 
 	protected static LBool assumptionImpliesEquivalence(final Script script, final Term originalTerm,
-			final Term relationToTerm, final Term additionalAssumption) {
-		final Term impli1 = SmtUtils.implies(script, additionalAssumption, relationToTerm);
-		final Term impli2 = SmtUtils.implies(script, additionalAssumption, originalTerm);
+			final Term relationToTerm, final Map<AssumptionForSolvability, Term> additionalAssumptions) {
+		final Term konJ = SmtUtils.and(script, additionalAssumptions.values());
+		final Term impli1 = SmtUtils.implies(script, konJ, relationToTerm);
+		final Term impli2 = SmtUtils.implies(script, konJ, originalTerm);
 		return isEquivalent(script, impli1, impli2);
 	}
 
@@ -338,9 +339,9 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		// Add here some code for polynomials where we have to try to divide by the
 		// other variables in the monomial
 		if (abstractVarOfSubject instanceof Monomial) {
-			Map<AssumptionForSolvability, Term> assumptionsMapTwo = new HashMap<>();
+			Map<AssumptionForSolvability, Term> assumptionsMapTemp = new HashMap<>();
 			for (final Entry<AssumptionForSolvability, Term> assu2term : assumptionsMap.entrySet()) {
-				assumptionsMapTwo.put(assu2term.getKey(), assu2term.getValue());
+				assumptionsMapTemp.put(assu2term.getKey(), assu2term.getValue());
 			}
 			for (final Entry<Term, Rational> var2exp : ((Monomial) abstractVarOfSubject).getVariable2Exponent().entrySet()) {
 				if (var2exp.getKey() == subject) {
@@ -353,7 +354,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 						// Because then this could be made easier.
 						final int exponent = var2exp.getValue().numerator().divide(var2exp.getValue().denominator()).intValue();
 						final Term power;
-						if (exponent > 2) {
+						if (exponent >= 2) {
 							final Term[] factors = new Term[exponent];
 							for (int i = 0; i < exponent; i++) {
 								factors[i] = var2exp.getKey();
@@ -363,15 +364,23 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 							power = var2exp.getKey();
 						}
 						final Term invPower = script.term("/", Rational.ONE.toTerm(mAffineTerm.getSort()), power);
-						assumptionsMapTwo.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO, 
-											  SmtUtils.not(script, SmtUtils.binaryEquality(script, var2exp.getKey(), 
-													  		          Rational.ZERO.toTerm(mAffineTerm.getSort()))));
+						if (assumptionsMapTemp.containsKey(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO)) {
+							assumptionsMapTemp.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO, 
+												   SmtUtils.and(script, 
+														   assumptionsMapTemp.get(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO),
+														   SmtUtils.not(script, SmtUtils.binaryEquality(script, var2exp.getKey(), 
+													  		          Rational.ZERO.toTerm(mAffineTerm.getSort())))));
+						}else {
+							assumptionsMapTemp.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO, 
+									  SmtUtils.not(script, SmtUtils.binaryEquality(script, var2exp.getKey(), 
+											  		          Rational.ZERO.toTerm(mAffineTerm.getSort()))));
+						}
 						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower, rhsTerm);
 					}
 				}
 			}
 			//TODO: Use Matthias' implementation
-			assumptionsMap = PolynomialTermUtils.shrinkMap(assumptionsMapTwo);
+			assumptionsMap = PolynomialTermUtils.shrinkMap(assumptionsMapTemp);
 		}
 		
 		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
@@ -379,8 +388,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		final Term relationToTerm = result.relationToTerm(script);
 		if (!assumptionsMap.isEmpty()) {
 			assert script instanceof INonSolverScript
-					|| assumptionImpliesEquivalence(script, mOriginalTerm, relationToTerm, assumptionsMap.entrySet()
-							.iterator().next().getValue()) != LBool.SAT : "transformation to AffineRelation unsound";
+					|| assumptionImpliesEquivalence(script, mOriginalTerm, relationToTerm, assumptionsMap) 
+												!= LBool.SAT : "transformation to AffineRelation unsound";
 		} else {
 			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
 					relationToTerm) != LBool.SAT : "transformation to AffineRelation unsound";
