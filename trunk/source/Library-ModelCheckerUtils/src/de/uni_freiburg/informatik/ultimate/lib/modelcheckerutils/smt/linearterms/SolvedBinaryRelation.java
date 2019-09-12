@@ -100,4 +100,10 @@ public class SolvedBinaryRelation {
 		return script.term(mRelationSymbol.toString(), mLeftHandSide, mRightHandSide);
 	}
 
+	@Override
+	public String toString() {
+		final String assumption = mAssumptionsMap.isEmpty() ? "" : ("if " + mAssumptionsMap.toString() + " then ");
+		return assumption + mLeftHandSide + " " + mRelationSymbol + " " + mRightHandSide;
+	}
+
 }
