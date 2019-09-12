@@ -9,6 +9,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.test,
  de.uni_freiburg.informatik.ultimate.lib.pea,
+ de.uni_freiburg.informatik.ultimate.core,
  org.junit
 Import-Package: junit.framework,
  org.junit,
