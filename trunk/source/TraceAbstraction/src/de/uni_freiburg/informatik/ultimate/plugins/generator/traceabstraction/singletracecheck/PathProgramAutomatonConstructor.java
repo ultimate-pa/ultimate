@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 /**
  * @author musab@informatik.uni-freiburg.de
@@ -71,7 +70,7 @@ public class PathProgramAutomatonConstructor<LETTER extends IIcfgTransition<?>> 
 	 */
 	public INestedWordAutomaton<LETTER, IPredicate> constructAutomatonFromGivenPath(final NestedWord<LETTER> path,
 			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs) {
+			final PredicateFactory predicateFactory, final boolean computeHoareAnnotation) {
 		// Set the alphabet
 		final Set<LETTER> internalAlphabet = new HashSet<>();
 		final Set<LETTER> callAlphabet = new HashSet<>();
@@ -90,11 +89,11 @@ public class PathProgramAutomatonConstructor<LETTER extends IIcfgTransition<?>> 
 		}
 
 		final IEmptyStackStateFactory<IPredicate> predicateFactoryFia = new PredicateFactoryForInterpolantAutomata(
-				csToolkit.getManagedScript(), predicateFactory, taPrefs.computeHoareAnnotation());
+				csToolkit.getManagedScript(), predicateFactory, computeHoareAnnotation);
 		// Create the automaton
-		final NestedWordAutomaton<LETTER, IPredicate> pathPA = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(services),
-				new VpAlphabet<>(internalAlphabet, callAlphabet, returnAlphabet), predicateFactoryFia);
+		final NestedWordAutomaton<LETTER, IPredicate> pathPA =
+				new NestedWordAutomaton<>(new AutomataLibraryServices(services),
+						new VpAlphabet<>(internalAlphabet, callAlphabet, returnAlphabet), predicateFactoryFia);
 
 		// We need this list to create the transitions of the automaton.
 		mPositionsToStates = new ArrayList<>(path.length() + 1);

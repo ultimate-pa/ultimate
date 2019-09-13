@@ -94,7 +94,7 @@ public final class TraceCheckUtils {
 			if (!(currentAction instanceof IIcfgTransition<?>)) {
 				throw new IllegalArgumentException("currentAction is no IIcfgTransition");
 			}
-			final IIcfgTransition<?> transition = ((IIcfgTransition<?>) currentAction);
+			final IIcfgTransition<?> transition = (IIcfgTransition<?>) currentAction;
 			result.add(transition.getSource());
 			if (!iter.hasNext()) {
 				result.add(transition.getTarget());
@@ -229,8 +229,8 @@ public final class TraceCheckUtils {
 	 */
 	public static boolean checkInterpolantsInductivityBackward(final List<IPredicate> interpolants,
 			final NestedWord<? extends IAction> trace, final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final String computation,
-			final CfgSmtToolkit csToolkit, final ILogger logger, final ManagedScript managedScript) {
+			final Map<Integer, IPredicate> pendingContexts, final String computation, final CfgSmtToolkit csToolkit,
+			final ILogger logger, final ManagedScript managedScript) {
 		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(csToolkit);
 		final TracePredicates ipp = new TracePredicates(precondition, postcondition, interpolants);
 		for (int i = interpolants.size(); i >= 0; i--) {
@@ -244,7 +244,7 @@ public final class TraceCheckUtils {
 	}
 
 	private static Validity checkInductivityAtPosition(final int pos, final TracePredicates ipp,
-			final NestedWord<? extends IAction> trace, final SortedMap<Integer, IPredicate> pendingContexts,
+			final NestedWord<? extends IAction> trace, final Map<Integer, IPredicate> pendingContexts,
 			final IHoareTripleChecker htc, final ILogger logger) {
 		final IPredicate predecessor = ipp.getPredicate(pos);
 		final IPredicate successor = ipp.getPredicate(pos + 1);

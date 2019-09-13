@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuild
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -57,7 +56,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final IIcfg<?> mIcfgContainer;
-	private final InterpolantAutomatonBuilderFactory<LETTER> mInterpolantAutomatonBuilderFactory;
 
 	// fields that can be read from the TAPreferences
 	private final RefinementStrategy mRefinementStrategy;
@@ -109,8 +107,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	public TaCheckAndRefinementPreferences(final IUltimateServiceProvider services, final TAPreferences taPrefs,
 			final InterpolationTechnique interpolationTechnique, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit cfgSmtToolkit,
-			final PredicateFactory predicateFactory, final IIcfg<?> icfgContainer,
-			final InterpolantAutomatonBuilderFactory<LETTER> interpolantAutomatonBuilderFactory) {
+			final PredicateFactory predicateFactory, final IIcfg<?> icfgContainer) {
 		mServices = services;
 		mInterpolationTechnique = interpolationTechnique;
 		mSimplificationTechnique = simplificationTechnique;
@@ -118,7 +115,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		mCfgSmtToolkit = cfgSmtToolkit;
 		mPredicateFactory = predicateFactory;
 		mIcfgContainer = icfgContainer;
-		mInterpolantAutomatonBuilderFactory = interpolantAutomatonBuilderFactory;
 
 		mRefinementStrategy = taPrefs.getRefinementStrategy();
 		mUseSeparateSolverForTracechecks = taPrefs.useSeparateSolverForTracechecks();
@@ -214,10 +210,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	@Override
 	public IIcfg<?> getIcfgContainer() {
 		return mIcfgContainer;
-	}
-
-	public InterpolantAutomatonBuilderFactory<LETTER> getInterpolantAutomatonBuilderFactory() {
-		return mInterpolantAutomatonBuilderFactory;
 	}
 
 	@Override

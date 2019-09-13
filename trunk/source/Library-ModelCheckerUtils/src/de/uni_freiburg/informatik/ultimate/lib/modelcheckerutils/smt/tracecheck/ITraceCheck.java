@@ -73,7 +73,7 @@ public interface ITraceCheck {
 	 */
 	IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution();
 
-	IStatisticsDataProvider getTraceCheckBenchmark();
+	IStatisticsDataProvider getStatistics();
 
 	/**
 	 * If during a trace check a {@link ToolchainCanceledException} occurs, the {@link ITraceCheck} may catch this

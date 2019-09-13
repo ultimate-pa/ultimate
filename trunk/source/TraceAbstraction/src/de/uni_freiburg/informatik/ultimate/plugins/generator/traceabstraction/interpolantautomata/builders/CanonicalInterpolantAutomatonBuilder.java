@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -65,12 +64,12 @@ public class CanonicalInterpolantAutomatonBuilder<CL, LETTER> extends CoverageAn
 
 	public CanonicalInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final TracePredicates ipp, final List<CL> programPointSequence,
-			final VpAlphabet<LETTER> alphabet, final CfgSmtToolkit csToolkit,
-			final IEmptyStackStateFactory<IPredicate> predicateFactory, final ILogger logger,
-			final IPredicateUnifier predicateUnifier, final NestedWord<LETTER> nestedWord) {
+			final VpAlphabet<LETTER> alphabet, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+			final ILogger logger, final IPredicateUnifier predicateUnifier,
+			final NestedWord<LETTER> nestedWord) {
 		super(services, ipp, programPointSequence, logger, predicateUnifier);
 		mNestedWord = nestedWord;
-		mIA = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet, predicateFactory);
+		mIA = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet, emptyStackFactory);
 	}
 
 	@Override

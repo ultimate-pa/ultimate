@@ -33,6 +33,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * Interface for objects that generate sequences of interpolants. Given
@@ -76,17 +77,7 @@ public interface IInterpolantGenerator<LETTER extends IAction> {
 	 */
 	boolean isPerfectSequence();
 
-	/**
-	 * @return {@code true} iff the {@link IInterpolantGenerator} returns a usable interpolant sequence even if it is
-	 *         imperfect. Certain interpolant generators (e.g. CegarAbsIntRunner in TraceAbstraction) can only deliver
-	 *         perfect sequences.
-	 * @deprecated This method is necessary as long as the trace checking / interpolant generation architecture is not
-	 *             refactored to accommodate algorithms that may produce invariants that are too weak
-	 */
-	@Deprecated
-	default boolean imperfectSequencesUsable() {
-		return true;
-	}
-
 	InterpolantComputationStatus getInterpolantComputationStatus();
+
+	IStatisticsDataProvider getStatistics();
 }

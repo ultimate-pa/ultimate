@@ -22,8 +22,8 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.AuxVarGen;
 import de.uni_freiburg.informatik.ultimate.reqtotest.graphtransformer.GraphToBoogie;
-import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.Req2TestReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqGuardGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToDeclarations;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToGraph;
 import de.uni_freiburg.informatik.ultimate.reqtotest.req.ReqToInOut;
@@ -49,7 +49,7 @@ public class ReqToTestObserver extends BaseObserver {
 		final SolverSettings settings = SolverBuilder.constructSolverSettings("", SolverMode.External_DefaultMode,
 				false, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, false, null);
 		mScript = SolverBuilder.buildAndInitializeSolver(services, SolverMode.External_DefaultMode, settings, false,
-				false, Logics.ALL.toString(), "RtInconsistencySolver");
+				false, Logics.ALL, "RtInconsistencySolver");
 
 		mManagedScript = new ManagedScript(services, mScript);
 
@@ -62,7 +62,8 @@ public class ReqToTestObserver extends BaseObserver {
 		}
 
 		final List<PatternType> rawPatterns = ((ObjectContainer<List<PatternType>>) root).getValue();
-		final Req2TestReqSymbolTable reqSymbolTable = new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
+		final Req2TestReqSymbolTable reqSymbolTable =
+				new ReqToDeclarations(mLogger).initPatternToSymbolTable(rawPatterns);
 		final BoogieDeclarations boogieDeclarations =
 				new BoogieDeclarations(reqSymbolTable.constructVariableDeclarations(), mLogger);
 		final Boogie2SMT boogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, mServices, false);
@@ -76,8 +77,8 @@ public class ReqToTestObserver extends BaseObserver {
 		final AuxVarGen auxVarGen = new AuxVarGen(mLogger, mScript, reqSymbolTable);
 		final ReqToGraph reqToBuchi = new ReqToGraph(mLogger, auxVarGen, mScript, cddToSmt, reqSymbolTable);
 		final List<ReqGuardGraph> automata = reqToBuchi.patternListToBuechi(rawPatterns);
-		final GraphToBoogie graphToBoogie = new GraphToBoogie(mLogger, mServices, reqSymbolTable, auxVarGen, automata,
-				mScript, mManagedScript);
+		final GraphToBoogie graphToBoogie =
+				new GraphToBoogie(mLogger, mServices, reqSymbolTable, auxVarGen, automata, mScript, mManagedScript);
 		mBoogieAst = graphToBoogie.getAst();
 
 		if (!RETURN_RESULT_AS_COUNTEREXAMPLE) {

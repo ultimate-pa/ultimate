@@ -156,7 +156,7 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 		final INestedWordAutomaton<LETTER, IPredicate> oldAbstraction =
 				(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
 		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices,
-				mPref.getHoareTripleChecks(), mCsToolkit, mTraceCheckAndRefinementEngine.getPredicateUnifier());
+				mPref.getHoareTripleChecks(), mCsToolkit, mRefinementEngine.getPredicateUnifier());
 		mLogger.debug("Start constructing difference");
 		// assert (oldAbstraction.getStateFactory() == mInterpolAutomaton.getStateFactory());
 
@@ -164,7 +164,7 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 
 		final DeterministicInterpolantAutomaton<LETTER> determinized =
 				new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, mInterpolAutomaton,
-						mTraceCheckAndRefinementEngine.getPredicateUnifier(), false, false);
+						mRefinementEngine.getPredicateUnifier(), false, false);
 		// ComplementDeterministicNwa<LETTER, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
 		final PowersetDeterminizer<LETTER, IPredicate> psd2 =

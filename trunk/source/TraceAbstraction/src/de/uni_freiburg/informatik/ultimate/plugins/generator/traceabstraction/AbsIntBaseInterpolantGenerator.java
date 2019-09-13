@@ -31,7 +31,7 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -43,7 +43,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public abstract class AbsIntBaseInterpolantGenerator<LETTER extends IAction> implements IInterpolantGenerator<LETTER> {
+public abstract class AbsIntBaseInterpolantGenerator<LETTER extends IAction>
+		implements IInterpolatingTraceCheck<LETTER> {
 
 	private final IPredicateUnifier mPredicateUnifier;
 	private final Word<LETTER> mCex;

@@ -28,8 +28,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -37,12 +39,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -50,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
@@ -70,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -79,6 +82,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -99,19 +105,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AbstractInterpretationMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.weakener.AbsIntPredicateInterpolantSequenceWeakener;
+import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IKeyedStatisticsElement;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
+public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	private static final boolean USE_INTERPOLANT_WEAKENER = true;
 
 	private static final boolean DEBUG_PRINT_TRACE = false;
 
-	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
@@ -120,34 +131,34 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	private final AbstractInterpretationMode mMode;
 	private final boolean mAlwaysRefine;
-	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final PathProgramCache<LETTER> mPathProgramCache;
-
-	private AbsIntCurrentIteration<?> mCurrentIteration;
-	private IPredicateUnifier mPredicateUnifierSmt;
-
 	private final TAPreferences mTaPreferences;
+	private final AbsIntStatisticsGenerator mStats;
 
-	public CegarAbsIntRunner(final IUltimateServiceProvider services, final CegarLoopStatisticsGenerator benchmark,
-			final IIcfg<?> root, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit csToolkit,
-			final PathProgramCache<LETTER> pathProgramCache, final TAPreferences taPrefs) {
-		mCegarLoopBenchmark = benchmark;
+	private final AbsIntCurrentIteration<?> mCurrentIteration;
+	private final IPredicateUnifier mPredicateUnifierSmt;
+
+	public CegarAbsIntRunner(final IUltimateServiceProvider services, final IIcfg<?> root,
+			final PathProgramCache<LETTER> pathProgramCache, final TAPreferences taPrefs,
+			final IRun<LETTER, IPredicate, ?> currentCex, final IPredicateUnifier unifier) {
+		mStats = new AbsIntStatisticsGenerator();
 		mServices = services;
 		mTaPreferences = taPrefs;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mRoot = root;
 		mPathProgramCache = pathProgramCache;
-		mCsToolkit = csToolkit;
+		mCsToolkit = root.getCfgSmtToolkit();
+		mPredicateUnifierSmt = Objects.requireNonNull(unifier);
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAlwaysRefine = prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ABSINT_ALWAYS_REFINE);
 		mMode = prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ABSINT_MODE,
 				AbstractInterpretationMode.class);
 		checkSettings();
+		mCurrentIteration = generateFixpoints(currentCex);
+		if (hasShownInfeasibility()) {
+			mStats.increment(AbsIntStats.WAS_STRONG);
+		}
 	}
 
 	/**
@@ -160,11 +171,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	 * <li>The path program does not contain any loops.
 	 * </ul>
 	 */
-	public void generateFixpoints(final IRun<LETTER, IPredicate, ?> currentCex,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> currentAbstraction,
-			final IPredicateUnifier unifier) {
-		assert currentCex != null : "Cannot run AI on empty counterexample";
-		assert currentAbstraction != null : "Cannot run AI on empty abstraction";
+	private AbsIntCurrentIteration<?> generateFixpoints(final IRun<LETTER, IPredicate, ?> cex) {
+		assert cex != null : "Cannot run AI on empty counterexample";
 
 		if (!mRoot.getLocationClass().equals(BoogieIcfgLocation.class)) {
 			// TODO: AI only supports BoogieIcfgLocations and Codeblocks atm, so die if this is not the type presented.
@@ -174,41 +182,38 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		if (!mRoot.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
 			throw new UnsupportedOperationException("AbsInt currently does not support concurrent programs");
 		}
-		mPredicateUnifierSmt = Objects.requireNonNull(unifier);
-		mCurrentIteration = null;
 
 		if (mMode == AbstractInterpretationMode.NONE) {
-			return;
+			return null;
 		}
 
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
+		mStats.resume(AbsIntStats.TIME);
 		try {
 
-			final int seen = mPathProgramCache.getPathProgramCount(currentCex);
+			final int seen = mPathProgramCache.getPathProgramCount(cex);
 			if (seen > 1) {
 				mLogger.info("Skipping current iteration for AI because we have already analyzed this path program");
-				return;
+				return null;
 			}
-			final Set<LETTER> pathProgramSet = currentCex.getWord().asSet();
+			final Set<LETTER> pathProgramSet = cex.getWord().asSet();
 			if (!containsLoop(pathProgramSet)
 					&& mTaPreferences.getRefinementStrategy() != RefinementStrategy.TOOTHLESS_TAIPAN) {
 				mLogger.info("Skipping current iteration for AI because the path program does not contain any loops");
-				return;
+				return null;
 			}
 
-			final int currentAbsIntIter = mCegarLoopBenchmark.announceNextAbsIntIteration();
+			final int currentAbsIntIter = mStats.increment(AbsIntStats.ITERATIONS) + 1;
 
 			// allow for 20% of the remaining time
 			// final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 			// allow for all the remaining time
 			final IProgressAwareTimer timer = mServices.getProgressMonitorService();
-			mLogger.info("Running AI on error trace of length " + currentCex.getLength()
-					+ " with the following transitions: ");
-			mLogger.info(String.join(", ", pathProgramSet.stream().map(LETTER::hashCode).sorted()
-					.map(a -> '[' + String.valueOf(a) + ']').collect(Collectors.toList())));
+			mLogger.info("Running AI on error trace of length " + cex.getLength());
 			if (DEBUG_PRINT_TRACE) {
+				mLogger.info(String.join(", ", pathProgramSet.stream().map(LETTER::hashCode).sorted()
+						.map(a -> '[' + String.valueOf(a) + ']').collect(Collectors.toList())));
 				mLogger.info("Trace:");
-				for (final LETTER trans : currentCex.getWord().asList()) {
+				for (final LETTER trans : cex.getWord().asList()) {
 					mLogger.info("[" + trans.hashCode() + "] " + trans);
 				}
 			}
@@ -222,15 +227,12 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					(IAbstractInterpretationResult<?, LETTER, ?>) AbstractInterpreter.runWithoutTimeoutAndResults(pp,
 							timer, mServices);
 			if (result == null) {
-				mCurrentIteration = null;
-			} else {
-				mCurrentIteration = new AbsIntCurrentIteration<>(currentCex, result, pp);
+				return null;
 			}
-			if (hasShownInfeasibility()) {
-				mCegarLoopBenchmark.announceStrongAbsInt();
-			}
+			return new AbsIntCurrentIteration<>(cex, result, pp);
+
 		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
+			mStats.stop(AbsIntStats.TIME);
 		}
 	}
 
@@ -254,7 +256,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		return mCurrentIteration.getHoareTripleChecker();
 	}
 
-	public IInterpolantGenerator<LETTER> getInterpolantGenerator() {
+	public IInterpolatingTraceCheck<LETTER> getInterpolantGenerator() {
 		if (mCurrentIteration == null) {
 			return new AbsIntFailedInterpolantGenerator<>(mPredicateUnifierSmt, null, ItpErrorStatus.ALGORITHM_FAILED,
 					createNoFixpointsException());
@@ -269,22 +271,24 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			throw createNoFixpointsException();
 		}
 
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
+		mStats.resume(AbsIntStats.TIME);
 		try {
 			mLogger.info("Constructing AI automaton with mode " + mMode);
 			final IInterpolantAutomatonBuilder<LETTER, IPredicate> aiInterpolAutomatonBuilder;
+			final SimplificationTechnique simplificationTechnique = mTaPreferences.getSimplificationTechnique();
+			final XnfConversionTechnique xnfConversionTechnique = mTaPreferences.getXnfConversionTechnique();
 			switch (mMode) {
 			case NONE:
 				throw new AssertionError("Mode should have been checked earlier");
 			case USE_PATH_PROGRAM:
 				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder<>(mServices, abstraction,
 						predicateUnifier, mCsToolkit.getManagedScript(), mRoot.getCfgSmtToolkit().getSymbolTable(),
-						currentCex, mSimplificationTechnique, mXnfConversionTechnique, emptyStackFactory);
+						currentCex, simplificationTechnique, xnfConversionTechnique, emptyStackFactory);
 				break;
 			case USE_PREDICATES:
 				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder<>(mServices, abstraction,
 						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex,
-						mSimplificationTechnique, mXnfConversionTechnique, mRoot.getCfgSmtToolkit().getSymbolTable(),
+						simplificationTechnique, xnfConversionTechnique, mRoot.getCfgSmtToolkit().getSymbolTable(),
 						emptyStackFactory);
 				break;
 			case USE_CANONICAL:
@@ -293,7 +297,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			case USE_TOTAL:
 				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder<>(mServices, abstraction,
 						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex,
-						mRoot.getCfgSmtToolkit().getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
+						mRoot.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique,
 						emptyStackFactory);
 				break;
 			default:
@@ -301,8 +305,12 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			}
 			return aiInterpolAutomatonBuilder;
 		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
+			mStats.stop(AbsIntStats.TIME);
 		}
+	}
+
+	public IStatisticsDataProvider getStatistics() {
+		return mStats;
 	}
 
 	private void checkSettings() {
@@ -331,6 +339,115 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				"AbsInt can only provide a hoare triple checker if it generated fixpoints");
 	}
 
+	public static final class AbsIntStatisticsGenerator implements IStatisticsDataProvider {
+
+		private static final StatisticsType<AbsIntStats> TYPE = new StatisticsType<>(AbsIntStats.class);
+
+		private final Map<AbsIntStats, Integer> mIntCounters = new EnumMap<>(AbsIntStats.class);
+		private final Map<AbsIntStats, Double> mRatioSum = new EnumMap<>(AbsIntStats.class);
+		private final Map<AbsIntStats, Integer> mRatioFrequency = new EnumMap<>(AbsIntStats.class);
+		private final Benchmark mStopwatches = new Benchmark();
+
+		@Override
+		public IStatisticsType getBenchmarkType() {
+			return TYPE;
+		}
+
+		@Override
+		public Collection<String> getKeys() {
+			return TYPE.getKeys();
+		}
+
+		@Override
+		public Object getValue(final String keyName) {
+			return getValue(AbsIntStats.valueOf(keyName));
+		}
+
+		public Object getValue(final AbsIntStats key) {
+			switch (key.getType()) {
+			case COUNTER:
+				return mIntCounters.getOrDefault(key, 0);
+			case RATIO:
+				return mRatioSum.getOrDefault(key, 0.0) / (double) mRatioFrequency.getOrDefault(key, 1);
+			case TIMER:
+				return mStopwatches.getElapsedTime(key.getName(), TimeUnit.NANOSECONDS);
+			default:
+				throw new UnsupportedOperationException("Unsupported key type " + key.getType());
+			}
+		}
+
+		public int increment(final AbsIntStats key) {
+			return add(key, 1);
+		}
+
+		public int add(final AbsIntStats key, final int summand) {
+			assert key.getType() == KeyType.COUNTER;
+			return mIntCounters.put(key, mIntCounters.getOrDefault(key, 0) + summand);
+		}
+
+		public void addRatio(final AbsIntStats key, final double ratio) {
+			assert key.getType() == KeyType.RATIO;
+			mRatioSum.put(key, mRatioSum.getOrDefault(key, 0.0) + ratio);
+			mRatioFrequency.put(key, mRatioFrequency.getOrDefault(key, 0) + 1);
+		}
+
+		/**
+		 * Start or restart a stopwatch
+		 */
+		public void start(final AbsIntStats key) {
+			assert key.getType() == KeyType.TIMER;
+			mStopwatches.start(key.getName());
+		}
+
+		/**
+		 * Stop or pause a stopwatch
+		 */
+		public void stop(final AbsIntStats key) {
+			assert key.getType() == KeyType.TIMER;
+			mStopwatches.stop(key.getName());
+		}
+
+		/**
+		 * Resume or unpause a stopped stopwatch. If the watch is not started, it will be started.
+		 */
+		public void resume(final AbsIntStats key) {
+			assert key.getType() == KeyType.TIMER;
+			mStopwatches.register(key.getName());
+			mStopwatches.unpause(key.getName());
+		}
+	}
+
+	public enum AbsIntStats implements IKeyedStatisticsElement {
+
+		TIME(KeyType.TIMER),
+
+		ITERATIONS(KeyType.COUNTER),
+
+		WAS_STRONG(KeyType.COUNTER),
+
+		WEAKENING_RATIO(KeyType.RATIO),
+
+		AVG_VARS_REMOVED_DURING_WEAKENING(KeyType.RATIO),
+
+		AVG_WEAKENED_CONJUNCTS(KeyType.RATIO);
+
+		private final KeyType mType;
+
+		AbsIntStats(final KeyType type) {
+			mType = type;
+		}
+
+		@Override
+		public KeyType getType() {
+			return mType;
+		}
+
+		@Override
+		public String getName() {
+			return name();
+		}
+	}
+
 	/**
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -341,7 +458,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private final IRun<LETTER, IPredicate, ?> mCex;
 		private final IAbstractInterpretationResult<STATE, LETTER, ?> mResult;
 
-		private IInterpolantGenerator<LETTER> mInterpolantGenerator;
+		private IInterpolatingTraceCheck<LETTER> mInterpolantGenerator;
 		private CachingHoareTripleChecker mHtc;
 		private final AbsIntPredicate<STATE> mFalsePredicate;
 		private final AbsIntPredicate<STATE> mTruePredicate;
@@ -384,14 +501,14 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			return new CachingHoareTripleCheckerMap(mServices, htc, mPredicateUnifierAbsInt);
 		}
 
-		public IInterpolantGenerator<LETTER> getInterpolantGenerator() {
+		public IInterpolatingTraceCheck<LETTER> getInterpolantGenerator() {
 			if (mInterpolantGenerator == null) {
 				mInterpolantGenerator = createInterpolantGenerator();
 			}
 			return mInterpolantGenerator;
 		}
 
-		private IInterpolantGenerator<LETTER> createInterpolantGenerator() {
+		private IInterpolatingTraceCheck<LETTER> createInterpolantGenerator() {
 			if (mResult.hasReachedError()) {
 				// analysis was not strong enough
 				return new AbsIntFailedInterpolantGenerator<>(mPredicateUnifierAbsInt, mCex.getWord(),
@@ -446,9 +563,10 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				final List<LETTER> ppTrace, final IHoareTripleChecker htc) {
 			return new AbsIntPredicateInterpolantSequenceWeakener<>(mLogger, htc, nonUnifiedPredicates, ppTrace,
 					mTruePredicate, mFalsePredicate, mCsToolkit.getManagedScript().getScript(),
-					mPredicateUnifierAbsInt.getPredicateFactory(), mCegarLoopBenchmark).getResult();
+					mPredicateUnifierAbsInt.getPredicateFactory(), mStats).getResult();
 		}
 
+		@SuppressWarnings("unchecked")
 		private List<LETTER> constructTraceFromWord(final Word<LETTER> word, final PathProgram pathProgram) {
 			final Map<LETTER, LETTER> wordLetter2PathProgramLetter = new HashMap<>();
 			final IcfgEdgeIterator iter = new IcfgEdgeIterator(pathProgram);
@@ -562,6 +680,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			return rtr;
 		}
 
+		@SuppressWarnings("unchecked")
 		private AbsIntPredicate<STATE> getPredicateFromStates(final Set<STATE> postStates, final Script script) {
 			if (postStates.isEmpty()) {
 				return mFalsePredicate;
@@ -583,6 +702,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			return (AbsIntPredicate<STATE>) disjunction;
 		}
 
+		@SuppressWarnings("unchecked")
 		private AbsIntPredicate<STATE> getNonUnifiedPredicateFromStates(final Set<STATE> postStates,
 				final Script script) {
 			if (postStates.isEmpty()) {
@@ -612,7 +732,6 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		@Override
 		public CachingHoareTripleChecker getHoareTripleChecker() {
-			// evil hack but Matthias does not want to change the architecture.
 			return mHtc;
 		}
 
@@ -632,14 +751,53 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			return true;
 		}
 
+		@Override
+		public LBool isCorrect() {
+			return LBool.UNSAT;
+		}
+
+		@Override
+		public boolean providesRcfgProgramExecution() {
+			return false;
+		}
+
+		@Override
+		public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ToolchainCanceledException getToolchainCanceledExpection() {
+			return null;
+		}
+
+		@Override
+		public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean wasTracecheckFinishedNormally() {
+			return true;
+		}
+
+		@Override
+		public IStatisticsDataProvider getStatistics() {
+			throw new UnsupportedOperationException();
+		}
+
 	}
 
 	private static final class AbsIntFailedInterpolantGenerator<LETTER extends IAction>
 			extends AbsIntBaseInterpolantGenerator<LETTER> {
 
+		private final TraceCheckReasonUnknown mReason;
+
 		private AbsIntFailedInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<LETTER> cex,
 				final ItpErrorStatus status, final Exception ex) {
 			super(predicateUnifier, cex, null, null, new InterpolantComputationStatus(false, status, ex));
+			mReason = new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, ex,
+					ExceptionHandlingCategory.KNOWN_IGNORE);
 		}
 
 		@Override
@@ -660,6 +818,41 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		@Override
 		public CachingHoareTripleChecker getHoareTripleChecker() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public LBool isCorrect() {
+			return LBool.UNKNOWN;
+		}
+
+		@Override
+		public boolean providesRcfgProgramExecution() {
+			return false;
+		}
+
+		@Override
+		public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ToolchainCanceledException getToolchainCanceledExpection() {
+			return null;
+		}
+
+		@Override
+		public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
+			return mReason;
+		}
+
+		@Override
+		public boolean wasTracecheckFinishedNormally() {
+			return true;
+		}
+
+		@Override
+		public IStatisticsDataProvider getStatistics() {
 			throw new UnsupportedOperationException();
 		}
 	}
@@ -700,6 +893,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				assert assertValidPredicate((AbsIntPredicate<?>) unifiedPred) : "Created invalid predicate";
 				return unifiedPred;
 			}
+			@SuppressWarnings("unchecked")
 			final Set<DisjunctiveAbstractState<STATE>> multistates =
 					minimalSubset.stream().map(a -> ((AbsIntPredicate<STATE>) a).getAbstractStates())
 							.map(a -> DisjunctiveAbstractState.createDisjunction(a)).collect(Collectors.toSet());
@@ -728,6 +922,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			return rtr;
 		}
 
+		@SuppressWarnings("unchecked")
 		private DisjunctiveAbstractState<STATE> toDisjunctiveState(final Set<IPredicate> preds) {
 			if (preds == null || preds.isEmpty()) {
 				return new DisjunctiveAbstractState<>();
@@ -779,4 +974,5 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 
 	}
+
 }

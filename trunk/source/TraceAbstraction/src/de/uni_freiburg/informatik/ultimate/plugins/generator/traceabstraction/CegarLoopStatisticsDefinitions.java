@@ -63,7 +63,7 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	BasicInterpolantAutomatonTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
 
-	BiggestAbstraction(Integer.class, CegarStatisticsType.s_SizeIterationPairDataAggregation,
+	BiggestAbstraction(Integer.class, CegarStatisticsType.SIZE_ITERATION_PAIR_DATA_AGGREGATION,
 			StatisticsType.KEY_BEFORE_DATA),
 
 	traceCheckStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
@@ -81,18 +81,6 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	TotalInterpolationStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
 			StatisticsType.KEY_BEFORE_DATA),
-
-	AbstIntTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
-
-	AbstIntIterations(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-	AbstIntStrong(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-	AbsIntWeakeningRatio(Double.class, StatisticsType.DOUBLE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-	AbsIntAvgWeakeningVarsNumRemoved(Double.class, StatisticsType.DOUBLE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-	AbsIntAvgWeakenedConjuncts(Double.class, StatisticsType.DOUBLE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	DUMP_TIME(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
 

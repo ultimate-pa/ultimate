@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuild
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -84,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
@@ -107,7 +106,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @author Jonas Werner (jonaswerner95@gmail.com)
  *
  */
-public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInterpolantGenerator<LETTER> {
+public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTraceCheck<LETTER> {
 
 	/**
 	 * To indicate whether a frame has been changed. It is possible to add "true" to frames, but that was ignored in the
@@ -1146,7 +1145,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		final SolverSettings solverSettings =
 				SolverBuilder.constructSolverSettings(SolverMode.Internal_SMTInterpol, false, null);
 		final Script script = SolverBuilder.buildAndInitializeSolver(services, SolverMode.Internal_SMTInterpol,
-				solverSettings, false, false, Logics.ALL.toString(), "PdrSolver");
+				solverSettings, false, false, Logics.ALL, "PdrSolver");
 
 		csToolkit.getSmtFunctionsAndAxioms().transferSymbols(script);
 		return new ManagedScript(services, script);
@@ -1188,7 +1187,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	}
 
 	@Override
-	public IStatisticsDataProvider getTraceCheckBenchmark() {
+	public IStatisticsDataProvider getStatistics() {
 		return mPdrBenchmark;
 	}
 

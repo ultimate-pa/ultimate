@@ -55,8 +55,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
@@ -65,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -101,54 +98,46 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 
 	private final AutomatonEpimorphism<IPredicate> mEpimorphism;
 	private final IHoareTripleChecker mHtc;
-	private final ModifiableGlobalsTable mModifiedGlobals;
 	private final InterpolationTechnique mInterpolation;
 
 	private final TotalInterpolationBenchmarkGenerator mBenchmarkGenerator = new TotalInterpolationBenchmarkGenerator();
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final IIcfgSymbolTable mSymbolTable;
 	private final boolean mCollectInterpolantStatistics;
 
 	public TotalInterpolationAutomatonBuilder(final INestedWordAutomaton<LETTER, IPredicate> abstraction,
-			final NestedRun<LETTER, IPredicate> nestedRun, final IInterpolantGenerator<LETTER> interpolantGenerator,
-			final CfgSmtToolkit csToolkit, final PredicateFactoryForInterpolantAutomata predicateFactory,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final InterpolationTechnique interpolation,
-			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfgSymbolTable symbolTable, final boolean collectInterpolantStatistics)
-			throws AutomataOperationCanceledException {
+			final NestedRun<LETTER, IPredicate> nestedRun, final CfgSmtToolkit csToolkit,
+			final PredicateFactoryForInterpolantAutomata predicateFactory, final InterpolationTechnique interpolation,
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final boolean collectInterpolantStatistics,
+			final IPredicateUnifier predicateUnifier, final TracePredicates ipp) throws AutomataOperationCanceledException {
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mCollectInterpolantStatistics = collectInterpolantStatistics;
-		mSymbolTable = symbolTable;
 		mStateSequence = nestedRun.getStateSequence();
-		// mTraceCheck = traceCheck;
 		mCsToolkit = csToolkit;
-		// mInterpolants = traceCheck.getInterpolants();
-		mPredicateUnifier = interpolantGenerator.getPredicateUnifier();
+		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = (PredicateFactory) mPredicateUnifier.getPredicateFactory();
 		mAbstraction = abstraction;
 		final VpAlphabet<LETTER> alphabet = NestedWordAutomataUtils.getVpAlphabet(abstraction);
-		mIA = new StraightLineInterpolantAutomatonBuilder<>(mServices, null, alphabet,
-				Collections.singletonList(new TracePredicates(interpolantGenerator)), predicateFactory,
+		mIA = new StraightLineInterpolantAutomatonBuilder<>(mServices, null, alphabet, Collections.singletonList(ipp),
+				predicateFactory,
 				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING)
 						.getResult();
-		mModifiedGlobals = modifiableGlobalsTable;
 		mInterpolation = interpolation;
 		mEpimorphism = new AutomatonEpimorphism<>(new AutomataLibraryServices(mServices));
 		{
 			final IPredicate firstAutomatonState = mStateSequence.get(0);
-			mEpimorphism.insert(firstAutomatonState, interpolantGenerator.getPrecondition());
+			mEpimorphism.insert(firstAutomatonState, ipp.getPrecondition());
 			mAnnotated.add(firstAutomatonState);
 			mWorklist.add(firstAutomatonState);
 		}
-		addInterpolants(mStateSequence, interpolantGenerator.getInterpolants());
+		addInterpolants(mStateSequence, ipp.getPredicates());
 		{
 			final IPredicate lastAutomatonState = mStateSequence.get(mStateSequence.size() - 1);
-			mEpimorphism.insert(lastAutomatonState, interpolantGenerator.getPostcondition());
+			mEpimorphism.insert(lastAutomatonState, ipp.getPostcondition());
 			mAnnotated.add(lastAutomatonState);
 			mWorklist.add(lastAutomatonState);
 		}
@@ -301,26 +290,6 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		}
 	}
 
-	private void caseDistinction(final IPredicate p, final ITransitionlet<LETTER, IPredicate> transition,
-			final IPredicate succ) {
-		if (transition instanceof OutgoingInternalTransition) {
-			final OutgoingInternalTransition<LETTER, IPredicate> internalTrans =
-					(OutgoingInternalTransition<LETTER, IPredicate>) transition;
-		} else if (transition instanceof OutgoingCallTransition) {
-			final OutgoingCallTransition<LETTER, IPredicate> callTrans =
-					(OutgoingCallTransition<LETTER, IPredicate>) transition;
-		} else if (transition instanceof OutgoingReturnTransition) {
-			final OutgoingReturnTransition<LETTER, IPredicate> returnTrans =
-					(OutgoingReturnTransition<LETTER, IPredicate>) transition;
-		} else if (transition instanceof SummaryReturnTransition) {
-			final SummaryReturnTransition<LETTER, IPredicate> summaryTrans =
-					(SummaryReturnTransition<LETTER, IPredicate>) transition;
-		} else {
-			throw new AssertionError("unsupported" + transition.getClass());
-		}
-
-	}
-
 	private void checkRun(final NestedRun<LETTER, IPredicate> run) {
 		final IPredicate first = run.getStateAtPosition(0);
 		final IPredicate last = run.getStateAtPosition(run.getLength() - 1);
@@ -352,7 +321,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
-		mBenchmarkGenerator.addTraceCheckData(tc.getTraceCheckBenchmark());
+		mBenchmarkGenerator.addTraceCheckData(tc.getStatistics());
 		if (tc.getToolchainCanceledExpection() != null) {
 			throw tc.getToolchainCanceledExpection();
 		}
@@ -413,17 +382,21 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		}
 	}
 
+	private int addInterpolants(final List<IPredicate> stateSequence, final IPredicate[] interpolants) {
+		return addInterpolants(stateSequence, Arrays.asList(interpolants));
+	}
+
 	/**
 	 * Add a sequence of interpolants itp_1,...,itp_{n-1} for a sequence of states s_0,...,s_n. For each i add itp_i to
 	 * the interpolant automaton if not already contained add s_i to the worklist add s_i to the annotated states add
 	 * (s_i, itp_i) to the epimorphism Return the number of (different) interpolants that have been in the automaton
 	 * before.
 	 */
-	private int addInterpolants(final List<IPredicate> stateSequence, final IPredicate[] interpolants) {
+	private int addInterpolants(final List<IPredicate> stateSequence, final List<IPredicate> interpolants) {
 		int numberOfNewPredicates = 0;
-		for (int i = 0; i < interpolants.length; i++) {
+		int i = 0;
+		for (final IPredicate interpolant : interpolants) {
 			final IPredicate state = stateSequence.get(i + 1);
-			final IPredicate interpolant = interpolants[i];
 			if (!mIA.getStates().contains(interpolant)) {
 				mIA.addState(false, false, interpolant);
 				numberOfNewPredicates++;
@@ -431,6 +404,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			mAnnotated.add(state);
 			mEpimorphism.insert(state, interpolant);
 			mWorklist.add(state);
+			i++;
 		}
 		return numberOfNewPredicates;
 	}

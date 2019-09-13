@@ -26,27 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.Objects;
-import java.util.TreeMap;
-
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TermClassifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 
 /**
  * Provides static auxiliary methods for {@link RefinementStrategy}s.
@@ -59,40 +42,7 @@ public class RefinementStrategyUtils {
 		// do not instantiate utility classes
 	}
 
-	public static <LETTER extends IIcfgTransition<?>> IInterpolantGenerator<LETTER> constructInterpolantGenerator(
-			final IUltimateServiceProvider services, final ILogger logger,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefsForInterpolantConsolidation,
-			final ITraceCheck traceCheck, final PredicateFactory predicateFactory,
-			final IPredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
-			final IPredicate precondition, final RefinementEngineStatisticsGenerator statistics) {
-		final ITraceCheck localTraceCheck = Objects.requireNonNull(traceCheck,
-				"cannot construct interpolant generator if no trace checker is present");
-		if (localTraceCheck instanceof IInterpolantGenerator<?>) {
-			final IInterpolantGenerator<LETTER> interpolatingTraceCheck =
-					(IInterpolantGenerator<LETTER>) localTraceCheck;
-
-			if (prefs.getUseInterpolantConsolidation()) {
-				try {
-					final CfgSmtToolkit cfgSmtToolkit = prefs.getCfgSmtToolkit();
-					final InterpolantConsolidation<LETTER> interpConsoli = new InterpolantConsolidation<>(precondition,
-							predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
-							NestedWord.nestedWord(counterexample.getWord()), cfgSmtToolkit,
-							cfgSmtToolkit.getModifiableGlobalsTable(), services, logger, predicateFactory,
-							predicateUnifier, interpolatingTraceCheck, taPrefsForInterpolantConsolidation);
-					statistics.addInterpolantConsolidationStatistics(
-							interpConsoli.getInterpolantConsolidationBenchmarks());
-					return interpConsoli;
-				} catch (final AutomataOperationCanceledException e) {
-					throw new AssertionError("react on timeout, not yet implemented");
-				}
-			}
-			return interpolatingTraceCheck;
-		}
-		throw new AssertionError("Currently only interpolating trace checkers are supported.");
-	}
-
 	/**
-	 *
 	 * @return true iff classified term does not contain {@link SmtUtils#FLOATINGPOINT_SORT}.
 	 */
 	public static boolean hasNoFloats(final TermClassifier tc) {
@@ -100,7 +50,6 @@ public class RefinementStrategyUtils {
 	}
 
 	/**
-	 *
 	 * @return true iff classified term does not contain {@link SmtUtils#FP_TO_IEEE_BV_EXTENSION} and does not contain
 	 *         quantifiers.
 	 */

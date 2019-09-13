@@ -45,13 +45,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.InvariantSynthesisStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
- * InterpolatingTraceCheck that returns path invariants as interpolants. If no path invariants are available, Craig
- * interpolation is used as a fallback.
+ * IpTc that returns path invariants as interpolants. If no path invariants are available, Craig interpolation is used
+ * as a fallback.
  *
  * @author Matthias Heizmann
  */
@@ -60,7 +60,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 
 	private final NestedRun<? extends IAction, IPredicate> mNestedRun;
 	private final IIcfg<?> mIcfg;
-	private InvariantSynthesisStatisticsGenerator mPathInvariantsStats;
+	private IStatisticsDataProvider mPathInvariantsStats;
 
 	private InterpolantComputationStatus mInterpolantComputationStatus;
 	private final InvariantSynthesisSettings mInvariantSynthesisSettings;
@@ -98,10 +98,9 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 	protected void computeInterpolants(final Set<Integer> interpolatedPositions,
 			final InterpolationTechnique interpolation) {
 
-		final PathInvariantsGenerator<?> pathInvariantsGenerator =
-				new PathInvariantsGenerator<>(super.mServices, mNestedRun, super.getPrecondition(), super.getPostcondition(),
-						mPredicateFactory, mPredicateUnifier, mIcfg, mInvariantSynthesisSettings,
-						mSimplificationTechnique, mXnfConversionTechnique);
+		final PathInvariantsGenerator<?> pathInvariantsGenerator = new PathInvariantsGenerator<>(super.mServices,
+				mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateFactory, mPredicateUnifier,
+				mIcfg, mInvariantSynthesisSettings, mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolantComputationStatus = pathInvariantsGenerator.getInterpolantComputationStatus();
 		final IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {
@@ -118,7 +117,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 		}
 		mInterpolants = interpolants;
 		// Store path invariants benchmarks
-		mPathInvariantsStats = pathInvariantsGenerator.getPathInvariantsBenchmarks();
+		mPathInvariantsStats = pathInvariantsGenerator.getStatistics();
 	}
 
 	@Override
@@ -126,7 +125,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 		return mInterpolantComputationStatus;
 	}
 
-	public InvariantSynthesisStatisticsGenerator getPathInvariantsStats() {
+	public IStatisticsDataProvider getPathInvariantsStats() {
 		return mPathInvariantsStats;
 	}
 

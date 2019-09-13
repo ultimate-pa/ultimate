@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.DiffWrapperScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -82,14 +83,15 @@ public class SolverBuilder {
 
 	public static final String COMMAND_CVC4_NO_TIMEOUT = "cvc4 --incremental --print-success --lang smt --rewrite-divk";
 	public static final String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
+
 	// 20161214 Matthias: MathSAT does not support timeouts
 	public static final String COMMAND_MATHSAT = "mathsat -unsat_core_generation=3";
 	public static final long TIMEOUT_SMTINTERPOL = 12_000L;
 	public static final long TIMEOUT_NONE_SMTINTERPOL = 0L;
-	public static final String LOGIC_Z3 = "ALL";
-	public static final String LOGIC_CVC4_DEFAULT = "AUFLIRA";
-	public static final String LOGIC_CVC4_BITVECTORS = "AUFBV";
-	public static final String LOGIC_MATHSAT = "ALL";
+	public static final Logics LOGIC_Z3 = Logics.ALL;
+	public static final Logics LOGIC_CVC4_DEFAULT = Logics.AUFLIRA;
+	public static final Logics LOGIC_CVC4_BITVECTORS = Logics.AUFBV;
+	public static final Logics LOGIC_MATHSAT = Logics.ALL;
 
 	public static final boolean USE_DIFF_WRAPPER_SCRIPT = true;
 
@@ -248,7 +250,7 @@ public class SolverBuilder {
 
 	public static Script buildAndInitializeSolver(final IUltimateServiceProvider services, final SolverMode solverMode,
 			final SolverSettings solverSettings, final boolean dumpUsatCoreTrackBenchmark,
-			final boolean dumpMainTrackBenchmark, final String logicForExternalSolver, final String solverId)
+			final boolean dumpMainTrackBenchmark, final Logics logicForExternalSolver, final String solverId)
 			throws AssertionError {
 
 		Script script = SolverBuilder.buildScript(services, solverSettings);
@@ -296,17 +298,14 @@ public class SolverBuilder {
 			result.setOption(":produce-models", true);
 			result.setOption(":produce-interpolants", true);
 			result.setLogic(logicForExternalSolver);
-			// add array-ext function
 			final Sort indexSort;
-			if (logicForExternalSolver.endsWith("A")) {
+			if (logicForExternalSolver.isArray()) {
+				// add array-ext function
 				indexSort = SmtSortUtils.getIntSort(result);
-				// Sort boolSort = SmtSortUtils.getBoolSort(result);
-				// Sort boolArraySort = SmtSortUtils.getArraySort(result, indexSort, boolSort);
-				// result.declareFun("array-ext", new Sort[] { boolArraySort, boolArraySort }, indexSort);
 				final Sort intSort = SmtSortUtils.getIntSort(result);
 				final Sort intArraySort = SmtSortUtils.getArraySort(result, indexSort, intSort);
 				result.declareFun("array-ext", new Sort[] { intArraySort, intArraySort }, indexSort);
-			} else if (logicForExternalSolver.endsWith("BV")) {
+			} else if (logicForExternalSolver.isBitVector()) {
 				// do nothing. several have to be added here
 			}
 			break;

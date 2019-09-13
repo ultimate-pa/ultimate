@@ -49,7 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner.AbsIntStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner.AbsIntStats;
 
 /**
  * {@link InterpolantSequenceWeakener} tries to weaken each predicate in a sequence of predicates s.t. it is still
@@ -70,10 +71,9 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	private final TripleList<P, LETTER> mTripleList;
 	protected final Map<Integer, P> mHierarchicalPreStates;
 
-	// TODO: move statistics in benchmarks class
 	private int mSuccessfulWeakenings;
 	private final List<Rational> mSizeDifferential;
-	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
+	private final AbsIntStatisticsGenerator mStats;
 
 	/**
 	 * Default constructor. Generates result directly.
@@ -89,7 +89,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	 */
 	public InterpolantSequenceWeakener(final ILogger logger, final HTC htc, final List<P> predicates,
 			final List<LETTER> trace, final P precondition, final P postcondition, final Script script,
-			final BasicPredicateFactory predicateFactory, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
+			final BasicPredicateFactory predicateFactory, final AbsIntStatisticsGenerator stats) {
 		mSuccessfulWeakenings = 0;
 		mSizeDifferential = new ArrayList<>();
 
@@ -99,7 +99,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		mPostcondition = postcondition;
 		mScript = script;
 		mPredicateFactory = predicateFactory;
-		mCegarLoopBenchmark = cegarLoopBenchmark;
+		mStats = stats;
 		mTripleList = new TripleList<>(predicates, trace, mPrecondition, mPostcondition);
 		final List<LETTER> checkedTrace = Objects.requireNonNull(trace, "trace is null");
 		final List<P> checkedPredicates = Objects.requireNonNull(predicates, "predicates are null");
@@ -251,7 +251,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	 *            The ratio of the number weakened predicates to the total number of predicates.
 	 */
 	protected void reportWeakeningRatio(final double ratio) {
-		mCegarLoopBenchmark.addAiWeakeningRatio(ratio);
+		mStats.addRatio(AbsIntStats.WEAKENING_RATIO, ratio);
 	}
 
 	/**
@@ -261,11 +261,11 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	 *            The number of removed variables.
 	 */
 	protected void reportWeakeningVarsNumRemoved(final int numRemovedVars) {
-		mCegarLoopBenchmark.addAiWeakeningVarsNumRemoved(numRemovedVars);
+		mStats.addRatio(AbsIntStats.AVG_VARS_REMOVED_DURING_WEAKENING, numRemovedVars);
 	}
 
 	protected void reportConjunctReduction(final int differenceConjuncts) {
-		mCegarLoopBenchmark.addAiConjunctReductionNumber(differenceConjuncts);
+		mStats.addRatio(AbsIntStats.AVG_WEAKENED_CONJUNCTS, differenceConjuncts);
 	}
 
 	/**

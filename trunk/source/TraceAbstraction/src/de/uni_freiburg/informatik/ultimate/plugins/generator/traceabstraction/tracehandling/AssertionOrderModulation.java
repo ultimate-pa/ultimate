@@ -59,7 +59,6 @@ public class AssertionOrderModulation<LETTER> {
 	private final AssertCodeBlockOrder[] mOrder;
 	private final ILogger mLogger;
 	private final PathProgramCache<LETTER> mPathProgramCache;
-	private int mCurrentIndex;
 
 	public AssertionOrderModulation(final PathProgramCache<LETTER> pathProgramCache, final ILogger logger) {
 		this(pathProgramCache, logger, DEFAULT_ORDER);
@@ -67,11 +66,9 @@ public class AssertionOrderModulation<LETTER> {
 
 	public AssertionOrderModulation(final PathProgramCache<LETTER> pathProgramCache, final ILogger logger,
 			final AssertCodeBlockOrder... order) {
-		assert order != null && order.length > 0 : "Order is needed";
 		mPathProgramCache = pathProgramCache;
 		mLogger = logger;
-		mCurrentIndex = 0;
-		mOrder = order;
+		mOrder = order == null || order.length == 0 ? DEFAULT_ORDER : order;
 	}
 
 	/**
@@ -87,26 +84,27 @@ public class AssertionOrderModulation<LETTER> {
 			final InterpolationTechnique interpolationTechnique) {
 
 		final int count = mPathProgramCache.getPathProgramCount(counterexample);
+		final int index = toIndex(count - 1);
+		final int oldIndex = toIndex(count - 2);
 
-		final AssertCodeBlockOrder oldOrder = mOrder[mCurrentIndex];
-		if (count == 0) {
-			mCurrentIndex = 0;
-		} else {
-			mCurrentIndex = (count - 1) % mOrder.length;
-		}
-
-		final AssertCodeBlockOrder newOrder = getOrder(interpolationTechnique);
-
+		final AssertCodeBlockOrder oldOrder = getOrder(interpolationTechnique, oldIndex);
+		final AssertCodeBlockOrder newOrder = getOrder(interpolationTechnique, index);
 		if (oldOrder != newOrder) {
 			mLogger.info("Changing assertion order to " + newOrder);
 		} else {
 			mLogger.info("Keeping assertion order " + newOrder);
 		}
-
-		return getOrder(interpolationTechnique);
+		return newOrder;
 	}
 
-	private AssertCodeBlockOrder getOrder(final InterpolationTechnique interpolationTechnique) {
+	private int toIndex(final int count) {
+		if (count <= 0) {
+			return 0;
+		}
+		return count % mOrder.length;
+	}
+
+	private AssertCodeBlockOrder getOrder(final InterpolationTechnique interpolationTechnique, final int index) {
 		if (interpolationTechnique == null) {
 			// if we do not compute interpolants, there is no need to assert incrementally
 			return AssertCodeBlockOrder.NOT_INCREMENTALLY;
@@ -123,7 +121,7 @@ public class AssertionOrderModulation<LETTER> {
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
 		case PathInvariants:
-			return mOrder[mCurrentIndex];
+			return mOrder[index];
 		default:
 			throw new IllegalArgumentException("Unknown interpolation technique: " + interpolationTechnique);
 		}

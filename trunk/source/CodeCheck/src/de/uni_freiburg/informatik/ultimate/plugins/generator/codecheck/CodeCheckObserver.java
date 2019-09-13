@@ -93,6 +93,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -119,7 +120,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantGeneratorWithConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
@@ -312,8 +313,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						CodeCheckPreferenceInitializer.DEF_SEPARATETRACECHECKSOLVERCOMMAND));
 
 		mGlobalSettings.setSeparateSolverForTracechecksTheory(
-				prefs.getString(CodeCheckPreferenceInitializer.LABEL_SEPARATETRACECHECKSOLVERTHEORY,
-						CodeCheckPreferenceInitializer.DEF_SEPARATETRACECHECKSOLVERTHEORY));
+				Logics.valueOf(prefs.getString(CodeCheckPreferenceInitializer.LABEL_SEPARATETRACECHECKSOLVERTHEORY,
+						CodeCheckPreferenceInitializer.DEF_SEPARATETRACECHECKSOLVERTHEORY)));
 
 		/*
 		 * Settings concerning betim interpolation
@@ -462,22 +463,17 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				}
 
 				final LBool isSafe = traceCheck.isCorrect();
-				benchmarkGenerator.addTraceCheckData(traceCheck.getTraceCheckBenchmark());
+				benchmarkGenerator.addTraceCheckData(traceCheck.getStatistics());
 
 				if (isSafe == LBool.UNSAT) { // trace is infeasible
 					IPredicate[] interpolants = null;
 
 					if (mGlobalSettings.isUseInterpolantconsolidation()) {
 						try {
-							final InterpolantConsolidation<IIcfgTransition<?>> interpConsoli =
-									new InterpolantConsolidation<>(mPredicateUnifier.getTruePredicate(),
-											mPredicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
-											NestedWord.nestedWord(errorRun.getWord()), mCsToolkit,
-											mCsToolkit.getModifiableGlobalsTable(), mServices, mLogger,
-											mPredicateFactory, mPredicateUnifier, traceCheck, null);
-							// Add benchmark data of interpolant consolidation
-							// mCegarLoopBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
-							// mInterpolantGenerator = interpConsoli;
+
+							final InterpolantGeneratorWithConsolidation<InterpolatingTraceCheck<IIcfgTransition<?>>, IIcfgTransition<?>> interpConsoli =
+									new InterpolantGeneratorWithConsolidation<>(mCsToolkit, mServices, mLogger,
+											mPredicateFactory, traceCheck);
 							interpolants = interpConsoli.getInterpolants();
 						} catch (final AutomataOperationCanceledException e) {
 							// Timeout

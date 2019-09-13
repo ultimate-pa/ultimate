@@ -51,46 +51,48 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
 
 	@SuppressWarnings("unchecked")
-	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
+	private static final Triple<String, String[], String>[] TOOLCHAINS =
+			new Triple[] {
 
-			// new Triple<>("AutomizerBpl.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+					// new Triple<>("AutomizerBpl.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+					// new Triple<>("AutomizerBplTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
 
-			// new Triple<>("AutomizerCInline.xml", C,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
-			// new Triple<>("AutomizerCInlineTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+					// new Triple<>("AutomizerCInline.xml", C,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+					// new Triple<>("AutomizerCInlineTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
 
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Ahmed_Debug.epf"),
+					// new Triple<>("AutomizerBplTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Ahmed_Debug.epf"),
 
-			// new Triple<>("AutomizerBpl.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
+					// new Triple<>("AutomizerBpl.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
+					// new Triple<>("AutomizerBplTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
 
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_LE.epf"),
-			// new Triple<>("AutomizerBpl.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
-			// new Triple<>("AutomizerBpl.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
-			// new Triple<>("AutomizerBpl.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
-			//
-			// new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_Debug.epf"),
-			// // new Triple<>("AutomizerBplTransformed.xml", BPL,
-			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
-			//
+					// new Triple<>("AutomizerBplTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
+					// new Triple<>("AutomizerBplTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_LE.epf"),
+					// new Triple<>("AutomizerBpl.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
+					// new Triple<>("AutomizerBpl.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
+					// new Triple<>("AutomizerBpl.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+					//
+					// new Triple<>("AutomizerBplTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_Debug.epf"),
+					// // new Triple<>("AutomizerBplTransformed.xml", BPL,
+					// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+					//
 
-			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
-			new Triple<>("AutomizerBplTransformed.xml", BPL,
-					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
+					new Triple<>("AutomizerBpl.xml", BPL,
+							"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
+					new Triple<>("AutomizerBplTransformed.xml", BPL,
+							"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
 			// new Triple<>("AutomizerCInline.xml", C,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
 			// new Triple<>("AutomizerCInlineTransformed.xml", C,
@@ -118,7 +120,7 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 			// new Triple<>("AutomizerCInline.xml", C,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_EE.epf"),
 
-	};
+			};
 
 	private static final String[] INPUT = new String[] {
 
@@ -204,12 +206,6 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
 				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallIterations.toString(), "Iter{-}ations",
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.AbstIntIterations.toString(), "AI Iter{-}ations",
-						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.AbstIntStrong.toString(), "AI Strong",
-						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.AbstIntTime.toString(), "AI Avg. Time",
-						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Trace Abstraction Time",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition("traceCheckStatistics_NumberOfCodeBlocks", null, ConversionContext.BestFitNumber(),

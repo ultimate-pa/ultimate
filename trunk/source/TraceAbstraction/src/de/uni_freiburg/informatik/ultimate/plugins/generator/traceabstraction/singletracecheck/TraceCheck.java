@@ -450,7 +450,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 	}
 
 	@Override
-	public TraceCheckStatisticsGenerator getTraceCheckBenchmark() {
+	public TraceCheckStatisticsGenerator getStatistics() {
 		if (mTraceCheckFinished || mToolchainCanceledException != null) {
 			return mTraceCheckBenchmarkGenerator;
 		}

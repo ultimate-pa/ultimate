@@ -250,7 +250,7 @@ public class RtInconcistencyConditionGenerator {
 				SolverMode.External_ModelsAndUnsatCoreMode, false, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, false, null);
 		final Script solver =
 				SolverBuilder.buildAndInitializeSolver(services, SolverMode.External_ModelsAndUnsatCoreMode, settings,
-						false, false, Logics.ALL.toString(), "RtInconsistencySolver");
+						false, false, Logics.ALL, "RtInconsistencySolver");
 		if (SOLVER_LOGFILE == null) {
 			return solver;
 		}

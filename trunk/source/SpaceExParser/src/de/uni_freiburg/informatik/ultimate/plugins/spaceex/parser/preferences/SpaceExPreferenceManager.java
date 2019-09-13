@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslatorConstants;
@@ -63,7 +64,7 @@ public class SpaceExPreferenceManager {
 	private String mCommandExternalSolver;
 	private boolean mDumpUsatCoreTrackBenchmark;
 	private boolean mDumpMainTrackBenchmark;
-	private String mLogicForExternalSolver;
+	private Logics mLogicForExternalSolver;
 	private SolverSettings mSolverSettings;
 
 	public SpaceExPreferenceManager(final IUltimateServiceProvider services, final ILogger logger,
@@ -122,8 +123,8 @@ public class SpaceExPreferenceManager {
 		mDumpMainTrackBenchmark = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
 
-		mLogicForExternalSolver = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC);
+		mLogicForExternalSolver = Logics.valueOf(mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
+				.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
 		mSolverSettings = SolverBuilder.constructSolverSettings(mModelFilename, mSolverMode, mFakeNonIncrementalScript,
 				mCommandExternalSolver, mDumpSmtScriptToFile, mPathOfDumpedScript);
 
@@ -179,7 +180,7 @@ public class SpaceExPreferenceManager {
 		return mDumpMainTrackBenchmark;
 	}
 
-	public String getLogicForExternalSolver() {
+	public Logics getLogicForExternalSolver() {
 		return mLogicForExternalSolver;
 	}
 

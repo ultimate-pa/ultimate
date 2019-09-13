@@ -40,7 +40,7 @@ public class ReqToTestPowersetObserver extends BaseObserver {
 		final SolverSettings settings = SolverBuilder.constructSolverSettings("", SolverMode.External_DefaultMode,
 				false, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, false, null);
 		mScript = SolverBuilder.buildAndInitializeSolver(services, SolverMode.External_DefaultMode, settings, false,
-				false, Logics.ALL.toString(), "RtInconsistencySolver");
+				false, Logics.ALL, "RtInconsistencySolver");
 
 		mManagedScript = new ManagedScript(services, mScript);
 	}

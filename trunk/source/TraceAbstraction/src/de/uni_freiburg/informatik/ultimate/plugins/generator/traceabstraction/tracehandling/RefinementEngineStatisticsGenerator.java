@@ -27,70 +27,117 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation.InterpolantConsolidationBenchmarkGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckPathInvariantsWithFallback;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public class RefinementEngineStatisticsGenerator implements IStatisticsDataProvider {
 
-	private final StatisticsData mTraceCheckStatistics = new StatisticsData();
-	private final StatisticsData mInvariantSynthesisStatistics = new StatisticsData();
-	private final StatisticsData mInterpolantConsolidationStatistics = new StatisticsData();
+	private final ConstructionCache<RefinementEngineStatisticsDefinitions, Set<IStatisticsDataProvider>> mStats;
+	private final ConstructionCache<RefinementEngineStatisticsDefinitions, StatisticsData> mStatsAggregated;
+	private static final StatisticsType<RefinementEngineStatisticsDefinitions> TYPE =
+			new StatisticsType<>(RefinementEngineStatisticsDefinitions.class);
+
+	public RefinementEngineStatisticsGenerator() {
+		mStats = new ConstructionCache<>(a -> new HashSet<>());
+		mStatsAggregated = new ConstructionCache<>(a -> new StatisticsData());
+	}
 
 	@Override
 	public IStatisticsType getBenchmarkType() {
-		return RefinementEngineStatisticsType.getInstance();
+		return TYPE;
 	}
 
-	private void addTraceCheckStatistics(final IStatisticsDataProvider traceCheckStatistics) {
-		mTraceCheckStatistics.aggregateBenchmarkData(traceCheckStatistics);
+	public void addTraceCheckStatistics(final IStatisticsDataProvider stats) {
+		addData(RefinementEngineStatisticsDefinitions.TRACE_CHECK, stats);
 	}
 
-	private void addInvariantSynthesisStatistics(final IStatisticsDataProvider invariantSynthesisStatistics) {
-		mInvariantSynthesisStatistics.aggregateBenchmarkData(invariantSynthesisStatistics);
+	public void addInvariantSynthesisStatistics(final IStatisticsDataProvider stats) {
+		addData(RefinementEngineStatisticsDefinitions.INVARIANT_SYNTHESIS, stats);
 	}
 
-	public void addInterpolantConsolidationStatistics(
-			final InterpolantConsolidationBenchmarkGenerator interpolantConsolidationStatistics) {
-		mInterpolantConsolidationStatistics.aggregateBenchmarkData(interpolantConsolidationStatistics);
+	public void addInterpolantConsolidationStatistics(final IStatisticsDataProvider stats) {
+		addData(RefinementEngineStatisticsDefinitions.INTERPOLANT_CONSOLIDATION, stats);
 	}
 
-	public void addTraceCheckStatistics(final ITraceCheck traceCheck) {
-		if (!traceCheck.wasTracecheckFinishedNormally()) {
+	public void addAbstractInterpretationStatistics(final IStatisticsDataProvider stats) {
+		addData(RefinementEngineStatisticsDefinitions.ABSTRACT_INTERPRETATION, stats);
+	}
+
+	public void finishRefinementEngineRun() {
+		for (final Entry<RefinementEngineStatisticsDefinitions, Set<IStatisticsDataProvider>> entry : mStats.getMap()
+				.entrySet()) {
+			final StatisticsData aggregatedData = mStatsAggregated.getOrConstruct(entry.getKey());
+			for (final IStatisticsDataProvider data : entry.getValue()) {
+				aggregatedData.aggregateBenchmarkData(data);
+			}
+		}
+	}
+
+	private void addData(final RefinementEngineStatisticsDefinitions defs, final IStatisticsDataProvider stats) {
+		if (stats == null) {
 			return;
 		}
-		addTraceCheckStatistics(traceCheck.getTraceCheckBenchmark());
-		if (traceCheck instanceof InterpolatingTraceCheckPathInvariantsWithFallback
-				&& traceCheck.isCorrect() == LBool.UNSAT) {
-			addInvariantSynthesisStatistics(
-					((InterpolatingTraceCheckPathInvariantsWithFallback<?>) traceCheck).getPathInvariantsStats());
-		}
+		mStats.getOrConstruct(defs).add(stats);
 	}
 
 	@Override
 	public Object getValue(final String key) {
-		final RefinementEngineStatisticsDefinitions keyEnum =
-				Enum.valueOf(RefinementEngineStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case InterpolantConsolidationStatistics:
-			return mInterpolantConsolidationStatistics;
-		case InvariantSynthesisStatistics:
-			return mInvariantSynthesisStatistics;
-		case TraceCheckStatistics:
-			return mTraceCheckStatistics;
-		default:
-			throw new AssertionError("unknown data");
-		}
+		final RefinementEngineStatisticsDefinitions keyEnum = RefinementEngineStatisticsDefinitions.valueOf(key);
+		return mStatsAggregated.getOrConstruct(keyEnum);
 	}
 
 	@Override
 	public Collection<String> getKeys() {
-		return RefinementEngineStatisticsType.getInstance().getKeys();
+		return TYPE.getKeys();
 	}
 
+	public enum RefinementEngineStatisticsDefinitions implements IStatisticsElement {
+
+		TRACE_CHECK(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
+
+		INVARIANT_SYNTHESIS(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+				StatisticsType.KEY_BEFORE_DATA),
+
+		INTERPOLANT_CONSOLIDATION(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+				StatisticsType.KEY_BEFORE_DATA),
+
+		ABSTRACT_INTERPRETATION(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+				StatisticsType.KEY_BEFORE_DATA);
+
+		private final Class<?> mClazz;
+		private final Function<Object, Function<Object, Object>> mAggr;
+		private final Function<String, Function<Object, String>> mPrettyprinter;
+
+		RefinementEngineStatisticsDefinitions(final Class<?> clazz,
+				final Function<Object, Function<Object, Object>> aggr,
+				final Function<String, Function<Object, String>> prettyprinter) {
+			mClazz = clazz;
+			mAggr = aggr;
+			mPrettyprinter = prettyprinter;
+		}
+
+		@Override
+		public Object aggregate(final Object o1, final Object o2) {
+			return mAggr.apply(o1).apply(o2);
+		}
+
+		@Override
+		public String prettyprint(final Object o) {
+			return mPrettyprinter.apply(name()).apply(o);
+		}
+
+		@Override
+		public Class<?> getDataType() {
+			return mClazz;
+		}
+	}
 }

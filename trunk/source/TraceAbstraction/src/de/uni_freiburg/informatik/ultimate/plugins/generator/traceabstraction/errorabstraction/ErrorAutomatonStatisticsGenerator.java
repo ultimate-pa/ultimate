@@ -481,5 +481,10 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 				}
 			};
 		}
+
+		@Override
+		public IStatisticsDataProvider getStatistics() {
+			return null;
+		}
 	}
 }

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.Checker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.EdgeCheckOptimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.PredicateUnification;
@@ -53,7 +54,7 @@ public final class CodeCheckSettings {
 	private boolean mUseSeparateSolverForTracechecks = true;
 	private SolverMode mChooseSeparateSolverForTracechecks;
 	private String mSeparateSolverForTracechecksCommand;
-	private String mSeparateSolverForTracechecksTheory;
+	private Logics mSeparateSolverForTracechecksTheory;
 	private boolean mUseLiveVariables;
 	private UnsatCores mUseUnsatCores;
 	private boolean mUseFallbackForSeparateSolverForTracechecks;
@@ -92,11 +93,11 @@ public final class CodeCheckSettings {
 		mUseLiveVariables = useLiveVariables;
 	}
 
-	public String getSeparateSolverForTracechecksTheory() {
+	public Logics getSeparateSolverForTracechecksTheory() {
 		return mSeparateSolverForTracechecksTheory;
 	}
 
-	public void setSeparateSolverForTracechecksTheory(final String separateSolverForTracechecksTheory) {
+	public void setSeparateSolverForTracechecksTheory(final Logics separateSolverForTracechecksTheory) {
 		mSeparateSolverForTracechecksTheory = separateSolverForTracechecksTheory;
 	}
 

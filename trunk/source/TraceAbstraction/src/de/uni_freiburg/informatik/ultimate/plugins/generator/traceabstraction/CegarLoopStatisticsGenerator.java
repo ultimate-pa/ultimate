@@ -50,17 +50,9 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mPathInvariantsStatistics = new StatisticsData();
 	private final StatisticsData mRefinementEngineStatistics = new StatisticsData();
 	private int mIterations = 0;
-	private int mAbsIntIterations = 0;
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
 	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
-	private int mAbsIntStrong = 0;
 	private int mTraceHistogramMaximum = 0;
-	private double mAiWeakeningAvgRatioSum = 0;
-	private int mAiWeakeningAvgRatioNum = 0;
-	private int mAiWeakeningVarsRemovedSum = 0;
-	private int mAiWeakeningVarsRemovedNum = 0;
-	private int mAiWeakeningConjunctReductionNum = 0;
-	private int mAiWeakeningConjunctReductionSum = 0;
 
 	@Override
 	public Collection<String> getKeys() {
@@ -103,36 +95,12 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		mIterations++;
 	}
 
-	public int announceNextAbsIntIteration() {
-		mAbsIntIterations++;
-		return mAbsIntIterations;
-	}
-
-	public void announceStrongAbsInt() {
-		mAbsIntStrong++;
-	}
-
 	public void addAutomataMinimizationData(final IStatisticsDataProvider tcbd) {
 		mAmData.aggregateBenchmarkData(tcbd);
 	}
 
 	public void addHoareAnnotationData(final IStatisticsDataProvider hasp) {
 		mHoareAnnotationData.aggregateBenchmarkData(hasp);
-	}
-
-	public void addAiWeakeningRatio(final double ratio) {
-		mAiWeakeningAvgRatioNum++;
-		mAiWeakeningAvgRatioSum += ratio;
-	}
-
-	public void addAiWeakeningVarsNumRemoved(final int numRemoved) {
-		mAiWeakeningVarsRemovedNum++;
-		mAiWeakeningVarsRemovedSum += numRemoved;
-	}
-
-	public void addAiConjunctReductionNumber(final int differenceConjuncts) {
-		mAiWeakeningConjunctReductionNum++;
-		mAiWeakeningConjunctReductionSum += differenceConjuncts;
 	}
 
 	/**
@@ -163,28 +131,12 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		case DeadEndRemovalTime:
 		case HoareAnnotationTime:
 		case BasicInterpolantAutomatonTime:
-		case AbstIntTime:
 		case DUMP_TIME:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
-		case AbsIntWeakeningRatio:
-			if (mAiWeakeningAvgRatioNum == 0) {
-				return Double.NaN;
-			}
-			return mAiWeakeningAvgRatioSum / mAiWeakeningAvgRatioNum;
-		case AbsIntAvgWeakeningVarsNumRemoved:
-			if (mAiWeakeningVarsRemovedNum == 0) {
-				return Double.NaN;
-			}
-			return (double) mAiWeakeningVarsRemovedSum / (double) mAiWeakeningVarsRemovedNum;
-		case AbsIntAvgWeakenedConjuncts:
-			if (mAiWeakeningConjunctReductionNum == 0) {
-				return Double.NaN;
-			}
-			return (double) mAiWeakeningConjunctReductionSum / (double) mAiWeakeningConjunctReductionNum;
 		case HoareTripleCheckerStatistics:
 			return mEcData;
 		case REUSE_STATISTICS:
@@ -203,10 +155,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mIterations;
 		case TraceHistogramMax:
 			return mTraceHistogramMaximum;
-		case AbstIntIterations:
-			return mAbsIntIterations;
-		case AbstIntStrong:
-			return mAbsIntStrong;
 		case BiggestAbstraction:
 			return mBiggestAbstraction;
 		case InterpolantCoveringCapability:
@@ -230,7 +178,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	@Override
 	public String[] getStopwatches() {
 		return new String[] { CegarLoopStatisticsDefinitions.OverallTime.toString(),
-				CegarLoopStatisticsDefinitions.AbstIntTime.toString(),
 				CegarLoopStatisticsDefinitions.AutomataDifference.toString(),
 				CegarLoopStatisticsDefinitions.DeadEndRemovalTime.toString(),
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),

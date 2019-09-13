@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
@@ -31,24 +31,24 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public class CegarStatisticsType extends StatisticsType<CegarLoopStatisticsDefinitions> {
-	
-	public static Function<Object, Function<Object,Object>> s_SizeIterationPairDataAggregation = 
-			x -> y -> { return ((SizeIterationPair) x).getSize() >= ((SizeIterationPair) y).getSize() ? x : y; };
-	
+
+	public static final Function<Object, Function<Object, Object>> SIZE_ITERATION_PAIR_DATA_AGGREGATION = x -> y -> {
+		return ((SizeIterationPair) x).getSize() >= ((SizeIterationPair) y).getSize() ? x : y;
+	};
+
 	public CegarStatisticsType() {
 		super(CegarLoopStatisticsDefinitions.class);
 	}
 
-	private static CegarStatisticsType s_Instance = new CegarStatisticsType();
-	
-	public static CegarStatisticsType getInstance() {
-		return s_Instance;
-	}
+	private static final CegarStatisticsType INSTANCE = new CegarStatisticsType();
 
+	public static CegarStatisticsType getInstance() {
+		return INSTANCE;
+	}
 
 	public static String prettyprintNanoseconds(final long time) {
 		final long seconds = time / 1000000000;
-		final long tenthDigit = (time / 100000000) % 10;
+		final long tenthDigit = time / 100000000 % 10;
 		return seconds + "." + tenthDigit + "s";
 	}
 

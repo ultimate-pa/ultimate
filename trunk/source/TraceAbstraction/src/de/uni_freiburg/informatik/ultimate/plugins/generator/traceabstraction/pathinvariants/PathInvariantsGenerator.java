@@ -59,10 +59,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Co
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessorFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.KindOfInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.InvariantSynthesisStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.KindOfInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
@@ -107,8 +108,9 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 	 */
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final NestedRun<LETTER, IPredicate> run,
 			final IPredicate precondition, final IPredicate postcondition, final PredicateFactory predicateFactory,
-			final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg, final InvariantSynthesisSettings invSynthSettings,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg,
+			final InvariantSynthesisSettings invSynthSettings, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mRun = run;
 
@@ -128,9 +130,9 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 		final Map<IcfgLocation, IcfgLocation> inputIcfgLocs2PathProgramLocs = ppResult.getLocationMapping();
 
 		// Generate invariants
-		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(pathProgram, services, precondition,
-				postcondition, predicateFactory, predicateUnifier, invSynthSettings, icfg.getCfgSmtToolkit(),
-				KindOfInvariant.SAFETY);
+		final CFGInvariantsGenerator cfgInvGenerator =
+				new CFGInvariantsGenerator(pathProgram, services, precondition, postcondition, predicateFactory,
+						predicateUnifier, invSynthSettings, icfg.getCfgSmtToolkit(), KindOfInvariant.SAFETY);
 		final Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
 		// Get invariant synthesis statistics
 		mPathInvariantsStats = cfgInvGenerator.getInvariantSynthesisStatistics();
@@ -235,7 +237,8 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 		return mInterpolantComputationStatus;
 	}
 
-	public InvariantSynthesisStatisticsGenerator getPathInvariantsBenchmarks() {
+	@Override
+	public IStatisticsDataProvider getStatistics() {
 		return mPathInvariantsStats;
 	}
 
@@ -297,7 +300,8 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 		private final Function<Object, Function<Object, Object>> mAggr;
 		private final Function<String, Function<Object, String>> mPrettyprinter;
 
-		InvariantSynthesisStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
+		InvariantSynthesisStatisticsDefinitions(final Class<?> clazz,
+				final Function<Object, Function<Object, Object>> aggr,
 				final Function<String, Function<Object, String>> prettyprinter) {
 			mClazz = clazz;
 			mAggr = aggr;
@@ -320,4 +324,5 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 		}
 
 	}
+
 }

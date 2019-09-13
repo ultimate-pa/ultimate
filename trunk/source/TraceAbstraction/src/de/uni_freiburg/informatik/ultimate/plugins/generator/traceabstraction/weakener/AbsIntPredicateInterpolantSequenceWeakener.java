@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner.AbsIntStatisticsGenerator;
 
 /**
  * Weakens a sequence of predicates by reducing the number of variables occurring in each Hoare-triple of {pred1} letter
@@ -98,7 +98,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	public AbsIntPredicateInterpolantSequenceWeakener(final ILogger logger, final IHoareTripleChecker htc,
 			final List<AbsIntPredicate<STATE>> predicates, final List<LETTER> trace,
 			final AbsIntPredicate<STATE> precondition, final AbsIntPredicate<STATE> postcondition, final Script script,
-			final BasicPredicateFactory predicateFactory, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
+			final BasicPredicateFactory predicateFactory, final AbsIntStatisticsGenerator cegarLoopBenchmark) {
 		super(logger, htc, predicates, trace, precondition, postcondition, script, predicateFactory,
 				cegarLoopBenchmark);
 	}

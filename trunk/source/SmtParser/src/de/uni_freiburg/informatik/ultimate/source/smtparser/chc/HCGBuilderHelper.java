@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuild
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.source.smtparser.Activator;
 import de.uni_freiburg.informatik.ultimate.source.smtparser.SmtParserPreferenceInitializer;
@@ -47,45 +48,35 @@ public class HCGBuilderHelper {
 	public static class ConstructAndInitializeBackendSmtSolver {
 
 		private SolverSettings mSolverSettings;
-		private String mLogicForExternalSolver;
+		private Logics mLogicForExternalSolver;
 		private ManagedScript mScript;
 
-		public ConstructAndInitializeBackendSmtSolver(final IUltimateServiceProvider services,
-				final String filename) {
+		public ConstructAndInitializeBackendSmtSolver(final IUltimateServiceProvider services, final String filename) {
 			constructAndInitializeBackendSmtSolver(services, filename);
 		}
 
-		void constructAndInitializeBackendSmtSolver(
-				final IUltimateServiceProvider services,
-				final String filename) {
+		void constructAndInitializeBackendSmtSolver(final IUltimateServiceProvider services, final String filename) {
 			final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
-			final SolverMode solverMode = prefs
-					.getEnum(SmtParserPreferenceInitializer.LABEL_Solver, SolverMode.class);
+			final SolverMode solverMode = prefs.getEnum(SmtParserPreferenceInitializer.LABEL_Solver, SolverMode.class);
 
-			final String commandExternalSolver = prefs
-					.getString(SmtParserPreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND);
+			final String commandExternalSolver =
+					prefs.getString(SmtParserPreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND);
 
-			mLogicForExternalSolver = prefs
-					.getString(SmtParserPreferenceInitializer.LABEL_ExtSolverLogic);
+			mLogicForExternalSolver =
+					Logics.valueOf(prefs.getString(SmtParserPreferenceInitializer.LABEL_ExtSolverLogic));
 
-			final String dumpPath = prefs.getString(
-					SmtParserPreferenceInitializer.LABEL_SMT_DUMP_PATH);
+			final String dumpPath = prefs.getString(SmtParserPreferenceInitializer.LABEL_SMT_DUMP_PATH);
 			final boolean dumpScript = !dumpPath.isEmpty();
 
 			final boolean fakeNonIncrementalSolver = false;
-			mSolverSettings = SolverBuilder.constructSolverSettings(
-					filename, solverMode, fakeNonIncrementalSolver ,
-					commandExternalSolver, dumpScript, dumpPath);//"C:\\Temp\\smt");
+			mSolverSettings = SolverBuilder.constructSolverSettings(filename, solverMode, fakeNonIncrementalSolver,
+					commandExternalSolver, dumpScript, dumpPath);// "C:\\Temp\\smt");
 
-			final Script script = SolverBuilder.buildAndInitializeSolver(services,
-					solverMode,
-					mSolverSettings,
+			final Script script = SolverBuilder.buildAndInitializeSolver(services, solverMode, mSolverSettings,
 					// dumpUsatCoreTrackBenchmark,
 					false,
 					// dumpMainTrackBenchmark,
-					false,
-					mLogicForExternalSolver,
-					"HornClauseSolverBackendSolverScript");
+					false, mLogicForExternalSolver, "HornClauseSolverBackendSolverScript");
 
 			mScript = new ManagedScript(services, script);
 		}
@@ -94,7 +85,7 @@ public class HCGBuilderHelper {
 			return mSolverSettings;
 		}
 
-		public String getLogicForExternalSolver() {
+		public Logics getLogicForExternalSolver() {
 			return mLogicForExternalSolver;
 		}
 

@@ -35,38 +35,33 @@ import java.util.function.BinaryOperator;
  * TODO use this enum in {@link IStatisticsElement}. See description below
  * <p>
  * This enum saves us from repeatedly writing code duplicates like
- * {@code ENUM_ITEM(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey)}
- * for <i>every</i> item in enums implementing {@link IStatisticsElement}.
- * <br>
- * This enum should be used by {@link IStatisticsElement} instead of forcing each implementing
- * class to overwrite {@link IStatisticsElement#getDataType()}, {@link IStatisticsElement#aggregate(Object, Object)}
- * and so on. The new {@link IStatisticsElement} would only require one method {@code KeyType getType()}.
- * The other methods could be implemented as defaults if something like {@code myStatsElement.getType().aggregate()}
- * isn't acceptable.
- * <br>
+ * {@code ENUM_ITEM(Integer.class, Aggregate::intAdd, PrettyPrint::dataSpaceKey)} for <i>every</i> item in enums
+ * implementing {@link IStatisticsElement}. <br>
+ * This enum should be used by {@link IStatisticsElement} instead of forcing each implementing class to overwrite
+ * {@link IStatisticsElement#getDataType()}, {@link IStatisticsElement#aggregate(Object, Object)} and so on. The new
+ * {@link IStatisticsElement} would only require one method {@code KeyType getType()}. The other methods could be
+ * implemented as defaults if something like {@code myStatsElement.getType().aggregate()} isn't acceptable. <br>
  * To do so we have to go through all implementations of {@link IStatisticsElement} and replace their constructor
- * arguments with a constant from this enum:
- * {@code ENUM_ITEM(Some.class, someAggregator, comePrettyPrinter)} becomes
- * {@code ENUM_ITEM(KeyType.SOMETHING)} and we add {@code SOMETHING(Some.class, someAggregator, comePrettyPrinter)}
- * to this enum (in most cases the item {@code KeyType.SOMETHING} should already exist).
+ * arguments with a constant from this enum: {@code ENUM_ITEM(Some.class, someAggregator, comePrettyPrinter)} becomes
+ * {@code ENUM_ITEM(KeyType.SOMETHING)} and we add {@code SOMETHING(Some.class, someAggregator, comePrettyPrinter)} to
+ * this enum (in most cases the item {@code KeyType.SOMETHING} should already exist).
  * <p>
- * TODO When doing the rewrite we should also use pretty printers only print data.
- * See comment on {@link #prettyPrint(String, Object)}
+ * TODO When doing the rewrite we should also use pretty printers only print data. See comment on
+ * {@link #prettyPrint(String, Object)}
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
 public enum KeyType {
 	COUNTER(Integer.class, Aggregate::intAdd, PrettyPrint::keyColonData),
+	RATIO(Double.class, Aggregate::doubleAdd, PrettyPrint::keyColonData),
 	TIMER(Long.class, Aggregate::longAdd, PrettyPrint.dataAsTime(PrettyPrint::keyColonData)),
-	MAX_TIMER(Long.class, Aggregate::longMax, PrettyPrint.dataAsTime(PrettyPrint::keyColonData)),
-	;
+	MAX_TIMER(Long.class, Aggregate::longMax, PrettyPrint.dataAsTime(PrettyPrint::keyColonData)),;
 
 	private final Class<?> mDataType;
 	private final BinaryOperator<Object> mAggregate;
 	private final BiFunction<String, Object, String> mPrettyPrinter;
 
-	KeyType(final Class<?> dataType,
-			final BinaryOperator<Object> aggregate,
+	KeyType(final Class<?> dataType, final BinaryOperator<Object> aggregate,
 			final BiFunction<String, Object, String> prettyprinter) {
 		mDataType = dataType;
 		mAggregate = aggregate;
@@ -82,8 +77,8 @@ public enum KeyType {
 	}
 
 	/**
-	 * TODO Make pretty printing only consider data.
-	 *      Whether to print "key: data" or "data key" should be consistent for all statistics elements.
+	 * TODO Make pretty printing only consider data. Whether to print "key: data" or "data key" should be consistent for
+	 * all statistics elements.
 	 */
 	public String prettyPrint(final String keyName, final Object data) {
 		return mPrettyPrinter.apply(keyName, data);

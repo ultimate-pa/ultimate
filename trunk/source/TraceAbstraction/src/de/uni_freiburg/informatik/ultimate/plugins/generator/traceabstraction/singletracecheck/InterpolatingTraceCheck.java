@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author heizmann@informatik.uni-freiburg.de
  */
 public abstract class InterpolatingTraceCheck<LETTER extends IAction> extends TraceCheck<LETTER>
-		implements IInterpolantGenerator<LETTER> {
+		implements IInterpolatingTraceCheck<LETTER> {
 
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
@@ -168,7 +168,7 @@ public abstract class InterpolatingTraceCheck<LETTER extends IAction> extends Tr
 
 	@Override
 	public boolean isPerfectSequence() {
-		final int perfectSequences = (int) getTraceCheckBenchmark()
+		final int perfectSequences = (int) getStatistics()
 				.getValue(TraceCheckStatisticsDefinitions.PerfectInterpolantSequences.toString());
 		assert perfectSequences == 0 || perfectSequences == 1 || perfectSequences == 2;
 		return perfectSequences == 1;

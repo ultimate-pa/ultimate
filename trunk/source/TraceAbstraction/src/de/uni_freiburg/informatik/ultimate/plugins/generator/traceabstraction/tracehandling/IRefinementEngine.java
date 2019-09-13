@@ -56,11 +56,6 @@ public interface IRefinementEngine<T> {
 	 */
 	T getInfeasibilityProof();
 
-	/**
-	 * @return Predicate unifier.
-	 */
-	IPredicateUnifier getPredicateUnifier();
-
 	boolean providesICfgProgramExecution();
 
 	/**
@@ -75,4 +70,8 @@ public interface IRefinementEngine<T> {
 	IHoareTripleChecker getHoareTripleChecker();
 
 	boolean somePerfectSequenceFound();
+
+	IPredicateUnifier getPredicateUnifier();
+
+	RefinementEngineStatisticsGenerator getRefinementEngineStatistics();
 }

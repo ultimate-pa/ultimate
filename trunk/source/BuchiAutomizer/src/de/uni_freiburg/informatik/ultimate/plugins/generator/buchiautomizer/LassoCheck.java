@@ -35,6 +35,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -93,9 +94,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IP
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.BaseRefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementEngineFactory;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class LassoCheck<LETTER extends IIcfgTransition<?>> {
@@ -174,9 +174,9 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
 	// private final BuchiModGlobalVarManager mBuchiModGlobalVarManager;
 
-	private TraceAbstractionRefinementEngine<LETTER> mStemCheck;
-	private TraceAbstractionRefinementEngine<LETTER> mLoopCheck;
-	private TraceAbstractionRefinementEngine<LETTER> mConcatCheck;
+	private IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> mStemCheck;
+	private IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> mLoopCheck;
+	private IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> mConcatCheck;
 
 	private NestedRun<LETTER, IPredicate> mConcatenatedCounterexample;
 
@@ -193,7 +193,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 	private final List<TerminationAnalysisBenchmark> mTerminationAnalysisBenchmarks = new ArrayList<>();
 	private final List<NonterminationAnalysisBenchmark> mNonterminationAnalysisBenchmarks = new ArrayList<>();
 
-	private final RefinementStrategyFactory<LETTER> mRefinementStrategyFactory;
+	private final RefinementEngineFactory<LETTER> mRefinementStrategyFactory;
 
 	private final INestedWordAutomaton<LETTER, IPredicate> mAbstraction;
 
@@ -212,7 +212,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<LETTER, IPredicate> counterexample,
 			final String lassoCheckIdentifier, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final RefinementStrategyFactory<LETTER> refinementStrategyFactory,
+			final RefinementEngineFactory<LETTER> refinementStrategyFactory,
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
 			final BuchiCegarLoopBenchmarkGenerator cegarStatistics) throws IOException {
 		mServices = services;
@@ -247,8 +247,8 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
 		mLassoCheckResult = new LassoCheckResult();
 		assert mLassoCheckResult.getStemFeasibility() != TraceCheckResult.UNCHECKED;
-		assert (mLassoCheckResult.getLoopFeasibility() != TraceCheckResult.UNCHECKED)
-				|| (mLassoCheckResult.getLoopFeasibility() != TraceCheckResult.INFEASIBLE && !mTryTwofoldRefinement);
+		assert mLassoCheckResult.getLoopFeasibility() != TraceCheckResult.UNCHECKED
+				|| mLassoCheckResult.getLoopFeasibility() != TraceCheckResult.INFEASIBLE && !mTryTwofoldRefinement;
 		if (mLassoCheckResult.getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
 			assert mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE
 					|| mLassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_BOTH;
@@ -277,15 +277,15 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		return mLassoCheckResult;
 	}
 
-	public TraceAbstractionRefinementEngine<LETTER> getStemCheck() {
+	public IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> getStemCheck() {
 		return mStemCheck;
 	}
 
-	public TraceAbstractionRefinementEngine<LETTER> getLoopCheck() {
+	public IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> getLoopCheck() {
 		return mLoopCheck;
 	}
 
-	public TraceAbstractionRefinementEngine<LETTER> getConcatCheck() {
+	public IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> getConcatCheck() {
 		return mConcatCheck;
 	}
 
@@ -656,7 +656,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
 		final TerminationArgument termArg =
 				tryTemplatesAndComputePredicates(withStem, laT, rankingFunctionTemplates, stemTF, loopTF);
-		assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
+		assert nonTermArgument == null || termArg == null : " terminating and nonterminating";
 		if (termArg != null) {
 			return SynthesisResult.TERMINATING;
 		} else if (nonTermArgument != null) {
@@ -813,7 +813,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 				return;
 			}
 			if (mStemFeasibility == TraceCheckResult.INFEASIBLE) {
-				assert (mTryTwofoldRefinement);
+				assert mTryTwofoldRefinement;
 				final UnmodifiableTransFormula loopTF = computeLoopTF();
 				mLoopTermination = checkLoopTermination(loopTF);
 				mConcatFeasibility = TraceCheckResult.UNCHECKED;
@@ -914,17 +914,14 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 
-		private TraceAbstractionRefinementEngine<LETTER> checkFeasibilityAndComputeInterpolants(
+		private IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> checkFeasibilityAndComputeInterpolants(
 				final NestedRun<LETTER, IPredicate> run, final TaskIdentifier taskIdentifier) {
-
-			final BaseRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(run, mAbstraction,
-					taskIdentifier, mStateFactoryForInterpolantAutomaton,
-					IPreconditionProvider.constructDefaultPreconditionProvider());
-
-			final TraceAbstractionRefinementEngine<LETTER> result;
 			try {
-				result = new TraceAbstractionRefinementEngine<>(mLogger, strategy);
-				mCegarStatistics.addRefinementEngineStatistics(strategy.getRefinementEngineStatistics());
+				final IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> engine = mRefinementStrategyFactory
+						.runRefinementEngine(run, mAbstraction, taskIdentifier, mStateFactoryForInterpolantAutomaton,
+								IPreconditionProvider.constructDefaultPreconditionProvider());
+				mCegarStatistics.addRefinementEngineStatistics(engine.getRefinementEngineStatistics());
+				return engine;
 			} catch (final ToolchainCanceledException tce) {
 				final int traceHistogramMax = new HistogramOfIterable<>(run.getWord()).getMax();
 				final String taskDescription =
@@ -932,7 +929,6 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 				throw tce;
 			}
-			return result;
 		}
 
 		private SynthesisResult checkLoopTermination(final UnmodifiableTransFormula loopTF) throws IOException {

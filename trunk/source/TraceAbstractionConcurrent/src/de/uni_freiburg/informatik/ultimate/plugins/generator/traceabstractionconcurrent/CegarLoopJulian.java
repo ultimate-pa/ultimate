@@ -305,7 +305,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final IHoareTripleChecker htc = new IncrementalHoareTripleChecker(super.mCsToolkit, false);
 			final DeterministicInterpolantAutomaton<LETTER> raw =
 					new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, interpolAutomaton,
-							mTraceCheckAndRefinementEngine.getPredicateUnifier(), false, false);
+							mRefinementEngine.getPredicateUnifier(), false, false);
 			if (mEnhanceInterpolantAutomatonOnDemand) {
 				final Set<LETTER> universalSubtrahendLoopers = determineUniversalSubtrahendLoopers(
 						mAbstraction.getAlphabet(), interpolAutomaton.getStates());

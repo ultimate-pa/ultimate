@@ -31,8 +31,8 @@ import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.util.statistics.IKeyedStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
@@ -41,21 +41,20 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 /**
  * Statistics for Sifa.
  * <p>
- * Sifa doesn't use the Ultimate's common statistics classes as intended as we would have to create and
- * return new statistics objects at too many places. In Sifa there is only one statistics object which does
- * <i>not</i> use the aggregation functions. Aggregation is done in-place inside the statistics object.
- * This is not pretty, but prettier than the alternative of returning a pair (actual result + statistics)
- * at every other function.
+ * Sifa doesn't use the Ultimate's common statistics classes as intended as we would have to create and return new
+ * statistics objects at too many places. In Sifa there is only one statistics object which does <i>not</i> use the
+ * aggregation functions. Aggregation is done in-place inside the statistics object. This is not pretty, but prettier
+ * than the alternative of returning a pair (actual result + statistics) at every other function.
  * <p>
  * Stopwatches in this class can be nested like parenthesis, that is stopwatch {@code s} can be used as in
- * {@code start(s); start(s); stop(s); stop(s);}. The measured time is the time between the first {@code start}
- * and its corresponding {@code stop}.
+ * {@code start(s); start(s); stop(s); stop(s);}. The measured time is the time between the first {@code start} and its
+ * corresponding {@code stop}.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
 public class SifaStats extends StatisticsGeneratorWithStopwatches implements IStatisticsDataProvider {
 
-	private static final StatisticsType<Key> sType = new StatisticsType<>(Key.class);
+	private static final StatisticsType<Key> TYPE = new StatisticsType<>(Key.class);
 
 	private final Map<Key, Integer> mStopwatchNestingLevels = new EnumMap<>(Key.class);
 	private final Map<Key, Integer> mIntCounters = new EnumMap<>(Key.class);
@@ -148,40 +147,46 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 
 	@Override
 	public Collection<String> getKeys() {
-		return sType.getKeys();
+		return TYPE.getKeys();
 	}
 
 	@Override
 	public IStatisticsType getBenchmarkType() {
-		return sType;
+		return TYPE;
 	}
 
 	@Override
 	public String[] getStopwatches() {
 		// TODO add max timers
-		return Arrays.stream(Key.values())
-				.filter(Key::isStopwatch)
-				.map(Enum::name)
-				.toArray(String[]::new);
+		return Arrays.stream(Key.values()).filter(Key::isStopwatch).map(Enum::name).toArray(String[]::new);
 	}
 
-	public enum Key implements IStatisticsElement {
+	public enum Key implements IKeyedStatisticsElement {
 		OVERALL_TIME(KeyType.TIMER),
 
 		/** Number of procedures entered (excluding CallReturnSummaries) during interpretation of the icfg. */
 		ICFG_INTERPRETER_ENTERED_PROCEDURES(KeyType.COUNTER),
 
 		DAG_INTERPRETER_EARLY_EXIT_QUERIES(KeyType.COUNTER),
+
 		DAG_INTERPRETER_EARLY_EXITS(KeyType.COUNTER),
 
 		TOOLS_POST_APPLICATIONS(KeyType.COUNTER),
+
 		TOOLS_POST_TIME(KeyType.TIMER),
+
 		TOOLS_POST_CALL_APPLICATIONS(KeyType.COUNTER),
+
 		TOOLS_POST_CALL_TIME(KeyType.TIMER),
+
 		TOOLS_POST_RETURN_APPLICATIONS(KeyType.COUNTER),
+
 		TOOLS_POST_RETURN_TIME(KeyType.TIMER),
+
 		TOOLS_QUANTIFIERELIM_APPLICATIONS(KeyType.COUNTER),
+
 		TOOLS_QUANTIFIERELIM_TIME(KeyType.TIMER),
+
 		TOOLS_QUANTIFIERELIM_MAX_TIME(KeyType.MAX_TIMER),
 
 		/** Overall time spent answering queries. */
@@ -192,19 +197,24 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		FLUID_YES_ANSWERS(KeyType.COUNTER),
 
 		DOMAIN_JOIN_APPLICATIONS(KeyType.COUNTER),
-		DOMAIN_JOIN_TIME(KeyType.TIMER),
-		DOMAIN_ALPHA_APPLICATIONS(KeyType.COUNTER),
-		DOMAIN_ALPHA_TIME(KeyType.TIMER),
-		DOMAIN_WIDEN_APPLICATIONS(KeyType.COUNTER),
-		DOMAIN_WIDEN_TIME(KeyType.TIMER),
-		DOMAIN_ISSUBSETEQ_APPLICATIONS(KeyType.COUNTER),
-		DOMAIN_ISSUBSETEQ_TIME(KeyType.TIMER),
-		DOMAIN_ISBOTTOM_APPLICATIONS(KeyType.COUNTER),
+
+		DOMAIN_JOIN_TIME(KeyType.TIMER), DOMAIN_ALPHA_APPLICATIONS(KeyType.COUNTER),
+
+		DOMAIN_ALPHA_TIME(KeyType.TIMER), DOMAIN_WIDEN_APPLICATIONS(KeyType.COUNTER),
+
+		DOMAIN_WIDEN_TIME(KeyType.TIMER), DOMAIN_ISSUBSETEQ_APPLICATIONS(KeyType.COUNTER),
+
+		DOMAIN_ISSUBSETEQ_TIME(KeyType.TIMER), DOMAIN_ISBOTTOM_APPLICATIONS(KeyType.COUNTER),
+
 		DOMAIN_ISBOTTOM_TIME(KeyType.TIMER),
 
 		LOOP_SUMMARIZER_APPLICATIONS(KeyType.COUNTER),
+
 		LOOP_SUMMARIZER_CACHE_MISSES(KeyType.COUNTER),
-		/** Time spent to obtain loop summaries, including the time to look search the cache and re-use existing summaries. */
+		/**
+		 * Time spent to obtain loop summaries, including the time to look search the cache and re-use existing
+		 * summaries.
+		 */
 		LOOP_SUMMARIZER_OVERALL_TIME(KeyType.TIMER),
 		/** Time spent to compute completely new loop summaries in case of cache misses. */
 		LOOP_SUMMARIZER_NEW_COMPUTATION_TIME(KeyType.TIMER),
@@ -212,8 +222,12 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		LOOP_SUMMARIZER_FIXPOINT_ITERATIONS(KeyType.COUNTER),
 
 		CALL_SUMMARIZER_APPLICATIONS(KeyType.COUNTER),
+
 		CALL_SUMMARIZER_CACHE_MISSES(KeyType.COUNTER),
-		/** Time spent to obtain call summaries, including the time to look search the cache and re-use existing summaries. */
+		/**
+		 * Time spent to obtain call summaries, including the time to look search the cache and re-use existing
+		 * summaries.
+		 */
 		CALL_SUMMARIZER_OVERALL_TIME(KeyType.TIMER),
 		/** Time spent to compute completely new call summaries in case of cache misses. */
 		CALL_SUMMARIZER_NEW_COMPUTATION_TIME(KeyType.TIMER),
@@ -231,8 +245,7 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		/** Sum of number of nodes in processed RegexDags before compression. */
 		DAG_COMPRESSION_PROCESSED_NODES(KeyType.COUNTER),
 		/** Sum of number of nodes in processed RegexDags after compression. */
-		DAG_COMPRESSION_RETAINED_NODES(KeyType.COUNTER),
-		;
+		DAG_COMPRESSION_RETAINED_NODES(KeyType.COUNTER),;
 
 		private final KeyType mType;
 
@@ -241,26 +254,13 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		}
 
 		@Override
-		public Class<?> getDataType() {
-			return mType.getDataType();
+		public KeyType getType() {
+			return mType;
 		}
 
 		@Override
-		public Object aggregate(final Object lhs, final Object rhs) {
-			return mType.aggregate(lhs, rhs);
-		}
-
-		@Override
-		public String prettyprint(final Object data) {
-			return mType.prettyPrint(name(), data);
-		}
-
-		public boolean isMaxTimer() {
-			return mType == KeyType.MAX_TIMER;
-		}
-
-		public boolean isStopwatch() {
-			return mType == KeyType.TIMER || mType == KeyType.MAX_TIMER;
+		public String getName() {
+			return name();
 		}
 	}
 

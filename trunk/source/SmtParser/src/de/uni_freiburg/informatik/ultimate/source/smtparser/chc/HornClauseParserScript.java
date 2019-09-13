@@ -97,7 +97,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	 * backend.
 	 */
 	private final ManagedScript mBackendSmtSolver;
-	private final String mLogic;
+	private final Logics mLogic;
 	private final HashSet<String> mDeclaredPredicateSymbols;
 	private final List<HornClause> mParsedHornClauses;
 	private final HcSymbolTable mSymbolTable;
@@ -125,7 +125,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	private final IPreferenceProvider mPreferences;
 
 	public HornClauseParserScript(final IUltimateServiceProvider services, final ILogger logger, final String filename,
-			final ManagedScript smtSolverScript, final String logic) {
+			final ManagedScript smtSolverScript, final Logics logic) {
 		mServices = services;
 		mLogger = logger;
 		mFilename = filename;

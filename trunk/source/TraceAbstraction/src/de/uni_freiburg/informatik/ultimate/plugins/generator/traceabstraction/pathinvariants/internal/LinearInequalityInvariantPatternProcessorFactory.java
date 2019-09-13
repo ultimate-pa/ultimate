@@ -37,9 +37,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunction
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -132,7 +132,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		final Logics logic = ConstraintSynthesisUtils.getLogic(linearity, useAlsoIntegers);
 
 		Script script = SolverBuilder.buildAndInitializeSolver(mServices, SolverMode.External_DefaultMode,
-				mSolverSettings, false, false, logic.toString(), "InvariantSynthesis");
+				mSolverSettings, false, false, logic, "InvariantSynthesis");
 		script = new ScriptWithTermConstructionChecks(script);
 		return script;
 	}
@@ -162,9 +162,9 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	public IInvariantPatternProcessor<Dnf<AbstractLinearInvariantPattern>> produce(final List<IcfgLocation> locations,
 			final List<IcfgInternalTransition> transitions, final IPredicate precondition,
 			final IPredicate postcondition, final IcfgLocation startLocation, final Set<IcfgLocation> errorLocations) {
-		return new LinearInequalityInvariantPatternProcessor(mServices, predUnifier, mCsToolkit, mSmtSymbols, produceSmtSolver(),
-				locations, transitions, precondition, postcondition, startLocation, errorLocations, mStrategy,
-				mUseNonlinearConstraints, mUseUnsatCores, mSimplificationTechnique, mXnfConversionTechnique, mLoc2underApprox,
-				mLoc2overApprox, mSynthesizeEntryPattern, mKindOfInvariant);
+		return new LinearInequalityInvariantPatternProcessor(mServices, predUnifier, mCsToolkit, mSmtSymbols,
+				produceSmtSolver(), locations, transitions, precondition, postcondition, startLocation, errorLocations,
+				mStrategy, mUseNonlinearConstraints, mUseUnsatCores, mSimplificationTechnique, mXnfConversionTechnique,
+				mLoc2underApprox, mLoc2overApprox, mSynthesizeEntryPattern, mKindOfInvariant);
 	}
 }
