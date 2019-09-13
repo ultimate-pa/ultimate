@@ -207,7 +207,7 @@ public class SymbolicTools {
 	}
 
 	public Optional<Boolean> isFalse(final IPredicate pred) {
-		// TODO: Use unifier instead of costly SMT check
+		// TODO: Maybe use unifier instead of SMT check
 		if (mBottom.equals(pred)) {
 			return Optional.of(Boolean.TRUE);
 		}
@@ -216,7 +216,7 @@ public class SymbolicTools {
 	}
 
 	public Optional<Boolean> implies(final IPredicate p1, final IPredicate p2) {
-		// TODO: Use unifier instead of costly SMT check
+		// TODO: Maybe use unifier instead of SMT check
 		if (p1.equals(p2)) {
 			return Optional.of(Boolean.TRUE);
 		}
@@ -273,7 +273,7 @@ public class SymbolicTools {
 			mStats.startMax(SifaStats.Key.TOOLS_QUANTIFIERELIM_MAX_TIME);
 			mStats.start(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
 			final Term result = PartialQuantifierElimination.quantifier(mServices, mPQELogger, mMgdScript,
-					SimplificationTechnique.NONE, mXnfConversion, quantifier, varsToQuantify, term);
+					mSimplification, mXnfConversion, quantifier, varsToQuantify, term);
 			mStats.stop(SifaStats.Key.TOOLS_QUANTIFIERELIM_TIME);
 			mStats.stopMax(SifaStats.Key.TOOLS_QUANTIFIERELIM_MAX_TIME);
 			return result;
