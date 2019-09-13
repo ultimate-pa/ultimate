@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Differ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty.SearchStrategy;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
@@ -222,6 +223,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private boolean mFirstReuseDump = true;
 	private static final boolean DUMP_DIFFICULT_PATH_PROGRAMS = false;
 
+	// heuristic_emptiness check
+	private boolean mUseHeuristicEmptinessCheck = false;
+
 	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
@@ -312,6 +316,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				}
 			}
 		}
+		// Heuristic Emptiness Check
+		mUseHeuristicEmptinessCheck = taPrefs.useHeuristicEmptinessCheck();
 	}
 
 	@Override
@@ -360,13 +366,15 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction =
-				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction;
-		// TODO: Make an option out of this
-		mCounterexample =
-				new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction = (INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction;
 
-		// mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(mServices), abstraction).getNestedRun();
+		if (mUseHeuristicEmptinessCheck) {
+			mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(mServices), abstraction)
+					.getNestedRun();
+		} else {
+			mCounterexample = new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy)
+					.getNestedRun();
+		}
 
 		if (mCounterexample == null) {
 			return true;
