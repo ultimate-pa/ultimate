@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractorScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
@@ -413,8 +414,12 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 			throw new IllegalArgumentException(
 					"Managed script construction not supported for interpolation technique: " + mode);
 		}
-		final Script solver = SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings,
-				false, false, logicForExternalSolver, "TraceCheck_Iteration" + mTaskIdentifier);
+		Script solver = SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings, false, false,
+				logicForExternalSolver, "TraceCheck_Iteration" + mTaskIdentifier);
+		if (mTaPrefsForInterpolantConsolidation.useSMTFeatureExtraction()) {
+			solver = new SMTFeatureExtractorScript(solver, mLogger, mServices,
+					mTaPrefsForInterpolantConsolidation.getSMTFeatureExtractionDumpPath());
+		}
 		final ManagedScript result = new ManagedScript(services, solver);
 		prefs.getIcfgContainer().getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferSymbols(solver);
 		return result;
