@@ -54,28 +54,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_USERLIMIT_TRACE_HISTOGRAM = "Limit trace histogram size";
-	private static final String DESC_USERLIMIT_TRACE_HISTOGRAM =
-			"Abort the analysis of either a single error location or the whole program if the trace histogram of the "
-					+ "current counterexample is larger than this value. 0 disables this limit.";
+	private static final String DESC_USERLIMIT_TRACE_HISTOGRAM = "Abort the analysis of either a single error location or the whole program if the trace histogram of the "
+			+ "current counterexample is larger than this value. 0 disables this limit.";
 	private static final int DEF_USERLIMIT_TRACE_HISTOGRAM = 0;
 
 	public static final String LABEL_USERLIMIT_TIME = "Limit analysis time";
-	private static final String DESC_USERLIMIT_TIME =
-			"Abort the analysis of either a single error location or the whole program if more time than specified has "
-					+ "elapsed. Time is specified in seconds. 0 disables this limit.";
+	private static final String DESC_USERLIMIT_TIME = "Abort the analysis of either a single error location or the whole program if more time than specified has "
+			+ "elapsed. Time is specified in seconds. 0 disables this limit.";
 	private static final int DEF_USERLIMIT_TIME = 0;
 
 	public static final String LABEL_USERLIMIT_PATH_PROGRAM = "Limit path program analysis attempts";
-	private static final String DESC_USERLIMIT_PATH_PROGRAM =
-			"Abort the analysis of either a single error location or the whole program if the same path program has "
-					+ "been induced by spurious counterexamples more than the specified amount of times. "
-					+ "0 disables this limit.";
+	private static final String DESC_USERLIMIT_PATH_PROGRAM = "Abort the analysis of either a single error location or the whole program if the same path program has "
+			+ "been induced by spurious counterexamples more than the specified amount of times. "
+			+ "0 disables this limit.";
 	private static final int DEF_USERLIMIT_PATH_PROGRAM = 0;
 
 	public static final String LABEL_USERLIMIT_ITERATIONS = "Limit iterations";
-	private static final String DESC_USERLIMIT_ITERATIONS =
-			"Abort the analysis of either a single error location or the whole program if more than the specified "
-					+ "amount of iterations occured. 0 disables this limit.";
+	private static final String DESC_USERLIMIT_ITERATIONS = "Abort the analysis of either a single error location or the whole program if more than the specified "
+			+ "amount of iterations occured. 0 disables this limit.";
 	private static final int DEF_USERLIMIT_ITERATIONS = 1_000_000;
 
 	public static final String LABEL_LBE_CONCURRENCY = "Use large block encoding in concurrent analysis";
@@ -84,22 +80,17 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_ALL_ERRORS_AT_ONCE = "Stop after first violation was found";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
-	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
-			"Enhance during reuse of Floyd-Hoare automata";
+	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT = "Enhance during reuse of Floyd-Hoare automata";
 	public static final String LABEL_ARTIFACT = "Kind of artifact that is visualized";
 	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
-	public static final String LABEL_HOARE =
-			"Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG";
+	public static final String LABEL_HOARE = "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG";
 	public static final String LABEL_HOARE_POSITIONS = "Positions where we compute the Hoare Annotation";
 	public static final String LABEL_SEPARATE_SOLVER = "Use separate solver for trace checks";
 	public static final String LABEL_INTERPOLATED_LOCS = "Compute Interpolants along a Counterexample";
-	public static final String LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS =
-			"Use nonlinear constraints in PathInvariants";
+	public static final String LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS = "Use nonlinear constraints in PathInvariants";
 	public static final String LABEL_UNSAT_CORES_IN_PATHINVARIANTS = "Use unsat cores in PathInvariants";
-	public static final String LABEL_WEAKEST_PRECONDITION_IN_PATHINVARIANTS =
-			"Use weakest precondition in PathInvariants";
-	public static final String LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS =
-			"Use abstract interpretation in PathInvariants";
+	public static final String LABEL_WEAKEST_PRECONDITION_IN_PATHINVARIANTS = "Use weakest precondition in PathInvariants";
+	public static final String LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS = "Use abstract interpretation in PathInvariants";
 	public static final String LABEL_INTERPOLANTS_CONSOLIDATION = "Interpolants consolidation";
 	public static final String LABEL_INTERPOLANT_AUTOMATON = "Interpolant automaton";
 	public static final String LABEL_DUMPAUTOMATA = "Dump automata to files";
@@ -121,17 +112,13 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_ABSINT_MODE = "Abstract interpretation Mode";
 	public static final String LABEL_ABSINT_ALWAYS_REFINE = "Refine always when using abstract interpretation";
 	public static final String LABEL_COMPUTE_COUNTEREXAMPLE = "Compute trace for counterexample result";
-	public static final String LABEL_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS =
-			"Compute statistics for interpolant sequences";
-	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE =
-			"Highlight relevant statements in error traces";
-	public static final String DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE =
-			"Analyse error traces and identify relevant statements. Warning: For programs with floats, arrays, or"
-					+ " pointers this analysis may take a significant amount of time.";
+	public static final String LABEL_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = "Compute statistics for interpolant sequences";
+	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE = "Highlight relevant statements in error traces";
+	public static final String DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE = "Analyse error traces and identify relevant statements. Warning: For programs with floats, arrays, or"
+			+ " pointers this analysis may take a significant amount of time.";
 	public static final String LABEL_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE = "Angelic verification mode";
-	public static final String DESC_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE =
-			"Assume that unspecified inputs (e.g., external functions) return \"safe\" values during error trace "
-					+ "relevance analysis.";
+	public static final String DESC_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE = "Assume that unspecified inputs (e.g., external functions) return \"safe\" values during error trace "
+			+ "relevance analysis.";
 	public static final String LABEL_SIMPLIFICATION_TECHNIQUE = "Simplification technique";
 	public static final String LABEL_XNF_CONVERSION_TECHNIQUE = "Xnf conversion technique";
 	public static final String LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY = "Counterexample search strategy";
@@ -146,8 +133,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String VALUE_ITP_GUESS = "Guess Interpolants";
 	public static final String VALUE_INTERPOLANT_AUTOMATON_SINGLE_TRACE = "SingleTrace";
 	public static final String VALUE_INTERPOLANT_AUTOMATON_TWO_TRACK = "TwoTrack";
-	public static final String VALUE_INTERPOLANT_AUTOMATON_CANONICAL =
-			"With backedges to repeated locations (Canonical)";
+	public static final String VALUE_INTERPOLANT_AUTOMATON_CANONICAL = "With backedges to repeated locations (Canonical)";
 	public static final String VALUE_INTERPOLANT_AUTOMATON_TOTAL_INTERPOLATION = "Total interpolation (Jan)";
 
 	public static final String VALUE_FINITE_AUTOMATON = "Finite Automata";
@@ -161,8 +147,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 */
 	public static final boolean DEF_INTERPROCEDUTAL = true;
 	private static final FloydHoareAutomataReuse DEF_FLOYD_HOARE_AUTOMATA_REUSE = FloydHoareAutomataReuse.NONE;
-	private static final FloydHoareAutomataReuseEnhancement DEF_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
-			FloydHoareAutomataReuseEnhancement.NONE;
+	private static final FloydHoareAutomataReuseEnhancement DEF_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT = FloydHoareAutomataReuseEnhancement.NONE;
 
 	public static final String DEF_ARTIFACT = VALUE_RCFG;
 	public static final int DEF_WATCHITERATION = 1_000_000;
@@ -180,11 +165,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_MINIMIZE = true;
 	public static final String DEF_CONCURRENCY = VALUE_FINITE_AUTOMATON;
 	public static final boolean DEF_ALL_ERRORS_AT_ONCE = true;
-	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
-			CounterexampleSearchStrategy.BFS;
+	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY = CounterexampleSearchStrategy.BFS;
 	public static final RefinementStrategy DEF_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
-	public static final RefinementStrategyExceptionBlacklist DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST =
-			RefinementStrategyExceptionBlacklist.DEPENDING;
+	public static final RefinementStrategyExceptionBlacklist DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST = RefinementStrategyExceptionBlacklist.DEPENDING;
 	// public static final boolean DEF_ALL_ERRORS_AT_ONCE = false;
 
 	public static final boolean DEF_CUTOFF = true;
@@ -198,45 +181,54 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE = false;
 
 	public static final SimplificationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
-	public static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	public static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private static final boolean DEF_ABSINT_ALWAYS_REFINE = Boolean.FALSE;
 	private static final boolean DEF_ONLY_REUSE = false;
 	private static final boolean DEF_COMPUTE_COUNTEREXAMPLE = true;
 	private static final boolean DEF_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = true;
 
-	private static final String DESC_DUMP_ONLY_REUSE =
-			"When dumping automata is enabled, we only dump the interpolant automaton and add to that file if it "
-					+ "exists s.t. it can be reused by later verification runs.";
-	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE =
-			"Try to re-use interpolant automata from input files and/or previous runs. " + FloydHoareAutomataReuse.NONE
-					+ " disables the re-use, all other settings enable it. You can specifiy additional .ats files as"
-					+ " input and the containing NWAs will be treated as additional interpolant automata. When "
-					+ LABEL_ALL_ERRORS_AT_ONCE + " is false, this setting will additionally try to re-use the automata "
-					+ "from previous runs. " + FloydHoareAutomataReuse.EAGER
-					+ " will compute the difference with the initial abstraction and "
-					+ "all additional interpolant automatas before the first iteration of a run. "
-					+ FloydHoareAutomataReuse.LAZY_IN_ORDER + " tries in each iteration after a potential "
-					+ "counterexample is found if one of the re-usable interpolant automata accepts the counterexample. "
-					+ "If this is the case, this automaton is substracted from the current abstraction and removed from "
-					+ "the set of reusable interpolant automata.";
-	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
-			"Specifies how to compute successors on-demand for re-use interpolant automata.";
+	private static final String DESC_DUMP_ONLY_REUSE = "When dumping automata is enabled, we only dump the interpolant automaton and add to that file if it "
+			+ "exists s.t. it can be reused by later verification runs.";
+	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE = "Try to re-use interpolant automata from input files and/or previous runs. "
+			+ FloydHoareAutomataReuse.NONE
+			+ " disables the re-use, all other settings enable it. You can specifiy additional .ats files as"
+			+ " input and the containing NWAs will be treated as additional interpolant automata. When "
+			+ LABEL_ALL_ERRORS_AT_ONCE + " is false, this setting will additionally try to re-use the automata "
+			+ "from previous runs. " + FloydHoareAutomataReuse.EAGER
+			+ " will compute the difference with the initial abstraction and "
+			+ "all additional interpolant automatas before the first iteration of a run. "
+			+ FloydHoareAutomataReuse.LAZY_IN_ORDER + " tries in each iteration after a potential "
+			+ "counterexample is found if one of the re-usable interpolant automata accepts the counterexample. "
+			+ "If this is the case, this automaton is substracted from the current abstraction and removed from "
+			+ "the set of reusable interpolant automata.";
+	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT = "Specifies how to compute successors on-demand for re-use interpolant automata.";
 
 	private static final String DESC_ALL_ERRORS_AT_ONCE = null;
 	private static final String DESC_COMPUTE_COUNTEREXAMPLE = null;
 	private static final String DESC_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = null;
-	private static final String DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST =
-			"Sets the category of solver result for which the verification is aborted (even if another solver is "
-					+ "available). When set to " + RefinementStrategyExceptionBlacklist.ALL
-					+ ", every unusable solver result aborts the verification, if set to "
-					+ RefinementStrategyExceptionBlacklist.NONE + " none of them do.";
-	public static final String LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER =
-			"Use predicate trie based predicate unification";
+	private static final String DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST = "Sets the category of solver result for which the verification is aborted (even if another solver is "
+			+ "available). When set to " + RefinementStrategyExceptionBlacklist.ALL
+			+ ", every unusable solver result aborts the verification, if set to "
+			+ RefinementStrategyExceptionBlacklist.NONE + " none of them do.";
+	public static final String LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER = "Use predicate trie based predicate unification";
 	public static final boolean DEF_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER = false;
-	public static final String DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER =
-			"Use the newer predicate-trie based predicate unification algorithm.";
+	public static final String DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER = "Use the newer predicate-trie based predicate unification algorithm.";
+
+	public static final String LABEL_HEURISTIC_EMPTINESS_CHECK = "Use heuristic emptiness check";
+	public static final boolean DEF_HEURISTIC_EMPTINESS_CHECK = false;
+	public static final String DESC_HEURISTIC_EMPTINESS_CHECK = "Use heuristics to traverse/explorew a NWA during the check emptiness";
+	
+	public static final String LABEL_SMT_FEATURE_EXTRACTION = "Extract SMT features during analysis";
+	public static final boolean DEF_SMT_FEATURE_EXTRACTION = false;
+	public static final String DESC_SMT_FEATURE_EXTRACTION = "We Extract SMT features during analysis and dump them.";
+	
+	public static final String LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH = "SMT feature Extraction Dump Path.";
+	public static final String DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH = "/tmp/";
+	public static final String DESC_SMT_FEATURE_EXTRACTION_DUMP_PATH = "We Extract SMT features during analysis and dump them to the given path";
+	
+	
+
 
 	/**
 	 * Constructor.
@@ -361,7 +353,14 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						RefinementStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 						DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST, DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
-						PreferenceType.Combo, RefinementStrategyExceptionBlacklist.values()), };
+						PreferenceType.Combo, RefinementStrategyExceptionBlacklist.values()),
+				new UltimatePreferenceItem<>(LABEL_HEURISTIC_EMPTINESS_CHECK, DEF_HEURISTIC_EMPTINESS_CHECK,
+						DESC_HEURISTIC_EMPTINESS_CHECK, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION, DEF_SMT_FEATURE_EXTRACTION,
+						DESC_SMT_FEATURE_EXTRACTION, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH, DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH,
+						DESC_SMT_FEATURE_EXTRACTION_DUMP_PATH, PreferenceType.Directory),};
+
 	}
 
 	/**
@@ -424,7 +423,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	/**
-	 * Search strategy for counterexamples in the remainder language of the current abstraction (automaton).
+	 * Search strategy for counterexamples in the remainder language of the current
+	 * abstraction (automaton).
 	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
@@ -440,14 +440,15 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	/**
-	 * Strategy used for trace check and trace refinement (i.e., interpolant automaton construction).
+	 * Strategy used for trace check and trace refinement (i.e., interpolant
+	 * automaton construction).
 	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	public enum RefinementStrategy {
 		/**
-		 * Strategy that reads the information from the settings. It always uses only one trace check and one
-		 * interpolation generator.
+		 * Strategy that reads the information from the settings. It always uses only
+		 * one trace check and one interpolation generator.
 		 */
 		FIXED_PREFERENCES,
 		/**
@@ -467,35 +468,39 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		TOOTHLESS_TAIPAN,
 		/**
-		 * Integer strategy that tries Craig interpolation with SMTInterpol, SP/WP with Z3 and CVC4 with a high
-		 * interpolant threshold.
+		 * Integer strategy that tries Craig interpolation with SMTInterpol, SP/WP with
+		 * Z3 and CVC4 with a high interpolant threshold.
 		 */
 		PENGUIN,
 		/**
-		 * Bitvector strategy that tries SP/WP with CVC4, Z3 and Mathsat with a low interpolant threshold
+		 * Bitvector strategy that tries SP/WP with CVC4, Z3 and Mathsat with a low
+		 * interpolant threshold
 		 */
 		WALRUS,
 		/**
-		 * Light-weight integer strategy that first tries to obtain craig interpolants with SMTInterpol and then Z3 with
-		 * FP.
+		 * Light-weight integer strategy that first tries to obtain craig interpolants
+		 * with SMTInterpol and then Z3 with FP.
 		 */
 		CAMEL,
 		/**
-		 * Even more light-weight than {@link #CAMEL}. This strategy is exactly like {@link #CAMEL} but does not use any
-		 * assertion order modulation.
+		 * Even more light-weight than {@link #CAMEL}. This strategy is exactly like
+		 * {@link #CAMEL} but does not use any assertion order modulation.
 		 */
 		CAMEL_NO_AM,
 		/**
-		 * An integer strategy without assertion order modulation using SMTInterpol with interpolation, Z3 with FP, and
-		 * Mathsat with FP. This strategy is used by ReqChecker.
+		 * An integer strategy without assertion order modulation using SMTInterpol with
+		 * interpolation, Z3 with FP, and Mathsat with FP. This strategy is used by
+		 * ReqChecker.
 		 */
 		BADGER,
 		/**
-		 * Bitvector strategy that tries SP/WP with CVC4, Z3 and Mathsat with a low interpolant threshold
+		 * Bitvector strategy that tries SP/WP with CVC4, Z3 and Mathsat with a low
+		 * interpolant threshold
 		 */
 		WOLF,
 		/**
-		 * Heavy-weight bitvector strategy that tries SP with CVC4, Z3 and Mathsat with a high interpolant threshold
+		 * Heavy-weight bitvector strategy that tries SP with CVC4, Z3 and Mathsat with
+		 * a high interpolant threshold
 		 */
 		WARTHOG,
 		/**
@@ -503,8 +508,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		WARTHOG_NO_AM,
 		/**
-		 * Heavy-weight integer strategy that tries craig interpolation with SMTInterpol and Z3 followed by SP/WP with
-		 * Z3 with a high interpolant threshold.
+		 * Heavy-weight integer strategy that tries craig interpolation with SMTInterpol
+		 * and Z3 followed by SP/WP with Z3 with a high interpolant threshold.
 		 */
 		MAMMOTH,
 		/**
@@ -512,14 +517,15 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		MAMMOTH_NO_AM,
 		/**
-		 * Strategy for benchmarking purposes only: it first uses SMTInterpol with Craig interpolation and disabled
-		 * array interpolation, then SMTInterpol with FP.
+		 * Strategy for benchmarking purposes only: it first uses SMTInterpol with Craig
+		 * interpolation and disabled array interpolation, then SMTInterpol with FP.
 		 */
 		SMTINTERPOL
 	}
 
 	/**
-	 * Reuse Floyd-Hoare that were built for one error location for succeeding error locations.
+	 * Reuse Floyd-Hoare that were built for one error location for succeeding error
+	 * locations.
 	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 *
@@ -530,8 +536,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		NONE,
 		/**
-		 * Take initially the difference of the control flow graph and all yet constructed Floyd-Hoare automata. Extend
-		 * the Floyd-Hoare automata on-demand (while difference is constructed by new edges).
+		 * Take initially the difference of the control flow graph and all yet
+		 * constructed Floyd-Hoare automata. Extend the Floyd-Hoare automata on-demand
+		 * (while difference is constructed by new edges).
 		 */
 		EAGER,
 		/**
@@ -541,31 +548,34 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	/**
-	 * How should on-demand enhancement of reuse-automata behave? Has only an impact if {@link FloydHoareAutomataReuse}
-	 * is not {@link FloydHoareAutomataReuse#NONE}.
+	 * How should on-demand enhancement of reuse-automata behave? Has only an impact
+	 * if {@link FloydHoareAutomataReuse} is not
+	 * {@link FloydHoareAutomataReuse#NONE}.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
 	public enum FloydHoareAutomataReuseEnhancement {
 		/**
-		 * Do not use any enhancement. Usually means none of the automata can be used during verifiation.
+		 * Do not use any enhancement. Usually means none of the automata can be used
+		 * during verifiation.
 		 */
 		NONE,
 		/**
-		 * Try to enhance the reuse automata "as usual", i.e., compute on-demand successors for all letters of the
-		 * alphabet and with solver support. May be more expensive than other options, but guarantees best re-use.
+		 * Try to enhance the reuse automata "as usual", i.e., compute on-demand
+		 * successors for all letters of the alphabet and with solver support. May be
+		 * more expensive than other options, but guarantees best re-use.
 		 */
 		AS_USUAL,
 		/**
-		 * Only compute on-demand successors for letters that are in the alphabet of the current program but are not in
-		 * the alphabet of the re-use automaton.
+		 * Only compute on-demand successors for letters that are in the alphabet of the
+		 * current program but are not in the alphabet of the re-use automaton.
 		 */
 		ONLY_NEW_LETTERS,
 		/**
-		 * Compute on-demand successors for all letters, but do not try to use an SMT solver for Hoare triple checks
-		 * involving letters that are in the alphabet of the current program but are not in the alphabet of the re-use
-		 * automaton.
+		 * Compute on-demand successors for all letters, but do not try to use an SMT
+		 * solver for Hoare triple checks involving letters that are in the alphabet of
+		 * the current program but are not in the alphabet of the re-use automaton.
 		 */
 		ONLY_NEW_LETTERS_SOLVER,
 	}
