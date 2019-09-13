@@ -194,7 +194,9 @@ public class IntervalDomain implements IDomain {
 
 		final Map<TermVariable, Interval> varToInterval = new HashMap<>();
 		boolean updated = true;
-		while (updated) {
+		final long maxIterations = 1 + solvedRelations.stream()
+				.map(SolvedBinaryRelation::getLeftHandSide).distinct().count();
+		for (int iteration = 1; updated && iteration <= maxIterations; ++iteration) {
 			if (!timer.continueProcessing()) {
 				mLogger.warn("Term to interval evaluator loop timed out before fixpoint was reached. "
 						+ "Continuing with non-optimal over-approximation.");
@@ -212,6 +214,15 @@ public class IntervalDomain implements IDomain {
 				}
 				updated = true;
 			}
+		}
+		if (updated) {
+			// maxIter limit reached
+			// TODO research whether this only happens if dnfDisjunct is unsat.
+			//      If so, then return bottom
+			mLogger.warn("Interval conversion did not stabilize in %d iterations. "
+					+ "Over-approximation may be very coarse.", maxIterations);
+			mLogger.debug("Relations used to update are %s.", solvedRelations);
+			mLogger.debug("Interval values after last iteration are %s.", varToInterval);
 		}
 		return Optional.of(Collections.unmodifiableMap(varToInterval));
 	}
