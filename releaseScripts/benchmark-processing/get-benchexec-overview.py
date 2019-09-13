@@ -15,6 +15,7 @@ from functools import reduce
   !v iff the following log line is the one we want to show
 """
 known_exceptions = {
+	"command is only available in interactive mode": True,
     "Argument of \"settings\" has invalid value": True,
     "encountered a call to a var args function, var args are not supported at the moment": True,
     "we do not support pthread": True,
