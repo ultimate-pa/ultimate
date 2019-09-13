@@ -67,10 +67,18 @@ public class ReflectionUtil {
 	 * If the core is not present, we do not need it as no OSGi loading can take place.
 	 */
 	private static UrlConverter createBundleResourceConverter() {
+		final String qualifiedName = "de.uni_freiburg.informatik.ultimate.core.util.RcpUtils";
 		try {
-			final Class<?> clazz = getClassFromQualifiedName("de.uni_freiburg.informatik.ultimate.core.util.RcpUtils");
-			final Method method = clazz.getMethod("getBundleProtocolResolver");
-			return (UrlConverter) method.invoke(null);
+			final List<ClassLoader> loaders = getClassLoaders(ReflectionUtil.class);
+			for (final ClassLoader loader : loaders) {
+				final Class<?> clazz = getClassFromQualifiedName(qualifiedName, loader);
+				if (clazz == null) {
+					continue;
+				}
+				final Method method = clazz.getMethod("getBundleProtocolResolver");
+				return (UrlConverter) method.invoke(null);
+			}
+			throw new ReflectionUtilException("Could not extract Class<?> from qualified name " + qualifiedName);
 		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException | ReflectionUtilException e) {
 			return null;
