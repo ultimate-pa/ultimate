@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2018 University of Freiburg
+ * Copyright (C) 2019 Max Barth (Max.Barth95@gmx.de)
+ * Copyright (C) 2019 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtilsTest Library.
  *
@@ -46,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 /**
- * @author schaetzc@tf.uni-freiburg.de
+ * @author Max Barth (Max.Barth95@gmx.de)
  */
 public class AffineRelationTest {
 
