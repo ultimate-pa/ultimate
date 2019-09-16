@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
-import java.math.BigInteger;
-
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -72,7 +70,7 @@ public class ScriptWithTermConstructionChecks extends WrapperScript {
 	}
 
 	@Override
-	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params) {
+	public Term term(final String funcname, final String[] indices, final Sort returnSort, final Term... params) {
 		checkIfsomeParamUsesDifferentTheory(params);
 		return mScript.term(funcname, indices, returnSort, params);
 	}

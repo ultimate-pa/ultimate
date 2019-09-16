@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
 
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -138,8 +137,8 @@ public class TypeSortTranslator {
 				final BoogieType valueType = (BoogieType) getType(valueSort);
 				type = BoogieType.createArrayType(0, indexTypes, valueType);
 			} else if (SmtSortUtils.isBitvecSort(sort)) {
-				final BigInteger bvsize = sort.getIndices()[0];
-				type = BoogieType.createBitvectorType(bvsize.intValueExact());
+				final String bvsize = sort.getIndices()[0];
+				type = BoogieType.createBitvectorType(Integer.valueOf(bvsize));
 				return type;
 			} else {
 				throw new IllegalArgumentException("Unknown sort " + sort);
@@ -258,7 +257,7 @@ public class TypeSortTranslator {
 				} else {
 					// use SMT identifier that was defined by our "builtin"
 					// attribute
-					final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
+					final String[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
 					result = SmtSortUtils.getBuiltinSort(mScript, attributeDefinedIdentifier, indices);
 				}
 			}

@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -107,7 +107,7 @@ public final class NonDeclaringTermTransferrer extends TermTransformer {
 
 	public Sort transferSort(final Sort sort) {
 		final Sort[] arguments = transferSorts(sort.getArguments());
-		final BigInteger[] indices = sort.getIndices();
+		final String[] indices = sort.getIndices();
 		return mScript.sort(sort.getName(), indices, arguments);
 	}
 

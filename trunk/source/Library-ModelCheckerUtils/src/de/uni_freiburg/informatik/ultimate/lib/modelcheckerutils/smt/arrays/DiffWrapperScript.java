@@ -18,8 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays;
 
-import java.math.BigInteger;
-
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaLet;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -125,7 +123,7 @@ public class DiffWrapperScript extends WrapperScript {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(sort.getName());
 		if (sort.getIndices() != null) {
-			for (final BigInteger index : sort.getIndices()) {
+			for (final String index : sort.getIndices()) {
 				sb.append('@').append(index);
 			}
 		}

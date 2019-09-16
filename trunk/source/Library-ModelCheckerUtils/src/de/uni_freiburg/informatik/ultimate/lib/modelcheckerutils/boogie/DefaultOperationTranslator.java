@@ -135,8 +135,7 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 
 	@Override
 	public Term bitvecTranslation(final BitvecLiteral exp) {
-		final BigInteger[] indices = { BigInteger.valueOf(exp.getLength()) };
-
+		final String[] indices = { String.valueOf(exp.getLength()) };
 		return mScript.term("bv" + exp.getValue(), indices, null);
 	}
 

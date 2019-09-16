@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -74,7 +73,7 @@ public class PredicateParsingWrapperScript extends WrapperScript {
 	}
 
 	@Override
-	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params)
+	public Term term(final String funcname, final String[] indices, final Sort returnSort, final Term... params)
 			throws SMTLIBException {
 		if (params.length == 0 && mProgramVarId2Tv.containsKey(funcname)) {
 			return mProgramVarId2Tv.get(funcname);

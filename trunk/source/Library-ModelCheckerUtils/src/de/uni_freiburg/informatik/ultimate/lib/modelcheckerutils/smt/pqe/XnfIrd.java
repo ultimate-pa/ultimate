@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtil
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -215,13 +215,14 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 		} else if (SmtSortUtils.isNumericSort(sort)) {
 			return Float.POSITIVE_INFINITY;
 		} else if (SmtSortUtils.isBitvecSort(sort)) {
-			final BigInteger bitsize = sort.getRealSort().getIndices()[0];
+
+			final BigInteger bitsize = new BigInteger(sort.getRealSort().getIndices()[0]);
 			return (float) Math.pow(2.0f, bitsize.doubleValue());
 		} else if (SmtSortUtils.isFloatingpointSort(sort)) {
 			// TODO 2019-07-27 Matthias: This is not correct the FloatingPoint
 			// theory does not have a value for each bitvector (e.g., there is
 			// only one NaN.
-			final BigInteger[] indices = sort.getRealSort().getIndices();
+			final BigInteger[] indices = SmtUtils.toBigIntegerArray(sort.getRealSort().getIndices());
 			final BigInteger bitsize = indices[0].add(indices[1]);
 			return (float) Math.pow(2.0f, bitsize.doubleValue());
 		} else if (SmtSortUtils.isArraySort(sort)) {

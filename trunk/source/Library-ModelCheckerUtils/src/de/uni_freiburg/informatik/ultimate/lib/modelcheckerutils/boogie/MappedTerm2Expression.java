@@ -242,8 +242,9 @@ public final class MappedTerm2Expression implements Serializable {
 		assert term.getParameters().length == 1;
 		assert term.getFunction().getIndices().length == 2;
 		final Expression bitvector = translate(term.getParameters()[0], variableNameRetainment, alternateOldNames);
-		final int start = term.getFunction().getIndices()[1].intValueExact();
-		final int end = term.getFunction().getIndices()[0].intValueExact();
+
+		final int start = Integer.valueOf(term.getFunction().getIndices()[1]);
+		final int end = Integer.valueOf(term.getFunction().getIndices()[0]);
 		return new BitVectorAccessExpression(null, type, bitvector, end, start);
 	}
 
@@ -272,8 +273,8 @@ public final class MappedTerm2Expression implements Serializable {
 		assert name.startsWith("bv");
 		final String decimalValue = name.substring(2, name.length());
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
-		final BigInteger length = term.getSort().getIndices()[0];
-		return new BitvecLiteral(null, type, decimalValue, length.intValue());
+		final String length = term.getSort().getIndices()[0];
+		return new BitvecLiteral(null, type, decimalValue, Integer.valueOf(length));
 	}
 
 	private static Expression mod(final Expression[] params) {
@@ -343,7 +344,7 @@ public final class MappedTerm2Expression implements Serializable {
 		final Object value = term.getValue();
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
 		if (SmtSortUtils.isBitvecSort(term.getSort())) {
-			final BigInteger[] indices = term.getSort().getIndices();
+			final String[] indices = term.getSort().getIndices();
 			if (indices.length != 1) {
 				throw new AssertionError("BitVec has exactly one index");
 			}
@@ -356,7 +357,7 @@ public final class MappedTerm2Expression implements Serializable {
 			} else {
 				throw new UnsupportedOperationException("only hexadecimal values and boolean values supported yet");
 			}
-			final int length = indices[0].intValue();
+			final int length = Integer.valueOf(indices[0]);
 			return new BitvecLiteral(null, type, String.valueOf(decimalValue), length);
 		}
 		if (value instanceof String) {

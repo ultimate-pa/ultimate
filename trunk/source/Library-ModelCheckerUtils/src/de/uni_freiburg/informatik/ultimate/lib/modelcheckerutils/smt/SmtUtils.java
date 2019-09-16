@@ -90,6 +90,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class SmtUtils {
 
+	private final static String[] EMPTY_INDICES = new String[0];
+	private final static BigInteger[] EMPTY_INDICES_BI = new BigInteger[0];
+
 	private static final String ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT = "unknown enum constant ";
 	private static final String ERROR_MSG_UNKNOWN_SORT = "unknown sort ";
 	/**
@@ -1190,8 +1193,8 @@ public final class SmtUtils {
 	 *            must be non-null if and only if we have an explicitly instantiated polymorphic FunctionSymbol, i.e., a
 	 *            function of the form (as <name> <sort>)
 	 */
-	public static Term termWithLocalSimplification(final Script script, final String funcname,
-			final BigInteger[] indices, final Sort resultSort, final Term... params) {
+	public static Term termWithLocalSimplification(final Script script, final String funcname, final String[] indices,
+			final Sort resultSort, final Term... params) {
 		final Term result;
 		switch (funcname) {
 		case "and":
@@ -1296,7 +1299,7 @@ public final class SmtUtils {
 		case "bvsle":
 		case "bvsgt":
 		case "bvsge":
-			result = BitvectorUtils.termWithLocalSimplification(script, funcname, indices, params);
+			result = BitvectorUtils.termWithLocalSimplification(script, funcname, toBigIntegerArray(indices), params);
 			break;
 		default:
 			result = script.term(funcname, indices, null, params);
@@ -1910,8 +1913,8 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Returns true iff the boolean formulas formula1 and formula2 are
-	 * equivalent under the given assumption w.r.t script.
+	 * Returns true iff the boolean formulas formula1 and formula2 are equivalent under the given assumption w.r.t
+	 * script.
 	 */
 	public static boolean areFormulasEquivalent(final Term formula1, final Term formula2, final Term assumption,
 			final Script script) {
@@ -1989,6 +1992,38 @@ public final class SmtUtils {
 	public static boolean isUnaryNumericMinus(final FunctionSymbol function) {
 		return function.isIntern() && function.getName().equals("-") && function.getParameterSorts().length == 1
 				&& function.getParameterSorts()[0].isNumericSort() && function.getReturnSort().isNumericSort();
+	}
+
+	/**
+	 * SMTInterpol changed its API with 2.5-554-g428a944, so we cannot pass BigInteger indices anymore, but have to
+	 * convert them to strings. This function performs this conversion, until we can decide for each place which
+	 * handling is better.
+	 */
+	public static final Term oldAPITerm(final Script script, final String funName, final BigInteger[] indices,
+			final Sort returnSort, final Term[] params) {
+		return script.term(funName, toStringArray(indices), returnSort, params);
+	}
+
+	public static final BigInteger[] toBigIntegerArray(final String... indices) {
+		if (indices == null || indices.length == 0) {
+			return EMPTY_INDICES_BI;
+		}
+		final BigInteger[] biIndices = new BigInteger[indices.length];
+		for (int i = 0; i < indices.length; ++i) {
+			biIndices[i] = new BigInteger(indices[i]);
+		}
+		return biIndices;
+	}
+
+	public static final String[] toStringArray(final BigInteger... indices) {
+		if (indices == null || indices.length == 0) {
+			return EMPTY_INDICES;
+		}
+		final String[] strIndices = new String[indices.length];
+		for (int i = 0; i < indices.length; ++i) {
+			strIndices[i] = indices[i].toString();
+		}
+		return strIndices;
 	}
 
 	private static class InnerDualJunctTracker {

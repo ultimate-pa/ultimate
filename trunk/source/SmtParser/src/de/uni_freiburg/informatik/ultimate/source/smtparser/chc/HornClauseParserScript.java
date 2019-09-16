@@ -120,7 +120,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	private boolean mSawCheckSat = false;
 	private boolean mFinished;
 
-	private final Stack<Triple<String, List<BigInteger>, List<Term>>> mSimplificationStack;
+	private final Stack<Triple<String, List<String>, List<Term>>> mSimplificationStack;
 
 	private final IPreferenceProvider mPreferences;
 
@@ -443,7 +443,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	}
 
 	@Override
-	public Sort sort(final String sortname, final BigInteger[] indices, final Sort... params) throws SMTLIBException {
+	public Sort sort(final String sortname, final String[] indices, final Sort... params) throws SMTLIBException {
 		return super.sort(sortname, indices, params);
 		// return mBackendSmtSolver.sort(sortname, indices, params);
 	}
@@ -461,7 +461,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	}
 
 	@Override
-	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params)
+	public Term term(final String funcname, final String[] indices, final Sort returnSort, final Term... params)
 			throws SMTLIBException {
 
 		// workaround to deal with unary and, which occurs in some chc-comp benchmarks (e.g. eldarica..) TODO: ugly!
@@ -474,7 +474,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 			return super.term(funcname, indices, returnSort, params);
 		}
 
-		final List<BigInteger> indicesList = indices == null ? null : Arrays.asList(indices);
+		final List<String> indicesList = indices == null ? null : Arrays.asList(indices);
 		final List<Term> paramsList = params == null ? null : Arrays.asList(params);
 
 		final Term result;

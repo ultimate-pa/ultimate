@@ -211,15 +211,13 @@ public class Expression2Term {
 						binexp.getLeft().getType(), binexp.getRight().getType());
 				final String negationFuncname =
 						mOperationTranslator.opTranslation(UnaryExpression.Operator.LOGICNEG, BoogieType.TYPE_BOOL);
-				final BigInteger[] indices = new BigInteger[0];
-				return SmtUtils.termWithLocalSimplification(mScript, negationFuncname, indices, null,
-						SmtUtils.termWithLocalSimplification(mScript, equalityFuncname, indices, null,
+				return SmtUtils.termWithLocalSimplification(mScript, negationFuncname, null, null,
+						SmtUtils.termWithLocalSimplification(mScript, equalityFuncname, null, null,
 								translate(binexp.getLeft()), translate(binexp.getRight())));
 			}
 			final String funcname =
 					mOperationTranslator.opTranslation(op, binexp.getLeft().getType(), binexp.getRight().getType());
-			final BigInteger[] indices = null;
-			return SmtUtils.termWithLocalSimplification(mScript, funcname, indices, null, translate(binexp.getLeft()),
+			return SmtUtils.termWithLocalSimplification(mScript, funcname, null, null, translate(binexp.getLeft()),
 					translate(binexp.getRight()));
 		} else if (exp instanceof UnaryExpression) {
 			final UnaryExpression unexp = (UnaryExpression) exp;
@@ -231,8 +229,7 @@ public class Expression2Term {
 				return term;
 			}
 			final String funcname = mOperationTranslator.opTranslation(op, unexp.getExpr().getType());
-			final BigInteger[] indices = null;
-			return SmtUtils.termWithLocalSimplification(mScript, funcname, indices, null, translate(unexp.getExpr()));
+			return SmtUtils.termWithLocalSimplification(mScript, funcname, null, null, translate(unexp.getExpr()));
 		} else if (exp instanceof RealLiteral) {
 			final Term result = mOperationTranslator.realTranslation((RealLiteral) exp);
 			assert result != null;
@@ -248,8 +245,8 @@ public class Expression2Term {
 			indices[0] = BigInteger.valueOf(((BitVectorAccessExpression) exp).getEnd() - 1);
 			indices[1] = BigInteger.valueOf(((BitVectorAccessExpression) exp).getStart());
 
-			final Term result =
-					mScript.term("extract", indices, null, translate(((BitVectorAccessExpression) exp).getBitvec()));
+			final Term result = mScript.term("extract", SmtUtils.toStringArray(indices), null,
+					translate(((BitVectorAccessExpression) exp).getBitvec()));
 			assert result != null;
 			return result;
 
@@ -400,7 +397,7 @@ public class Expression2Term {
 				throw new IllegalArgumentException("unknown function" + func.getIdentifier());
 			}
 
-			final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
+			final String[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
 			final SupportedBitvectorOperations sbo = ExpressionFactory.getSupportedBitvectorOperation(funcSymb);
 			if (sbo == null) {
 				result = mScript.term(funcSymb, indices, null, parameters);

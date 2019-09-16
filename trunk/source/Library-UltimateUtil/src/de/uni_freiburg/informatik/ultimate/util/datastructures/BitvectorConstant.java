@@ -265,6 +265,13 @@ public class BitvectorConstant {
 		mIndex = index;
 	}
 
+	public BitvectorConstant(final BigInteger value, final String index) {
+		super();
+		final BigInteger indexAsBi = new BigInteger(index);
+		mValue = computeUnifiedValue(value, indexAsBi);
+		mIndex = indexAsBi;
+	}
+
 	/**
 	 * @return the result of value % 2^index
 	 */
@@ -278,6 +285,10 @@ public class BitvectorConstant {
 
 	public BigInteger getIndex() {
 		return mIndex;
+	}
+
+	public String getStringIndex() {
+		return mIndex.toString();
 	}
 
 	public boolean isZero() {

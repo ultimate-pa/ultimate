@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,8 +62,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.ISmtDeclarable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.DeclarableFunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.ISmtDeclarable;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -269,7 +268,7 @@ public class Boogie2SmtSymbolTable
 							"if builtin identifier is " + "used we support only one constant per const declaration");
 				}
 				final String constId = varlist.getIdentifiers()[0];
-				final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
+				final String[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
 				final ApplicationTerm constant =
 						(ApplicationTerm) mScript.term(this, attributeDefinedIdentifier, indices, null);
 				final BoogieConst boogieConst = new BoogieConst(constId, iType, constant, true);
@@ -385,16 +384,16 @@ public class Boogie2SmtSymbolTable
 	 * defines the indices for the corresponding SMT function. Returns the array of indices if there is an attribute
 	 * with this name and null otherwise.
 	 */
-	public static BigInteger[] checkForIndices(final Map<String, Expression[]> attributes) {
+	public static String[] checkForIndices(final Map<String, Expression[]> attributes) {
 		final Expression[] values = attributes.get(ID_INDICES);
 		if (values == null) {
 			// no such name
 			return null;
 		}
-		final BigInteger[] result = new BigInteger[values.length];
+		final String[] result = new String[values.length];
 		for (int i = 0; i < values.length; i++) {
 			if (values[i] instanceof IntegerLiteral) {
-				result[i] = new BigInteger(((IntegerLiteral) values[i]).getValue());
+				result[i] = ((IntegerLiteral) values[i]).getValue();
 			} else {
 				throw new IllegalArgumentException("no single value attribute");
 			}

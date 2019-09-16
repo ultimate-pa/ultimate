@@ -143,7 +143,7 @@ public class TermTransferrer extends TermTransformer {
 
 	public Sort transferSort(final Sort sort) {
 		final Sort[] arguments = transferSorts(sort.getArguments());
-		final BigInteger[] indices = sort.getIndices();
+		final String[] indices = sort.getIndices();
 
 		final String sortName = sort.getName();
 		if (!sort.isInternal() && !mNewScript.getSymbolTable().containsKey(sortName)) {

@@ -84,7 +84,7 @@ public final class BitvectorUtils {
 						assert (symb.getName().startsWith("bv"));
 						final String valueString = symb.getName().substring(2);
 						final BigInteger value = new BigInteger(valueString);
-						final BigInteger index = term.getSort().getIndices()[0];
+						final String index = term.getSort().getIndices()[0];
 						return new BitvectorConstant(value, index);
 					}
 				}
@@ -97,13 +97,13 @@ public final class BitvectorUtils {
 	 * @return Term that represents bitvector (value % 2^index)
 	 */
 	public static Term constructTerm(final Script script, final BigInteger value, final Sort sort) {
-		final BigInteger index = sort.getIndices()[0];
+		final String index = sort.getIndices()[0];
 		return constructTerm(script, new BitvectorConstant(value, index));
 	}
 
 	public static Term constructTerm(final Script script, final BitvectorConstant bitvec) {
 		final String funcname = "bv" + bitvec.getValue().toString();
-		return script.term(funcname, new BigInteger[] { bitvec.getIndex() }, null, new Term[0]);
+		return script.term(funcname, new String[] { bitvec.getStringIndex() }, null, new Term[0]);
 	}
 
 	public static boolean allTermsAreBitvectorConstants(final Term[] terms) {
@@ -228,7 +228,7 @@ public final class BitvectorUtils {
 			if (BitvectorUtils.allTermsAreBitvectorConstants(params)) {
 				throw new AssertionError("wasted optimization " + funcname);
 			}
-			result = script.term(funcname, indices, null, params);
+			result = SmtUtils.oldAPITerm(script, funcname, indices, null, params);
 			break;
 		}
 		return result;
@@ -260,7 +260,7 @@ public final class BitvectorUtils {
 		}
 
 		private final Term notSimplified(final Script script, final BigInteger[] indices, final Term[] params) {
-			return script.term(getFunctionName(), indices, null, params);
+			return SmtUtils.oldAPITerm(script, getFunctionName(), indices, null, params);
 		}
 
 		public abstract String getFunctionName();

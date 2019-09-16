@@ -33,8 +33,8 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AbstractGeneralizedAffineRelation.TransformInequality;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -95,10 +95,10 @@ public class CommuhashNormalForm {
 		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 			final String funcname = appTerm.getFunction().getName();
 			if (CommuhashUtils.isKnownToBeCommutative(funcname)) {
-				final Sort resultSort = appTerm.getFunction().isReturnOverload() ? appTerm.getFunction().getReturnSort()
-						: null;
+				final Sort resultSort =
+						appTerm.getFunction().isReturnOverload() ? appTerm.getFunction().getReturnSort() : null;
 				final Term simplified = constructlocallySimplifiedTermWithSortedParams(funcname,
-						appTerm.getSort().getIndices(), resultSort, newArgs);
+						SmtUtils.toBigIntegerArray(appTerm.getSort().getIndices()), resultSort, newArgs);
 				setResult(simplified);
 			} else {
 				super.convertApplicationTerm(appTerm, newArgs);
@@ -117,26 +117,25 @@ public class CommuhashNormalForm {
 		}
 
 		private Term tryToTransformToPositiveNormalForm(final Term simplified) {
-			final AffineRelation affRel = AffineRelation.convert(mScript, simplified, TransformInequality.NO_TRANFORMATION);
+			final AffineRelation affRel =
+					AffineRelation.convert(mScript, simplified, TransformInequality.NO_TRANFORMATION);
 			if (affRel == null) {
 				return null;
-			} else {
-				final Term pnf = affRel.positiveNormalForm(mScript);
-				return pnf;
 			}
+			final Term pnf = affRel.positiveNormalForm(mScript);
+			return pnf;
 		}
 
 		/**
 		 * @param resultSort
-		 *            must be non-null if and only if we have an explicitly instantiated
-		 *            polymorphic FunctionSymbol, i.e., a function of the form (as
-		 *            <name> <sort>)
+		 *            must be non-null if and only if we have an explicitly instantiated polymorphic FunctionSymbol,
+		 *            i.e., a function of the form (as <name> <sort>)
 		 */
 		private Term constructlocallySimplifiedTermWithSortedParams(final String funcname, final BigInteger[] indices,
 				final Sort resultSort, final Term[] params) {
 			final Term[] sortedParams = CommuhashUtils.sortByHashCode(params);
-			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, funcname, indices, resultSort,
-					sortedParams);
+			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, funcname,
+					SmtUtils.toStringArray(indices), resultSort, sortedParams);
 			return simplified;
 		}
 

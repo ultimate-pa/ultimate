@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -218,7 +217,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	 */
 	private Sort transferSort(final Sort sort) {
 		final Sort[] arguments = transferSorts(sort.getArguments());
-		final BigInteger[] indices = sort.getIndices();
+		final String[] indices = sort.getIndices();
 		Sort result;
 		try {
 			result = mManagedScript.getScript().sort(sort.getName(), indices, arguments);

@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.source.smtparser;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -361,7 +360,7 @@ public class SmtParser implements ISource {
 		Set<String> mNames = new HashSet<>();
 
 		@Override
-		public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params)
+		public Term term(final String funcname, final String[] indices, final Sort returnSort, final Term... params)
 				throws SMTLIBException {
 			mNames.add(funcname);
 			return super.term(funcname, indices, returnSort, params);

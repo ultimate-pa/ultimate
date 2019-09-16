@@ -106,17 +106,19 @@ public final class SmtSortUtils {
 	}
 
 	/**
-	 * @param size number of bits
+	 * @param size
+	 *            number of bits
 	 */
 	public static Sort getBitvectorSort(final Script script, final int size) {
 		return getBitvectorSort(script, BigInteger.valueOf(size));
 	}
 
 	/**
-	 * @param size number of bits
+	 * @param size
+	 *            number of bits
 	 */
 	public static Sort getBitvectorSort(final Script script, final BigInteger size) {
-		return script.sort(BITVECTOR_SORT, new BigInteger[] { size });
+		return script.sort(BITVECTOR_SORT, new String[] { size.toString() });
 	}
 
 	public static Sort getArraySort(final Script script, final Sort domainSort, final Sort rangeSort) {
@@ -129,7 +131,7 @@ public final class SmtSortUtils {
 	}
 
 	public static Sort getBuiltinSort(final Script script, final String attributeDefinedIdentifier,
-			final BigInteger[] indices) {
+			final String[] indices) {
 		// TODO: Check if identifier is reserved (Array)
 		return script.sort(attributeDefinedIdentifier, indices);
 	}

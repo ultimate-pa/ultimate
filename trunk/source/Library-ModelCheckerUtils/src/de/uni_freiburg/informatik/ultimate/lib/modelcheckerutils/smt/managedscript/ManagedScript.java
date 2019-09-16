@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript;
 
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -156,7 +155,7 @@ public class ManagedScript {
 		return mScript.term(funcname, params);
 	}
 
-	public Term term(final Object lockOwner, final String funcname, final BigInteger[] indices, final Sort returnSort,
+	public Term term(final Object lockOwner, final String funcname, final String[] indices, final Sort returnSort,
 			final Term... params) throws SMTLIBException {
 		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
 		return mScript.term(funcname, indices, returnSort, params);
@@ -204,11 +203,10 @@ public class ManagedScript {
 		if (actualLockOwner == null) {
 			return "A " + expectedLockOwner.getClass().getSimpleName()
 					+ " wants to use this ManagedScript without locking";
-		} else {
-			return "A " + expectedLockOwner.getClass().getSimpleName()
-					+ " wants to use this ManagedScript but it is locked by some "
-					+ actualLockOwner.getClass().getSimpleName();
 		}
+		return "A " + expectedLockOwner.getClass().getSimpleName()
+				+ " wants to use this ManagedScript but it is locked by some "
+				+ actualLockOwner.getClass().getSimpleName();
 	}
 
 	/**

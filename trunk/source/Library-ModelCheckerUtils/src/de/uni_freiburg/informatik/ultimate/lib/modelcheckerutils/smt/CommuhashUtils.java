@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -58,7 +57,8 @@ public class CommuhashUtils {
 	/**
 	 * Dangerous! A function may be commutative in some theory but it is not in e.g., QF_UF
 	 *
-	 * @param name The String that is usually returned by FunctionSymbol#getName
+	 * @param name
+	 *            The String that is usually returned by FunctionSymbol#getName
 	 * @return
 	 */
 	public static boolean isKnownToBeCommutative(final String name) {
@@ -81,8 +81,8 @@ public class CommuhashUtils {
 		return sortedParams;
 	}
 
-	public static Term term(final Script script, final String funcname, final BigInteger[] indices,
-			final Sort returnSort, final Term[] params) {
+	public static Term term(final Script script, final String funcname, final String[] indices, final Sort returnSort,
+			final Term[] params) {
 		if (isKnownToBeCommutative(funcname)) {
 			return script.term(funcname, indices, returnSort, sortByHashCode(params));
 		}
