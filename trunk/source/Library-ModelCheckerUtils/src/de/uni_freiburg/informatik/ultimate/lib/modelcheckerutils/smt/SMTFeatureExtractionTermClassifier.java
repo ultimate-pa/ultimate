@@ -122,7 +122,16 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		run(new MyWalker(term));
 		mTermsInWhichWeAlreadyDescended = null;
 		mLogger.warn("UNION FIND: "  + mUnionFind.toString());
-		mUnionFind = new UnionFind<>();
+	}
+	
+	private boolean isApplicationTermWithArityZero(Term term) {
+		if (term instanceof ApplicationTerm) {
+	    	ApplicationTerm appterm = (ApplicationTerm) term;
+	    	if(appterm.getParameters().length == 0) {
+	    		return true;
+	    	}
+		}
+		return false;
 	}
 
 	private class MyWalker extends TermWalker {
@@ -136,30 +145,13 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 				// do nothing
 			} else {
 				Term term = getTerm();
-			    boolean add = false;
 			    // Add sorts only if term is TermVariable or ApplicationTerm with arity 0.
-			    if(!term.toStringDirect().equals("true") && !term.toStringDirect().equals("false")) {
-			    	if (term instanceof TermVariable) {
-				    	add = true;
-				    } else if (term instanceof ApplicationTerm) {
-				    	ApplicationTerm appterm = (ApplicationTerm) term;
-				    	if(appterm.getParameters().length == 0) {
-				    		add = true;
-				    	}
-				    }
-			    }
-			    if(add) {
+			    if(!term.toStringDirect().equals("true") && !term.toStringDirect().equals("false") 
+			       && (term instanceof TermVariable || isApplicationTermWithArityZero(term))) {
 			    	final Sort currentSort = term.getSort();
 			    	mOccuringSortNames.add(currentSort.toString());
 			    	if (currentSort.isArraySort()) {
 			    		mHasArrays = true;
-					}
-				}
-				if (add) {
-					final Sort currentSort = term.getSort();
-					mOccuringSortNames.add(currentSort.toString());
-					if (currentSort.isArraySort()) {
-						mHasArrays = true;
 					}
 				}
 				super.walk(walker);
@@ -174,31 +166,32 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		@Override
 		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			mTermsInWhichWeAlreadyDescended.add(term);
-			mLogger.warn("SUBTERM:" + term.getSubterm().toStringDirect());
 			walker.enqueueWalker(new MyWalker(term.getSubterm()));
 		}
 
 		@Override
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
-	    	if(term.getParameters().length > 0) {
+			int numberOfParameters = term.getParameters().length;
+	    	if(numberOfParameters > 0) {
 	    		final String functionName = term.getFunction().getName();
 	    		mOccuringFunctionNames.add(functionName);
-	    		if (functionName.equals("=")) {
-	    			mLogger.warn("######################## START #######################");
-	    			mLogger.warn("FUNCTION: " + functionName);
-	    			mLogger.warn("TERM: " + term.toStringDirect());
-	    			final Term[] termParameters = term.getParameters();
-	    			for (int i = 0; i < termParameters.length - 1; i++) {
-	    				final Term term1 = termParameters[i];
-	    				final Term term2 = termParameters[i+1];
-	    				final Term rep1 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(term1);
-	    				final Term rep2 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(term2);
-	    				mLogger.warn("REP1: " + rep1.toStringDirect());
-	    				mLogger.warn("REP2: " + rep2.toStringDirect());
-	    				mUnionFind.union(rep1, rep2);						
+	    		mLogger.warn("######################## START #######################");
+	    		mLogger.warn("FUNCTION: " + functionName);
+	    		mLogger.warn("TERM: " + term.toStringDirect());
+	    		final Term[] termParameters = term.getParameters();
+	    		for (int i = 0; i < termParameters.length - 1; i++) {	    				
+	    			final Term term1 = termParameters[i];
+	    			final Term term2 = termParameters[i+1];
+	    			if (isApplicationTermWithArityZero(term1)  && isApplicationTermWithArityZero(term2) ) {
+					    	final Term rep1 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(term1);
+					    	final Term rep2 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(term2);
+					    	mLogger.warn("REP1: " + rep1.toStringDirect());
+					    	mLogger.warn("REP2: " + rep2.toStringDirect());
+					    	mUnionFind.union(rep1, rep2);
+					    }
 					}
 	    			mLogger.warn("######################### END #########################");
-	    		}
+	    		
 	    		mNumberOfFunctions += 1;
 	    	}else {	    	
 	    		mNumberOfVariables += 1;
