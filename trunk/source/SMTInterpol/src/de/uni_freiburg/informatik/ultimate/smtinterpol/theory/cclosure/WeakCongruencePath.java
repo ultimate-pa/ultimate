@@ -122,7 +122,7 @@ public class WeakCongruencePath extends CongruencePath {
 	 * Compute the clause and proof for a weakeq-ext lemma.
 	 *
 	 * The caller must ensure that the array node for the const term is already the weak representative.
-	 * 
+	 *
 	 * @param a
 	 *            The first array
 	 * @param b
@@ -277,8 +277,8 @@ public class WeakCongruencePath extends CongruencePath {
 	}
 
 	/**
-	 * Connect two arrays using only store edges on the path.  It adds the 
-	 * path from start to the dest and moves the cursor accordingly. 
+	 * Connect two arrays using only store edges on the path.  It adds the
+	 * path from start to the dest and moves the cursor accordingly.
 	 * @param start the starting array and array node.
 	 * @param dest the destination array and array node.
 	 * @param storeIndices accumulates the store indices on the path.
@@ -315,7 +315,7 @@ public class WeakCongruencePath extends CongruencePath {
 	/**
 	 * Step over a single secondary edge in the weak-i equivalence class. This assumes there is such a secondary edge.
 	 * It adds the path from cursor to the destination of the secondary edge and moves the cursor accordingly.
-	 * 
+	 *
 	 * @param cursor
 	 *            The position where the path currently ends. This is updated to the destination of the secondary edge.
 	 * @param path
@@ -343,7 +343,7 @@ public class WeakCongruencePath extends CongruencePath {
 			t1 = t;
 		}
 		assert (n1.findSecondaryNode(path.mIdxRep) == selector);
-		path.addSubPath(collectPathPrimary(cursor, new Cursor(t1, n1), 
+		path.addSubPath(collectPathPrimary(cursor, new Cursor(t1, n1),
 				storeIndices, produceProofs));
 		path.addEntry(t2, null);
 		cursor.update(t2, n2);

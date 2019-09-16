@@ -25,11 +25,11 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
  * typing when setting a value from this enum.  This is needed since java
  * generics are broken and don't have the generic argument type present at
  * runtime.
- * 
+ *
  * For convenience this implementation tries to find enum constants that are
  * written in the way given by the user or after transforming the value to upper
  * cases.
- * 
+ *
  * The interface methods return strings to prevent output of some arbitrary
  * string in case an enum overrides the toString() method.
  * @author Juergen Christ
@@ -39,7 +39,7 @@ public class EnumOption<E extends Enum<E>> extends Option {
 	private E mValue;
 	private E mDefaultValue;
 	private final Class<E> mClass;
-	
+
 	public EnumOption(E defaultValue, boolean onlineModifiable, Class<E> cls,
 			String description) {
 		super(onlineModifiable, description);

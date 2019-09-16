@@ -98,6 +98,7 @@ public interface ProofConstants {
 	public final static Annotation RW_STORE_REWRITE     = new Annotation(":storeRewrite", null);
 	public final static Annotation RW_FORALL_EXISTS     = new Annotation(":forallExists", null);
 	public final static Annotation RW_INTERN            = new Annotation(":intern", null);
+	public final static Annotation RW_SORRY             = new Annotation(":sorry", null);
 
 	//// ==== Tautologies ====
 	public final static Annotation AUX_TRUE_NOT_FALSE    = new Annotation(":trueNotFalse", null);

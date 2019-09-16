@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.util.ScopeUtils;
 /**
  * A scoped map implementation based on identity maps.  This map violates the
  * map contract in the same way as IdentityHashMap does.
- * 
+ *
  * Null values are not permitted.
  * @author Juergen Christ
  */

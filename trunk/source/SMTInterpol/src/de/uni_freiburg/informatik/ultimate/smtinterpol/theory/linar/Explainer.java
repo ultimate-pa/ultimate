@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
  * When proofs are generated, this class builds the corresponding LAAnnotation.
  * It also determines which literals are necessary to occur in the conflict
  * clause.
- * 
+ *
  * @author Jochen Hoenicke
  */
 public class Explainer {
@@ -57,12 +57,12 @@ public class Explainer {
 	private final Literal mExplainedLiteral;
 
 	/**
-	 * The stack of reasons/annotations we are currently explaining. 
+	 * The stack of reasons/annotations we are currently explaining.
 	 */
 	private final ArrayDeque<LAAnnotation> mAnnotationStack;
-	
-	
-	public Explainer(LinArSolve solver, boolean generateProofTree, 
+
+
+	public Explainer(LinArSolve solver, boolean generateProofTree,
 			Literal explainedLiteral) {
 		mSolver = solver;
 		mExplainedLiteral = explainedLiteral;
@@ -74,10 +74,10 @@ public class Explainer {
 	/**
 	 * Check if the literal can be used to explain this clause.  It checks
 	 * it against the unit literal that should be explained by a unit clause.
-	 * If the given literal "lit" has a lower stack position than the unit 
-	 * literal for which the unit clause is generated, it may not be used in 
+	 * If the given literal "lit" has a lower stack position than the unit
+	 * literal for which the unit clause is generated, it may not be used in
 	 * the explanation.
-	 * @param lit The literal that we would like to include in the 
+	 * @param lit The literal that we would like to include in the
 	 *             explanation clause.
 	 * @return true if the literal may appear in the clause.
 	 */
@@ -105,7 +105,7 @@ public class Explainer {
 			if (mAnnotationStack != null) {
 				mAnnotationStack.addLast(annot);
 			}
-			reason.explain(this, reason.getVar().getEpsilon(), 
+			reason.explain(this, reason.getVar().getEpsilon(),
 					sign);
 			if (mAnnotationStack != null) {
 				mAnnotationStack.removeLast();
@@ -119,7 +119,7 @@ public class Explainer {
 	public void addEQAnnotation(LiteralReason reason, Rational coeff) {
 		// FIXME: make a special annotation for disequalities
 		assert ((coeff.signum() > 0) == reason.isUpper());
-		final Rational sign = Rational.valueOf(coeff.signum(), 1); 
+		final Rational sign = Rational.valueOf(coeff.signum(), 1);
 		LAAnnotation annot = mSubReasons.get(reason);
 		if (annot == null) {
 			annot = new LAAnnotation(reason);
@@ -141,7 +141,7 @@ public class Explainer {
 			mAnnotationStack.getLast().addFarkas(lit, coeff);
 		}
 	}
-	
+
 	private boolean validClause() {
 		if (mAnnotationStack == null) {
 			return true;
@@ -161,7 +161,7 @@ public class Explainer {
 		}
 		return true;
 	}
-	
+
 	public Clause createClause(DPLLEngine engine) {
 		assert (mAnnotationStack.size() == 1);
 		final LAAnnotation baseAnnotation = mAnnotationStack.getLast();
@@ -177,12 +177,12 @@ public class Explainer {
 
 	/**
 	 * Get the decide level on which all literals must live if they are
-	 * allowed to appear in the explained clause. 
+	 * allowed to appear in the explained clause.
 	 * @return the decide level of the explained unit literal or the current
 	 * decide level if a conflict is explained.
 	 */
 	public int getDecideLevel() {
-		return mExplainedLiteral == null 
+		return mExplainedLiteral == null
 				? mSolver.mEngine.getDecideLevel()
 				: mExplainedLiteral.getAtom().getDecideLevel();
 	}

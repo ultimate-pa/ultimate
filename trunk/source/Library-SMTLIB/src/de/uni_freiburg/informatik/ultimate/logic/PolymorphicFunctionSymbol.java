@@ -18,18 +18,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
-import java.math.BigInteger;
 import java.util.HashMap;
 
 
 public class PolymorphicFunctionSymbol extends FunctionSymbolFactory {
-	
+
 	private final Sort[] mTypeParams;
 	private final Sort[] mParamSorts;
 	private final Sort mResultSort;
 	private final int  mFlags;
-	
-	PolymorphicFunctionSymbol(String name, Sort[] typeParams, Sort[] params, 
+
+	PolymorphicFunctionSymbol(String name, Sort[] typeParams, Sort[] params,
 			Sort result, int flags) {
 		super(name);
 		mTypeParams = typeParams;
@@ -39,13 +38,13 @@ public class PolymorphicFunctionSymbol extends FunctionSymbolFactory {
 	}
 
 	@Override
-	public int getFlags(BigInteger[] indices, Sort[] paramSorts, Sort result) {
+	public int getFlags(String[] indices, Sort[] paramSorts, Sort result) {
 		return mFlags;
 	}
 
 	@Override
 	public Sort getResultSort(
-			BigInteger[] indices, Sort[] paramSorts, Sort result) {
+			String[] indices, Sort[] paramSorts, Sort result) {
 		if (indices != null) {
 			return null;
 		}

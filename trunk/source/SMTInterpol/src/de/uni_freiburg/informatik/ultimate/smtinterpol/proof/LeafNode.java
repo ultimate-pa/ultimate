@@ -43,12 +43,12 @@ public class LeafNode extends ProofNode {
 
 	private final int mLeafKind;
 	private IAnnotation mAnnotation;
-	
+
 	public LeafNode(int leafKind, IAnnotation annot) {
 		mLeafKind = leafKind;
 		mAnnotation = annot;
 	}
-	
+
 	@Override
 	public boolean isLeaf() {
 		return true;

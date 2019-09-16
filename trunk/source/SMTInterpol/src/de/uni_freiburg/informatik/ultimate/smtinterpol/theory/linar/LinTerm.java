@@ -19,33 +19,32 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar;
 
 import java.math.BigInteger;
-import java.util.Map;
-import java.util.Map.Entry;
+
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ArrayMap;
 
 /**
  * Class representing a linear term c1*x1+...+cn*xn
- * 
+ *
  * @author Juergen Christ
  */
-public class LinTerm {
-	// coefficient map has to be initialized before mvar!!!
-	Map<LinVar,BigInteger> mCoeffs;
+public class LinTerm extends ArrayMap<LinVar, BigInteger> {
 	/**
 	 * Generate a new linear term. Note that we do not make a copy of the given
-	 * map. 
+	 * map.
 	 * @param coeffmap Coefficient map to use.
 	 */
-	LinTerm(Map<LinVar,BigInteger> coeffmap) {
-		mCoeffs = coeffmap;
+	LinTerm(LinVar[] vars, BigInteger[] coeffs) {
+		super(vars, coeffs);
 	}
+
 	@Override
 	public String toString() {
-		if (mCoeffs.isEmpty()) {
+		if (isEmpty()) {
 			return "0";
 		}
 		final StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
-		for (final Entry<LinVar,BigInteger> entry : mCoeffs.entrySet()) {
+		for (final Entry<LinVar, BigInteger> entry : entrySet()) {
 			final LinVar var = entry.getKey();
 			BigInteger fact = entry.getValue();
 			if (fact.signum() == -1) {
@@ -61,16 +60,5 @@ public class LinTerm {
 			isFirst = false;
 		}
 		return sb.toString();
-	}
-	@Override
-	public int hashCode() {
-		return mCoeffs.hashCode();
-	}
-	@Override
-	public boolean equals(Object o) {
-		if (o instanceof LinTerm) {
-			return mCoeffs.equals(((LinTerm)o).mCoeffs);
-		}
-		return false;
 	}
 }

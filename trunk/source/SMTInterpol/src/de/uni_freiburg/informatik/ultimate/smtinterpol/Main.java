@@ -37,12 +37,12 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTLIB2Parser;
  * @author Juergen Christ
  */
 public final class Main {
-	
+
 	public static Properties sVersionInfo; //NOCHECKSTYLE
 	static {
 		sVersionInfo = new Properties();
 		try {
-			final InputStream is = 
+			final InputStream is =
 					Main.class.getResourceAsStream("Version.properties");
 			if (is != null) {
 				sVersionInfo.load(is);
@@ -51,7 +51,7 @@ public final class Main {
 			/* ignore */
 		}
 	}
-	
+
 	private Main() {
 		// Hide constructor
 	}
@@ -64,7 +64,7 @@ public final class Main {
 		}
 		return version;
 	}
-	
+
 	private static void usage() {
 		System.err.println("USAGE: smtinterpol [OPTION]... [INPUTFILE]");
 		System.err.println("If no INPUTFILE is given, stdin is used.");
@@ -81,7 +81,7 @@ public final class Main {
 		System.err.println("  -d                   Parse input as DIMACS benchmark.");// NOCHECKSTYLE
 		System.err.println("  -version             Print version and exit.");
 	}
-	
+
 	private static void version() {
 		final String date = sVersionInfo.getProperty("build.date");
 		System.err.println("SMTInterpol " + getVersion());
@@ -89,7 +89,7 @@ public final class Main {
 			System.err.println("  built on " + date);
 		}
 	}
-	
+
 	/**
 	 * @param param Command line arguments.
 	 */

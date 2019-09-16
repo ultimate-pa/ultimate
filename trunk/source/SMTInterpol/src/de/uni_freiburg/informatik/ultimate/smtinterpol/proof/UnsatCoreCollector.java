@@ -37,7 +37,7 @@ public class UnsatCoreCollector {
 	public UnsatCoreCollector(Script script) {
 		mScript = script;
 	}
-	
+
 	public Term[] getUnsatCore(Clause unsat) {
 		try {
 			final HashSet<String> unsatCoreIds = run(unsat);

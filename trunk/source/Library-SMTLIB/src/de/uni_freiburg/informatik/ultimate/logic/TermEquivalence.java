@@ -24,35 +24,35 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
  * This class checks if two terms are syntactically equivalent modulo renaming of variables. E. g.,
  * <code>(let ((x 0)) x)</code> is equivalent to <code>(let ((y 0)) y)</code>, but not to <code>0</code> or
  * <code>(let ((y 0)) 0)</code>.
- * 
+ *
  * @author Juergen Christ, Jochen Hoenicke
  */
 public class TermEquivalence extends NonRecursive {
-	
+
 	private final ScopedHashMap<TermVariable, TermVariable> mRenaming =
 			new ScopedHashMap<TermVariable, TermVariable>();
-	
+
 	private void beginScope() {
 		mRenaming.beginScope();
 	}
-	
+
 	private void endScope() {
 		mRenaming.endScope();
 	}
-	
+
 	private void addRenaming(TermVariable lvar, TermVariable rvar) {
 		mRenaming.put(lvar, rvar);
 	}
-	
+
 	private boolean checkRenaming(TermVariable lvar, TermVariable rvar) {
 		return mRenaming.get(lvar) == rvar;
 	}
-	
+
 	@SuppressWarnings("serial")
 	private static final class NotEq extends RuntimeException {
 		// Empty control flow exception
 	}
-	
+
 	private final static class EndScope implements Walker {
 		public final static EndScope INSTANCE = new EndScope();
 		@Override
@@ -61,7 +61,7 @@ public class TermEquivalence extends NonRecursive {
 			te.endScope();
 		}
 	}
-	
+
 	private final static class AddRenaming implements Walker {
 		private final TermVariable mLvar, mRvar;
 		public AddRenaming(TermVariable lvar, TermVariable rvar) {
@@ -78,16 +78,16 @@ public class TermEquivalence extends NonRecursive {
 	private final static class TermEq implements Walker {
 
 		private final Term mLhs, mRhs;
-		
+
 		public TermEq(Term lhs, Term rhs) {
 			mLhs = lhs;
 			mRhs = rhs;
 		}
-		
+
 		private final void notEqual() {
 			throw new NotEq();
 		}
-		
+
 		@Override
 		public void walk(NonRecursive engine) {
 			final TermEquivalence te = (TermEquivalence) engine;
@@ -227,9 +227,9 @@ public class TermEquivalence extends NonRecursive {
 			}
 		}
 	}
-	
+
 	/**
-	 * Returns true if the terms are equivalent. 
+	 * Returns true if the terms are equivalent.
 	 * @param lhs the left hand side term.
 	 * @param rhs the right hand side term.
 	 * @return true if the terms are equivalent modulo variable renaming.
@@ -243,5 +243,5 @@ public class TermEquivalence extends NonRecursive {
 			return false;
 		}
 	}
-	
+
 }

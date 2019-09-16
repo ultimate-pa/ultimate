@@ -23,12 +23,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 public class BooleanVarAtom extends DPLLAtom {
 	final Term mVariable;
-	
+
 	public BooleanVarAtom(Term var, int assertionstacklevel) {
 		super(var.hashCode(), assertionstacklevel);
 		mVariable = var;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mVariable.toString();
@@ -38,10 +38,10 @@ public class BooleanVarAtom extends DPLLAtom {
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
 		return mVariable;
 	}
-	
+
 	@Override
 	public boolean equals(Object other) { // NOCHECKSTYLE see Literal.hashCode()
-		return other instanceof BooleanVarAtom 
+		return other instanceof BooleanVarAtom
 			&& ((BooleanVarAtom) other).mVariable == mVariable;
 	}
 }

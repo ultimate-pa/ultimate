@@ -25,12 +25,12 @@ public class InterpolationInfo {
 	int[] mStartOfSubTrees;
 	int   mSize = 0;
 	boolean mIsAndTerm = false;
-	
+
 	public InterpolationInfo() {
 		mPartitions = new Term[5];
 		mStartOfSubTrees = new int[5];
 	}
-	
+
 	private void grow(int minsize) {
 		int newsize = 2 * mPartitions.length;
 		if (newsize < minsize) {
@@ -43,11 +43,11 @@ public class InterpolationInfo {
 		mPartitions = newPartitions;
 		mStartOfSubTrees = newStartOfSubTrees;
 	}
-	
+
 	public void makeAndTerm() {
 		mIsAndTerm = true;
 	}
-	
+
 	public void addParent(Term partition) {
 		if (mSize + 1 >= mPartitions.length) {
 			grow(mSize + 1);
@@ -56,7 +56,7 @@ public class InterpolationInfo {
 		mStartOfSubTrees[mSize] = 0;
 		mSize++;
 	}
-	
+
 	public void addSibling(InterpolationInfo sibling) {
 		if (mSize + sibling.mSize >= mPartitions.length) {
 			grow(mSize + sibling.mSize);
@@ -67,7 +67,7 @@ public class InterpolationInfo {
 		}
 		mSize += sibling.mSize;
 	}
-	
+
 	public Term[] getPartition() {
 		if (mPartitions.length != mSize) {
 			final Term[] newPartitions = new Term[mSize];
@@ -85,7 +85,7 @@ public class InterpolationInfo {
 		}
 		return mStartOfSubTrees;
 	}
-	
+
 	public boolean isEmpty() {
 		return mSize == 0;
 	}
@@ -93,7 +93,7 @@ public class InterpolationInfo {
 	public boolean isAndTerm() {
 		return mIsAndTerm;
 	}
-	
+
 	public boolean isClosedTree() {
 		return !mIsAndTerm && mSize > 0 && mStartOfSubTrees[mSize - 1] == 0;
 	}

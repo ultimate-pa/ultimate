@@ -37,6 +37,7 @@ import org.junit.runners.Parameterized.Parameters;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SolverOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
@@ -64,14 +65,20 @@ public class SystemTest {
 			}
 
 		};
-		solver.setOption(":proof-check-mode", true);
-		solver.setOption(":model-check-mode", true);
-		solver.setOption(":interpolant-check-mode", true);
+		if (!f.getAbsolutePath().contains("epr") && !f.getAbsolutePath().contains("quant")) {
+			solver.setOption(":proof-check-mode", true);
+			solver.setOption(":model-check-mode", true);
+			solver.setOption(":interpolant-check-mode", true);
+		}
+		if (f.getAbsolutePath().contains("test" + File.separatorChar + "epr")) {
+			solver.setOption(SolverOptions.EPR, true);
+		}
 		pe.parseStream(new FileReader(f), "TestStream");
 	}
 
 	private static boolean shouldExecute(final File f) {
 		final String fname = f.getName();
+		final char separator = File.separatorChar;
 		if (fname.startsWith("tightrhombus-lira")) {
 			// remove tightrhombus-lira-xxx-yyy-
 			String sizestr = fname.substring(26, 28); // NOCHECKSTYLE
@@ -87,7 +94,11 @@ public class SystemTest {
 			}
 			final int size = Integer.parseInt(sizestr);
 			return size < 5;// NOCHECKSTYLE
-		} else if (f.getParent().endsWith("lira/cut-lemmas/20-vars")) {
+		} else if (f.getParent().endsWith("lira" + separator + "cut-lemmas" + separator + "20-vars")) {
+			return false;
+		} else if (f.getParent().contains("test" + separator + "epr")) {
+			return false;
+		} else if (f.getParent().contains("test" + separator + "datatype")) {
 			return false;
 		}
 		return true;

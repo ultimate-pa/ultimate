@@ -37,11 +37,11 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.IParser;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 
 public class AIGERFrontEnd implements IParser {
-	
+
 	private static final int BUFFER_SIZE = 4096;
-	
+
 	private final static boolean USE_DEFINITIONS = true;
-	
+
 	/**
 	 * Token type "magic number".
 	 */
@@ -84,16 +84,16 @@ public class AIGERFrontEnd implements IParser {
 	private String mFilename;
 	private InputStream mInputStream;
 	private Script mSolver;
-	
+
 	// The header data
 	private BigInteger mNumAnds;
 	private String[] mInputs;
-	
+
 	// Parsing data
 	private byte[] mBuffer = new byte[BUFFER_SIZE];
 	private int mBufpos = 0;
 	private int mBufsize = -1;
-	
+
 	public AIGERFrontEnd() {
 		mLine = 1;
 		mCol = 0;
@@ -122,7 +122,7 @@ public class AIGERFrontEnd implements IParser {
 		++mCol;
 		return mBuffer[mBufpos++] & 0xff;// NOCHECKSTYLE
 	}
-	
+
 	private final void ungetLastChar() {
 		assert(mBufpos > 0);
 		--mCol;
@@ -239,19 +239,19 @@ public class AIGERFrontEnd implements IParser {
 			return null;
 		}
 	}
-	
+
 	private final void getOneSpace() {
 		if (nextToken(TT_SPACE) == null) {
 			reportError("Expected one space");
 		}
 	}
-	
+
 	private final void getNewline() {
 		if (nextToken(TT_NEWLINE) == null) {
 			reportError("Expected newline");
 		}
 	}
-	
+
 	private final String getNumber() {
 		final String res = (String) nextToken(TT_NUMBER);
 		if (res == null) {
@@ -259,7 +259,7 @@ public class AIGERFrontEnd implements IParser {
 		}
 		return res;
 	}
-	
+
 	/**
 	 * Parses the header of an AIGER file.  This file has to be in binary
 	 * format.
@@ -292,7 +292,7 @@ public class AIGERFrontEnd implements IParser {
 			System.exit(5);// NOCHECKSTYLE
 		}
 	}
-	
+
 	private void parseSymbolTable() {
 		String sts;
 		while ((sts = (String) nextToken(TT_STS)) != null) {
@@ -311,7 +311,7 @@ public class AIGERFrontEnd implements IParser {
 			// I ignore a possible name for the output
 		}
 	}
-	
+
 	private void parseCommentSection() {
 		if (nextToken(TT_COMMENT) != null) {
 			while (true) {
@@ -323,7 +323,7 @@ public class AIGERFrontEnd implements IParser {
 			}
 		}
 	}
-	
+
 	private Term toTerm(BigInteger lit) {
 		if (lit.equals(BigInteger.ZERO)) {
 			return mSolver.term("false");
@@ -337,7 +337,7 @@ public class AIGERFrontEnd implements IParser {
 		}
 		return res;
 	}
-	
+
 	private void parse() {
 		parseHeader();
 		final Sort bool = mSolver.sort("Bool");

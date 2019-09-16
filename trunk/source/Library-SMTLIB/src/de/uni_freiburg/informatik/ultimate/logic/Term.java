@@ -30,7 +30,7 @@ import java.util.ArrayDeque;
  * <code>(! term ...)</code>.</li>
  * <li>{@link ConstantTerm} represents a numeral, decimal, bit vector, or string
  * literal.</li>
- * <li>{@link LetTerm} represents a let term 
+ * <li>{@link LetTerm} represents a let term
  * <code>(let ((var term)...) term)</code>.</li>
  * <li>{@link TermVariable} represents a term variable <code>var</code> used in
  * quantifier or let term.
@@ -38,24 +38,24 @@ import java.util.ArrayDeque;
  * <li>{@link QuantifiedFormula} represents a quantified formula
  * <code>(exists/forall ...)</code>.</li>
  * </ul>
- * 
+ *
  * In principle it is possible to write your own sub-classes, but that is
  * dangerous and only recommend for the advanced SMTInterpol hacker.
- * 
+ *
  * @author Juergen Christ, Jochen Hoenicke
  */
 public abstract class Term {
 	private final int mHash;
-	
+
 	/**
 	 * A temporary counter used e.g. to count the number of occurrences of this
 	 * term in a bigger term.
 	 * Don't use this!!!!
 	 */
 	public int mTmpCtr;
-	
+
 	TermVariable[] mFreeVars;
-	
+
 	/**
 	 * Create a term.
 	 * @param hash the hash code of the term.  This should be stable.
@@ -86,10 +86,10 @@ public abstract class Term {
 	}
 
 	/**
-	 * Prints an SMTLIB representation of this term.  This 
-	 * {@link FormulaLet introduces lets for common subexpressions} 
+	 * Prints an SMTLIB representation of this term.  This
+	 * {@link FormulaLet introduces lets for common subexpressions}
 	 * to prevent exponential blow-up when printing
-	 * a term with lots of sharing. 
+	 * a term with lots of sharing.
 	 * @return an SMTLIB representation.
 	 */
 	@Override
@@ -97,7 +97,7 @@ public abstract class Term {
 		final Term letted = new FormulaLet().let(this);
 		return letted.toStringDirect();
 	}
-	
+
 	/**
 	 * Prints the canonical SMTLIB representation of this term.
 	 * This does not eliminate common sub-expressions and can cause
@@ -109,7 +109,7 @@ public abstract class Term {
 		new PrintTerm().append(sb, this);
 		return sb.toString();
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mHash;

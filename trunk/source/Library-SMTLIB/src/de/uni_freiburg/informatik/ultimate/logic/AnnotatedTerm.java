@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * (! ... :key_1 value_1 ... :key_n value_n)
  * </pre>
  *
- * An annotated term is created by 
+ * An annotated term is created by
  * {@link Script#annotate(Term, Annotation...)}.
  *
  * @author hoenicke
@@ -38,13 +38,13 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 public class AnnotatedTerm extends Term {
 	private final Term mSubterm;
 	private final Annotation[] mAnnotations;
-	
+
 	AnnotatedTerm(Annotation[] annots, Term term, int hash) {
 		super(hash);
 		mAnnotations = annots;
 		mSubterm = term;
 	}
-	
+
 	@Override
 	public Sort getSort() {
 		return mSubterm.getSort();
@@ -64,12 +64,12 @@ public class AnnotatedTerm extends Term {
 	public Annotation[] getAnnotations() {
 		return mAnnotations;
 	}
-	
+
 	public static int hashAnnotations(Annotation[] annots, Term subTerm) {
 		return //subTerm.hashCode() * 31 + Arrays.hashCode(annots);
 			HashUtils.hashJenkins(subTerm.hashCode(), (Object[])annots);
 	}
-	
+
 	@Override
 	public void toStringHelper(ArrayDeque<Object> mTodo) {
 		// Add annotations to stack.

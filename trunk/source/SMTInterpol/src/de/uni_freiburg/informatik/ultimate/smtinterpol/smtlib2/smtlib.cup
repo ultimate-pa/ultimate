@@ -73,8 +73,9 @@ parser code {:
 action code {:
 	ScopedHashMap<String,TermVariable> localVars =
 		new ScopedHashMap<String, TermVariable>(false);
-	Sort[] sortParams = null;
+	Sort[] mSortParams = null;
 	static Sort[] emptySortArray = new Sort[0];
+	Sort mMatchSort = null;
 
 	static class Binding {
 		TermVariable mVar;
@@ -93,15 +94,15 @@ action code {:
 
 	static class IndexedIdentifier {
 		String mName;
-		BigInteger[] mIndices;
-		public IndexedIdentifier(String name, BigInteger[] indices) {
+		String[] mIndices;
+		public IndexedIdentifier(String name, String[] indices) {
 			mName = name;
 			mIndices = indices;
 		}
 		public String getName() {
 			return mName;
 		}
-		public BigInteger[] getIndices() {
+		public String[] getIndices() {
 			return mIndices;
 		}
 
@@ -114,7 +115,7 @@ action code {:
 
 	static class QualIdentifier {
 		String mName;
-		BigInteger[] mIndices;
+		String[] mIndices;
 		Sort mSort;
 		public QualIdentifier(IndexedIdentifier id, Sort sort) {
 			mName = id.getName();
@@ -124,7 +125,7 @@ action code {:
 		public String getIdentifier() {
 			return mName;
 		}
-		public BigInteger[] getIndices() {
+		public String[] getIndices() {
 			return mIndices;
 		}
 		public Sort getSort() {
@@ -143,6 +144,181 @@ action code {:
 		}
 	}
 
+	static class SelectorDec {
+		String mSelector;
+		Sort mArgumentSort;
+		public SelectorDec(String selector, Sort argumentSort) {
+			mSelector = selector;
+			mArgumentSort = argumentSort; 
+		}
+		public String getSelector() {
+			return mSelector;
+		}
+		public Sort getArgumentSort() {
+			return mArgumentSort;
+		}
+		public String toString() {
+			return "(" + mSelector + " " + mArgumentSort + ")";
+		}
+	}
+
+	static class ParametricConstructors {
+		final DataType.Constructor[] mConstructors;
+		final Sort[] mSortParams;
+		public ParametricConstructors(DataType.Constructor[] constructors) {
+			mConstructors = constructors;
+			mSortParams = null;
+		}
+		public ParametricConstructors(DataType.Constructor[] constructors, Sort[] sortparams) {
+			mConstructors = constructors;
+			mSortParams = sortparams;
+		}
+		public DataType.Constructor[] getConstructors() {
+			return mConstructors;
+		}
+		public Sort[] getSortParams() {
+			return mSortParams;
+		}
+	}
+
+	class Pattern {
+		DataType.Constructor mConstructor;
+		TermVariable[] mVars;
+		Sort[] mSorts;
+
+		public Pattern(String constructor, String[] vars) {
+			for (int i = 0; i < vars.length; i++) {
+				for (int j = 0; j < i; j++) {
+					if (vars[j].equals(vars[i])) {
+						throw new SMTLIBException("Variables must all be distinct.");
+					}
+				}
+			}
+
+			DataType dataType = (DataType) mMatchSort.getSortSymbol();
+			mConstructor = dataType.findConstructor(constructor);
+			if (mConstructor == null) {
+				throw new SMTLIBException("Constructor not found.");
+			}
+			mSorts = mConstructor.getArgumentSorts();
+			mVars = new TermVariable[vars.length];
+			if (mSorts.length != mVars.length) {
+				throw new SMTLIBException("Number of constructor arguments does not match.");
+			}
+
+			for (int i = 0; i < vars.length; i++) {
+				Sort sort = mSorts[i].mapSort(mMatchSort.getArguments());
+				mVars[i] = createTermVariable(vars[i], sort);
+			}
+		}
+
+		public Pattern(String constructor) {
+			mConstructor = ((DataType) mMatchSort.getSortSymbol()).findConstructor(constructor);
+			if (mConstructor == null) {
+				mVars = new TermVariable[1];
+				mVars[0] = createTermVariable(constructor, mMatchSort);
+			} else {
+				mVars = new TermVariable[0];
+				if (mConstructor.getArgumentSorts().length != 0) {
+					throw new SMTLIBException("Number of constructor arguments does not match.");
+				}
+			}
+		}
+
+		public TermVariable[] getVars() {
+			return mVars;
+		}
+
+		public DataType.Constructor getConstructor() {
+			return mConstructor;
+		}
+
+		public String toString() {
+			if (mConstructor == null) {
+				return mVars[0].toString();
+			} else {
+				StringBuilder sb = new StringBuilder();
+				sb.append('('). append(mConstructor.getName());
+				for (TermVariable tv : mVars) {
+					sb.append(' ').append(tv);
+				}
+				sb.append(')');
+				return sb.toString();
+			}
+		}
+	}
+
+	static class MatchCase {
+		Pattern mPattern;
+		Term mCase;
+
+		public MatchCase(Pattern pattern, Term caseTerm) {
+			mPattern = pattern;
+			mCase = caseTerm;
+		}
+
+		public Pattern getPattern() {
+			return mPattern;
+		}
+
+		public Term getCase() {
+			return mCase;
+		}
+
+		public String toString() {
+			return "(" + mPattern + " " + mCase + ")";
+		}
+	}
+
+	Term createMatchTerm (Symbol sym, Term dataArg, MatchCase[] matchCases) {
+		/* first check if some argument is null.  In this case we already reported an error and should return null. */
+		if (mMatchSort == null) {
+			return null;
+		}
+		for (MatchCase matchCase : matchCases) {
+			if (matchCase == null) {
+				return null;
+			}
+		}
+		DataType matchDatatype = (DataType) mMatchSort.getSortSymbol();
+		if (!checkPatterns(matchDatatype, matchCases)) {
+			parser.report_error("Either match term contains a pattern consisting of a variable or all constructors must occur in one of the patterns.", sym);
+			return null;
+		}
+		TermVariable[][] vars = new TermVariable[matchCases.length][];
+		Term[] cases = new Term[matchCases.length];
+		DataType.Constructor[] constructors = new DataType.Constructor[matchCases.length];
+		for (int i = 0; i < matchCases.length; i++) {
+			vars[i] = matchCases[i].getPattern().getVars();
+			cases[i] = matchCases[i].getCase();
+			constructors[i] = matchCases[i].getPattern().getConstructor();
+		}
+		return parser.env.getScript().match(dataArg, vars, cases, constructors);
+	}
+
+	// Function to check that either match term contains a pattern consisting of a variable
+	// or all constructors must occur in one of the patterns.
+	public boolean checkPatterns(DataType matchDatatype, MatchCase[] matchCases) {
+		for (int i = 0; i < matchCases.length; i++) {
+			if (matchCases[i].getPattern().getConstructor() == null) {
+				return true;
+			}
+		}
+		DataType.Constructor[] allConstrs = matchDatatype.getConstructors();
+		for (int i = 0; i < allConstrs.length; i++) {
+			boolean constrFound = false;
+			for (int j = 0; j < matchCases.length; j++) {
+				if (matchCases[j].getPattern().getConstructor().getName().equals(allConstrs[i].getName())) {
+					constrFound = true;
+				}
+			}
+			if (!constrFound) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	String errorMessage;
 	public void setError(String message) {
 		if (errorMessage == null)
@@ -157,13 +333,27 @@ action code {:
 		return result;
 	}
 
+	private Sort[] getSortParams() {
+		return mSortParams;
+	}
+
+	private void pushSortParams(String[] sortVars) {
+		assert mSortParams == null;
+		mSortParams = parser.env.getScript().sortVariables(sortVars);
+	}
+
+	private void popSortParams() {
+		assert mSortParams != null;
+		mSortParams = null;
+	}
+
 	public Sort lookupSort(Symbol sym, IndexedIdentifier id, Sort[] args) {
 		for (Sort s: args) {
 			if (s == null) return null;
 		}
 		String name = id.getName();
-		if (args.length == 0 && id.getIndices() == null && sortParams != null) {
-			for (Sort s: sortParams) {
+		if (args.length == 0 && id.getIndices() == null && mSortParams != null) {
+			for (Sort s: mSortParams) {
 				if (s.getName().equals(name))
 					return s;
 			}
@@ -176,7 +366,7 @@ action code {:
 		return null;
 	}
 
-	public Term createTerm(Symbol fsym, String name, BigInteger[] indices, Sort resultSort, Term[] param) {
+	public Term createTerm(Symbol fsym, String name, String[] indices, Sort resultSort, Term[] param) {
 		// check if there was an error when creating the child term.
 		for (Term p : param) {
 			if (p == null)
@@ -225,11 +415,12 @@ scan with {: return getScanner().next_token(); :}
 /* Predefined Symbols */
 terminal String UNDERSCORE, BANG,
          AS, ASSERT, CHECKSAT, CONTINUEDEXECUTION,
-         DECLARESORT, DECLAREFUN, DECLARECONST, DEFINESORT, DEFINEFUN, ERRORSYM,
+         DECLARESORT, DECLAREFUN, DECLARECONST, DECLAREDATATYPE, DECLAREDATATYPES,
+         DEFINESORT, DEFINEFUN, ERRORSYM,
          EXISTS, EXIT, FALSE, FORALL, GETASSERTIONS, GETASSIGNMENT, GETINFO,
          GETINTERPOLANTS,
          GETMODEL, GETOPTION, GETPROOF, GETUNSATCORE, GETVALUE, IMMEDIATEEXIT,
-         INCOMPLETE, LET, LOGIC, NONE, NUMERALSYM, MEMOUT, PAR, POP, PUSH,
+         INCOMPLETE, LET, LOGIC, NONE, NUMERALSYM, MATCH, MEMOUT, PAR, POP, PUSH,
          DECIMALSYM, SAT, SUCCESS, SETLOGIC, SETINFO, SETOPTION, STRINGSYM,
          THEORY, TRUE, UNKNOWN, UNSUPPORTED, UNSAT,
          INCLUDE, RESET, RESETASSERTIONS, SIMPLIFY, TIMED, ALLSAT, ECHO,
@@ -261,6 +452,7 @@ non terminal String keywordAttr, keywordOption;
 non terminal String keywordTheory, keywordLogic, keywordTheoryLogic;
 non terminal String keywordNoAttr, keywordNoTheory, keywordNoLogic, keywordNoOption;
 non terminal String booleanOption, stringOption, numeralOption;
+non terminal String index;
 non terminal IndexedIdentifier identifier, identifierIndexed;
 non terminal Object specConstant;
 non terminal Object sExpr;
@@ -272,8 +464,14 @@ non terminal Annotation attributeTheory, attributeLogic;
 non terminal QualIdentifier qualIdentifier;
 non terminal Binding varBinding;
 non terminal TermVariable sortedVar;
+non terminal Pattern pattern;
+non terminal MatchCase matchCase;
 non terminal Term constantTerm, term;
 non terminal InterpolationInfo interpolantpartition;
+non terminal SelectorDec selectorDec;
+non terminal DataType sortDec, sortDec0;
+non terminal DataType.Constructor constructorDec;
+non terminal ParametricConstructors datatypeDec;
 non terminal sortSymbolDecl;
 non terminal metaSpecConstant;
 non terminal parFunSymbolDecl, funSymbolDecl;
@@ -330,7 +528,8 @@ constantTerm ::= NUMERAL:n
              			parser.report_error(se.getMessage());
              			RESULT = null;
              		} :};
-identifierIndexed ::= LPAR UNDERSCORE symbol:id NUMERAL+:indices RPAR
+index ::= NUMERAL:n {: RESULT = n.toString(); :} | symbol;
+identifierIndexed ::= LPAR UNDERSCORE symbol:id index+:indices RPAR
              {: RESULT = new IndexedIdentifier(id, indices); :};
 identifier ::= symbol:s {: RESULT = new IndexedIdentifier(s, null); :}
            | identifierIndexed;
@@ -363,6 +562,37 @@ varBinding ::= LPAR symbol:sym term:t RPAR
           :};
 sortedVar ::= LPAR symbol:sym sort:s RPAR
          {: RESULT = createTermVariable(sym, s); :};
+pattern ::= symbol:sym
+         {: if (mMatchSort == null) {
+            	RESULT = null;
+            } else {
+            	try {
+            		RESULT = new Pattern(sym);
+            	} catch (SMTLIBException ex) {
+            		parser.report_error(ex.getMessage(), sym$);
+            		RESULT = null;
+            	}
+            }
+         :}
+       | LPAR symbol:constr symbol+:vars RPAR
+         {: if (mMatchSort == null) {
+            	RESULT = null;
+            } else {
+            	try {
+            		RESULT = new Pattern(constr, vars);
+            	} catch (SMTLIBException ex) {
+            		parser.report_error(ex.getMessage(), constr$);
+            		RESULT = null;
+            	}
+            }
+         :};
+matchCase ::= LPAR {: localVars.beginScope(); :} pattern:p term:t RPAR
+         {:
+            localVars.endScope();
+            if (p != null && t != null) {
+            	RESULT = new MatchCase(p, t);
+            }
+         :};
 term ::= constantTerm
        | qualIdentifier:fun
          {: RESULT = fun.getIndices() == null && fun.getSort() == null ? getTermVariable(fun.getIdentifier()) : null;
@@ -400,11 +630,27 @@ term ::= constantTerm
          {: localVars.endScope();
            	RESULT = null;
 			try {
-            	if (!hasError())
+            	if (!hasError()) {
             		RESULT = parser.env.getScript().quantifier(Script.EXISTS, vars, t);
+            	}
 			} catch (SMTLIBException se) {
 				parser.report_error(se.getMessage(), sym$);
 			} :}
+       | LPAR MATCH:sym 
+            term:dataArg
+         {:
+            if (dataArg != null) {
+            	mMatchSort = dataArg.getSort();
+            	if (!mMatchSort.getSortSymbol().isDatatype()) {
+            		parser.report_error("Match term must be of a datatype sort.", sym$);
+            		mMatchSort = null;
+            	}
+            } :}
+            LPAR matchCase+:matchCases RPAR RPAR
+         {:
+            RESULT = createMatchTerm(sym$, dataArg, matchCases);
+            mMatchSort = null;
+         :}
        | LPAR BANG term:t attribute+:attr RPAR
          {: RESULT = annotateTerm(t, attr); :};
 
@@ -487,7 +733,7 @@ interpolantpartition
                    child.makeAndTerm();
                 else
                    child.addParent(createTerm(symb$, symb, null, null, new Term[0]));
-                RESULT = child;:}
+                 RESULT = child;:}
            | interpolantpartition:child LPAR interpolantpartition:sibling RPAR
              {: if (sibling.isAndTerm() && !hasError()) {
              	    child.addParent(parser.env.getScript()
@@ -501,6 +747,44 @@ interpolantpartition
            | /* empty */
              {: RESULT = new InterpolationInfo(); :}
            ;
+
+sortDec ::= LPAR symbol:type NUMERAL:numParams RPAR
+            {: RESULT = parser.env.getScript().datatype(type, numParams.intValueExact()); :}
+            ;
+
+/* sort declaration in declare-datatype is always of arity 0 */
+sortDec0 ::= symbol:type
+            {: RESULT = parser.env.getScript().datatype(type, 0); :}
+            ;
+
+selectorDec ::= LPAR symbol:selector sort:argumentSort RPAR
+              {:
+              RESULT = new SelectorDec(selector, argumentSort);
+              :};
+
+
+constructorDec ::= LPAR symbol:name selectorDec*:selDec RPAR
+                   {:    
+                   String[] selectors = new String[selDec.length];
+                   Sort[] argumentSorts = new Sort[selDec.length];
+                   
+                   for (int i = 0; i < selDec.length; i++) {
+
+                       selectors[i] = selDec[i].getSelector();
+                       argumentSorts[i] = selDec[i].getArgumentSort();
+                       
+                       
+                   }
+                   RESULT = parser.env.getScript().constructor(name, selectors, argumentSorts);
+                   :};
+
+datatypeDec ::= LPAR constructorDec+:cons RPAR
+                {: RESULT = new ParametricConstructors(cons); :} 
+              | LPAR PAR LPAR symbol+:sortvars RPAR
+                {: pushSortParams(sortvars); :}
+                LPAR constructorDec+:cons RPAR RPAR
+                {: RESULT = new ParametricConstructors(cons, getSortParams()); popSortParams(); :} 
+              ;
 
 command ::= SETLOGIC symbol:logic
             {: try {
@@ -534,19 +818,20 @@ command ::= SETLOGIC symbol:logic
 				}
 			:}
           | DEFINESORT symbol:sort LPAR symbol*:sortVars
-            {: sortParams = parser.env.getScript().sortVariables(sortVars); :}
+            {: pushSortParams(sortVars); :}
             RPAR sort:def
             {: if (hasError())
             	   parser.env.printError(getError());
                else {
                    try {
-                   		parser.env.getScript().defineSort(sort, sortParams, def);
+                   		parser.env.getScript().defineSort(sort, getSortParams(), def);
                    		parser.env.printSuccess();
                    } catch (SMTLIBException se) {
                    		parser.report_error(se.getMessage(), sort$);
                    		parser.env.printError(getError());
                    }
                }
+               popSortParams();
             :}
           | DECLAREFUN symbol:fun LPAR sort*:param RPAR sort:result
             {: if (hasError())
@@ -573,6 +858,32 @@ command ::= SETLOGIC symbol:logic
                         parser.env.printError(getError());
                     }
                }
+            :}
+          | DECLAREDATATYPE sortDec0:datatype datatypeDec:dataDec
+            {:
+              try {
+                  parser.env.getScript().declareDatatype(datatype, dataDec.getConstructors());
+                  parser.env.printSuccess();
+              } catch (SMTLIBException se) {
+                  parser.report_error(se.getMessage(), datatype$);
+                  parser.env.printError(getError());
+              }
+            :}
+          | DECLAREDATATYPES LPAR sortDec+:datatypes RPAR LPAR datatypeDec+:dataDecs RPAR
+            {:
+              DataType.Constructor[][] constructors = new DataType.Constructor[dataDecs.length][];
+              Sort[][] sortParams = new Sort[dataDecs.length][];
+              for (int i = 0; i < dataDecs.length; i++) {
+                  constructors[i] = dataDecs[i].getConstructors();
+                  sortParams[i] = dataDecs[i].getSortParams();
+              }
+              try {
+                  parser.env.getScript().declareDatatypes(datatypes, constructors, sortParams);
+                  parser.env.printSuccess();
+              } catch (SMTLIBException se) {
+                  parser.report_error(se.getMessage(), datatypes$);
+                  parser.env.printError(getError());
+              }
             :}
           | DEFINEFUN {: localVars.beginScope(); :} symbol:fun
                       LPAR sortedVar*:param RPAR sort:resultSort term:value
@@ -813,7 +1124,7 @@ symbol ::= SYMBOL | CONTINUEDEXECUTION | ERRORSYM | FALSE | IMMEDIATEEXIT |
          GETMODEL | GETOPTION | GETPROOF | GETUNSATASSUMPTIONS |
          GETUNSATCORE | GETVALUE |
          POP | PUSH | RESET | RESETASSERTIONS |
-         SETLOGIC | SETINFO | SETOPTION; */
+         SETLOGIC | SETINFO | SETOPTION | DECLAREDATATYPE | DECLAREDATATYPES; */
 
 keywordAttr   ::= CPATTERN | CNAMED;
 keywordTheory ::= CSORTSDESCRIPTION | CSORTS |

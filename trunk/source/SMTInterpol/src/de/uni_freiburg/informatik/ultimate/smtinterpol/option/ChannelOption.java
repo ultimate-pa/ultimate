@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
  * describe the channels according to SMTLIB specifications, i.e., either file
  * names, "stdout", or "stderr".  This option is designed to be usable either
  * for direct storage of a PrintWriter or a wrapped PrintWriter used, e.g., by
- * a {@link DefaultLogger}. 
+ * a {@link DefaultLogger}.
  * @author Juergen Christ.
  *
  */
@@ -76,7 +76,7 @@ public class ChannelOption extends Option {
 	public Object defaultValue() {
 		return new QuotedObject(mDefaultName);
 	}
-	
+
 	private void createChannel(String file) {
 		try {
 			mWriter = ChannelUtil.createChannel(file);

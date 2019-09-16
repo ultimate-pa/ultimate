@@ -28,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 
 /**
  * This class converts CCTerm to Term (SMTLIB) non-recursively.
- * 
+ *
  * @author Jochen Hoenicke
  *
  */

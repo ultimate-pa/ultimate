@@ -23,26 +23,27 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.CuckooHashSet;
 
 public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
-	
+
 	public final static class Info {
 		CCEquality mDiseq;
 		final SimpleList<CCEquality.Entry>  mEqlits;
 		final Entry mLhsEntry, mRhsEntry;
+		final SimpleList<CompareTrigger> mCompareTriggers; // E-Matching
 
 		class Entry extends SimpleListable<Entry> {
 			CCTerm mOther;
-			
+
 			Entry(CCTerm other) {
 				mOther = other;
 			}
-			
+
 			Info getInfo() {
 				return Info.this;
 			}
-			
+
 			Entry getOtherEntry() {
-				return mLhsEntry == this 
-					? mRhsEntry : mLhsEntry; 
+				return mLhsEntry == this
+					? mRhsEntry : mLhsEntry;
 			}
 
 			@Override
@@ -50,30 +51,31 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 				return Info.this.toString();
 			}
 		}
-		
+
 		public Info(CCTerm l, CCTerm r) {
 			mLhsEntry = new Entry(r);
 			mRhsEntry = new Entry(l);
 			l.mPairInfos.append(mLhsEntry);
 			r.mPairInfos.append(mRhsEntry);
 			mEqlits = new SimpleList<CCEquality.Entry>();
+			mCompareTriggers = new SimpleList<>();
 		}
-		
+
 		@Override
 		public int hashCode() {
 			return pairHash(mRhsEntry.mOther, mLhsEntry.mOther);
 		}
-		
+
 		public final boolean equals(CCTerm lhs, CCTerm rhs) {
 			return (mRhsEntry.mOther == lhs && mLhsEntry.mOther == rhs)
 					|| (mRhsEntry.mOther == rhs && mLhsEntry.mOther == lhs);
 		}
-		
+
 		@Override
 		public String toString() {
 			return "Info[" + mRhsEntry.mOther + "," + mLhsEntry.mOther + "]";
 		}
-		
+
 //		public void addExtensionalityDiseq(ConvertFormula converter) {
 //			if (arrayextadded == 0) {
 //				arrayextadded = 1;
@@ -86,22 +88,22 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 			return mEqlits.isEmpty();
 		}
 	}
-	
+
 	private Info getInfoStash(CCTerm lhs, CCTerm rhs) {
 		if (mStash != null && mStash.equals(lhs, rhs)) {
 			return mStash;
 		}
 		return null;
 	}
-	
+
 	public Info getInfo(CCTerm lhs, CCTerm rhs) {
 		final int hash = hash(pairHash(lhs, rhs));
 		final int hash1 = hash1(hash);
-		Info bucket = (Info) mBuckets[hash1]; 
+		Info bucket = (Info) mBuckets[hash1];
 		if (bucket != null && bucket.equals(lhs, rhs)) {
 			return bucket;
 		}
-		bucket = (Info) mBuckets[hash2(hash) ^ hash1]; 
+		bucket = (Info) mBuckets[hash2(hash) ^ hash1];
 		if (bucket != null && bucket.equals(lhs, rhs)) {
 			return bucket;
 		}

@@ -29,7 +29,7 @@ public class LiteralReason extends LAReason {
 	private final Literal mLiteral;
 	ArrayDeque<LAReason> mDependents;
 	private LiteralReason mOldLiteralReason;
-	
+
 	public LiteralReason(LinVar var, LiteralReason oldLiteralReason, InfinitesimalNumber bound, boolean isUpper,
 			Literal lit, LiteralReason lastLit) {
 		super(var, bound, isUpper, lastLit);
@@ -45,7 +45,7 @@ public class LiteralReason extends LAReason {
 	public Literal getLiteral() {
 		return mLiteral;
 	}
-	
+
 	public void addDependent(LAReason reason) {
 		assert getLastLiteral() == this;
 		if (mDependents == null) {
@@ -53,7 +53,7 @@ public class LiteralReason extends LAReason {
 		}
 		mDependents.addFirst(reason);
 	}
-	
+
 	public Iterable<LAReason> getDependents() {
 		if (mDependents == null) {
 			return Collections.emptySet();
@@ -62,7 +62,7 @@ public class LiteralReason extends LAReason {
 	}
 
 	@Override
-	InfinitesimalNumber explain(Explainer explainer, 
+	InfinitesimalNumber explain(Explainer explainer,
 			InfinitesimalNumber slack, Rational factor) {
 		if (!explainer.canExplainWith(mLiteral)) {
 			assert getBound().equals(getOldReason().getBound());
@@ -85,11 +85,11 @@ public class LiteralReason extends LAReason {
 
 	/**
 	 * Returns the minimal DPLL decide level on which the literal
-	 * behind this reason can be propagated.  This is just the decide 
+	 * behind this reason can be propagated.  This is just the decide
 	 * level of the underlying literal.
-	 * 
+	 *
 	 * Note that this is not necessarily the decide level of this reason.
-	 * Use getLastLiteral().getDecideLevel() to get this. 
+	 * Use getLastLiteral().getDecideLevel() to get this.
 	 * @return the DPLL decide level.
 	 */
 	public int getDecideLevel() {

@@ -21,26 +21,26 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.dpll;
 import java.util.Iterator;
 
 /**
- * A light-weight double linked list entry.  The usage is a bit complicated but  
+ * A light-weight double linked list entry.  The usage is a bit complicated but
  * it gives better performance than LinkedList.  To use this class define
  * a class <code>foo</code> of things you want to keep in a linked list
  * and extend it from <code>SimpleListable&lt;foo&gt;.
  * You can then append it to a <code>SimpleList&lt;foo&gt;.
- * 
- * <em>Note:</em> 
+ *
+ * <em>Note:</em>
  * <ul><li>Every element of <code>foo</code> can only be in one list.  This is because
  * the back/front pointers are in the object.</li>
  * <li>Since you need to extend the class SimpleListable, the class cannot extend another
  * class</li>
- * <li>If you want to store a class <code>elem</code> that does not meet the above 
- * requirements, write a class <code>wrapper</code> that extends 
+ * <li>If you want to store a class <code>elem</code> that does not meet the above
+ * requirements, write a class <code>wrapper</code> that extends
  * <code>SimpleListable&lt;wrapper&gt;</code> with a field <code>elem</code>.
  * This has a performance similar to <code>LinkedList</code>.</li>
  * </ul>
- * 
+ *
  * For technical reasons SimpleList it extends SimpleListable, but you must not
  * use any of its methods.
- * 
+ *
  * @author hoenicke
  *
  */
@@ -49,31 +49,31 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E>
 	public SimpleList() {
 		mNext = mPrev = this;
 	}
-	
+
 	public boolean isEmpty() {
 		return mNext == this;
 	}
-	
+
 	public E removeFirst() {
 		final SimpleListable<E> entry = mNext;
 		mNext = entry.mNext;
 		mNext.mPrev = this;
 		entry.mNext = entry.mPrev = null;
-		return entry.getElem();			
+		return entry.getElem();
 	}
-	
+
 	public E removeLast() {
 		final SimpleListable<E> entry = mPrev;
 		mPrev = entry.mPrev;
 		mPrev.mNext = this;
 		entry.mNext = entry.mPrev = null;
-		return entry.getElem();			
+		return entry.getElem();
 	}
-	
+
 	/**
 	 * Prepares to remove an entry from joined lists.  Call this on all lists
 	 * the entry has been joined into starting from the innermost one.
-	 * Afterwards, call <code>entry.removeFromList()</code>.  
+	 * Afterwards, call <code>entry.removeFromList()</code>.
 	 * @param entry Entry to remove.
 	 */
 	public void prepareRemove(E entry) {
@@ -87,9 +87,9 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E>
 			mPrev = entry.mPrev;
 		}
 	}
-	
+
 	/**
-	 * Append an entry to the end of the list.  
+	 * Append an entry to the end of the list.
 	 */
 	public void append(E entry) {
 		assert (mPrev.mNext == this);
@@ -99,7 +99,7 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E>
 	}
 
 	/**
-	 * Prepend an entry to the beginning of the list.   
+	 * Prepend an entry to the beginning of the list.
 	 * @param entry the element to prepend.
 	 */
 	public void prepend(E entry) {
@@ -115,13 +115,13 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E>
 	 * be called on all lists to which this list was joined to.  The entry
 	 * must have been fresh, i.e. next and prev pointers must be null.
 	 * The entry must first be added to the inner-most list and then to all
-	 * lists, for which joinList was executed on the list. 
+	 * lists, for which joinList was executed on the list.
 	 * @param entry the element to prepend.
 	 */
 	public void prependIntoJoined(E entry, boolean isLast) {
 		if (entry.mNext == null) {
 			if (this != mNext || isLast) { // NOPMD
-				/* only if list is not empty or in the last step, 
+				/* only if list is not empty or in the last step,
 				 * we can set entry.next */
 				entry.mNext = mNext;
 				entry.mPrev = mNext.mPrev;
@@ -135,9 +135,9 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E>
 		} else {
 			/* The entry was already added in a previous call to a non-empty
 			 * list.  Since the remaining lists have been joined with the list,
-			 * they contain the element entry.next.  
+			 * they contain the element entry.next.
 			 * We already changed entry.next.prev to insert entry to the list
-			 * so entry is already added to all lists that contain also 
+			 * so entry is already added to all lists that contain also
 			 * entry.next.prev.  However, if the list starts with entry.next
 			 * we still have to add entry to the list.
 			 */
@@ -162,11 +162,11 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E>
 		mPrev = source.mPrev;
 		source.mNext = source.mPrev = source;
 	}
-	
+
 	/**
 	 * Move the elements from source to this list, but do not clear source.
 	 * This operation can be undone unjoinLists.  However, source must not
-	 * be touched in between.  It is allowed to add new elements to this, 
+	 * be touched in between.  It is allowed to add new elements to this,
 	 * though, as long as they are not added to the middle.
 	 * @param source the source list which is joined into this list.
 	 */
@@ -182,7 +182,7 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E>
 		mPrev = source.mPrev;
 		mPrev.mNext = this;
 	}
-	
+
 	/**
 	 * Undo the join of this and source.  This moves the elements from this
 	 * back to source that were in source before.  It is essential that
@@ -200,7 +200,7 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E>
 		source.mNext.mPrev = source;
 		source.mPrev.mNext = source;
 	}
-	
+
 	@Override
 	public Iterator<E> iterator() {
 		return new Iterator<E>() {
@@ -254,14 +254,14 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E>
 			}
 		};
 	}
-	
+
 	/**
 	 * Remove all elements from this list.
 	 */
 	public void clear() {
 		mNext = mPrev = this;
 	}
-	
+
 	public boolean wellformed() {
 		if (mNext.mPrev != this) {
 			System.err.println("Not in this list!!!!");
@@ -291,7 +291,7 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E>
 		}
 		return true;
 	}
-	
+
 	public boolean contains(E elem) {
 		SimpleListable<E> entry = mNext;
 		while (entry != this) {
@@ -302,7 +302,7 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E>
 		}
 		return false;
 	}
-	
+
 	@Override
 	public String toString() {
 		if (mNext == this) {

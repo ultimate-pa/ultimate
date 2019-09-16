@@ -58,7 +58,7 @@ public class Assignments {
 		/**
 		 * Search for the next value to return.
 		 */
-		private void nextVal() {			
+		private void nextVal() {
 			while (mIt.hasNext()) {
 				final Map.Entry<String, Boolean> me = mIt.next();
 				if (me.getValue() == mTruthVal) {
@@ -68,7 +68,7 @@ public class Assignments {
 			}
 			mNextVal = null;
 		}
-		
+
 		@Override
 		public boolean hasNext() {
 			return mNextVal != null;
@@ -88,7 +88,7 @@ public class Assignments {
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
-		
+
 	}
 	/**
 	 * Store the assignment.
@@ -131,7 +131,7 @@ public class Assignments {
 	 */
 	public Iterable<String> getTrueAssignments() {
 		return new Iterable<String>() {
-			
+
 			@Override
 			public Iterator<String> iterator() {
 				return new TruthIterator(Boolean.TRUE);
@@ -145,7 +145,7 @@ public class Assignments {
 	 */
 	public Iterable<String> getFalseAssignments() {
 		return new Iterable<String>() {
-			
+
 			@Override
 			public Iterator<String> iterator() {
 				return new TruthIterator(Boolean.FALSE);

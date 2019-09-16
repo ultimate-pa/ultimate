@@ -21,8 +21,8 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2;
 /**
  * An asynchronous user cancellation request proxy.  SMTInterpol regularly polls
  * an object that implements this interface for user requests to terminate the
- * current search.  If cancellation is requested, SMTInterpol will set the 
- * reason to return unknown to 
+ * current search.  If cancellation is requested, SMTInterpol will set the
+ * reason to return unknown to
  * {@link de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown#CANCELLED}.
  * Once termination is requested, the solver keeps this state until the next
  * {@link de.uni_freiburg.informatik.ultimate.logic.Script#pop(int) pop}

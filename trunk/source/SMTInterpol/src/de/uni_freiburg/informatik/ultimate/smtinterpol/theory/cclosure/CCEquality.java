@@ -73,7 +73,7 @@ public class CCEquality extends DPLLAtom {
 	/**
 	 * Returns the linar factor. This is the factor f, such that
 	 * <code>f * (getLhs() - getRhs()) == getLASharedData().getVar()</code>
-	 * 
+	 *
 	 * @return the factor.
 	 */
 	public Rational getLAFactor() {

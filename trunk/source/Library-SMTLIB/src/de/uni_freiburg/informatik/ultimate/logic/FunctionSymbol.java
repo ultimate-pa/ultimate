@@ -18,16 +18,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
-import java.math.BigInteger;
-
 /**
  * Represents a function symbol.  Each function symbol has a name, a sort and
  * zero or more parameter sorts.  A constant symbol is represented as a function
  * symbols with zero parameters.
- * 
- * For parametric functions we create a different FunctionSymbol for every 
+ *
+ * For parametric functions we create a different FunctionSymbol for every
  * instantiation.
- * 
+ *
  * @author hoenicke
  */
 public class FunctionSymbol {
@@ -37,20 +35,21 @@ public class FunctionSymbol {
 	public static final int CHAINABLE  = (3) << 1;// NOCHECKSTYLE
 	public static final int PAIRWISE   = (4) << 1;// NOCHECKSTYLE
 	public static final int ASSOCMASK  = (7) << 1;// NOCHECKSTYLE
-	
+
 	public static final int RETURNOVERLOAD = 16;
 	public static final int MODELVALUE = 32;
 	public static final int UNINTERPRETEDINTERNAL = 64;
+	public static final int CONSTRUCTOR = 128;
 
 	final String mName;
-	final BigInteger[] mIndices;
+	final String[] mIndices;
 	final Sort[] mParamSort;
 	final Sort mReturnSort;
 	final int mFlags;
 	final TermVariable[] mDefinitionVars;
 	final Term mDefinition;
-	
-	FunctionSymbol(String n, BigInteger[] i, Sort[] params, Sort result,
+
+	FunctionSymbol(String n, String[] i, Sort[] params, Sort result,
 			TermVariable[] definitionVars, Term definition, int flags) {
 		mName = n;
 		mIndices = i;
@@ -59,62 +58,62 @@ public class FunctionSymbol {
 		mFlags = flags;
 		mDefinition = definition;
 		mDefinitionVars = definitionVars;
-		if (isLeftAssoc() 
+		if (isLeftAssoc()
 				&& (params.length != 2 || !params[0].equalsSort(result))) {
 			throw new IllegalArgumentException(
 					"Wrong sorts for left-associative symbol");
 		}
-		if (isRightAssoc() 
+		if (isRightAssoc()
 				&& (params.length != 2 || !params[1].equalsSort(result))) {
 			throw new IllegalArgumentException(
 					"Wrong sorts for right-associative symbol");
 		}
 		if ((isChainable() || isPairwise())
 				&& (params.length != 2 || !params[0].equalsSort(params[1])
-                   	|| !result.equalsSort(getTheory().getBooleanSort()))) {
+						|| !result.equalsSort(getTheory().getBooleanSort()))) {
 			throw new IllegalArgumentException(
 					"Wrong sorts for chainable symbol");
 		}
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mName.hashCode();
 	}
-	
+
 	/**
 	 * Get the name of the function. This is the name as used in an SMTLIB
 	 * script.  It can also contain symbols not allowed by the SMTLIB standard.
 	 * In that case the string representation uses <code>|</code> to quote
-	 * the name.  The name may not contain <code>|</code> symbols. 
+	 * the name.  The name may not contain <code>|</code> symbols.
 	 * @return the name of the function.
 	 */
 	public String getName() {
 		return mName;
 	}
-	
-	public BigInteger[] getIndices() {
+
+	public String[] getIndices() {
 		return mIndices;
 	}
 	/**
 	 * Check whether this function symbol is created by the solver.  Symbols
 	 * created by the solver are assumed to be special symbols like
 	 * <code>+</code>, <code>-</code>, or internal symbols only used by the
-	 * solver. 
+	 * solver.
 	 * @return true if and only if the function symbol was flagged as internal.
 	 */
 	public boolean isIntern() {
 		return (mFlags & INTERNAL) != 0;
 	}
-	
+
 	public boolean isModelValue() {
 		return (mFlags & MODELVALUE) != 0;
 	}
-	
+
 	public Theory getTheory() {
 		return mReturnSort.mSymbol.mTheory;
 	}
-	
+
 	/**
 	 * @deprecated use getParameterSorts().length
 	 * @return the number of parameters this function takes.
@@ -123,7 +122,7 @@ public class FunctionSymbol {
 	public int getParameterCount() {
 		return mParamSort.length;
 	}
-	
+
 	/**
 	 * @deprecated use getParameterSorts()[i].
 	 * @param i the parameter number.
@@ -138,7 +137,7 @@ public class FunctionSymbol {
 	 * A definition only exists if the function symbol is a macro created by the
 	 * {@link Script#defineFun(String, TermVariable[], Sort, Term) define-fun}
 	 * command or a <code>:named</code> annotation.
-	 * @return The variables used in the definition of this function symbol or 
+	 * @return The variables used in the definition of this function symbol or
 	 *         <code>null</code> if this function symbol is not a macro.
 	 */
 	public TermVariable[] getDefinitionVars() {
@@ -146,7 +145,7 @@ public class FunctionSymbol {
 	}
 	/**
 	 * Retrieve the definition of this function symbol.  A definition only
-	 * exists if the function symbol is a macro created by the 
+	 * exists if the function symbol is a macro created by the
 	 * {@link Script#defineFun(String, TermVariable[], Sort, Term) define-fun}
 	 * command or a <code>:named</code> annotation.
 	 * @return The definition of this function symbol or <code>null</code> if
@@ -155,7 +154,7 @@ public class FunctionSymbol {
 	public Term getDefinition() {
 		return mDefinition;
 	}
-	
+
 	/**
 	 * Get the return sort of this function.
 	 * @return the return sort.
@@ -163,7 +162,7 @@ public class FunctionSymbol {
 	public Sort getReturnSort() {
 		return mReturnSort;
 	}
-	
+
 	/**
 	 * Get the sort of the parameters for this function.
 	 * @return An array with the parameter sorts.  Never write to this array!
@@ -171,7 +170,7 @@ public class FunctionSymbol {
 	public Sort[] getParameterSorts() {
 		return mParamSort;
 	}
-	
+
 	private final void checkSort(Term arg, Sort sort) {
 		final Sort argSort = arg.getSort();
 		if (!sort.equalsSort(argSort)) {
@@ -185,7 +184,7 @@ public class FunctionSymbol {
 			}
 		}
 	}
-	
+
 	/**
 	 * Check if this function symbol can be called on the given argument terms.
 	 * This throws an exception if the type check fails.
@@ -216,7 +215,7 @@ public class FunctionSymbol {
 			}
 		}
 	}
-	
+
 	/**
 	 * Check if this function symbol can be called on terms with the given sort.
 	 * @param params the sort of the arguments for the function symbols.
@@ -252,7 +251,7 @@ public class FunctionSymbol {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Returns a string representation of this object.  This is a SMTLIB
 	 * like representation of the following form:
@@ -268,7 +267,7 @@ public class FunctionSymbol {
 			sb.append(name);
 		} else {
 			sb.append("(_ ").append(name);
-			for (final BigInteger i : mIndices) {
+			for (final String i : mIndices) {
 				sb.append(' ').append(i);
 			}
 			sb.append(')');
@@ -313,10 +312,10 @@ public class FunctionSymbol {
 	public final boolean isRightAssoc() {
 		return (mFlags & ASSOCMASK) == RIGHTASSOC;
 	}
-	
+
 	/**
 	 * Checks if this function symbol was created with the SMTLIB
-	 * syntax <code>(as name sort)</code> to give it a different result 
+	 * syntax <code>(as name sort)</code> to give it a different result
 	 * sort.
 	 * @return true if the sort was explicitly given, false if it is implicit.
 	 */
@@ -343,7 +342,7 @@ public class FunctionSymbol {
 		}
 		sb.append(name);
 		if (mIndices != null) {
-			for (final BigInteger i : mIndices) {
+			for (final String i : mIndices) {
 				sb.append(' ').append(i);
 			}
 			sb.append(')');

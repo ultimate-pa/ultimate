@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 public class NumericSortInterpretation implements SortInterpretation {
-	
+
 	private final BidiMap<Rational> mValues = new BidiMap<Rational>();
 	// Desired invariants:
 	// mBiggest.isIntegral()
@@ -35,7 +35,7 @@ public class NumericSortInterpretation implements SortInterpretation {
 		mValues.add(0, Rational.ZERO);
 		mValues.add(1, Rational.ONE);
 	}
-	
+
 	@Override
 	public Term toSMTLIB(Theory t, Sort sort) {
 		throw new InternalError("Should never be called!");
@@ -52,7 +52,7 @@ public class NumericSortInterpretation implements SortInterpretation {
 		}
 		return idx;
 	}
-	
+
 	@Override
 	public int extendFresh() {
 		final int idx = mValues.size();
@@ -87,7 +87,7 @@ public class NumericSortInterpretation implements SortInterpretation {
 		final Rational rat = mValues.get(idx);
 		return rat.toTerm(s);
 	}
-	
+
 	public Rational get(int idx) {
 		return mValues.get(idx);
 	}

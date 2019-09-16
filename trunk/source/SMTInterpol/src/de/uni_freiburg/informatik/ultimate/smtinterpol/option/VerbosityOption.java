@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 /**
  * The <code>:verbosity</code> option.  This option is specialized to directly
  * modify the {@link LogProxy} to set the correct value.
- * 
+ *
  * For backward compatibility the interface methods return a BigInteger.
  * @author Juergen Christ
  */

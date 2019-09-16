@@ -20,6 +20,10 @@ package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.HashSet;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Theory.SolverSetup;
@@ -97,6 +101,125 @@ public class NoopScript implements Script {
 	@Override
 	public void setInfo(final String info, final Object value) {
 		// Nothing to do
+	}
+
+	@Override
+	public FunctionSymbol getFunctionSymbol(String constructor) {
+		return mTheory.getFunctionSymbol(constructor);
+	}
+
+	@Override
+	public DataType.Constructor constructor(String name, String[] selectors, Sort[] argumentSorts) {
+		if (name == null) {
+			throw new SMTLIBException(
+					"Invalid input to declare a datatype");
+		}
+		checkSymbol(name);
+		return mTheory.createConstructor(name, selectors, argumentSorts);
+	}
+
+	@Override
+	public DataType datatype(String typename, int numParams) {
+		if (typename == null) {
+			throw new SMTLIBException(
+					"Invalid input to declare a datatype");
+		}
+		checkSymbol(typename);
+		return mTheory.createDatatypes(typename, numParams);
+	}
+
+	/**
+	 * Check if a constructor of a datatype needs to be declared with RETURNOVERLOAD. This is the case if its arguments
+	 * do not contain all sort parameters.
+	 *
+	 * @param sortParams
+	 *            The sort parameters of the datatype.
+	 * @param argumentSorts
+	 *            The arguments of the constructor.
+	 * @return 0 or RETURNOVERLOAD, depending on if the flag is needed.
+	 */
+	private int checkReturnOverload(Sort[] sortParams, Sort[] argumentSorts) {
+		BitSet unused = new BitSet();
+		unused.set(0, sortParams.length);
+		ArrayDeque<Sort> todo = new ArrayDeque<>();
+		HashSet<Sort> seen = new HashSet<>();
+		todo.addAll(Arrays.asList(argumentSorts));
+		while (!todo.isEmpty()) {
+			Sort sort = todo.removeFirst();
+			if (seen.add(sort)) {
+				if (sort.isParametric()) {
+					for (int i = 0; i < sortParams.length; i++) {
+						if (sort == sortParams[i]) {
+							unused.clear(i);
+							break;
+						}
+					}
+				} else {
+					todo.addAll(Arrays.asList(sort.getArguments()));
+				}
+			}
+		}
+		return unused.isEmpty() ? 0 : FunctionSymbol.RETURNOVERLOAD;
+	}
+	/**
+	 * Declare internal functions for the constructors and selectors of the datatype.
+	 * @param datatype The datatype.
+	 * @param constrs The constructors.
+	 * @throws SMTLIBException
+	 */
+	private void declareConstructorFunctions(DataType datatype, DataType.Constructor[] constrs, Sort[] sortParams) {
+		String[] indices = null;
+		Sort datatypeSort;
+		if (sortParams == null) {
+			if (datatype.mNumParams != 0) {
+				throw new SMTLIBException("Sort parameters missing");
+			}
+			datatypeSort = datatype.getSort(indices, Theory.EMPTY_SORT_ARRAY);
+		} else {
+			if (datatype.mNumParams == 0 || datatype.mNumParams != sortParams.length) {
+				throw new SMTLIBException("Sort parameter mismatch");
+			}
+			datatypeSort = datatype.getSort(indices, sortParams);
+		}
+		Sort[] selectorParamSorts = new Sort[] { datatypeSort };
+
+		for (int i = 0; i < constrs.length; i++) {
+
+			String constrName = constrs[i].getName();
+			String[] selectors = constrs[i].getSelectors();
+			Sort[] argumentSorts = constrs[i].getArgumentSorts();
+
+			if (sortParams == null) {
+				getTheory().declareInternalFunction(constrName, argumentSorts, datatypeSort, FunctionSymbol.CONSTRUCTOR);
+
+				for (int j = 0; j < selectors.length; j++) {
+					getTheory().declareInternalFunction(selectors[j], selectorParamSorts, argumentSorts[j], 0);
+				}
+			} else {
+				getTheory().declareInternalPolymorphicFunction(constrName, sortParams, argumentSorts,
+						datatypeSort, checkReturnOverload(sortParams, argumentSorts)+ FunctionSymbol.CONSTRUCTOR);
+
+				for (int j = 0; j < selectors.length; j++) {
+					getTheory().declareInternalPolymorphicFunction(selectors[j], sortParams, selectorParamSorts,
+							argumentSorts[j], 0);
+				}
+			}
+		}
+	}
+
+	@Override
+	public void declareDatatype(DataType datatype, DataType.Constructor[] constrs) {
+		assert datatype.mNumParams == 0;
+		datatype.setConstructors(new Sort[0], constrs);
+		declareConstructorFunctions(datatype, constrs, null);
+	}
+
+	@Override
+	public void declareDatatypes(DataType[] datatypes, DataType.Constructor[][] constrs, Sort[][] sortParams) {
+		for (int i = 0; i < datatypes.length; i++) {
+			datatypes[i].setConstructors(sortParams[i], constrs[i]);
+			declareConstructorFunctions(datatypes[i], constrs[i], sortParams[i]);
+		}
 	}
 
 	@Override
@@ -279,7 +402,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Sort sort(final String sortname, final BigInteger[] indices, final Sort... params)
+	public Sort sort(final String sortname, final String[] indices, final Sort... params)
 		throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
@@ -297,7 +420,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term term(final String funcname, final BigInteger[] indices,
+	public Term term(final String funcname, final String[] indices,
 			final Sort returnSort, final Term... params) throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
@@ -404,6 +527,14 @@ public class NoopScript implements Script {
 		return mTheory.let(vars, values, body);
 	}
 
+	@Override
+	public Term match(final Term dataArg, final TermVariable[][] vars, final Term[] cases,
+			final DataType.Constructor[] constructors) throws SMTLIBException {
+		return mTheory.match(dataArg, vars, cases, constructors);
+	}
+	
+	
+	
 	@Override
 	public Term annotate(final Term t, final Annotation... annotations)
 		throws SMTLIBException {

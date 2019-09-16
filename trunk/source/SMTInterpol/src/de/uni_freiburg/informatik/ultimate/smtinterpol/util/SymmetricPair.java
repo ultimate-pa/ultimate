@@ -24,14 +24,14 @@ public class SymmetricPair<T> {
 		mFst = f;
 		mSnd = s;
 	}
-	
+
 	public T getFirst() {
 		return mFst;
 	}
 	public T getSecond() {
 		return mSnd;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mFst.hashCode() + mSnd.hashCode();
@@ -46,7 +46,7 @@ public class SymmetricPair<T> {
 		}
 		return false;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "(" + mFst + "," + mSnd + ")";

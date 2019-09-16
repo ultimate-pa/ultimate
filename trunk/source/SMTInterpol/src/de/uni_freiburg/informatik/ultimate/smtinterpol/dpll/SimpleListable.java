@@ -19,30 +19,30 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.dpll;
 
 /**
- * A light-weight double linked list entry.  The usage is a bit complicated but  
+ * A light-weight double linked list entry.  The usage is a bit complicated but
  * it gives better performance than LinkedList.  To use this class define
  * a class <code>foo</code> of things you want to keep in a linked list
  * and extend it from <code>SimpleListable&lt;foo&gt;.
  * You can then append it to a <code>SimpleList&lt;foo&gt;.
- * 
- * <em>Note:</em> 
+ *
+ * <em>Note:</em>
  * <ul><li>Every element of <code>foo</code> can only be in one list.  This is because
  * the back/front pointers are in the object.</li>
  * <li>Since you need to extend the class SimpleListable, the class cannot extend another
  * class</li>
- * <li>If you want to store a class <code>elem</code> that does not meet the above 
- * requirements, write a class <code>wrapper</code> that extends 
+ * <li>If you want to store a class <code>elem</code> that does not meet the above
+ * requirements, write a class <code>wrapper</code> that extends
  * <code>SimpleListable&lt;wrapper&gt;</code> with a field <code>elem</code>.
  * This has a performance similar to <code>LinkedList</code>.</li>
  * </ul>
- * 
+ *
  * @author hoenicke
  *
  */
 public class SimpleListable<E extends SimpleListable<E>> {
 	SimpleListable<E> mNext;
 	SimpleListable<E> mPrev;
-	
+
 	/**
 	 * Create an element that is not part of any list.
 	 */
@@ -54,12 +54,12 @@ public class SimpleListable<E extends SimpleListable<E>> {
 		this.mNext = next;
 		this.mPrev = prev;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public final E getElem() {
 		return (E) this;
 	}
-	
+
 	public final void removeFromList() {
 		mPrev.mNext = mNext;
 		mNext.mPrev = mPrev;

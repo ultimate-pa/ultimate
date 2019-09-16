@@ -26,13 +26,13 @@ import java.text.ParsePosition;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Class used to prevent unnecessary String conversions and 
+ * Class used to prevent unnecessary String conversions and
  * concatenations.
- * 
+ *
  * Just use {num} to refer to the array position like in
  * <code>new DebugMessage("Arg 1 is {1} and 0 is {0}",obj0,obj1)</code>.
  * The string is formatted by {@link java.text.MessageFormat}.
- * 
+ *
  * @author Juergen Christ
  */
 public class DebugMessage {
@@ -50,7 +50,7 @@ public class DebugMessage {
 		public Object parseObject(String source, ParsePosition pos) {
 			throw new UnsupportedOperationException();
 		}
-		
+
 	}
 	private static final TermDirectFormat TERM_FORMAT = new TermDirectFormat();
 	private final boolean mTermDirect;

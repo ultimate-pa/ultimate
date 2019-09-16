@@ -28,9 +28,9 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * <pre>
  * (let ((var_0 val_0) ... (var_n val_n)) ...)
  * </pre>
- * 
+ *
  * A let term is created by {@link Script#let(TermVariable[], Term[], Term)}.
- * 
+ *
  * @author hoenicke
  */
 public class LetTerm extends Term {
@@ -38,7 +38,7 @@ public class LetTerm extends Term {
 	private final Term[] mValues;
 	private final Term mSubterm;
 	private final Sort mSort;
-	
+
 	/**
 	 * @return The variables
 	 */
@@ -67,7 +67,7 @@ public class LetTerm extends Term {
 		mSubterm = t;
 		mSort = t.getSort();
 	}
-	
+
 	@Override
 	public Sort getSort() {
 		return mSort;
@@ -75,13 +75,13 @@ public class LetTerm extends Term {
 
 	public static final int hashLet(
 			TermVariable[] vars, Term[] values, Term subform) {
-//		return Arrays.hashCode(vars) ^ Arrays.hashCode(values) ^ 
+//		return Arrays.hashCode(vars) ^ Arrays.hashCode(values) ^
 //			subform.hashCode();
 		return HashUtils.hashJenkins(
 				HashUtils.hashJenkins(subform.hashCode(), (Object[]) values),
 					(Object[]) vars);
 	}
-	
+
 	@Override
 	public void toStringHelper(ArrayDeque<Object> mTodo) {
 		// Add subterm to stack.
@@ -94,7 +94,7 @@ public class LetTerm extends Term {
 		for (int i = values.length - 1; i > 0; i--) {
 			mTodo.addLast(values[i]);
 			mTodo.addLast(") (" + vars[i].toString() + " ");
-		}	
+		}
 		mTodo.addLast(values[0]);
 		mTodo.addLast("(let ((" + vars[0].toString() + " ");
 	}

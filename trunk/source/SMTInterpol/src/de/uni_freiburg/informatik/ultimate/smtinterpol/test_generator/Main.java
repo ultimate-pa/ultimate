@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 
 
 public final class Main {
-    
+
     private Main() {
         // Hide constructor
     }
@@ -109,13 +109,13 @@ public final class Main {
 			usage();
 			return;
 		}
-		
+
 		// JC: Commented this out since it does not work.  Not sure if it is
 		//     worth refactoring this.
 //		ParseEnvironment env = new ParseEnvironment(benchmark);
 //		env.parseScript(filename);
 	}
-	
+
 	public static List<String> getFiles(File path) {
 		final List<String> files = new ArrayList<String>();
 
@@ -124,7 +124,7 @@ public final class Main {
 			return files;
 		}
 		final File [] children = path.listFiles();
-		
+
 		for (int i = 0; i < children.length; i++) {
 			if (children[i].isFile()) {
 				files.add(children[i].toString());

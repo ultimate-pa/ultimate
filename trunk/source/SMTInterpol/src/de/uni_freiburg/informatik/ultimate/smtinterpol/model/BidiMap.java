@@ -29,12 +29,12 @@ public class BidiMap<E> {
 	private static class Entry<E> {
 		final int mIdx;
 		final E mVal;
-		
+
 		final int mHash;
-		
+
 		Entry<E> mNextIdx;
 		Entry<E> mNextVal;
-		
+
 		public Entry(int idx, E val, int hash) {
 			mIdx = idx;
 			mVal = val;
@@ -42,21 +42,21 @@ public class BidiMap<E> {
 			mNextIdx = null;
 			mNextVal = null;
 		}
-		
+
 		public int getIdx() {
 			return mIdx;
 		}
-		
+
 		public E getValue() {
 			return mVal;
 		}
-		
+
 		@Override
 		public String toString() {
 			return "[" + mIdx + "," + mVal + "]";
 		}
 	}
-	
+
 	private static int roundUpToPowerOf2(int number) {
 		// assert number >= 0 : "number must be non-negative";
 		int rounded = number >= MAXIMUM_CAPACITY
@@ -66,42 +66,42 @@ public class BidiMap<E> {
 						: 1;
 		return rounded;
 	}
-	
+
 	private Entry<E>[] mIntTable;
 	private Entry<E>[] mValTable;
-	
+
 	private int mSize;
 	private int mThreshold;
 	private float mLoadFactor;
-	
+
 	private Entry<E> mLastEntry;
-	
+
 	public final static float DEFAULT_LOAD_FACTOR = 0.75f;
 	public final static int DEFAULT_SIZE = 8;
-	
+
 	public final static int MAXIMUM_CAPACITY = 1 << 30; // NOCHECKSTYLE
-	
+
 	public BidiMap() {
 		this(DEFAULT_SIZE, DEFAULT_LOAD_FACTOR);
 	}
-	
+
 	public BidiMap(int size) {
 		this(size, DEFAULT_LOAD_FACTOR);
 	}
-	
+
 	public BidiMap(int size, float loadFactor) {
 		mSize = 0;
 		mLoadFactor = loadFactor;
 		init(roundUpToPowerOf2(size));
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void init(int size) {
 		mIntTable = new Entry[size];
 		mValTable = new Entry[size];
 		mThreshold = (int) (size * mLoadFactor);
 	}
-	
+
 	private final int hash(E val) {
 		int h = 0;
 		h ^= val.hashCode();
@@ -116,11 +116,11 @@ public class BidiMap<E> {
 	private final int intBucketIdx(int idx) {
 		return idx & (mIntTable.length - 1);
 	}
-	
+
 	private final int valBucketIdx(int hash) {
 		return hash & (mValTable.length - 1);
 	}
-	
+
 	/**
 	 * Add a new mapping.  Note that this map does not support null keys.  If
 	 * either the key or the value is already known, the map is not changed and
@@ -145,7 +145,7 @@ public class BidiMap<E> {
 		mLastEntry = null;
 		return false;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void grow() {
 		int newCapacity = mIntTable.length << 1;
@@ -173,7 +173,7 @@ public class BidiMap<E> {
 			}
 		}
 	}
-	
+
 	private Entry<E> getEntryByIdx(int idx) {
 		final int b = intBucketIdx(idx);
 		for (Entry<E> bucket = mIntTable[b]; bucket != null;
@@ -184,7 +184,7 @@ public class BidiMap<E> {
 		}
 		return null;
 	}
-	
+
 	private Entry<E> getEntryByVal(E val) {
 		final int hash = hash(val);
 		final int b = valBucketIdx(hash);
@@ -197,24 +197,24 @@ public class BidiMap<E> {
 		}
 		return null;
 	}
-	
+
 	private boolean canInsert(Entry<E> newEntry) {
 		return getEntryByIdx(newEntry.mIdx) == null
 				&& getEntryByVal(newEntry.mVal) == null;
 	}
-	
+
 	private void insertInt(Entry<E> newEntry) {
 		final int idx = intBucketIdx(newEntry.mIdx);
 		newEntry.mNextIdx = mIntTable[idx];
 		mIntTable[idx] = newEntry;
 	}
-	
+
 	private void insertVal(Entry<E> newEntry) {
 		final int idx = valBucketIdx(newEntry.mHash);
 		newEntry.mNextVal = mValTable[idx];
 		mValTable[idx] = newEntry;
 	}
-	
+
 	public E get(int idx) {
 		if (mLastEntry != null && mLastEntry.mIdx == idx) {
 			return mLastEntry.getValue();
@@ -222,7 +222,7 @@ public class BidiMap<E> {
 		final Entry<E> bucket = getEntryByIdx(idx);
 		return bucket == null ? null : bucket.getValue();
 	}
-	
+
 	public int get(E val) {
 		if (mLastEntry != null) {
 			final int hash = hash(val);
@@ -236,15 +236,15 @@ public class BidiMap<E> {
 		}
 		return bucket.getIdx();
 	}
-	
+
 	public boolean containsIdx(int idx) {
 		return getEntryByIdx(idx) != null;
 	}
-	
+
 	public boolean containsVal(E val) {
 		return getEntryByVal(val) != null;
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
@@ -262,5 +262,5 @@ public class BidiMap<E> {
 	public int size() {
 		return mSize;
 	}
-	
+
 }

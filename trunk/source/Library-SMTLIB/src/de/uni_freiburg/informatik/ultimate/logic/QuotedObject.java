@@ -25,11 +25,11 @@ package de.uni_freiburg.informatik.ultimate.logic;
  * is represented by a ConstantTerm whose value is a quoted object.  The
  * underlying value is the string in parsed form, i.e., escape sequences using
  * backslash are removed and the surrounding quotes are removed.
- * 
+ *
  * A QuotedObject can also be used to quote arbitrary java objects.  These can
  * be used in annotations and will produce syntactically correct SMTLIB
  * scripts if they are dumped.
- * 
+ *
  * @author hoenicke
  */
 public class QuotedObject {
@@ -46,9 +46,9 @@ public class QuotedObject {
 	public QuotedObject(Object value) {
 		mValue = value;
 	}
-	
+
 	/**
-	 * Get the underlying object.  
+	 * Get the underlying object.
 	 * @return the underlying object.
 	 */
 	public Object getValue() {
@@ -74,7 +74,7 @@ public class QuotedObject {
 		}
 		return sb.append('\"').toString();
 	}
-	
+
 	private static String quoteString25(String str) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append('\"');
@@ -98,7 +98,7 @@ public class QuotedObject {
 	public String toString() {
 		return toString(true);
 	}
-	
+
 	public String toString(boolean version25) {
 		return version25 ? quoteString25(mValue.toString())
 				: quoteString20(mValue.toString());

@@ -21,12 +21,13 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Formatter;
+import java.util.Locale;
 
 public class DefaultLogger implements LogProxy {
 
 	// Multithreading support
 	private static final Object LOCK = new Object();
-	
+
 	// Loglevel strings
 	private static final String[] LEVELS = {
 		"FATAL",
@@ -38,11 +39,11 @@ public class DefaultLogger implements LogProxy {
 	};
 
 	private PrintWriter mWriter = new PrintWriter(System.err);
-	private Formatter mFormat = new Formatter(mWriter);
+	private Formatter mFormat = new Formatter(mWriter, Locale.ROOT);
 	private String mDest = "stderr";
-	
+
 	private int mLevel = Config.DEFAULT_LOG_LEVEL;
-	
+
 	@Override
 	public void setLoglevel(int level) {
 		mLevel = level;
@@ -56,7 +57,7 @@ public class DefaultLogger implements LogProxy {
 	private final boolean isEnabled(int lvl) {
 		return lvl <= mLevel;
 	}
-	
+
 	private final void log(int lvl, Object msg) {
 		synchronized (LOCK) {
 			mWriter.print(LEVELS[lvl - 1]);
@@ -65,7 +66,7 @@ public class DefaultLogger implements LogProxy {
 			mWriter.flush();
 		}
 	}
-	
+
 	private final void log(int lvl, String msg, Object[] params) {
 		if (params.length == 0) {
 			log(lvl, msg);
@@ -78,7 +79,7 @@ public class DefaultLogger implements LogProxy {
 			mWriter.flush();
 		}
 	}
-	
+
 	@Override
 	public boolean isFatalEnabled() {
 		return isEnabled(LOGLEVEL_FATAL);
@@ -208,7 +209,7 @@ public class DefaultLogger implements LogProxy {
 	@Override
 	public void changeDestination(String newDest) throws IOException {
 		mWriter = ChannelUtil.createChannel(newDest);
-		mFormat = new Formatter(mWriter);
+		mFormat = new Formatter(mWriter, Locale.ROOT);
 		mDest = newDest;
 	}
 

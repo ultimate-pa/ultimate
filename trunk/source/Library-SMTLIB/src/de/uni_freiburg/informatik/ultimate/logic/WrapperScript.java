@@ -122,6 +122,17 @@ public abstract class WrapperScript implements Script {
 	}
 
 	@Override
+	public void declareDatatype(final DataType datatype, final DataType.Constructor[] constrs) throws SMTLIBException {
+		mScript.declareDatatype(datatype, constrs);
+	}
+
+	@Override
+	public void declareDatatypes(final DataType[] datatypes, final DataType.Constructor[][] constrs,
+			final Sort[][] sortParams) throws SMTLIBException {
+		mScript.declareDatatypes(datatypes, constrs, sortParams);
+	}
+
+	@Override
 	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) throws SMTLIBException {
 		mScript.declareFun(fun, paramSorts, resultSort);
 	}
@@ -208,7 +219,7 @@ public abstract class WrapperScript implements Script {
 	}
 
 	@Override
-	public Sort sort(final String sortname, final BigInteger[] indices, final Sort... params) throws SMTLIBException {
+	public Sort sort(final String sortname, final String[] indices, final Sort... params) throws SMTLIBException {
 		return mScript.sort(sortname, indices, params);
 	}
 
@@ -218,12 +229,23 @@ public abstract class WrapperScript implements Script {
 	}
 
 	@Override
+	public DataType.Constructor constructor(final String name, final String[] selectors, Sort[] argumentSorts)
+			throws SMTLIBException {
+		return mScript.constructor(name, selectors, argumentSorts);
+	}
+
+	@Override
+	public DataType datatype(final String typename, final int numParams) throws SMTLIBException {
+		return mScript.datatype(typename, numParams);
+	}
+
+	@Override
 	public Term term(final String funcname, final Term... params) throws SMTLIBException {
 		return mScript.term(funcname, params);
 	}
 
 	@Override
-	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params)
+	public Term term(final String funcname, final String[] indices, final Sort returnSort, final Term... params)
 			throws SMTLIBException {
 		return mScript.term(funcname, indices, returnSort, params);
 	}
@@ -242,6 +264,12 @@ public abstract class WrapperScript implements Script {
 	@Override
 	public Term let(final TermVariable[] vars, final Term[] values, final Term body) throws SMTLIBException {
 		return mScript.let(vars, values, body);
+	}
+
+	@Override
+	public Term match(final Term dataArg, final TermVariable[][] vars, final Term[] cases,
+			DataType.Constructor[] constructors) throws SMTLIBException {
+		return mScript.match(dataArg, vars, cases, constructors);
 	}
 
 	@Override

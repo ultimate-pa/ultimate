@@ -114,6 +114,8 @@ Keyword = ":" {SMTLetterDigit}+
   "declare-sort"         { return symbol(LexerSymbols.DECLARESORT, yytext()); }
   "declare-fun"          { return symbol(LexerSymbols.DECLAREFUN, yytext()); }
   "declare-const"        { return symbol(LexerSymbols.DECLARECONST, yytext()); }
+  "declare-datatype"     { return symbol(LexerSymbols.DECLAREDATATYPE, yytext()); }
+  "declare-datatypes"    { return symbol(LexerSymbols.DECLAREDATATYPES, yytext()); }
   "define-sort"          { return symbol(LexerSymbols.DEFINESORT, yytext()); }
   "define-fun"           { return symbol(LexerSymbols.DEFINEFUN, yytext()); }
   "error"                { return symbol(LexerSymbols.ERRORSYM, yytext()); }
@@ -138,6 +140,7 @@ Keyword = ":" {SMTLetterDigit}+
   "logic"                { return symbol(LexerSymbols.LOGIC, yytext()); }
   "none"                 { return symbol(LexerSymbols.NONE, yytext()); }
   "NUMERAL"              { return symbol(LexerSymbols.NUMERALSYM, yytext()); }
+  "match"                { return symbol(LexerSymbols.MATCH, yytext()); }
   "memout"               { return symbol(LexerSymbols.MEMOUT, yytext()); }
   "par"                  { return symbol(LexerSymbols.PAR, yytext()); }
   "pop"                  { return symbol(LexerSymbols.POP, yytext()); }

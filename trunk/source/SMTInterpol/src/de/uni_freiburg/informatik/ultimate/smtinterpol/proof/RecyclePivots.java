@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode.Ante
  * literals that are "safe" for this proof node.  A literal is "safe" if it is
  * either present in the node, or resolved on every path from that node to the
  * root of the proof.
- * 
+ *
  * We compute the set of safe literals and the nodes to regularize in one pass.
  * The method relies on the following facts about nodes of type
  * {@link ResolutionNode}:
@@ -42,19 +42,19 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode.Ante
  * <li>A pivot can only occur once in the antecedent chain</li>
  * <li>A pivot can only occur in one polarity in the resolution chain</li>
  * </ul>
- * 
+ *
  * Given a {@link ResolutionNode} and a set of literals that are safe for the
  * result clause of that resolution node, we can compute the set of safe
  * literals for an antecedent by adding the negated pivots of all later
  * antecedents (those with bigger indices in the antecedent array) to the base
  * set of safe literals.
- * 
+ *
  * We can delete an antecedent clause if the corresponding pivot is safe.  This
  * removes the antecedent from the proof.  To remove multiple antecedents from
  * the resolution node, we mark the antecedent as removed.  This can be done if
  * the negation of the pivot is safe.  In this case, we replace the resolution
  * primary with the antecedent clause.
- * 
+ *
  * Storing the set of safe literals is unnecessary if the node has fan out 1.
  * Otherwise, we have to store the set of safe literals and build the
  * intersection of the safe literals of all paths.  In this context, we need to
@@ -77,7 +77,7 @@ public class RecyclePivots {
 
 	/**
 	 * Helper class that checks for possible regularizations in a sub proof
-	 * w.r.t. a given set of safe literals for the root of the sub proof. 
+	 * w.r.t. a given set of safe literals for the root of the sub proof.
 	 * @author Juergen Christ
 	 */
 	private class SetAndExpand implements Worker {
@@ -95,7 +95,7 @@ public class RecyclePivots {
 			mCls = cls;
 			mSafes = safes;
 		}
-		
+
 		@Override
 		public void work() {
 			if (seen(mCls)) {
@@ -105,7 +105,7 @@ public class RecyclePivots {
 				} else if (oldSafes != null) {
 					mSafes.retainAll(oldSafes);
 				}
-				
+
 				// Clause has been seen for the last time.
 				final ProofNode pn = mCls.getProof();
 				// We can skip leaf nodes since they cannot be regularized
@@ -127,18 +127,18 @@ public class RecyclePivots {
 							// visit antecedent with null since we do not use it.
 						} else 	if (!antes[i].mAntecedent.getProof().isLeaf()) {
 							// Sub proof is not a leaf => try to regularize
-							// copy safes and add the pivot to get the 
+							// copy safes and add the pivot to get the
 							// new safes set for the antecedent.
 							newSafes = new HashSet<Literal>(mSafes);
 							newSafes.add(antes[i].mPivot);
 						}
-						
+
 						if (!antes[i].mAntecedent.getProof().isLeaf()) {
 							mTodo.push(new SetAndExpand(
 									antes[i].mAntecedent, newSafes));
 						}
 
-						if (mSafes != null 
+						if (mSafes != null
 							&& mSafes.contains(antes[i].mPivot)) {
 							// pivot is safe => delete antecedent
 							if (delLits == null) {
@@ -146,7 +146,7 @@ public class RecyclePivots {
 							}
 							delLits.add(antes[i].mPivot.negate());
 							mSafes = null;
-						}							
+						}
 						if (mSafes != null) {
 							mSafes.add(antes[i].mPivot.negate());
 						}
@@ -188,11 +188,11 @@ public class RecyclePivots {
 	 * Set of all clauses already visited.
 	 */
 	private HashMap<Clause, Integer> mSeen;
-	
+
 	private HashMap<Object, Set<Literal>> mSafeLits;
-	
+
 	private Map<Clause, Set<Literal>> mDeleted;
-	
+
 	public Map<Clause, Set<Literal>> regularize(
 			Clause proof, Map<Clause, Integer> counts) {
 		mCounts = counts;

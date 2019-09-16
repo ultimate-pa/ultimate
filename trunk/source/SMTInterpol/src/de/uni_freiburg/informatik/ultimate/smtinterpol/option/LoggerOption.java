@@ -34,7 +34,7 @@ public class LoggerOption extends Option {
 		mDefaultDest = logger.getDestination();
 		mLogger = logger;
 	}
-	
+
 	private final void changeLoggerDest(String newdest) {
 		try {
 			mLogger.changeDestination(String.valueOf(newdest));

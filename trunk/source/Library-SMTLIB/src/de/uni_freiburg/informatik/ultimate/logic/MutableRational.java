@@ -25,11 +25,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational.BigRational;
 /**
  * Mutable version of the {@link Rational} class. All arithmetic
  * operations change the value of this object.
- * 
+ *
  * This class is intended to save some unneeded temporary objects in bigger
  * calculations. This should reduce the number of garbage collections such that
  * the program should run faster.
- * 
+ *
  * @author Juergen Christ
  */
 public class MutableRational implements Comparable<MutableRational> {
@@ -170,7 +170,7 @@ public class MutableRational implements Comparable<MutableRational> {
 		}
 		if (mBignum == null && !(other instanceof Rational.BigRational)) {
 			if (mDenom == other.mDenom) {
-				/* handle gcd = 0 correctly 
+				/* handle gcd = 0 correctly
 				 * two INFINITYs with same sign give INFINITY,
 				 * otherwise it gives NAN.
 				 */
@@ -184,8 +184,8 @@ public class MutableRational implements Comparable<MutableRational> {
 				}
 			} else {
 				final int gcd = Rational.gcd(mDenom, other.mDenom);
-				final long denomgcd = mDenom / gcd; 
-				final long otherdenomgcd = other.mDenom / gcd; 
+				final long denomgcd = mDenom / gcd;
+				final long otherdenomgcd = other.mDenom / gcd;
 				final long newdenom = denomgcd * other.mDenom;
 				final long newnum = otherdenomgcd * mNum + denomgcd * other.mNum;
 				setValue(newnum, newdenom);
@@ -204,7 +204,7 @@ public class MutableRational implements Comparable<MutableRational> {
 		final BigInteger odenom = other.denominator();
 		if (tdenom.equals(odenom)) {
 			mBignum = numerator().add(other.numerator());
-			mBigdenom = tdenom; 
+			mBigdenom = tdenom;
 		} else {
 			final BigInteger gcd = Rational.gcd(tdenom, odenom);
 			final BigInteger tdenomgcd = tdenom.divide(gcd);
@@ -383,7 +383,7 @@ public class MutableRational implements Comparable<MutableRational> {
 			}
 			final long valt = (long)mNum * o.mDenom;
 			final long valo = (long)o.mNum * mDenom;
-			return valt < valo ? -1 : valt == valo ? 0 : 1; 
+			return valt < valo ? -1 : valt == valo ? 0 : 1;
 		}
 		final BigInteger valthis = numerator().multiply(o.denominator());
 		final BigInteger valo = o.numerator().multiply(denominator());
@@ -404,7 +404,7 @@ public class MutableRational implements Comparable<MutableRational> {
 			}
 			final long valt = (long)mNum * o.mDenom;
 			final long valo = (long)o.mNum * mDenom;
-			return valt < valo ? -1 : valt == valo ? 0 : 1; 
+			return valt < valo ? -1 : valt == valo ? 0 : 1;
 		}
 		final BigInteger valthis = numerator().multiply(o.denominator());
 		final BigInteger valo = o.numerator().multiply(denominator());
@@ -455,7 +455,7 @@ public class MutableRational implements Comparable<MutableRational> {
 	}
 
 	/**
-	 * Computes a hashcode.  The hashcode is computed as 
+	 * Computes a hashcode.  The hashcode is computed as
 	 * {@code 257 * numerator + denominator} if both fit into an integer and
 	 * {@code 257 * numerator().hashCode() + denominator().hashCode()} if big
 	 * integers are necessary.
@@ -473,7 +473,7 @@ public class MutableRational implements Comparable<MutableRational> {
 	/**
 	 * Get a string representation of this number.  This is
 	 * {@code numerator()+ "/" + denominator()} except for
-	 * infinity ({@code "inf"}), nan ({@code "nan"}), or minus 
+	 * infinity ({@code "inf"}), nan ({@code "nan"}), or minus
 	 * infinity ({@code "-inf"}).
 	 * @return the string representation.
 	 */

@@ -19,12 +19,13 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar;
 
 import java.math.BigInteger;
+import java.util.BitSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.logic.MutableRational;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 
@@ -64,10 +65,10 @@ public class LinVar implements Comparable<LinVar> {
 	boolean mIsInt;
 	// List of all bounds on this variable
 	NavigableMap<InfinitesimalNumber, BoundConstraint> mConstraints =
-		new TreeMap<InfinitesimalNumber, BoundConstraint>();
+		new TreeMap<>();
 	// List of all equalities known for this variable
 	NavigableMap<InfinitesimalNumber, LAEquality> mEqualities =
-		new TreeMap<InfinitesimalNumber, LAEquality>();
+		new TreeMap<>();
 
 	/**
 	 * All disequalities asserted on this variable.
@@ -77,48 +78,11 @@ public class LinVar implements Comparable<LinVar> {
 	boolean mBasic;
 	// Number to sort this variable in the sparse matrix
 	final int mMatrixpos;
-	int mNumcuts = 0;
-	/**
-	 * The dummy entry that starts the list for this linvar.
-	 * The list follows nextInRow if this is a basic variable,
-	 * nextInCol if this is a non-basic variable.
-	 */
-	MatrixEntry mHeadEntry;
 
-	/**
-	 * Number of infinities currently contributing to the upper bound.
-	 */
-	int mNumUpperInf;
-	/**
-	 * Number of infinities currently contributing to the lower bound.
-	 */
-	int mNumLowerInf;
-	/**
-	 * Number of epsilons currently contributing to the upper bound.
-	 */
-	int mNumUpperEps;
-	/**
-	 * Number of epsilons currently contributing to the lower bound.
-	 */
-	int mNumLowerEps;
-	/**
-	 * Rational part of upper bound.
-	 * This still has to be divided by the head coeff (and may also be a
-	 * lower bound if head coeff is negative).
-	 */
-	private MutableRational mUpperComposite = new MutableRational(Rational.ZERO);
-	/**
-	 * Rational part of lower bound.
-	 * This still has to be divided by the head coeff (and may also be a
-	 * upper bound if head coeff is negative).
-	 */
-	private MutableRational mLowerComposite = new MutableRational(Rational.ZERO);
 	LinVar[] mCachedRowVars;
 	Rational[] mCachedRowCoeffs;
 
 	int mAssertionstacklevel;
-
-	int mChainlength;
 
 	ExactInfinitesimalNumber mExactVal = null;
 
@@ -145,13 +109,7 @@ public class LinVar implements Comparable<LinVar> {
 		mBasic = false;
 		mMatrixpos = num;
 
-		mHeadEntry = new MatrixEntry();
-		mHeadEntry.mColumn = this;
-		mHeadEntry.mRow = DUMMY_LINVAR;
-		mHeadEntry.mPrevInCol = mHeadEntry;
-		mHeadEntry.mNextInCol = mHeadEntry;
 		mAssertionstacklevel = assertionstacklevel;
-		mChainlength = 0;
 	}
 	/**
 	 * Get the upper bound.
@@ -245,7 +203,7 @@ public class LinVar implements Comparable<LinVar> {
 
 	void addDiseq(final LAEquality ea) {
 		if (mDisequalities == null) {
-			mDisequalities = new HashMap<Rational,LAEquality>();
+			mDisequalities = new HashMap<>();
 		}
 		mDisequalities.put(ea.getBound(), ea);
 	}
@@ -278,152 +236,13 @@ public class LinVar implements Comparable<LinVar> {
 		return mIsInt ? InfinitesimalNumber.ONE : InfinitesimalNumber.EPSILON;
 	}
 
-	public final void moveBounds(final LinVar other) {
-		mNumUpperInf = other.mNumUpperInf;
-		mNumLowerInf = other.mNumLowerInf;
-		mNumUpperEps = other.mNumUpperEps;
-		mNumLowerEps = other.mNumLowerEps;
-		mUpperComposite = other.mUpperComposite;
-		mLowerComposite = other.mLowerComposite;
-		other.mUpperComposite = null;
-		other.mLowerComposite = null;
-	}
-
-	public void mulUpperLower(final Rational r) {
-		mUpperComposite.mul(r);
-		mLowerComposite.mul(r);
-	}
-
-	public final void updateUpper(
-			final BigInteger coeff, final InfinitesimalNumber oldBound, final InfinitesimalNumber newBound) {
-		if (oldBound.isInfinity()) {
-			if (newBound.isInfinity()) {
-				return;
-			}
-			mNumUpperInf--;
-			mUpperComposite.addmul(newBound.mReal, coeff);
-		} else if (newBound.isInfinity()) {
-			mNumUpperInf++;
-			mUpperComposite.addmul(oldBound.mReal.negate(), coeff);
-		} else {
-			mUpperComposite.addmul(newBound.mReal.sub(oldBound.mReal), coeff);
-		}
-		mNumUpperEps += (newBound.mEps - oldBound.mEps) * coeff.signum();
-	}
-
-	public final void updateLower(
-			final BigInteger coeff, final InfinitesimalNumber oldBound, final InfinitesimalNumber newBound) {
-		if (oldBound.isInfinity()) {
-			if (newBound.isInfinity()) {
-				return;
-			}
-			mNumLowerInf--;
-			mLowerComposite.addmul(newBound.mReal, coeff);
-		} else if (newBound.isInfinity()) {
-			mNumLowerInf++;
-			mLowerComposite.addmul(oldBound.mReal.negate(), coeff);
-		} else {
-			mLowerComposite.addmul(newBound.mReal.sub(oldBound.mReal), coeff);
-		}
-		mNumLowerEps += (newBound.mEps - oldBound.mEps) * coeff.signum();
-	}
-
-	public void updateUpperLowerSet(final BigInteger coeff, final LinVar nb) {
-		InfinitesimalNumber ubound = nb.getTightUpperBound();
-		InfinitesimalNumber lbound = nb.getTightLowerBound();
-		if (coeff.signum() < 0) {
-			final InfinitesimalNumber swap = ubound;
-			ubound = lbound;
-			lbound = swap;
-		}
-		if (ubound.isInfinity()) {
-			mNumUpperInf++;
-		} else {
-			mUpperComposite.addmul(ubound.mReal, coeff);
-		}
-		mNumUpperEps += ubound.mEps * coeff.signum();
-		if (lbound.isInfinity()) {
-			mNumLowerInf++;
-		} else {
-			mLowerComposite.addmul(lbound.mReal, coeff);
-		}
-		mNumLowerEps += lbound.mEps * coeff.signum();
-	}
-	public void updateUpperLowerClear(final BigInteger coeff, final LinVar nb) {
-		InfinitesimalNumber ubound = nb.getTightUpperBound().negate();
-		InfinitesimalNumber lbound = nb.getTightLowerBound().negate();
-		if (coeff.signum() < 0) {
-			final InfinitesimalNumber swap = ubound;
-			ubound = lbound;
-			lbound = swap;
-		}
-		if (ubound.isInfinity()) {
-			mNumUpperInf--;
-		} else {
-			mUpperComposite.addmul(ubound.mReal, coeff);
-		}
-		mNumUpperEps += ubound.mEps * coeff.signum();
-		if (lbound.isInfinity()) {
-			mNumLowerInf--;
-		} else {
-			mLowerComposite.addmul(lbound.mReal, coeff);
-		}
-		mNumLowerEps += lbound.mEps * coeff.signum();
-	}
-	public InfinitesimalNumber getUpperComposite() {
-		if (mHeadEntry.mCoeff.signum() < 0) {
-			if (mNumUpperInf != 0) {
-				return InfinitesimalNumber.POSITIVE_INFINITY;
-			}
-			final Rational denom = mUpperComposite.toRational()
-				.mul(Rational.valueOf(BigInteger.valueOf(-1), mHeadEntry.mCoeff));
-			return new InfinitesimalNumber(denom, InfinitesimalNumber.normEpsilon(mNumUpperEps));
-		} else {
-			if (mNumLowerInf != 0) {
-				return InfinitesimalNumber.POSITIVE_INFINITY;
-			}
-			final Rational denom = mLowerComposite.toRational()
-				.mul(Rational.valueOf(BigInteger.valueOf(-1), mHeadEntry.mCoeff));
-			return new InfinitesimalNumber(denom, -InfinitesimalNumber.normEpsilon(mNumLowerEps));
-		}
-	}
-
-	public InfinitesimalNumber getLowerComposite() {
-		if (mHeadEntry.mCoeff.signum() < 0) {
-			if (mNumLowerInf != 0) {
-				return InfinitesimalNumber.NEGATIVE_INFINITY;
-			}
-			final Rational denom = mLowerComposite.toRational()
-				.mul(Rational.valueOf(BigInteger.valueOf(-1), mHeadEntry.mCoeff));
-			return new InfinitesimalNumber(denom, InfinitesimalNumber.normEpsilon(mNumLowerEps));
-		} else {
-			if (mNumUpperInf != 0) {
-				return InfinitesimalNumber.NEGATIVE_INFINITY;
-			}
-			final Rational denom = mUpperComposite.toRational()
-				.mul(Rational.valueOf(BigInteger.valueOf(-1), mHeadEntry.mCoeff));
-			return new InfinitesimalNumber(denom, -InfinitesimalNumber.normEpsilon(mNumUpperEps));
-		}
-	}
-
-	void resetComposites() {
-		mLowerComposite.setValue(Rational.ZERO);
-		mUpperComposite.setValue(Rational.ZERO);
-		mNumUpperInf = 0;
-		mNumLowerInf = 0;
-		mNumUpperEps = 0;
-		mNumLowerEps = 0;
-		mCachedRowCoeffs = null;
-		mCachedRowVars = null;
-	}
-
 	/**
 	 * Get the linear term from which this basic linvar was created.
 	 * @throws ClassCastException if this is not an initially basic variable.
 	 * @return the LinTerm.
 	 */
 	public Map<LinVar,BigInteger> getLinTerm() {
-		return ((LinTerm) mName).mCoeffs;
+		return (LinTerm) mName;
 	}
 
 	/**
@@ -435,101 +254,25 @@ public class LinVar implements Comparable<LinVar> {
 		return (SharedTerm) mName;
 	}
 
-	public int getAssertionStackLevel() {
-		return mAssertionstacklevel;
-	}
-	public boolean checkBrpCounters() {
-		assert mBasic;
-		int cntLower = 0, cntLowerEps = 0;
-		int cntUpper = 0, cntUpperEps = 0;
-		ExactInfinitesimalNumber value = ExactInfinitesimalNumber.ZERO;
-		ExactInfinitesimalNumber lbound = ExactInfinitesimalNumber.ZERO;
-		ExactInfinitesimalNumber ubound = ExactInfinitesimalNumber.ZERO;
-		for (MatrixEntry entry = mHeadEntry.mNextInRow;
-			 entry != mHeadEntry; entry = entry.mNextInRow) {
-			final Rational coeff = Rational.valueOf(entry.mCoeff, BigInteger.ONE);
-			value = value.add(entry.mColumn.getValue().mul(coeff));
-			if (entry.mCoeff.signum() < 0) {
-				if (entry.mColumn.hasTightUpperBound()) {
-					lbound = lbound.add(entry.mColumn.getTightUpperBound().mul(coeff));
-				} else {
-					cntLower++;
-				}
-				cntLowerEps -= entry.mColumn.getTightUpperBound().mEps;
-				if (entry.mColumn.hasTightLowerBound()) {
-					ubound = ubound.add(entry.mColumn.getTightLowerBound().mul(coeff));
-				} else {
-					cntUpper++;
-				}
-				cntUpperEps -= entry.mColumn.getTightLowerBound().mEps;
-			} else {
-				if (entry.mColumn.hasTightUpperBound()) {
-					ubound = ubound.add(entry.mColumn.getTightUpperBound().mul(coeff));
-				} else {
-					cntUpper++;
-				}
-				cntUpperEps += entry.mColumn.getTightUpperBound().mEps;
-				if (entry.mColumn.hasTightLowerBound()) {
-					lbound = lbound.add(entry.mColumn.getTightLowerBound().mul(coeff));
-				} else {
-					cntLower++;
-				}
-				cntLowerEps += entry.mColumn.getTightLowerBound().mEps;
-			}
-		}
-		value = value.div(Rational.valueOf(mHeadEntry.mCoeff.negate(), BigInteger.ONE));
-		assert cntLower == mNumLowerInf && cntUpper == mNumUpperInf;
-		assert lbound.getRealValue().equals(mLowerComposite);
-		assert lbound.getEpsilon().signum() == Integer.signum(mNumLowerEps);
-		assert cntLowerEps == mNumLowerEps;
-		assert ubound.getRealValue().equals(mUpperComposite);
-		assert ubound.getEpsilon().signum() == Integer.signum(mNumUpperEps);
-		assert cntUpperEps == mNumUpperEps;
-		assert value.equals(mCurval);
-		return true;
-	}
-
-	public boolean checkCoeffChain() {
+	public boolean checkCoeffChain(final LinArSolve solver) {
 		if (!mBasic) {
 			return true;
 		}
-		assert mHeadEntry.mRow == mHeadEntry.mColumn;
-		//assert headEntry.nextInCol == headEntry;
-		//assert headEntry.nextInCol == headEntry.prevInCol;
 		final MutableAffineTerm mat = new MutableAffineTerm();
-		MatrixEntry entry = mHeadEntry;
-		do {
-			assert entry.mRow == this;
-			assert entry.mRow == entry.mColumn || !entry.mColumn.mBasic;
-			assert entry.mNextInRow.mPrevInRow == entry;
-			mat.add(Rational.valueOf(entry.mCoeff, BigInteger.ONE), entry.mColumn);
-			entry = entry.mNextInRow;
-		} while (entry != mHeadEntry);
+		final BigInteger headCoeff = solver.mTableaux.get(mMatrixpos).getRawCoeff(0);
+		mat.add(Rational.valueOf(headCoeff, BigInteger.ONE), this);
+		for (final MatrixEntry entry : getTableauxRow(solver)) {
+			assert entry.getRow() == this;
+			assert !entry.getColumn().mBasic;
+			assert solver.mDependentRows.get(entry.getColumn().mMatrixpos).get(mMatrixpos);
+			mat.add(Rational.valueOf(entry.getCoeff(), BigInteger.ONE), entry.getColumn());
+		}
 		assert mat.isConstant() && mat.getConstant().equals(InfinitesimalNumber.ZERO);
 		return true;
 	}
 	public boolean isFixed() {
 		return mUpper != null && mLower != null
 			&& mUpper.getBound().equals(mLower.getBound());
-	}
-
-	boolean checkChainlength() {
-		if (mBasic) {
-			int length = 0;
-			for (MatrixEntry entry = mHeadEntry.mNextInRow; entry != mHeadEntry;
-			entry = entry.mNextInRow) {
-				++length;
-			}
-			assert(length == mChainlength);
-		} else {
-			int length = 0;
-			for (MatrixEntry entry = mHeadEntry.mNextInCol; entry != mHeadEntry;
-			entry = entry.mNextInCol) {
-				++length;
-			}
-			assert(length == mChainlength);
-		}
-		return true;
 	}
 
 	public LAEquality getEquality(final InfinitesimalNumber bound) {
@@ -563,5 +306,58 @@ public class LinVar implements Comparable<LinVar> {
 	public boolean checkReasonChains() {
 		return checkReasonChain(mUpper, mUpperLiteral)
 				&& checkReasonChain(mLower, mLowerLiteral);
+	}
+
+	public Iterable<MatrixEntry> getTableauxRow(final LinArSolve solver) {
+		assert mBasic;
+		final TableauxRow row = solver.mTableaux.get(mMatrixpos);
+		assert row != null;
+		return new Iterable<MatrixEntry>() {
+
+			@Override
+			public Iterator<MatrixEntry> iterator() {
+				return new Iterator<MatrixEntry>() {
+					private int pos = 1;
+
+					@Override
+					public boolean hasNext() {
+						return pos < row.size();
+					}
+
+					@Override
+					public MatrixEntry next() {
+						return new MatrixEntry(solver, row, pos++);
+					}
+				};
+			}
+		};
+	}
+
+	public Iterable<MatrixEntry> getTableauxColumn(final LinArSolve solver) {
+		assert !mBasic;
+		final BitSet dependentRows = solver.mDependentRows.get(mMatrixpos);
+		return new Iterable<MatrixEntry>() {
+
+			@Override
+			public Iterator<MatrixEntry> iterator() {
+				return new Iterator<MatrixEntry>() {
+					private int mRowIdx = dependentRows.nextSetBit(0);
+
+					@Override
+					public boolean hasNext() {
+						return mRowIdx != -1;
+					}
+
+					@Override
+					public MatrixEntry next() {
+						final TableauxRow row = solver.mTableaux.get(mRowIdx);
+						final MatrixEntry result = new MatrixEntry(solver, row, row.findRawIndex(mMatrixpos));
+						assert result.getColumn() == LinVar.this;
+						mRowIdx = dependentRows.nextSetBit(mRowIdx + 1);
+						return result;
+					}
+				};
+			}
+		};
 	}
 }

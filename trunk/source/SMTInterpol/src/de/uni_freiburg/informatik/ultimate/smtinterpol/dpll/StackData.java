@@ -31,11 +31,11 @@ public class StackData {
 	Object[] mSatelliteData;
 	/// The previous element of the stack
 	StackData mPrev;
-	
+
 	public StackData() {
 		this(null);
 	}
-	
+
 	protected StackData(StackData prev) {
 		mPrev = prev;
 	}
@@ -47,7 +47,7 @@ public class StackData {
 		// At root level we never need to remove an atom.  So we don't remember
 		// it.
 	}
-	
+
 	public StackData save(DPLLEngine engine) {
 		mCompleteness = engine.getCompleteness();
 		final ITheory[] satellites = engine.getAttachedTheories();
@@ -57,7 +57,7 @@ public class StackData {
 		}
 		return new NonRootLvlStackData(this);
 	}
-	
+
 	public StackData restore(DPLLEngine engine, int targetlevel) {
 		final ITheory[] satellites = engine.getAttachedTheories();
 		for (int i = 0; i < mPrev.mSatelliteData.length; ++i) {

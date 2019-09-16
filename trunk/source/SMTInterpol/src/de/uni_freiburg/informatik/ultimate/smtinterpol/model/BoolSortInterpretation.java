@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 public class BoolSortInterpretation implements SortInterpretation {
-	
+
 	private final static int TRUE_INDEX = 1;
 	private final static int FALSE_INDEX = 0;
 
@@ -35,7 +35,7 @@ public class BoolSortInterpretation implements SortInterpretation {
 	public int getFalseIdx() {
 		return FALSE_INDEX;
 	}
-	
+
 	public int getTrueIdx() {
 		return TRUE_INDEX;
 	}

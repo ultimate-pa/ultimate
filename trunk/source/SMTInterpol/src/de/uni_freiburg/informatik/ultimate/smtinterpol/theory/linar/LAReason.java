@@ -24,25 +24,25 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
- * Reason for a specific bound on a variable. 
- * 
- * The reason can be a literal that was set by the dpll engine 
+ * Reason for a specific bound on a variable.
+ *
+ * The reason can be a literal that was set by the dpll engine
  * ({@link LiteralReason}) or it is a composite reason ({@link CompositeReason})
  * build from the sum of other reasons.
  * Each LinVar keeps a list of reasons for upper and lower bounds, starting
  * with the most tight reason.
- * 
- * A special case are LiteralReasons that have inequalities as literals.  
- * These must have a strict bound and are followed by another reason 
+ *
+ * A special case are LiteralReasons that have inequalities as literals.
+ * These must have a strict bound and are followed by another reason
  * explaining, why the bound holds non-strictly.  In integer arithmetic the
  * bound is an integer and the next bound is the next integer.
- * 
+ *
  * @see LiteralReason
  * @see CompositeReason
  * @author Juergen Christ, Jochen Hoenicke
  */
 public abstract class LAReason {
-	
+
 	private final LinVar mVar;
 	protected InfinitesimalNumber mBound;
 	private LAReason mOldReason;
@@ -50,10 +50,10 @@ public abstract class LAReason {
 	/**
 	 * The most recently asserted literal reason that caused this LAreason
 	 * to be created.  If this class is a LiteralReason and was created
-	 * by an asserted Literal this points to this class. 
+	 * by an asserted Literal this points to this class.
 	 */
 	private final LiteralReason mLastlit;
-	
+
 	public LAReason(LinVar var, InfinitesimalNumber bound, boolean isUpper, LiteralReason lastLit) {
 		mVar = var;
 		mBound = bound;
@@ -67,7 +67,7 @@ public abstract class LAReason {
 	public InfinitesimalNumber getBound() {
 		return mBound;
 	}
-	
+
 	/**
 	 * Get the exact bound of this reason.
 	 * @return Exact bound of this reason.
@@ -75,11 +75,11 @@ public abstract class LAReason {
 	public InfinitesimalNumber getExactBound() {
 		return mBound;
 	}
-	
+
 	public LinVar getVar() {
 		return mVar;
 	}
-	
+
 	public boolean isUpper() {
 		return mIsUpper;
 	}
@@ -101,23 +101,23 @@ public abstract class LAReason {
 	public LiteralReason getLastLiteral() {
 		return mLastlit;
 	}
-	
+
 	/**
 	 * Explain this reason.  This may also explain a similar weaker formula
 	 * weakened by a value less than slack and returns the slack minus the
-	 * amount the formula was weakened.  The explanation of an upper bound  
+	 * amount the formula was weakened.  The explanation of an upper bound
 	 * poly(x,y,z) <= bound is a set of literals  p_1(x,y,z) <= b_1,...,
-	 * p_n(x,y,z) <= bn, with coefficient c_1,...,c_n >= 0, such that 
+	 * p_n(x,y,z) <= bn, with coefficient c_1,...,c_n >= 0, such that
 	 *  sum c_i p_i(x,y,z) = p(x,y,z)   and   sum c_i b_i = bound - eps, where
 	 * eps < slack.  The return value of the function is slack - eps.
-	 * The explanation is added to the annotation which contains a map that 
+	 * The explanation is added to the annotation which contains a map that
 	 * assigns each literal p_i(x,y,z) <= b_i the coefficient c_i.
 	 * @param explainer the explainer object that helps explaining.
 	 * @param slack a positive amount by which the formula may be weakened.
 	 * @param literals the set of literals.
-	 * @return the new positive slack that may be reduced. 
+	 * @return the new positive slack that may be reduced.
 	 */
-	abstract InfinitesimalNumber explain(Explainer explainer, 
+	abstract InfinitesimalNumber explain(Explainer explainer,
 		InfinitesimalNumber slack, Rational factor);
 
 	@Override
@@ -128,7 +128,7 @@ public abstract class LAReason {
 	public int hashCode() {
 		return HashUtils.hashJenkins(mBound.hashCode(), mVar);
 	}
-	
+
 	public Term toSMTLIB(Theory smtTheory, boolean useAuxVars) {
 		final MutableAffineTerm at = new MutableAffineTerm();
 		at.add(Rational.ONE, mVar);

@@ -30,7 +30,7 @@ public interface LogProxy {
 
 	/*
 	 * Log levels such that a message is logged iff the enabled level is greater
-	 * or equal than the level of the message. 
+	 * or equal than the level of the message.
 	 */
 	public final static int LOGLEVEL_OFF = 0;
 	public final static int LOGLEVEL_FATAL = 1;
@@ -39,11 +39,11 @@ public interface LogProxy {
 	public final static int LOGLEVEL_INFO = 4;
 	public final static int LOGLEVEL_DEBUG = 5;
 	public final static int LOGLEVEL_TRACE = 6;
-	
+
 	// Getter and setter for the log level of this proxy.
 	void setLoglevel(int level);
 	int getLoglevel();
-	
+
 	/*
 	 * Fatal messages.  Note that in a system based on LogRecords, the
 	 * outOfMemory function should _not_ log anything as it will produce the
@@ -53,32 +53,32 @@ public interface LogProxy {
 	void fatal(String msg, Object... params);
 	void fatal(Object msg);
 	void outOfMemory(String msg);
-	
+
 	// Error messages.
 	boolean isErrorEnabled();
 	void error(String msg, Object... params);
 	void error(Object msg);
-	
+
 	// Warning messages.
 	boolean isWarnEnabled();
 	void warn(String msg, Object... params);
 	void warn(Object msg);
-	
+
 	// Info messages.
 	boolean isInfoEnabled();
 	void info(String msg, Object... params);
 	void info(Object msg);
-	
+
 	// Debug messages.
 	boolean isDebugEnabled();
 	void debug(String msg, Object... params);
 	void debug(Object msg);
-	
+
 	// Trace messages.
 	boolean isTraceEnabled();
 	void trace(String msg, Object... params);
 	void trace(Object msg);
-	
+
 	// Output destination management
 	/**
 	 * Check if the logger can change its destination.

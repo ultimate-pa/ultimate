@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 
 /**
- * This class converts a term into an Appendable (StringBuilder, 
- * OutputStreamWriter, etc).  It is non-recursive to prevent stack overflow. 
+ * This class converts a term into an Appendable (StringBuilder,
+ * OutputStreamWriter, etc).  It is non-recursive to prevent stack overflow.
  * @author Jochen Hoenicke
  */
 public class PrintTerm {
@@ -91,13 +91,13 @@ public class PrintTerm {
 		}
 		return id;
 	}
-	
+
 	/**
 	 * Ensure that object can be used as SMT-LIB 2 compliant identifier.
 	 * otherwise the input is returned.
 	 * @param value some object.
-	 * @return quoted identifier if value is String, otherwise value 
-	 * (the input) is returned. 
+	 * @return quoted identifier if value is String, otherwise value
+	 * (the input) is returned.
 	 */
 	public static Object quoteObjectIfString(Object value) {
 		if (value instanceof String) {
@@ -106,7 +106,7 @@ public class PrintTerm {
 			return value;
 		}
 	}
-	
+
 	private void run(Appendable appender) throws IOException {
 		while (!mTodo.isEmpty()) {
 			final Object next = mTodo.removeLast();
@@ -129,7 +129,7 @@ public class PrintTerm {
 			}
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		return "[PrintTerm: " + mTodo + "]";

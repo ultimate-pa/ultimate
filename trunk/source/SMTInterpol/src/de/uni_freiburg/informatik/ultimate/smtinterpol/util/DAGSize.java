@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -97,6 +98,14 @@ public class DAGSize extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			walker.enqueueWalker(new TermOnceWalker(term.getSubformula()));
+		}
+
+		@Override
+		public void walk(final NonRecursive walker, final MatchTerm term) {
+			walker.enqueueWalker(new TermOnceWalker(term.getDataTerm()));
+			for (final Term t : term.getCases()) {
+				walker.enqueueWalker(new TermOnceWalker(t));
+			}
 		}
 
 		@Override

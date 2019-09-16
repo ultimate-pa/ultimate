@@ -23,11 +23,11 @@ import java.util.ArrayDeque;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
- * Represents a function application term.  This consists of a function 
+ * Represents a function application term.  This consists of a function
  * symbol and zero or more sub-terms (the parameters of the function).
  * A constant is represented as function application with zero parameters.
  *
- * An application term is created by 
+ * An application term is created by
  * {@link Script#term(String, Term...)} or
  * for indexed function symbols or for symbols with generic return sort by
  * {@link Script#term(String, java.math.BigInteger[], Sort, Term...)}.
@@ -47,7 +47,7 @@ public class ApplicationTerm extends Term {
 
 	/**
 	 * Get the function symbol.
-	 * @return the function symbol. 
+	 * @return the function symbol.
 	 * @see FunctionSymbol#getName()
 	 */
 	public FunctionSymbol getFunction() {
@@ -70,7 +70,7 @@ public class ApplicationTerm extends Term {
 	public Sort getSort() {
 		return mFunction.mReturnSort.getRealSort();
 	}
-		
+
 	static final int hashApplication(
 			FunctionSymbol func, Term[] parameters) {
 		return HashUtils.hashJenkins(func.hashCode(), (Object[])parameters);

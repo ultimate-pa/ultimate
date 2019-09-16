@@ -31,9 +31,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
  * @author Juergen Christ
  */
 public class FiniteSortInterpretation implements SortInterpretation {
-	
+
 	private int mSize = 0;
-	
+
 	@Override
 	public Term toSMTLIB(Theory t, Sort sort) {
 		final TermVariable var = t.createTermVariable("@v", sort);
@@ -43,7 +43,7 @@ public class FiniteSortInterpretation implements SortInterpretation {
 		}
 		return t.forall(new TermVariable[] {var}, t.or(disj));
 	}
-	
+
 	@Override
 	public int ensureCapacity(int numValues) {
 		if (mSize < numValues) {

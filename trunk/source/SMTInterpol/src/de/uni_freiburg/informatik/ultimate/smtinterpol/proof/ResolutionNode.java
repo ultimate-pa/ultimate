@@ -36,7 +36,7 @@ public class ResolutionNode extends ProofNode {
 	public static class Antecedent {
 		public final Literal mPivot;
 		public final Clause mAntecedent;
-		
+
 		/**
 		 * Create an pivot/antecedent entry for a resolution node.
 		 * The pivot must occur with the same polarity in the antecedent clause.
@@ -59,13 +59,13 @@ public class ResolutionNode extends ProofNode {
 	private final Clause mPrimary;
 	/// Our antecedents of the hyper resolution.
 	private final Antecedent[] mAntecedents;
-	
+
 	public ResolutionNode(Clause primary, Antecedent[] antecedents) {
 		assert(primary != null);
 		mPrimary = primary;
 		mAntecedents = antecedents;
 	}
-	
+
 	@Override
 	public boolean isLeaf() {
 		return false;
@@ -81,7 +81,7 @@ public class ResolutionNode extends ProofNode {
 	public Antecedent[] getAntecedents() {
 		return mAntecedents;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mPrimary + " => " + Arrays.toString(mAntecedents);

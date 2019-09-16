@@ -40,21 +40,21 @@ public interface ITheory {
 	 * @return a conflict clause, if setting the literal is in conflict.
 	 */
 	public Clause setLiteral(Literal literal);
-	
+
 	/**
-	 * Remove the decision of a literal (set it to <em>undecided</em>).  
+	 * Remove the decision of a literal (set it to <em>undecided</em>).
 	 * This is always called in exactly the reverse order to setLiteral.
 	 * @param literal the literal which is backtracked.
 	 */
 	public void backtrackLiteral(Literal literal);
-	
+
 	/**
 	 * Generates a conflict clause that follows directly from the underlying
 	 * theory. All literals in this clause must have been decided to false.
-	 * 
+	 *
 	 * This function should do more sophisticated checks to generate conflicts
 	 * and propagated literals.
-	 * 
+	 *
 	 * @return a conflict clause, null iff there is no conflict.
 	 */
 	public Clause checkpoint();
@@ -62,34 +62,34 @@ public interface ITheory {
 	/**
 	 * Generates a conflict clause that follows directly from the underlying
 	 * theory. All literals in this clause must have been decided to false.
-	 * 
+	 *
 	 * If this returns null, the theory is consistent with the set literals.
-	 * 
+	 *
 	 * @return a conflict clause or null iff there is no conflict.
 	 */
 	public Clause computeConflictClause();
-	
+
 	/**
 	 * Computes a literal that follows from the other literals that
 	 * have been decided before.
-	 * 
+	 *
 	 * A valid implementation may always return null.  This is just to
 	 * speed-up the process if the theory has generated some knowledge
 	 * it wants to share.
 	 * @return a "unit" literal, null if none available.
 	 */
 	public Literal getPropagatedLiteral();
-	
+
 	/**
 	 * Generates the explanation clause for the given literals.
 	 * The clause must be a tautology in the underlying theory.
-	 * It must contain the literal and all other literals in 
+	 * It must contain the literal and all other literals in
 	 * the clause must have been decided to false.
-	 * This is only invoked for literals returned by 
+	 * This is only invoked for literals returned by
 	 * getPropagatedLiteral().  There may be more literals set between
-	 * getPropagatedLiteral() and getUnitClause(), but they may 
+	 * getPropagatedLiteral() and getUnitClause(), but they may
 	 * not be used in the explanation.
-	 * 
+	 *
 	 * @return the explanation clause for literal.
 	 */
 	public Clause getUnitClause(Literal literal);
@@ -100,13 +100,20 @@ public interface ITheory {
 	 * @return Known, but undecided literal.
 	 */
 	public Literal getSuggestion();
-	
+
 	/**
-	 * Print statistics. 
+	 * Check if the theory has a complete model that satisfies all theory axioms.
+	 * 
+	 * @return DPLLEngine.COMPLETE, if a model exists, DPLLEngine.INCOMPLETE_* if unsure.
+	 */
+	public int checkCompleteness();
+
+	/**
+	 * Print statistics.
 	 */
 	public void printStatistics(LogProxy logger);
 	/**
-	 * Dump current model.  Currently only used for debugging purposes. 
+	 * Dump current model.  Currently only used for debugging purposes.
 	 */
 	public void dumpModel(LogProxy logger);
 	/**
@@ -119,11 +126,11 @@ public interface ITheory {
 	 * @param currentDecideLevel Number of decisions of the engine.
 	 */
 	public void decreasedDecideLevel(int currentDecideLevel);
-	
+
 	/**
 	 * Notification that a conflict was completely resolved.  The theory
 	 * may perform cleanups.
-	 * @return a conflict clause or null if no more obvious conflicts.  
+	 * @return a conflict clause or null if no more obvious conflicts.
 	 */
 	public Clause backtrackComplete();
 	/**
@@ -139,7 +146,7 @@ public interface ITheory {
 	/**
 	 * Save data needed to restore the stack level.  This method is called
 	 * during a push on the assertion stack and should return an object suitable
-	 * to restore the current state. 
+	 * to restore the current state.
 	 * @see #pop(Object)
 	 * @return Description of the current state.
 	 */

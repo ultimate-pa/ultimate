@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 
 public class CCBaseTerm extends CCTerm {
 	Object mSymbol;
-	
+
 	public CCBaseTerm(boolean isFunc, int parentPos, Object symb, SharedTerm term) {
 		super(isFunc, parentPos, term, symb.hashCode());
 		mSymbol = symb;
@@ -40,7 +40,7 @@ public class CCBaseTerm extends CCTerm {
 	public FunctionSymbol getFunctionSymbol() {
 		return (FunctionSymbol) mSymbol;
 	}
-	
+
 	public boolean isFunctionSymbol() {
 		return mSymbol instanceof FunctionSymbol;
 	}

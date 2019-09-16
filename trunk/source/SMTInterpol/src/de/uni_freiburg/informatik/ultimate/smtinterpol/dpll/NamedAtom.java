@@ -20,20 +20,17 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.dpll;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 public class NamedAtom extends DPLLAtom {
-	public final static Annotation[] QUOTED = new Annotation[] {
-		new Annotation(":quoted", null)
-	};
+	public final static Annotation[] QUOTED = new Annotation[] { new Annotation(":quoted", null) };
 	private final Term mSmtAtom;
-	
+
 	public NamedAtom(final Term smtAtom, final int assertionstacklevel) {
 		super(smtAtom.hashCode(), assertionstacklevel);
 		mSmtAtom = smtAtom;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mSmtAtom.toString();
@@ -43,14 +40,9 @@ public class NamedAtom extends DPLLAtom {
 	public Term getSMTFormula(final Theory smtTheory, final boolean quoted) {
 		return quoted ? smtTheory.annotatedTerm(QUOTED, mSmtAtom) : mSmtAtom;
 	}
-	
-	public int containsTerm(final TermVariable tv) {
-		return 0;
-	}
-	
+
 	@Override
 	public boolean equals(final Object other) { // NOCHECKSTYLE see Literal.hashCode()
-		return other instanceof NamedAtom
-			&& ((NamedAtom) other).mSmtAtom == mSmtAtom;
+		return other instanceof NamedAtom && ((NamedAtom) other).mSmtAtom == mSmtAtom;
 	}
 }

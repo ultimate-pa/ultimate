@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 public class AtomQueue extends AbstractQueue<DPLLAtom> {
 	DPLLAtom[] mAtoms;
 	int mSize;
-	
+
 	public AtomQueue() {
 		mAtoms = new DPLLAtom[100];
 		mSize = 0;
@@ -55,7 +55,7 @@ public class AtomQueue extends AbstractQueue<DPLLAtom> {
 	public int size() {
 		return mSize;
 	}
-	
+
 	private void sink(DPLLAtom atom, int pos) {
 		int parent;
 		while (pos > 0
@@ -70,7 +70,7 @@ public class AtomQueue extends AbstractQueue<DPLLAtom> {
 
 	@Override
 	public boolean offer(DPLLAtom atom) {
-		assert atom.mAtomQueueIndex == -1 
+		assert atom.mAtomQueueIndex == -1
 			|| mAtoms[atom.mAtomQueueIndex] == atom;
 		if (Config.EXPENSIVE_ASSERTS) {
 			for (int i = 0; i < mSize; i++) {
@@ -113,7 +113,7 @@ public class AtomQueue extends AbstractQueue<DPLLAtom> {
 				|| mAtoms[((DPLLAtom) o).mAtomQueueIndex] == o);
 		return (((DPLLAtom) o).mAtomQueueIndex != -1);
 	}
-	
+
 	@Override
 	public boolean remove(Object o) {
 		if (!(o instanceof DPLLAtom)) {
@@ -130,7 +130,7 @@ public class AtomQueue extends AbstractQueue<DPLLAtom> {
 			return false;
 		}
 		assert mAtoms[atom.mAtomQueueIndex] == atom;
-		
+
 		// remove the element
 		int pos = atom.mAtomQueueIndex;
 		atom.mAtomQueueIndex = -1;
@@ -152,7 +152,7 @@ public class AtomQueue extends AbstractQueue<DPLLAtom> {
 		//                         this into the free spot.
 		// in all other cases: move last element to the leaf and let it sink
 		// into the tree.
-		
+
 		// check if the new free position is at the end.
 		if (pos != --mSize) {
 			// move the element from the last position to the free leaf

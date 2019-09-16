@@ -37,7 +37,7 @@ public class IRAWrapperFactory {
 	 *            the result type specified by SMTLIB {@code (as ..)}; null if no result type specified.
 	 * @return null if an error occured, otherwise the wrapping function symbol.
 	 */
-	public FunctionSymbol createWrapper(Theory theory, String name, final BigInteger[] indices, Sort[] paramSorts,
+	public FunctionSymbol createWrapper(Theory theory, String name, final String[] indices, Sort[] paramSorts,
 			final Sort resultType) {
 		final Sort realSort = theory.getRealSort();
 		final Sort intSort = theory.getNumericSort();

@@ -25,7 +25,7 @@ import java.util.Iterator;
 /**
  * A scoped combination of a set and a list.  Elements are unique within this
  * collection (as in sets) and can be iterated in an order (as in lists).
- * 
+ *
  * Whenever a new scope is created, an empty list element is inserted into the
  * list (not into the set) and marks the beginning of this scope.  The scope is
  * invisible for <code>ListSetIterator</code>, be can be retrieved using
@@ -34,7 +34,7 @@ import java.util.Iterator;
  * @author Juergen Christ
  */
 public class ListSet<E> extends AbstractSet<E> {
-	
+
 	private class ScopeIterator implements Iterator<E> {
 		ListSetElem<E> mCur = mRoot;
 		@Override
@@ -53,17 +53,17 @@ public class ListSet<E> extends AbstractSet<E> {
 			mCur = ListSet.this.remove(mCur).mNext;
 			ListSet.this.mElems.remove(mCur);
 		}
-		
+
 	}
-	
+
 	public class ListSetIterator implements Iterator<E> {
 
 		ListSetElem<E> mCur;
-		
+
 		ListSetIterator(ListSetElem<E> cur) {
 			mCur = cur;
 		}
-		
+
 		@Override
 		public boolean hasNext() {
 			ListSetElem<E> walk = mCur.mNext;
@@ -88,9 +88,9 @@ public class ListSet<E> extends AbstractSet<E> {
 			mCur = ListSet.this.remove(mCur);
 			ListSet.this.mElems.remove(mCur);
 		}
-		
+
 	}
-	
+
 	private static class ListSetElem<E> {
 		E mElem;
 		ListSetElem<E> mNext;
@@ -111,20 +111,20 @@ public class ListSet<E> extends AbstractSet<E> {
 			return mElem == null ? other == null : mElem.equals(other);
 		}
 	}
-	
+
 	private final HashSet<ListSetElem<E>> mElems;
 	private final ListSetElem<E> mRoot;
-	
+
 	public ListSet() {
 		mElems = new HashSet<ListSetElem<E>>();
 		mRoot = new ListSetElem<E>(null);
 	}
-	
+
 	public void beginScope() {
 		final ListSetElem<E> marker = new ListSetElem<E>(null);
 		addToList(marker);
 	}
-	
+
 	public void endScope() {
 		ListSetElem<E> walk = mRoot.mPrev;
 		while (walk.mElem != null) {
@@ -132,14 +132,14 @@ public class ListSet<E> extends AbstractSet<E> {
 			walk = remove(walk);
 		}
 	}
-	
+
 	private void addToList(ListSetElem<E> toAdd) {
 		mRoot.mPrev.mNext = toAdd;
 		toAdd.mNext = mRoot;
 		toAdd.mPrev = mRoot.mPrev;
 		mRoot.mPrev = toAdd;
 	}
-	
+
 	@Override
 	public boolean add(E elem) {
 		final ListSetElem<E> toAdd = new ListSetElem<E>(elem);
@@ -157,7 +157,7 @@ public class ListSet<E> extends AbstractSet<E> {
 
 			Iterator<ListSetElem<E>> mIt = mElems.iterator();
 			ListSetElem<E> mData;
-			
+
 			@Override
 			public boolean hasNext() {
 				return mIt.hasNext();
@@ -173,10 +173,10 @@ public class ListSet<E> extends AbstractSet<E> {
 				ListSet.this.remove(mData);
 				mIt.remove();
 			}
-			
+
 		};
 	}
-	
+
 	private ListSetElem<E> remove(ListSetElem<E> elem) {
 		final ListSetElem<E> prev = elem.mPrev;
 		prev.mNext = elem.mNext;
@@ -191,19 +191,19 @@ public class ListSet<E> extends AbstractSet<E> {
 	public int size() {
 		return mElems.size();
 	}
-	
+
 	public ListSetIterator listIterator() {
 		return new ListSetIterator(mRoot);
 	}
-	
+
 	public ListSetIterator successors(ListSetIterator it) {
 		return new ListSetIterator(it.mCur);
 	}
-	
+
 	public Iterator<E> scopeIterator() {
 		return new ScopeIterator();
 	}
-	
+
 	public Iterable<E> scope() {
 		return new Iterable<E>() {
 
@@ -211,7 +211,7 @@ public class ListSet<E> extends AbstractSet<E> {
 			public Iterator<E> iterator() {
 				return scopeIterator();
 			}
-			
+
 		};
 	}
 

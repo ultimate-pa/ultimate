@@ -26,11 +26,11 @@ import java.util.Iterator;
 public class IdentityHashSet<E> extends AbstractSet<E> {
 
 	private final IdentityHashMap<E, Object> mBacking;
-	
+
 	public IdentityHashSet() {
 		mBacking = new IdentityHashMap<E, Object>();
 	}
-	
+
 	@Override
 	public Iterator<E> iterator() {
 		return mBacking.keySet().iterator();

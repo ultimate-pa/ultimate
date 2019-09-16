@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  * This test case is designed to test a bug in the selection of possible values for the infinitesimal parameter epsilon.
  * It is designed as a system test and does not directly test the implementation, i.e., the concrete values computed by
  * SMTInterpol. Instead, it checks that the model satisfies the given formula using SMTInterpols model-check-mode
- * 
+ *
  * @author Juergen Christ
  */
 @RunWith(JUnit4.class)

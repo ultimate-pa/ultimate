@@ -44,7 +44,7 @@ public class PropProofChecker {
 		mTodo.add(refutation);
 		return run();
 	}
-	
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private boolean run() {
 		int errors = 0;
@@ -95,7 +95,7 @@ public class PropProofChecker {
 								return false;
 							}
 							if (!clauselits.remove(ante.mPivot.negate())) {
-								System.err.println("Negated pivot literal " 
+								System.err.println("Negated pivot literal "
 										+ ante.mPivot.negate()
 										+ " not in primary");
 								return false;

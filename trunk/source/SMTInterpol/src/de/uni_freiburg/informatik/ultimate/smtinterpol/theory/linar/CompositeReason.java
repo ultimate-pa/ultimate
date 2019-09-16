@@ -47,28 +47,28 @@ public class CompositeReason extends LAReason {
 		}
 		assert (!getVar().mIsInt || mBound.isIntegral());
 	}
-		
+
 	@Override
 	public InfinitesimalNumber getExactBound() {
 		return mExactBound;
 	}
-	
+
 	@Override
 	InfinitesimalNumber explain(Explainer explainer,
 			InfinitesimalNumber slack, Rational factor) {
 		// First check, if there is already a literal with a weaker bound
-		// that is strong enough to explain the conflict/unit clause.  
+		// that is strong enough to explain the conflict/unit clause.
 		// However, make sure that this literal was set before the literal
 		// for which we want to generate a unit clause.
 		//
 		// needToExplain is set to true, if there is a weaker literal
 		// that was not set before the current conflict/unit clause.  Usually,
-		// this means that we want to generate a unit clause for such a 
+		// this means that we want to generate a unit clause for such a
 		// weaker literal.  Therefore, it does not make sense to create a
 		// composite literal.
 		boolean needToExplain = false;
 		if (isUpper()) {
-			final Entry<InfinitesimalNumber, BoundConstraint> nextEntry = 
+			final Entry<InfinitesimalNumber, BoundConstraint> nextEntry =
 				getVar().mConstraints.ceilingEntry(getBound());
 			if (nextEntry != null) {
 				final BoundConstraint nextBound = nextEntry.getValue();
@@ -84,7 +84,7 @@ public class CompositeReason extends LAReason {
 				}
 			}
 		} else {
-			final Entry<InfinitesimalNumber, BoundConstraint> nextEntry = 
+			final Entry<InfinitesimalNumber, BoundConstraint> nextEntry =
 				getVar().mConstraints.lowerEntry(getBound());
 			if (nextEntry != null) {
 				final BoundConstraint nextBound = nextEntry.getValue();
@@ -101,7 +101,7 @@ public class CompositeReason extends LAReason {
 				}
 			}
 		}
-		
+
 		final InfinitesimalNumber diff = !getVar().mIsInt ? InfinitesimalNumber.ZERO // NOPMD
 				: isUpper()
 				? mExactBound.sub(getBound())
@@ -109,7 +109,7 @@ public class CompositeReason extends LAReason {
 		final int decideLevel = explainer.getDecideLevel();
 		// Should we create a composite literal?  We do this only, if there
 		// is not already a weaker usable bound (needToExplain is true), and
-		// if we do not have enough slack to avoid the composite literal 
+		// if we do not have enough slack to avoid the composite literal
 		// completely or if the composite literal would appear on the same
 		// decideLevel (and therefore would be immediately removed anyway).
 		if (needToExplain
@@ -118,7 +118,7 @@ public class CompositeReason extends LAReason {
 			// Here, we do not create a composite literal.
 			final boolean enoughSlack = slack.compareTo(diff) > 0;
 			if (!enoughSlack) {
-				// we have not have enough slack to just use the proof of 
+				// we have not have enough slack to just use the proof of
 				// the exact bound. Create a sub-annotation.
 				explainer.addAnnotation(this, factor);
 				return slack;
@@ -129,7 +129,7 @@ public class CompositeReason extends LAReason {
 			for (int i = 0; i < mReasons.length; i++) {
 				final Rational coeff = mCoeffs[i];
 				slack = slack.div(coeff.abs());
-				slack = mReasons[i].explain(explainer, 
+				slack = mReasons[i].explain(explainer,
 						slack, factor.mul(coeff));
 				slack = slack.mul(coeff.abs());
 				assert (slack.compareTo(InfinitesimalNumber.ZERO) > 0);

@@ -131,17 +131,17 @@ public class SortTest {
 	@Test
 	public void testIndexedSort() {
 		final Theory theory = new Theory(Logics.QF_UF);
-		final BigInteger[] size = new BigInteger[] { BigInteger.valueOf(5) };// NOCHECKSTYLE
-		final BigInteger[] dim = new BigInteger[] { BigInteger.valueOf(2) };
+		final String[] size = new String[] { String.valueOf(5) };// NOCHECKSTYLE
+		final String[] dim = new String[] { String.valueOf(2) };
 		final Sort bv5 = new SortSymbol(theory, "bv", 0, null, SortSymbol.INDEXED) {
 			@Override
-			public void checkArity(final BigInteger[] indices, final int arity) {
+			public void checkArity(final String[] indices, final int arity) {
 				// Disable arity check for this test
 			}
 		}.getSort(size);// NOCHECKSTYLE
 		final Sort marr = new SortSymbol(theory, "MultiArray", 2, null, SortSymbol.INDEXED) {
 			@Override
-			public void checkArity(final BigInteger[] indices, final int arity) {
+			public void checkArity(final String[] indices, final int arity) {
 				// Disable arity check for this test
 			}
 		}.getSort(dim, bv5, bv5);// NOCHECKSTYLE

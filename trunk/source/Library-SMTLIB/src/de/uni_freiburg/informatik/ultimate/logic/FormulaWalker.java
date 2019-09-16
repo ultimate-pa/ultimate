@@ -102,7 +102,7 @@ public class FormulaWalker {
 			try {
 				final Term newsub = recursivewalk(let.getSubTerm());
 				return mVisitor.unlet() ? newsub
-					: newvalues == values && newsub == let.getSubTerm() ? let 
+					: newvalues == values && newsub == let.getSubTerm() ? let
 						: mScript.let(let.getVariables(), newvalues, newsub);
 			} finally {
 				mVisitor.endscope(let.getVariables());

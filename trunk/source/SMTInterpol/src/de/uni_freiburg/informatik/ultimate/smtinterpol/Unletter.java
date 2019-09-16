@@ -28,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class Unletter extends LoggingScript {
 
 	private final FormulaUnLet mUnletter = new FormulaUnLet();
-	
+
 	public Unletter() throws FileNotFoundException {
 		super("<stdout>", true);
 	}

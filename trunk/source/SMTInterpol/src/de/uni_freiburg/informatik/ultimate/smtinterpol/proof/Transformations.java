@@ -29,17 +29,17 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode.Antecedent;
 
 /**
- * Collection of proof tree transformations.  The algorithms are taken from 
+ * Collection of proof tree transformations.  The algorithms are taken from
  * Fontaine, Merz, Woltzenlogel Paleo, "Compression of Propositional Resolution
  * Proofs via Partial Regularization"
  * @author Juergen Christ
  */
 public final class Transformations {
-    
+
     private Transformations() {
         // Hide constructor
     }
-    
+
 	public static enum AvailableTransformations {
 		NONE {
 
@@ -47,7 +47,7 @@ public final class Transformations {
 			public Clause transform(Clause proof) {
 				return proof;
 			}
-			
+
 		},
 		LU {
 
@@ -55,7 +55,7 @@ public final class Transformations {
 			public Clause transform(Clause proof) {
 				return Transformations.lowerUnits(proof);
 			}
-			
+
 		},
 		RPI {
 
@@ -63,7 +63,7 @@ public final class Transformations {
 			public Clause transform(Clause proof) {
 				return Transformations.recycleUnits(proof);
 			}
-			
+
 		},
 		RPILU {
 
@@ -72,7 +72,7 @@ public final class Transformations {
 				return Transformations.lowerUnits(
 						Transformations.recycleUnits(proof));
 			}
-			
+
 		},
 		LURPI {
 
@@ -81,7 +81,7 @@ public final class Transformations {
 				return Transformations.recycleUnits(
 						Transformations.lowerUnits(proof));
 			}
-			
+
 		};
 		public abstract Clause transform(Clause proof);
 	}

@@ -35,11 +35,11 @@ public class FormulaLet extends NonRecursive {
 	private ArrayDeque<Term> mResultStack;
 	private int mCseNum;
 	private final LetFilter mFilter;
-	
+
 	public static interface LetFilter {
 		public boolean isLettable(Term t);
 	}
-	
+
 	public FormulaLet() {
 		this(null);
 	}
@@ -67,10 +67,10 @@ public class FormulaLet extends NonRecursive {
 		mVisited = null;
 		return result;
 	}
-	
+
 	/**
 	 * This walker converts a term into a letted term.
-	 * 
+	 *
 	 * For the initial formula and for each quantifier, a new scope for term infos is created (mVisited).
 	 * It then creates a TermInfo for the term, which is walked first to collect all information about the term and its
 	 * subterms. After collecting all info, the the term is transformed. to a letted term. Finally, the visited scope
@@ -81,7 +81,7 @@ public class FormulaLet extends NonRecursive {
 		public Letter(Term term) {
 			mTerm = term;
 		}
-		
+
 		@Override
 		public void walk(NonRecursive engine) {
 			if (mTerm instanceof TermVariable
@@ -103,7 +103,7 @@ public class FormulaLet extends NonRecursive {
 			engine.enqueueWalker(info);
 		}
 	}
-	
+
 	/**
 	 * This class collects informations for a term and is also a walker. As a walker it will just compute the
 	 * predecessor counter (or occurrence counter).
@@ -162,10 +162,10 @@ public class FormulaLet extends NonRecursive {
 			}
 			return true;
 		}
-		
+
 		/**
 		 * Merge the mParent with parent, i.e. find the common parent of mParent and parent and update mParent.
-		 * 
+		 *
 		 * @param parent
 		 *            The new parent that should be merged.
 		 */
@@ -250,13 +250,18 @@ public class FormulaLet extends NonRecursive {
 		}
 
 		@Override
+		public void walk(NonRecursive walker, MatchTerm term) {
+			// TODO: same as quantified formula above
+		}
+
+		@Override
 		public void walk(NonRecursive walker, TermVariable term) {
 			throw new InternalError("No TermInfo for TermVariable allowed");
 		}
 
 		/**
 		 * Visit a child of the current term.
-		 * 
+		 *
 		 * @param let
 		 *            The formula let environment.
 		 * @param term
@@ -299,7 +304,7 @@ public class FormulaLet extends NonRecursive {
 
 		/**
 		 * Create walker to transform the term into a letted term.
-		 * 
+		 *
 		 * @param parent
 		 *            The predecessor, or the common ancestor term where the let is placed.
 		 * @param isCounted
@@ -310,7 +315,7 @@ public class FormulaLet extends NonRecursive {
 			mTermInfo = parent;
 			mIsCounted = isCounted;
 		}
-		
+
 		@Override
 		public void walk(NonRecursive engine) {
 			final FormulaLet let = ((FormulaLet) engine);
@@ -394,6 +399,16 @@ public class FormulaLet extends NonRecursive {
 					let.enqueueWalker(
 						new Converter(mTermInfo, params[i], mIsCounted));
 				}
+			} else if (term instanceof MatchTerm) {
+				// enqueue the final walker that rebuilds the application term.
+				final MatchTerm matchTerm = (MatchTerm) term;
+				let.enqueueWalker(new BuildMatchTerm(matchTerm));
+				// recursively convert the arguments.
+				final Term[] cases = matchTerm.getCases();
+				for (int i = cases.length - 1; i >= 0; i--) {
+					let.enqueueWalker(new Letter(cases[i]));
+				}
+				let.enqueueWalker(new Converter(mTermInfo, matchTerm.getDataTerm(), mIsCounted));
 			} else {
 				// everything else is converted to itself
 				let.mResultStack.addLast(term);
@@ -427,7 +442,7 @@ public class FormulaLet extends NonRecursive {
 			}
 			// merge parents, to find out where the let should be put into.
 			info.mergeParent(mParent);
-			if (info.shouldBuildLet() && info.mSubst == null 
+			if (info.shouldBuildLet() && info.mSubst == null
 					&& (let.mFilter == null || let.mFilter.isLettable(child))) {
 				// this will be letted, so create a new term variable for it.
 				final Term t = info.mTerm;
@@ -504,7 +519,7 @@ public class FormulaLet extends NonRecursive {
 			lettedTerms.clear();
 		}
 	}
-	
+
 	/**
 	 * Add a let term around the term on the result stack using the let values also from the result stack and put the
 	 * let term back onto the result stack.
@@ -585,6 +600,41 @@ public class FormulaLet extends NonRecursive {
 				} else {
 					result = theory.forall(mOldTerm.getVariables(), newBody);
 				}
+			}
+			let.mResultStack.addLast(result);
+		}
+	}
+
+	/**
+	 * Build a match term using the terms on the result stack and put the result on the result stack.
+	 */
+	static class BuildMatchTerm implements Walker {
+		final MatchTerm mOldTerm;
+
+		public BuildMatchTerm(MatchTerm term) {
+			mOldTerm = term;
+		}
+
+		@Override
+		public void walk(NonRecursive engine) {
+			final FormulaLet let = (FormulaLet) engine;
+			final Term[] oldCases = mOldTerm.getCases();
+			Term[] newCases = oldCases;
+			for (int i = oldCases.length - 1; i >= 0; i--) {
+				Term caseTerm = let.mResultStack.removeLast();
+				if (caseTerm != oldCases[i]) {
+					if (newCases == oldCases) {
+						newCases = oldCases.clone();
+					}
+					newCases[i] = caseTerm;
+				}
+			}
+			final Term newDataTerm = let.mResultStack.removeLast();
+
+			Term result = mOldTerm;
+			if (newDataTerm != mOldTerm.getDataTerm() || newCases != oldCases) {
+				final Theory theory = mOldTerm.getTheory();
+				result = theory.match(newDataTerm, mOldTerm.getVariables(), newCases, mOldTerm.getConstructors());
 			}
 			let.mResultStack.addLast(result);
 		}

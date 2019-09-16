@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleList;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm.Parent;
 
 /**
- * This class collects various information for an equivalence class 
+ * This class collects various information for an equivalence class
  * of CCTerms about function applications on the terms in the class.
  * The informations are:
  * <ul><li>The AppTerm that have a CCTerm in the equivalence class as
@@ -30,26 +30,26 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm
  * <li>The reverse triggers that search for a function application on
  * the equivalence class.</li>
  * </ul>
- * 
+ *
  * To allow faster searches for the relevant information, the information
  * is ordered by the function symbol and position of the the argument.
  * This is realised by the member <code>mFuncSymbNr</code> that uniquely
- * defines the function symbol and the position of the argument.  The 
+ * defines the function symbol and the position of the argument.  The
  * <code>mFuncSymbNr</code> is 0 if this represents the func child of some
  * appterm.  Since all the things in that class are partial application of
  * the same function, the mFuncSymbNr is not needed in that case.
- * 
+ *
  * The CCParentInfo build a linked list sorted by <code>mFuncSymbNr</code>.
- * The CCTerm stores only the first element of the list, the 
+ * The CCTerm stores only the first element of the list, the
  * <code>mNext</code> field points to the next element in the linked list.
- *  
- * When equivalence classes are merged, their corresponding 
- * <code>CCParentInfo</code>s are merged, too.  The list for the new 
+ *
+ * When equivalence classes are merged, their corresponding
+ * <code>CCParentInfo</code>s are merged, too.  The list for the new
  * representative is changed.  Currently new CCParentInfo are created for
  * the new representative, however, the contents are just shared with the
- * list of the old representative.  We use the usual joinList/unjoinList 
+ * list of the old representative.  We use the usual joinList/unjoinList
  * paradigm for the contents of the parent info.
- * 
+ *
  * @author hoenicke
  *
  */
@@ -57,7 +57,8 @@ public class CCParentInfo {
 	int mFuncSymbNr;
 	SimpleList<Parent> mCCParents;
 	CCParentInfo mNext;
-	
+	SimpleList<ReverseTrigger> mReverseTriggers; // E-Matching
+
 	/**
 	 * Create an empty CCParentInfo as list head.
 	 */
@@ -69,13 +70,15 @@ public class CCParentInfo {
 		mFuncSymbNr = funcSymbNr;
 		mCCParents = new SimpleList<Parent>();
 		mNext = next;
+		mReverseTriggers = new SimpleList<>();
 	}
-	
+
 	private CCParentInfo(CCParentInfo other, CCParentInfo next) {
 		this(other.mFuncSymbNr, next);
 		mCCParents.joinList(other.mCCParents);
+		mReverseTriggers.joinList(other.mReverseTriggers);
 	}
-	
+
 	public void addParentInfo(int funcSymbNr, Parent parent, boolean isLast, CClosure engine) {
 		CCParentInfo info = this;
 		while (info.mNext != null && info.mNext.mFuncSymbNr <= funcSymbNr) {
@@ -88,7 +91,7 @@ public class CCParentInfo {
 		info.mNext = new CCParentInfo(funcSymbNr, info.mNext);
 		info.mNext.mCCParents.prependIntoJoined(parent, isLast);
 	}
-	
+
 	public void mergeParentInfo(CCParentInfo other) {
 		CCParentInfo myInfo = this;
 		// skip head
@@ -103,9 +106,10 @@ public class CCParentInfo {
 				/* merge infos */
 				myInfo = myInfo.mNext;
 				myInfo.mCCParents.joinList(other.mCCParents);
+				myInfo.mReverseTriggers.joinList(other.mReverseTriggers);
 			} else {
 				/* copy info */
-				/* FIXME: can we move info instead??  It saves creating lots of 
+				/* FIXME: can we move info instead??  It saves creating lots of
 				 * objects but really complicates things */
 				myInfo.mNext = new CCParentInfo(other, myInfo.mNext);
 				myInfo = myInfo.mNext;
@@ -113,7 +117,7 @@ public class CCParentInfo {
 			other = other.mNext;
 		}
 	}
-	
+
 	public void unmergeParentInfo(CCParentInfo other) {
 		CCParentInfo myInfo = this;
 		// skip head
@@ -126,13 +130,14 @@ public class CCParentInfo {
 			}
 			final CCParentInfo next = myInfo.mNext;
 			assert (next.mFuncSymbNr == funcSymbNr);
-			
+
 			/* unjoin lists */
 			next.mCCParents.unjoinList(other.mCCParents);
-			/* FIXME: Do we really want to remove the entry if it gets empty?? 
+			next.mReverseTriggers.unjoinList(other.mReverseTriggers);
+			/* FIXME: Do we really want to remove the entry if it gets empty??
 			 * OTOH, we would then need to create a new info more often.
 			 */
-			if (next.mCCParents.isEmpty()) {
+			if (next.mCCParents.isEmpty() && next.mReverseTriggers.isEmpty()) {
 				/*myInfo.m_Next = next.m_Next;*/
 			} else {
 				myInfo = next;
@@ -151,7 +156,7 @@ public class CCParentInfo {
 		}
 		return null;
 	}
-	
+
 	CCParentInfo createInfo(int funcSymbNr) {
 		CCParentInfo info = this;
 		while (info.mNext != null && info.mNext.mFuncSymbNr <= funcSymbNr) {
@@ -162,7 +167,7 @@ public class CCParentInfo {
 		}
 		return info.mNext = new CCParentInfo(funcSymbNr, info.mNext);
 	}
-	
+
 	CCParentInfo getExistingParentInfo(int funcSymbNr) {
 		CCParentInfo info = this;
 		while (info.mNext != null && info.mNext.mFuncSymbNr <= funcSymbNr) {
@@ -173,7 +178,7 @@ public class CCParentInfo {
 		}
 		return null;
 	}
-	
+
 	public SimpleList<Parent> getParentInfo(int funcSymbNr) {
 		CCParentInfo info = mNext;
 		while (info != null && info.mFuncSymbNr < funcSymbNr) {

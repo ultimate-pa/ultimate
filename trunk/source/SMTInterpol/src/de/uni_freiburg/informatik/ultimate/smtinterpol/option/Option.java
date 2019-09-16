@@ -26,7 +26,7 @@ public abstract class Option {
 
 	private final boolean mOnlineModifiable;
 	private final String mDescription;
-	
+
 	public Option(boolean onlineModifiable, String description) {
 		mOnlineModifiable = onlineModifiable;
 		mDescription = description;

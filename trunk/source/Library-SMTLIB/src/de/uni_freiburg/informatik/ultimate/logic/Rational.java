@@ -439,7 +439,7 @@ public class Rational implements Comparable<Rational> {
 	 * @param b Second Number
 	 * @return Greatest common divisor
 	 */
-	static int gcd(int a,int b) {
+	public static int gcd(int a, int b) {
 		/* This is faster for integer */
 		//assert(a >= 0 && b >= 0);
 		while (b != 0) {
@@ -456,7 +456,7 @@ public class Rational implements Comparable<Rational> {
 	 * @param b Second Number
 	 * @return Greatest common divisor
 	 */
-	static long gcd(long a,long b) {
+	public static long gcd(long a, long b) {
 		/* This is faster for longs on 32-bit architectures */
 		if (a < 0) {
 			a = -a;

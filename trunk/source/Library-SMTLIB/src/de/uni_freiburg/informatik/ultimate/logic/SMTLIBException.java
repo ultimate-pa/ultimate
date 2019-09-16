@@ -20,15 +20,15 @@ package de.uni_freiburg.informatik.ultimate.logic;
 
 /**
  * This is the exception thrown by the script interface when an error occurs.
- * This corresponds to the SMTLIB 2 result 
+ * This corresponds to the SMTLIB 2 result
  * <pre>(error "msg")</pre>
- * For the result <code>unsupported</code>, the standard java exception 
+ * For the result <code>unsupported</code>, the standard java exception
  * UnsupportedOperationException is used.
- * 
+ *
  * This class extends RuntimeException since it should never be thrown if
- * the script interface is used correctly.  It therefore corresponds to 
- * other runtime exceptions like IllegalArgumentException. 
- * 
+ * the script interface is used correctly.  It therefore corresponds to
+ * other runtime exceptions like IllegalArgumentException.
+ *
  * @author hoenicke
  */
 @SuppressWarnings("serial")

@@ -21,24 +21,24 @@ package de.uni_freiburg.informatik.ultimate.logic;
 import java.util.ArrayDeque;
 
 /**
- * Represents a term variable that is used in a {@link LetTerm lets}, 
+ * Represents a term variable that is used in a {@link LetTerm lets},
  * {@link QuantifiedFormula quantified formulas}, and
  * {@link Script#defineFun(String, TermVariable[], Sort, Term) define-fun}.
- * 
+ *
  * Term variables are created by {@link Script#variable(String, Sort)}.
- * 
+ *
  * @author Juergen Christ
  */
 public class TermVariable extends Term {
 	private final String mName;
 	private final Sort mSort;
-	
+
 	TermVariable(String n, Sort s, int hash) {
 		super(hash);
 		mName = n;
 		mSort = s;
 	}
-	
+
 	/**
 	 * Return the name of the variable.
 	 * @return the name of the variable.
@@ -55,7 +55,7 @@ public class TermVariable extends Term {
 	public Sort getDeclaredSort() {
 		return mSort;
 	}
-	
+
 	/**
 	 * Return the (expanded) sort of the variable.
 	 * @return the expanded sort of the variable.
@@ -64,7 +64,7 @@ public class TermVariable extends Term {
 	public Sort getSort() {
 		return mSort.getRealSort();
 	}
-	
+
 	/**
 	 * The SMTLIB representation of the term.
 	 */

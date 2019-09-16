@@ -21,11 +21,11 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol;
 import java.util.Random;
 
 public final class RandomSeedFinder {
-	
+
 	private RandomSeedFinder() {
 		// Hide constructor
 	}
-	
+
 	private static boolean testSeed(long seed, int timesTillRandomSplit) {
 		final Random random = new Random(seed);
 		for (int i = 0; i < timesTillRandomSplit; ++i) {

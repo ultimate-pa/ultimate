@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
  * 1: x0=x1 and f(x0) then add f(x1) 2: x2=x3 then add f(x2) and f(x3) 3: x4=x5 then add g(f(x4)) and g(f(x5)) 4: add
  * h(x0,x2,x4) and h(x1,x2,x3) 5: a=b and b=c with terms f(b), and f(c) then create f(a), retract b=c, build congruence,
  * and check f(a)=f(b)
- * 
+ *
  * @author Juergen Christ
  */
 @RunWith(JUnit4.class)

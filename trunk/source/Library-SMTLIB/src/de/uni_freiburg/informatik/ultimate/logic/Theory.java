@@ -102,6 +102,7 @@ public class Theory {
 
 	private final UnifyHash<QuantifiedFormula> mQfCache = new UnifyHash<>();
 	private final UnifyHash<LetTerm> mLetCache = new UnifyHash<>();
+	private final UnifyHash<MatchTerm> mMtCache = new UnifyHash<>();
 	private final UnifyHash<Term> mTermCache = new UnifyHash<>();
 	private final UnifyHash<TermVariable> mTvUnify = new UnifyHash<>();
 	/**
@@ -174,6 +175,26 @@ public class Theory {
 		mFalse = term(declareInternalFunction("false", noarg, mBooleanSort, 0));
 		// Finally, declare logic specific functions
 		setLogic(logic);
+	}
+
+	/** Method to check if indices is a numeral or symbol.
+	 *  If numeral return as BigInteger, if symbol return null **/
+	public BigInteger toNumeral(String index){
+		try {
+			return new BigInteger(index);
+		} catch(NumberFormatException e){
+			throw new SMTLIBException("index must be numeral", e);
+		}
+	}
+
+	/** Method to check if the parameter is the name of a constructor. If so,
+	 *  return the constructor.	 */
+	public FunctionSymbol getFunctionSymbol(String constructor) {
+		if (mDeclaredFuns.containsKey(constructor)) {
+			return mDeclaredFuns.get(constructor);
+		} else {
+			return null;
+		}
 	}
 
 	/******************** LOGICAL OPERATORS *******************************/
@@ -317,6 +338,16 @@ public class Theory {
 
 	public Term forall(final TermVariable[] vars, final Term f) {
 		return quantify(QuantifiedFormula.FORALL, vars, f);
+	}
+
+	public Term match(final Term dataArg, final TermVariable[][] vars, final Term[] cases,
+			final DataType.Constructor[] constructors) {
+		
+		final int hash = MatchTerm.hashMatch(dataArg, vars, cases);
+		final MatchTerm mt = new MatchTerm(hash, dataArg, vars, cases, constructors);
+		// add to hashmap
+		mMtCache.put(hash, mt);
+		return mt;
 	}
 
 	public Term let(final TermVariable[] vars, final Term[] values, final Term subform) {
@@ -490,8 +521,8 @@ public class Theory {
 		if (mBitVecSort == null) {
 			return null;
 		}
-		final BigInteger bsize = BigInteger.valueOf(value.length() - 2);
-		final Sort sort = mBitVecSort.getSort(new BigInteger[] { bsize }, new Sort[0]);
+		final String bsize = String.valueOf(value.length() - 2);
+		final Sort sort = mBitVecSort.getSort(new String[] { bsize }, new Sort[0]);
 		return new ConstantTerm(value, sort, ConstantTerm.hashConstant(value, sort));
 	}
 
@@ -500,8 +531,8 @@ public class Theory {
 		if (mBitVecSort == null) {
 			return null;
 		}
-		final BigInteger bsize = BigInteger.valueOf(4 * (value.length() - 2));// NOCHECKSTYLE
-		final Sort sort = mBitVecSort.getSort(new BigInteger[] { bsize }, new Sort[0]);
+		final String bsize = String.valueOf(4 * (value.length() - 2));// NOCHECKSTYLE
+		final Sort sort = mBitVecSort.getSort(new String[] { bsize }, new Sort[0]);
 		return new ConstantTerm(value, sort, ConstantTerm.hashConstant(value, sort));
 	}
 
@@ -570,13 +601,13 @@ public class Theory {
 		}
 
 		@Override
-		public int getFlags(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+		public int getFlags(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 			return paramSorts.length == 1 ? FunctionSymbol.INTERNAL
 					: FunctionSymbol.LEFTASSOC | FunctionSymbol.INTERNAL;
 		}
 
 		@Override
-		public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+		public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 			if (indices != null || paramSorts.length == 0 || paramSorts.length > 2 || resultSort != null
 					|| (paramSorts[0] != mSort1 && paramSorts[0] != mSort2)) {
 				return null;
@@ -596,8 +627,8 @@ public class Theory {
 		}
 
 		@Override
-		public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
-			return indices != null && indices.length == 1 && indices[0].signum() > 0 && paramSorts.length == 1
+		public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			return indices != null && indices.length == 1 && toNumeral(indices[0]).signum() > 0 && paramSorts.length == 1
 					&& paramSorts[0] == mNumericSort && resultSort == null ? mBooleanSort : null;
 		}
 	}
@@ -642,12 +673,12 @@ public class Theory {
 			}
 
 			@Override
-			public int getFlags(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public int getFlags(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				return mFlags;
 			}
 
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null && paramSorts.length == 2 && paramSorts[0] == paramSorts[1]
 						&& (paramSorts[0] == mNumericSort || paramSorts[0] == mRealSort) && resultSort == null) {
 					return mReturnSort == null ? paramSorts[0] : mReturnSort;
@@ -689,7 +720,7 @@ public class Theory {
 			}
 
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null && paramSorts.length == 1
 						&& (paramSorts[0] == mNumericSort || paramSorts[0] == mRealSort) && resultSort == null) {
 					return paramSorts[0];
@@ -718,11 +749,11 @@ public class Theory {
 	private void createBitVecSort() {
 		mBitVecSort = new SortSymbol(this, "BitVec", 0, null, SortSymbol.INTERNAL | SortSymbol.INDEXED) {
 			@Override
-			public void checkArity(final BigInteger[] indices, final int arity) {
+			public void checkArity(final String[] indices, final int arity) {
 				if (indices == null || indices.length != 1) {
 					throw new IllegalArgumentException("BitVec needs one index");
 				}
-				if (indices[0].signum() <= 0) {
+				if (toNumeral(indices[0]).signum() <= 0) {
 					throw new IllegalArgumentException("BitVec index must be positive");
 				}
 				if (arity != 0) {
@@ -751,12 +782,12 @@ public class Theory {
 			}
 
 			@Override
-			public int getFlags(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public int getFlags(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				return mFlags;
 			}
 
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices != null || paramSorts.length != mNumArgs || resultSort != null
 						|| paramSorts[0].getName() != "BitVec") {
 					return null;
@@ -773,15 +804,14 @@ public class Theory {
 			public ExtendBitVecFunction(final String name) {
 				super(name);
 			}
-
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 1 || paramSorts.length != 1 || resultSort != null
 						|| paramSorts[0].getName() != "BitVec") {
 					return null;
 				}
-				final BigInteger size = indices[0].add(paramSorts[0].getIndices()[0]);
-				return mBitVecSort.getSort(new BigInteger[] { size }, new Sort[0]);
+				final BigInteger size = toNumeral(indices[0]).add(toNumeral(paramSorts[0].getIndices()[0]));
+				return mBitVecSort.getSort(new String[] { size.toString() }, new Sort[0]);
 			}
 		}
 		class RotateBitVecFunction extends FunctionSymbolFactory {
@@ -790,7 +820,7 @@ public class Theory {
 			}
 
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 1 || paramSorts.length != 1 || resultSort != null
 						|| paramSorts[0].getName() != "BitVec") {
 					return null;
@@ -800,23 +830,30 @@ public class Theory {
 		}
 		defineFunction(new FunctionSymbolFactory("concat") {
 			@Override
-			public int getFlags(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public int getFlags(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				return FunctionSymbol.INTERNAL;
 			}
 
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices != null || paramSorts.length != 2 || resultSort != null
 						|| paramSorts[0].getName() != "BitVec" || paramSorts[1].getName() != "BitVec") {
 					return null;
 				}
-				final BigInteger size = paramSorts[0].getIndices()[0].add(paramSorts[1].getIndices()[0]);
-				return mBitVecSort.getSort(new BigInteger[] { size }, new Sort[0]);
+				
+				
+				BigInteger paramSortAsInt0 = new BigInteger(paramSorts[0].getIndices()[0]);
+				BigInteger paramSortAsInt1 = new BigInteger(paramSorts[1].getIndices()[0]);
+				
+				final BigInteger size = paramSortAsInt0.add(paramSortAsInt1);
+				// before: final BigInteger size = paramSorts[0].getIndices()[0].add(paramSorts[1].getIndices()[0]);
+				return mBitVecSort.getSort(new String[] { size.toString() }, new Sort[0]);
+				// what does { size } ? 
 			}
 		});
 		defineFunction(new FunctionSymbolFactory("extract") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length < 2 || paramSorts.length != 1 || resultSort != null
 						|| paramSorts[0].getName() != "BitVec") {
 					return null;
@@ -824,11 +861,11 @@ public class Theory {
 				if (indices[0].compareTo(indices[1]) < 0 || paramSorts[0].getIndices()[0].compareTo(indices[0]) < 0) {
 					return null;
 				}
-				final BigInteger size = indices[0].subtract(indices[1]).add(BigInteger.ONE);
-				return mBitVecSort.getSort(new BigInteger[] { size }, new Sort[0]);
+				final BigInteger size = toNumeral(indices[0]).subtract(toNumeral(indices[1])).add(BigInteger.ONE);
+				return mBitVecSort.getSort(new String[] { size.toString() }, new Sort[0]);
 			}
 		});
-		final Sort bitvec1 = mBitVecSort.getSort(new BigInteger[] { BigInteger.ONE }, new Sort[0]);
+		final Sort bitvec1 = mBitVecSort.getSort(new String[] { BigInteger.ONE.toString() }, new Sort[0]);
 
 		defineFunction(new RegularBitVecFunction("bvnot", 1, null));
 		defineFunction(new RegularBitVecFunction("bvand", 2, null, FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
@@ -854,13 +891,13 @@ public class Theory {
 
 		defineFunction(new FunctionSymbolFactory("repeat") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 1 || paramSorts.length != 1 || resultSort != null
 						|| paramSorts[0].getName() != "BitVec") {
 					return null;
 				}
-				final BigInteger size = indices[0].multiply(paramSorts[0].getIndices()[0]);
-				return mBitVecSort.getSort(new BigInteger[] { size }, new Sort[0]);
+				final BigInteger size = toNumeral(indices[0]).multiply(toNumeral(paramSorts[0].getIndices()[0]));
+				return mBitVecSort.getSort(new String[] { size.toString() }, new Sort[0]);
 			}
 		});
 		defineFunction(new ExtendBitVecFunction("zero_extend"));
@@ -890,12 +927,12 @@ public class Theory {
 
 		mFloatingPointSort = new SortSymbol(this, "FloatingPoint", 0, null, SortSymbol.INTERNAL | SortSymbol.INDEXED) {
 			@Override
-			public void checkArity(final BigInteger[] indices, final int arity) {
+			public void checkArity(final String[] indices, final int arity) {
 				if (indices == null || indices.length != 2) {
 					throw new IllegalArgumentException("Floating Point needs two indices");
 				}
 
-				if (indices[0].signum() <= 0 || indices[1].signum() <= 0) {
+				if (toNumeral(indices[0]).signum() <= 0 || toNumeral(indices[1]).signum() <= 0) {
 					throw new IllegalArgumentException("FloatingPoint indices must be greater 0");
 				}
 
@@ -926,12 +963,12 @@ public class Theory {
 			}
 
 			@Override
-			public int getFlags(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public int getFlags(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				return mFlags;
 			}
 
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices != null || paramSorts.length != mNumArgs || resultSort != null) {
 					return null;
 				}
@@ -951,15 +988,15 @@ public class Theory {
 
 		defineFunction(new FunctionSymbolFactory("fp") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices != null || paramSorts.length != 3 || resultSort != null
 						|| paramSorts[0].getName() != "BitVec" || !paramSorts[0].getIndices()[0].equals(BigInteger.ONE)
 						|| paramSorts[1].getName() != "BitVec" || paramSorts[2].getName() != "BitVec") {
 					return null;
 				}
-				final BigInteger[] fpIndices = new BigInteger[2];
-				fpIndices[0] = paramSorts[1].getIndices()[0];
-				fpIndices[1] = paramSorts[2].getIndices()[0].add(BigInteger.ONE);
+				final String[] fpIndices = new String[2];
+				fpIndices[0] = toNumeral(paramSorts[1].getIndices()[0]).toString();
+				fpIndices[1] = toNumeral(paramSorts[2].getIndices()[0]).add(BigInteger.ONE).toString();
 				return mFloatingPointSort.getSort(fpIndices, new Sort[0]);
 			}
 		});
@@ -967,13 +1004,13 @@ public class Theory {
 		// from BitVec to FP
 		defineFunction(new FunctionSymbolFactory("to_fp") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 2 || paramSorts == null) {
 					return null;
 				}
 				// from BitVec to FP
 				if (paramSorts.length == 1 && paramSorts[0].getName() == "BitVec") {
-					if (!((indices[0].add(indices[1]).equals(paramSorts[0].getIndices()[0])))) {
+					if (!((new BigInteger(indices[0]).add(new BigInteger(indices[1])).equals(new BigInteger(paramSorts[0].getIndices()[0]))))) {
 						return null;
 					}
 					return mFloatingPointSort.getSort(indices, new Sort[0]);
@@ -1002,7 +1039,7 @@ public class Theory {
 
 		defineFunction(new FunctionSymbolFactory("to_fp_unsigned") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 2 || paramSorts.length != 2 || resultSort != null
 						|| paramSorts[0].getName() != "RoundingMode" || paramSorts[1].getName() != "BitVec") {
 					return null;
@@ -1013,23 +1050,23 @@ public class Theory {
 
 		defineFunction(new FunctionSymbolFactory("fp.to_ubv") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 1 || paramSorts.length != 2 || resultSort != null
 						|| paramSorts[0].getName() != "RoundingMode" || paramSorts[1].getName() != "FloatingPoint") {
 					return null;
 				}
-				return mBitVecSort.getSort(new BigInteger[] { indices[0] }, new Sort[0]);
+				return mBitVecSort.getSort(new String[] { indices[0] }, new Sort[0]);
 			}
 		});
 
 		defineFunction(new FunctionSymbolFactory("fp.to_sbv") {
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 1 || paramSorts.length != 2 || resultSort != null
 						|| paramSorts[0].getName() != "RoundingMode" || paramSorts[1].getName() != "FloatingPoint") {
 					return null;
 				}
-				return mBitVecSort.getSort(new BigInteger[] { indices[0] }, new Sort[0]);
+				return mBitVecSort.getSort(new String[] { indices[0] }, new Sort[0]);
 			}
 		});
 
@@ -1042,7 +1079,7 @@ public class Theory {
 			}
 
 			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices.length != 2 || paramSorts.length != 0 || resultSort != null) {
 					return null;
 				}
@@ -1060,13 +1097,13 @@ public class Theory {
 
 		// short forms of common floats
 		defineSort("Float16", 0,
-				mFloatingPointSort.getSort(new BigInteger[] { new BigInteger("5"), new BigInteger("11") }));
+				mFloatingPointSort.getSort(new String[] { new String("5"), new String("11") }));
 		defineSort("Float32", 0,
-				mFloatingPointSort.getSort(new BigInteger[] { new BigInteger("8"), new BigInteger("24") }));
+				mFloatingPointSort.getSort(new String[] { new String("8"), new String("24") }));
 		defineSort("Float64", 0,
-				mFloatingPointSort.getSort(new BigInteger[] { new BigInteger("11"), new BigInteger("53") }));
+				mFloatingPointSort.getSort(new String[] { new String("11"), new String("53") }));
 		defineSort("Float128", 0,
-				mFloatingPointSort.getSort(new BigInteger[] { new BigInteger("15"), new BigInteger("113") }));
+				mFloatingPointSort.getSort(new String[] { new String("15"), new String("113") }));
 
 		// RoundingModes
 		declareInternalFunction("roundNearestTiesToEven", new Sort[0], mRoundingModeSort, 0);
@@ -1165,6 +1202,9 @@ public class Theory {
 		if (mSolverSetup != null) {
 			mSolverSetup.setLogic(this, logic);
 		}
+		if (logic.isDatatype()) {
+			defineFunction(new IsConstructorFactory());
+		}
 	}
 
 	/******************** SORTS ********************************************/
@@ -1224,7 +1264,7 @@ public class Theory {
 	 *            The sort arguments.
 	 * @return the sort object.
 	 */
-	public Sort getSort(final String id, final BigInteger[] indices, final Sort... args) {
+	public Sort getSort(final String id, final String[] indices, final Sort... args) {
 		SortSymbol symbol;
 		symbol = mDeclaredSorts.get(id);
 		if (symbol == null) {
@@ -1369,7 +1409,7 @@ public class Theory {
 		return symb;
 	}
 
-	public FunctionSymbol getFunctionWithResult(final String name, final BigInteger[] indices, final Sort resultType,
+	public FunctionSymbol getFunctionWithResult(final String name, final String[] indices, final Sort resultType,
 			final Sort... paramTypes) {
 		if (resultType != null && indices == null && paramTypes.length == 0 && name.matches(MODEL_VALUE_PATTERN)) {
 			return getModelValueSymbol(name, resultType);
@@ -1400,7 +1440,7 @@ public class Theory {
 		return null;
 	}
 
-	private FunctionSymbol getBitVecConstant(final String name, final BigInteger[] indices) {
+	private FunctionSymbol getBitVecConstant(final String name, final String[] indices) {
 		if (mBitVecConstCache == null) {
 			mBitVecConstCache = new UnifyHash<>();
 		}
@@ -1495,6 +1535,32 @@ public class Theory {
 		mTvUnify.put(hash, tv);
 		return tv;
 	}
+	
+	
+	
+	public DataType.Constructor createConstructor(final String name, final String[] selectors, final Sort[] argumentSorts) {
+		DataType.Constructor constructor = new DataType.Constructor(name, selectors, argumentSorts);
+		return constructor;
+	
+	}
+
+	/**
+	 * Create a new data type with the given name and number of parameters.
+	 *
+	 * @param name
+	 *            the variable name.
+	 * @param numParams
+	 *            the number of parameters of the data type.
+	 * @return a data type.
+	 */
+	public DataType createDatatypes(final String name, final int numParams) {
+		if (mDeclaredSorts.containsKey(name)) {
+			throw new IllegalArgumentException("Datatype " + name + " already exists.");
+		}
+		DataType datatype = new DataType(this, name, numParams);
+		mDeclaredSorts.put(name, datatype);
+		return datatype;
+	}
 
 	public Term term(final TermVariable var) {
 		return var;
@@ -1534,9 +1600,17 @@ public class Theory {
 	}
 
 	/******************** SKOLEMIZATION SUPPORT ***************************/
-	public FunctionSymbol skolemize(final TermVariable tv) {
-		return new FunctionSymbol("@" + tv.getName() + "_skolem_" + mSkolemCounter++, null, EMPTY_SORT_ARRAY,
+	public Term skolemize(final TermVariable tv, QuantifiedFormula qf) {
+		TermVariable[] freeVars = qf.getFreeVars();
+		Term[] args = new Term[freeVars.length];
+		Sort[] freeVarSorts = new Sort[freeVars.length];
+		for (int i = 0; i < freeVars.length; i++) {
+			args[i] = freeVars[i];
+			freeVarSorts[i] = freeVars[i].getSort();
+		}
+		FunctionSymbol fsym = new FunctionSymbol("@" + tv.getName() + "_skolem_" + mSkolemCounter++, null, freeVarSorts,
 				tv.getSort(), null, null, 0);
+		return term(fsym, args);
 	}
 
 	public void resetAssertions() {

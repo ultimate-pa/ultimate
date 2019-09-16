@@ -26,7 +26,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class SharingSet<E> extends AbstractSet<E> {
-	
+
 	private static final class SharingSetData<E> {
 		SharingSetData() {
 			mRep = new HashSet<E>();
@@ -59,13 +59,13 @@ public class SharingSet<E> extends AbstractSet<E> {
 			return this;
 		}
 	}
-	
+
 	private SharingSetData<E> mData;
-	
+
 	public SharingSet() {
 		mData = new SharingSetData<E>();
 	}
-	
+
 	public SharingSet(SharingSet<E> other) {
 		mData = other.mData.share();
 	}
@@ -93,7 +93,7 @@ public class SharingSet<E> extends AbstractSet<E> {
 				throw new UnsupportedOperationException(
 						"remove not allowed on SharingSet iterator");
 			}
-			
+
 		};
 	}
 

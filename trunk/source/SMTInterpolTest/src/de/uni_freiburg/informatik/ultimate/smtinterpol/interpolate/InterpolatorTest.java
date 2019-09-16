@@ -75,30 +75,32 @@ public class InterpolatorTest {
 		addvar = false;
 		final Term a = mA;
 		final Term b = mB;
-		InterpolatorAffineTerm aterm = new InterpolatorAffineTerm().add(Rational.ONE, a);
-		InterpolatorAffineTerm bterm = new InterpolatorAffineTerm().add(Rational.ONE, b);
+		final InterpolatorAffineTerm aterm = new InterpolatorAffineTerm();
+		aterm.add(Rational.ONE, a);
+		final InterpolatorAffineTerm bterm = new InterpolatorAffineTerm();
+		bterm.add(Rational.ONE, b);
 		if (doubleab || addconst || addvar) {
 			if (doubleab) {
-				aterm = aterm.mul(Rational.TWO);
-				bterm = bterm.mul(Rational.TWO);
+				aterm.mul(Rational.TWO);
+				bterm.mul(Rational.TWO);
 			}
 			if (addvar) {
-				aterm = aterm.add(Rational.ONE, mS);
-				bterm = bterm.add(Rational.ONE, mS);
+				aterm.add(Rational.ONE, mS);
+				bterm.add(Rational.ONE, mS);
 			}
 			if (addconst) {
-				aterm = aterm.add(Rational.TWO);
-				bterm = bterm.add(Rational.TWO);
+				aterm.add(Rational.TWO);
+				bterm.add(Rational.TWO);
 			}
 		}
 		final Term aSmt = aterm.toSMTLib(mTheory, false);
 		final Term bSmt = bterm.toSMTLib(mTheory, false);
 		Term cceq = ccswap ? mTheory.term("=", aSmt, bSmt) : mTheory.term("=", bSmt, aSmt);
 		cceq = mTheory.annotatedTerm(QUOTED_CC, cceq);
-		final InterpolatorAffineTerm linTerm = aterm.add(Rational.MONE, bterm);
-		linTerm.normalize();
-		final InterpolatorAffineTerm zeroterm = new InterpolatorAffineTerm();
-		Term laeq = mTheory.term("=", linTerm.toSMTLib(mTheory, false), zeroterm.toSMTLib(mTheory, false));
+		final InterpolatorAffineTerm linTerm = new InterpolatorAffineTerm(aterm);
+		linTerm.add(Rational.MONE, bterm);
+		linTerm.mul(linTerm.getGcd().inverse());
+		Term laeq = mTheory.term("=", linTerm.toSMTLib(mTheory, false), Rational.ZERO.toTerm(mReal));
 		laeq = mTheory.annotatedTerm(QUOTED_LA, laeq);
 		final Term[] lits = clauseswap
 				? litswap ? new Term[] { mTheory.term("not", cceq), laeq }
@@ -111,8 +113,8 @@ public class InterpolatorTest {
 		final Set<String> empty = Collections.emptySet();
 		@SuppressWarnings("unchecked")
 		final Set<String>[] partition = new Set[] { empty, empty };
-		mInterpolator =
-				new Interpolator(mSolver.getLogger(), mSolver, null, mTheory, partition, new int[partition.length]);
+		mInterpolator = new Interpolator(mSolver.getLogger(), mSolver, null, null, mTheory, partition,
+						new int[partition.length]);
 		final HashSet<Term> bsubTerms = mInterpolator.getSubTerms(bSmt);
 		final HashSet<Term> asubTerms = mInterpolator.getSubTerms(aSmt);
 		for (final Term sub : asubTerms) {
@@ -125,7 +127,7 @@ public class InterpolatorTest {
 				mInterpolator.addOccurrence(sub, abswap ? 0 : 1);
 			}
 		}
-		final Interpolant[] interpolants = mInterpolator.interpolate(lemma);
+		final Term[] interpolants = mInterpolator.interpolate(lemma);
 		final TermVariable ccVar = mInterpolator.getAtomOccurenceInfo(cceq).getMixedVar();
 		final TermVariable laVar = mInterpolator.getAtomOccurenceInfo(laeq).getMixedVar();
 		Term var;
@@ -168,7 +170,7 @@ public class InterpolatorTest {
 		}
 		final Term rhs = summands.toSMTLib(mTheory, false);
 		final Term expected = mTheory.term(Interpolator.EQ, var, rhs);
-		Assert.assertSame(expected, interpolants[0].mTerm);
+		Assert.assertSame(expected, interpolants[0]);
 	}
 
 	@Test

@@ -26,7 +26,7 @@ import java.util.Queue;
 public class ArrayQueue<E> extends AbstractCollection<E> implements Queue<E> {
 	private int mFront, mSize;
 	private Object[] mContents;
-	
+
 	public ArrayQueue(int size) {
 		int i;
 		for (i = 1; i < size; i += i) {
@@ -35,11 +35,11 @@ public class ArrayQueue<E> extends AbstractCollection<E> implements Queue<E> {
 		mContents = new Object[i];
 		mFront = size = 0;
 	}
-	
+
 	public ArrayQueue() {
 		this(32);
 	}
-	
+
 	private void resize() {
 		assert (mSize == mContents.length);
 		final Object[] oldcontents = mContents;
@@ -77,7 +77,7 @@ public class ArrayQueue<E> extends AbstractCollection<E> implements Queue<E> {
 	public E peek() {
 		return (E) mContents[mFront];
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public E poll() {

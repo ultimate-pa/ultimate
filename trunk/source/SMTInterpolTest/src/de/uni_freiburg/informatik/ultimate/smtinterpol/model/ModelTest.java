@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 /**
  * Tests for the model production of SMTInterpol.
- * 
+ *
  * @author Juergen Christ
  */
 @RunWith(JUnit4.class)
@@ -259,9 +259,9 @@ public class ModelTest {
 		Assert.assertEquals(Rational.ONE, getConstantTerm(model, script.term("mod", xvar, tmnine)).getValue());
 		// divisible
 		Assert.assertEquals(trueTerm,
-				model.evaluate(script.term("divisible", new BigInteger[] { BigInteger.TEN }, null, xvar)));
+				model.evaluate(script.term("divisible", new String[] { String.valueOf(10) }, null, xvar)));
 		Assert.assertEquals(falseTerm,
-				model.evaluate(script.term("divisible", new BigInteger[] { BigInteger.valueOf(9) }, null, xvar)));// NOCHECKSTYLE
+				model.evaluate(script.term("divisible", new String[] { String.valueOf(9) }, null, xvar)));// NOCHECKSTYLE
 		// abs
 		Assert.assertEquals(model.evaluate(xvar), model.evaluate(script.term("abs", script.term("-", xvar))));
 	}

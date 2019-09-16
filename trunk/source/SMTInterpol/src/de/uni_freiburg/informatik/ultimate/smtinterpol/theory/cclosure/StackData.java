@@ -23,7 +23,7 @@ public class StackData {
 	int mAllTermsSize;
 	/// numFuncPositions.
 	int mNumFuncPositions;
-	
+
 	public StackData(CClosure engine) {
 		mAllTermsSize = engine.mAllTerms.size();
 		mNumFuncPositions = engine.mNumFunctionPositions;

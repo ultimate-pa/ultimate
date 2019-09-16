@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -2423,13 +2424,19 @@ public class ProofChecker extends NonRecursive {
 		}
 		return rhsOffset == rhsArgs.length;
 	}
-
+ 
 	boolean checkRewriteDivisible(final Term lhs, final Term rhs) {
 		// ((_ divisible n) x) --> (= x (* n (div x n)))
 		if (!isApplication("divisible", lhs)) {
 			return false;
 		}
-		final Rational num = Rational.valueOf(((ApplicationTerm) lhs).getFunction().getIndices()[0], BigInteger.ONE);
+		BigInteger num1;
+		try {
+			num1 = new BigInteger(((ApplicationTerm) lhs).getFunction().getIndices()[0]);
+		} catch(NumberFormatException e){
+			throw new SMTLIBException("index must be numeral", e);
+		}
+		final Rational num = Rational.valueOf(num1, BigInteger.ONE);
 		if (num.equals(Rational.ONE)) {
 			return isApplication("true", rhs);
 		}

@@ -25,7 +25,7 @@ public class QuantifiedAtom extends DPLLAtom {
 
 	private final String mName;
 	private final Term mSmtFormula;
-	
+
 	public QuantifiedAtom(String name, Term smtFormula, int assertionstacklevel) {
 		super(smtFormula.hashCode(), assertionstacklevel);
 		mName = name;

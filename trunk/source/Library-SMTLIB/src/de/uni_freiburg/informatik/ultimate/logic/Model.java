@@ -31,13 +31,13 @@ import java.util.Set;
  * Values for numeric sorts in linear arithmetic logics are {@link ConstantTerm ConstantTerms} whose value is of type
  * {@link Rational}. For non-numeric sorts, we return some term of the corresponding sort. No further guarantees are
  * made.
- * 
+ *
  * @author Juergen Christ, Jochen Hoenicke
  */
 public interface Model {
 	/**
 	 * Compute the value of an input term.
-	 * 
+	 *
 	 * @param input
 	 *            Term to evaluate.
 	 * @return Value of the term.
@@ -46,7 +46,7 @@ public interface Model {
 
 	/**
 	 * Compute the value of some input terms.
-	 * 
+	 *
 	 * @param input
 	 *            Terms to evaluate.
 	 * @return Values of the terms.
@@ -56,20 +56,20 @@ public interface Model {
 	/**
 	 * Get the set of function symbols for which the model defines the value. These is the set of uninterpreted function
 	 * symbols.
-	 * 
+	 *
 	 * @return The set of function symbols.
 	 */
 	public Set<FunctionSymbol> getDefinedFunctions();
 
 	/**
 	 * Get the definition of a function. This is a term that can be used as last parameter in a
-	 * 
+	 *
 	 * <pre>
 	 * (define-fun ...)
 	 * </pre>
-	 * 
+	 *
 	 * command.
-	 * 
+	 *
 	 * @param func
 	 *            the name of the function
 	 * @param args

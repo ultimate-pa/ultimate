@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode.Ante
  * Collect all units in a proof tree that occur more than once.  This is
  * accomplished by a DAG traversal of the proof tree.  If we see a node for the
  * last time, we visit it (i.e., add it to the unit queue if it is a unit clause
- * that occurs more than once) and visit the children. 
+ * that occurs more than once) and visit the children.
  * @author Juergen Christ
  */
 public class UnitCollector {
@@ -94,7 +94,7 @@ public class UnitCollector {
 					final ResolutionNode rn = (ResolutionNode) pn;
 					final Antecedent[] antes = rn.getAntecedents();
 					for (int i = antes.length - 1; i >= 0; --i) {
-						if (antes[i].mAntecedent.getSize() == 1 
+						if (antes[i].mAntecedent.getSize() == 1
 								&& mCounts.get(antes[i].mAntecedent) > 1) {
 							// We will lower this unit => Mark it deleted
 							if (deletions == null) {

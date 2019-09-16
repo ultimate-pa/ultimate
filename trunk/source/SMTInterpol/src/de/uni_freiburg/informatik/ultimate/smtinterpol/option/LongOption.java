@@ -37,7 +37,7 @@ public class LongOption extends Option {
 		super(onlineModifiable, description);
 		mValue = mDefaultValue = defaultValue;
 	}
-	
+
 	LongOption(LongOption other) {
 		super(other.isOnlineModifiable(), other.getDescription());
 		mValue = other.mValue;
@@ -62,7 +62,7 @@ public class LongOption extends Option {
 			throw new SMTLIBException("Not a number: " + value);
 		}
 	}
-	
+
 	public final long getValue() {
 		return mValue;
 	}

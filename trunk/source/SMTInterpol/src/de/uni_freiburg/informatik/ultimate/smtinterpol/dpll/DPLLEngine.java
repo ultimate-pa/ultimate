@@ -246,6 +246,7 @@ public class DPLLEngine {
 			if (Config.PROFILE_TIME) {
 				time = System.nanoTime();
 			}
+			mLogger.debug("DPLL: checkpoint");
 			for (final ITheory t : mTheories) {
 				conflict = t.checkpoint();
 				if (conflict != null) {
@@ -270,6 +271,7 @@ public class DPLLEngine {
 	private Clause propagateTheories() {
 		while (true) {
 			boolean changed = false;
+			mLogger.debug("DPLL: propagate theories");
 			for (final ITheory t : mTheories) {
 				Literal propLit = t.getPropagatedLiteral();
 				if (propLit != null) {
@@ -426,9 +428,7 @@ public class DPLLEngine {
 	 */
 	@SuppressWarnings("unused")
 	private Clause setLiteral(final Literal literal) {
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("S " + literal);
-		}
+		mLogger.debug("S %s", literal);
 		final DPLLAtom atom = literal.getAtom();
 		assert atom.mDecideStatus == null;
 		assert mAtoms.contains(atom);
@@ -608,9 +608,7 @@ public class DPLLEngine {
 	 * @return Explanation
 	 */
 	private Clause explainConflict(final Clause clause) {
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("explain conflict " + clause);
-		}
+		mLogger.debug("explain conflict %s", clause);
 		final HashSet<Literal> level0Ants = new HashSet<Literal>();
 		List<Antecedent> antecedents = null;
 		if (isProofGenerationEnabled()) {
@@ -648,9 +646,7 @@ public class DPLLEngine {
 			}
 			atom.mActivity += mAtomScale;
 		}
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("removing level0: " + conflict);
-		}
+		mLogger.debug("removing level0: %s", conflict);
 		if (conflict.size() == numAssumptions) {
 			/*
 			 * Unsatisfiable
@@ -730,9 +726,7 @@ public class DPLLEngine {
 			conflict.remove(lit);
 			numLitsOnMaxDecideLevel--;
 			final DPLLAtom atom = lit.getAtom();
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Resolving with " + expl + " pivot = " + atom);
-			}
+			mLogger.debug("Resolving with %s pivot = %s", expl, atom);
 			for (final Literal l : expl.mLiterals) {
 				if (l != lit) {
 					assert l.getAtom().mDecideStatus == l.negate();
@@ -753,9 +747,7 @@ public class DPLLEngine {
 				}
 			}
 			assert countLitsOnDecideLevel(conflict) == numLitsOnMaxDecideLevel;
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("new conflict: " + conflict);
-			}
+			mLogger.debug("new conflict: %s", conflict);
 		}
 		assert mCurrentDecideLevel == maxDecideLevel;
 		assert countLitsOnDecideLevel(conflict) == numLitsOnMaxDecideLevel;
@@ -777,9 +769,7 @@ public class DPLLEngine {
 			findBacktrackingPoint(conflict);
 		}
 
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Backtrack to " + mDecideStack.size());
-		}
+		mLogger.debug("Backtrack to %d", mDecideStack.size());
 
 		final HashMap<Literal, Integer> redundancy = computeRedundancy(conflict);
 		final Integer REDUNDANT = 1;
@@ -816,9 +806,7 @@ public class DPLLEngine {
 				}
 			}
 		}
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("removing redundancy yields " + conflict);
-		}
+		mLogger.debug("removing redundancy yields %s", conflict);
 		/* add assumptions from level0 antecedents */
 		for (final Literal lit0 : level0Ants) {
 			final Clause c = getLevel0(lit0);
@@ -847,9 +835,7 @@ public class DPLLEngine {
 				resolution.setProof(new ResolutionNode(clause, ants));
 			}
 		}
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Resolved to " + resolution);
-		}
+		mLogger.debug("Resolved to %s", resolution);
 		// If resolution size is number of literals we are unsat
 		if (newlits.length == numAssumptions) {
 			mUnsatClause = resolution;
@@ -997,9 +983,7 @@ public class DPLLEngine {
 
 	private void backtrackLiteral(final Literal literal) {
 		long time;
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("B " + literal);
-		}
+		mLogger.debug("B %s", literal);
 		final DPLLAtom atom = literal.getAtom();
 		mWatcherBackList.moveAll(atom.mBacktrackWatchers);
 		atom.mExplanation = null;
@@ -1023,10 +1007,14 @@ public class DPLLEngine {
 		if (Config.PROFILE_TIME) {
 			time = System.nanoTime();
 		}
+		mLogger.debug("DPLL: final check");
 		for (final ITheory t : mTheories) {
 			final Clause conflict = t.computeConflictClause();
 			if (conflict != null) {
 				return conflict;
+			}
+			if (!mAtoms.isEmpty()) {
+				break;
 			}
 		}
 		if (Config.PROFILE_TIME) {
@@ -1446,12 +1434,12 @@ public class DPLLEngine {
 					inputit.remove();
 				} else {
 					throw new InternalError("Input clause still blocked, but invalid");
-					// logger.debug("Removed clause {0}", input);
+					// mLogger.debug("Removed clause %s", input);
 				}
 			} else {
 				// Terminate iteration here since only clauses with lower
 				// stacklevel remain.
-				// logger.debug("Keeping input {0}", input);
+				// mLogger.debug("Keeping input %s", input);
 				break;
 			}
 		}
@@ -1482,6 +1470,9 @@ public class DPLLEngine {
 	}
 
 	public boolean hasModel() {
+		for (ITheory t : mTheories) {
+			provideCompleteness(t.checkCompleteness());
+		}
 		return mHasModel && mCompleteness == COMPLETE;
 	}
 
@@ -1575,9 +1566,7 @@ public class DPLLEngine {
 	}
 
 	private final void increaseDecideLevel() {
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Decide@" + mDecideStack.size());
-		}
+		mLogger.debug("Decide@%d", mDecideStack.size());
 		mCurrentDecideLevel++;
 		assert mCurrentDecideLevel >= 0 : "Decidelevel negative";
 		for (final ITheory t : mTheories) {

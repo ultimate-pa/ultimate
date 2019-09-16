@@ -26,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 
 /**
  * This is an implementation of the IProofTracker that doesn't generated the proof annotations. It still applies some of
@@ -59,7 +58,7 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public Term orSimpClause(final Term rewrite, final Literal[] lits) {
+	public Term orSimpClause(final Term rewrite) {
 		return rewrite;
 	}
 
@@ -101,7 +100,7 @@ public class NoopProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public Term split(final Term splitTerm, final Term input, final Annotation splitKind) {
+	public Term split(final Term input, final Term splitTerm, final Annotation splitKind) {
 		return splitTerm;
 	}
 

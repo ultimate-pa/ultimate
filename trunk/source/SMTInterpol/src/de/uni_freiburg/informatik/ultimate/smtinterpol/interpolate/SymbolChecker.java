@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2012 University of Freiburg
+ * Copyright (C) 2009-2019 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -22,77 +22,84 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
-public class SymbolChecker extends TermTransformer {
+/**
+ * This is a symbol checker specialized to check symbol condition in interpolants.
+ *
+ * @author Christ, Hoenicke
+ */
+public class SymbolChecker {
 
-	private Map<FunctionSymbol, Integer> mLeftAllowed;
-	private Map<FunctionSymbol, Integer> mRightAllowed;
-	private HashSet<FunctionSymbol> mLeftErrors;
-	private HashSet<FunctionSymbol> mRightErrors;
+	private Map<FunctionSymbol, Integer> mSubtreeOccurrences;
+	private final Map<FunctionSymbol, Integer> mAllOccurences;
+	private HashSet<FunctionSymbol> mALocal;
+	private HashSet<FunctionSymbol> mBLocal;
 	private final Set<FunctionSymbol> mGlobals;
+	private final SymbolCollector mCollector = new SymbolCollector();
 
-	public SymbolChecker(Set<FunctionSymbol> globals) {
+	/**
+	 * Create a new checker for symbol occurrences in interpolants.
+	 *
+	 * @param globals
+	 *            The symbols that occur in the background theory.
+	 * @param occurrences
+	 *            A map from each symbol to the number of partitions where the symbol occurs.
+	 */
+	public SymbolChecker(final Set<FunctionSymbol> globals, final Map<FunctionSymbol, Integer> allOccurrences) {
 		mGlobals = globals;
+		mAllOccurences = allOccurrences;
 	}
 
 	/**
 	 * Check whether an interpolant contains only allowed symbols.
-	 * 
+	 *
 	 * @param interpolant
 	 *            The interpolant.
-	 * @param leftAllowed
-	 *            The symbols allowed from the left-hand side.
-	 * @param rightAllowed
-	 *            The symbols allowed from the right-hand side.
-	 * @return <code>true</code> if an error has been detected.
+	 * @param subtreeOccurrences
+	 *            This maps for each symbol the number of partitions in the subtree (A-part) where the symbol occurs.
+	 * @return {@code true} if an A local or B local symbol was found in the interpolant.
 	 */
-	public final boolean check(Term interpolant, Map<FunctionSymbol, Integer> leftAllowed,
-			Map<FunctionSymbol, Integer> rightAllowed) {
-		mLeftAllowed = leftAllowed;
-		mRightAllowed = rightAllowed;
-		mLeftErrors = new HashSet<FunctionSymbol>();
-		mRightErrors = new HashSet<FunctionSymbol>();
-		transform(interpolant);
-		return !(mLeftErrors.isEmpty() && mRightErrors.isEmpty());
-	}
-
-	@Override
-	public void convert(Term term) {
-		if (term instanceof AnnotatedTerm) {
-			throw new SMTLIBException("Interpolant contains annotated term: " + term);
-		}
-		super.convert(term);
-	}
-
-	@Override
-	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-		final FunctionSymbol fs = appTerm.getFunction();
-		if (!fs.isIntern() && !mGlobals.contains(fs)) {
-			final Integer left = mLeftAllowed.get(fs);
-			final Integer right = mRightAllowed.get(fs);
-			if (left == null && right == null) {
-				throw new InternalError("Detected new symbol in interpolant: " + fs);
-			} else if (left == null) {
-				mRightErrors.add(fs);
-			} else if (right - left <= 0) {
-				mLeftErrors.add(fs);
+	public final boolean check(final Term interpolant, final Map<FunctionSymbol, Integer> subtreeOccurrences) {
+		mSubtreeOccurrences = subtreeOccurrences;
+		mALocal = new HashSet<FunctionSymbol>();
+		mBLocal = new HashSet<FunctionSymbol>();
+		mCollector.collect(interpolant);
+		for (final FunctionSymbol fsym : mCollector.getSymbols()) {
+			if (!mGlobals.contains(fsym)) {
+				final Integer inA = mSubtreeOccurrences.get(fsym);
+				final Integer inAll = mAllOccurences.get(fsym);
+				if (inAll == null) {
+					throw new InternalError("Detected new symbol in interpolant: " + fsym);
+				} else if (inA == null) {
+					// symbol doesn't occur in the A part
+					mBLocal.add(fsym);
+				} else if (inAll - inA <= 0) {
+					// symbol doesn't occur in the B part
+					mALocal.add(fsym);
+				}
 			}
 		}
-		super.convertApplicationTerm(appTerm, newArgs);
+		mSubtreeOccurrences = null;
+		return !(mALocal.isEmpty() && mBLocal.isEmpty());
 	}
 
-	public Set<FunctionSymbol> getLeftErrors() {
-		return mLeftErrors;
+	/**
+	 * Get all symbols from the interpolant that are A-local. If this is non-empty it indicates an error.
+	 *
+	 * @return The A-local symbols.
+	 */
+	public Set<FunctionSymbol> getALocals() {
+		return mALocal;
 	}
 
-	public Set<FunctionSymbol> getRightErrors() {
-		return mRightErrors;
+	/**
+	 * Get all symbols from the interpolant that are B-local. If this is non-empty it indicates an error.
+	 *
+	 * @return The B-local symbols.
+	 */
+	public Set<FunctionSymbol> getBLocals() {
+		return mBLocal;
 	}
-
 }

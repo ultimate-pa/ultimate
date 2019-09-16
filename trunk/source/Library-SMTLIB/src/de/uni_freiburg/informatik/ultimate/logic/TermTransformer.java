@@ -23,19 +23,19 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 /**
- * This is the base class for transforming formulas.  It does nothing by itself
- * but you can use it to create arbitrary transformations on formulas.
- * The transform method applies the transformation in a non-recursive manner.
+ * This is the base class for transforming formulas. It does nothing by itself but you can use it to create arbitrary
+ * transformations on formulas. The transform method applies the transformation in a non-recursive manner. To achieve
+ * this it uses a todo stack, which contains terms and a small info how much of this term was already processed.
+ * Additionally it uses a convert stack that contains the most recent converted terms, which is used to collect the
+ * arguments of function calls and the subterm of other terms.
  *
- * Subclasses should override the function convert.  It takes as argument
- * the term to convert and should set its result with setResult.  If it needs
- * to build a more complex term with transformed arguments, it can enqueue the
- * subclasses BuildLetTerm, BuildApplicationTerm, BuildAnnotatedTerm with
- * enqueueWalker.  The arguments should be added to the work queue by
- * pushTerm/pushTerms.
+ * Subclasses should override the function convert. It takes as argument the term to convert and should set its result
+ * with setResult. If it needs to build a more complex term with transformed arguments, it can enqueue the subclasses
+ * BuildLetTerm, BuildApplicationTerm, BuildAnnotatedTerm with enqueueWalker. The arguments should be added to the work
+ * queue by pushTerm/pushTerms.
  *
- * Of course, you can also add your own Build class that takes the converted
- * arguments from the conversion stack using getConverted().
+ * Of course, you can also add your own Build class that takes the converted arguments from the conversion stack using
+ * getConverted().
  *
  * @author Jochen Hoenicke
  */
@@ -43,20 +43,21 @@ public class TermTransformer extends NonRecursive {
 	/**
 	 * The term cache.
 	 */
-	private final ArrayDeque<HashMap<Term, Term>> mCache = new ArrayDeque<>();
+	private final ArrayDeque<HashMap<Term, Term>> mCache =
+		new ArrayDeque<HashMap<Term,Term>>();
 
 	/**
 	 * The converted terms.  This is used for example to store the
 	 * arguments of an application term, before the application term is
 	 * evaluated.
 	 */
-	private final ArrayDeque<Term> mConverted = new ArrayDeque<>();
+	private final ArrayDeque<Term> mConverted = new ArrayDeque<Term>();
 
 	/**
 	 * The converted object arrays. This is used to store the arguments of an array valued annotation, before the
 	 * annotation's subterm is processed.
 	 */
-	private final ArrayDeque<Object[]> mConvertedArrays = new ArrayDeque<>();
+	private final ArrayDeque<Object[]> mConvertedArrays = new ArrayDeque<Object[]>();
 
 	/**
 	 * This class represents one item of work. It consists of a term and some task that still needs to be performed on
@@ -189,6 +190,10 @@ public class TermTransformer extends NonRecursive {
 			}
 			pushTerm(annterm.getSubterm());
 			return;
+		} else if (term instanceof MatchTerm) {
+			final MatchTerm matchTerm = (MatchTerm) term;
+			enqueueWalker(new WalkMatchTerm(matchTerm));
+			pushTerm(matchTerm.getDataTerm());
 		} else {
 			throw new AssertionError("Unknown Term: " + term.toStringDirect());
 		}
@@ -242,6 +247,21 @@ public class TermTransformer extends NonRecursive {
 		setResult(result);
 	}
 
+	public void preConvertMatchCase(final MatchTerm oldMatch, final int caseNr) {
+		beginScope();
+		pushTerm(oldMatch.getCases()[caseNr]);
+	}
+
+	public void postConvertMatch(final MatchTerm oldMatch, final Term newDataTerm, final Term[] newCases) {
+		Term result = oldMatch;
+		if (newDataTerm != oldMatch.getDataTerm()
+				|| newCases != oldMatch.getCases()) {
+			final Theory theory = oldMatch.getTheory();
+			result = theory.match(newDataTerm, oldMatch.getVariables(), newCases, oldMatch.getConstructors());
+		}
+		setResult(result);
+	}
+
 	/**
 	 * Transform a term.
 	 * @param term the term to transform.
@@ -266,7 +286,7 @@ public class TermTransformer extends NonRecursive {
 
 	/**
 	 * Get a single converted object array from the converted stack.
-	 * 
+	 *
 	 * @return the new converted object array.
 	 */
 	protected final Object[] getConvertedObjectArray() {
@@ -277,7 +297,7 @@ public class TermTransformer extends NonRecursive {
 	 * Get the converted terms from the converted stack. This is the dual of pushTerms() that is called after the term
 	 * were removed from the todo stack and pushed to the converted stack. It takes the old terms as argument and checks
 	 * for changes.
-	 * 
+	 *
 	 * @param oldArgs
 	 *            the original arguments.
 	 * @return the new converted arguments. It will return the same array oldArgs if there were no changes.
@@ -488,6 +508,44 @@ public class TermTransformer extends NonRecursive {
 				}
 			}
 			transformer.mConvertedArrays.addLast(newArray);
+		}
+
+		@Override
+		public String toString() {
+			return "annotate";
+		}
+	}
+
+	/**
+	 * Walk over each case of a match term, one after another.
+	 */
+	protected static class WalkMatchTerm implements Walker {
+		/** the match term. */
+		private final MatchTerm mMatchTerm;
+		/** the next case nr to walk through */
+		private int mCaseNr;
+
+		public WalkMatchTerm(final MatchTerm term) {
+			mMatchTerm = term;
+			mCaseNr = 0;
+		}
+
+		@Override
+		public void walk(final NonRecursive engine) {
+			final TermTransformer transformer = (TermTransformer) engine;
+			Term[] cases = mMatchTerm.getCases();
+			if (mCaseNr > 0) {
+				transformer.endScope();
+			}
+			if (mCaseNr < cases.length) {
+				transformer.enqueueWalker(this);
+				transformer.preConvertMatchCase(mMatchTerm, mCaseNr);
+				mCaseNr++;
+			} else {
+				final Term[] newCases = transformer.getConverted(cases);
+				final Term newDataTerm = transformer.getConverted();
+				transformer.postConvertMatch(mMatchTerm, newDataTerm, newCases);
+			}
 		}
 
 		@Override

@@ -34,7 +34,7 @@ public class ConstantTermNormalizer extends TermTransformer {
 			final ConstantTerm ct = (ConstantTerm) term;
 			if (ct.getValue() instanceof BigInteger) {
 				final Rational rat = Rational.valueOf(
-						(BigInteger) ct.getValue(), BigInteger.ONE); 
+						(BigInteger) ct.getValue(), BigInteger.ONE);
 				setResult(rat.toTerm(term.getSort()));
 			} else if (ct.getValue() instanceof BigDecimal) {
 				final BigDecimal decimal = (BigDecimal) ct.getValue();
@@ -57,5 +57,5 @@ public class ConstantTermNormalizer extends TermTransformer {
 			super.convert(term);
 		}
 	}
-	
+
 }

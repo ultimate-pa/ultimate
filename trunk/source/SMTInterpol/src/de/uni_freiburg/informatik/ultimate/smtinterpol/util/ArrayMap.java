@@ -56,7 +56,7 @@ public class ArrayMap<K, V> extends AbstractMap<K, V> {
 			mValues[mId] = value;
 			return old;
 		}
-		
+
 	}
 	@Override
 	public Set<java.util.Map.Entry<K, V>> entrySet() {
@@ -81,7 +81,7 @@ public class ArrayMap<K, V> extends AbstractMap<K, V> {
 					public void remove() {
 						throw new UnsupportedOperationException("No remove!");
 					}
-					
+
 				};
 			}
 
@@ -89,7 +89,7 @@ public class ArrayMap<K, V> extends AbstractMap<K, V> {
 			public int size() {
 				return mKeys.length;
 			}
-			
+
 		};
 	}
 

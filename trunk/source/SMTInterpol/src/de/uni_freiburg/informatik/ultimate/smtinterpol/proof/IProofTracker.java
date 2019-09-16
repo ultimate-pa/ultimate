@@ -23,7 +23,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 
 /**
  * The proof tracker interface. There are two implementations, one that builds the proof and one that only builds the
@@ -155,7 +154,7 @@ public interface IProofTracker {
 	 *            The disjunction to simplify.
 	 * @return
 	 */
-	public Term orSimpClause(Term rewrite, Literal[] finalClause);
+	public Term orSimpClause(Term rewrite);
 
 	/**
 	 * Create aux axiom input (tautologies). The term axiom is introduced as Tautology. This doesn't check if the axiom
@@ -178,7 +177,6 @@ public interface IProofTracker {
 	 *            The subformula, which is the result of the split.
 	 * @param splitKind
 	 *            The kind of split, see {@see ProofConstants}.SPLIT_*.
-	 *
 	 * @return The subterm annotated with its proof.
 	 */
 	public Term split(Term formula, Term subterm, Annotation splitKind);

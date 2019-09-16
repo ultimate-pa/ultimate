@@ -72,7 +72,7 @@ public class CCAppTerm extends CCTerm {
 	/**
 	 * Searches the current mCCPar list of args and func to find an application term that is congruent to this term. The
 	 * congruence is detected by finding a CCAppTerm that is in both parent lists.
-	 * 
+	 *
 	 * @param func
 	 *            A term on the path from this.mFunc to this.mFunc.mRepStar.
 	 * @param arg
@@ -99,7 +99,7 @@ public class CCAppTerm extends CCTerm {
 	/**
 	 * Add this app term to the parent info lists of its function and argument. Also adds it to the mCCPars of all the
 	 * oldReps on the path to the repStar, which is necessary for unmerging correctly.
-	 * 
+	 *
 	 * @param engine
 	 *            the congruence closure engine.
 	 * @return the first term that is congruent to the current application term. I.e., the first term that would have
@@ -113,7 +113,7 @@ public class CCAppTerm extends CCTerm {
 		/*
 		 * Store the parent info in all mCCPars of the representatives occuring on the path to the root, so that it is
 		 * still present when we unmerge later.
-		 * 
+		 *
 		 * Also find the first congruent application term.
 		 */
 		while (func.mRep != func || arg.mRep != arg) {

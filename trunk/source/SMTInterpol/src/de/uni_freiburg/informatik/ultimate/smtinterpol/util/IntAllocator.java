@@ -21,7 +21,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.util;
 /**
  * An allocator for integers.  It allocates integers from a given interval with
  * the guarantee that you always get the lowest not-allocated integer.
- * 
+ *
  * You might increase the interval by freeing a value which has previously not
  * been part of the allocation interval, but you should never double free the
  * same integer without allocating it in between.

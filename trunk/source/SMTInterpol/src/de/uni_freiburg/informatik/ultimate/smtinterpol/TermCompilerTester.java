@@ -29,11 +29,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
 
 public class TermCompilerTester extends LoggingScript {
-	
+
 	FormulaUnLet mUnletter = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
 	TermCompiler mCompiler = new TermCompiler();
 	FormulaLet mLetter = new FormulaLet();
-	
+
 	public TermCompilerTester() throws FileNotFoundException {
 		super("<stdout>", true);
 	}
@@ -54,5 +54,5 @@ public class TermCompilerTester extends LoggingScript {
 //		System.exit(0);
 		return super.assertTerm(mLetter.let(tmp));
 	}
-	
+
 }

@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.LitInfo;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.Occurrence;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.InterpolatorClauseTermInfo.ProofPath;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
 /**
@@ -230,6 +229,17 @@ public class CCInterpolator {
 	}
 
 	/**
+	 * For a CC lemma, get the single subpath.
+	 *
+	 * @return the single proof path in the annotation.
+	 */
+	private Term[] getPath(final InterpolatorClauseTermInfo clauseInfo) {
+		final Object[] annotations = (Object[]) clauseInfo.getLemmaAnnotation();
+		assert annotations.length == 3 && annotations[1].equals(":subpath");
+		return (Term[]) annotations[2];
+	}
+
+	/**
 	 * Compute the interpolants for a congruence lemma.
 	 *
 	 * @param left
@@ -400,9 +410,7 @@ public class CCInterpolator {
 			}
 		}
 
-		final ProofPath[] paths = proofTermInfo.getPaths();
-		assert (paths.length == 1 && paths[0].getIndex() == null);
-		mPath = paths[0].getPath();
+		mPath = getPath(proofTermInfo);
 		if (mPath.length == 2) {
 			return interpolateCongruence((ApplicationTerm) mPath[0], (ApplicationTerm) mPath[1]);
 		} else {

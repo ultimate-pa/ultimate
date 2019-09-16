@@ -30,7 +30,7 @@ public class Reletter extends LoggingScript {
 
 	private final FormulaUnLet mUnletter = new FormulaUnLet();
 	private final FormulaLet mLetter = new FormulaLet();
-	
+
 	public Reletter() throws FileNotFoundException {
 		super("<stdout>", true);
 	}

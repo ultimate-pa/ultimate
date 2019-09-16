@@ -27,7 +27,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * Class representing an upper bound (var <= bound) on a variable.
- * 
+ *
  * @author Juergen Christ
  */
 public class BoundConstraint extends DPLLAtom {
@@ -53,16 +53,16 @@ public class BoundConstraint extends DPLLAtom {
 
 	/**
 	 * Return the bound if this atom should be true (var <= bound).
-	 * 
+	 *
 	 * @return Bound set during construction
 	 */
 	public InfinitesimalNumber getBound() {
 		return mBound;
 	}
-	
+
 	/**
 	 * Return the bound if this atom should be false (ibound <= var).
-	 * 
+	 *
 	 * @return Bound converted to lower bound.
 	 */
 	public InfinitesimalNumber getInverseBound() {
@@ -91,10 +91,10 @@ public class BoundConstraint extends DPLLAtom {
 	// / --- Implies checks ---
 	/**
 	 * Is this constraint implied by a given upper bound?
-	 * 
+	 *
 	 * This function returns <code>true</code> iff this bound is bigger than
 	 * the given bound.
-	 * 
+	 *
 	 * @param ubound
 	 *            Upper bound currently set.
 	 * @return true iff this bound is bigger than <code>ubound</code>.
@@ -105,10 +105,10 @@ public class BoundConstraint extends DPLLAtom {
 
 	/**
 	 * Is this constraint implied by a given lower bound?
-	 * 
+	 *
 	 * This function returns <code>true</code> iff this bound is smaller than
 	 * the given bound.
-	 * 
+	 *
 	 * @param lbound
 	 *            Lower bound currently set.
 	 * @return true iff this bound is smaller than <code>lbound</code>.

@@ -57,6 +57,7 @@ public class SolverOptions {
 	public static final String ARRAY_INTERPOLATION = ":array-interpolation";
 	public static final String CHECK_TYPE = ":check-type";
 	public static final String SIMPLIFY_CHECK_TYPE = ":simplify-check-type";
+	public static final String EPR = ":epr";
 
 	SolverOptions(final OptionMap options, final LogProxy logger) {
 		mTimeout = new LongOption(0, true, "Soft timeout in milliseconds for "
@@ -129,6 +130,8 @@ public class SolverOptions {
 
 		// general non-standard options
 		options.addOption(CHECK_TYPE, mCheckType);
+		options.addOption(EPR, new BooleanOption(false, false,
+				"Assume formula is in EPR fragment. This give an error if the formula is outside EPR."));
 
 		// simplifier options
 		options.addOption(SIMPLIFY_CHECK_TYPE, mSimpCheckType);

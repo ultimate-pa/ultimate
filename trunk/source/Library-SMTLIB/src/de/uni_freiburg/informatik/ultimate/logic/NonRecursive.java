@@ -21,14 +21,14 @@ package de.uni_freiburg.informatik.ultimate.logic;
 import java.util.ArrayDeque;
 
 /**
- * This class does a recursive algorithm by using an explicit stack on 
- * the heap. 
- * 
+ * This class does a recursive algorithm by using an explicit stack on
+ * the heap.
+ *
  * If you need a stateless walker, you can just implement Walker.  If
  * your goal is to walk terms, then TermWalker may help you, as it already
  * dispatches the walk function based on the type of the term. A simple
  * term walker can be created as:
- * 
+ *
  * <pre>
  * class MyWalker extends TermWalker {
  *    MyWalker(Term term) { super(term) }
@@ -44,43 +44,36 @@ import java.util.ArrayDeque;
  *    }
  *    walk(... // handle other term classes...
  * </pre>
- * 
+ *
  * For stateful walker you need to extend the class NonRecursive.  In
  * addition you still need a Walker class that does the job.  It can
  * access the state by casting NonRecursive.
- * 
+ *
  * Results can be added in a stateful walker to an additional result
- * stack.  See FormulaUnLet as an example. 
+ * stack.  See FormulaUnLet as an example.
  *
  * @see ComputeFreeVariables
  * @see FormulaUnLet
  * @author Jochen Hoenicke
  */
 public class NonRecursive {
-	/* This class iterates the term in a non-recursive way.  To achieve this
-	 * it uses a todo stack, which contains terms and a small info how much
-	 * of this term was already processed.  Additionally it uses a convert
-	 * stack that contains the most recent converted terms, which is used 
-	 * to collect the arguments of function calls and the subterm of other 
-	 * terms.
-	 */
 	/**
 	 * The todo stack. It contains the terms to convert and some info how much
 	 * was already processed of this term.
 	 */
 	private final ArrayDeque<Walker> mTodo = new ArrayDeque<Walker>();
-	
+
 	/**
 	 * Walker that does some piece of work.  This can be added to
-	 * the todo stack to be executed later. 
-	 * 
+	 * the todo stack to be executed later.
+	 *
 	 * @author hoenicke
 	 */
 	protected interface Walker {
 		/**
 		 * Do one step of the recursive algorithm.  This may enqueue new
 		 * walkers that do the remaining steps.
-		 * @param engine The non recursive engine where new walkers 
+		 * @param engine The non recursive engine where new walkers
 		 * can be enqueued.
 		 */
 		public void walk(NonRecursive engine);
@@ -94,7 +87,7 @@ public class NonRecursive {
 	protected void reset() {
 		mTodo.clear();
 	}
-	
+
 	/**
 	 * Enqueues a walker on the todo stack.
 	 * @param item the walker to enqueue.
@@ -102,7 +95,7 @@ public class NonRecursive {
 	public void enqueueWalker(Walker item) {
 		mTodo.addLast(item);
 	}
-	
+
 	/**
 	 * The main work horse.  This will repeat doing work items until the
 	 * todo stack is empty.
@@ -122,17 +115,17 @@ public class NonRecursive {
 			mTodo.removeLast().walk(this);
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		return mTodo.toString();
 	}
-	
+
 	/**
 	 * Walker that walks non-recursively over terms.
 	 * This dispatches the walk function.  You still have to provide
 	 * the code that chooses which sub terms to walk.
-	 * 
+	 *
 	 * @author hoenicke
 	 */
 	public static abstract class TermWalker implements Walker {
@@ -154,6 +147,8 @@ public class NonRecursive {
 				walk(walker, (ConstantTerm) mTerm);
 			} else if (mTerm instanceof TermVariable) {
 				walk(walker, (TermVariable) mTerm);
+			} else if (mTerm instanceof MatchTerm) {
+				walk(walker, (MatchTerm) mTerm);
 			}
 		}
 
@@ -163,7 +158,8 @@ public class NonRecursive {
 		public abstract void walk(NonRecursive walker, LetTerm term);
 		public abstract void walk(NonRecursive walker, QuantifiedFormula term);
 		public abstract void walk(NonRecursive walker, TermVariable term);
-		
+		public abstract void walk(NonRecursive walker, MatchTerm term);
+
 		public Term getTerm() {
 			return mTerm;
 		}

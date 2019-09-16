@@ -35,14 +35,14 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  * This is a filter script around the smtlib2 benchmark solver that
  * generates verification conditions for the formula converter.  It
  * parses the formulas as usual but instead of solving them it calls
- * the generator to create verification conditions stating that the 
+ * the generator to create verification conditions stating that the
  * original and the converted formula are equisatisfiable.
- * 
+ *
  * @author Oday Jubran, Jochen Hoenicke
  */
 public class TBenchmark extends SMTInterpol {
 	Generator mGenerator;
-	
+
 	public TBenchmark(LogProxy logger, PrintWriter out) {
 		super(logger);
 		mGenerator = new Generator(out);
@@ -56,13 +56,13 @@ public class TBenchmark extends SMTInterpol {
 		super.push(n);
 		mGenerator.addPush(n);
 	}
-	
+
 	@Override
 	public void pop(int n) throws SMTLIBException {
 		super.pop(n);
 		mGenerator.addPop(n);
 	}
-		
+
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		generate();
@@ -83,7 +83,7 @@ public class TBenchmark extends SMTInterpol {
 	}
 
 	@Override
-	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort) 
+	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort)
 	    throws SMTLIBException {
 		super.declareFun(fun, paramSorts, resultSort);
 		mGenerator.addFuncDec(fun, paramSorts, resultSort);
@@ -103,18 +103,18 @@ public class TBenchmark extends SMTInterpol {
 	}
 
 	@Override
-	public void defineSort(String sort, Sort[] params, Sort definition) 
+	public void defineSort(String sort, Sort[] params, Sort definition)
 	    throws SMTLIBException {
 		super.defineSort(sort, params, definition);
 		mGenerator.addSortDef(sort, params, definition);
 	}
-	
+
 	@Override
 	public void exit() {
 		super.exit();
 		mGenerator.exit();
 	}
-	
+
 	public void generate() throws SMTLIBException {
     	final Term[] assertions = getAssertions();
     	final SimpleList<Clause> clauses = getEngine().getClauses();

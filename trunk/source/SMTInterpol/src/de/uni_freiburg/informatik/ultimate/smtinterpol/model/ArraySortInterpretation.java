@@ -26,13 +26,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 public class ArraySortInterpretation implements SortInterpretation {
-	
+
 	private final SortInterpretation mIndexSort;
 	private final SortInterpretation mValueSort;
-	
+
 	private final ArrayList<ArrayValue> mValues;
 	private HashMap<ArrayValue, Integer> mUnifier;
-	
+
 	public ArraySortInterpretation(SortInterpretation index,
 			SortInterpretation value) {
 		mIndexSort = index;
@@ -97,11 +97,11 @@ public class ArraySortInterpretation implements SortInterpretation {
 	public SortInterpretation getIndexInterpretation() {
 		return mIndexSort;
 	}
-	
+
 	public SortInterpretation getValueInterpretation() {
 		return mValueSort;
 	}
-	
+
 	public int value2index(ArrayValue value) {
 		if (mUnifier == null) {
 			mUnifier = new HashMap<ArrayValue, Integer>();
@@ -120,5 +120,5 @@ public class ArraySortInterpretation implements SortInterpretation {
 		mUnifier.put(value, idx);
 		return idx;
 	}
-	
+
 }

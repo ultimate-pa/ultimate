@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * (exists ((var_1 sort_1) ... (var_n sort_n)) ...)
  * </pre>.
  *
- * A quantified formula is created by 
+ * A quantified formula is created by
  * {@link Script#quantifier(int, TermVariable[], Term, Term[][])}.
  *
  * @author hoenicke
@@ -41,18 +41,18 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 public class QuantifiedFormula extends Term {
 	public static final int EXISTS = 0;
 	public static final int FORALL = 1;
-	
+
 	private final int mQuantifier;
 	private final TermVariable[] mVariables;
 	private final Term mSubFormula;
-	
+
 	QuantifiedFormula(int quant, TermVariable[] vars, Term f, int hash) {
 		super(hash);
 		mQuantifier = quant;
 		mVariables = vars;
 		mSubFormula = f;
 	}
-	
+
 	/**
 	 * @return the quantifier
 	 */
@@ -61,7 +61,7 @@ public class QuantifiedFormula extends Term {
 	}
 
 	/**
-	 * Get the quantified variables.  
+	 * Get the quantified variables.
 	 * @return the variables
 	 */
 	public TermVariable[] getVariables() {
@@ -85,7 +85,7 @@ public class QuantifiedFormula extends Term {
 	public int hashCode() {
 		return hashQuantifier(mQuantifier, mVariables, mSubFormula);
 	}
-	
+
 	public static final int hashQuantifier(
 			int quant, TermVariable[] vars, Term f) {
 		return //Arrays.hashCode(vars) ^ f.hashCode() ^ quant;
@@ -98,7 +98,7 @@ public class QuantifiedFormula extends Term {
 		mTodo.addLast(")");
 		mTodo.addLast(getSubformula());
 		mTodo.addLast(")) ");
-		
+
 		// Add variables
 		final TermVariable[] vars = getVariables();
 		for (int i = vars.length - 1; i > 0; i--) {

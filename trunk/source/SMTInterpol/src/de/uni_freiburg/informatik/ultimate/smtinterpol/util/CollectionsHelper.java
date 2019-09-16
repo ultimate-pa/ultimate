@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class CollectionsHelper {
-	
+
 	private CollectionsHelper() {
 		// Hide constructor
 	}
@@ -68,5 +68,5 @@ public final class CollectionsHelper {
 			}
 		}
 		return result;
-	}	
+	}
 }

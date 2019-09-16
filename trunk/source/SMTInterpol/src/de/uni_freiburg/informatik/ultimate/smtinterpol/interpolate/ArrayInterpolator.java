@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.LitInfo;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.Occurrence;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.InterpolatorClauseTermInfo.ProofPath;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
 /**
@@ -131,6 +130,36 @@ public class ArrayInterpolator {
 	}
 
 	/**
+	 * For an array lemma, get the diseq.
+	 *
+	 * @return paths an array containing the proof paths
+	 */
+	private Term getDiseq(final InterpolatorClauseTermInfo clauseInfo) {
+		final Object[] annotations = (Object[]) clauseInfo.getLemmaAnnotation();
+		assert annotations.length % 2 == 1;
+		return (Term) annotations[0];
+	}
+
+	/**
+	 * For an array lemma, get the sub- and weak paths.
+	 *
+	 * @return paths an array containing the proof paths
+	 */
+	private ProofPath[] getPaths(final InterpolatorClauseTermInfo clauseInfo) {
+		final Object[] annotations = (Object[]) clauseInfo.getLemmaAnnotation();
+		assert annotations.length % 2 == 1;
+		final int length = (annotations.length - 1) / 2;
+		final ProofPath[] paths = new ProofPath[length];
+		for (int i = 0; i < length; i++) {
+			final int j = 2 * i + 1;
+			final String type = (String) annotations[j];
+			final Object path = annotations[j + 1];
+			paths[i] = new ProofPath(type, path);
+		}
+		return paths;
+	}
+
+	/**
 	 * Compute interpolants for array lemmas of type read-over-weakeq and weakeq-ext.
 	 *
 	 * @param proofTerm
@@ -139,8 +168,7 @@ public class ArrayInterpolator {
 	 */
 	public Term[] computeInterpolants(final Term proofTerm) {
 		mLemmaInfo = mInterpolator.getClauseTermInfo(proofTerm);
-		assert mLemmaInfo.getDiseq() instanceof AnnotatedTerm;
-		mDiseq = (AnnotatedTerm) mLemmaInfo.getDiseq();
+		mDiseq = (AnnotatedTerm) getDiseq(mLemmaInfo);
 		mDiseqInfo = mInterpolator.getAtomOccurenceInfo(mDiseq);
 		mEqualities = new HashMap<SymmetricPair<Term>, AnnotatedTerm>();
 		mDisequalities = new HashMap<SymmetricPair<Term>, AnnotatedTerm>();
@@ -189,7 +217,7 @@ public class ArrayInterpolator {
 	 * @return An array containing the interpolants for all partitions.
 	 */
 	private Term[] computeReadOverWeakeqInterpolants(final Term proofTerm) {
-		final ProofPath[] paths = mLemmaInfo.getPaths();
+		final ProofPath[] paths = getPaths(mLemmaInfo);
 		assert paths.length <= 2;
 		if (paths.length == 2) {
 			assert paths[0].getIndex() == null;
@@ -239,7 +267,7 @@ public class ArrayInterpolator {
 	private Term[] computeWeakeqExtInterpolants(final Term proofTerm) {
 		// TODO Find shared arrays for the mixed case. If there are shared arrays for mDiseq, we don't need to build the
 		// recursive interpolant but interpolate in such way that all paths in either A or B are closed by shared terms.
-		final ProofPath[] paths = mLemmaInfo.getPaths();
+		final ProofPath[] paths = getPaths(mLemmaInfo);
 		mStorePath = paths[0];
 		mIndexPaths = new HashMap<Term, ProofPath>();
 		mIndexPathInfos = new HashMap<Term, WeakPathInfo>();
@@ -293,7 +321,7 @@ public class ArrayInterpolator {
 	 * @return an array containing the interpolants of the lemma for all partitions of the interpolation problem.
 	 */
 	private Term[] computeConstWeakeqInterpolants(final Term proofTerm) {
-		final ProofPath[] paths = mLemmaInfo.getPaths();
+		final ProofPath[] paths = getPaths(mLemmaInfo);
 		assert paths.length == 1;
 		mStorePath = paths[0];
 
@@ -332,7 +360,7 @@ public class ArrayInterpolator {
 	 * @return an array containing the interpolants of the lemma for all partitions of the interpolation problem.
 	 */
 	private Term[] computeReadConstWeakeqInterpolants(final Term proofTerm) {
-		final ProofPath[] paths = mLemmaInfo.getPaths();
+		final ProofPath[] paths = getPaths(mLemmaInfo);
 		assert paths.length == 1;
 		mStorePath = paths[0];
 
@@ -755,6 +783,36 @@ public class ArrayInterpolator {
 			searchArr = mTheory.term("store", searchArr, searchIdx, buildSelect(sharedArr, searchIdx));
 		}
 		return constPathItp;
+	}
+
+	/**
+	 * This class is used to store subpaths and weakpaths of CC and array lemmas in a way convenient for the
+	 * interpolation procedure. It stores the path index for weakpaths (null for subpaths) and the path as an array of
+	 * terms. This is the equivalent of ArrayAnnotation.IndexedPath with Terms instead of CCTerms.
+	 */
+	class ProofPath {
+		private final Term mPathIndex;
+		private final Term[] mPath;
+
+		private ProofPath(final String type, final Object path) {
+			if (type.equals(":subpath")) {
+				mPathIndex = null;
+				mPath = (Term[]) path;
+			} else {
+				assert type.equals(":weakpath");
+				final Object[] indexAndPath = (Object[]) path;
+				mPathIndex = (Term) indexAndPath[0];
+				mPath = (Term[]) indexAndPath[1];
+			}
+		}
+
+		public Term getIndex() {
+			return mPathIndex;
+		}
+
+		public Term[] getPath() {
+			return mPath;
+		}
 	}
 
 	/**

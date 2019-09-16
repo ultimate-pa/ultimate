@@ -41,12 +41,12 @@ public class StringOption extends Option {
 	public Option copy() {
 		return new StringOption(this);
 	}
-	
+
 	@Override
 	public void set(Object value) {
 		mValue = value.toString();
 	}
-	
+
 	public final String getValue() {
 		return mValue;
 	}

@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -169,14 +170,12 @@ public class ModelEvaluator extends NonRecursive {
 
 		@Override
 		public void walk(final NonRecursive walker, final LetTerm term) {
-			throw new InternalError(
-					"Let-Terms should not be in model evaluation");
+			throw new InternalError("Let-Terms should not be in model evaluation");
 		}
 
 		@Override
 		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
-			throw new SMTLIBException(
-					"Quantifiers not supported in model evaluation");
+			throw new SMTLIBException("Quantifiers not supported in model evaluation");
 		}
 
 		@Override
@@ -184,6 +183,10 @@ public class ModelEvaluator extends NonRecursive {
 			throw new SMTLIBException("Terms to evaluate must be closed");
 		}
 
+		@Override
+		public void walk(final NonRecursive walker, final MatchTerm term) {
+			throw new SMTLIBException("Match not yet supported in model evaluation");
+		}
 	}
 
 	HashMap<Term, Integer> mCache = new HashMap<Term, Integer>();
@@ -453,9 +456,15 @@ public class ModelEvaluator extends NonRecursive {
 		if (name.equals("divisible")) {
 			assert(args.length == 1);
 			final Rational arg = rationalValue(args[0]);
-			final BigInteger[] indices = fun.getIndices();
+			final String[] indices = fun.getIndices();
 			assert(indices.length == 1);
-			final Rational rdiv = Rational.valueOf(indices[0], BigInteger.ONE);
+			BigInteger rdiv1;
+			try {
+				rdiv1 = new BigInteger(indices[0]);
+			} catch(NumberFormatException e){
+				throw new SMTLIBException("index must be numeral", e);
+			};
+			final Rational rdiv = Rational.valueOf(rdiv1, BigInteger.ONE);
 			return arg.div(rdiv).isIntegral()
 					? mModel.getTrueIdx() : mModel.getFalseIdx();
 		}

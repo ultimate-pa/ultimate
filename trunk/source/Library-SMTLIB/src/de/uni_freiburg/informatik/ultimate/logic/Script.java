@@ -26,10 +26,10 @@ import java.util.Map;
  * Basic interface for the interaction with an SMTLIB version 2 compliant
  * solver.  The interface provides all commands of the SMTLIB version 2 standard
  * and some additional commands to create sorts and terms.
- * 
+ *
  * Following table summarizes the standard options that should be understood by
  * every implementation and gives their types.
- * 
+ *
  * <table summary="Standard Options">
  * <tr><th>Option</th><th>Type</th></tr>
  * <tr><td>:print-success</td><td>Boolean</td></tr>
@@ -43,7 +43,7 @@ import java.util.Map;
  * <tr><td>:random-seed</td><td>BigInteger</td></tr>
  * <tr><td>:timeout</td><td>BigInteger</td></tr>
  * </table>
- * 
+ *
  * @author Jochen Hoenicke, Juergen Christ
  */
 public interface Script {
@@ -102,7 +102,7 @@ public interface Script {
 	 * @throws UnsupportedOperationException If the option is unsupported.
 	 * @throws SMTLIBException In case of type errors.
 	 */
-	public void setOption(String opt, Object value) 
+	public void setOption(String opt, Object value)
 		throws UnsupportedOperationException, SMTLIBException;
 	/**
 	 * Set some information for the solver.  Note that according to the standard
@@ -113,10 +113,52 @@ public interface Script {
 	 */
 	public void setInfo(String info, Object value);
 	/**
+	 * Check if constr is the Constructor of a Datatype within the Theory.
+	 * @param constr The Name of the constructor.
+	 * @return The Contructor or null if it does not exist.
+	 */
+	public FunctionSymbol getFunctionSymbol(String constructor);
+	/**
+	 * Declare constructors of a datatype.
+	 * @param name Name of the Constructor.
+	 * @param selectors The selectors of the Constructor.
+	 * @param argumentSorts The argumentSorts of the Constructor.
+	 * @return The array of constructors.
+	 * @throws SMTLIBException.
+	 */
+	public DataType.Constructor constructor(String name, String[] selectors, Sort[] argumentSorts)
+		throws SMTLIBException;
+	/**
+	 * Create a new datatype.
+	 * @param sort Sort of the datatypes.
+	 * @param typename Name of the datatypes.
+	 * @return The datatype object.
+	 * @throws SMTLIBException.
+	 */
+	public DataType datatype(String typename, int numParams)
+		throws SMTLIBException;	
+	/**
+	 * Declare new datatypes by setting their constructors.
+	 * @param datatype
+	 * @param constrs The constructors.
+	 * @throws SMTLIBException.
+	 */
+	public void declareDatatype(DataType datatype, DataType.Constructor[] constrs)
+		throws SMTLIBException;
+	/**
+	 * Declare new datatypes by setting their constructors.
+	 * @param datatypes 
+	 * @param constrs The constructors.
+	 * @throws SMTLIBException.
+	 */
+	public void declareDatatypes(DataType[] datatypes, DataType.Constructor[][] constrs, Sort[][] sortParams)
+		throws SMTLIBException;
+	
+	/**
 	 * Declare a user-defined sort.
 	 * @param sort  The name of the new sort.
 	 * @param arity The arity of the new sort.
-	 * @throws SMTLIBException If no logic is set, the logic does not allow 
+	 * @throws SMTLIBException If no logic is set, the logic does not allow
 	 *                         user-defined sorts, or a sort with this
 	 *                         name already exists.
 	 */
@@ -126,7 +168,7 @@ public interface Script {
 	 * @param sort       Name of the alias.
 	 * @param sortParams Sort parameters.
 	 * @param definition Original sort.
-	 * @throws SMTLIBException If no logic is set, the logic does not allow 
+	 * @throws SMTLIBException If no logic is set, the logic does not allow
 	 *                         user-defined sorts, or a sort with this
 	 *                         name already exists.
 	 */
@@ -137,8 +179,8 @@ public interface Script {
 	 * @param fun        Name of the function symbol.
 	 * @param paramSorts Sorts of the parameters.
 	 * @param resultSort Sort of the result of an application of this function.
-	 * @throws SMTLIBException If the logic is not set, the logic is not an UF 
-	 *                         logic but the function takes parameters, or a 
+	 * @throws SMTLIBException If the logic is not set, the logic is not an UF
+	 *                         logic but the function takes parameters, or a
 	 *                         function with this name already exists.
 	 */
 	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort)
@@ -149,8 +191,8 @@ public interface Script {
 	 * @param params     Parameters of the alias.
 	 * @param resultSort Return sort of the alias.
 	 * @param definition Definition of the function alias.
-	 * @throws SMTLIBException If the logic is not set, the logic is not an UF 
-	 *                         logic but the function takes parameters, or a 
+	 * @throws SMTLIBException If the logic is not set, the logic is not an UF
+	 *                         logic but the function takes parameters, or a
 	 *                         function with this name already exists.
 	 */
 	public void defineFun(String fun, TermVariable[] params, Sort resultSort,
@@ -179,7 +221,7 @@ public interface Script {
 	public LBool assertTerm(Term term) throws SMTLIBException;
 	/**
 	 * Check for satisfiability of the current context.
-	 * 
+	 *
 	 * Note that this function should return {@link LBool#UNKNOWN} in case of
 	 * errors.
 	 * @return The result of the check as a lifted Boolean.
@@ -189,7 +231,7 @@ public interface Script {
 	/**
 	 * Check for satisfiability of the current context under additional
 	 * assumptions.
-	 * 
+	 *
 	 * Note that this function should return {@link LBool#UNKNOWN} in case of
 	 * errors.
 	 * @param assumptions Additional assumptions as Boolean constants (nullary
@@ -256,7 +298,7 @@ public interface Script {
 	 * did not return {@link LBool#UNSAT}.  To enable model production, call
 	 * {@link #setOption(String, Object) setOption}(":produce-models", true).
 	 * @param terms an array of terms whose value should be computed.
-	 * @return A valuation (mapping from term to value (which is again 
+	 * @return A valuation (mapping from term to value (which is again
 	 * represented by a term) where the keys are the given terms.
 	 * @throws SMTLIBException If model production is not enabled or the solver
 	 *                         detected unsatisfiability.
@@ -303,7 +345,7 @@ public interface Script {
 	 * Exit the solver.
 	 */
 	public void exit();
-	
+
 	/* Term creation */
 	/**
 	 * Constant representing universal quantification.
@@ -329,14 +371,14 @@ public interface Script {
 	 * @return The corresponding sort.
 	 * @throws SMTLIBException If and only if the sort does not exist.
 	 */
-	public Sort sort(String sortname, BigInteger[] indices, Sort... params)
+	public Sort sort(String sortname, String[] indices, Sort... params)
 		throws SMTLIBException;
 	/**
 	 * Create an array of sort parameters.  These parameters can be used when
 	 * defining a sort.  Note that these names cannot be used in the sort
 	 * functions since the result does not contain any real sort.  Users have
 	 * to save the array and use its components.  The result contains the
-	 * variables in the order in which the names are specified in the input. 
+	 * variables in the order in which the names are specified in the input.
 	 * @param names The names of the variables
 	 * @return An array corresponding to sort variables with the given names.
 	 * @throws SMTLIBException If an error occured.
@@ -345,7 +387,7 @@ public interface Script {
 	/**
 	 * Create an n-ary term by name.  This function should also be used to
 	 * construct Boolean terms. I.e., the function names "and", "or", "=&gt;",
-	 * "ite", "=", "distinct", or "not" might be used to create formulas. 
+	 * "ite", "=", "distinct", or "not" might be used to create formulas.
 	 * @param funcname Name of the function.
 	 * @param params   The parameters of the function application.
 	 * @return The constructed term.
@@ -363,7 +405,7 @@ public interface Script {
 	 * @return The constructed term.
 	 * @throws SMTLIBException If an error occurred.
 	 */
-	public Term term(String funcname, BigInteger[] indices,
+	public Term term(String funcname, String[] indices,
 			Sort returnSort, Term... params) throws SMTLIBException;
 	/**
 	 * Create a term variable.
@@ -376,7 +418,7 @@ public interface Script {
 		throws SMTLIBException;
 	/**
 	 * Create a quantified formula.
-	 * @param quantor  The quantor flag (one of {@link #EXISTS}, or 
+	 * @param quantor  The quantor flag (one of {@link #EXISTS}, or
 	 *                 {@link #FORALL})
 	 * @param vars     The quantified variables.
 	 * @param body     The body of the quantified formula.
@@ -398,6 +440,17 @@ public interface Script {
 	 */
 	public Term let(TermVariable[] vars, Term[] values, Term body)
 		throws SMTLIBException;
+	
+	/**
+	 * Create a match term.
+	 * @param dataArg The term that is to be matched.
+	 * @param vars The variables of each pattern.
+	 * @param cases The match cases.
+	 * @return The match term.
+	 * @throws SMTLIBException
+	 */
+	public Term match(final Term dataArg, final TermVariable[][] vars, final Term[] cases,
+			DataType.Constructor[] constructors) throws SMTLIBException;
 	/**
 	 * Annotate a term.  This can be used to create named terms.
 	 * @param t           Term to annotate.
@@ -455,7 +508,7 @@ public interface Script {
 	 * @throws SMTLIBException If an error occurred.
 	 */
 	public Term string(String str) throws SMTLIBException;
-	
+
 	/* Non-SMTLIB extensions */
 	/**
 	 * Return the underlying theory.  This theory is only valid after a call to
@@ -515,7 +568,7 @@ public interface Script {
 	 * {@link LBool#UNKNOWN} and no assertion stack command was issued after
 	 * this check.
 	 * @return A model for the current formula.
-	 * @throws SMTLIBException 
+	 * @throws SMTLIBException
 	 * 				Model production was not enabled.
 	 * @throws UnsupportedOperationException
 	 * 				The solver does not support this operation.
@@ -547,7 +600,7 @@ public interface Script {
 	 * Echo a message on the regular output channel of the solver.  Although
 	 * this function is not specified in the SMTLIB standard, we do not expect
 	 * implementations to throw any exceptions.  Instead, if the command is
-	 * unsupported, it should simply be implemented as the identity function.  
+	 * unsupported, it should simply be implemented as the identity function.
 	 * @param msg The message to print.
 	 * @return The message.
 	 */

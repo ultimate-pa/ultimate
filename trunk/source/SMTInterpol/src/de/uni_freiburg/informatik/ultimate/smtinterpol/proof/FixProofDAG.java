@@ -69,11 +69,11 @@ public class FixProofDAG {
 			// Simplify rn
 			final Set<Literal> removed = engine.mDeletedNodes.get(mCls);
 			final Antecedent[] antes = rn.getAntecedents();
-			final ArrayDeque<Antecedent> newAntes = 
+			final ArrayDeque<Antecedent> newAntes =
 					new ArrayDeque<ResolutionNode.Antecedent>();
 			boolean deleted = false;
 			boolean changed = false;
-			
+
 			Clause primary = null;
 		newprimary:
 		    {
@@ -86,20 +86,20 @@ public class FixProofDAG {
 						}
 						deleted = removed.contains(antes[i].mPivot.negate());
 					}
-					
+
 					final Clause cls = engine.mTransformed.get(antes[i].mAntecedent);
 					if (deleted || !cls.contains(antes[i].mPivot)) {
 						primary = cls;
 						changed = true;
 						break newprimary;
 					}
-					
+
 					if (cls == antes[i].mAntecedent) {
 						newAntes.addFirst(antes[i]);
 					} else {
 						newAntes.addFirst(new Antecedent(antes[i].mPivot, cls));
 						changed = true;
-					}	
+					}
 				}
 				primary = engine.mTransformed.get(rn.getPrimary());
 				changed |= primary != rn.getPrimary();
@@ -159,7 +159,7 @@ public class FixProofDAG {
 		public ExpandClause(Clause cls) {
 			mCls = cls;
 		}
-		
+
 		@Override
 		public void process(FixProofDAG engine) {
 			if (engine.mTransformed.containsKey(mCls)) {

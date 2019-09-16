@@ -46,12 +46,12 @@ public class CuckooHashSet<E> extends AbstractSet<E> {
 	 * The hash function.  This must have good bit distributing properties.
 	 * We use Jenkins hash function on object hashcode.
 	 * @param o the object to hash
-	 * @return the hash code. 
+	 * @return the hash code.
 	 */
 	protected int hash(Object o) {
 		return hashJenkins(o.hashCode());
 	}
-	
+
 	protected static int hashJenkins(int hash) {
 		hash += (hash << 12);// NOCHECKSTYLE
 		hash ^= (hash >>> 22);// NOCHECKSTYLE

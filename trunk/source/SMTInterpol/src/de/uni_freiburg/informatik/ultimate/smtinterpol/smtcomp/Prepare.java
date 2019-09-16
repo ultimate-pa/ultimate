@@ -29,10 +29,10 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 public class Prepare implements ExitHook {
 
 	Script mScript;
-	
+
 	/**
 	 * @param args
-	 * @throws FileNotFoundException 
+	 * @throws FileNotFoundException
 	 */
 	public static void main(String[] args) throws FileNotFoundException {
 		Track track = Track.MAIN;

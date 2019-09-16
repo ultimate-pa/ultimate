@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 
 public abstract class DPLLAtom extends Literal {
-	
+
 	public static class TrueAtom extends DPLLAtom {
 
 		public TrueAtom() {
@@ -36,12 +36,12 @@ public abstract class DPLLAtom extends Literal {
 		public Term getSMTFormula(Theory smtTheory, boolean quoted) {
 			return smtTheory.mTrue;
 		}
-		
+
 	}
-	
+
 	public static class NegLiteral extends Literal {
 		public NegLiteral(DPLLAtom atom) {
-			super(~atom.hashCode());//TODO is bit-flipping a good hash??? 
+			super(~atom.hashCode());//TODO is bit-flipping a good hash???
 			mAtom = atom;
 			mNegated = atom;
 		}
@@ -58,7 +58,7 @@ public abstract class DPLLAtom extends Literal {
 			return mAtom.getNegatedSMTFormula(smtTheory, quoted);
 		}
 	}
-	
+
 	int mDecideLevel = -1;
 	int mStackPosition = -1;
 	Literal mDecideStatus;
@@ -76,7 +76,7 @@ public abstract class DPLLAtom extends Literal {
 		mAssertionstacklevel = assertionstacklevel;
 		mLastStatus = mNegated;
 	}
-	
+
 	/**
 	 * Compares two atoms with respect to their activity. Do not override!
 	 */
@@ -92,12 +92,12 @@ public abstract class DPLLAtom extends Literal {
 	public int getSign() {
 		return 1;
 	}
-	
-	public final int getDecideLevel() { 
+
+	public final int getDecideLevel() {
 		return mDecideLevel;
 	}
 
-	public final int getStackPosition() { 
+	public final int getStackPosition() {
 		return mStackPosition;
 	}
 
@@ -108,7 +108,7 @@ public abstract class DPLLAtom extends Literal {
 	public String toStringNegated() {
 		return "!(" + toString() + ")";
 	}
-	
+
 	/**
 	 * Returns a SMT formula representing the negated atoms.
 	 * Subclasses may overwrite this for pretty output.
@@ -135,7 +135,7 @@ public abstract class DPLLAtom extends Literal {
 		mLastStatus = status;
 //		activity += 1.0;
 	}
-	
+
 	public Literal getPreferredStatus() {
 		return mLastStatus;
 	}

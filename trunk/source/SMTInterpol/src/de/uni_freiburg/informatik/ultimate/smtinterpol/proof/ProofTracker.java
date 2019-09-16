@@ -20,6 +20,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 
 /**
  * This is an implementation of the IProofTracker that generates the proof annotations.
@@ -102,19 +102,24 @@ public class ProofTracker implements IProofTracker{
 	}
 
 	@Override
-	public Term orSimpClause(final Term rewrite, final Literal[] clause) {
+	public Term orSimpClause(final Term rewrite) {
 		final Theory t = rewrite.getTheory();
 		final Term orig = getProvedTerm(rewrite);
-		Term result;
-		if (clause.length == 0) {
-			result = t.mFalse;
-		} else if (clause.length == 1) {
-			result = clause[0].getSMTFormula(t, true);
-		} else {
-			final Term[] newArgs = new Term[clause.length];
-			for (int i = 0; i < clause.length; i++)  {
-				newArgs[i] = clause[i].getSMTFormula(t, true);
+		assert orig instanceof ApplicationTerm && ((ApplicationTerm) orig).getFunction() == t.mOr;
+		final Term[] args = ((ApplicationTerm) orig).getParameters();
+		final LinkedHashSet<Term> simpParams = new LinkedHashSet<>();
+		for (final Term arg : args) {
+			if (arg != t.mFalse) {
+				simpParams.add(arg);
 			}
+		}
+		Term result;
+		if (simpParams.size() == 0) {
+			result = t.mFalse;
+		} else if (simpParams.size() == 1) {
+			result = simpParams.iterator().next();
+		} else {
+			final Term[] newArgs = simpParams.toArray(new Term[simpParams.size()]);
 			result = t.term("or", newArgs);
 		}
 		return transitivity(rewrite, buildRewrite(orig, result, ProofConstants.RW_OR_SIMP));
@@ -202,7 +207,7 @@ public class ProofTracker implements IProofTracker{
 	}
 
 	@Override
-	public Term split(final Term splitTerm, final Term input, final Annotation splitRule) {
+	public Term split(final Term input, final Term splitTerm, final Annotation splitRule) {
 		final Theory t = input.getTheory();
 		final Term proof = t.term(ProofConstants.FN_SPLIT,
 				t.annotatedTerm(new Annotation[] { splitRule }, getProof(input)), splitTerm);
@@ -247,7 +252,7 @@ public class ProofTracker implements IProofTracker{
 		final Theory theory = quant.getTheory();
 		final Term negQuant = theory.not(theory.exists(quant.getVariables(), theory.not(quant.getSubformula())));
 		Term rewrite = buildRewrite(quant, negQuant, ProofConstants.RW_FORALL_EXISTS);
-		rewrite = transitivity(rewrite, congruence(negQuant, new Term[] { exists(quant, negNewBody) }));
+		rewrite = congruence(rewrite, new Term[] { exists(quant, negNewBody) });
 		return rewrite;
 	}
 }
