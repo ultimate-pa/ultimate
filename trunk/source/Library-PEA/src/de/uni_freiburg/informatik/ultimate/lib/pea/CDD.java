@@ -696,10 +696,6 @@ public final class CDD {
 		return toString(false);
 	}
 
-	public String toTexString() {
-		return toString("tex", false);
-	}
-
 	/**
 	 * Creates a string representation of the CDD.
 	 *
@@ -708,6 +704,26 @@ public final class CDD {
 	 */
 	public String toString(final boolean needsParens) {
 		return toString("boogie", needsParens);
+	}
+
+	public String toTexString() {
+		return toString("tex", false);
+	}
+
+	public String toSmtString() {
+		return toString("smt", true);
+	}
+
+	public String toBoogieString() {
+		return toString("boogie", true);
+	}
+
+	public String toUppaalString() {
+		return toString("uppaal", true);
+	}
+
+	public String toGeneralString() {
+		return toString("general", true);
 	}
 
 	/**
@@ -769,18 +785,6 @@ public final class CDD {
 			return toStringInfix(funCdd2Str, funDecision2Str, orStr, andStr);
 		}
 		return toStringPrefix(funCdd2Str, funDecision2Str, orStr, andStr);
-	}
-
-	public String toSmtString() {
-		return toString("smt", true);
-	}
-
-	public String toBoogieString() {
-		return toString("boogie", true);
-	}
-
-	public String toUppaalString() {
-		return toString("uppaal", true);
 	}
 
 	private String toStringPrefix(final Function<CDD, String> funCdd2Str,

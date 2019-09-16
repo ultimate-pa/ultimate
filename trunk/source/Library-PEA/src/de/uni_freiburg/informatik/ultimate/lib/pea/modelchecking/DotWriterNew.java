@@ -39,8 +39,12 @@ public class DotWriterNew {
 
 		for (final Phase phase : pea.getPhases()) {
 			final String location = phase.getName();
-			final String clock = phase.getClockInvariant().toString();
-			final String predicate = phase.getStateInvariant().toString();
+			final String clock = phase.getClockInvariant().toUppaalString();
+			final String predicate = phase.getStateInvariant().toUppaalString();
+
+			logger.info("location: " + location);
+			logger.info("clock: " + clock);
+			logger.info("predicate: " + predicate);
 
 			String table = "";
 
@@ -55,7 +59,7 @@ public class DotWriterNew {
 			for (final Transition transition : phase.getTransitions()) {
 				final String src = transition.getSrc().getName();
 				final String dst = transition.getDest().getName();
-				final String guard = transition.getGuard().toString();
+				final String guard = transition.getGuard().toGeneralString();
 
 				String resets = "";
 				for (final String reset : transition.getResets()) {
