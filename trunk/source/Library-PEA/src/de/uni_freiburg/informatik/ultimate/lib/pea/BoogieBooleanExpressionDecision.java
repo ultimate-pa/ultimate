@@ -114,7 +114,13 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 
 	@Override
 	public String toUppaalString(final int child) {
-		return toString(child);
+		String rtr = toString(child);
+		rtr = rtr.replaceAll("<=", "&lt;=");
+		rtr = rtr.replaceAll("<", "&lt;");
+		rtr = rtr.replaceAll(">=", "&gt;=");
+		rtr = rtr.replaceAll(">", "&gt;");
+		rtr = rtr.replaceAll("&&", "&amp;&amp;");
+		return rtr;
 	}
 
 	@Override
