@@ -87,15 +87,15 @@ action code {:
 	
 	static class IndexedIdentifier {
 	    String mName;
-	    BigInteger[] mIndices;
-	    public IndexedIdentifier(String name, BigInteger[] indices) {
+	    String[] mIndices;
+	    public IndexedIdentifier(String name, String[] indices) {
 	        mName = name;
 	        mIndices = indices;
 	    }
 	    public String getName() {
 	        return mName;
 	    }
-	    public BigInteger[] getIndices() {
+	    public String[] getIndices() {
 	        return mIndices;
 	    }
 	    
@@ -108,7 +108,7 @@ action code {:
 
 	static class QualIdentifier {
 	    String mName;
-	    BigInteger[] mIndices;
+	    String[] mIndices;
 	    Sort mSort;
 	    public QualIdentifier(IndexedIdentifier id, Sort sort) {
 	        mName = id.getName();
@@ -118,7 +118,7 @@ action code {:
 	    public String getIdentifier() {
 	        return mName;
 	    }
-	    public BigInteger[] getIndices() {
+	    public String[] getIndices() {
 	        return mIndices;
 	    }
 	    public Sort getSort() {
@@ -170,7 +170,7 @@ action code {:
 		}
 	}
 	
-	public Term createTerm(Symbol fsym, String name, BigInteger[] indices, Sort resultSort, Term[] param) {
+	public Term createTerm(Symbol fsym, String name, String[] indices, Sort resultSort, Term[] param) {
 		for (Term p : param) {
 			if (p == null)
 				return null;
@@ -380,7 +380,7 @@ constantTerm ::= NUMERAL:n
              			RESULT = null;
              		} :}
              | STRING:n {: RESULT = parser.getScript().string(n); :};
-identifierIndexed ::= LPAR UNDERSCORE symbol:id NUMERAL+:indices RPAR
+identifierIndexed ::= LPAR UNDERSCORE symbol:id STRING+:indices RPAR
              {: RESULT = new IndexedIdentifier(id, indices); :};
 identifier ::= symbol:s {: RESULT = new IndexedIdentifier(s, null); :}
            | identifierIndexed;
