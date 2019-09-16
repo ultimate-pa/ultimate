@@ -5,6 +5,7 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive.TermWalker;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -54,6 +55,11 @@ public class PositionTrackingTermWalker extends TermWalker {
 	public void walk(final NonRecursive walker, final TermVariable term) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public void walk(final NonRecursive walker, final MatchTerm term) {
+		throw new UnsupportedOperationException("not yet implemented: MatchTerm");
 	}
 
 }

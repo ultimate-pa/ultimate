@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -40,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Check if term contains some quantified subformula.
+ * 
  * @author Matthias Heizmann
  * @deprecated Use {@link QuantifierUtils#isQuantifierFree(Term)} instead.
  *
@@ -52,8 +54,9 @@ public class ContainsQuantifier extends NonRecursive {
 	private Set<Term> mTermsInWhichWeAlreadyDescended;
 
 	class QuantifierFinder extends TermWalker {
-		QuantifierFinder(final Term term) { super(term); }
-
+		QuantifierFinder(final Term term) {
+			super(term);
+		}
 
 		@Override
 		public void walk(final NonRecursive walker) {
@@ -72,10 +75,12 @@ public class ContainsQuantifier extends NonRecursive {
 		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			// cannot descend
 		}
+
 		@Override
 		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			walker.enqueueWalker(new QuantifierFinder(term.getSubterm()));
 		}
+
 		@Override
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			mTermsInWhichWeAlreadyDescended.add(term);
@@ -83,25 +88,32 @@ public class ContainsQuantifier extends NonRecursive {
 				walker.enqueueWalker(new QuantifierFinder(t));
 			}
 		}
+
 		@Override
 		public void walk(final NonRecursive walker, final LetTerm term) {
 			walker.enqueueWalker(new QuantifierFinder(term.getSubTerm()));
 		}
+
 		@Override
 		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			mQuantifierFound = true;
 			mFirstQuantifierFound = term.getQuantifier();
 			reset();
 		}
+
 		@Override
 		public void walk(final NonRecursive walker, final TermVariable term) {
 			// cannot descend
 		}
+
+		@Override
+		public void walk(final NonRecursive walker, final MatchTerm term) {
+			throw new UnsupportedOperationException("not yet implemented: MatchTerm");
+		}
 	}
 
 	/**
-	 * Returns true iff this term contains the subterm of this ContainsSubterm
-	 * object.
+	 * Returns true iff this term contains the subterm of this ContainsSubterm object.
 	 */
 	public boolean containsQuantifier(final Term term) {
 		mFirstQuantifierFound = -1;

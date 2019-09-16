@@ -8,15 +8,15 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.NonRecursive.TermWalker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
-public class SMTFeatureExtractionTermClassifier extends NonRecursive{
+public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 
 	private Set<Term> mTermsInWhichWeAlreadyDescended;
 
@@ -31,7 +31,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 	private int mDAGSize;
 	private long mTreeSize;
 
-	private ArrayList<String> mTerms;
+	private final ArrayList<String> mTerms;
 
 	public SMTFeatureExtractionTermClassifier() {
 		super();
@@ -44,7 +44,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		mNumberOfQuantifiers = 0;
 		mDAGSize = 0;
 		mTreeSize = 0;
-		mTerms = new ArrayList<String>();
+		mTerms = new ArrayList<>();
 	}
 
 	public Set<String> getOccuringSortNames() {
@@ -78,16 +78,17 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 	public ArrayList<String> getTerm() {
 		return mTerms;
 	}
+
 	public int getDAGSize() {
 		return mDAGSize;
 	}
-	
+
 	public long getTreeSize() {
 		return mTreeSize;
 	}
 
 	public String getStats() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("Formula ").append(mTerms).append("\n");
 		sb.append("Occuring sorts ").append(mOccuringSortNames.toString()).append("\n");
 		sb.append("Occuring functions  ").append(mOccuringFunctionNames.toString()).append("\n");
@@ -116,36 +117,35 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		MyWalker(final Term term) {
 			super(term);
 		}
-		
+
 		@Override
 		public void walk(final NonRecursive walker) {
 			if (mTermsInWhichWeAlreadyDescended.contains(getTerm())) {
 				// do nothing
 			} else {
-			    Term term = getTerm();
-			    boolean add = false;
-			    // Add sorts only if term is TermVariable or ApplicationTerm with arity 0.
-			    if(!term.toStringDirect().equals("true") && !term.toStringDirect().equals("false")) {
-			    	if (term instanceof TermVariable) {
-				    	add = true;
-				    }else if (term instanceof ApplicationTerm) {
-				    	ApplicationTerm appterm = (ApplicationTerm) term;
-				    	if(appterm.getParameters().length == 0) {
-				    		add = true;
-				    	}
-				    }
-			    }
-			    if(add) {
-			    	final Sort currentSort = term.getSort();
-			    	mOccuringSortNames.add(currentSort.toString());
-			    	if (currentSort.isArraySort()) {
-			    		mHasArrays = true;
+				final Term term = getTerm();
+				boolean add = false;
+				// Add sorts only if term is TermVariable or ApplicationTerm with arity 0.
+				if (!term.toStringDirect().equals("true") && !term.toStringDirect().equals("false")) {
+					if (term instanceof TermVariable) {
+						add = true;
+					} else if (term instanceof ApplicationTerm) {
+						final ApplicationTerm appterm = (ApplicationTerm) term;
+						if (appterm.getParameters().length == 0) {
+							add = true;
+						}
 					}
-			    }
+				}
+				if (add) {
+					final Sort currentSort = term.getSort();
+					mOccuringSortNames.add(currentSort.toString());
+					if (currentSort.isArraySort()) {
+						mHasArrays = true;
+					}
+				}
 				super.walk(walker);
 			}
 		}
-		
 
 		@Override
 		public void walk(final NonRecursive walker, final ConstantTerm term) {
@@ -160,13 +160,13 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 
 		@Override
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
-	    	if(term.getParameters().length > 0) {
-	    		mOccuringFunctionNames.add(term.getFunction().getName());			
-	    		mNumberOfFunctions += 1;
-	    	}else {	    	
-	    		mNumberOfVariables += 1;
-	    	}
-			
+			if (term.getParameters().length > 0) {
+				mOccuringFunctionNames.add(term.getFunction().getName());
+				mNumberOfFunctions += 1;
+			} else {
+				mNumberOfVariables += 1;
+			}
+
 			mTermsInWhichWeAlreadyDescended.add(term);
 			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new MyWalker(t));
@@ -193,6 +193,11 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		@Override
 		public void walk(final NonRecursive walker, final TermVariable term) {
 			// cannot descend
+		}
+
+		@Override
+		public void walk(final NonRecursive walker, final MatchTerm term) {
+			throw new UnsupportedOperationException("not yet implemented: MatchTerm");
 		}
 	}
 }

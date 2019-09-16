@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -48,18 +49,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 /**
  * A Note on the notion of array writes in our setting:
  * <li>array writes are to an array group
- * <li>a write to an array group is given by a store term in the program whose
- * base array is an array of the group
- * <li>as the base arrays on both sides of an equation are always in the same
- * array group, the write is also to the array on the side of the equation other
- * from where the store term is (so the standard notion of array updates is
- * covered, but also for example assume statements in Boogie can constitute an
- * array write)
+ * <li>a write to an array group is given by a store term in the program whose base array is an array of the group
+ * <li>as the base arrays on both sides of an equation are always in the same array group, the write is also to the
+ * array on the side of the equation other from where the store term is (so the standard notion of array updates is
+ * covered, but also for example assume statements in Boogie can constitute an array write)
  *
- * We compute array groups per TransFormula and globally, where the per
- * transformula partitions form the constraints for the global partition. Aux
- * vars may also belong to an array group, because they are equated to some term
- * that belongs to a pvoc in their TransFormula.
+ * We compute array groups per TransFormula and globally, where the per transformula partitions form the constraints for
+ * the global partition. Aux vars may also belong to an array group, because they are equated to some term that belongs
+ * to a pvoc in their TransFormula.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -68,15 +65,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 	/**
-	 * Note that this map only contains arrays that are subject to heap separation.
-	 * (in contrast to {@link #mEdgeToTermToArrayGroup})
+	 * Note that this map only contains arrays that are subject to heap separation. (in contrast to
+	 * {@link #mEdgeToTermToArrayGroup})
 	 */
 	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup = new HashMap<>();
 
 	/**
-	 * Note that this map also contains arrays that not subject to heap separation.
-	 * (because that would require a post-processing)
-	 * For checking that, see {@link #isArrayTermSubjectToSeparation(EdgeInfo, Term)}.
+	 * Note that this map also contains arrays that not subject to heap separation. (because that would require a
+	 * post-processing) For checking that, see {@link #isArrayTermSubjectToSeparation(EdgeInfo, Term)}.
 	 */
 	private final NestedMap2<EdgeInfo, Term, ArrayGroup> mEdgeToTermToArrayGroup = new NestedMap2<>();
 
@@ -85,8 +81,8 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	 */
 
 	/**
-	 * Note that index -1 is reserved for the "NoStoreInfo" object. This counter
-	 * should always be non-negative, so no mId-clash occurs.
+	 * Note that index -1 is reserved for the "NoStoreInfo" object. This counter should always be non-negative, so no
+	 * mId-clash occurs.
 	 */
 	private int mStoreInfoCounter;
 
@@ -94,9 +90,8 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 	private final ManagedScript mMgdScript;
 
-	private final NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> mEdgeToPositionToLocUpdateInfo
-		= new NestedMap2<>();
-
+	private final NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> mEdgeToPositionToLocUpdateInfo =
+			new NestedMap2<>();
 
 	private final HashRelation<EdgeInfo, TermVariable> mEdgeToUnconstrainedVariables = new HashRelation<>();
 
@@ -131,10 +126,8 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 		// base line for the array groups: the heap arrays
 		heapArrays.forEach(globalArrayPartition::findAndConstructEquivalenceClassIfNeeded);
 
-
-		final Map<EdgeInfo, UnionFind<Term>> edgeToPerEdgeArrayPartition = computeEdgeLevelArrayGroups(icfg,
-				globalArrayPartition);
-
+		final Map<EdgeInfo, UnionFind<Term>> edgeToPerEdgeArrayPartition =
+				computeEdgeLevelArrayGroups(icfg, globalArrayPartition);
 
 		computeProgramLevelArrayGroups(heapArrays, globalArrayPartition, edgeToPerEdgeArrayPartition);
 
@@ -149,18 +142,17 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 				final Map<Term, ArrayGroup> termToArrayGroupForCurrentEdge = mEdgeToTermToArrayGroup.get(edgeInfo);
 
-
 				final BuildStoreInfos bsi = new BuildStoreInfos(edgeInfo, termToArrayGroupForCurrentEdge, mMgdScript,
 						mLocArrayManager, mStoreInfoCounter, collectDefinitelyUnconstrainedVariables(edgeInfo));
 				bsi.buildStoreInfos();
-				for (final Entry<SubtreePosition, ArrayEqualityLocUpdateInfo> en :
-						bsi.getLocArrayUpdateInfos().entrySet()) {
+				for (final Entry<SubtreePosition, ArrayEqualityLocUpdateInfo> en : bsi.getLocArrayUpdateInfos()
+						.entrySet()) {
 					mEdgeToPositionToLocUpdateInfo.put(edgeInfo, en.getKey(), en.getValue());
 				}
 				mLocLitToStoreInfo.putAll(bsi.getLocLitToStoreInfo());
 				bsi.getLocLitToStoreInfo().keySet().forEach(hspc -> mLocLitTermToLocLitPvoc.put(hspc.getTerm(), hspc));
 				bsi.getLocLitToStoreInfo().values()
-					.forEach(si -> mEdgeToPositionToStoreInfo.put(edgeInfo, si.getPosition(), si));
+						.forEach(si -> mEdgeToPositionToStoreInfo.put(edgeInfo, si.getPosition(), si));
 				// (managing the store counter this way is a bit inelegant..)
 				mStoreInfoCounter = bsi.getStoreInfoCounter();
 			}
@@ -180,16 +172,15 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 		return result;
 	}
 
-
 	private boolean isDefinitelyUnconstrained(final IProgramVar var, final EdgeInfo edgeInfo) {
 		IcfgEdge currentEdge = edgeInfo.getEdge();
 		while (true) {
 			{
 				final List<IcfgEdge> inEdges = currentEdge.getSource().getIncomingEdges();
-//				if (inEdges.size() == 0) {
-//					// no incoming edge, var was not constrained so far
-//					return true;
-//				}
+				// if (inEdges.size() == 0) {
+				// // no incoming edge, var was not constrained so far
+				// return true;
+				// }
 				if (inEdges.size() != 1) {
 					// more than two incoming edges --> give up
 					return false;
@@ -241,8 +232,8 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 		}
 
 		/**
-		 * Construct the map {@link #mEdgeToTermToArrayGroup}, which links each Term in an edge to a program-level
-		 * array group. (or to null, if we do not track the term)
+		 * Construct the map {@link #mEdgeToTermToArrayGroup}, which links each Term in an edge to a program-level array
+		 * group. (or to null, if we do not track the term)
 		 */
 		{
 			for (final Entry<EdgeInfo, UnionFind<Term>> en : edgeToPerEdgeArrayPartition.entrySet()) {
@@ -250,11 +241,10 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 				for (final Set<Term> block : en.getValue().getAllEquivalenceClasses()) {
 					/*
-					 * find a Term that has an IProgramVarOrConst according to the EdgeInfo (there
-					 * must be one as the above analysis starts from IProgramVarOrConsts, right (the
-					 * heap arrays)? (a formula relating a group of auxVars only within itself would
-					 * be weird anyway) (if that assertion does not hold, see commented out code
-					 * below for a possible fix)
+					 * find a Term that has an IProgramVarOrConst according to the EdgeInfo (there must be one as the
+					 * above analysis starts from IProgramVarOrConsts, right (the heap arrays)? (a formula relating a
+					 * group of auxVars only within itself would be weird anyway) (if that assertion does not hold, see
+					 * commented out code below for a possible fix)
 					 */
 					final Optional<IProgramVarOrConst> opt = block.stream()
 							.map(t -> edgeInfo.getProgramVarOrConstForTerm(t)).filter(pvoc -> pvoc != null).findAny();
@@ -270,19 +260,18 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 			}
 		}
 	}
+
 	/**
-	 * Build edge-level array groups.
-	 * I.e. Terms that are weakly/strongly equivalent in an edge are in an edge-level array group.
+	 * Build edge-level array groups. I.e. Terms that are weakly/strongly equivalent in an edge are in an edge-level
+	 * array group.
 	 *
-	 * Note that the notion of edge-level array group is already imprecise in some sense:
-	 *  Example: edge formula: a = b \/ b = c
-	 *      we would put a, b, c into one array group here, even though a and c are never related in the edge.
-	 * (our algorithm here does not account for Boolean structure of the formula, it simply considers all =
-	 *  predicates)
+	 * Note that the notion of edge-level array group is already imprecise in some sense: Example: edge formula: a = b
+	 * \/ b = c we would put a, b, c into one array group here, even though a and c are never related in the edge. (our
+	 * algorithm here does not account for Boolean structure of the formula, it simply considers all = predicates)
 	 * However this overapproximation does not hurt soundness of our heap separation.
 	 *
-	 * EDIT : Note there are a few places where we currently assume TransFormulas to be conjunctive, so we may
-	 *  consider computing more precise array groups once that is changed
+	 * EDIT : Note there are a few places where we currently assume TransFormulas to be conjunctive, so we may consider
+	 * computing more precise array groups once that is changed
 	 *
 	 */
 	private Map<EdgeInfo, UnionFind<Term>> computeEdgeLevelArrayGroups(final IIcfg<LOC> icfg,
@@ -299,27 +288,29 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 				final UnmodifiableTransFormula tf = edge.getTransformula();
 				final EdgeInfo edgeInfo = new EdgeInfo(edge);
 
-//				if (SmtUtils.containsFunctionApplication(tf.getFormula(), "or")
-//						|| !SmtUtils.isNNF(tf.getFormula())) {
-//					throw new UnsupportedOperationException("this computation can only handle conjunctive formulas at"
-//							+ "the moment");
-//				}
+				// if (SmtUtils.containsFunctionApplication(tf.getFormula(), "or")
+				// || !SmtUtils.isNNF(tf.getFormula())) {
+				// throw new UnsupportedOperationException("this computation can only handle conjunctive formulas at"
+				// + "the moment");
+				// }
 
 				/*
 				 * construct the per-edge (or per-transformula, the difference does not matter here) array partition
 				 */
 				final UnionFind<Term> perTfArrayPartition = new UnionFind<>();
 
-				/* before we do the array groups based on array equalities, we initialize the groups for all array terms
+				/*
+				 * before we do the array groups based on array equalities, we initialize the groups for all array terms
 				 * in the formula (this makes sure that also arrays that occur in select terms only in the formula get
-				 * an array group) */
+				 * an array group)
+				 */
 				final Set<Term> baseArrayTerms =
 						new SubTermFinder(SmtUtils::isBasicArrayTerm).findMatchingSubterms(tf.getFormula());
 				baseArrayTerms.forEach(perTfArrayPartition::findAndConstructEquivalenceClassIfNeeded);
 
 				// compute edge-specific array groups
-				final List<ArrayEqualityAllowStores> aeass = ArrayEqualityAllowStores
-						.extractArrayEqualityAllowStores(tf.getFormula());
+				final List<ArrayEqualityAllowStores> aeass =
+						ArrayEqualityAllowStores.extractArrayEqualityAllowStores(tf.getFormula());
 				for (final ArrayEqualityAllowStores aeas : aeass) {
 					final Term lhsArrayTerm = SmtUtils.getBasicArrayTerm(aeas.getLhsArray());
 					final Term rhsArrayTerm = SmtUtils.getBasicArrayTerm(aeas.getRhsArray());
@@ -334,9 +325,9 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 				for (final Set<Term> eqc : perTfArrayPartition.getAllEquivalenceClasses()) {
 					// pick some element that has a pvoc from the group of array terms
 
-					final Set<IProgramVarOrConst> eqcPvocs = eqc.stream()
-							.map(term -> TransFormulaUtils.getProgramVarOrConstForTerm(tf, term))
-							.filter(pvoc -> pvoc != null).collect(Collectors.toSet());
+					final Set<IProgramVarOrConst> eqcPvocs =
+							eqc.stream().map(term -> TransFormulaUtils.getProgramVarOrConstForTerm(tf, term))
+									.filter(pvoc -> pvoc != null).collect(Collectors.toSet());
 					eqcPvocs.forEach(globalArrayPartition::findAndConstructEquivalenceClassIfNeeded);
 					globalArrayPartition.union(eqcPvocs);
 				}
@@ -356,8 +347,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 		}
 
 		final Set<TermVariable> constrainedVars = new HashSet<>();
-		final Set<TermVariable> unconstrainedVars =
-				new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
+		final Set<TermVariable> unconstrainedVars = new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
 		boolean goOn = true;
 		while (goOn) {
 			goOn = false;
@@ -368,7 +358,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 				final TermVariable lhsArrayTv =
 						(lhsArrayTerm instanceof TermVariable) ? (TermVariable) lhsArrayTerm : null;
 				final TermVariable rhsArrayTv =
-								(rhsArrayTerm instanceof TermVariable) ? (TermVariable) rhsArrayTerm : null;
+						(rhsArrayTerm instanceof TermVariable) ? (TermVariable) rhsArrayTerm : null;
 
 				// code for determining which variables are unconstrained ("havocced") in this edge
 				final boolean lhsIsAStore = lhsArrayTerm != aeas.getLhsArray();
@@ -429,7 +419,6 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 			throw new AssertionError();
 		}
 
-
 		if (constrainedVars.contains(tv)) {
 			assert !unconstrainedVars.contains(tv);
 			return false;
@@ -472,7 +461,7 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 	/**
 	 * @return per edge, the variables that are unconstrained/havocced by that edge. (Assuming purely conjunctive edges
-	 *  at the moment.)
+	 *         at the moment.)
 	 */
 	public HashRelation<EdgeInfo, TermVariable> getEdgeToUnconstrainedVariables() {
 		if (!mFrozen) {
@@ -538,7 +527,8 @@ public class ComputeStoreInfosAndArrayGroups<LOC extends IcfgLocation> {
 	}
 
 	/**
-	 *  Note that this only returns arrays that are subject to heap separation.
+	 * Note that this only returns arrays that are subject to heap separation.
+	 *
 	 * @return
 	 */
 	public Collection<ArrayGroup> getArrayGroups() {
@@ -605,8 +595,8 @@ class BuildStoreInfos extends NonRecursive {
 	}
 
 	/**
-	 * Note that this walks the Term "tree-style". For Terms with extensive sharing of sub-terms this may explode.
-	 * (But we want to take the surrounding of each store Term into account, so we must do it this way.)
+	 * Note that this walks the Term "tree-style". For Terms with extensive sharing of sub-terms this may explode. (But
+	 * we want to take the surrounding of each store Term into account, so we must do it this way.)
 	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
@@ -646,8 +636,7 @@ class BuildStoreInfos extends NonRecursive {
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			final String funcName = term.getFunction().getName();
 			switch (funcName) {
-			case "store":
-			{
+			case "store": {
 				final ArrayGroup arrayGroup = mTermToArrayGroup.get(SmtUtils.getBasicArrayTerm(term));
 
 				if (arrayGroup == null) {
@@ -658,13 +647,11 @@ class BuildStoreInfos extends NonRecursive {
 				final int siId = getNextStoreInfoId();
 				final int siDim = mEnclosingStoreIndices.size() + 1;
 				final HeapSepProgramConst locLit = constructLocationLiteral(mEdge, siId, siDim);
-				final StoreInfo si = StoreInfo.buildStoreInfo(siId, mEdge, mSubTreePosition, term,
-						arrayGroup, mEnclosingStoreIndices,
-						locLit, mEnclosingEquality, mRelativePosition);
+				final StoreInfo si = StoreInfo.buildStoreInfo(siId, mEdge, mSubTreePosition, term, arrayGroup,
+						mEnclosingStoreIndices, locLit, mEnclosingEquality, mRelativePosition);
 				mLocLitToStoreInfo.put(locLit, si);
 				mCollectedStoreInfos.put(mSubTreePosition, si);
-			}
-			{
+			} {
 				// dive deeper into the array (no change to enclosing store indices)
 				walker.enqueueWalker(new BuildStoreInfoWalker(term.getParameters()[0], mSubTreePosition.append(0),
 						mEnclosingStoreIndices, mEnclosingEquality, mRelativePosition.append(0)));
@@ -678,11 +665,10 @@ class BuildStoreInfos extends NonRecursive {
 			case "=":
 				if (term.getParameters()[0].getSort().isArraySort()) {
 					assert mEnclosingEquality == null;
-					final ArrayEqualityLocUpdateInfo newEnclosingEquality =
-							new ArrayEqualityLocUpdateInfo(mMgdScript, term, mEdge, mLocArrayManager,
-									mDefinitelyUnconstrainedVariables);
+					final ArrayEqualityLocUpdateInfo newEnclosingEquality = new ArrayEqualityLocUpdateInfo(mMgdScript,
+							term, mEdge, mLocArrayManager, mDefinitelyUnconstrainedVariables);
 					walker.enqueueWalker(new BuildStoreInfoWalker(term.getParameters()[0], mSubTreePosition.append(0),
-						 mEnclosingStoreIndices, newEnclosingEquality, new SubtreePosition().append(0)));
+							mEnclosingStoreIndices, newEnclosingEquality, new SubtreePosition().append(0)));
 					walker.enqueueWalker(new BuildStoreInfoWalker(term.getParameters()[1], mSubTreePosition.append(1),
 							mEnclosingStoreIndices, newEnclosingEquality, new SubtreePosition().append(1)));
 					mPositionToLocArrayUpdateInfos.put(mSubTreePosition, newEnclosingEquality);
@@ -720,6 +706,11 @@ class BuildStoreInfos extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive walker, final TermVariable term) {
 			// do nothing
+		}
+
+		@Override
+		public void walk(final NonRecursive walker, final MatchTerm term) {
+			throw new UnsupportedOperationException("not yet implemented: MatchTerm");
 		}
 
 	}

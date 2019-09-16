@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -48,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class SubTermFinder extends NonRecursive {
 
-
 	private final Predicate<Term> mPredicate;
 	private final boolean mOnlyOutermost;
 
@@ -58,7 +58,8 @@ public class SubTermFinder extends NonRecursive {
 	/**
 	 * See {@link SubTermFinder}.
 	 *
-	 * @param predicate subterms fulfilling this predicate are collected.
+	 * @param predicate
+	 *            subterms fulfilling this predicate are collected.
 	 */
 	public SubTermFinder(final Predicate<Term> predicate) {
 		this(predicate, false);
@@ -67,9 +68,10 @@ public class SubTermFinder extends NonRecursive {
 	/**
 	 * See {@link SubTermFinder}.
 	 *
-	 * @param predicate subterms fulfilling this predicate are collected.
-	 * @param onlyOutermost if a subterm is collected, don't look further inside for subterms also matching the
-	 * 		predicate
+	 * @param predicate
+	 *            subterms fulfilling this predicate are collected.
+	 * @param onlyOutermost
+	 *            if a subterm is collected, don't look further inside for subterms also matching the predicate
 	 */
 	public SubTermFinder(final Predicate<Term> predicate, final boolean onlyOutermost) {
 		mPredicate = predicate;
@@ -154,6 +156,11 @@ public class SubTermFinder extends NonRecursive {
 			if (mPredicate.test(term)) {
 				mResult.add(term);
 			}
+		}
+
+		@Override
+		public void walk(final NonRecursive walker, final MatchTerm term) {
+			throw new UnsupportedOperationException("not yet implemented: MatchTerm");
 		}
 	}
 }

@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
+import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -46,8 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Analyze for a given term and a given (wanted) array in which kinds of
- * subterms the array occurs.
+ * Analyze for a given term and a given (wanted) array in which kinds of subterms the array occurs.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -89,13 +89,15 @@ public class ArrayOccurrenceAnalysis {
 	public List<MultiDimensionalSelectOverNestedStore> getArraySelectOverStores() {
 		return mArraySelectOverStores;
 	}
+
 	/**
-	 * @return from the analyzed term all (possibly nested) store subterms whose array is the wantedArray
-	 * such that the store subterms are not part of a select-over-store subterm.
+	 * @return from the analyzed term all (possibly nested) store subterms whose array is the wantedArray such that the
+	 *         store subterms are not part of a select-over-store subterm.
 	 */
 	public List<MultiDimensionalNestedStore> getNestedArrayStores() {
 		return mNestedArrayStores;
 	}
+
 	/**
 	 * @return from the analyzed term all select subterms whose array is the wantedArray
 	 */
@@ -104,27 +106,25 @@ public class ArrayOccurrenceAnalysis {
 	}
 
 	/**
-	 * @return from the analyzed term all binary equality subterms such that the
-	 *         wanted array occurs on one side of the equality.
+	 * @return from the analyzed term all binary equality subterms such that the wanted array occurs on one side of the
+	 *         equality.
 	 */
 	public List<BinaryEqualityRelation> getArrayEqualities() {
 		return mArrayEqualities;
 	}
 
 	/**
-	 * @return from the analyzed term all binary disequality subterms such that the
-	 *         wanted array occurs on one side of the disequality.
+	 * @return from the analyzed term all binary disequality subterms such that the wanted array occurs on one side of
+	 *         the disequality.
 	 */
 	public List<BinaryEqualityRelation> getArrayDisequalities() {
 		return mArrayDisequalities;
 	}
 
 	/**
-	 * @return from the analyzed term all function application subterms such that
-	 *         the wanted array is an argument. However, as an exception all cases
-	 *         that are already handled by this class are omitted (i.e., if the
-	 *         wanted array is first argument of store/select or occurs on one side
-	 *         of an equality/disequality)
+	 * @return from the analyzed term all function application subterms such that the wanted array is an argument.
+	 *         However, as an exception all cases that are already handled by this class are omitted (i.e., if the
+	 *         wanted array is first argument of store/select or occurs on one side of an equality/disequality)
 	 */
 	public List<Term> getOtherFunctionApplications() {
 		return mOtherFunctionApplications;
@@ -189,11 +189,11 @@ public class ArrayOccurrenceAnalysis {
 
 			@Override
 			public void walk(final NonRecursive walker) {
-					if (mTermsInWhichWeAlreadyDescended.contains(getTerm())) {
-						// do nothing
-					} else {
-						super.walk(walker);
-					}
+				if (mTermsInWhichWeAlreadyDescended.contains(getTerm())) {
+					// do nothing
+				} else {
+					super.walk(walker);
+				}
 			}
 
 			@Override
@@ -264,7 +264,7 @@ public class ArrayOccurrenceAnalysis {
 					}
 				} else if (fun.equals("store")) {
 					MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.convert(mScript, term);
-					if(nas != null && nas.getArray().equals(mWantedArray)) {
+					if (nas != null && nas.getArray().equals(mWantedArray)) {
 						if (THROW_ERROR_BEFORE_DOWNGRADE && nas
 								.getDimension() != new MultiDimensionalSort(mWantedArray.getSort()).getDimension()) {
 							throw new AssertionError("downgrade");
@@ -293,8 +293,8 @@ public class ArrayOccurrenceAnalysis {
 						}
 					}
 				} else if (fun.equals("select")) {
-					final MultiDimensionalSelectOverNestedStore asos = MultiDimensionalSelectOverNestedStore
-							.convert(mScript, term);
+					final MultiDimensionalSelectOverNestedStore asos =
+							MultiDimensionalSelectOverNestedStore.convert(mScript, term);
 					if (asos != null) {
 						if (asos.getNestedStore().getArray().equals(mWantedArray)) {
 							mArraySelectOverStores.add(asos);
@@ -335,9 +335,9 @@ public class ArrayOccurrenceAnalysis {
 					for (final Term t : term.getParameters()) {
 						if (t.equals(mWantedArray)) {
 							mOtherFunctionApplications.add(t);
- 						} else {
- 							walker.enqueueWalker(new MyWalker(t));
- 						}
+						} else {
+							walker.enqueueWalker(new MyWalker(t));
+						}
 					}
 				}
 			}
@@ -364,6 +364,11 @@ public class ArrayOccurrenceAnalysis {
 			@Override
 			public void walk(final NonRecursive walker, final TermVariable term) {
 				// cannot descend
+			}
+
+			@Override
+			public void walk(final NonRecursive walker, final MatchTerm term) {
+				throw new UnsupportedOperationException("not yet implemented: MatchTerm");
 			}
 		}
 
