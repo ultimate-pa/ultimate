@@ -26,7 +26,9 @@ public class DotWriterNew {
 
 		dot += "digraph G {" + "\n\n";
 		dot += "rankdir=LR;" + "\n";
-		dot += "node [shape=circle];" + "\n";
+		dot += "graph [fontname=\"arial\"]";
+		dot += "node [fontname=\"arial\" shape=circle];" + "\n";
+		dot += "edge [fontname=\"arial\"]";
 		dot += "\n";
 
 		for (final Phase phase : pea.getInit()) {
@@ -42,16 +44,10 @@ public class DotWriterNew {
 			final String clock = phase.getClockInvariant().toUppaalString();
 			final String predicate = phase.getStateInvariant().toUppaalString();
 
-			logger.info("location: " + location);
-			logger.info("clock: " + clock);
-			logger.info("predicate: " + predicate);
-
 			String table = "";
-
-			table += "<<table border=\"0\">" + "<tr><td><b>" + location + "</b></td></tr>";
-			table += "<tr><td><font COLOR=\"#1f78b4\">" + predicate + "</font></td></tr>";
-			table += "<tr><td><font COLOR=\"#b2df8a\">" + clock + "</font></td></tr>";
-			table += "</table>>";
+			table += "<<b>" + location + "</b><br/>";
+			table += "<font COLOR=\"#984ea3\">" + predicate + "</font><br/>";
+			table += "<font COLOR=\"#ff7f00\">" + clock + "</font><br/>>";
 
 			// dot += location + " [label=\"" + location + "\\n" + predicate + "\\n" + clock + "\"];" + "\n";
 			dot += location + " [label=" + table + "];" + "\n";
@@ -59,14 +55,15 @@ public class DotWriterNew {
 			for (final Transition transition : phase.getTransitions()) {
 				final String src = transition.getSrc().getName();
 				final String dst = transition.getDest().getName();
-				final String guard = transition.getGuard().toGeneralString();
+				final String guard = transition.getGuard().toUppaalString();
 
 				String resets = "";
 				for (final String reset : transition.getResets()) {
-					resets += "\\n" + reset + " :=0";
+					resets += "<br/>" + reset + " :=0";
 				}
 
-				dot += "\t" + src + " -> " + dst + " [label=\"" + guard + resets + "\"];" + "\n";
+				dot += "\t" + src + " -> " + dst + " [label=" + "<<br/><font COLOR=\"#377eb8\">" + guard + "</font>"
+						+ resets + ">];" + "\n";
 			}
 			dot += "\n";
 		}

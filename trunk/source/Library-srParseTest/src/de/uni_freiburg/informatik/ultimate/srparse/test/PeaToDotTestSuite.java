@@ -65,18 +65,18 @@ public class PeaToDotTestSuite {
 
 	@Test
 	public void testDot() throws Exception {
-		// final List<String> strings = getPatterns();
-		// final String str = strings.get(5);
-		//
-		// mLogger.info("PATTERN: " + str);
-		//
-		// final StringReader stringReader = new StringReader(str);
-		// final ReqParser reqParser = new ReqParser(mServiceProvider,
-		// mServiceProvider.getLoggingService().getLogger(getClass()), stringReader, "");
-		// final Symbol goal = reqParser.parse();
-		// final PatternType[] patterns = (PatternType[]) goal.value;
-		//
-		// final PhaseEventAutomata pea = patterns[0].transformToPea(mLogger, new HashMap<String, Integer>());
+		final List<String> strings = getPatterns();
+		final String str = strings.get(5);
+
+		mLogger.info("PATTERN: " + str);
+
+		final StringReader stringReader = new StringReader(str);
+		final ReqParser reqParser = new ReqParser(mServiceProvider,
+				mServiceProvider.getLoggingService().getLogger(getClass()), stringReader, "");
+		final Symbol goal = reqParser.parse();
+		final PatternType[] patterns = (PatternType[]) goal.value;
+
+		final PhaseEventAutomata pea = patterns[0].transformToPea(mLogger, new HashMap<String, Integer>());
 
 		// DotWriterNew.write("/home/ubuntu/Schreibtisch/graph.dot", true, pea, mLogger);
 	}
