@@ -55,10 +55,10 @@ public class SMTFeatureExtractor {
 		}
 	}
 
-	public void extractFeature(Term[] terms, double time, String result) throws IllegalAccessException, IOException {
+	public void extractFeature(List<Term> assertions, double time, String result) throws IllegalAccessException, IOException {
 		mLogger.warn("Extracting feature..");
-		SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier();
-		for (Term term : terms) {
+		SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
+		for (Term term : assertions) {
 			tc.checkTerm(term);
 		}
 		SMTFeature feature = new SMTFeature();
@@ -75,6 +75,7 @@ public class SMTFeatureExtractor {
 		feature.solverresult = result;
 		feature.solvertime = time;
 		mFeatures.add(feature);
+		mLogger.warn("FEATURE: " + feature);
 		dumpFeature(feature);
 		
 	}

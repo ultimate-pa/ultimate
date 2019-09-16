@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaLet;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
@@ -15,8 +17,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
-public class SMTFeatureExtractionTermClassifier extends NonRecursive {
+public class SMTFeatureExtractionTermClassifier extends NonRecursive{
+	
+	private final ILogger mLogger;
 
 	private Set<Term> mTermsInWhichWeAlreadyDescended;
 
@@ -30,11 +35,14 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 	private int mNumberOfQuantifiers;
 	private int mDAGSize;
 	private long mTreeSize;
+	
+	private UnionFind<Term> mUnionFind;
 
 	private final ArrayList<String> mTerms;
 
-	public SMTFeatureExtractionTermClassifier() {
+	public SMTFeatureExtractionTermClassifier(ILogger logger) {
 		super();
+		mLogger = logger;
 		mOccuringSortNames = new HashSet<>();
 		mOccuringFunctionNames = new HashSet<>();
 		mOccuringQuantifiers = new HashSet<>();
@@ -44,7 +52,8 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		mNumberOfQuantifiers = 0;
 		mDAGSize = 0;
 		mTreeSize = 0;
-		mTerms = new ArrayList<>();
+		mTerms = new ArrayList<String>();
+		mUnionFind = new UnionFind<>();
 	}
 
 	public Set<String> getOccuringSortNames() {
@@ -109,8 +118,11 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		mTerms.add(term.toString());
 		mDAGSize += new DAGSize().size(term);
 		mTreeSize += new DAGSize().treesize(term);
+		mLogger.warn("FULL TERM: " + term.toStringDirect());
 		run(new MyWalker(term));
 		mTermsInWhichWeAlreadyDescended = null;
+		mLogger.warn("UNION FIND: "  + mUnionFind.toString());
+		mUnionFind = new UnionFind<>();
 	}
 
 	private class MyWalker extends TermWalker {
@@ -123,17 +135,24 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 			if (mTermsInWhichWeAlreadyDescended.contains(getTerm())) {
 				// do nothing
 			} else {
-				final Term term = getTerm();
-				boolean add = false;
-				// Add sorts only if term is TermVariable or ApplicationTerm with arity 0.
-				if (!term.toStringDirect().equals("true") && !term.toStringDirect().equals("false")) {
-					if (term instanceof TermVariable) {
-						add = true;
-					} else if (term instanceof ApplicationTerm) {
-						final ApplicationTerm appterm = (ApplicationTerm) term;
-						if (appterm.getParameters().length == 0) {
-							add = true;
-						}
+				Term term = getTerm();
+			    boolean add = false;
+			    // Add sorts only if term is TermVariable or ApplicationTerm with arity 0.
+			    if(!term.toStringDirect().equals("true") && !term.toStringDirect().equals("false")) {
+			    	if (term instanceof TermVariable) {
+				    	add = true;
+				    } else if (term instanceof ApplicationTerm) {
+				    	ApplicationTerm appterm = (ApplicationTerm) term;
+				    	if(appterm.getParameters().length == 0) {
+				    		add = true;
+				    	}
+				    }
+			    }
+			    if(add) {
+			    	final Sort currentSort = term.getSort();
+			    	mOccuringSortNames.add(currentSort.toString());
+			    	if (currentSort.isArraySort()) {
+			    		mHasArrays = true;
 					}
 				}
 				if (add) {
@@ -155,18 +174,36 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			mTermsInWhichWeAlreadyDescended.add(term);
+			mLogger.warn("SUBTERM:" + term.getSubterm().toStringDirect());
 			walker.enqueueWalker(new MyWalker(term.getSubterm()));
 		}
 
 		@Override
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
-			if (term.getParameters().length > 0) {
-				mOccuringFunctionNames.add(term.getFunction().getName());
-				mNumberOfFunctions += 1;
-			} else {
-				mNumberOfVariables += 1;
-			}
-
+	    	if(term.getParameters().length > 0) {
+	    		final String functionName = term.getFunction().getName();
+	    		mOccuringFunctionNames.add(functionName);
+	    		if (functionName.equals("=")) {
+	    			mLogger.warn("######################## START #######################");
+	    			mLogger.warn("FUNCTION: " + functionName);
+	    			mLogger.warn("TERM: " + term.toStringDirect());
+	    			final Term[] termParameters = term.getParameters();
+	    			for (int i = 0; i < termParameters.length - 1; i++) {
+	    				final Term term1 = termParameters[i];
+	    				final Term term2 = termParameters[i+1];
+	    				final Term rep1 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(term1);
+	    				final Term rep2 = mUnionFind.findAndConstructEquivalenceClassIfNeeded(term2);
+	    				mLogger.warn("REP1: " + rep1.toStringDirect());
+	    				mLogger.warn("REP2: " + rep2.toStringDirect());
+	    				mUnionFind.union(rep1, rep2);						
+					}
+	    			mLogger.warn("######################### END #########################");
+	    		}
+	    		mNumberOfFunctions += 1;
+	    	}else {	    	
+	    		mNumberOfVariables += 1;
+	    	}
+			
 			mTermsInWhichWeAlreadyDescended.add(term);
 			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new MyWalker(t));
