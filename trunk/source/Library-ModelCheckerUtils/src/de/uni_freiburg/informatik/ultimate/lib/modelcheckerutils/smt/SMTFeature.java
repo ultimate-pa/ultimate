@@ -27,7 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
-import java.awt.List;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
