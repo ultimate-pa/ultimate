@@ -382,7 +382,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 */
 	public enum InterpolationTechnique {
 		Craig_NestedInterpolation, Craig_TreeInterpolation, ForwardPredicates, BackwardPredicates, FPandBP,
-		FPandBPonlyIfFpWasNotPerfect, PathInvariants, PDR
+		FPandBPonlyIfFpWasNotPerfect, PathInvariants, PDR, MCR
 	}
 
 	/**

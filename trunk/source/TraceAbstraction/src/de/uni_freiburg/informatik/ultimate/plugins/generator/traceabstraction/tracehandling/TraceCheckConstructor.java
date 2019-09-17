@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.MCR;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -145,9 +146,9 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 	 */
 	public TraceCheckConstructor(final ITraceCheckPreferences prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
-			final IPredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample, final IPredicate precondition,
-			final AssertCodeBlockOrder assertOrder, final InterpolationTechnique interpolationTechnique,
-			final TaskIdentifier taskIdentifier) {
+			final IPredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
+			final IPredicate precondition, final AssertCodeBlockOrder assertOrder,
+			final InterpolationTechnique interpolationTechnique, final TaskIdentifier taskIdentifier) {
 		mPrefs = prefs;
 		mManagedScript = managedScript;
 		mServices = services;
@@ -190,6 +191,8 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 			return constructPathInvariants();
 		case PDR:
 			return constructPdr();
+		case MCR:
+			return constructMCR();
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation: " + mInterpolationTechnique);
 		}
@@ -255,11 +258,10 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 			solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:12000";
 		}
 		final boolean fakeNonIncrementalSolver = false;
-		final SolverSettings solverSettings = new SolverSettings(fakeNonIncrementalSolver, true, solverCommand, -1, null,
-				dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
-		final InvariantSynthesisSettings invariantSynthesisSettings =
-				new InvariantSynthesisSettings(solverSettings, useNonlinearConstraints, useUnsatCores,
-						useAbstractInterpretationPredicates, useWpPredicates, true);
+		final SolverSettings solverSettings = new SolverSettings(fakeNonIncrementalSolver, true, solverCommand, -1,
+				null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
+		final InvariantSynthesisSettings invariantSynthesisSettings = new InvariantSynthesisSettings(solverSettings,
+				useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWpPredicates, true);
 
 		return new InterpolatingTraceCheckPathInvariantsWithFallback<>(mPrecondition, falsePredicate,
 				new TreeMap<Integer, IPredicate>(), (NestedRun<LETTER, IPredicate>) mCounterexample,
@@ -276,4 +278,11 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 		return pdr;
 	}
 
+	private ITraceCheck constructMCR() {
+		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+				HoareTripleChecks.MONOLITHIC, mPrefs.getCfgSmtToolkit(), mPredicateUnifier);
+		final MCR<LETTER> mcr = new MCR<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs,
+				mPredicateUnifier, htc, mCounterexample.getWord().asList());
+		return mcr;
+	}
 }
