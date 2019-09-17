@@ -55,34 +55,9 @@ import java.util.stream.Collectors;
 public class ReflectionUtil {
 
 	private final static ExposedSecurityManager EXPOSED_SECURITY_MANAGER = new ExposedSecurityManager();
-	private final static UrlConverter BUNDLE_RESOURCE_CONVERTER = createBundleResourceConverter();
 
 	private ReflectionUtil() {
 		// do not instantiate utility class
-	}
-
-	/**
-	 * Create a UrlConverter taken from the core to handle bundle resources.
-	 *
-	 * If the core is not present, we do not need it as no OSGi loading can take place.
-	 */
-	private static UrlConverter createBundleResourceConverter() {
-		final String qualifiedName = "de.uni_freiburg.informatik.ultimate.core.util.RcpUtils";
-		try {
-			final List<ClassLoader> loaders = getClassLoaders(ReflectionUtil.class);
-			for (final ClassLoader loader : loaders) {
-				final Class<?> clazz = getClassFromQualifiedName(qualifiedName, loader);
-				if (clazz == null) {
-					continue;
-				}
-				final Method method = clazz.getMethod("getBundleProtocolResolver");
-				return (UrlConverter) method.invoke(null);
-			}
-			throw new ReflectionUtilException("Could not extract Class<?> from qualified name " + qualifiedName);
-		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException
-				| InvocationTargetException | ReflectionUtilException e) {
-			return null;
-		}
 	}
 
 	/**
@@ -136,16 +111,27 @@ public class ReflectionUtil {
 	}
 
 	/**
-	 * Finds all classes in the folder beside or below the supplied anchor class.
+	 * Finds all classes in the folder beside or below the supplied anchor class. If this method fails you might want to
+	 * use {@link #getClassesFromFolder(Class, UrlConverter)} instead.
 	 */
 	public static <T> Set<Class<? extends T>> getClassesFromFolder(final Class<T> anchorClazz) {
+		return getClassesFromFolder(anchorClazz, createBundleResourceConverter());
+	}
+
+	/**
+	 * Finds all classes in the folder beside or below the supplied anchor class using a certain {@link UrlConverter}
+	 * for unknown resource types. Usually used for testing in OSGi environment where you want to have a resolver for
+	 * bundleresource resources and where you can use RcpUtils.getBundleProtocolResolver().
+	 */
+	public static <T> Set<Class<? extends T>> getClassesFromFolder(final Class<T> anchorClazz,
+			final UrlConverter resourceConverter) {
 		if (anchorClazz == null) {
 			return Collections.emptySet();
 		}
 
 		final Set<Class<? extends T>> result = new HashSet<>();
 		final String packageName = anchorClazz.getPackage().getName();
-		final Collection<File> files = getFolderContentsFromClass(anchorClazz);
+		final Collection<File> files = getFolderContentsFromClass(anchorClazz, resourceConverter);
 		if (files == null) {
 			return Collections.emptySet();
 		}
@@ -173,6 +159,78 @@ public class ReflectionUtil {
 	public static <T> Supplier<T> getInstanceSupplier(final Class<T> clazz, final Object... params) {
 		final ConstructorAndRemainingParameters<T> constructors = getConstructorsForClass(clazz, params);
 		return () -> constructors.instantiate();
+	}
+
+	/**
+	 * @return true if clazz represents an abstract class, false otherwise
+	 */
+	public static boolean isAbstractClass(final Class<?> clazz) {
+		return Modifier.isAbstract(clazz.getModifiers());
+	}
+
+	/**
+	 * Checks if the given class implements a given interface.
+	 * <p>
+	 * The check also checks whether a superclass implements the interface.
+	 *
+	 * @param clazzIn
+	 *            the class object to check
+	 * @return true if and only if <code>clazzIn</code> implements <code>interfaceClazz</code>. Otherwise false.
+	 */
+	public static boolean isClassImplementingInterface(final Class<?> clazzIn, final Class<?> interfaceClazz) {
+		if (interfaceClazz == null || !interfaceClazz.isInterface()) {
+			throw new IllegalArgumentException("interfaceClazz does not represent an interface");
+		}
+
+		Class<?> clazz = clazzIn;
+		while (clazz != null) {
+			final Class<?>[] implementedInterfaces = clazz.getInterfaces();
+			for (final Class<?> interFace : implementedInterfaces) {
+				if (interFace.equals(interfaceClazz)) {
+					// class implements IOperation in a transitive chain
+					return true;
+				}
+			}
+			clazz = clazz.getSuperclass();
+		}
+		return false;
+	}
+
+	public static boolean isSubclassOfClass(final Class<?> clazzIn, final Class<?> superClazz) {
+		if (superClazz == null) {
+			throw new IllegalArgumentException("superClazz is null");
+		}
+		if (Modifier.isFinal(superClazz.getModifiers())) {
+			return false;
+		}
+		if (clazzIn == null) {
+			return true;
+		}
+		return superClazz.isAssignableFrom(clazzIn);
+	}
+
+	/**
+	 * Create a UrlConverter taken from the core to handle bundle resources.
+	 *
+	 * If the core is not present, we do not need it as no OSGi loading can take place.
+	 */
+	private static UrlConverter createBundleResourceConverter() {
+		final String qualifiedName = "de.uni_freiburg.informatik.ultimate.core.util.RcpUtils";
+		try {
+			final List<ClassLoader> loaders = getClassLoaders(ReflectionUtil.class);
+			for (final ClassLoader loader : loaders) {
+				final Class<?> clazz = getClassFromQualifiedName(qualifiedName, loader);
+				if (clazz == null) {
+					continue;
+				}
+				final Method method = clazz.getMethod("getBundleProtocolResolver");
+				return (UrlConverter) method.invoke(null);
+			}
+			throw new ReflectionUtilException("Could not extract Class<?> from qualified name " + qualifiedName);
+		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException | ReflectionUtilException e) {
+			return null;
+		}
 	}
 
 	private static <T> ConstructorAndRemainingParameters<T> getConstructorsForClass(final Class<T> clazz,
@@ -263,35 +321,11 @@ public class ReflectionUtil {
 	}
 
 	/**
-	 * Return the filenames of the files in the given directory. We use the classloader to get the URL of this folder.
-	 * We support only URLs with protocol <i>file</i>.
-	 */
-	private static Collection<File> getFilesFromDirectoryResources(final ClassLoader loader,
-			final List<String> resourceNames) {
-		final Set<File> rtr = new HashSet<>();
-		for (final String resourceName : resourceNames) {
-			rtr.addAll(getFilesFromDirectoryResource(loader, resourceName));
-		}
-		return rtr;
-	}
-
-	/**
-	 * Return the filenames of the files in the given directory. We use the classloader to get the URL of this folder.
-	 * We support only URLs with protocol <i>file</i>.
-	 */
-	private static Collection<File> getFilesFromDirectoryResource(final ClassLoader loader, final String resourceName) {
-		final URL dirUrl = loader.getResource(resourceName);
-		if (dirUrl == null) {
-			throw new ReflectionUtilException("Could not resolve resource " + resourceName);
-		}
-		return getFilesFromDirectoryResource(loader, dirUrl);
-	}
-
-	/**
 	 * Return the filenames of the files specified by the given resource URL. We use the classloader to get the URL of
 	 * this folder. We support only URLs with protocol <i>file</i> or <i>bundleresource</i>.
 	 */
-	private static Collection<File> getFilesFromDirectoryResource(final ClassLoader loader, final URL url) {
+	private static Collection<File> getFilesFromDirectoryResource(final ClassLoader loader, final URL url,
+			final UrlConverter resourceConverter) {
 		final String protocol = url.getProtocol();
 		final File dirFile;
 		if ("file".equals(protocol)) {
@@ -301,13 +335,13 @@ public class ReflectionUtil {
 				return Collections.emptySet();
 			}
 		} else if ("bundleresource".equals(protocol)) {
-			if (BUNDLE_RESOURCE_CONVERTER == null) {
+			if (resourceConverter == null) {
 				throw new AssertionError("Someone supplied a bundleresource resource but we do not have a converter -- "
 						+ "check if this deployable is built correctly "
 						+ "(maybe de.uni_freiburg.informatik.ultimate.core is missing?)");
 			}
 			try {
-				final URL fileUrl = BUNDLE_RESOURCE_CONVERTER.convert(url);
+				final URL fileUrl = resourceConverter.convert(url);
 				dirFile = new File(fileUrl.getFile());
 			} catch (final IOException e) {
 				return Collections.emptySet();
@@ -316,17 +350,6 @@ public class ReflectionUtil {
 			throw new UnsupportedOperationException("unknown protocol " + protocol);
 		}
 		return CoreUtil.flattenDirectories(Collections.singleton(dirFile));
-	}
-
-	/**
-	 * @return true if clazz represents an abstract class, false otherwise
-	 */
-	public static boolean isAbstractClass(final Class<?> clazz) {
-		return Modifier.isAbstract(clazz.getModifiers());
-	}
-
-	private static Class<?> getClassFromFile(final String packageName, final File file) {
-		return getClassFromFile(packageName, file, Collections.emptyList());
 	}
 
 	private static Class<?> getClassFromFile(final String packageName, final File file,
@@ -406,21 +429,25 @@ public class ReflectionUtil {
 	private static List<ClassLoader> getClassLoaders(final Class<?> clazz) {
 		final List<ClassLoader> rtr = new ArrayList<>();
 		ClassLoader loader = clazz.getClassLoader();
-		if (loader == null) {
-			// Try the bootstrap classloader - obtained from the ultimate parent of the System Class Loader.
-			loader = ClassLoader.getSystemClassLoader();
+		while (loader != null) {
+			rtr.add(loader);
+			loader = loader.getParent();
 		}
+		// Try the bootstrap classloader - obtained from the ultimate parent of the System Class Loader.
+		loader = ClassLoader.getSystemClassLoader();
 		while (loader != null) {
 			rtr.add(loader);
 			loader = loader.getParent();
 		}
 		return rtr;
+
 	}
 
 	/**
 	 * Return the contents of the folder from which this class was loaded.
 	 */
-	private static Collection<File> getFolderContentsFromClass(final Class<?> clazz) {
+	private static Collection<File> getFolderContentsFromClass(final Class<?> clazz,
+			final UrlConverter resourceConverter) {
 		if (clazz == null) {
 			return null;
 		}
@@ -443,50 +470,9 @@ public class ReflectionUtil {
 		final List<File> rtr = new ArrayList<>();
 		while (resourceUrlsIter.hasMoreElements()) {
 			final URL resourceUrl = resourceUrlsIter.nextElement();
-			rtr.addAll(getFilesFromDirectoryResource(loader, resourceUrl));
+			rtr.addAll(getFilesFromDirectoryResource(loader, resourceUrl, resourceConverter));
 		}
 		return rtr;
-	}
-
-	/**
-	 * Checks if the given class implements a given interface.
-	 * <p>
-	 * The check also checks whether a superclass implements the interface.
-	 *
-	 * @param clazzIn
-	 *            the class object to check
-	 * @return true if and only if <code>clazzIn</code> implements <code>interfaceClazz</code>. Otherwise false.
-	 */
-	public static boolean isClassImplementingInterface(final Class<?> clazzIn, final Class<?> interfaceClazz) {
-		if (interfaceClazz == null || !interfaceClazz.isInterface()) {
-			throw new IllegalArgumentException("interfaceClazz does not represent an interface");
-		}
-
-		Class<?> clazz = clazzIn;
-		while (clazz != null) {
-			final Class<?>[] implementedInterfaces = clazz.getInterfaces();
-			for (final Class<?> interFace : implementedInterfaces) {
-				if (interFace.equals(interfaceClazz)) {
-					// class implements IOperation in a transitive chain
-					return true;
-				}
-			}
-			clazz = clazz.getSuperclass();
-		}
-		return false;
-	}
-
-	public static boolean isSubclassOfClass(final Class<?> clazzIn, final Class<?> superClazz) {
-		if (superClazz == null) {
-			throw new IllegalArgumentException("superClazz is null");
-		}
-		if (Modifier.isFinal(superClazz.getModifiers())) {
-			return false;
-		}
-		if (clazzIn == null) {
-			return true;
-		}
-		return superClazz.isAssignableFrom(clazzIn);
 	}
 
 	private static Class<?> toWrapperClazz(final Class<?> clazz) {

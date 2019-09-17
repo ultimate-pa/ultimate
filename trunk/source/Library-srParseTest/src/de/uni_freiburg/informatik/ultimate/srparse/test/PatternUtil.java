@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
@@ -47,17 +48,19 @@ public final class PatternUtil {
 		}
 
 		// instantiate scopes
-		final List<? extends SrParseScope> scopes = ReflectionUtil.getClassesFromFolder(SrParseScope.class).stream()
+		final List<? extends SrParseScope> scopes = ReflectionUtil
+				.getClassesFromFolder(SrParseScope.class, RcpUtils.getBundleProtocolResolver()).stream()
 				.filter(c -> !ReflectionUtil.isAbstractClass(c))
 				.filter(c -> ReflectionUtil.isSubclassOfClass(c, SrParseScope.class))
 				.map(a -> ReflectionUtil.instantiateClass(a, (Object[]) patternObs)).collect(Collectors.toList());
 		Collections.sort(scopes, new ClassNameComparator());
 
 		// instantiate patterns
-		final List<Class<? extends PatternType>> patternTypeClazzes = ReflectionUtil
-				.getClassesFromFolder(PatternType.class).stream().filter(c -> !ReflectionUtil.isAbstractClass(c))
-				.filter(c -> ReflectionUtil.isSubclassOfClass(c, PatternType.class))
-				.filter(c -> !c.equals(InitializationPattern.class)).collect(Collectors.toList());
+		final List<Class<? extends PatternType>> patternTypeClazzes =
+				ReflectionUtil.getClassesFromFolder(PatternType.class, RcpUtils.getBundleProtocolResolver()).stream()
+						.filter(c -> !ReflectionUtil.isAbstractClass(c))
+						.filter(c -> ReflectionUtil.isSubclassOfClass(c, PatternType.class))
+						.filter(c -> !c.equals(InitializationPattern.class)).collect(Collectors.toList());
 		Collections.sort(patternTypeClazzes, new ClassNameComparator());
 
 		final List<PatternType> rtr = new ArrayList<>();
