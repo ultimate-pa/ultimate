@@ -533,6 +533,7 @@
         <module>../Library-LassoRanker</module>
         <module>../Library-Log4j2</module>
         <module>../Library-log4j</module>
+        <module>../Library-MCR</module>
         <module>../Library-ModelCheckerUtils</module>
         <module>../Library-MSO</module>
         <module>../Library-ojAlgo</module>
