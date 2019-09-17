@@ -85,7 +85,8 @@ public class TermParseUtils {
 		} catch (final UnsupportedOperationException ex) {
 			throw ex;
 		} catch (final Exception ex) {
-			throw new SMTLIBException("wrapping Exception", ex);
+			final String msg = String.format("Wrapping exception %s with message %s", ex.getClass(), ex.getMessage());
+			throw new SMTLIBException(msg, ex);
 		}
 	}
 
