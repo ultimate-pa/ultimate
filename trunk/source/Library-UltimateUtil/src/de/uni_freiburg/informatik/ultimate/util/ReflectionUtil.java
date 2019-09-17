@@ -209,6 +209,13 @@ public class ReflectionUtil {
 		return superClazz.isAssignableFrom(clazzIn);
 	}
 
+	public static File getClassFolder(final Class<?> clazz, final UrlConverter resourceConverter) {
+		final String name = clazz.getPackage().getName();
+		final ClassLoader loader = getClassLoader(clazz);
+		final URL url = loader.getResource(name);
+		return tryConvertUrlToFile(loader, url, resourceConverter);
+	}
+
 	/**
 	 * Create a UrlConverter taken from the core to handle bundle resources.
 	 *
@@ -326,13 +333,21 @@ public class ReflectionUtil {
 	 */
 	private static Collection<File> getFilesFromDirectoryResource(final ClassLoader loader, final URL url,
 			final UrlConverter resourceConverter) {
+		final File dirFile = tryConvertUrlToFile(loader, url, resourceConverter);
+		if (dirFile == null) {
+			return Collections.emptyList();
+		}
+		return CoreUtil.flattenDirectories(Collections.singleton(dirFile));
+	}
+
+	private static File tryConvertUrlToFile(final ClassLoader loader, final URL url,
+			final UrlConverter resourceConverter) {
 		final String protocol = url.getProtocol();
-		final File dirFile;
 		if ("file".equals(protocol)) {
 			try {
-				dirFile = new File(url.toURI());
+				return new File(url.toURI());
 			} catch (final URISyntaxException e) {
-				return Collections.emptySet();
+				return null;
 			}
 		} else if ("bundleresource".equals(protocol)) {
 			if (resourceConverter == null) {
@@ -342,14 +357,13 @@ public class ReflectionUtil {
 			}
 			try {
 				final URL fileUrl = resourceConverter.convert(url);
-				dirFile = new File(fileUrl.getFile());
+				return new File(fileUrl.getFile());
 			} catch (final IOException e) {
-				return Collections.emptySet();
+				return null;
 			}
 		} else {
 			throw new UnsupportedOperationException("unknown protocol " + protocol);
 		}
-		return CoreUtil.flattenDirectories(Collections.singleton(dirFile));
 	}
 
 	private static Class<?> getClassFromFile(final String packageName, final File file,
@@ -444,7 +458,9 @@ public class ReflectionUtil {
 	}
 
 	/**
-	 * Return the contents of the folder from which this class was loaded.
+	 * Return the contents of the folder from which this class was loaded (i.e., the package). You can supply your own
+	 * URL converter for different kinds of protocols or null; if you supply null, {@link ReflectionUtil} will try and
+	 * find one for you.
 	 */
 	private static Collection<File> getFolderContentsFromClass(final Class<?> clazz,
 			final UrlConverter resourceConverter) {
