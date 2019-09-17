@@ -285,6 +285,7 @@ non terminal String keywordAttr, keywordOption;
 non terminal String keywordTheory, keywordLogic, keywordTheoryLogic;
 non terminal String keywordNoAttr, keywordNoTheory, keywordNoLogic, keywordNoOption;
 non terminal String booleanOption, stringOption, numeralOption;
+non terminal String index;
 non terminal IndexedIdentifier identifier, identifierIndexed;
 non terminal Object specConstant;
 non terminal Object sExpr;
@@ -380,7 +381,8 @@ constantTerm ::= NUMERAL:n
              			RESULT = null;
              		} :}
              | STRING:n {: RESULT = parser.getScript().string(n); :};
-identifierIndexed ::= LPAR UNDERSCORE symbol:id STRING+:indices RPAR
+index ::= NUMERAL:n {: RESULT = n.toString(); :} | symbol;
+identifierIndexed ::= LPAR UNDERSCORE symbol:id index+:indices RPAR
              {: RESULT = new IndexedIdentifier(id, indices); :};
 identifier ::= symbol:s {: RESULT = new IndexedIdentifier(s, null); :}
            | identifierIndexed;
