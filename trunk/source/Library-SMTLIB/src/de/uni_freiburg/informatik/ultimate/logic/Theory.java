@@ -169,32 +169,30 @@ public class Theory {
 		mDistinct = declareInternalPolymorphicFunction("distinct", generic1, generic2, mBooleanSort,
 				FunctionSymbol.PAIRWISE);
 		mXor = declareInternalFunction("xor", bool2, mBooleanSort, leftassoc);
-		declareInternalPolymorphicFunction("ite", generic1,
-				new Sort[] { mBooleanSort, generic1[0], generic1[0] }, generic1[0], 0);
+		declareInternalPolymorphicFunction("ite", generic1, new Sort[] { mBooleanSort, generic1[0], generic1[0] },
+				generic1[0], 0);
 		mTrue = term(declareInternalFunction("true", noarg, mBooleanSort, 0));
 		mFalse = term(declareInternalFunction("false", noarg, mBooleanSort, 0));
 		// Finally, declare logic specific functions
 		setLogic(logic);
 	}
 
-	/** Method to check if indices is a numeral or symbol.
-	 *  If numeral return as BigInteger, if symbol return null **/
-	public BigInteger toNumeral(String index){
+	/**
+	 * Method to check if indices is a numeral or symbol. If numeral return as BigInteger, if symbol return null
+	 **/
+	public BigInteger toNumeral(final String index) {
 		try {
 			return new BigInteger(index);
-		} catch(NumberFormatException e){
-			throw new SMTLIBException("index must be numeral", e);
+		} catch (final NumberFormatException e) {
+			throw new SMTLIBException("not a numeral: " + index, e);
 		}
 	}
 
-	/** Method to check if the parameter is the name of a constructor. If so,
-	 *  return the constructor.	 */
-	public FunctionSymbol getFunctionSymbol(String constructor) {
-		if (mDeclaredFuns.containsKey(constructor)) {
-			return mDeclaredFuns.get(constructor);
-		} else {
-			return null;
-		}
+	/**
+	 * Method to check if the parameter is the name of a constructor. If so, return the constructor.
+	 */
+	public FunctionSymbol getFunctionSymbol(final String constructor) {
+		return mDeclaredFuns.get(constructor);
 	}
 
 	/******************** LOGICAL OPERATORS *******************************/
@@ -342,7 +340,7 @@ public class Theory {
 
 	public Term match(final Term dataArg, final TermVariable[][] vars, final Term[] cases,
 			final DataType.Constructor[] constructors) {
-		
+
 		final int hash = MatchTerm.hashMatch(dataArg, vars, cases);
 		final MatchTerm mt = new MatchTerm(hash, dataArg, vars, cases, constructors);
 		// add to hashmap
@@ -479,7 +477,7 @@ public class Theory {
 	}
 
 	public Term numeral(final String num) {
-		return numeral(new BigInteger(num));
+		return numeral(toNumeral(num));
 	}
 
 	public Term decimal(final BigDecimal value) {
@@ -576,8 +574,8 @@ public class Theory {
 		return defineFunction(name, paramTypes, resultType, null, null, flags | FunctionSymbol.INTERNAL);
 	}
 
-	public FunctionSymbol declareInternalFunction(final String name, final Sort[] paramTypes, final TermVariable[] defVars,
-			final Term definition, final int flags) {
+	public FunctionSymbol declareInternalFunction(final String name, final Sort[] paramTypes,
+			final TermVariable[] defVars, final Term definition, final int flags) {
 		return defineFunction(name, paramTypes, definition.getSort(), defVars, definition,
 				flags | FunctionSymbol.INTERNAL);
 	}
@@ -628,8 +626,9 @@ public class Theory {
 
 		@Override
 		public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
-			return indices != null && indices.length == 1 && toNumeral(indices[0]).signum() > 0 && paramSorts.length == 1
-					&& paramSorts[0] == mNumericSort && resultSort == null ? mBooleanSort : null;
+			return indices != null && indices.length == 1 && toNumeral(indices[0]).signum() > 0
+					&& paramSorts.length == 1 && paramSorts[0] == mNumericSort && resultSort == null ? mBooleanSort
+							: null;
 		}
 	}
 
@@ -742,8 +741,8 @@ public class Theory {
 		// store : ((Array X Y) X Y) -> (Array X Y)
 		declareInternalPolymorphicFunction("store", generic2, new Sort[] { array, generic2[0], generic2[1] }, array, 0);
 		// const : (Y) -> (Array X Y)
-		declareInternalPolymorphicFunction("const", generic2, new Sort[] { generic2[1] },
-				array, FunctionSymbol.INTERNAL | FunctionSymbol.RETURNOVERLOAD);
+		declareInternalPolymorphicFunction("const", generic2, new Sort[] { generic2[1] }, array,
+				FunctionSymbol.INTERNAL | FunctionSymbol.RETURNOVERLOAD);
 	}
 
 	private void createBitVecSort() {
@@ -804,6 +803,7 @@ public class Theory {
 			public ExtendBitVecFunction(final String name) {
 				super(name);
 			}
+
 			@Override
 			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
 				if (indices == null || indices.length != 1 || paramSorts.length != 1 || resultSort != null
@@ -840,15 +840,14 @@ public class Theory {
 						|| paramSorts[0].getName() != "BitVec" || paramSorts[1].getName() != "BitVec") {
 					return null;
 				}
-				
-				
-				BigInteger paramSortAsInt0 = new BigInteger(paramSorts[0].getIndices()[0]);
-				BigInteger paramSortAsInt1 = new BigInteger(paramSorts[1].getIndices()[0]);
-				
+
+				final BigInteger paramSortAsInt0 = toNumeral(paramSorts[0].getIndices()[0]);
+				final BigInteger paramSortAsInt1 = toNumeral(paramSorts[1].getIndices()[0]);
+
 				final BigInteger size = paramSortAsInt0.add(paramSortAsInt1);
 				// before: final BigInteger size = paramSorts[0].getIndices()[0].add(paramSorts[1].getIndices()[0]);
 				return mBitVecSort.getSort(new String[] { size.toString() }, new Sort[0]);
-				// what does { size } ? 
+				// what does { size } ?
 			}
 		});
 		defineFunction(new FunctionSymbolFactory("extract") {
@@ -858,10 +857,13 @@ public class Theory {
 						|| paramSorts[0].getName() != "BitVec") {
 					return null;
 				}
-				if (indices[0].compareTo(indices[1]) < 0 || paramSorts[0].getIndices()[0].compareTo(indices[0]) < 0) {
+				final BigInteger idxFirst = toNumeral(indices[0]);
+				final BigInteger idxScnd = toNumeral(indices[1]);
+				final BigInteger paramLength = toNumeral(paramSorts[0].getIndices()[0]);
+				if (idxFirst.compareTo(idxScnd) < 0 || paramLength.compareTo(idxFirst) < 0) {
 					return null;
 				}
-				final BigInteger size = toNumeral(indices[0]).subtract(toNumeral(indices[1])).add(BigInteger.ONE);
+				final BigInteger size = idxFirst.subtract(idxScnd).add(BigInteger.ONE);
 				return mBitVecSort.getSort(new String[] { size.toString() }, new Sort[0]);
 			}
 		});
@@ -1010,7 +1012,8 @@ public class Theory {
 				}
 				// from BitVec to FP
 				if (paramSorts.length == 1 && paramSorts[0].getName() == "BitVec") {
-					if (!((new BigInteger(indices[0]).add(new BigInteger(indices[1])).equals(new BigInteger(paramSorts[0].getIndices()[0]))))) {
+					if (!((toNumeral(indices[0]).add(toNumeral(indices[1]))
+							.equals(toNumeral(paramSorts[0].getIndices()[0]))))) {
 						return null;
 					}
 					return mFloatingPointSort.getSort(indices, new Sort[0]);
@@ -1096,14 +1099,10 @@ public class Theory {
 		defineFunction(new FloatingPointConstant("NaN"));
 
 		// short forms of common floats
-		defineSort("Float16", 0,
-				mFloatingPointSort.getSort(new String[] { new String("5"), new String("11") }));
-		defineSort("Float32", 0,
-				mFloatingPointSort.getSort(new String[] { new String("8"), new String("24") }));
-		defineSort("Float64", 0,
-				mFloatingPointSort.getSort(new String[] { new String("11"), new String("53") }));
-		defineSort("Float128", 0,
-				mFloatingPointSort.getSort(new String[] { new String("15"), new String("113") }));
+		defineSort("Float16", 0, mFloatingPointSort.getSort(new String[] { new String("5"), new String("11") }));
+		defineSort("Float32", 0, mFloatingPointSort.getSort(new String[] { new String("8"), new String("24") }));
+		defineSort("Float64", 0, mFloatingPointSort.getSort(new String[] { new String("11"), new String("53") }));
+		defineSort("Float128", 0, mFloatingPointSort.getSort(new String[] { new String("15"), new String("113") }));
 
 		// RoundingModes
 		declareInternalFunction("roundNearestTiesToEven", new Sort[0], mRoundingModeSort, 0);
@@ -1535,13 +1534,12 @@ public class Theory {
 		mTvUnify.put(hash, tv);
 		return tv;
 	}
-	
-	
-	
-	public DataType.Constructor createConstructor(final String name, final String[] selectors, final Sort[] argumentSorts) {
-		DataType.Constructor constructor = new DataType.Constructor(name, selectors, argumentSorts);
+
+	public DataType.Constructor createConstructor(final String name, final String[] selectors,
+			final Sort[] argumentSorts) {
+		final DataType.Constructor constructor = new DataType.Constructor(name, selectors, argumentSorts);
 		return constructor;
-	
+
 	}
 
 	/**
@@ -1557,7 +1555,7 @@ public class Theory {
 		if (mDeclaredSorts.containsKey(name)) {
 			throw new IllegalArgumentException("Datatype " + name + " already exists.");
 		}
-		DataType datatype = new DataType(this, name, numParams);
+		final DataType datatype = new DataType(this, name, numParams);
 		mDeclaredSorts.put(name, datatype);
 		return datatype;
 	}
@@ -1600,16 +1598,16 @@ public class Theory {
 	}
 
 	/******************** SKOLEMIZATION SUPPORT ***************************/
-	public Term skolemize(final TermVariable tv, QuantifiedFormula qf) {
-		TermVariable[] freeVars = qf.getFreeVars();
-		Term[] args = new Term[freeVars.length];
-		Sort[] freeVarSorts = new Sort[freeVars.length];
+	public Term skolemize(final TermVariable tv, final QuantifiedFormula qf) {
+		final TermVariable[] freeVars = qf.getFreeVars();
+		final Term[] args = new Term[freeVars.length];
+		final Sort[] freeVarSorts = new Sort[freeVars.length];
 		for (int i = 0; i < freeVars.length; i++) {
 			args[i] = freeVars[i];
 			freeVarSorts[i] = freeVars[i].getSort();
 		}
-		FunctionSymbol fsym = new FunctionSymbol("@" + tv.getName() + "_skolem_" + mSkolemCounter++, null, freeVarSorts,
-				tv.getSort(), null, null, 0);
+		final FunctionSymbol fsym = new FunctionSymbol("@" + tv.getName() + "_skolem_" + mSkolemCounter++, null,
+				freeVarSorts, tv.getSort(), null, null, 0);
 		return term(fsym, args);
 	}
 
