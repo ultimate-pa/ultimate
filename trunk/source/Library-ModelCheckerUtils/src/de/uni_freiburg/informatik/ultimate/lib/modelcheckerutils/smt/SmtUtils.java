@@ -2005,7 +2005,10 @@ public final class SmtUtils {
 	}
 
 	public static final BigInteger[] toBigIntegerArray(final String... indices) {
-		if (indices == null || indices.length == 0) {
+		if (indices == null) {
+			return null;
+		}
+		if (indices.length == 0) {
 			return EMPTY_INDICES_BI;
 		}
 		final BigInteger[] biIndices = new BigInteger[indices.length];
@@ -2016,7 +2019,10 @@ public final class SmtUtils {
 	}
 
 	public static final String[] toStringArray(final BigInteger... indices) {
-		if (indices == null || indices.length == 0) {
+		if (indices == null) {
+			return null;
+		}
+		if (indices.length == 0) {
 			return EMPTY_INDICES;
 		}
 		final String[] strIndices = new String[indices.length];
