@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -309,14 +310,22 @@ public final class TestUtil {
 	}
 
 	public static Predicate<File> getRegexTest(final String... regexes) {
-		return file -> file != null && Arrays.stream(regexes).allMatch(regex -> file.getAbsolutePath().matches(regex));
+		if (regexes == null || regexes.length == 0) {
+			return file -> file != null;
+		}
+		return file -> file != null && matchRegexStream(file, Arrays.stream(regexes));
 	}
 
 	public static Predicate<File> getRegexTest(final Collection<String> regexes) {
 		if (regexes.isEmpty()) {
 			return file -> file != null;
 		}
-		return file -> file != null && regexes.stream().allMatch(regex -> file.getAbsolutePath().matches(regex));
+		return file -> file != null && matchRegexStream(file, regexes.stream());
+	}
+
+	private static boolean matchRegexStream(final File file, final Stream<String> regexStream) {
+		return regexStream.filter(a -> a != null && !a.isEmpty())
+				.allMatch(regex -> file.getAbsolutePath().matches(regex));
 	}
 
 	/**

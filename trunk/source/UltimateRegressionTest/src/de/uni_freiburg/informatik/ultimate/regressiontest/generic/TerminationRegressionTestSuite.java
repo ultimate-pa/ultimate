@@ -46,7 +46,7 @@ public class TerminationRegressionTestSuite extends AbstractRegressionTestSuite 
 		mTimeout = TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
-		mIncludeFilterRegex = ".*(lassos|termination).*";
+		mIncludeFilterRegexToolchain = ".*(lassos|termination).*";
 	}
 
 	@Override

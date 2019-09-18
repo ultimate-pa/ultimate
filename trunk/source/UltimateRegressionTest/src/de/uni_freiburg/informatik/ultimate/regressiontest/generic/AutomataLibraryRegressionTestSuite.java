@@ -46,7 +46,7 @@ public class AutomataLibraryRegressionTestSuite extends AbstractRegressionTestSu
 		mTimeout = TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
-		mIncludeFilterRegex = ".*(Automata).*";
+		mIncludeFilterRegexToolchain = ".*(Automata).*";
 	}
 
 	@Override

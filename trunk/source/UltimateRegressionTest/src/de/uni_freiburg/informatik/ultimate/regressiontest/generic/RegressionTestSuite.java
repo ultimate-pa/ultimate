@@ -50,7 +50,7 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
 		// exclude paths that match the following regex
-		mExcludeFilterRegex =
+		mExcludeFilterRegexToolchain =
 				".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation|Automata|LTL).*";
 	}
 

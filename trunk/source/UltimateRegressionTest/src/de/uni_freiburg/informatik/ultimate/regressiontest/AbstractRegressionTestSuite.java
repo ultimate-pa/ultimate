@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.regressiontest;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,30 +66,40 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	protected long mTimeout;
 	protected String mRootFolder;
 	/**
-	 * Regex that excludes toolchain and settings files whose path is matched by the regex.
+	 * Regex that excludes toolchain files whose path is matched by the regex.
 	 */
-	protected String mExcludeFilterRegex;
+	protected String mExcludeFilterRegexToolchain;
 	/**
-	 * Regex that includes only toolchain and settings files whose path is matched by the regex.
+	 * Regex that includes only toolchain files whose path is matched by the regex.
 	 */
-	protected String mIncludeFilterRegex;
+	protected String mIncludeFilterRegexToolchain;
+	/**
+	 * Regex that excludes settings files whose path is matched by the regex.
+	 */
+	protected String mExcludeFilterRegexSettings;
+	/**
+	 * Regex that includes only settings files whose path is matched by the regex.
+	 */
+	protected String mIncludeFilterRegexSettings;
 	/**
 	 * Regex that excludes input files whose path is matched by the regex.
 	 */
-	protected String mFileExcludeFilterRegex;
+	protected String mExcludeFilterRegexInput;
 	/**
 	 * Regex that includes only input files whose path is matched by the regex.
 	 */
-	protected String mFileIncludeFilterRegex;
+	protected String mIncludeFilterRegexInput;
 	protected String[] mFiletypesToConsider;
 
 	public AbstractRegressionTestSuite() {
 		super();
 		mTimeout = 1000;
-		mExcludeFilterRegex = "";
-		mIncludeFilterRegex = "";
-		mFileExcludeFilterRegex = "";
-		mFileIncludeFilterRegex = "";
+		mExcludeFilterRegexToolchain = "";
+		mExcludeFilterRegexInput = "";
+		mExcludeFilterRegexSettings = "";
+		mIncludeFilterRegexToolchain = "";
+		mIncludeFilterRegexInput = "";
+		mIncludeFilterRegexSettings = "";
 		mFiletypesToConsider = new String[] { ".c", ".bpl", ".i", ".ats" };
 	}
 
@@ -121,21 +133,25 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	 *         settings.
 	 */
 	protected Collection<Pair> getRunConfiguration() {
-		final Set<Pair> rtr = new HashSet<>();
-
 		final File root = getRootFolder(mRootFolder);
 		if (root == null) {
-			return rtr;
+			return Collections.emptySet();
 		}
 
-		final Predicate<File> regexFilter = getToolchainSettingsRegexFilter();
+		final Predicate<File> tcRegexFilter = getToolchainRegexFilter();
+		final Predicate<File> settingsRegexFilter = getSettingsRegexFilter();
 		final List<File> tcAndSettingsFiles = TestUtil.getFiles(root, new String[] { ".xml", ".epf" });
 
 		final Collection<File> toolchainFiles =
-				tcAndSettingsFiles.stream().filter(FILTER_XML.and(regexFilter)).collect(Collectors.toSet());
+				tcAndSettingsFiles.stream().filter(FILTER_XML.and(tcRegexFilter)).collect(Collectors.toSet());
 		final Collection<File> settingsFiles =
-				tcAndSettingsFiles.stream().filter(FILTER_EPF.and(regexFilter)).collect(Collectors.toSet());
+				tcAndSettingsFiles.stream().filter(FILTER_EPF.and(settingsRegexFilter)).collect(Collectors.toSet());
 
+		if (toolchainFiles.isEmpty() || settingsFiles.isEmpty()) {
+			return Collections.emptySet();
+		}
+
+		final Set<Pair> rtr = new HashSet<>();
 		for (final File toolchain : toolchainFiles) {
 			final String toolchainName = toolchain.getName().replaceAll("\\..*", "");
 			final String localRegex = Matcher.quoteReplacement(toolchain.getParent()) + ".*";
@@ -154,33 +170,35 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		return rtr;
 	}
 
-	private Predicate<File> getToolchainSettingsRegexFilter() {
-		final List<String> regexes = new ArrayList<>();
-		regexes.add(".*regression.*");
-		if (!mIncludeFilterRegex.isEmpty()) {
-			regexes.add(mIncludeFilterRegex);
-		}
-		Predicate<File> regexFilter;
-		if (!mExcludeFilterRegex.isEmpty()) {
-			regexFilter = TestUtil.getRegexTest(regexes).and(TestUtil.getRegexTest(mExcludeFilterRegex).negate());
-		} else {
-			regexFilter = TestUtil.getRegexTest(regexes);
-		}
-		return regexFilter;
+	private Predicate<File> getSettingsRegexFilter() {
+		return getRegexFilter(new String[] { ".*regression.*", mIncludeFilterRegexSettings },
+				new String[] { mExcludeFilterRegexSettings });
+	}
+
+	private Predicate<File> getToolchainRegexFilter() {
+		return getRegexFilter(new String[] { ".*regression.*", mIncludeFilterRegexToolchain },
+				new String[] { mExcludeFilterRegexToolchain });
 	}
 
 	private Predicate<File> getFilesRegexFilter() {
-		final List<String> regexes = new ArrayList<>();
-		if (!mFileIncludeFilterRegex.isEmpty()) {
-			regexes.add(mFileIncludeFilterRegex);
+		return getRegexFilter(new String[] { mIncludeFilterRegexInput }, new String[] { mExcludeFilterRegexInput });
+	}
+
+	private static String[] removeEmptyOrNull(final String[] str) {
+		if (str == null || str.length == 0) {
+			return str;
 		}
-		Predicate<File> regexFilter;
-		if (!mFileExcludeFilterRegex.isEmpty()) {
-			regexFilter = TestUtil.getRegexTest(regexes).and(TestUtil.getRegexTest(mFileExcludeFilterRegex).negate());
-		} else {
-			regexFilter = TestUtil.getRegexTest(regexes);
+		final List<String> rtr = Arrays.stream(str).filter(a -> a != null && !a.isEmpty()).collect(Collectors.toList());
+		return rtr.toArray(new String[rtr.size()]);
+	}
+
+	private static Predicate<File> getRegexFilter(final String[] include, final String[] exclude) {
+		final String[] filteredInclude = removeEmptyOrNull(include);
+		final String[] filteredExclude = removeEmptyOrNull(exclude);
+		if (filteredExclude == null || filteredExclude.length == 0) {
+			return TestUtil.getRegexTest(filteredInclude);
 		}
-		return regexFilter;
+		return TestUtil.getRegexTest(filteredInclude).and(TestUtil.getRegexTest(filteredExclude).negate());
 	}
 
 	@Override
