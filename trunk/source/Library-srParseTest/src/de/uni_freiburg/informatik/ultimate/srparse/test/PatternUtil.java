@@ -31,10 +31,10 @@ public final class PatternUtil {
 	}
 
 	/**
-	 * Create for all subclasses of {@link PatternType} and {@link SrParseScope} an instantiated requirements pattern
-	 * that can be used to create a PEA.
+	 * Create for all subclasses of {@link PatternType} and {@link SrParseScope} an
+	 * instantiated requirements pattern that can be used to create a PEA.
 	 */
-	public static Pair<List<PatternType>, Map<String, Integer>> createAllPatterns() {		
+	public static Pair<List<PatternType>, Map<String, Integer>> createAllPatterns() {
 		// first, create some observables and durartions
 		final int count = 10;
 		final int duration = 50;
@@ -57,20 +57,22 @@ public final class PatternUtil {
 		Collections.sort(scopes, new ClassNameComparator());
 
 		// instantiate patterns
-		final List<Class<? extends PatternType>> patternTypeClazzes =
-				ReflectionUtil.getClassesFromFolder(PatternType.class, RcpUtils.getBundleProtocolResolver()).stream()
-						.filter(c -> !ReflectionUtil.isAbstractClass(c))
-						.filter(c -> ReflectionUtil.isSubclassOfClass(c, PatternType.class))
-						.filter(c -> !c.equals(InitializationPattern.class)).collect(Collectors.toList());
+		final List<Class<? extends PatternType>> patternTypeClazzes = ReflectionUtil
+				.getClassesFromFolder(PatternType.class, RcpUtils.getBundleProtocolResolver()).stream()
+				.filter(c -> !ReflectionUtil.isAbstractClass(c))
+				.filter(c -> ReflectionUtil.isSubclassOfClass(c, PatternType.class))
+				.filter(c -> !c.equals(InitializationPattern.class)).collect(Collectors.toList());
 		Collections.sort(patternTypeClazzes, new ClassNameComparator());
 
 		final List<PatternType> patterns = new ArrayList<>();
 		int id = 0;
 		for (final Class<? extends PatternType> patternTypeClazz : patternTypeClazzes) {
-			// all patterns except the initializationpattern have a constructor of the form (final SrParseScope scope,
+			// all patterns except the initializationpattern have a constructor of the form
+			// (final SrParseScope scope,
 			// final String id, final List<CDD> cdds,
 			// final List<String> durations)
-			// we first instantiate the pattern type to see how many cdds and durations we actually need, and then we
+			// we first instantiate the pattern type to see how many cdds and durations we
+			// actually need, and then we
 			// instantiate it again for real for every scope
 
 			final PatternType dummyInstance = ReflectionUtil.instantiateClass(patternTypeClazz, null, null, null, null);
@@ -78,17 +80,17 @@ public final class PatternUtil {
 			final int durationCount = dummyInstance.getExpectedDurationSize();
 
 			for (final SrParseScope scope : scopes) {
-				final List<CDD> currentCdds =
-						Arrays.stream(patternObs).skip(scope.getSize()).limit(cddCount).collect(Collectors.toList());
-				final List<String> currentDurations =
-						Arrays.stream(durations).limit(durationCount).collect(Collectors.toList());
+				final List<CDD> currentCdds = Arrays.stream(patternObs).skip(scope.getSize()).limit(cddCount)
+						.collect(Collectors.toList());
+				final List<String> currentDurations = Arrays.stream(durations).limit(durationCount)
+						.collect(Collectors.toList());
 				patterns.add(ReflectionUtil.instantiateClass(patternTypeClazz, scope, "ID_" + String.valueOf(id),
 						currentCdds, currentDurations));
 				id++;
 			}
 		}
 
-		return new Pair<List<PatternType>, Map<String, Integer>>(patterns, duration2bounds);
+		return new Pair<>(patterns, duration2bounds);
 	}
 
 	private static final class ClassNameComparator implements Comparator<Object> {
