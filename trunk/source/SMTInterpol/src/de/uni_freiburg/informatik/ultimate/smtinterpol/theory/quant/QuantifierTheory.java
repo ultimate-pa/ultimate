@@ -238,10 +238,10 @@ public class QuantifierTheory implements ITheory {
 					lit.getAtom().mExplanation = expl;
 					mEngine.learnClause(expl);
 					mPropCount++;
-					mLogger.debug("Quant Prop: %1s Reason: %2s", lit, lit.getAtom().mExplanation);
+					mLogger.debug("Quant Prop: %s Reason: %s", lit, lit.getAtom().mExplanation);
 					return lit;
 				} else {
-					mLogger.debug("Not propagated: %1s Clause: %2s", lit, clause.mLits);
+					mLogger.debug("Not propagated: %s Clause: %s", lit, clause.mLits);
 				}
 			}
 		}

@@ -249,10 +249,10 @@ public class LAInterpolator {
 			for (int part = 0; part < mInterpolator.mNumInterpolants; part++) {
 				if (occurrenceInfo.isALocal(part)) {
 					numALocal[part]++;
-					aLocalLit[part] = lit;
+					aLocalLit[part] = mInterpolator.unquote(lit);
 				} else if (occurrenceInfo.isBLocal(part)) {
 					numBLocal[part]++;
-					bLocalLit[part] = lit;
+					bLocalLit[part] = mInterpolator.unquote(lit);
 				}
 			}
 			if (atomTermInfo.isBoundConstraint()) {

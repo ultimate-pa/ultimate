@@ -218,15 +218,21 @@ public class ArrayInterpolator {
 	 */
 	private Term[] computeReadOverWeakeqInterpolants(final Term proofTerm) {
 		final ProofPath[] paths = getPaths(mLemmaInfo);
-		assert paths.length <= 2;
-		if (paths.length == 2) {
-			assert paths[0].getIndex() == null;
-			final Term[] indexPath = paths[0].getPath();
-			assert indexPath.length == 2;
-			mStorePath = paths[1];
-			mIndexEquality = mEqualities.get(new SymmetricPair<Term>(indexPath[0], indexPath[1]));
-		} else { // In this case, the main disequality is of form "a[i] != b[i]"
-			mStorePath = paths[0];
+		assert paths.length == 1;
+		mStorePath = paths[0];
+
+		assert mDiseq != null;
+		ApplicationTerm selectEq = (ApplicationTerm) mDiseq.getSubterm();
+		assert selectEq.getFunction().getName().equals("=")
+			&& selectEq.getParameters()[0] instanceof ApplicationTerm
+			&& selectEq.getParameters()[1] instanceof ApplicationTerm
+			&& ((ApplicationTerm) selectEq.getParameters()[0]).getFunction().getName().equals("select")
+			&& ((ApplicationTerm) selectEq.getParameters()[1]).getFunction().getName().equals("select");
+		Term leftIndex = ((ApplicationTerm) selectEq.getParameters()[0]).getParameters()[1];
+		Term rightIndex = ((ApplicationTerm) selectEq.getParameters()[1]).getParameters()[1];
+		if (leftIndex != rightIndex) {
+			mIndexEquality = mEqualities.get(new SymmetricPair<Term>(leftIndex, rightIndex));
+			assert mIndexEquality != null;
 		}
 
 		final WeakPathInfo arrayPath = new WeakPathInfo(mStorePath);

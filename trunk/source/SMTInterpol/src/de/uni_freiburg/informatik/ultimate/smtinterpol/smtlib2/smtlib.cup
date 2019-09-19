@@ -447,7 +447,7 @@ terminal BigDecimal DECIMAL;
 terminal String HEXADECIMAL, BINARY, STRING;
 terminal LPAR, RPAR;
 
-non terminal String keyword, symbol;
+non terminal String keyword, symbol, allsymbol;
 non terminal String keywordAttr, keywordOption;
 non terminal String keywordTheory, keywordLogic, keywordTheoryLogic;
 non terminal String keywordNoAttr, keywordNoTheory, keywordNoLogic, keywordNoOption;
@@ -492,7 +492,7 @@ specConstant ::= NUMERAL:n {: RESULT = n; :}
              | BINARY:n {: RESULT = n; :}
              | STRING:n {: RESULT = new QuotedObject(n); :};
 sExpr ::= specConstant
-        | symbol
+        | allsymbol
         | KEYWORD
         | LPAR sExpr*:s RPAR {: RESULT = s; :};
 
@@ -1115,16 +1115,17 @@ symbol ::= SYMBOL | CONTINUEDEXECUTION | ERRORSYM | FALSE | IMMEDIATEEXIT |
            UNKNOWN | UNSUPPORTED | UNSAT | INCLUDE | SIMPLIFY |
            TIMED | GETINTERPOLANTS | FINDIMPLIEDEQUALITY | ALLSAT;
 
-/* The following are reserved words
+/* The following are reserved words and are only allowed in sexpr. */
+allsymbol ::= symbol |
          PAR | NUMERALSYM | DECIMALSYM | STRINGSYM |
-         UNDERSCORE | AS | BANG | LET | FORALL | EXISTS |
+         UNDERSCORE | AS | BANG | LET | FORALL | EXISTS | MATCH |
          ASSERT | CHECKSAT | CHECKSATASSUMING |
          DECLARESORT | DECLAREFUN | DECLARECONST | DEFINESORT | DEFINEFUN |
          ECHO | EXIT | GETASSERTIONS | GETASSIGNMENT | GETINFO |
          GETMODEL | GETOPTION | GETPROOF | GETUNSATASSUMPTIONS |
          GETUNSATCORE | GETVALUE |
          POP | PUSH | RESET | RESETASSERTIONS |
-         SETLOGIC | SETINFO | SETOPTION | DECLAREDATATYPE | DECLAREDATATYPES; */
+         SETLOGIC | SETINFO | SETOPTION | DECLAREDATATYPE | DECLAREDATATYPES;
 
 keywordAttr   ::= CPATTERN | CNAMED;
 keywordTheory ::= CSORTSDESCRIPTION | CSORTS |
