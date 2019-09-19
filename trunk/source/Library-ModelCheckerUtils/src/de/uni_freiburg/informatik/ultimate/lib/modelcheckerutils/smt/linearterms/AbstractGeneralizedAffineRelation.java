@@ -451,7 +451,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			final Rational secondRat) {
 		rhsTermWithoutDivision = SmtUtils.sum(script, mAffineTerm.getSort(), rhsTermWithoutDivision,
 				SmtUtils.rational2Term(script, Rational.MONE, mAffineTerm.getSort()));
-		final Term divTerm = SmtUtils.div(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort()));
+		final Term divTerm = SmtUtils.div(script, rhsTermWithoutDivision,
+				SmtUtils.rational2Term(script, coeffOfSubject, mAffineTerm.getSort()));
 		return SmtUtils.sum(script, mAffineTerm.getSort(), divTerm,
 				SmtUtils.rational2Term(script, secondRat, mAffineTerm.getSort()));
 	}
