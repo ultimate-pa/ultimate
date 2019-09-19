@@ -257,39 +257,6 @@ public class PhaseEventAutomata implements Comparable<Object> {
 		return mName;
 	}
 
-	public void dump() {
-		System.err.println("automata " + mName + " { ");
-		System.err.print("clocks: ");
-		final Iterator<String> clockIter = mClocks.iterator();
-		while (clockIter.hasNext()) {
-			final String actClock = clockIter.next();
-			System.err.print(actClock);
-			if (clockIter.hasNext()) {
-				System.err.print(", ");
-			}
-		}
-		System.err.println("");
-		System.err.print("  init { ");
-		String delim = "";
-		for (int i = 0; i < mInit.length; i++) {
-			System.err.print(delim + mInit[i]);
-			delim = ", ";
-		}
-		System.err.println(" }");
-		for (int i = 0; i < mPhases.length; i++) {
-			mPhases[i].dump();
-		}
-		System.err.println("}");
-	}
-
-	public void dumpDot() {
-		System.out.println("digraph " + mName + " { ");
-		for (int i = 0; i < mPhases.length; i++) {
-			mPhases[i].dumpDot();
-		}
-		System.out.println("}");
-	}
-
 	/**
 	 * @return Returns the init.
 	 */

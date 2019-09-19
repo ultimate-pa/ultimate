@@ -354,31 +354,4 @@ public class PEAXML2JConverter {
 		return clockInvariant;
 	}
 
-	/**
-	 * Used for testing.
-	 */
-	public static void main(final String[] args) {
-		try {
-			final PEAXML2JConverter fileParser = new PEAXML2JConverter(false);
-			final PhaseEventAutomata[] output = fileParser.convert("./pea/modelchecking/CaseStudy/Property0_par.xml");
-			final PhaseEventAutomata[] irgendwann = fileParser.convert("./pea/modelchecking/CaseStudy/ComNW.xml");
-			// PEAJ2UPPAALConverter converter = new PEAJ2UPPAALConverter();
-			// PhaseEventAutomata[] array = new PhaseEventAutomata[1];
-			// output[0].dump();
-			// irgendwann[1].dump();
-			final PhaseEventAutomata newAut = output[0].parallel(irgendwann[1]).parallel(irgendwann[1]);
-			newAut.dump();
-			// output[0].parallel(irgendwann[0]).dump();
-			// array[0] = output[0].parallel(irgendwann[0]);
-			// array[0] = irgendwann[0].parallel(output[0]);
-			// array[0].dump();
-			// Document uppaal = converter.convert(array);
-			// XMLWriter writer = new XMLWriter();
-			// writer.writeXMLDocumentToFile(uppaal,
-			// "src/pea/modelchecking/example/toCheck.xml");
-		} catch (final Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 }

@@ -24,16 +24,16 @@ public class TestUppaalExport {
 		PhaseEventAutomata ctA, ctA2, mctA;
 		final PhaseEventAutomata mctA2;
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
-		        new CounterTrace.DCPhase(P), new CounterTrace.DCPhase(S, CounterTrace.BOUND_LESS, bound),
-		        new CounterTrace.DCPhase(S.negate()),
-		        // new CounterTrace.DCPhase(R),
-		        new CounterTrace.DCPhase() });
+				new CounterTrace.DCPhase(P), new CounterTrace.DCPhase(S, CounterTrace.BOUND_LESS, bound),
+				new CounterTrace.DCPhase(S.negate()),
+				// new CounterTrace.DCPhase(R),
+				new CounterTrace.DCPhase() });
 		final MCTrace mct = new MCTrace(ct, entry, exit, missing, true);
 		mctA = compiler.compile("TInvariance1", mct); // ctA.dump();
 		ctA = compiler.compile("TInvariance1", ct); // ctA.dump();
 
 		final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
-		        new CounterTrace.DCPhase(P.and(S.negate())), new CounterTrace.DCPhase() });
+				new CounterTrace.DCPhase(P.and(S.negate())), new CounterTrace.DCPhase() });
 
 		ctA2 = compiler.compile("TInvariance2", ct2);
 		// ctA2.dump();
@@ -45,8 +45,8 @@ public class TestUppaalExport {
 	public PhaseEventAutomata bndResp_Glob(final CDD P, final CDD S, final int bound) {
 		PhaseEventAutomata ctA;
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
-		        new CounterTrace.DCPhase(P.and(S.negate())),
-		        new CounterTrace.DCPhase(S.negate(), CounterTrace.BOUND_GREATER, bound), new CounterTrace.DCPhase() });
+				new CounterTrace.DCPhase(P.and(S.negate())),
+				new CounterTrace.DCPhase(S.negate(), CounterTrace.BOUND_GREATER, bound), new CounterTrace.DCPhase() });
 		ctA = compiler.compile("TBndResp", ct); // ctA.dump();
 		return ctA;
 
@@ -61,7 +61,6 @@ public class TestUppaalExport {
 		ct2A = bndResp_Glob(P, S, 10);
 
 		ctParallel = ct1A.parallel(ct2A);
-		ctParallel.dump();
 
 		final DOTWriter dotwriter = new DOTWriter("C:/Deadlock.dot", ctParallel);
 		dotwriter.write();
