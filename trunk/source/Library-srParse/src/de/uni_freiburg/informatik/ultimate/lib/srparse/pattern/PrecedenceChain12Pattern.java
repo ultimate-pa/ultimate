@@ -12,7 +12,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
 /**
- * {scope}, it is always the case that if "P" holds and is succeeded by "S", then "T" previously held
+ * {scope}, it is always the case that if "P" holds and is succeeded by "S",
+ * then "T" previously held
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -36,9 +37,9 @@ public class PrecedenceChain12Pattern extends PatternType {
 		if (scope instanceof SrParseScopeGlob) {
 			ct = counterTrace(phase(P.negate()), phase(S), phaseT(), phase(T), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
-			final CDD R = scope.getCdd2();
-			ct = counterTrace(phase(P.negate().and(R.negate())), phase(S.and(R.negate()).and(P.negate())),
-					phase(R.negate()), phase(T.and(R.negate())), phaseT());
+			final CDD Q = scope.getCdd1();
+			ct = counterTrace(phase(P.negate().and(Q.negate())), phase(S.and(Q.negate()).and(P.negate())),
+					phase(Q.negate()), phase(T.and(Q.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();

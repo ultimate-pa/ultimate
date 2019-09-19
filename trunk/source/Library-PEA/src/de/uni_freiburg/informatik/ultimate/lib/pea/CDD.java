@@ -758,7 +758,7 @@ public final class CDD {
 			funCdd2Str = a -> a.toString("uppaal", needsParens);
 			funDecision2Str = i -> mDecision.toUppaalString(i);
 			orStr = " || ";
-			andStr = " && ";
+			andStr = " &amp;&amp; ";
 			isInfix = true;
 		} else if ("boogie".equalsIgnoreCase(format)) {
 			funCdd2Str = a -> a.toString("boogie", needsParens);

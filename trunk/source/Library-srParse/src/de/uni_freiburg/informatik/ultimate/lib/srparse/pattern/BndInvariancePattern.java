@@ -13,7 +13,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
 /**
- * {scope}, it is always the case that if "R" holds, then "S" holds for at least "c1" time units
+ * {scope}, it is always the case that if "R" holds, then "S" holds for at least
+ * "c1" time units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -37,9 +38,9 @@ public class BndInvariancePattern extends PatternType {
 		if (scope instanceof SrParseScopeGlob) {
 			ct = counterTrace(phaseT(), phase(R), phase(CDD.TRUE, BoundTypes.LESS, c1), phase(S.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
-			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phase(Q.negate()), phase(R.and(Q.negate())), phase(Q.negate(), BoundTypes.LESS, c1),
-					phase(S.negate().and(Q.negate())), phaseT());
+			final CDD P = scope.getCdd1();
+			ct = counterTrace(phase(P.negate()), phase(R.and(P.negate())), phase(P.negate(), BoundTypes.LESS, c1),
+					phase(S.negate().and(P.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();

@@ -35,24 +35,27 @@ public class ResponsePattern extends PatternType {
 		if (scope instanceof SrParseScopeGlob) {
 			// Globally, it is always the case that if P holds then S eventually holds.
 			// (¬(true;|P ∧ ¬S|;|¬S|)) -> true
-			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des
+			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn
+			// S.negate müßte bis zum ende des
 			// intervalls gelten
 			// TODO: Das leads-to scheint falsch
 			ct = counterTrace(phaseT(), phase(P.and(S.negate())), phase(S.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			// Before Q, it is always the case that if P holds then S eventually holds.
 			// ¬(|¬Q|;|P ∧ ¬S ∧ ¬Q|;|¬S ∧ ¬Q|;|Q|; true)
-			final CDD R = scope.getCdd2();
-			ct = counterTrace(phase(R.negate()), phase(P.and(R.negate()).and(S.negate())),
-					phase(S.negate().and(R.negate())), phase(R), phaseT());
+			final CDD Q = scope.getCdd1();
+			ct = counterTrace(phase(Q.negate()), phase(P.and(Q.negate()).and(S.negate())),
+					phase(S.negate().and(Q.negate())), phase(Q), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
-			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des
+			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn
+			// S.negate müßte bis zum ende des
 			// intervalls gelten
 			ct = counterTrace(phaseT());
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		} else if (scope instanceof SrParseScopeAfter) {
 			// (¬(true;|Q|;true;|P ∧ ¬S|;|¬S|)) -> true
-			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des
+			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn
+			// S.negate müßte bis zum ende des
 			// intervalls gelten
 			ct = counterTrace(phaseT());
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());

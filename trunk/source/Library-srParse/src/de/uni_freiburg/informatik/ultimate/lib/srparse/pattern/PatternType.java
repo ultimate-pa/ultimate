@@ -74,8 +74,8 @@ public abstract class PatternType {
 					+ getPatternName();
 			final CounterTrace ct = transform(cdds, durations);
 			final String name = getId() + "_" + createPeaSuffix();
-			final Trace2PeaCompilerStateless compiler =
-					new Trace2PeaCompilerStateless(logger, name, ct, id2bounds.keySet());
+			final Trace2PeaCompilerStateless compiler = new Trace2PeaCompilerStateless(logger, name, ct,
+					id2bounds.keySet());
 			mPea = compiler.getResult();
 		}
 		return mPea;
@@ -177,7 +177,8 @@ public abstract class PatternType {
 
 	@Override
 	public int hashCode() {
-		// note that mId and mPea are deliberately not part of the hash code or the equality comparison
+		// note that mId and mPea are deliberately not part of the hash code or the
+		// equality comparison
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + (mCdds == null ? 0 : mCdds.hashCode());
@@ -188,7 +189,8 @@ public abstract class PatternType {
 
 	@Override
 	public boolean equals(final Object obj) {
-		// note that mId and mPea are deliberately not part of the hash code or the equality comparison
+		// note that mId and mPea are deliberately not part of the hash code or the
+		// equality comparison
 		if (this == obj) {
 			return true;
 		}

@@ -41,16 +41,14 @@ public class DotWriterNew {
 
 		for (final Phase phase : pea.getPhases()) {
 			final String location = phase.getName();
-			final String clock = phase.getClockInvariant().toUppaalString();
 			final String predicate = phase.getStateInvariant().toUppaalString();
+			final String clock = phase.getClockInvariant().toUppaalString();
 
-			String table = "";
-			table += "<<b>" + location + "</b><br/>";
-			table += "<font COLOR=\"#984ea3\">" + predicate + "</font><br/>";
-			table += "<font COLOR=\"#ff7f00\">" + clock + "</font><br/>>";
+			String label = "<<b>" + location + "</b><br/>";
+			label += "<font COLOR=\"#984ea3\">" + predicate + "</font><br/>";
+			label += "<font COLOR=\"#ff7f00\">" + clock + "</font><br/>>";
 
-			// dot += location + " [label=\"" + location + "\\n" + predicate + "\\n" + clock + "\"];" + "\n";
-			dot += location + " [label=" + table + "];" + "\n";
+			dot += location + " [label=" + label + "];" + "\n";
 
 			for (final Transition transition : phase.getTransitions()) {
 				final String src = transition.getSrc().getName();

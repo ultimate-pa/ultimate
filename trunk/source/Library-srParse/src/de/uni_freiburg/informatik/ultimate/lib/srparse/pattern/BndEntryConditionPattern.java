@@ -13,7 +13,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
 /**
- * "{scope}, it is always the case that after "P" holds for "c1" time units, then "S" holds
+ * "{scope}, it is always the case that after "P" holds for "c1" time units,
+ * then "S" holds
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -37,9 +38,9 @@ public class BndEntryConditionPattern extends PatternType {
 		if (scope instanceof SrParseScopeGlob) {
 			ct = counterTrace(phaseT(), phase(P, BoundTypes.GREATER, c1), phase(S.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
-			final CDD R = scope.getCdd2();
-			ct = counterTrace(phase(R.negate()), phase(P.and(R.negate()), BoundTypes.GREATER, c1),
-					phase(S.negate().and(R.negate())), phaseT());
+			final CDD Q = scope.getCdd1();
+			ct = counterTrace(phase(Q.negate()), phase(P.and(Q.negate()), BoundTypes.GREATER, c1),
+					phase(S.negate().and(Q.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();

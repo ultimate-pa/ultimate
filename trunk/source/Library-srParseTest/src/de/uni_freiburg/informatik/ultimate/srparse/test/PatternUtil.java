@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -33,7 +34,7 @@ public final class PatternUtil {
 	 * Create for all subclasses of {@link PatternType} and {@link SrParseScope} an instantiated requirements pattern
 	 * that can be used to create a PEA.
 	 */
-	public static List<PatternType> createAllPatterns() {
+	public static Pair<List<PatternType>, Map<String, Integer>> createAllPatterns() {		
 		// first, create some observables and durartions
 		final int count = 10;
 		final int duration = 50;
@@ -63,7 +64,7 @@ public final class PatternUtil {
 						.filter(c -> !c.equals(InitializationPattern.class)).collect(Collectors.toList());
 		Collections.sort(patternTypeClazzes, new ClassNameComparator());
 
-		final List<PatternType> rtr = new ArrayList<>();
+		final List<PatternType> patterns = new ArrayList<>();
 		int id = 0;
 		for (final Class<? extends PatternType> patternTypeClazz : patternTypeClazzes) {
 			// all patterns except the initializationpattern have a constructor of the form (final SrParseScope scope,
@@ -81,13 +82,13 @@ public final class PatternUtil {
 						Arrays.stream(patternObs).skip(scope.getSize()).limit(cddCount).collect(Collectors.toList());
 				final List<String> currentDurations =
 						Arrays.stream(durations).limit(durationCount).collect(Collectors.toList());
-				rtr.add(ReflectionUtil.instantiateClass(patternTypeClazz, scope, "ID_" + String.valueOf(id),
+				patterns.add(ReflectionUtil.instantiateClass(patternTypeClazz, scope, "ID_" + String.valueOf(id),
 						currentCdds, currentDurations));
 				id++;
 			}
 		}
 
-		return rtr;
+		return new Pair<List<PatternType>, Map<String, Integer>>(patterns, duration2bounds);
 	}
 
 	private static final class ClassNameComparator implements Comparator<Object> {

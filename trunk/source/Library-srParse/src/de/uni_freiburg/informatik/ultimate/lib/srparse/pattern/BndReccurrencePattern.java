@@ -35,8 +35,8 @@ public class BndReccurrencePattern extends PatternType {
 		if (scope instanceof SrParseScopeGlob) {
 			ct = counterTrace(phaseT(), phase(P.negate(), BoundTypes.GREATER, 10), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
-			final CDD R = scope.getCdd2();
-			ct = counterTrace(phase(R.negate()), phase(P.negate().and(R.negate()), BoundTypes.GREATER, c1), phaseT());
+			final CDD Q = scope.getCdd1();
+			ct = counterTrace(phase(Q.negate()), phase(P.negate().and(Q.negate()), BoundTypes.GREATER, c1), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();

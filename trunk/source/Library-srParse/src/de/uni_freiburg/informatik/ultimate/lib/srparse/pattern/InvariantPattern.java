@@ -29,15 +29,16 @@ public class InvariantPattern extends PatternType {
 		final CDD S = cdds[0];
 		CDD P = cdds[1];
 
-		// Before refactoring: invariantPatern calls absencePattern(id, P.and(S.negate()), Q, R, scope)
+		// Before refactoring: invariantPatern calls absencePattern(id,
+		// P.and(S.negate()), Q, R, scope)
 		P = P.and(S.negate());
 
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlob) {
 			ct = counterTrace(phaseT(), phase(P), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
-			final CDD R = scope.getCdd2();
-			ct = counterTrace(phase(R.negate()), phase(P.and(R.negate())), phase(R.negate()), phaseT());
+			final CDD Q = scope.getCdd1();
+			ct = counterTrace(phase(Q.negate()), phase(P.and(Q.negate())), phase(Q.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();

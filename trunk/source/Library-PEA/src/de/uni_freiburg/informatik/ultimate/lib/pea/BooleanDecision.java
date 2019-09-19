@@ -98,9 +98,7 @@ public class BooleanDecision extends Decision<BooleanDecision> {
 
 	@Override
 	public String toUppaalString(final int child) {
-		// return child == 0 ? var : " \\neg " + var;
-		// return "true";
-		throw new UnsupportedOperationException();
+		return child == 0 ? mVar : "!" + mVar;
 	}
 
 	@Override

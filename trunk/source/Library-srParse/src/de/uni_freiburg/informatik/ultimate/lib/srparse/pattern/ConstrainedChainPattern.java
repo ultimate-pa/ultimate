@@ -21,7 +21,8 @@ public class ConstrainedChainPattern extends PatternType {
 
 	@Override
 	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
-		throw new UnsupportedOperationException();
+		final SrParseScope scope = getScope();
+		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
 
 	@Override

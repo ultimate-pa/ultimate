@@ -7,8 +7,8 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 /**
- * {scope}, if "R" holds, then there is at least one execution sequence such that "S" holds after at most "c1" time
- * units
+ * {scope}, if "R" holds, then there is at least one execution sequence such
+ * that "S" holds after at most "c1" time units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -22,7 +22,8 @@ public class BndPossResponsePattern extends PatternType {
 
 	@Override
 	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
-		throw new UnsupportedOperationException();
+		final SrParseScope scope = getScope();
+		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
 
 	@Override
