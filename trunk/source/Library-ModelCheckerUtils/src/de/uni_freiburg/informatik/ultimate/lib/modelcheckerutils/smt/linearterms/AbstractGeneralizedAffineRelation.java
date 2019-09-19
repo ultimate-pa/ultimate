@@ -339,7 +339,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		// Add here some code for polynomials where we have to try to divide by the
 		// other variables in the monomial
 		if (abstractVarOfSubject instanceof Monomial) {
-			Map<AssumptionForSolvability, Term> assumptionsMapTemp = new HashMap<>();
+			final Map<AssumptionForSolvability, Term> assumptionsMapTemp = new HashMap<>();
 			for (final Entry<AssumptionForSolvability, Term> assu2term : assumptionsMap.entrySet()) {
 				assumptionsMapTemp.put(assu2term.getKey(), assu2term.getValue());
 			}
@@ -365,14 +365,14 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 						}
 						final Term invPower = script.term("/", Rational.ONE.toTerm(mAffineTerm.getSort()), power);
 						if (assumptionsMapTemp.containsKey(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO)) {
-							assumptionsMapTemp.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO, 
-												   SmtUtils.and(script, 
+							assumptionsMapTemp.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO,
+												   SmtUtils.and(script,
 														   assumptionsMapTemp.get(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO),
-														   SmtUtils.not(script, SmtUtils.binaryEquality(script, var2exp.getKey(), 
+														   SmtUtils.not(script, SmtUtils.binaryEquality(script, var2exp.getKey(),
 													  		          Rational.ZERO.toTerm(mAffineTerm.getSort())))));
 						}else {
-							assumptionsMapTemp.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO, 
-									  SmtUtils.not(script, SmtUtils.binaryEquality(script, var2exp.getKey(), 
+							assumptionsMapTemp.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO,
+									  SmtUtils.not(script, SmtUtils.binaryEquality(script, var2exp.getKey(),
 											  		          Rational.ZERO.toTerm(mAffineTerm.getSort()))));
 						}
 						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower, rhsTerm);
@@ -382,13 +382,13 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			//TODO: Use Matthias' implementation
 			assumptionsMap = PolynomialTermUtils.shrinkMap(assumptionsMapTemp);
 		}
-		
+
 		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
 				assumptionsMap);
 		final Term relationToTerm = result.relationToTerm(script);
 		if (!assumptionsMap.isEmpty()) {
 			assert script instanceof INonSolverScript
-					|| assumptionImpliesEquivalence(script, mOriginalTerm, relationToTerm, assumptionsMap) 
+					|| assumptionImpliesEquivalence(script, mOriginalTerm, relationToTerm, assumptionsMap)
 												!= LBool.SAT : "transformation to AffineRelation unsound";
 		} else {
 			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
