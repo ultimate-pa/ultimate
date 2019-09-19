@@ -44,9 +44,6 @@ public class ElevatorInf {
 		elev.buildCSPPart();
 		elev.buildDCPart();
 
-		// elev.csppart.dump();
-		// elev.zpart.dump();
-		// elev.dcpart.dump();
 		final PhaseEventAutomata pea = elev.csppart.parallel(elev.zpart); // .parallel(elev.dcpart);
 
 		final Phase good = new Phase("ok", CDD.TRUE);
@@ -59,13 +56,10 @@ public class ElevatorInf {
 				new ArrayList<String>(), new Phase[] { bad });
 		PEATestAutomaton all = tester.parallel(pea);
 		all = all.parallel(new PhaseEventAutomata("inv", new Phase[] { invP }, new Phase[] { invP }));
-		// all = all.parallel(tester);
 		final SimplifyPEAs simplifier = new SimplifyPEAs();
 		simplifier.removeAllEvents(all);
 		all = simplifier.mergeFinalLocations(all, "FINAL");
 		simplifier.mergeTransitions(all);
-
-		// elev.csppart.parallel(elev.zpart).dump();
 
 		final PEA2ARMCConverter pea2armcFast = new PEA2ARMCConverter();
 		final ArrayList<String> addVars = new ArrayList<>();
@@ -82,19 +76,6 @@ public class ElevatorInf {
 		addTypes.add("integer");
 
 		pea2armcFast.convert(all, "./elevator.armc", addVars, addTypes, false);
-
-		System.err.println(all.getPhases().length + " total states.");
-
-		// System.out.println("/* Complete System */");
-		// System.out.println("#locs "+all.phases.length);
-		// int trans = 0;
-		// for (i = 0; i < all.phases.length; i++) {
-		// trans += all.phases[i].getTransitions().size();
-		// }
-		// System.out.println("#trans "+trans);
-		// //System.out.println("#clocks "+clocks);
-		// for (i = 0; i < all.phases.length; i++)
-		// dumpKronos(all.phases[i]);
 	}
 
 	public void buildZPart() {

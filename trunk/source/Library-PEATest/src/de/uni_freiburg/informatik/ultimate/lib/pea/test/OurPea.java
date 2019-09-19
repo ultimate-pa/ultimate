@@ -52,13 +52,11 @@ public final class OurPea {
 		final Phase[] phases = new Phase[2];
 
 		try {
-			phases[0] = new Phase("{0}", ZDecision.createSimplified("\u2577 x: \u2119 [] | x \u2029")); // TODO what is
-																										// this for?
+			phases[0] = new Phase("{0}", ZDecision.createSimplified("\u2577 x: \u2119 [] | x \u2029"));
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 		phases[1] = new Phase("{0,1}");
-		// phases[0] = new Phase("{0}");
 		final String[] resets = { "c" };
 		phases[0].addTransition(phases[1], CDD.TRUE, resets);
 		phases[1].addTransition(phases[0], CDD.TRUE, new String[0]);

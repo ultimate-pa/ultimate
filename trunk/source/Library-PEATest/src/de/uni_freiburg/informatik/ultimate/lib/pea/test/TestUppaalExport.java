@@ -15,9 +15,7 @@ public class TestUppaalExport {
 
 	Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 	CDD entry = EventDecision.create("S1");
-	// CDD entry = CDD.FALSE;
 	CDD exit = EventDecision.create("S2");
-	// CDD exit = CDD.TRUE;
 	CDD missing = CDD.TRUE;
 
 	public PhaseEventAutomata bndInvariance(final CDD P, final CDD S, final int bound) {
@@ -25,21 +23,17 @@ public class TestUppaalExport {
 		final PhaseEventAutomata mctA2;
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 				new CounterTrace.DCPhase(P), new CounterTrace.DCPhase(S, CounterTrace.BOUND_LESS, bound),
-				new CounterTrace.DCPhase(S.negate()),
-				// new CounterTrace.DCPhase(R),
-				new CounterTrace.DCPhase() });
+				new CounterTrace.DCPhase(S.negate()), new CounterTrace.DCPhase() });
 		final MCTrace mct = new MCTrace(ct, entry, exit, missing, true);
-		mctA = compiler.compile("TInvariance1", mct); // ctA.dump();
-		ctA = compiler.compile("TInvariance1", ct); // ctA.dump();
+		mctA = compiler.compile("TInvariance1", mct);
+		ctA = compiler.compile("TInvariance1", ct);
 
 		final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 				new CounterTrace.DCPhase(P.and(S.negate())), new CounterTrace.DCPhase() });
 
 		ctA2 = compiler.compile("TInvariance2", ct2);
-		// ctA2.dump();
-		ctA = ctA2.parallel(ctA); // ctA.dump();
+		ctA = ctA2.parallel(ctA);
 		return ctA;
-		// return mctA;
 	}
 
 	public PhaseEventAutomata bndResp_Glob(final CDD P, final CDD S, final int bound) {
@@ -47,7 +41,7 @@ public class TestUppaalExport {
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 				new CounterTrace.DCPhase(P.and(S.negate())),
 				new CounterTrace.DCPhase(S.negate(), CounterTrace.BOUND_GREATER, bound), new CounterTrace.DCPhase() });
-		ctA = compiler.compile("TBndResp", ct); // ctA.dump();
+		ctA = compiler.compile("TBndResp", ct);
 		return ctA;
 
 	}

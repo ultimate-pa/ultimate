@@ -58,29 +58,12 @@ public class Elevator {
 		elev.buildCSPPart();
 		elev.buildDCPart();
 
-		// elev.csppart.dump();
-		// elev.zpart.dump();
-		// elev.dcpart.dump();
 		final PhaseEventAutomata all = elev.csppart.parallel(elev.zpart).parallel(elev.dcpart);
-
-		// elev.csppart.parallel(elev.zpart).dump();
 
 		final CDD outOfRange = RangeDecision.create("floor", RangeDecision.OP_LT, minFloor)
 				.or(RangeDecision.create("floor", RangeDecision.OP_GT, maxFloor));
 
 		new TimedAutomata(all, new CDD[] { outOfRange }, new String[] { "OutOfRange" });
-		System.err.println(all.getPhases().length + " total states.");
-
-		// System.out.println("/* Complete System */");
-		// System.out.println("#locs "+all.phases.length);
-		// int trans = 0;
-		// for (i = 0; i < all.phases.length; i++) {
-		// trans += all.phases[i].getTransitions().size();
-		// }
-		// System.out.println("#trans "+trans);
-		// //System.out.println("#clocks "+clocks);
-		// for (i = 0; i < all.phases.length; i++)
-		// dumpKronos(all.phases[i]);
 	}
 
 	private static final int getPhaseNr(final int rs, final int floor, final int dir, final int doors) {
