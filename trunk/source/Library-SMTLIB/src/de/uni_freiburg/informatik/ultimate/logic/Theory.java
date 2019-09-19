@@ -991,10 +991,13 @@ public class Theory {
 		defineFunction(new FunctionSymbolFactory("fp") {
 			@Override
 			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
-				final BigInteger fpSignIndex = toNumeral(paramSorts[0].getIndices()[0]);
 				if (indices != null || paramSorts.length != 3 || resultSort != null
-						|| paramSorts[0].getName() != "BitVec" || !fpSignIndex.equals(BigInteger.ONE)
-						|| paramSorts[1].getName() != "BitVec" || paramSorts[2].getName() != "BitVec") {
+						|| paramSorts[0].getName() != "BitVec" || paramSorts[1].getName() != "BitVec"
+						|| paramSorts[2].getName() != "BitVec") {
+					return null;
+				}
+				final BigInteger fpSignIndex = toNumeral(paramSorts[0].getIndices()[0]);
+				if (!fpSignIndex.equals(BigInteger.ONE)) {
 					return null;
 				}
 				final String[] fpIndices = new String[2];
