@@ -447,11 +447,11 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 	 * construct DivTerm for LESS and GEQ case, where the default divTerm can't be
 	 * used. "secondRat" depends on the sign of the coefficient.
 	 */
-	private Term constructDivTerm(final Script script, Term rhsTermWithoutDivision, final Rational coeffOfSubject,
+	private Term constructDivTerm(final Script script, final Term rhsTermWithoutDivision, final Rational coeffOfSubject,
 			final Rational secondRat) {
-		rhsTermWithoutDivision = SmtUtils.sum(script, mAffineTerm.getSort(), rhsTermWithoutDivision,
+		final Term divArgument = SmtUtils.sum(script, mAffineTerm.getSort(), rhsTermWithoutDivision,
 				SmtUtils.rational2Term(script, Rational.MONE, mAffineTerm.getSort()));
-		final Term divTerm = SmtUtils.div(script, rhsTermWithoutDivision,
+		final Term divTerm = SmtUtils.div(script, divArgument,
 				SmtUtils.rational2Term(script, coeffOfSubject, mAffineTerm.getSort()));
 		return SmtUtils.sum(script, mAffineTerm.getSort(), divTerm,
 				SmtUtils.rational2Term(script, secondRat, mAffineTerm.getSort()));
