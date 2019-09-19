@@ -1,26 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 
 public class DotWriterNew {
 
-	public static String node(final String nodeId, final String attrList) {
-		String result = "";
-
-		result += nodeId + " [label=\"" + attrList + "\"];" + "\n";
-
-		return result;
-	}
-
-	public static void write(final String fileName, final boolean rename, final PhaseEventAutomata pea,
-			final ILogger logger) throws IOException {
+	public static StringBuilder createDotString(final PhaseEventAutomata pea) throws IOException {
 
 		String dot = "";
 
@@ -72,8 +61,6 @@ public class DotWriterNew {
 			dot = dot.replaceAll(clocks.get(i), "c" + String.valueOf(i));
 		}
 
-		final FileWriter writer = new FileWriter(fileName);
-		writer.write(dot);
-		writer.close();
+		return null;
 	}
 }
