@@ -124,7 +124,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		THROW_EXCEPTION, CONTINUE
 	}
 
-	private static final boolean USE_INTERPOLATION = false;
+	private static final boolean USE_INTERPOLATION = true;
 	private static final boolean USE_ICFGBUILDER_SOLVER = true;
 
 	/**
@@ -421,6 +421,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					final LBool res = PredicateUtils.isInductiveHelper(mScript.getScript(), predecessorFrame,
 							not(toBeBlocked), predTF, modifiableGlobals, modifiableGlobals);
 
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(String.format("Is %s", res));
+					}
 					/*
 					 * Query is satisfiable: generate new proofobligation
 					 */
@@ -452,7 +455,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						 * Query is not satisfiable: strengthen the frames of location.
 						 */
 					} else if (res == LBool.UNSAT) {
-						if (USE_INTERPOLATION) {
+						if (USE_INTERPOLATION
+								&& predecessorTransition.getTransformula().getFormula() != mTruePred.getFormula()) {
 							final IPredicate interpolant =
 									getInterpolant(predecessorTransition, predecessorFrame, toBeBlocked);
 							if (interpolant != null) {
@@ -537,13 +541,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 		Term equalities = mTruePred.getFormula();
 
-		final IPredicate frameAndTransPred = mPredicateUnifier.getOrConstructPredicate(frameAndTrans);
+		// final IPredicate frameAndTransPred = mPredicateUnifier.getOrConstructPredicate(frameAndTrans);
 
 		final Set<IProgramVar> ppVars = prePred.getVars();
 		final Map<Term, Term> substitutionMappingPrePred = new HashMap<>();
 		final Map<Term, Term> substitutionMappingTrans = new HashMap<>();
 		final Map<Term, Term> reverseMappingPrePred = new HashMap<>();
-		final Map<Term, Term> reverseMappingPreTrans = new HashMap<>();
 		final Map<IProgramVar, TermVariable> outVarsTrans =
 				new HashMap<>(predecessorTransition.getTransformula().getOutVars());
 		/*
@@ -565,20 +568,19 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		/*
 		 * Replace outVars with primed constants in frame /\ pred.
 		 */
-		for (final IProgramVar outVar : frameAndTransPred.getVars()) {
-			if (outVarsTrans.containsKey(outVar)) {
-				substitutionMappingTrans.put(outVar.getDefaultConstant(), outVar.getPrimedConstant());
-				reverseMappingPrePred.put(outVar.getPrimedConstant(), outVar.getTermVariable());
+		for (final TermVariable outVar : frameAndTrans.getFreeVars()) {
+			final IProgramVar pv = mSymbolTable.getProgramVar(outVar);
+			if (outVarsTrans.containsKey(pv)) {
+				substitutionMappingTrans.put(pv.getDefaultConstant(), pv.getPrimedConstant());
+				reverseMappingPrePred.put(pv.getPrimedConstant(), pv.getTermVariable());
 			}
 		}
 
 		final Term transformedPrePred =
 				new Substitution(mScript, substitutionMappingPrePred).transform(prePred.getClosedFormula());
 
-		Term transformedTrans =
-				new Substitution(mScript, substitutionMappingTrans).transform(frameAndTransPred.getClosedFormula());
+		Term transformedTrans = new Substitution(mScript, substitutionMappingTrans).transform(frameAndTrans);
 		transformedTrans = SmtUtils.and(mScript.getScript(), transformedTrans, equalities);
-		
 
 		final Pair<LBool, Term> interpolPair =
 				SmtUtils.interpolateBinary(mScript.getScript(), transformedTrans, transformedPrePred);
@@ -593,14 +595,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 							transformedTrans, transformedPrePred));
 		}
 
-		// TODO: The interpolant is now full of variables that are constants and primed
-		// constant_pv_prime; we have to go
-		// back to unprimed and un-constants
-
-		for (final IProgramVar var : frameAndTransPred.getVars()) {
-			reverseMappingPrePred.put(var.getPrimedConstant(), var.getTermVariable());
-		}
-
 		// unprime
 		final Term transformedInterpolant =
 				new Substitution(mScript, reverseMappingPrePred).transform(interpolPair.getSecond());
@@ -608,7 +602,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		final IPredicate interpolatedPreCondition = mPredicateUnifier.getOrConstructPredicate(transformedInterpolant);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(String.format("Interpolant: %s (%s from binInt(%s  %s))", interpolatedPreCondition,
-					interpolPair.getSecond(), transformedPrePred, frameAndTransPred.getClosedFormula()));
+					interpolPair.getSecond(), transformedPrePred, frameAndTrans));
 		}
 		return interpolatedPreCondition;
 	}
@@ -796,7 +790,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	}
 
 	private IPredicate not(final IPredicate pred) {
-		return mPredicateUnifier.getOrConstructPredicate(mPredicateUnifier.getPredicateFactory().not(pred));
+		return mPredicateUnifier.getPredicateFactory().not(pred);
 	}
 
 	/**
