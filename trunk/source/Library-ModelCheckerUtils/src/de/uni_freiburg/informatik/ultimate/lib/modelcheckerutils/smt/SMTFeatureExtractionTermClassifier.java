@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2019 Julian Löffler (loefflju@informatik.uni-freiburg.de), Breee@github
+ * Copyright (C) 2012-2019 University of Freiburg
+ *
+ * This file is part of the ULTIMATE ModelCheckerUtils Library.
+ *
+ * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
 import java.util.ArrayList;
@@ -28,6 +55,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 	private final Set<String> mOccuringFunctionNames;
 	private final Set<Integer> mOccuringQuantifiers;
 	private boolean mHasArrays;
+	private int mNumberOfArrays;
 	private int mNumberOfVariables;
 	private int mNumberOfFunctions;
 	private int mNumberOfQuantifiers;
@@ -54,6 +82,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 					mOccuringSortNames.add(currentSort.toString());
 					if (currentSort.isArraySort()) {
 						mHasArrays = true;
+						mNumberOfArrays += 1;
 					}
 				}
 				super.walk(walker);
@@ -141,6 +170,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		mOccuringFunctionNames = new HashSet<>();
 		mOccuringQuantifiers = new HashSet<>();
 		mHasArrays = false;
+		mNumberOfArrays = 0;
 		mNumberOfVariables = 0;
 		mNumberOfFunctions = 0;
 		mNumberOfQuantifiers = 0;
@@ -180,6 +210,10 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		return mNumberOfVariables;
 	}
 
+	public int getNumberOfArrays() {
+		return mNumberOfArrays;
+	}
+
 	public Set<String> getOccuringFunctionNames() {
 		return mOccuringFunctionNames;
 	}
@@ -192,20 +226,6 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		return mOccuringSortNames;
 	}
 
-	public String getStats() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Formula ").append(mTerms).append("\n");
-		sb.append("Occuring sorts ").append(mOccuringSortNames.toString()).append("\n");
-		sb.append("Occuring functions  ").append(mOccuringFunctionNames.toString()).append("\n");
-		sb.append("Occuring Quantifiers  ").append(mOccuringQuantifiers.toString()).append("\n");
-		sb.append("DAGSize  ").append(mDAGSize).append("\n");
-		sb.append("TreeSize  ").append(mTreeSize).append("\n");
-		sb.append("Number of functions ").append(mNumberOfFunctions).append("\n");
-		sb.append("Number of quantifiers ").append(mNumberOfQuantifiers).append("\n");
-		sb.append("Number of variables ").append(mNumberOfVariables).append("\n");
-		sb.append("DependencyScore ").append(calcDependencyScore()).append("\n");
-		return sb.toString();
-	}
 
 	public ArrayList<String> getTerm() {
 		return mTerms;
