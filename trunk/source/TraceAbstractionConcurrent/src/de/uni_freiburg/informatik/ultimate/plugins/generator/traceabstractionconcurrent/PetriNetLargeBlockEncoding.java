@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Si
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
@@ -108,7 +109,7 @@ public class PetriNetLargeBlockEncoding {
 		mCoEnabledRelation = computeCoEnabledRelation(petriNet, bp);
 		BoundedPetriNet<IIcfgTransition<?>, IPredicate> result1 = choiceRule(services, petriNet);
 		for (int i = 0; i < 10; i++) {
-			BoundedPetriNet<IIcfgTransition<?>, IPredicate> result2 = sequenceRule(services, result1);
+			BoundedPetriNet<IIcfgTransition<?>, IPredicate> result2 = sequenceRule(services, result1, true);
 			result1 = choiceRule(services, result2);
 		}
 		mResult = result1;
@@ -147,14 +148,9 @@ public class PetriNetLargeBlockEncoding {
 	}
 
 	private BoundedPetriNet<IIcfgTransition<?>, IPredicate> sequenceRule(IUltimateServiceProvider services,
-			BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet)
+			BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet, boolean semanticCheck)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		Collection<ITransition<IIcfgTransition<?>, IPredicate>> transitions = petriNet.getTransitions();
-		for (ITransition<IIcfgTransition<?>, IPredicate> trans : transitions) {
-			if (!onlyInternal(trans.getSymbol())) {
-				mLogger.info("transition " + trans + "is not internal!");
-			}
-		}
 		List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> meltingStack = new ArrayList<>();
 		for (ITransition<IIcfgTransition<?>, IPredicate> t1 : transitions) {
 			Set<IPredicate> t1PostSet = petriNet.getSuccessors(t1);
@@ -163,7 +159,7 @@ public class PetriNetLargeBlockEncoding {
 				if (petriNet.getPredecessors(state).size() == 1) {
 					boolean meltingAllowed = true;
 					for (ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet.getSuccessors(state)) {
-						if (sequenceRuleCheck(t1, t2, state, meltingStack, petriNet) == false) {
+						if (sequenceRuleCheck(t1, t2, state, meltingStack, petriNet, semanticCheck) == false) {
 							meltingAllowed = false;
 						}
 					}
@@ -172,8 +168,8 @@ public class PetriNetLargeBlockEncoding {
 							IcfgEdge meltedIcfgEdge = constructSequentialComposition(t1.getSymbol().getSource(),
 									t2.getSymbol().getTarget(), t1.getSymbol(), t2.getSymbol());
 							// create new element of the meltingStack.
-							Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element = new Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>(
-									meltedIcfgEdge, t1, t2);
+							Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element = 
+									new Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>(meltedIcfgEdge, t1, t2);
 							meltingStack.add(element);
 							mLogger.info("Element added to the stack.");
 							updateCoEnabledRelation(element);
@@ -187,16 +183,21 @@ public class PetriNetLargeBlockEncoding {
 		return newNet;
 	}
 
-	boolean sequenceRuleCheck(ITransition<IIcfgTransition<?>, IPredicate> t1,
+	private boolean sequenceRuleCheck(ITransition<IIcfgTransition<?>, IPredicate> t1,
 			ITransition<IIcfgTransition<?>, IPredicate> t2, IPredicate state,
 			List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> meltingStack,
-			BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet) {
+			BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet, boolean semanticCheck) {
 		boolean meltingAllowed = true;
 		if (petriNet.getPredecessors(t2).size() == 1 && !petriNet.getSuccessors(t2).contains(state)
 				&& onlyInternal(t1.getSymbol()) && onlyInternal(t2.getSymbol())) {
-			boolean moverCheck1 = variableMoverCheck(t1);
-			boolean moverCheck2 = variableMoverCheck(t2);
-			if (moverCheck1 || moverCheck2) {
+			boolean moverCheck = false;
+			if (semanticCheck) {
+				moverCheck = semanticMoverCheck(t1, t2);
+			}
+			else {
+				moverCheck = (variableMoverCheck(t1)|variableMoverCheck(t2));
+			}
+			if (moverCheck) {
 				if (meltingStack.size() != 0) {
 					for (Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> triple : meltingStack) {
 						if (triple.getThird() == t1 || triple.getSecond() == t2) {
@@ -248,7 +249,7 @@ public class PetriNetLargeBlockEncoding {
 				}
 			}
 		}
-		// Because mCoEnabledRelation is modified when something is added, we do not
+		// Because mCoEnabledRelation is modified when something is added to the meltingStack, we do not
 		// have to compute the coEnabledRelation again.
 		// BranchingProcess<IIcfgTransition<?>, IPredicate> bp2 = new FinitePrefix<>(new
 		// AutomataLibraryServices(services),
@@ -286,7 +287,7 @@ public class PetriNetLargeBlockEncoding {
 		return hashRelation;
 	}
 
-	boolean isInCoRelation(Event<IIcfgTransition<?>, IPredicate> e1, Event<IIcfgTransition<?>, IPredicate> e2,
+	private boolean isInCoRelation(Event<IIcfgTransition<?>, IPredicate> e1, Event<IIcfgTransition<?>, IPredicate> e2,
 			ICoRelation<IIcfgTransition<?>, IPredicate> coRelation) {
 		return e2.getPredecessorConditions().stream().allMatch(condition -> coRelation.isInCoRelation(condition, e1));
 	}
@@ -321,8 +322,7 @@ public class PetriNetLargeBlockEncoding {
 		return false;
 	}
 
-	private boolean semanticMoverCheck(ITransition<IIcfgTransition<?>, IPredicate> t1,
-			ITransition<IIcfgTransition<?>, IPredicate> t2, IPetriNet<IIcfgTransition<?>, IPredicate> petriNet) {
+	private boolean semanticMoverCheck(ITransition<IIcfgTransition<?>, IPredicate> t1,ITransition<IIcfgTransition<?>, IPredicate> t2) {
 		// Filter which elements of coEnabledRelation are relevant.
 		Set<IIcfgTransition<?>> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
 		if (coEnabledTransitions.size() == 0) {
@@ -330,6 +330,18 @@ public class PetriNetLargeBlockEncoding {
 		}
 		// TODO: Full mover check. t1 should be right mover or t2 should be left mover.
 
+		boolean rightMover = true;
+		boolean leftMover = true;
+		for (IIcfgTransition<?> t3 : coEnabledTransitions) {
+			if (semanticRightMoverCheckTwoTransitions(t1.getSymbol(), t3) == false) {
+				rightMover = false;
+			}
+			if (semanticLeftMoverCheckTwoTransitions(t2.getSymbol(), t3) == false) {
+				leftMover = false;
+			}
+		}
+		return (rightMover|leftMover);
+	}
 		// compute trans formulas for both orders, with
 		// TransformulaUtils::sequentialComposition
 		// use Substitution class to make both TransFormulas use the same variables
@@ -337,7 +349,25 @@ public class PetriNetLargeBlockEncoding {
 		// 2nd (use SmtUtils::not)
 		// check sat: if sat or unknown, then not a mover. If unsat, then a mover. use
 		// mManagedScript.checkSat(null).
-		return false;
+	
+	private boolean semanticRightMoverCheckTwoTransitions(IIcfgTransition<?> t1, IIcfgTransition<?> t3) {
+		UnmodifiableTransFormula transFormula1 = constructSequentialComposition(t1.getSource(), t3.getTarget(), t1, t3).getTransformula();
+		UnmodifiableTransFormula transFormula2 = constructSequentialComposition(t3.getSource(), t1.getTarget(), t3, t1).getTransformula();
+		LBool result = TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);
+		if (result == LBool.SAT || result == LBool.UNKNOWN) {
+			return false;
+		}
+		return true;
+	}
+	
+	private boolean semanticLeftMoverCheckTwoTransitions(IIcfgTransition<?> t2, IIcfgTransition<?> t3) {
+		UnmodifiableTransFormula transFormula1 = constructSequentialComposition(t2.getSource(), t3.getTarget(), t2, t3).getTransformula();
+		UnmodifiableTransFormula transFormula2 = constructSequentialComposition(t3.getSource(), t2.getTarget(), t3, t2).getTransformula();
+		LBool result = TransFormulaUtils.checkImplication(transFormula2, transFormula1, mManagedScript);
+		if (result == LBool.SAT || result == LBool.UNKNOWN) {
+			return false;
+		}
+		return true;
 	}
 
 	// Methods from IcfgEdgeBuilder!

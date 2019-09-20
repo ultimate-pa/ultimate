@@ -16,7 +16,6 @@ modifies f;
 implementation ULTIMATE.start()
 {
     f := true;
-    fork 1 foo();
     assert f == true;
     assert f == true;
     assert f == true;
@@ -37,7 +36,6 @@ implementation ULTIMATE.start()
     assert f == true;
     assert f == true;
     assert f == true;
-    join 1;
     
 }
 
