@@ -337,13 +337,13 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 
 		for (final Condition<LETTER, PLACE> cond2 : set2) {
 			final PLACE p2 = cond2.getPlace();
-			assert p2 != null : "no condition for place " + p2;
+			assert p2 != null : "no place for condition " + cond2;
 			final Condition<LETTER, PLACE> c1 = origPlace2Condition.get(p2);
+			assert c1 != null : "no condition for place " + p2;
 			final Condition<LETTER, PLACE> c1representative = mRepresentatives.find(c1);
-			assert c1representative != null;
-
+			assert c1representative != null : "condition " + c1 + " does not have a representative";
 			final Condition<LETTER, PLACE> c2representative = mRepresentatives.find(cond2);
-			assert c2representative != null;
+			assert c2representative != null : "condition " + cond2 + " does not have a representative";
 
 			mRepresentatives.union(c1representative, c2representative);
 		}
