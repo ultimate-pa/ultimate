@@ -196,8 +196,10 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 			assert mRepresentatives.find(c) != null;
 			// equality intended here
 			if (c == mRepresentatives.find(c)) {
-				final PLACE place = mNet.addPlace(mStateFactory.finitePrefix2net(c),
-						bp.initialConditions().contains(c), bp.getNet().isAccepting(c.getPlace()));
+				final boolean isInitial = containsInitial(mRepresentatives.getEquivalenceClassMembers(c),
+						bp.initialConditions());
+				final PLACE place = mNet.addPlace(mStateFactory.finitePrefix2net(c), isInitial,
+						bp.getNet().isAccepting(c.getPlace()));
 				placeMap.put(c, place);
 			}
 		}
@@ -263,6 +265,11 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 			transitionMap.put(e, transition);
 		}
 		*/
+	}
+
+	private boolean containsInitial(final Set<Condition<LETTER, PLACE>> equivalenceClassMembers,
+			final Collection<Condition<LETTER, PLACE>> initialConditions) {
+		return equivalenceClassMembers.stream().anyMatch(x -> initialConditions.contains(x));
 	}
 
 	private boolean petriNetLanguageEquivalence(final BoundedPetriNet<LETTER, PLACE> oldNet, final BoundedPetriNet<LETTER, PLACE> newNet,
