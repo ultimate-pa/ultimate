@@ -46,6 +46,8 @@ public class SMTFeature {
 	public int dagsize = 0;
 	public long treesize = 0;
 	public int dependencyScore = 0;
+	public ArrayList<Integer> variableEquivalenceClassSizes;
+	public int biggestEquivalenceClass;
 	public Set<String> occuringSorts = Collections.emptySet();
 	public Set<String> occuringFunctions = Collections.emptySet();
 	public Set<Integer> occuringQuantifiers = Collections.emptySet();

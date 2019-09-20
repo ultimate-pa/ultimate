@@ -62,6 +62,8 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 	private int mDAGSize;
 	private long mTreeSize;
 	private final UnionFind<Term> mVariableEquivalenceClasses;
+	private final ArrayList<Integer> mVariableEquivalenceClassSizes;
+	private int mBiggestEquivalenceClass;
 	private final ArrayList<String> mTerms;
 
 	private class MyWalker extends TermWalker {
@@ -178,6 +180,8 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		mTreeSize = 0;
 		mTerms = new ArrayList<>();
 		mVariableEquivalenceClasses = new UnionFind<>();
+		mVariableEquivalenceClassSizes = new ArrayList<>();
+		mBiggestEquivalenceClass = 0;
 	}
 
 	/**
@@ -226,6 +230,13 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		return mOccuringSortNames;
 	}
 
+	public ArrayList<Integer> getVariableEquivalenceClassSizes() {
+		return mVariableEquivalenceClassSizes;
+	}
+
+	public int getBiggestEquivalenceClass() {
+		return mBiggestEquivalenceClass;
+	}
 
 	public ArrayList<String> getTerm() {
 		return mTerms;
@@ -257,7 +268,12 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		int score = 0;
 		for (final Set<Term> eqclass : mVariableEquivalenceClasses.getAllEquivalenceClasses()) {
 			// quadratic score, punishes equivalence classes which are large harder.
-			score += Math.pow(eqclass.size(), 2);
+			final int classSize = eqclass.size();
+			if (classSize > mBiggestEquivalenceClass) {
+				mBiggestEquivalenceClass = classSize;
+			}
+			mVariableEquivalenceClassSizes.add(classSize);
+			score += Math.pow(classSize, 2);
 		}
 		return score;
 	}

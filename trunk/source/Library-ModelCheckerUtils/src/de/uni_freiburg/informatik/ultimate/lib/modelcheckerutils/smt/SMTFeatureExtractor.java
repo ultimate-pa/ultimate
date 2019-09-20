@@ -79,6 +79,8 @@ public class SMTFeatureExtractor {
 		feature.dagsize = tc.getDAGSize();
 		feature.treesize = tc.getTreeSize();
 		feature.dependencyScore = tc.getDependencyScore();
+		feature.variableEquivalenceClassSizes = tc.getVariableEquivalenceClassSizes();
+		feature.biggestEquivalenceClass = tc.getBiggestEquivalenceClass();
 		feature.solverresult = result;
 		feature.solvertime = time;
 		mFeatures.add(feature);
