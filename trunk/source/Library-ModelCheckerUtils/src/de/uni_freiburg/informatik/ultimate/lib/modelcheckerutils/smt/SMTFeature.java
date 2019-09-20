@@ -44,23 +44,25 @@ public class SMTFeature {
 	public int numberOfVariables = 0;
 	public int dagsize = 0;
 	public long treesize = 0;
+	public int dependencyScore = 0;
 	public Set<String> occuringSorts = Collections.emptySet();
 	public Set<String> occuringFunctions = Collections.emptySet();
 	public Set<Integer> occuringQuantifiers = Collections.emptySet();
 	public boolean containsArrays = false;
-	public ArrayList<String> assertionStack = new ArrayList<String>();
+	public ArrayList<String> assertionStack = new ArrayList<>();
 	public String solverresult = "";
 	public double solvertime = 0.0;
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append(assertionStack).append(",");
 		sb.append(numberOfFunctions).append(",");
 		sb.append(numberOfQuantifiers).append(",");
 		sb.append(numberOfVariables).append(",");
 		sb.append(dagsize).append(",");
 		sb.append(treesize).append(",");
+		sb.append(dependencyScore).append(",");
 		sb.append(occuringFunctions).append(",");
 		sb.append(occuringSorts).append(",");
 		sb.append(occuringQuantifiers).append(",");
@@ -69,26 +71,26 @@ public class SMTFeature {
 		sb.append(solvertime);
 		return sb.toString();
 	}
-	
-	public String toCsv(String delimiter) throws IllegalAccessException {
-		StringBuilder sb = new StringBuilder();
-		Field[] fields = getClass().getDeclaredFields();
-		ArrayList<String> values = new ArrayList<String>();
-		for (Field field : fields) {
+
+	public String toCsv(final String delimiter) throws IllegalAccessException {
+		final StringBuilder sb = new StringBuilder();
+		final Field[] fields = getClass().getDeclaredFields();
+		final ArrayList<String> values = new ArrayList<>();
+		for (final Field field : fields) {
 			values.add(field.get(this).toString());
 		}
 		sb.append(String.join(delimiter,values));
 		return sb.toString();
 	}
-	public static String getCsvHeader(String delimiter) throws IllegalAccessException {
-		StringBuilder sb = new StringBuilder();
-		Field[] fields = SMTFeature.class.getFields();
-		ArrayList<String> names = new ArrayList<String>();
-		for (Field field : fields) {
+	public static String getCsvHeader(final String delimiter) throws IllegalAccessException {
+		final StringBuilder sb = new StringBuilder();
+		final Field[] fields = SMTFeature.class.getFields();
+		final ArrayList<String> names = new ArrayList<>();
+		for (final Field field : fields) {
 			names.add(field.getName());
 		}
 		sb.append(String.join(delimiter,names));
 		return sb.toString();
 	}
-	
+
 }
