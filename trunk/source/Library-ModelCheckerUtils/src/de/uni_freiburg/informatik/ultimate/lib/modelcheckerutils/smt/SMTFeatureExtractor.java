@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2019 Julian Löffler (loefflju@informatik.uni-freiburg.de), Breee@github
+ * Copyright (C) 2012-2019 University of Freiburg
+ *
+ * This file is part of the ULTIMATE ModelCheckerUtils Library.
+ *
+ * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
 import java.io.BufferedWriter;
@@ -30,26 +57,7 @@ public class SMTFeatureExtractor {
 		mDumpPath = dump_path;
 		final String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern( "uuuu-MM-dd" ));
 		mFilename = mDumpPath + timestamp + "-smtfeatures.csv";
-		final File f = new File(mFilename);
-		if(!f.exists()){
-			try {
-				f.createNewFile();
-				try(FileWriter fw = new FileWriter(mFilename, true);
-						BufferedWriter bw = new BufferedWriter(fw);
-						PrintWriter out = new PrintWriter(bw))
-				{
-					final String header = SMTFeature.getCsvHeader(";");
-					out.println(header);
-				} catch (IOException | IllegalAccessException e) {
-					mLogger.error(e);
-				}
-
-			} catch (final IOException e) {
-				mLogger.error(e);
-			}
-		}else{
-			mLogger.info("SMT feature dump-file already exists.");
-		}
+		createDumpFile();
 	}
 
 	public void extractFeature(final List<Term> assertions, final double time, final String result) throws IllegalAccessException, IOException {
@@ -67,6 +75,7 @@ public class SMTFeatureExtractor {
 		feature.numberOfFunctions = tc.getNumberOfFunctions();
 		feature.numberOfQuantifiers = tc.getNumberOfQuantifiers();
 		feature.numberOfVariables = tc.getNumberOfVariables();
+		feature.numberOfArrays = tc.getNumberOfArrays();
 		feature.dagsize = tc.getDAGSize();
 		feature.treesize = tc.getTreeSize();
 		feature.dependencyScore = tc.getDependencyScore();
@@ -88,6 +97,29 @@ public class SMTFeatureExtractor {
 			out.println(feature.toCsv(";"));
 		} catch (final IOException e) {
 			throw new IOException(e);
+		}
+	}
+
+	private void createDumpFile() {
+		final File f = new File(mFilename);
+		if(!f.exists()){
+			try {
+				f.createNewFile();
+				try(FileWriter fw = new FileWriter(mFilename, true);
+						BufferedWriter bw = new BufferedWriter(fw);
+						PrintWriter out = new PrintWriter(bw))
+				{
+					final String header = SMTFeature.getCsvHeader(";");
+					out.println(header);
+				} catch (IOException | IllegalAccessException e) {
+					mLogger.error(e);
+				}
+
+			} catch (final IOException e) {
+				mLogger.error(e);
+			}
+		}else{
+			mLogger.info("SMT feature dump-file already exists.");
 		}
 	}
 
