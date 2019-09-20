@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -31,7 +30,7 @@ public class SMTFeatureExtractorScript extends WrapperScript {
 		mLogger = logger;
 		mServices = services;
 		mFeatureExtractor = new SMTFeatureExtractor(logger, services, dump_path);
-		mCurrentAssertionStack = new ArrayList<Term>();
+		mCurrentAssertionStack = new ArrayList<>();
 	}
 
 	@Override
@@ -64,7 +63,7 @@ public class SMTFeatureExtractorScript extends WrapperScript {
 		final double analysisTime = (System.nanoTime() - start) / 1000;
 		try {
 			mFeatureExtractor.extractFeature(mCurrentAssertionStack, analysisTime, sat.toString());
-			mCurrentAssertionStack = new ArrayList<Term>();
+			mCurrentAssertionStack = new ArrayList<>();
 		} catch (IllegalAccessException | IOException e) {
 			mLogger.error(e);
 		}
