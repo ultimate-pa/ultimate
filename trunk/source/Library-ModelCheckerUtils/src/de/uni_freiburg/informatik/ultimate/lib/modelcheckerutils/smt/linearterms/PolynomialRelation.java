@@ -120,7 +120,6 @@ public class PolynomialRelation extends AbstractGeneralizedAffineRelation<Abstra
 		for (final Term concreteVar : mAffineTerm.getAbstractVariable2Coefficient().keySet()) {
 			for (final Entry<Term, Rational> var2exp : ((Monomial) concreteVar).getVariable2Exponent().entrySet()) {
 				if (var2exp.getKey() == subject) {
-					//TODO: Ask Matthias about higher exponents of variables
 					if (var2exp.getValue() != Rational.ONE || subjectOccurred) {
 						return null;
 					}else {
