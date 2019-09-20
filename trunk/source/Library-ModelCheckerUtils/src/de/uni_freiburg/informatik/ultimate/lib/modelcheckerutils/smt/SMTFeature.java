@@ -42,6 +42,7 @@ public class SMTFeature {
 	public int numberOfFunctions = 0;
 	public int numberOfQuantifiers = 0;
 	public int numberOfVariables = 0;
+	public int numberOfArrays = 0;
 	public int dagsize = 0;
 	public long treesize = 0;
 	public int dependencyScore = 0;
@@ -55,21 +56,16 @@ public class SMTFeature {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(assertionStack).append(",");
-		sb.append(numberOfFunctions).append(",");
-		sb.append(numberOfQuantifiers).append(",");
-		sb.append(numberOfVariables).append(",");
-		sb.append(dagsize).append(",");
-		sb.append(treesize).append(",");
-		sb.append(dependencyScore).append(",");
-		sb.append(occuringFunctions).append(",");
-		sb.append(occuringSorts).append(",");
-		sb.append(occuringQuantifiers).append(",");
-		sb.append(containsArrays).append(",");
-		sb.append(solverresult).append(",");
-		sb.append(solvertime);
-		return sb.toString();
+		try {
+			final StringBuilder sb = new StringBuilder();
+			sb.append("\n" + getCsvHeader(";") + "\n");
+			sb.append(toCsv(";"));
+			return sb.toString();
+		} catch (final IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return "";
 	}
 
 	public String toCsv(final String delimiter) throws IllegalAccessException {
