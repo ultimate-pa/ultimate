@@ -141,6 +141,23 @@ public class PolynomialRelationTest {
 		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "x"));
 	}
 	
+	/**
+	 * The background why this shouldn't work, is because divisions by variables are treated as an individual variable,
+	 * but now the subject occurs in this variable.
+	 */
+	@Test
+	public void relationRealDivPolyNestedSubjectEQ8() throws NotAffineException {
+		final String inputSTR = "(= 1.0 (/ y x))";
+		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "x"));
+	}
+	
+	@Test
+	public void relationRealDivPolyWithDivisionsEQ9() throws NotAffineException {
+		final String inputSTR = "(= (/ (+ 6.0 (* (/ z y) x)) 2.0) (+ 3.0 (/ y z)))";
+		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
+				polyRelOnLeftHandSide(inputSTR, "x")));
+	}
+	
 	@Test
 	public void relationRealDivGEQ() throws NotAffineException {
 		final String inputSTR = "(>= (* 3.0 x) lo )";
