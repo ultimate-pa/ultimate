@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.SparseMapBuilder;
 
 /**
  * Provides static auxiliary methods for {@link AffineTerm}s and {@link PolynomialTerm}s
@@ -98,20 +99,19 @@ public class PolynomialTermUtils {
 	public static <T extends AbstractGeneralizedAffineTerm<MNL>, MNL extends Term> T applyModuloToAllCoefficients(
 			final T agAffineTerm, final BigInteger divident, final GeneralizedConstructor<MNL, T> constructor) {
 		assert SmtSortUtils.isIntSort(agAffineTerm.getSort());
-		final Map<MNL, Rational> newMap = new HashMap<>();
+		final SparseMapBuilder<MNL, Rational> mapBuilder = new SparseMapBuilder<>();
 		Rational newCoeff;
 		for (final Entry<MNL, Rational> entry : agAffineTerm.getAbstractVariable2Coefficient().entrySet()) {
 			newCoeff = SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(entry.getValue()), divident));
 			if (newCoeff == Rational.ZERO) {
 				continue;
 			} else {
-				newMap.put(entry.getKey(), newCoeff);
+				mapBuilder.put(entry.getKey(), newCoeff);
 			}
 		}
-		shrinkMap(newMap);
 		final Rational constant =
 				SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(agAffineTerm.getConstant()), divident));
-		return constructor.apply(agAffineTerm.getSort(), constant, newMap);
+		return constructor.apply(agAffineTerm.getSort(), constant, mapBuilder.getBuiltMap());
 	}
 
 	/**
@@ -147,14 +147,14 @@ public class PolynomialTermUtils {
 	 * Convert a map in <Monomial, Rational> Form to an equivalent map in <Term, Rational> Form if possible.
 	 */
 	public static Map<Term, Rational> convertToAffineMap(final Map<Monomial, Rational> map) {
-		final Map<Term, Rational> affineMap = new HashMap<>();
+		final SparseMapBuilder<Term, Rational> mapBuilder = new SparseMapBuilder<>();
 		for (final Entry<Monomial, Rational> entry : map.entrySet()) {
 			final Map<Term, Rational> monomialMap = entry.getKey().getVariable2Exponent();
 			assert monomialMap.size() == 1 : "Cannot convert to AffineMap.";
 			final Term term = monomialMap.keySet().iterator().next();
-			affineMap.put(term, entry.getValue());
+			mapBuilder.put(term, entry.getValue());
 		}
-		return shrinkMap(affineMap);
+		return mapBuilder.getBuiltMap();
 	}
 
 	/**

@@ -40,7 +40,20 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 
 /**
- *
+ * Represents an term of the form ψ ▷ φ, where ψ and φ are
+ * {@link PolynomialTerm}s or {@link AffineTerm}s and ▷ is a binary relation symbol 
+ * from the following list.
+ * <p>
+ * ▷ ∈ { =, !=, \<=, \<, \>=, \> }
+ * </p>
+ * <p>
+ * Allows to return this relation as an SMT term in the following two forms:
+ * <ul>
+ * <li>positive normal form
+ * <li>the form where a specific variable is on the left hand side and all other
+ * summands are moved to the right hand side.
+ * </ul>
+ * </p>
  * @author Leonard Fichtner
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -165,9 +178,6 @@ public class PolynomialRelation extends AbstractGeneralizedAffineRelation<Abstra
 		if (!subjectOccurred) {
 			throw new AssertionError("superclass already checked that subject is abstract var");
 		}
-		if (abstractVarOfSubject == null) {
-			throw new AssertionError("abstractVarOfSubject must always be assigned, when the subject occurs!");
-		}
 		return abstractVarOfSubject;
 	}
 
@@ -193,7 +203,7 @@ public class PolynomialRelation extends AbstractGeneralizedAffineRelation<Abstra
 	}
 
 	static AbstractGeneralizedAffineTerm<?> transformToPolynomialTerm(final Script script, final Term term) {
-		AffineTerm affTerm = (AffineTerm) new AffineTermTransformer(script).transform(term);
+		final AffineTerm affTerm = (AffineTerm) new AffineTermTransformer(script).transform(term);
 		if (affTerm.isErrorTerm()) {
 			return (AbstractGeneralizedAffineTerm<?>) new PolynomialTermTransformer(script).transform(term);
 		}else {
