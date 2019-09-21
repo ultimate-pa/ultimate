@@ -22,5 +22,5 @@ PetriNet n = (
     ({p1} c {p2})
   },
   initialMarking = {p0},
-  acceptingPlaces = {p0}
+  acceptingPlaces = {p2}
 );
