@@ -110,25 +110,26 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 */
 	private static Map<Monomial, Rational> calculateProductMap(final IPolynomialTerm poly1,
 			final IPolynomialTerm poly2) {
-		final Map<Monomial, Rational> map = new HashMap<>();
-		monomialsTimesMonomialsIntoMap(map, poly1, poly2);
-		monomialsTimesConstantIntoMap(map, poly1, poly2);
-		monomialsTimesConstantIntoMap(map, poly2, poly1);
-		return PolynomialTermUtils.shrinkMap(map);
+		final SparseMapBuilder<Monomial, Rational> mapBuilder = new SparseMapBuilder<>();
+		monoTimesMonoIntoMap(mapBuilder, poly1, poly2);
+		monomialsTimesConstantIntoMap(mapBuilder, poly1, poly2);
+		monomialsTimesConstantIntoMap(mapBuilder, poly2, poly1);
+		return mapBuilder.getBuiltMap();
 	}
 
 	/**
 	 * Multiply just the Monomials of the two polynomialTerms with each other and put them into the given map. Return
 	 * that same map.
 	 */
-	private static Map<Monomial, Rational> monomialsTimesMonomialsIntoMap(final Map<Monomial, Rational> map,
-			final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
+	private static SparseMapBuilder<Monomial, Rational> monoTimesMonoIntoMap(final SparseMapBuilder<Monomial, Rational> builder,
+																		     final IPolynomialTerm poly1, 
+																		     final IPolynomialTerm poly2) {
 		for (final Map.Entry<Monomial, Rational> summand1 : poly1.getMonomial2Coefficient().entrySet()) {
 			for (final Map.Entry<Monomial, Rational> summand2 : poly2.getMonomial2Coefficient().entrySet()) {
 				final Monomial mono = new Monomial(summand1.getKey(), summand2.getKey());
 				final Rational tempCoeff;
 				final Rational newCoeff;
-				final Rational coeff = map.get(mono);
+				final Rational coeff = builder.get(mono);
 
 				// Check whether this Monomial does already exist in the map
 				if (coeff == null) {
@@ -144,20 +145,21 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 				}
 
 				if (!newCoeff.equals(Rational.ZERO)) {
-					map.put(mono, newCoeff);
+					builder.put(mono, newCoeff);
 				}
 			}
 		}
-		return map;
+		return builder;
 	}
 
 	/**
 	 * Multiply the Monomials of poly1 with the constant of poly2 and put them into the given map. Return that same map.
 	 */
-	private static Map<Monomial, Rational> monomialsTimesConstantIntoMap(final Map<Monomial, Rational> map,
-			final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
+	private static SparseMapBuilder<Monomial, Rational> monomialsTimesConstantIntoMap(final SparseMapBuilder<Monomial, Rational> builder,
+																					  final IPolynomialTerm poly1, 
+																					  final IPolynomialTerm poly2) {
 		for (final Map.Entry<Monomial, Rational> summand : poly1.getMonomial2Coefficient().entrySet()) {
-			final Rational coeff = map.get(summand.getKey());
+			final Rational coeff = builder.get(summand.getKey());
 			final Rational newCoeff;
 			final Rational tempCoeff;
 
@@ -175,10 +177,10 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 			}
 
 			if (!newCoeff.equals(Rational.ZERO)) {
-				map.put(summand.getKey(), newCoeff);
+				builder.put(summand.getKey(), newCoeff);
 			}
 		}
-		return map;
+		return builder;
 	}
 
 	/**
