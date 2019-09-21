@@ -52,6 +52,10 @@ public class SparseMapBuilder<K, V> {
 	private boolean mConstructionFinished;
 	private Map<K, V> mMap;
 
+	public SparseMapBuilder() {
+		mMap = Collections.emptyMap();
+	}
+	
 	public V put(final K key, final V value) {
 		if (mConstructionFinished) {
 			throw new IllegalStateException(MAP_CANNOT_BE_MODIFIED_AFTER_THE_RESULT_WAS_RETURNED);

@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.SparseMapBuilder;
 
 /**
  *
@@ -191,12 +192,11 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	
 	private static Map<Monomial, Rational> termWrapper(IPolynomialTerm poly) {
 		if (poly.isAffine()) {
-			final Map<Monomial, Rational> map = new HashMap<>();
+			final SparseMapBuilder<Monomial, Rational> mapBuilder = new SparseMapBuilder<>();
 			for (Entry<Term, Rational> var2coeff : ((AffineTerm) poly).getVariable2Coefficient().entrySet()) {
-				map.put(new Monomial(var2coeff.getKey(), Rational.ONE), var2coeff.getValue());
+				mapBuilder.put(new Monomial(var2coeff.getKey(), Rational.ONE), var2coeff.getValue());
 			}
-			//TODO: Replace by Matthias' implementation
-			return PolynomialTermUtils.shrinkMap(map);
+			return mapBuilder.getBuiltMap();
 		}else {
 			return ((PolynomialTerm) poly).getMonomial2Coefficient();
 		}

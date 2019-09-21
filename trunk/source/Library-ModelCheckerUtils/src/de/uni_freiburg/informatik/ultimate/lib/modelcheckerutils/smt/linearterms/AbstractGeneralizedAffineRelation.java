@@ -347,7 +347,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 				if (var2exp.getKey() == subject) {
 					//do nothing
 				}else {
-					//TODO: Bitvector sort, Integer Sort.
+					//TODO: Integer Sort.
 					if (SmtSortUtils.isRealSort(mAffineTerm.getSort())){
 						assert var2exp.getValue().isIntegral();
 						// TODO: Ask Matthias about whether it is to be expected that the implementation of isintegral changes.
