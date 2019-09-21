@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * 
  * where x_i's are variables and e_i are literals.
  * 
- * @author Leonard Fichtner
+ * @author Leonard Fichtner (leonard.fichtner@web.de)
  *
  */
 public class Monomial extends Term {

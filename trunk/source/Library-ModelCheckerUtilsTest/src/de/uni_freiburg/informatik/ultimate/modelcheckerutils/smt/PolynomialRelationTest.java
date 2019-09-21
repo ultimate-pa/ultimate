@@ -46,7 +46,8 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 /**
- * @author LeonardFichtner
+ * @author Max Barth (Max.Barth95@gmx.de)
+ * @author LeonardFichtner (leonard.fichtner@web.de)
  */
 public class PolynomialRelationTest {
 

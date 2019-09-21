@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.SparseMapBuilder;
  *
  * where c_i, c, e_i are literals, and x_i are variables.
  *
- * @author Leonard Fichtner
+ * @author Leonard Fichtner (leonard.fichtner@web.de)
  *
  */
 public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {

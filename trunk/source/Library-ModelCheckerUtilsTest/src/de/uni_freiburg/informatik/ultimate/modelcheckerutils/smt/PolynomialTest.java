@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @author Leonard Fichtner
+ * @author Leonard Fichtner (leonard.fichtner@web.de)
  */
 public class PolynomialTest {
 

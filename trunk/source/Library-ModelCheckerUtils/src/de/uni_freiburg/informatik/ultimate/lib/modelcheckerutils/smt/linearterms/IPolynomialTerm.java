@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * where c_i, c, e_i are literals, and x_i are variables.
  *
- * @author Leonard Fichtner
+ * @author Leonard Fichtner (leonard.fichtner@web.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */

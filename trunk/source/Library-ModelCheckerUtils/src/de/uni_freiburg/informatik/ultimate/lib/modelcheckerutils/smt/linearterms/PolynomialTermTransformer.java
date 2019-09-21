@@ -28,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
  * implement recursive algorithms for {@link Term}s without recursive methods
  * calls by explicitly using a stack.
  *
- * @author Leonard Fichtner
+ * @author Leonard Fichtner (leonard.fichtner@web.de)
  *
  */
 public class PolynomialTermTransformer extends TermTransformer {
