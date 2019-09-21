@@ -50,17 +50,6 @@ public class Monomial extends Term {
 	}
 
 	/**
-	 * Check if term is of a type that may be a variable of an Monomial.
-	 */
-	public void checkIfTermIsLegalVariable(final Term term) {
-		if (term instanceof TermVariable || term instanceof ApplicationTerm) {
-			// term is ok
-		} else {
-			throw new IllegalArgumentException("Variable of Monomial has to be TermVariable or ApplicationTerm");
-		}
-	}
-
-	/**
 	 * Monomial that represents the product of Monomials.
 	 */
 	public Monomial(final Monomial... monomials) {
@@ -71,6 +60,7 @@ public class Monomial extends Term {
 			for (final Map.Entry<Term, Rational> factor : monomial.getVariable2Exponent().entrySet()) {
 				assert factor.getKey().getSort() == mSort : "Sort mismatch: " + factor.getKey().getSort() + " vs. "
 						+ mSort;
+				assert !(factor.getValue().signum() == -1);
 				final Rational exp = mVariable2Exponent.get(factor.getKey());
 				if (exp == null) {
 					mVariable2Exponent.put(factor.getKey(), factor.getValue());
@@ -90,21 +80,13 @@ public class Monomial extends Term {
 	}
 
 	/**
-	 * Monomial that represents the inverse Monomial in the sense of Product (i.e. 1/Monomial)
+	 * Check if term is of a type that may be a variable of an Monomial.
 	 */
-	public Monomial(final Monomial monomial) {
-		super(0);
-		mSort = monomial.getSort();
-		if (monomial.getVariable2Exponent().size() == 1) {
-			final Term variable = monomial.getVariable2Exponent().keySet().iterator().next();
-			final Rational exponent = monomial.getVariable2Exponent().values().iterator().next().negate();
-			mVariable2Exponent = Collections.singletonMap(variable, exponent);
-			return;
-		}
-
-		mVariable2Exponent = new HashMap<>();
-		for (final Map.Entry<Term, Rational> variabletoexponent : monomial.getVariable2Exponent().entrySet()) {
-			mVariable2Exponent.put(variabletoexponent.getKey(), variabletoexponent.getValue().negate());
+	public void checkIfTermIsLegalVariable(final Term term) {
+		if (term instanceof TermVariable || term instanceof ApplicationTerm) {
+			// term is ok
+		} else {
+			throw new IllegalArgumentException("Variable of Monomial has to be TermVariable or ApplicationTerm");
 		}
 	}
 
@@ -154,29 +136,20 @@ public class Monomial extends Term {
 		int i = 0;
 		for (final Map.Entry<Term, Rational> entry : mVariable2Exponent.entrySet()) {
 			assert !entry.getValue().equals(Rational.ZERO) : "zero is no legal exponent in AffineTerm";
+			assert !(entry.getValue().signum() == -1);
 			Term factor = entry.getKey();
 			assert entry.getValue().isIntegral();
 			// TODO: Ask Matthias about whether it is to be expected that the implementation of isintegral changes.
 			// Because then this could be made easier.
 			final BigInteger exponent = entry.getValue().numerator().divide(entry.getValue().denominator());
-			if (exponent.signum() == 1) {
-				final Term singlefactor = factor;
-				// Here we could use intValueExact. But I think it would be veeeeery unusual to have such big exponents.
-				// Nonetheless: TODO: Better ask Matthias about this
-				for (int j = 1; j < exponent.intValue(); j++) {
-					factor = SmtUtils.mul(script, mSort, factor, singlefactor);
-				}
-				factors[i] = factor;
-				++i;
-			} else {
-				final Term singlefactor = factor;
-				for (int j = 1; j < exponent.negate().intValue(); j++) {
-					factor = SmtUtils.mul(script, mSort, factor, singlefactor);
-				}
-				// TODO: Ask Matthias whether it is ok, that I multiply with 1/factor instead of directly dividing.
-				factors[i] = script.term("/", Rational.ONE.toTerm(mSort), factor);
-				++i;
+			final Term singlefactor = factor;
+			// Here we could use intValueExact. But I think it would be veeeeery unusual to have such big exponents.
+			// Nonetheless: TODO: Better ask Matthias about this
+			for (int j = 1; j < exponent.intValue(); j++) {
+				factor = SmtUtils.mul(script, mSort, factor, singlefactor);
 			}
+			factors[i] = factor;
+			++i;
 		}
 		final Term result = SmtUtils.mul(script, mSort, factors);
 		return result;

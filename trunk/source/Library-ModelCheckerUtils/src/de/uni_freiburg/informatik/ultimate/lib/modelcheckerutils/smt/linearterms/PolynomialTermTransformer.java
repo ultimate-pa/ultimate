@@ -62,7 +62,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		// Otherwise, if the terms represents a literal, we convert the literal
 		// to a PolynomialTerm and tell the TermTransformer that this
 		// is the result (i.e., it should not descend to subformulas).
-		final Rational valueOfLiteral = tryToConvertToLiteral(mScript, term);
+		final Rational valueOfLiteral = tryToConvertToLiteral(term);
 		if (valueOfLiteral != null) {
 			final AffineTerm result = AffineTerm.constructConstant(term.getSort(), valueOfLiteral);
 			setResult(result);
@@ -127,7 +127,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	 * Check if term represents a literal. If this is the case, then return its
 	 * value as a {@link Rational} otherwise return true.
 	 */
-	private static Rational tryToConvertToLiteral(final Script script, final Term term) {
+	private static Rational tryToConvertToLiteral(final Term term) {
 		final Rational result;
 		if (SmtSortUtils.isBitvecSort(term.getSort())) {
 			final BitvectorConstant bc = BitvectorUtils.constructBitvectorConstant(term);
@@ -269,8 +269,8 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Returns true when one of the given Terms is truly polynomial (not representable
-	 * by an AffineTerm)
+	 * Returns true when one of the given Terms is truly polynomial 
+	 * (not representable by an AffineTerm).
 	 */
 	private static boolean someTermIsPolynomial(final IPolynomialTerm[] polynomialTerms) {
 		for (final IPolynomialTerm polynomialTerm: polynomialTerms) {
