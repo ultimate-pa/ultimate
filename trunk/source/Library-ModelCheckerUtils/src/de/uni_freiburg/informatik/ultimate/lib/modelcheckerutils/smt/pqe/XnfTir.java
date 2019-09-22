@@ -45,12 +45,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.Mult
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AbstractGeneralizedAffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryNumericRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Transitive inequality resolution (TIR) for terms in XNF.
@@ -144,7 +147,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		final List<Term> termsWithoutEliminatee = new ArrayList<>();
 		final List<Bound> upperBounds = new ArrayList<>();
 		final List<Bound> lowerBounds = new ArrayList<>();
-		final List<Term> antiDer = new ArrayList<>();
+		final List<Pair<Term, Term>> antiDer = new ArrayList<>(); // TODO IDEE LISTE VON SolvedBinaryRelation
 
 		for (final Term term : inputAtoms) {
 			if (!Arrays.asList(term.getFreeVars()).contains(eliminatee)) {
@@ -171,15 +174,21 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				if (sbr == null) {
 					return null;
 				}
-				if (!sbr.getAssumptionsMap().isEmpty()) {
-					 return null;
+				if (!sbr.getAssumptionsMap().isEmpty()
+						&& !sbr.getRelationSymbol().equals(BinaryRelation.RelationSymbol.DISTINCT)) {
+					return null;
 				}
 				final Term eliminateeOnLhs = sbr.relationToTerm(mScript);
 				final BinaryNumericRelation bnr = BinaryNumericRelation.convert(eliminateeOnLhs);
 				switch (bnr.getRelationSymbol()) {
 				case DISTINCT:
 					if (quantifier == QuantifiedFormula.EXISTS) {
-						antiDer.add(bnr.getRhs());
+						if (!sbr.getAssumptionsMap().isEmpty()) {
+							antiDer.add(antiDerWithAssumption(term, eliminatee));
+						} else {
+							antiDer.add(new Pair<Term, Term>(bnr.getRhs(), bnr.getRhs()));
+						}
+
 					} else {
 						assert occursInsideSelectTerm(term, eliminatee) : "should have been removed by DER";
 						// no chance to eliminate the variable
@@ -187,7 +196,11 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					break;
 				case EQ:
 					if (quantifier == QuantifiedFormula.FORALL) {
-						antiDer.add(bnr.getRhs());
+						if (!sbr.getAssumptionsMap().isEmpty()) {
+							antiDer.add(antiDerWithAssumption(term, eliminatee));
+						} else {
+							antiDer.add(new Pair<Term, Term>(bnr.getRhs(), bnr.getRhs()));
+						}
 					} else {
 						assert occursInsideSelectTerm(term, eliminatee) : "should have been removed by DER";
 						// no chance to eliminate the variable
@@ -248,6 +261,32 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			resultDisjunctions = Arrays.asList(QuantifierUtils.getXjunctsOuter(quantifier, disjunction));
 		}
 		return resultDisjunctions;
+	}
+
+	/**
+	 * AntiDER: (a != b) to (a < b OR a > b) SolveForSubject on both disjuncts to
+	 * get the right hand side of the relations. returns lower/upper bound right
+	 * hand side of the relation
+	 */
+	private Pair<Term, Term> antiDerWithAssumption(final Term originalTerm, final Term eliminatee) {
+		// Strict to NONStrict transformation is done in the method "computeBound"
+		final TransformInequality transform = TransformInequality.NO_TRANFORMATION;
+		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(originalTerm);
+
+		final BinaryNumericRelation lowerBoundBnr = bnr.changeRelationSymbol(RelationSymbol.GREATER);
+		final AffineRelation relLower = AffineRelation.convert(mScript, lowerBoundBnr.toTerm(mScript), transform);
+		final SolvedBinaryRelation sbrLower = relLower.solveForSubject(mScript, eliminatee);
+
+		final BinaryNumericRelation upperBoundBnr = bnr.changeRelationSymbol(RelationSymbol.LESS);
+		final AffineRelation relUpper = AffineRelation.convert(mScript, upperBoundBnr.toTerm(mScript), transform);
+		final SolvedBinaryRelation sbrUpper = relUpper.solveForSubject(mScript, eliminatee);
+
+		if ((sbrLower == null) || (sbrUpper == null)) {
+			return null;
+		}
+		final Term lowerBound = sbrLower.getRightHandSide();
+		final Term upperBound = sbrUpper.getRightHandSide();
+		return new Pair<Term, Term>(lowerBound, upperBound);
 	}
 
 	/**
@@ -320,10 +359,10 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		private final List<Term> mTermsWithoutEliminatee;
 		private final List<Bound> mUpperBounds;
 		private final List<Bound> mLowerBounds;
-		private final List<Term> mAntiDer;
+		private final List<Pair<Term, Term>> mAntiDer;
 
 		public BuildingInstructions(final int quantifier, final Sort sort, final List<Term> termsWithoutEliminatee,
-				final List<Bound> upperBounds, final List<Bound> lowerBounds, final List<Term> antiDer) {
+				final List<Bound> upperBounds, final List<Bound> lowerBounds, final List<Pair<Term, Term>> antiDer) {
 			super();
 			mQuantifier = quantifier;
 			mSort = sort;
@@ -342,10 +381,11 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				for (int k = 0; k < mAntiDer.size(); k++) {
 					// zero means lower - one means upper
 					if (BigInteger.valueOf(i).testBit(k)) {
-						final Bound upperBound = computeBound(mAntiDer.get(k), mQuantifier, BoundType.UPPER);
+						final Bound upperBound = computeBound(mAntiDer.get(k).getSecond(), mQuantifier,
+								BoundType.UPPER);
 						adUpperBounds.add(upperBound);
 					} else {
-						final Bound lowerBound = computeBound(mAntiDer.get(k), mQuantifier, BoundType.LOWER);
+						final Bound lowerBound = computeBound(mAntiDer.get(k).getFirst(), mQuantifier, BoundType.LOWER);
 						adLowerBounds.add(lowerBound);
 
 					}
