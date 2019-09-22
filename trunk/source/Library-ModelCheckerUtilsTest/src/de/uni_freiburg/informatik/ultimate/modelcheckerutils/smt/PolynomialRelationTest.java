@@ -85,7 +85,7 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationRealDivDefault() throws NotAffineException {
+	public void relationRealDefault() throws NotAffineException {
 		final String inputSTR = "(= (+ 7.0 x) y )";
 		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				polyRelOnLeftHandSide(inputSTR, "x")));
@@ -93,7 +93,7 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationRealDivEQ() throws NotAffineException {
+	public void relationRealEQ() throws NotAffineException {
 		final String inputSTR = "(= (* 7.0 x) y )";
 		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				polyRelOnLeftHandSide(inputSTR, "x")));
@@ -101,42 +101,42 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationRealDivEQ2() throws NotAffineException {
+	public void relationRealEQ2() throws NotAffineException {
 		final String inputSTR = "(= (* 3.0 x) (* 7.0 y) )";
 		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				polyRelOnLeftHandSide(inputSTR, "x")));
 	}
 
 	@Test
-	public void relationRealDivEQ3() throws NotAffineException {
+	public void relationRealEQ3() throws NotAffineException {
 		final String inputSTR = "(= (* 3.0 x) (+ (* 7.0 y) (* 5.0 z)) )";
 		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				polyRelOnLeftHandSide(inputSTR, "x")));
 	}
 
 	@Test
-	public void relationRealDivEQ4() throws NotAffineException {
+	public void relationRealEQ4() throws NotAffineException {
 		final String inputSTR = "(= (* 6.0 (+ y x)) (* 7.0 z) )";
 		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				polyRelOnLeftHandSide(inputSTR, "x")));
 	}
 
 	@Test
-	public void relationRealDivPolyEQ5() throws NotAffineException {
+	public void relationRealPolyEQ5() throws NotAffineException {
 		final String inputSTR = "(= (* 6.0 (* y x)) (+ 3.0 (* z z)))";
 		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				polyRelOnLeftHandSide(inputSTR, "x")));
 	}
 	
 	@Test
-	public void relationRealDivPolyEQ6() throws NotAffineException {
+	public void relationRealPolyEQ6() throws NotAffineException {
 		final String inputSTR = "(= (* z (+ 6.0 (* (* y y) x))) (+ 3.0 (* z z)))";
 		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				polyRelOnLeftHandSide(inputSTR, "x")));
 	}
 	
 	@Test
-	public void relationRealDivPolyMultipleSubjectsEQ7() throws NotAffineException {
+	public void relationRealPolyMultipleSubjectsEQ7() throws NotAffineException {
 		final String inputSTR = "(= (* z (+ 6.0 (* (* x y) x))) (+ 3.0 (* z z)))";
 		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "x"));
 	}
@@ -146,48 +146,54 @@ public class PolynomialRelationTest {
 	 * but now the subject occurs in this variable.
 	 */
 	@Test
-	public void relationRealDivPolyNestedSubjectEQ8() throws NotAffineException {
+	public void relationRealPolyNestedSubjectEQ8() throws NotAffineException {
 		final String inputSTR = "(= 1.0 (/ y x))";
 		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "x"));
 	}
 	
 	@Test
-	public void relationRealDivPolyWithDivisionsEQ9() throws NotAffineException {
+	public void relationRealPolyWithDivisionsEQ9() throws NotAffineException {
 		final String inputSTR = "(= (/ (+ 6.0 (* (/ z y) x)) 2.0) (+ 3.0 (/ y z)))";
 		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				polyRelOnLeftHandSide(inputSTR, "x")));
 	}
 	
 	@Test
-	public void relationRealDivGEQ() throws NotAffineException {
+	public void relationRealPolyDetectNestedSecondVariableEQ10() throws NotAffineException {
+		final String inputSTR = "(= (/ (+ 6.0 (* (/ z y) x)) 2.0) (+ 3.0 (/ y x)))";
+		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "x"));
+	}
+	
+	@Test
+	public void relationRealGEQ() throws NotAffineException {
 		final String inputSTR = "(>= (* 3.0 x) lo )";
 		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				polyRelOnLeftHandSide(inputSTR, "x")));
 	}
 
 	@Test
-	public void relationRealDivLEQ() throws NotAffineException {
+	public void relationRealLEQ() throws NotAffineException {
 		final String inputSTR = "(<= (* 3.0 x) hi )";
 		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				polyRelOnLeftHandSide(inputSTR, "x")));
 	}
 
 	@Test
-	public void relationRealDivDISTINCT() throws NotAffineException {
+	public void relationRealDISTINCT() throws NotAffineException {
 		final String inputSTR = "(not(= (* 3.0 x) y ))";
 		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				polyRelOnLeftHandSide(inputSTR, "x")));
 	}
 
 	@Test
-	public void relationRealDivGREATER() throws NotAffineException {
+	public void relationRealGREATER() throws NotAffineException {
 		final String inputSTR = "(> (* 3.0 x) lo )";
 		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				polyRelOnLeftHandSide(inputSTR, "x")));
 	}
 
 	@Test
-	public void relationRealDivLESS() throws NotAffineException {
+	public void relationRealLESS() throws NotAffineException {
 		final String inputSTR = "(< (* 4.0 x) hi )";
 		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
 				polyRelOnLeftHandSide(inputSTR, "x")));
