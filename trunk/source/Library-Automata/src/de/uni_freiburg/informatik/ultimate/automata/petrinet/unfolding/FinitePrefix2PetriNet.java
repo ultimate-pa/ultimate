@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
@@ -199,8 +200,9 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 			if (c == mRepresentatives.find(c)) {
 				final boolean isInitial = containsInitial(mRepresentatives.getEquivalenceClassMembers(c),
 						bp.initialConditions());
-				final PLACE place = mNet.addPlace(mStateFactory.finitePrefix2net(c), isInitial,
-						bp.getNet().isAccepting(c.getPlace()));
+				final boolean isAccepting = containsAccepting(mRepresentatives.getEquivalenceClassMembers(c),
+						bp.getNet());
+				final PLACE place = mNet.addPlace(mStateFactory.finitePrefix2net(c), isInitial, isAccepting);
 				placeMap.put(c, place);
 			}
 		}
@@ -271,6 +273,11 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 	private boolean containsInitial(final Set<Condition<LETTER, PLACE>> equivalenceClassMembers,
 			final Collection<Condition<LETTER, PLACE>> initialConditions) {
 		return equivalenceClassMembers.stream().anyMatch(x -> initialConditions.contains(x));
+	}
+
+	private boolean containsAccepting(final Set<Condition<LETTER, PLACE>> equivalenceClassMembers,
+			final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
+		return equivalenceClassMembers.stream().anyMatch(x -> net.isAccepting(x.getPlace()));
 	}
 
 	private boolean petriNetLanguageEquivalence(final BoundedPetriNet<LETTER, PLACE> oldNet, final BoundedPetriNet<LETTER, PLACE> newNet,
