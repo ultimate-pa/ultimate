@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class SolvedBinaryRelation {
 
 	public enum AssumptionForSolvability {
-		INTEGER_DIVISIBLE_BY_CONSTANT, REAL_DIVISOR_NOT_ZERO,
+		INTEGER_DIVISIBLE_BY_CONSTANT, REAL_DIVISOR_NOT_ZERO, INTEGER_DIVISOR_NOT_ZERO, INTEGER_DIVISIBLE_BY_VARIABLE
 	}
 
 	private final Term mLeftHandSide;

@@ -60,6 +60,11 @@ public class AssumptionMapBuilder {
 		}
 	}
 	
+	public boolean hasContractedForm(AssumptionForSolvability assu) {
+		return (assu == AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO 
+				|| assu == AssumptionForSolvability.INTEGER_DIVISOR_NOT_ZERO);
+	}
+	
 	/**
 	 * Get a Term, that represents all the assumptions of type "assu" so far, in explicit form,
 	 * i. e. the conjunction of all assumptions.
@@ -68,13 +73,21 @@ public class AssumptionMapBuilder {
 	 * Explicit form  x != 0 and y != 0
 	 */
 	public Term getExplicitForm(AssumptionForSolvability assu) {
-		if(assu == AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT) {
-			BiFunction<Script, Term, Term> eqZero = AssumptionMapBuilder::equalZeroInt;
-			return constructExplicitAssumptionTerm(assu, eqZero);
-		}else if (assu == AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO) {
-			BiFunction<Script, Term, Term> neqZero = AssumptionMapBuilder::notEqualZeroReal;
-			return constructExplicitAssumptionTerm(assu, neqZero);
-		}else {
+		BiFunction<Script, Term, Term> eqOrNeqZero;
+		switch (assu) {
+		case INTEGER_DIVISIBLE_BY_CONSTANT:
+			eqOrNeqZero = AssumptionMapBuilder::equalZeroInt;
+			return constructExplicitAssumptionTerm(assu, eqOrNeqZero);
+		case INTEGER_DIVISIBLE_BY_VARIABLE:
+			eqOrNeqZero = AssumptionMapBuilder::equalZeroInt;
+			return constructExplicitAssumptionTerm(assu, eqOrNeqZero);
+		case REAL_DIVISOR_NOT_ZERO:
+			eqOrNeqZero = AssumptionMapBuilder::notEqualZeroReal;
+			return constructExplicitAssumptionTerm(assu, eqOrNeqZero);
+		case INTEGER_DIVISOR_NOT_ZERO:
+			eqOrNeqZero = AssumptionMapBuilder::notEqualZeroInt;
+			return constructExplicitAssumptionTerm(assu, eqOrNeqZero);
+		default:
 			throw new UnsupportedOperationException("This method has no implementation for the given Asssumption.");
 		}
 	}
@@ -89,16 +102,23 @@ public class AssumptionMapBuilder {
 	 * Contracted form  x*y != 0
 	 */
 	public Term getContractedForm(AssumptionForSolvability assu) {
-		if(assu == AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT) {
-			BiFunction<Script, Term, Term> eqZero = AssumptionMapBuilder::equalZeroInt;
-			return constructContractedAssumptionTerm(assu, eqZero);
-		}else if (assu == AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO) {
-			BiFunction<Script, Term, Term> neqZero = AssumptionMapBuilder::notEqualZeroReal;
-			return constructContractedAssumptionTerm(assu, neqZero);
-		}else {
+		BiFunction<Script, Term, Term> eqOrNeqZero;
+		switch (assu) {
+		case INTEGER_DIVISIBLE_BY_CONSTANT:
+			throw new UnsupportedOperationException("This assumption has no contracted form yet.");
+		case INTEGER_DIVISIBLE_BY_VARIABLE:
+			throw new UnsupportedOperationException("This assumption has no contracted form yet.");
+		case REAL_DIVISOR_NOT_ZERO:
+			eqOrNeqZero = AssumptionMapBuilder::notEqualZeroReal;
+			return constructContractedAssumptionTerm(assu, eqOrNeqZero);
+		case INTEGER_DIVISOR_NOT_ZERO:
+			eqOrNeqZero = AssumptionMapBuilder::notEqualZeroInt;
+			return constructContractedAssumptionTerm(assu, eqOrNeqZero);
+		default:
 			throw new UnsupportedOperationException("This method has no implementation for the given Asssumption.");
 		}
 	}
+	
 	
 	private static Term equalZeroInt(Script script, Term term) {
 		return SmtUtils.binaryEquality(script, term, SmtUtils.constructIntValue(script, BigInteger.ZERO));
@@ -106,10 +126,18 @@ public class AssumptionMapBuilder {
 
 	private static Term notEqualZeroReal(Script script, Term term) {
 		return SmtUtils.not(script, 
-						    SmtUtils.binaryEquality(script, term, Rational.ZERO.toTerm(SmtSortUtils.getRealSort(script))));
+						    SmtUtils.binaryEquality(script, term, 
+						    						SmtUtils.rational2Term(script, Rational.ZERO, 
+						    					  						   SmtSortUtils.getRealSort(script))));
+	}
+	
+	private static Term notEqualZeroInt(Script script, Term term) {
+		return SmtUtils.not(script, 
+						    SmtUtils.binaryEquality(script, term, SmtUtils.constructIntValue(script, BigInteger.ZERO)));
 	}
 
-	private Term constructContractedAssumptionTerm(AssumptionForSolvability assu, BiFunction<Script, Term, Term> rhsConstructor) {
+	private Term constructContractedAssumptionTerm(AssumptionForSolvability assu, 
+												   BiFunction<Script, Term, Term> rhsConstructor) {
 		if (mAssumptionMap.containsKey(assu)) {
 			LinkedList<Term> factors = mAssumptionMap.get(assu);
 			Term[] factorArray = new Term[factors.size()];
@@ -124,7 +152,8 @@ public class AssumptionMapBuilder {
 		return mScript.term("true");
 	}
 	
-	private Term constructExplicitAssumptionTerm(AssumptionForSolvability assu, BiFunction<Script, Term, Term> rhsConstructor) {
+	private Term constructExplicitAssumptionTerm(AssumptionForSolvability assu, 
+												 BiFunction<Script, Term, Term> rhsConstructor) {
 		if(mAssumptionMap.containsKey(assu)) {
 			LinkedList<Term> list = mAssumptionMap.get(assu);
 			Term[] conjuncts = new Term[list.size()];
@@ -154,10 +183,14 @@ public class AssumptionMapBuilder {
 		return mapBuilder.getBuiltMap();
 	}
 	
-	public Map<AssumptionForSolvability, Term> getContractedAssumptionMap() {
+	public Map<AssumptionForSolvability, Term> getContractedAssumptionMapWherePossible() {
 		SparseMapBuilder<AssumptionForSolvability, Term> mapBuilder = new SparseMapBuilder<>();
 		for (AssumptionForSolvability assu : mAssumptionMap.keySet()) {
-			mapBuilder.put(assu, getContractedForm(assu));
+			if (hasContractedForm(assu)) {
+				mapBuilder.put(assu, getContractedForm(assu));
+			}else {
+				mapBuilder.put(assu, getExplicitForm(assu));
+			}
 		}
 		return mapBuilder.getBuiltMap();
 	}

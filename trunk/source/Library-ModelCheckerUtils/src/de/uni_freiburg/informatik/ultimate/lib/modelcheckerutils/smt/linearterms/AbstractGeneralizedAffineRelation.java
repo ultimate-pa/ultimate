@@ -305,16 +305,16 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 
 		final Term simpliySolvableRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 				coeffOfSubject);
-		AssumptionMapBuilder assumptionMapBuilder = new AssumptionMapBuilder(script);
+		final AssumptionMapBuilder assumptionMapBuilder = new AssumptionMapBuilder(script);
 		Term rhsTerm;
 		if (simpliySolvableRhsTerm == null) {
 			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
-					Rational.ONE);
+																		        Rational.ONE);
 			rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
 			// EQ and DISTINCT need Modulo Assumption
 			if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
 				Term modTerm = SmtUtils.mod(script, rhsTermWithoutDivision,
-						coeffOfSubject.toTerm(mAffineTerm.getSort()));
+										    coeffOfSubject.toTerm(mAffineTerm.getSort()));
 				assumptionMapBuilder.put(AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT, modTerm);
 			} 
 			// cases LEQ, LESS, GREATER, GEQ do nothing
@@ -331,52 +331,70 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			resultRelationSymbol = mRelationSymbol;
 		}
 
-		// TODO 2019-06-10 Matthias:
-		// Add here some code for polynomials where we have to try to divide by the
-		// other variables in the monomial
 		if (abstractVarOfSubject instanceof Monomial) {
 			for (final Entry<Term, Rational> var2exp : ((Monomial) abstractVarOfSubject).getVariable2Exponent().entrySet()) {
 				if (var2exp.getKey() == subject) {
 					//do nothing
 				}else {
 					//TODO: Integer Sort.
-					if (SmtSortUtils.isRealSort(mAffineTerm.getSort())){
-						assert var2exp.getValue().isIntegral();
-						// TODO: Ask Matthias about whether it is to be expected that the implementation of isintegral changes.
-						// Because then this could be made easier.
-						final int exponent = var2exp.getValue().numerator().divide(var2exp.getValue().denominator()).intValue();
-						final Term power;
-						if (exponent >= 2) {
-							final Term[] factors = new Term[exponent];
-							for (int i = 0; i < exponent; i++) {
-								factors[i] = var2exp.getKey();
-							}
-							power = SmtUtils.mul(script, mAffineTerm.getSort(), factors);
-						}else {
-							power = var2exp.getKey();
+					assert var2exp.getValue().isIntegral();
+					// TODO: Ask Matthias about whether it is to be expected that the implementation of isintegral changes.
+					// Because then this could be made easier.
+					final int exponent = var2exp.getValue().numerator().divide(var2exp.getValue().denominator()).intValue();
+					final Term power;
+					if (exponent >= 2) {
+						final Term[] factors = new Term[exponent];
+						for (int i = 0; i < exponent; i++) {
+							factors[i] = var2exp.getKey();
 						}
-						final Term invPower = script.term("/", Rational.ONE.toTerm(mAffineTerm.getSort()), power);
-						assumptionMapBuilder.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO,
-												 var2exp.getKey());
+						power = SmtUtils.mul(script, mAffineTerm.getSort(), factors);
+					}else {
+						power = var2exp.getKey();
+					}
+					if (SmtSortUtils.isRealSort(mAffineTerm.getSort())){
+						makeRealAssumptions(assumptionMapBuilder, var2exp.getKey());
+						final Term invPower = script.term("/", SmtUtils.rational2Term(script, Rational.ONE, 
+																					  mAffineTerm.getSort()), power);
 						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower, rhsTerm);
+					}else if (SmtSortUtils.isIntSort(mAffineTerm.getSort())) {
+						makeIntAssumptions(assumptionMapBuilder, script, var2exp.getKey(), rhsTerm);
+						final Term invPower = script.term("div", SmtUtils.constructIntValue(script, BigInteger.ZERO),
+																							power);
+						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower, rhsTerm);
+					}else {
+						throw new UnsupportedOperationException("PolynomialRelations of this sort are not supported.");
 					}
 				}
 			}
 		}
 
 		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
-																	 assumptionMapBuilder.getContractedAssumptionMap());
+																	 assumptionMapBuilder.getExplicitAssumptionMap());
 		final Term relationToTerm = result.relationToTerm(script);
 		if (!assumptionMapBuilder.isEmpty()) {
 			assert script instanceof INonSolverScript
 					|| assumptionImpliesEquivalence(script, mOriginalTerm, relationToTerm, 
-													assumptionMapBuilder.getContractedAssumptionMap())
+													assumptionMapBuilder.getExplicitAssumptionMap())
 						!= LBool.SAT : "transformation to AffineRelation unsound";
 		} else {
 			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
 					relationToTerm) != LBool.SAT : "transformation to AffineRelation unsound";
 		}
 		return result;
+	}
+	
+	private void makeRealAssumptions(AssumptionMapBuilder assuMapBuilder, Term divisor) {
+		assuMapBuilder.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO, divisor);
+	}
+	
+	private void makeIntAssumptions(AssumptionMapBuilder assuMapBuilder, Script script, Term divisor, Term dividend) {
+		assuMapBuilder.put(AssumptionForSolvability.INTEGER_DIVISOR_NOT_ZERO, divisor);
+		// EQ and DISTINCT need Modulo Assumption
+		if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
+			Term modTerm = SmtUtils.mod(script, dividend, divisor);
+			assuMapBuilder.put(AssumptionForSolvability.INTEGER_DIVISIBLE_BY_VARIABLE, modTerm);
+		}
+		// cases LEQ, LESS, GREATER, GEQ do nothing
 	}
 
 	private Term integerDivision(final Script script, final Rational coeffOfSubject,
