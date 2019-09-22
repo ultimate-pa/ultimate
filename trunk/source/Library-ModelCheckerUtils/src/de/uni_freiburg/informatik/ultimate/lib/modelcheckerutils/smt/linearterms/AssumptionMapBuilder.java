@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.SparseMapBuilder;
 
 /**
  * A datastructure to handle the Terms that describe certain Assumptions.
@@ -22,12 +23,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author LeonardFichtner
  *
  */
-public class AssumptionMap {
+public class AssumptionMapBuilder {
 
 	private Map<AssumptionForSolvability, LinkedList<Term>> mAssumptionMap;
 	private Script mScript;
 	
-	public AssumptionMap(Script script){
+	public AssumptionMapBuilder(Script script){
 		mAssumptionMap = Collections.emptyMap();
 		mScript = script;
 	}
@@ -68,10 +69,10 @@ public class AssumptionMap {
 	 */
 	public Term getExplicitForm(AssumptionForSolvability assu) {
 		if(assu == AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT) {
-			BiFunction<Script, Term, Term> eqZero = AssumptionMap::equalZeroInt;
+			BiFunction<Script, Term, Term> eqZero = AssumptionMapBuilder::equalZeroInt;
 			return constructExplicitAssumptionTerm(assu, eqZero);
 		}else if (assu == AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO) {
-			BiFunction<Script, Term, Term> neqZero = AssumptionMap::notEqualZeroReal;
+			BiFunction<Script, Term, Term> neqZero = AssumptionMapBuilder::notEqualZeroReal;
 			return constructExplicitAssumptionTerm(assu, neqZero);
 		}else {
 			throw new UnsupportedOperationException("This method has no implementation for the given Asssumption.");
@@ -89,10 +90,10 @@ public class AssumptionMap {
 	 */
 	public Term getContractedForm(AssumptionForSolvability assu) {
 		if(assu == AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT) {
-			BiFunction<Script, Term, Term> eqZero = AssumptionMap::equalZeroInt;
+			BiFunction<Script, Term, Term> eqZero = AssumptionMapBuilder::equalZeroInt;
 			return constructContractedAssumptionTerm(assu, eqZero);
 		}else if (assu == AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO) {
-			BiFunction<Script, Term, Term> neqZero = AssumptionMap::notEqualZeroReal;
+			BiFunction<Script, Term, Term> neqZero = AssumptionMapBuilder::notEqualZeroReal;
 			return constructContractedAssumptionTerm(assu, neqZero);
 		}else {
 			throw new UnsupportedOperationException("This method has no implementation for the given Asssumption.");
@@ -109,19 +110,55 @@ public class AssumptionMap {
 	}
 
 	private Term constructContractedAssumptionTerm(AssumptionForSolvability assu, BiFunction<Script, Term, Term> rhsConstructor) {
-		LinkedList<Term> factors = mAssumptionMap.get(assu);
-		Term product = SmtUtils.mul(mScript, factors.getFirst().getSort(), (Term[]) factors.toArray());
-		return rhsConstructor.apply(mScript, product);
+		if (mAssumptionMap.containsKey(assu)) {
+			LinkedList<Term> factors = mAssumptionMap.get(assu);
+			Term[] factorArray = new Term[factors.size()];
+			int i = 0;
+			for (Term term : factors) {
+				factorArray[i] = term;
+				i++;
+			}
+			Term product = SmtUtils.mul(mScript, factors.getFirst().getSort(), factorArray);
+			return rhsConstructor.apply(mScript, product);
+		}
+		return mScript.term("true");
 	}
 	
 	private Term constructExplicitAssumptionTerm(AssumptionForSolvability assu, BiFunction<Script, Term, Term> rhsConstructor) {
-		LinkedList<Term> list = mAssumptionMap.get(assu);
-		Term[] conjuncts = new Term[list.size()];
-		int i = 0;
-		for (Term term : list) {
-			conjuncts[i] = rhsConstructor.apply(mScript, term);
-			i++;
+		if(mAssumptionMap.containsKey(assu)) {
+			LinkedList<Term> list = mAssumptionMap.get(assu);
+			Term[] conjuncts = new Term[list.size()];
+			int i = 0;
+			for (Term term : list) {
+				conjuncts[i] = rhsConstructor.apply(mScript, term);
+				i++;
+			}
+			return SmtUtils.and(mScript, conjuncts);
 		}
-		return SmtUtils.and(mScript, conjuncts);
+		return mScript.term("true");
+	}
+	
+	public boolean isEmpty() {
+		return mAssumptionMap.isEmpty();
+	}
+	
+	public void clear() {
+		mAssumptionMap = Collections.emptyMap();
+	}
+	
+	public Map<AssumptionForSolvability, Term> getExplicitAssumptionMap() {
+		SparseMapBuilder<AssumptionForSolvability, Term> mapBuilder = new SparseMapBuilder<>();
+		for (AssumptionForSolvability assu : mAssumptionMap.keySet()) {
+			mapBuilder.put(assu, getExplicitForm(assu));
+		}
+		return mapBuilder.getBuiltMap();
+	}
+	
+	public Map<AssumptionForSolvability, Term> getContractedAssumptionMap() {
+		SparseMapBuilder<AssumptionForSolvability, Term> mapBuilder = new SparseMapBuilder<>();
+		for (AssumptionForSolvability assu : mAssumptionMap.keySet()) {
+			mapBuilder.put(assu, getContractedForm(assu));
+		}
+		return mapBuilder.getBuiltMap();
 	}
 }
