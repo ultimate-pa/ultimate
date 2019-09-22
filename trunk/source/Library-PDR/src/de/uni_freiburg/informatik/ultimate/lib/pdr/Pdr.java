@@ -134,7 +134,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> mGlobalFrames;
+	private Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> mGlobalFrames;
 	private final ManagedScript mScript;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredTrans;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
@@ -178,7 +178,15 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		// stuff initialized here
 		mPdrBenchmark = new PdrBenchmark();
 
-		mGlobalFrames = new HashMap<>();
+		final PathProgramConstructionResult pp =
+				PathProgram.constructPathProgram("errorPP", mIcfg, new HashSet<>(counterexample));
+
+		mPpIcfg = pp.getPathProgram();
+		mCsToolkit = mPpIcfg.getCfgSmtToolkit();
+
+		mScript = createSolver(mServices, mCsToolkit);
+		mPredTrans = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
+		mAxioms = mPredicateUnifier.getOrConstructPredicate(mCsToolkit.getSmtSymbols().getAxioms());
 		final PathProgramConstructionResult pp =
 				PathProgram.constructPathProgram("errorPP", mIcfg, new HashSet<>(counterexample));
 
@@ -191,7 +199,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 		mTruePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("true"));
 		mFalsePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("false"));
-
+		mGlobalFrames = initializeFrames(mPpIcfg);
 		mLogger.info("Analyzing path program with PDR");
 
 		try {
@@ -266,35 +274,10 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 */
 	private LBool computePdr(final IIcfg<? extends IcfgLocation> icfg, final Deque<ProofObligation> firstPos) {
 
-		final Set<? extends IcfgLocation> init = icfg.getInitialNodes();
-		final Set<? extends IcfgLocation> error = IcfgUtils.getErrorLocations(mPpIcfg);
-
 		/**
 		 * Initialize level 0.
 		 */
-		final IcfgLocationIterator<? extends IcfgLocation> iter = new IcfgLocationIterator<>(icfg);
-		while (iter.hasNext()) {
-			final IcfgLocation loc = iter.next();
-			if (error.contains(loc)) {
-				continue;
-			}
-			mGlobalFrames.put(loc, new ArrayList<>());
-
-			/*
-			 * Assume we only have one errorstate.
-			 */
-			if (init.contains(loc)) {
-				for (final IcfgLocation errorloc : error) {
-					if (errorloc.getProcedure().equals(loc.getProcedure())) {
-						mGlobalFrames.get(loc).add(new Pair<>(ChangedFrame.U, mAxioms));
-					} else {
-						mGlobalFrames.get(loc).add(new Pair<>(ChangedFrame.U, mFalsePred));
-					}
-				}
-			} else {
-				mGlobalFrames.get(loc).add(new Pair<>(ChangedFrame.U, mFalsePred));
-			}
-		}
+		final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames = initializeFrames(icfg);
 
 		while (true) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -304,7 +287,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			 * Initialize new level.
 			 */
 			final Deque<ProofObligation> proofObligations = new ArrayDeque<>(firstPos);
-			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> trace : mGlobalFrames.entrySet()) {
+			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> trace : localFrames.entrySet()) {
 				trace.getValue().add(new Pair<>(ChangedFrame.U, mAxioms));
 			}
 
@@ -313,10 +296,10 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			/**
 			 * Generated proof-obligation on level 0 -> error reachable
 			 */
-			if (!blockingPhase(proofObligations)) {
+			if (!blockingPhase(proofObligations, localFrames)) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(
-							"Error trace found. Frames: " + mGlobalFrames.entrySet().stream()
+							"Error trace found. Frames: " + localFrames.entrySet().stream()
 									.map(a -> a.getKey().getDebugIdentifier() + ": {"
 											+ a.getValue().stream().map(Pair<ChangedFrame, IPredicate>::toString)
 													.collect(Collectors.joining(","))
@@ -324,16 +307,19 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 									.collect(Collectors.joining(",")));
 				}
 				mLogger.debug("Error is reachable.");
+				
+				mGlobalFrames = localFrames;
+				
 				return LBool.SAT;
 			}
 
 			/**
 			 * Found a global fixpoint position -> error not reachable
 			 */
-			if (propagationPhase()) {
+			if (propagationPhase(localFrames)) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Frames:");
-					for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : mGlobalFrames
+					for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : localFrames
 							.entrySet()) {
 						mLogger.debug("  " + entry.getKey().getDebugIdentifier() + ": " + entry.getValue().stream()
 								.map(Pair<ChangedFrame, IPredicate>::toString).collect(Collectors.joining(",")));
@@ -343,6 +329,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 							.map(a -> a.getDebugIdentifier().toString()).collect(Collectors.joining(",")));
 					mLogger.debug("Error is not reachable.");
 				}
+				mGlobalFrames = localFrames;
 				mInterpolants = computeInterpolants();
 
 				if (mLogger.isDebugEnabled()) {
@@ -369,7 +356,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 *
 	 * @return false, if proof-obligation on level 0 is created true, if there is no proof-obligation left
 	 */
-	private final boolean blockingPhase(final Deque<ProofObligation> proofObligations) {
+	private final boolean blockingPhase(final Deque<ProofObligation> proofObligations,
+			Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames) {
 
 		mLogger.debug("Begin Blocking Phase: on Level: " + mLevel);
 
@@ -390,7 +378,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			}
 			for (final IcfgEdge predecessorTransition : location.getIncomingEdges()) {
 				final IcfgLocation predecessor = predecessorTransition.getSource();
-				final IPredicate predecessorFrame = mGlobalFrames.get(predecessor).get(level - 1).getSecond();
+				final IPredicate predecessorFrame = localFrames.get(predecessor).get(level - 1).getSecond();
 				final Triple<IPredicate, IAction, IPredicate> query =
 						new Triple<>(predecessorFrame, predecessorTransition, toBeBlocked);
 
@@ -465,12 +453,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 								// predsForDumbPeople.add(mPredicateUnifier.getOrConstructPredicate(toBeBlocked));
 								final Term pred = SmtUtils.and(mScript.getScript(), not(interpolant).getFormula(),
 										toBeBlocked.getFormula());
-								updateFrames(mPredicateUnifier.getOrConstructPredicate(pred), location, level);
+								updateLocalFrames(mPredicateUnifier.getOrConstructPredicate(pred), location, level, localFrames);
 							} else {
-								updateFrames(toBeBlocked, location, level);
+								updateLocalFrames(toBeBlocked, location, level, localFrames);
 							}
 						} else {
-							updateFrames(toBeBlocked, location, level);
+							updateLocalFrames(toBeBlocked, location, level, localFrames);
 						}
 						proofObligation.addBlockedQuery(query);
 					} else {
@@ -637,21 +625,57 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 * @param location
 	 * @param level
 	 */
-	private void updateFrames(final IPredicate toBeBlocked, final IcfgLocation location, final int level) {
+	private void updateLocalFrames(final IPredicate toBeBlocked, final IcfgLocation location, final int level,
+			Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames) {
 		for (int i = 0; i <= level; i++) {
-			IPredicate fTerm = mGlobalFrames.get(location).get(i).getSecond();
+			IPredicate fTerm = localFrames.get(location).get(i).getSecond();
 			final IPredicate negToBeBlocked = not(toBeBlocked);
 			fTerm = mPredicateUnifier.getPredicateFactory().and(fTerm, negToBeBlocked);
 			fTerm = mPredicateUnifier.getOrConstructPredicate(fTerm);
-			mGlobalFrames.get(location).set(i, new Pair<>(ChangedFrame.C, fTerm));
+			localFrames.get(location).set(i, new Pair<>(ChangedFrame.C, fTerm));
 		}
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Frames: Updated \n");
-			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : mGlobalFrames.entrySet()) {
+			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : localFrames.entrySet()) {
 				mLogger.debug("  " + entry.getKey().getDebugIdentifier() + ": " + entry.getValue().stream()
 						.map(Pair<ChangedFrame, IPredicate>::toString).collect(Collectors.joining(",")));
 			}
 		}
+	}
+
+	final void updateGlobalFrames(final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames) {
+		
+	}
+
+	final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> initializeFrames(IIcfg<? extends IcfgLocation> icfg) {
+		final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames =
+				new HashMap<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>>();
+		final Set<? extends IcfgLocation> init = icfg.getInitialNodes();
+		final Set<? extends IcfgLocation> error = IcfgUtils.getErrorLocations(mPpIcfg);
+		final IcfgLocationIterator<? extends IcfgLocation> iter = new IcfgLocationIterator<>(icfg);
+		while (iter.hasNext()) {
+			final IcfgLocation loc = iter.next();
+			if (error.contains(loc)) {
+				continue;
+			}
+			localFrames.put(loc, new ArrayList<>());
+
+			/*
+			 * Assume we only have one errorstate.
+			 */
+			if (init.contains(loc)) {
+				for (final IcfgLocation errorloc : error) {
+					if (errorloc.getProcedure().equals(loc.getProcedure())) {
+						localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mAxioms));
+					} else {
+						localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mFalsePred));
+					}
+				}
+			} else {
+				localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mFalsePred));
+			}
+		}
+		return localFrames;
 	}
 
 	/**
@@ -692,9 +716,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	/**
 	 * Propagation-Phase, for finding invariants
 	 */
-	private boolean propagationPhase() {
+	private boolean propagationPhase(final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames) {
 		mLogger.debug("Begin Propagation Phase: \n");
-		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> locationTrace : mGlobalFrames.entrySet()) {
+		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> locationTrace : localFrames.entrySet()) {
 			final List<Pair<ChangedFrame, IPredicate>> frames = locationTrace.getValue();
 
 			for (int i = 0; i < frames.size() - 1; i++) {
@@ -705,7 +729,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				final IPredicate p1 = frames.get(i).getSecond();
 				final IPredicate p2 = frames.get(i + 1).getSecond();
 
-				if (p1.getFormula().equals(p2.getFormula()) && checkFrames(i)) {
+				if (p1.getFormula().equals(p2.getFormula()) && checkFrames(i, localFrames)) {
 					mLogger.debug("Spot: " + i);
 					mInvarSpot = i;
 					return true;
@@ -721,8 +745,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 * @param i
 	 * @return
 	 */
-	private boolean checkFrames(final int i) {
-		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> locationTrace : mGlobalFrames.entrySet()) {
+	private boolean checkFrames(final int i,
+			final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames) {
+		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> locationTrace : localFrames.entrySet()) {
 			if (mPpIcfg.getInitialNodes().contains(locationTrace.getKey())) {
 				continue;
 			}
