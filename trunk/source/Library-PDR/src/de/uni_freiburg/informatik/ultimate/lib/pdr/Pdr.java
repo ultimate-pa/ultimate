@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pdr;
 
+import java.lang.reflect.Array;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -258,7 +260,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			final Term sp = mPredTrans.pre(mTruePred, edge.getTransformula());
 			final IPredicate proofObligationPred = mPredicateUnifier.getPredicateFactory().newPredicate(sp);
 			final ProofObligation initialProofObligation =
-					new ProofObligation(proofObligationPred, edge.getSource(), mLevel);
+					new ProofObligation(proofObligationPred, edge.getSource(), 0);
 
 			firstPos.add(initialProofObligation);
 		}
@@ -278,6 +280,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		 * Initialize level 0.
 		 */
 		final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames = initializeFrames(icfg);
+		int localLevel = 0;
 
 		while (true) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -291,12 +294,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				trace.getValue().add(new Pair<>(ChangedFrame.U, mAxioms));
 			}
 
-			mLevel += 1;
+			localLevel += 1;
 
 			/**
 			 * Generated proof-obligation on level 0 -> error reachable
 			 */
-			if (!blockingPhase(proofObligations, localFrames)) {
+			if (!blockingPhase(proofObligations, localFrames, localLevel)) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(
 							"Error trace found. Frames: " + localFrames.entrySet().stream()
@@ -307,9 +310,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 									.collect(Collectors.joining(",")));
 				}
 				mLogger.debug("Error is reachable.");
-				
-				mGlobalFrames = localFrames;
-				
+				updateGlobalFrames(localFrames, localLevel);
 				return LBool.SAT;
 			}
 
@@ -329,7 +330,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 							.map(a -> a.getDebugIdentifier().toString()).collect(Collectors.joining(",")));
 					mLogger.debug("Error is not reachable.");
 				}
-				mGlobalFrames = localFrames;
+				// mGlobalFrames = localFrames;
+				updateGlobalFrames(localFrames, localLevel);
 				mInterpolants = computeInterpolants();
 
 				if (mLogger.isDebugEnabled()) {
@@ -357,7 +359,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 * @return false, if proof-obligation on level 0 is created true, if there is no proof-obligation left
 	 */
 	private final boolean blockingPhase(final Deque<ProofObligation> proofObligations,
-			Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames) {
+			Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames, int localLevel) {
 
 		mLogger.debug("Begin Blocking Phase: on Level: " + mLevel);
 
@@ -370,7 +372,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			final ProofObligation proofObligation = proofObligations.pop();
 			final IPredicate toBeBlocked = proofObligation.getToBeBlocked();
 			final IcfgLocation location = proofObligation.getLocation();
-			final int level = mLevel - proofObligation.getLevel();
+			final int level = localLevel - proofObligation.getLevel();
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("ProofObligation: " + proofObligation);
@@ -428,7 +430,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						}
 						final IPredicate prePred = mPredicateUnifier.getOrConstructPredicate(pre);
 						final ProofObligation newProofObligation =
-								new ProofObligation(prePred, predecessor, mLevel - level + 1);
+								new ProofObligation(prePred, predecessor, localLevel - level + 1);
 						proofObligations.addFirst(proofObligation);
 						proofObligations.addFirst(newProofObligation);
 						// addProofObligation(proofObligations, proofObligation, level, predecessor,
@@ -453,7 +455,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 								// predsForDumbPeople.add(mPredicateUnifier.getOrConstructPredicate(toBeBlocked));
 								final Term pred = SmtUtils.and(mScript.getScript(), not(interpolant).getFormula(),
 										toBeBlocked.getFormula());
-								updateLocalFrames(mPredicateUnifier.getOrConstructPredicate(pred), location, level, localFrames);
+								updateLocalFrames(mPredicateUnifier.getOrConstructPredicate(pred), location, level,
+										localFrames);
 							} else {
 								updateLocalFrames(toBeBlocked, location, level, localFrames);
 							}
@@ -643,8 +646,38 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		}
 	}
 
-	final void updateGlobalFrames(final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames) {
-		
+	/**
+	 * Compute conjunction of global frames and the given local frames
+	 * 
+	 * @param localFrames
+	 * @param localLevel
+	 */
+	final void updateGlobalFrames(final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames,
+			final int localLevel) {
+		int cnt;
+		/*
+		 * If local level is bigger than the global level, there are more predicates in local level, we fill the global
+		 * frames with true preds.
+		 */
+		if (localLevel > mLevel) {
+			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> frame : mGlobalFrames.entrySet()) {
+				cnt = localLevel - mLevel;
+				while (cnt > 0) {
+					frame.getValue().add(new Pair<>(ChangedFrame.U, mAxioms));
+					cnt--;
+				}
+			}
+			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> frame : mGlobalFrames.entrySet()) {
+				for (int i = 0; i <= localLevel; i++) {
+					final IPredicate current = frame.getValue().get(i).getSecond();
+					final IPredicate changed = localFrames.get(frame.getKey()).get(i).getSecond();
+					final IPredicate conjunct =
+							mPredicateUnifier.getOrConstructPredicateForConjunction(Arrays.asList(current, changed));
+					frame.getValue().set(i, new Pair<>(frame.getValue().get(i).getFirst(), conjunct));
+				}
+			}
+		}
+		mLevel = localLevel;
 	}
 
 	final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> initializeFrames(IIcfg<? extends IcfgLocation> icfg) {
