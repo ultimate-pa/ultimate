@@ -358,7 +358,7 @@ public class PetriNetLargeBlockEncoding {
 		final boolean simplify = false;
 		// try to eliminate auxiliary variables to avoid quantifier alternation in
 		// implication check
-		// advanced but possibly useless optimization: Do you elimination only for RHS
+		// advanced but possibly useless optimization: do elimination only for RHS
 		final boolean tryAuxVarElimination = true;
 		final UnmodifiableTransFormula transFormula1 = constructSequentialComposition(t1.getSource(), t3.getTarget(),
 				t1, t3, simplify, tryAuxVarElimination).getTransformula();
@@ -376,7 +376,7 @@ public class PetriNetLargeBlockEncoding {
 		final boolean simplify = false;
 		// try to eliminate auxiliary variables to avoid quantifier alternation in
 		// implication check
-		// advanced but possibly useless optimization: Do you elimination only for RHS
+		// advanced but possibly useless optimization: do elimination only for RHS
 		final boolean tryAuxVarElimination = true;
 		final UnmodifiableTransFormula transFormula1 = constructSequentialComposition(t2.getSource(), t3.getTarget(),
 				t2, t3, simplify, tryAuxVarElimination).getTransformula();
