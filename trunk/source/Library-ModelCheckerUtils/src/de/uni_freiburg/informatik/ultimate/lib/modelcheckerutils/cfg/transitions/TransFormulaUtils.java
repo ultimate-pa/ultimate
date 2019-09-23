@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -1158,9 +1159,6 @@ public final class TransFormulaUtils {
 	 * implies rhs, i.e., if the relation represented by lhs is a subset of the
 	 * relation by rhs.
 	 *
-	 * FIXME 20190902 Matthias: WARNING this method does not yet provide correct
-	 * results! I will fix the method in the next days.
-	 *
 	 * @param mgdScript
 	 *            {@link ManagedScript} that is not locked.
 	 * @return UNSAT if the implication holds, SAT if the implication does not hold,
@@ -1168,20 +1166,50 @@ public final class TransFormulaUtils {
 	 */
 	public static LBool checkImplication(final UnmodifiableTransFormula lhs, final UnmodifiableTransFormula rhs,
 			final ManagedScript mgdScript) {
-		if (!lhs.getAuxVars().isEmpty()) {
-			throw new UnsupportedOperationException();
-		}
-		if (!rhs.getAuxVars().isEmpty()) {
-			throw new UnsupportedOperationException();
-		}
 		mgdScript.lock(lhs);
 		mgdScript.push(lhs, 1);
-		mgdScript.assertTerm(lhs, lhs.getClosedFormula());
-		mgdScript.assertTerm(lhs, SmtUtils.not(mgdScript.getScript(), rhs.getClosedFormula()));
+
+		final Script script = mgdScript.getScript();
+
+		// Get the core part of the transition formulas.
+		// The RHS formula must be explicitly quantified, as it will be negated.
+		final Term lhsClosedFormula = lhs.getClosedFormula();
+		final Term rhsQuantFormula = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, rhs.getAuxVars(),
+				rhs.getFormula());
+		final Term rhsClosedFormula = UnmodifiableTransFormula.computeClosedFormula(rhsQuantFormula, rhs.getInVars(),
+				rhs.getOutVars(), new HashSet<>(), mgdScript);
+
+		// Add explicit equalities for variables mentioned in one, but not the other,
+		// transition formula.
+		final Set<IProgramVar> lhsUnmodified = DataStructureUtils.difference(rhs.getAssignedVars(),
+				lhs.getAssignedVars());
+		final Term lhsEqualities = constructExplicitEqualities(script, lhsUnmodified);
+		final Term lhsFormula = SmtUtils.and(script, lhsClosedFormula, lhsEqualities);
+
+		final Set<IProgramVar> rhsUnmodified = DataStructureUtils.difference(lhs.getAssignedVars(),
+				rhs.getAssignedVars());
+		final Term rhsEqualities = constructExplicitEqualities(script, rhsUnmodified);
+		final Term rhsFormula = SmtUtils.and(script, rhsClosedFormula, rhsEqualities);
+
+		mgdScript.assertTerm(lhs, lhsFormula);
+		mgdScript.assertTerm(lhs, SmtUtils.not(script, rhsFormula));
+
 		final LBool result = mgdScript.checkSat(lhs);
+
 		mgdScript.pop(lhs, 1);
 		mgdScript.unlock(lhs);
+
 		return result;
+	}
+
+	private static Term constructExplicitEqualities(Script script, Set<IProgramVar> variables) {
+		List<Term> equalities = new ArrayList<>(variables.size());
+		for (final IProgramVar progVar : variables) {
+			final Term equality = SmtUtils.binaryEquality(script, progVar.getDefaultConstant(),
+					progVar.getPrimedConstant());
+			equalities.add(equality);
+		}
+		return SmtUtils.and(script, equalities);
 	}
 
 	/**
