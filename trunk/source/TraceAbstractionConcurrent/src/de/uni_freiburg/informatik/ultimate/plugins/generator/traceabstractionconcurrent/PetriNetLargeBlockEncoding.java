@@ -382,12 +382,12 @@ public class PetriNetLargeBlockEncoding {
 	}
 
 	private IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
-			final List<IIcfgTransition<?>> transitions, final boolean simplify, final boolean elimQuants) {
+			final List<IIcfgTransition<?>> transitions, final boolean simplify, final boolean tryAuxVarElimination) {
 		assert onlyInternal(transitions) : "You cannot have calls or returns in normal sequential compositions";
 		final List<UnmodifiableTransFormula> transFormulas = transitions.stream().map(IcfgUtils::getTransformula)
 				.collect(Collectors.toList());
 		final UnmodifiableTransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript,
-				simplify, elimQuants, false, mXnfConversionTechnique, mSimplificationTechnique, transFormulas);
+				simplify, tryAuxVarElimination, false, mXnfConversionTechnique, mSimplificationTechnique, transFormulas);
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
 		ModelUtils.mergeAnnotations(transitions, rtr);
 		return rtr;
