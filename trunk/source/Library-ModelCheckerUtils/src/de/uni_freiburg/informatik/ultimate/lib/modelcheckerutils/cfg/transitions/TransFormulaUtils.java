@@ -288,6 +288,7 @@ public final class TransFormulaUtils {
 			final IUltimateServiceProvider services, final int serialNumber, final ManagedScript mgdScript,
 			final TermVariable[] branchIndicators, final boolean tranformToCNF,
 			final XnfConversionTechnique xnfConversionTechnique, final UnmodifiableTransFormula... transFormulas) {
+		//FIXME Matthias 2019-09-22: remove serial number, use ManagedScript to construct fresh variables
 		logger.debug("parallel composition");
 		boolean useBranchEncoders;
 		if (branchIndicators == null) {
