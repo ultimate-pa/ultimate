@@ -84,8 +84,8 @@ public class PetriNetLargeBlockEncoding {
 
 	private final ILogger mLogger;
 	private final BoundedPetriNet<IIcfgTransition<?>, IPredicate> mResult;
-	private final SimplificationTechnique simplification = SimplificationTechnique.NONE;
-	private final XnfConversionTechnique conversion = XnfConversionTechnique.BDD_BASED;
+	private final SimplificationTechnique mSimplification = SimplificationTechnique.NONE;
+	private final XnfConversionTechnique mConversion = XnfConversionTechnique.BDD_BASED;
 	private final IcfgEdgeFactory mEdgeFactory;
 	private final ManagedScript mManagedScript;
 	private final HashRelation<IIcfgTransition<?>, IIcfgTransition<?>> mCoEnabledRelation;
@@ -387,7 +387,7 @@ public class PetriNetLargeBlockEncoding {
 		final List<UnmodifiableTransFormula> transFormulas = transitions.stream().map(IcfgUtils::getTransformula)
 				.collect(Collectors.toList());
 		final UnmodifiableTransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript,
-				simplify, elimQuants, false, conversion, simplification, transFormulas);
+				simplify, elimQuants, false, mConversion, mSimplification, transFormulas);
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf);
 		ModelUtils.mergeAnnotations(transitions, rtr);
 		return rtr;
@@ -402,7 +402,7 @@ public class PetriNetLargeBlockEncoding {
 				.toArray(new UnmodifiableTransFormula[transFormulas.size()]);
 		final int serialNumber = HashUtils.hashHsieh(293, (Object[]) tfArray);
 		final UnmodifiableTransFormula parallelTf = TransFormulaUtils.parallelComposition(mLogger, mServices,
-				serialNumber, mManagedScript, null, false, conversion, tfArray);
+				serialNumber, mManagedScript, null, false, mConversion, tfArray);
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, parallelTf);
 		ModelUtils.mergeAnnotations(transitions, rtr);
 		return rtr;
