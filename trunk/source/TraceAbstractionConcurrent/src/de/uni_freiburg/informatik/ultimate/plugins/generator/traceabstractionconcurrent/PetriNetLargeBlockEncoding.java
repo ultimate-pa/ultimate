@@ -161,8 +161,15 @@ public class PetriNetLargeBlockEncoding {
 					}
 					if (meltingAllowed) {
 						for (final ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet.getSuccessors(state)) {
+							// simplify Term resulting TransFormula because various other algorithms
+							// in Ultimate have to work with this term
+							final boolean simplify = true;
+							// try to eliminate auxiliary variables to avoid quantifier alterations
+							// subsequent SMT solver calls during verification
+							final boolean tryAuxVarElimination = true;
 							final IcfgEdge meltedIcfgEdge = constructSequentialComposition(t1.getSymbol().getSource(),
-									t2.getSymbol().getTarget(), t1.getSymbol(), t2.getSymbol());
+									t2.getSymbol().getTarget(), t1.getSymbol(), t2.getSymbol(), simplify,
+									tryAuxVarElimination);
 							// create new element of the meltingStack.
 							final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element =
 									new Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>(meltedIcfgEdge, t1, t2);
@@ -347,8 +354,16 @@ public class PetriNetLargeBlockEncoding {
 		// mManagedScript.checkSat(null).
 
 	private boolean semanticRightMoverCheckTwoTransitions(final IIcfgTransition<?> t1, final IIcfgTransition<?> t3) {
-		final UnmodifiableTransFormula transFormula1 = constructSequentialComposition(t1.getSource(), t3.getTarget(), t1, t3).getTransformula();
-		final UnmodifiableTransFormula transFormula2 = constructSequentialComposition(t3.getSource(), t1.getTarget(), t3, t1).getTransformula();
+		// no need to do simplification, result is only used in one implication check
+		final boolean simplify = false;
+		// try to eliminate auxiliary variables to avoid quantifier alternation in
+		// implication check
+		// advanced but possibly useless optimization: Do you elimination only for RHS
+		final boolean tryAuxVarElimination = true;
+		final UnmodifiableTransFormula transFormula1 = constructSequentialComposition(t1.getSource(), t3.getTarget(),
+				t1, t3, simplify, tryAuxVarElimination).getTransformula();
+		final UnmodifiableTransFormula transFormula2 = constructSequentialComposition(t3.getSource(), t1.getTarget(),
+				t3, t1, simplify, tryAuxVarElimination).getTransformula();
 		final LBool result = TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);
 		if (result == LBool.SAT || result == LBool.UNKNOWN) {
 			return false;
@@ -357,8 +372,16 @@ public class PetriNetLargeBlockEncoding {
 	}
 
 	private boolean semanticLeftMoverCheckTwoTransitions(final IIcfgTransition<?> t2, final IIcfgTransition<?> t3) {
-		final UnmodifiableTransFormula transFormula1 = constructSequentialComposition(t2.getSource(), t3.getTarget(), t2, t3).getTransformula();
-		final UnmodifiableTransFormula transFormula2 = constructSequentialComposition(t3.getSource(), t2.getTarget(), t3, t2).getTransformula();
+		// no need to do simplification, result is only used in one implication check
+		final boolean simplify = false;
+		// try to eliminate auxiliary variables to avoid quantifier alternation in
+		// implication check
+		// advanced but possibly useless optimization: Do you elimination only for RHS
+		final boolean tryAuxVarElimination = true;
+		final UnmodifiableTransFormula transFormula1 = constructSequentialComposition(t2.getSource(), t3.getTarget(),
+				t2, t3, simplify, tryAuxVarElimination).getTransformula();
+		final UnmodifiableTransFormula transFormula2 = constructSequentialComposition(t3.getSource(), t2.getTarget(),
+				t3, t2, simplify, tryAuxVarElimination).getTransformula();
 		final LBool result = TransFormulaUtils.checkImplication(transFormula2, transFormula1, mManagedScript);
 		if (result == LBool.SAT || result == LBool.UNKNOWN) {
 			return false;
@@ -376,9 +399,10 @@ public class PetriNetLargeBlockEncoding {
 	}
 
 	public IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
-			final IIcfgTransition<?> first, final IIcfgTransition<?> second) {
+			final IIcfgTransition<?> first, final IIcfgTransition<?> second, final boolean simplify,
+			final boolean tryAuxVarElimination) {
 		final List<IIcfgTransition<?>> codeblocks = Arrays.asList(new IIcfgTransition<?>[] { first, second });
-		return constructSequentialComposition(source, target, codeblocks, false, false);
+		return constructSequentialComposition(source, target, codeblocks, simplify, tryAuxVarElimination);
 	}
 
 	private IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
