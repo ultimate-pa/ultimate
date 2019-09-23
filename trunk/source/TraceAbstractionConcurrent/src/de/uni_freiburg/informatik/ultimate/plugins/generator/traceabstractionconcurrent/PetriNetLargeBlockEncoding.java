@@ -84,8 +84,8 @@ public class PetriNetLargeBlockEncoding {
 
 	private final ILogger mLogger;
 	private final BoundedPetriNet<IIcfgTransition<?>, IPredicate> mResult;
-	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.NONE;
-	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BDD_BASED;
+	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
+	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 	private final IcfgEdgeFactory mEdgeFactory;
 	private final ManagedScript mManagedScript;
 	private final HashRelation<IIcfgTransition<?>, IIcfgTransition<?>> mCoEnabledRelation;
