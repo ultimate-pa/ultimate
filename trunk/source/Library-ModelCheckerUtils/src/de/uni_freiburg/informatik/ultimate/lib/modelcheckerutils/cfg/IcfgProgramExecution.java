@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -144,14 +145,25 @@ public class IcfgProgramExecution implements IProgramExecution<IIcfgTransition<I
 	 * 
 	 */
 	private static final Map<String, Integer> createThreadIds(final List<? extends IIcfgTransition<?>> trace) {
-		int nextThreadId = -1;
+		int nextThreadId = 0;
 		final Map<String, Integer> threadIdMap = new HashMap<>();
+		if (trace.isEmpty()) {
+			throw new UnsupportedOperationException("trace has length 0");
+		}
+		final String initialProcedure = trace.get(0).getPrecedingProcedure();
+		threadIdMap.put(initialProcedure, nextThreadId);
+		nextThreadId++;
 		for (final IIcfgTransition<?> trans : trace) {
-			Integer id = threadIdMap.get(trans.getPrecedingProcedure());
+			final Integer id = threadIdMap.get(trans.getPrecedingProcedure());
 			if (id == null) {
-				id = nextThreadId;
-				nextThreadId++;
-				threadIdMap.put(trans.getPrecedingProcedure(), id);
+				throw new AssertionError("No thread ID for procedure " + trans.getPrecedingProcedure());
+			}
+			if (trans instanceof IcfgForkThreadOtherTransition) {
+				final String forkedProcedure = trans.getSucceedingProcedure();
+				if (!threadIdMap.containsKey(forkedProcedure)) {
+					threadIdMap.put(forkedProcedure, nextThreadId);
+					nextThreadId++;
+				}
 			}
 		}
 		return threadIdMap;
