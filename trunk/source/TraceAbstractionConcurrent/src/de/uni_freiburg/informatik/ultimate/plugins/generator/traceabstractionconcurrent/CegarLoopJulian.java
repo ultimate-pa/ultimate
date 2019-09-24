@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePre
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.UnfoldingOrder;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -97,7 +98,6 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 	private static final boolean USE_ON_DEMAND_RESULT = false;
 
-
 	private BranchingProcess<LETTER, IPredicate> mUnfolding;
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
@@ -113,18 +113,16 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 	private PetriNetLargeBlockEncoding mLBE;
 
-	public CegarLoopJulian(final DebugIdentifier name, final IIcfg<?> rootNode,
-			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TraceAbstractionBenchmarks timingStatistics, final TAPreferences taPrefs,
-			final Collection<IcfgLocation> errorLocs, final IUltimateServiceProvider services) {
+	public CegarLoopJulian(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
+			final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks timingStatistics,
+			final TAPreferences taPrefs, final Collection<IcfgLocation> errorLocs,
+			final IUltimateServiceProvider services) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
 				InterpolationTechnique.Craig_TreeInterpolation, false, services);
 	}
 
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
-		final TaConcurContentFactory contentFactory = new TaConcurContentFactory(this, super.mCsToolkit,
-				mPredicateFactory, super.mPref.computeHoareAnnotation(), mPref.computeHoareAnnotation(), false);
 		final boolean useTildeInitWorkaround = mIcfg.getProcedureEntryNodes().containsKey("~init");
 		if (useTildeInitWorkaround) {
 			mLogger.warn(
@@ -139,12 +137,14 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 						+ " procedure (this is the procedure where all executions start)");
 			}
 			final boolean addThreadUsageMonitors = false;
-			final BoundedPetriNet<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices, mIcfg,
-					mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
+			final BoundedPetriNet<LETTER, IPredicate> cfg =
+					CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices, mIcfg,
+							mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
 			if (mPref.useLbeInConcurrentAnalysis()) {
 				mLBE = new PetriNetLargeBlockEncoding(mServices, mIcfg.getCfgSmtToolkit(),
 						(BoundedPetriNet<IIcfgTransition<?>, IPredicate>) cfg);
-				final BoundedPetriNet<LETTER, IPredicate> lbecfg = (BoundedPetriNet<LETTER, IPredicate>) mLBE.getResult();
+				final BoundedPetriNet<LETTER, IPredicate> lbecfg =
+						(BoundedPetriNet<LETTER, IPredicate>) mLBE.getResult();
 				mAbstraction = lbecfg;
 			} else {
 				mAbstraction = cfg;
@@ -175,8 +175,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 		PetriNetUnfolder<LETTER, IPredicate> unf;
 		try {
-			unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices),
-					abstraction, ord, cutOffSameTrans, !mPref.unfoldingToNet());
+			unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices), abstraction, ord, cutOffSameTrans,
+					!mPref.unfoldingToNet());
 		} catch (final PetriNetNot1SafeException e) {
 			throw new UnsupportedOperationException(e.getMessage());
 		}
@@ -243,21 +243,21 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		}
 
 		if (mPref.dumpAutomata()) {
-			final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-					+ "_AbstractionAfterDifference";
+			final String filename =
+					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "_AbstractionAfterDifference";
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
 
 		if (mRemoveUnreachable) {
 			mAbstraction = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable<>(
-					new AutomataLibraryServices(mServices), (BoundedPetriNet) mAbstraction).getResult();
+					new AutomataLibraryServices(mServices), (BoundedPetriNet<LETTER, IPredicate>) mAbstraction)
+							.getResult();
 			if (mPref.dumpAutomata()) {
 				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
 						+ "_AbstractionAfterRemoveUnreachable";
 				super.writeAutomatonToFile(mAbstraction, filename);
 			}
 		}
-
 
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 		// if (mBiggestAbstractionSize < mAbstraction.size()){
@@ -303,42 +303,44 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			break;
 		case PREDICATE_ABSTRACTION:
 			final IHoareTripleChecker htc = new IncrementalHoareTripleChecker(super.mCsToolkit, false);
-			final DeterministicInterpolantAutomaton<LETTER> raw =
-					new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, interpolAutomaton,
-							mRefinementEngine.getPredicateUnifier(), false, false);
+			final DeterministicInterpolantAutomaton<LETTER> raw = new DeterministicInterpolantAutomaton<>(mServices,
+					mCsToolkit, htc, interpolAutomaton, mRefinementEngine.getPredicateUnifier(), false, false);
 			if (mEnhanceInterpolantAutomatonOnDemand) {
-				final Set<LETTER> universalSubtrahendLoopers = determineUniversalSubtrahendLoopers(
-						mAbstraction.getAlphabet(), interpolAutomaton.getStates());
+				final Set<LETTER> universalSubtrahendLoopers =
+						determineUniversalSubtrahendLoopers(mAbstraction.getAlphabet(), interpolAutomaton.getStates());
 				mLogger.info("Number of universal loopers: " + universalSubtrahendLoopers.size() + " out of "
 						+ mAbstraction.getAlphabet().size());
-				final NestedWordAutomaton<LETTER, IPredicate> ia = (NestedWordAutomaton<LETTER, IPredicate>) interpolAutomaton;
+				final NestedWordAutomaton<LETTER, IPredicate> ia =
+						(NestedWordAutomaton<LETTER, IPredicate>) interpolAutomaton;
 				for (final IPredicate state : ia.getStates()) {
 					for (final LETTER letter : universalSubtrahendLoopers) {
 						ia.addInternalTransition(state, letter, state);
 					}
 				}
-				final DifferencePairwiseOnDemand dpod = new DifferencePairwiseOnDemand<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
-						mPredicateFactoryInterpolantAutomata, (IPetriNet<LETTER, IPredicate>) mAbstraction, raw,
-						universalSubtrahendLoopers);
+				final DifferencePairwiseOnDemand<LETTER, IPredicate> dpod = new DifferencePairwiseOnDemand<>(
+						new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
+						(IPetriNet<LETTER, IPredicate>) mAbstraction, raw, universalSubtrahendLoopers);
 				onDemandConstructedNet = dpod.getResult();
 				raw.switchToReadonlyMode();
 			} else {
 				onDemandConstructedNet = null;
 			}
 			try {
-				dia = new RemoveUnreachable(new AutomataLibraryServices(mServices), raw).getResult();
+				dia = new RemoveUnreachable<>(new AutomataLibraryServices(mServices), raw).getResult();
 			} catch (final AutomataOperationCanceledException aoce) {
-				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
-						"enhancing interpolant automaton that has " + interpolAutomaton.getStates().size()
-								+ " states and an alphabet of " + mAbstraction.getAlphabet().size() + " letters");
-				throw aoce;
+				final RunningTaskInfo rti =
+						new RunningTaskInfo(getClass(),
+								"enhancing interpolant automaton that has " + interpolAutomaton.getStates().size()
+										+ " states and an alphabet of " + mAbstraction.getAlphabet().size()
+										+ " letters");
+				throw new ToolchainCanceledException(aoce, rti);
 			}
 			final double dfaTransitionDensity = new Analyze<>(new AutomataLibraryServices(mServices), dia, false)
 					.getTransitionDensity(SymbolType.INTERNAL);
 			mLogger.info("DFA transition density " + dfaTransitionDensity);
 			if (mPref.dumpAutomata()) {
-				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-						+ "_EagerFloydHoareAutomaton";
+				final String filename =
+						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "_EagerFloydHoareAutomaton";
 				super.writeAutomatonToFile(dia, filename);
 			}
 			break;
@@ -354,9 +356,9 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final String filename = "InterpolantAutomatonDeterminized_Iteration" + mIteration;
 			writeAutomatonToFile(dia, filename);
 		}
-//		assert accepts(mServices, dia, mCounterexample.getWord(),
-//				true) : "Counterexample not accepted by determinized interpolant automaton: "
-//						+ mCounterexample.getWord();
+		// assert accepts(mServices, dia, mCounterexample.getWord(),
+		// true) : "Counterexample not accepted by determinized interpolant automaton: "
+		// + mCounterexample.getWord();
 		mLogger.debug("Sucessfully determinized");
 		return new Pair<>(dia, onDemandConstructedNet);
 	}
@@ -410,28 +412,26 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 	@Override
 	public IPreconditionProvider getPreconditionProvider() {
-
-		final boolean threadInUseCheckEnabled = (!mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap()
-				.isEmpty())
-				&& mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().entrySet().iterator()
-						.next().getValue().getInUseVar() != null;
-		if (threadInUseCheckEnabled ) {
-		return predicateUnifier -> {
-			final ConcurrencyInformation ci = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
-			if (ci.getThreadInstanceMap().isEmpty()) {
-				return predicateUnifier.getTruePredicate();
-			}
-			final Set<IProgramNonOldVar> threadInUseVars = ci.getThreadInstanceMap().entrySet().stream()
-					.map(Entry::getValue).map(ThreadInstance::getInUseVar).collect(Collectors.toSet());
-			final List<Term> negated = threadInUseVars.stream().map(
-					x -> SmtUtils.not(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), x.getTermVariable()))
-					.collect(Collectors.toList());
-			final Term conjunction = SmtUtils.and(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), negated);
-			return predicateUnifier.getOrConstructPredicate(conjunction);
-		};
-		} else {
-			return super.getPreconditionProvider();
+		final boolean threadInUseCheckEnabled =
+				!mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()
+						&& mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().entrySet()
+								.iterator().next().getValue().getInUseVar() != null;
+		if (threadInUseCheckEnabled) {
+			return predicateUnifier -> {
+				final ConcurrencyInformation ci = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
+				if (ci.getThreadInstanceMap().isEmpty()) {
+					return predicateUnifier.getTruePredicate();
+				}
+				final Set<IProgramNonOldVar> threadInUseVars = ci.getThreadInstanceMap().entrySet().stream()
+						.map(Entry::getValue).map(ThreadInstance::getInUseVar).collect(Collectors.toSet());
+				final List<Term> negated = threadInUseVars.stream().map(
+						x -> SmtUtils.not(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), x.getTermVariable()))
+						.collect(Collectors.toList());
+				final Term conjunction = SmtUtils.and(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), negated);
+				return predicateUnifier.getOrConstructPredicate(conjunction);
+			};
 		}
+		return super.getPreconditionProvider();
 	}
 
 }
