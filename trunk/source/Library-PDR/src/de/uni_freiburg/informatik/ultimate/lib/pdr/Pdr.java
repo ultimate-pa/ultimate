@@ -188,7 +188,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 		mScript = createSolver(mServices, mCsToolkit);
 		mPredTrans = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
-		
+
 		mAxioms = mPredicateUnifier.getOrConstructPredicate(mCsToolkit.getSmtFunctionsAndAxioms().getAxioms());
 
 		mTruePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("true"));
@@ -232,8 +232,13 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			for (final IcfgEdge loc : initNode.getOutgoingEdges()) {
 				if (error.contains(loc.getTarget())) {
 					if (mAxioms != null) {
-						final Validity result = checkSatInternal(mTruePred, (IInternalAction) loc, mAxioms);
-						if (IHoareTripleChecker.convertValidity2Lbool(result) == LBool.UNSAT) {
+						final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
+								.getModifiedBoogieVars(loc.getPrecedingProcedure());
+
+						final LBool res = PredicateUtils.isInductiveHelper(mScript.getScript(), mTruePred, not(mAxioms),
+								loc.getTransformula(), modifiableGlobals, modifiableGlobals);
+
+						if (res == LBool.UNSAT) {
 							mInvarSpot = 0;
 							mInterpolants = computeInterpolants();
 							return LBool.UNSAT;
@@ -415,11 +420,10 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						}
 
 						Term pre = mPredTrans.pre(toBeBlocked, predTF);
-						if (pre instanceof QuantifiedFormula) {
-							pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
-									SimplificationTechnique.SIMPLIFY_DDA,
-									XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-						}
+						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
+								SimplificationTechnique.SIMPLIFY_DDA,
+								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+
 						final IPredicate prePred = mPredicateUnifier.getOrConstructPredicate(pre);
 						final ProofObligation newProofObligation =
 								new ProofObligation(prePred, predecessor, localLevel - level + 1);
@@ -480,15 +484,16 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						throw new UnsupportedOperationException("Cannot deal with procedures");
 					}
 					mLogger.debug("Found Return");
-					final IIcfgReturnTransition<?, ?> returnTrans = (IIcfgReturnTransition<?, ?>) predecessorTransition;
+					// final IIcfgReturnTransition<?, ?> returnTrans = (IIcfgReturnTransition<?, ?>)
+					// predecessorTransition;
 					/**
 					 * Get the procedure in form of a trace.
 					 */
-					final List<LETTER> procTrace = getProcedureTrace(returnTrans);
-					final PathProgramConstructionResult pp =
-							PathProgram.constructPathProgram("procErrorPP", mIcfg, new HashSet<>(procTrace));
-					final Set<IcfgLocation> errorLocOfProc = new HashSet<>();
-					errorLocOfProc.add(returnTrans.getTarget());
+					// final List<LETTER> procTrace = getProcedureTrace(returnTrans);
+					// final PathProgramConstructionResult pp =
+					// PathProgram.constructPathProgram("procErrorPP", mIcfg, new HashSet<>(procTrace));
+					// final Set<IcfgLocation> errorLocOfProc = new HashSet<>();
+					// errorLocOfProc.add(returnTrans.getTarget());
 					// final LBool procResult = computePdr(pp.getPathProgram(), errorLocOfProc);
 				} else {
 					throw new UnsupportedOperationException(
@@ -541,9 +546,14 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		}
 		final ArrayList<Term> tfConstants = new ArrayList<Term>();
 		final ArrayList<Term> tfConstantsPrimed = new ArrayList<Term>();
+
 		for (final IProgramVar outVar : outVarsTrans.keySet()) {
 			tfConstants.add(outVar.getDefaultConstant());
 			tfConstantsPrimed.add(outVar.getPrimedConstant());
+		}
+		for (final IProgramVar var : predecessorFrame.getVars()) {
+			tfConstants.add(var.getDefaultConstant());
+			tfConstantsPrimed.add(var.getPrimedConstant());
 		}
 
 		equalities = SmtUtils.and(mScript.getScript(), equalities,
@@ -1005,7 +1015,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				SolverBuilder.constructSolverSettings(SolverMode.Internal_SMTInterpol, false, null);
 		final Script script = SolverBuilder.buildAndInitializeSolver(services, SolverMode.Internal_SMTInterpol,
 				solverSettings, false, false, Logics.ALL.toString(), "PdrSolver");
-		
+
 		csToolkit.getSmtFunctionsAndAxioms().transferSymbols(script);
 		return new ManagedScript(services, script);
 	}
