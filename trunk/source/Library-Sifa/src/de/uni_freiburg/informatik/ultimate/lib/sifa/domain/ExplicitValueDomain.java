@@ -88,10 +88,15 @@ public class ExplicitValueDomain implements IDomain {
 		return mTools.orT(joinAccordingToMax(rewrittenDisjuncts));
 	}
 
-	private IPredicate joinAccordingToMax(final IPredicate dnfPredicate) {
-		return mTools.orT(joinAccordingToMax(SmtUtils.getDisjuncts(dnfPredicate.getFormula())));
+	private IPredicate joinAccordingToMax(final IPredicate predicate) {
+		// We convert to DNF circumvent problems with nested disjunctions.
+		// There might be a more clever way to deal with nested disjunctions.
+		return mTools.orT(joinAccordingToMax(mTools.dnfDisjuncts(predicate)));
 	}
 
+	/**
+	 * @param disjuncts Disjuncts from a DNF. Each disjunct is free of nested disjunctions.
+	 */
 	private Term[] joinAccordingToMax(final Term[] disjuncts) {
 		if (disjuncts.length <= mMaxDisjuncts) {
 			return disjuncts;
