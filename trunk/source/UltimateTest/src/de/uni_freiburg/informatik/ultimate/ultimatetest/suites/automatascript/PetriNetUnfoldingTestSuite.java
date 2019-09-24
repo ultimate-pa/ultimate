@@ -80,6 +80,7 @@ public class PetriNetUnfoldingTestSuite extends UltimateTestSuite {
 
 	private static final String[] SETTINGS = {
 			"AutomataScript/finitePrefix.epf",
+//			"AutomataScript/finitePrefix2PetriNet.epf",
 			};
 
 	private static final String[] INTERESTING_COLUMNS = {
