@@ -246,4 +246,9 @@ public class PolynomialTermUtils {
 	public interface GeneralizedConstructor<V, T> {
 		public T apply(Sort sort, Rational constant, Map<V, Rational> map);
 	}
+	
+	@FunctionalInterface
+	public interface TriFunction<T, U, R, S> {
+		public S apply(T script, U sort, R term);
+	}
 }

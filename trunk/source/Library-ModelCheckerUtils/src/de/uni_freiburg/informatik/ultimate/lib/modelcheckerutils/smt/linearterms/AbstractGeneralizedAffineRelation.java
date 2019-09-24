@@ -336,7 +336,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 				if (var2exp.getKey() == subject) {
 					//do nothing
 				}else {
-					//TODO: Integer Sort.
+					//TODO: Integer sort tests
 					assert var2exp.getValue().isIntegral();
 					// TODO: Ask Matthias about whether it is to be expected that the implementation of isintegral changes.
 					// Because then this could be made easier.
@@ -351,6 +351,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 					}else {
 						power = var2exp.getKey();
 					}
+					//TODO: Ask Matthias whether it matters much, that redundant assumptions could get added
+					//e.g. when you already have x != 0 and you have to divide by x again.
 					if (SmtSortUtils.isRealSort(mAffineTerm.getSort())){
 						makeRealAssumptions(assumptionMapBuilder, var2exp.getKey());
 						final Term invPower = script.term("/", SmtUtils.rational2Term(script, Rational.ONE, 
