@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -91,7 +92,7 @@ public class ConditionMarking<LETTER, PLACE> implements Iterable<Condition<LETTE
 	 */
 	@Override
 	public Iterator<Condition<LETTER, PLACE>> iterator() {
-		return mConditions.iterator();
+		return Collections.unmodifiableSet(mConditions).iterator();
 	}
 
 	/**
