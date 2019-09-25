@@ -2,22 +2,22 @@
  * Copyright (C) 2011-2015 Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 
 /**
  * A Marking of an occurencenet which is a set of conditions.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            symbol type
@@ -51,7 +51,7 @@ public class ConditionMarking<LETTER, PLACE> implements Iterable<Condition<LETTE
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param conditions
 	 *            set of conditions
 	 */
@@ -137,18 +137,8 @@ public class ConditionMarking<LETTER, PLACE> implements Iterable<Condition<LETTE
 	}
 
 	/**
-	 * Adds the conditions of another marking.
-	 * 
-	 * @param other
-	 *            another marking
-	 */
-	public void add(final ConditionMarking<LETTER, PLACE> other) {
-		mConditions.addAll(other.mConditions);
-	}
-
-	/**
 	 * Adds the markings conditions to another set.
-	 * 
+	 *
 	 * @param other
 	 *            another set of conditions
 	 */
@@ -167,22 +157,6 @@ public class ConditionMarking<LETTER, PLACE> implements Iterable<Condition<LETTE
 		resultSet.removeAll(event.getPredecessorConditions());
 		resultSet.addAll(event.getSuccessorConditions());
 		return new ConditionMarking<>(resultSet);
-	}
-
-	/**
-	 * Revokes the occurence of the specified transition if valid.
-	 * 
-	 * @param event
-	 *            event
-	 * @return {@code true} iff revoking was successful
-	 */
-	public boolean undoEvent(final Event<LETTER, PLACE> event) {
-		if (!mConditions.containsAll(event.getSuccessorConditions())) {
-			return false;
-		}
-		mConditions.removeAll(event.getSuccessorConditions());
-		mConditions.addAll(event.getPredecessorConditions());
-		return true;
 	}
 
 	@Override
