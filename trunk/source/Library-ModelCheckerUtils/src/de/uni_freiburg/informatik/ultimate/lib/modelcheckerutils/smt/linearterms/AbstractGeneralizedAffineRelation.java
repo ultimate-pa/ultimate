@@ -2,8 +2,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterm
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -313,9 +311,10 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
 			// EQ and DISTINCT need Modulo Assumption
 			if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
-				Term modTerm = SmtUtils.mod(script, rhsTermWithoutDivision,
+				final Term modTerm = SmtUtils.mod(script, rhsTermWithoutDivision,
 										    coeffOfSubject.toTerm(mAffineTerm.getSort()));
-				assumptionMapBuilder.put(AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT, modTerm);
+				assumptionMapBuilder.putDivisibleByConstant(rhsTermWithoutDivision, 
+															coeffOfSubject.toTerm(mAffineTerm.getSort()));
 			} 
 			// cases LEQ, LESS, GREATER, GEQ do nothing
 			
@@ -385,16 +384,15 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		return result;
 	}
 	
-	private void makeRealAssumptions(AssumptionMapBuilder assuMapBuilder, Term divisor) {
-		assuMapBuilder.put(AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO, divisor);
+	private void makeRealAssumptions(final AssumptionMapBuilder assuMapBuilder, final Term divisor) {
+		assuMapBuilder.putDivisorNotZero(divisor);
 	}
 	
-	private void makeIntAssumptions(AssumptionMapBuilder assuMapBuilder, Script script, Term divisor, Term dividend) {
-		assuMapBuilder.put(AssumptionForSolvability.INTEGER_DIVISOR_NOT_ZERO, divisor);
+	private void makeIntAssumptions(final AssumptionMapBuilder assuMapBuilder, final Script script, final Term divisor, final Term dividend) {
+		assuMapBuilder.putDivisorNotZero(divisor);
 		// EQ and DISTINCT need Modulo Assumption
 		if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
-			Term modTerm = SmtUtils.mod(script, dividend, divisor);
-			assuMapBuilder.put(AssumptionForSolvability.INTEGER_DIVISIBLE_BY_VARIABLE, modTerm);
+			assuMapBuilder.putDivisibleByVariable(dividend, divisor);
 		}
 		// cases LEQ, LESS, GREATER, GEQ do nothing
 	}

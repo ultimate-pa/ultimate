@@ -12,8 +12,6 @@ public abstract class AbstractAssumption implements IAssumption{
 	protected final Script mScript;
 	protected final TriFunction<Script, Sort, Term, Term> mRhsAppender;
 	
-	
-	public abstract boolean hasContractedForm();
 	protected abstract Term constructContractedLhs();
 	protected abstract Term[] getConjunctsForExplicitForm();
 	
@@ -24,6 +22,7 @@ public abstract class AbstractAssumption implements IAssumption{
 		mRhsAppender = rhsConstructor;
 	}
 	
+	@Override
 	public Sort getSort() {
 		return mSort;
 	}

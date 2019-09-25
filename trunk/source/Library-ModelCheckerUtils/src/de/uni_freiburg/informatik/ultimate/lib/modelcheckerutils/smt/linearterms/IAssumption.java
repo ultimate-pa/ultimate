@@ -34,4 +34,6 @@ public interface IAssumption {
 	 * Contracted form  x*y != 0
 	 */
 	public Term toContractedTermIfPossible();
+	
+	public boolean hasContractedForm();
 }
