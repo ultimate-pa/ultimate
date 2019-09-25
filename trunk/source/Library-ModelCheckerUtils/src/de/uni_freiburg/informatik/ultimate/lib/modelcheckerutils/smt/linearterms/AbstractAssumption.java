@@ -44,7 +44,7 @@ public abstract class AbstractAssumption implements IAssumption{
 		return mRhsAppender.apply(mScript, mSort, constructExplicitLhs());
 	}
 	
-	private Term constructExplicitLhs() {
+	protected Term constructExplicitLhs() {
 		return SmtUtils.and(mScript, getConjunctsForExplicitForm());
 	}
 }

@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 /**
  * 
  * An assumption that represents Terms that declare variables to be notZero.
+ * 
  * @author LeonardFichtner
  *
  */
@@ -41,7 +42,7 @@ public class VariableNotZeroAssumption extends AbstractAssumption{
 		}else if (SmtSortUtils.isIntSort(sort)){
 			return notEqualZeroInt(script, term);
 		}else {
-			throw new UnsupportedOperationException("this method is not implemented for this sort.");
+			throw new UnsupportedOperationException("This method is not implemented for this sort.");
 		}
 	}
 	

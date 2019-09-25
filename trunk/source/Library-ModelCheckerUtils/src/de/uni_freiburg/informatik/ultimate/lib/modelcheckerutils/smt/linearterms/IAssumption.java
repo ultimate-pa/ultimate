@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 /**
 *
 * This represents an Assumption (possibly consisting of multiple sub-assumptions)
-* for Solvability of an {@link AbstractGeneralizedAffineRelation}.
+* for solvability of an {@link AbstractGeneralizedAffineRelation}.
 *
 * @author Leonard Fichtner (leonard.fichtner@web.de)
 *
