@@ -102,6 +102,7 @@ public class PetriNetUnfoldingTestSuite extends UltimateTestSuite {
 
 	private static final Object[] INTERESTING_OPERATIONS = {
 			"finitePrefix",
+			"finitePrefix2PetriNet"
 	};
 
 	private static final Set<Object> INTERESTING_OPERATIONS_AS_SET =
