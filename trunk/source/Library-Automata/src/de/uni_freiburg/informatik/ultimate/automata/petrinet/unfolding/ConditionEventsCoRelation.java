@@ -302,6 +302,7 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 		final Set<Event<LETTER, PLACE>> coRelatedEvents = mCoRelation.getImage(cond);
 		final Set<Condition<LETTER, PLACE>> result = coRelatedEvents.stream()
 				.flatMap(x -> x.getSuccessorConditions().stream()).collect(Collectors.toSet());
+		cond.getPredecessorEvent().getConditionMark().addTo(result);
 		return result;
 	}
 }
