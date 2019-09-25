@@ -31,6 +31,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -267,6 +268,31 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		}
 		setCompanion(event);
 		return true;
+	}
+
+	/**
+	 * TODO #Backfolding
+	 */
+	public boolean doCutOffCheckAndSetCompanionForComprehensivePrefix(final Event<LETTER, PLACE> companionCandidate,
+			final Comparator<Event<LETTER, PLACE>> order, final BranchingProcess<LETTER, PLACE> bp) {
+		companionCandidate.computeMapForFiniteComprehensivePrefixCutOffCheck(bp);
+		this.computeMapForFiniteComprehensivePrefixCutOffCheck(bp);
+		return false;
+	}
+
+	/**
+	 * TODO #Backfolding
+	 * <p>
+	 * Map m such that for each {@link Condition} c in the local configuration of
+	 * this {@link Event} the map contains the pair
+	 * (c.getPlace(),bp.getCoRelatedPlaces(c)). </ p> TODO Find a nice name for this
+	 * map or find a view that is easy to understand
+	 */
+	public Map<PLACE, Set<PLACE>> computeMapForFiniteComprehensivePrefixCutOffCheck(
+			final BranchingProcess<LETTER, PLACE> bp) {
+		getLocalConfiguration();
+		bp.computeCoRelatedPlaces(null);
+		return null;
 	}
 
 	/**
