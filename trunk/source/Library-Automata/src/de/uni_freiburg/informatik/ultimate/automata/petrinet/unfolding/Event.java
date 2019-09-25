@@ -124,7 +124,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public Event(final BranchingProcess<LETTER, PLACE> bp) {
 		mTransition = null;
 		mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>());
-		mMark = new Marking(bp.getNet().getInitialPlaces());
+		mMark = new Marking<LETTER, PLACE>(bp.getNet().getInitialPlaces());
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
 		mConditionMark = new ConditionMarking<>(conditionMarkSet);
 		mPredecessors = new HashSet<>();
