@@ -251,8 +251,8 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 *         </ul>
 	 *         So far this definition corresponds to cut-off events as defined in the 1996 TACAS Paper.
 	 */
-	public boolean checkCutOffSetCompanion(final Event<LETTER, PLACE> event, final Comparator<Event<LETTER, PLACE>> order,
-			final boolean sameTransitionCutOff) {
+	public boolean checkCutOffAndSetCompanion(final Event<LETTER, PLACE> event,
+			final Comparator<Event<LETTER, PLACE>> order, final boolean sameTransitionCutOff) {
 		if (sameTransitionCutOff) {
 			// additional requirement for cut-off events.
 			// TODO: tests to compare prefix sizes.
@@ -273,7 +273,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	/**
 	 * TODO #Backfolding
 	 */
-	public boolean doCutOffCheckAndSetCompanionForComprehensivePrefix(final Event<LETTER, PLACE> companionCandidate,
+	public boolean checkCutOffAndSetCompanionForComprehensivePrefix(final Event<LETTER, PLACE> companionCandidate,
 			final Comparator<Event<LETTER, PLACE>> order, final BranchingProcess<LETTER, PLACE> bp) {
 		companionCandidate.computeMapForFiniteComprehensivePrefixCutOffCheck(bp);
 		this.computeMapForFiniteComprehensivePrefixCutOffCheck(bp);

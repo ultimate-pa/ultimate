@@ -182,17 +182,17 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * @param sameTransitionCutOff
 	 *            {@code true} iff events belong to the same transition
 	 * @return true iff event is cut-off
-	 * @see Event#checkCutOffSetCompanion(Event, Comparator, boolean)
+	 * @see Event#checkCutOffAndSetCompanion(Event, Comparator, boolean)
 	 */
 	public boolean isCutoffEvent(final Event<LETTER, PLACE> event, final Comparator<Event<LETTER, PLACE>> order,
 			final boolean sameTransitionCutOff) {
 		for (final Event<LETTER, PLACE> ev : mMarkingEventRelation.getImage(event.getMark().hashCode())) {
 			if (mNewFiniteComprehensivePrefixMode) {
-				if (event.doCutOffCheckAndSetCompanionForComprehensivePrefix(ev, order, this)) {
+				if (event.checkCutOffAndSetCompanionForComprehensivePrefix(ev, order, this)) {
 					return true;
 				}
 			} else {
-				if (event.checkCutOffSetCompanion(ev, order, sameTransitionCutOff)) {
+				if (event.checkCutOffAndSetCompanion(ev, order, sameTransitionCutOff)) {
 					return true;
 				}
 			}
