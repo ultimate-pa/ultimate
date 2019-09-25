@@ -21,7 +21,7 @@ public abstract class BranchingProcessWriter<LETTER, STATE> extends GeneralAutom
 		super(writer);
 		mAlphabet = getAlphabetMapping(branchingProcess.getAlphabet());
 		mConditionsMapping = getConditionsMapping(branchingProcess.getConditions());
-		print("PetriNet ");
+		print("Branching Process ");
 		print(name);
 		printAutomatonPrefix();
 		printAlphabet();
