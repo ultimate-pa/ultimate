@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.cli.options;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -348,8 +349,9 @@ public class OptionBuilder {
 		final int lastIdx = pluginId.lastIndexOf('.');
 		final String prefix = lastIdx > 0 ? pluginId.substring(lastIdx + 1) : pluginId;
 		final String unprocessedName = prefix + " " + label;
-		final String processedName = unprocessedName.replace(' ', '.').replace('(', '.').replace(')', '.')
-				.replaceAll(":", "").replace('"', '.').replace('\'', '.').replaceAll("\\.+", ".").toLowerCase();
+		final String processedName = unprocessedName
+				.replaceAll(":", "").replaceAll("[ ()\"'.]+", ".")
+				.toLowerCase(Locale.ENGLISH);
 		final int newLength = processedName.length();
 
 		if (newLength > MAX_NAME_LENGTH) {

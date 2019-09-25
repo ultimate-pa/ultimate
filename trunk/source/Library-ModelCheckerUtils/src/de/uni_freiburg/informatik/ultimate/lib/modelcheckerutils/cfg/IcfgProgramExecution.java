@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformat
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.AtomicTraceElementBuilder;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
@@ -48,9 +50,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -130,15 +131,39 @@ public class IcfgProgramExecution implements IProgramExecution<IIcfgTransition<I
 				|| a instanceof IIcfgJoinTransitionThreadCurrent<?>);
 	}
 
+	/**
+	 * Construct mapping from procedures to thread IDs. The thread IDs are
+	 * constructed for the output of Ultimate and may not coincide with the
+	 * auxiliary thread id variables that are introduced by our "petrification"
+	 * algorithm. <br />
+	 * The fact that we assign each procedure a thread ID is not a soundness
+	 * issue because the procedures that we see here are the "thread instances"
+	 * and not the "thread templates" of our petrification. Thread instances can
+	 * only be used once at a time and if a thread instance is used
+	 * consecutively it will get the same thread ID again. But this is
+	 * compatible to the Pthreads execution model.
+	 * 
+	 */
 	private static final Map<String, Integer> createThreadIds(final List<? extends IIcfgTransition<?>> trace) {
-		int nextThreadId = -1;
+		int nextThreadId = 0;
 		final Map<String, Integer> threadIdMap = new HashMap<>();
+		if (trace.isEmpty()) {
+			throw new UnsupportedOperationException("trace has length 0");
+		}
+		final String initialProcedure = trace.get(0).getPrecedingProcedure();
+		threadIdMap.put(initialProcedure, nextThreadId);
+		nextThreadId++;
 		for (final IIcfgTransition<?> trans : trace) {
-			Integer id = threadIdMap.get(trans.getPrecedingProcedure());
+			final Integer id = threadIdMap.get(trans.getPrecedingProcedure());
 			if (id == null) {
-				id = nextThreadId;
-				nextThreadId++;
-				threadIdMap.put(trans.getPrecedingProcedure(), id);
+				throw new AssertionError("No thread ID for procedure " + trans.getPrecedingProcedure());
+			}
+			if (trans instanceof IcfgForkThreadOtherTransition) {
+				final String forkedProcedure = trans.getSucceedingProcedure();
+				if (!threadIdMap.containsKey(forkedProcedure)) {
+					threadIdMap.put(forkedProcedure, nextThreadId);
+					nextThreadId++;
+				}
 			}
 		}
 		return threadIdMap;

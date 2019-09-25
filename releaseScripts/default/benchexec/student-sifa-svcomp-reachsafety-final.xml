@@ -30,7 +30,6 @@
     <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>
     <option name="--sifa.call.summarizer">TopInputCallSummarizer</option>
     <option name="--sifa.fluid">SizeLimitFluid</option>
-    <option name="--sifa.intern.fluid">SizeLimitFluid</option>
     <option name="--sifa.simplification.technique">SIMPLIFY_DDA</option>
   </rundefinition>
   
@@ -42,7 +41,6 @@
     <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>
     <option name="--sifa.call.summarizer">TopInputCallSummarizer</option>
     <option name="--sifa.fluid">SizeLimitFluid</option>
-    <option name="--sifa.intern.fluid">SizeLimitFluid</option>
     <option name="--sifa.simplification.technique">NONE</option>
   </rundefinition>
   
@@ -54,7 +52,6 @@
     <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>
     <option name="--sifa.call.summarizer">TopInputCallSummarizer</option>
     <option name="--sifa.fluid">SizeLimitFluid</option>
-    <option name="--sifa.intern.fluid">SizeLimitFluid</option>
     <option name="--sifa.simplification.technique">SIMPLIFY_QUICK</option>
   </rundefinition>
   
@@ -66,7 +63,6 @@
     <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>
     <option name="--sifa.call.summarizer">TopInputCallSummarizer</option>
     <option name="--sifa.fluid">SizeLimitFluid</option>
-    <option name="--sifa.intern.fluid">SizeLimitFluid</option>
     <option name="--sifa.simplification.technique">SIMPLIFY_DDA</option>
   </rundefinition>
 
@@ -78,7 +74,6 @@
     <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>
     <option name="--sifa.call.summarizer">TopInputCallSummarizer</option>
     <option name="--sifa.fluid">SizeLimitFluid</option>
-    <option name="--sifa.intern.fluid">SizeLimitFluid</option>
     <option name="--sifa.simplification.technique">SIMPLIFY_DDA</option>
   </rundefinition>
 
@@ -90,7 +85,6 @@
     <option name="--rcfgbuilder.size.of.a.code.block">SequenceOfStatements</option>
     <option name="--sifa.call.summarizer">TopInputCallSummarizer</option>
     <option name="--sifa.fluid">SizeLimitFluid</option>
-    <option name="--sifa.intern.fluid">SizeLimitFluid</option>
     <option name="--sifa.simplification.technique">SIMPLIFY_DDA</option>
   </rundefinition>
   
@@ -102,7 +96,6 @@
     <option name="--rcfgbuilder.size.of.a.code.block">SingleStatement</option>
     <option name="--sifa.call.summarizer">TopInputCallSummarizer</option>
     <option name="--sifa.fluid">SizeLimitFluid</option>
-    <option name="--sifa.intern.fluid">SizeLimitFluid</option>
     <option name="--sifa.simplification.technique">SIMPLIFY_DDA</option>
   </rundefinition>
 
@@ -114,7 +107,6 @@
     <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>
     <option name="--sifa.call.summarizer">ReUseSupersetCallSummarizer</option>
     <option name="--sifa.fluid">SizeLimitFluid</option>
-    <option name="--sifa.intern.fluid">SizeLimitFluid</option>
     <option name="--sifa.simplification.technique">SIMPLIFY_DDA</option>
   </rundefinition>
 
@@ -126,7 +118,6 @@
     <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>
     <option name="--sifa.call.summarizer">InterpretCallSummarizer</option>
     <option name="--sifa.fluid">SizeLimitFluid</option>
-    <option name="--sifa.intern.fluid">SizeLimitFluid</option>
     <option name="--sifa.simplification.technique">SIMPLIFY_DDA</option>
   </rundefinition>
 
@@ -138,7 +129,6 @@
     <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>
     <option name="--sifa.call.summarizer">TopInputCallSummarizer</option>
     <option name="--sifa.fluid">AlwaysFluid</option>
-    <option name="--sifa.intern.fluid">AlwaysFluid</option>
     <option name="--sifa.simplification.technique">SIMPLIFY_DDA</option>
   </rundefinition>
   
@@ -150,10 +140,56 @@
     <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>
     <option name="--sifa.call.summarizer">TopInputCallSummarizer</option>
     <option name="--sifa.fluid">NeverFluid</option>
-    <option name="--sifa.intern.fluid">NeverFluid</option>
     <option name="--sifa.simplification.technique">SIMPLIFY_DDA</option>
   </rundefinition>
 
+  <rundefinition name="Sifa 12">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/SifaC.xml</option>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+    <option name="--sifa.abstract.domain">IntervalDomain</option>
+    <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>
+    <option name="--sifa.call.summarizer">TopInputCallSummarizer</option>
+    <option name="--sifa.fluid">SizeLimitFluid</option>
+    <option name="--sifa.simplification.technique">SIMPLIFY_QUICK</option>
+  </rundefinition>
+
+  <rundefinition name="Sifa 13">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/SifaC.xml</option>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+    <option name="--sifa.abstract.domain">CompoundDomain</option>
+    <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>
+    <option name="--sifa.call.summarizer">TopInputCallSummarizer</option>
+    <option name="--sifa.fluid">SizeLimitFluid</option>
+    <option name="--sifa.simplification.technique">SIMPLIFY_QUICK</option>
+  </rundefinition>
+
+ <rundefinition name="Sifa 14">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/SifaC.xml</option>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+    <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
+    <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>
+    <option name="--sifa.call.summarizer">TopInputCallSummarizer</option>
+    <option name="--sifa.fluid">SizeLimitFluid</option>
+    <option name="--sifa.simplification.technique">SIMPLIFY_QUICK</option>
+    <option name="--sifa.max.parallel.explicit.values">2</option>
+    <option name="--sifa.sizelimitfluid.max.disjunctions">4</option>
+  </rundefinition>
+
+ <rundefinition name="Sifa 15">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/SifaC.xml</option>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+    <option name="--sifa.abstract.domain">ExplicitValueDomain</option>
+    <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>
+    <option name="--sifa.call.summarizer">TopInputCallSummarizer</option>
+    <option name="--sifa.fluid">SizeLimitFluid</option>
+    <option name="--sifa.simplification.technique">SIMPLIFY_QUICK</option>
+    <option name="--sifa.max.parallel.explicit.values">4</option>
+    <option name="--sifa.sizelimitfluid.max.disjunctions">16</option>
+  </rundefinition>
 
   <tasks name="400">
     <includesfile>../../../trunk/examples/svcomp/400.set</includesfile>
