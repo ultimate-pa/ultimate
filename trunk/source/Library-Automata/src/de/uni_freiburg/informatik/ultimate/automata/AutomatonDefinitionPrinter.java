@@ -51,6 +51,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.Nwa
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaWriterUniqueId;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessWriter;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessWriterToString;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterToString;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterToStringWithUniqueNumber;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterUniqueId;
@@ -324,7 +327,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			printAlternatingAutomaton(name, (AlternatingAutomaton<LETTER, STATE>) automaton, format);
 		} else if (automaton instanceof TreeAutomatonBU<?, ?>) {
 			printTreeAutomaton(name, (TreeAutomatonBU<?, STATE>) automaton, format);
-		}
+		} else if (automaton instanceof BranchingProcess<?, ?>)
+			printBranchingProcess(name, (BranchingProcess<LETTER, STATE>) automaton, format);
 		mPrintWriter.close();
 	}
 
@@ -431,6 +435,30 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		switch (format) {
 			case ATS:
 				new AlternatingAutomatonWriter<>(mPrintWriter, name, alternating);
+				break;
+			case ATS_QUOTED:
+			case ATS_NUMERATE:
+			case BA:
+			case GFF:
+			case HOA:
+			default:
+				throw new AssertionError(UNSUPPORTED_LABELING);
+		}
+	}
+	
+	@SuppressWarnings("unused")
+	private void printBranchingProcess(final String name, final BranchingProcess<LETTER, STATE> branchingProcess, final Format format)
+			throws AssertionError {
+		if (!(branchingProcess instanceof BranchingProcess)) {
+			final String msg = "Unknown Petri branching process. Only supported type is " + BranchingProcess.class.getSimpleName();
+			throw new IllegalArgumentException(msg);
+		}
+
+
+
+		switch (format) {
+			case ATS:
+				new BranchingProcessWriterToString(mPrintWriter, name, branchingProcess);
 				break;
 			case ATS_QUOTED:
 			case ATS_NUMERATE:
