@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -294,5 +295,13 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	@Override
 	public String toString() {
 		return mCoRelation.toStringAsTable();
+	}
+
+	@Override
+	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond) {
+		final Set<Event<LETTER, PLACE>> coRelatedEvents = mCoRelation.getImage(cond);
+		final Set<Condition<LETTER, PLACE>> result = coRelatedEvents.stream()
+				.flatMap(x -> x.getSuccessorConditions().stream()).collect(Collectors.toSet());
+		return result;
 	}
 }
