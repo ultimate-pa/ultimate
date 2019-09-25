@@ -188,7 +188,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 				final ConditionMarking<LETTER, PLACE> companionCondMark = companion.getConditionMark();
 				final ConditionMarking<LETTER, PLACE> eCondMark = current.getConditionMark();
 				mergeConditions(companionCondMark, eCondMark);
-				mergeConditions(companion.getPredecessorConditions(), current.getPredecessorConditions());
 			}
 
 		}
