@@ -72,16 +72,22 @@ public class AssumptionMapBuilder {
 					 final BiAssumptionConstructor<? extends IAssumption> assuConst) {
 		if (mAssumptionMap.isEmpty()) {
 			mAssumptionMap = Collections.singletonMap(assuType, assu);
-		}else if (!mAssumptionMap.containsKey(assuType)) {
-			if (mAssumptionMap.size() == 1) {
+		}else if (mAssumptionMap.size() == 1) {
+			if (mAssumptionMap.containsKey(assuType)) {
+				mAssumptionMap = Collections.singletonMap(assuType, 
+													      assuConst.apply(mScript, mAssumptionMap.get(assuType), assu));
+			}else {
 				final Entry<AssumptionForSolvability, IAssumption> entry = mAssumptionMap.entrySet().iterator().next();
 				mAssumptionMap = new HashMap<>();
 				mAssumptionMap.put(entry.getKey(), entry.getValue());
-			}else {
 				mAssumptionMap.put(assuType, assu);
 			}
 		}else {
-			mAssumptionMap.put(assuType, assuConst.apply(mScript, mAssumptionMap.get(assuType), assu));
+			if(mAssumptionMap.containsKey(assuType)) {
+				mAssumptionMap.put(assuType, assuConst.apply(mScript, mAssumptionMap.get(assuType), assu));
+			}else {
+				mAssumptionMap.put(assuType, assu);
+			}
 		}
 	}
 	

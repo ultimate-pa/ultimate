@@ -42,4 +42,9 @@ public abstract class AbstractAssumption implements IAssumption{
 	public Term toExplicitTerm() {
 		return SmtUtils.and(mScript, getConjunctsForExplicitForm());
 	}
+	
+	@Override
+	public String toString() {
+		return toExplicitTerm().toString();
+	}
 }
