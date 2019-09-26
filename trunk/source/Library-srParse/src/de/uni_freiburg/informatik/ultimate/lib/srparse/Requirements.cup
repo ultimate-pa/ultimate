@@ -188,7 +188,7 @@ propid ::= ID:id IDSEP
 
 scope ::=
     GLOBALLY
-      {: RESULT = new SrParseScopeGlob(); :}
+      {: RESULT = new SrParseScopeGlobally(); :}
   | BEFORE expression:p
       {: RESULT = new SrParseScopeBefore(p); :}
   | AFTER expression:p
