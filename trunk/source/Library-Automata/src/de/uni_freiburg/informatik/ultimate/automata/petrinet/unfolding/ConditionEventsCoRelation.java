@@ -54,6 +54,8 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	 * Document which subset is stored.
 	 * For [1] the co-relation between the only a-event and all p3-conditions were missing.
 	 * [1] trunk/examples/Automata/regression/pn/operations/removeDead/VitalParallel.ats
+	 * TODO Matthias 2019-09-25: I just checked this and saw all three p3-conditions in relation
+	 * with the (only) a-event. Maybe the problem has been fixed in the last 13 months.
 	 */
 	private final HashRelation<Condition<LETTER, PLACE>, Event<LETTER, PLACE>> mCoRelation = new HashRelation<>();
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
