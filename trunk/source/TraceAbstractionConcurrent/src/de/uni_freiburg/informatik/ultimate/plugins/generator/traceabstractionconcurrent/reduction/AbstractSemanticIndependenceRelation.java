@@ -85,6 +85,11 @@ public class AbstractSemanticIndependenceRelation<STATE> implements IIndependenc
 		final UnmodifiableTransFormula tfA = concretizeAbstraction(abstrA);
 		final UnmodifiableTransFormula tfB = concretizeAbstraction(abstrB);
 
+		assert TransFormulaUtils.checkImplication(a.getTransformula(), tfA,
+				mManagedScript) != LBool.SAT : "Abstraction is not a superset of concrete relation";
+		assert TransFormulaUtils.checkImplication(b.getTransformula(), tfB,
+				mManagedScript) != LBool.SAT : "Abstraction is not a superset of concrete relation";
+
 		final UnmodifiableTransFormula transFormula1 = compose(tfA, tfB);
 		final UnmodifiableTransFormula transFormula2 = compose(tfB, tfA);
 		final LBool result = TransFormulaUtils.checkImplication(transFormula2, transFormula1, mManagedScript);

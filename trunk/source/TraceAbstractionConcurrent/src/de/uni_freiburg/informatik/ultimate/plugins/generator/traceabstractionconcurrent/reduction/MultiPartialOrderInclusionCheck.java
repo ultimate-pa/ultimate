@@ -41,6 +41,11 @@ public class MultiPartialOrderInclusionCheck<LETTER> {
 		mProgram = program;
 		mProof = proof;
 
+		assert program.getVpAlphabet().getCallAlphabet().isEmpty() : "POR does not support calls.";
+		assert program.getVpAlphabet().getReturnAlphabet().isEmpty() : "POR does not support returns.";
+		assert proof.getVpAlphabet().getCallAlphabet().isEmpty() : "POR does not support calls.";
+		assert proof.getVpAlphabet().getReturnAlphabet().isEmpty() : "POR does not support returns.";
+
 		mCounterexample = performCheck();
 	}
 
