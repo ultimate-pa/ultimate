@@ -24,7 +24,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
@@ -70,8 +69,8 @@ public class PeaToDotTestSuite {
 			return; // Oops, somebody forgot to implement that sh.. ;-)
 		}
 
-		writeDotToSvg(DotWriterNew.createDotString(pea));
-		writeMarkdown();
+		// writeDotToSvg(DotWriterNew.createDotString(pea));
+		// writeMarkdown();
 	}
 
 	private void writeDotToSvg(final StringBuilder dot) throws IOException, InterruptedException {
