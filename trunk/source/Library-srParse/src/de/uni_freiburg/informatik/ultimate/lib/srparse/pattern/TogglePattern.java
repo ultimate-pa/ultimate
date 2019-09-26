@@ -31,7 +31,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
  * "{scope}, if S holds then P toggles T."
@@ -52,7 +52,7 @@ public class TogglePattern extends PatternType {
 		final CDD P = cdds[1];
 		final CDD T = cdds[2];
 
-		if (scope instanceof SrParseScopeGlob) {
+		if (scope instanceof SrParseScopeGlobally) {
 			final CounterTrace ct = counterTrace(phaseT(), phase(P.and(S)), phase(P.negate()),
 					phase(P.negate().and(T.negate())), phaseT());
 			return ct;

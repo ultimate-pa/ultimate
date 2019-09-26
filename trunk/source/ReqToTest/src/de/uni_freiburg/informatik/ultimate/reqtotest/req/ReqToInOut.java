@@ -6,7 +6,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndInvariancePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTT;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTU;
@@ -143,7 +143,7 @@ public class ReqToInOut {
 	 * least "c2" time units
 	 */
 	private void addBndResponsePatternTTPattern(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
@@ -158,7 +158,7 @@ public class ReqToInOut {
 	 * {scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards.
 	 */
 	private void addBndResponsePatternTUPattern(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
@@ -173,7 +173,7 @@ public class ReqToInOut {
 	 *  * {scope}, it is always the case that if "R" holds, then "S" holds for at least "c1" time units.
 	 */
 	private void addBndInvariance(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
@@ -191,7 +191,7 @@ public class ReqToInOut {
 	 * Assuming stability of output ( R, R & S, R & !S, R & S,.....) not intended behavior
 	 */
 	private void addBndResponsePatternUTPattern(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
@@ -215,7 +215,7 @@ public class ReqToInOut {
 	 */
 	private void addInvariantPattern(PatternType pattern){
 		if(UNIVERSALITY_IS_DEFINITNG) return;
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
@@ -238,7 +238,7 @@ public class ReqToInOut {
 	 *  * {scope}, it is always the case that if "S" holds.
 	 */
 	private void addUniversalityPattern(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
 			addEffectSet(S.getFreeVars());
@@ -251,7 +251,7 @@ public class ReqToInOut {
 	 *  * {scope}, it is never the case that if "S" holds.
 	 */
 	private void addInstAbsPattern(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
 			addEffectSet(S.getFreeVars());
@@ -264,7 +264,7 @@ public class ReqToInOut {
 	 *  * {scope}, it is always the case that if "R" holds, then "S" holds in the next Step.
 	 */
 	private void getImmediateResponsePatternToAutomaton(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
@@ -276,7 +276,7 @@ public class ReqToInOut {
 	}
 	
 	private void addTogglePatternDelayed(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term P = mCddToSmt.toSmt(args.get(0)); 
 			final Term S = mCddToSmt.toSmt(args.get(1));

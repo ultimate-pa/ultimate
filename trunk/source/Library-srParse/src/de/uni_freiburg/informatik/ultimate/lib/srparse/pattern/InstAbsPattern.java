@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
  * {scope}, it is never the case that "P" holds
@@ -32,7 +32,7 @@ public class InstAbsPattern extends PatternType {
 		final CDD R = scope.getCdd2();
 
 		final CounterTrace ct;
-		if (scope instanceof SrParseScopeGlob) {
+		if (scope instanceof SrParseScopeGlobally) {
 			ct = counterTrace(phaseT(), phase(P), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()), phase(P.and(R.negate())),

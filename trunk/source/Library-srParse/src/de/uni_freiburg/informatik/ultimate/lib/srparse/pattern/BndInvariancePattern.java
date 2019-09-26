@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
  * {scope}, it is always the case that if "R" holds, then "S" holds for at least
@@ -35,7 +35,7 @@ public class BndInvariancePattern extends PatternType {
 		final int c1 = durations[0];
 
 		final CounterTrace ct;
-		if (scope instanceof SrParseScopeGlob) {
+		if (scope instanceof SrParseScopeGlobally) {
 			ct = counterTrace(phaseT(), phase(R), phase(CDD.TRUE, BoundTypes.LESS, c1), phase(S.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD P = scope.getCdd1();

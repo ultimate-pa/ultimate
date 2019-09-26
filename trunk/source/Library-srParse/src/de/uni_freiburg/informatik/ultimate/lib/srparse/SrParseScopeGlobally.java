@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse;
 
-public class SrParseScopeGlob extends SrParseScope {
+public class SrParseScopeGlobally extends SrParseScope {
 
-	public SrParseScopeGlob() {
+	public SrParseScopeGlobally() {
 		super(null, null);
 	}
 

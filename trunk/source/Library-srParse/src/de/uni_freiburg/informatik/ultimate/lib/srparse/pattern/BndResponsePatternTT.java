@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
  * "{scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards for at
@@ -57,7 +57,7 @@ public class BndResponsePatternTT extends PatternType {
 		final int c1 = durations[0];
 		final int c2 = durations[1];
 
-		if (scope instanceof SrParseScopeGlob) {
+		if (scope instanceof SrParseScopeGlobally) {
 			final CounterTrace ct = counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1),
 					phaseE(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT());
 			return ct;

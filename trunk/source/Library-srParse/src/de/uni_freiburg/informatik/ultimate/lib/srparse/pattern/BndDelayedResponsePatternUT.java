@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
  * "{scope}, it is always the case that if "R" holds, then "S" holds after at most "c1" time units for at least "c2"
@@ -59,7 +59,7 @@ public class BndDelayedResponsePatternUT extends PatternType {
 		final int c1 = durations[0];
 		final int c2 = durations[1];
 
-		if (scope instanceof SrParseScopeGlob) {
+		if (scope instanceof SrParseScopeGlobally) {
 			return counterTrace(phaseT(), phase(R), phase(CDD.TRUE, BoundTypes.GREATEREQUAL, c1),
 					phaseE(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT());
 		}

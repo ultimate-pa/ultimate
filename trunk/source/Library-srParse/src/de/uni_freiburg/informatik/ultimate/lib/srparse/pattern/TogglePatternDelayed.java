@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
  * "{scope}, if S holds then P toggles T after at most c1 time units."
@@ -54,7 +54,7 @@ public class TogglePatternDelayed extends PatternType {
 		final CDD T = cdds[2];
 		final int c1 = durations[0];
 
-		if (scope instanceof SrParseScopeGlob) {
+		if (scope instanceof SrParseScopeGlobally) {
 			return counterTrace(phaseT(), phase(P.and(S)), phase(P.negate(), BoundTypes.GREATEREQUAL, c1),
 					phase(P.negate().and(T.negate())), phaseT());
 		}

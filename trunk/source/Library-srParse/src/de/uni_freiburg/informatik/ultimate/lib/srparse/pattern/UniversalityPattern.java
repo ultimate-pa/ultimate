@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
  * {scope}, it is always the case that "S" holds.
@@ -30,7 +30,7 @@ public class UniversalityPattern extends PatternType {
 		final SrParseScope scope = getScope();
 		final CDD S = cdds[0];
 
-		if (scope instanceof SrParseScopeGlob) {
+		if (scope instanceof SrParseScopeGlobally) {
 			final CounterTrace ct = counterTrace(phaseT(), phase(S.negate()), phaseT());
 			return ct;
 		} else if (scope instanceof SrParseScopeBefore) {

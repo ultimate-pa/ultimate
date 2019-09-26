@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -71,7 +71,7 @@ public class BoogieRequirementsParserTestAllPatterns {
 		final String[] scope = new String[] { "Globally,", "Before \" x > 0 \", ", "After \" x > 0\", ",
 				"Between \"x > 0\" and \" x < 0\", " };
 		// TODO?:"After <Q> before <R>"
-		final Class<?>[] scopezz = new Class<?>[] { SrParseScopeGlob.class, SrParseScopeBefore.class,
+		final Class<?>[] scopezz = new Class<?>[] { SrParseScopeGlobally.class, SrParseScopeBefore.class,
 				SrParseScopeAfter.class, SrParseScopeBetween.class };
 
 		final String[] pattern = new String[] {

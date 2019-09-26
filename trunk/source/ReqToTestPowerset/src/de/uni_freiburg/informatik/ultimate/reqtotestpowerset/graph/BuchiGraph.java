@@ -6,7 +6,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternUT;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariantPattern;
@@ -65,7 +65,7 @@ public class BuchiGraph {
 	 *  G(R -> XS)
 	 */
 	private GuardGraph makeBndResponsePatternUTAutomaton(PatternType pattern) {
-		if (pattern.getScope() instanceof SrParseScopeGlob) {
+		if (pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			// Terms - also known as edge labels
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -95,7 +95,7 @@ public class BuchiGraph {
 	 *  G(R -> S)
 	 */
 	private GuardGraph makeInvariantPatternAutomaton(PatternType pattern) {
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			// Terms
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -121,7 +121,7 @@ public class BuchiGraph {
 	 *  G(S)
 	 */
 	private GuardGraph makeUniversalityPatternAutomaton(PatternType pattern) {
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			
 			// Terms

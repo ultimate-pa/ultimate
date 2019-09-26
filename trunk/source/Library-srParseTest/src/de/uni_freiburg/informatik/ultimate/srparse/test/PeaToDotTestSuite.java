@@ -34,7 +34,6 @@ public class PeaToDotTestSuite {
 	private static final String ROOT_DIR = "/media/ubuntu/Daten/Projects/hanfor/documentation/docs/";
 	private static final String MARKDOWN_DIR = "usage/patterns/";
 	private static final String IMAGE_DIR = "img/patterns/";
-	private static final String SCOPE_PREFIX = "SrParseScope";
 
 	private final IUltimateServiceProvider mServiceProvider;
 	private final ILogger mLogger;
@@ -51,7 +50,8 @@ public class PeaToDotTestSuite {
 		mPattern = pattern;
 		mDuration2Bounds = duration2Bounds;
 
-		mScope = mPattern.getScope().getClass().getSimpleName().replace(SCOPE_PREFIX, "");
+		final Class<?> scope = pattern.getScope().getClass();
+		mScope = scope.getSimpleName().replace(scope.getSuperclass().getSimpleName(), "");
 	}
 
 	// @Test
@@ -83,7 +83,10 @@ public class PeaToDotTestSuite {
 		final String formula = mPattern.toString().replace(mPattern.getId() + ": ", "");
 
 		final StringBuilder markdown = new StringBuilder();
-		markdown.append("## " + mName + "_" + mScope + "\n\n");
+		if (mScope.equals("Glob")) {
+			markdown.append("## " + mName + "\n\n");
+		}
+		markdown.append("### " + mScope + "\n\n");
 		markdown.append(formula + "\n\n");
 		markdown.append("![](/img/patterns/" + mName + "_" + mScope + ".svg)\n");
 

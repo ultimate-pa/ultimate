@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
  * {scope}, it is always the case that if "P" holds, then "S", previously held and was preceded by "T"
@@ -36,7 +36,7 @@ public class PrecedenceChain21Pattern extends PatternType {
 		// final CDD R = scope.getCdd2();
 
 		final CounterTrace ct;
-		if (scope instanceof SrParseScopeGlob) {
+		if (scope instanceof SrParseScopeGlobally) {
 			ct = counterTrace(phase(S.negate()), phase(S.and(T.negate())), phase(T.negate()), phase(P), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			ct = counterTrace(phaseT());

@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
  * "{scope}, it is always the case that if "P" holds, then "S" eventually holds"
@@ -32,7 +32,7 @@ public class ResponsePattern extends PatternType {
 
 		final CounterTrace ct;
 
-		if (scope instanceof SrParseScopeGlob) {
+		if (scope instanceof SrParseScopeGlobally) {
 			// Globally, it is always the case that if P holds then S eventually holds.
 			// (¬(true;|P ∧ ¬S|;|¬S|)) -> true
 			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn

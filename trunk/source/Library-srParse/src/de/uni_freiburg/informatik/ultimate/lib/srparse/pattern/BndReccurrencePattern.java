@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
  * {scope}, it is always the case that "P" holds at least every "c1" time units
@@ -32,7 +32,7 @@ public class BndReccurrencePattern extends PatternType {
 		final int c1 = durations[0];
 
 		final CounterTrace ct;
-		if (scope instanceof SrParseScopeGlob) {
+		if (scope instanceof SrParseScopeGlobally) {
 			ct = counterTrace(phaseT(), phase(P.negate(), BoundTypes.GREATER, 10), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD Q = scope.getCdd1();

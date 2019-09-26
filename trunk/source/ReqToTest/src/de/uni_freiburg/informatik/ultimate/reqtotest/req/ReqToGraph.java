@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndDelayedResponsePatternUT;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndInvariancePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTT;
@@ -113,7 +113,7 @@ public class ReqToGraph {
 	 * least "c2" time units
 	 */
 	private ReqGuardGraph getBndResponsePatternTTPattern(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
@@ -166,7 +166,7 @@ public class ReqToGraph {
  * time units
 	 */
 	private ReqGuardGraph getBndDelayedResponsePatternUT(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
@@ -213,7 +213,7 @@ public class ReqToGraph {
 	 * {scope}, it is always the case that if "R" holds for at least "c1" time units, then "S" holds afterwards.
 	 */
 	private ReqGuardGraph getBndResponsePatternTUPattern(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
@@ -264,7 +264,7 @@ public class ReqToGraph {
 	 *  * {scope}, it is always the case that if "R" holds, then "S" holds for at least "c1" time units.
 	 */
 	private ReqGuardGraph getBndInvariance(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
@@ -311,7 +311,7 @@ public class ReqToGraph {
 	 * Assuming stability of output ( R, R & S, R & !S, R & S,.....) not intended behavior
 	 */
 	private ReqGuardGraph getBndResponsePatternUTPattern(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
@@ -426,7 +426,7 @@ public class ReqToGraph {
 	 *  * {scope}, it is always the case that if "R" holds, then "S" holds as well.
 	 */
 	private ReqGuardGraph getInvariantPattern(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
@@ -483,7 +483,7 @@ public class ReqToGraph {
 	 *  * {scope}, it is always the case that if "S" holds.
 	 */
 	private ReqGuardGraph getUniversalityPattern(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
 			String id = pattern.getId();
@@ -506,7 +506,7 @@ public class ReqToGraph {
 	 *  * {scope}, it is never the case that if "S" holds.
 	 */
 	private ReqGuardGraph getInstAbsPattern(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term S = mCddToSmt.toSmt(args.get(0)); 
 			String id = pattern.getId();
@@ -529,7 +529,7 @@ public class ReqToGraph {
 	 */
 	@SuppressWarnings("unused")
 	private ReqGuardGraph getImmediateResponsePatternToAutomaton(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			String id = pattern.getId();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -572,7 +572,7 @@ public class ReqToGraph {
 	 *  * "{scope}, it is always the case that if P holds then S toggles T at most c1 time units later."
 	 */
 	private ReqGuardGraph getTogglePatternDelayed(PatternType pattern){
-		if(pattern.getScope() instanceof SrParseScopeGlob) {
+		if(pattern.getScope() instanceof SrParseScopeGlobally) {
 			final List<CDD> args = pattern.getCdds();
 			final Term P = mCddToSmt.toSmt(args.get(0)); 
 			final Term S = mCddToSmt.toSmt(args.get(1));

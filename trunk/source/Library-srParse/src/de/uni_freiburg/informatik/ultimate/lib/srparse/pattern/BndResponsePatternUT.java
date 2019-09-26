@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
  * {scope}, it is always the case that if "R" holds, then "S" holds after at most "c1" time units.
@@ -33,7 +33,7 @@ public class BndResponsePatternUT extends PatternType {
 		final CDD S = cdds[0];
 		final int c1 = durations[0];
 
-		if (scope instanceof SrParseScopeGlob) {
+		if (scope instanceof SrParseScopeGlobally) {
 			final CounterTrace ct = counterTrace(phaseT(), phase(R.and(S.negate())),
 					phase(S.negate(), BoundTypes.GREATER, c1), phaseT());
 			return ct;
