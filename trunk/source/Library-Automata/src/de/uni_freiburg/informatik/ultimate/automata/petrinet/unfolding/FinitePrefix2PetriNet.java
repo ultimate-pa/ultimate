@@ -116,7 +116,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 		}
 		assert petriNetLanguageEquivalence(oldNet, mNet, net2autoStateFactory,
 				nwaInclusionStateFactory) : "The result of the " + FinitePrefix2PetriNet.class.getSimpleName()
-						+ "recognizes a different language than the original net.";
+						+ " recognizes a different language than the original net.";
 	}
 
 	@SuppressWarnings("squid:S1698")
