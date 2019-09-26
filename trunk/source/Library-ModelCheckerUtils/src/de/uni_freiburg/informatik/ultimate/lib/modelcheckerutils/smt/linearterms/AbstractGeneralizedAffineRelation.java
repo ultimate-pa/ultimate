@@ -311,8 +311,6 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
 			// EQ and DISTINCT need Modulo Assumption
 			if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
-				final Term modTerm = SmtUtils.mod(script, rhsTermWithoutDivision,
-										    coeffOfSubject.toTerm(mAffineTerm.getSort()));
 				assumptionMapBuilder.putDivisibleByConstant(rhsTermWithoutDivision, 
 															coeffOfSubject.toTerm(mAffineTerm.getSort()));
 			} 

@@ -33,17 +33,13 @@ public abstract class AbstractAssumption implements IAssumption{
 		if (hasContractedForm()) {
 			lhs = constructContractedLhs();
 		}else {
-			lhs = constructExplicitLhs();
+			return toExplicitTerm();
 		}
 		return mRhsAppender.apply(mScript, mSort, lhs);
 	}
 	
 	@Override
 	public Term toExplicitTerm() {
-		return mRhsAppender.apply(mScript, mSort, constructExplicitLhs());
-	}
-	
-	protected Term constructExplicitLhs() {
 		return SmtUtils.and(mScript, getConjunctsForExplicitForm());
 	}
 }

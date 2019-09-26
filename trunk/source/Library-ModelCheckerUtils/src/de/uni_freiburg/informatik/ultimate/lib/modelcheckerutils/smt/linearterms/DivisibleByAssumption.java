@@ -65,7 +65,7 @@ public class DivisibleByAssumption extends AbstractAssumption{
 	
 	@Override
 	protected Term constructContractedLhs() {
-		return constructExplicitLhs();
+		return toExplicitTerm();
 	}
 	
 	private LinkedList<Term> getModTerms(){
