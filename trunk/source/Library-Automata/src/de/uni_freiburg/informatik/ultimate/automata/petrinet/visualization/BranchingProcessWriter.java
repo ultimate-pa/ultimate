@@ -61,16 +61,17 @@ public abstract class BranchingProcessWriter<LETTER, STATE> extends GeneralAutom
 	}
 	
 	private void printEvent(final Event<LETTER, STATE> event) {
-		printOneTransitionPrefix();
-		printMarking(event.getPredecessorConditions());
-		print(' ');
-		if ( event.getTransition() == null) 
-			print("dummy event");
-		else
+		//we don't want to print the dummy event
+		if ( event.getTransition() != null)
+		{
+			printOneTransitionPrefix();
+			printMarking(event.getPredecessorConditions());
+			print(' ');
 			print(mAlphabet.get(event.getTransition().getSymbol()));
-		print(' ');
-		printMarking(event.getSuccessorConditions());
-		printOneTransitionSuffix();
+			print(' ');
+			printMarking(event.getSuccessorConditions());
+			printOneTransitionSuffix();
+		}
 	}
 	
 	private void printMarking(final Collection<Condition<LETTER,STATE>> marking) {
