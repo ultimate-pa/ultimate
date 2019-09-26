@@ -109,6 +109,7 @@ public class PeaToDotTestSuite {
 		writer.write("{!" + MARKDOWN_DIR + mName + "_" + mScope + ".md!}");
 		writer.newLine();
 		writer.close();
+
 	}
 
 	@BeforeClass
