@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking;
 
-import java.io.IOException;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
@@ -9,23 +9,22 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 
 public class DotWriterNew {
 
-	public static StringBuilder createDotString(final PhaseEventAutomata pea) throws IOException {
+	public static StringBuilder createDotString(final PhaseEventAutomata pea) {
+		StringBuilder rtr = new StringBuilder();
 
-		String dot = "";
-
-		dot += "digraph G {" + "\n\n";
-		dot += "rankdir=LR;" + "\n";
-		dot += "graph [fontname=\"arial\"]";
-		dot += "node [fontname=\"arial\" shape=circle];" + "\n";
-		dot += "edge [fontname=\"arial\"]";
-		dot += "\n";
+		rtr.append("digraph G {" + "\n\n");
+		rtr.append("rankdir=LR;" + "\n");
+		rtr.append("graph [fontname=\"arial\"]" + "\n");
+		rtr.append("node [fontname=\"arial\" shape=circle];" + "\n");
+		rtr.append("edge [fontname=\"arial\"]");
+		rtr.append("\n");
 
 		for (final Phase phase : pea.getInit()) {
 			final String location = phase.getName();
 
-			dot += "_" + location + " [style=invis];" + "\n";
-			dot += "\t" + "_" + location + " -> " + location + ";" + "\n";
-			dot += "\n";
+			rtr.append("_" + location + " [style=invis];" + "\n");
+			rtr.append("\t" + "_" + location + " -> " + location + ";" + "\n");
+			rtr.append("\n");
 		}
 
 		for (final Phase phase : pea.getPhases()) {
@@ -37,7 +36,7 @@ public class DotWriterNew {
 			label += "<font COLOR=\"#984ea3\">" + predicate + "</font><br/>";
 			label += "<font COLOR=\"#ff7f00\">" + clock + "</font><br/>>";
 
-			dot += location + " [label=" + label + "];" + "\n";
+			rtr.append(location + " [label=" + label + "];" + "\n");
 
 			for (final Transition transition : phase.getTransitions()) {
 				final String src = transition.getSrc().getName();
@@ -49,18 +48,18 @@ public class DotWriterNew {
 					resets += "<br/>" + reset + " :=0";
 				}
 
-				dot += "\t" + src + " -> " + dst + " [label=" + "<<br/><font COLOR=\"#377eb8\">" + guard + "</font>"
-						+ resets + ">];" + "\n";
+				rtr.append("\t" + src + " -> " + dst + " [label=" + "<<br/><font COLOR=\"#377eb8\">" + guard + "</font>"
+						+ resets + ">];" + "\n");
 			}
-			dot += "\n";
+			rtr.append("\n");
 		}
-		dot += "}";
+		rtr.append("}");
 
 		final List<String> clocks = pea.getClocks();
 		for (int i = 0; i < clocks.size(); i++) {
-			dot = dot.replaceAll(clocks.get(i), "c" + String.valueOf(i));
+			rtr = new StringBuilder(Pattern.compile(clocks.get(i)).matcher(rtr).replaceAll("c" + String.valueOf(i)));
 		}
 
-		return null;
+		return rtr;
 	}
 }
