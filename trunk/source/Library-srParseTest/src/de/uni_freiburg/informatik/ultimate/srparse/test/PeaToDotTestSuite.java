@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -24,11 +26,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternScopeNotImplemented;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -43,18 +41,18 @@ public class PeaToDotTestSuite {
 
 	private final IUltimateServiceProvider mServiceProvider;
 	private final ILogger mLogger;
-	private final String mName;
 	private final PatternType mPattern;
-	private final Map<String, Integer> mDuration2Bounds;
+	private final Map<String, Integer> mDurationToBounds;
+	private final String mName;
 	private final String mScope;
 
-	public PeaToDotTestSuite(final PatternType pattern, final Map<String, Integer> duration2Bounds, final String name) {
+	public PeaToDotTestSuite(final PatternType pattern, final Map<String, Integer> durationToBounds) {
 		mServiceProvider = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
 		mLogger = mServiceProvider.getLoggingService().getLogger("");
 
-		mName = name;
 		mPattern = pattern;
-		mDuration2Bounds = duration2Bounds;
+		mDurationToBounds = durationToBounds;
+		mName = pattern.getClass().getSimpleName();
 
 		final Class<?> scope = pattern.getScope().getClass();
 		mScope = scope.getSimpleName().replace(scope.getSuperclass().getSimpleName(), "");
@@ -64,13 +62,13 @@ public class PeaToDotTestSuite {
 	public void testDot() throws IOException, InterruptedException {
 		PhaseEventAutomata pea;
 		try {
-			pea = mPattern.transformToPea(mLogger, mDuration2Bounds);
+			pea = mPattern.transformToPea(mLogger, mDurationToBounds);
 		} catch (final PatternScopeNotImplemented e) {
 			return; // Oops, somebody forgot to implement that sh.. ;-)
 		}
 
-		// writeDotToSvg(DotWriterNew.createDotString(pea));
-		// writeMarkdown();
+		writeDotToSvg(DotWriterNew.createDotString(pea));
+		writeMarkdown();
 	}
 
 	private void writeDotToSvg(final StringBuilder dot) throws IOException, InterruptedException {
@@ -93,22 +91,10 @@ public class PeaToDotTestSuite {
 		markdown.append(formula + "\n\n");
 		markdown.append("![](/" + IMAGE_DIR + mName + "_" + mScope + ".svg)\n");
 
-		File file = new File(ROOT_DIR + MARKDOWN_DIR + mName + "_" + mScope + ".md");
-		BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+		final File file = new File(ROOT_DIR + MARKDOWN_DIR + mName + "_" + mScope + ".md");
+		final BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 		writer.write(markdown.toString());
 		writer.close();
-
-		file = new File(ROOT_DIR + MARKDOWN_DIR + "includes.md");
-		writer = new BufferedWriter(new FileWriter(file, true));
-
-		if (mScope.equals("Globally")) {
-			writer.write("## " + mName + "\n");
-		}
-
-		writer.write("{!" + MARKDOWN_DIR + mName + "_" + mScope + ".md!}");
-		writer.newLine();
-		writer.close();
-
 	}
 
 	@BeforeClass
@@ -126,40 +112,62 @@ public class PeaToDotTestSuite {
 	}
 
 	@AfterClass
-	public static void afterClass() {
+	public static void afterClass() throws IOException {
+		final File markdownDir = new File(ROOT_DIR + MARKDOWN_DIR);
+		final List<String> filenames = Arrays.stream(markdownDir.list()).filter(a -> a.endsWith(".md"))
+				.sorted(new PatternNameComparator()).collect(Collectors.toList());
 
+		final File file = new File(ROOT_DIR + MARKDOWN_DIR + "includes.md");
+		final Writer writer = new BufferedWriter(new FileWriter(file));
+
+		String prev = null;
+		for (final String filename : filenames) {
+			final String[] name = filename.split("_|\\.");
+			assert (name.length == 3);
+
+			if (prev == null || !name[0].equals(prev)) {
+				writer.write("## " + name[0] + System.lineSeparator());
+			}
+
+			writer.write("{!" + MARKDOWN_DIR + filename + "!}" + System.lineSeparator());
+			prev = name[0];
+		}
+		writer.close();
 	}
 
-	@Parameters(name = "{2}")
+	@Parameters()
 	public static Collection<Object[]> data() {
 		final Pair<List<PatternType>, Map<String, Integer>> pair = PatternUtil.createAllPatterns();
 
-		return pair.getFirst().stream().sorted(new PatternComparator())
-				.map(a -> new Object[] { a, pair.getSecond(), a.getClass().getSimpleName() })
-				.collect(Collectors.toList());
+		return pair.getFirst().stream().map(a -> new Object[] { a, pair.getSecond() }).collect(Collectors.toList());
 	}
 
-	private static final class PatternComparator implements Comparator<PatternType> {
+	private static final class PatternNameComparator implements Comparator<String> {
 
-		private static final Map<Class<?>, Integer> scopeOrder = new HashMap<Class<?>, Integer>() {
+		private static final Map<String, Integer> mScopeOrder = new HashMap<String, Integer>() {
 			{
-				put(SrParseScopeGlobally.class, 1);
-				put(SrParseScopeBefore.class, 2);
-				put(SrParseScopeAfter.class, 3);
-				put(SrParseScopeBetween.class, 4);
-				put(SrParseScopeAfterUntil.class, 5);
+				put("Globally", 0);
+				put("Before", 1);
+				put("After", 2);
+				put("Between", 3);
+				put("AfterUntil", 4);
 			}
 		};
 
 		@Override
-		public int compare(final PatternType p1, final PatternType p2) {
-			int result = p1.getClass().getSimpleName().compareTo(p2.getClass().getSimpleName());
+		public int compare(final String str1, final String str2) {
+			final String[] s1 = str1.split("_|\\.");
+			final String[] s2 = str2.split("_|\\.");
+			assert (s1.length == 3);
+			assert (s2.length == 3);
 
-			if (result == 0) {
-				result = scopeOrder.get(p1.getScope().getClass()) - scopeOrder.get(p2.getScope().getClass());
+			final int order = s1[0].compareTo(s2[0]);
+
+			if (order != 0) {
+				return order;
 			}
 
-			return result;
+			return mScopeOrder.get(s1[1]) - mScopeOrder.get(s2[1]);
 		}
 	}
 }
