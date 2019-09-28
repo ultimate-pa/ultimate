@@ -3,6 +3,8 @@
 // SimpleIncorrectTwoContextSwitches.bpl_AllErrorsAtOnce_Iteration1_AbstractionAfterDifference.ats (2018/07/30 09:55:00)
 // SimpleIncorrectTwoContextSwitches.bpl_AllErrorsAtOnce_Iteration2_EagerFloydHoareAutomaton.ats (2018/07/30 09:55:01)
 
+assert(!isEmpty(differencePairwiseOnDemand(net, nwa)));
+
 
 PetriNet net = (
 	alphabet = {"#0#g := -2;" "#1#assume true;" "#4#g := 0;" "#8#assume true;" "#9#g := g + 1;" "#11#assume !(g != -1);" "#12#assume g != -1;" "#13#assume true;" "g := 0;assume true;" },
