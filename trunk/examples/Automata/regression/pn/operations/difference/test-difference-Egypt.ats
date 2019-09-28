@@ -18,6 +18,11 @@ assert(isEmpty(difference(se7en, all)));
 assert(!isEmpty(difference(NonEmptyNetWithoutTransitions, atLeastOneA)));
 assert(isEmpty(difference(NonEmptyNetWithoutTransitions, all)));
 
+assert(!isEmpty(differencePairwiseOnDemand(se7en, atLeastOneA)));
+assert(isEmpty(differencePairwiseOnDemand(se7en, all)));
+assert(!isEmpty(differencePairwiseOnDemand(NonEmptyNetWithoutTransitions, atLeastOneA)));
+assert(isEmpty(differencePairwiseOnDemand(NonEmptyNetWithoutTransitions, all)));
+
 // print(difference(se7en, atLeastOneA));
 
 PetriNet se7en = (
