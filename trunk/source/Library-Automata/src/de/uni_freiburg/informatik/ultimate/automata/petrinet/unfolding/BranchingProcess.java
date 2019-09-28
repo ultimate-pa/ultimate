@@ -94,7 +94,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * Temporary boolean flag for testing our computation of
 	 * a "finite comprehensive prefix".
 	 */
-	private final boolean mNewFiniteComprehensivePrefixMode = true;
+	private final boolean mNewFiniteComprehensivePrefixMode = false;
 
 	public BranchingProcess(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> net,
 			final IOrder<LETTER, PLACE> order) throws PetriNetNot1SafeException {
