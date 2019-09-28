@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -64,7 +65,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 
 	private Event<LETTER, PLACE> mCompanion;
 	private final ITransition<LETTER, PLACE> mTransition;
-
+	private final Map<PLACE, Set<PLACE>> mPlaceCorelationMap;
 	/**
 	 * Creates an Event from its predecessor conditions and the transition from the net system it is mapped to by the
 	 * homomorphism. Its successor conditions are automatically created. The given set not be referenced directly, but
@@ -113,6 +114,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		conditionMarkSet.addAll(mSuccessors);
 		mConditionMark = new ConditionMarking<>(conditionMarkSet);
 		mMark = mConditionMark.getMarking();
+		mPlaceCorelationMap = computePlaceCorelationMap(bp);
 	}
 
 	/**
@@ -135,6 +137,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 			conditionMarkSet.add(c);
 		}
 		mHashCode = computeHashCode();
+		mPlaceCorelationMap = computePlaceCorelationMap(bp);
 	}
 
 	/**
@@ -219,7 +222,9 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public Set<Condition<LETTER, PLACE>> getPredecessorConditions() {
 		return mPredecessors;
 	}
-
+	public Map<PLACE, Set<PLACE>> getPlaceCorelationMap(){
+		return  mPlaceCorelationMap;
+	}
 	/**
 	 * @return marking of the local configuration of this.
 	 */
@@ -271,28 +276,45 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	}
 
 	/**
-	 * TODO #Backfolding
+	 * #Backfolding
 	 */
 	public boolean checkCutOffAndSetCompanionForComprehensivePrefix(final Event<LETTER, PLACE> companionCandidate,
-			final Comparator<Event<LETTER, PLACE>> order, final BranchingProcess<LETTER, PLACE> bp) {
-		companionCandidate.computeMapForFiniteComprehensivePrefixCutOffCheck(bp);
-		this.computeMapForFiniteComprehensivePrefixCutOffCheck(bp);
-		return false;
+			final Comparator<Event<LETTER, PLACE>> order, final BranchingProcess<LETTER, PLACE> bp,
+			final boolean sameTransitionCutOff) {
+		//by comparing the hashmaps we check simultaneously if they have the same marking (set of keys of the map)
+		if (sameTransitionCutOff) {
+			if (!getTransition().equals(companionCandidate.getTransition())) {
+				return false;
+			}
+		}
+		
+		if (order.compare(companionCandidate, this) >= 0) {
+			return false;
+		}
+		
+		if (!companionCandidate.getPlaceCorelationMap().equals(getPlaceCorelationMap()))
+			return false;
+		
+		setCompanion(companionCandidate);
+		return true;
 	}
 
 	/**
-	 * TODO #Backfolding
+	 * #Backfolding
 	 * <p>
 	 * Map m such that for each {@link Condition} c in the local configuration of
 	 * this {@link Event} the map contains the pair
 	 * (c.getPlace(),bp.getCoRelatedPlaces(c)). </ p> TODO Find a nice name for this
 	 * map or find a view that is easy to understand
 	 */
-	public Map<PLACE, Set<PLACE>> computeMapForFiniteComprehensivePrefixCutOffCheck(
+	public Map<PLACE, Set<PLACE>> computePlaceCorelationMap(
 			final BranchingProcess<LETTER, PLACE> bp) {
-		getLocalConfiguration();
-		bp.computeCoRelatedPlaces(null);
-		return null;
+			Map<PLACE, Set<PLACE>> result = new HashMap<>();
+			for (Condition<LETTER,PLACE> c:  getConditionMark())
+			{
+				result.put(c.getPlace(), bp.computeCoRelatedPlaces(c));
+			}
+		return result;
 	}
 
 	/**

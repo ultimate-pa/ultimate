@@ -90,11 +90,11 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	private final HashRelation<Integer, Event<LETTER, PLACE>> mMarkingEventRelation = new HashRelation<>();
 
 	/**
-	 * TODO #Backfolding
+	 * #Backfolding
 	 * Temporary boolean flag for testing our computation of
 	 * a "finite comprehensive prefix".
 	 */
-	private final boolean mNewFiniteComprehensivePrefixMode = false;
+	private final boolean mNewFiniteComprehensivePrefixMode = true;
 
 	public BranchingProcess(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> net,
 			final IOrder<LETTER, PLACE> order) throws PetriNetNot1SafeException {
@@ -188,7 +188,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 			final boolean sameTransitionCutOff) {
 		for (final Event<LETTER, PLACE> ev : mMarkingEventRelation.getImage(event.getMark().hashCode())) {
 			if (mNewFiniteComprehensivePrefixMode) {
-				if (event.checkCutOffAndSetCompanionForComprehensivePrefix(ev, order, this)) {
+				if (event.checkCutOffAndSetCompanionForComprehensivePrefix(ev, order, this, sameTransitionCutOff)) {
 					return true;
 				}
 			} else {
@@ -415,11 +415,17 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	}
 
 	/**
-	 * TODO #Backfolding
+	 * #Backfolding
+	 * @param cond : a condition
+	 * @return the set of Co
 	 */
 	public Set<PLACE> computeCoRelatedPlaces(final Condition<LETTER, PLACE> cond) {
-		mCoRelation.computeCoRelatatedConditions(cond);
-		return null;
+		Set<PLACE> result = new HashSet<>();
+		for (Condition<LETTER,PLACE> c : mCoRelation.computeCoRelatatedConditions(cond))
+		{
+			result.add(c.getPlace());
+		}
+		return result;
 	}
 
 	@Override
