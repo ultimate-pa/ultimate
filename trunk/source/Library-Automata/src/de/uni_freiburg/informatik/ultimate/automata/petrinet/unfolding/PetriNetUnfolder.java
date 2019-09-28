@@ -352,7 +352,9 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 				for (final Event<LETTER, PLACE> event2 : events) {
 					mLogger.info("  existing Event has " + event2.getAncestors() + " ancestors and is "
 							+ (event.isCutoffEvent() ? "" : "not ") + "cut-off event");
-					assert event2.getAncestors() == event.getAncestors() || event.isCutoffEvent();
+					assert event2.getAncestors() == event.getAncestors() || event.isCutoffEvent() : "if there is "
+							+ "already an event that has the same marking and a different size of "
+							+ "local configuration then the new event must be cut-off event";
 				}
 			}
 			events.add(event);
