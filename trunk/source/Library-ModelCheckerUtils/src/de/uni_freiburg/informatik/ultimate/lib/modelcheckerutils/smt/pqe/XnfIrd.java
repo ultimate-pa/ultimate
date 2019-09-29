@@ -190,8 +190,9 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	private static boolean isSolvableWithoutCaseDistinction(final Script script, final TermVariable tv,
 			final AffineRelation affineRelation) {
 		assert Arrays.equals(AssumptionForSolvability.values(), new AssumptionForSolvability[] {
-				AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT,
-				AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO }) : "A new value was added to enum and has to be considered here";
+				AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT, AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO,
+				AssumptionForSolvability.INTEGER_DIVISOR_NOT_ZERO,
+				AssumptionForSolvability.INTEGER_DIVISIBLE_BY_VARIABLE }) : "A new value was added to enum and has to be considered here";
 		final SolvedBinaryRelation sbr = affineRelation.solveForSubject(script, tv);
 		if (sbr == null) {
 			return false;
