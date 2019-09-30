@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Si
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -75,7 +74,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractioncon
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction.SyntacticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -120,7 +118,6 @@ public class PetriNetLargeBlockEncoding {
 		final IIndependenceRelation<IPredicate, IIcfgTransition<?>> syntaxCheck = new SyntacticIndependenceRelation<>();
 		if (USE_SEMANTIC_CHECK) {
 			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> semanticCheck = new SemanticIndependenceRelation(mServices, mManagedScript, false, false);
-			Arrays.asList(syntaxCheck, semanticCheck);
 			mMoverCheck = new UnionIndependenceRelation<IPredicate, IIcfgTransition<?>>(Arrays.asList(syntaxCheck, semanticCheck));
 		} else {
 			mMoverCheck = syntaxCheck;
