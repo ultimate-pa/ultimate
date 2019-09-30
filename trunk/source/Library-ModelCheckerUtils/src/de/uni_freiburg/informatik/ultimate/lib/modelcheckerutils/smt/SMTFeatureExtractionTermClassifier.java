@@ -110,7 +110,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 				for (int i = 0; i < (termParameters.length - 1); i++) {
 					final Term term1 = termParameters[i];
 					final Term term2 = termParameters[i+1];
-					if (isApplicationTermWithArityZero(term1)  && isApplicationTermWithArityZero(term2) ) {
+					if ((isApplicationTermWithArityZero(term1) || (term1 instanceof TermVariable)) && (isApplicationTermWithArityZero(term2) || (term2 instanceof TermVariable) )) {
 						final Term rep1 = mVariableEquivalenceClasses.findAndConstructEquivalenceClassIfNeeded(term1);
 						final Term rep2 = mVariableEquivalenceClasses.findAndConstructEquivalenceClassIfNeeded(term2);
 						mLogger.warn("REP1: " + rep1.toStringDirect());
@@ -277,4 +277,12 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		}
 		return score;
 	}
+
+	public int score() {
+		final int score = 0;
+		// TODO.
+		return mNumberOfFunctions;
+	}
+
+
 }
