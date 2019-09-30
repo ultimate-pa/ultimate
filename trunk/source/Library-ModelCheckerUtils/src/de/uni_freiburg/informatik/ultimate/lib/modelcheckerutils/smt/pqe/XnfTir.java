@@ -175,7 +175,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					return null;
 				}
 				if (!sbr.getAssumptionsMap().isEmpty()
-						&& !sbr.getRelationSymbol().equals(BinaryRelation.RelationSymbol.DISTINCT)) {
+						&& !sbr.getRelationSymbol().equals(BinaryRelation.RelationSymbol.DISTINCT)
+						&& !sbr.getRelationSymbol().equals(BinaryRelation.RelationSymbol.EQ)) {
 					return null;
 				}
 				final Term eliminateeOnLhs = sbr.relationToTerm(mScript);
@@ -184,7 +185,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				case DISTINCT:
 					if (quantifier == QuantifiedFormula.EXISTS) {
 						if (!sbr.getAssumptionsMap().isEmpty()) {
-							antiDer.add(antiDerWithAssumption(term, eliminatee));
+							antiDer.add(antiDerWithAssumption(QuantifiedFormula.EXISTS, term, eliminatee));
 						} else {
 							antiDer.add(new Pair<Term, Term>(bnr.getRhs(), bnr.getRhs()));
 						}
@@ -197,7 +198,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				case EQ:
 					if (quantifier == QuantifiedFormula.FORALL) {
 						if (!sbr.getAssumptionsMap().isEmpty()) {
-							antiDer.add(antiDerWithAssumption(term, eliminatee));
+							antiDer.add(antiDerWithAssumption(QuantifiedFormula.FORALL, term, eliminatee));
 						} else {
 							antiDer.add(new Pair<Term, Term>(bnr.getRhs(), bnr.getRhs()));
 						}
@@ -264,20 +265,32 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	}
 
 	/**
-	 * AntiDER: (a != b) to (a < b OR a > b) SolveForSubject on both disjuncts to
-	 * get the right hand side of the relations. returns lower/upper bound right
-	 * hand side of the relation
+	 * transforms
+	 * (a != b) to (a < b OR a > b) for exist quantifier and
+	 * (a = b) to (a <= b OR a >= b) for forall quantifier 
+	 * uses solveForSubject on both disjuncts to get the right hand side of the both relations.
+	 * returns lower/upper bound right hand side.
 	 */
-	private Pair<Term, Term> antiDerWithAssumption(final Term originalTerm, final Term eliminatee) {
+	private Pair<Term, Term> antiDerWithAssumption(final int quantifier, final Term originalTerm,
+			final Term eliminatee) {
 		// Strict to NONStrict transformation is done in the method "computeBound"
 		final TransformInequality transform = TransformInequality.NO_TRANFORMATION;
+		RelationSymbol lowerRelationSymbol;
+		RelationSymbol upperRelationSymbol;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			lowerRelationSymbol = RelationSymbol.GREATER;
+			upperRelationSymbol = RelationSymbol.LESS;
+		} else {
+			lowerRelationSymbol = RelationSymbol.GEQ;
+			upperRelationSymbol = RelationSymbol.LEQ;
+		}
 		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(originalTerm);
 
-		final BinaryNumericRelation lowerBoundBnr = bnr.changeRelationSymbol(RelationSymbol.GREATER);
+		final BinaryNumericRelation lowerBoundBnr = bnr.changeRelationSymbol(lowerRelationSymbol);
 		final AffineRelation relLower = AffineRelation.convert(mScript, lowerBoundBnr.toTerm(mScript), transform);
 		final SolvedBinaryRelation sbrLower = relLower.solveForSubject(mScript, eliminatee);
 
-		final BinaryNumericRelation upperBoundBnr = bnr.changeRelationSymbol(RelationSymbol.LESS);
+		final BinaryNumericRelation upperBoundBnr = bnr.changeRelationSymbol(upperRelationSymbol);
 		final AffineRelation relUpper = AffineRelation.convert(mScript, upperBoundBnr.toTerm(mScript), transform);
 		final SolvedBinaryRelation sbrUpper = relUpper.solveForSubject(mScript, eliminatee);
 

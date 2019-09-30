@@ -812,13 +812,24 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void antiDerTIR() throws NotAffineException {
+	public void antiDerTirExist() throws NotAffineException {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("lo", new Sort[0], intSort);
 		mScript.declareFun("hi", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
-		final String expectedResult = "(or (and (<= (+ lo 2) hi) (<= (+ lo 1) (div (+ y (- 1)) 4))) (and (<= (+ lo 2) hi) (<= (+ (div y 4) 2) hi)))";
 		final String inputSTR = "(exists ((x Int)) (and	(not(=(* 4 x) y)) (> x lo) (< x hi)) )";
+		final String expectedResult = "(or (and (<= (+ lo 2) hi) (<= (+ lo 1) (div (+ y (- 1)) 4))) (and (<= (+ lo 2) hi) (<= (+ (div y 4) 2) hi)))";
+		runQuantifierEliminationTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void antiDerTirForall() throws NotAffineException {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("lo", new Sort[0], intSort);
+		mScript.declareFun("hi", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String inputSTR = "(forall ((x Int)) (or	(=(* 4 x) y) (> x lo) (< x hi))  )";
+		final String expectedResult = "(and (or (< lo hi) (< lo (+ (div y 4) 1))) (or (< (div (+ y (- 1)) 4) hi) (< lo hi)))";
 		runQuantifierEliminationTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
