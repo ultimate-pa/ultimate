@@ -70,6 +70,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction.SemanticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction.SyntacticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -96,6 +100,9 @@ public class PetriNetLargeBlockEncoding {
 	private final Map<IIcfgTransition<?>, List<IIcfgTransition<?>>> mSequentialCompositions = new HashMap<>();
 	private final Map<IIcfgTransition<?>, Triple<TermVariable, IIcfgTransition<?>, IIcfgTransition<?>>> mChoiceCompositions = new HashMap<>();
 
+	private final boolean USE_SEMANTIC_CHECK = true;
+	private final IIndependenceRelation<?, IIcfgTransition<?>> mMoverCheck;
+
 	private final IUltimateServiceProvider mServices;
 
 	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
@@ -110,9 +117,18 @@ public class PetriNetLargeBlockEncoding {
 				new AutomataLibraryServices(services), petriNet).getResult();
 		mCoEnabledRelation = computeCoEnabledRelation(petriNet, bp);
 
+		final IIndependenceRelation<IPredicate, IIcfgTransition<?>> syntaxCheck = new SyntacticIndependenceRelation<>();
+		if (USE_SEMANTIC_CHECK) {
+			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> semanticCheck = new SemanticIndependenceRelation(mServices, mManagedScript, false, false);
+			Arrays.asList(syntaxCheck, semanticCheck);
+			mMoverCheck = new UnionIndependenceRelation<IPredicate, IIcfgTransition<?>>(Arrays.asList(syntaxCheck, semanticCheck));
+		} else {
+			mMoverCheck = syntaxCheck;
+		}
+
 		BoundedPetriNet<IIcfgTransition<?>, IPredicate> result1 = choiceRule(services, petriNet);
 		for (int i = 0; i < 10; i++) {
-			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> result2 = sequenceRule(services, result1, true);
+			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> result2 = sequenceRule(services, result1);
 			result1 = choiceRule(services, result2);
 		}
 		mResult = result1;
@@ -158,7 +174,7 @@ public class PetriNetLargeBlockEncoding {
 	}
 
 	private BoundedPetriNet<IIcfgTransition<?>, IPredicate> sequenceRule(final IUltimateServiceProvider services,
-			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet, final boolean semanticCheck)
+			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		final Collection<ITransition<IIcfgTransition<?>, IPredicate>> transitions = petriNet.getTransitions();
 		final List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> meltingStack = new ArrayList<>();
@@ -170,7 +186,7 @@ public class PetriNetLargeBlockEncoding {
 					// TODO: maybe use allMatch()
 					boolean meltingAllowed = true;
 					for (final ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet.getSuccessors(state)) {
-						if (sequenceRuleCheck(t1, t2, state, meltingStack, petriNet, semanticCheck) == false) {
+						if (sequenceRuleCheck(t1, t2, state, meltingStack, petriNet) == false) {
 							meltingAllowed = false;
 						}
 					}
@@ -235,22 +251,15 @@ public class PetriNetLargeBlockEncoding {
 	private boolean sequenceRuleCheck(final ITransition<IIcfgTransition<?>, IPredicate> t1,
 			final ITransition<IIcfgTransition<?>, IPredicate> t2, final IPredicate state,
 			final List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> meltingStack,
-			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet, final boolean semanticCheck) {
+			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet) {
 		boolean meltingAllowed = true;
 		if (petriNet.getPredecessors(t2).size() == 1 && !petriNet.getSuccessors(t2).contains(state)
 				&& onlyInternal(t1.getSymbol()) && onlyInternal(t2.getSymbol())) {
-			boolean moverCheck = false;
-			if (semanticCheck) {
-				moverCheck = semanticMoverCheck(t1, t2);
-			} else {
-				moverCheck = variableMoverCheck(t1) || variableMoverCheck(t2);
-			}
-			if (moverCheck) {
-				if (meltingStack.size() != 0) {
-					for (final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> triple : meltingStack) {
-						if (triple.getThird() == t1 || triple.getSecond() == t2) {
-							meltingAllowed = false; // TODO: early return?
-						}
+
+			if (isRightMover(t1) || isLeftMover(t2)) {
+				for (final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> triple : meltingStack) {
+					if (triple.getThird() == t1 || triple.getSecond() == t2) {
+						meltingAllowed = false; // TODO: early return?
 					}
 				}
 			} else {
@@ -333,6 +342,7 @@ public class PetriNetLargeBlockEncoding {
 		return hashRelation;
 	}
 
+	// TODO: use new builtin method? (but correct spelling)
 	private boolean isInCoRelation(final Event<IIcfgTransition<?>, IPredicate> e1,
 			final Event<IIcfgTransition<?>, IPredicate> e2,
 			final ICoRelation<IIcfgTransition<?>, IPredicate> coRelation) {
@@ -343,67 +353,16 @@ public class PetriNetLargeBlockEncoding {
 		return mResult;
 	}
 
-	private boolean variableMoverCheck(final ITransition<IIcfgTransition<?>, IPredicate> t1) {
+	private boolean isLeftMover(final ITransition<IIcfgTransition<?>, IPredicate> t1) {
 		// Filter which elements of coEnabledRelation are relevant.
 		final Set<IIcfgTransition<?>> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
-		return coEnabledTransitions.stream().allMatch(t2 -> variableMoverCheckTwoTransitions(t1.getSymbol(), t2));
+		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t2, t1.getSymbol()));
 	}
 
-	private boolean variableMoverCheckTwoTransitions(final IIcfgTransition<?> t1, final IIcfgTransition<?> t2) {
-		// TODO: eliminate if/return
-		if (DataStructureUtils.haveEmptyIntersection(t1.getTransformula().getAssignedVars(),
-				t2.getTransformula().getAssignedVars())
-				&& DataStructureUtils.haveEmptyIntersection(t1.getTransformula().getAssignedVars(),
-						t2.getTransformula().getInVars().keySet())
-				&& DataStructureUtils.haveEmptyIntersection(t1.getTransformula().getInVars().keySet(),
-						t2.getTransformula().getAssignedVars())) {
-			return true;
-		}
-		return false;
-	}
-
-	private boolean semanticMoverCheck(final ITransition<IIcfgTransition<?>, IPredicate> t1,
-			final ITransition<IIcfgTransition<?>, IPredicate> t2) {
+	private boolean isRightMover(final ITransition<IIcfgTransition<?>, IPredicate> t1) {
 		// Filter which elements of coEnabledRelation are relevant.
 		final Set<IIcfgTransition<?>> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
-		if (coEnabledTransitions.size() == 0) {
-			return true;
-		}
-		// TODO: Full mover check. t1 should be right mover or t2 should be left mover.
-
-		// TODO: use allMatch?
-		boolean rightMover = true;
-		boolean leftMover = true;
-		for (final IIcfgTransition<?> t3 : coEnabledTransitions) {
-			if (semanticRightMoverCheckTwoTransitions(t1.getSymbol(), t3) == false) {
-				rightMover = false;
-			}
-			if (semanticLeftMoverCheckTwoTransitions(t2.getSymbol(), t3) == false) {
-				leftMover = false;
-			}
-		}
-		return rightMover || leftMover;
-	}
-
-	// TODO: better property & method name (also for next method)
-	private boolean semanticRightMoverCheckTwoTransitions(final IIcfgTransition<?> t1, final IIcfgTransition<?> t3) {
-		return semanticLeftMoverCheckTwoTransitions(t3, t1);
-	}
-
-	private boolean semanticLeftMoverCheckTwoTransitions(final IIcfgTransition<?> t2, final IIcfgTransition<?> t3) {
-		// no need to do simplification, result is only used in one implication check
-		final boolean simplify = false;
-		// try to eliminate auxiliary variables to avoid quantifier alternation in
-		// implication check
-		// advanced but possibly useless optimization: do elimination only for RHS
-		final boolean tryAuxVarElimination = true;
-		final UnmodifiableTransFormula transFormula1 = constructSequentialComposition(t2.getSource(), t3.getTarget(),
-				t2, t3, simplify, tryAuxVarElimination).getTransformula();
-		final UnmodifiableTransFormula transFormula2 = constructSequentialComposition(t3.getSource(), t2.getTarget(),
-				t3, t2, simplify, tryAuxVarElimination).getTransformula();
-		final LBool result = TransFormulaUtils.checkImplication(transFormula2, transFormula1, mManagedScript);
-
-		return result == LBool.UNSAT;
+		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t1.getSymbol(), t2));
 	}
 
 	// Methods from IcfgEdgeBuilder!
