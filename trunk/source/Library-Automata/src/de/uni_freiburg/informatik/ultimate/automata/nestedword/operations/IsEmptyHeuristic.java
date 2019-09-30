@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2017 University of Freiburg
+ * Copyright (C) 2019 Julian Löffler (loefflju@informatik.uni-freiburg.de), Breee@github
+ * Copyright (C) 2017-2019 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
  *
@@ -69,6 +70,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	private final Predicate<STATE> mIsForbiddenState;
 	private final NestedRun<LETTER, STATE> mAcceptingRun;
 	private final STATE mDummyEmptyStackState;
+	private final IHeuristic<STATE, LETTER> mHeuristic;
 
 	/**
 	 * Default constructor. Here we search a run from the initial states of the automaton to the final states of the
@@ -81,10 +83,10 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	 * @see #IsEmpty(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
 	 */
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final IHeuristic<STATE, LETTER> heuristic)
+					throws AutomataOperationCanceledException {
 		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false, a -> operand.isFinal(a),
-				IHeuristic.getZeroHeuristic());
+				heuristic);
 	}
 
 	/**
@@ -95,7 +97,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	public IsEmptyHeuristic(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Set<STATE> startStates, final Predicate<STATE> funIsForbiddenState,
 			final Predicate<STATE> funIsGoalState, final IHeuristic<STATE, LETTER> heuristic)
-			throws AutomataOperationCanceledException {
+					throws AutomataOperationCanceledException {
 		this(services, (INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>) operand, startStates,
 				funIsForbiddenState, funIsGoalState, heuristic);
 		assert operand.getStates().containsAll(startStates) : "unknown states";
@@ -109,6 +111,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		mOperand = operand;
 		mIsGoalState = funIsGoalState;
 		mIsForbiddenState = funIsForbiddenState;
+		mHeuristic = heuristic;
 		assert startStates != null;
 		assert mIsGoalState != null;
 		assert mIsForbiddenState != null;
@@ -192,7 +195,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 	private List<Item> getUnvaluatedSuccessors(final Item current) {
 		final List<Item> rtr = new ArrayList<>();
-
 		// process internal transitions
 		for (final OutgoingInternalTransition<LETTER, STATE> transition : mOperand
 				.internalSuccessors(current.mTargetState)) {
@@ -297,7 +299,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		private final Item mBackPointer;
 		private final ItemType mItemType;
 
-		// g-value, how much have we already payed?
+		// g-value, how much have we already ph payed?
 		private int mCostSoFar;
 		// h-value
 		private int mLowestExpectedCost;
@@ -434,9 +436,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + ((mTargetState == null) ? 0 : mTargetState.hashCode());
-			result = prime * result + ((mHierPreStates == null) ? 0 : mHierPreStates.hashCode());
-			result = prime * result + ((mTransition == null) ? 0 : mTransition.hashCode());
+			result = (prime * result) + ((mTargetState == null) ? 0 : mTargetState.hashCode());
+			result = (prime * result) + ((mHierPreStates == null) ? 0 : mHierPreStates.hashCode());
+			result = (prime * result) + ((mTransition == null) ? 0 : mTransition.hashCode());
 			return result;
 		}
 
@@ -481,37 +483,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		public String toString() {
 			return String.format("{?} {%s} %s (%s) {%s} (g=%d, h=%d, f=%d, s=%d)", mHierPreStates.peek().hashCode(),
 					mTransition == null ? 0 : mTransition.hashCode(), mItemType, mTargetState.hashCode(), mCostSoFar,
-					mLowestExpectedCost, mExpectedCostToTarget, mHierPreStates.size());
+							mLowestExpectedCost, mExpectedCostToTarget, mHierPreStates.size());
 		}
 	}
 
-	/**
-	 *
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
-	 * @param <STATE>
-	 *            Type of states
-	 * @param <LETTER>
-	 *            Type of transitions
-	 */
-	public interface IHeuristic<STATE, LETTER> {
-
-		int getHeuristicValue(STATE state, STATE stateK, LETTER trans);
-
-		int getConcreteCost(LETTER trans);
-
-		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getZeroHeuristic() {
-			return new IHeuristic<STATE, LETTER>() {
-				@Override
-				public final int getHeuristicValue(final STATE state, final STATE stateK, final LETTER trans) {
-					return 0;
-				}
-
-				@Override
-				public final int getConcreteCost(final LETTER e) {
-					return 1;
-				}
-			};
-		}
-	}
 }
