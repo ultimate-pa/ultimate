@@ -67,6 +67,8 @@ public class PeaToDotTestSuite {
 			return; // Oops, somebody forgot to implement that sh.. ;-)
 		}
 
+		mLogger.info(DotWriterNew.createDotString(pea));
+
 		writeDotToSvg(DotWriterNew.createDotString(pea));
 		writeMarkdown();
 	}

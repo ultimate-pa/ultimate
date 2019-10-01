@@ -17,11 +17,12 @@
 ;(assert (forall ((x Int) (y Int)) (=> (and (<= x 1) (element (+ x 0) I) (= (- y x) 2)) (element y I)))) 
 
 ; x >= 2 /\ y < 2 /\ x \in I /\ y \in I
-(assert (and (not (< x 2)) (< y 2) (element x I) (element y I)))
+;(assert (and (not (< x 2)) (< y 2) (element x I) (element y I)))
 
 ;(assert (forall ((x Int)) (=> (> x 0) (element (+ x 0) I) ) ))
 
+(assert (< x 1))
 
 (check-sat)
 
-(get-value (x y I))
+(get-value (x))
