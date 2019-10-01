@@ -15,7 +15,7 @@ public class DotWriterNew {
 		rtr.append("digraph G {" + "\n\n");
 		rtr.append("rankdir=LR;" + "\n");
 		rtr.append("graph [fontname=\"arial\"]" + "\n");
-		rtr.append("node [fontname=\"arial\" shape=circle];" + "\n");
+		rtr.append("node [fontname=\"arial\" shape=rectangle];" + "\n");
 		rtr.append("edge [fontname=\"arial\"]");
 		rtr.append("\n");
 
@@ -48,7 +48,7 @@ public class DotWriterNew {
 					resets += "<br/>" + reset + " :=0";
 				}
 
-				rtr.append("\t" + src + " -> " + dst + " [label=" + "<<br/><font COLOR=\"#377eb8\">" + guard + "</font>"
+				rtr.append("\t" + src + " -> " + dst + " [label=" + "<<font COLOR=\"#377eb8\">" + guard + "</font>"
 						+ resets + ">];" + "\n");
 			}
 			rtr.append("\n");
