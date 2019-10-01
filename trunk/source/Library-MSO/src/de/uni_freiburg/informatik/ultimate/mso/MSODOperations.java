@@ -209,45 +209,23 @@ public final class MSODOperations {
 	 */
 	public Map<Term, Term> getResult(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
-		if (mAutomataOperations instanceof MSODAutomataOperationsWeak) {
-			return getResultWeak(script, services, automaton);
+		if (mAutomataOperations instanceof MSODAutomataOperationsWeak
+				& mFormulaOperations instanceof MSODFormulaOperationsNat) {
+			return getResultNatWeak(script, services, automaton);
 		}
-		if (mAutomataOperations instanceof MSODAutomataOperationsBuchi) {
-			return getResultBuchi(script, services, automaton);
+		if (mAutomataOperations instanceof MSODAutomataOperationsWeak
+				& mFormulaOperations instanceof MSODFormulaOperationsInt) {
+			return getResultIntWeak(script, services, automaton);
+		}
+		if (mAutomataOperations instanceof MSODAutomataOperationsBuchi
+				& mFormulaOperations instanceof MSODFormulaOperationsNat) {
+			return getResultNatBuchi(script, services, automaton);
+		}
+		if (mAutomataOperations instanceof MSODAutomataOperationsBuchi
+				&& mFormulaOperations instanceof MSODFormulaOperationsInt) {
+			return getResultIntBuchi(script, services, automaton);
 		}
 		return null;
-	}
-
-	// Returns the range of consecutive numbers in the given array as a set of arrays. Each array in the result contains
-	// the start resp. end number of one series of consecutive numbers.
-	public Set<Pair<Integer, Integer>> getRangeOfConsecutiveNumbers(final Set<Integer> num) {
-
-		final List<Integer> numbers = new ArrayList<>();
-		numbers.addAll(num);
-		numbers.sort(null);
-
-		final Set<Pair<Integer, Integer>> result = new HashSet<>();
-		Integer start = null;
-		Integer end = null;
-
-		for (int i = 0; i < numbers.size(); i++) {
-			if (i == 0) {
-				start = numbers.get(i);
-				end = numbers.get(i);
-			} else {
-				if (numbers.get(i) - end == 1) {
-					end = numbers.get(i);
-				} else {
-					result.add(new Pair<>(start, end));
-					start = numbers.get(i);
-					end = numbers.get(i);
-				}
-			}
-			if (i == numbers.size() - 1) {
-				result.add(new Pair<>(start, end));
-			}
-		}
-		return result;
 	}
 
 	/**
@@ -255,27 +233,27 @@ public final class MSODOperations {
 	 * of the given NestedWord.
 	 */
 	public Pair<NestedWord<MSODAlphabetSymbol>, NestedWord<MSODAlphabetSymbol>> splitWordWeak(final Script script,
-			final NestedWord<MSODAlphabetSymbol> word, final MSODFormulaOperations formulaOperation) {
+			final NestedWord<MSODAlphabetSymbol> word) {
 		NestedWord<MSODAlphabetSymbol> wordPos = new NestedWord<>();
 		NestedWord<MSODAlphabetSymbol> wordNeg = new NestedWord<>();
 
-		if (formulaOperation instanceof MSODFormulaOperationsNat) {
-			wordPos = word;
-		}
-		if (formulaOperation instanceof MSODFormulaOperationsInt) {
-			final List<MSODAlphabetSymbol> symbolsPos = new ArrayList<>();
-			final List<MSODAlphabetSymbol> symbolsNeg = new ArrayList<>();
-			;
-			for (int i = 0; i < word.length(); i++) {
-				if (i % 2 == 0) {
-					symbolsNeg.add(word.getSymbol(i));
-				} else {
-					symbolsPos.add(word.getSymbol(i));
-				}
+		final List<MSODAlphabetSymbol> symbolsPos = new ArrayList<>();
+		final List<MSODAlphabetSymbol> symbolsNeg = new ArrayList<>();
+
+		for (int i = 0; i < word.length(); i++) {
+			if (i % 2 == 0) {
+				symbolsNeg.add(word.getSymbol(i));
+			} else {
+				symbolsPos.add(word.getSymbol(i));
 			}
-			wordPos = NestedWord.nestedWord(new Word<>((MSODAlphabetSymbol[]) symbolsPos.toArray()));
-			wordNeg = NestedWord.nestedWord(new Word<>((MSODAlphabetSymbol[]) symbolsNeg.toArray()));
 		}
+
+		// MSODAlphabetSymbol[] array = symbolsPos.toArray(new MSODAlphabetSymbol[(int) (0.5 * word.length())]);
+		wordPos = NestedWord
+				.nestedWord(new Word<>(symbolsPos.toArray(new MSODAlphabetSymbol[(int) (0.5 * word.length())])));
+		wordNeg = NestedWord
+				.nestedWord(new Word<>(symbolsNeg.toArray(new MSODAlphabetSymbol[(int) (0.5 * word.length() + 0.5)])));
+
 		return new Pair<>(wordPos, wordNeg);
 	}
 
@@ -344,29 +322,53 @@ public final class MSODOperations {
 	}
 
 	/**
-	 * Returns a satisfying SMTLIB model for the MSOD-formula represented by the given automata or null if no such model
-	 * exists.
+	 * Returns a satisfying SMTLIB model for the Weak-MSOD-formula of type Nat represented by the given automata or null
+	 * if no such model exists.
 	 *
 	 * @throws AutomataLibraryException
 	 * @throws UnsupportedOperationException
 	 *             if representation of Integer variable is corrupted
 	 */
-	public Map<Term, Term> getResultWeak(final Script script, final AutomataLibraryServices services,
+	public Map<Term, Term> getResultNatWeak(final Script script, final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
+			throws AutomataLibraryException, UnsupportedOperationException {
+
+		// Get the word of the acceptedsymbolsPos.toArray() run.
+		final NestedWord<MSODAlphabetSymbol> word = getWordWeak(script, services, automaton);
+
+		// Construct resulting term.
+		return stemTerm(word, true, script);
+	}
+
+	/**
+	 * Returns a satisfying SMTLIB model for the Weak-MSOD-formula of type Int represented by the given automata or null
+	 * if no such model exists.
+	 *
+	 * @throws AutomataLibraryException
+	 * @throws UnsupportedOperationException
+	 *             if representation of Integer variable is corrupted
+	 */
+	public Map<Term, Term> getResultIntWeak(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
 			throws AutomataLibraryException, UnsupportedOperationException {
 		Map<Term, Term> result = new HashMap<>();
 		Map<Term, Term> tmp = new HashMap<>();
 
-		// Get the word of the accepted run and split it into positive and negative parts.
+		// Get the word of the accepted run.
 		final NestedWord<MSODAlphabetSymbol> word = getWordWeak(script, services, automaton);
-		final Pair<NestedWord<MSODAlphabetSymbol>, NestedWord<MSODAlphabetSymbol>> splittedWord =
-				splitWordWeak(script, word, mFormulaOperations);
-		final NestedWord<MSODAlphabetSymbol> wordPos = splittedWord.getFirst();
-		final NestedWord<MSODAlphabetSymbol> wordNeg = splittedWord.getSecond();
 
-		// Construct resulting term from positive resp. negative stem terms.
-		result = stemTerm(wordPos, true, script);
-		tmp = stemTerm(wordNeg, false, script);
+		final NestedWord<MSODAlphabetSymbol> wordPos =
+				(word.length() > 1) ? splitWordWeak(script, word).getFirst() : null;
+		final NestedWord<MSODAlphabetSymbol> wordNeg = splitWordWeak(script, word).getSecond();
+
+		// Construct resulting term from positive resp. negative word.
+		result = stemTerm(wordNeg, false, script);
+
+		if (wordPos != null) {
+			tmp = stemTerm(wordPos, true, script);
+		}
+
+		// Build disjunction of all positive and negative parts.
 		for (final Term t : tmp.keySet()) {
 			if (tmp.get(t) != null) {
 				if (result.get(t) != null) {
@@ -380,7 +382,104 @@ public final class MSODOperations {
 	}
 
 	// TODO:
-	public Map<Term, Term> getResultBuchi(final Script script, final AutomataLibraryServices services,
+	public Map<Term, Term> getResultNatBuchi(final Script script, final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
+		Map<Term, Term> result = new HashMap<>();
+		Map<Term, Term> tmp = new HashMap<>();
+		final Set<Term> terms = automaton.getAlphabet().iterator().next().getTerms();
+
+		// Get word of an accepting run and split it into stem and loop.
+		final NestedLassoWord<MSODAlphabetSymbol> word = getWordBuchi(script, services, automaton);
+
+		// Create stem and loop conditions.
+		result = stemTerm(word.getStem(), true, script);
+		tmp = loopTermNat(word.getLoop(), word.getStem().length() - 1, script);
+
+		for (final Term term : terms) {
+			if (tmp.get(term) != null) {
+				if (result.get(term) != null) {
+					result.replace(term, SmtUtils.or(script, result.get(term), tmp.get(term)));
+				} else {
+					result.replace(term, tmp.get(term));
+				}
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Return the loop Term condition derived from an accepted LassoWord (for natural numbers only).
+	 */
+	public Map<Term, Term> loopTermNat(final NestedWord<MSODAlphabetSymbol> loop, final int maxStem,
+			final Script script) {
+		final Map<Term, Term> result = new HashMap<>();
+		final Set<Term> terms = loop.getSymbol(0).getTerms();
+		final int maxLoop = loop.length();
+
+		for (final Term term : terms) {
+			final Set<Term> disjuncts = new HashSet<>();
+			Integer value = null;
+
+			// Create new Term variable, with same name as SetOfInt variable but sort IntSort.
+			final Term newTerm = term.getTheory().createTermVariable(term.toString(), SmtSortUtils.getIntSort(script));
+
+			// Find all indices that are enabled in the loop, either as a single index or as a part of consecutive
+			// enabled indices.
+			for (int i = 0; i < loop.length(); i++) {
+				// Find Enabled index
+				if (loop.getSymbol(i).getMap().get(term)) {
+					// Start a new interval
+					if (value == null) {
+						value = i;
+					}
+					// Create and store term, if interval cannot be not prolonged.
+					if (value != null & (i + 1 == loop.length() || !loop.getSymbol(i + 1).getMap().get(term))) {
+						disjuncts.add(createModTermNat(script, newTerm, maxStem, maxLoop, value + 1, i + 1));
+						value = null;
+					}
+				}
+			}
+
+			if (!disjuncts.isEmpty()) {
+				// Build disjunction of all terms.
+				final Term t1 = SmtUtils.or(script, disjuncts);
+				// Add conjunct to exclude stem values.
+				final Term t2 = SmtUtils.greater(script, newTerm,
+						SmtUtils.constructIntValue(script, BigInteger.valueOf(maxStem)));
+				result.put(term, SmtUtils.and(script, t1, t2));
+			} else {
+				result.put(term, null);
+			}
+		}
+		return result;
+	}
+
+	public Term createModTermNat(final Script script, final Term term, final int maxStem, final int maxLoop,
+			final int start, final int end) {
+
+		// No IntSort variable should have indices enabled in its loop.
+		if (SmtSortUtils.isIntSort(term.getSort())) {
+			throw new InternalError("Integer representation is corrupted.");
+		}
+
+		// "variable % maxLoop"
+		final Term mod = SmtUtils.mod(script, term, SmtUtils.constructIntValue(script, BigInteger.valueOf(maxLoop)));
+
+		// If single index is enabled, create binary equality of modulo Term.
+		if (start == end) {
+			final int value = (start + maxStem) % maxLoop;
+			return SmtUtils.binaryEquality(script, mod, SmtUtils.constructIntValue(script, BigInteger.valueOf(value)));
+		}
+		// Otherwise create a term representing an interval between start and end.
+		final Term t1 = SmtUtils.geq(script, mod, SmtUtils.constructIntValue(script, BigInteger.valueOf(start)));
+		final Term t2 = SmtUtils.leq(script, mod, SmtUtils.constructIntValue(script, BigInteger.valueOf(end)));
+
+		return SmtUtils.and(script, t1, t2);
+	}
+
+	// TODO:
+	public Map<Term, Term> getResultIntBuchi(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 		final Map<Term, Term> result = new HashMap<>();
 		final Set<Term> terms = automaton.getAlphabet().iterator().next().getTerms();
@@ -398,7 +497,7 @@ public final class MSODOperations {
 	}
 
 	/**
-	 * Returns a Map containing terms and the disjunction corresponding to the numbers encoded in the given word.
+	 * Returns a Map containing terms and the disjunction corresponding to the numbers encoded in the given stem.
 	 */
 	public Map<Term, Term> stemTerm(final NestedWord<MSODAlphabetSymbol> stem, final Boolean isPositive,
 			final Script script) {
@@ -407,49 +506,51 @@ public final class MSODOperations {
 
 		for (final Term term : terms) {
 			final Set<Term> disjuncts = new HashSet<>();
-			Boolean isChain = false;
-			int start = 0;
-			int end = 0;
+			Integer value = null;
 
+			// Find all indices that are enabled in the stem, either as a single index or as a part of consecutive
+			// enabled indices.
 			for (int i = 0; i < stem.length(); i++) {
+				// Find Enabled index
 				if (stem.getSymbol(i).getMap().get(term)) {
-					if (isChain) {
-						end = i;
-					} else {
-						isChain = true;
-						start = i;
-						end = i;
+					// Start a new interval
+					if (value == null) {
+						value = i;
 					}
-				} else {
-					if (isChain) {
+					// Create and store term, if interval cannot be not prolonged.
+					if (value != null & (i + 1 == stem.length() || !stem.getSymbol(i + 1).getMap().get(term))) {
 						// Convert index to correct number
 						if (isPositive) {
-							disjuncts.add(createIntervalTerm(script, term, start + 1, end + 1));
+							disjuncts.add(createIntervalForStemTerm(script, term, value + 1, i + 1));
 						} else {
-							disjuncts.add(createIntervalTerm(script, term, -end, -start));
+							disjuncts.add(createIntervalForStemTerm(script, term, -i, -value));
 						}
-						isChain = false;
+						value = null;
 					}
 				}
 			}
 
+			// Build disjunction of all terms.
 			if (!disjuncts.isEmpty()) {
 				result.put(term, SmtUtils.or(script, disjuncts));
 			} else {
 				result.put(term, null);
 			}
 		}
-
 		return result;
 	}
 
 	/**
-	 * Create terms needed to describe an integer intervall.
+	 * Create terms needed to describe an integer interval used to represent the stem conditions.
 	 */
-	public Term createIntervalTerm(final Script script, final Term term, final int start, final int end) {
-
+	public Term createIntervalForStemTerm(final Script script, final Term term, final int start, final int end) {
 		final Term newTerm = term.getTheory().createTermVariable(term.toString(), SmtSortUtils.getIntSort(script));
 		if (start == end) {
+			// Return single value if sort of term is IntSort
+			if (SmtSortUtils.isIntSort(term.getSort())) {
+				return SmtUtils.constructIntValue(script, BigInteger.valueOf(start));
+			}
+			// Return binary equality if sort is SetOfIntSOrt.
 			return SmtUtils.binaryEquality(script, newTerm,
 					SmtUtils.constructIntValue(script, BigInteger.valueOf(start)));
 		}
