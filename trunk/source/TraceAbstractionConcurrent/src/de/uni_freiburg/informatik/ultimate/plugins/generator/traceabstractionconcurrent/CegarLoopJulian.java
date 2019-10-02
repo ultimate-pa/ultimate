@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetU
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ConcurrencyInformation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ThreadInstance;
@@ -111,6 +112,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	 */
 	private final boolean mRemoveUnreachable = true;
 
+	private PetriNetLargeBlockEncoding mLBE;
+
 	public CegarLoopJulian(final DebugIdentifier name, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks timingStatistics, final TAPreferences taPrefs,
@@ -140,9 +143,9 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final BoundedPetriNet<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices, mIcfg,
 					mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
 			if (mPref.useLbeInConcurrentAnalysis()) {
-				final PetriNetLargeBlockEncoding pnlbe = new PetriNetLargeBlockEncoding(mServices, mIcfg.getCfgSmtToolkit(),
+				mLBE = new PetriNetLargeBlockEncoding(mServices, mIcfg.getCfgSmtToolkit(),
 						(BoundedPetriNet<IIcfgTransition<?>, IPredicate>) cfg);
-				final BoundedPetriNet<LETTER, IPredicate> lbecfg = (BoundedPetriNet<LETTER, IPredicate>) pnlbe.getResult();
+				final BoundedPetriNet<LETTER, IPredicate> lbecfg = (BoundedPetriNet<LETTER, IPredicate>) mLBE.getResult();
 				mAbstraction = lbecfg;
 			} else {
 				mAbstraction = cfg;
@@ -191,6 +194,14 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
 		}
 		return false;
+	}
+
+	@Override
+	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+		if (mPref.useLbeInConcurrentAnalysis()) {
+			return mLBE.translateExecution(mRcfgProgramExecution);
+		}
+		return super.getRcfgProgramExecution();
 	}
 
 	@Override

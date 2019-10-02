@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,7 +53,12 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelati
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.AtomicTraceElementBuilder;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -66,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Si
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -248,6 +255,61 @@ public class PetriNetLargeBlockEncoding {
 			}
 		}
 		return translatedTrace;
+	}
+
+	// Code adapted from BlockEncodingBacktranslator
+	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> translateExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> execution) {
+		// TODO: handling of choice rule
+
+		if (execution == null) {
+			throw new IllegalArgumentException("execution is null");
+		}
+
+		if (!(execution instanceof IcfgProgramExecution)) {
+			throw new IllegalArgumentException("argument is not IcfgProgramExecution but " + execution.getClass());
+
+		}
+		final IcfgProgramExecution oldIcfgPe = ((IcfgProgramExecution) execution);
+		final Map<TermVariable, Boolean>[] oldBranchEncoders = oldIcfgPe.getBranchEncoders();
+		assert oldBranchEncoders.length == oldIcfgPe.getLength() : "wrong branchencoders";
+
+		final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> newTrace = new ArrayList<>();
+		final List<ProgramState<Term>> newValues = new ArrayList<>();
+		final List<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
+
+		for (int i = 0; i < oldIcfgPe.getLength(); ++i) {
+			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> currentATE = oldIcfgPe.getTraceElement(i);
+			final IIcfgTransition<IcfgLocation> transition = currentATE.getTraceElement();
+
+			if (mSequentialCompositions.containsKey(transition)) {
+				final List<IIcfgTransition<?>> mappedEdges = mSequentialCompositions.get(transition);
+				final Iterator<IIcfgTransition<?>> iter = mappedEdges.iterator();
+				while (iter.hasNext()) {
+					final IIcfgTransition<?> currentEdge = iter.next();
+					// TODO: try to avoid this unchecked cast
+					newTrace.add((AtomicTraceElement) AtomicTraceElementBuilder.fromReplaceElementAndStep(currentATE, currentEdge).build());
+					if (iter.hasNext()) {
+						newValues.add(null);
+						newBranchEncoders.add(null);
+					}
+				}
+			} else {
+				newTrace.add(currentATE);
+			}
+
+			final ProgramState<Term> newProgramState = oldIcfgPe.getProgramState(i);
+			newValues.add(newProgramState);
+			newBranchEncoders.add(oldBranchEncoders[i]);
+		}
+
+		final Map<Integer, ProgramState<Term>> newValuesMap = new HashMap<>();
+		newValuesMap.put(-1, oldIcfgPe.getInitialProgramState());
+		for (int i = 0; i < newValues.size(); ++i) {
+			newValuesMap.put(i, newValues.get(i));
+		}
+
+		return new IcfgProgramExecution(newTrace, newValuesMap,
+				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]), oldIcfgPe.isConcurrent());
 	}
 
 	private boolean sequenceRuleCheck(final ITransition<IIcfgTransition<?>, IPredicate> t1,
