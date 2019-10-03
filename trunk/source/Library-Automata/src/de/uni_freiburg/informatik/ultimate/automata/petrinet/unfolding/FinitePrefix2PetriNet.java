@@ -75,7 +75,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 	private final UnionFind<Condition<LETTER, PLACE>> mRepresentatives;
 	private final IFinitePrefix2PetriNetStateFactory<PLACE> mStateFactory;
 	private final boolean mUsePetrification = false;
-	private final boolean mExtendedBackfolding = true;
+	private final boolean mExtendedBackfolding = false;
 
 	/**
 	 * Constructor.
