@@ -53,7 +53,7 @@ public class DiffWrapperScript extends WrapperScript {
 	 */
 	private ScopedHashSet<Doubleton<Term>> mDiffAxioms;
 
-	private final static String DIFF_FUNCTION_PREFIX = "ULTIMATE@diff";
+	private static final String DIFF_FUNCTION_PREFIX = "ULTIMATE@diff";
 
 	/**
 	 * Create a new script adding diff support around some existing script.
@@ -67,10 +67,7 @@ public class DiffWrapperScript extends WrapperScript {
 
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
-		mScript.setLogic(logic);
-		setupDiffFunction();
-		mDiffFunctions = new ScopedHashMap<>();
-		mDiffAxioms = new ScopedHashSet<>();
+		setLogic(Logics.valueOf(logic));
 	}
 
 	private void setupDiffFunction() {
@@ -84,6 +81,8 @@ public class DiffWrapperScript extends WrapperScript {
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		mScript.setLogic(logic);
 		setupDiffFunction();
+		mDiffFunctions = new ScopedHashMap<>();
+		mDiffAxioms = new ScopedHashSet<>();
 	}
 
 	@Override
