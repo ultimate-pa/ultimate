@@ -195,6 +195,16 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 		final Set<E> set = mEquivalenceClass.get(elem);
 		return mRepresentative.get(set);
 	}
+	
+	public Set<E> find(final Set<E> elemSet)
+	{
+		Set<E> result = new HashSet<>();
+		for (E elem: elemSet)
+		{
+			result.add(find(elem));
+		}
+		return result;
+	}
 
 	/**
 	 * @param elem

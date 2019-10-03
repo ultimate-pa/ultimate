@@ -39,6 +39,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.Queue;
+import java.util.LinkedList;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -73,6 +75,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 	private final UnionFind<Condition<LETTER, PLACE>> mRepresentatives;
 	private final IFinitePrefix2PetriNetStateFactory<PLACE> mStateFactory;
 	private final boolean mUsePetrification = false;
+	private final boolean mExtendedBackfolding = true;
 
 	/**
 	 * Constructor.
@@ -191,6 +194,34 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 			}
 
 		}
+		
+		Set<Event<LETTER, PLACE>> uselessEvents = new HashSet<>();
+		if (mExtendedBackfolding)
+		{
+			Queue<Event<LETTER, PLACE>> eventQueue = new LinkedList<>(bp.getEvents());
+			while(!eventQueue.isEmpty())
+			{
+				Event<LETTER, PLACE> e1 = eventQueue.poll();
+					if (e1.getPredecessorConditions().isEmpty())
+						continue;
+				for (Event<LETTER, PLACE> e2 : bp.getEvents())
+				{
+					if (e1.getTransition().equals(e2.getTransition())
+							&& mRepresentatives.find(e1.getPredecessorConditions()).equals(mRepresentatives.find(e2.getPredecessorConditions()))
+							&& !mRepresentatives.find(e1.getSuccessorConditions()).equals(mRepresentatives.find(e2.getSuccessorConditions())))
+					{
+						mergeConditions(e1.getSuccessorConditions(), e2.getSuccessorConditions());
+						uselessEvents.add(e1);
+						for (Condition<LETTER, PLACE> c : e1.getSuccessorConditions())
+							for (Event<LETTER, PLACE> e3: c.getSuccessorEvents())
+								if (!eventQueue.contains(e3))
+									eventQueue.add(e3);
+						break;
+									
+					}
+				}
+			}
+		}
 
 		final Map<Condition<LETTER, PLACE>, PLACE> placeMap = new HashMap<>();
 		for (final Condition<LETTER, PLACE> c : bp.getConditions()) {
@@ -208,7 +239,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 		final TransitionSet transitionSet = new TransitionSet();
 		for (final Event<LETTER, PLACE> e : events) {
 			// equality intended here
-			if (e == bp.getDummyRoot()) {
+			if (e == bp.getDummyRoot() || uselessEvents.contains(e)) {
 				continue;
 			}
 			final Set<PLACE> preds = new HashSet<>();
@@ -355,6 +386,8 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 			mRepresentatives.union(c1representative, c2representative);
 		}
 	}
+	
+	
 
 	/**
 	 * A transition set.
