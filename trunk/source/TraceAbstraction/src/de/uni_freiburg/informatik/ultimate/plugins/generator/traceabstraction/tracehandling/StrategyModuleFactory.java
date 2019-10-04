@@ -141,8 +141,8 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createTrackStrategyPdr() {
-		// TODO Auto-generated method stub
-		return null;
+		return createInterpolantConsolidationIfNecessary(
+				new IpTcStrategyModulePdr<>(mLogger, mCounterexample, mPredicateUnifier, mPrefs));
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModulePreferences() {
