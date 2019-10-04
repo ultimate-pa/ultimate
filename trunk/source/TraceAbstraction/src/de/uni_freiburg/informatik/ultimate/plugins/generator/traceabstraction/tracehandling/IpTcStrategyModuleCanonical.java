@@ -36,8 +36,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 
 /**
+ * Base class for all {@link IpTcStrategyModuleBase} implementations that create an {@link IInterpolatingTraceCheck}
+ * using one of the instances of the {@link TraceCheck} family.
+ * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -68,8 +73,8 @@ public abstract class IpTcStrategyModuleCanonical<T extends IInterpolatingTraceC
 	}
 
 	@Override
-	public void aggregateStatistics(final RefinementEngineStatisticsGenerator statistics) {
-		statistics.addTraceCheckStatistics(getOrConstruct().getStatistics());
+	public void aggregateStatistics(final RefinementEngineStatisticsGenerator stats) {
+		stats.addStatistics(RefinementEngineStatisticsDefinitions.TRACE_CHECK, getOrConstruct().getStatistics());
 	}
 
 	protected ManagedScript createExternalManagedScript(final Script script) {

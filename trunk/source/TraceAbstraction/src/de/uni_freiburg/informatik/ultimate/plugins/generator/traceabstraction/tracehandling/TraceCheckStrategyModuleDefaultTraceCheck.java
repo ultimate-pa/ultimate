@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 
 public class TraceCheckStrategyModuleDefaultTraceCheck<LETTER extends IIcfgTransition<?>>
 		implements ITraceCheckStrategyModule<TraceCheck<LETTER>> {
@@ -88,8 +89,8 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<LETTER extends IIcfgTrans
 	}
 
 	@Override
-	public void aggregateStatistics(final RefinementEngineStatisticsGenerator statistics) {
-		statistics.addTraceCheckStatistics(getOrConstruct().getStatistics());
+	public void aggregateStatistics(final RefinementEngineStatisticsGenerator stats) {
+		stats.addStatistics(RefinementEngineStatisticsDefinitions.TRACE_CHECK, getOrConstruct().getStatistics());
 	}
 
 	@Override

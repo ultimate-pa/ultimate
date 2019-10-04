@@ -49,14 +49,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbol
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
@@ -65,8 +62,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -133,13 +128,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> mGlobalFrames;
+	private final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> mGlobalFrames;
 	private final ManagedScript mScript;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredTrans;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
 	private final IIcfg<? extends IcfgLocation> mPpIcfg;
 	private final CfgSmtToolkit mCsToolkit;
-	private final IHoareTripleChecker mHtc;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IPredicate mTruePred;
 	private final IPredicate mFalsePred;
@@ -163,11 +157,10 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private int mLevel;
 
 	public Pdr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
-			final IHoareTripleChecker htc, final List<LETTER> counterexample) {
+			final List<LETTER> counterexample) {
 		// from params
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
-		mHtc = htc;
 		mTrace = counterexample;
 
 		mInvarSpot = -1;
@@ -363,7 +356,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	 * @return false, if proof-obligation on level 0 is created true, if there is no proof-obligation left
 	 */
 	private final boolean blockingPhase(final Deque<ProofObligation> proofObligations,
-			Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames, int localLevel) {
+			final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames, final int localLevel) {
 
 		mLogger.debug("Begin Blocking Phase: on Level: " + mLevel);
 
@@ -639,8 +632,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			substitutionMappingPrePred.put(var.getDefaultConstant(), var.getPrimedConstant());
 			reverseMappingPrePred.put(var.getPrimedConstant(), var.getTermVariable());
 		}
-		final ArrayList<Term> tfConstants = new ArrayList<Term>();
-		final ArrayList<Term> tfConstantsPrimed = new ArrayList<Term>();
+		final ArrayList<Term> tfConstants = new ArrayList<>();
+		final ArrayList<Term> tfConstantsPrimed = new ArrayList<>();
 
 		for (final IProgramVar outVar : outVarsTrans.keySet()) {
 			tfConstants.add(outVar.getDefaultConstant());
@@ -726,7 +719,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	 * @param level
 	 */
 	private void updateLocalFrames(final IPredicate toBeBlocked, final IcfgLocation location, final int level,
-			Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames) {
+			final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames) {
 		for (int i = 0; i <= level; i++) {
 			IPredicate fTerm = localFrames.get(location).get(i).getSecond();
 			final IPredicate negToBeBlocked = not(toBeBlocked);
@@ -786,9 +779,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		}
 	}
 
-	final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> initializeFrames(IIcfg<? extends IcfgLocation> icfg) {
-		final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames =
-				new HashMap<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>>();
+	final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>>
+			initializeFrames(final IIcfg<? extends IcfgLocation> icfg) {
+		final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames = new HashMap<>();
 		final Set<? extends IcfgLocation> init = icfg.getInitialNodes();
 		final Set<? extends IcfgLocation> error = IcfgUtils.getErrorLocations(mPpIcfg);
 		final IcfgLocationIterator<? extends IcfgLocation> iter = new IcfgLocationIterator<>(icfg);
@@ -927,57 +920,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			return false;
 		}
 		return true;
-	}
-
-	/**
-	 * Use a {@link IHoareTripleChecker} to check for satisfiability of pre &and; tf &and; post
-	 *
-	 * This method converts the post condition because an {@link IHoareTripleChecker} checks for P &and; S &and; !Q
-	 *
-	 * @param pre
-	 * @param trans
-	 * @param post
-	 *
-	 * @return {@link Validity#VALID} iff the formula is unsat, {@link Validity#INVALID} iff the formula is sat,
-	 *         {@link Validity#UNKNOWN} iff the solver was not able to find a solution, and {@link Validity#NOT_CHECKED}
-	 *         should not be returned
-	 */
-	private Validity checkSatInternal(final IPredicate pre, final IInternalAction trans, final IPredicate post) {
-		final IPredicate notP = not(post);
-		final Validity result = mHtc.checkInternal(pre, trans, notP);
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(String.format(" %s && %s && %s is %s", pre, trans, post,
-					result == Validity.VALID ? "unsat" : result == Validity.INVALID ? "sat" : "unknown"));
-		}
-		assert result != Validity.NOT_CHECKED;
-		return result;
-
-	}
-
-	private Validity checkSatCall(final IPredicate pre, final ICallAction trans, final IPredicate post) {
-		final IPredicate notP = not(post);
-		final Validity result = mHtc.checkCall(pre, trans, notP);
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(String.format(" %s && %s && %s is %s", pre, trans, post,
-					result == Validity.VALID ? "unsat" : result == Validity.INVALID ? "sat" : "unknown"));
-		}
-		assert result != Validity.NOT_CHECKED;
-		return result;
-	}
-
-	private Validity checkSatReturn(final IPredicate pre, final IPredicate preHier, final IReturnAction trans,
-			final IPredicate post) {
-		final IPredicate notP = not(post);
-		final Validity result = mHtc.checkReturn(pre, preHier, trans, notP);
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(String.format(" %s && %s && %s && %s is %s", pre, preHier, trans, post,
-					result == Validity.VALID ? "unsat" : result == Validity.INVALID ? "sat" : "unknown"));
-		}
-		assert result != Validity.NOT_CHECKED;
-		return result;
 	}
 
 	private IPredicate not(final IPredicate pred) {

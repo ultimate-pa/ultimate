@@ -143,13 +143,11 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 					invariantSynthesisSettings, xnfConversionTechnique, simplificationTechnique, icfgContainer,
 					mPrefs.collectInterpolantStatistics());
 		case PDR:
-			final Pdr<LETTER> pdr = new Pdr<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs,
-					mPredicateUnifier, constructHoareTripleChecker(), mCounterexample.getWord().asList());
-			return pdr;
+			return new Pdr<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs, mPredicateUnifier,
+					mCounterexample.getWord().asList());
 		case MCR:
-			final MCR<LETTER> mcr = new MCR<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs,
-					mPredicateUnifier, constructHoareTripleChecker(), mCounterexample.getWord().asList());
-			return mcr;
+			return new MCR<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs, mPredicateUnifier,
+					constructHoareTripleChecker(), mCounterexample.getWord().asList());
 		default:
 			throw new UnsupportedOperationException("Unsupported interpolation technique: " + mInterpolationTechnique);
 		}

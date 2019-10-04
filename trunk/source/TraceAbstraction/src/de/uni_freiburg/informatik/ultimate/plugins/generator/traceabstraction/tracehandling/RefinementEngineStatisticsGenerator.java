@@ -39,6 +39,17 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
+/**
+ * {@link IStatisticsDataProvider} that accumulates statistics from the various trace checks, interpolant generators,
+ * etc. used during a run of a refinement engine.
+ * 
+ * It avoids aggregating the same object twice by hashing all statistics during a refinement engine run and aggregating
+ * only at the end.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class RefinementEngineStatisticsGenerator implements IStatisticsDataProvider {
 
 	private final ConstructionCache<RefinementEngineStatisticsDefinitions, Set<IStatisticsDataProvider>> mStats;
@@ -56,22 +67,9 @@ public class RefinementEngineStatisticsGenerator implements IStatisticsDataProvi
 		return TYPE;
 	}
 
-	public void addTraceCheckStatistics(final IStatisticsDataProvider stats) {
-		addData(RefinementEngineStatisticsDefinitions.TRACE_CHECK, stats);
-	}
-
-	public void addInvariantSynthesisStatistics(final IStatisticsDataProvider stats) {
-		addData(RefinementEngineStatisticsDefinitions.INVARIANT_SYNTHESIS, stats);
-	}
-
-	public void addInterpolantConsolidationStatistics(final IStatisticsDataProvider stats) {
-		addData(RefinementEngineStatisticsDefinitions.INTERPOLANT_CONSOLIDATION, stats);
-	}
-
-	public void addAbstractInterpretationStatistics(final IStatisticsDataProvider stats) {
-		addData(RefinementEngineStatisticsDefinitions.ABSTRACT_INTERPRETATION, stats);
-	}
-
+	/**
+	 * Signal that the refinement engine has finished executing and all collected statistics should be aggregated now.
+	 */
 	public void finishRefinementEngineRun() {
 		for (final Entry<RefinementEngineStatisticsDefinitions, Set<IStatisticsDataProvider>> entry : mStats.getMap()
 				.entrySet()) {
@@ -82,7 +80,15 @@ public class RefinementEngineStatisticsGenerator implements IStatisticsDataProvi
 		}
 	}
 
-	private void addData(final RefinementEngineStatisticsDefinitions defs, final IStatisticsDataProvider stats) {
+	/**
+	 * Add a new {@link IStatisticsDataProvider} of the <code>defs</code> type to this aggregator.
+	 * 
+	 * @param defs
+	 *            The type of statistics to aggregate
+	 * @param stats
+	 *            The actual data provider.
+	 */
+	public void addStatistics(final RefinementEngineStatisticsDefinitions defs, final IStatisticsDataProvider stats) {
 		if (stats == null) {
 			return;
 		}
@@ -111,7 +117,9 @@ public class RefinementEngineStatisticsGenerator implements IStatisticsDataProvi
 				StatisticsType.KEY_BEFORE_DATA),
 
 		ABSTRACT_INTERPRETATION(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
-				StatisticsType.KEY_BEFORE_DATA);
+				StatisticsType.KEY_BEFORE_DATA),
+
+		PDR(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA);
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;

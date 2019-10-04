@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
+ * Base class for all {@link IIpTcStrategyModule}s that create <i>some</i> {@link IInterpolatingTraceCheck}.
+ * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */

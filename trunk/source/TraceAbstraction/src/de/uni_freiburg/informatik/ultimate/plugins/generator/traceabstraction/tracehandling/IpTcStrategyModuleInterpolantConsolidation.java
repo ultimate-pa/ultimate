@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckWithConsolidation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 
 /**
  * Creates separate instance of SmtInterpol with {@link InterpolationTechnique#Craig_NestedInterpolation} and without
@@ -95,9 +96,10 @@ public class IpTcStrategyModuleInterpolantConsolidation<T extends IInterpolating
 	}
 
 	@Override
-	public void aggregateStatistics(final RefinementEngineStatisticsGenerator statistics) {
-		mTrackModule.aggregateStatistics(statistics);
-		statistics.addInterpolantConsolidationStatistics(getOrConstruct().getStatistics());
+	public void aggregateStatistics(final RefinementEngineStatisticsGenerator stats) {
+		mTrackModule.aggregateStatistics(stats);
+		stats.addStatistics(RefinementEngineStatisticsDefinitions.INTERPOLANT_CONSOLIDATION,
+				getOrConstruct().getStatistics());
 	}
 
 	@Override

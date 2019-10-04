@@ -36,8 +36,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 
 /**
+ * Creates {@link IInterpolatingTraceCheck} using fixpoint computation based on abstract interpretation plugin.
+ * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -80,7 +83,8 @@ public class IpTcStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransi
 
 	@Override
 	public void aggregateStatistics(final RefinementEngineStatisticsGenerator stats) {
-		stats.addAbstractInterpretationStatistics(getOrConstructRunner().getStatistics());
+		stats.addStatistics(RefinementEngineStatisticsDefinitions.ABSTRACT_INTERPRETATION,
+				getOrConstructRunner().getStatistics());
 	}
 
 }

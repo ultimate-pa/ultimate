@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscri
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.BadgerRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.CamelNoAmRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.CamelRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.DachshundRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.FixedRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.LazyTaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.MammothNoAmRefinementStrategy;
@@ -123,8 +125,8 @@ public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final IPreconditionProvider preconditionProvider) {
-		final IPredicateUnifier predicateUnifier = getNewPredicateUnifier();
-		final IRefinementStrategy<LETTER> strategy = createStrategy(counterexample, abstraction, taskIdentifier,
+		final IPredicateUnifier predicateUnifier = constructPredicateUnifier();
+		final IRefinementStrategy<LETTER> strategy = constructStrategy(counterexample, abstraction, taskIdentifier,
 				emptyStackFactory, preconditionProvider, predicateUnifier);
 		return new TraceAbstractionRefinementEngine<>(mLogger, predicateUnifier, strategy, mFunHtcConstructor);
 	}
@@ -133,7 +135,7 @@ public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
 		return mPathProgramCache;
 	}
 
-	private IRefinementStrategy<LETTER> createStrategy(final IRun<LETTER, IPredicate, ?> counterexample,
+	private IRefinementStrategy<LETTER> constructStrategy(final IRun<LETTER, IPredicate, ?> counterexample,
 			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final IPreconditionProvider preconditionProvider, final IPredicateUnifier predicateUnifier) {
@@ -144,47 +146,50 @@ public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
 		final StrategyModuleFactory<LETTER> strategyModuleFactory = new StrategyModuleFactory<>(taskIdentifier,
 				mServices, mLogger, mPrefs, mTaPrefs, counterexample, precondition, predicateUnifier, mPredicateFactory,
 				abstraction, emptyStackFactory, mCfgSmtToolkit, mPredicateFactoryInterpolAut, mPathProgramCache);
+		final RefinementStrategyExceptionBlacklist exceptionBlacklist = mPrefs.getExceptionBlacklist();
 
 		switch (mStrategy) {
 		case FIXED_PREFERENCES:
-			return new FixedRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new FixedRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case PENGUIN:
-			return new PenguinRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new PenguinRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case CAMEL:
-			return new CamelRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new CamelRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case CAMEL_NO_AM:
-			return new CamelNoAmRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new CamelNoAmRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case BADGER:
-			return new BadgerRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new BadgerRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case WALRUS:
-			return new WalrusRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new WalrusRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case WOLF:
-			return new WolfRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new WolfRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case WARTHOG_NO_AM:
-			return new WarthogNoAmRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new WarthogNoAmRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case WARTHOG:
-			return new WarthogRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new WarthogRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case RUBBER_TAIPAN:
-			return new RubberTaipanRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new RubberTaipanRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case TAIPAN:
-			return new TaipanRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new TaipanRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case LAZY_TAIPAN:
-			return new LazyTaipanRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new LazyTaipanRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case TOOTHLESS_TAIPAN:
-			return new ToothlessTaipanRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new ToothlessTaipanRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case SMTINTERPOL:
-			return new SmtInterpolRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new SmtInterpolRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case MAMMOTH:
-			return new MammothRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new MammothRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case MAMMOTH_NO_AM:
-			return new MammothNoAmRefinementStrategy<>(strategyModuleFactory, mPrefs.getExceptionBlacklist());
+			return new MammothNoAmRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
+		case DACHSHUND:
+			return new DachshundRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		default:
 			throw new IllegalArgumentException(
 					"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());
 		}
 	}
 
-	private IPredicateUnifier getNewPredicateUnifier() {
+	private IPredicateUnifier constructPredicateUnifier() {
 		final ManagedScript managedScript = mPrefs.getCfgSmtToolkit().getManagedScript();
 		final IIcfgSymbolTable symbolTable = mInitialIcfg.getCfgSmtToolkit().getSymbolTable();
 		if (mPrefs.usePredicateTrieBasedPredicateUnifier()) {

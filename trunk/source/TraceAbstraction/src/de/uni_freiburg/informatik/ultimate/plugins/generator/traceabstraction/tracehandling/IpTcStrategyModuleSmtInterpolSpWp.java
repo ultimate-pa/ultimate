@@ -41,9 +41,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 
 /**
- * Creates internal instance of SmtInterpol with SP/WP based interpolation.
+ * Creates internal instance of SmtInterpol with SP/WP based interpolation using {@link TraceCheckSpWp}.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
