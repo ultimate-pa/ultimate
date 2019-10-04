@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscri
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -163,7 +163,7 @@ public class InteractiveCegar {
 	public <LETTER> NestedRun<LETTER, IPredicate> getUserRun(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction, final int iteration,
 			final IUltimateServiceProvider services, final SearchStrategy searchStrategy,
-			final PredicateFactoryForInterpolantAutomata taContentFactory, final PredicateFactory predicateFactory,
+			final PredicateFactoryRefinement taContentFactory, final PredicateFactory predicateFactory,
 			final ManagedScript script) throws AutomataOperationCanceledException {
 		mLogger.info("Asking the user for a trace...");
 		NestedRun<LETTER, IPredicate> userRun = null;
@@ -174,22 +174,22 @@ public class InteractiveCegar {
 		 * mInteractive.request(PredicateQueueResult.class, data); try { return userChoice.get().mResult; } catch
 		 * (InterruptedException | ExecutionException e) { // e.printStackTrace(); } return
 		 * IsEmptyInteractive.bfsDequeue(callQueue, queue); }
-		 * 
-		 * 
+		 *
+		 *
 		 * INestedWordAutomatonSimple<LETTER, IPredicate> userAutomaton = null;
-		 * 
+		 *
 		 * while (userRun == null) { try { userAutomaton = mInteractive.request(INestedWordAutomatonSimple.class).get();
 		 * } catch (InterruptedException | ExecutionException e) { mLogger.error("Failed to get user automaton", e);
 		 * mInteractive.common().send(e); }
-		 * 
+		 *
 		 * // mCounterexample = new IsEmptyInteractive<LETTER, IPredicate>(new AutomataLibraryServices(mServices), //
 		 * abstraction, this::interactiveCounterexampleSearchStrategy).getNestedRun();
-		 * 
+		 *
 		 * // last arg finalIsTrap could be !mComputeHoareAnnotation; try { final IntersectNwa<LETTER, IPredicate>
 		 * intersect = new IntersectNwa<>(abstraction, userAutomaton, mStateFactoryForRefinement, false); } catch
 		 * (AutomataLibraryException e) { mLogger.error("Intersection with user automaton failed", e);
 		 * mInteractive.common().send(e); }
-		 * 
+		 *
 		 * userRun = new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
 		 * }
 		 */

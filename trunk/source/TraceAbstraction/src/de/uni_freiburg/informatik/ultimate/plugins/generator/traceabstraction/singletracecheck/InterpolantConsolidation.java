@@ -166,7 +166,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 				);
 
 		final PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(
-				mCsToolkit, mPredicateFactory, mTaPrefs.computeHoareAnnotation());
+				mServices, mCsToolkit, mPredicateFactory, mTaPrefs.computeHoareAnnotation());
 
 		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata =
 				new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(), mPredicateFactory,

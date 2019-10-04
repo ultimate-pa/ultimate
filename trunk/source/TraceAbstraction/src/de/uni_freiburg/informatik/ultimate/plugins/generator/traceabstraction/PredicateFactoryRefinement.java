@@ -31,6 +31,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.IBuchiNwaInclusionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incrementalinclusion.IIncrementalInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -44,7 +47,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateWithHistory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 
-public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAutomata {
+public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAutomata
+		implements INwaInclusionStateFactory<IPredicate>, IIncrementalInclusionStateFactory<IPredicate>,
+		IBuchiNwaInclusionStateFactory<IPredicate> {
 
 	private static final boolean DEBUG_COMPUTE_HISTORY = false;
 

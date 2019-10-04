@@ -34,13 +34,13 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incrementalinclusion.IIncrementalInclusionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -55,9 +55,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class PredicateFactoryForInterpolantAutomata
 		implements ISenwaStateFactory<IPredicate>, IBlackWhiteStateFactory<IPredicate>,
-		IBuchiComplementNcsbStateFactory<IPredicate>, IConcurrentProductStateFactory<IPredicate>,
-		IPetriNet2FiniteAutomatonStateFactory<IPredicate>, IIncrementalInclusionStateFactory<IPredicate>,
-		IMinimizationStateFactory<IPredicate>, IMinimizationCheckResultStateFactory<IPredicate> {
+		IBuchiComplementFkvStateFactory<IPredicate>, IBuchiComplementNcsbStateFactory<IPredicate>,
+		IConcurrentProductStateFactory<IPredicate>, IPetriNet2FiniteAutomatonStateFactory<IPredicate>,
+		IMinimizationStateFactory<IPredicate>, IDeterminizeStateFactory<IPredicate> {
 
 	protected final boolean mComputeHoareAnnotation;
 	private final IPredicate mEmtpyStack;
@@ -70,12 +70,6 @@ public class PredicateFactoryForInterpolantAutomata
 		mMgdScript = mgdScript;
 		mPredicateFactory = predicateFactory;
 		mEmtpyStack = mPredicateFactory.newEmptyStackPredicate();
-	}
-
-	@Override
-	public IPredicate intersection(final IPredicate p1, final IPredicate p2) {
-		throw new AssertionError(
-				"intersect is only required for refinement, not for construction of interpolant automaton");
 	}
 
 	@Override
@@ -125,12 +119,6 @@ public class PredicateFactoryForInterpolantAutomata
 	@Override
 	public IPredicate buchiComplementNcsb(final LevelRankingState<?, IPredicate> compl) {
 		return buchiComplementFkv(compl);
-	}
-
-	@Override
-	public IPredicate intersectBuchi(final IPredicate s1, final IPredicate s2, final int track) {
-		throw new AssertionError(
-				"intersect is only required for refinement, not for construction of interpolant automaton");
 	}
 
 	@Override
