@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  */
 public abstract class IpTcStrategyModuleCraig<LETTER extends IIcfgTransition<?>>
-		extends IpTcStrategyModuleCanonical<InterpolatingTraceCheckCraig<LETTER>, LETTER> {
+		extends IpTcStrategyModuleTraceCheck<InterpolatingTraceCheckCraig<LETTER>, LETTER> {
 
 	public IpTcStrategyModuleCraig(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, IPredicate, ?> counterExample,

@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  */
 public abstract class IpTcStrategyModuleSpWp<LETTER extends IIcfgTransition<?>>
-		extends IpTcStrategyModuleCanonical<TraceCheckSpWp<LETTER>, LETTER> {
+		extends IpTcStrategyModuleTraceCheck<TraceCheckSpWp<LETTER>, LETTER> {
 
 	public IpTcStrategyModuleSpWp(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, IPredicate, ?> counterExample,

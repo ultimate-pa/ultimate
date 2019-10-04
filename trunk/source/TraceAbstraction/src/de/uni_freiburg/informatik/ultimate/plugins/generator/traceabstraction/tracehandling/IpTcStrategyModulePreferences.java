@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  */
 public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<?>>
-		extends IpTcStrategyModuleCanonical<IInterpolatingTraceCheck<LETTER>, LETTER> {
+		extends IpTcStrategyModuleTraceCheck<IInterpolatingTraceCheck<LETTER>, LETTER> {
 
 	private final InterpolationTechnique mInterpolationTechnique;
 	private final Logics mLogics;

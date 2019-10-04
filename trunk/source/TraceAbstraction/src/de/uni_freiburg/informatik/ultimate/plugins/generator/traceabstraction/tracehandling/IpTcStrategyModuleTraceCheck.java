@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public abstract class IpTcStrategyModuleCanonical<T extends IInterpolatingTraceCheck<LETTER>, LETTER extends IIcfgTransition<?>>
+public abstract class IpTcStrategyModuleTraceCheck<T extends IInterpolatingTraceCheck<LETTER>, LETTER extends IIcfgTransition<?>>
 		extends IpTcStrategyModuleBase<T, LETTER> {
 
 	protected final TaskIdentifier mTaskIdentifier;
@@ -58,7 +58,7 @@ public abstract class IpTcStrategyModuleCanonical<T extends IInterpolatingTraceC
 	protected final IPredicate mPrecondition;
 	protected final PredicateFactory mPredicateFactory;
 
-	public IpTcStrategyModuleCanonical(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
+	public IpTcStrategyModuleTraceCheck(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, IPredicate, ?> counterExample,
 			final IPredicate precondition, final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory) {
