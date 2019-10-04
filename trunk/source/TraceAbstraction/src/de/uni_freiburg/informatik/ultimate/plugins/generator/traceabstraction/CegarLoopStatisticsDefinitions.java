@@ -41,19 +41,19 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
-	Result(Result.class, CegarLoopStatisticsUtils.DEFAULT_AGGREGATION_FUN, StatisticsType.DATA_BEFORE_KEY),
+	Result(Result.class, CegarLoopStatisticsUtils.DEFAULT_AGGREGATION_FUN, StatisticsType.KEY_BEFORE_DATA),
 
-	OverallTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+	OverallTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
-	OverallIterations(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+	OverallIterations(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
-	TraceHistogramMax(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.DATA_BEFORE_KEY),
+	TraceHistogramMax(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
 
-	AutomataDifference(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+	AutomataDifference(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
-	DeadEndRemovalTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+	DeadEndRemovalTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
-	HoareAnnotationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+	HoareAnnotationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 	HoareTripleCheckerStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
 			StatisticsType.KEY_BEFORE_DATA),
