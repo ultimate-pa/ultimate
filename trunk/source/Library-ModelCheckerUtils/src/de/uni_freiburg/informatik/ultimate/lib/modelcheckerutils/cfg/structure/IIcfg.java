@@ -108,6 +108,8 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 					sb.append("ProgramPoint: ");
 					sb.append(loc.toString());
 					sb.append(" --->  Edge: ");
+					sb.append(edge.getClass().getSimpleName());
+					sb.append(" ");
 					sb.append(edge.toString());
 					sb.append(" --->  ProgramPoint: ");
 					sb.append(edge.getTarget().toString());
