@@ -46,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
  * should run in LTL mode and which property should be checked.
  *
  * TODO: Using a check for translation is ugly. This should change.
+ * 
+ * TODO: Overwrite equals and hashcode if you want to keep using this class
  *
  * @author dietsch@informatik.uni-freiburg.de
  */
