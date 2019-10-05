@@ -328,7 +328,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					mLogger.debug("Error is not reachable.");
 				}
 				// mGlobalFrames = localFrames;
+				
 				updateGlobalFrames(localFrames, localLevel);
+				
 				mInterpolants = computeInterpolants();
 
 				if (mLogger.isDebugEnabled()) {
@@ -474,7 +476,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						throw new UnsupportedOperationException("Cannot deal with procedures");
 					}
 
-					mLogger.debug("Found Call");
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("Found Call");
+					}
 
 					/*
 					 * Dealing with procedure returns TODO:
@@ -483,18 +487,50 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					if (mDealWithProcedures.equals(DealWithProcedures.THROW_EXCEPTION)) {
 						throw new UnsupportedOperationException("Cannot deal with procedures");
 					}
-					mLogger.debug("Found Return");
-					// final IIcfgReturnTransition<?, ?> returnTrans = (IIcfgReturnTransition<?, ?>)
-					// predecessorTransition;
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("Found return, starting PDR for proceedure: %s", predecessorTransition.getSource().getProcedure());
+					}
+					final IIcfgReturnTransition<?, ?> returnTrans = (IIcfgReturnTransition<?, ?>) predecessorTransition;
 					/**
 					 * Get the procedure in form of a trace.
 					 */
-					// final List<LETTER> procTrace = getProcedureTrace(returnTrans);
-					// final PathProgramConstructionResult pp =
-					// PathProgram.constructPathProgram("procErrorPP", mIcfg, new HashSet<>(procTrace));
-					// final Set<IcfgLocation> errorLocOfProc = new HashSet<>();
-					// errorLocOfProc.add(returnTrans.getTarget());
-					// final LBool procResult = computePdr(pp.getPathProgram(), errorLocOfProc);
+					final List<LETTER> procTrace = getProcedureTrace(returnTrans);
+					final PathProgramConstructionResult pp =
+							PathProgram.constructPathProgram("procErrorPP", mIcfg, new HashSet<>(procTrace));
+					final Set<IcfgLocation> errorLocOfProc = new HashSet<>();
+					errorLocOfProc.add(returnTrans.getTarget());
+
+					final ArrayDeque<ProofObligation> procedurePo = new ArrayDeque<>();
+					final ProofObligation initialProofObligation =
+							new ProofObligation(proofObligation.getToBeBlocked(), predecessorTransition.getSource(), 0);
+
+					procedurePo.add(initialProofObligation);
+					final LBool procResult = computePdr(pp.getPathProgram(), procedurePo);
+
+					/*
+					 * Recursive PDR call returns SAT -> error can be reached by calling this procedure.
+					 */
+					if (procResult == LBool.SAT) {
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug("Procedure can lead to Error!");
+						}
+						
+					}
+					
+					/*
+					 * Recursive PDR call returns UNSAT -> error cannot be reached by calling this procedure.
+					 */
+					else if (procResult == LBool.UNSAT) {
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug("Procedure can not lead to Error!");
+						}
+						updateLocalFrames(toBeBlocked, location, level, localFrames);
+					}
+					 else {
+							mLogger.error(String.format("Internal query %s && %s && %s was unknown!", predecessorFrame,
+									predecessorTransition, toBeBlocked));
+							throw new UnsupportedOperationException("Solver returned unknown");
+						}
 				} else {
 					throw new UnsupportedOperationException(
 							"Unknown transition type: " + predecessorTransition.getClass().toString());
@@ -669,13 +705,14 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					cnt--;
 				}
 			}
-			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> frame : mGlobalFrames.entrySet()) {
+			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> frame : localFrames.entrySet()) {
 				for (int i = 0; i <= localLevel; i++) {
 					final IPredicate current = frame.getValue().get(i).getSecond();
-					final IPredicate changed = localFrames.get(frame.getKey()).get(i).getSecond();
+					final IPredicate changed = mGlobalFrames.get(frame.getKey()).get(i).getSecond();
 					final IPredicate conjunct =
 							mPredicateUnifier.getOrConstructPredicateForConjunction(Arrays.asList(current, changed));
-					frame.getValue().set(i, new Pair<>(frame.getValue().get(i).getFirst(), conjunct));
+					mGlobalFrames.get(frame.getKey()).set(i, new Pair<>(frame.getValue().get(i).getFirst(), conjunct));
+					// frame.getValue().set(i, new Pair<>(frame.getValue().get(i).getFirst(), conjunct));
 				}
 			}
 		}
@@ -699,13 +736,15 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			 * Assume we only have one errorstate.
 			 */
 			if (init.contains(loc)) {
-				for (final IcfgLocation errorloc : error) {
-					if (errorloc.getProcedure().equals(loc.getProcedure())) {
-						localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mAxioms));
-					} else {
-						localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mFalsePred));
-					}
-				}
+				// for (final IcfgLocation errorloc : error) {
+				// not used anymore, each initial node needs to be true.
+				// if (errorloc.getProcedure().equals(loc.getProcedure())) {
+				// localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mAxioms));
+				// } else {
+				// localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mFalsePred));
+				// }
+				localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mAxioms));
+				// }
 			} else {
 				localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mFalsePred));
 			}
