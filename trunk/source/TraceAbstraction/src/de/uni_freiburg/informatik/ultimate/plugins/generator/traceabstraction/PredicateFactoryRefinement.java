@@ -35,10 +35,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.IBuchiNwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incrementalinclusion.IIncrementalInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -49,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAutomata
 		implements INwaInclusionStateFactory<IPredicate>, IIncrementalInclusionStateFactory<IPredicate>,
-		IBuchiNwaInclusionStateFactory<IPredicate> {
+		IBuchiNwaInclusionStateFactory<IPredicate>, IFinitePrefix2PetriNetStateFactory<IPredicate> {
 
 	private static final boolean DEBUG_COMPUTE_HISTORY = false;
 
@@ -164,6 +168,22 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 		final IcfgLocation[] programPoints =
 				marking.stream().map(x -> ((SPredicate) x).getProgramPoint()).toArray(IcfgLocation[]::new);
 		return mPredicateFactory.newMLDontCarePredicate(programPoints);
+	}
+
+	@Override
+	public IPredicate finitePrefix2net(final Condition<?, IPredicate> condition) {
+		if (condition.getPlace() instanceof SPredicate) {
+			final SPredicate spred = (SPredicate) condition.getPlace();
+			return mPredicateFactory.newSPredicate(spred.getProgramPoint(), spred.getFormula());
+		} else if (condition.getPlace() instanceof BasicPredicate) {
+			final BasicPredicate bpred = (BasicPredicate) condition.getPlace();
+			return mPredicateFactory.newPredicate(bpred.getFormula());
+		} else if (condition.getPlace() instanceof DebugPredicate) {
+			final DebugPredicate dpred = (DebugPredicate) condition.getPlace();
+			return mPredicateFactory.newDebugPredicate(dpred.getDebugMessage());
+		} else {
+			throw new AssertionError("unexpected predicate: " + condition.getPlace().getClass().getSimpleName());
+		}
 	}
 
 }

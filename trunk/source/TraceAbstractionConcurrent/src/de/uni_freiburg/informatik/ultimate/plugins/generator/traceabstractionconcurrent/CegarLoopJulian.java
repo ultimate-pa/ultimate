@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix2PetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.UnfoldingOrder;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -208,10 +207,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
 		if (mPref.unfoldingToNet()) {
-			// TODO: Find/implement appropriate stateFactory.
-			final IFinitePrefix2PetriNetStateFactory<IPredicate> stateFactory = null;
-			abstraction = new FinitePrefix2PetriNet<>(new AutomataLibraryServices(mServices), stateFactory, mUnfolding)
-					.getResult();
+			abstraction = new FinitePrefix2PetriNet<>(new AutomataLibraryServices(mServices),
+					mStateFactoryForRefinement, mUnfolding).getResult();
 		}
 
 		// Determinize the interpolant automaton
