@@ -1,6 +1,10 @@
 // #Safe
 /* 
  * Simple Program for Checking PDRs interprocedual capabilities
+ * Here, the the query for the recursive PDR going through inc() is sat.
+ * meaning true /\ y' = y + 1 /\ y' != x' + 1 is sat
+ * so that we backtrack out of the procedure to the assumption which then
+ * gets unsat.
  *
  */
 

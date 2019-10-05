@@ -262,7 +262,28 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			firstPos.add(initialProofObligation);
 		}
 
-		return computePdr(icfg, firstPos);
+		final LBool result = computePdr(icfg, firstPos);
+		if (result == LBool.UNSAT) {
+
+			mInterpolants = computeInterpolants();
+
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Interpolants are");
+				int i = 0;
+				mLogger.debug("{true}");
+				for (final LETTER letter : mTrace) {
+					mLogger.debug(letter);
+
+					if (i != mTrace.size() - 1) {
+						mLogger.debug("%s {%s}", letter.getTarget(), mInterpolants[i]);
+					}
+					++i;
+				}
+				mLogger.debug("{false}");
+			}
+		}
+
+		return result;
 	}
 
 	/**
@@ -307,7 +328,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 									.collect(Collectors.joining(",")));
 				}
 				mLogger.debug("Error is reachable.");
-				updateGlobalFrames(localFrames, localLevel);
+				// updateGlobalFrames(localFrames, localLevel);
 				return LBool.SAT;
 			}
 
@@ -327,26 +348,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 							.map(a -> a.getDebugIdentifier().toString()).collect(Collectors.joining(",")));
 					mLogger.debug("Error is not reachable.");
 				}
-				// mGlobalFrames = localFrames;
-				
 				updateGlobalFrames(localFrames, localLevel);
-				
-				mInterpolants = computeInterpolants();
-
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Interpolants are");
-					int i = 0;
-					mLogger.debug("{true}");
-					for (final LETTER letter : mTrace) {
-						mLogger.debug(letter);
-
-						if (i != mTrace.size() - 1) {
-							mLogger.debug("%s {%s}", letter.getTarget(), mInterpolants[i]);
-						}
-						++i;
-					}
-					mLogger.debug("{false}");
-				}
 				return LBool.UNSAT;
 			}
 		}
@@ -488,7 +490,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						throw new UnsupportedOperationException("Cannot deal with procedures");
 					}
 					if (mLogger.isDebugEnabled()) {
-						mLogger.debug("Found return, starting PDR for proceedure: %s", predecessorTransition.getSource().getProcedure());
+						mLogger.debug("Found return, starting PDR for proceedure: %s",
+								predecessorTransition.getSource().getProcedure());
 					}
 					final IIcfgReturnTransition<?, ?> returnTrans = (IIcfgReturnTransition<?, ?>) predecessorTransition;
 					/**
@@ -505,6 +508,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 							new ProofObligation(proofObligation.getToBeBlocked(), predecessorTransition.getSource(), 0);
 
 					procedurePo.add(initialProofObligation);
+
 					final LBool procResult = computePdr(pp.getPathProgram(), procedurePo);
 
 					/*
@@ -514,9 +518,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug("Procedure can lead to Error!");
 						}
-						
+
 					}
-					
+
 					/*
 					 * Recursive PDR call returns UNSAT -> error cannot be reached by calling this procedure.
 					 */
@@ -525,18 +529,21 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 							mLogger.debug("Procedure can not lead to Error!");
 						}
 						updateLocalFrames(toBeBlocked, location, level, localFrames);
-					}
-					 else {
-							mLogger.error(String.format("Internal query %s && %s && %s was unknown!", predecessorFrame,
-									predecessorTransition, toBeBlocked));
-							throw new UnsupportedOperationException("Solver returned unknown");
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug("Return to procedure");
 						}
+					} else {
+						mLogger.error(String.format("Internal query %s && %s && %s was unknown!", predecessorFrame,
+								predecessorTransition, toBeBlocked));
+						throw new UnsupportedOperationException("Solver returned unknown");
+					}
 				} else {
 					throw new UnsupportedOperationException(
 							"Unknown transition type: " + predecessorTransition.getClass().toString());
 				}
 			}
 		}
+		updateGlobalFrames(localFrames, localLevel);
 		return true;
 
 	}
@@ -676,7 +683,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			localFrames.get(location).set(i, new Pair<>(ChangedFrame.C, fTerm));
 		}
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Frames: Updated \n");
+			mLogger.debug("LOCAL Frames: Updated \n");
 			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : localFrames.entrySet()) {
 				mLogger.debug("  " + entry.getKey().getDebugIdentifier() + ": " + entry.getValue().stream()
 						.map(Pair<ChangedFrame, IPredicate>::toString).collect(Collectors.joining(",")));
@@ -705,18 +712,26 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					cnt--;
 				}
 			}
-			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> frame : localFrames.entrySet()) {
-				for (int i = 0; i <= localLevel; i++) {
-					final IPredicate current = frame.getValue().get(i).getSecond();
-					final IPredicate changed = mGlobalFrames.get(frame.getKey()).get(i).getSecond();
-					final IPredicate conjunct =
-							mPredicateUnifier.getOrConstructPredicateForConjunction(Arrays.asList(current, changed));
-					mGlobalFrames.get(frame.getKey()).set(i, new Pair<>(frame.getValue().get(i).getFirst(), conjunct));
-					// frame.getValue().set(i, new Pair<>(frame.getValue().get(i).getFirst(), conjunct));
-				}
+		}
+		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> frame : localFrames.entrySet()) {
+			for (int i = 0; i <= localLevel; i++) {
+				final IPredicate current = frame.getValue().get(i).getSecond();
+				final IPredicate changed = mGlobalFrames.get(frame.getKey()).get(i).getSecond();
+				final IPredicate conjunct =
+						mPredicateUnifier.getOrConstructPredicateForConjunction(Arrays.asList(current, changed));
+				mGlobalFrames.get(frame.getKey()).set(i, new Pair<>(frame.getValue().get(i).getFirst(), conjunct));
+				// frame.getValue().set(i, new Pair<>(frame.getValue().get(i).getFirst(), conjunct));
 			}
 		}
+
 		mLevel = localLevel;
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("GLOBAL Frames: Updated \n");
+			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : mGlobalFrames.entrySet()) {
+				mLogger.debug("  " + entry.getKey().getDebugIdentifier() + ": " + entry.getValue().stream()
+						.map(Pair<ChangedFrame, IPredicate>::toString).collect(Collectors.joining(",")));
+			}
+		}
 	}
 
 	final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> initializeFrames(IIcfg<? extends IcfgLocation> icfg) {
