@@ -82,13 +82,13 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 	private final ILogger mLogger;
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
 	private final CfgSmtToolkit mCsToolkit;
-	private final IRun<LETTER, IPredicate, ?> mCurrentCounterExample;
+	private final IRun<LETTER, ?> mCurrentCounterExample;
 	private final IIcfgSymbolTable mSymbolTable;
 
 	public AbsIntStraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, LETTER, ?> aiResult, final IPredicateUnifier predUnifier,
-			final CfgSmtToolkit csToolkit, final IRun<LETTER, IPredicate, ?> currentCounterExample,
+			final CfgSmtToolkit csToolkit, final IRun<LETTER, ?> currentCounterExample,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {

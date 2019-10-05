@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 public class IpTcStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransition<?>>
 		extends IpTcStrategyModuleBase<IInterpolatingTraceCheck<LETTER>, LETTER> {
 
-	private final IRun<LETTER, IPredicate, ?> mCounterExample;
+	private final IRun<LETTER, ?> mCounterExample;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final TAPreferences mTaPrefs;
 	private final PathProgramCache<LETTER> mPathProgramCache;
@@ -56,7 +56,7 @@ public class IpTcStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransi
 
 	private CegarAbsIntRunner<LETTER> mAbsIntRunner;
 
-	public IpTcStrategyModuleAbstractInterpretation(final IRun<LETTER, IPredicate, ?> counterexample,
+	public IpTcStrategyModuleAbstractInterpretation(final IRun<LETTER, ?> counterexample,
 			final IPredicateUnifier predicateUnifier, final IUltimateServiceProvider services, final IIcfg<?> icfg,
 			final PathProgramCache<LETTER> pathProgramCache, final TAPreferences taPrefs) {
 		super();

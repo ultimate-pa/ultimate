@@ -49,7 +49,7 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<LETTER extends IIcfgTrans
 	private final IUltimateServiceProvider mServices;
 	private final TaCheckAndRefinementPreferences<?> mPrefs;
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
-	private final IRun<LETTER, IPredicate, ?> mCounterexample;
+	private final IRun<LETTER, ?> mCounterexample;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IPredicate mPrecondition;
 
@@ -58,7 +58,7 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<LETTER extends IIcfgTrans
 	protected TraceCheckStrategyModuleDefaultTraceCheck(final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicateUnifier predicateUnifier,
+			final IRun<LETTER, ?> counterexample, final IPredicateUnifier predicateUnifier,
 			final IPredicate precondition) {
 		mServices = services;
 		mPrefs = prefs;

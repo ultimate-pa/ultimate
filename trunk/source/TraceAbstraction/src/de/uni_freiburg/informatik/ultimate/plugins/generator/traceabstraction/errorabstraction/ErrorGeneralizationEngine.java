@@ -165,7 +165,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 	 * @param iteration
 	 *            current CEGAR loop iteration
 	 */
-	public void constructErrorAutomaton(final IRun<LETTER, IPredicate, ?> counterexample,
+	public void constructErrorAutomaton(final IRun<LETTER, ?> counterexample,
 			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
 			final CfgSmtToolkit csToolkit, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
@@ -232,7 +232,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 	public void stopDifference(final INestedWordAutomaton<LETTER, IPredicate> abstraction,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final PredicateFactoryResultChecking predicateFactoryResultChecking,
-			final IRun<LETTER, IPredicate, ?> errorTrace, final boolean prematureTermination)
+			final IRun<LETTER, ?> errorTrace, final boolean prematureTermination)
 			throws AutomataLibraryException {
 		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
 		if (!prematureTermination) {

@@ -50,7 +50,7 @@ public class IpAbStrategyModuleCanonical<LETTER>
 		implements IIpAbStrategyModule<LETTER> {
 
 	private final IUltimateServiceProvider mServices;
-	private final IRun<LETTER, IPredicate, ?> mCounterexample;
+	private final IRun<LETTER, ?> mCounterexample;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private final ILogger mLogger;
@@ -60,7 +60,7 @@ public class IpAbStrategyModuleCanonical<LETTER>
 
 	public IpAbStrategyModuleCanonical(final IUltimateServiceProvider services,
 			final ILogger logger, final IAutomaton<LETTER, IPredicate> abstraction,
-			final IRun<LETTER, IPredicate, ?> counterexample,
+			final IRun<LETTER, ?> counterexample,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final IPredicateUnifier predicateUnifier) {
 		mServices = services;
 		mAbstraction = abstraction;

@@ -356,7 +356,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction;
 
 		if (mUseHeuristicEmptinessCheck) {
-			final EmptinessCheckHeuristic heuristic = new EmptinessCheckHeuristic(mLogger, mScoringMethod);
+			final EmptinessCheckHeuristic<IPredicate, LETTER> heuristic =
+					new EmptinessCheckHeuristic<>(mLogger, mScoringMethod);
 			mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(mServices), abstraction, heuristic)
 					.getNestedRun();
 		} else {
@@ -827,7 +828,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private void debugLogBrokenInterpolantAutomaton(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> interpolantAutomaton,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> enhancedInterpolantAutomaton,
-			final IRun<LETTER, IPredicate, ?> counterexample) {
+			final IRun<LETTER, ?> counterexample) {
 		mLogger.fatal("--");
 		mLogger.fatal("enhanced interpolant automaton broken: counterexample not accepted");
 		mLogger.fatal("word:");

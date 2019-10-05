@@ -194,7 +194,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 			final PredicateFactoryForInterpolantAutomata predicateFactory,
 			final PredicateFactoryResultChecking predicateFactoryResultChecking,
-			final IRun<LETTER, IPredicate, ?> errorTrace) throws AutomataLibraryException {
+			final IRun<LETTER, ?> errorTrace) throws AutomataLibraryException {
 		final NestedWordAutomaton<LETTER, IPredicate> subtrahend;
 		final AutomataLibraryServices alServices = new AutomataLibraryServices(services);
 		switch (errorAutomatonBuilder.getType()) {
@@ -378,7 +378,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 
 	private static <LETTER extends IIcfgTransition<?>> NestedWordAutomaton<LETTER, IPredicate>
 			constructStraightLineAutomaton(final IUltimateServiceProvider services,
-					final IRun<LETTER, IPredicate, ?> errorTrace, final VpAlphabet<LETTER> alphabet,
+					final IRun<LETTER, ?> errorTrace, final VpAlphabet<LETTER> alphabet,
 					final PredicateFactoryForInterpolantAutomata predicateFactory) {
 		final IInterpolantGenerator<LETTER> ig = new StraightlineGenerator<>(errorTrace);
 		return new StraightLineInterpolantAutomatonBuilder<>(services, errorTrace.getWord(), alphabet,
@@ -408,9 +408,9 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 	private static final class StraightlineGenerator<LETTER extends IAction> implements IInterpolantGenerator<LETTER> {
-		private final IRun<LETTER, IPredicate, ?> mErrorTrace;
+		private final IRun<LETTER, ?> mErrorTrace;
 
-		private StraightlineGenerator(final IRun<LETTER, IPredicate, ?> errorTrace) {
+		private StraightlineGenerator(final IRun<LETTER, ?> errorTrace) {
 			mErrorTrace = errorTrace;
 		}
 

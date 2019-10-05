@@ -90,7 +90,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 	private final ILogger mLogger;
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
 	private final CfgSmtToolkit mCsToolkit;
-	private final IRun<LETTER, IPredicate, ?> mCurrentCounterExample;
+	private final IRun<LETTER, ?> mCurrentCounterExample;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final VariableCollector mVariableCollector;
 	private final IIcfgSymbolTable mSymbolTable;
@@ -114,7 +114,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 	public AbsIntTotalInterpolationAutomatonBuilder(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, LETTER, ?> aiResult, final IPredicateUnifier predicateUnifier,
-			final CfgSmtToolkit csToolkit, final IRun<LETTER, IPredicate, ?> currentCounterExample,
+			final CfgSmtToolkit csToolkit, final IRun<LETTER, ?> currentCounterExample,
 			final IIcfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {

@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
  *            state type
  * @see NestedWord
  */
-public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
+public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 	private static final char BLANK = ' ';
 
 	private NestedWord<LETTER> mNestedWord;

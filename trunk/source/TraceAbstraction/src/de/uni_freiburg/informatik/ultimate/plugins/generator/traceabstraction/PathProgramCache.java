@@ -64,7 +64,7 @@ public class PathProgramCache<LETTER> {
 	 *            The counterexample you want to cache.
 	 * @return The number of times the path program induced by this counterexample has already been added (will be > 0).
 	 */
-	public int addRun(final IRun<LETTER, ?, ?> counterexample) {
+	public int addRun(final IRun<LETTER, ?> counterexample) {
 		final List<LETTER> trace = counterexample.getWord().asList();
 		final int traceHash = trace.hashCode();
 		mTraceHashes.add(traceHash);
@@ -89,7 +89,7 @@ public class PathProgramCache<LETTER> {
 	 *
 	 * @return The number of times the path program induced by the supplied counterexample has already been added.
 	 */
-	public int getPathProgramCount(final IRun<LETTER, ?, ?> counterexample) {
+	public int getPathProgramCount(final IRun<LETTER, ?> counterexample) {
 		final Set<LETTER> pathProgramRepresentative = counterexample.getWord().asSet();
 		final Integer count = mKnownPathPrograms.get(pathProgramRepresentative);
 		if (count == null) {

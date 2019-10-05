@@ -54,7 +54,7 @@ public abstract class IpTcStrategyModuleCraig<LETTER extends IIcfgTransition<?>>
 		extends IpTcStrategyModuleTraceCheck<InterpolatingTraceCheckCraig<LETTER>, LETTER> {
 
 	public IpTcStrategyModuleCraig(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, IPredicate, ?> counterExample,
+			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
 			final IPredicate precondition, final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory) {
 		super(taskIdentifier, services, prefs, counterExample, precondition, assertionOrderModulation, predicateUnifier,

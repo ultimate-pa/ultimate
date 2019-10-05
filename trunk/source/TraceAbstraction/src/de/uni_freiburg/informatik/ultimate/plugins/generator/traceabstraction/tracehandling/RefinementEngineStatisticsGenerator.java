@@ -119,7 +119,9 @@ public class RefinementEngineStatisticsGenerator implements IStatisticsDataProvi
 		ABSTRACT_INTERPRETATION(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
 				StatisticsType.KEY_BEFORE_DATA),
 
-		PDR(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA);
+		PDR(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
+
+		SIFA(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA);
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;

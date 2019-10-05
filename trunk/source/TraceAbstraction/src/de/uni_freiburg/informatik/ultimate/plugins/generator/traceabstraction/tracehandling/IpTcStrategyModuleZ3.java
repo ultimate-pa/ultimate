@@ -61,7 +61,7 @@ public class IpTcStrategyModuleZ3<LETTER extends IIcfgTransition<?>> extends IpT
 	private final InterpolationTechnique mInterpolationTechnique;
 
 	public IpTcStrategyModuleZ3(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, IPredicate, ?> counterExample,
+			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
 			final IPredicate precondition, final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory, final boolean useTimeout,
 			final InterpolationTechnique interpolationTechnique) {

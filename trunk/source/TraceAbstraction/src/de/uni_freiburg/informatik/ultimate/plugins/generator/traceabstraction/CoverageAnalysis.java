@@ -162,7 +162,7 @@ public class CoverageAnalysis<CL> {
 		// do nothing
 	}
 
-	public static List<IcfgLocation> extractProgramPoints(final IRun<?, IPredicate, ? extends IPredicate> irun) {
+	public static List<IcfgLocation> extractProgramPoints(final IRun<?, IPredicate> irun) {
 		final List<? extends IPredicate> predicateSequence = irun.getStateSequence();
 		final List<IcfgLocation> result = new ArrayList<>();
 		for (final IPredicate p : predicateSequence) {

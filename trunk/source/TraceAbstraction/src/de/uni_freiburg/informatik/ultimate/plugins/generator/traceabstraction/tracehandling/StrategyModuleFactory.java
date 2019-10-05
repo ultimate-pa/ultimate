@@ -58,7 +58,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	private final IUltimateServiceProvider mServices;
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	private final TAPreferences mTaPrefs;
-	private final IRun<LETTER, IPredicate, ?> mCounterexample;
+	private final IRun<LETTER, ?> mCounterexample;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IPredicate mPrecondition;
 	private final PredicateFactory mPredicateFactory;
@@ -72,7 +72,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 
 	public StrategyModuleFactory(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefs,
-			final IRun<LETTER, IPredicate, ?> counterExample, final IPredicate precondition,
+			final IRun<LETTER, ?> counterExample, final IPredicate precondition,
 			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory,
 			final IAutomaton<LETTER, IPredicate> abstraction,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final CfgSmtToolkit csToolkit,
@@ -138,6 +138,11 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleAbstractInterpretation() {
 		return createInterpolantConsolidationIfNecessary(new IpTcStrategyModuleAbstractInterpretation<>(mCounterexample,
 				mPredicateUnifier, mServices, mPrefs.getIcfgContainer(), mPathProgramCache, mTaPrefs));
+	}
+
+	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSifa() {
+		return createInterpolantConsolidationIfNecessary(new IpTcStrategyModuleSifa<>(mServices, mLogger,
+				mPrefs.getIcfgContainer(), mCounterexample, mPredicateUnifier));
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createTrackStrategyPdr() {

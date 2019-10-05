@@ -80,7 +80,7 @@ public class AssertionOrderModulation<LETTER> {
 	 *            interpolation technique
 	 * @return which assertion order to use
 	 */
-	public AssertCodeBlockOrder get(final IRun<LETTER, IPredicate, ?> counterexample,
+	public AssertCodeBlockOrder get(final IRun<LETTER, ?> counterexample,
 			final InterpolationTechnique interpolationTechnique) {
 
 		final int count = mPathProgramCache.getPathProgramCount(counterexample);

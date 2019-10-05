@@ -60,7 +60,7 @@ public class IpTcStrategyModuleSmtInterpolCraig<LETTER extends IIcfgTransition<?
 
 	public IpTcStrategyModuleSmtInterpolCraig(final TaskIdentifier taskIdentifier,
 			final IUltimateServiceProvider services, final TaCheckAndRefinementPreferences<LETTER> prefs,
-			final IRun<LETTER, IPredicate, ?> counterExample, final IPredicate precondition,
+			final IRun<LETTER, ?> counterExample, final IPredicate precondition,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory, final boolean useTimeout,
 			final InterpolationTechnique interpolationTechnique, final boolean arrayInterpolation) {

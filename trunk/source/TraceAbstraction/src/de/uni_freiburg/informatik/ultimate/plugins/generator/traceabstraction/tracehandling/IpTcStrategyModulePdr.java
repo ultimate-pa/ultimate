@@ -44,12 +44,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 public class IpTcStrategyModulePdr<LETTER extends IIcfgTransition<?>>
 		extends IpTcStrategyModuleBase<IInterpolatingTraceCheck<LETTER>, LETTER> {
 
-	private final IRun<LETTER, IPredicate, ?> mCounterExample;
+	private final IRun<LETTER, ?> mCounterExample;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	private final ILogger mLogger;
 
-	public IpTcStrategyModulePdr(final ILogger logger, final IRun<LETTER, IPredicate, ?> counterexample,
+	public IpTcStrategyModulePdr(final ILogger logger, final IRun<LETTER, ?> counterexample,
 			final IPredicateUnifier predicateUnifier, final TaCheckAndRefinementPreferences<LETTER> prefs) {
 		super();
 		mCounterExample = counterexample;

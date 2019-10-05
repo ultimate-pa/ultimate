@@ -185,7 +185,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	/**
 	 * Accepting run of the abstraction obtained in this iteration.
 	 */
-	protected IRun<LETTER, IPredicate, ?> mCounterexample;
+	protected IRun<LETTER, ?> mCounterexample;
 
 	/**
 	 * Abstraction of this iteration. The language of mAbstraction is a set of traces which is

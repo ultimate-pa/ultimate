@@ -55,7 +55,7 @@ public class IpAbStrategyModuleTotalInterpolation<LETTER extends IIcfgTransition
 		implements IIpAbStrategyModule<LETTER> {
 
 	private final IUltimateServiceProvider mServices;
-	private final IRun<LETTER, IPredicate, ?> mCounterexample;
+	private final IRun<LETTER, ?> mCounterexample;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final PredicateFactoryForInterpolantAutomata mPredicateFactory;
@@ -66,7 +66,7 @@ public class IpAbStrategyModuleTotalInterpolation<LETTER extends IIcfgTransition
 
 	public IpAbStrategyModuleTotalInterpolation(
 			final IUltimateServiceProvider services, final IAutomaton<LETTER, IPredicate> abstraction,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IPredicateUnifier predicateUnifier,
+			final IRun<LETTER, ?> counterexample, final IPredicateUnifier predicateUnifier,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final CfgSmtToolkit csToolkit,
 			final PredicateFactoryForInterpolantAutomata predFac) {
 		mServices = services;

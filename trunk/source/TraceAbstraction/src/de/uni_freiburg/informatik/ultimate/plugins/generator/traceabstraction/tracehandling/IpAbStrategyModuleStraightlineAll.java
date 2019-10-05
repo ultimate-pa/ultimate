@@ -51,14 +51,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 public class IpAbStrategyModuleStraightlineAll<LETTER> implements IIpAbStrategyModule<LETTER> {
 
 	private final IUltimateServiceProvider mServices;
-	private final IRun<LETTER, IPredicate, ?> mCounterexample;
+	private final IRun<LETTER, ?> mCounterexample;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 
 	private NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
 
 	public IpAbStrategyModuleStraightlineAll(final IUltimateServiceProvider services,
-			final IAutomaton<LETTER, IPredicate> abstraction, final IRun<LETTER, IPredicate, ?> counterexample,
+			final IAutomaton<LETTER, IPredicate> abstraction, final IRun<LETTER, ?> counterexample,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mServices = services;
 		mAbstraction = abstraction;

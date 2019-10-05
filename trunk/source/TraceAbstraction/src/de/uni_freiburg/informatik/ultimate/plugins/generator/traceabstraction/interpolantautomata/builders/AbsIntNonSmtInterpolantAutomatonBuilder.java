@@ -63,14 +63,14 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
-	private final IRun<LETTER, IPredicate, ?> mCurrentCounterExample;
+	private final IRun<LETTER, ?> mCurrentCounterExample;
 	private final PredicateFactory mPredicateFactory;
 	private final ManagedScript mBoogie2Smt;
 
 	public AbsIntNonSmtInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction, final IPredicateUnifier predUnifier,
 			final ManagedScript csToolkit, final IIcfgSymbolTable symbolTable,
-			final IRun<LETTER, IPredicate, ?> currentCounterexample,
+			final IRun<LETTER, ?> currentCounterexample,
 			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {

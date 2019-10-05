@@ -140,7 +140,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	public CegarAbsIntRunner(final IUltimateServiceProvider services, final IIcfg<?> root,
 			final PathProgramCache<LETTER> pathProgramCache, final TAPreferences taPrefs,
-			final IRun<LETTER, IPredicate, ?> currentCex, final IPredicateUnifier unifier) {
+			final IRun<LETTER, ?> currentCex, final IPredicateUnifier unifier) {
 		mStats = new AbsIntStatisticsGenerator();
 		mServices = services;
 		mTaPreferences = taPrefs;
@@ -171,7 +171,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	 * <li>The path program does not contain any loops.
 	 * </ul>
 	 */
-	private AbsIntCurrentIteration<?> generateFixpoints(final IRun<LETTER, IPredicate, ?> cex) {
+	private AbsIntCurrentIteration<?> generateFixpoints(final IRun<LETTER, ?> cex) {
 		assert cex != null : "Cannot run AI on empty counterexample";
 
 		if (!mRoot.getLocationClass().equals(BoogieIcfgLocation.class)) {
@@ -266,7 +266,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> createInterpolantAutomatonBuilder(
 			final IPredicateUnifier predicateUnifier, final INestedWordAutomaton<LETTER, IPredicate> abstraction,
-			final IRun<LETTER, IPredicate, ?> currentCex, final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+			final IRun<LETTER, ?> currentCex, final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		if (mCurrentIteration == null) {
 			throw createNoFixpointsException();
 		}
@@ -455,7 +455,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	 * @param <STATE>
 	 */
 	private final class AbsIntCurrentIteration<STATE extends IAbstractState<STATE>> {
-		private final IRun<LETTER, IPredicate, ?> mCex;
+		private final IRun<LETTER, ?> mCex;
 		private final IAbstractInterpretationResult<STATE, LETTER, ?> mResult;
 
 		private IInterpolatingTraceCheck<LETTER> mInterpolantGenerator;
@@ -465,7 +465,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private final IPredicateUnifier mPredicateUnifierAbsInt;
 		private final PathProgram mPathProgram;
 
-		public AbsIntCurrentIteration(final IRun<LETTER, IPredicate, ?> cex,
+		public AbsIntCurrentIteration(final IRun<LETTER, ?> cex,
 				final IAbstractInterpretationResult<STATE, LETTER, ?> result, final PathProgram pathprogram) {
 			mPathProgram = Objects.requireNonNull(pathprogram);
 			mCex = Objects.requireNonNull(cex);

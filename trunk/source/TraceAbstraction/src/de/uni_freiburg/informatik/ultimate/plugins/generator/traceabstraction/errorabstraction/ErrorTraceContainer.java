@@ -51,7 +51,7 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 	 * @param precondition
 	 *            precondition
 	 */
-	public void addTrace(final IRun<LETTER, IPredicate, ?> trace, final IPredicate precondition) {
+	public void addTrace(final IRun<LETTER, ?> trace, final IPredicate precondition) {
 		mTraces.add(new ErrorTrace<>(trace, precondition));
 	}
 
@@ -59,7 +59,7 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 	 * @param trace
 	 *            Error trace.
 	 */
-	public void addTrace(final IRun<LETTER, IPredicate, ?> trace) {
+	public void addTrace(final IRun<LETTER, ?> trace) {
 		addTrace(trace, null);
 	}
 
@@ -108,7 +108,7 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 	 *            letter type in the trace
 	 */
 	public static final class ErrorTrace<LETTER> {
-		private final IRun<LETTER, IPredicate, ?> mTrace;
+		private final IRun<LETTER, ?> mTrace;
 		private IPredicate mPrecondition;
 		public EnhancementType mEnhancement;
 
@@ -118,7 +118,7 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 		 * @param precondition
 		 *            precondition
 		 */
-		public ErrorTrace(final IRun<LETTER, IPredicate, ?> trace, final IPredicate precondition) {
+		public ErrorTrace(final IRun<LETTER, ?> trace, final IPredicate precondition) {
 			mTrace = trace;
 			mPrecondition = precondition;
 			mEnhancement = EnhancementType.UNKNOWN;
@@ -128,11 +128,11 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 		 * @param trace
 		 *            Error trace.
 		 */
-		public ErrorTrace(final IRun<LETTER, IPredicate, ?> trace) {
+		public ErrorTrace(final IRun<LETTER, ?> trace) {
 			this(trace, null);
 		}
 
-		public IRun<LETTER, IPredicate, ?> getTrace() {
+		public IRun<LETTER, ?> getTrace() {
 			return mTrace;
 		}
 

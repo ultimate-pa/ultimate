@@ -45,14 +45,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 public class IpAbStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransition<?>>
 		implements IIpAbStrategyModule<LETTER> {
 
-	private final IRun<LETTER, IPredicate, ?> mCounterexample;
+	private final IRun<LETTER, ?> mCounterexample;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 
 	private NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
 	private final IpTcStrategyModuleAbstractInterpretation<LETTER> mIpTcSmAbsInt;
 
-	public IpAbStrategyModuleAbstractInterpretation(final IRun<LETTER, IPredicate, ?> counterexample,
+	public IpAbStrategyModuleAbstractInterpretation(final IRun<LETTER, ?> counterexample,
 			final IPredicateUnifier predicateUnifier,
 			final IpTcStrategyModuleAbstractInterpretation<LETTER> ipTcSmAbsInt,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {

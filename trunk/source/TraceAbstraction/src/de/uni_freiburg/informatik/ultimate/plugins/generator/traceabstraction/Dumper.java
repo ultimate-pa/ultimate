@@ -100,14 +100,13 @@ public final class Dumper {
 		}
 	}
 
-	public void dumpNestedRun(final IRun<?, IPredicate, ?> run) {
+	public void dumpNestedRun(final IRun<?, ?> run) {
 		if (run == null || !(run instanceof NestedRun)) {
 			return;
 		}
 
 		final List<IPredicate> stateSequence = ((NestedRun<CodeBlock, IPredicate>) run).getStateSequence();
-		final NestedWord<CodeBlock> counterexample =
-				NestedWord.nestedWord(((IRun<CodeBlock, IPredicate, ?>) run).getWord());
+		final NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(((IRun<CodeBlock, ?>) run).getWord());
 		String line;
 		int indentation = 0;
 		try {

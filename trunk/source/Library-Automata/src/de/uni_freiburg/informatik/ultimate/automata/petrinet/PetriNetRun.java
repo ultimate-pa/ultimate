@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
  * @param <PLACE>
  *            place content type
  */
-public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, PLACE, Marking<LETTER, PLACE>> {
+public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, Marking<LETTER, PLACE>> {
 
 	private final Word<LETTER> mWord;
 	private final ArrayList<Marking<LETTER, PLACE>> mMarkingSequence;
@@ -112,11 +112,9 @@ public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, PLACE, Marking<L
 	}
 
 	/*
-	// use this method only if needed
-	public ArrayList<Marking<S,C>> getMarkingSequence() {
-		return mMarkingSequence;
-	}
-	*/
+	 * // use this method only if needed public ArrayList<Marking<S,C>> getMarkingSequence() { return mMarkingSequence;
+	 * }
+	 */
 
 	/**
 	 * @param run2

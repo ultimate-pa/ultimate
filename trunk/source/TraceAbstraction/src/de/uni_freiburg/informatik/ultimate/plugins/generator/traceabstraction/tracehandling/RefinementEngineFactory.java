@@ -122,7 +122,7 @@ public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
 	 * @return refinement strategy
 	 */
 	public IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> runRefinementEngine(
-			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
+			final IRun<LETTER, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final IPreconditionProvider preconditionProvider) {
 		final IPredicateUnifier predicateUnifier = constructPredicateUnifier();
@@ -135,7 +135,7 @@ public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
 		return mPathProgramCache;
 	}
 
-	private IRefinementStrategy<LETTER> constructStrategy(final IRun<LETTER, IPredicate, ?> counterexample,
+	private IRefinementStrategy<LETTER> constructStrategy(final IRun<LETTER, ?> counterexample,
 			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final IPreconditionProvider preconditionProvider, final IPredicateUnifier predicateUnifier) {
