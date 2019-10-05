@@ -537,7 +537,19 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * Strategy for benchmarking purposes only: it first uses SMTInterpol with Craig interpolation and disabled
 		 * array interpolation, then SMTInterpol with FP.
 		 */
-		SMTINTERPOL
+		SMTINTERPOL,
+		/**
+		 * Strategy that first tries SMTInterpol and then PDR.
+		 */
+		DACHSHUND,
+		/**
+		 * Strategy that is exactly like {@link #TAIPAN}, but uses Sifa instead of abstract interpretation.
+		 */
+		SIFA_TAIPAN,
+		/**
+		 * Strategy that is exactly like {@link #TOOTHLESS_TAIPAN}, but uses Sifa instead of abstract interpretation.
+		 */
+		TOOTHLESS_SIFA_TAIPAN
 	}
 
 	/**

@@ -228,6 +228,7 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 	private LBool checkFeasibility() {
 		while (mStrategy.hasNextFeasilibityCheck()) {
 			final ITraceCheckStrategyModule<?> currentTraceCheck = mStrategy.nextFeasibilityCheck();
+			mLogger.info("Using trace check " + currentTraceCheck.getClass().getSimpleName());
 			final LBool feasibilityResult = currentTraceCheck.isCorrect();
 			if (feasibilityResult == LBool.SAT) {
 				if (currentTraceCheck.providesRcfgProgramExecution()) {
@@ -279,9 +280,14 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 	}
 
 	private IIpgStrategyModule<?, LETTER> tryExecuteInterpolantGenerator() {
-		final IIpgStrategyModule<?, LETTER> interpolantGenerator;
+		final InterpolantComputationStatus status;
 		try {
-			interpolantGenerator = mStrategy.nextInterpolantGenerator();
+			final IIpgStrategyModule<?, LETTER> interpolantGenerator = mStrategy.nextInterpolantGenerator();
+			mLogger.info("Using interpolant generator " + interpolantGenerator.getClass().getSimpleName());
+			status = interpolantGenerator.getInterpolantComputationStatus();
+			if (status.wasComputationSuccesful()) {
+				return interpolantGenerator;
+			}
 		} catch (final ToolchainCanceledException tce) {
 			throw tce;
 		} catch (final Exception e) {
@@ -290,10 +296,6 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 			}
 			mLogger.fatal("Ignoring exception!", e);
 			return null;
-		}
-		final InterpolantComputationStatus status = interpolantGenerator.getInterpolantComputationStatus();
-		if (status.wasComputationSuccesful()) {
-			return interpolantGenerator;
 		}
 
 		final ExceptionHandlingCategory category;

@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.sifa;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -77,6 +78,11 @@ public class SifaBuilder {
 	}
 
 	public SifaComponents construct(final IIcfg<IcfgLocation> icfg, final IProgressAwareTimer timer) {
+		return construct(icfg, timer, IcfgInterpreter.allErrorLocations(icfg));
+	}
+
+	public SifaComponents construct(final IIcfg<IcfgLocation> icfg, final IProgressAwareTimer timer,
+			final Collection<IcfgLocation> locationsOfInterest) {
 		final SifaStats stats = new SifaStats();
 		final SymbolicTools tools = constructTools(stats, icfg);
 		final IDomain domain = constructStatsDomain(stats, tools, timer);
@@ -86,14 +92,14 @@ public class SifaBuilder {
 		final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSum =
 				constructCallSummarizer(stats, tools, domain);
 		final IcfgInterpreter icfgInterpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg,
-				IcfgInterpreter.allErrorLocations(icfg), domain, fluid, loopSum, callSum);
+				locationsOfInterest, domain, fluid, loopSum, callSum);
 		return new SifaComponents(icfgInterpreter, domain, stats);
 	}
 
 	private SymbolicTools constructTools(final SifaStats stats, final IIcfg<IcfgLocation> icfg) {
 		return new SymbolicTools(mServices, stats, icfg,
-			mPrefs.getEnum(SifaPreferences.LABEL_SIMPLIFICATION, SifaPreferences.CLASS_SIMPLIFICATION),
-			mPrefs.getEnum(SifaPreferences.LABEL_XNF_CONVERSION, SifaPreferences.CLASS_XNF_CONVERSION));
+				mPrefs.getEnum(SifaPreferences.LABEL_SIMPLIFICATION, SifaPreferences.CLASS_SIMPLIFICATION),
+				mPrefs.getEnum(SifaPreferences.LABEL_XNF_CONVERSION, SifaPreferences.CLASS_XNF_CONVERSION));
 	}
 
 	private IDomain constructStatsDomain(final SifaStats stats, final SymbolicTools tools,
@@ -115,16 +121,15 @@ public class SifaBuilder {
 		}
 	}
 
-	private IDomain constructNonCompoundDomain(final String domainName,
-			final SymbolicTools tools, final IProgressAwareTimer timer) {
+	private IDomain constructNonCompoundDomain(final String domainName, final SymbolicTools tools,
+			final IProgressAwareTimer timer) {
 		final IDomain domain;
 		if (ExplicitValueDomain.class.getSimpleName().equals(domainName)) {
 			domain = new ExplicitValueDomain(tools,
 					mPrefs.getInt(SifaPreferences.LABEL_EXPLVALDOM_MAX_PARALLEL_STATES));
 		} else if (IntervalDomain.class.getSimpleName().equals(domainName)) {
 			domain = new IntervalDomain(mLogger, tools,
-					mPrefs.getInt(SifaPreferences.LABEL_INTERVALDOM_MAX_PARALLEL_STATES),
-					() -> timer);
+					mPrefs.getInt(SifaPreferences.LABEL_INTERVALDOM_MAX_PARALLEL_STATES), () -> timer);
 		} else {
 			throw new IllegalArgumentException("Unknown domain setting: " + domainName);
 		}
@@ -142,14 +147,12 @@ public class SifaBuilder {
 		if (NeverFluid.class.getSimpleName().equals(prefFluid)) {
 			fluid = new NeverFluid();
 		} else if (SizeLimitFluid.class.getSimpleName().equals(prefFluid)) {
-			fluid = new SizeLimitFluid(
-					mPrefs.getInt(SifaPreferences.LABEL_SIZELIMITFLUID_MAX_DAGSIZE),
+			fluid = new SizeLimitFluid(mPrefs.getInt(SifaPreferences.LABEL_SIZELIMITFLUID_MAX_DAGSIZE),
 					mPrefs.getInt(SifaPreferences.LABEL_SIZELIMITFLUID_MAX_DISJUNCTS));
 		} else if (AlwaysFluid.class.getSimpleName().equals(prefFluid)) {
 			fluid = new AlwaysFluid();
 		} else if (LogSizeWrapperFluid.class.getSimpleName().equals(prefFluid)) {
-			final String prefInternFluid =
-					mPrefs.getString(SifaPreferences.LABEL_LOGFLUID_INTERN_FLUID);
+			final String prefInternFluid = mPrefs.getString(SifaPreferences.LABEL_LOGFLUID_INTERN_FLUID);
 			fluid = new LogSizeWrapperFluid(mLogger, constructFluid(prefInternFluid));
 		} else {
 			throw new IllegalArgumentException("Unknown fluid setting: " + prefFluid);
@@ -158,23 +161,23 @@ public class SifaBuilder {
 	}
 
 	private Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> constructLoopSummarizer(
-			final SifaStats stats, final IProgressAwareTimer timer, final SymbolicTools tools,
-			final IDomain domain, final IFluid fluid) {
+			final SifaStats stats, final IProgressAwareTimer timer, final SymbolicTools tools, final IDomain domain,
+			final IFluid fluid) {
 		final String prefLoopSum = mPrefs.getString(SifaPreferences.LABEL_LOOP_SUMMARIZER);
 		if (FixpointLoopSummarizer.class.getSimpleName().equals(prefLoopSum)) {
-			return icfgIpr -> dagIpr -> new FixpointLoopSummarizer(
-					stats, mLogger, () -> timer, tools, domain, fluid, dagIpr);
+			return icfgIpr -> dagIpr -> new FixpointLoopSummarizer(stats, mLogger, () -> timer, tools, domain, fluid,
+					dagIpr);
 		} else {
 			throw new IllegalArgumentException("Unknown loop summarizer setting: " + prefLoopSum);
 		}
 	}
 
-	private Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> constructCallSummarizer(
-			final SifaStats stats, final SymbolicTools tools, final IDomain domain) {
+	private Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>>
+			constructCallSummarizer(final SifaStats stats, final SymbolicTools tools, final IDomain domain) {
 		final String prefCallSum = mPrefs.getString(SifaPreferences.LABEL_CALL_SUMMARIZER);
 		if (TopInputCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
-			return icfgIpr -> dagIpr -> new TopInputCallSummarizer(
-					stats, tools, icfgIpr.procedureResourceCache(), dagIpr);
+			return icfgIpr -> dagIpr -> new TopInputCallSummarizer(stats, tools, icfgIpr.procedureResourceCache(),
+					dagIpr);
 		} else if (InterpretCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
 			return constructIprCallSummarizer(stats);
 		} else if (ReUseSupersetCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
@@ -186,14 +189,14 @@ public class SifaBuilder {
 		}
 	}
 
-	private static Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> constructIprCallSummarizer(
-			final SifaStats stats) {
+	private static Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>>
+			constructIprCallSummarizer(final SifaStats stats) {
 		return icfgIpr -> dagIpr -> new InterpretCallSummarizer(stats, icfgIpr.procedureResourceCache(), dagIpr);
 	}
 
 	/**
-	 * Sifa is divided into components – this class stores the main component {@link #getIcfgInterpreter()}
-	 * and gives access to some intern components which are useful after interpretation.
+	 * Sifa is divided into components – this class stores the main component {@link #getIcfgInterpreter()} and gives
+	 * access to some intern components which are useful after interpretation.
 	 *
 	 * @author schaetzc@tf.uni-freiburg.de
 	 */
@@ -201,17 +204,21 @@ public class SifaBuilder {
 		private final IcfgInterpreter mIcfgInterpreter;
 		private final IDomain mDomain;
 		private final SifaStats mStats;
+
 		public SifaComponents(final IcfgInterpreter icfgInterpreter, final IDomain domain, final SifaStats stats) {
 			mIcfgInterpreter = icfgInterpreter;
 			mDomain = domain;
 			mStats = stats;
 		}
+
 		public IcfgInterpreter getIcfgInterpreter() {
 			return mIcfgInterpreter;
 		}
+
 		public IDomain getDomain() {
 			return mDomain;
 		}
+
 		public SifaStats getStats() {
 			return mStats;
 		}

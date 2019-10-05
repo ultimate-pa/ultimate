@@ -63,8 +63,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.MammothRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.PenguinRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.RubberTaipanRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.SifaTaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.SmtInterpolRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.TaipanRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.ToothlessSifaTaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.ToothlessTaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.WalrusRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.WarthogNoAmRefinementStrategy;
@@ -183,6 +185,10 @@ public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
 			return new MammothNoAmRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case DACHSHUND:
 			return new DachshundRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
+		case SIFA_TAIPAN:
+			return new SifaTaipanRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
+		case TOOTHLESS_SIFA_TAIPAN:
+			return new ToothlessSifaTaipanRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		default:
 			throw new IllegalArgumentException(
 					"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());
