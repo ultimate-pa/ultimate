@@ -138,4 +138,34 @@ public class ReqCheck extends Check {
 		return super.toString() + " for " + Arrays.stream(mReqs).map(a -> a.getId()).collect(Collectors.joining(", "));
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + mEndline;
+		result = prime * result + Arrays.hashCode(mReqs);
+		result = prime * result + mStartline;
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final ReqCheck other = (ReqCheck) obj;
+		if (mEndline != other.mEndline)
+			return false;
+		if (!Arrays.equals(mReqs, other.mReqs))
+			return false;
+		if (mStartline != other.mStartline)
+			return false;
+		return true;
+	}
+
+
+
 }
