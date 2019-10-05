@@ -354,4 +354,28 @@ public class Check extends ModernAnnotations {
 		return mSpec.stream().map(a -> a.toString()).collect(Collectors.joining(MSG_AND));
 	}
 
+	@Override
+	public int hashCode() {
+		return mSpec.hashCode();
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final Check other = (Check) obj;
+		if (mSpec == null) {
+			if (other.mSpec != null)
+				return false;
+		} else if (!mSpec.equals(other.mSpec))
+			return false;
+		return true;
+	}
+
+
+
 }
