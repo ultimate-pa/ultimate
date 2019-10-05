@@ -86,7 +86,7 @@ public final class TraceCheckUtils {
 	 *            trace
 	 * @return sequence of program points
 	 */
-	public static List<IcfgLocation> getSequenceOfProgramPoints(final NestedWord<? extends IAction> trace) {
+	public static List<IcfgLocation> getSequenceOfProgramPoints(final Word<? extends IAction> trace) {
 		final List<IcfgLocation> result = new ArrayList<>();
 		final Iterator<? extends IAction> iter = trace.iterator();
 		while (iter.hasNext()) {
