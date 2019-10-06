@@ -118,7 +118,7 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 			final BranchingProcess<LETTER, PLACE> finPre = new FinitePrefix<>(mServices, mOperand).getResult();
 			return reachableTransitions(finPre);
 		} catch (final AutomataOperationCanceledException aoce) {
-			final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "anayzing net that has "
+			final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "analyzing net that has "
 					+ mOperand.getPlaces().size() + " and " + mOperand.getTransitions().size() + " transistions.");
 			aoce.addRunningTaskInfo(rti);
 			throw aoce;
