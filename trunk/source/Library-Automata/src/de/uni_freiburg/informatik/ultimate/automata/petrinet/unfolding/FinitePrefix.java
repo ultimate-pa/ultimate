@@ -79,7 +79,20 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + getOperationName() + " Result " + mResult.sizeInformation();
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Finished " + getOperationName());
+		sb.append(" ");
+		sb.append("Result " + mResult.sizeInformation());
+		sb.append(" ");
+		sb.append(mUnfoldingStatistics.getCutOffEvents() + "/"
+				+ (mUnfoldingStatistics.getCutOffEvents() + mUnfoldingStatistics.getNonCutOffEvents())
+				+ " cut-off events.");
+		sb.append(" ");
+		sb.append("Co-relation was queried " + mUnfoldingStatistics.getCoRelationQueries() + " times.");
+		sb.append(" ");
+		sb.append(mUnfoldingStatistics.getNumberOfUselessExtensionCandidates() + "/"
+				+ mUnfoldingStatistics.getNumberOfExtensionCandidates() + " useless extension candidates.");
+		return sb.toString();
 	}
 
 	@Override
