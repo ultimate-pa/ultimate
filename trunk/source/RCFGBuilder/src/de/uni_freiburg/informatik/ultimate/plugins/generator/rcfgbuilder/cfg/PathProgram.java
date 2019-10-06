@@ -180,6 +180,9 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			return mPathProgram;
 		}
 
+		/**
+		 * @return A mapping from original {@link IcfgLocation}s to path program {@link IcfgLocation}s.
+		 */
 		public Map<IcfgLocation, IcfgLocation> getLocationMapping() {
 			return Collections.unmodifiableMap(mOldLoc2NewLoc);
 		}

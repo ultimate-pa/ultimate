@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -52,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.sifa.SifaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.sifa.SifaBuilder.SifaComponents;
@@ -82,12 +84,16 @@ public final class SifaRunner<LETTER extends IIcfgTransition<?>> implements IInt
 		mPredicateUnifier = unifier;
 		mPrecondition = mPredicateUnifier.getTruePredicate();
 		final Set<LETTER> pathProgramSet = currentCex.getWord().asSet();
-		final PathProgram pp =
-				PathProgram.constructPathProgram("sifa-path-program", icfg, pathProgramSet).getPathProgram();
-		final List<IcfgLocation> locationSequence = TraceCheckUtils.getSequenceOfProgramPoints(currentCex.getWord());
-		final Collection<IcfgLocation> locationsOfInterest = new HashSet<>(locationSequence);
+		final PathProgramConstructionResult ppConstructionResult =
+				PathProgram.constructPathProgram("sifa-path-program", icfg, pathProgramSet);
+		final PathProgram pp = ppConstructionResult.getPathProgram();
+
+		final List<IcfgLocation> locationOfInterestList =
+				TraceCheckUtils.getSequenceOfProgramPoints(currentCex.getWord()).stream()
+						.map(a -> ppConstructionResult.getLocationMapping().get(a)).collect(Collectors.toList());
+		final Collection<IcfgLocation> locationOfInterestSet = new HashSet<>(locationOfInterestList);
 		final SifaComponents sifaComponents = new SifaBuilder(services, logger).construct(pp,
-				services.getProgressMonitorService(), locationsOfInterest);
+				services.getProgressMonitorService(), locationOfInterestSet);
 		final Map<IcfgLocation, IPredicate> predicates;
 		try {
 			predicates = sifaComponents.getIcfgInterpreter().interpret();
@@ -103,12 +109,12 @@ public final class SifaRunner<LETTER extends IIcfgTransition<?>> implements IInt
 			return;
 		}
 
-		final IcfgLocation errorLoc = locationSequence.get(locationSequence.size() - 1);
-		mPostcondition = predicates.get(errorLoc);
+		final IcfgLocation errorLoc = locationOfInterestList.get(locationOfInterestList.size() - 1);
+		mPostcondition = unifier.getOrConstructPredicate(predicates.get(errorLoc));
 		assert mPostcondition != null;
-		mInterpolants = generateInterpolants(locationSequence, predicates);
+		mInterpolants = generateInterpolants(locationOfInterestList, predicates, unifier);
 		mStats = sifaComponents.getStats();
-		if (sifaComponents.getDomain().isEqBottom(mPostcondition).isTrueForAbstraction()) {
+		if (unifier.getFalsePredicate() == mPostcondition) {
 			mIsCorrect = LBool.UNSAT;
 			mTraceCheckReasonUnknown = null;
 			mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
@@ -123,15 +129,15 @@ public final class SifaRunner<LETTER extends IIcfgTransition<?>> implements IInt
 	}
 
 	private static IPredicate[] generateInterpolants(final List<? extends IcfgLocation> locationSequence,
-			final Map<IcfgLocation, IPredicate> predicates) {
+			final Map<IcfgLocation, IPredicate> predicates, final IPredicateUnifier unifier) {
 		// the first location and the last location do not yield interpolants;
 		final int length = locationSequence.size();
-		final IPredicate[] rtr = new IPredicate[length - 1];
+		final IPredicate[] rtr = new IPredicate[length - 2];
 		int i = 0;
 		int j = 0;
 		for (final IcfgLocation location : locationSequence) {
 			if (i != 0 && i != length - 1) {
-				rtr[j] = predicates.get(location);
+				rtr[j] = unifier.getOrConstructPredicate(predicates.get(location));
 				assert rtr[j] != null;
 				j++;
 			}
