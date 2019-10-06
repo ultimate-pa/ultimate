@@ -343,7 +343,8 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + getOperationName() + ". Result " + mNet.sizeInformation();
+		return "Finished " + getOperationName() + ". Result " + mNet.sizeInformation() + ". Original net "
+				+ mInput.getNet().sizeInformation() + ".";
 	}
 
 	@Override
