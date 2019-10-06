@@ -82,7 +82,7 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Finished " + getOperationName());
 		sb.append(" ");
-		sb.append("Result " + mResult.sizeInformation());
+		sb.append("Result " + mResult.sizeInformation() + ".");
 		sb.append(" ");
 		sb.append(mUnfoldingStatistics.getCutOffEvents() + "/"
 				+ (mUnfoldingStatistics.getCutOffEvents() + mUnfoldingStatistics.getNonCutOffEvents())
