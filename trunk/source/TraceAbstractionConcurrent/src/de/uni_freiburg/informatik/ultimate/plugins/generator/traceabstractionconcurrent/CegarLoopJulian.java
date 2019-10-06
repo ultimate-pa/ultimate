@@ -207,8 +207,10 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
 		if (mPref.unfoldingToNet()) {
-			abstraction = new FinitePrefix2PetriNet<>(new AutomataLibraryServices(mServices),
-					mStateFactoryForRefinement, mUnfolding).getResult();
+			final FinitePrefix2PetriNet<LETTER, IPredicate> fp2pn = new FinitePrefix2PetriNet<>(
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mUnfolding);
+			assert fp2pn.checkResult(mPredicateFactoryResultChecking) : fp2pn.getClass().getSimpleName() + " failed";
+			abstraction = fp2pn.getResult();
 		}
 
 		// Determinize the interpolant automaton
