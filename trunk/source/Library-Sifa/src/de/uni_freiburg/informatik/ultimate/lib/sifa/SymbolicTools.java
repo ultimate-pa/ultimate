@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
@@ -54,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 /**
  * Helper class to create and transform terms/formulas/predicates.
@@ -65,7 +65,7 @@ public class SymbolicTools {
 
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final ManagedScript mMngdScript;
-	private final PredicateFactory mFactory;
+	private final BasicPredicateFactory mFactory;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mTransformer;
 	private final IPredicate mTop;
 	private final IPredicate mBottom;
@@ -90,7 +90,7 @@ public class SymbolicTools {
 		mXnfConversion = xnfConversion;
 		mMngdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		final Script script = mMngdScript.getScript();
-		mFactory = new PredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable());
+		mFactory = new BasicPredicateFactory(services, mMngdScript, icfg.getCfgSmtToolkit().getSymbolTable());
 		mTransformer = new PredicateTransformer<>(mMngdScript,
 				new EliminatingTermDomainOperationProvider(services, mPQELogger, mMngdScript));
 		mTop = mFactory.newPredicate(script.term("true"));
@@ -105,7 +105,7 @@ public class SymbolicTools {
 		return mMngdScript.getScript();
 	}
 
-	public PredicateFactory getFactory() {
+	public BasicPredicateFactory getFactory() {
 		return mFactory;
 	}
 
