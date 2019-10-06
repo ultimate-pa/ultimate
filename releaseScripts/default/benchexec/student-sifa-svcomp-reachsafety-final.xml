@@ -13,13 +13,29 @@
   <rundefinition name="Taipan INT">
     <option name="--force-no-wrapper" />
     <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
-    <option name="-s">../../../trunk/examples/settings/ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf</option>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+	<option name="--abstractinterpretationv2.abstract.domain">IntervalDomain</option>
+	<option name="--traceabstraction.trace.refinement.strategy">TAIPAN</option>
+	<option name="--traceabstraction.abstract.interpretation.mode">USE_PREDICATES</option>
+  </rundefinition>
+
+  <rundefinition name="Taipan Sifa 13">
+    <option name="--force-no-wrapper" />
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+	<option name="--traceabstraction.trace.refinement.strategy">SIFA_TAIPAN</option>
+    <option name="--sifa.abstract.domain">CompoundDomain</option>
+    <option name="--rcfgbuilder.size.of.a.code.block">LoopFreeBlock</option>
+    <option name="--sifa.call.summarizer">TopInputCallSummarizer</option>
+    <option name="--sifa.fluid">SizeLimitFluid</option>
+    <option name="--sifa.simplification.technique">SIMPLIFY_QUICK</option>
   </rundefinition>
 
   <rundefinition name="AbsInt INT">
     <option name="--force-no-wrapper" />
     <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
-    <option name="-s">../../../trunk/examples/settings/ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf</option>
+    <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+ 	<option name="--abstractinterpretationv2.abstract.domain">IntervalDomain</option>
   </rundefinition>
 
   <rundefinition name="Sifa 1">
@@ -193,6 +209,10 @@
 
   <tasks name="400">
     <includesfile>../../../trunk/examples/svcomp/400.set</includesfile>
+  </tasks>
+
+  <tasks name="3200-nr">
+    <includesfile>../../../trunk/examples/svcomp/3200-nr.set</includesfile>
   </tasks>
 
 </benchmark>
