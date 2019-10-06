@@ -33,29 +33,27 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
-import java.util.Queue;
-import java.util.LinkedList;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -69,7 +67,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @param <PLACE>
  *            content type
  */
-public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation<LETTER, PLACE, IStateFactory<PLACE>> {
+public final class FinitePrefix2PetriNet<LETTER, PLACE>
+		extends GeneralOperation<LETTER, PLACE, IPetriNetAndAutomataInclusionStateFactory<PLACE>> {
 	private final BranchingProcess<LETTER, PLACE> mInput;
 	private final BoundedPetriNet<LETTER, PLACE> mNet;
 	private final UnionFind<Condition<LETTER, PLACE>> mRepresentatives;
@@ -91,11 +90,10 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 	 *             if two nets do not have the same alphabet.
 	 */
 	public FinitePrefix2PetriNet(final AutomataLibraryServices services,
-			final IFinitePrefix2PetriNetStateFactory<PLACE> stateFactory, final BranchingProcess<LETTER, PLACE> bp) throws AutomataLibraryException {
+			final IFinitePrefix2PetriNetStateFactory<PLACE> stateFactory, final BranchingProcess<LETTER, PLACE> bp)
+			throws AutomataLibraryException {
 		super(services);
 		mStateFactory = stateFactory;
-		final IPetriNet2FiniteAutomatonStateFactory<PLACE> net2autoStateFactory = (IPetriNet2FiniteAutomatonStateFactory<PLACE>) stateFactory;
-		final INwaInclusionStateFactory<PLACE> nwaInclusionStateFactory = (INwaInclusionStateFactory<PLACE>) stateFactory;
 		// TODO implement merging for markings?
 		mInput = bp;
 
@@ -117,9 +115,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
-		assert petriNetLanguageEquivalence(oldNet, mNet, net2autoStateFactory,
-				nwaInclusionStateFactory) : "The result of the " + FinitePrefix2PetriNet.class.getSimpleName()
-						+ " recognizes a different language than the original net.";
 	}
 
 	@SuppressWarnings("squid:S1698")
@@ -194,17 +189,17 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 			}
 
 		}
-		
-		Set<Event<LETTER, PLACE>> uselessEvents = new HashSet<>();
+
+		final Set<Event<LETTER, PLACE>> uselessEvents = new HashSet<>();
 		if (mExtendedBackfolding)
 		{
-			Queue<Event<LETTER, PLACE>> eventQueue = new LinkedList<>(bp.getEvents());
+			final Queue<Event<LETTER, PLACE>> eventQueue = new LinkedList<>(bp.getEvents());
 			while(!eventQueue.isEmpty())
 			{
-				Event<LETTER, PLACE> e1 = eventQueue.poll();
+				final Event<LETTER, PLACE> e1 = eventQueue.poll();
 					if (e1.getPredecessorConditions().isEmpty())
 						continue;
-				for (Event<LETTER, PLACE> e2 : bp.getEvents())
+				for (final Event<LETTER, PLACE> e2 : bp.getEvents())
 				{
 					if (e1.getTransition().equals(e2.getTransition())
 							&& mRepresentatives.find(e1.getPredecessorConditions()).equals(mRepresentatives.find(e2.getPredecessorConditions()))
@@ -212,12 +207,12 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 					{
 						mergeConditions(e1.getSuccessorConditions(), e2.getSuccessorConditions());
 						uselessEvents.add(e1);
-						for (Condition<LETTER, PLACE> c : e1.getSuccessorConditions())
-							for (Event<LETTER, PLACE> e3: c.getSuccessorEvents())
+						for (final Condition<LETTER, PLACE> c : e1.getSuccessorConditions())
+							for (final Event<LETTER, PLACE> e3: c.getSuccessorEvents())
 								if (!eventQueue.contains(e3))
 									eventQueue.add(e3);
 						break;
-									
+
 					}
 				}
 			}
@@ -310,25 +305,25 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 		return equivalenceClassMembers.stream().anyMatch(x -> net.isAccepting(x.getPlace()));
 	}
 
-	private boolean petriNetLanguageEquivalence(final BoundedPetriNet<LETTER, PLACE> oldNet, final BoundedPetriNet<LETTER, PLACE> newNet,
-			final IPetriNet2FiniteAutomatonStateFactory<PLACE> net2autoStateFactory,
-			final INwaInclusionStateFactory<PLACE> nwaInclusionStateFactory) throws AutomataLibraryException {
+	private boolean petriNetLanguageEquivalence(final BoundedPetriNet<LETTER, PLACE> oldNet,
+			final BoundedPetriNet<LETTER, PLACE> newNet,
+			final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing Petri net language equivalence");
 		}
 
-		final INestedWordAutomaton<LETTER, PLACE> finAuto1 = (new PetriNet2FiniteAutomaton<>(mServices, net2autoStateFactory, oldNet))
-				.getResult();
-		final INestedWordAutomaton<LETTER, PLACE> finAuto2 = (new PetriNet2FiniteAutomaton<>(mServices, net2autoStateFactory, newNet))
-				.getResult();
-		final NestedRun<LETTER, PLACE> subsetCounterex = new IsIncluded<>(mServices, nwaInclusionStateFactory, finAuto1,
-				finAuto2).getCounterexample();
+		final INestedWordAutomaton<LETTER, PLACE> finAuto1 = (new PetriNet2FiniteAutomaton<>(mServices, stateFactory,
+				oldNet)).getResult();
+		final INestedWordAutomaton<LETTER, PLACE> finAuto2 = (new PetriNet2FiniteAutomaton<>(mServices, stateFactory,
+				newNet)).getResult();
+		final NestedRun<LETTER, PLACE> subsetCounterex = new IsIncluded<>(mServices, stateFactory, finAuto1, finAuto2)
+				.getCounterexample();
 		final boolean subset = subsetCounterex == null;
 		if (!subset && mLogger.isErrorEnabled()) {
 			mLogger.error("Only accepted by first: " + subsetCounterex.getWord());
 		}
-		final NestedRun<LETTER, PLACE> supersetCounterex = new IsIncluded<>(mServices, nwaInclusionStateFactory, finAuto2,
-				finAuto1).getCounterexample();
+		final NestedRun<LETTER, PLACE> supersetCounterex = new IsIncluded<>(mServices, stateFactory, finAuto2, finAuto1)
+				.getCounterexample();
 		final boolean superset = supersetCounterex == null;
 		if (!superset && mLogger.isErrorEnabled()) {
 			mLogger.error("Only accepted by second: " + supersetCounterex.getWord());
@@ -386,8 +381,8 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 			mRepresentatives.union(c1representative, c2representative);
 		}
 	}
-	
-	
+
+
 
 	/**
 	 * A transition set.
@@ -541,6 +536,24 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE> extends GeneralOperation
 		}
 		return result;
 	}
+
+	@Override
+	public boolean checkResult(final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactory) throws AutomataLibraryException {
+		BoundedPetriNet<LETTER, PLACE> originalNet;
+		if (mInput.getNet() instanceof BoundedPetriNet) {
+			originalNet = (BoundedPetriNet<LETTER, PLACE>) mInput.getNet();
+		} else {
+			throw new AssertionError("implement result checking for on-demand inputs");
+		}
+		final boolean languagesEquivalent = petriNetLanguageEquivalence(originalNet, mNet, stateFactory);
+		if (!languagesEquivalent) {
+			mLogger.error("The result of the " + FinitePrefix2PetriNet.class.getSimpleName()
+					+ " recognizes a different language than the original net.");
+		}
+		return languagesEquivalent;
+	}
+
+
 
 
 }
