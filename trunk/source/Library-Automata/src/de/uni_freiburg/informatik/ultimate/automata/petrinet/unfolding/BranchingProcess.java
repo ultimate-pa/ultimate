@@ -413,6 +413,10 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		}
 		return result;
 	}
+	
+	public boolean getNewFiniteComprehensivePrefixMode() {
+		return mNewFiniteComprehensivePrefixMode;
+	}
 
 	/**
 	 * #Backfolding

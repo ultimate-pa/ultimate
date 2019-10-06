@@ -114,7 +114,10 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		conditionMarkSet.addAll(mSuccessors);
 		mConditionMark = new ConditionMarking<>(conditionMarkSet);
 		mMark = mConditionMark.getMarking();
-		mPlaceCorelationMap = computePlaceCorelationMap(bp);
+		mPlaceCorelationMap = new HashMap<>();
+		if (bp.getNewFiniteComprehensivePrefixMode()) {
+			computePlaceCorelationMap(bp);
+		}
 	}
 
 	/**
@@ -137,7 +140,10 @@ public final class Event<LETTER, PLACE> implements Serializable {
 			conditionMarkSet.add(c);
 		}
 		mHashCode = computeHashCode();
-		mPlaceCorelationMap = computePlaceCorelationMap(bp);
+		mPlaceCorelationMap = new HashMap<>();
+		if (bp.getNewFiniteComprehensivePrefixMode()) {
+			computePlaceCorelationMap(bp);
+		}
 	}
 
 	/**
@@ -307,14 +313,12 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 * (c.getPlace(),bp.getCoRelatedPlaces(c)). </ p> TODO Find a nice name for this
 	 * map or find a view that is easy to understand
 	 */
-	public Map<PLACE, Set<PLACE>> computePlaceCorelationMap(
+	public void computePlaceCorelationMap(
 			final BranchingProcess<LETTER, PLACE> bp) {
-			Map<PLACE, Set<PLACE>> result = new HashMap<>();
 			for (Condition<LETTER,PLACE> c:  getConditionMark())
 			{
-				result.put(c.getPlace(), bp.computeCoRelatedPlaces(c));
+				mPlaceCorelationMap.put(c.getPlace(), bp.computeCoRelatedPlaces(c));
 			}
-		return result;
 	}
 
 	/**
