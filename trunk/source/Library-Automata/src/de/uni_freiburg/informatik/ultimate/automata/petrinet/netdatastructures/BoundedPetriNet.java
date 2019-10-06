@@ -341,7 +341,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 
 	@Override
 	public String sizeInformation() {
-		return "has " + mPlaces.size() + "places, " + mTransitions.size() + " transitions";
+		return "has " + mPlaces.size() + " places, " + mTransitions.size() + " transitions";
 	}
 
 	/** @return Letters actually being used as a label of some transition in this net. */
