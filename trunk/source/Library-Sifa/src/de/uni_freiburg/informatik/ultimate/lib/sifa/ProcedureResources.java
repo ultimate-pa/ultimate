@@ -61,7 +61,7 @@ public class ProcedureResources {
 	public ProcedureResources(final SifaStats stats, final IIcfg<IcfgLocation> icfg, final String procedure,
 			final Collection<IcfgLocation> locationsOfInterest, final Collection<String> enterCallsOfInterest) {
 
-		// TODO split this function into sub-functions
+		// TODO split this function for readability
 
 		final ProcedureGraph procedureGraph = new ProcedureGraphBuilder(stats, icfg)
 				.graphOfProcedure(procedure, locationsOfInterest, enterCallsOfInterest);
@@ -84,12 +84,11 @@ public class ProcedureResources {
 				.map(regex -> RegexStatUtils.addToDag(stats, regexToDag, regex))
 				.forEach(loisAndEnterCallMarkers::add);
 
+		IcfgLocation exitNode = procedureGraph.getExitNode().orElse(null);
+		final IRegex<IIcfgTransition<IcfgLocation>> regexToReturn = exitNode == null ?
+				Regex.emptySet() : RegexStatUtils.exprBetween(stats, peComputer, entry, exitNode);
 		final RegexDagNode<IIcfgTransition<IcfgLocation>> returnDagNode = RegexStatUtils.addToDag(stats, regexToDag,
-			markRegex(
-				RegexStatUtils.exprBetween(stats, peComputer, entry, procedureGraph.getExitNode()),
-				procedureGraph.getExitNode()
-			)
-		);
+				markRegex(regexToReturn, exitNode));
 
 		mRegexDag = RegexStatUtils.getDagAndReset(stats, regexToDag);
 		RegexStatUtils.compress(stats, mRegexDag);

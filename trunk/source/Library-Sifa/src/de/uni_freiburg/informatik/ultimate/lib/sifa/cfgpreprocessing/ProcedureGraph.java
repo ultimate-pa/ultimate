@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing;
 
+import java.util.Objects;
+import java.util.Optional;
+
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -45,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.GenericLabeledGra
 public class ProcedureGraph extends GenericLabeledGraph<IcfgLocation, IIcfgTransition<IcfgLocation>> {
 
 	private final IcfgLocation mEntryNode;
-	private final IcfgLocation mExitNode;
+	private final Optional<IcfgLocation> mExitNode;
 
 	/**
 	 * Constructs the base for a new procedure graph. This graph starts only with some disconnected nodes.
@@ -54,10 +57,10 @@ public class ProcedureGraph extends GenericLabeledGraph<IcfgLocation, IIcfgTrans
 	 * @param exitNode Exit node of the procedure from inside the icfg
 	 */
 	public ProcedureGraph(final IcfgLocation entryNode, final IcfgLocation exitNode) {
-		mEntryNode = entryNode;
-		mExitNode = exitNode;
+		mEntryNode = Objects.requireNonNull(entryNode);
+		mExitNode = Optional.ofNullable(exitNode);
 		mNodes.add(mEntryNode);
-		mNodes.add(mExitNode);
+		mExitNode.ifPresent(mNodes::add);
 	}
 
 	/**
@@ -74,7 +77,7 @@ public class ProcedureGraph extends GenericLabeledGraph<IcfgLocation, IIcfgTrans
 		return mEntryNode;
 	}
 
-	public IcfgLocation getExitNode() {
+	public Optional<IcfgLocation> getExitNode() {
 		return mExitNode;
 	}
 }

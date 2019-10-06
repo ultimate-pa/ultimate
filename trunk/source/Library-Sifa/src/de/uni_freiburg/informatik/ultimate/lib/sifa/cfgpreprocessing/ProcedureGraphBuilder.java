@@ -107,7 +107,7 @@ public class ProcedureGraphBuilder {
 		locationsOfInterest.forEach(mCurrentProcedureGraph::addNode);
 		enterCallsOfInterest.forEach(callee -> copyEnterCallEdges(procedureName, callee));
 
-		mWork.add(mCurrentProcedureGraph.getExitNode());
+		mCurrentProcedureGraph.getExitNode().ifPresent(mWork::add);
 		mWork.addAll(locationsOfInterest);
 		while (!mWork.isEmpty()) {
 			for (final IcfgEdge edge : mWork.remove().getIncomingEdges()) {
