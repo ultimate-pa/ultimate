@@ -625,9 +625,6 @@ public class CACSL2BoogieBacktranslator
 		for (final Expression varName : compressedProgramState.getVariables()) {
 			translateProgramStateEntry(varName, compressedProgramState, translatedStateMap);
 		}
-		if (translatedStateMap.isEmpty()) {
-			return null;
-		}
 		return new ProgramState<>(translatedStateMap, IASTExpression.class);
 
 	}
