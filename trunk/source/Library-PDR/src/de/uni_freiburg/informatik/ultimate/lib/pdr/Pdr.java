@@ -150,6 +150,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	private final PdrBenchmark mPdrBenchmark;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final IPredicate mAxioms;
+	private final Deque<ProofObligation> mSatProofObligations;
 
 	private boolean mTraceCheckFinishedNormally;
 	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mFeasibleProgramExecution;
@@ -194,6 +195,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		mTruePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("true"));
 		mFalsePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("false"));
 		mGlobalFrames = initializeFrames(mPpIcfg);
+		mSatProofObligations = new ArrayDeque<ProofObligation>();
 		mLogger.info("Analyzing path program with PDR");
 
 		try {
@@ -419,10 +421,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					 * Query is satisfiable: generate new proofobligation
 					 */
 					if (res == LBool.SAT) {
-						if (level - 1 == 0) {
-							return false;
-						}
-
 						Term pre = mPredTrans.pre(toBeBlocked, predTF);
 						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
 								SimplificationTechnique.SIMPLIFY_DDA,
@@ -431,6 +429,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						final IPredicate prePred = mPredicateUnifier.getOrConstructPredicate(pre);
 						final ProofObligation newProofObligation =
 								new ProofObligation(prePred, predecessor, localLevel - level + 1);
+
+						if (level - 1 == 0) {
+							mSatProofObligations.add(newProofObligation);
+							return false;
+						}
+
 						proofObligations.addFirst(proofObligation);
 						proofObligations.addFirst(newProofObligation);
 						// addProofObligation(proofObligations, proofObligation, level, predecessor,
@@ -518,7 +522,23 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug("Procedure can lead to Error!");
 						}
+						/**
+						 * TODO: new proof-obligation for main PDR loop. see above. possible problem, normally we save
+						 * SAT proof-obligations, but what in the case of procedures? (Maybe the previous
+						 * proof-obligation that started this here comes back to here, but how do we update the frames
+						 * of the procedure? Global Frame usage?)
+						 */
+						final ProofObligation procSatProofObligation = mSatProofObligations.pop();
+						final IPredicate newLocalProofObligation = procSatProofObligation.getToBeBlocked();
+						final IcfgLocation newLocation = returnTrans.getCallerProgramPoint();
 
+						final ProofObligation newProofObligation =
+								new ProofObligation(newLocalProofObligation, newLocation, proofObligation.getLevel());
+						if (proofObligation.getLevel() - 1 == 0) {
+							return false;
+						}
+						// proofObligations.addFirst(proofObligation);
+						proofObligations.addFirst(newProofObligation);
 					}
 
 					/*
