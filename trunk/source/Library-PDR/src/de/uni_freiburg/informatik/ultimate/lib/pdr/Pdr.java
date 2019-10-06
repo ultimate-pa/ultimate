@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pdr;
 
-import java.lang.reflect.Array;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -92,7 +91,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.pdr.PdrBenchmark.PdrStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -150,7 +148,11 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	private final PdrBenchmark mPdrBenchmark;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final IPredicate mAxioms;
-	private final Deque<ProofObligation> mSatProofObligations;
+	/*
+	 * Pair of proof-obligations that lead to PDR returning SAT an iteration before. First is that obligation, second is
+	 * the one with correct pre.
+	 */
+	private final Deque<Pair<ProofObligation, ProofObligation>> mSatProofObligations;
 
 	private boolean mTraceCheckFinishedNormally;
 	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mFeasibleProgramExecution;
@@ -195,7 +197,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		mTruePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("true"));
 		mFalsePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("false"));
 		mGlobalFrames = initializeFrames(mPpIcfg);
-		mSatProofObligations = new ArrayDeque<ProofObligation>();
+		mSatProofObligations = new ArrayDeque<Pair<ProofObligation, ProofObligation>>();
 		mLogger.info("Analyzing path program with PDR");
 
 		try {
@@ -431,7 +433,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 								new ProofObligation(prePred, predecessor, localLevel - level + 1);
 
 						if (level - 1 == 0) {
-							mSatProofObligations.add(newProofObligation);
+							mSatProofObligations.add(
+									new Pair<ProofObligation, ProofObligation>(proofObligation, newProofObligation));
 							return false;
 						}
 
@@ -516,7 +519,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					final LBool procResult = computePdr(pp.getPathProgram(), procedurePo);
 
 					/*
-					 * Recursive PDR call returns SAT -> error can be reached by calling this procedure.
+					 * Recursive PDR call returns SAT -> error can be reached by calling this procedure. In this case we
+					 * need the last proofobligation of the procedure to start another PDR call on the remainder of the
+					 * program. Otherwise we cannot block the proofobligation that lead to the procedure.
 					 */
 					if (procResult == LBool.SAT) {
 						if (mLogger.isDebugEnabled()) {
@@ -528,17 +533,42 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						 * proof-obligation that started this here comes back to here, but how do we update the frames
 						 * of the procedure? Global Frame usage?)
 						 */
-						final ProofObligation procSatProofObligation = mSatProofObligations.pop();
-						final IPredicate newLocalProofObligation = procSatProofObligation.getToBeBlocked();
+						final Pair<ProofObligation, ProofObligation> procSatProofObligations =
+								mSatProofObligations.pop();
+						final IPredicate newLocalProofObligation = procSatProofObligations.getSecond().getToBeBlocked();
 						final IcfgLocation newLocation = returnTrans.getCallerProgramPoint();
 
 						final ProofObligation newProofObligation =
 								new ProofObligation(newLocalProofObligation, newLocation, proofObligation.getLevel());
-						if (proofObligation.getLevel() - 1 == 0) {
-							return false;
+
+						final List<LETTER> subTrace = getSubTrace(newLocation);
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug("Beginning recursive PDR");
 						}
-						// proofObligations.addFirst(proofObligation);
-						proofObligations.addFirst(newProofObligation);
+						/**
+						 * Get the procedure in form of a trace.
+						 */
+						final PathProgramConstructionResult subPP =
+								PathProgram.constructPathProgram("procErrorPP", mIcfg, new HashSet<>(subTrace));
+						// final Set<IcfgLocation> errorLocOfProc = new HashSet<>();
+						// errorLocOfProc.add(returnTrans.getTarget());
+
+						final ArrayDeque<ProofObligation> subTracePo = new ArrayDeque<>();
+						subTracePo.add(newProofObligation);
+						final LBool subTraceResult = computePdr(subPP.getPathProgram(), subTracePo);
+
+						/**
+						 * TODO: Dealing with the results of this recursive PDR call: SAT: (Intuition) the rest of the
+						 * program cannot disprove the pre for the execution of the procedure that leads to the error ->
+						 * return false UNSAT: update the frames and try to disprove the earlier proof-obligations from
+						 * previous PDR instances.
+						 */
+						if (subTraceResult == LBool.UNSAT) {
+							mLogger.debug("Recursive is unsat");
+						} else if (subTraceResult == LBool.SAT) {
+							mLogger.debug("SAT");
+						}
+
 					}
 
 					/*
@@ -819,6 +849,31 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		assert end != -1;
 		final List<LETTER> procedureTrace = new ArrayList<>(mTrace.subList(start, end));
 		return procedureTrace;
+
+	}
+
+	/**
+	 * Get a trace of a proecdure
+	 *
+	 * @param callLoc
+	 * @param returnTrans
+	 * @param globalVarsAssignments
+	 * @param oldVarAssignments
+	 * @param modifiableGlobals
+	 * @return The trace as a pair of List of edges and a summarizing {@link UnmodifiableTransFormula}
+	 */
+	private List<LETTER> getSubTrace(final IcfgLocation target) {
+		int end = -1;
+		int i = 0;
+		for (final LETTER l : mTrace) {
+			if (l.getSource().equals(target.getLabel())) {
+				end = i;
+			}
+			i++;
+		}
+		assert end != -1;
+		final List<LETTER> subTrace = new ArrayList<>(mTrace.subList(0, end));
+		return subTrace;
 
 	}
 
