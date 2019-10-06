@@ -430,7 +430,8 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 
 	@Override
 	public String sizeInformation() {
-		return "has " + mConditions.size() + "conditions, " + mEvents.size() + " events.";
+		// Subtract one from size of events because of auxiliary/dummy initial event.
+		return "has " + mConditions.size() + "conditions, " + (mEvents.size() - 1) + " events.";
 	}
 
 	public IOrder<LETTER, PLACE> getOrder() {
