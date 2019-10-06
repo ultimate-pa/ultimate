@@ -108,11 +108,34 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
-		mReachableTransitions = reachableTransitions == null ? reachableTransitions() : reachableTransitions;
+
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+
+		mReachableTransitions = (reachableTransitions == null ? computeReachableTransitions() : reachableTransitions);
 		mResult = CopySubnet.copy(services, mOperand, mReachableTransitions);
+
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 
-	private Set<ITransition<LETTER, PLACE>> reachableTransitions()
+	@Override
+	public String exitMessage() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Finished " + getOperationName() + ".");
+		sb.append(" ");
+		sb.append("Removed ");
+		sb.append(computeRemovedPlaces() + " of " + mOperand.getPlaces().size() + " places");
+		sb.append(", ");
+		sb.append(computeRemovedTransitions() + " of " + mOperand.getTransitions().size() + " transitions");
+		sb.append(", ");
+		sb.append(computeRemovedFlow() + " of " + mOperand.flowSize() + " flow.");
+		return sb.toString();
+	}
+
+	private Set<ITransition<LETTER, PLACE>> computeReachableTransitions()
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		try {
 			final BranchingProcess<LETTER, PLACE> finPre = new FinitePrefix<>(mServices, mOperand).getResult();
@@ -149,6 +172,18 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 		return mOperand;
 	}
 
+	private int computeRemovedPlaces() {
+		return mOperand.getPlaces().size() - mResult.getPlaces().size();
+	}
+
+	private int computeRemovedTransitions() {
+		return mOperand.getTransitions().size() - mResult.getTransitions().size();
+	}
+
+	private int computeRemovedFlow() {
+		return mOperand.flowSize() - mResult.flowSize();
+	}
+
 	@Override
 	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
@@ -166,11 +201,11 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
 
 		statistics.addKeyValuePair(
-				StatisticsType.PETRI_REMOVED_PLACES , mOperand.getPlaces().size() - mResult.getPlaces().size());
+				StatisticsType.PETRI_REMOVED_PLACES , computeRemovedPlaces());
 		statistics.addKeyValuePair(
-				StatisticsType.PETRI_REMOVED_TRANSITIONS, mOperand.getTransitions().size() - mResult.getTransitions().size());
+				StatisticsType.PETRI_REMOVED_TRANSITIONS, computeRemovedTransitions());
 		statistics.addKeyValuePair(
-				StatisticsType.PETRI_REMOVED_FLOW, mOperand.flowSize() - mResult.flowSize());
+				StatisticsType.PETRI_REMOVED_FLOW, computeRemovedFlow());
 
 		statistics.addKeyValuePair(
 				StatisticsType.PETRI_ALPHABET, mResult.getAlphabet().size());
