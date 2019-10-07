@@ -440,8 +440,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 						proofObligations.addFirst(proofObligation);
 						proofObligations.addFirst(newProofObligation);
-						// addProofObligation(proofObligations, proofObligation, level, predecessor,
-						// prePred);
 
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug(
@@ -457,9 +455,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 							final IPredicate interpolant =
 									getInterpolant(predecessorTransition, predecessorFrame, toBeBlocked);
 							if (interpolant != null) {
-								// final List<IPredicate> predsForDumbPeople = new ArrayList<>();
-								// predsForDumbPeople.add(not(interpolant));
-								// predsForDumbPeople.add(mPredicateUnifier.getOrConstructPredicate(toBeBlocked));
 								final Term pred = SmtUtils.and(mScript.getScript(), not(interpolant).getFormula(),
 										toBeBlocked.getFormula());
 								updateLocalFrames(mPredicateUnifier.getOrConstructPredicate(pred), location, level,
@@ -516,7 +511,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 					procedurePo.add(initialProofObligation);
 
-					final LBool procResult = computePdr(pp.getPathProgram(), procedurePo);
+					LBool procResult = computePdr(pp.getPathProgram(), procedurePo);
 
 					/*
 					 * Recursive PDR call returns SAT -> error can be reached by calling this procedure. In this case we
@@ -527,44 +522,52 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug("Procedure can lead to Error!");
 						}
-						/**
-						 * TODO: new proof-obligation for main PDR loop. see above. possible problem, normally we save
-						 * SAT proof-obligations, but what in the case of procedures? (Maybe the previous
-						 * proof-obligation that started this here comes back to here, but how do we update the frames
-						 * of the procedure? Global Frame usage?)
-						 */
 						final Pair<ProofObligation, ProofObligation> procSatProofObligations =
 								mSatProofObligations.pop();
-						final IPredicate newLocalProofObligation = procSatProofObligations.getSecond().getToBeBlocked();
+
+						final ProofObligation oldProofObligation = procSatProofObligations.getFirst();
+						final ProofObligation newProofObligation = procSatProofObligations.getSecond();
 						final IcfgLocation newLocation = returnTrans.getCallerProgramPoint();
 
-						final ProofObligation newProofObligation =
-								new ProofObligation(newLocalProofObligation, newLocation, proofObligation.getLevel());
+						final ProofObligation newLocalProofObligation = new ProofObligation(
+								newProofObligation.getToBeBlocked(), newLocation, proofObligation.getLevel());
 
 						final List<LETTER> subTrace = getSubTrace(newLocation);
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug("Beginning recursive PDR");
 						}
 						/**
-						 * Get the procedure in form of a trace.
+						 * Get the rest of the program as a trace.
 						 */
 						final PathProgramConstructionResult subPP =
 								PathProgram.constructPathProgram("procErrorPP", mIcfg, new HashSet<>(subTrace));
-						// final Set<IcfgLocation> errorLocOfProc = new HashSet<>();
-						// errorLocOfProc.add(returnTrans.getTarget());
-
 						final ArrayDeque<ProofObligation> subTracePo = new ArrayDeque<>();
-						subTracePo.add(newProofObligation);
+						subTracePo.add(newLocalProofObligation);
 						final LBool subTraceResult = computePdr(subPP.getPathProgram(), subTracePo);
 
 						/**
-						 * TODO: Dealing with the results of this recursive PDR call: SAT: (Intuition) the rest of the
-						 * program cannot disprove the pre for the execution of the procedure that leads to the error ->
-						 * return false UNSAT: update the frames and try to disprove the earlier proof-obligations from
-						 * previous PDR instances.
+						 * The rest of the program proves that the precondition needed for the procedure to lead to the
+						 * error cannot be created. Which means, updating global frames and redo the procedure PDR to
+						 * check if the error is now unreachable. If so try to block the proof-obligation that found the
+						 * return. TODO: Propagate newly information of susequent PDR calls back to procedure. -> Change
+						 * how frames are initialized.
 						 */
 						if (subTraceResult == LBool.UNSAT) {
 							mLogger.debug("Recursive is unsat");
+							updateLocalFrames(newLocalProofObligation.getToBeBlocked(),
+									((IIcfgReturnTransition<?, ?>) predecessorTransition).getCorrespondingCall()
+											.getTarget(),
+									localLevel, localFrames);
+							updateGlobalFrames(localFrames, localLevel);
+							procResult = computePdr(pp.getPathProgram(), procedurePo);
+							proofObligations.addFirst(proofObligation);
+
+							/**
+							 * The rest of the program can make the precondition possible -> proof-obligation cannot be
+							 * blocked, whole program is unsafe.
+							 * 
+							 * TODO
+							 */
 						} else if (subTraceResult == LBool.SAT) {
 							mLogger.debug("SAT");
 						}
@@ -572,7 +575,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					}
 
 					/*
-					 * Recursive PDR call returns UNSAT -> error cannot be reached by calling this procedure.
+					 * Procedure PDR call returns UNSAT -> error cannot be reached by calling this procedure.
 					 */
 					else if (procResult == LBool.UNSAT) {
 						if (mLogger.isDebugEnabled()) {
@@ -818,7 +821,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	}
 
 	/**
-	 * Get a trace of a proecdure
+	 * Get a trace of a procedure
 	 *
 	 * @param callLoc
 	 * @param returnTrans
