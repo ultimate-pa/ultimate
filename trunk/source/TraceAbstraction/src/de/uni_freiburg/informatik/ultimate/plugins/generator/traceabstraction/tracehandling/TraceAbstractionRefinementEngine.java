@@ -195,6 +195,7 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 		}
 
 		final IIpAbStrategyModule<LETTER> interpolantAutomatonBuilder = mStrategy.getInterpolantAutomatonBuilder();
+		logModule("Using interpolant automaton builder", interpolantAutomatonBuilder);
 		try {
 			mInterpolantAutomaton = interpolantAutomatonBuilder.buildInterpolantAutomaton(perfectIpps, imperfectIpps);
 		} catch (final AutomataOperationCanceledException e) {
@@ -228,7 +229,7 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 	private LBool checkFeasibility() {
 		while (mStrategy.hasNextFeasilibityCheck()) {
 			final ITraceCheckStrategyModule<?> currentTraceCheck = mStrategy.nextFeasibilityCheck();
-			mLogger.info("Using trace check " + currentTraceCheck.getClass().getSimpleName());
+			logModule("Using trace check", currentTraceCheck);
 			final LBool feasibilityResult = currentTraceCheck.isCorrect();
 			if (feasibilityResult == LBool.SAT) {
 				if (currentTraceCheck.providesRcfgProgramExecution()) {
@@ -283,7 +284,7 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 		final InterpolantComputationStatus status;
 		try {
 			final IIpgStrategyModule<?, LETTER> interpolantGenerator = mStrategy.nextInterpolantGenerator();
-			mLogger.info("Using interpolant generator " + interpolantGenerator.getClass().getSimpleName());
+			logModule("Using interpolant generator", interpolantGenerator);
 			status = interpolantGenerator.getInterpolantComputationStatus();
 			if (status.wasComputationSuccesful()) {
 				return interpolantGenerator;
@@ -324,5 +325,9 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 		final String message = status.getException() == null ? "Unknown" : status.getException().getMessage();
 		mLogger.info("Interpolation failed due to " + category + ": " + message);
 		return null;
+	}
+
+	private void logModule(final String msg, final Object module) {
+		mLogger.info("%s %s [%s]", msg, module.getClass().getSimpleName(), module.hashCode());
 	}
 }

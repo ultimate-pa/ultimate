@@ -112,8 +112,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 						+ "There should be one interpolant between each " + "two successive CodeBlocks");
 			}
 			assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), mTrace,
-					mPrecondition, mPostcondition, mPendingContexts, "invariant map", mCsToolkit, mLogger,
-					mCfgManagedScript) : "invalid Hoare triple in invariant map";
+					mPrecondition, mPostcondition, mPendingContexts, "invariant map", mCsToolkit, mLogger) : "invalid Hoare triple in invariant map";
 		}
 		mInterpolants = interpolants;
 		// Store path invariants benchmarks

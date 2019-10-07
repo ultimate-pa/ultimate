@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +36,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -113,6 +116,10 @@ public final class SifaRunner<LETTER extends IIcfgTransition<?>> implements IInt
 		mPostcondition = unifier.getOrConstructPredicate(predicates.get(errorLoc));
 		assert mPostcondition != null;
 		mInterpolants = generateInterpolants(locationOfInterestList, predicates, unifier);
+
+		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants),
+				NestedWord.nestedWord(currentCex.getWord()), mPrecondition, mPostcondition, Collections.emptyMap(),
+				getClass().getSimpleName(), icfg.getCfgSmtToolkit(), logger);
 		mStats = sifaComponents.getStats();
 		if (unifier.getFalsePredicate() == mPostcondition) {
 			mIsCorrect = LBool.UNSAT;
@@ -136,9 +143,10 @@ public final class SifaRunner<LETTER extends IIcfgTransition<?>> implements IInt
 		int i = 0;
 		int j = 0;
 		for (final IcfgLocation location : locationSequence) {
+			final IPredicate predicate = predicates.get(location);
+			assert predicate != null;
 			if (i != 0 && i != length - 1) {
-				rtr[j] = unifier.getOrConstructPredicate(predicates.get(location));
-				assert rtr[j] != null;
+				rtr[j] = unifier.getOrConstructPredicate(predicate);
 				j++;
 			}
 			i++;

@@ -510,7 +510,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord(),
-				false) : "Interpolant automaton broken!";
+				false) : "Interpolant automaton broken!: " + mCounterexample.getWord() + " not accepted";
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
 	}

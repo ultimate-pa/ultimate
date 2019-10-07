@@ -296,8 +296,7 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 				throw tce;
 			}
 			assert TraceCheckUtils.checkInterpolantsInductivityForward(mInterpolantsFp, mTrace, mPrecondition,
-					mPostcondition, mPendingContexts, "FP", mCsToolkit, mLogger,
-					mCfgManagedScript) : "invalid Hoare triple in FP";
+					mPostcondition, mPendingContexts, "FP", mCsToolkit, mLogger) : "invalid Hoare triple in FP";
 
 			mTraceCheckBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsFp, InterpolantType.Forward);
 			mTraceCheckBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesFp, InterpolantType.Forward);

@@ -182,14 +182,12 @@ public final class TraceCheckUtils {
 	 *            CFG-SMT toolkit
 	 * @param logger
 	 *            logger
-	 * @param managedScript
-	 *            managed script
 	 * @return {@code true}
 	 */
 	public static boolean checkInterpolantsInductivityForward(final List<IPredicate> interpolants,
 			final NestedWord<? extends IAction> trace, final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final String computation,
-			final CfgSmtToolkit csToolkit, final ILogger logger, final ManagedScript managedScript) {
+			final Map<Integer, IPredicate> pendingContexts, final String computation, final CfgSmtToolkit csToolkit,
+			final ILogger logger) {
 		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(csToolkit);
 		final TracePredicates ipp = new TracePredicates(precondition, postcondition, interpolants);
 		Validity result;
@@ -204,7 +202,7 @@ public final class TraceCheckUtils {
 
 	/***
 	 * Similar to the method
-	 * {@link #checkInterpolantsInductivityForward(List, NestedWord, IPredicate, IPredicate, SortedMap, String, CfgSmtToolkit, ILogger, ManagedScript)}
+	 * {@link #checkInterpolantsInductivityForward(List, NestedWord, IPredicate, IPredicate, SortedMap, String, CfgSmtToolkit, ILogger)}
 	 * . But here we start from the end. This ensures that we get the last Hoare triple that is invalid.
 	 *
 	 * @param interpolants
