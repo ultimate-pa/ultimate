@@ -35,6 +35,7 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
@@ -42,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialTermTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -362,6 +362,67 @@ public class PolynomialTest {
 		final Term resultAsTerm = result.toTerm(mScript);
 		mLogger.info("Output: " + resultAsTerm);
 		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
+		Assert.assertTrue(resultIsCorrect);
+	}
+	
+	/**
+	 * Result should be 
+	 * <pre>(/ 42.0 x y)</pre>
+	 * instead of
+	 * <pre>(/ 42.0 (/ x y))</pre>.
+	 */
+	@Test
+	public void realDivisionLeftAssoc01() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		mScript.declareFun("y", new Sort[0], realSort);
+		final String formulaAsString = "(/ 42.0 x y)";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mLogger.info("Input: " + formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final Term resultAsTerm = result.toTerm(mScript);
+		mLogger.info("Output: " + resultAsTerm);
+		final boolean resultIsCorrect = formulaAsTerm.equals(resultAsTerm);
+		Assert.assertTrue(resultIsCorrect);
+	}
+	
+	/**
+	 * Check that non-polynomial terms a partially simplified
+	 */
+	@Test
+	public void realDivisionLeftAssoc02() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		final String formulaAsString = "(/ 42.0 2.0 x)";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mLogger.info("Input: " + formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final Term resultAsTerm = result.toTerm(mScript);
+		mLogger.info("Output: " + resultAsTerm);
+		final String expectedResultAsString = "(/ 21.0 x)";
+		final Term exprectedResultAsTerm = TermParseUtils.parseTerm(mScript, expectedResultAsString);
+		final boolean resultIsCorrect = exprectedResultAsTerm.equals(resultAsTerm);
+		Assert.assertTrue(resultIsCorrect);
+	}
+	
+	/**
+	 * Result should be 
+	 * <pre>(/ 42 x y)</pre>
+	 * instead of
+	 * <pre>(/ 42 (/ x y))</pre>.
+	 */
+	@Test
+	public void intDivisionLeftAssoc01() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String formulaAsString = "(/ 42 x y)";
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		mLogger.info("Input: " + formulaAsTerm);
+		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
+		final Term resultAsTerm = result.toTerm(mScript);
+		mLogger.info("Output: " + resultAsTerm);
+		final boolean resultIsCorrect = formulaAsTerm.equals(resultAsTerm);
 		Assert.assertTrue(resultIsCorrect);
 	}
 
