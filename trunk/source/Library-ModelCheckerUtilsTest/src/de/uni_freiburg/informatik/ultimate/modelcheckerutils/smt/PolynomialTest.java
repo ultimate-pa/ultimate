@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
-import java.math.BigInteger;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -36,7 +34,6 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineTerm;
@@ -95,15 +92,8 @@ public class PolynomialTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
-		final String formulaAsString = "(+ (* 2 x) y)";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
-		Assert.assertTrue(result instanceof AffineTerm);
+		final String inputAsString = "(+ (* 2 x) y)";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
 	}
 
 
@@ -115,15 +105,8 @@ public class PolynomialTest {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
-		final String formulaAsString = "(/ (- y x) 10.0)";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
-		Assert.assertTrue(result instanceof AffineTerm);
+		final String inputAsString = "(/ (- y x) 10.0)";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
 	}
 
 	/**
@@ -134,15 +117,8 @@ public class PolynomialTest {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
-		final String formulaAsString = "(/ (- 2.0 x) (+ y x))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
-		Assert.assertTrue(result instanceof AffineTerm);
+		final String inputAsString = "(/ (- 2.0 x) (+ y x))";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
 	}
 
 	/**
@@ -153,14 +129,8 @@ public class PolynomialTest {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
-		final String formulaAsString = "(/ (- y x) y)";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
+		final String inputAsString = "(/ (- y x) y)";
+		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
 
 	/**
@@ -170,15 +140,8 @@ public class PolynomialTest {
 	public void polynomialTermTest05() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
-		final String formulaAsString = "(/ (- 2.0 x) (+ x 19.0))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
-		Assert.assertTrue(result instanceof AffineTerm);
+		final String inputAsString = "(/ (- 2.0 x) (+ x 19.0))";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
 	}
 
 	/**
@@ -189,14 +152,8 @@ public class PolynomialTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
-		final String formulaAsString = "(+ (* x x) (* y y))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
+		final String inputAsString = "(+ (* x x) (* y y))";
+		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
 
 	/**
@@ -207,14 +164,8 @@ public class PolynomialTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
-		final String formulaAsString = "(+ (* x y) (* y x))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
+		final String inputAsString = "(+ (* x y) (* y x))";
+		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
 
 	/**
@@ -225,16 +176,9 @@ public class PolynomialTest {
 		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
 		mScript.declareFun("x", new Sort[0], bv8);
 		mScript.declareFun("y", new Sort[0], bv8);
-		final String formulaAsString = "(bvmul (bvmul (_ bv4 8) x y) (bvmul (_ bv64 8) x x x))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
-		final boolean resultIsCorrect2 = BitvectorUtils.constructTerm(mScript, BigInteger.ZERO, bv8).equals(resultAsTerm);
-		Assert.assertTrue(resultIsCorrect2);
+		final String inputAsString = "(bvmul (bvmul (_ bv4 8) x y) (bvmul (_ bv64 8) x x x))";
+		final String expectedOutputAsString = "(_ bv0 8)";
+		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 	
 	/**
@@ -245,14 +189,8 @@ public class PolynomialTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
-		final String formulaAsString = "(div (* (* y 6) (* y (* x x) ) ) (div 6 3))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
+		final String inputAsString = "(div (* (* y 6) (* y (* x x) ) ) (div 6 3))";
+		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
 	
 	/**
@@ -263,14 +201,8 @@ public class PolynomialTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
-		final String formulaAsString = "(div (* (* y 0) (* y (* x x) ) ) (div 144 12))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
+		final String inputAsString = "(div (* (* y 0) (* y (* x x) ) ) (div 144 12))";
+		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
 	
 	/**
@@ -281,14 +213,8 @@ public class PolynomialTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
-		final String formulaAsString = "(div (* (* y 23) (* y (* x x))) (div 0 12))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
+		final String inputAsString = "(div (* (* y 23) (* y (* x x))) (div 0 12))";
+		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
 
 	/**
@@ -299,14 +225,8 @@ public class PolynomialTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
-		final String formulaAsString = "(div (* (* y 6) (* y (* x x))) (div 144 12))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
+		final String inputAsString = "(div (* (* y 6) (* y (* x x))) (div 144 12))";
+		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
 	
 	/**
@@ -317,15 +237,8 @@ public class PolynomialTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
-		final String formulaAsString = "(+ (div (* y 14) (div 1337 191)) (div (* (+ x y) 20) 10))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
-		Assert.assertTrue(result instanceof AffineTerm);
+		final String inputAsString = "(+ (div (* y 14) (div 1337 191)) (div (* (+ x y) 20) 10))";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
 	}
 	
 	/**
@@ -336,15 +249,8 @@ public class PolynomialTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
-		final String formulaAsString = "(* (+ (div (* y 123) (div 1337 191)) (div (* (+ x y) 23) 10)) 2)";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
-		Assert.assertTrue(result instanceof AffineTerm);
+		final String inputAsString = "(* (+ (div (* y 123) (div 1337 191)) (div (* (+ x y) 23) 10)) 2)";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
 	}
 	
 	/**
@@ -355,14 +261,8 @@ public class PolynomialTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
-		final String formulaAsString = "(+ (* 2 x) (* y y))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = areEquivalent(mScript, formulaAsTerm, resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
+		final String inputAsString = "(+ (* 2 x) (* y y))";
+		runLogicalEquivalenceBasedTest(inputAsString, false);
 	}
 	
 	/**
@@ -376,15 +276,10 @@ public class PolynomialTest {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
-		final String formulaAsString = "(/ 42.0 x y)";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = formulaAsTerm.equals(resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
+		final String inputAsString = "(/ 42.0 x y)";
+		runDefaultTest(inputAsString, inputAsString);
 	}
+
 	
 	/**
 	 * Check that non-polynomial terms a partially simplified
@@ -393,17 +288,11 @@ public class PolynomialTest {
 	public void realDivisionLeftAssoc02() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
-		final String formulaAsString = "(/ 42.0 2.0 x)";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final String expectedResultAsString = "(/ 21.0 x)";
-		final Term exprectedResultAsTerm = TermParseUtils.parseTerm(mScript, expectedResultAsString);
-		final boolean resultIsCorrect = exprectedResultAsTerm.equals(resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
+		final String inputAsString = "(/ 42.0 2.0 x)";
+		final String expectedOutputAsString = "(/ 21.0 x)";
+		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
+
 	
 	/**
 	 * Result should be 
@@ -416,16 +305,44 @@ public class PolynomialTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
-		final String formulaAsString = "(/ 42 x y)";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		mLogger.info("Input: " + formulaAsTerm);
-		final IPolynomialTerm result = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(formulaAsTerm);
-		final Term resultAsTerm = result.toTerm(mScript);
-		mLogger.info("Output: " + resultAsTerm);
-		final boolean resultIsCorrect = formulaAsTerm.equals(resultAsTerm);
-		Assert.assertTrue(resultIsCorrect);
+		final String inputAsString = "(/ 42 x y)";
+		runDefaultTest(inputAsString, inputAsString);
+	}
+	
+	
+	/**
+	 * Test whether transformed input is syntactically equivalent to expected
+	 * output.
+	 */
+	private void runDefaultTest(final String InputAsString, final String expectedOutputAsString) {
+		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, InputAsString);
+		final Term exprectedOutputAsTerm = TermParseUtils.parseTerm(mScript, expectedOutputAsString);
+		mLogger.info("Input: " + inputAsTerm);
+		final IPolynomialTerm output = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(inputAsTerm);
+		final Term outputAsTerm = output.toTerm(mScript);
+		mLogger.info("Output: " + outputAsTerm);
+		mLogger.info("Expected output: " + exprectedOutputAsTerm);
+		final boolean outputIsCorrect = exprectedOutputAsTerm.equals(outputAsTerm);
+		Assert.assertTrue(outputIsCorrect);
 	}
 
+	/**
+	 * Test whether the transformed input is logically equivalent to the input.
+	 * @param checkOutputIsAffine check that transformed input is an {@link AffineTerm}
+	 */
+	private void runLogicalEquivalenceBasedTest(final String inputAsString, final boolean checkOutputIsAffine) {
+		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
+		mLogger.info("Input: " + inputAsTerm);
+		final IPolynomialTerm output = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(inputAsTerm);
+		final Term outputAsTerm = output.toTerm(mScript);
+		mLogger.info("Output: " + outputAsTerm);
+		final boolean resultIsCorrect = areEquivalent(mScript, inputAsTerm, outputAsTerm);
+		Assert.assertTrue(resultIsCorrect);
+		if (checkOutputIsAffine) {
+			Assert.assertTrue(output instanceof AffineTerm);
+		}
+	}
+	
 	private static boolean areEquivalent(final Script script, final Term formulaAsTerm, final Term resultAsTerm) {
 		final Term equality = SmtUtils.binaryEquality(script, formulaAsTerm, resultAsTerm);
 		final Term negatedEquality = SmtUtils.not(script, equality);
