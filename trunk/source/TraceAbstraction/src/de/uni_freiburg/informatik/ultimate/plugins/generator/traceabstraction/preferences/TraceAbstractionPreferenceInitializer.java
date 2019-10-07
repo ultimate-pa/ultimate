@@ -170,7 +170,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final RefinementStrategyExceptionBlacklist DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST = RefinementStrategyExceptionBlacklist.DEPENDING;
 	// public static final boolean DEF_ALL_ERRORS_AT_ONCE = false;
 
-	public static final boolean DEF_CUTOFF = true;
+	public static final boolean DEF_CUTOFF = false;
 	public static final boolean DEF_UNFOLDING2NET = false;
 	public static final String DEF_ORDER = VALUE_EVR;
 	public static final boolean DEF_SIMPLIFY_CODE_BLOCKS = false;
@@ -218,16 +218,16 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_HEURISTIC_EMPTINESS_CHECK = "Use heuristic emptiness check";
 	public static final boolean DEF_HEURISTIC_EMPTINESS_CHECK = false;
 	public static final String DESC_HEURISTIC_EMPTINESS_CHECK = "Use heuristics to traverse/explorew a NWA during the check emptiness";
-	
+
 	public static final String LABEL_SMT_FEATURE_EXTRACTION = "Extract SMT features during analysis";
 	public static final boolean DEF_SMT_FEATURE_EXTRACTION = false;
 	public static final String DESC_SMT_FEATURE_EXTRACTION = "We Extract SMT features during analysis and dump them.";
-	
+
 	public static final String LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH = "SMT feature Extraction Dump Path.";
 	public static final String DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH = "/tmp/";
 	public static final String DESC_SMT_FEATURE_EXTRACTION_DUMP_PATH = "We Extract SMT features during analysis and dump them to the given path";
-	
-	
+
+
 
 
 	/**
