@@ -282,7 +282,7 @@ public class PolynomialTest {
 
 	
 	/**
-	 * Check that non-polynomial terms a partially simplified
+	 * Check that non-polynomial terms get partially simplified
 	 */
 	@Test
 	public void realDivisionLeftAssoc02() {
@@ -307,6 +307,18 @@ public class PolynomialTest {
 		mScript.declareFun("y", new Sort[0], intSort);
 		final String inputAsString = "(/ 42 x y)";
 		runDefaultTest(inputAsString, inputAsString);
+	}
+	
+	/**
+	 * Check that non-polynomial terms get partially simplified
+	 */
+	@Test
+	public void intDivisionLeftAssoc02() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		final String inputAsString = "(div 42 2 x)";
+		final String expectedOutputAsString = "(/ 21 x)";
+		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 	
 	
