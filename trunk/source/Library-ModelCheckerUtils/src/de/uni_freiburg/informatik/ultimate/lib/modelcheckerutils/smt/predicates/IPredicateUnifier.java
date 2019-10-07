@@ -68,6 +68,9 @@ public interface IPredicateUnifier {
 
 	/**
 	 * Get a unified version of a predicate.
+	 * 
+	 * Note that the given predicate needs to be built by the same predicate factory than the one used in the predicate
+	 * unifier, or else this might lead to difficult-to-detect bugs
 	 */
 	IPredicate getOrConstructPredicate(IPredicate predicate);
 

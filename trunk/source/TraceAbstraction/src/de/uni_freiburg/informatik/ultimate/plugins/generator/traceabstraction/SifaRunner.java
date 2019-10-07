@@ -113,7 +113,7 @@ public final class SifaRunner<LETTER extends IIcfgTransition<?>> implements IInt
 		}
 
 		final IcfgLocation errorLoc = locationOfInterestList.get(locationOfInterestList.size() - 1);
-		mPostcondition = unifier.getOrConstructPredicate(predicates.get(errorLoc));
+		mPostcondition = unifier.getOrConstructPredicate(predicates.get(errorLoc).getFormula());
 		assert mPostcondition != null;
 		mInterpolants = generateInterpolants(locationOfInterestList, predicates, unifier);
 
@@ -146,7 +146,7 @@ public final class SifaRunner<LETTER extends IIcfgTransition<?>> implements IInt
 			final IPredicate predicate = predicates.get(location);
 			assert predicate != null;
 			if (i != 0 && i != length - 1) {
-				rtr[j] = unifier.getOrConstructPredicate(predicate);
+				rtr[j] = unifier.getOrConstructPredicate(predicate.getFormula());
 				j++;
 			}
 			i++;
