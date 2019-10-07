@@ -36,6 +36,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
@@ -190,29 +191,32 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 
 		}
 
-		final Set<Event<LETTER, PLACE>> uselessEvents = new HashSet<>();
-		if (mExtendedBackfolding)
-		{
-			final Queue<Event<LETTER, PLACE>> eventQueue = new LinkedList<>(bp.getEvents());
-			while(!eventQueue.isEmpty())
-			{
+		final Set<Event<LETTER, PLACE>> releventEvents = new HashSet<>(bp.getEvents());
+		if (mExtendedBackfolding) {
+			final PriorityQueue<Event<LETTER, PLACE>> eventQueue = new PriorityQueue<>(bp.getOrder());
+			eventQueue.addAll(bp.getEvents());
+			while (!eventQueue.isEmpty()) {
 				final Event<LETTER, PLACE> e1 = eventQueue.poll();
-					if (e1.getPredecessorConditions().isEmpty())
+				if (e1.getPredecessorConditions().isEmpty())
+					continue;
+				assert (releventEvents.contains(e1)) :
+					"The events in the PQ must be relevent events according to our order";
+				for (final Event<LETTER, PLACE> e2 : releventEvents) {
+					if (e1.equals(e2)) {
 						continue;
-				for (final Event<LETTER, PLACE> e2 : bp.getEvents())
-				{
+					}
 					if (e1.getTransition().equals(e2.getTransition())
-							&& mRepresentatives.find(e1.getPredecessorConditions()).equals(mRepresentatives.find(e2.getPredecessorConditions()))
-							&& !mRepresentatives.find(e1.getSuccessorConditions()).equals(mRepresentatives.find(e2.getSuccessorConditions())))
-					{
-						mergeConditions(e1.getSuccessorConditions(), e2.getSuccessorConditions());
-						uselessEvents.add(e1);
-						for (final Condition<LETTER, PLACE> c : e1.getSuccessorConditions())
-							for (final Event<LETTER, PLACE> e3: c.getSuccessorEvents())
-								if (!eventQueue.contains(e3))
-									eventQueue.add(e3);
+							&& mRepresentatives.find(e1.getPredecessorConditions())
+									.equals(mRepresentatives.find(e2.getPredecessorConditions()))) {
+						if (!mRepresentatives.find(e1.getSuccessorConditions())
+								.equals(mRepresentatives.find(e2.getSuccessorConditions()))) {
+							mergeConditions(e1.getSuccessorConditions(), e2.getSuccessorConditions());
+							assert(eventQueue.containsAll(e1.getSuccessorEvents())):
+								"Succesors of an Event in the PQ must be in the PQ";
+								
+						}
+						releventEvents.remove(e1);
 						break;
-
 					}
 				}
 			}
@@ -232,9 +236,9 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			}
 		}
 		final TransitionSet transitionSet = new TransitionSet();
-		for (final Event<LETTER, PLACE> e : events) {
+		for (final Event<LETTER, PLACE> e : releventEvents) {
 			// equality intended here
-			if (e == bp.getDummyRoot() || uselessEvents.contains(e)) {
+			if (e == bp.getDummyRoot()) {
 				continue;
 			}
 			final Set<PLACE> preds = new HashSet<>();
