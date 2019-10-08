@@ -183,15 +183,18 @@ public class AffineTermTransformer extends TermTransformer {
 		// If this is the case, we report that input is not affine.
 		final AffineTerm[] affineArgs = castAndCheckForNonAffineArguments(newArgs);
 		if (affineArgs == null) {
-			inputIsNotAffine();
-			return;
+			throw new AssertionError();
+//			inputIsNotAffine();
+//			return;
 		}
 		final String funName = appTerm.getFunction().getName();
 		if (funName.equals("*") || funName.equals("bvmul")) {
 			final Sort sort = appTerm.getSort();
 			final AffineTerm result = tryToMultiply(sort, affineArgs);
 			if (result == null) {
-				inputIsNotAffine();
+				// if result of multiplication is not affine, the term becomes a variable of the
+				// resulting AffineTerm
+				setResult(AffineTerm.constructVariable(appTerm));
 				return;
 			}
 			setResult(result);
@@ -214,7 +217,9 @@ public class AffineTermTransformer extends TermTransformer {
 			final Sort sort = appTerm.getSort();
 			final AffineTerm result = divide(sort, affineArgs);
 			if (result == null) {
-				inputIsNotAffine();
+				// if result of division is not affine, the term becomes a variable of the
+				// resulting AffineTerm
+				setResult(AffineTerm.constructVariable(appTerm));
 				return;
 			}
 			setResult(result);
