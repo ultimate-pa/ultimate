@@ -203,12 +203,7 @@ public class PolynomialRelation extends AbstractGeneralizedAffineRelation<Abstra
 	}
 
 	static AbstractGeneralizedAffineTerm<?> transformToPolynomialTerm(final Script script, final Term term) {
-		final AffineTerm affTerm = (AffineTerm) new AffineTermTransformer(script).transform(term);
-		if (affTerm.isErrorTerm()) {
-			return (AbstractGeneralizedAffineTerm<?>) new PolynomialTermTransformer(script).transform(term);
-		}else {
-			return affTerm;
-		}
+		return (AbstractGeneralizedAffineTerm<?>) new PolynomialTermTransformer(script).transform(term);
 	}
 
 }
