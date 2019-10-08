@@ -321,23 +321,118 @@ public class PolynomialTest {
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 	
+	/**
+	 * Result should be 
+	 * <pre>(* 42.0 x y)</pre>
+	 * instead of
+	 * <pre>(* 42.0 (* x y))</pre>.
+	 */
+	@Test
+	public void realMultiplicationLeftAssoc01() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		mScript.declareFun("y", new Sort[0], realSort);
+		final String inputAsString = "(* 42.0 y x)";
+		runSyntaxWithoutPermutationsTest(inputAsString, inputAsString);
+	}
+	
+	/**
+	 * Check that non-polynomial terms get partially simplified
+	 */
+	@Test
+	public void realMultiplicationLeftAssoc02() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		final String inputAsString = "(* 42.0 2.0 x)";
+		final String expectedOutputAsString = "(* 84.0 x)";
+		runSyntaxWithoutPermutationsTest(inputAsString, expectedOutputAsString);
+	}
+	
+	/**
+	 * Result should be 
+	 * <pre>(+ 42.0 x y)</pre>
+	 * instead of
+	 * <pre>(+ 42.0 (+ x y))</pre>.
+	 */
+	@Test
+	public void realAdditionLeftAssoc01() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		mScript.declareFun("y", new Sort[0], realSort);
+		final String inputAsString = "(+ 42.0 y x)";
+		runSyntaxWithoutPermutationsTest(inputAsString, "(+ 42.0 y x)");
+	}
+	
+	/**
+	 * Check that non-polynomial terms get partially simplified
+	 */
+	@Test
+	public void realAdditionLeftAssoc02() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		final String inputAsString = "(+ 42.0 2.0 x)";
+		final String expectedOutputAsString = "(+ 44.0 x)";
+		runSyntaxWithoutPermutationsTest(inputAsString, expectedOutputAsString);
+	}
 	
 	/**
 	 * Test whether transformed input is syntactically equivalent to expected
 	 * output.
 	 */
-	private void runDefaultTest(final String InputAsString, final String expectedOutputAsString) {
-		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, InputAsString);
-		final Term exprectedOutputAsTerm = TermParseUtils.parseTerm(mScript, expectedOutputAsString);
+	private void runDefaultTest(final String inputAsString, final String expectedOutputAsString) {
+		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
+		final Term expectedOutputAsTerm = TermParseUtils.parseTerm(mScript, expectedOutputAsString);
 		mLogger.info("Input: " + inputAsTerm);
 		final IPolynomialTerm output = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(inputAsTerm);
 		final Term outputAsTerm = output.toTerm(mScript);
 		mLogger.info("Output: " + outputAsTerm);
-		mLogger.info("Expected output: " + exprectedOutputAsTerm);
-		final boolean outputIsCorrect = exprectedOutputAsTerm.equals(outputAsTerm);
+		mLogger.info("Expected output: " + expectedOutputAsTerm);
+		final boolean outputIsCorrect = expectedOutputAsTerm.equals(outputAsTerm);
 		Assert.assertTrue(outputIsCorrect);
 	}
-
+	
+	/**
+	 * Test whether transformed input is syntactically equivalent to expected
+	 * output, except for permutation of the arguments. Only works for "flattened" Terms.
+	 */
+	private void runSyntaxWithoutPermutationsTest(final String inputAsString, final String expectedOutputAsString) {
+		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
+		final Term expectedOutputAsTerm = TermParseUtils.parseTerm(mScript, expectedOutputAsString);
+		mLogger.info("Input: " + inputAsTerm);
+		final IPolynomialTerm output = (IPolynomialTerm) new PolynomialTermTransformer(mScript).transform(inputAsTerm);
+		final Term outputAsTerm = output.toTerm(mScript);
+		mLogger.info("Output: " + outputAsTerm);
+		mLogger.info("Expected output: " + expectedOutputAsTerm);
+		//Trim braces
+		String expectedTrimmed = expectedOutputAsString.substring(1, expectedOutputAsString.length() - 1);
+		String outputTrimmed = outputAsTerm.toString().substring(1, outputAsTerm.toString().length() - 1);
+		String[] expectedArgs = expectedTrimmed.split("\\s");
+		String[] outputArgs = outputTrimmed.split("\\s");
+		for (int i = 0; i < expectedArgs.length; i++) {
+			for (int j = 0; j < outputArgs.length; j++) {
+				if (expectedArgs[i].equals(outputArgs[j])) {
+					outputArgs[j] = null;
+					expectedArgs[i] = null;
+					break;
+				}
+			}
+		}
+		boolean inputRemoved = true;
+		for (String arg : outputArgs) {
+			if (!(arg == null)) {
+				inputRemoved = false;
+			}
+		}
+		boolean expectedRemoved = true;
+		for (String arg : expectedArgs) {
+			if (!(arg == null)) {
+				expectedRemoved = false;
+			}
+		}
+		final boolean outputIsCorrect = inputRemoved && expectedRemoved;
+		Assert.assertTrue(outputIsCorrect);
+	}
+	
 	/**
 	 * Test whether the transformed input is logically equivalent to the input.
 	 * @param checkOutputIsAffine check that transformed input is an {@link AffineTerm}
