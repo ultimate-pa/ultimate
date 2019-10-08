@@ -449,16 +449,17 @@ public class CTranslationUtil {
 	 */
 	public static Set<CType> extractNonAggregateNonUnionTypes(final CType aggregateOrUnionCType) {
 		assert isAggregateOrUnionType(aggregateOrUnionCType) : "not an aggregate or union type";
-		if (aggregateOrUnionCType instanceof CArray) {
-			final CType valueType = getValueTypeOfNestedArray((CArray) aggregateOrUnionCType).getUnderlyingType();
+		final CType underlyingType = aggregateOrUnionCType.getUnderlyingType();
+		if (underlyingType instanceof CArray) {
+			final CType valueType = getValueTypeOfNestedArray((CArray) underlyingType).getUnderlyingType();
 			if (isAggregateOrUnionType(valueType)) {
 				return extractNonAggregateNonUnionTypes(valueType);
 			} else {
 				return Collections.singleton(valueType.getUnderlyingType());
 			}
-		} else if (aggregateOrUnionCType instanceof CStructOrUnion) {
+		} else if (underlyingType instanceof CStructOrUnion) {
 			final Set<CType> result = new HashSet<>();
-			for (final CType fieldType : ((CStructOrUnion) aggregateOrUnionCType).getFieldTypes()) {
+			for (final CType fieldType : ((CStructOrUnion) underlyingType).getFieldTypes()) {
 				if (isAggregateOrUnionType(fieldType)) {
 					result.addAll(extractNonAggregateNonUnionTypes(fieldType.getUnderlyingType()));
 				} else {
