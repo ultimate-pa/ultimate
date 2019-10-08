@@ -34,8 +34,23 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ * @param <T>
+ */
 public interface ITraceCheckStrategyModule<T extends ITraceCheck> {
 
+	/**
+	 * @see ITraceCheck#isCorrect()
+	 * @return
+	 *         <ul>
+	 *         <li>SAT if the trace does not fulfill its specification (e.g., if an error location is reachable),
+	 *         <li>UNSAT if the trace does fulfill its specification,
+	 *         <li>UNKNOWN if it was not possible to determine if the trace fulfills its specification.
+	 *         </ul>
+	 */
 	LBool isCorrect();
 
 	boolean providesRcfgProgramExecution();

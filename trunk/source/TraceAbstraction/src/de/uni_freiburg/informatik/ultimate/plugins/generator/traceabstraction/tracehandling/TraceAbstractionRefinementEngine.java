@@ -107,7 +107,7 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 	}
 
 	@Override
-	public boolean providesICfgProgramExecution() {
+	public boolean providesIcfgProgramExecution() {
 		return mIcfgProgramExecution != null;
 	}
 
@@ -123,6 +123,8 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 			if (strategyHtc == null) {
 				mHoareTripleChecker = mFunHtcConstructor.apply(mPredicateUnifier);
 			} else {
+				mLogger.info("Using hoare triple checker %s provided by strategy",
+						strategyHtc.getClass().getSimpleName());
 				mHoareTripleChecker = strategyHtc;
 			}
 		}

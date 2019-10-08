@@ -106,8 +106,7 @@ public interface IRefinementStrategy<LETTER extends IAction> {
 	 *            All perfect sequences of interpolants collected so far.
 	 * @param imperfectIpps
 	 *            All imperfect sequences of interpolants collected so far.
-	 * @return true if {@link #nextInterpolantGenerator()} can be called to retrieve another
-	 *         {@link IIpgStrategyModule}.
+	 * @return true if {@link #nextInterpolantGenerator()} can be called to retrieve another {@link IIpgStrategyModule}.
 	 */
 	boolean hasNextInterpolantGenerator(List<TracePredicates> perfectIpps, List<TracePredicates> imperfectIpps);
 
@@ -118,14 +117,12 @@ public interface IRefinementStrategy<LETTER extends IAction> {
 	IIpgStrategyModule<?, LETTER> nextInterpolantGenerator();
 
 	/**
-	 *
-	 * @return the {@link IIpAbStrategyModule} that should be used to build an interpolant
-	 *         automaton from the collected interpolant sequences.
+	 * @return the {@link IIpAbStrategyModule} that should be used to build an interpolant automaton from the collected
+	 *         interpolant sequences.
 	 */
 	IIpAbStrategyModule<LETTER> getInterpolantAutomatonBuilder();
 
 	/**
-	 *
 	 * @return A {@link RefinementStrategyExceptionBlacklist} that defines how exceptions during trace checks or
 	 *         interpolant generation (i.e., through interactions with underlying solvers) should be handled.
 	 */
@@ -137,6 +134,8 @@ public interface IRefinementStrategy<LETTER extends IAction> {
 	 * loop.
 	 *
 	 * If your strategy does not require a specific {@link IHoareTripleChecker}, return null.
+	 * 
+	 * @return An {@link IHoareTripleChecker} instance particular to this strategy or null
 	 */
 	IHoareTripleChecker getHoareTripleChecker();
 

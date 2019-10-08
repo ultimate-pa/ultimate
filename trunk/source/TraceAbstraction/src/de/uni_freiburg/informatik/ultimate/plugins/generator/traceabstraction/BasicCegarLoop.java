@@ -449,7 +449,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		if (feasibility != LBool.UNSAT) {
 			mLogger.info("Counterexample might be feasible");
-			if (mRefinementEngine.providesICfgProgramExecution()) {
+			if (mRefinementEngine.providesIcfgProgramExecution()) {
 				mRcfgProgramExecution = mRefinementEngine.getIcfgProgramExecution();
 			} else {
 				mRcfgProgramExecution =

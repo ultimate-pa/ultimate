@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016-2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2016-2019 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -31,7 +31,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -45,33 +47,58 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public interface IRefinementEngine<T> {
 	/**
-	 * @return Feasibility status of the counterexample trace.
+	 * 
+	 * @see ITraceCheck#isCorrect()
+	 * @see ITraceCheckStrategyModule#isCorrect()
+	 * @return
+	 *         <ul>
+	 *         <li>SAT if the trace does not fulfill its specification (e.g., if an error location is reachable),
+	 *         <li>UNSAT if the trace does fulfill its specification,
+	 *         <li>UNKNOWN if it was not possible to determine if the trace fulfills its specification.
+	 *         </ul>
 	 */
 	LBool getCounterexampleFeasibility();
 
 	/**
 	 * This method may only be called if {@link #getCounterexampleFeasibility()} returns {@code UNSAT}.
 	 *
-	 * @return Proof of infeasibility.
+	 * @return A proof of infeasibility in a format specified by the implementer. Examples include a NestedWordAutomaton
+	 *         or just a sequence of predicates.
 	 */
 	T getInfeasibilityProof();
 
-	boolean providesICfgProgramExecution();
+	/**
+	 * @return true if {@link #getCounterexampleFeasibility()} was {@link LBool#UNSAT} and the underlying strategy can
+	 *         be queried via {@link #getIcfgProgramExecution()} to retrieve a program exeuction that describes the
+	 *         counterexample.
+	 */
+	boolean providesIcfgProgramExecution();
 
 	/**
-	 * @return RCFG program execution.
+	 * @return An {@link IProgramExecution} if {@link #providesIcfgProgramExecution()} is true.
 	 */
 	IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getIcfgProgramExecution();
 
 	/**
-	 * Does sometimes return a Hoare triple checker. TODO: Find out under which conditions a Hoare triple checker is
-	 * returned.
+	 * Provide a {@link IHoareTripleChecker} that corresponds to the generated interpolants.
 	 */
 	IHoareTripleChecker getHoareTripleChecker();
 
+	/**
+	 * @return true if the refinement engine found a perfect sequence of interpolants, i.e., a sequence where each
+	 *         interpolant is inductive w.r.t. the path program.
+	 */
 	boolean somePerfectSequenceFound();
 
+	/**
+	 * @return An {@link IPredicateUnifier} instance that already knows all {@link IPredicate} that are used in the
+	 *         infeasibility proof provided by {@link #getInfeasibilityProof()}.
+	 */
 	IPredicateUnifier getPredicateUnifier();
 
+	/**
+	 * @return An {@link RefinementEngineStatisticsGenerator} instance that contains all statistics collected during the
+	 *         execution of this {@link IRefinementEngine} instance.
+	 */
 	RefinementEngineStatisticsGenerator getRefinementEngineStatistics();
 }
