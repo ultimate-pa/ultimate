@@ -84,24 +84,9 @@ public class PolynomialTest {
 		mScript.exit();
 	}
 
-	/**
-	 * Test addition and multiplication.
-	 */
+	
 	@Test
-	public void polynomialTermTest01() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("x", new Sort[0], intSort);
-		mScript.declareFun("y", new Sort[0], intSort);
-		final String inputAsString = "(+ (* 2 x) y)";
-		runLogicalEquivalenceBasedTest(inputAsString, true);
-	}
-
-
-	/**
-	 * Test division by constant.
-	 */
-	@Test
-	public void polynomialTermTest02() {
+	public void realDivisionByConst() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
@@ -110,22 +95,10 @@ public class PolynomialTest {
 	}
 
 	/**
-	 * Test treating of division by sum of variables as a unique variable.
-	 */
-	@Test
-	public void polynomialTermTest03() {
-		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
-		mScript.declareFun("x", new Sort[0], realSort);
-		mScript.declareFun("y", new Sort[0], realSort);
-		final String inputAsString = "(/ (- 2.0 x) (+ y x))";
-		runLogicalEquivalenceBasedTest(inputAsString, true);
-	}
-
-	/**
 	 * Test treating division by variable as a unique variable.
 	 */
 	@Test
-	public void polynomialTermTest04() {
+	public void realDivisionByVar() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
@@ -134,10 +107,22 @@ public class PolynomialTest {
 	}
 
 	/**
+	 * Test treating of division by sum of variables as a unique variable.
+	 */
+	@Test
+	public void realDivisionBySum01() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		mScript.declareFun("y", new Sort[0], realSort);
+		final String inputAsString = "(/ (- 2.0 x) (+ y x))";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+	}
+
+	/**
 	 * Test treating division by sum of constant and variable as a unique variable.
 	 */
 	@Test
-	public void polynomialTermTest05() {
+	public void realDivisionBySum02() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
 		final String inputAsString = "(/ (- 2.0 x) (+ x 19.0))";
@@ -148,7 +133,7 @@ public class PolynomialTest {
 	 * Test multiplication of equal variables.
 	 */
 	@Test
-	public void polynomialTermTest06() {
+	public void realMul() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
@@ -160,7 +145,7 @@ public class PolynomialTest {
 	 * Test addition of differently ordered (but equal) multiplications of variables.
 	 */
 	@Test
-	public void polynomialTermTest07() {
+	public void realAddMul() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
@@ -172,7 +157,7 @@ public class PolynomialTest {
 	 * A the product of non-zero bitvectors can be zero.
 	 */
 	@Test
-	public void polynomialTermTest08() {
+	public void bvMul() {
 		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
 		mScript.declareFun("x", new Sort[0], bv8);
 		mScript.declareFun("y", new Sort[0], bv8);
@@ -181,11 +166,20 @@ public class PolynomialTest {
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 	
+	@Test
+	public void intAddMul() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String inputAsString = "(+ (* 2 x) y)";
+		runLogicalEquivalenceBasedTest(inputAsString, true);
+	}
+
 	/**
 	 * Test div.
 	 */
 	@Test
-	public void polynomialTermTest09() {
+	public void intDivision01() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
@@ -197,7 +191,7 @@ public class PolynomialTest {
 	 * Test division of zero by something with div.
 	 */
 	@Test
-	public void polynomialTermTest10() {
+	public void intDivision02() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
@@ -209,7 +203,7 @@ public class PolynomialTest {
 	 * Test treating div as a unique variable, if division is by zero.
 	 */
 	@Test
-	public void polynomialTermTest11() {
+	public void intDivision03() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
@@ -221,7 +215,7 @@ public class PolynomialTest {
 	 * Test treating div as a unique variable, if coefficients are not integer-divisible.
 	 */
 	@Test
-	public void polynomialTermTest12() {
+	public void intDivision04() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
@@ -233,7 +227,7 @@ public class PolynomialTest {
 	 * Test affine div.
 	 */
 	@Test
-	public void polynomialTermTest13() {
+	public void intDivision05() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
@@ -245,7 +239,7 @@ public class PolynomialTest {
 	 * Test treating affine div as unique variable, and then handle these variables.
 	 */
 	@Test
-	public void polynomialTermTest14() {
+	public void intDivision06() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
@@ -254,10 +248,22 @@ public class PolynomialTest {
 	}
 	
 	/**
+	 * Test treating affine div as unique variable, and then handle these variables.
+	 */
+	@Test
+	public void intDivision07() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String inputAsString = "(* (div (* y 123) (div 1337 191)) (div (* y 123) (div 1337 191)))";
+		runLogicalEquivalenceBasedTest(inputAsString, false);
+	}
+	
+	/**
 	 * Test addition of AffineTerm and a PolynomialTerm.
 	 */
 	@Test
-	public void polynomialTermTest15() {
+	public void intAdd() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
@@ -393,7 +399,7 @@ public class PolynomialTest {
 	
 	/**
 	 * Test whether transformed input is syntactically equivalent to expected
-	 * output, except for permutation of the arguments. Only works for "flattened" Terms.
+	 * output, except for permutation. Only works for "flattened" Terms.
 	 */
 	private void runSyntaxWithoutPermutationsTest(final String inputAsString, final String expectedOutputAsString) {
 		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
