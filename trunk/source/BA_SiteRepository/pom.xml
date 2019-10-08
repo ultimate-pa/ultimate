@@ -9,10 +9,9 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>UltimateRepository</artifactId>
 	<packaging>eclipse-repository</packaging>
-
+	
 	<profiles>
 		<profile>
 			<id>materialize</id>
