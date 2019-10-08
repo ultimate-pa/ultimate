@@ -305,7 +305,7 @@ public class PolynomialTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		mScript.declareFun("y", new Sort[0], intSort);
-		final String inputAsString = "(/ 42 x y)";
+		final String inputAsString = "(div 42 x y)";
 		runDefaultTest(inputAsString, inputAsString);
 	}
 	
@@ -317,7 +317,7 @@ public class PolynomialTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
 		final String inputAsString = "(div 42 2 x)";
-		final String expectedOutputAsString = "(/ 21 x)";
+		final String expectedOutputAsString = "(div 21 x)";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 	

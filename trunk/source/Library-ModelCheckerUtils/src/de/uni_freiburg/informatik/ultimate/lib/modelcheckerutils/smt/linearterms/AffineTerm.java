@@ -149,10 +149,10 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 				// all other arguments must be literals,
 				// divisors must not be zero.
 				if (funcName == "div") {
-					final Term term = PolynomialTermUtils.constructIteratedTerm("div", affineArgs, script);
+					final Term term = PolynomialTermUtils.constructSimplifiedTerm("div", affineArgs, script);
 					return constructVariable(term);
 				}else if (funcName == "/") {
-					final Term term = PolynomialTermUtils.constructIteratedTerm("/", affineArgs, script);
+					final Term term = PolynomialTermUtils.constructSimplifiedTerm("/", affineArgs, script);
 					return constructVariable(term);
 				}else {
 					throw new UnsupportedOperationException("FuncName does not match any known division.");
@@ -178,7 +178,7 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 		if (result.isIntegral()) {
 			return result;
 		}
-		final Term term = PolynomialTermUtils.constructIteratedTerm("div", affineArgs, script);
+		final Term term = PolynomialTermUtils.constructSimplifiedTerm("div", affineArgs, script);
 		return constructVariable(term);
 	}
 

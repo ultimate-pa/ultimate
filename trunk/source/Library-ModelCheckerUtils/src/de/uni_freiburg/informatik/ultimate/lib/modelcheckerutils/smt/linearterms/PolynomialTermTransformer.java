@@ -250,7 +250,9 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Determines whether the product of two polynomialTerms will be truly polynomial (not affine).
+	 * Determines whether the product of two polynomialTerms will most likely be truly polynomial (not affine).
+	 * (It can still happen, that the result is affine, but we can't say that at this point in the code. The PolynomialTerm-class
+	 *  should return an AffineTerm if that's the case. Why not use PolynomialTerm everytime, then? Because of efficiency-reasons.)
 	 * If the result is truly polynomial it returns true, false otherwise.
 	 */
 	private static boolean productWillBePolynomial(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
@@ -349,7 +351,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 			return PolynomialTerm.div(polynomialArgs, mScript);
 		}
 	}
-
+	
 	/**
 	 * Convert an array of {@link Term}s into an an array of {@link PolynomialTerm}s by
 	 * casting every single element. In case an element of the input is our

@@ -72,18 +72,17 @@ public class PolynomialTermUtils {
 		final BigInteger resultBigInt = BoogieUtils.euclideanMod(bvBigInt, numberOfValues);
 		return Rational.valueOf(resultBigInt, BigInteger.ONE);
 	}
-
+	
 	/**
-	 * Constructs an iterated SMT-Term (func ...(func arg[0] arg[1]) ... arg[n]) as determined by the arguments.
+	 * Constructs an iterated simplified SMT-Term (func arg[0] arg[1]... arg[n]) as determined by the arguments.
 	 */
-	public static Term constructIteratedTerm(final String functionSymbol, final IPolynomialTerm[] polynomialArgs,
+	public static Term constructSimplifiedTerm(final String functionSymbol, final IPolynomialTerm[] polynomialArgs,
 			final Script script) {
-
-		Term term = script.term(functionSymbol, polynomialArgs[0].toTerm(script), polynomialArgs[1].toTerm(script));
-		for (int i = 2; i < polynomialArgs.length; i++) {
-			term = script.term(functionSymbol, polynomialArgs[0].toTerm(script), polynomialArgs[1].toTerm(script));
+		Term[] terms = new Term[polynomialArgs.length];
+		for (int i = 0; i < polynomialArgs.length; i++) {
+			terms[i] = polynomialArgs[i].toTerm(script);
 		}
-		return term;
+		return script.term(functionSymbol, terms);
 	}
 
 	/**
