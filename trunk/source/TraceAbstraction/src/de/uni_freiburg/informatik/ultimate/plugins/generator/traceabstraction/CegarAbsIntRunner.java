@@ -382,7 +382,12 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		public int add(final AbsIntStats key, final int summand) {
 			assert key.getType() == KeyType.COUNTER;
-			return mIntCounters.put(key, mIntCounters.getOrDefault(key, 0) + summand);
+			final int oldOrDefaultValue = mIntCounters.getOrDefault(key, 0);
+			final Integer oldValue = mIntCounters.put(key, oldOrDefaultValue + summand);
+			if (oldValue == null) {
+				return 0;
+			}
+			return oldValue;
 		}
 
 		public void addRatio(final AbsIntStats key, final double ratio) {

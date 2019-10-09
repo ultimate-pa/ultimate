@@ -454,7 +454,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 		if (mTraceCheckFinished || mToolchainCanceledException != null) {
 			return mTraceCheckBenchmarkGenerator;
 		}
-		throw new AssertionError("Benchmark is only available after the trace check is finished.");
+		return null;
 	}
 
 	@Override
