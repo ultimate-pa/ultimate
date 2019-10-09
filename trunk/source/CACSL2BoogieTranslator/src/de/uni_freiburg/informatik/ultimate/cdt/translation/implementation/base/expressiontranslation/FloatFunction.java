@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -62,6 +64,15 @@ public class FloatFunction {
 			"fmod", // see 7.12.10.1
 			"fdim" // see 7.12.12.1
 	};
+	
+	public static final Set<String> CONVERT_TO_BITVEC = new HashSet<String>(Arrays.asList("sqrt", "fabs",
+			"fmin", "fmax",
+			"trunc",
+			"round", "lround", "llround",
+			"floor", "ceil",
+			"sin",
+			"remainder",
+			"fmod", "fdim"));
 
 	private static final String[] TYPE_SUFFIXES = { "f", "d", "l" };
 

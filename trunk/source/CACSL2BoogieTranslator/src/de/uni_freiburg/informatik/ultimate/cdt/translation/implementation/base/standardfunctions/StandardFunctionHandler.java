@@ -1717,7 +1717,24 @@ public class StandardFunctionHandler {
 		final List<ExpressionResult> args = handleFloatArguments(main, node, loc, name, 2, floatFunction);
 		final RValue rvalue = mExpressionTranslation.constructOtherBinaryFloatOperation(loc, floatFunction,
 				(RValue) args.get(0).getLrValue(), (RValue) args.get(1).getLrValue());
-		return new ExpressionResultBuilder().addAllExceptLrValue(args).setLrValue(rvalue).build();
+		Expression[] arguments = new Expression[1];
+		arguments[0] = rvalue.getValue();
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		final CPrimitive cType = new CPrimitive(CPrimitives.FLOAT);
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+		resultBuilder.addAuxVar(auxvarinfo);
+		final CallStatement call = StatementFactory.constructCallStatement(
+				loc,
+				false, new VariableLHS[] {auxvarinfo.getLhs()},
+				"float_to_bitvec32",
+				arguments);
+		resultBuilder.addStatement(call);
+		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.FLOAT)));
+		
+		return resultBuilder.build();
+		
+		// return new ExpressionResultBuilder().addAllExceptLrValue(args).setLrValue(rvalue).build();
 	}
 
 	private List<ExpressionResult> handleFloatArguments(final IDispatcher main, final IASTFunctionCallExpression node,

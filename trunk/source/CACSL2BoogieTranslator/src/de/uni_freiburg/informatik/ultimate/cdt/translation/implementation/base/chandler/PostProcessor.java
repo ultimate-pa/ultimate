@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -56,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -64,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
@@ -72,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -80,6 +84,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BaseMemoryModel.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
@@ -101,6 +107,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Class caring for some post processing steps, like creating an initializer procedure and the start procedure.
@@ -224,6 +232,8 @@ public class PostProcessor {
 				mReporter.warn(loc, msg);
 			}
 		}
+		
+		decl.addAll(createFloatToBitvectorProcedure(loc));
 
 		decl.addAll(declareFunctionPointerProcedures());
 
@@ -289,6 +299,7 @@ public class PostProcessor {
 				continue;
 			}
 
+			final Attribute[] attributes;
 			if (!mSettings.overapproximateFloatingPointOperations()) {
 				// declare floating point constructors here because we might
 				// always need them for our backtranslation
@@ -303,23 +314,23 @@ public class PostProcessor {
 						new CPrimitive(cPrimitive));
 				mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_PLUS_ZERO,
 						new CPrimitive(cPrimitive));
-			}
-
-			final Attribute[] attributes;
-			if (mSettings.overapproximateFloatingPointOperations()) {
-				attributes = new Attribute[0];
+				
+				attributes = new Attribute[1];
+				attributes[0] = new NamedAttribute(loc, "bitsize", new Expression[] { ExpressionFactory.createIntegerLiteral(loc, String.valueOf(32)) });
+//				attributes[0] = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
+//						new Expression[] { ExpressionFactory.createStringLiteral(loc, "FloatingPoint") });
+//				final int[] indices = mTypeSize.getFloatingPointSize(cPrimitive).getIndices();
+//				attributes[1] = new NamedAttribute(loc, FunctionDeclarations.INDEX_IDENTIFIER,
+//						new Expression[] { ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[0])),
+//								ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[1])) });
 			} else {
-				attributes = new Attribute[2];
-				attributes[0] = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
-						new Expression[] { ExpressionFactory.createStringLiteral(loc, "FloatingPoint") });
-				final int[] indices = mTypeSize.getFloatingPointSize(cPrimitive).getIndices();
-				attributes[1] = new NamedAttribute(loc, FunctionDeclarations.INDEX_IDENTIFIER,
-						new Expression[] { ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[0])),
-								ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[1])) });
+				attributes = new Attribute[0];
 			}
+			
 			final String identifier = "C_" + cPrimitive.name();
 			final String[] typeParams = new String[0];
-			decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams));
+			final ASTType astType = mTypeHandler.byteSize2AstType(loc, CPrimitiveCategory.FLOATTYPE, 4);
+			decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams, astType));
 		}
 		return decls;
 	}
@@ -494,6 +505,130 @@ public class PostProcessor {
 
 		return declarations;
 	}
+	
+	private ArrayList<Declaration> createFloatToBitvectorProcedure(final ILocation loc) {
+		
+		final String functionName = "float_to_bitvec" + Integer.toString(32);
+		final String inVar = "f_in";
+		final String outVar = "bv_out";
+		
+		final ArrayList<Declaration> declarations = new ArrayList<>();
+		final ArrayList<Statement> statements = new ArrayList<>();
+		
+
+		final CPrimitive floatCPrimitive = new CPrimitive(CPrimitives.FLOAT);
+		final ASTType floatAstType = mTypeHandler.cType2AstType(loc, floatCPrimitive);
+		final BoogieType floatBoogieType = (BoogieType) floatAstType.getBoogieType();
+		
+		
+		
+		final VarList[] inVarList;
+		inVarList = new VarList[1];
+		inVarList[0] = new VarList(loc, new String[] { inVar }, floatAstType);
+
+		final VarList[] outVarList;
+		outVarList = new VarList[1];
+		outVarList[0] = new VarList(loc, new String[] { outVar }, floatAstType);
+		
+		
+		
+		final Procedure procedure = new Procedure(loc, new Attribute[0], functionName, new String[0], inVarList,
+				outVarList, new Specification[0], null);
+		
+		mProcedureManager.beginCustomProcedure(mCHandler, loc, functionName, procedure);
+
+		
+		// make the specifications
+		final ArrayList<Specification> specs = new ArrayList<>();
+//
+//		final Expression returnValueAsBitvector = ExpressionFactory.constructIdentifierExpression(loc,
+//				mTypeHandler.getBoogieTypeForBoogieASTType(valueAstType), "#valueAsBitvector",
+//				new DeclarationInformation(StorageClass.QUANTIFIED, null));
+//
+//		final Expression transformedToFloat =
+//				mExpressionTranslation.transformBitvectorToFloat(loc, returnValueAsBitvector, cprimitive);
+//		final Expression inputValue =
+//				ExpressionFactory.constructIdentifierExpression(loc, (BoogieType) transformedToFloat.getType(),
+//						"#value", new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
+//
+//		final Expression eq =
+//				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, transformedToFloat, inputValue);
+//		conjuncts.add(eq);
+//		final Expression conjunction = ExpressionFactory.and(loc, conjuncts);
+//		final ASTType type = ((TypeHandler) mTypeHandler).byteSize2AstType(loc, cprimitive.getPrimitiveCategory(),
+//				mTypeSizes.getSize(cprimitive));
+//		final VarList[] parameters = new VarList[] { new VarList(loc, new String[] { "#valueAsBitvector" }, type) };
+//		final QuantifierExpression qe =
+//				new QuantifierExpression(loc, false, new String[0], parameters, new Attribute[0], conjunction);
+//		swrite.add(mProcedureManager.constructEnsuresSpecification(loc, false, qe, modifiedGlobals));
+		
+//		final HashRelation<Integer, CPrimitives> bytesizes2primitives = new HashRelation<>();
+//		for (final CPrimitives primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
+//			final int bytesize = 0;
+//			if (getDataHeapArray(primitive) == hda) {
+//				bytesizes2primitives.addPair(bytesize, primitive);
+//			}
+//		}
+//		final List<ReadWriteDefinition> result = new ArrayList<>();
+//		for (final Integer bytesize : bytesizes2primitives.getDomain()) {
+//			final Set<CPrimitives> primitives = bytesizes2primitives.getImage(bytesize);
+//			final CPrimitives representative = primitives.iterator().next();
+//			final String procedureName = getProcedureSuffix(representative);
+//			final ASTType astType =
+//					mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
+//			final boolean alsoUncheckedWrite = DataStructureUtils
+//					.haveNonEmptyIntersection(requiredMemoryModelFeatures.getUncheckedWriteRequired(), primitives);
+//			final boolean alsoInit = DataStructureUtils
+//					.haveNonEmptyIntersection(requiredMemoryModelFeatures.getInitWriteRequired(), primitives);
+//			final boolean alsoUncheckedRead = DataStructureUtils
+//						.haveNonEmptyIntersection(requiredMemoryModelFeatures.getUncheckedReadRequired(), primitives);
+//			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, primitives, alsoUncheckedWrite,
+//					alsoInit, alsoUncheckedRead))
+		
+		
+		
+		final Expression inVarExp = ExpressionFactory.constructIdentifierExpression(loc,
+				mTypeHandler.getBoogieTypeForBoogieASTType(
+				mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), new CPrimitive(CPrimitives.FLOAT))),
+				inVar, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, functionName));
+		final Expression inVarToFloat = mExpressionTranslation.transformBitvectorToFloat(loc, inVarExp, CPrimitives.FLOAT);
+		
+
+		final EnsuresSpecification spec = mProcedureManager.constructEnsuresSpecification(loc, true, 
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+						ExpressionFactory.constructIdentifierExpression(loc, floatBoogieType,
+								outVar, new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, functionName)),
+						inVarToFloat), Collections.emptySet());
+		
+//		final EnsuresSpecification returnValue = mProcedureManager.constructEnsuresSpecification(ignoreLoc, true,
+//				ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
+//						ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(),
+//								outParamResult, new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, procName)),
+//						ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(),
+//								inParamPtr, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName))),
+//				Collections.emptySet());
+
+		specs.add(spec);
+
+		// add the procedure declaration
+		mProcedureManager.addSpecificationsToCurrentProcedure(specs);
+		
+		
+		
+		final Body procedureBody = mProcedureManager.constructBody(loc, new VariableDeclaration[0],
+				statements.toArray(new Statement[statements.size()]), functionName);
+
+		final Procedure procedureImplementation = new Procedure(loc, new Attribute[0], functionName, new String[0],
+				inVarList, outVarList, null, procedureBody);
+
+		mProcedureManager.endCustomProcedure(mCHandler, functionName);
+		
+		declarations.add(procedureImplementation);
+		
+		return declarations;
+	}
+	
+	
 
 	private ArrayList<Declaration> declareConversionFunctions() {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
