@@ -118,8 +118,8 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		mPossibleExtensions = new PossibleExtensions<>(mUnfolding, mOrder);
 
 		computeUnfolding();
-		mLogger.info(mStatistics.cutOffInformation());
-		mLogger.info(mStatistics.coRelationInformation());
+		mLogger.info(mStatistics.prettyprintCutOffInformation());
+		mLogger.info(mStatistics.prettyprintCoRelationInformation());
 	}
 
 	public PetriNetUnfolder<LETTER, PLACE>.Statistics getUnfoldingStatistics() {
@@ -365,16 +365,21 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			}
 		}
 
-		public String cutOffInformation() {
-			return "has " + mCutOffEvents + " CutOffEvents and " + mNonCutOffEvents + " nonCutOffEvents";
+		public String prettyprintCutOffInformation() {
+			return getCutOffEvents() + "/" + (getCutOffEvents() + getNonCutOffEvents()) + " cut-off events.";
 		}
 
-		public String coRelationInformation() {
-			return "co relation was queried " + mUnfolding.getCoRelation().getQueryCounter() + " times.";
+		public String prettyprintCoRelationInformation() {
+			return "For " + getCoRelationQueriesYes() + "/" + (getCoRelationQueriesYes() + getCoRelationQueriesNo())
+					+ " co-relation queries the response was YES.";
 		}
 
-		public long getCoRelationQueries() {
-			return mUnfolding.getCoRelation().getQueryCounter();
+		public long getCoRelationQueriesYes() {
+			return mUnfolding.getCoRelation().getQueryCounterYes();
+		}
+		
+		public long getCoRelationQueriesNo() {
+			return mUnfolding.getCoRelation().getQueryCounterNo();
 		}
 
 		public int getCutOffEvents() {

@@ -221,10 +221,17 @@ public enum StatisticsType {
 	 */
 	NUMBER_CONDITIONS,
 	/**
-	 * Number of pairs of conditions for which we checked whether they are in co-relation while computing the
-	 * unfolding of a Petri net.
+	 * Number of pairs of conditions for which we checked whether they are in
+	 * co-relation while computing the unfolding of a Petri net and the response
+	 * was YES.
 	 */
-	NUMBER_CO_RELATION_QUERIES,
+	NUMBER_CO_RELATION_QUERIES_YES,
+	/**
+	 * Number of pairs of conditions for which we checked whether they are in
+	 * co-relation while computing the unfolding of a Petri net and the response
+	 * was NO.
+	 */
+	NUMBER_CO_RELATION_QUERIES_NO,
 	/**
 	 * Number of cut-off events in Petri net unfolding.
 	 */

@@ -47,7 +47,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *            place content type
  */
 public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER, PLACE> {
-	private long mQueryCounter;
+	private long mQueryCounterYes;
+	private long mQueryCounterNo;
 
 	/**
 	 * TODO schaetzc 2018-08-16: This does not seem to store all co-relations between conditions and events.
@@ -71,9 +72,15 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	}
 
 	@Override
-	public long getQueryCounter() {
-		return mQueryCounter;
+	public long getQueryCounterYes() {
+		return mQueryCounterYes;
 	}
+	
+	@Override
+	public long getQueryCounterNo() {
+		return mQueryCounterNo;
+	}
+
 
 	@Override
 	public void initialize(final Set<Condition<LETTER, PLACE>> initialConditions) {
@@ -207,12 +214,16 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 
 	@Override
 	public boolean isInCoRelation(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
-		mQueryCounter++;
 		final boolean result = mCoRelation.containsPair(c1, c2.getPredecessorEvent())
 				|| mCoRelation.containsPair(c2, c1.getPredecessorEvent())
 				|| (c1.getPredecessorEvent() == c2.getPredecessorEvent());
 		assert result == isInCoRelationNaive(c1, c2) :
 				String.format("contradictory co-Relation for %s,%s: normal=%b != %b=naive", c1, c2, result, !result);
+		if (result) {
+			mQueryCounterYes++;
+		} else {
+			mQueryCounterNo++;
+		}
 		return result;
 	}
 

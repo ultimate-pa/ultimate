@@ -84,11 +84,9 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 		sb.append(" ");
 		sb.append("Result " + mResult.sizeInformation() + ".");
 		sb.append(" ");
-		sb.append(mUnfoldingStatistics.getCutOffEvents() + "/"
-				+ (mUnfoldingStatistics.getCutOffEvents() + mUnfoldingStatistics.getNonCutOffEvents())
-				+ " cut-off events.");
+		sb.append(mUnfoldingStatistics.prettyprintCutOffInformation());
 		sb.append(" ");
-		sb.append("Co-relation was queried " + mUnfoldingStatistics.getCoRelationQueries() + " times.");
+		sb.append(mUnfoldingStatistics.prettyprintCoRelationInformation());
 		sb.append(" ");
 		sb.append(mUnfoldingStatistics.getNumberOfUselessExtensionCandidates() + "/"
 				+ mUnfoldingStatistics.getNumberOfExtensionCandidates() + " useless extension candidates.");
@@ -111,8 +109,10 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 
 		final int numberConditions = new NumberOfConditions<>(mServices, getResult()).getResult();
 		statistics.addKeyValuePair(StatisticsType.NUMBER_CONDITIONS, numberConditions);
-		statistics.addKeyValuePair(StatisticsType.NUMBER_CO_RELATION_QUERIES,
-				mUnfoldingStatistics.getCoRelationQueries());
+		statistics.addKeyValuePair(StatisticsType.NUMBER_CO_RELATION_QUERIES_YES,
+				mUnfoldingStatistics.getCoRelationQueriesYes());
+		statistics.addKeyValuePair(StatisticsType.NUMBER_CO_RELATION_QUERIES_NO,
+				mUnfoldingStatistics.getCoRelationQueriesNo());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_CUT_OFF_EVENTS, mUnfoldingStatistics.getCutOffEvents());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_NON_CUT_OFF_EVENTS, mUnfoldingStatistics.getNonCutOffEvents());
 		if (mOperand instanceof IPetriNet) {

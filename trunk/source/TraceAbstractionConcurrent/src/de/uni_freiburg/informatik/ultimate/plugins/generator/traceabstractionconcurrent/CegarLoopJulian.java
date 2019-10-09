@@ -181,7 +181,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			throw new UnsupportedOperationException(e.getMessage());
 		}
 		mUnfolding = unf.getFinitePrefix();
-		mCoRelationQueries += mUnfolding.getCoRelation().getQueryCounter();
+		mCoRelationQueries += (mUnfolding.getCoRelation().getQueryCounterYes()
+				+ mUnfolding.getCoRelation().getQueryCounterNo());
 
 		mCounterexample = unf.getAcceptingRun();
 		if (mCounterexample == null) {
