@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,11 @@ public class PredicateFactory extends BasicPredicateFactory {
 		return predicate;
 	}
 
+	public IPredicate newMLPredicate(final IcfgLocation[] programPoints, final ArrayList<Term> terms) {
+		final IPredicate conjunction = andT(terms);
+		return newMLPredicate(programPoints, conjunction.getFormula());
+	}
+
 	public MLPredicate newMLDontCarePredicate(final IcfgLocation[] programPoints) {
 		final TermVarsProc termVarsProc = constructTermVarsProc(mDontCareTerm);
 		final MLPredicate predicate =
@@ -124,5 +130,7 @@ public class PredicateFactory extends BasicPredicateFactory {
 			return "noCaller";
 		}
 	}
+
+
 
 }
