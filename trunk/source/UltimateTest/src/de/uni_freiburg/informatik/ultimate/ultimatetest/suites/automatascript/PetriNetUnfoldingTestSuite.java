@@ -79,8 +79,9 @@ public class PetriNetUnfoldingTestSuite extends UltimateTestSuite {
 	private static final String[] FILE_ENDINGS = { ".ats" };
 
 	private static final String[] SETTINGS = {
-			"AutomataScript/finitePrefix.epf",
+//			"AutomataScript/finitePrefix.epf",
 //			"AutomataScript/finitePrefix2PetriNet.epf",
+			"AutomataScript/finitePrefix2PetriNetB.epf"
 			};
 
 	private static final String[] INTERESTING_COLUMNS = {
