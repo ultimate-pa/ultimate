@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -165,9 +166,15 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 
 	@Override
 	public IPredicate getContentOnPetriNet2FiniteAutomaton(final Marking<?, IPredicate> marking) {
-		final IcfgLocation[] programPoints =
-				marking.stream().map(x -> ((SPredicate) x).getProgramPoint()).toArray(IcfgLocation[]::new);
-		return mPredicateFactory.newMLDontCarePredicate(programPoints);
+		final ArrayList<IcfgLocation> programPoints = new ArrayList<>();
+		final ArrayList<Term> terms = new ArrayList<Term>();
+		for (final IPredicate pred : marking) {
+			if (pred instanceof ISLPredicate) {
+				programPoints.add(((ISLPredicate) pred).getProgramPoint());
+			}
+			terms.add(pred.getFormula());
+		}
+		return mPredicateFactory.newMLPredicate(programPoints.toArray(new IcfgLocation[programPoints.size()]), terms);
 	}
 
 	@Override
