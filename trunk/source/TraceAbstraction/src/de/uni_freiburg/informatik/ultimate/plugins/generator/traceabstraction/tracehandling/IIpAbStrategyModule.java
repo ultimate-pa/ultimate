@@ -30,12 +30,43 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ * @param <LETTER>
+ */
 public interface IIpAbStrategyModule<LETTER> {
 
-	NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(List<TracePredicates> perfectIpps,
-			List<TracePredicates> imperfectIpps) throws AutomataOperationCanceledException;
+	IpAbStrategyModuleResult<LETTER> buildInterpolantAutomaton(List<QualifiedTracePredicates> perfectIpps,
+			List<QualifiedTracePredicates> imperfectIpps) throws AutomataOperationCanceledException;
 
+	/**
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 * @param <LETTER>
+	 */
+	public static final class IpAbStrategyModuleResult<LETTER> {
+		private final NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
+		private final List<QualifiedTracePredicates> mUsedTracePredicates;
+
+		public IpAbStrategyModuleResult(final NestedWordAutomaton<LETTER, IPredicate> automaton,
+				final List<QualifiedTracePredicates> predicates) {
+			mAutomaton = automaton;
+			mUsedTracePredicates = predicates;
+		}
+
+		public NestedWordAutomaton<LETTER, IPredicate> getAutomaton() {
+			return mAutomaton;
+		}
+
+		public List<QualifiedTracePredicates> getUsedTracePredicates() {
+			return mUsedTracePredicates;
+		}
+
+	}
 }

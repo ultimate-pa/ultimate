@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -45,12 +45,12 @@ public class MammothNoAmRefinementStrategy<LETTER extends IIcfgTransition<?>> ex
 	@SuppressWarnings("unchecked")
 	public MammothNoAmRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(new IIpTcStrategyModule[] {
-				factory.createIpTcStrategyModuleSmtInterpolCraig(false, InterpolationTechnique.Craig_TreeInterpolation,
-						true, AssertCodeBlockOrder.NOT_INCREMENTALLY),
-				factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP,
-						AssertCodeBlockOrder.NOT_INCREMENTALLY) },
-				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+		super(factory,
+				new IIpTcStrategyModule[] {
+						factory.createIpTcStrategyModuleSmtInterpolCraig(false, InterpolationTechnique.Craig_TreeInterpolation,
+								true, AssertCodeBlockOrder.NOT_INCREMENTALLY),
+						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP,
+								AssertCodeBlockOrder.NOT_INCREMENTALLY) }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@Override
@@ -59,8 +59,8 @@ public class MammothNoAmRefinementStrategy<LETTER extends IIcfgTransition<?>> ex
 	}
 
 	@Override
-	protected boolean needsMoreInterpolants(final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
+	protected boolean needsMoreInterpolants(final List<QualifiedTracePredicates> perfectIpps,
+			final List<QualifiedTracePredicates> imperfectIpps) {
 		// we are only satisfied if we find perfect interpolants or run out of generators
 		return perfectIpps.isEmpty();
 	}

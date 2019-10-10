@@ -30,14 +30,14 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
 
 /**
@@ -53,13 +53,13 @@ public class PenguinRefinementStrategy<LETTER extends IIcfgTransition<?>> extend
 	@SuppressWarnings("unchecked")
 	public PenguinRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(new IIpTcStrategyModule[] {
-				factory.createIpTcStrategyModuleSmtInterpolCraig(false, InterpolationTechnique.Craig_TreeInterpolation,
-						true),
-				factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP),
-				factory.createIpTcStrategyModuleCVC4(false, InterpolationTechnique.FPandBP,
-						SolverBuilder.LOGIC_CVC4_DEFAULT), },
-				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+		super(factory,
+				new IIpTcStrategyModule[] {
+						factory.createIpTcStrategyModuleSmtInterpolCraig(
+								false, InterpolationTechnique.Craig_TreeInterpolation, true),
+						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP),
+						factory.createIpTcStrategyModuleCVC4(false, InterpolationTechnique.FPandBP,
+								SolverBuilder.LOGIC_CVC4_DEFAULT), }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@Override
@@ -68,8 +68,8 @@ public class PenguinRefinementStrategy<LETTER extends IIcfgTransition<?>> extend
 	}
 
 	@Override
-	protected boolean needsMoreInterpolants(final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
+	protected boolean needsMoreInterpolants(final List<QualifiedTracePredicates> perfectIpps,
+			final List<QualifiedTracePredicates> imperfectIpps) {
 		return perfectIpps.isEmpty();
 	}
 }

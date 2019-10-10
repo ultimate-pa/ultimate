@@ -27,15 +27,19 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -48,14 +52,16 @@ public class IpAbStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransi
 	private final IRun<LETTER, ?> mCounterexample;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
+	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 
-	private NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
 	private final IpTcStrategyModuleAbstractInterpretation<LETTER> mIpTcSmAbsInt;
+	private IpAbStrategyModuleResult<LETTER> mResult;
 
-	public IpAbStrategyModuleAbstractInterpretation(final IRun<LETTER, ?> counterexample,
-			final IPredicateUnifier predicateUnifier,
+	public IpAbStrategyModuleAbstractInterpretation(final IAutomaton<LETTER, IPredicate> abstraction,
+			final IRun<LETTER, ?> counterexample, final IPredicateUnifier predicateUnifier,
 			final IpTcStrategyModuleAbstractInterpretation<LETTER> ipTcSmAbsInt,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+		mAbstraction = abstraction;
 		mCounterexample = counterexample;
 		mPredicateUnifier = predicateUnifier;
 		mIpTcSmAbsInt = ipTcSmAbsInt;
@@ -63,12 +69,19 @@ public class IpAbStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransi
 	}
 
 	@Override
-	public NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) throws AutomataOperationCanceledException {
-		if (mAutomaton == null) {
-			mAutomaton = mIpTcSmAbsInt.getOrConstructRunner().createInterpolantAutomatonBuilder(mPredicateUnifier,
-					mAutomaton, mCounterexample, mEmptyStackFactory).getResult();
+	public IpAbStrategyModuleResult<LETTER> buildInterpolantAutomaton(final List<QualifiedTracePredicates> perfectIpps,
+			final List<QualifiedTracePredicates> imperfectIpps) throws AutomataOperationCanceledException {
+		if (mResult == null) {
+			final CegarAbsIntRunner<LETTER> runner = mIpTcSmAbsInt.getOrConstructRunner();
+			final List<QualifiedTracePredicates> predicates =
+					perfectIpps.stream().filter(a -> a.getOrigin() == runner.getClass()).collect(Collectors.toList());
+			assert !predicates.isEmpty();
+			final NestedWordAutomaton<LETTER, IPredicate> automaton =
+					runner.createInterpolantAutomatonBuilder(mPredicateUnifier,
+							(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, mCounterexample,
+							mEmptyStackFactory).getResult();
+			mResult = new IpAbStrategyModuleResult<>(automaton, predicates);
 		}
-		return mAutomaton;
+		return mResult;
 	}
 }

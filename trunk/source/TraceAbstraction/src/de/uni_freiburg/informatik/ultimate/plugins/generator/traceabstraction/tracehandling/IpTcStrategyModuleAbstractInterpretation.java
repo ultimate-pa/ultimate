@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
@@ -84,6 +85,16 @@ public class IpTcStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransi
 	public void aggregateStatistics(final RefinementEngineStatisticsGenerator stats) {
 		stats.addStatistics(RefinementEngineStatisticsDefinitions.ABSTRACT_INTERPRETATION,
 				getOrConstructRunner().getStatistics());
+	}
+
+	@Override
+	public IHoareTripleChecker getHoareTripleChecker() {
+		return getOrConstructRunner().getHoareTripleChecker();
+	}
+
+	@Override
+	public IPredicateUnifier getPredicateUnifier() {
+		return getOrConstructRunner().getPredicateUnifier();
 	}
 
 }

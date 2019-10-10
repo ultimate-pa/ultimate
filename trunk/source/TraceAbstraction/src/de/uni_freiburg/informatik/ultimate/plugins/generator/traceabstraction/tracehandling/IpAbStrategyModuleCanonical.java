@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
@@ -36,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.CanonicalInterpolantAutomatonBuilder;
@@ -46,8 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
  *
  * @param <LETTER>
  */
-public class IpAbStrategyModuleCanonical<LETTER>
-		implements IIpAbStrategyModule<LETTER> {
+public class IpAbStrategyModuleCanonical<LETTER> implements IIpAbStrategyModule<LETTER> {
 
 	private final IUltimateServiceProvider mServices;
 	private final IRun<LETTER, ?> mCounterexample;
@@ -56,11 +56,10 @@ public class IpAbStrategyModuleCanonical<LETTER>
 	private final ILogger mLogger;
 	private final IPredicateUnifier mPredicateUnifier;
 
-	private NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
+	private IpAbStrategyModuleResult<LETTER> mResult;
 
-	public IpAbStrategyModuleCanonical(final IUltimateServiceProvider services,
-			final ILogger logger, final IAutomaton<LETTER, IPredicate> abstraction,
-			final IRun<LETTER, ?> counterexample,
+	public IpAbStrategyModuleCanonical(final IUltimateServiceProvider services, final ILogger logger,
+			final IAutomaton<LETTER, IPredicate> abstraction, final IRun<LETTER, ?> counterexample,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final IPredicateUnifier predicateUnifier) {
 		mServices = services;
 		mAbstraction = abstraction;
@@ -71,13 +70,13 @@ public class IpAbStrategyModuleCanonical<LETTER>
 	}
 
 	@Override
-	public NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
-		if (mAutomaton == null) {
+	public IpAbStrategyModuleResult<LETTER> buildInterpolantAutomaton(final List<QualifiedTracePredicates> perfectIpps,
+			final List<QualifiedTracePredicates> imperfectIpps) {
+		if (mResult == null) {
 			if (perfectIpps.isEmpty() && imperfectIpps.isEmpty()) {
 				throw new AssertionError();
 			}
-			final TracePredicates ipp;
+			final QualifiedTracePredicates ipp;
 			if (!perfectIpps.isEmpty()) {
 				ipp = perfectIpps.get(0);
 			} else {
@@ -85,13 +84,15 @@ public class IpAbStrategyModuleCanonical<LETTER>
 			}
 
 			final CanonicalInterpolantAutomatonBuilder<? extends Object, LETTER> iab =
-					new CanonicalInterpolantAutomatonBuilder<>(mServices, ipp, mCounterexample.getStateSequence(),
-							NestedWordAutomataUtils.getVpAlphabet(mAbstraction), mEmptyStackFactory, mLogger,
-							mPredicateUnifier, NestedWord.nestedWord(mCounterexample.getWord()));
+					new CanonicalInterpolantAutomatonBuilder<>(mServices, ipp.getTracePredicates(),
+							mCounterexample.getStateSequence(), NestedWordAutomataUtils.getVpAlphabet(mAbstraction),
+							mEmptyStackFactory, mLogger, mPredicateUnifier,
+							NestedWord.nestedWord(mCounterexample.getWord()));
 			iab.analyze();
-			mAutomaton = iab.getResult();
+			final NestedWordAutomaton<LETTER, IPredicate> automaton = iab.getResult();
+			mResult = new IpAbStrategyModuleResult<>(automaton, Collections.singletonList(ipp));
 		}
-		return mAutomaton;
+		return mResult;
 	}
 
 }

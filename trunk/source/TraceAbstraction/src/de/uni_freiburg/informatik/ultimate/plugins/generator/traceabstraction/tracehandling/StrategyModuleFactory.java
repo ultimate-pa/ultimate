@@ -191,7 +191,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 
 	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleAbstractInterpretation(
 			final IpTcStrategyModuleAbstractInterpretation<LETTER> ipTcStrategyModuleAbsInt) {
-		return new IpAbStrategyModuleAbstractInterpretation<>(mCounterexample, mPredicateUnifier,
+		return new IpAbStrategyModuleAbstractInterpretation<>(mAbstraction, mCounterexample, mPredicateUnifier,
 				ipTcStrategyModuleAbsInt, mEmptyStackFactory);
 	}
 
@@ -207,6 +207,10 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 
 	public TermClassifier getTermClassifierForTrace() {
 		return TraceCheckUtils.classifyTermsInTrace(mCounterexample.getWord(), mCsToolkit.getSmtFunctionsAndAxioms());
+	}
+
+	public IPredicateUnifier getDefaultPredicateUnifier() {
+		return mPredicateUnifier;
 	}
 
 }

@@ -27,10 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
@@ -80,15 +83,24 @@ public interface IRefinementEngine<T> {
 	IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getIcfgProgramExecution();
 
 	/**
-	 * Provide a {@link IHoareTripleChecker} that corresponds to the generated interpolants.
-	 */
-	IHoareTripleChecker getHoareTripleChecker();
-
-	/**
 	 * @return true if the refinement engine found a perfect sequence of interpolants, i.e., a sequence where each
 	 *         interpolant is inductive w.r.t. the path program.
 	 */
 	boolean somePerfectSequenceFound();
+
+	/**
+	 * @return A list of {@link QualifiedTracePredicates} used in the result of {@link #getInfeasibilityProof()} or null
+	 *         if no such proof was constructed.
+	 */
+	List<QualifiedTracePredicates> getUsedTracePredicates();
+
+	/**
+	 * Provides a {@link IHoareTripleChecker} that corresponds to the generated interpolants if this is needed. May
+	 * return null.
+	 * 
+	 * @see IRefinementStrategy#getHoareTripleChecker(IRefinementEngine)
+	 */
+	IHoareTripleChecker getHoareTripleChecker();
 
 	/**
 	 * @return An {@link IPredicateUnifier} instance that already knows all {@link IPredicate} that are used in the

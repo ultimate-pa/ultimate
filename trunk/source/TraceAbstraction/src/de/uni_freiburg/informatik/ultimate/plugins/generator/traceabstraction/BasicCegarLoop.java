@@ -185,6 +185,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	 * If the trace histogram max is larger than this number we try to find a danger invariant. Only used for debugging.
 	 */
 	private static final int DEBUG_DANGER_INVARIANTS_THRESHOLD = Integer.MAX_VALUE;
+	private static final boolean DUMP_DIFFICULT_PATH_PROGRAMS = false;
 
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
@@ -197,33 +198,27 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	protected final boolean mComputeHoareAnnotation;
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
+	protected final Collection<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>> mStoredRawInterpolantAutomata;
 
 	private final RelevanceAnalysisMode mFaultLocalizationMode;
 	private final boolean mFaultLocalizationAngelic;
 	private final Set<IcfgLocation> mHoareAnnotationLocations;
-
-	protected final Collection<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>> mStoredRawInterpolantAutomata;
-
 	private final SearchStrategy mSearchStrategy;
-
 	private final RefinementEngineFactory<LETTER> mRefinementStrategyFactory;
 	private final PathProgramDumpController<LETTER> mPathProgramDumpController;
-
-	protected boolean mFallbackToFpIfInterprocedural = false;
-	protected HoareAnnotationFragments<LETTER> mHaf;
-	private INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
-	protected IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> mRefinementEngine;
-
 	private final ErrorGeneralizationEngine<LETTER> mErrorGeneralizationEngine;
 	private final boolean mStoreFloydHoareAutomata;
 	private final LinkedHashSet<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> mFloydHoareAutomata =
 			new LinkedHashSet<>();
-	private boolean mFirstReuseDump = true;
-	private static final boolean DUMP_DIFFICULT_PATH_PROGRAMS = false;
-
-	// heuristic_emptiness check
-	private boolean mUseHeuristicEmptinessCheck = false;
 	private final ScoringMethod mScoringMethod = ScoringMethod.NUM_FUNCTIONS;
+
+	protected boolean mFallbackToFpIfInterprocedural = false;
+	protected HoareAnnotationFragments<LETTER> mHaf;
+	protected IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> mRefinementEngine;
+
+	private INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
+	private boolean mFirstReuseDump = true;
+	private boolean mUseHeuristicEmptinessCheck = false;
 
 	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -444,7 +439,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			throw tce;
 		}
 
-		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
 		final LBool feasibility = mRefinementEngine.getCounterexampleFeasibility();
 
 		if (feasibility != LBool.UNSAT) {
@@ -462,9 +456,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 								super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
 				final FlowSensitiveFaultLocalizer<LETTER> fl = new FlowSensitiveFaultLocalizer<>(
 						(NestedRun<LETTER, IPredicate>) mCounterexample, cfg, mServices, mCsToolkit, mPredicateFactory,
-						mCsToolkit.getModifiableGlobalsTable(), predicateUnifier, mFaultLocalizationMode,
-						mSimplificationTechnique, mXnfConversionTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable(),
-						(IIcfg<IcfgLocation>) mIcfg);
+						mCsToolkit.getModifiableGlobalsTable(), mRefinementEngine.getPredicateUnifier(),
+						mFaultLocalizationMode, mSimplificationTechnique, mXnfConversionTechnique,
+						mIcfg.getCfgSmtToolkit().getSymbolTable(), (IIcfg<IcfgLocation>) mIcfg);
 				if (mRcfgProgramExecution instanceof IcfgProgramExecution) {
 					mRcfgProgramExecution = ((IcfgProgramExecution) mRcfgProgramExecution)
 							.addRelevanceInformation(fl.getRelevanceInformation());
@@ -551,19 +545,19 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
 		mStateFactoryForRefinement.setIteration(mIteration);
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 
 		final INestedWordAutomaton<LETTER, IPredicate> minuend =
 				(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
 
+		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
 		final IHoareTripleChecker htc;
 		if (mRefinementEngine.getHoareTripleChecker() != null) {
 			htc = mRefinementEngine.getHoareTripleChecker();
 		} else {
 			htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-					mPref.getHoareTripleChecks(), mCsToolkit, mRefinementEngine.getPredicateUnifier());
+					mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);
 		}
 
 		final AutomatonType automatonType;

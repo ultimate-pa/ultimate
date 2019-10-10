@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
@@ -216,8 +217,14 @@ public class IncrementalInclusionCegarLoop<LETTER extends IIcfgTransition<?>> ex
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 
-		final IHoareTripleChecker edgeChecker = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices,
-				HoareTripleChecks.MONOLITHIC, mCsToolkit, mRefinementEngine.getPredicateUnifier());
+		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
+		final IHoareTripleChecker htc;
+		if (mRefinementEngine.getHoareTripleChecker() != null) {
+			htc = mRefinementEngine.getHoareTripleChecker();
+		} else {
+			htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+					HoareTripleChecks.MONOLITHIC, mCsToolkit, predicateUnifier);
+		}
 
 		boolean progress;
 		try {
@@ -234,13 +241,12 @@ public class IncrementalInclusionCegarLoop<LETTER extends IIcfgTransition<?>> ex
 				final boolean cannibalize = mPref
 						.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
 				final DeterministicInterpolantAutomaton<LETTER> determinized =
-						new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, edgeChecker, mInterpolAutomaton,
-								mRefinementEngine.getPredicateUnifier(),
-								conservativeSuccessorCandidateSelection, cannibalize);
+						new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, mInterpolAutomaton,
+								predicateUnifier, conservativeSuccessorCandidateSelection, cannibalize);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				mInclusionCheck.addSubtrahend(determinized);
 				mInterpolantAutomata.add(determinized);
-				mHoareTripleChecker.add(edgeChecker);
+				mHoareTripleChecker.add(htc);
 				switchAllInterpolantAutomataToReadOnlyMode();
 				final INestedWordAutomaton<LETTER, IPredicate> test =
 						new RemoveUnreachable<>(new AutomataLibraryServices(mServices), determinized).getResult();
@@ -257,13 +263,12 @@ public class IncrementalInclusionCegarLoop<LETTER extends IIcfgTransition<?>> ex
 				final boolean secondChance =
 						mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
 				final NondeterministicInterpolantAutomaton<LETTER> nondet =
-						new NondeterministicInterpolantAutomaton<>(mServices, mCsToolkit, edgeChecker,
-								mInterpolAutomaton, mRefinementEngine.getPredicateUnifier(),
-								conservativeSuccessorCandidateSelection, secondChance);
+						new NondeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, mInterpolAutomaton,
+								predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				mInclusionCheck.addSubtrahend(nondet);
 				mInterpolantAutomata.add(nondet);
-				mHoareTripleChecker.add(edgeChecker);
+				mHoareTripleChecker.add(htc);
 				switchAllInterpolantAutomataToReadOnlyMode();
 				final INestedWordAutomaton<LETTER, IPredicate> test =
 						new RemoveUnreachable<>(new AutomataLibraryServices(mServices), nondet).getResult();

@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
@@ -44,10 +44,10 @@ public class MammothRefinementStrategy<LETTER extends IIcfgTransition<?>> extend
 	@SuppressWarnings("unchecked")
 	public MammothRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-				InterpolationTechnique.Craig_TreeInterpolation, true),
-				factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP) },
-				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+		super(factory,
+				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(false,
+						InterpolationTechnique.Craig_TreeInterpolation, true),
+						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP) }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@Override
@@ -56,8 +56,8 @@ public class MammothRefinementStrategy<LETTER extends IIcfgTransition<?>> extend
 	}
 
 	@Override
-	protected boolean needsMoreInterpolants(final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
+	protected boolean needsMoreInterpolants(final List<QualifiedTracePredicates> perfectIpps,
+			final List<QualifiedTracePredicates> imperfectIpps) {
 		// we are only satisfied if we find perfect interpolants or run out of generators
 		return perfectIpps.isEmpty();
 	}

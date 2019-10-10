@@ -41,12 +41,12 @@ public class SmtInterpolRefinementStrategy<LETTER extends IIcfgTransition<?>> ex
 	@SuppressWarnings("unchecked")
 	public SmtInterpolRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(new IIpTcStrategyModule[] {
-				factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-						InterpolationTechnique.Craig_NestedInterpolation, false),
-				factory.createIpTcStrategyModuleSmtInterpolSpWp(false, InterpolationTechnique.ForwardPredicates,
-						true) },
-				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+		super(factory,
+				new IIpTcStrategyModule[] {
+						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
+								InterpolationTechnique.Craig_NestedInterpolation, false),
+						factory.createIpTcStrategyModuleSmtInterpolSpWp(false, InterpolationTechnique.ForwardPredicates,
+								true) }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@Override

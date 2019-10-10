@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.function.Function;
-
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -38,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.biesenb.BPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -49,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
@@ -89,7 +85,6 @@ public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
 	private final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolAut;
 	private final PathProgramCache<LETTER> mPathProgramCache;
 	private final RefinementStrategy mStrategy;
-	private final Function<IPredicateUnifier, IHoareTripleChecker> mFunHtcConstructor;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 
 	public RefinementEngineFactory(final ILogger logger, final IUltimateServiceProvider services,
@@ -104,10 +99,7 @@ public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
 		mCfgSmtToolkit = initialIcfg.getCfgSmtToolkit();
 		mPredicateFactory = predicateFactory;
 		mPredicateFactoryInterpolAut = predicateFactoryInterpolAut;
-		mFunHtcConstructor = pu -> TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-				mTaPrefs.getHoareTripleChecks(), mCfgSmtToolkit, pu);
 		mPathProgramCache = new PathProgramCache<>(mLogger);
-
 		mStrategy = mPrefs.getRefinementStrategy();
 	}
 
@@ -127,10 +119,9 @@ public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
 			final IRun<LETTER, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final IPreconditionProvider preconditionProvider) {
-		final IPredicateUnifier predicateUnifier = constructPredicateUnifier();
-		final IRefinementStrategy<LETTER> strategy = constructStrategy(counterexample, abstraction, taskIdentifier,
-				emptyStackFactory, preconditionProvider, predicateUnifier);
-		return new TraceAbstractionRefinementEngine<>(mLogger, predicateUnifier, strategy, mFunHtcConstructor);
+		final IRefinementStrategy<LETTER> strategy =
+				constructStrategy(counterexample, abstraction, taskIdentifier, emptyStackFactory, preconditionProvider);
+		return new TraceAbstractionRefinementEngine<>(mLogger, strategy);
 	}
 
 	public PathProgramCache<LETTER> getPathProgramCache() {
@@ -140,8 +131,9 @@ public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
 	private IRefinementStrategy<LETTER> constructStrategy(final IRun<LETTER, ?> counterexample,
 			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
-			final IPreconditionProvider preconditionProvider, final IPredicateUnifier predicateUnifier) {
+			final IPreconditionProvider preconditionProvider) {
 
+		final IPredicateUnifier predicateUnifier = constructPredicateUnifier();
 		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
 		mPathProgramCache.addRun(counterexample);
 

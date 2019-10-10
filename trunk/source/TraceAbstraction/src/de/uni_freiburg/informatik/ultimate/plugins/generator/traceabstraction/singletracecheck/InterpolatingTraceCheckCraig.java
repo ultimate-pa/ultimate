@@ -153,9 +153,12 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 			}
 
 			mInterpolantComputationStatus = ics;
-		} else {
+		} else if (isCorrect() == LBool.SAT) {
 			mInterpolantComputationStatus =
 					new InterpolantComputationStatus(false, ItpErrorStatus.TRACE_FEASIBLE, null);
+		} else {
+			mInterpolantComputationStatus =
+					new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, null);
 		}
 	}
 
@@ -274,7 +277,8 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 				mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolants = nib.getNestedInterpolants();
 		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace, mPrecondition,
-				mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger) : "invalid Hoare triple in tree interpolants";
+				mPostcondition, mPendingContexts, "Craig", mCsToolkit,
+				mLogger) : "invalid Hoare triple in tree interpolants";
 		assert mInterpolants != null;
 	}
 
@@ -377,7 +381,8 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 		}
 
 		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace, mPrecondition,
-				mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger) : "invalid Hoare triple in nested interpolants";
+				mPostcondition, mPendingContexts, "Craig", mCsToolkit,
+				mLogger) : "invalid Hoare triple in nested interpolants";
 	}
 
 	/**

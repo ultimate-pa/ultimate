@@ -36,9 +36,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -61,7 +63,7 @@ public class IpTcStrategyModuleInterpolantConsolidation<T extends IInterpolating
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<?> mPrefs;
 	private final PredicateFactory mPredicateFactory;
-	private final IIpTcStrategyModule<T, LETTER> mTrackModule;
+	private final IIpTcStrategyModule<T, LETTER> mIpTcModule;
 
 	private InterpolatingTraceCheckWithConsolidation<T, LETTER> mInterpolantConsolidation;
 
@@ -71,33 +73,43 @@ public class IpTcStrategyModuleInterpolantConsolidation<T extends IInterpolating
 		mServices = services;
 		mPrefs = prefs;
 		mPredicateFactory = predicateFactory;
-		mTrackModule = nestedModule;
+		mIpTcModule = nestedModule;
 		mLogger = logger;
 	}
 
 	@Override
 	public LBool isCorrect() {
-		return mTrackModule.isCorrect();
+		return mIpTcModule.isCorrect();
 	}
 
 	@Override
 	public boolean providesRcfgProgramExecution() {
-		return mTrackModule.providesRcfgProgramExecution();
+		return mIpTcModule.providesRcfgProgramExecution();
 	}
 
 	@Override
 	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
-		return mTrackModule.getRcfgProgramExecution();
+		return mIpTcModule.getRcfgProgramExecution();
 	}
 
 	@Override
 	public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
-		return mTrackModule.getTraceCheckReasonUnknown();
+		return mIpTcModule.getTraceCheckReasonUnknown();
+	}
+
+	@Override
+	public IHoareTripleChecker getHoareTripleChecker() {
+		return mIpTcModule.getHoareTripleChecker();
+	}
+
+	@Override
+	public IPredicateUnifier getPredicateUnifier() {
+		return mIpTcModule.getPredicateUnifier();
 	}
 
 	@Override
 	public void aggregateStatistics(final RefinementEngineStatisticsGenerator stats) {
-		mTrackModule.aggregateStatistics(stats);
+		mIpTcModule.aggregateStatistics(stats);
 		stats.addStatistics(RefinementEngineStatisticsDefinitions.INTERPOLANT_CONSOLIDATION,
 				getOrConstruct().getStatistics());
 	}
@@ -108,19 +120,19 @@ public class IpTcStrategyModuleInterpolantConsolidation<T extends IInterpolating
 	}
 
 	@Override
-	public Collection<TracePredicates> getPerfectInterpolantSequences() {
+	public Collection<QualifiedTracePredicates> getPerfectInterpolantSequences() {
 		final InterpolatingTraceCheckWithConsolidation<T, LETTER> tc = getOrConstruct();
 		if (tc.isPerfectSequence()) {
-			return Collections.singleton(tc.getIpp());
+			return Collections.singleton(new QualifiedTracePredicates(tc.getIpp(), tc.getClass(), true));
 		}
 		return Collections.emptyList();
 	}
 
 	@Override
-	public Collection<TracePredicates> getImperfectInterpolantSequences() {
+	public Collection<QualifiedTracePredicates> getImperfectInterpolantSequences() {
 		final InterpolatingTraceCheckWithConsolidation<T, LETTER> tc = getOrConstruct();
 		if (!tc.isPerfectSequence()) {
-			return Collections.singleton(tc.getIpp());
+			return Collections.singleton(new QualifiedTracePredicates(tc.getIpp(), tc.getClass(), false));
 		}
 		return Collections.emptyList();
 	}
@@ -131,7 +143,7 @@ public class IpTcStrategyModuleInterpolantConsolidation<T extends IInterpolating
 			final CfgSmtToolkit cfgSmtToolkit = mPrefs.getCfgSmtToolkit();
 			try {
 				mInterpolantConsolidation = new InterpolatingTraceCheckWithConsolidation<>(cfgSmtToolkit, mServices,
-						mLogger, mPredicateFactory, mTrackModule.getOrConstruct());
+						mLogger, mPredicateFactory, mIpTcModule.getOrConstruct());
 			} catch (final AutomataOperationCanceledException e) {
 				throw new RuntimeException(e);
 			}

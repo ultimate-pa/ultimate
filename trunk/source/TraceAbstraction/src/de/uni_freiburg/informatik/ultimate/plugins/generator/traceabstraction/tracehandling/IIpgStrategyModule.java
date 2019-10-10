@@ -29,9 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
 /**
  * 
@@ -44,12 +46,26 @@ public interface IIpgStrategyModule<T extends IInterpolantGenerator<LETTER>, LET
 
 	InterpolantComputationStatus getInterpolantComputationStatus();
 
-	Collection<TracePredicates> getPerfectInterpolantSequences();
+	Collection<QualifiedTracePredicates> getPerfectInterpolantSequences();
 
-	Collection<TracePredicates> getImperfectInterpolantSequences();
+	Collection<QualifiedTracePredicates> getImperfectInterpolantSequences();
 
 	void aggregateStatistics(final RefinementEngineStatisticsGenerator statistics);
 
 	T getOrConstruct();
 
+	/**
+	 * @see IRefinementEngine#getHoareTripleChecker()
+	 * @see IRefinementStrategy#getHoareTripleChecker(IRefinementEngine)
+	 * @return
+	 */
+	IHoareTripleChecker getHoareTripleChecker();
+
+	/**
+	 * @see IRefinementEngine#getPredicateUnifier()()
+	 * @see IRefinementStrategy#getPredicateUnifier(IRefinementEngine)
+	 * @return A predicate unifier that is required by this {@link IIpgStrategyModule} or null if no particular
+	 *         predicate unifier is required.
+	 */
+	IPredicateUnifier getPredicateUnifier();
 }

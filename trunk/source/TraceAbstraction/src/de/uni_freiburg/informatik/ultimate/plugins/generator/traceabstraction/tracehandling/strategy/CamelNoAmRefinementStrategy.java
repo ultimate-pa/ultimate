@@ -49,11 +49,11 @@ public class CamelNoAmRefinementStrategy<LETTER extends IIcfgTransition<?>> exte
 	@SuppressWarnings("unchecked")
 	public CamelNoAmRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(new IIpTcStrategyModule[] {
-				factory.createIpTcStrategyModuleSmtInterpolCraig(false,
+		super(factory,
+				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(false,
 						InterpolationTechnique.Craig_NestedInterpolation, true, AssertCodeBlockOrder.NOT_INCREMENTALLY),
-				factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates,
-						AssertCodeBlockOrder.NOT_INCREMENTALLY) },
+						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates,
+								AssertCodeBlockOrder.NOT_INCREMENTALLY) },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 

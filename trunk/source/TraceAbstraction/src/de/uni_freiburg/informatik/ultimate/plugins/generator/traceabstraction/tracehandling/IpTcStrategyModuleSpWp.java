@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -65,27 +65,27 @@ public abstract class IpTcStrategyModuleSpWp<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public Collection<TracePredicates> getPerfectInterpolantSequences() {
-		final Collection<TracePredicates> rtr = new ArrayList<>();
+	public Collection<QualifiedTracePredicates> getPerfectInterpolantSequences() {
+		final Collection<QualifiedTracePredicates> rtr = new ArrayList<>();
 		final TraceCheckSpWp<LETTER> tc = getOrConstruct();
 		if (tc.wasForwardPredicateComputationRequested() && tc.isForwardSequencePerfect()) {
-			rtr.add(tc.getForwardIpp());
+			rtr.add(new QualifiedTracePredicates(tc.getForwardIpp(), tc.getClass(), true));
 		}
 		if (tc.wasBackwardSequenceConstructed() && tc.isBackwardSequencePerfect()) {
-			rtr.add(tc.getBackwardIpp());
+			rtr.add(new QualifiedTracePredicates(tc.getBackwardIpp(), tc.getClass(), true));
 		}
 		return rtr;
 	}
 
 	@Override
-	public Collection<TracePredicates> getImperfectInterpolantSequences() {
-		final Collection<TracePredicates> rtr = new ArrayList<>();
+	public Collection<QualifiedTracePredicates> getImperfectInterpolantSequences() {
+		final Collection<QualifiedTracePredicates> rtr = new ArrayList<>();
 		final TraceCheckSpWp<LETTER> tc = getOrConstruct();
 		if (tc.wasForwardPredicateComputationRequested() && !tc.isForwardSequencePerfect()) {
-			rtr.add(tc.getForwardIpp());
+			rtr.add(new QualifiedTracePredicates(tc.getForwardIpp(), tc.getClass(), false));
 		}
 		if (tc.wasBackwardSequenceConstructed() && !tc.isBackwardSequencePerfect()) {
-			rtr.add(tc.getBackwardIpp());
+			rtr.add(new QualifiedTracePredicates(tc.getBackwardIpp(), tc.getClass(), false));
 		}
 		return rtr;
 	}

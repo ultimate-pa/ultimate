@@ -47,7 +47,7 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 
 	public FixedRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(createModules(factory), exceptionBlacklist);
+		super(factory, createModules(factory), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")

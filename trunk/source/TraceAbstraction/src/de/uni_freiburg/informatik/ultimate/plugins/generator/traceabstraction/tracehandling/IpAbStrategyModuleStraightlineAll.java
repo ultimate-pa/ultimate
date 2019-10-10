@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode;
@@ -55,7 +55,7 @@ public class IpAbStrategyModuleStraightlineAll<LETTER> implements IIpAbStrategyM
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 
-	private NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
+	private IpAbStrategyModuleResult<LETTER> mResult;
 
 	public IpAbStrategyModuleStraightlineAll(final IUltimateServiceProvider services,
 			final IAutomaton<LETTER, IPredicate> abstraction, final IRun<LETTER, ?> counterexample,
@@ -67,22 +67,24 @@ public class IpAbStrategyModuleStraightlineAll<LETTER> implements IIpAbStrategyM
 	}
 
 	@Override
-	public NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
-		final List<TracePredicates> usedIpps;
+	public IpAbStrategyModuleResult<LETTER> buildInterpolantAutomaton(final List<QualifiedTracePredicates> perfectIpps,
+			final List<QualifiedTracePredicates> imperfectIpps) {
+		final List<QualifiedTracePredicates> usedIpps;
 		if (perfectIpps.isEmpty()) {
 			usedIpps = imperfectIpps;
 		} else {
 			usedIpps = perfectIpps;
 		}
-		if (mAutomaton == null) {
+		if (mResult == null) {
 			final StraightLineInterpolantAutomatonBuilder<LETTER> automatonBuilder =
 					new StraightLineInterpolantAutomatonBuilder<>(mServices, mCounterexample.getWord(),
-							NestedWordAutomataUtils.getVpAlphabet(mAbstraction), usedIpps, mEmptyStackFactory,
+							NestedWordAutomataUtils.getVpAlphabet(mAbstraction),
+							QualifiedTracePredicates.toList(usedIpps), mEmptyStackFactory,
 							InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING);
-			mAutomaton = automatonBuilder.getResult();
+			final NestedWordAutomaton<LETTER, IPredicate> automaton = automatonBuilder.getResult();
+			mResult = new IpAbStrategyModuleResult<>(automaton, usedIpps);
 		}
-		return mAutomaton;
+		return mResult;
 	}
 
 }

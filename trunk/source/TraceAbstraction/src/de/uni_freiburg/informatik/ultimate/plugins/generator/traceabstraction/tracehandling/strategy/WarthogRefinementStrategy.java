@@ -54,8 +54,8 @@ public class WarthogRefinementStrategy<LETTER extends IIcfgTransition<?>> extend
 
 	public WarthogRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(),
-				exceptionBlacklist);
+		super(factory, createModules(factory),
+				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")

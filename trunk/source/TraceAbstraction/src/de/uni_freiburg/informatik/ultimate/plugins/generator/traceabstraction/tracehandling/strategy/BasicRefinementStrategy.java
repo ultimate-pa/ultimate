@@ -33,13 +33,16 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpgStrategyModule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.ITraceCheckStrategyModule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
 
 /**
  *
@@ -57,7 +60,10 @@ public class BasicRefinementStrategy<LETTER extends IIcfgTransition<?>> implemen
 
 	private final RefinementStrategyExceptionBlacklist mBlacklist;
 
-	public BasicRefinementStrategy(final ITraceCheckStrategyModule<?>[] traceChecks,
+	private final IPredicateUnifier mDefaultPredicateUnifier;
+
+	public BasicRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+			final ITraceCheckStrategyModule<?>[] traceChecks,
 			final IIpgStrategyModule<?, LETTER>[] interpolantGenerators,
 			final IIpAbStrategyModule<LETTER> interpolantAutomatonBuilder,
 			final RefinementStrategyExceptionBlacklist blacklist) {
@@ -67,17 +73,20 @@ public class BasicRefinementStrategy<LETTER extends IIcfgTransition<?>> implemen
 		mBlacklist = Objects.requireNonNull(blacklist);
 		mCurrentIndexTraceCheck = 0;
 		mCurrentIndexInterpolantGenerator = 0;
+		mDefaultPredicateUnifier = factory.getDefaultPredicateUnifier();
 	}
 
-	public BasicRefinementStrategy(final StrategyModules<LETTER> modules,
+	public BasicRefinementStrategy(final StrategyModuleFactory<LETTER> factory, final StrategyModules<LETTER> modules,
 			final RefinementStrategyExceptionBlacklist blacklist) {
-		this(modules.mTraceChecks, modules.mInterpolantGenerators, modules.mInterpolantAutomatonBuilder, blacklist);
+		this(factory, modules.mTraceChecks, modules.mInterpolantGenerators, modules.mInterpolantAutomatonBuilder,
+				blacklist);
 	}
 
-	public BasicRefinementStrategy(final IIpTcStrategyModule<?, LETTER>[] traceChecks,
+	public BasicRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+			final IIpTcStrategyModule<?, LETTER>[] traceChecks,
 			final IIpAbStrategyModule<LETTER> interpolantAutomatonBuilder,
 			final RefinementStrategyExceptionBlacklist blacklist) {
-		this(traceChecks, traceChecks, interpolantAutomatonBuilder, blacklist);
+		this(factory, traceChecks, traceChecks, interpolantAutomatonBuilder, blacklist);
 	}
 
 	@Override
@@ -99,8 +108,8 @@ public class BasicRefinementStrategy<LETTER extends IIcfgTransition<?>> implemen
 	}
 
 	@Override
-	public boolean hasNextInterpolantGenerator(final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
+	public boolean hasNextInterpolantGenerator(final List<QualifiedTracePredicates> perfectIpps,
+			final List<QualifiedTracePredicates> imperfectIpps) {
 		if (needsMoreInterpolants(perfectIpps, imperfectIpps)) {
 			return mCurrentIndexInterpolantGenerator < mInterpolantGenerators.length;
 		}
@@ -127,8 +136,13 @@ public class BasicRefinementStrategy<LETTER extends IIcfgTransition<?>> implemen
 	}
 
 	@Override
-	public IHoareTripleChecker getHoareTripleChecker() {
+	public IHoareTripleChecker getHoareTripleChecker(final IRefinementEngine<?> engine) {
 		return null;
+	}
+
+	@Override
+	public IPredicateUnifier getPredicateUnifier(final IRefinementEngine<?> engine) {
+		return mDefaultPredicateUnifier;
 	}
 
 	/**
@@ -142,12 +156,24 @@ public class BasicRefinementStrategy<LETTER extends IIcfgTransition<?>> implemen
 	 * @return true if we should try with another interpolant generator, false if we should build an automaton from the
 	 *         interpolants we have.
 	 */
-	protected boolean needsMoreInterpolants(final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps) {
+	protected boolean needsMoreInterpolants(final List<QualifiedTracePredicates> perfectIpps,
+			final List<QualifiedTracePredicates> imperfectIpps) {
 		if (!perfectIpps.isEmpty()) {
 			return false;
 		}
 		return imperfectIpps.size() < DEFAULT_INTERPOLANT_THRESHOLD;
+	}
+
+	protected ITraceCheckStrategyModule<?>[] getTraceCheckModules() {
+		return mTraceChecks;
+	}
+
+	protected IIpgStrategyModule<?, LETTER>[] getInterpolantGeneratorModules() {
+		return mInterpolantGenerators;
+	}
+
+	protected IIpAbStrategyModule<LETTER> getInterpolantAutomatonBuilderModule() {
+		return mInterpolantAutomatonBuilder;
 	}
 
 	/**

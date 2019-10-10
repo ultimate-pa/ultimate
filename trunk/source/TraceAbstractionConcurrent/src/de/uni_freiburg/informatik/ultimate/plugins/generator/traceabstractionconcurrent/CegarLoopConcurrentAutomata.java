@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
@@ -155,16 +156,21 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 
 		final INestedWordAutomaton<LETTER, IPredicate> oldAbstraction =
 				(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
-		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices,
-				mPref.getHoareTripleChecks(), mCsToolkit, mRefinementEngine.getPredicateUnifier());
+		final IPredicateUnifier predicateUnifier = mRefinementEngine.getPredicateUnifier();
+		final IHoareTripleChecker htc;
+		if (mRefinementEngine.getHoareTripleChecker() != null) {
+			htc = mRefinementEngine.getHoareTripleChecker();
+		} else {
+			htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+					mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);
+		}
 		mLogger.debug("Start constructing difference");
 		// assert (oldAbstraction.getStateFactory() == mInterpolAutomaton.getStateFactory());
 
 		IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> diff;
 
-		final DeterministicInterpolantAutomaton<LETTER> determinized =
-				new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, mInterpolAutomaton,
-						mRefinementEngine.getPredicateUnifier(), false, false);
+		final DeterministicInterpolantAutomaton<LETTER> determinized = new DeterministicInterpolantAutomaton<>(
+				mServices, mCsToolkit, htc, mInterpolAutomaton, predicateUnifier, false, false);
 		// ComplementDeterministicNwa<LETTER, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
 		final PowersetDeterminizer<LETTER, IPredicate> psd2 =

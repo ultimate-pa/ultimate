@@ -32,9 +32,11 @@ import java.util.Collections;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -76,19 +78,19 @@ public abstract class IpTcStrategyModuleBase<T extends IInterpolatingTraceCheck<
 	}
 
 	@Override
-	public Collection<TracePredicates> getPerfectInterpolantSequences() {
+	public Collection<QualifiedTracePredicates> getPerfectInterpolantSequences() {
 		final T tc = getOrConstruct();
 		if (tc.isPerfectSequence()) {
-			return Collections.singleton(tc.getIpp());
+			return Collections.singleton(new QualifiedTracePredicates(tc.getIpp(), tc.getClass(), true));
 		}
 		return Collections.emptyList();
 	}
 
 	@Override
-	public Collection<TracePredicates> getImperfectInterpolantSequences() {
+	public Collection<QualifiedTracePredicates> getImperfectInterpolantSequences() {
 		final T tc = getOrConstruct();
 		if (!tc.isPerfectSequence()) {
-			return Collections.singleton(tc.getIpp());
+			return Collections.singleton(new QualifiedTracePredicates(tc.getIpp(), tc.getClass(), false));
 		}
 		return Collections.emptyList();
 	}
@@ -99,6 +101,16 @@ public abstract class IpTcStrategyModuleBase<T extends IInterpolatingTraceCheck<
 			mTrack = construct();
 		}
 		return mTrack;
+	}
+
+	@Override
+	public IHoareTripleChecker getHoareTripleChecker() {
+		return null;
+	}
+
+	@Override
+	public IPredicateUnifier getPredicateUnifier() {
+		return null;
 	}
 
 	protected abstract T construct();

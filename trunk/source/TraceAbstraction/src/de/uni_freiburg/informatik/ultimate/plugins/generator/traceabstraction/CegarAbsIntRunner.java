@@ -256,6 +256,13 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		return mCurrentIteration.getHoareTripleChecker();
 	}
 
+	public IPredicateUnifier getPredicateUnifier() {
+		if (mCurrentIteration == null) {
+			throw createNoFixpointsException();
+		}
+		return mCurrentIteration.getPredicateUnifier();
+	}
+
 	public IInterpolatingTraceCheck<LETTER> getInterpolantGenerator() {
 		if (mCurrentIteration == null) {
 			return new AbsIntFailedInterpolantGenerator<>(mPredicateUnifierSmt, null, ItpErrorStatus.ALGORITHM_FAILED,
@@ -370,7 +377,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			case RATIO:
 				return mRatioSum.getOrDefault(key, 0.0) / (double) mRatioFrequency.getOrDefault(key, 1);
 			case TIMER:
-				return mStopwatches.getElapsedTime(key.getName(), TimeUnit.NANOSECONDS);
+				return (long) mStopwatches.getElapsedTime(key.getName(), TimeUnit.NANOSECONDS);
 			default:
 				throw new UnsupportedOperationException("Unsupported key type " + key.getType());
 			}
@@ -483,6 +490,10 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					mPredicateUnifierSmt.getPredicateFactory(), mCsToolkit.getSymbolTable(),
 					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 					mFalsePredicate, mTruePredicate);
+		}
+
+		public IPredicateUnifier getPredicateUnifier() {
+			return mPredicateUnifierAbsInt;
 		}
 
 		public IAbstractInterpretationResult<STATE, LETTER, ?> getResult() {
@@ -721,7 +732,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
-	private static final class AbsIntInterpolantGenerator<LETTER extends IAction>
+	public static final class AbsIntInterpolantGenerator<LETTER extends IAction>
 			extends AbsIntBaseInterpolantGenerator<LETTER> {
 
 		private final IPredicate[] mInterpolants;

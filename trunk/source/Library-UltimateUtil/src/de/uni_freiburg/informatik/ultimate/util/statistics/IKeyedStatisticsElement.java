@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 University of Freiburg
  *
  * This file is part of the ULTIMATE Util Library.
  *
@@ -27,9 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
 /**
- * TODO consider rewriting this interface as mentioned in {@link KeyType}.
- *
- * @author Matthias Heizmann
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public interface IKeyedStatisticsElement extends IStatisticsElement {
 

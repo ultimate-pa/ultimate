@@ -54,8 +54,8 @@ public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>> extends B
 
 	public WolfRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(),
-				exceptionBlacklist);
+		super(factory, createModules(factory),
+				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@SuppressWarnings("unchecked")
