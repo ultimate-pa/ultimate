@@ -188,7 +188,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 		mTruePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("true"));
 		mFalsePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("false"));
-		mGlobalFrames = initializeFrames(mPpIcfg);
+		mGlobalFrames = initializeGlobalFrames(mPpIcfg);
 		mSatProofObligations = new ArrayDeque<Pair<ProofObligation, ProofObligation>>();
 		mLogger.info("Analyzing path program with PDR");
 
@@ -293,7 +293,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		/**
 		 * Initialize level 0.
 		 */
-		final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames = initializeFrames(icfg);
+		final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames = initializeLocalFrames(icfg);
 		int localLevel = 0;
 
 		while (true) {
@@ -541,8 +541,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 						 * The rest of the program proves that the precondition needed for the procedure to lead to the
 						 * error cannot be created. Which means, updating global frames and redo the procedure PDR to
 						 * check if the error is now unreachable. If so try to block the proof-obligation that found the
-						 * return. TODO: Propagate newly information of susequent PDR calls back to procedure. -> Change
-						 * how frames are initialized.
+						 * return.
 						 */
 						if (subTraceResult == LBool.UNSAT) {
 							mLogger.debug("Recursive is unsat");
@@ -551,6 +550,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 											.getTarget(),
 									localLevel, localFrames);
 							updateGlobalFrames(localFrames, localLevel);
+							/**
+							 * TODO There is something wrong about the PDR calculation, a predicate missing
+							 */
 							procResult = computePdr(pp.getPathProgram(), procedurePo);
 							proofObligations.addFirst(proofObligation);
 
@@ -779,8 +781,14 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		}
 	}
 
+	/**
+	 * Initializes a new set of global frames for the give icfg.
+	 * 
+	 * @param icfg
+	 * @return
+	 */
 	final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>>
-			initializeFrames(final IIcfg<? extends IcfgLocation> icfg) {
+			initializeGlobalFrames(final IIcfg<? extends IcfgLocation> icfg) {
 		final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames = new HashMap<>();
 		final Set<? extends IcfgLocation> init = icfg.getInitialNodes();
 		final Set<? extends IcfgLocation> error = IcfgUtils.getErrorLocations(mPpIcfg);
@@ -791,23 +799,40 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				continue;
 			}
 			localFrames.put(loc, new ArrayList<>());
-
-			/*
-			 * Assume we only have one errorstate.
-			 */
 			if (init.contains(loc)) {
-				// for (final IcfgLocation errorloc : error) {
-				// not used anymore, each initial node needs to be true.
-				// if (errorloc.getProcedure().equals(loc.getProcedure())) {
-				// localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mAxioms));
-				// } else {
-				// localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mFalsePred));
-				// }
 				localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mAxioms));
-				// }
 			} else {
 				localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mFalsePred));
 			}
+		}
+		return localFrames;
+	}
+
+	/**
+	 * Initializes a new set of local frames for the given icfg.
+	 * 
+	 * @param icfg
+	 * @return
+	 */
+	final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>>
+			initializeLocalFrames(final IIcfg<? extends IcfgLocation> icfg) {
+		final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames = new HashMap<>();
+		final Set<? extends IcfgLocation> error = IcfgUtils.getErrorLocations(mPpIcfg);
+		final IcfgLocationIterator<? extends IcfgLocation> iter = new IcfgLocationIterator<>(icfg);
+		while (iter.hasNext()) {
+			final IcfgLocation loc = iter.next();
+			if (error.contains(loc)) {
+				continue;
+			}
+			final List<Pair<ChangedFrame, IPredicate>> newLocalFrame = new ArrayList<Pair<ChangedFrame, IPredicate>>();
+			List<Pair<ChangedFrame, IPredicate>> globalFrame = mGlobalFrames.get(loc);
+
+			for (int i = 0; i < globalFrame.size(); i++) {
+				final Pair<ChangedFrame, IPredicate> globalPred = globalFrame.get(i);
+				final IPredicate localPred = mPredicateUnifier.getOrConstructPredicate(globalPred.getSecond());
+				newLocalFrame.add(new Pair<>(globalPred.getFirst(), localPred));
+			}
+			localFrames.put(loc, newLocalFrame);
 		}
 		return localFrames;
 	}
@@ -848,7 +873,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	/**
-	 * Get a trace of a proecdure
+	 * Get the part from the initial location of mTrace to the given target.
 	 *
 	 * @param callLoc
 	 * @param returnTrans
