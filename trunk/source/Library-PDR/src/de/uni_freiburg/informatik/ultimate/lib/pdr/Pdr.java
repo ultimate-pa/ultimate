@@ -304,8 +304,15 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			 * Initialize new level.
 			 */
 			final Deque<ProofObligation> proofObligations = new ArrayDeque<>(firstPos);
-			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> trace : localFrames.entrySet()) {
-				trace.getValue().add(new Pair<>(ChangedFrame.U, mAxioms));
+			if (mLevel > localLevel) {
+				for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> trace : localFrames.entrySet()) {
+					final IPredicate global = mGlobalFrames.get(trace.getKey()).get(localLevel + 1).getSecond();
+					trace.getValue().add(new Pair<>(ChangedFrame.U, mPredicateUnifier.getOrConstructPredicate(global)));
+				}
+			} else {
+				for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> trace : localFrames.entrySet()) {
+					trace.getValue().add(new Pair<>(ChangedFrame.U, mAxioms));
+				}
 			}
 
 			localLevel += 1;
@@ -827,11 +834,10 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			final List<Pair<ChangedFrame, IPredicate>> newLocalFrame = new ArrayList<Pair<ChangedFrame, IPredicate>>();
 			List<Pair<ChangedFrame, IPredicate>> globalFrame = mGlobalFrames.get(loc);
 
-			for (int i = 0; i < globalFrame.size(); i++) {
-				final Pair<ChangedFrame, IPredicate> globalPred = globalFrame.get(i);
-				final IPredicate localPred = mPredicateUnifier.getOrConstructPredicate(globalPred.getSecond());
-				newLocalFrame.add(new Pair<>(globalPred.getFirst(), localPred));
-			}
+			final Pair<ChangedFrame, IPredicate> globalPred = globalFrame.get(0);
+			final IPredicate localPred = mPredicateUnifier.getOrConstructPredicate(globalPred.getSecond());
+			newLocalFrame.add(new Pair<>(globalPred.getFirst(), localPred));
+
 			localFrames.put(loc, newLocalFrame);
 		}
 		return localFrames;
