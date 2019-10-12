@@ -318,11 +318,20 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 						ia.addInternalTransition(state, letter, state);
 					}
 				}
-				final DifferencePairwiseOnDemand<LETTER, IPredicate> dpod = new DifferencePairwiseOnDemand<>(
-						new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
-						(IPetriNet<LETTER, IPredicate>) mAbstraction, raw, universalSubtrahendLoopers);
-				onDemandConstructedNet = dpod.getResult();
-				raw.switchToReadonlyMode();
+				try {
+					final DifferencePairwiseOnDemand<LETTER, IPredicate> dpod = new DifferencePairwiseOnDemand<>(
+							new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
+							(IPetriNet<LETTER, IPredicate>) mAbstraction, raw, universalSubtrahendLoopers);
+					onDemandConstructedNet = dpod.getResult();
+				} catch (final AutomataOperationCanceledException tce) {
+					final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
+					final String taskDescription = generateOnDemandEnhancementCanceledMessage(interpolAutomaton,
+							universalSubtrahendLoopers, mAbstraction.getAlphabet(), mIteration);
+					tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+					throw tce;
+				} finally {
+					raw.switchToReadonlyMode();
+				}
 			} else {
 				onDemandConstructedNet = null;
 			}
@@ -362,6 +371,13 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		// + mCounterexample.getWord();
 		mLogger.debug("Sucessfully determinized");
 		return new Pair<>(dia, onDemandConstructedNet);
+	}
+
+	private String generateOnDemandEnhancementCanceledMessage(
+			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final Set<LETTER> universalSubtrahendLoopers,
+			final Set<LETTER> alphabet, final int iteration) {
+		return "enhancing Floyd-Hoare automaton (" + interpolAutomaton.getStates().size() + "states, "
+				+ universalSubtrahendLoopers.size() + "/" + alphabet.size() + " universal loopers) in iteration " + iteration;
 	}
 
 	private Set<LETTER> determineUniversalSubtrahendLoopers(final Set<LETTER> alphabet, final Set<IPredicate> states) {
