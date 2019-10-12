@@ -324,7 +324,6 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 							(IPetriNet<LETTER, IPredicate>) mAbstraction, raw, universalSubtrahendLoopers);
 					onDemandConstructedNet = dpod.getResult();
 				} catch (final AutomataOperationCanceledException tce) {
-					final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
 					final String taskDescription = generateOnDemandEnhancementCanceledMessage(interpolAutomaton,
 							universalSubtrahendLoopers, mAbstraction.getAlphabet(), mIteration);
 					tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
