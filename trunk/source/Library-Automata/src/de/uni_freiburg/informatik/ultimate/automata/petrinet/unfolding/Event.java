@@ -66,7 +66,6 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	private Event<LETTER, PLACE> mCompanion;
 	private final ITransition<LETTER, PLACE> mTransition;
 	private final Map<PLACE, Set<PLACE>> mPlaceCorelationMap;
-	private int mBackfoldingId;
 	/**
 	 * Creates an Event from its predecessor conditions and the transition from the net system it is mapped to by the
 	 * homomorphism. Its successor conditions are automatically created. The given set not be referenced directly, but
@@ -365,13 +364,6 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		return mTransition;
 	}
 	
-	public void setBackfoldingId(int backfoldingId) {
-		mBackfoldingId = backfoldingId;
-	}
-
-	public int getBackfoldingId() {
-		return mBackfoldingId;
-	}
 	
 	@Override
 	public String toString() {

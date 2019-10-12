@@ -34,12 +34,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Map.Entry;
-import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -192,6 +190,30 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			}
 
 		}
+
+		Map<Event<LETTER, PLACE>, Integer> BackfoldingId = new HashMap<>();
+		
+		if (mUseBackfoldingIds) {
+			ArrayList<Event<LETTER, PLACE>> eventList = new ArrayList<>(bp.getEvents());
+			eventList.sort(bp.getOrder());
+			int i = 0;
+			int numberOfEventsWithLessAnsc = 0;
+			int indexOfNextElemWithMoreAnsc = 0;
+			while (i < eventList.size()) {
+				if (i == indexOfNextElemWithMoreAnsc) {
+					numberOfEventsWithLessAnsc = i;
+					indexOfNextElemWithMoreAnsc = i + 1;
+					while ((indexOfNextElemWithMoreAnsc < eventList.size()) && (eventList.get(i)
+							.getAncestors() < eventList.get(indexOfNextElemWithMoreAnsc).getAncestors())) {
+						indexOfNextElemWithMoreAnsc++;
+					}
+				}
+				BackfoldingId.put(eventList.get(i),
+						eventList.size() - indexOfNextElemWithMoreAnsc + i - numberOfEventsWithLessAnsc);
+				i++;
+			}
+		}
+
 		PriorityQueue<Event<LETTER, PLACE>> eventQueue;
 		final Set<Event<LETTER, PLACE>> releventEvents = new HashSet<>(bp.getEvents());
 		if (mExtendedBackfolding) {
@@ -218,7 +240,9 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 
 						}
 						releventEvents.remove(e1);
-						e2.setBackfoldingId(e1.getBackfoldingId());
+						if (mUseBackfoldingIds) {
+							BackfoldingId.put(e2, BackfoldingId.get(e1));
+						}
 						break;
 					}
 				}
@@ -238,9 +262,10 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				placeMap.put(c, place);
 			}
 		}
-		
+
 		if (mUseBackfoldingIds) {
-			eventQueue = new PriorityQueue<>(new IdBasedEventSorting());
+			Comparator<Event<LETTER, PLACE>> idBasedComparator = new IdBasedEventSorting(BackfoldingId);
+			eventQueue = new PriorityQueue<>(idBasedComparator);
 			eventQueue.addAll(releventEvents);
 			while (!eventQueue.isEmpty()) {
 				Event<LETTER, PLACE> e = eventQueue.poll();
@@ -587,9 +612,15 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 
 
 	class IdBasedEventSorting implements Comparator<Event<LETTER, PLACE>> {
+		private Map<Event<LETTER, PLACE>, Integer> mEventIdMap;
+		
+		public IdBasedEventSorting (Map<Event<LETTER, PLACE>, Integer>eventIdMap){
+			super();
+			mEventIdMap =  eventIdMap;
+		}
 		@Override
 		public int compare(Event<LETTER, PLACE> e1, Event<LETTER, PLACE> e2) {
-			return e1.getBackfoldingId() - e2.getBackfoldingId();
+			return mEventIdMap.get(e1) -  mEventIdMap.get(e2);
 		}
 	}
 

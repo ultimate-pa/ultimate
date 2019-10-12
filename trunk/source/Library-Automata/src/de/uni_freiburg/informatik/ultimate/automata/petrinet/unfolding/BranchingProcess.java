@@ -136,7 +136,6 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * @throws PetriNetNot1SafeException
 	 */
 	boolean addEvent(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
-		event.setBackfoldingId(mEvents.size());
 		mEvents.add(event);
 		mMarkingEventRelation.addPair(event.getMark().hashCode(), event);
 		for (final Condition<LETTER, PLACE> c : event.getPredecessorConditions()) {
