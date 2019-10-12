@@ -48,7 +48,6 @@ public class AbsIntRegressionTestSuite extends AbstractRegressionTestSuite {
 		mRootFolder = TestUtil.getPathFromTrunk("examples/programs/abstractInterpretation/");
 		mFiletypesToConsider = new String[] { ".bpl" };
 		// mExcludeFilterRegex = ".*((open)|(oct)|(non_taipan)|(non_con)|(all)).*";
-		mIncludeFilterRegexToolchain = ".*Taipan.*";
 	}
 
 	@Override
