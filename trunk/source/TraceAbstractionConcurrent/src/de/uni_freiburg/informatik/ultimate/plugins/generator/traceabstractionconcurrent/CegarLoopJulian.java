@@ -374,10 +374,11 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	}
 
 	private String generateOnDemandEnhancementCanceledMessage(
-			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final Set<LETTER> universalSubtrahendLoopers,
-			final Set<LETTER> alphabet, final int iteration) {
+			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton,
+			final Set<LETTER> universalSubtrahendLoopers, final Set<LETTER> alphabet, final int iteration) {
 		return "enhancing Floyd-Hoare automaton (" + interpolAutomaton.getStates().size() + "states, "
-				+ universalSubtrahendLoopers.size() + "/" + alphabet.size() + " universal loopers) in iteration " + iteration;
+				+ universalSubtrahendLoopers.size() + "/" + alphabet.size() + " universal loopers) in iteration "
+				+ iteration;
 	}
 
 	private Set<LETTER> determineUniversalSubtrahendLoopers(final Set<LETTER> alphabet, final Set<IPredicate> states) {
