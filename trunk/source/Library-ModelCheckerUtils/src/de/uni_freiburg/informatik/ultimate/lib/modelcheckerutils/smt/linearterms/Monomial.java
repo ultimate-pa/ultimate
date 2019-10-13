@@ -132,24 +132,22 @@ public class Monomial extends Term {
 	 */
 	public Term toTerm(final Script script) {
 		Term[] factors;
-		factors = new Term[mVariable2Exponent.size()];
+		Rational size = Rational.ZERO;
+		for (final Rational exp : mVariable2Exponent.values()) {
+			assert !exp.equals(Rational.ZERO) : "zero is no legal exponent in AffineTerm";
+			assert !(exp.signum() == -1);
+			assert exp.isIntegral();
+			size = size.add(exp);
+		}
+		factors = new Term[size.numerator().intValueExact()];
 		int i = 0;
 		for (final Map.Entry<Term, Rational> entry : mVariable2Exponent.entrySet()) {
-			assert !entry.getValue().equals(Rational.ZERO) : "zero is no legal exponent in AffineTerm";
-			assert !(entry.getValue().signum() == -1);
 			Term factor = entry.getKey();
-			assert entry.getValue().isIntegral();
-			// TODO: Ask Matthias about whether it is to be expected that the implementation of isintegral changes.
-			// Because then this could be made easier.
-			final BigInteger exponent = entry.getValue().numerator().divide(entry.getValue().denominator());
-			final Term singlefactor = factor;
-			// Here we could use intValueExact. But I think it would be veeeeery unusual to have such big exponents.
-			// Nonetheless: TODO: Better ask Matthias about this
-			for (int j = 1; j < exponent.intValue(); j++) {
-				factor = SmtUtils.mul(script, mSort, factor, singlefactor);
+			final int exponent = entry.getValue().numerator().intValueExact();
+			for (int j = 0; j < exponent; j++) {
+				factors[i] = factor;
+				++i;
 			}
-			factors[i] = factor;
-			++i;
 		}
 		final Term result = SmtUtils.mul(script, mSort, factors);
 		return result;

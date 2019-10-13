@@ -334,10 +334,9 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 					//do nothing
 				}else {
 					//TODO: Integer sort tests
+					//TODO: Flatten this
 					assert var2exp.getValue().isIntegral();
-					// TODO: Ask Matthias about whether it is to be expected that the implementation of isintegral changes.
-					// Because then this could be made easier.
-					final int exponent = var2exp.getValue().numerator().divide(var2exp.getValue().denominator()).intValue();
+					final int exponent = var2exp.getValue().numerator().intValueExact();
 					final Term power;
 					if (exponent >= 2) {
 						final Term[] factors = new Term[exponent];
@@ -350,6 +349,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 					}
 					//TODO: Ask Matthias whether it matters much, that redundant assumptions could get added
 					//e.g. when you already have x != 0 and you have to divide by x again.
+					// Better detect it before adding them.
 					if (SmtSortUtils.isRealSort(mAffineTerm.getSort())){
 						makeRealAssumptions(assumptionMapBuilder, var2exp.getKey());
 						final Term invPower = script.term("/", SmtUtils.rational2Term(script, Rational.ONE, 
