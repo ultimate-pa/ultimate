@@ -283,11 +283,6 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		return mAbstractVariable2Coefficient;
 	}
 
-	@Override
-	public Map<Term, Rational> getVariable2Coefficient() {
-		throw new UnsupportedOperationException("This PolynomialTerm has no Map in this representation.");
-	}
-
 	/**
 	 * @return true iff var is a variable of this {@link PolynomialTerm} (i.e., if var is a variable of some
 	 *         {@link Monomial} that has a non-zero coefficient) Note that for returning true it is especially NOT
