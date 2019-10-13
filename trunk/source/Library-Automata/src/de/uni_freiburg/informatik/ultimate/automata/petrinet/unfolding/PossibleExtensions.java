@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
 
@@ -86,7 +87,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	}
 
 	@Override
-	public void update(final Event<LETTER, PLACE> event) {
+	public void update(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
 		final Collection<Candidate<LETTER, PLACE>> candidates = computeCandidates(event);
 		for (final Candidate<LETTER, PLACE> candidate : candidates) {
 			if (candidate.getInstantiated().isEmpty()) {
@@ -107,7 +108,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 * extensions (ones whose predecessors are a co-set) to he possible extension set.
 	 */
 	@SuppressWarnings("squid:S1698")
-	private void evolveCandidate(final Candidate<LETTER, PLACE> cand) {
+	private void evolveCandidate(final Candidate<LETTER, PLACE> cand) throws PetriNetNot1SafeException {
 		if (cand.isFullyInstantiated()) {
 			for (final ITransition<LETTER, PLACE> trans : cand.getTransition().getTransitions()) {
 				final Event<LETTER, PLACE> newEvent = new Event<>(cand.getInstantiated(), trans, mBranchingProcess);

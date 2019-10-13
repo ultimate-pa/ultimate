@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
@@ -151,13 +150,14 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 			}
 		}
 		mCoRelation.update(event);
-		final PLACE counterexampleToOneSafety = isOneSafe(event);
-		if (counterexampleToOneSafety != null) {
-			throw new PetriNetNot1SafeException(getClass(), Collections.singleton(counterexampleToOneSafety));
-		}
 		return someSuccessorIsAccepting;
 	}
 
+	/**
+	 * @deprecated Superseded by {@link ConditionMarking#getMarking()} which does
+	 *             not have additional costs.
+	 */
+	@Deprecated
 	private PLACE isOneSafe(final Event<LETTER, PLACE> event) {
 		for (final Condition<LETTER, PLACE> condition : event.getSuccessorConditions()) {
 			final Set<Condition<LETTER, PLACE>> existing = mPlace2Conds.getImage(condition.getPlace());

@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 
 /**
  * A Marking of an occurencenet which is a set of conditions.
@@ -168,11 +169,13 @@ public class ConditionMarking<LETTER, PLACE> implements Iterable<Condition<LETTE
 	/**
 	 * @return A new marking containing the places corresponding to the conditionMarkings Conditions.
 	 */
-	public Marking<LETTER, PLACE> getMarking() {
+	public Marking<LETTER, PLACE> getMarking() throws PetriNetNot1SafeException {
 		final HashSet<PLACE> mark = new HashSet<>();
 		for (final Condition<LETTER, PLACE> c : mConditions) {
-			assert !mark.contains(c.getPlace()) : "Petri Net not one safe!";
-			mark.add(c.getPlace());
+			final boolean wasAddedForTheFirstTime = mark.add(c.getPlace());
+			if (!wasAddedForTheFirstTime) {
+				throw new PetriNetNot1SafeException(this.getClass(), Collections.singleton(c.getPlace()));
+			}
 		}
 		return new Marking<>(mark);
 	}

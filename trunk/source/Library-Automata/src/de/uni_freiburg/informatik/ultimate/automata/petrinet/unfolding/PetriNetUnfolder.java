@@ -201,7 +201,12 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	 */
 	private PetriNetRun<LETTER, PLACE> constructRun(final Event<LETTER, PLACE> event) {
 		mLogger.debug("Marking: " + mUnfolding.getDummyRoot().getMark());
-		return constructRun(event, mUnfolding.getDummyRoot().getConditionMark()).mRunInner;
+		try {
+			return constructRun(event, mUnfolding.getDummyRoot().getConditionMark()).mRunInner;
+		} catch (final PetriNetNot1SafeException e) {
+			throw new AssertionError("Petri net not one safe for places " + e.getUnsafePlaces()
+					+ " but this should have been detected earlier.");
+		}
 	}
 
 	/**
@@ -210,7 +215,8 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	 * <p>
 	 * The run starts with the given Marking {@code initialMarking}
 	 */
-	private RunAndConditionMarking constructRun(final Event<LETTER, PLACE> event, final ConditionMarking<LETTER, PLACE> initialMarking) {
+	private RunAndConditionMarking constructRun(final Event<LETTER, PLACE> event,
+			final ConditionMarking<LETTER, PLACE> initialMarking) throws PetriNetNot1SafeException {
 		assert event != mUnfolding.getDummyRoot();
 		assert !event.getPredecessorConditions().isEmpty();
 		assert !mUnfolding.pairwiseConflictOrCausalRelation(event.getPredecessorConditions());

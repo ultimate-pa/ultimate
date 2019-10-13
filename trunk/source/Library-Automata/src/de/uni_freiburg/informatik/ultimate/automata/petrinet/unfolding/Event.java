@@ -38,6 +38,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 
 /**
  * Event of a {@link BranchingProcess}.
@@ -77,7 +78,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 *            homomorphism transition
 	 */
 	public Event(final Collection<Condition<LETTER, PLACE>> predecessors, final ITransition<LETTER, PLACE> transition,
-			final BranchingProcess<LETTER, PLACE> bp) {
+			final BranchingProcess<LETTER, PLACE> bp) throws PetriNetNot1SafeException {
 		assert conditionToPlaceEqual(predecessors,
 				bp.getNet().getPredecessors(transition)) : "An event was created with inappropriate predecessors.\n  "
 						+ "transition: " + transition.toString() + "\n  events predecessors: " + predecessors.toString()
@@ -293,14 +294,14 @@ public final class Event<LETTER, PLACE> implements Serializable {
 				return false;
 			}
 		}
-		
+
 		if (order.compare(companionCandidate, this) >= 0) {
 			return false;
 		}
-		
+
 		if (!companionCandidate.getPlaceCorelationMap().equals(getPlaceCorelationMap()))
 			return false;
-		
+
 		setCompanion(companionCandidate);
 		return true;
 	}
@@ -315,7 +316,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 */
 	public void computePlaceCorelationMap(
 			final BranchingProcess<LETTER, PLACE> bp) {
-			for (Condition<LETTER,PLACE> c:  getConditionMark())
+			for (final Condition<LETTER,PLACE> c:  getConditionMark())
 			{
 				mPlaceCorelationMap.put(c.getPlace(), bp.computeCoRelatedPlaces(c));
 			}
@@ -363,8 +364,8 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public ITransition<LETTER, PLACE> getTransition() {
 		return mTransition;
 	}
-	
-	
+
+
 	@Override
 	public String toString() {
 		return mHashCode + ":" + getTransition() + "," + mLocalConfiguration.size() + "A";
