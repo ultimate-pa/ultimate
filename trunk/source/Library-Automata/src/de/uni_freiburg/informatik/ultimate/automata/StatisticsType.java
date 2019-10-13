@@ -141,10 +141,6 @@ public enum StatisticsType {
 	 */
 	BUILD_SCC,
 	/**
-	 * Maximal amount of conditions per place.
-	 */
-	CONDITION_PER_PLACE_MAX,
-	/**
 	 * The time needed for computing which vertex down states are safe (used in simulation, for compatibility with
 	 * {@link ETimeMeasure}).
 	 */
@@ -154,6 +150,10 @@ public enum StatisticsType {
 	 * compatibility with {@link ETimeMeasure}).
 	 */
 	COMPUTE_SUMMARIZE_EDGE_PRIORITIES,
+	/**
+	 * Maximal amount of conditions per place.
+	 */
+	CONDITION_PER_PLACE_MAX,
 	/**
 	 * See {@link ICoRelation#computeMaximalDegree()}
 	 */
