@@ -36,9 +36,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
@@ -413,7 +413,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		}
 		return result;
 	}
-	
+
 	public boolean getNewFiniteComprehensivePrefixMode() {
 		return mNewFiniteComprehensivePrefixMode;
 	}
@@ -424,8 +424,8 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * @return the set of Co
 	 */
 	public Set<PLACE> computeCoRelatedPlaces(final Condition<LETTER, PLACE> cond) {
-		Set<PLACE> result = new HashSet<>();
-		for (Condition<LETTER,PLACE> c : mCoRelation.computeCoRelatatedConditions(cond))
+		final Set<PLACE> result = new HashSet<>();
+		for (final Condition<LETTER,PLACE> c : mCoRelation.computeCoRelatatedConditions(cond))
 		{
 			result.add(c.getPlace());
 		}
@@ -447,6 +447,12 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		return mConditions.size();
 	}
 
+	public int computeConditionPerPlaceMax() {
+		final int max = mPlace2Conds.getDomain().stream().map(x -> mPlace2Conds.getImage(x).size()).max(Integer::compare)
+				.orElse(0);
+		return max;
+	}
+
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return mNet.getAlphabet();
@@ -457,7 +463,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 			throws AutomataOperationCanceledException {
 		return new BranchingProcessToUltimateModel<LETTER, PLACE>().transformToUltimateModel(this);
 	}
-	
+
 	@Override
 	public String toString() {
 		return (new AutomatonDefinitionPrinter<String, String>(mServices, "branchingProcess", Format.ATS, this))

@@ -157,10 +157,12 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 						.getUsefulExtensionCandidates() + numberOfUselessExtensionCandidates;
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
 						"constructing finite prefix that currently has " + mUnfolding.getConditions().size()
-								+ " conditions, " + mUnfolding.getEvents().size() + " events, and "
-								+ mPossibleExtensions.size() + " possible extensions. " + numberOfExtensionsCandidates
-								+ " extension candidates were considered " + numberOfUselessExtensionCandidates
-								+ " were useless");
+								+ " conditions, " + mUnfolding.getEvents().size() + " events (" +
+								mStatistics.prettyprintCutOffInformation() + " " +
+								mStatistics.prettyprintCoRelationInformation() + " " +
+								mStatistics.prettyprintPossibleExtensionInformation() + " " +
+								mStatistics.prettyprintCoRelationMaximalDegree() + " " +
+								mStatistics.prettyprintConditionPerPlaceMax() + ")");
 				throw new AutomataOperationCanceledException(rti);
 			}
 		}
@@ -374,10 +376,25 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 					+ " co-relation queries the response was YES.";
 		}
 
+		public String prettyprintPossibleExtensionInformation() {
+			return getNumberOfUselessExtensionCandidates() + "/" + getNumberOfExtensionCandidates()
+					+ " useless extension candidates.";
+		}
+
+		public String prettyprintCoRelationMaximalDegree() {
+			return "Maximal degree in co-relation " + mUnfolding.getCoRelation().computeMaximalDegree() + ".";
+		}
+
+		public String prettyprintConditionPerPlaceMax() {
+			return "Up to " + mUnfolding.computeConditionPerPlaceMax() + " conditions per place.";
+		}
+
+
+
 		public long getCoRelationQueriesYes() {
 			return mUnfolding.getCoRelation().getQueryCounterYes();
 		}
-		
+
 		public long getCoRelationQueriesNo() {
 			return mUnfolding.getCoRelation().getQueryCounterNo();
 		}

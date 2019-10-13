@@ -88,8 +88,12 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 		sb.append(" ");
 		sb.append(mUnfoldingStatistics.prettyprintCoRelationInformation());
 		sb.append(" ");
-		sb.append(mUnfoldingStatistics.getNumberOfUselessExtensionCandidates() + "/"
-				+ mUnfoldingStatistics.getNumberOfExtensionCandidates() + " useless extension candidates.");
+		sb.append(mUnfoldingStatistics.prettyprintPossibleExtensionInformation());
+		sb.append(" ");
+		sb.append(mUnfoldingStatistics.prettyprintCoRelationMaximalDegree());
+		sb.append(" ");
+		sb.append(mUnfoldingStatistics.prettyprintConditionPerPlaceMax());
+		sb.append(" ");
 		return sb.toString();
 	}
 
@@ -124,6 +128,11 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 		statistics.addKeyValuePair(StatisticsType.EXTENSION_CANDIDATES_USELESS,
 				mUnfoldingStatistics.getNumberOfUselessExtensionCandidates());
 
+		statistics.addKeyValuePair(StatisticsType.CO_RELATION_MAX_DEGREE,
+				mUnfoldingStatistics.prettyprintCoRelationMaximalDegree());
+
+		statistics.addKeyValuePair(StatisticsType.CONDITION_PER_PLACE_MAX,
+				mUnfoldingStatistics.prettyprintConditionPerPlaceMax());
 		return statistics;
 	}
 

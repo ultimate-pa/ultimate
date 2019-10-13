@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaSimulationBased;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 
 /**
  * Type of statistics that can be reported to the
@@ -140,6 +141,10 @@ public enum StatisticsType {
 	 */
 	BUILD_SCC,
 	/**
+	 * Maximal amount of conditions per place.
+	 */
+	CONDITION_PER_PLACE_MAX,
+	/**
 	 * The time needed for computing which vertex down states are safe (used in simulation, for compatibility with
 	 * {@link ETimeMeasure}).
 	 */
@@ -149,6 +154,10 @@ public enum StatisticsType {
 	 * compatibility with {@link ETimeMeasure}).
 	 */
 	COMPUTE_SUMMARIZE_EDGE_PRIORITIES,
+	/**
+	 * See {@link ICoRelation#computeMaximalDegree()}
+	 */
+	CO_RELATION_MAX_DEGREE,
 	/**
 	 * The amount of states the determinized game automaton has (used in simulation, for compatibility with
 	 * {@link ECountingMeasure}).

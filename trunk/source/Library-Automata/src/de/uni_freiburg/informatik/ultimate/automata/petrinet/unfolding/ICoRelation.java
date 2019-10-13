@@ -121,4 +121,13 @@ public interface ICoRelation<LETTER, PLACE> {
 	 *         {@link Condition} cond.
 	 */
 	Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(Condition<LETTER, PLACE> cond);
+
+
+	/**
+	 * Compute <pre>max {numberOfCoRelated(c)|c ∈ C}</pre> where C is the set
+	 * of all conditions and numberOfCoRelated is the function that assigns
+	 * to a condition c the number of all conditions that are in co-relation
+	 * to c.
+	 */
+	int computeMaximalDegree();
 }

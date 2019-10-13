@@ -75,7 +75,7 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	public long getQueryCounterYes() {
 		return mQueryCounterYes;
 	}
-	
+
 	@Override
 	public long getQueryCounterNo() {
 		return mQueryCounterNo;
@@ -317,5 +317,14 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 				.flatMap(x -> x.getSuccessorConditions().stream()).collect(Collectors.toSet());
 		cond.getPredecessorEvent().getConditionMark().addTo(result);
 		return result;
+	}
+
+	@Override
+	public int computeMaximalDegree() {
+		final Integer max = mCoRelation
+				.getDomain().stream().map(x -> mCoRelation.getImage(x).stream()
+						.map(y -> y.getSuccessorConditions().size()).reduce(0, Integer::sum))
+				.max(Integer::compare).orElse(Integer.valueOf(0));
+		return max;
 	}
 }
