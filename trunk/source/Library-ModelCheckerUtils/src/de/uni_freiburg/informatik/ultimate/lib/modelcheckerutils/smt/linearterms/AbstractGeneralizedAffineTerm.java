@@ -213,7 +213,6 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 			if (entry.getValue().equals(Rational.ONE)) {
 				summands[i] = abstractVariableToTerm(script, entry.getKey());
 			} else {
-				final Term coeff = SmtUtils.rational2Term(script, entry.getValue(), mSort);
 				summands[i] = abstractVariableTimesCoeffToTerm(script, entry.getKey(), entry.getValue());
 			}
 			++i;
