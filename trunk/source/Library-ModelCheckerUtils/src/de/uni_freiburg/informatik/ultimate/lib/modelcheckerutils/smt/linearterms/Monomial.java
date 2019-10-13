@@ -131,16 +131,24 @@ public class Monomial extends Term {
 	 *            Script for that this term is constructed.
 	 */
 	public Term toTerm(final Script script) {
+		return timesCoefficientToTerm(script, Rational.ONE);
+	}
+	
+	/**
+	 * Transforms this Monomial times the given coefficient into a Term that is supported by the solver.
+	 */
+	public Term timesCoefficientToTerm(final Script script, Rational coeff) {
 		Term[] factors;
-		Rational size = Rational.ZERO;
-		for (final Rational exp : mVariable2Exponent.values()) {
-			assert !exp.equals(Rational.ZERO) : "zero is no legal exponent in AffineTerm";
-			assert !(exp.signum() == -1);
-			assert exp.isIntegral();
-			size = size.add(exp);
+		int i;
+		int size = sumOfExponents();
+		if (coeff.equals(Rational.ONE)) {
+			factors = new Term[size];
+			i = 0;
+		}else {
+			factors = new Term[size + 1];
+			factors[0] = SmtUtils.rational2Term(script, coeff, mSort);
+			i = 1;
 		}
-		factors = new Term[size.numerator().intValueExact()];
-		int i = 0;
 		for (final Map.Entry<Term, Rational> entry : mVariable2Exponent.entrySet()) {
 			Term factor = entry.getKey();
 			final int exponent = entry.getValue().numerator().intValueExact();
@@ -151,6 +159,17 @@ public class Monomial extends Term {
 		}
 		final Term result = SmtUtils.mul(script, mSort, factors);
 		return result;
+	}
+	
+	private int sumOfExponents() {
+		Rational size = Rational.ZERO;
+		for (final Rational exp : mVariable2Exponent.values()) {
+			assert !exp.equals(Rational.ZERO) : "zero is no legal exponent in AffineTerm";
+			assert !(exp.signum() == -1);
+			assert exp.isIntegral();
+			size = size.add(exp);
+		}
+		return size.numerator().intValueExact();
 	}
 
 	@Override

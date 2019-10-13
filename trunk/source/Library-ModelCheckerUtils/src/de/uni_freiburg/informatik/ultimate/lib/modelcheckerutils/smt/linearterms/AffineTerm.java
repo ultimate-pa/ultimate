@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialTermUtils.GeneralizedConstructor;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -219,6 +220,14 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 	@Override
 	protected Term abstractVariableToTerm(final Script script, final Term abstractVariable) {
 		return abstractVariable;
+	}
+	
+	@Override
+	protected Term abstractVariableTimesCoeffToTerm(final Script script, final Term abstractVariable, final Rational coeff) {
+		Term[] factors = new Term[2];
+		factors[0] = abstractVariable;
+		factors[1] = SmtUtils.rational2Term(script, coeff, mSort);
+		return SmtUtils.mul(script, mSort, factors);
 	}
 
 }

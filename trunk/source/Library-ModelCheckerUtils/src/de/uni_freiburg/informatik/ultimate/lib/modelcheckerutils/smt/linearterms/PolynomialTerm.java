@@ -266,6 +266,11 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	protected Term abstractVariableToTerm(final Script script, final Monomial abstractVariable) {
 		return abstractVariable.toTerm(script);
 	}
+	
+	@Override
+	protected Term abstractVariableTimesCoeffToTerm(Script script, Monomial abstractVariable, Rational coeff) {
+		return abstractVariable.timesCoefficientToTerm(script, coeff);
+	}
 
 	public static PolynomialTerm applyModuloToAllCoefficients(final PolynomialTerm polynomialTerm,
 			final BigInteger divident) {

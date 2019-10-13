@@ -189,6 +189,11 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	protected abstract Term abstractVariableToTerm(Script script, AVAR abstractVariable);
 
 	/**
+	 * @return an SMT {@link Term} that represents an abstract variable that occurs in the map of this object TIMES the given coefficient.
+	 */
+	protected abstract Term abstractVariableTimesCoeffToTerm(Script script, AVAR abstractVariable, Rational coeff);
+	
+	/**
 	 * Transforms this {@link AbstractGeneralizedAffineTerm} into a Term that is supported by the solver.
 	 *
 	 * @param script
@@ -209,7 +214,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 				summands[i] = abstractVariableToTerm(script, entry.getKey());
 			} else {
 				final Term coeff = SmtUtils.rational2Term(script, entry.getValue(), mSort);
-				summands[i] = SmtUtils.mul(script, mSort, coeff, abstractVariableToTerm(script, entry.getKey()));
+				summands[i] = abstractVariableTimesCoeffToTerm(script, entry.getKey(), entry.getValue());
 			}
 			++i;
 		}
