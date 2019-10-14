@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.Topological
 
 public class TopsortCache {
 
+	// TODO change to weak hash map to allow garbage collector cached delete entries when we don't need them anymore
 	private final Map<RegexDag<IIcfgTransition<IcfgLocation>>, List<RegexDagNode<IIcfgTransition<IcfgLocation>>>>
 			mCache = new HashMap<>();
 

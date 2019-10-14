@@ -91,6 +91,8 @@ public class ProcedureResources {
 				markRegex(regexToReturn, exitNode));
 
 		mRegexDag = RegexStatUtils.getDagAndReset(stats, regexToDag);
+		// TODO this compression breaks something.
+		// I something stores nodes from before compression leading to errors later on
 		RegexStatUtils.compress(stats, mRegexDag);
 
 		mDagOverlayPathToLOIsAndEnterCalls = new BackwardClosedOverlay<>();
