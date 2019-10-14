@@ -1444,9 +1444,9 @@ public final class SmtUtils {
 		}
 		return script.term("div", dividend, divisor);
 	}
-	
-	
-	public static Term divReal(final Script script, final Term[] inputParams) {
+
+
+	public static Term divReal(final Script script, final Term... inputParams) {
 		final List<Term> resultParams = new ArrayList<>();
 		if (inputParams.length == 0) {
 			throw new IllegalArgumentException("real division needs at least one argument");
