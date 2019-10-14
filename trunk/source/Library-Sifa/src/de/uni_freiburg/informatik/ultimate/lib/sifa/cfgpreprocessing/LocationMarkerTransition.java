@@ -35,17 +35,28 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.RegexDag;
 
 /**
- * Transition to mark paths in {@link RegexDag}.
+ * Transition to mark paths uniquely in {@link RegexDag}.
  * 
  * @author schaetzc@tf.uni-freiburg.de
  */
 public class LocationMarkerTransition implements IIcfgInternalTransition<IcfgLocation> {
 
+	/** Marks generated so far. */
+	private static int sMarkCounter = 0;
+	
 	private static final long serialVersionUID = 1L;
 	private final IcfgLocation mMarkedTarget;
-
+	private final int mUniqueId; 
+	
+	/**
+	 * Creates a new unique mark.
+	 * 
+	 * @param markedTarget Label of the mark. Even two marks with the same label are unique/unequal.
+	 */
 	public LocationMarkerTransition(final IcfgLocation markedTarget) {
 		mMarkedTarget = markedTarget;
+		mUniqueId = sMarkCounter;
+		sMarkCounter++;
 	}
 
 	@Override
@@ -85,7 +96,7 @@ public class LocationMarkerTransition implements IIcfgInternalTransition<IcfgLoc
 
 	@Override
 	public String toString() {
-		return String.format("※ %s", mMarkedTarget);
+		return String.format("※%d %s", mUniqueId, mMarkedTarget);
 	}
 
 	@Override
@@ -103,6 +114,6 @@ public class LocationMarkerTransition implements IIcfgInternalTransition<IcfgLoc
 			return false;
 		}
 		final LocationMarkerTransition other = (LocationMarkerTransition) obj;
-		return Objects.equals(mMarkedTarget, other.mMarkedTarget);
+		return mUniqueId == other.mUniqueId;
 	}
 }

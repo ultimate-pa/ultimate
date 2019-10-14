@@ -91,8 +91,6 @@ public class ProcedureResources {
 				markRegex(regexToReturn, exitNode));
 
 		mRegexDag = RegexStatUtils.getDagAndReset(stats, regexToDag);
-		// TODO this compression breaks something.
-		// I something stores nodes from before compression leading to errors later on
 		RegexStatUtils.compress(stats, mRegexDag);
 
 		mDagOverlayPathToLOIsAndEnterCalls = new BackwardClosedOverlay<>();
@@ -104,7 +102,7 @@ public class ProcedureResources {
 		mDagOverlayPathToReturn.addExclusive(returnDagNode);
 	}
 
-	/**  Marks a regex by appending a marker literal based on a location. */
+	/**  Marks a regex by appending a unique marker literal. */
 	private static IRegex<IIcfgTransition<IcfgLocation>> markRegex(
 			final IRegex<IIcfgTransition<IcfgLocation>> regex, final IcfgLocation finalLocationAsMark) {
 		return Regex.concat(regex, Regex.literal(new LocationMarkerTransition(finalLocationAsMark)));
