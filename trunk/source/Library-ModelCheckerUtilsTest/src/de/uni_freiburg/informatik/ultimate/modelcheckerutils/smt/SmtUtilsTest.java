@@ -29,18 +29,19 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.core.runtime.Assert;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.UnfTransformer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -105,7 +106,7 @@ public class SmtUtilsTest {
 		mLogger.info("After Substitution:     " + result.toStringDirect());
 		mLogger.info("(distinct true result): " + isDistinct);
 		mLogger.info("isEqualToTrue:          " + isEqualToTrue);
-		Assert.isTrue(isDistinct == LBool.UNSAT && isEqualToTrue);
+		Assert.assertTrue(isDistinct == LBool.UNSAT && isEqualToTrue);
 	}
 
 	@Test
@@ -137,7 +138,7 @@ public class SmtUtilsTest {
 		mLogger.info("After Substitution:      " + result.toStringDirect());
 		mLogger.info("(distinct false result): " + isDistinct);
 		mLogger.info("isEqualToFalse:          " + isEqualToFalse);
-		Assert.isTrue(isDistinct == LBool.UNSAT && isEqualToFalse);
+		Assert.assertTrue(isDistinct == LBool.UNSAT && isEqualToFalse);
 	}
 
 	private Term declareVar(final String name, final Sort sort) {
