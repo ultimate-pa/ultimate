@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
@@ -37,11 +38,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IDirectedGraph;
 import de.uni_freiburg.informatik.ultimate.util.TgfBuilder;
 
 /**
- * Converts an {@link IDirectedGraph} into a string using the Trivial Graph Format (TGF) file format.
- * Nodes can be labeled by a custom function.
- * There are no explicit edges in {@linkplain IDirectedGraph} therefore the edges are not labeled with data.
+ * Converts any graph-based structure into a string using the Trivial Graph Format (TGF) file format.
+ * Nodes can be labeled by a custom function. Edges are <i>not</i> represented explicitly. For a TGF converter
+ * that also labels edges see {@link TgfBuilder}.
  * <p>
- * Some implementations of {@linkplain IDirectedGraph} can represent edges non-symmetrically, that is
+ * This class is meant to be used in the toString methods of other classes and to debug graph-based structures.
+ * <p>
+ * Some graph-based structures might represent edges non-symmetrically, that is
  * a node U can have successor V not having U as a predecessor. To show such issues the generated TGF
  * represents directed edges by <i>forward</i> edges and (hopefully anti-parallel) <i>backward</i> edges.
  *
@@ -51,34 +54,35 @@ import de.uni_freiburg.informatik.ultimate.util.TgfBuilder;
  *
  * @see TgfBuilder Can be used to convert anything into TGF format manually without having to create an IDirectedGraph
  */
-public class GraphToTgf<N extends IDirectedGraph<N, ?>> {
+public class GraphToTgf<N> {
 
 	private final StringBuilder mTgfNodes = new StringBuilder();
 	private final StringBuilder mTgfEdges = new StringBuilder();
 	private final Map<N, Integer> mVisitedNodeToId = new HashMap<>();
 	private final Queue<N> mWorklist = new ArrayDeque<>();
-	private final Function<N, Object> mNodeToLabel;
+	private final Function<N, Object> mLabelOf;
 
-	public GraphToTgf(final N startingNode) {
-		this(startingNode, N::toString);
+	private final Function<N, Collection<N>> mSuccessorsOf;
+	private final Function<N, Collection<N>> mPredecessorsOf;
+
+	public GraphToTgf(final Function<N, Collection<N>> successorsOf, final Function<N, Collection<N>> predecessorsOf,
+			final Function<N, Object> nodeToLabel) {
+		mSuccessorsOf = successorsOf;
+		mPredecessorsOf = predecessorsOf;
+		mLabelOf = nodeToLabel;
 	}
 
-	public GraphToTgf(final N startingNode, final Function<N, Object> nodeToLabel) {
-		this(nodeToLabel);
-		includeComponentOf(startingNode);
+	public static <GN extends IDirectedGraph<GN, ?>> GraphToTgf<GN> graph(final Function<GN, Object> labelOf) {
+		return new GraphToTgf<GN>(GN::getOutgoingNodes, GN::getIncomingNodes, labelOf);
 	}
 
-	public GraphToTgf() {
-		this(N::toString);
+	public static <GN extends IDirectedGraph<GN, ?>> GraphToTgf<GN> graph(final GN startingNode) {
+		return graph(GN::toString).includeComponentOf(startingNode);
 	}
-
-	public GraphToTgf(final Function<N, Object> nodeToLabel) {
-		mNodeToLabel = nodeToLabel;
-	}
-
+	
 	/**
 	 * Returns the trivial graph format (TGF) representation of all weakly connected components visited by
-	 * {@link #includeComponentOf(IDirectedGraph)}.
+	 * {@link #includeComponentOf(N)} and similar methods.
 	 *
 	 * @return String in TGF format representing a graph
 	 */
@@ -106,9 +110,19 @@ public class GraphToTgf<N extends IDirectedGraph<N, ?>> {
 		}
 		return this;
 	}
+	
+	/**
+	 * @see #includeComponentOf(Object)
+	 */
+	public GraphToTgf<N> includeComponentsOf(final Collection<N> nodes) {
+		for (final N node : nodes) {
+			includeComponentOf(node);
+		}
+		return this;
+	}
 
 	private void visitNeighbors(final N node) {
-		Stream.concat(node.getIncomingNodes().stream(), node.getOutgoingNodes().stream())
+		Stream.concat(mPredecessorsOf.apply(node).stream(), mSuccessorsOf.apply(node).stream())
 			.filter(this::isUnvisited)
 			.forEach(this::visit);
 	}
@@ -116,15 +130,15 @@ public class GraphToTgf<N extends IDirectedGraph<N, ?>> {
 	private int visit(final N node) {
 		final int id = mVisitedNodeToId.size();
 		mVisitedNodeToId.put(node, id);
-		mTgfNodes.append(id).append(' ').append(mNodeToLabel.apply(node)).append("\n");
+		mTgfNodes.append(id).append(' ').append(mLabelOf.apply(node)).append("\n");
 		mWorklist.add(node);
 		return id;
 	}
 
 	private void addEdges(final N source) {
 		final int sourceId = idOf(source);
-		source.getIncomingNodes().forEach(target -> addEdge(sourceId, idOf(target), "backward"));
-		source.getOutgoingNodes().forEach(target -> addEdge(sourceId, idOf(target), "forward"));
+		mPredecessorsOf.apply(source).forEach(target -> addEdge(sourceId, idOf(target), "backward"));
+		mSuccessorsOf.apply(source).forEach(target -> addEdge(sourceId, idOf(target), "forward"));
 	}
 
 	private void addEdge(final int source, final int target, final String label) {

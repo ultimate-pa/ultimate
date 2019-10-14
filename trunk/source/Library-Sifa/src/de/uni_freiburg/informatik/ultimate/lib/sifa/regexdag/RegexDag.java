@@ -100,7 +100,7 @@ public class RegexDag<L> {
 
 	@Override
 	public String toString() {
-		return new GraphToTgf<>(mSource).includeComponentOf(mSink).getTgf();
+		return GraphToTgf.graph(mSource).includeComponentOf(mSink).getTgf();
 	}
 
 	/**

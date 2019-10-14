@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.GraphToTgf;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -98,5 +99,10 @@ public class BackwardClosedOverlay<L> implements IDagOverlay<L> {
 	public Collection<RegexDagNode<L>> sinks(final RegexDag<L> dag) {
 		return mSinks;
 	}
-
+	
+	@Override
+	public String toString() {
+		return new GraphToTgf<RegexDagNode<L>>(mSuccessorRelation::getImage, mPredecessorRelation::getImage,
+				RegexDagNode::toString).includeComponentsOf(mSinks).getTgf();
+	}
 }
