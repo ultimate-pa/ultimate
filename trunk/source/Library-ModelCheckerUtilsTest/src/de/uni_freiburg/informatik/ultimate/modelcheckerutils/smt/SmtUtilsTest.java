@@ -145,5 +145,42 @@ public class SmtUtilsTest {
 		mScript.declareFun(name, new Sort[0], sort);
 		return mScript.term(name);
 	}
+	
+	@Test
+	public void divRealTest01() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		mScript.declareFun("y", new Sort[0], realSort);
+		// check that initial literals are simplified by division
+		// check that commutativity is not applied
+		// check that intermediate literals are simplified by multiplication
+		// check that a non-initial zero cannot be simplified
+		final String inputAsString01 = "(/ 10.0 2.0 x 0.0 3.0 5.0 y)";
+		final String expectedOutputAsString01 = "(/ 5.0 x 0.0 15.0 y)";
+		divRealTest(inputAsString01, expectedOutputAsString01);
+		// check that initial zero can be simplified
+		// check that intermediate one is dropped
+		final String inputAsString02 = "(/ 0.0 2.0 x 1.0 y)";
+		final String expectedOutputAsString02 = "(/ 0.0 x y)";
+		divRealTest(inputAsString02, expectedOutputAsString02);
+		// check that non-integer rationals are represented as binary real
+		// divison terms (This is the default representation of SMTInterpol's
+		// libraries, we do not want to change that add allow nested
+		// division terms for these cases
+		final String inputAsString03 = "(/ 7.0 0.5 4.0 x 11.5)";
+		final String expectedOutputAsString03 = "(/ (/ 7.0 2.0) x (/ 23.0 2.0))";
+		divRealTest(inputAsString03, expectedOutputAsString03);
+	}
+
+	private void divRealTest(final String inputAsString, final String expectedOutputAsString) {
+		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
+		final Term expectedOutputAsTerm = TermParseUtils.parseTerm(mScript, expectedOutputAsString);
+		mLogger.info("Input: " + inputAsTerm);
+		final Term outputAsTerm = SmtUtils.divReal(mScript, ((ApplicationTerm) inputAsTerm).getParameters());
+		mLogger.info("Output: " + outputAsTerm);
+		mLogger.info("Expected output: " + expectedOutputAsTerm);
+		final boolean outputIsCorrect = expectedOutputAsTerm.equals(outputAsTerm);
+		Assert.assertTrue(outputIsCorrect);
+	}
 
 }

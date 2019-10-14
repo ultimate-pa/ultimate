@@ -1444,6 +1444,72 @@ public final class SmtUtils {
 		}
 		return script.term("div", dividend, divisor);
 	}
+	
+	
+	public static Term divReal(final Script script, final Term[] inputParams) {
+		final List<Term> resultParams = new ArrayList<>();
+		if (inputParams.length == 0) {
+			throw new IllegalArgumentException("real division needs at least one argument");
+		}
+		resultParams.add(inputParams[0]);
+		for (int i = 1; i < inputParams.length; i++) {
+			final Rational nextAsRational = tryToConvertToLiteral(inputParams[i]);
+			if (nextAsRational == null) {
+				// cannot simplify - is not at literal
+				resultParams.add(inputParams[i]);
+			} else {
+				if (nextAsRational.numerator() == BigInteger.ZERO) {
+					// cannot simplify
+					resultParams.add(inputParams[i]);
+				} else if (nextAsRational.numerator() == BigInteger.ONE && nextAsRational.isIntegral()) {
+					// do nothing
+				} else {
+					final Rational lastSimplifiedParam;
+					if (resultParams.isEmpty()) {
+						lastSimplifiedParam = null;
+					} else {
+						final Rational tmp = tryToConvertToLiteral(resultParams.get(resultParams.size() - 1));
+						if (tmp == null) {
+							lastSimplifiedParam = null;
+						} else {
+							// if parameter at position i-1 is zero we can use
+							// it for simplification iff it will be the first
+							// parameter of the result (i.e., we do not divide
+							// by 0)
+							if (!tmp.numerator().equals(BigInteger.ZERO) || resultParams.size() == 1) {
+								lastSimplifiedParam = tmp;
+							} else {
+								lastSimplifiedParam = null;
+							}
+						}
+					}
+					if (lastSimplifiedParam != null) {
+						// if parameter at position i-1 is the first parameter
+						// (i.e., i=1) we divide it by the next parameter
+						// otherwise we multiply with the next parameter
+						// e.g., 54/2 becomes 23, but x/21/2 becomes x/42
+						final Rational resultRat;
+						if (resultParams.size() == 1) {
+							resultRat = lastSimplifiedParam.div(nextAsRational);
+						} else {
+							resultRat = lastSimplifiedParam.mul(nextAsRational);
+						}
+						final Term resultTerm = resultRat.toTerm(SmtSortUtils.getRealSort(script));
+						resultParams.set(resultParams.size() - 1, resultTerm);
+					} else {
+						// cannot simplify
+						resultParams.add(inputParams[i]);
+					}
+				}
+			}
+		}
+		if (resultParams.size() == 1) {
+			return resultParams.get(0);
+		} else {
+			return script.term("/", resultParams.toArray(new Term[resultParams.size()]));
+		}
+	}
+
 
 	/**
 	 * Returns a possibly simplified version of the Term (mod dividend divisor). If dividend and divisor are both
