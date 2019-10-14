@@ -26,10 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms;
 
-import java.math.BigInteger;
 import java.util.function.Predicate;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -41,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 
 /**
  * Transforms a {@link Term} which is "affine" into our {@link AffineTerm} data
@@ -86,7 +83,7 @@ public class AffineTermTransformer extends TermTransformer {
 		// Otherwise, if the terms represents a literal, we convert the literal
 		// to an AffineTerm and tell the TermTransformer that this
 		// is the result (i.e., it should not descend to subformulas).
-		final Rational valueOfLiteral = tryToConvertToLiteral(mScript, term);
+		final Rational valueOfLiteral = SmtUtils.tryToConvertToLiteral(term);
 		if (valueOfLiteral != null) {
 			final AffineTerm result = AffineTerm.constructConstant(term.getSort(), valueOfLiteral);
 			setResult(result);
@@ -125,31 +122,6 @@ public class AffineTermTransformer extends TermTransformer {
 	 */
 	private static boolean hasSupportedSort(final Term term) {
 		return SmtSortUtils.isNumericSort(term.getSort()) || SmtSortUtils.isBitvecSort(term.getSort());
-	}
-
-	/**
-	 * Check if term represents a literal. If this is the case, then return its
-	 * value as a {@link Rational} otherwise return true.
-	 */
-	private static Rational tryToConvertToLiteral(final Script script, final Term term) {
-		final Rational result;
-		if (SmtSortUtils.isBitvecSort(term.getSort())) {
-			final BitvectorConstant bc = BitvectorUtils.constructBitvectorConstant(term);
-			if (bc != null) {
-				result = Rational.valueOf(bc.getValue(), BigInteger.ONE);
-			} else {
-				result = null;
-			}
-		} else if (SmtSortUtils.isNumericSort(term.getSort())) {
-			if (term instanceof ConstantTerm) {
-				result = SmtUtils.convertConstantTermToRational((ConstantTerm) term);
-			} else {
-				result = null;
-			}
-		} else {
-			result = null;
-		}
-		return result;
 	}
 
 	/**

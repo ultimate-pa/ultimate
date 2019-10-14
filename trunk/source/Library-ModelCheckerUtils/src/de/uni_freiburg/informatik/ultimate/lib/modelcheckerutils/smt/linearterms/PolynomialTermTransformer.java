@@ -1,13 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms;
 
-import java.math.BigInteger;
 import java.util.function.Predicate;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -15,7 +12,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 
 /**
  * Transforms a {@link Term} which is "polynomial" into our {@link PolynomialTerm} data
@@ -62,7 +58,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		// Otherwise, if the terms represents a literal, we convert the literal
 		// to a PolynomialTerm and tell the TermTransformer that this
 		// is the result (i.e., it should not descend to subformulas).
-		final Rational valueOfLiteral = tryToConvertToLiteral(term);
+		final Rational valueOfLiteral = SmtUtils.tryToConvertToLiteral(term);
 		if (valueOfLiteral != null) {
 			final AffineTerm result = AffineTerm.constructConstant(term.getSort(), valueOfLiteral);
 			setResult(result);
@@ -123,30 +119,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 				|| funName.equals("bvadd") || funName.equals("bvsub") || funName.equals("bvmul") || funName.equals("div"));
 	}
 
-	/**
-	 * Check if term represents a literal. If this is the case, then return its
-	 * value as a {@link Rational} otherwise return true.
-	 */
-	private static Rational tryToConvertToLiteral(final Term term) {
-		final Rational result;
-		if (SmtSortUtils.isBitvecSort(term.getSort())) {
-			final BitvectorConstant bc = BitvectorUtils.constructBitvectorConstant(term);
-			if (bc != null) {
-				result = Rational.valueOf(bc.getValue(), BigInteger.ONE);
-			} else {
-				result = null;
-			}
-		} else if (SmtSortUtils.isNumericSort(term.getSort())) {
-			if (term instanceof ConstantTerm) {
-				result = SmtUtils.convertConstantTermToRational((ConstantTerm) term);
-			} else {
-				result = null;
-			}
-		} else {
-			result = null;
-		}
-		return result;
-	}
+
 
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
@@ -166,25 +139,25 @@ public class PolynomialTermTransformer extends TermTransformer {
 		final IPolynomialTerm result = convertArgumentsToFunction(polynomialArgs, funName);
 		castAndSetResult(result);
 	}
-	
+
 	/**
 	 * Create an IPolynomialTerm out of the polynomialArgs, according to the given funName, if possible.
 	 */
-	private IPolynomialTerm convertArgumentsToFunction(final IPolynomialTerm[] polynomialArgs, 
-													   String funName) {
+	private IPolynomialTerm convertArgumentsToFunction(final IPolynomialTerm[] polynomialArgs,
+													   final String funName) {
 		switch(funName) {
 		case "*":
 			return multiply(polynomialArgs);
-			
+
 		case "bvmul":
 			return multiply(polynomialArgs);
-			
+
 		case "+":
 			return add(polynomialArgs);
-			
+
 		case "bvadd":
 			return add(polynomialArgs);
-			
+
 		case "-":
 			if (polynomialArgs.length == 1) {
 				// unary minus
@@ -192,7 +165,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 			} else {
 				return subtract(polynomialArgs);
 			}
-			
+
 		case "bvsub":
 			if (polynomialArgs.length == 1) {
 				// unary minus
@@ -200,13 +173,13 @@ public class PolynomialTermTransformer extends TermTransformer {
 			} else {
 				return subtract(polynomialArgs);
 			}
-			
+
 		case "/":
 			return divide(polynomialArgs);
-			
+
 		case "div":
 			return div(polynomialArgs);
-			
+
 		default:
 			throw new UnsupportedOperationException("unsupported symbol " + funName);
 		}
@@ -271,7 +244,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Returns true when one of the given Terms is truly polynomial 
+	 * Returns true when one of the given Terms is truly polynomial
 	 * (not representable by an AffineTerm).
 	 */
 	private static boolean someTermIsPolynomial(final IPolynomialTerm[] polynomialTerms) {
@@ -323,7 +296,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	 */
 	private IPolynomialTerm divide(final IPolynomialTerm[] polynomialArgs) {
 		assert SmtSortUtils.isRealSort(polynomialArgs[0].getSort());
-		
+
 		//Only Term at position 0 may be not affine.
 		if (polynomialArgs[0].isAffine()) {
 			return AffineTerm.divide(polynomialArgs, mScript);
@@ -331,7 +304,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 			return PolynomialTerm.divide(polynomialArgs, mScript);
 		}
 	}
-	
+
 	/**
 	 * Given {@link PolynomialTerm}s <code>t1,t2,...,tn</code> construct an
 	 * {@link PolynomialTerm} that represents the quotient <code>t1 div t2 div ... div tn</code>,
@@ -343,7 +316,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	 */
 	private IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs) {
 		assert SmtSortUtils.isIntSort(polynomialArgs[0].getSort());
-		
+
 		//Only Term at position 0 may be not affine.
 		if (polynomialArgs[0].isAffine()) {
 			return AffineTerm.div(polynomialArgs, mScript);
@@ -351,7 +324,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 			return PolynomialTerm.div(polynomialArgs, mScript);
 		}
 	}
-	
+
 	/**
 	 * Convert an array of {@link Term}s into an an array of {@link PolynomialTerm}s by
 	 * casting every single element. In case an element of the input is our

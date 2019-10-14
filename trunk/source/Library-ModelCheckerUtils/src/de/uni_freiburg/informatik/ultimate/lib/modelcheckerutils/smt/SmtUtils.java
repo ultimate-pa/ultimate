@@ -1550,6 +1550,31 @@ public final class SmtUtils {
 	}
 
 	/**
+	 * Check if term represents a literal. If this is the case, then return its
+	 * value as a {@link Rational} otherwise return true.
+	 */
+	public static Rational tryToConvertToLiteral(final Term term) {
+		final Rational result;
+		if (SmtSortUtils.isBitvecSort(term.getSort())) {
+			final BitvectorConstant bc = BitvectorUtils.constructBitvectorConstant(term);
+			if (bc != null) {
+				result = Rational.valueOf(bc.getValue(), BigInteger.ONE);
+			} else {
+				result = null;
+			}
+		} else if (SmtSortUtils.isNumericSort(term.getSort())) {
+			if (term instanceof ConstantTerm) {
+				result = SmtUtils.convertConstantTermToRational((ConstantTerm) term);
+			} else {
+				result = null;
+			}
+		} else {
+			result = null;
+		}
+		return result;
+	}
+
+	/**
 	 * Check if {@link Term} which may contain free {@link TermVariable}s is satisfiable with respect to the current
 	 * assertion stack of {@link Script}. Compute unsat core if unsatisfiable. Use {@link LoggingScript} to see the
 	 * input. TODO: Show values of satisfying assignment (including array access) if satisfiable.
