@@ -405,7 +405,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 */
 	public enum InterpolationTechnique {
 		Craig_NestedInterpolation, Craig_TreeInterpolation, ForwardPredicates, BackwardPredicates, FPandBP,
-		FPandBPonlyIfFpWasNotPerfect, PathInvariants, PDR, MCR
+		FPandBPonlyIfFpWasNotPerfect, PathInvariants, PDR
 	}
 
 	/**
@@ -549,7 +549,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		/**
 		 * Strategy that is exactly like {@link #TOOTHLESS_TAIPAN}, but uses Sifa instead of abstract interpretation.
 		 */
-		TOOTHLESS_SIFA_TAIPAN
+		TOOTHLESS_SIFA_TAIPAN,
+		/**
+		 * Maximal causality reduction strategy for concurrent programs.
+		 */
+		MCR
 	}
 
 	/**
