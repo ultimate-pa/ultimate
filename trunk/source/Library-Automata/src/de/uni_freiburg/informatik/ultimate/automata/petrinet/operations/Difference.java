@@ -455,7 +455,10 @@ public final class Difference
 			return null;
 		}
 		final E result = iter.next();
-		assert !iter.hasNext() : "Expected one element, found more.";
+		if (iter.hasNext()) {
+			throw new AssertionError(
+					"Expected at most one element, found more, probably the second arguement of the difference operation is not deterministic.");
+		}
 		return result;
 	}
 
