@@ -216,7 +216,7 @@ public final class MSODIntOperationsTest {
 		// 3 < -2
 		c = Rational.valueOf(-2, 1);
 		xValuesStem = new int[] { 3 };
-		lastStemIndex = 5;
+		lastStemIndex = 6;
 		xValuesLoop = new int[] {};
 		lastLoopIndex = 0;
 		test(false, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
@@ -225,7 +225,7 @@ public final class MSODIntOperationsTest {
 		// -4 < 3
 		c = Rational.valueOf(3, 1);
 		xValuesStem = new int[] { -4 };
-		lastStemIndex = 9;
+		lastStemIndex = 10;
 		xValuesLoop = new int[] {};
 		lastLoopIndex = 2;
 		test(true, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
