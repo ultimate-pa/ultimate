@@ -527,7 +527,9 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 				pred = state;
 			}
 
-			automaton.addInternalTransition(pred, x1, "final");
+			automaton.addState(false, false, "s2");
+			automaton.addInternalTransition(pred, x0, "s2");
+			automaton.addInternalTransition("s2", x1, "final");
 		}
 
 		if (c > 0) {
@@ -543,12 +545,13 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			}
 
 			automaton.addState(false, false, "s0");
-			automaton.addInternalTransition(pred, x0, "s0");
-			automaton.addInternalTransition("s0", x1, "final");
-
 			automaton.addState(false, false, "s1");
+			automaton.addState(false, false, "s2");
+			automaton.addInternalTransition(pred, x0, "s0");
 			automaton.addInternalTransition("s0", x0, "s1");
-			automaton.addInternalTransition("s1", x0, "s0");
+			automaton.addInternalTransition("s1", x0, "s2");
+			automaton.addInternalTransition("s2", x0, "s1");
+			automaton.addInternalTransition("s1", x1, "final");
 		}
 
 		return automaton;
