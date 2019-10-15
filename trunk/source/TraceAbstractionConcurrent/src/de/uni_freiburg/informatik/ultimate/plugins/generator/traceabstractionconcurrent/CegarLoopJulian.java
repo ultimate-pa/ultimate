@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.AutomatonWithImplicitSelfloops;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -291,7 +292,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			enhanceAnddeterminizeInterpolantAutomaton(final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton)
 					throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger.debug("Start determinization");
-		INestedWordAutomaton<LETTER, IPredicate> dia;
+		final INestedWordAutomaton<LETTER, IPredicate> dia;
 		final IPetriNet<LETTER, IPredicate> onDemandConstructedNet;
 		switch (mPref.interpolantAutomatonEnhancement()) {
 		case NONE:
@@ -331,18 +332,19 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 				} finally {
 					raw.switchToReadonlyMode();
 				}
+				final AutomatonWithImplicitSelfloops<LETTER, IPredicate> awis = new AutomatonWithImplicitSelfloops<LETTER, IPredicate>(
+						new AutomataLibraryServices(mServices), raw, universalSubtrahendLoopers);
+				dia = new RemoveUnreachable<>(new AutomataLibraryServices(mServices), awis).getResult();
 			} else {
 				onDemandConstructedNet = null;
-			}
-			try {
-				dia = new RemoveUnreachable<>(new AutomataLibraryServices(mServices), raw).getResult();
-			} catch (final AutomataOperationCanceledException aoce) {
-				final RunningTaskInfo rti =
-						new RunningTaskInfo(getClass(),
-								"enhancing interpolant automaton that has " + interpolAutomaton.getStates().size()
-										+ " states and an alphabet of " + mAbstraction.getAlphabet().size()
-										+ " letters");
-				throw new ToolchainCanceledException(aoce, rti);
+				try {
+					dia = new RemoveUnreachable<>(new AutomataLibraryServices(mServices), raw).getResult();
+				} catch (final AutomataOperationCanceledException aoce) {
+					final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
+							"enhancing interpolant automaton that has " + interpolAutomaton.getStates().size()
+									+ " states and an alphabet of " + mAbstraction.getAlphabet().size() + " letters");
+					throw new ToolchainCanceledException(aoce, rti);
+				}
 			}
 			final double dfaTransitionDensity = new Analyze<>(new AutomataLibraryServices(mServices), dia, false)
 					.getTransitionDensity(SymbolType.INTERNAL);
