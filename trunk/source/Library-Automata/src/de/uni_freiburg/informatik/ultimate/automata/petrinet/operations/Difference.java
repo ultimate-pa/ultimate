@@ -73,6 +73,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  * If the subtrahend automaton A is closed under concatenation with Σ^*
  * then L(A)◦Σ^* = L(A) and therefore L(N)-(L(A)◦Σ^*) = L(N)-L(A);
  * in other words: The result of this operation is the normal difference.
+ * 
+ * TODO 2019-10-15 Matthias: Allow user to specify set of universal loopers.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author schaetzc@informatik.uni-freiburg.de
