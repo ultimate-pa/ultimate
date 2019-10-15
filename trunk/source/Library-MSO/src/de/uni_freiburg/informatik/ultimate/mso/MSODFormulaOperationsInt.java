@@ -626,9 +626,9 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * consists of four parts, one for each of the following case distinctions:
 	 * <ul>
 	 * <li>x + c <= 0 &and; x <= 0
+	 * <li>x + c > 0 &and; x > 0
 	 * <li>x + c <= 0 &and; x > 0
 	 * <li>x + c > 0 &and; x <= 0
-	 * <li>x + c > 0 &and; x > 0
 	 * </ul>
 	 *
 	 * @throws IllegalArgumentException
@@ -734,8 +734,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c <=
-	 * 0 and; x > 0.
+	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c > 0
+	 * and; x > 0.
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartTwo(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
@@ -814,8 +814,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c > 0
-	 * and; x <= 0.
+	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c <=
+	 * 0 and; x > 0.
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartThree(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
@@ -895,7 +895,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 	/**
 	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c > 0
-	 * and; x > 0.
+	 * and; x <= 0.
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartFour(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
@@ -1000,7 +1000,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		automaton.addInternalTransition("final", x0, "final");
 		automaton.addInternalTransition("final", x1, "final");
 
-		if (c <= 0) {
+		if (c >= 0) {
 			String pred = "init";
 			for (int i = 0; i < 2 * Math.abs(c); i++) {
 				final String state = "c" + i;
@@ -1013,7 +1013,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addInternalTransition(pred, x1, "final");
 		}
 
-		if (c > 0) {
+		if (c < 0) {
 			String pred = "init";
 			for (int i = 0; i < 2 * (Math.abs(c) - 1); i++) {
 				final String state = "c" + i;

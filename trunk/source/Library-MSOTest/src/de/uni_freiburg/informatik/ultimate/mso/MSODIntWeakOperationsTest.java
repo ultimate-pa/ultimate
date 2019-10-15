@@ -95,7 +95,7 @@ public class MSODIntWeakOperationsTest {
 
 	private int intToIndex(final int n) {
 
-		return n <= 0 ? 2 * Math.abs(n) : 2 * n - 1;
+		return n < 0 ? 2 * Math.abs(n) - 1 : 2 * n;
 	}
 
 	private NestedWord<MSODAlphabetSymbol> getWord(final Term term, final int[] values) {
