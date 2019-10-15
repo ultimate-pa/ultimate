@@ -93,7 +93,7 @@ public final class MSODIntOperationsTest {
 
 	private int intToIndex(final int n) {
 
-		return n <= 0 ? 2 * Math.abs(n) : 2 * n - 1;
+		return n < 0 ? 2 * Math.abs(n) - 1 : 2 * n;
 	}
 
 	private NestedLassoWord<MSODAlphabetSymbol> getWord(final Term term, final int[] stemValues,
@@ -428,19 +428,19 @@ public final class MSODIntOperationsTest {
 		// { 4 } strictSubsetInt { 0 , 2, 4, 6, ..}
 		xValuesStem = new int[] { 4 };
 		yValuesStem = new int[] { 0, 2, 4 };
-		lastStemIndex = 7;
+		lastStemIndex = 8;
 		xValuesLoop = new int[] {};
 		yValuesLoop = new int[] { 1 };
 		lastLoopIndex = 1;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
 				mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
-		// { -1, -2, -3, ... } strictSubsetInt {0, 1, -1, 2, -2, ...}
-		xValuesStem = new int[] {};
-		yValuesStem = new int[] { 0 };
-		lastStemIndex = 0;
+		// { -1, -2, -3, ... } strictSubsetInt {0, -1, 1, -2, 2, ...}
+		xValuesStem = new int[] { -1 };
+		yValuesStem = new int[] { 0, -1 };
+		lastStemIndex = 1;
 		xValuesLoop = new int[] { 1 };
-		yValuesLoop = new int[] { 01 };
+		yValuesLoop = new int[] { 0, 1 };
 		lastLoopIndex = 1;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
 				mMSODOperations.strictSubsetAutomaton(mServices, x, y));
@@ -505,7 +505,7 @@ public final class MSODIntOperationsTest {
 		// { 4 } subsetInt { 0 , 2, 4, 6, ..}
 		xValuesStem = new int[] { 4 };
 		yValuesStem = new int[] { 0, 2, 4 };
-		lastStemIndex = 7;
+		lastStemIndex = 8;
 		xValuesLoop = new int[] {};
 		yValuesLoop = new int[] { 1 };
 		lastLoopIndex = 1;
@@ -517,7 +517,7 @@ public final class MSODIntOperationsTest {
 		yValuesStem = new int[] { 0 };
 		lastStemIndex = 0;
 		xValuesLoop = new int[] { 1 };
-		yValuesLoop = new int[] { 01 };
+		yValuesLoop = new int[] { 0, 1 };
 		lastLoopIndex = 1;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
 				mMSODOperations.subsetAutomaton(mServices, x, y));
@@ -650,8 +650,8 @@ public final class MSODIntOperationsTest {
 
 		// -6 element { 0, 1, 2, 3, ... }
 		c = Rational.valueOf(-6, 1);
-		xValuesStem = new int[] { 1 };
-		lastStemIndex = 1;
+		xValuesStem = new int[] { 0, 1 };
+		lastStemIndex = 2;
 		xValuesLoop = new int[] { 1 };
 		lastLoopIndex = 1;
 		test(false, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
