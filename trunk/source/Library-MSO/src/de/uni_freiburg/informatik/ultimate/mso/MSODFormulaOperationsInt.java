@@ -152,7 +152,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 	/**
 	 * Returns a {@link NestedWordAutomaton} representing one part of the strict inequality automaton of "x - y < c",
-	 * for x > 0 and y > 0.
+	 * for x > 0 and y > 0. : new: x>=0 and y>=0
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartOne(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
@@ -176,13 +176,10 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		automaton.addInternalTransition("s0", xy00, "init");
 
 		automaton.addState(false, false, "s1");
-		automaton.addInternalTransition("init", xy00, "s1");
+		automaton.addInternalTransition("init", xy10, "s1");
 
 		if (c <= 0) {
-			automaton.addState(false, false, "s2");
-			automaton.addInternalTransition("s1", xy10, "s2");
-
-			String pred = "s2";
+			String pred = "s1";
 			for (int i = 0; i < 2 * Math.abs(c); i++) {
 
 				final String state = "c" + i;
@@ -191,30 +188,27 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 				pred = state;
 			}
 
-			automaton.addState(false, false, "s3");
-			automaton.addInternalTransition(pred, xy00, "s3");
-			automaton.addInternalTransition("s3", xy01, "final");
-
-			automaton.addState(false, false, "s4");
-			automaton.addInternalTransition("s3", xy00, "s4");
-			automaton.addInternalTransition("s4", xy00, "s3");
-		}
-
-		if (c > 0) {
-			automaton.addInternalTransition("s1", xy11, "final");
-
 			automaton.addState(false, false, "s2");
-			automaton.addInternalTransition("s1", xy10, "s2");
+			automaton.addInternalTransition(pred, xy00, "s2");
+			automaton.addInternalTransition("s2", xy01, "final");
 
 			automaton.addState(false, false, "s3");
 			automaton.addInternalTransition("s2", xy00, "s3");
-			automaton.addInternalTransition("s3", xy01, "final");
+			automaton.addInternalTransition("s3", xy00, "s2");
+		}
 
-			automaton.addState(false, false, "s4");
-			automaton.addInternalTransition("s3", xy00, "s4");
-			automaton.addInternalTransition("s4", xy00, "s3");
+		if (c > 0) {
+			automaton.addInternalTransition("init", xy11, "final");
 
-			String pred = "s1";
+			automaton.addState(false, false, "s2");
+			automaton.addInternalTransition("s1", xy00, "s2");
+			automaton.addInternalTransition("s2", xy01, "final");
+
+			automaton.addState(false, false, "s3");
+			automaton.addInternalTransition("s2", xy00, "s3");
+			automaton.addInternalTransition("s3", xy00, "s2");
+
+			String pred = "init";
 			for (int i = 0; i < 2 * (Math.abs(c) - 1) - 1; i++) {
 				final String state0 = "c_" + i + "_0";
 				automaton.addState(false, false, state0);
@@ -236,7 +230,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 	/**
 	 * Returns a {@link NestedWordAutomaton} representing one part of the strict inequality automaton of "x - y < c",
-	 * for x <= 0 and y <= 0.
+	 * for x <= 0 and y <= 0. new: x<0 and y<0
 	 */
 
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartTwo(
@@ -260,11 +254,14 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		automaton.addInternalTransition("init", xy00, "s0");
 		automaton.addInternalTransition("s0", xy00, "init");
 
-		if (c <= 0) {
-			automaton.addState(false, false, "s1");
-			automaton.addInternalTransition("init", xy01, "s1");
+		automaton.addState(false, false, "s1");
+		automaton.addInternalTransition("init", xy00, "s1");
 
-			String pred = "s1";
+		automaton.addState(false, false, "s2");
+		automaton.addInternalTransition("s1", xy01, "s2");
+
+		if (c <= 0) {
+			String pred = "s2";
 			for (int i = 0; i < 2 * Math.abs(c); i++) {
 
 				final String state = "c" + i;
@@ -273,30 +270,27 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 				pred = state;
 			}
 
-			automaton.addState(false, false, "s2");
-			automaton.addInternalTransition(pred, xy00, "s2");
-			automaton.addInternalTransition("s2", xy10, "final");
-
 			automaton.addState(false, false, "s3");
-			automaton.addInternalTransition("s2", xy00, "s3");
-			automaton.addInternalTransition("s3", xy00, "s2");
+			automaton.addInternalTransition(pred, xy00, "s3");
+			automaton.addInternalTransition("s3", xy10, "final");
+
+			automaton.addState(false, false, "s4");
+			automaton.addInternalTransition("s3", xy00, "s4");
+			automaton.addInternalTransition("s4", xy00, "s3");
 		}
 
 		if (c > 0) {
-			automaton.addInternalTransition("init", xy11, "final");
-
-			automaton.addState(false, false, "s1");
-			automaton.addInternalTransition("init", xy01, "s1");
-
-			automaton.addState(false, false, "s2");
-			automaton.addInternalTransition("s1", xy00, "s2");
-			automaton.addInternalTransition("s2", xy10, "final");
+			automaton.addInternalTransition("s1", xy11, "final");
 
 			automaton.addState(false, false, "s3");
 			automaton.addInternalTransition("s2", xy00, "s3");
-			automaton.addInternalTransition("s3", xy00, "s2");
+			automaton.addInternalTransition("s3", xy10, "final");
 
-			String pred = "init";
+			automaton.addState(false, false, "s4");
+			automaton.addInternalTransition("s3", xy00, "s4");
+			automaton.addInternalTransition("s4", xy00, "s3");
+
+			String pred = "s1";
 			for (int i = 0; i < 2 * (Math.abs(c) - 1) - 1; i++) {
 				final String state0 = "c_" + i + "_0";
 				automaton.addState(false, false, state0);
