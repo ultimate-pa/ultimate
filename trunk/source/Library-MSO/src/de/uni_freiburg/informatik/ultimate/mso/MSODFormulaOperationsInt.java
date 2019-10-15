@@ -658,7 +658,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 	/**
 	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c <=
-	 * 0 and; x <= 0.
+	 * 0 and; x <= 0 new: x+c>=0 and x>=0
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartOne(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
@@ -689,7 +689,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addInternalTransition("init", xy11, "final");
 		}
 
-		if (c < 0) {
+		if (c > 0) {
 			automaton.addState(false, false, "s1");
 			automaton.addInternalTransition("init", xy10, "s1");
 			automaton.addInternalTransition("init", xy11, "s1");
@@ -709,7 +709,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addInternalTransition("s2", xy01, "final");
 		}
 
-		if (c > 0) {
+		if (c < 0) {
 			automaton.addState(false, false, "s1");
 			automaton.addInternalTransition("init", xy01, "s1");
 
@@ -735,7 +735,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 	/**
 	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c > 0
-	 * and; x > 0.
+	 * and; x > 0. new: x+c<0 and x<0
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartTwo(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
@@ -769,7 +769,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addInternalTransition("s0", xy11, "final");
 		}
 
-		if (c < 0) {
+		if (c > 0) {
 			automaton.addState(false, false, "s2");
 			automaton.addInternalTransition("s0", xy01, "s2");
 
@@ -790,7 +790,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addInternalTransition("s3", xy11, "final");
 		}
 
-		if (c > 0) {
+		if (c < 0) {
 			automaton.addState(false, false, "s2");
 			automaton.addInternalTransition("s0", xy10, "s2");
 			automaton.addInternalTransition("s0", xy11, "s2");
@@ -815,7 +815,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 	/**
 	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c <=
-	 * 0 and; x > 0.
+	 * 0 and; x > 0. new: x+c>=0 and x<0
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartThree(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
@@ -831,7 +831,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
-		if (c >= 0) {
+		if (c <= 0) {
 			return automaton;
 		}
 
@@ -895,7 +895,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 	/**
 	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c > 0
-	 * and; x <= 0.
+	 * and; x <= 0. new: x+c<0 and x>=0
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartFour(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
@@ -911,7 +911,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
-		if (c <= 0) {
+		if (c >= 0) {
 			return automaton;
 		}
 

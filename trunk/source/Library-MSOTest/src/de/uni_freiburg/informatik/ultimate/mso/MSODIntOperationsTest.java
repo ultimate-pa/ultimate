@@ -585,7 +585,7 @@ public final class MSODIntOperationsTest {
 		c = Rational.valueOf(2, 1);
 		xValuesStem = new int[] { 3 };
 		yValuesStem = new int[] { 1, -1, 3 };
-		lastStemIndex = 5;
+		lastStemIndex = 6;
 		xValuesLoop = new int[] {};
 		yValuesLoop = new int[] { 0, 3 };
 		lastLoopIndex = 3;
@@ -596,7 +596,7 @@ public final class MSODIntOperationsTest {
 		c = Rational.valueOf(-2, 1);
 		xValuesStem = new int[] { 3 };
 		yValuesStem = new int[] { 1, -1, 3 };
-		lastStemIndex = 5;
+		lastStemIndex = 6;
 		xValuesLoop = new int[] {};
 		yValuesLoop = new int[] { 0, 3 };
 		lastLoopIndex = 3;
@@ -607,7 +607,7 @@ public final class MSODIntOperationsTest {
 		c = Rational.valueOf(2, 1);
 		xValuesStem = new int[] { 2 };
 		yValuesStem = new int[] { 1, -1, 3 };
-		lastStemIndex = 5;
+		lastStemIndex = 6;
 		xValuesLoop = new int[] {};
 		yValuesLoop = new int[] { 0, 3 };
 		lastLoopIndex = 3;
