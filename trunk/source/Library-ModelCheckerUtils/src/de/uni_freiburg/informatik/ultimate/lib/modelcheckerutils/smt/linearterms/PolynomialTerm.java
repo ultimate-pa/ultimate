@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -212,7 +213,36 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		if (!divisionPossible(polynomialTerms)) {
 			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this
 			//whole term as an unique variable.
-			final Term term = PolynomialTermUtils.constructSimplifiedTerm("/", polynomialTerms, script);
+			final ArrayList<IPolynomialTerm> constants = new ArrayList<>();
+			for (int i = 1; i < polynomialTerms.length ; i++) {
+				if (polynomialTerms[i].isConstant()) {
+					constants.add(polynomialTerms[i]);
+				}
+			}
+			final IPolynomialTerm[] allConstants;
+			if (polynomialTerms[0].isConstant()) {
+				allConstants = new IPolynomialTerm[constants.size() + 1];
+				allConstants[0] = polynomialTerms[0];
+			}else {
+				allConstants = new IPolynomialTerm[constants.size()];
+			}
+			constants.toArray(allConstants);
+			final IPolynomialTerm constantTerm = AffineTerm.divide(allConstants, script);
+			final ArrayList<IPolynomialTerm> flattenedTerm = new ArrayList<>();
+			if (polynomialTerms[0].isConstant()) {
+				flattenedTerm.add(constantTerm);
+			}else {
+				flattenedTerm.add(polynomialTerms[0]);
+				flattenedTerm.add(constantTerm);
+			}
+			for (int i = 1; i < polynomialTerms.length ; i++) {
+				if (!polynomialTerms[i].isConstant()) {
+					flattenedTerm.add(polynomialTerms[i]);
+				}
+			}
+			IPolynomialTerm[] flattenedTermArray = new IPolynomialTerm[flattenedTerm.size()];
+			flattenedTerm.toArray(flattenedTermArray);
+			final Term term = PolynomialTermUtils.constructSimplifiedTerm("/", flattenedTermArray, script);
 			return AffineTerm.constructVariable(term);
 		}
 		return constructDivision(polynomialTerms);
@@ -222,6 +252,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 * Construct the division of the given polynomialTerms.
 	 */
 	private static IPolynomialTerm constructDivision(final IPolynomialTerm[] polynomialTerms) {
+		//TODO flatten Term
 		IPolynomialTerm poly = PolynomialTerm.mul(polynomialTerms[0], polynomialTerms[1].getConstant().inverse());
 		for (int i = 2; i < polynomialTerms.length; i++) {
 			poly = PolynomialTerm.mul(poly, polynomialTerms[i].getConstant().inverse());
@@ -235,7 +266,6 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 */
 	public static boolean divisionPossible(final IPolynomialTerm[] polynomialTerms) {
 		for (int i = 1; i < polynomialTerms.length; i++) {
-			//TODO: Ask Matthias whether the Term should be handled as an unique variable even if we divide by zero in it
 			if (!polynomialTerms[i].isConstant() || polynomialTerms[i].isZero()) {
 				return false;
 			}
@@ -248,6 +278,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 * {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
 	 */
 	public static IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs, final Script script) {
+		//TODO Flatten this
 		if (!divisionPossible(polynomialArgs)) {
 			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this
 			//whole term as an unique variable.
