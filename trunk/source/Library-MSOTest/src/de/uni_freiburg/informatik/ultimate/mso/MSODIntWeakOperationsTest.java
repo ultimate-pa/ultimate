@@ -218,280 +218,280 @@ public class MSODIntWeakOperationsTest {
 
 	}
 
-	// @Test
-	// public void strictIneqAutomatonXYC() throws AutomataLibraryException {
-	// mLogger.info("--------------------------------------------------");
-	// mLogger.info("Testing strictIneqAutomaton ...");
-	//
-	// int[] xValues, yValues;
-	// Rational c;
-	// final Term x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
-	// final Term y = mScript.variable("y", SmtSortUtils.getIntSort(mScript));
-	//
-	// // Test Cases for x - y < c AND x > 0 AND y > 0 AND c <= 0
-	//
-	// // 1 - 2 < 0
-	// c = Rational.valueOf(0, 1);
-	// xValues = new int[] { 1 };
-	// yValues = new int[] { 2 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 2 - 4 < 0
-	// c = Rational.valueOf(0, 1);
-	// xValues = new int[] { 2 };
-	// yValues = new int[] { 4 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 1 - 4 < -2
-	// c = Rational.valueOf(-2, 1);
-	// xValues = new int[] { 1 };
-	// yValues = new int[] { 4 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 2 - 1 < 0
-	// c = Rational.valueOf(0, 1);
-	// xValues = new int[] { 2 };
-	// yValues = new int[] { 1 };
-	// test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 1 - 1 < -3
-	// c = Rational.valueOf(-3, 1);
-	// xValues = new int[] { 1 };
-	// yValues = new int[] { 1 };
-	// test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // Test Cases for x - y < c AND x > 0 AND y > 0 AND c > 0
-	//
-	// // 1 - 1 < 1
-	// c = Rational.valueOf(1, 1);
-	// xValues = new int[] { 1 };
-	// yValues = new int[] { 1 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 1 - 2 < 1
-	// c = Rational.valueOf(1, 1);
-	// xValues = new int[] { 1 };
-	// yValues = new int[] { 2 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 3 - 2 < 2
-	// c = Rational.valueOf(2, 1);
-	// xValues = new int[] { 3 };
-	// yValues = new int[] { 2 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 2 - 1 < 3
-	// c = Rational.valueOf(3, 1);
-	// xValues = new int[] { 2 };
-	// yValues = new int[] { 1 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 2 - 1 < 1
-	// c = Rational.valueOf(1, 1);
-	// xValues = new int[] { 2 };
-	// yValues = new int[] { 1 };
-	// test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 4 - 1 < 2
-	// c = Rational.valueOf(2, 1);
-	// xValues = new int[] { 4 };
-	// yValues = new int[] { 1 };
-	// test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 7 - 6 < 2
-	// c = Rational.valueOf(2, 1);
-	// xValues = new int[] { 7 };
-	// yValues = new int[] { 6 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // Test Cases for x - y < c AND x <= 0 AND y <= 0 AND c <= 0
-	//
-	// // -1 - 0 < 0
-	// c = Rational.valueOf(0, 1);
-	// xValues = new int[] { -1 };
-	// yValues = new int[] { 0 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // - 2 - (-1) < 0
-	// c = Rational.valueOf(0, 1);
-	// xValues = new int[] { -2 };
-	// yValues = new int[] { -1 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // -5 - (-2) < -2
-	// c = Rational.valueOf(-2, 1);
-	// xValues = new int[] { -5 };
-	// yValues = new int[] { -2 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // -1 - (-2) < 0
-	// c = Rational.valueOf(0, 1);
-	// xValues = new int[] { -1 };
-	// yValues = new int[] { -2 };
-	// test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // -2 - (-2) < -3
-	// c = Rational.valueOf(-3, 1);
-	// xValues = new int[] { -2 };
-	// yValues = new int[] { -2 };
-	// test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // -8 - (-4) < -3
-	// c = Rational.valueOf(-3, 1);
-	// xValues = new int[] { -8 };
-	// yValues = new int[] { -4 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // Test cases for x - y < c AND x <= 0 AND y <= 0 AND c > 0
-	//
-	// // 0 - 0 < 1
-	// c = Rational.valueOf(1, 1);
-	// xValues = new int[] { 0 };
-	// yValues = new int[] { 0 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // -1 - (-1) < 1
-	// c = Rational.valueOf(1, 1);
-	// xValues = new int[] { -1 };
-	// yValues = new int[] { -1 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // -3 - (-2) < 1
-	// c = Rational.valueOf(1, 1);
-	// xValues = new int[] { -3 };
-	// yValues = new int[] { -2 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 0 - (-1) < 2
-	// c = Rational.valueOf(2, 1);
-	// xValues = new int[] { 0 };
-	// yValues = new int[] { -1 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // -2 - (-4) < 3
-	// c = Rational.valueOf(3, 1);
-	// xValues = new int[] { -2 };
-	// yValues = new int[] { -4 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // -2 - (-3) < 1
-	// c = Rational.valueOf(1, 1);
-	// xValues = new int[] { -2 };
-	// yValues = new int[] { -3 };
-	// test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 0 - (-3) < 2
-	// c = Rational.valueOf(2, 1);
-	// xValues = new int[] { 0 };
-	// yValues = new int[] { -3 };
-	// test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // -9 - (-5) < 3
-	// c = Rational.valueOf(3, 1);
-	// xValues = new int[] { -9 };
-	// yValues = new int[] { -5 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // Test Cases for x - y < c AND x > 0 AND y <= 0 AND c > 0
-	//
-	// // 1 - 0 < 2
-	// c = Rational.valueOf(2, 1);
-	// xValues = new int[] { 1 };
-	// yValues = new int[] { 0 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 1 - (-2) < 4
-	// c = Rational.valueOf(4, 1);
-	// xValues = new int[] { 1 };
-	// yValues = new int[] { -2 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 2 - (-1) < 4
-	// c = Rational.valueOf(4, 1);
-	// xValues = new int[] { 2 };
-	// yValues = new int[] { -1 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 1 - (-1) < 1
-	// c = Rational.valueOf(1, 1);
-	// xValues = new int[] { 1 };
-	// yValues = new int[] { -1 };
-	// test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 1 - 0 < 1
-	// c = Rational.valueOf(1, 1);
-	// xValues = new int[] { 1 };
-	// yValues = new int[] { 0 };
-	// test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 1 - (-2) < 3
-	// c = Rational.valueOf(3, 1);
-	// xValues = new int[] { 1 };
-	// yValues = new int[] { -2 };
-	// test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 5 - (-4) < 3
-	// c = Rational.valueOf(3, 1);
-	// xValues = new int[] { 5 };
-	// yValues = new int[] { -4 };
-	// test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // Test Cases for x - y < c AND x <= 0 AND y > 0 AND c <= 0
-	//
-	// // -1 - 1 < -2
-	// c = Rational.valueOf(-2, 1);
-	// xValues = new int[] { -1 };
-	// yValues = new int[] { 1 };
-	// test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 0 - 1 < 0
-	// c = Rational.valueOf(0, 1);
-	// xValues = new int[] { 0 };
-	// yValues = new int[] { 1 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 0 - 3 < 0
-	// c = Rational.valueOf(0, 1);
-	// xValues = new int[] { 0 };
-	// yValues = new int[] { 3 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // -3 - 1 < -3
-	// c = Rational.valueOf(-3, 1);
-	// xValues = new int[] { -3 };
-	// yValues = new int[] { 1 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // -2 - 2 < -3
-	// c = Rational.valueOf(-3, 1);
-	// xValues = new int[] { -2 };
-	// yValues = new int[] { 2 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // 0 - 1 < -1
-	// c = Rational.valueOf(-1, 1);
-	// xValues = new int[] { 0 };
-	// yValues = new int[] { 1 };
-	// test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // -7 - 8 < -5
-	// c = Rational.valueOf(-5, 1);
-	// xValues = new int[] { -7 };
-	// yValues = new int[] { 8 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // -6 - 5 < -1
-	// c = Rational.valueOf(-1, 1);
-	// xValues = new int[] { -6 };
-	// yValues = new int[] { 5 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	//
-	// // -6 - 6 < -1
-	// c = Rational.valueOf(-1, 1);
-	// xValues = new int[] { -6 };
-	// yValues = new int[] { 6 };
-	// test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
-	// }
+	@Test
+	public void strictIneqAutomatonXYC() throws AutomataLibraryException {
+		mLogger.info("--------------------------------------------------");
+		mLogger.info("Testing strictIneqAutomaton ...");
+
+		int[] xValues, yValues;
+		Rational c;
+		final Term x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
+		final Term y = mScript.variable("y", SmtSortUtils.getIntSort(mScript));
+
+		// Test Cases for x - y < c AND x > 0 AND y > 0 AND c <= 0
+
+		// 1 - 2 < 0
+		c = Rational.valueOf(0, 1);
+		xValues = new int[] { 1 };
+		yValues = new int[] { 2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 2 - 4 < 0
+		c = Rational.valueOf(0, 1);
+		xValues = new int[] { 2 };
+		yValues = new int[] { 4 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 1 - 4 < -2
+		c = Rational.valueOf(-2, 1);
+		xValues = new int[] { 1 };
+		yValues = new int[] { 4 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 2 - 1 < 0
+		c = Rational.valueOf(0, 1);
+		xValues = new int[] { 2 };
+		yValues = new int[] { 1 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 1 - 1 < -3
+		c = Rational.valueOf(-3, 1);
+		xValues = new int[] { 1 };
+		yValues = new int[] { 1 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// Test Cases for x - y < c AND x > 0 AND y > 0 AND c > 0
+
+		// 1 - 1 < 1
+		c = Rational.valueOf(1, 1);
+		xValues = new int[] { 1 };
+		yValues = new int[] { 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 1 - 2 < 1
+		c = Rational.valueOf(1, 1);
+		xValues = new int[] { 1 };
+		yValues = new int[] { 2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 3 - 2 < 2
+		c = Rational.valueOf(2, 1);
+		xValues = new int[] { 3 };
+		yValues = new int[] { 2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 2 - 1 < 3
+		c = Rational.valueOf(3, 1);
+		xValues = new int[] { 2 };
+		yValues = new int[] { 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 2 - 1 < 1
+		c = Rational.valueOf(1, 1);
+		xValues = new int[] { 2 };
+		yValues = new int[] { 1 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 4 - 1 < 2
+		c = Rational.valueOf(2, 1);
+		xValues = new int[] { 4 };
+		yValues = new int[] { 1 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 7 - 6 < 2
+		c = Rational.valueOf(2, 1);
+		xValues = new int[] { 7 };
+		yValues = new int[] { 6 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// Test Cases for x - y < c AND x <= 0 AND y <= 0 AND c <= 0
+
+		// -1 - 0 < 0
+		c = Rational.valueOf(0, 1);
+		xValues = new int[] { -1 };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// - 2 - (-1) < 0
+		c = Rational.valueOf(0, 1);
+		xValues = new int[] { -2 };
+		yValues = new int[] { -1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -5 - (-2) < -2
+		c = Rational.valueOf(-2, 1);
+		xValues = new int[] { -5 };
+		yValues = new int[] { -2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -1 - (-2) < 0
+		c = Rational.valueOf(0, 1);
+		xValues = new int[] { -1 };
+		yValues = new int[] { -2 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -2 - (-2) < -3
+		c = Rational.valueOf(-3, 1);
+		xValues = new int[] { -2 };
+		yValues = new int[] { -2 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -8 - (-4) < -3
+		c = Rational.valueOf(-3, 1);
+		xValues = new int[] { -8 };
+		yValues = new int[] { -4 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// Test cases for x - y < c AND x <= 0 AND y <= 0 AND c > 0
+
+		// 0 - 0 < 1
+		c = Rational.valueOf(1, 1);
+		xValues = new int[] { 0 };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -1 - (-1) < 1
+		c = Rational.valueOf(1, 1);
+		xValues = new int[] { -1 };
+		yValues = new int[] { -1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -3 - (-2) < 1
+		c = Rational.valueOf(1, 1);
+		xValues = new int[] { -3 };
+		yValues = new int[] { -2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 0 - (-1) < 2
+		c = Rational.valueOf(2, 1);
+		xValues = new int[] { 0 };
+		yValues = new int[] { -1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -2 - (-4) < 3
+		c = Rational.valueOf(3, 1);
+		xValues = new int[] { -2 };
+		yValues = new int[] { -4 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -2 - (-3) < 1
+		c = Rational.valueOf(1, 1);
+		xValues = new int[] { -2 };
+		yValues = new int[] { -3 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 0 - (-3) < 2
+		c = Rational.valueOf(2, 1);
+		xValues = new int[] { 0 };
+		yValues = new int[] { -3 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -9 - (-5) < 3
+		c = Rational.valueOf(3, 1);
+		xValues = new int[] { -9 };
+		yValues = new int[] { -5 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// Test Cases for x - y < c AND x > 0 AND y <= 0 AND c > 0
+
+		// 1 - 0 < 2
+		c = Rational.valueOf(2, 1);
+		xValues = new int[] { 1 };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 1 - (-2) < 4
+		c = Rational.valueOf(4, 1);
+		xValues = new int[] { 1 };
+		yValues = new int[] { -2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 2 - (-1) < 4
+		c = Rational.valueOf(4, 1);
+		xValues = new int[] { 2 };
+		yValues = new int[] { -1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 1 - (-1) < 1
+		c = Rational.valueOf(1, 1);
+		xValues = new int[] { 1 };
+		yValues = new int[] { -1 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 1 - 0 < 1
+		c = Rational.valueOf(1, 1);
+		xValues = new int[] { 1 };
+		yValues = new int[] { 0 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 1 - (-2) < 3
+		c = Rational.valueOf(3, 1);
+		xValues = new int[] { 1 };
+		yValues = new int[] { -2 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 5 - (-4) < 3
+		c = Rational.valueOf(3, 1);
+		xValues = new int[] { 5 };
+		yValues = new int[] { -4 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// Test Cases for x - y < c AND x <= 0 AND y > 0 AND c <= 0
+
+		// -1 - 1 < -2
+		c = Rational.valueOf(-2, 1);
+		xValues = new int[] { -1 };
+		yValues = new int[] { 1 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 0 - 1 < 0
+		c = Rational.valueOf(0, 1);
+		xValues = new int[] { 0 };
+		yValues = new int[] { 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 0 - 3 < 0
+		c = Rational.valueOf(0, 1);
+		xValues = new int[] { 0 };
+		yValues = new int[] { 3 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -3 - 1 < -3
+		c = Rational.valueOf(-3, 1);
+		xValues = new int[] { -3 };
+		yValues = new int[] { 1 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -2 - 2 < -3
+		c = Rational.valueOf(-3, 1);
+		xValues = new int[] { -2 };
+		yValues = new int[] { 2 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// 0 - 1 < -1
+		c = Rational.valueOf(-1, 1);
+		xValues = new int[] { 0 };
+		yValues = new int[] { 1 };
+		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -7 - 8 < -5
+		c = Rational.valueOf(-5, 1);
+		xValues = new int[] { -7 };
+		yValues = new int[] { 8 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -6 - 5 < -1
+		c = Rational.valueOf(-1, 1);
+		xValues = new int[] { -6 };
+		yValues = new int[] { 5 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -6 - 6 < -1
+		c = Rational.valueOf(-1, 1);
+		xValues = new int[] { -6 };
+		yValues = new int[] { 6 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+	}
 
 	@Test
 	public void strictNegIneqAutomaton() throws AutomataLibraryException {
