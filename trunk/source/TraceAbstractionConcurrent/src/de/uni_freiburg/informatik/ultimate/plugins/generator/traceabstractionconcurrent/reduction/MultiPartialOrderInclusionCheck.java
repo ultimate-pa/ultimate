@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -45,10 +46,8 @@ public class MultiPartialOrderInclusionCheck<STATE1, STATE2, LETTER> {
 		mProgram = program;
 		mProof = proof;
 
-		assert program.getVpAlphabet().getCallAlphabet().isEmpty() : "POR does not support calls.";
-		assert program.getVpAlphabet().getReturnAlphabet().isEmpty() : "POR does not support returns.";
-		assert proof.getVpAlphabet().getCallAlphabet().isEmpty() : "POR does not support calls.";
-		assert proof.getVpAlphabet().getReturnAlphabet().isEmpty() : "POR does not support returns.";
+		assert NestedWordAutomataUtils.isFiniteAutomaton(program) : "POR does not support calls and returns.";
+		assert NestedWordAutomataUtils.isFiniteAutomaton(proof) : "POR does not support calls and returns.";
 
 		mCounterexample = performCheck();
 	}
@@ -97,7 +96,7 @@ public class MultiPartialOrderInclusionCheck<STATE1, STATE2, LETTER> {
 		final Set<LETTER> enabledActions = mProgram.lettersInternal(location);
 		int level = maxLevel;
 
-		for (LETTER a : enabledActions) {
+		for (final LETTER a : enabledActions) {
 			if (sleepSet.containsKey(a)) {
 				final Integer sleepLevel = sleepSet.get(a);
 				assert sleepLevel != null;
@@ -114,9 +113,10 @@ public class MultiPartialOrderInclusionCheck<STATE1, STATE2, LETTER> {
 				level = Math.min(level, recursiveLevel);
 				sleepSet.put(a, recursiveLevel);
 
-				if (result.getFirst() != null) {
-					result.getFirst().add(a);
-					return new Pair<>(result.getFirst(), level);
+				final List<LETTER> counterexample = result.getFirst();
+				if (counterexample != null) {
+					counterexample.add(a);
+					return new Pair<>(counterexample, level);
 				}
 			}
 		}
@@ -128,7 +128,7 @@ public class MultiPartialOrderInclusionCheck<STATE1, STATE2, LETTER> {
 			final LETTER action) {
 		final Map<LETTER, Integer> newSleepSet = new HashMap<>(oldSleepSet.size());
 
-		for (Map.Entry<LETTER, Integer> entry : oldSleepSet.entrySet()) {
+		for (final Map.Entry<LETTER, Integer> entry : oldSleepSet.entrySet()) {
 			for (int level = entry.getValue(); level >= 0; level--) {
 				assert 0 <= level && level < mRelations.length : "Illegal level " + level;
 				if (mRelations[level].contains(context, entry.getKey(), action)) {
@@ -151,7 +151,7 @@ public class MultiPartialOrderInclusionCheck<STATE1, STATE2, LETTER> {
 		final ArrayList<STATE1> stateSequence = new ArrayList<>(word.length() + 1);
 		STATE1 current = getInitial(mProgram);
 		stateSequence.add(current);
-		for (LETTER a : word) {
+		for (final LETTER a : word) {
 			current = getSuccessor(mProgram, current, a);
 			stateSequence.add(current);
 		}
@@ -160,7 +160,7 @@ public class MultiPartialOrderInclusionCheck<STATE1, STATE2, LETTER> {
 	}
 
 	// TODO: determinize automata, use built-in product automata
-	private <STATE> STATE getInitial(final INestedWordAutomaton<?, STATE> automaton) {
+	private static <STATE> STATE getInitial(final INestedWordAutomaton<?, STATE> automaton) {
 		final Set<STATE> initial = automaton.getInitialStates();
 		assert initial.size() == 1 : "Automaton must be deterministic";
 		return initial.iterator().next();

@@ -56,8 +56,8 @@ public class AbstractSemanticIndependenceRelation implements IIndependenceRelati
 	private final ManagedScript mManagedScript;
 	private final ILogger mLogger;
 
-	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	private final static SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
+	private final static XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	/**
 	 * Create a new variant of the abstract semantic independence relation.
@@ -125,7 +125,7 @@ public class AbstractSemanticIndependenceRelation implements IIndependenceRelati
 			return mAbstractionCache.get(action);
 		}
 
-		HashRelation<IPredicate, IPredicate> abstraction = new HashRelation<>();
+		final HashRelation<IPredicate, IPredicate> abstraction = new HashRelation<>();
 		for (final IPredicate pre : mPredicates) {
 			for (final IPredicate post : mPredicates) {
 				final IHoareTripleChecker.Validity result = mChecker.checkInternal(pre, action, post);
@@ -143,10 +143,10 @@ public class AbstractSemanticIndependenceRelation implements IIndependenceRelati
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
 
 		// Construct a substitution to apply to postconditions.
-		final Map<TermVariable, Term> substitutionMap = new HashMap<>();
-		for (IProgramVar variable : mAllVariables) {
-			TermVariable original = variable.getTermVariable();
-			TermVariable replacement = mManagedScript.constructFreshCopy(original);
+		final Map<TermVariable, Term> substitutionMap = new HashMap<>(mAllVariables.size());
+		for (final IProgramVar variable : mAllVariables) {
+			final TermVariable original = variable.getTermVariable();
+			final TermVariable replacement = mManagedScript.constructFreshCopy(original);
 			substitutionMap.put(original, replacement);
 
 			// All variables are output variables (may change arbitrarily, unless
@@ -157,20 +157,20 @@ public class AbstractSemanticIndependenceRelation implements IIndependenceRelati
 
 		final List<Term> conjuncts = new ArrayList<>(abstraction.size());
 
-		for (Map.Entry<IPredicate, IPredicate> pair : abstraction) {
+		for (final Map.Entry<IPredicate, IPredicate> pair : abstraction) {
 			final IPredicate pre = pair.getKey();
 			final IPredicate post = pair.getValue();
 
 			// Add program constants.
-			for (IProgramConst constant : pre.getConstants()) {
+			for (final IProgramConst constant : pre.getConstants()) {
 				tfb.addProgramConst(constant);
 			}
-			for (IProgramConst constant : post.getConstants()) {
+			for (final IProgramConst constant : post.getConstants()) {
 				tfb.addProgramConst(constant);
 			}
 
 			// Free variables of the precondition are input variables.
-			for (IProgramVar variable : pre.getVars()) {
+			for (final IProgramVar variable : pre.getVars()) {
 				tfb.addInVar(variable, variable.getTermVariable());
 			}
 
