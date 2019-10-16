@@ -350,8 +350,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addState(false, false, state1);
 
 			if (i % 2 == 0) {
-				automaton.addInternalTransition(state0, xy01, state1);
-				automaton.addInternalTransition(state1, xy10, "final");
+				automaton.addInternalTransition(state0, xy10, state1);
+				automaton.addInternalTransition(state1, xy01, "final");
 
 				String predInner = state1;
 				for (int j = 0; j < 2 * (Math.abs(c) - 2 * n - 2); j++) {
@@ -360,7 +360,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 					automaton.addInternalTransition(predInner, xy00, state);
 
 					if (j % 2 != 0) {
-						automaton.addInternalTransition(state, xy10, "final");
+						automaton.addInternalTransition(state, xy01, "final");
 					}
 
 					predInner = state;
@@ -368,8 +368,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			}
 
 			if (i % 2 != 0) {
-				automaton.addInternalTransition(state0, xy10, state1);
-				automaton.addInternalTransition(state1, xy01, "final");
+				automaton.addInternalTransition(state0, xy01, state1);
+				automaton.addInternalTransition(state1, xy10, "final");
 
 				String predInner = state1;
 				for (int j = 0; j < 2 * (Math.abs(c) - 2 * n - 1); j++) {
@@ -378,7 +378,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 					automaton.addInternalTransition(predInner, xy00, state);
 
 					if (j % 2 != 0) {
-						automaton.addInternalTransition(state, xy01, "final");
+						automaton.addInternalTransition(state, xy10, "final");
 					}
 
 					predInner = state;
