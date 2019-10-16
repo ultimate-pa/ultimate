@@ -229,6 +229,68 @@ public final class MSODOperations {
 	}
 
 	/**
+	 * Returns a satisfying SMTLIB model for the Weak-MSOD-formula of type Nat represented by the given automata or null
+	 * if no such model exists.
+	 *
+	 * @throws AutomataLibraryException
+	 * @throws UnsupportedOperationException
+	 *             if representation of Integer variable is corrupted
+	 */
+	public Map<Term, Term> testGetResultWeak(final Script script, final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
+			throws AutomataLibraryException, UnsupportedOperationException {
+		Pair<NestedWord<MSODAlphabetSymbol>, NestedWord<MSODAlphabetSymbol>> pair;
+
+		// Get the word of the accepted run.
+		final NestedWord<MSODAlphabetSymbol> word = getWordWeak(script, services, automaton);
+
+		// Split word into positive and negative part if the input formula is defined for integer numbers.
+		if (mAutomataOperations instanceof MSODAutomataOperationsWeak
+				& mFormulaOperations instanceof MSODFormulaOperationsInt) {
+			pair = splitWordWeak(script, word);
+		}
+		// Input Formula defined only for natural numbers, no negative word exists.
+		else {
+			pair = new Pair<>(word, null);
+		}
+
+		// Construct resulting term.
+		return stemTerm(word, true, script);
+	}
+
+	/**
+	 * Returns a satisfying SMTLIB model for the MSOD-formula represented by the given Buchi automata or null if no such
+	 * model exists.
+	 *
+	 * @throws AutomataLibraryException
+	 * @throws UnsupportedOperationException
+	 *             if representation of Integer variable is corrupted
+	 */
+	public Map<Term, Term> testGetResultBuchi(final Script script, final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
+			throws AutomataLibraryException, UnsupportedOperationException {
+		Pair<NestedLassoWord<MSODAlphabetSymbol>, NestedLassoWord<MSODAlphabetSymbol>> pair;
+
+		// Get the word of the accepted run.
+		final NestedLassoWord<MSODAlphabetSymbol> word = getWordBuchi(script, services, automaton);
+
+		// Split word into positive and negative part if the input formula is defined for integer numbers.
+		if (mAutomataOperations instanceof MSODAutomataOperationsWeak
+				& mFormulaOperations instanceof MSODFormulaOperationsInt) {
+			pair = splitWordBuchi(script, word);
+		}
+		// Input Formula defined only for natural numbers, no negative word exists.
+		else {
+			pair = new Pair<>(word, null);
+		}
+
+		// Construct resulting term.
+		// return stemTerm(word, true, script);
+		return null;
+
+	}
+
+	/**
 	 * Returns a pair of NestedWords. First value contains only the positive part, second value only the negative part
 	 * of the given NestedWord.
 	 */
@@ -242,17 +304,16 @@ public final class MSODOperations {
 
 		for (int i = 0; i < word.length(); i++) {
 			if (i % 2 == 0) {
-				symbolsNeg.add(word.getSymbol(i));
-			} else {
 				symbolsPos.add(word.getSymbol(i));
+			} else {
+				symbolsNeg.add(word.getSymbol(i));
 			}
 		}
 
-		// MSODAlphabetSymbol[] array = symbolsPos.toArray(new MSODAlphabetSymbol[(int) (0.5 * word.length())]);
 		wordPos = NestedWord
-				.nestedWord(new Word<>(symbolsPos.toArray(new MSODAlphabetSymbol[(int) (0.5 * word.length())])));
+				.nestedWord(new Word<>(symbolsPos.toArray(new MSODAlphabetSymbol[(int) (0.5 * word.length() + 0.5)])));
 		wordNeg = NestedWord
-				.nestedWord(new Word<>(symbolsNeg.toArray(new MSODAlphabetSymbol[(int) (0.5 * word.length() + 0.5)])));
+				.nestedWord(new Word<>(symbolsNeg.toArray(new MSODAlphabetSymbol[(int) (0.5 * word.length())])));
 
 		return new Pair<>(wordPos, wordNeg);
 	}
@@ -261,63 +322,43 @@ public final class MSODOperations {
 	 * Returns a pair of NestedLassoWords. First value contains only the positive part, second value only the negative
 	 * part of the given NestedLassoWord.
 	 */
-	public Pair<NestedLassoWord<MSODAlphabetSymbol>, NestedLassoWord<MSODAlphabetSymbol>> splitWordBuchi(
-			final Script script, NestedLassoWord<MSODAlphabetSymbol> word,
-			final MSODFormulaOperations formulaOperation) {
+	public Pair<NestedLassoWord<MSODAlphabetSymbol>, NestedLassoWord<MSODAlphabetSymbol>>
+			splitWordBuchi(final Script script, NestedLassoWord<MSODAlphabetSymbol> word) {
 		NestedLassoWord<MSODAlphabetSymbol> lassoWordPos = new NestedLassoWord<>(null, null);
 		NestedLassoWord<MSODAlphabetSymbol> lassoWordNeg = new NestedLassoWord<>(null, null);
 
-		if (formulaOperation instanceof MSODFormulaOperationsNat) {
-			lassoWordPos = word;
+		Pair<NestedWord<MSODAlphabetSymbol>, NestedWord<MSODAlphabetSymbol>> stemPair;
+
+		final List<MSODAlphabetSymbol> symbolsPosLoop = new ArrayList<>();
+		final List<MSODAlphabetSymbol> symbolsNegLoop = new ArrayList<>();
+
+		// The loop must be unrolled once in case of odd loop length.
+		if (word.getLoop().length() % 2 == 1) {
+			word = new NestedLassoWord<>(word.getStem(), word.getLoop().concatenate(word.getLoop()));
 		}
-		if (formulaOperation instanceof MSODFormulaOperationsInt) {
-			final List<MSODAlphabetSymbol> symbolsPosStem = new ArrayList<>();
-			final List<MSODAlphabetSymbol> symbolsPosLoop = new ArrayList<>();
-			final List<MSODAlphabetSymbol> symbolsNegStem = new ArrayList<>();
-			final List<MSODAlphabetSymbol> symbolsNegLoop = new ArrayList<>();
 
-			final Boolean fstLoopNumIsNeg = (word.getStem().length() % 2 == 0) ? true : false;
+		// Split stem into positive resp. negative part.
+		stemPair = splitWordWeak(script, word.getStem());
 
-			// Deal with loop of odd length.
-			if (word.getLoop().length() % 2 == 1) {
-				word = new NestedLassoWord<>(word.getStem(), word.getLoop().concatenate(word.getLoop()));
+		// Split loop into positive resp. negative part. The order of positive and negative numbers in the loop is
+		// reversed if the stem length is odd.
+		for (int i = 0; i < word.getLoop().length(); i++) {
+			if (i % 2 == word.getStem().length() % 2) {
+				symbolsPosLoop.add(word.getLoop().getSymbol(i));
+			} else {
+				symbolsNegLoop.add(word.getLoop().getSymbol(i));
 			}
-
-			// Split stem into positive resp. negative part.
-			for (int i = 0; i < word.getStem().length(); i++) {
-				if (i % 2 == 0) {
-					symbolsNegStem.add(word.getStem().getSymbol(i / 2));
-				} else {
-					symbolsPosStem.add(word.getStem().getSymbol((i - 1) / 2));
-				}
-			}
-
-			// Split loop into positive resp. negative part.
-			int j = 0;
-			for (int i = 0; i < word.getLoop().length(); i++) {
-				if (!fstLoopNumIsNeg) {
-					j = 1;
-				}
-				if (i % 2 == j) {
-					symbolsNegLoop.add(word.getLoop().getSymbol(i / 2));
-				} else {
-					symbolsPosLoop.add(word.getLoop().getSymbol((i - 1) / 2));
-				}
-			}
-
-			// Create new LassoWords
-			final NestedWord<MSODAlphabetSymbol> stemPos =
-					NestedWord.nestedWord(new Word<>((MSODAlphabetSymbol[]) symbolsPosStem.toArray()));
-			final NestedWord<MSODAlphabetSymbol> loopPos =
-					NestedWord.nestedWord(new Word<>((MSODAlphabetSymbol[]) symbolsPosLoop.toArray()));
-			final NestedWord<MSODAlphabetSymbol> stemNeg =
-					NestedWord.nestedWord(new Word<>((MSODAlphabetSymbol[]) symbolsNegStem.toArray()));
-			final NestedWord<MSODAlphabetSymbol> loopNeg =
-					NestedWord.nestedWord(new Word<>((MSODAlphabetSymbol[]) symbolsNegLoop.toArray()));
-
-			lassoWordPos = new NestedLassoWord<>(stemPos, loopPos);
-			lassoWordNeg = new NestedLassoWord<>(stemNeg, loopNeg);
 		}
+
+		// Create positive resp. negative LassoWords
+		final NestedWord<MSODAlphabetSymbol> loopPos =
+				NestedWord.nestedWord(new Word<>((MSODAlphabetSymbol[]) symbolsPosLoop.toArray()));
+		final NestedWord<MSODAlphabetSymbol> loopNeg =
+				NestedWord.nestedWord(new Word<>((MSODAlphabetSymbol[]) symbolsNegLoop.toArray()));
+
+		lassoWordPos = new NestedLassoWord<>(stemPair.getFirst(), loopPos);
+		lassoWordNeg = new NestedLassoWord<>(stemPair.getSecond(), loopNeg);
+
 		return new Pair<>(lassoWordPos, lassoWordNeg);
 	}
 
@@ -329,6 +370,7 @@ public final class MSODOperations {
 	 * @throws UnsupportedOperationException
 	 *             if representation of Integer variable is corrupted
 	 */
+	@Deprecated
 	public Map<Term, Term> getResultNatWeak(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
 			throws AutomataLibraryException, UnsupportedOperationException {
@@ -348,6 +390,7 @@ public final class MSODOperations {
 	 * @throws UnsupportedOperationException
 	 *             if representation of Integer variable is corrupted
 	 */
+	@Deprecated
 	public Map<Term, Term> getResultIntWeak(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
 			throws AutomataLibraryException, UnsupportedOperationException {
@@ -382,6 +425,7 @@ public final class MSODOperations {
 	}
 
 	// TODO:
+	@Deprecated
 	public Map<Term, Term> getResultNatBuchi(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 		Map<Term, Term> result = new HashMap<>();
@@ -411,6 +455,7 @@ public final class MSODOperations {
 	/**
 	 * Return the loop Term condition derived from an accepted LassoWord (for natural numbers only).
 	 */
+	@Deprecated
 	public Map<Term, Term> loopTermNat(final NestedWord<MSODAlphabetSymbol> loop, final int maxStem,
 			final Script script) {
 		final Map<Term, Term> result = new HashMap<>();
@@ -479,6 +524,7 @@ public final class MSODOperations {
 	}
 
 	// TODO:
+	@Deprecated
 	public Map<Term, Term> getResultIntBuchi(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 		final Map<Term, Term> result = new HashMap<>();
@@ -487,7 +533,7 @@ public final class MSODOperations {
 		// Get word of accepting run and split it into positive / negative stem and loop.
 		final NestedLassoWord<MSODAlphabetSymbol> word = getWordBuchi(script, services, automaton);
 		final Pair<NestedLassoWord<MSODAlphabetSymbol>, NestedLassoWord<MSODAlphabetSymbol>> pair =
-				splitWordBuchi(script, word, mFormulaOperations);
+				splitWordBuchi(script, word);
 		final NestedWord<MSODAlphabetSymbol> stemPos = pair.getFirst().getStem();
 		final NestedWord<MSODAlphabetSymbol> loopPos = pair.getFirst().getLoop();
 		final NestedWord<MSODAlphabetSymbol> stemNeg = pair.getSecond().getStem();
@@ -499,6 +545,7 @@ public final class MSODOperations {
 	/**
 	 * Returns a Map containing terms and the disjunction corresponding to the numbers encoded in the given stem.
 	 */
+	@Deprecated
 	public Map<Term, Term> stemTerm(final NestedWord<MSODAlphabetSymbol> stem, final Boolean isPositive,
 			final Script script) {
 		final Map<Term, Term> result = new HashMap<>();
@@ -543,6 +590,7 @@ public final class MSODOperations {
 	/**
 	 * Create terms needed to describe an integer interval used to represent the stem conditions.
 	 */
+	@Deprecated
 	public Term createIntervalForStemTerm(final Script script, final Term term, final int start, final int end) {
 		final Term newTerm = term.getTheory().createTermVariable(term.toString(), SmtSortUtils.getIntSort(script));
 		if (start == end) {
