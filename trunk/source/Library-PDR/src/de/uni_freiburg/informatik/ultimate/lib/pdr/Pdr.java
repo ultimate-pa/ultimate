@@ -398,6 +398,10 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				 * Dealing with internal transitions:
 				 */
 				if (predecessorTransition instanceof IIcfgInternalTransition) {
+					if (!localFrames.containsKey(predecessor)) {
+						mLogger.warn("Found unrelated predecessor");
+						continue;
+					}
 					final IPredicate predecessorFrame = localFrames.get(predecessor).get(level - 1).getSecond();
 					final Triple<IPredicate, IAction, IPredicate> query =
 							new Triple<>(predecessorFrame, predecessorTransition, toBeBlocked);
