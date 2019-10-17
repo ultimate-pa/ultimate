@@ -397,7 +397,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 * Interpolant automaton mode.
 	 */
 	public enum InterpolantAutomaton {
-		CANONICAL, STRAIGHT_LINE, TOTALINTERPOLATION, TOTALINTERPOLATION2, ABSTRACT_INTERPRETATION
+		CANONICAL, STRAIGHT_LINE, TOTALINTERPOLATION, TOTALINTERPOLATION2, ABSTRACT_INTERPRETATION, MCR
 	}
 
 	/**

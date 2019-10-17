@@ -179,6 +179,8 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 		case ABSTRACT_INTERPRETATION:
 			return createIpAbStrategyModuleAbstractInterpretation(
 					(IpTcStrategyModuleAbstractInterpretation<LETTER>) preferenceIpTc);
+		case MCR:
+			return createIpAbStrategyModuleMCR((IpTcStrategyModuleMCR<?, LETTER>) preferenceIpTc);
 		case TOTALINTERPOLATION:
 		default:
 			throw new IllegalArgumentException("Setting " + mTaPrefs.interpolantAutomaton() + " is unsupported");
@@ -203,6 +205,10 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleCanonical() {
 		return new IpAbStrategyModuleCanonical<>(mServices, mLogger, mAbstraction, mCounterexample, mEmptyStackFactory,
 				mPredicateUnifier);
+	}
+
+	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleMCR(final IpTcStrategyModuleMCR<?, LETTER> ipTcSmMCR) {
+		return new IpAbStrategyModuleMCR<>(ipTcSmMCR);
 	}
 
 	public TermClassifier getTermClassifierForTrace() {
