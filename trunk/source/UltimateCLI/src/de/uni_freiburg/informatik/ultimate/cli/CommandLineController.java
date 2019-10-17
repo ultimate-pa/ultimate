@@ -134,17 +134,7 @@ public class CommandLineController implements IController<RunDefinition> {
 			return IApplication.EXIT_OK;
 		}
 
-		final Predicate<String> pluginNameFilter;
-		try {
-			pluginNameFilter = getToolchainBasedPluginFilter(core, toolchainStageParams.getToolchainFile());
-		} catch (final ParseException pex) {
-			mLogger.error("Could not find the provided toolchain file: " + pex.getMessage());
-			return -1;
-		} catch (final InvalidFileArgumentException e) {
-			mLogger.error(e.getMessage());
-			printArgs(args);
-			return -1;
-		}
+		final Predicate<String> pluginNameFilter = a -> true;
 
 		// second, perform real parsing
 		final CommandLineParser fullParser = CommandLineParser.createParser(core, pluginNameFilter, true);
