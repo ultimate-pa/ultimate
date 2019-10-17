@@ -187,7 +187,7 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict subset relation of the form " X ⊆ Y".
+	 * Returns a {@link NestedWordAutomaton} representing a subset relation of the form " X ⊆ Y".
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
@@ -208,14 +208,10 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 		xy11 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, true });
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
-		automaton.addState(true, false, "init");
-		automaton.addState(false, true, "final");
-		automaton.addInternalTransition("init", xy00, "final");
-		automaton.addInternalTransition("init", xy01, "final");
-		automaton.addInternalTransition("init", xy11, "final");
-		automaton.addInternalTransition("final", xy00, "final");
-		automaton.addInternalTransition("final", xy01, "final");
-		automaton.addInternalTransition("final", xy11, "final");
+		automaton.addState(true, true, "init");
+		automaton.addInternalTransition("init", xy00, "init");
+		automaton.addInternalTransition("init", xy01, "init");
+		automaton.addInternalTransition("init", xy11, "init");
 
 		return automaton;
 	}
