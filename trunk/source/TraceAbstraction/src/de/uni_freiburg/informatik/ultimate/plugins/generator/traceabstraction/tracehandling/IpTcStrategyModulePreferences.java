@@ -146,8 +146,9 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 			return new Pdr<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs, mPredicateUnifier,
 					mCounterexample.getWord().asList());
 		case MCR:
+			// TODO: Where to get another internal IInterpolatingTraceCheck?
 			return new MCR<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs, mPredicateUnifier,
-					constructHoareTripleChecker(), mCounterexample.getWord().asList());
+					mCounterexample.getWord().asList(), null);
 		default:
 			throw new UnsupportedOperationException("Unsupported interpolation technique: " + mInterpolationTechnique);
 		}

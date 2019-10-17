@@ -21,14 +21,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -50,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTraceCheck<LETTER> {
 	private final ILogger mLogger;
 	private final IPredicateUnifier mPredicateUnifier;
-	private final IHoareTripleChecker mHtc;
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
 	private final IPredicate mTruePred;
@@ -69,11 +69,9 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final ITraceCheckFactory<LETTER> mTraceCheckFactory;
 
 	public MCR(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
-			final IHoareTripleChecker htc, final List<LETTER> trace,
-			final ITraceCheckFactory<LETTER> traceCheckFactory) {
+			final List<LETTER> trace, final ITraceCheckFactory<LETTER> traceCheckFactory) {
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
-		mHtc = htc;
 		mServices = prefs.getUltimateServices();
 		mManagedScript = prefs.getCfgSmtToolkit().getManagedScript();
 		mTraceCheckFactory = traceCheckFactory;
@@ -310,6 +308,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		return interpolants[trace.indexOf(action) + 1].getFormula();
 	}
 
+	// TODO: Where to return this automaton?
 	public NestedWordAutomaton<LETTER, IPredicate> getAutomaton() {
 		return mAutomaton;
 	}
@@ -433,7 +432,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		}
 	}
 
-	public interface ITraceCheckFactory<LETTER> {
-		ITraceCheck getTraceCheck(final List<LETTER> trace);
+	public interface ITraceCheckFactory<LETTER extends IIcfgTransition<?>> {
+		IInterpolatingTraceCheck<LETTER> getTraceCheck(final List<LETTER> trace);
 	}
 }
