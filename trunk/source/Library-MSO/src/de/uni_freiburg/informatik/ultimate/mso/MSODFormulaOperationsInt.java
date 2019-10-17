@@ -40,7 +40,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * TODO: Comment Class.
+ * This class provides methods to construct automata corresponding to given MSOD-Formulas over the set of integers
+ * numbers.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)

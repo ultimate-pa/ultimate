@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inters
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * TODO: Comment Class.
+ * This class provides methods to manipulate finite automata used to describe Weak-MSOD-Formulas.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)

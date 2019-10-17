@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtil
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * TODO: Comment Class.
+ * This class provides methods to manipulate Buchi automata used to describe MSOD-Formulas.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)

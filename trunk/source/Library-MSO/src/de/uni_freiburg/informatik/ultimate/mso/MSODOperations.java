@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * TODO: Comment Class.
+ * This class provides methods to construct and manipulate automata used to describe MSOD-Formulas.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -316,7 +316,7 @@ public final class MSODOperations {
 		final Map<Term, Term> result = new HashMap<>();
 
 		for (final Entry<Term, Set<BigInteger>> entry : stemNumbers.entrySet()) {
-			final List<BigInteger> list = new ArrayList(entry.getValue());
+			final List<BigInteger> list = new ArrayList<>(entry.getValue());
 			Collections.sort(list);
 			final Set<Term> disjuncts = new HashSet<>();
 			BigInteger value = null;
@@ -334,9 +334,6 @@ public final class MSODOperations {
 
 				// Create and store term, if interval cannot be not prolonged.
 				if (value != null & (i + 1 == list.size() || list.get(i + 1) != value.add(BigInteger.ONE))) {
-
-					// TODO: Create term for start=value, end = list.get(i)
-
 					// Number is not part of an interval
 					if (value == list.get(i)) {
 						// Create single value term if sort of term is IntSort
