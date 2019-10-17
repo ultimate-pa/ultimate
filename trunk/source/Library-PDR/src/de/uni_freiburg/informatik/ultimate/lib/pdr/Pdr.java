@@ -384,9 +384,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			}
 			for (final IcfgEdge predecessorTransition : location.getIncomingEdges()) {
 				final IcfgLocation predecessor = predecessorTransition.getSource();
-				final IPredicate predecessorFrame = localFrames.get(predecessor).get(level - 1).getSecond();
-				final Triple<IPredicate, IAction, IPredicate> query =
-						new Triple<>(predecessorFrame, predecessorTransition, toBeBlocked);
 
 				/*
 				 * Check whether the proofobligation has already been blocked to skip the rest.
@@ -401,6 +398,10 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				 * Dealing with internal transitions:
 				 */
 				if (predecessorTransition instanceof IIcfgInternalTransition) {
+					final IPredicate predecessorFrame = localFrames.get(predecessor).get(level - 1).getSecond();
+					final Triple<IPredicate, IAction, IPredicate> query =
+							new Triple<>(predecessorFrame, predecessorTransition, toBeBlocked);
+
 					final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
 							.getModifiedBoogieVars(predecessorTransition.getPrecedingProcedure());
 					final UnmodifiableTransFormula predTF = predecessorTransition.getTransformula();
@@ -495,6 +496,14 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 								predecessorTransition.getSource().getProcedure());
 					}
 					final IIcfgReturnTransition<?, ?> returnTrans = (IIcfgReturnTransition<?, ?>) predecessorTransition;
+
+					final UnmodifiableTransFormula assOfRet =
+							((IIcfgReturnTransition) predecessorTransition).getAssignmentOfReturn();
+					final UnmodifiableTransFormula assOfCallRet =
+							((IIcfgReturnTransition) predecessorTransition).getLocalVarsAssignmentOfCall();
+					final UnmodifiableTransFormula assOfCall =
+							returnTrans.getCorrespondingCall().getLocalVarsAssignment();
+
 					/**
 					 * Get the procedure in form of a trace.
 					 */
@@ -528,8 +537,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 						final ProofObligation newProofObligation = procSatProofObligations.getSecond();
 						final IcfgLocation newLocation = returnTrans.getCallerProgramPoint();
 
-						final ProofObligation newLocalProofObligation = new ProofObligation(
-								newProofObligation.getToBeBlocked(), newLocation, proofObligation.getLevel());
+						final ProofObligation newLocalProofObligation =
+								new ProofObligation(newProofObligation.getToBeBlocked(), newLocation, 0);
 
 						final List<LETTER> subTrace = getSubTrace(newLocation);
 						if (mLogger.isDebugEnabled()) {
@@ -571,6 +580,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 							 */
 						} else if (subTraceResult == LBool.SAT) {
 							mLogger.debug("SAT");
+							return false;
 						}
 
 					}
@@ -587,8 +597,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 							mLogger.debug("Return to procedure");
 						}
 					} else {
-						mLogger.error(String.format("Internal query %s && %s && %s was unknown!", predecessorFrame,
-								predecessorTransition, toBeBlocked));
+						mLogger.error(String.format("Internal query was unknown!"));
 						throw new UnsupportedOperationException("Solver returned unknown");
 					}
 				} else {
