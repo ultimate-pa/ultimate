@@ -600,8 +600,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 		automaton.addState(true, false, "init");
 		automaton.addState(false, true, "final");
-		automaton.addInternalTransition("final", xy00, "final");
-		automaton.addInternalTransition("final", xy01, "final");
 
 		automaton.addInternalTransition("init", xy00, "init");
 		automaton.addInternalTransition("init", xy11, "init");
@@ -614,7 +612,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict subset relation of the form " X ⊆ Y".
+	 * Returns a {@link NestedWordAutomaton} representing a subset relation of the form " X ⊆ Y".
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.

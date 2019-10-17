@@ -351,10 +351,10 @@ public final class MSODNatOperationsTest {
 
 		// Test Cases for x strictSubsetInt y
 
-		// { } subsetInt { 0 }
+		// { } subsetInt { 2 }
 		xValuesStem = new int[] {};
-		yValuesStem = new int[] { 0 };
-		lastStemNumber = 0;
+		yValuesStem = new int[] { 2 };
+		lastStemNumber = 2;
 		xValuesLoop = new int[] {};
 		yValuesLoop = new int[] {};
 		lastLoopNumber = 0;
@@ -428,18 +428,18 @@ public final class MSODNatOperationsTest {
 
 		// Test Cases for x subsetInt y
 
-		// { } subsetInt { 0 }
+		// { } subsetInt { 3 }
 		xValuesStem = new int[] {};
-		yValuesStem = new int[] { 0 };
-		lastStemNumber = 0;
+		yValuesStem = new int[] { 3 };
+		lastStemNumber = 3;
 		xValuesLoop = new int[] {};
 		yValuesLoop = new int[] {};
 		lastLoopNumber = 0;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemNumber, lastLoopNumber),
 				mMSODOperations.subsetAutomaton(mServices, x, y));
 
-		// { 2, 4, 6, ...} subsetInt { 0, 1, 2, 3, 4, ... }
-		xValuesStem = new int[] { 2 };
+		// { 1, 4, 6, ...} subsetInt { 0, 1, 2, 3, 4, ... }
+		xValuesStem = new int[] { 1 };
 		yValuesStem = new int[] { 0, 1, 2 };
 		lastStemNumber = 2;
 		xValuesLoop = new int[] { 1 };

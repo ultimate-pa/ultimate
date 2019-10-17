@@ -47,7 +47,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing an element relation of the form "x + c ∈ Y".
+	 * TODO: Correct Comment: Returns a {@link NestedWordAutomaton} representing an element relation of the form "x + c
+	 * ∈ Y".
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type Int or c is less than 0.
@@ -267,7 +268,7 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 		if (!MSODUtils.isSetOfIntVariable(x) || c.isNegative()) {
 			throw new IllegalArgumentException("Input x must be a SetOfInt variable and c must be >= 0.");
 		}
-
+		final int cInt = SmtUtils.toInt(c).intValueExact();
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
 		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
@@ -278,11 +279,17 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 		automaton.addInternalTransition("final", x0, "final");
 		automaton.addInternalTransition("final", x1, "final");
 
-		if (c.signum() == 0) {
-			automaton.addInternalTransition("init", x1, "final");
+		String pred = "init";
+
+		for (int i = 0; i < cInt; i++) {
+			final String state = "c" + i;
+			automaton.addState(false, false, state);
+			automaton.addInternalTransition(pred, x0, state);
+			automaton.addInternalTransition(pred, x1, state);
+			pred = state;
 		}
 
-		addConstPart(automaton, c, x0, x1, x0, x1, x1);
+		automaton.addInternalTransition(pred, x1, "final");
 
 		return automaton;
 	}
@@ -290,6 +297,7 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	/**
 	 * Adds a part to the given automaton that represents the value of constant c.
 	 */
+	@Deprecated
 	private static void addConstPart(final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Rational c,
 			final MSODAlphabetSymbol initToState1, final MSODAlphabetSymbol initToState2,
 			final MSODAlphabetSymbol predToState1, final MSODAlphabetSymbol predToState2,

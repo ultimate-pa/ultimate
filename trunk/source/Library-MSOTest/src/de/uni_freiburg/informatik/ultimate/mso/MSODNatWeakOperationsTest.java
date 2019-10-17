@@ -263,34 +263,34 @@ public final class MSODNatWeakOperationsTest {
 		yValues = new int[] { 0 };
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
-		// { 3, 4 } strictSubsetInt { 1, 3, 4, 8 }
-		xValues = new int[] { 3, 4 };
+		// { 3, 8 } strictSubsetInt { 1, 3, 4, 8 }
+		xValues = new int[] { 3, 8 };
 		yValues = new int[] { 1, 3, 4, 8 };
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
-		// { 2, 5 } strictSubsetInt { 2, 5, 6, 7}
-		xValues = new int[] { 2, 5 };
-		yValues = new int[] { 2, 5, 6, 7 };
+		// { 3, 5 } strictSubsetInt { 3, 5, 6, 7}
+		xValues = new int[] { 3, 5 };
+		yValues = new int[] { 3, 5, 6, 7 };
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
-		// { 1 } strictSubsetInt { 0 }
+		// { 1 } strictSubsetInt { 1 }
 		xValues = new int[] { 1 };
-		yValues = new int[] { 0 };
+		yValues = new int[] { 1 };
 		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
-		// { 1, 3, 7} strictSubsetInt { 1, 2, 3, 7}
-		xValues = new int[] { 1, 3, 7 };
+		// { 2, 3, 7} strictSubsetInt { 1, 2, 3, 7}
+		xValues = new int[] { 2, 3, 7 };
 		yValues = new int[] { 1, 2, 3, 7 };
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
-		// { 0, 1, 4, 6 } strictSubsetInt { 0, 1, 4 }
-		xValues = new int[] { 0, 1, 4, 6 };
+		// { 0, 1, 4, 7 } strictSubsetInt { 0, 1, 4 }
+		xValues = new int[] { 0, 1, 4, 7 };
 		yValues = new int[] { 0, 1, 4 };
 		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
-		// { 2, 3, 5 } strictSubsetInt { 2, 3, 5 }
-		xValues = new int[] { 2, 3, 5 };
-		yValues = new int[] { 2, 3, 5 };
+		// { 2, 4, 5 } strictSubsetInt { 2, 4, 5 }
+		xValues = new int[] { 2, 4, 5 };
+		yValues = new int[] { 2, 4, 5 };
 		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
 
 	}
@@ -307,9 +307,9 @@ public final class MSODNatWeakOperationsTest {
 
 		// Test Cases for x subsetInt y
 
-		// { } subsetInt { 0 }
+		// { } subsetInt { }
 		xValues = new int[] {};
-		yValues = new int[] { 0 };
+		yValues = new int[] {};
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
 
 		// { 3, 4 } subsetInt { 1, 3, 4, 8 }
