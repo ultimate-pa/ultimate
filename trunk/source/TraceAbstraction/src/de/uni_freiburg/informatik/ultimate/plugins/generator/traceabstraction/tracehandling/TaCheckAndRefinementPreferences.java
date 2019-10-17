@@ -81,6 +81,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final boolean mCollectInterpolantStatistics;
 	private final IUltimateServiceProvider mServices;
 	private final boolean mUsePredicateTrieBasedPredicateUnifier;
+	private final boolean mUseMCR;
 
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
@@ -137,6 +138,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS);
 		mUseInterpolantConsolidation =
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
+		mUseMCR = ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_MCR);
 		mUseNonlinearConstraints = ultimatePrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS);
 		mUseVarsFromUnsatCoreForPathInvariants =
@@ -234,6 +236,10 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 
 	public boolean getUseInterpolantConsolidation() {
 		return mUseInterpolantConsolidation;
+	}
+
+	public boolean getUseMCR() {
+		return mUseMCR;
 	}
 
 	@Override

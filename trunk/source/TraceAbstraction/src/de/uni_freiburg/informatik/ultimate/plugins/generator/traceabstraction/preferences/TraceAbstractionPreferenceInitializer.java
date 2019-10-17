@@ -101,6 +101,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS =
 			"Use abstract interpretation in PathInvariants";
 	public static final String LABEL_INTERPOLANTS_CONSOLIDATION = "Interpolants consolidation";
+	public static final String LABEL_INTERPOLANTS_MCR = "Maximal causality reduction";
 	public static final String LABEL_INTERPOLANT_AUTOMATON = "Interpolant automaton";
 	public static final String LABEL_DUMPAUTOMATA = "Dump automata to files";
 	public static final String LABEL_AUTOMATAFORMAT = "Output format of dumped automata";
@@ -325,6 +326,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS, Boolean.FALSE,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANTS_CONSOLIDATION, Boolean.FALSE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INTERPOLANTS_MCR, Boolean.FALSE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_UNSAT_CORES, UnsatCores.CONJUNCT_LEVEL, PreferenceType.Combo,
 						UnsatCores.values()),
 				new UltimatePreferenceItem<>(LABEL_LIVE_VARIABLES, Boolean.TRUE, PreferenceType.Boolean),
@@ -405,7 +407,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 */
 	public enum InterpolationTechnique {
 		Craig_NestedInterpolation, Craig_TreeInterpolation, ForwardPredicates, BackwardPredicates, FPandBP,
-		FPandBPonlyIfFpWasNotPerfect, PathInvariants, PDR, MCR
+		FPandBPonlyIfFpWasNotPerfect, PathInvariants, PDR
 	}
 
 	/**
