@@ -231,6 +231,7 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 			throw new IllegalArgumentException("Input x, y must be Int, SetOfInt variables and c must be >= 0.");
 		}
 
+		final int cInt = SmtUtils.toInt(c).intValueExact();
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		final MSODAlphabetSymbol xy00, xy01, xy10, xy11;
 		xy00 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, false });
@@ -248,9 +249,24 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 
 		if (c.signum() == 0) {
 			automaton.addInternalTransition("init", xy11, "final");
+			return automaton;
 		}
 
-		addConstPart(automaton, c, xy10, xy11, xy00, xy01, xy01);
+		automaton.addState(false, false, "s0");
+		automaton.addInternalTransition("init", xy10, "s0");
+		automaton.addInternalTransition("init", xy11, "s0");
+
+		String pred = "s0";
+
+		for (int i = 0; i < cInt - 1; i++) {
+			final String state = "c" + i;
+			automaton.addState(false, false, state);
+			automaton.addInternalTransition(pred, xy00, state);
+			automaton.addInternalTransition(pred, xy01, state);
+			pred = state;
+		}
+
+		automaton.addInternalTransition(pred, xy01, "final");
 
 		return automaton;
 	}
@@ -295,40 +311,9 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Adds a part to the given automaton that represents the value of constant c.
-	 */
-	@Deprecated
-	private static void addConstPart(final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Rational c,
-			final MSODAlphabetSymbol initToState1, final MSODAlphabetSymbol initToState2,
-			final MSODAlphabetSymbol predToState1, final MSODAlphabetSymbol predToState2,
-			final MSODAlphabetSymbol stateToFinal) {
-
-		final int cInt = SmtUtils.toInt(c).intValueExact();
-
-		for (int i = 0; i < cInt; i++) {
-			final String state = "c" + String.valueOf(i + 1);
-			automaton.addState(false, false, state);
-
-			if (i == 0) {
-				automaton.addInternalTransition("init", initToState1, state);
-				automaton.addInternalTransition("init", initToState2, state);
-			}
-
-			if (i > 0) {
-				final String pred = "c" + String.valueOf(i);
-				automaton.addInternalTransition(pred, predToState1, state);
-				automaton.addInternalTransition(pred, predToState2, state);
-			}
-
-			if (i == cInt - 1) {
-				automaton.addInternalTransition(state, stateToFinal, "final");
-			}
-		}
-	}
-
-	/**
 	 * Adds a part to the given automaton that represents values from 0 up to constant c.
 	 */
+	@Deprecated
 	private static void addUpToConstPart(final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton,
 			final Rational c, final MSODAlphabetSymbol initToState, final MSODAlphabetSymbol predToState,
 			final MSODAlphabetSymbol stateToFinal) {
