@@ -327,4 +327,10 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 				.max(Integer::compare).orElse(Integer.valueOf(0));
 		return max;
 	}
+
+	@Override
+	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond, final PLACE p) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

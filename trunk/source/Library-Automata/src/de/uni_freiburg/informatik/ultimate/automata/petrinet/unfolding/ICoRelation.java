@@ -122,6 +122,20 @@ public interface ICoRelation<LETTER, PLACE> {
 	 */
 	Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(Condition<LETTER, PLACE> cond);
 
+	/**
+	 * Warning:
+	 * <ul>
+	 * <li>This is not a getter. The set is computed each time anew.
+	 * <li>The result is NOT backed by the {@link BranchingProcess}. After an update
+	 * of the {@link BranchingProcess} the set that you obtained might be outdated.
+	 * </ul>
+	 *
+	 * @return Set of all {@link Condition}s that are in co-relation to the
+	 *         {@link Condition} cond and whose {@link Condition#getPlace()}
+	 *         is p.
+	 */
+	Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(Condition<LETTER, PLACE> cond, PLACE p);
+
 
 	/**
 	 * Compute <pre>max {numberOfCoRelated(c)|c ∈ C}</pre> where C is the set

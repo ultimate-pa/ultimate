@@ -56,6 +56,11 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.S
  */
 public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LETTER, PLACE> {
 
+	/**
+	 * Use the optimization that is outlined in observation B07 in the following
+	 * issue. https://github.com/ultimate-pa/ultimate/issues/448
+	 */
+	private static final boolean BUMBLEBEE_B07_OPTIMIZAION = false;
 	private final PriorityQueue<Event<LETTER, PLACE>> mPe;
 	/**
 	 * If {@link Event} is known to be cut-off event we can move it immediately
@@ -128,16 +133,26 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			return;
 		}
 		final PLACE p = cand.getNextUninstantiatedPlace();
-		for (final Condition<LETTER, PLACE> c : mBranchingProcess.place2cond(p)) {
-			assert cand.getTransition().getPredecessorPlaces().contains(c.getPlace());
-			// equality intended here
-			assert c.getPlace().equals(p);
-			assert !cand.getInstantiated().contains(c);
-			if (!c.getPredecessorEvent().isCutoffEvent()) {
-				if (mBranchingProcess.getCoRelation().isCoset(cand.getInstantiated(), c)) {
-					cand.instantiateNext(c);
-					evolveCandidate(cand);
-					cand.undoOneInstantiation();
+		if (BUMBLEBEE_B07_OPTIMIZAION) {
+			final List<Condition<LETTER, PLACE>> yetIntantiated = cand.getInstantiated();
+			final List<Set<Condition<LETTER, PLACE>>> instantiationCandidatesForP = new ArrayList<>();
+			for (final Condition<LETTER, PLACE> instantiated : yetIntantiated) {
+				final Set<Condition<LETTER, PLACE>> permitted = mBranchingProcess.getCoRelation()
+						.computeCoRelatatedConditions(instantiated, p);
+				instantiationCandidatesForP.add(permitted);
+			}
+		} else {
+			for (final Condition<LETTER, PLACE> c : mBranchingProcess.place2cond(p)) {
+				assert cand.getTransition().getPredecessorPlaces().contains(c.getPlace());
+				// equality intended here
+				assert c.getPlace().equals(p);
+				assert !cand.getInstantiated().contains(c);
+				if (!c.getPredecessorEvent().isCutoffEvent()) {
+					if (mBranchingProcess.getCoRelation().isCoset(cand.getInstantiated(), c)) {
+						cand.instantiateNext(c);
+						evolveCandidate(cand);
+						cand.undoOneInstantiation();
+					}
 				}
 			}
 		}
