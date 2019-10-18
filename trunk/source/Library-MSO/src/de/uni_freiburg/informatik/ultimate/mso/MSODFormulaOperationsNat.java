@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * TODO: Check inputs This class provides methods to construct automata corresponding to given MSOD-Formulas over the
- * set of natural numbers.
+ * This class provides methods to construct automata corresponding to given MSOD-Formulas over the set of natural
+ * numbers.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -47,8 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 
 	/**
-	 * TODO: Correct Comment: Returns a {@link NestedWordAutomaton} representing an element relation of the form "x + c
-	 * ∈ Y".
+	 * Returns a {@link NestedWordAutomaton} representing a strict inequality of the form "x < c".
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type Int or c is less than 0.
@@ -104,6 +103,7 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 			throw new IllegalArgumentException("Input x, y must be Int variables and c must be >= 0.");
 		}
 
+		final int cInt = SmtUtils.toInt(c).intValueExact();
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		final MSODAlphabetSymbol xy00, xy01, xy10, xy11;
 		xy00 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, false });
@@ -114,17 +114,32 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 
 		automaton.addState(true, false, "init");
 		automaton.addState(false, true, "final");
-		automaton.addState(false, false, "s1");
+		automaton.addState(false, false, "s0");
 		automaton.addInternalTransition("init", xy00, "init");
-		automaton.addInternalTransition("init", xy10, "s1");
-		automaton.addInternalTransition("s1", xy00, "s1");
-		automaton.addInternalTransition("s1", xy01, "final");
+		automaton.addInternalTransition("init", xy10, "s0");
+		automaton.addInternalTransition("s0", xy00, "s0");
+		automaton.addInternalTransition("s0", xy01, "final");
 		automaton.addInternalTransition("final", xy00, "final");
 
-		if (c.signum() == 1) {
-			automaton.addInternalTransition("init", xy11, "final");
-			addUpToConstPart(automaton, c.add(Rational.MONE), xy01, xy00, xy10);
+		if (c.signum() == 0) {
+			return automaton;
 		}
+
+		automaton.addState(false, false, "s1");
+		automaton.addInternalTransition("init", xy01, "s1");
+		automaton.addInternalTransition("init", xy11, "final");
+
+		String pred = "s1";
+
+		for (int i = 0; i < cInt - 2; i++) {
+			final String state = "c" + i;
+			automaton.addState(false, false, state);
+			automaton.addInternalTransition(pred, xy00, state);
+			automaton.addInternalTransition(pred, xy10, "final");
+			pred = state;
+		}
+
+		automaton.addInternalTransition(pred, xy10, "final");
 
 		return automaton;
 	}
@@ -153,15 +168,15 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 		automaton.addInternalTransition("init", x0, "init");
 		automaton.addInternalTransition("final", x0, "final");
 
+		String pred = "init";
+
 		if (c.signum() == 0) {
-			automaton.addState(false, false, "s1");
-			automaton.addInternalTransition("init", x0, "s1");
-			automaton.addInternalTransition("s1", x1, "final");
+			automaton.addState(false, false, "s0");
+			automaton.addInternalTransition("init", x0, "s0");
+			pred = "s0";
 		}
 
-		if (c.signum() == 1) {
-			automaton.addInternalTransition("init", x1, "final");
-		}
+		automaton.addInternalTransition(pred, x1, "final");
 
 		return automaton;
 	}
@@ -321,32 +336,5 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 		automaton.addInternalTransition(pred, x1, "final");
 
 		return automaton;
-	}
-
-	/**
-	 * Adds a part to the given automaton that represents values from 0 up to constant c.
-	 */
-	@Deprecated
-	private static void addUpToConstPart(final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton,
-			final Rational c, final MSODAlphabetSymbol initToState, final MSODAlphabetSymbol predToState,
-			final MSODAlphabetSymbol stateToFinal) {
-
-		final int cInt = SmtUtils.toInt(c).intValueExact();
-
-		for (int i = 0; i < cInt; i++) {
-			final String state = "c" + String.valueOf(i + 1);
-			automaton.addState(false, false, state);
-
-			if (i == 0) {
-				automaton.addInternalTransition("init", initToState, state);
-			}
-
-			if (i > 0) {
-				final String pred = "c" + String.valueOf(i);
-				automaton.addInternalTransition(pred, predToState, state);
-			}
-
-			automaton.addInternalTransition(state, stateToFinal, "final");
-		}
 	}
 }
