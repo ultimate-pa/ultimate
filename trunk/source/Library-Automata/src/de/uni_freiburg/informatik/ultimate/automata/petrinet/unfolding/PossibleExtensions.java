@@ -58,8 +58,12 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 
 	private final PriorityQueue<Event<LETTER, PLACE>> mPe;
 	/**
-	 * If {@link Event} is known to be cut-off event we can move it immediately to
-	 * front because it will not create descendants. This optimization keeps the queue smaller.
+	 * If {@link Event} is known to be cut-off event we can move it immediately
+	 * to front because it will not create descendants. This optimization keeps
+	 * the queue smaller. TODO 2019-10-16 Matthias: Mehdi found out that this
+	 * ArrayDeque is currently unused because the cut-off detection is only done
+	 * later. We could to an additional cut-off check earlier but we have doubts
+	 * that this will pay off.
 	 */
 	private final ArrayDeque<Event<LETTER, PLACE>> mFastpathCutoffEventList;
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
