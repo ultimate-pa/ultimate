@@ -35,27 +35,50 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ITermProviderOnDemand;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Represents a binary relation that has been solved for a subject x. I.e. this
- * represents a formula of the form x ▷ φ, where x is a variable, φ is a term in
- * which x does not occur. Here, the binary relation symbol ▷ is an element of
- * the following list.
- * <p>
- * ▷ ∈ { =, !=, \<=, \<, \>=, \> }
- * </p>
- * Additionally, this class may provide a Boolean formula ψ and if such a
- * formula is provided the formula x ▷ φ holds only under the assumption that ψ
- * holds.
+ * Represents a binary relation that has been solved for a subject x. Unlike
+ * {@link SolvedBinaryRelation} object of this class can also represent binary
+ * relations for which a case distinction is necessary.
+ * E.g., if we solve y*x<t for subject x the result is the following disjunction.
+ * <pre>
+ * x < (div t y) ∧ (mod t y) = 0 ∧ y > 0
+ * ∨ x > (div t y) ∧ (mod t y) = 0 ∧ y < 0
+ * ∨ y = 0 ∧ t = 0
+ * </pre>
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 
 	public enum IntricateOperation {
-		DIV_BY_NONCONSTANT, DIV_BY_INTEGER_CONSTANT, MUL_BY_INTEGER_CONSTANT,
+		/**
+		 * Indicates that we had to divide by a non-constant term in order to
+		 * solve the relation. Necessary e.g,. if we want to solve y*x=t for x and
+		 * y is a variable. This operation is intricate because we now have to
+		 * distinguish the cases that y is zero and that y is non-zero. (If the
+		 * relation symbol is an inequality we even have to take into account
+		 * that the relation symbol is "swapped" if y is negative.)
+		 */
+		DIV_BY_NONCONSTANT,
+		/**
+		 * Indicates that we had to divide by an integer literal in
+		 * order to solve the relation. Necessary e.g,. if we want to solve k*x=t
+		 * for x and k is a (non-zero) integer literal. This operation is intricate because
+		 * if we divide by k, we loose the information that t is divisible by k.
+		 */
+		DIV_BY_INTEGER_CONSTANT, 
+		/**
+		 * Indicates that we had to multiply by an integer literal in order to
+		 * solve the relation. Necessary e.g,. if we want to solve (div x k)=t
+		 * for x and k is a (non-zero) integer literal. This operation is
+		 * intricate because if we multiply by k, we loose the information that
+		 * e.g., t can be zero if x is k-1.
+		 */
+		MUL_BY_INTEGER_CONSTANT,
 	}
 
 	public enum Xnf {
