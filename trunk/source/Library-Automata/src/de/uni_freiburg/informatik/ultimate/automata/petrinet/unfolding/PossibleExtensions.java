@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Implementation of a possible extension.
@@ -132,20 +133,38 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			}
 			return;
 		}
-		final PLACE p = cand.getNextUninstantiatedPlace();
+		final PLACE nextUninstantiated = cand.getNextUninstantiatedPlace();
 		if (BUMBLEBEE_B07_OPTIMIZAION) {
-			final List<Condition<LETTER, PLACE>> yetIntantiated = cand.getInstantiated();
-			final List<Set<Condition<LETTER, PLACE>>> instantiationCandidatesForP = new ArrayList<>();
-			for (final Condition<LETTER, PLACE> instantiated : yetIntantiated) {
-				final Set<Condition<LETTER, PLACE>> permitted = mBranchingProcess.getCoRelation()
-						.computeCoRelatatedConditions(instantiated, p);
-				instantiationCandidatesForP.add(permitted);
+			final List<Condition<LETTER, PLACE>> yetInstantiated = cand.getInstantiated();
+			// list that contains one set for each instantiated condition c
+			// the set contains all conditions that are in co-relation to c and
+			// whose place is 'nextUninstantiated'
+			final List<Set<Condition<LETTER, PLACE>>> coRelatedWithInstantiated = new ArrayList<>();
+			for (final Condition<LETTER, PLACE> instantiated : yetInstantiated) {
+				final Set<Condition<LETTER, PLACE>> coRelatedToInstantiated = mBranchingProcess.getCoRelation()
+						.computeCoRelatatedConditions(instantiated, nextUninstantiated);
+				// 2019-10-18 Matthias Optimization: Use construction cache
+				// because while backtracking same set is computed several times
+				coRelatedWithInstantiated.add(coRelatedToInstantiated);
 			}
-		} else {
-			for (final Condition<LETTER, PLACE> c : mBranchingProcess.place2cond(p)) {
+			final Set<Condition<LETTER, PLACE>> inCoRelationWithAllInstantiated = DataStructureUtils
+					.intersection(coRelatedWithInstantiated);
+			for (final Condition<LETTER, PLACE> c : inCoRelationWithAllInstantiated) {
 				assert cand.getTransition().getPredecessorPlaces().contains(c.getPlace());
 				// equality intended here
-				assert c.getPlace().equals(p);
+				assert c.getPlace().equals(nextUninstantiated);
+				assert !cand.getInstantiated().contains(c);
+				if (!c.getPredecessorEvent().isCutoffEvent()) {
+					cand.instantiateNext(c);
+					evolveCandidate(cand);
+					cand.undoOneInstantiation();
+				}
+			}
+		} else {
+			for (final Condition<LETTER, PLACE> c : mBranchingProcess.place2cond(nextUninstantiated)) {
+				assert cand.getTransition().getPredecessorPlaces().contains(c.getPlace());
+				// equality intended here
+				assert c.getPlace().equals(nextUninstantiated);
 				assert !cand.getInstantiated().contains(c);
 				if (!c.getPredecessorEvent().isCutoffEvent()) {
 					if (mBranchingProcess.getCoRelation().isCoset(cand.getInstantiated(), c)) {

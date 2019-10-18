@@ -329,8 +329,9 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	}
 
 	@Override
-	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond, final PLACE p) {
-		// TODO Auto-generated method stub
-		return null;
+	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond,
+			final PLACE p) {
+		return computeCoRelatatedConditions(cond).stream().filter(x -> x.getPlace().equals(p))
+				.collect(Collectors.toSet());
 	}
 }
