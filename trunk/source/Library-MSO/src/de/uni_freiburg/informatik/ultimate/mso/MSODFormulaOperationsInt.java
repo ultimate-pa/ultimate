@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * This class provides methods to construct automata corresponding to given MSOD-Formulas over the set of integers
- * numbers.
+ * TODO: Check inputs This class provides methods to construct automata corresponding to given MSOD-Formulas over the
+ * set of integers numbers.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -63,7 +63,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		}
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
-
 		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
 		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
 
@@ -78,8 +77,10 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addState(false, false, "s0");
 			automaton.addInternalTransition("init", x0, "s0");
 			automaton.addInternalTransition("s0", x0, "init");
+			automaton.addState(false, false, "s1");
+			automaton.addInternalTransition("init", x0, "s1");
 
-			String pred = "init";
+			String pred = "s1";
 			for (int i = 0; i < 2 * Math.abs(c); i++) {
 				final String state = "c" + i;
 				automaton.addState(false, false, state);
@@ -87,11 +88,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 				pred = state;
 			}
 
-			automaton.addState(false, false, "s1");
-			automaton.addInternalTransition(pred, x0, "s1");
-			automaton.addInternalTransition("s1", x1, "final");
+			automaton.addInternalTransition("pred", x1, "final");
 		}
-
 		if (c > 0) {
 			automaton.addInternalTransition("init", x1, "final");
 
@@ -111,7 +109,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addInternalTransition("s0", x1, "final");
 			automaton.addInternalTransition("s1", x0, "s0");
 		}
-
 		return automaton;
 	}
 
@@ -538,7 +535,10 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addState(false, false, "s1");
 			automaton.addInternalTransition("init", x0, "s1");
 
-			String pred = "s1";
+			automaton.addState(false, false, "s2");
+			automaton.addInternalTransition("s1", x0, "s2");
+
+			String pred = "s2";
 			for (int i = 0; i < 2 * Math.abs(c); i++) {
 				final String state = "c" + i;
 				automaton.addState(false, false, state);
@@ -546,9 +546,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 				pred = state;
 			}
 
-			automaton.addState(false, false, "s2");
-			automaton.addInternalTransition(pred, x0, "s2");
-			automaton.addInternalTransition("s2", x1, "final");
+			automaton.addInternalTransition(pred, x1, "final");
 		}
 
 		if (c > 0) {
@@ -572,7 +570,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addInternalTransition("s2", x0, "s1");
 			automaton.addInternalTransition("s1", x1, "final");
 		}
-
 		return automaton;
 	}
 
@@ -642,8 +639,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns an {@link INestedWordAutomaton} representing an element relation of the form "x + c ∈ Y". The automaton
-	 * consists of four parts, one for each of the following case distinctions:
+	 * TODO: correct comment. Returns an {@link INestedWordAutomaton} representing an element relation of the form "x +
+	 * c ∈ Y". The automaton consists of four parts, one for each of the following case distinctions:
 	 * <ul>
 	 * <li>x + c <= 0 &and; x <= 0
 	 * <li>x + c > 0 &and; x > 0
@@ -677,8 +674,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c <=
-	 * 0 and; x <= 0 new: x+c>=0 and x>=0
+	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x+c>=0
+	 * and x>=0
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartOne(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
@@ -707,47 +704,32 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 		if (c == 0) {
 			automaton.addInternalTransition("init", xy11, "final");
+			return automaton;
 		}
 
-		if (c > 0) {
-			automaton.addState(false, false, "s1");
-			automaton.addInternalTransition("init", xy10, "s1");
-			automaton.addInternalTransition("init", xy11, "s1");
+		automaton.addState(false, false, "s1");
+		automaton.addState(false, false, "s2");
+		automaton.addInternalTransition("s1", xy00, "s2");
+		automaton.addInternalTransition("s1", xy01, "s2");
 
-			String pred = "s1";
-			for (int i = 0; i < 2 * (Math.abs(c) - 1); i++) {
-				final String state = "c0_" + i;
-				automaton.addState(false, false, state);
-				automaton.addInternalTransition(pred, xy00, state);
-				automaton.addInternalTransition(pred, xy01, state);
-				pred = state;
-			}
-
-			automaton.addState(false, false, "s2");
-			automaton.addInternalTransition(pred, xy00, "s2");
-			automaton.addInternalTransition(pred, xy01, "s2");
-			automaton.addInternalTransition("s2", xy01, "final");
+		String pred = "s2";
+		for (int i = 0; i < 2 * (Math.abs(c) - 1); i++) {
+			final String state = "c0_" + i;
+			automaton.addState(false, false, state);
+			automaton.addInternalTransition(pred, xy00, state);
+			automaton.addInternalTransition(pred, xy01, state);
+			pred = state;
 		}
 
 		if (c < 0) {
-			automaton.addState(false, false, "s1");
 			automaton.addInternalTransition("init", xy01, "s1");
-
-			String pred = "s1";
-			for (int i = 0; i < 2 * (Math.abs(c) - 1); i++) {
-				final String state = "c0_" + i;
-				automaton.addState(false, false, state);
-				automaton.addInternalTransition(pred, xy00, state);
-				automaton.addInternalTransition(pred, xy01, state);
-				pred = state;
-			}
-
-			automaton.addState(false, false, "s2");
-			automaton.addInternalTransition(pred, xy00, "s2");
-			automaton.addInternalTransition(pred, xy01, "s2");
-
-			automaton.addInternalTransition("s2", xy10, "final");
-			automaton.addInternalTransition("s2", xy11, "final");
+			automaton.addInternalTransition(pred, xy10, "final");
+			automaton.addInternalTransition(pred, xy11, "final");
+		}
+		if (c > 0) {
+			automaton.addInternalTransition("init", xy10, "s1");
+			automaton.addInternalTransition("init", xy11, "s1");
+			automaton.addInternalTransition(pred, xy01, "final");
 		}
 
 		return automaton;
