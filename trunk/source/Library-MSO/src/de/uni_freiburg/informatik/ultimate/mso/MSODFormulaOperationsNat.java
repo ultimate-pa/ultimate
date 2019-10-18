@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * This class provides methods to construct automata corresponding to given MSOD-Formulas over the set of natural
- * numbers.
+ * TODO: Check inputs This class provides methods to construct automata corresponding to given MSOD-Formulas over the
+ * set of natural numbers.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -61,18 +61,31 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 			throw new IllegalArgumentException("Input x must be an Int variable and c must be >= 0.");
 		}
 
+		final int cInt = SmtUtils.toInt(c).intValueExact();
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
 		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
 		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
 
-		if (c.signum() == 1) {
-			automaton.addState(true, false, "init");
-			automaton.addState(false, true, "final");
-			automaton.addInternalTransition("init", x1, "final");
-			automaton.addInternalTransition("final", x0, "final");
-			addUpToConstPart(automaton, c.add(Rational.MONE), x0, x0, x1);
+		if (c.signum() != 1) {
+			return automaton;
 		}
+
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		automaton.addInternalTransition("final", x0, "final");
+
+		String pred = "init";
+
+		for (int i = 0; i < cInt - 1; i++) {
+			final String state = "c" + i;
+			automaton.addState(false, false, state);
+			automaton.addInternalTransition(pred, x1, "final");
+			automaton.addInternalTransition(pred, x0, state);
+			pred = state;
+		}
+
+		automaton.addInternalTransition(pred, x1, "final");
 
 		return automaton;
 	}
