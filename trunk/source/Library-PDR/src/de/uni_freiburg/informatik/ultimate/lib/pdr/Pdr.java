@@ -90,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -128,7 +129,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> mGlobalFrames;
+	private final Map<IcfgLocation, IPredicate> mGlobalFrames;
 	private final ManagedScript mScript;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredTrans;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
@@ -304,17 +305,10 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			 * Initialize new level.
 			 */
 			final Deque<ProofObligation> proofObligations = new ArrayDeque<>(firstPos);
-			if (mLevel > localLevel) {
-				for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> trace : localFrames.entrySet()) {
-					final IPredicate global = mGlobalFrames.get(trace.getKey()).get(localLevel + 1).getSecond();
-					trace.getValue().add(new Pair<>(ChangedFrame.U, mPredicateUnifier.getOrConstructPredicate(global)));
-				}
-			} else {
-				for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> trace : localFrames.entrySet()) {
-					trace.getValue().add(new Pair<>(ChangedFrame.U, mAxioms));
-				}
+			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> trace : localFrames.entrySet()) {
+				final IPredicate global = mGlobalFrames.get(trace.getKey());
+				trace.getValue().add(new Pair<>(ChangedFrame.U, mPredicateUnifier.getOrConstructPredicate(global)));
 			}
-
 			localLevel += 1;
 
 			/**
@@ -350,8 +344,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					mLogger.debug("  " + new IcfgLocationIterator<>(mPpIcfg).asStream()
 							.map(a -> a.getDebugIdentifier().toString()).collect(Collectors.joining(",")));
 					mLogger.debug("Error is not reachable.");
+					updateGlobalFrames(localFrames, mInvarSpot);
 				}
-				updateGlobalFrames(localFrames, localLevel);
 				return LBool.UNSAT;
 			}
 		}
@@ -365,7 +359,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final boolean blockingPhase(final Deque<ProofObligation> proofObligations,
 			final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames, final int localLevel) {
 
-		mLogger.debug("Begin Blocking Phase: on Level: " + mLevel);
+		mLogger.debug("Begin Blocking Phase: on Level: " + localLevel);
 
 		while (!proofObligations.isEmpty()) {
 
@@ -569,12 +563,18 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 									((IIcfgReturnTransition<?, ?>) predecessorTransition).getCorrespondingCall()
 											.getTarget(),
 									localLevel, localFrames);
-							updateGlobalFrames(localFrames, localLevel);
+
+							updateSpecificGlobalFrame(not(newLocalProofObligation.getToBeBlocked()),
+									((IIcfgReturnTransition<?, ?>) predecessorTransition).getCorrespondingCall()
+											.getTarget());
+							if (mLogger.isDebugEnabled()) {
+								mLogger.debug("Return to second PDR \n");
+							}
 							/**
-							 * TODO There is something wrong about the PDR calculation, a predicate missing
+							 * not sure about these two...
 							 */
-							procResult = computePdr(pp.getPathProgram(), procedurePo);
-							proofObligations.addFirst(proofObligation);
+							// procResult = computePdr(pp.getPathProgram(), procedurePo);
+							// proofObligations.addFirst(proofObligation);
 
 							/**
 							 * The rest of the program can make the precondition possible -> proof-obligation cannot be
@@ -610,7 +610,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				}
 			}
 		}
-		updateGlobalFrames(localFrames, localLevel);
+		// updateGlobalFrames(localFrames, localLevel);
 		return true;
 
 	}
@@ -765,38 +765,47 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	 * @param localLevel
 	 */
 	final void updateGlobalFrames(final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames,
-			final int localLevel) {
-		int cnt;
-		/*
-		 * If local level is bigger than the global level, there are more predicates in local level, we fill the global
-		 * frames with true preds.
-		 */
-		if (localLevel > mLevel) {
-			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> frame : mGlobalFrames.entrySet()) {
-				cnt = localLevel - mLevel;
-				while (cnt > 0) {
-					frame.getValue().add(new Pair<>(ChangedFrame.U, mAxioms));
-					cnt--;
-				}
+			final int invarSpot) {
+		for (final Entry<IcfgLocation, IPredicate> frame : mGlobalFrames.entrySet()) {
+			if (!localFrames.containsKey(frame.getKey())) {
+				continue;
 			}
-		}
-		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> frame : localFrames.entrySet()) {
-			for (int i = 0; i <= localLevel; i++) {
-				final IPredicate current = frame.getValue().get(i).getSecond();
-				final IPredicate changed = mGlobalFrames.get(frame.getKey()).get(i).getSecond();
-				final IPredicate conjunct =
-						mPredicateUnifier.getOrConstructPredicateForConjunction(Arrays.asList(current, changed));
-				mGlobalFrames.get(frame.getKey()).set(i, new Pair<>(frame.getValue().get(i).getFirst(), conjunct));
-				// frame.getValue().set(i, new Pair<>(frame.getValue().get(i).getFirst(), conjunct));
+			mLogger.debug("%s, %s, %s", frame.getKey(), invarSpot, localFrames.get(frame.getKey()).size());
+			final IPredicate invar = localFrames.get(frame.getKey()).get(invarSpot).getSecond();
+			if (frame.getValue() == mTruePred) {
+				mGlobalFrames.replace(frame.getKey(), mPredicateUnifier.getOrConstructPredicate(invar));
+			} else {
+				final Term newGlobal = Util.or(mScript.getScript(), invar.getFormula(), frame.getValue().getFormula());
+				mGlobalFrames.replace(frame.getKey(), mPredicateUnifier.getOrConstructPredicate(newGlobal));
 			}
 		}
 
-		mLevel = localLevel;
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("GLOBAL Frames: Updated \n");
-			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : mGlobalFrames.entrySet()) {
-				mLogger.debug("  " + entry.getKey().getDebugIdentifier() + ": " + entry.getValue().stream()
-						.map(Pair<ChangedFrame, IPredicate>::toString).collect(Collectors.joining(",")));
+			for (final Entry<IcfgLocation, IPredicate> frame : mGlobalFrames.entrySet()) {
+				mLogger.debug("%s: %s", frame.getKey(), frame.getValue());
+			}
+		}
+	}
+
+	/**
+	 * Compute conjunction of global frames and the given local frames
+	 * 
+	 * @param localFrames
+	 * @param localLevel
+	 */
+	final void updateSpecificGlobalFrame(final IPredicate pred, final IcfgLocation loc) {
+		final IPredicate globalPred = mGlobalFrames.get(loc);
+		if (globalPred == mTruePred) {
+			mGlobalFrames.replace(loc, mPredicateUnifier.getOrConstructPredicate(pred));
+		} else {
+			final Term newGlobal = Util.or(mScript.getScript(), globalPred.getFormula(), pred.getFormula());
+			mGlobalFrames.replace(loc, mPredicateUnifier.getOrConstructPredicate(newGlobal));
+		}
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("GLOBAL SPECIFIC Frames: Updated \n");
+			for (final Entry<IcfgLocation, IPredicate> frame : mGlobalFrames.entrySet()) {
+				mLogger.debug("%s: %s", frame.getKey(), frame.getValue());
 			}
 		}
 	}
@@ -807,23 +816,17 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	 * @param icfg
 	 * @return
 	 */
-	final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>>
-			initializeGlobalFrames(final IIcfg<? extends IcfgLocation> icfg) {
-		final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames = new HashMap<>();
-		final Set<? extends IcfgLocation> init = icfg.getInitialNodes();
+	final Map<IcfgLocation, IPredicate> initializeGlobalFrames(final IIcfg<? extends IcfgLocation> icfg) {
+		final Map<IcfgLocation, IPredicate> localFrames = new HashMap<>();
 		final Set<? extends IcfgLocation> error = IcfgUtils.getErrorLocations(mPpIcfg);
 		final IcfgLocationIterator<? extends IcfgLocation> iter = new IcfgLocationIterator<>(icfg);
+
 		while (iter.hasNext()) {
 			final IcfgLocation loc = iter.next();
 			if (error.contains(loc)) {
 				continue;
 			}
-			localFrames.put(loc, new ArrayList<>());
-			if (init.contains(loc)) {
-				localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mAxioms));
-			} else {
-				localFrames.get(loc).add(new Pair<>(ChangedFrame.U, mFalsePred));
-			}
+			localFrames.put(loc, mTruePred);
 		}
 		return localFrames;
 	}
@@ -837,7 +840,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>>
 			initializeLocalFrames(final IIcfg<? extends IcfgLocation> icfg) {
 		final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames = new HashMap<>();
-		final Set<? extends IcfgLocation> error = IcfgUtils.getErrorLocations(mPpIcfg);
+		final Set<? extends IcfgLocation> error = IcfgUtils.getErrorLocations(icfg);
+		final Set<? extends IcfgLocation> init = icfg.getInitialNodes();
 		final IcfgLocationIterator<? extends IcfgLocation> iter = new IcfgLocationIterator<>(icfg);
 		while (iter.hasNext()) {
 			final IcfgLocation loc = iter.next();
@@ -845,12 +849,18 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				continue;
 			}
 			final List<Pair<ChangedFrame, IPredicate>> newLocalFrame = new ArrayList<Pair<ChangedFrame, IPredicate>>();
-			List<Pair<ChangedFrame, IPredicate>> globalFrame = mGlobalFrames.get(loc);
-
-			final Pair<ChangedFrame, IPredicate> globalPred = globalFrame.get(0);
-			final IPredicate localPred = mPredicateUnifier.getOrConstructPredicate(globalPred.getSecond());
-			newLocalFrame.add(new Pair<>(globalPred.getFirst(), localPred));
-
+			IPredicate globalFrame = mGlobalFrames.get(loc);
+			IPredicate localPred;
+			if (init.contains(loc)) {
+				localPred = globalFrame;
+			} else {
+				if (globalFrame != mTruePred) {
+					localPred = mPredicateUnifier.getOrConstructPredicate(globalFrame);
+				} else {
+					localPred = mFalsePred;
+				}
+			}
+			newLocalFrame.add(new Pair<>(ChangedFrame.U, localPred));
 			localFrames.put(loc, newLocalFrame);
 		}
 		return localFrames;
@@ -868,7 +878,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	 */
 	private List<LETTER> getProcedureTrace(final IIcfgReturnTransition<?, ?> returnTrans) {
 		final IcfgLocation returnLoc = returnTrans.getSource();
-		final IcfgLocation callLoc = returnTrans.getCallerProgramPoint();
+		final IIcfgCallTransition<?> callEdge = returnTrans.getCorrespondingCall();
+		final IcfgLocation callLoc = callEdge.getTarget();
 		final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
 		tfs.add(returnTrans.getTransformula());
 		int i = 0;
@@ -979,13 +990,13 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		mLogger.debug("Computing interpolants.");
 
 		final Map<IcfgLocation, IPredicate> traceFrames = new HashMap<>();
-		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : mGlobalFrames.entrySet()) {
+		for (final Entry<IcfgLocation, IPredicate> entry : mGlobalFrames.entrySet()) {
 			final IcfgLocation key = entry.getKey();
 			final IcfgLocation actualLoc = key.getLabel();
 			assert key != actualLoc : "Not a path program loc";
 			assert mInvarSpot != -1 : "Invariants";
 
-			final IPredicate pred = entry.getValue().get(mInvarSpot).getSecond();
+			final IPredicate pred = entry.getValue();
 
 			final IPredicate old = traceFrames.put(actualLoc, pred);
 			assert old == null || old.equals(pred);
