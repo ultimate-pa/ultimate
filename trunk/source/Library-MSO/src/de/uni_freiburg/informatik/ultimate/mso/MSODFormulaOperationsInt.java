@@ -736,8 +736,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c > 0
-	 * and; x > 0. new: x+c<0 and x<0
+	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x+c<0 and
+	 * x<0.
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartTwo(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
@@ -762,54 +762,40 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		automaton.addState(false, false, "s1");
 		automaton.addInternalTransition("init", xy00, "s0");
 		automaton.addInternalTransition("init", xy01, "s0");
-		automaton.addInternalTransition("s0", xy00, "s1");
-		automaton.addInternalTransition("s0", xy01, "s1");
-		automaton.addInternalTransition("s1", xy00, "s0");
-		automaton.addInternalTransition("s1", xy01, "s0");
+		automaton.addInternalTransition("s0", xy00, "init");
+		automaton.addInternalTransition("s0", xy01, "init");
+		automaton.addInternalTransition("init", xy00, "s1");
+		automaton.addInternalTransition("init", xy01, "s1");
 
 		if (c == 0) {
 			automaton.addInternalTransition("s0", xy11, "final");
+			return automaton;
+		}
+
+		automaton.addState(false, false, "s2");
+		automaton.addState(false, false, "s3");
+		automaton.addInternalTransition("s2", xy00, "s3");
+		automaton.addInternalTransition("s2", xy01, "s3");
+
+		String pred = "s3";
+		for (int i = 0; i < 2 * (Math.abs(c) - 1); i++) {
+			final String state = "c0_" + i;
+			automaton.addState(false, false, state);
+			automaton.addInternalTransition(pred, xy00, state);
+			automaton.addInternalTransition(pred, xy01, state);
+			pred = state;
 		}
 
 		if (c > 0) {
-			automaton.addState(false, false, "s2");
-			automaton.addInternalTransition("s0", xy01, "s2");
-
-			String pred = "s2";
-			for (int i = 0; i < 2 * (Math.abs(c) - 1); i++) {
-				final String state = "c0_" + i;
-				automaton.addState(false, false, state);
-				automaton.addInternalTransition(pred, xy00, state);
-				automaton.addInternalTransition(pred, xy01, state);
-				pred = state;
-			}
-
-			automaton.addState(false, false, "s3");
-			automaton.addInternalTransition(pred, xy00, "s3");
-			automaton.addInternalTransition(pred, xy01, "s3");
-
-			automaton.addInternalTransition("s3", xy10, "final");
-			automaton.addInternalTransition("s3", xy11, "final");
+			automaton.addInternalTransition("s1", xy01, "s2");
+			automaton.addInternalTransition(pred, xy10, "final");
+			automaton.addInternalTransition(pred, xy11, "final");
 		}
 
 		if (c < 0) {
-			automaton.addState(false, false, "s2");
-			automaton.addInternalTransition("s0", xy10, "s2");
-			automaton.addInternalTransition("s0", xy11, "s2");
-
-			String pred = "s2";
-			for (int i = 0; i < 2 * (Math.abs(c) - 1); i++) {
-				final String state = "c0_" + i;
-				automaton.addState(false, false, state);
-				automaton.addInternalTransition(pred, xy00, state);
-				automaton.addInternalTransition(pred, xy01, state);
-				pred = state;
-			}
-
-			automaton.addState(false, false, "s3");
-			automaton.addInternalTransition(pred, xy00, "s3");
-			automaton.addInternalTransition(pred, xy01, "s3");
-			automaton.addInternalTransition("s3", xy01, "final");
+			automaton.addInternalTransition("s1", xy10, "s2");
+			automaton.addInternalTransition("s1", xy11, "s2");
+			automaton.addInternalTransition(pred, xy01, "final");
 		}
 
 		return automaton;
