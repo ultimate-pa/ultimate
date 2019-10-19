@@ -344,8 +344,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					mLogger.debug("  " + new IcfgLocationIterator<>(mPpIcfg).asStream()
 							.map(a -> a.getDebugIdentifier().toString()).collect(Collectors.joining(",")));
 					mLogger.debug("Error is not reachable.");
-					updateGlobalFrames(localFrames, mInvarSpot);
 				}
+				updateGlobalFrames(localFrames, mInvarSpot);
 				return LBool.UNSAT;
 			}
 		}
