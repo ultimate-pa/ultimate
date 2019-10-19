@@ -44,6 +44,11 @@ public class HashRelation3<K1, K2, K3> implements Iterable<Triple<K1, K2, K3>> {
 		return isContained == IsContained.IsContained;
 	}
 
+	public boolean containsTriple(final K1 fst, final K2 snd, final K3 trd) {
+		final IsContained isContained = mBackingMap.get(fst, snd, trd);
+		return isContained == IsContained.IsContained;
+	}
+
 	public Set<K1> projectToFst() {
 		return mBackingMap.keySet();
 	}
@@ -114,6 +119,35 @@ public class HashRelation3<K1, K2, K3> implements Iterable<Triple<K1, K2, K3>> {
 				return next;
 			}
 		};
+	}
+
+
+	public Iterator<Triple<K1, K2, K3>> iterator(final K1 k1) {
+		return new Iterator<Triple<K1,K2,K3>>() {
+
+			Iterator<Quad<K1, K2, K3, IsContained>> mBackingMapIterator = mBackingMap.entries(k1).iterator();
+
+			@Override
+			public boolean hasNext() {
+				return mBackingMapIterator.hasNext();
+			}
+
+			@Override
+			public Triple<K1, K2, K3> next() {
+				final Quad<K1, K2, K3, IsContained> next = mBackingMapIterator.next();
+				return new Triple<K1, K2, K3>(next.getFirst(), next.getSecond(), next.getThird());
+			}
+		};
+	}
+
+	public String toStringAsTable() {
+		final Iterator<Triple<K1, K2, K3>> it = iterator();
+		final StringBuilder sb = new StringBuilder();
+		while (it.hasNext()) {
+			final Triple<K1, K2, K3> next = it.next();
+			sb.append(next.getFirst() + ", " + next.getSecond() + ", " + next.getThird() + System.lineSeparator());
+		}
+		return sb.toString();
 	}
 
 
