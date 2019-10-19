@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterm
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
@@ -213,51 +214,31 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		if (!divisionPossible(polynomialTerms)) {
 			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this
 			//whole term as an unique variable.
-			final ArrayList<IPolynomialTerm> constants = new ArrayList<>();
-			for (int i = 1; i < polynomialTerms.length ; i++) {
-				if (polynomialTerms[i].isConstant()) {
-					constants.add(polynomialTerms[i]);
-				}
-			}
-			final IPolynomialTerm[] allConstants;
-			if (polynomialTerms[0].isConstant()) {
-				allConstants = new IPolynomialTerm[constants.size() + 1];
-				allConstants[0] = polynomialTerms[0];
-			}else {
-				allConstants = new IPolynomialTerm[constants.size()];
-			}
-			constants.toArray(allConstants);
-			final IPolynomialTerm constantTerm = AffineTerm.divide(allConstants, script);
-			final ArrayList<IPolynomialTerm> flattenedTerm = new ArrayList<>();
-			if (polynomialTerms[0].isConstant()) {
-				flattenedTerm.add(constantTerm);
-			}else {
-				flattenedTerm.add(polynomialTerms[0]);
-				flattenedTerm.add(constantTerm);
-			}
-			for (int i = 1; i < polynomialTerms.length ; i++) {
-				if (!polynomialTerms[i].isConstant()) {
-					flattenedTerm.add(polynomialTerms[i]);
-				}
-			}
-			IPolynomialTerm[] flattenedTermArray = new IPolynomialTerm[flattenedTerm.size()];
-			flattenedTerm.toArray(flattenedTermArray);
-			final Term term = PolynomialTermUtils.constructSimplifiedTerm("/", flattenedTermArray, script);
+			final IPolynomialTerm[] flattenedTerm = flattenDivision(polynomialTerms, script);
+			final Term term = PolynomialTermUtils.constructSimplifiedTerm("/", flattenedTerm, script);
 			return AffineTerm.constructVariable(term);
 		}
-		return constructDivision(polynomialTerms);
+		return constructDivision(polynomialTerms, script);
 	}
 
 	/**
-	 * Construct the division of the given polynomialTerms.
+	 * Returns a PolynomialTerm which represents the integral quotient of the given arguments (see
+	 * {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
 	 */
-	private static IPolynomialTerm constructDivision(final IPolynomialTerm[] polynomialTerms) {
-		//TODO flatten Term
-		IPolynomialTerm poly = PolynomialTerm.mul(polynomialTerms[0], polynomialTerms[1].getConstant().inverse());
-		for (int i = 2; i < polynomialTerms.length; i++) {
-			poly = PolynomialTerm.mul(poly, polynomialTerms[i].getConstant().inverse());
+	public static IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs, final Script script) {
+		//TODO Flatten this
+		if (!divisionPossible(polynomialArgs)) {
+			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this
+			//whole term as an unique variable.
+			final Term term = PolynomialTermUtils.constructSimplifiedTerm("div", polynomialArgs, script);
+			return AffineTerm.constructVariable(term);
 		}
-		return poly;
+		final IPolynomialTerm result = constructDivision(polynomialArgs, script);
+		if (result.isIntegral()) {
+			return result;
+		}
+		final Term term = PolynomialTermUtils.constructSimplifiedTerm("div", polynomialArgs, script);
+		return AffineTerm.constructVariable(term);
 	}
 
 	/**
@@ -274,25 +255,79 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	}
 
 	/**
-	 * Returns a PolynomialTerm which represents the integral quotient of the given arguments (see
-	 * {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
+	 * Construct the division of the given polynomialTerms.
 	 */
-	public static IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs, final Script script) {
-		//TODO Flatten this
-		if (!divisionPossible(polynomialArgs)) {
-			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this
-			//whole term as an unique variable.
-			final Term term = PolynomialTermUtils.constructSimplifiedTerm("div", polynomialArgs, script);
-			return AffineTerm.constructVariable(term);
+	private static IPolynomialTerm constructDivision(final IPolynomialTerm[] polynomialTerms, final Script script) {
+		//TODO flatten Term
+		IPolynomialTerm poly = PolynomialTerm.mul(polynomialTerms[0], polynomialTerms[1].getConstant().inverse());
+		for (int i = 2; i < polynomialTerms.length; i++) {
+			poly = PolynomialTerm.mul(poly, polynomialTerms[i].getConstant().inverse());
 		}
-		final IPolynomialTerm result = constructDivision(polynomialArgs);
-		if (result.isIntegral()) {
-			return result;
+		return poly;
+	}
+	
+	/**
+	 * Assuming the given array represents a division Term
+	 * (see {@PolynomialTermTransformer#divide(Sort, IPolynomialTerm[])}),
+	 * this method "flattens" this term, and returns the respective array.
+	 * Example for "flattening" given at {@PolynomialTest#realDivisionLeftAssoc02()}.
+	 */
+	private static IPolynomialTerm[] flattenDivision(final IPolynomialTerm[] divArray, final Script script) {
+		final ArrayList<IPolynomialTerm> denominatorConstants = new ArrayList<>();
+		for (int i = 1; i < divArray.length ; i++) {
+			if (divArray[i].isConstant()) {
+				denominatorConstants.add(divArray[i]);
+			}
 		}
-		final Term term = PolynomialTermUtils.constructSimplifiedTerm("div", polynomialArgs, script);
-		return AffineTerm.constructVariable(term);
+		
+		IPolynomialTerm constantTerm;
+		if (denominatorConstants.size() == 0) {
+			return divArray;
+		}else if (denominatorConstants.size() == 1) {
+			if (divArray[0].isConstant()) {
+				constantTerm = constructQuotientOfConstants(divArray[0], denominatorConstants, script);
+			}else {
+				return divArray;
+			}
+		}else {
+			if (divArray[0].isConstant()) {
+				constantTerm = constructQuotientOfConstants(divArray[0], denominatorConstants, script);
+			}else {
+				final IPolynomialTerm one = AffineTerm.constructConstant(denominatorConstants.get(0).getSort(), Rational.ONE);
+				constantTerm = constructQuotientOfConstants(one, denominatorConstants, script);
+			}
+		}
+		
+		return constructFlattenedArray(constantTerm, divArray);
 	}
 
+	private static IPolynomialTerm constructQuotientOfConstants(final IPolynomialTerm nominator, 
+														 	    final ArrayList<IPolynomialTerm> denomConstants, 
+														 	    final Script script) {
+		final IPolynomialTerm[] allConstants = new IPolynomialTerm[denomConstants.size() + 1];
+		allConstants[0] = nominator;
+		denomConstants.toArray(allConstants);
+		return AffineTerm.divide(allConstants, script);
+	}
+	
+	private static IPolynomialTerm[] constructFlattenedArray(final IPolynomialTerm constant, final IPolynomialTerm[] divArray) {
+		final ArrayList<IPolynomialTerm> flattenedTermList = new ArrayList<>();
+		if (divArray[0].isConstant()) {
+			flattenedTermList.add(constant);
+		}else {
+			flattenedTermList.add(divArray[0]);
+			flattenedTermList.add(constant);
+		}
+		for (int i = 1; i < divArray.length ; i++) {
+			if (!divArray[i].isConstant()) {
+				flattenedTermList.add(divArray[i]);
+			}
+		}
+		IPolynomialTerm[] flattenedTermArray = new IPolynomialTerm[flattenedTermList.size()];
+		flattenedTermList.toArray(flattenedTermArray);
+		return flattenedTermArray;
+	}
+	
 	@Override
 	protected Term abstractVariableToTerm(final Script script, final Monomial abstractVariable) {
 		return abstractVariable.toTerm(script);
