@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.6
 
 from __future__ import print_function
 
@@ -10,6 +10,7 @@ import signal
 import subprocess
 import sys
 from stat import ST_MODE
+from functools import lru_cache
 
 version = '47e1251f'
 toolname = 'wrong toolname'
@@ -153,7 +154,7 @@ class _CallFailed(Exception):
 class _ExitCode:
     _exit_codes = ["SUCCESS", "FAIL_OPEN_SUBPROCESS", "FAIL_NO_INPUT_FILE", "FAIL_NO_WITNESS_TO_VALIDATE",
                    "FAIL_MULTIPLE_FILES", "FAIL_NO_TOOLCHAIN_FOUND", "FAIL_NO_SETTINGS_FILE_FOUND",
-                   "FAIL_ULTIMATE_ERROR", "FAIL_SIGNAL"]
+                   "FAIL_ULTIMATE_ERROR", "FAIL_SIGNAL", "FAIL_NO_JAVA", "FAIL_NO_SPEC", "FAIL_NO_ARCH" ]
 
     def __init__(self):
         pass
@@ -174,10 +175,46 @@ def check_string_contains(strings, words):
                 return True
     return False
 
-
-def get_binary():
-    ultimate_bin = [
+@lru_cache(maxsize=1)
+def get_java():
+    candidates = [
         'java',
+        '/usr/bin/java',
+        '/opt/oracle-jdk-bin-1.8.0.202/bin/java',
+        '/usr/lib/jvm/java-8-openjdk-amd64/bin/java'
+    ]
+    for candidate in candidates:
+        candidate = self.which(candidate)
+        if not candidate:
+            continue
+        process = call_desperate([candidate,'-version'])
+        while True:
+            line = process.stdout.readline().decode('utf-8', 'ignore')
+            if not line:
+                break
+            if "1.8" in line: 
+                return candidate
+    print_err("Did not find Java 1.8 in known paths")
+    sys.exit(ExitCode.FAIL_NO_JAVA)
+
+def which(program):
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+    return None
+
+def create_ultimate_base_call():
+    ultimate_bin = [
+        get_java(),
         '-Dosgi.configuration.area=' + os.path.join(datadir, 'config'),
         '-Xmx12G',
         '-Xms1G',
@@ -311,7 +348,7 @@ def run_ultimate(ultimate_call, prop):
 
 
 def _init_child_process():
-    new_umask = 022
+    new_umask = 0o022
     os.umask(new_umask)
 
 
@@ -326,20 +363,6 @@ def call_desperate(call_args):
         print('Error trying to open subprocess ' + str(call_args))
         sys.exit(ExitCode.FAIL_OPEN_SUBPROCESS)
     return child_process
-
-
-def call_relaxed(call_args):
-    if call_args is None:
-        print('No call_args given')
-        return '', None
-
-    try:
-        child_process = subprocess.Popen(call_args, stdout=subprocess.PIPE, preexec_fn=_init_child_process)
-        return child_process.communicate()
-    except Exception as ex:
-        print('Error trying to start ' + str(call_args))
-        print(str(ex))
-        return '', None
 
 
 def create_callargs(callargs, arguments):
@@ -448,7 +471,9 @@ def debug_environment():
     call_relaxed_and_print(['cat', '/proc/meminfo'])
 
     print('--- Java ---')
-    call_relaxed(['java', '-version'])
+    java_bin = get_java()
+    print("Using java binary {}".format(java_bin))
+    call_relaxed_and_print([java_bin, '-version'])
 
     print('--- Files ---')
     file_counter = 0
@@ -468,7 +493,7 @@ def debug_environment():
 
     print('--- Versions ---')
     print(version)
-    call_relaxed_and_print(create_callargs(get_binary(), ['--version']))
+    call_relaxed_and_print(create_callargs(create_ultimate_base_call(), ['--version']))
 
     print('--- umask ---')
     call_relaxed_and_print(['touch', 'testfile'])
@@ -477,12 +502,21 @@ def debug_environment():
 
 
 def call_relaxed_and_print(call_args):
-    stdout, stderr = call_relaxed(call_args)
+    if call_args is None:
+        print('No call_args given')
+    try:
+        child_process = subprocess.Popen(call_args, stdout=subprocess.PIPE, preexec_fn=_init_child_process)
+        stdout, stderr = child_process.communicate()
+    except Exception as ex:
+        print('Error trying to start ' + str(call_args))
+        print(str(ex))
+        return
+
     if stdout:
-        print(stdout)
+        print(stdout.decode('utf-8', 'ignore'))
     if stderr:
         print('sdterr:')
-        print(stderr)
+        print(stderr.decode('utf-8', 'ignore'))
 
 
 def parse_args():
@@ -492,17 +526,12 @@ def parse_args():
     global witnessdir
     global witnessname
     global enable_assertions
-    if (len(sys.argv) == 2) and (sys.argv[1] == '--version'):
-        print(version)
-        sys.exit(ExitCode.SUCCESS)
-
-    if (len(sys.argv) == 2) and (sys.argv[1] == '--envdebug'):
-        debug_environment()
-        sys.exit(ExitCode.SUCCESS)
 
     parser = argparse.ArgumentParser(description='Ultimate wrapper script for SVCOMP')
     parser.add_argument('--version', action='store_true',
                         help='Print Ultimate.py\'s version and exit')
+    parser.add_argument('--ultversion', action='store_true',
+                        help='Print Ultimate\'s version and exit')
     parser.add_argument('--config', nargs=1, metavar='<dir>', type=check_dir,
                         help='Specify the directory in which the static config files are located; default is config/ '
                              'relative to the location of this script')
@@ -517,11 +546,11 @@ def parse_args():
                         help='Before doing anything, print as much information about the environment as possible')
     parser.add_argument('--validate', nargs=1, metavar='<file>', type=check_file,
                         help='Activate witness validation mode (if supported) and specify a .graphml file as witness')
-    parser.add_argument('--spec', metavar='<file>', nargs=1, type=check_file, required=True,
+    parser.add_argument('--spec', metavar='<file>', nargs=1, type=check_file,
                         help='An property (.prp) file from SVCOMP')
-    parser.add_argument('--architecture', choices=['32bit', '64bit'], required=True,
+    parser.add_argument('--architecture', choices=['32bit', '64bit'],
                         help='Choose which architecture (defined as per SV-COMP rules) should be assumed')
-    parser.add_argument('--file', metavar='<file>', nargs=1, type=check_file, required=True,
+    parser.add_argument('--file', metavar='<file>', nargs=1, type=check_file,
                         help='One C file')
     parser.add_argument('--witness-dir', nargs=1, metavar='<dir>', type=check_dir,
                         help='Specify the directory in which witness files should be saved; default is besides '
@@ -536,14 +565,27 @@ def parse_args():
 
     if args.envdebug:
         debug_environment()
+        sys.exit(ExitCode.SUCCESS)
 
     if args.version:
         print(version)
         sys.exit(ExitCode.SUCCESS)
 
-    # first, debug environment no matter what to find the error
-    # if not args.envdebug:
-    #    debug_environment()
+    if args.ultversion:
+        call_relaxed_and_print(create_ultimate_base_call() + ['--version'])
+        sys.exit(ExitCode.SUCCESS)
+
+    if args.file is None:
+        print_err("--file is required")
+        sys.exit(ExitCode.FAIL_NO_INPUT_FILE)
+
+    if args.spec is None:
+        print_err("--spec is required")
+        sys.exit(ExitCode.FAIL_NO_SPEC)
+
+    if args.architecture is None:
+        print_err("--architecture is required")
+        sys.exit(ExitCode.FAIL_NO_ARCH)
 
     witness = None
     c_file = args.file[0]
@@ -668,7 +710,7 @@ def main():
 
     # execute ultimate
     print('Version ' + version)
-    ultimate_bin = get_binary()
+    ultimate_bin = create_ultimate_base_call()
     ultimate_call = create_callargs(ultimate_bin,
                                     ['-tc', toolchain_file, '-i', input_files, '-s', settings_file,
                                      cli_arguments])
