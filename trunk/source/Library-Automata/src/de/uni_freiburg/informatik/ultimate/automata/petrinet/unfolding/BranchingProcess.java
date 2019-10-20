@@ -79,6 +79,11 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 */
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mNet;
 
+	/**
+	 * The input is a {@link IPetriNetSuccessorProvider} and does not provide the
+	 * predecessor transitions of places. We use this relation to store the
+	 * information that we observed while computing the finite prefix.
+	 */
 	private final HashRelation<PLACE, ITransition<LETTER, PLACE>> mYetKnownPredecessorTransitions = new HashRelation<>();
 
 	private final IOrder<LETTER, PLACE> mOrder;
@@ -157,9 +162,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 				someSuccessorIsAccepting = true;
 			}
 		}
-		if (!event.isCutoffEvent()) {
-			mCoRelation.update(event);
-		}
+		mCoRelation.update(event);
 		return someSuccessorIsAccepting;
 	}
 
