@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.F
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
@@ -77,6 +78,8 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * Events of this branching process correspond to transitions of the net.
 	 */
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mNet;
+
+	private final HashRelation<PLACE, ITransition<LETTER, PLACE>> mYetKnownPredecessorTransitions = new HashRelation<>();
 
 	private final IOrder<LETTER, PLACE> mOrder;
 
@@ -135,6 +138,11 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * @throws PetriNetNot1SafeException
 	 */
 	boolean addEvent(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
+		if (event != getDummyRoot()) {
+			for (final Condition<LETTER, PLACE> c : event.getSuccessorConditions()) {
+				mYetKnownPredecessorTransitions.addPair(c.getPlace(), event.getTransition());
+			}
+		}
 		mEvents.add(event);
 		mMarkingEventRelation.addPair(event.getMark().hashCode(), event);
 		for (final Condition<LETTER, PLACE> c : event.getPredecessorConditions()) {
@@ -149,7 +157,9 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 				someSuccessorIsAccepting = true;
 			}
 		}
-		mCoRelation.update(event);
+		if (!event.isCutoffEvent()) {
+			mCoRelation.update(event);
+		}
 		return someSuccessorIsAccepting;
 	}
 
@@ -451,6 +461,10 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		final int max = mPlace2Conds.getDomain().stream().map(x -> mPlace2Conds.getImage(x).size()).max(Integer::compare)
 				.orElse(0);
 		return max;
+	}
+
+	public HashRelation<PLACE, ITransition<LETTER, PLACE>> getYetKnownPredecessorTransitions() {
+		return mYetKnownPredecessorTransitions;
 	}
 
 	@Override

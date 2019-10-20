@@ -31,10 +31,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 
 /**
  * A co-relation between a {@link Condition} and an {@link Event}.
@@ -47,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *            place content type
  */
 public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER, PLACE> {
+	private static final boolean EXTENDED_ASSERTION_CHECKING = false;
 	private long mQueryCounterYes;
 	private long mQueryCounterNo;
 
@@ -58,7 +62,7 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	 * TODO Matthias 2019-09-25: I just checked this and saw all three p3-conditions in relation
 	 * with the (only) a-event. Maybe the problem has been fixed in the last 13 months.
 	 */
-	private final HashRelation<Condition<LETTER, PLACE>, Event<LETTER, PLACE>> mCoRelation = new HashRelation<>();
+	private final HashRelation3<Condition<LETTER, PLACE>, ITransition<LETTER, PLACE>, Event<LETTER, PLACE>> mCoRelation = new HashRelation3<>();
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
 
 	/**
@@ -88,6 +92,26 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 		// hence there's nothing to do here
 	}
 
+	private Stream<Event<LETTER, PLACE>> streamCoRelatedEvents(final Condition<LETTER, PLACE> c) {
+		return streamCoRelatedEvents(c, mCoRelation.projectToSnd(c));
+	}
+
+	private Stream<Event<LETTER, PLACE>> streamCoRelatedEvents(final Condition<LETTER, PLACE> c,
+			final Set<ITransition<LETTER, PLACE>> transitions) {
+		return transitions.stream().flatMap(t -> mCoRelation.projectToTrd(c, t).stream());
+	}
+
+	private Stream<Condition<LETTER, PLACE>> streamCoRelatedConditions(final Condition<LETTER, PLACE> c) {
+		return streamCoRelatedConditions(c, mCoRelation.projectToSnd(c));
+	}
+
+	private Stream<Condition<LETTER, PLACE>> streamCoRelatedConditions(final Condition<LETTER, PLACE> c,
+			final Set<ITransition<LETTER, PLACE>> transitions) {
+		return Stream.concat(c.getPredecessorEvent().getConditionMark().stream(),
+				streamCoRelatedEvents(c, transitions).flatMap(x -> x.getSuccessorConditions().stream()));
+	}
+
+
 	@Override
 	public void update(final Event<LETTER, PLACE> e) {
 		if (e.getTransition() == null) {
@@ -103,15 +127,16 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 		{
 			// new method - continuity
 			final Set<Event<LETTER, PLACE>>[] coRelatedEvents = e.getPredecessorConditions().stream()
-					.map(mCoRelation::getImage).toArray(Set[]::new);
+					.map(x -> streamCoRelatedEvents(x).collect(Collectors.toSet()))
+					.toArray(Set[]::new);
 			final Set<Event<LETTER, PLACE>> intersection = DataStructureUtils.intersection(Arrays.asList(coRelatedEvents));
 			for (final Event<LETTER, PLACE> coRelatedEvent : intersection) {
 				for (final Condition<LETTER, PLACE> c : e.getSuccessorConditions()) {
-					mCoRelation.addPair(c, coRelatedEvent);
+					mCoRelation.addTriple(c, coRelatedEvent.getTransition(), coRelatedEvent);
 //					newCoRelation.addPair(c, coRelatedEvent);
 				}
 				for (final Condition<LETTER, PLACE> c : coRelatedEvent.getSuccessorConditions()) {
-					mCoRelation.addPair(c, e);
+					mCoRelation.addTriple(c, e.getTransition(), e);
 //					newCoRelation.addPair(c, e);
 				}
 			}
@@ -128,9 +153,9 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 				if (parent.equals(e)) {
 					continue;
 				}
-				for (final Condition c : parent.getSuccessorConditions()) {
+				for (final Condition<LETTER, PLACE> c : parent.getSuccessorConditions()) {
 					if (!someSuccessorEventIsAncestorOfE(c, e)) {
-						mCoRelation.addPair(c, e);
+						mCoRelation.addTriple(c, e.getTransition(), e);
 //						newCoRelation.addPair(c,e);
 					}
 				}
@@ -214,8 +239,9 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 
 	@Override
 	public boolean isInCoRelation(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
-		final boolean result = mCoRelation.containsPair(c1, c2.getPredecessorEvent())
-				|| mCoRelation.containsPair(c2, c1.getPredecessorEvent())
+		final boolean result = mCoRelation.containsTriple(c1, c2.getPredecessorEvent().getTransition(),
+				c2.getPredecessorEvent())
+				|| mCoRelation.containsTriple(c2, c1.getPredecessorEvent().getTransition(), c1.getPredecessorEvent())
 				|| (c1.getPredecessorEvent() == c2.getPredecessorEvent());
 		assert result == isInCoRelationNaive(c1, c2) :
 				String.format("contradictory co-Relation for %s,%s: normal=%b != %b=naive", c1, c2, result, !result);
@@ -312,26 +338,39 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 
 	@Override
 	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond) {
-		final Set<Event<LETTER, PLACE>> coRelatedEvents = mCoRelation.getImage(cond);
-		final Set<Condition<LETTER, PLACE>> result = coRelatedEvents.stream()
-				.flatMap(x -> x.getSuccessorConditions().stream()).collect(Collectors.toSet());
-		cond.getPredecessorEvent().getConditionMark().addTo(result);
+		final Set<Condition<LETTER, PLACE>> result = streamCoRelatedConditions(cond).collect(Collectors.toSet());
+		if (EXTENDED_ASSERTION_CHECKING) {
+			assert result
+					.equals(computeCoRelatatedConditionsInefficient(cond)) : "inconsistent co-relation information";
+		}
+		return result;
+	}
+
+	private Set<Condition<LETTER, PLACE>> computeCoRelatatedConditionsInefficient(final Condition<LETTER, PLACE> cond) {
+		final Set<Condition<LETTER, PLACE>> result = new HashSet<>();
+		for (final Condition<LETTER, PLACE> c2 : mBranchingProcess.getConditions()) {
+			if (isInCoRelation(cond, c2)) {
+				result.add(c2);
+			}
+		}
 		return result;
 	}
 
 	@Override
 	public int computeMaximalDegree() {
-		final Integer max = mCoRelation
-				.getDomain().stream().map(x -> mCoRelation.getImage(x).stream()
-						.map(y -> y.getSuccessorConditions().size()).reduce(0, Integer::sum))
-				.max(Integer::compare).orElse(Integer.valueOf(0));
+		final Function<Condition<LETTER, PLACE>, Integer> computeDegree = (c -> streamCoRelatedEvents(c)
+				.map(e -> e.getSuccessorConditions().size()).reduce(0, Integer::sum));
+		final Integer max = mCoRelation.projectToFst().stream().map(computeDegree).max(Integer::compare)
+				.orElse(Integer.valueOf(0));
 		return max;
 	}
 
 	@Override
 	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond,
 			final PLACE p) {
-		return computeCoRelatatedConditions(cond).stream().filter(x -> x.getPlace().equals(p))
+		final Set<ITransition<LETTER, PLACE>> transitions = mBranchingProcess.getYetKnownPredecessorTransitions()
+				.getImage(p);
+		return streamCoRelatedConditions(cond, transitions).filter(x -> x.getPlace().equals(p))
 				.collect(Collectors.toSet());
 	}
 }

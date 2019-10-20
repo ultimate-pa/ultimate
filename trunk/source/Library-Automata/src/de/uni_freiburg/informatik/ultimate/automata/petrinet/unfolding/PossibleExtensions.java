@@ -61,7 +61,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 * Use the optimization that is outlined in observation B07 in the following
 	 * issue. https://github.com/ultimate-pa/ultimate/issues/448
 	 */
-	private static final boolean BUMBLEBEE_B07_OPTIMIZAION = false;
+	private static final boolean BUMBLEBEE_B07_OPTIMIZAION = true;
 	private final PriorityQueue<Event<LETTER, PLACE>> mPe;
 	/**
 	 * If {@link Event} is known to be cut-off event we can move it immediately

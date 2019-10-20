@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
@@ -178,5 +179,9 @@ public class ConditionMarking<LETTER, PLACE> implements Iterable<Condition<LETTE
 			}
 		}
 		return new Marking<>(mark);
+	}
+
+	public Stream<Condition<LETTER, PLACE>> stream() {
+		return mConditions.stream();
 	}
 }
