@@ -214,8 +214,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		if (!divisionPossible(polynomialTerms)) {
 			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this
 			//whole term as an unique variable.
-			final IPolynomialTerm[] flattenedTerm = flattenDivision(polynomialTerms, script);
-			final Term term = PolynomialTermUtils.constructSimplifiedTerm("/", flattenedTerm, script);
+			final Term term = PolynomialTermUtils.constructSimplifiedTerm("/", polynomialTerms, script);
 			return AffineTerm.constructVariable(term);
 		}
 		return constructDivision(polynomialTerms, script);
@@ -264,68 +263,6 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 			poly = PolynomialTerm.mul(poly, polynomialTerms[i].getConstant().inverse());
 		}
 		return poly;
-	}
-	
-	/**
-	 * Assuming the given array represents a division Term
-	 * (see {@PolynomialTermTransformer#divide(Sort, IPolynomialTerm[])}),
-	 * this method "flattens" this term, and returns the respective array.
-	 * Example for "flattening" given at {@PolynomialTest#realDivisionLeftAssoc02()}.
-	 */
-	private static IPolynomialTerm[] flattenDivision(final IPolynomialTerm[] divArray, final Script script) {
-		final ArrayList<IPolynomialTerm> denominatorConstants = new ArrayList<>();
-		for (int i = 1; i < divArray.length ; i++) {
-			if (divArray[i].isConstant()) {
-				denominatorConstants.add(divArray[i]);
-			}
-		}
-		
-		IPolynomialTerm constantTerm;
-		if (denominatorConstants.size() == 0) {
-			return divArray;
-		}else if (denominatorConstants.size() == 1) {
-			if (divArray[0].isConstant()) {
-				constantTerm = constructQuotientOfConstants(divArray[0], denominatorConstants, script);
-			}else {
-				return divArray;
-			}
-		}else {
-			if (divArray[0].isConstant()) {
-				constantTerm = constructQuotientOfConstants(divArray[0], denominatorConstants, script);
-			}else {
-				final IPolynomialTerm one = AffineTerm.constructConstant(denominatorConstants.get(0).getSort(), Rational.ONE);
-				constantTerm = constructQuotientOfConstants(one, denominatorConstants, script);
-			}
-		}
-		
-		return constructFlattenedArray(constantTerm, divArray);
-	}
-
-	private static IPolynomialTerm constructQuotientOfConstants(final IPolynomialTerm nominator, 
-														 	    final ArrayList<IPolynomialTerm> denomConstants, 
-														 	    final Script script) {
-		final IPolynomialTerm[] allConstants = new IPolynomialTerm[denomConstants.size() + 1];
-		allConstants[0] = nominator;
-		denomConstants.toArray(allConstants);
-		return AffineTerm.divide(allConstants, script);
-	}
-	
-	private static IPolynomialTerm[] constructFlattenedArray(final IPolynomialTerm constant, final IPolynomialTerm[] divArray) {
-		final ArrayList<IPolynomialTerm> flattenedTermList = new ArrayList<>();
-		if (divArray[0].isConstant()) {
-			flattenedTermList.add(constant);
-		}else {
-			flattenedTermList.add(divArray[0]);
-			flattenedTermList.add(constant);
-		}
-		for (int i = 1; i < divArray.length ; i++) {
-			if (!divArray[i].isConstant()) {
-				flattenedTermList.add(divArray[i]);
-			}
-		}
-		IPolynomialTerm[] flattenedTermArray = new IPolynomialTerm[flattenedTermList.size()];
-		flattenedTermList.toArray(flattenedTermArray);
-		return flattenedTermArray;
 	}
 	
 	@Override

@@ -298,6 +298,20 @@ public class PolynomialTest {
 		final String expectedOutputAsString = "(/ 21.0 x)";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
+	
+	/**
+	 * Result should be 
+	 * <pre>(/ 2.0 x y)</pre>
+	 */
+	@Test
+	public void realDivisionLeftAssoc03() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		mScript.declareFun("y", new Sort[0], realSort);
+		final String inputAsString = "(/ 42.0 x y 21.0)";
+		final String expectedOutputAsString = "(/ 2.0 x y)";
+		runDefaultTest(inputAsString, expectedOutputAsString);
+	}
 
 	
 	/**

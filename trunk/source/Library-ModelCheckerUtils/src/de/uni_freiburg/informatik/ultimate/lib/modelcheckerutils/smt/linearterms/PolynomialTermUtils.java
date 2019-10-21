@@ -27,8 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
@@ -78,11 +80,86 @@ public class PolynomialTermUtils {
 	 */
 	public static Term constructSimplifiedTerm(final String functionSymbol, final IPolynomialTerm[] polynomialArgs,
 			final Script script) {
-		Term[] terms = new Term[polynomialArgs.length];
-		for (int i = 0; i < polynomialArgs.length; i++) {
-			terms[i] = polynomialArgs[i].toTerm(script);
+		final IPolynomialTerm[] flattenedTerm;
+//		if (functionSymbol == "/") {
+//			flattenedTerm = flattenRealDivision(polynomialArgs, script);
+//		}else if (functionSymbol == "div") {
+//			
+//		}else {
+//			throw new UnsupportedOperationException("A simplification for this function has not been straightforwardly implemented."
+//													+ "Try using the PolynomialTermTransformer/AffineTermTransformer or SMTUtils.");
+//		}
+		flattenedTerm = flattenRealDivision(polynomialArgs, script);
+		Term[] terms = new Term[flattenedTerm.length];
+		for (int i = 0; i < flattenedTerm.length; i++) {
+			terms[i] = flattenedTerm[i].toTerm(script);
 		}
 		return script.term(functionSymbol, terms);
+	}
+	
+	/**
+	 * Assuming the given array represents a division Term
+	 * (see {@PolynomialTermTransformer#divide(Sort, IPolynomialTerm[])}),
+	 * this method "flattens" this term, and returns the respective array.
+	 * Example for "flattening" given at {@PolynomialTest#realDivisionLeftAssoc02()}.
+	 */
+	private static IPolynomialTerm[] flattenRealDivision(final IPolynomialTerm[] divArray, final Script script) {
+		final ArrayList<IPolynomialTerm> denominatorConstants = new ArrayList<>();
+		for (int i = 1; i < divArray.length ; i++) {
+			if (divArray[i].isConstant()) {
+				denominatorConstants.add(divArray[i]);
+			}
+		}
+		
+		IPolynomialTerm constantTerm;
+		if (denominatorConstants.size() == 0) {
+			return divArray;
+		}else if (denominatorConstants.size() == 1) {
+			if (divArray[0].isConstant()) {
+				constantTerm = constructQuotientOfConstants(divArray[0], denominatorConstants, script);
+			}else {
+				return divArray;
+			}
+		}else {
+			if (divArray[0].isConstant()) {
+				constantTerm = constructQuotientOfConstants(divArray[0], denominatorConstants, script);
+			}else {
+				final IPolynomialTerm one = AffineTerm.constructConstant(denominatorConstants.get(0).getSort(), Rational.ONE);
+				constantTerm = constructQuotientOfConstants(one, denominatorConstants, script);
+			}
+		}
+		
+		return constructFlattenedArray(constantTerm, divArray);
+	}
+
+	private static IPolynomialTerm constructQuotientOfConstants(final IPolynomialTerm nominator, 
+														 	    final ArrayList<IPolynomialTerm> denomConstants, 
+														 	    final Script script) {
+		final IPolynomialTerm[] allConstants = new IPolynomialTerm[denomConstants.size() + 1];
+		allConstants[0] = nominator;
+		Iterator<IPolynomialTerm> iter = denomConstants.iterator();
+		for (int i = 1; iter.hasNext(); i++) {
+			allConstants[i] = iter.next();
+		}
+		return AffineTerm.divide(allConstants, script);
+	}
+	
+	private static IPolynomialTerm[] constructFlattenedArray(final IPolynomialTerm constant, final IPolynomialTerm[] divArray) {
+		final ArrayList<IPolynomialTerm> flattenedTermList = new ArrayList<>();
+		if (divArray[0].isConstant()) {
+			flattenedTermList.add(constant);
+		}else {
+			flattenedTermList.add(divArray[0]);
+			flattenedTermList.add(constant);
+		}
+		for (int i = 1; i < divArray.length ; i++) {
+			if (!divArray[i].isConstant()) {
+				flattenedTermList.add(divArray[i]);
+			}
+		}
+		IPolynomialTerm[] flattenedTermArray = new IPolynomialTerm[flattenedTermList.size()];
+		flattenedTermList.toArray(flattenedTermArray);
+		return flattenedTermArray;
 	}
 
 	/**
