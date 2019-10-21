@@ -343,6 +343,19 @@ public class PolynomialTest {
 	
 	/**
 	 * Result should be 
+	 * <pre>(/ 2.0 x y)</pre>
+	 */
+	@Test
+	public void intDivisionLeftAssoc03() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		mScript.declareFun("y", new Sort[0], realSort);
+		final String inputAsString = "(div 42 x y 21)";
+		runDefaultTest(inputAsString, inputAsString);
+	}
+	
+	/**
+	 * Result should be 
 	 * <pre>(* 42.0 x y)</pre>
 	 * instead of
 	 * <pre>(* 42.0 (* x y))</pre>.
