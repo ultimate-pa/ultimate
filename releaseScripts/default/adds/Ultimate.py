@@ -184,7 +184,7 @@ def get_java():
         '/usr/lib/jvm/java-8-openjdk-amd64/bin/java'
     ]
     for candidate in candidates:
-        candidate = self.which(candidate)
+        candidate = which(candidate)
         if not candidate:
             continue
         process = call_desperate([candidate,'-version'])
