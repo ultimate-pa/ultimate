@@ -88,7 +88,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 				pred = state;
 			}
 
-			automaton.addInternalTransition("pred", x1, "final");
+			automaton.addInternalTransition(pred, x1, "final");
 		}
 		if (c > 0) {
 			automaton.addInternalTransition("init", x1, "final");
