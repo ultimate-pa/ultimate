@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.pdr;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -155,7 +154,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private IPredicate[] mInterpolants;
 	private TraceCheckReasonUnknown mReasonUnknown;
 	private int mInvarSpot;
-	private int mLevel;
+	private final int mLevel;
 
 	public Pdr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
 			final List<LETTER> counterexample) {
@@ -190,7 +189,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		mTruePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("true"));
 		mFalsePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("false"));
 		mGlobalFrames = initializeGlobalFrames(mPpIcfg);
-		mSatProofObligations = new ArrayDeque<Pair<ProofObligation, ProofObligation>>();
+		mSatProofObligations = new ArrayDeque<>();
 		mLogger.info("Analyzing path program with PDR");
 
 		try {
@@ -432,7 +431,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 						if (level - 1 == 0) {
 							mSatProofObligations.add(
-									new Pair<ProofObligation, ProofObligation>(proofObligation, newProofObligation));
+									new Pair<>(proofObligation, newProofObligation));
 							return false;
 						}
 
@@ -517,7 +516,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 					procedurePo.add(initialProofObligation);
 
-					LBool procResult = computePdr(pp.getPathProgram(), procedurePo);
+					final LBool procResult = computePdr(pp.getPathProgram(), procedurePo);
 
 					/*
 					 * Recursive PDR call returns SAT -> error can be reached by calling this procedure. In this case we
@@ -848,8 +847,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			if (error.contains(loc)) {
 				continue;
 			}
-			final List<Pair<ChangedFrame, IPredicate>> newLocalFrame = new ArrayList<Pair<ChangedFrame, IPredicate>>();
-			IPredicate globalFrame = mGlobalFrames.get(loc);
+			final List<Pair<ChangedFrame, IPredicate>> newLocalFrame = new ArrayList<>();
+			final IPredicate globalFrame = mGlobalFrames.get(loc);
 			IPredicate localPred;
 			if (init.contains(loc)) {
 				localPred = globalFrame;
