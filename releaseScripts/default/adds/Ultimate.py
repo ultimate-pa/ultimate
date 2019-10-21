@@ -12,8 +12,8 @@ import sys
 from stat import ST_MODE
 from functools import lru_cache
 
-version = '47e1251f'
-toolname = 'wrong toolname'
+version = '1b62244e'
+toolname = 'Automizer'
 write_ultimate_output_to_file = True
 output_file_name = 'Ultimate.log'
 error_path_file_name = 'UltimateCounterExample.errorpath'
@@ -261,7 +261,7 @@ def contains_overapproximation_result(line):
 
 
 def run_ultimate(ultimate_call, prop):
-    print('Calling Ultimate with: ' + " ".join(ultimate_call))
+    print("Calling Ultimate with: " + " ".join(ultimate_call))
 
     ultimate_process = call_desperate(ultimate_call)
 
@@ -425,7 +425,7 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
         ret.append('--witnessprinter.graph.data.programhash')
 
         sha = call_desperate(['sha1sum', c_file[0]])
-        ret.append(sha.communicate()[0].split()[0])
+        ret.append(sha.communicate()[0].split()[0].decode('utf-8', 'ignore'))
 
     return ret
 
@@ -754,7 +754,7 @@ def main():
     print(result)
     if verbose:
         print('--- Real Ultimate output ---')
-        print(ultimate_output.encode('UTF-8', 'replace'))
+        print(ultimate_output)
 
     if result.startswith('ERROR'):
         sys.exit(ExitCode.FAIL_ULTIMATE_ERROR)
