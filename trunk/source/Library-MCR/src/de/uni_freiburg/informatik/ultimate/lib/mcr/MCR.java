@@ -37,10 +37,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -408,7 +408,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			// // TODO: For reads visit ((AssumeStatement)s).getFormula()
 			// }
 			// if (s instanceof AssignmentStatement) {
-			// AssignmentStatement a = (AssignmentStatement) s;
+			// final AssignmentStatement a = (AssignmentStatement) s;
 			// // TODO: For writes visit a.getLhs()
 			// // TODO: For reads visit a.getRhs()
 			// }
