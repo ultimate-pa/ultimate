@@ -116,8 +116,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * TODO: Correct comment Returns an {@link INestedWordAutomaton} representing a strict inequality of the form "x - y
 	 * < c". The automaton consists of four parts, one for each of the following case distinctions:
 	 * <ul>
-	 * <li>x > 0 &and; y > 0
-	 * <li>x <= 0 &and; y <= 0
+	 * <li>x >= 0 &and; y >= 0
+	 * <li>x < 0 &and; y < 0
 	 * <li>x > 0 &and; y <= 0
 	 * <li>x <= 0 &and; y > 0
 	 * </ul>
@@ -199,14 +199,14 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 			String pred = "init";
 			for (int i = 0; i < 2 * (Math.abs(c) - 1) - 1; i++) {
-				final String state0 = "c_" + i;
-				automaton.addState(false, false, state0);
-				automaton.addInternalTransition(pred, i == 0 ? xy01 : xy00, state0);
+				final String state = "c_" + i;
+				automaton.addState(false, false, state);
+				automaton.addInternalTransition(pred, i == 0 ? xy01 : xy00, state);
 
 				if (i % 2 == 0) {
-					automaton.addInternalTransition(state0, xy00, "c1");
+					automaton.addInternalTransition(state, xy00, "c1");
 				}
-				pred = state0;
+				pred = state;
 			}
 		}
 		return automaton;
@@ -214,7 +214,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 	/**
 	 * Returns a {@link NestedWordAutomaton} representing one part of the strict inequality automaton of "x - y < c",
-	 * for x <= 0 and y <= 0. new: x<0 and y<0
+	 * for x < 0 and y < 0.
 	 */
 
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartTwo(
@@ -235,62 +235,48 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		automaton.addInternalTransition("final", xy00, "final");
 
 		automaton.addState(false, false, "s0");
+		automaton.addState(false, false, "s1");
+		automaton.addState(false, false, "s2");
+		automaton.addState(false, false, "s3");
+		automaton.addState(false, false, "s4");
+
 		automaton.addInternalTransition("init", xy00, "s0");
 		automaton.addInternalTransition("s0", xy00, "init");
-
-		automaton.addState(false, false, "s1");
 		automaton.addInternalTransition("init", xy00, "s1");
-
-		automaton.addState(false, false, "s2");
 		automaton.addInternalTransition("s1", xy01, "s2");
+		automaton.addInternalTransition("s2", xy00, "s3");
+		automaton.addInternalTransition("s3", xy00, "s2");
+		automaton.addInternalTransition("s2", xy00, "s4");
 
 		if (c <= 0) {
-			String pred = "s2";
+			String pred = "s4";
 			for (int i = 0; i < 2 * Math.abs(c); i++) {
-
 				final String state = "c" + i;
 				automaton.addState(false, false, state);
 				automaton.addInternalTransition(pred, xy00, state);
 				pred = state;
 			}
-
-			automaton.addState(false, false, "s3");
-			automaton.addInternalTransition(pred, xy00, "s3");
-			automaton.addInternalTransition("s3", xy10, "final");
-
-			automaton.addState(false, false, "s4");
-			automaton.addInternalTransition("s3", xy00, "s4");
-			automaton.addInternalTransition("s4", xy00, "s3");
+			automaton.addInternalTransition(pred, xy10, "final");
 		}
 
 		if (c > 0) {
+			automaton.addState(false, false, "c");
 			automaton.addInternalTransition("s1", xy11, "final");
-
-			automaton.addState(false, false, "s3");
-			automaton.addInternalTransition("s2", xy00, "s3");
-			automaton.addInternalTransition("s3", xy10, "final");
-
-			automaton.addState(false, false, "s4");
-			automaton.addInternalTransition("s3", xy00, "s4");
-			automaton.addInternalTransition("s4", xy00, "s3");
+			automaton.addInternalTransition("s4", xy10, "final");
+			automaton.addInternalTransition("c", xy01, "final");
 
 			String pred = "s1";
 			for (int i = 0; i < 2 * (Math.abs(c) - 1) - 1; i++) {
-				final String state0 = "c_" + i + "_0";
-				automaton.addState(false, false, state0);
-				automaton.addInternalTransition(pred, i == 0 ? xy10 : xy00, state0);
+				final String state = "c_" + i + "_0";
+				automaton.addState(false, false, state);
+				automaton.addInternalTransition(pred, i == 0 ? xy10 : xy00, state);
 
 				if (i % 2 == 0) {
-					final String state1 = "c_" + i + "_1";
-					automaton.addState(false, false, state1);
-					automaton.addInternalTransition(state0, xy00, state1);
-					automaton.addInternalTransition(state1, xy01, "final");
+					automaton.addInternalTransition(state, xy00, "c");
 				}
-
-				pred = state0;
+				pred = state;
 			}
 		}
-
 		return automaton;
 	}
 
