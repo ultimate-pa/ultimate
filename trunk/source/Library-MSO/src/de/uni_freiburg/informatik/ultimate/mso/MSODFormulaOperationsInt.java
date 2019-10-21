@@ -113,8 +113,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns an {@link INestedWordAutomaton} representing a strict inequality of the form "x - y < c". The automaton
-	 * consists of four parts, one for each of the following case distinctions:
+	 * TODO: Correct comment Returns an {@link INestedWordAutomaton} representing a strict inequality of the form "x - y
+	 * < c". The automaton consists of four parts, one for each of the following case distinctions:
 	 * <ul>
 	 * <li>x > 0 &and; y > 0
 	 * <li>x <= 0 &and; y <= 0
@@ -150,7 +150,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 	/**
 	 * Returns a {@link NestedWordAutomaton} representing one part of the strict inequality automaton of "x - y < c",
-	 * for x > 0 and y > 0. : new: x>=0 and y>=0
+	 * for x >= 0 and y >= 0.
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartOne(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
@@ -170,59 +170,45 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		automaton.addInternalTransition("final", xy00, "final");
 
 		automaton.addState(false, false, "s0");
+		automaton.addState(false, false, "s1");
+		automaton.addState(false, false, "s2");
+		automaton.addState(false, false, "s3");
 		automaton.addInternalTransition("init", xy00, "s0");
 		automaton.addInternalTransition("s0", xy00, "init");
-
-		automaton.addState(false, false, "s1");
 		automaton.addInternalTransition("init", xy10, "s1");
+		automaton.addInternalTransition("s1", xy00, "s2");
+		automaton.addInternalTransition("s2", xy00, "s3");
+		automaton.addInternalTransition("s3", xy00, "s2");
 
 		if (c <= 0) {
-			String pred = "s1";
+			String pred = "s2";
 			for (int i = 0; i < 2 * Math.abs(c); i++) {
-
 				final String state = "c" + i;
 				automaton.addState(false, false, state);
 				automaton.addInternalTransition(pred, xy00, state);
 				pred = state;
 			}
-
-			automaton.addState(false, false, "s2");
-			automaton.addInternalTransition(pred, xy00, "s2");
-			automaton.addInternalTransition("s2", xy01, "final");
-
-			automaton.addState(false, false, "s3");
-			automaton.addInternalTransition("s2", xy00, "s3");
-			automaton.addInternalTransition("s3", xy00, "s2");
+			automaton.addInternalTransition(pred, xy01, "final");
 		}
 
 		if (c > 0) {
+			automaton.addState(false, false, "c1");
 			automaton.addInternalTransition("init", xy11, "final");
-
-			automaton.addState(false, false, "s2");
-			automaton.addInternalTransition("s1", xy00, "s2");
 			automaton.addInternalTransition("s2", xy01, "final");
-
-			automaton.addState(false, false, "s3");
-			automaton.addInternalTransition("s2", xy00, "s3");
-			automaton.addInternalTransition("s3", xy00, "s2");
+			automaton.addInternalTransition("c1", xy10, "final");
 
 			String pred = "init";
 			for (int i = 0; i < 2 * (Math.abs(c) - 1) - 1; i++) {
-				final String state0 = "c_" + i + "_0";
+				final String state0 = "c_" + i;
 				automaton.addState(false, false, state0);
 				automaton.addInternalTransition(pred, i == 0 ? xy01 : xy00, state0);
 
 				if (i % 2 == 0) {
-					final String state1 = "c_" + i + "_1";
-					automaton.addState(false, false, state1);
-					automaton.addInternalTransition(state0, xy00, state1);
-					automaton.addInternalTransition(state1, xy10, "final");
+					automaton.addInternalTransition(state0, xy00, "c1");
 				}
-
 				pred = state0;
 			}
 		}
-
 		return automaton;
 	}
 
@@ -639,13 +625,13 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * TODO: correct comment. Returns an {@link INestedWordAutomaton} representing an element relation of the form "x +
-	 * c ∈ Y". The automaton consists of four parts, one for each of the following case distinctions:
+	 * Returns an {@link INestedWordAutomaton} representing an element relation of the form "x + c ∈ Y". The automaton
+	 * consists of four parts, one for each of the following case distinctions:
 	 * <ul>
-	 * <li>x + c <= 0 &and; x <= 0
-	 * <li>x + c > 0 &and; x > 0
-	 * <li>x + c <= 0 &and; x > 0
-	 * <li>x + c > 0 &and; x <= 0
+	 * <li>x + c >= 0 &and; x >= 0
+	 * <li>x + c < 0 &and; x < 0
+	 * <li>x + c >= 0 &and; x < 0
+	 * <li>x + c < 0 &and; x >= 0
 	 * </ul>
 	 *
 	 * @throws IllegalArgumentException
@@ -802,8 +788,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c <=
-	 * 0 and; x > 0. new: x+c>=0 and x<0
+	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c >=
+	 * 0 and x < 0
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartThree(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
@@ -882,8 +868,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c > 0
-	 * and; x <= 0. new: x+c<0 and x>=0
+	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c < 0
+	 * and x > = 0
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartFour(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
@@ -954,10 +940,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 				automaton.addInternalTransition(predInner, xy10, "final");
 				automaton.addInternalTransition(predInner, xy11, "final");
 			}
-
 			pred = state0;
 		}
-
 		return automaton;
 	}
 
