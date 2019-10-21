@@ -24,14 +24,15 @@ public class IpTcStrategyModuleMCR<T extends IInterpolatingTraceCheck<LETTER>, L
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<?> mPrefs;
 	private final IIpTcStrategyModule<T, LETTER> mIpTcModule;
-
+	private final IPredicateUnifier mPredicateUnifier;
 	private MCR<LETTER> mMCR;
 
 	public IpTcStrategyModuleMCR(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
-			final IIpTcStrategyModule<T, LETTER> nestedModule) {
+			final IPredicateUnifier predicateUnifier, final IIpTcStrategyModule<T, LETTER> nestedModule) {
 		mPrefs = prefs;
 		mIpTcModule = nestedModule;
 		mLogger = logger;
+		mPredicateUnifier = predicateUnifier;
 	}
 
 	@Override
@@ -61,7 +62,7 @@ public class IpTcStrategyModuleMCR<T extends IInterpolatingTraceCheck<LETTER>, L
 
 	@Override
 	public IPredicateUnifier getPredicateUnifier() {
-		return mIpTcModule.getPredicateUnifier();
+		return mPredicateUnifier;
 	}
 
 	@Override
@@ -98,7 +99,7 @@ public class IpTcStrategyModuleMCR<T extends IInterpolatingTraceCheck<LETTER>, L
 	public MCR<LETTER> getOrConstruct() {
 		if (mMCR == null) {
 			// TODO: Where to get a trace check factory?
-			mMCR = new MCR<>(mLogger, mPrefs, getPredicateUnifier(), mIpTcModule.getOrConstruct().getTrace(), null);
+			mMCR = new MCR<>(mLogger, mPrefs, mPredicateUnifier, mIpTcModule.getOrConstruct().getTrace(), null);
 		}
 		return mMCR;
 	}

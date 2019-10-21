@@ -23,13 +23,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -92,7 +90,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	private Triple<List<LETTER>, LBool, NestedWordAutomaton<LETTER, IPredicate>>
 			exploreInterleavings(final List<LETTER> initialTrace) {
-		getReadsAndWrites();
+		getReadsAndWrites(initialTrace);
 		final LinkedList<List<LETTER>> queue = new LinkedList<>();
 		final Set<List<LETTER>> visited = new HashSet<>();
 		queue.add(initialTrace);
@@ -111,13 +109,13 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				// TODO: Get the interpolants from mAutomaton
 				interpolants = null;
 			} else {
-				final ITraceCheck traceCheck = mTraceCheckFactory.getTraceCheck(trace);
+				final IInterpolatingTraceCheck<LETTER> traceCheck = mTraceCheckFactory.getTraceCheck(trace);
 				final LBool isCorrect = traceCheck.isCorrect();
 				if (isCorrect != LBool.UNSAT) {
 					// We found a feasible error trace
 					return new Triple<>(trace, isCorrect, automaton);
 				}
-				interpolants = getInterpolants(traceCheck);
+				interpolants = traceCheck.getInterpolants();
 				final NestedWordAutomaton<LETTER, String> mcrAutomaton = getMcrAutomaton(trace, interpolants);
 				// TOOD: Get the interpolants from mcrAutomaton (DAG-interpolation?) and add them to automaton
 			}
@@ -126,14 +124,8 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		return new Triple<>(initialTrace, LBool.UNSAT, automaton);
 	}
 
-	@SuppressWarnings("unchecked")
-	private IPredicate[] getInterpolants(final ITraceCheck traceCheck) {
-		assert traceCheck instanceof IInterpolantGenerator;
-		return ((IInterpolantGenerator<LETTER>) traceCheck).getInterpolants();
-	}
-
-	private void getReadsAndWrites() {
-		for (final LETTER action : mTrace) {
+	private void getReadsAndWrites(final List<LETTER> trace) {
+		for (final LETTER action : trace) {
 			if (action instanceof IcfgEdge) {
 				final ReadWriteFinder finder = new ReadWriteFinder((IcfgEdge) action);
 				mReads2Variables.addAllPairs(action, finder.getReadVars());
@@ -414,7 +406,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			// }
 			// // TODO: Other cases?
 			// }
-			super.visit(c);
+			// super.visit(c);
 		}
 
 		ReadWriteFinder(final IcfgEdge action) {
