@@ -56,6 +56,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *            place content type
  */
 public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER, PLACE> {
+	/**
+	 * Before 2019-10-20 we added cut-off events and their successor conditions to
+	 * the co-relation. This is not necessary for the computation of the finite
+	 * prefix (maybe necessary for other applications) and we might be able to save
+	 * some time. See Issue #448. https://github.com/ultimate-pa/ultimate/issues/448
+	 */
+	private static final boolean ADD_CUTOFF_EVENTS_TO_CORELATION = true;
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
@@ -162,7 +169,9 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 				someSuccessorIsAccepting = true;
 			}
 		}
-		mCoRelation.update(event);
+		if (ADD_CUTOFF_EVENTS_TO_CORELATION || !event.isCutoffEvent()) {
+			mCoRelation.update(event);
+		}
 		return someSuccessorIsAccepting;
 	}
 
