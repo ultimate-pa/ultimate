@@ -337,6 +337,27 @@ public final class MSODIntOperationsTest {
 		test(false, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
 				mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 
+		// -2 - 5 < 1
+		c = Rational.valueOf(2, 1);
+		xValuesStem = new int[] { -2 };
+		yValuesStem = new int[] { 5 };
+		lastStemIndex = 12;
+		xValuesLoop = new int[] {};
+		yValuesLoop = new int[] {};
+		lastLoopIndex = 4;
+		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
+				mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -3 - 2 < 0
+		c = Rational.valueOf(0, 1);
+		xValuesStem = new int[] { -3 };
+		yValuesStem = new int[] { 2 };
+		lastStemIndex = 9;
+		xValuesLoop = new int[] {};
+		yValuesLoop = new int[] {};
+		lastLoopIndex = 1;
+		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
+				mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 	}
 
 	@Test

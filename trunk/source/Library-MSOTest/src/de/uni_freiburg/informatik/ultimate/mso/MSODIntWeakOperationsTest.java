@@ -491,6 +491,26 @@ public class MSODIntWeakOperationsTest {
 		xValues = new int[] { -6 };
 		yValues = new int[] { 6 };
 		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// Test Cases for x - y < c AND x < 0 AND y >= 0 AND c >= 0
+
+		// -1 - 3 < 2
+		c = Rational.valueOf(2, 1);
+		xValues = new int[] { -1 };
+		yValues = new int[] { 3 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -5 - 7 < 0
+		c = Rational.valueOf(0, 1);
+		xValues = new int[] { -5 };
+		yValues = new int[] { 7 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+
+		// -1 - 0 < 6
+		c = Rational.valueOf(6, 1);
+		xValues = new int[] { -1 };
+		yValues = new int[] { 0 };
+		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
 	}
 
 	@Test
