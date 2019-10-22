@@ -80,16 +80,20 @@ public class PolynomialTermUtils {
 	 */
 	public static Term constructSimplifiedTerm(final String functionSymbol, final IPolynomialTerm[] polynomialArgs,
 			final Script script) {
+		//TODO Think about how the coefficient in the nominator can be extracted and write tests for this case.
+		//Probably I only need to let AffineTerm handle the coefficients.
+		//Change AffineTerm.divide to probably PolynomialTerm.divide too
+		//Ask Matthias about what to do with a zero in the denominator. Make the whole denominator zero? Skip it?
+		//At the moment this code skips it.
 		final IPolynomialTerm[] flattenedTerm;
-//		if (functionSymbol == "/") {
-//			flattenedTerm = flattenRealDivision(polynomialArgs, script);
-//		}else if (functionSymbol == "div") {
-//			
-//		}else {
-//			throw new UnsupportedOperationException("A simplification for this function has not been straightforwardly implemented."
-//													+ "Try using the PolynomialTermTransformer/AffineTermTransformer or SMTUtils.");
-//		}
-		flattenedTerm = flattenRealDivision(polynomialArgs, script);
+		if (functionSymbol == "/") {
+			flattenedTerm = flattenRealDivision(polynomialArgs, script);
+		}else if (functionSymbol == "div") {
+			flattenedTerm = flattenIntDivision(polynomialArgs, script);
+		}else {
+			throw new UnsupportedOperationException("A simplification for this function has not been straightforwardly implemented."
+													+ "Try using the PolynomialTermTransformer/AffineTermTransformer or SMTUtils.");
+		}
 		Term[] terms = new Term[flattenedTerm.length];
 		for (int i = 0; i < flattenedTerm.length; i++) {
 			terms[i] = flattenedTerm[i].toTerm(script);
@@ -106,32 +110,32 @@ public class PolynomialTermUtils {
 	private static IPolynomialTerm[] flattenRealDivision(final IPolynomialTerm[] divArray, final Script script) {
 		final ArrayList<IPolynomialTerm> denominatorConstants = new ArrayList<>();
 		for (int i = 1; i < divArray.length ; i++) {
-			if (divArray[i].isConstant()) {
+			if (divArray[i].isConstant() && !divArray[i].isZero()) {
 				denominatorConstants.add(divArray[i]);
 			}
 		}
 		
-		IPolynomialTerm constantTerm;
+		IPolynomialTerm newNominator;
 		if (denominatorConstants.size() == 0) {
 			return divArray;
 		}else if (denominatorConstants.size() == 1) {
 			if (divArray[0].isConstant()) {
-				constantTerm = constructQuotientOfConstants(divArray[0], denominatorConstants, script);
+				newNominator = constructQuotientOfConstants(divArray[0], denominatorConstants, script);
 			}else {
 				return divArray;
 			}
 		}else {
 			if (divArray[0].isConstant()) {
-				constantTerm = constructQuotientOfConstants(divArray[0], denominatorConstants, script);
+				newNominator = constructQuotientOfConstants(divArray[0], denominatorConstants, script);
 			}else {
 				final IPolynomialTerm one = AffineTerm.constructConstant(denominatorConstants.get(0).getSort(), Rational.ONE);
-				constantTerm = constructQuotientOfConstants(one, denominatorConstants, script);
+				newNominator = constructQuotientOfConstants(one, denominatorConstants, script);
 			}
 		}
 		
-		return constructFlattenedArray(constantTerm, divArray);
+		return rearrangeRealDivision(newNominator, divArray);
 	}
-
+	
 	private static IPolynomialTerm constructQuotientOfConstants(final IPolynomialTerm nominator, 
 														 	    final ArrayList<IPolynomialTerm> denomConstants, 
 														 	    final Script script) {
@@ -143,23 +147,81 @@ public class PolynomialTermUtils {
 		}
 		return AffineTerm.divide(allConstants, script);
 	}
-	
-	private static IPolynomialTerm[] constructFlattenedArray(final IPolynomialTerm constant, final IPolynomialTerm[] divArray) {
-		final ArrayList<IPolynomialTerm> flattenedTermList = new ArrayList<>();
-		if (divArray[0].isConstant()) {
-			flattenedTermList.add(constant);
+
+	/**
+	 * This method constructs a new divisionArray by placing the nominator at the first place and then extracting all
+	 * constants out of the divArray
+	 */
+	private static IPolynomialTerm[] rearrangeRealDivision(final IPolynomialTerm nominator, 
+													   final IPolynomialTerm[] oldDivArray) {
+		final ArrayList<IPolynomialTerm> newDiv = new ArrayList<>();
+		if (oldDivArray[0].isConstant()) {
+			newDiv.add(nominator);
 		}else {
-			flattenedTermList.add(divArray[0]);
-			flattenedTermList.add(constant);
+			newDiv.add(oldDivArray[0]);
+			newDiv.add(nominator);
 		}
-		for (int i = 1; i < divArray.length ; i++) {
-			if (!divArray[i].isConstant()) {
-				flattenedTermList.add(divArray[i]);
+		for (int i = 1; i < oldDivArray.length ; i++) {
+			if (!oldDivArray[i].isConstant()) {
+				newDiv.add(oldDivArray[i]);
 			}
 		}
-		IPolynomialTerm[] flattenedTermArray = new IPolynomialTerm[flattenedTermList.size()];
-		flattenedTermList.toArray(flattenedTermArray);
-		return flattenedTermArray;
+		IPolynomialTerm[] newDivArray = new IPolynomialTerm[newDiv.size()];
+		newDiv.toArray(newDivArray);
+		return newDivArray;
+	}
+
+	private static IPolynomialTerm[] flattenIntDivision(final IPolynomialTerm[] divArray, final Script script) {
+		if (!divArray[0].isConstant()) {
+			return divArray;
+		}
+		
+		IPolynomialTerm newNominator = null;
+		final IPolynomialTerm[] binaryDivision = new IPolynomialTerm[2];
+		binaryDivision[0] = divArray[0];
+		int endOfSimplification = 1;
+		boolean stillSimplifiable = true;
+		for (; stillSimplifiable && endOfSimplification < divArray.length; endOfSimplification++) {
+			if (divArray[endOfSimplification].isConstant() && !divArray[endOfSimplification].isZero()) {
+				binaryDivision[1] = divArray[endOfSimplification];
+				//Use the real Division here, because the int Division would return a single Variable, if the quotient
+				//would've been not integral, therefore we could not (properly) check for integrality afterwards.
+				newNominator = AffineTerm.divide(binaryDivision, script);
+				if (newNominator.isIntegral()) {
+					binaryDivision[0] = newNominator;
+				}else {
+					newNominator = binaryDivision[0];
+					stillSimplifiable = false;
+					endOfSimplification--;
+				}
+			}else {
+				stillSimplifiable = false;
+				endOfSimplification--;
+			}
+		}
+		
+		if (newNominator == null) {
+			return divArray;
+		}
+		return rearrangeIntDivision(newNominator, divArray, endOfSimplification);
+	}
+
+	/**
+	 * This method constructs a new divisionArray by placing the nominator at the first place and then
+	 * copying the oldDivArray from the given startIndex (included) until the end. 
+	 */
+	private static IPolynomialTerm[] rearrangeIntDivision(final IPolynomialTerm nominator, 
+													      final IPolynomialTerm[] oldDivArray,
+													      final int startIndex) {
+		final ArrayList<IPolynomialTerm> newDiv = new ArrayList<>();
+		newDiv.add(nominator);
+		for (int i = startIndex; i < oldDivArray.length ; i++) {
+			newDiv.add(oldDivArray[i]);
+			
+		}
+		IPolynomialTerm[] newDivArray = new IPolynomialTerm[newDiv.size()];
+		newDiv.toArray(newDivArray);
+		return newDivArray;
 	}
 
 	/**

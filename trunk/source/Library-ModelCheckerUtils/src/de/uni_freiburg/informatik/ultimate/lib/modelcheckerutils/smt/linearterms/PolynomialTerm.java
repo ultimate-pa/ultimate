@@ -225,7 +225,6 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 * {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
 	 */
 	public static IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs, final Script script) {
-		//TODO Flatten this
 		if (!divisionPossible(polynomialArgs)) {
 			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this
 			//whole term as an unique variable.
@@ -257,7 +256,6 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 * Construct the division of the given polynomialTerms.
 	 */
 	private static IPolynomialTerm constructDivision(final IPolynomialTerm[] polynomialTerms, final Script script) {
-		//TODO flatten Term
 		IPolynomialTerm poly = PolynomialTerm.mul(polynomialTerms[0], polynomialTerms[1].getConstant().inverse());
 		for (int i = 2; i < polynomialTerms.length; i++) {
 			poly = PolynomialTerm.mul(poly, polynomialTerms[i].getConstant().inverse());
