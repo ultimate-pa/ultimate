@@ -292,7 +292,7 @@ public final class MSODOperations {
 
 				for (int i = 0; i < pair.getFirst().length(); i++) {
 					if (pair.getFirst().getSymbol(i).getMap().get(term)) {
-						numbers.add(BigInteger.valueOf(i / 2));
+						numbers.add(BigInteger.valueOf(i));
 					}
 				}
 			}
@@ -300,7 +300,7 @@ public final class MSODOperations {
 			if (pair.getSecond() != null) {
 				for (int i = 0; i < pair.getSecond().length(); i++) {
 					if (pair.getSecond().getSymbol(i).getMap().get(term)) {
-						numbers.add(BigInteger.valueOf(-(i + 1) / 2));
+						numbers.add(BigInteger.valueOf(-(i + 1)));
 					}
 				}
 			}
@@ -464,22 +464,28 @@ public final class MSODOperations {
 
 		// Get the word of the accepted run and the contained terms.
 		final NestedWord<MSODAlphabetSymbol> word = getWordWeak(script, services, automaton);
-		final Set<Term> terms = word.getSymbol(0).getTerms();
 
-		// Split word into positive and negative part if the input formula is defined for integer numbers.
-		if (mFormulaOperations instanceof MSODFormulaOperationsInt) {
-			pair = splitWordWeak(script, word);
+		if (word.length() > 0) {
+			final Set<Term> terms = word.getSymbol(0).getTerms();
+
+			// Split word into positive and negative part if the input formula is defined for integer numbers.
+			if (mFormulaOperations instanceof MSODFormulaOperationsInt) {
+				pair = splitWordWeak(script, word);
+			}
+			// Input Formula defined only for natural numbers, no negative word exists.
+			else {
+				pair = new Pair<>(word, null);
+			}
+
+			// Extract the numbers encoded in the stems.
+			final Map<Term, Set<BigInteger>> numbers = extractStemNumbers(script, pair, terms);
+
+			// Construct resulting stem terms from Set of numbers
+			return constructStemTerm(script, numbers);
 		}
-		// Input Formula defined only for natural numbers, no negative word exists.
-		else {
-			pair = new Pair<>(word, null);
-		}
 
-		// Extract the numbers encoded in the stems.
-		final Map<Term, Set<BigInteger>> numbers = extractStemNumbers(script, pair, terms);
-
-		// Construct resulting stem terms from Set of numbers
-		return constructStemTerm(script, numbers);
+		// TODO: Deal with empty word
+		return null;
 	}
 
 	/**

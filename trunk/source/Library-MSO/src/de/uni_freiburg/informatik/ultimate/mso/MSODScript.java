@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -297,6 +298,14 @@ public class MSODScript extends NoopScript {
 		final Set<MSODAlphabetSymbol> reducedAlphabet = MSODUtils.createAlphabet(freeVars.toArray(new Term[0]));
 		result = mMSODOperations.reconstruct(mAutomataLibrarayServices, result, reducedAlphabet, false);
 
+		// TODO: Remove later. Find out if the initial state is accepting
+		final Set<String> initialStates = result.getInitialStates();
+		final Collection<String> finalStates = result.getFinalStates();
+		for (final String state : finalStates) {
+			if (initialStates.contains(state)) {
+				mLogger.info("---------: initial and final ");
+			}
+		}
 		return result;
 	}
 
