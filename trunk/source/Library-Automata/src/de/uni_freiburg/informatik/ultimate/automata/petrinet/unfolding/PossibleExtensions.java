@@ -73,7 +73,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 */
 	private final ArrayDeque<Event<LETTER, PLACE>> mFastpathCutoffEventList;
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
-	private final boolean mLazySuccessorComputation = !false;
+	private final boolean mLazySuccessorComputation = true;
 
 	/**
 	 * A candidate is useful if it lead to at least one new possible extension.
