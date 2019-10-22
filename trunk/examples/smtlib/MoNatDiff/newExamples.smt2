@@ -19,9 +19,9 @@
 ; x >= 2 /\ y < 2 /\ x \in I /\ y \in I
 ;(assert (and (not (< x 2)) (< y 2) (element x I) (element y I)))
 
-;(assert (forall ((x Int)) (=> (> x 0) (element (+ x 0) I) ) ))
+(assert (forall ((x Int)) (=> (> x 0) (element (+ x 0) I) ) ))
 
-(assert (< x 1))
+;(assert (< x 1))
 
 (check-sat)
 

@@ -560,10 +560,14 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
-		automaton.addState(true, true, "init");
-		automaton.addInternalTransition("init", xy00, "init");
-		automaton.addInternalTransition("init", xy01, "init");
-		automaton.addInternalTransition("init", xy11, "init");
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		automaton.addInternalTransition("init", xy00, "final");
+		automaton.addInternalTransition("init", xy01, "final");
+		automaton.addInternalTransition("init", xy11, "final");
+		automaton.addInternalTransition("final", xy00, "final");
+		automaton.addInternalTransition("final", xy01, "final");
+		automaton.addInternalTransition("final", xy11, "final");
 
 		return automaton;
 	}
