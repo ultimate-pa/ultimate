@@ -115,22 +115,11 @@ public class PolynomialTermUtils {
 			}
 		}
 		
-		IPolynomialTerm newNominator;
+		final IPolynomialTerm newNominator;
 		if (denominatorConstants.size() == 0) {
 			return divArray;
-		}else if (denominatorConstants.size() == 1) {
-			if (divArray[0].isConstant()) {
-				newNominator = constructQuotientOfConstants(divArray[0], denominatorConstants, script);
-			}else {
-				return divArray;
-			}
 		}else {
-			if (divArray[0].isConstant()) {
-				newNominator = constructQuotientOfConstants(divArray[0], denominatorConstants, script);
-			}else {
-				final IPolynomialTerm one = AffineTerm.constructConstant(denominatorConstants.get(0).getSort(), Rational.ONE);
-				newNominator = constructQuotientOfConstants(one, denominatorConstants, script);
-			}
+			newNominator = constructQuotientOfConstants(divArray[0], denominatorConstants, script);
 		}
 		
 		return rearrangeRealDivision(newNominator, divArray);
@@ -155,12 +144,7 @@ public class PolynomialTermUtils {
 	private static IPolynomialTerm[] rearrangeRealDivision(final IPolynomialTerm nominator, 
 													   final IPolynomialTerm[] oldDivArray) {
 		final ArrayList<IPolynomialTerm> newDiv = new ArrayList<>();
-		if (oldDivArray[0].isConstant()) {
-			newDiv.add(nominator);
-		}else {
-			newDiv.add(oldDivArray[0]);
-			newDiv.add(nominator);
-		}
+		newDiv.add(nominator);
 		for (int i = 1; i < oldDivArray.length ; i++) {
 			if (!oldDivArray[i].isConstant()) {
 				newDiv.add(oldDivArray[i]);

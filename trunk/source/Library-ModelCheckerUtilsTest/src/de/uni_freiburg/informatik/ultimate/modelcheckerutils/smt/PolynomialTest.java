@@ -323,7 +323,7 @@ public class PolynomialTest {
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
 		final String inputAsString = "(/ (* 42.0 x) x y 21.0)";
-		final String expectedOutputAsString = "(/ (* 2.0 x) x y)";
+		final String expectedOutputAsString = "(/ (* x 2.0) x y)";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 
