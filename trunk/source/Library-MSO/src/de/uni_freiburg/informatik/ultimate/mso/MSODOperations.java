@@ -476,30 +476,30 @@ public final class MSODOperations {
 		// Get the word of the accepted run and the contained terms.
 		final NestedWord<MSODAlphabetSymbol> word = getWordWeak(script, services, automaton);
 
-		if (word.length() > 0) {
-			final Set<Term> terms = word.getSymbol(0).getTerms();
-
-			// Split word into positive and negative part if the input formula is defined for integer numbers.
-			if (mFormulaOperations instanceof MSODFormulaOperationsInt) {
-				pair = splitWordWeak(script, word);
-			}
-			// Input Formula defined only for natural numbers, no negative word exists.
-			else {
-				pair = new Pair<>(word, null);
-			}
-
-			// Extract the numbers encoded in the stems.
-			final Map<Term, Set<BigInteger>> numbers = extractStemNumbers(script, pair, terms);
-
-			// Construct resulting stem terms from Set of numbers
-			return constructStemTerm(script, numbers);
+		// Variable must represent the empty set. Deal with empty word.
+		if (word.length() == 0) {
+			// TODO: Construct lambda expression.
+			final Map<Term, Term> result = new HashMap<>();
+			result.put(SmtUtils.buildNewConstant(script, "emptyWord", SmtSortUtils.BOOL_SORT), null);
+			return result;
 		}
 
-		// TODO: Deal with empty word
-		final Term t = SmtUtils.buildNewConstant(script, "emptyWord", SmtSortUtils.BOOL_SORT);
-		final Map<Term, Term> result = new HashMap<>();
-		result.put(t, null);
-		return result;
+		final Set<Term> terms = word.getSymbol(0).getTerms();
+
+		// Split word into positive and negative part if the input formula is defined for integer numbers.
+		if (mFormulaOperations instanceof MSODFormulaOperationsInt) {
+			pair = splitWordWeak(script, word);
+		}
+		// Input Formula defined only for natural numbers, no negative word exists.
+		else {
+			pair = new Pair<>(word, null);
+		}
+
+		// Extract the numbers encoded in the stems.
+		final Map<Term, Set<BigInteger>> numbers = extractStemNumbers(script, pair, terms);
+
+		// Construct resulting stem terms from Set of numbers
+		return constructStemTerm(script, numbers);
 	}
 
 	/**
@@ -516,16 +516,16 @@ public final class MSODOperations {
 		final Map<Term, Term> result = new HashMap<>();
 		Pair<NestedLassoWord<MSODAlphabetSymbol>, NestedLassoWord<MSODAlphabetSymbol>> pair;
 
-		// Get the word of the accepted run and the contained terms.
+		// Get the word of the accepted run.
 		final NestedLassoWord<MSODAlphabetSymbol> word = getWordBuchi(script, services, automaton);
-		final Set<Term> terms = word.getStem().getSymbol(0).getTerms();
 
-		// TODO: Deal with empty word
+		// Deal with empty word.
 		if (word.getStem().length() + word.getLoop().length() == 0) {
-			final Term t = SmtUtils.buildNewConstant(script, "emptyWord", SmtSortUtils.BOOL_SORT);
-			result.put(t, null);
+			result.put(SmtUtils.buildNewConstant(script, "emptyWord", SmtSortUtils.BOOL_SORT), null);
 			return result;
 		}
+		// Get the terms from of the accepted word.
+		final Set<Term> terms = word.getStem().getSymbol(0).getTerms();
 
 		// Split word into positive and negative part if the input formula is defined for integer numbers.
 		if (mFormulaOperations instanceof MSODFormulaOperationsInt) {
@@ -549,7 +549,6 @@ public final class MSODOperations {
 		Map<Term, Term> loopTermsNeg = new HashMap<>();
 
 		// Construct condition from positive loop part.
-		// TODO. Check max /min number
 		if (pair.getFirst() != null) {
 			final int maxStemNumber =
 					pair.getFirst().getStem().length() > 0 ? pair.getFirst().getStem().length() - 1 : 0;
@@ -577,8 +576,10 @@ public final class MSODOperations {
 			}
 			if (!set.isEmpty()) {
 				result.put(term, SmtUtils.or(script, set));
-				// TODO: Deal with empty set
-			} else {
+			}
+			// The variable must represent the empty set.
+			// TODO: Construct lambda expression.
+			else {
 				result.put(term, term.getTheory().mFalse);
 			}
 		}
