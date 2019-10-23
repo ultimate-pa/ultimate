@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
+import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -262,11 +263,22 @@ public final class MSODOperations {
 			}
 		}
 
-		// Create positive resp. negative LassoWords
-		final NestedWord<MSODAlphabetSymbol> loopPos =
-				NestedWord.nestedWord(new Word<>((MSODAlphabetSymbol[]) symbolsPosLoop.toArray()));
-		final NestedWord<MSODAlphabetSymbol> loopNeg =
-				NestedWord.nestedWord(new Word<>((MSODAlphabetSymbol[]) symbolsNegLoop.toArray()));
+		final MSODAlphabetSymbol[] symbolP =
+				(MSODAlphabetSymbol[]) Array.newInstance(MSODAlphabetSymbol.class, symbolsPosLoop.size());
+		final MSODAlphabetSymbol[] symbolN =
+				(MSODAlphabetSymbol[]) Array.newInstance(MSODAlphabetSymbol.class, symbolsPosLoop.size());
+		for (int i = 0; i < symbolsPosLoop.size(); i++) {
+			Array.set(symbolP, i, symbolsPosLoop.get(i));
+		}
+
+		for (int i = 0; i < symbolsNegLoop.size(); i++) {
+			Array.set(symbolN, i, symbolsNegLoop.get(i));
+		}
+
+		// Create positive resp. negative LassoWords.
+
+		final NestedWord<MSODAlphabetSymbol> loopPos = NestedWord.nestedWord(new Word<>(symbolP));
+		final NestedWord<MSODAlphabetSymbol> loopNeg = NestedWord.nestedWord(new Word<>(symbolN));
 
 		lassoWordPos = new NestedLassoWord<>(stemPair.getFirst(), loopPos);
 		lassoWordNeg = new NestedLassoWord<>(stemPair.getSecond(), loopNeg);
@@ -442,8 +454,7 @@ public final class MSODOperations {
 		if (mAutomataOperations instanceof MSODAutomataOperationsWeak) {
 			return getResultWeak(script, services, automaton);
 		}
-		if (mAutomataOperations instanceof MSODAutomataOperationsBuchi
-				& mFormulaOperations instanceof MSODFormulaOperationsNat) {
+		if (mAutomataOperations instanceof MSODAutomataOperationsBuchi) {
 			return getResultBuchi(script, services, automaton);
 		}
 		return null;
@@ -485,7 +496,10 @@ public final class MSODOperations {
 		}
 
 		// TODO: Deal with empty word
-		return null;
+		final Term t = SmtUtils.buildNewConstant(script, "emptyWord", SmtSortUtils.BOOL_SORT);
+		final Map<Term, Term> result = new HashMap<>();
+		result.put(t, null);
+		return result;
 	}
 
 	/**
@@ -506,9 +520,15 @@ public final class MSODOperations {
 		final NestedLassoWord<MSODAlphabetSymbol> word = getWordBuchi(script, services, automaton);
 		final Set<Term> terms = word.getStem().getSymbol(0).getTerms();
 
+		// TODO: Deal with empty word
+		if (word.getStem().length() + word.getLoop().length() == 0) {
+			final Term t = SmtUtils.buildNewConstant(script, "emptyWord", SmtSortUtils.BOOL_SORT);
+			result.put(t, null);
+			return result;
+		}
+
 		// Split word into positive and negative part if the input formula is defined for integer numbers.
-		if (mAutomataOperations instanceof MSODAutomataOperationsWeak
-				& mFormulaOperations instanceof MSODFormulaOperationsInt) {
+		if (mFormulaOperations instanceof MSODFormulaOperationsInt) {
 			pair = splitWordBuchi(script, word);
 		}
 		// Input Formula defined only for natural numbers, no negative word exists.
@@ -529,13 +549,16 @@ public final class MSODOperations {
 		Map<Term, Term> loopTermsNeg = new HashMap<>();
 
 		// Construct condition from positive loop part.
+		// TODO. Check max /min number
 		if (pair.getFirst() != null) {
-			final int maxStemNumber = pair.getFirst().getLoop().length() - 1;
+			final int maxStemNumber =
+					pair.getFirst().getStem().length() > 0 ? pair.getFirst().getStem().length() - 1 : 0;
 			loopTermsPos = constructLoopTerm(script, pair.getFirst().getLoop(), terms, maxStemNumber);
 		}
 		// Construct condition from negative loop part.
 		if (pair.getSecond() != null) {
-			final int minStemNumber = -pair.getSecond().getLoop().length();
+			final int minStemNumber =
+					pair.getSecond().getStem().length() > 0 ? -pair.getSecond().getStem().length() : 0;
 			loopTermsNeg = constructLoopTerm(script, pair.getSecond().getLoop(), terms, minStemNumber);
 		}
 
@@ -554,8 +577,9 @@ public final class MSODOperations {
 			}
 			if (!set.isEmpty()) {
 				result.put(term, SmtUtils.or(script, set));
+				// TODO: Deal with empty set
 			} else {
-				result.put(term, null);
+				result.put(term, term.getTheory().mFalse);
 			}
 		}
 		return result;

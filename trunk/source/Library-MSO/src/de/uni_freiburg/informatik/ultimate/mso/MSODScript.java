@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -51,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Comple
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AbstractGeneralizedAffineRelation.TransformInequality;
@@ -119,14 +119,24 @@ public class MSODScript extends NoopScript {
 			// mLogger.info(automatonToString(automaton, Format.ATS));
 			mModel = mMSODOperations.getResult(this, mAutomataLibrarayServices, automaton);
 
+			if (mModel.keySet().toString().contains("emptyWord")) {
+				// TODO: Deal with empty word
+				mLogger.info("Model: EMPTYWORD");
+				final ConstantFinder cf = new ConstantFinder();
+				final Set<ApplicationTerm> terms = cf.findConstants(mAssertionTerm, true);
+				mModel.clear();
+				for (final Term t : terms) {
+					mModel.put(t, mAssertionTerm.getTheory().mFalse);
+				}
+			}
+
 			if (mModel == null) {
 				result = LBool.UNSAT;
-				// mLogger.info("RESULT: UNSAT");
+				mLogger.info("RESULT: UNSAT");
 			} else {
 				result = LBool.SAT;
-
-				// mLogger.info("RESULT: SAT");
-				// mLogger.info("MODEL: " + mModel);
+				mLogger.info("RESULT: SAT");
+				mLogger.info("MODEL: " + mModel);
 			}
 
 		} catch (final Exception e) {
@@ -298,14 +308,6 @@ public class MSODScript extends NoopScript {
 		final Set<MSODAlphabetSymbol> reducedAlphabet = MSODUtils.createAlphabet(freeVars.toArray(new Term[0]));
 		result = mMSODOperations.reconstruct(mAutomataLibrarayServices, result, reducedAlphabet, false);
 
-		// TODO: Remove later. Find out if the initial state is accepting
-		final Set<String> initialStates = result.getInitialStates();
-		final Collection<String> finalStates = result.getFinalStates();
-		for (final String state : finalStates) {
-			if (initialStates.contains(state)) {
-				mLogger.info("---------: initial and final ");
-			}
-		}
 		return result;
 	}
 
