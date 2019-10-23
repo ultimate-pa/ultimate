@@ -388,8 +388,8 @@ public class PolynomialTest {
 	public void intDivisionLeftAssoc04() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
-		final String inputAsString = "(div (* 42 x x) 2 x)";
-		final String expectedOutputAsString = "(div (* 21 x) x)";
+		final String inputAsString = "(div (* 42 x) 2 x)";
+		final String expectedOutputAsString = "(div (* x 21) x)";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 	

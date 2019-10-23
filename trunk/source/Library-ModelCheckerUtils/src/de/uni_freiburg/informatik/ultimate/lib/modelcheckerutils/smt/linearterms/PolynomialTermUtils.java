@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
@@ -160,10 +161,12 @@ public class PolynomialTermUtils {
 	}
 
 	private static IPolynomialTerm[] flattenIntDivision(final IPolynomialTerm[] divArray, final Script script) {
-		if (!divArray[0].isConstant()) {
-			return divArray;
+		final BiFunction<IPolynomialTerm[], Script, IPolynomialTerm> divider;
+		if (divArray[0].isAffine()) {
+			divider = AffineTerm::divide;
+		}else {
+			divider = PolynomialTerm::divide;
 		}
-		
 		IPolynomialTerm newNominator = null;
 		final IPolynomialTerm[] binaryDivision = new IPolynomialTerm[2];
 		binaryDivision[0] = divArray[0];
@@ -174,7 +177,7 @@ public class PolynomialTermUtils {
 				binaryDivision[1] = divArray[endOfSimplification];
 				//Use the real Division here, because the int Division would return a single Variable, if the quotient
 				//would've been not integral, therefore we could not (properly) check for integrality afterwards.
-				newNominator = AffineTerm.divide(binaryDivision, script);
+				newNominator = divider.apply(binaryDivision, script);
 				if (newNominator.isIntegral()) {
 					binaryDivision[0] = newNominator;
 				}else {
