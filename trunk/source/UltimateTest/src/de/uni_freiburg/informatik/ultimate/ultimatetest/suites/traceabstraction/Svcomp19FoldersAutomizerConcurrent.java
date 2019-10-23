@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
 public class Svcomp19FoldersAutomizerConcurrent extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	private static final int FILES_PER_DIR_LIMIT = 200;
+	private static final int FILES_PER_DIR_LIMIT = 50;
 	// private static final int FILES_PER_DIR_LIMIT = 1;
 	private static final int FILE_OFFSET = 0;
 
@@ -75,7 +75,7 @@ public class Svcomp19FoldersAutomizerConcurrent extends AbstractTraceAbstraction
 		new DirectoryFileEndingsPair("examples/svcomp/pthread-divine/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/pthread-nondet/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 	};
-
+	
 
 
 	private static final DirectoryFileEndingsPair[] BENCHMARKS_64BIT = {
@@ -94,7 +94,7 @@ public class Svcomp19FoldersAutomizerConcurrent extends AbstractTraceAbstraction
 	 */
 	@Override
 	public long getTimeout() {
-		return 60 * 1000;
+		return 120 * 1000;
 	}
 
 	/**
