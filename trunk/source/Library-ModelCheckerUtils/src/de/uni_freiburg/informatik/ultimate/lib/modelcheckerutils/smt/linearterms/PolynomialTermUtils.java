@@ -81,10 +81,7 @@ public class PolynomialTermUtils {
 	 */
 	public static Term constructSimplifiedTerm(final String functionSymbol, final IPolynomialTerm[] polynomialArgs,
 			final Script script) {
-		//TODO Think about how the coefficient in the nominator can be extracted and write tests for this case.
-		//Probably I only need to let AffineTerm handle the coefficients.
-		//Change AffineTerm.divide to probably PolynomialTerm.divide too
-		//Ask Matthias about what to do with a zero in the denominator. Make the whole denominator zero? Skip it?
+		//TODO Ask Matthias about what to do with a zero in the denominator. Make the whole denominator zero? Skip it?
 		//At the moment this code skips it.
 		final IPolynomialTerm[] flattenedTerm;
 		if (functionSymbol == "/") {
@@ -151,7 +148,7 @@ public class PolynomialTermUtils {
 		final ArrayList<IPolynomialTerm> newDiv = new ArrayList<>();
 		newDiv.add(nominator);
 		for (int i = 1; i < oldDivArray.length ; i++) {
-			if (!oldDivArray[i].isConstant()) {
+			if (!oldDivArray[i].isConstant() || oldDivArray[i].isZero()) {
 				newDiv.add(oldDivArray[i]);
 			}
 		}
