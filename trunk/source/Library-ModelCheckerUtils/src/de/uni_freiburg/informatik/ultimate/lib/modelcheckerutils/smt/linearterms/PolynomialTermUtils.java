@@ -134,7 +134,11 @@ public class PolynomialTermUtils {
 		for (int i = 1; iter.hasNext(); i++) {
 			allConstants[i] = iter.next();
 		}
-		return AffineTerm.divide(allConstants, script);
+		if (nominator.isAffine()) {
+			return AffineTerm.divide(allConstants, script);
+		}else {
+			return PolynomialTerm.divide(allConstants, script);
+		}
 	}
 
 	/**
