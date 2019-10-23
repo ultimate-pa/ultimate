@@ -13,7 +13,13 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -51,8 +57,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
-	private final IPredicate mTruePred;
-	private final IPredicate mFalsePred;
+	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
 
 	private final HashRelation<LETTER, String> mReads2Variables;
 	private final HashRelation<LETTER, String> mWrites2Variables;
@@ -65,22 +70,24 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final LBool mIsCorrect;
 	private final NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
 	private final ITraceCheckFactory<LETTER> mTraceCheckFactory;
+	private final Collection<IInterpolatingTraceCheck<LETTER>> mTraceChecks;
 
 	public MCR(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
-			final List<LETTER> trace, final ITraceCheckFactory<LETTER> traceCheckFactory) {
+			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final List<LETTER> trace,
+			final ITraceCheckFactory<LETTER> traceCheckFactory) throws AutomataLibraryException {
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
 		mServices = prefs.getUltimateServices();
 		mManagedScript = prefs.getCfgSmtToolkit().getManagedScript();
+		mEmptyStackStateFactory = emptyStackStateFactory;
 		mTraceCheckFactory = traceCheckFactory;
-		mTruePred = predicateUnifier.getOrConstructPredicate(mManagedScript.getScript().term("true"));
-		mFalsePred = predicateUnifier.getOrConstructPredicate(mManagedScript.getScript().term("false"));
 		mReads2Variables = new HashRelation<>();
 		mWrites2Variables = new HashRelation<>();
 		mVariables2Writes = new HashRelation<>();
 		mMhbInverse = new HashRelation<>();
 		mPreviousWrite = new HashMap<>();
 		mActions2TermVars = new HashMap<>();
+		mTraceChecks = new HashSet<>();
 		// Explore all the interleavings of trace
 		final Triple<List<LETTER>, LBool, NestedWordAutomaton<LETTER, IPredicate>> result = exploreInterleavings(trace);
 		mTrace = result.getFirst();
@@ -89,7 +96,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	private Triple<List<LETTER>, LBool, NestedWordAutomaton<LETTER, IPredicate>>
-			exploreInterleavings(final List<LETTER> initialTrace) {
+			exploreInterleavings(final List<LETTER> initialTrace) throws AutomataLibraryException {
 		getReadsAndWrites(initialTrace);
 		final LinkedList<List<LETTER>> queue = new LinkedList<>();
 		final Set<List<LETTER>> visited = new HashSet<>();
@@ -104,19 +111,20 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			visited.add(trace);
 			preprocess(trace);
 			final IPredicate[] interpolants;
-			// TODO: if trace in mAutomaton
+			// TODO: if trace in automaton
 			if (false) {
-				// TODO: Get the interpolants from mAutomaton
+				// TODO: Get the interpolants from automaton
 				interpolants = null;
 			} else {
 				final IInterpolatingTraceCheck<LETTER> traceCheck = mTraceCheckFactory.getTraceCheck(trace);
+				mTraceChecks.add(traceCheck);
 				final LBool isCorrect = traceCheck.isCorrect();
 				if (isCorrect != LBool.UNSAT) {
 					// We found a feasible error trace
 					return new Triple<>(trace, isCorrect, automaton);
 				}
 				interpolants = traceCheck.getInterpolants();
-				final NestedWordAutomaton<LETTER, String> mcrAutomaton = getMcrAutomaton(trace, interpolants);
+				final INestedWordAutomaton<LETTER, ?> mcrAutomaton = getMcrAutomaton(trace, interpolants);
 				// TOOD: Get the interpolants from mcrAutomaton (DAG-interpolation?) and add them to automaton
 			}
 			queue.addAll(generateSeedInterleavings(trace, interpolants));
@@ -285,10 +293,71 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		return rational.numerator();
 	}
 
-	private NestedWordAutomaton<LETTER, String> getMcrAutomaton(final List<LETTER> trace,
-			final IPredicate[] interpolants) {
-		// TODO: Create the MCR automaton from trace (using intersection and removing all self-loops?)
-		return null;
+	private INestedWordAutomaton<LETTER, ?> getMcrAutomaton(final List<LETTER> trace, final IPredicate[] interpolants)
+			throws AutomataLibraryException {
+		INestedWordAutomaton<LETTER, IPredicate> result = null;
+		final AutomataLibraryServices automataServices = new AutomataLibraryServices(mServices);
+		// TODO: Separate correctly
+		final VpAlphabet<LETTER> vpAlphabet = new VpAlphabet<>(mActions2TermVars.keySet());
+		for (final LETTER read : trace) {
+			final Map<String, LETTER> previousWrites = mPreviousWrite.get(read);
+			if (previousWrites == null) {
+				continue;
+			}
+			for (final Entry<String, LETTER> entry : previousWrites.entrySet()) {
+				final LETTER write = entry.getValue();
+				// TODO: Can we cache these post conditions?
+				final Term post = getPostcondition(write, trace, interpolants);
+				final NestedWordAutomaton<LETTER, IPredicate> readNwa =
+						new NestedWordAutomaton<>(automataServices, vpAlphabet, mEmptyStackStateFactory);
+				// TODO: These predicates are not sound (but should be also not used)
+				final IPredicate initial = mPredicateUnifier.getTruePredicate();
+				final IPredicate postWrite = mPredicateUnifier.getOrConstructPredicate(post);
+				final IPredicate postRead = mPredicateUnifier.getFalsePredicate();
+				readNwa.addState(true, false, initial);
+				readNwa.addState(false, false, postWrite);
+				readNwa.addState(false, true, postRead);
+				final Set<LETTER> correctWrites = new HashSet<>();
+				final Set<LETTER> incorrectWrites = new HashSet<>();
+				final Set<LETTER> otherActions = new HashSet<>(mActions2TermVars.keySet());
+				for (final LETTER otherWrite : mVariables2Writes.getImage(entry.getKey())) {
+					if (write.equals(otherWrite)
+							|| writeDoesNotImply(otherWrite, post, trace, interpolants) == LBool.UNSAT) {
+						correctWrites.add(otherWrite);
+					} else {
+						incorrectWrites.add(otherWrite);
+					}
+					otherActions.remove(otherWrite);
+				}
+				// TODO: Restrict transitions to the number of actions in trace
+				addTransitions(readNwa, initial, otherActions, initial);
+				addTransitions(readNwa, initial, incorrectWrites, initial);
+				addTransitions(readNwa, initial, correctWrites, postWrite);
+				addTransitions(readNwa, postWrite, otherActions, postWrite);
+				addTransitions(readNwa, postWrite, correctWrites, postWrite);
+				readNwa.addInternalTransition(postWrite, read, postRead);
+				addTransitions(readNwa, postRead, mActions2TermVars.keySet(), postRead);
+				if (result == null) {
+					result = readNwa;
+				} else {
+					// TODO: Is there a more efficient intersection with multiple automata?
+					// TODO: What to use as state factory?
+					final Intersect<LETTER, IPredicate> intersect =
+							new Intersect<>(automataServices, null, result, readNwa);
+					result = intersect.getResult();
+
+				}
+			}
+		}
+		// TODO: Remove self-loops
+		return result;
+	}
+
+	private void addTransitions(final NestedWordAutomaton<LETTER, IPredicate> nwa, final IPredicate pred,
+			final Collection<LETTER> actions, final IPredicate succ) {
+		for (final LETTER action : actions) {
+			nwa.addInternalTransition(pred, action, succ);
+		}
 	}
 
 	private Term getPrecondition(final LETTER action, final List<LETTER> trace, final IPredicate[] interpolants) {
@@ -300,9 +369,12 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		return interpolants[trace.indexOf(action) + 1].getFormula();
 	}
 
-	// TODO: Where to return this automaton?
 	public NestedWordAutomaton<LETTER, IPredicate> getAutomaton() {
 		return mAutomaton;
+	}
+
+	public Collection<IInterpolatingTraceCheck<LETTER>> getTraceChecks() {
+		return mTraceChecks;
 	}
 
 	@Override
@@ -340,12 +412,12 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	@Override
 	public IPredicate getPrecondition() {
-		return mTruePred;
+		return mPredicateUnifier.getTruePredicate();
 	}
 
 	@Override
 	public IPredicate getPostcondition() {
-		return mFalsePred;
+		return mPredicateUnifier.getFalsePredicate();
 	}
 
 	@Override

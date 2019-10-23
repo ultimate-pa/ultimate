@@ -1,12 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.MCR;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 
 public class IpAbStrategyModuleMCR<T extends IInterpolatingTraceCheck<LETTER>, LETTER extends IIcfgTransition<?>>
 		implements IIpAbStrategyModule<LETTER> {
@@ -22,9 +24,12 @@ public class IpAbStrategyModuleMCR<T extends IInterpolatingTraceCheck<LETTER>, L
 	public IpAbStrategyModuleResult<LETTER> buildInterpolantAutomaton(final List<QualifiedTracePredicates> perfectIpps,
 			final List<QualifiedTracePredicates> imperfectIpps) throws AutomataOperationCanceledException {
 		if (mResult == null) {
-			final NestedWordAutomaton<LETTER, IPredicate> automaton = mIpTcSmMCR.getOrConstruct().getAutomaton();
-			// TODO: What to use as interpolants? The interpolants (=states) used by automaton?
-			mResult = new IpAbStrategyModuleResult<>(automaton, null);
+			final MCR<LETTER> mcr = mIpTcSmMCR.getOrConstruct();
+			// TODO: Are these all predicates?
+			final List<QualifiedTracePredicates> predicates = mcr.getTraceChecks().stream()
+					.map(t -> new QualifiedTracePredicates(new TracePredicates(t), t.getClass(), t.isPerfectSequence()))
+					.collect(Collectors.toList());
+			mResult = new IpAbStrategyModuleResult<>(mcr.getAutomaton(), predicates);
 		}
 		return mResult;
 	}

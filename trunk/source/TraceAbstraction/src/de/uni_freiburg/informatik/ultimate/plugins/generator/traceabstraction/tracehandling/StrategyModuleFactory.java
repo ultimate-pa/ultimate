@@ -166,7 +166,8 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 					trackStrategyModule);
 		}
 		if (useMCR) {
-			return new IpTcStrategyModuleMCR<>(mLogger, mPrefs, mPredicateUnifier, trackStrategyModule);
+			return new IpTcStrategyModuleMCR<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory,
+					trackStrategyModule);
 		}
 		return trackStrategyModule;
 

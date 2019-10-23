@@ -2,16 +2,21 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.MCR;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.MCR.ITraceCheckFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -26,13 +31,16 @@ public class IpTcStrategyModuleMCR<T extends IInterpolatingTraceCheck<LETTER>, L
 	private final IIpTcStrategyModule<T, LETTER> mIpTcModule;
 	private final IPredicateUnifier mPredicateUnifier;
 	private MCR<LETTER> mMCR;
+	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 
 	public IpTcStrategyModuleMCR(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
-			final IPredicateUnifier predicateUnifier, final IIpTcStrategyModule<T, LETTER> nestedModule) {
+			final IPredicateUnifier predicateUnifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+			final IIpTcStrategyModule<T, LETTER> nestedModule) {
 		mPrefs = prefs;
 		mIpTcModule = nestedModule;
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
+		mEmptyStackFactory = emptyStackFactory;
 	}
 
 	@Override
@@ -99,7 +107,19 @@ public class IpTcStrategyModuleMCR<T extends IInterpolatingTraceCheck<LETTER>, L
 	public MCR<LETTER> getOrConstruct() {
 		if (mMCR == null) {
 			// TODO: Where to get a trace check factory?
-			mMCR = new MCR<>(mLogger, mPrefs, mPredicateUnifier, mIpTcModule.getOrConstruct().getTrace(), null);
+			// TODO: This is only a dummy trace check factory for the initial trace
+			try {
+				final ITraceCheckFactory<LETTER> tcf = new ITraceCheckFactory<LETTER>() {
+					@Override
+					public IInterpolatingTraceCheck<LETTER> getTraceCheck(final List<LETTER> trace) {
+						return mIpTcModule.getOrConstruct();
+					}
+				};
+				mMCR = new MCR<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory,
+						mIpTcModule.getOrConstruct().getTrace(), tcf);
+			} catch (final AutomataLibraryException e) {
+				throw new RuntimeException(e);
+			}
 		}
 		return mMCR;
 	}
