@@ -347,9 +347,9 @@ public class PolynomialTest {
 	 */
 	@Test
 	public void intDivisionLeftAssoc03() {
-		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
-		mScript.declareFun("x", new Sort[0], realSort);
-		mScript.declareFun("y", new Sort[0], realSort);
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], intSort);
+		mScript.declareFun("y", new Sort[0], intSort);
 		final String inputAsString = "(div 42 x y 21)";
 		runDefaultTest(inputAsString, inputAsString);
 	}
