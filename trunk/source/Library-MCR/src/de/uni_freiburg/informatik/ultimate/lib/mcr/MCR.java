@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -20,6 +21,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -139,6 +149,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				mReads2Variables.addAllPairs(action, finder.getReadVars());
 				for (final String var : finder.getWrittenVars()) {
 					mVariables2Writes.addPair(var, action);
+					mWrites2Variables.addPair(action, var);
 				}
 			}
 		}
@@ -166,6 +177,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		}
 		for (final LETTER action : trace) {
 			// TODO: There might be duplicate action, is this a problem?
+			// TODO: Any better name?
 			mActions2TermVars.put(action,
 					mManagedScript.getScript().variable(action.toString(), SmtSortUtils.getIntSort(mManagedScript)));
 		}
@@ -321,7 +333,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				final Set<LETTER> incorrectWrites = new HashSet<>();
 				final Set<LETTER> otherActions = new HashSet<>(mActions2TermVars.keySet());
 				for (final LETTER otherWrite : mVariables2Writes.getImage(entry.getKey())) {
-					if (write.equals(otherWrite)
+					if (Objects.equals(write, otherWrite)
 							|| writeDoesNotImply(otherWrite, post, trace, interpolants) == LBool.UNSAT) {
 						correctWrites.add(otherWrite);
 					} else {
@@ -362,11 +374,19 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	private Term getPrecondition(final LETTER action, final List<LETTER> trace, final IPredicate[] interpolants) {
 		// TODO: Use mPreviousWrite?
-		return interpolants[trace.indexOf(action)].getFormula();
+		final int index = trace.indexOf(action);
+		if (index == 0) {
+			return mManagedScript.getScript().term("true");
+		}
+		return interpolants[index - 1].getFormula();
 	}
 
 	private Term getPostcondition(final LETTER action, final List<LETTER> trace, final IPredicate[] interpolants) {
-		return interpolants[trace.indexOf(action) + 1].getFormula();
+		final int index = trace.indexOf(action);
+		if (index == trace.size() - 1) {
+			return mManagedScript.getScript().term("false");
+		}
+		return interpolants[index].getFormula();
 	}
 
 	public NestedWordAutomaton<LETTER, IPredicate> getAutomaton() {
@@ -466,19 +486,24 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 		@Override
 		protected void visit(final StatementSequence c) {
-			// TODO: Statement is not API
-			// for (final Statement s : c.getStatements()) {
-			// if (s instanceof AssumeStatement) {
-			// // TODO: For reads visit ((AssumeStatement)s).getFormula()
-			// }
-			// if (s instanceof AssignmentStatement) {
-			// final AssignmentStatement a = (AssignmentStatement) s;
-			// // TODO: For writes visit a.getLhs()
-			// // TODO: For reads visit a.getRhs()
-			// }
-			// // TODO: Other cases?
-			// }
-			// super.visit(c);
+			for (final Statement s : c.getStatements()) {
+				if (s instanceof AssumeStatement) {
+					// TODO: For reads visit ((AssumeStatement)s).getFormula()
+					final Expression expression = ((AssumeStatement) s).getFormula();
+					mReadVars.addAll(new VariableFinder(expression).getResult());
+				}
+				if (s instanceof AssignmentStatement) {
+					final AssignmentStatement a = (AssignmentStatement) s;
+					for (final LeftHandSide lhs : a.getLhs()) {
+						mWrittenVars.addAll(new VariableFinder(lhs).getResult());
+					}
+					for (final Expression rhs : a.getRhs()) {
+						mReadVars.addAll(new VariableFinder(rhs).getResult());
+					}
+				}
+				// TODO: Other cases?
+			}
+			super.visit(c);
 		}
 
 		ReadWriteFinder(final IcfgEdge action) {
@@ -493,6 +518,31 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 		Set<String> getWrittenVars() {
 			return mWrittenVars;
+		}
+	}
+
+	private class VariableFinder extends GeneratedBoogieAstVisitor {
+		private final Collection<String> mResult;
+
+		VariableFinder(final BoogieASTNode node) {
+			mResult = new HashSet<>();
+			node.accept(this);
+		}
+
+		Collection<String> getResult() {
+			return mResult;
+		}
+
+		@Override
+		public boolean visit(final IdentifierExpression node) {
+			mResult.add(node.getIdentifier());
+			return super.visit(node);
+		}
+
+		@Override
+		public boolean visit(final VariableLHS node) {
+			mResult.add(node.getIdentifier());
+			return super.visit(node);
 		}
 	}
 
