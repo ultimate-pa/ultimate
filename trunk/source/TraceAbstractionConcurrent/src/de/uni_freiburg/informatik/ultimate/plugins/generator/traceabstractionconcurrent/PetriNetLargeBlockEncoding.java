@@ -108,7 +108,8 @@ public class PetriNetLargeBlockEncoding {
 
 	private final boolean USE_SEMANTIC_CHECK = true;
 	private final IIndependenceRelation<?, IIcfgTransition<?>> mMoverCheck;
-
+	private int i = 0;
+	private int mMoverChecks = 0;
 	private final IUltimateServiceProvider mServices;
 
 	/**
@@ -146,12 +147,18 @@ public class PetriNetLargeBlockEncoding {
 		} else {
 			mMoverCheck = syntaxCheck;
 		}
+		if (USE_SEMANTIC_CHECK) {
+			mLogger.info("Semantic Check.");
+		} else {
+			mLogger.info("Variable Check.");
+		}
 		BoundedPetriNet<IIcfgTransition<?>, IPredicate> result1 = sequenceRule(services, petriNet);
 		BoundedPetriNet<IIcfgTransition<?>, IPredicate> result2 = sequenceRule(services, result1);
 		while (result1.getTransitions().size() != result2.getTransitions().size()) {
 			result1 = sequenceRule(services, result2);
 			result2 = sequenceRule(services, result1);
 		}
+		mLogger.info("Total number of mover checks: " + mMoverChecks);
 		mResult = result2;
 	}
 
@@ -226,13 +233,41 @@ public class PetriNetLargeBlockEncoding {
 		final List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> sequentialCompositionStack = new ArrayList<>();
 		for (final ITransition<IIcfgTransition<?>, IPredicate> t1 : transitions) {
 			final Set<IPredicate> t1PostSet = petriNet.getSuccessors(t1);
+			final Set<IPredicate> t1PreSet = petriNet.getPredecessors(t1);
 			if (t1PostSet.size() == 1) {
-				final IPredicate place = t1PostSet.iterator().next();
-				if (petriNet.getPredecessors(place).size() == 1) {
-					boolean sequentialCompositionAllowed = petriNet.getSuccessors(place).stream().allMatch(t2 -> 
-					sequenceRuleCheck(t1, t2, place, sequentialCompositionStack, petriNet));
+				final IPredicate prePlace = t1PreSet.iterator().next();
+				final IPredicate postPlace = t1PostSet.iterator().next();
+				// Y to V check.
+				if (petriNet.getSuccessors(prePlace).size() == 1 && petriNet.getPredecessors(prePlace).size() > 1) {
+					boolean sequentialCompositionAllowed = petriNet.getPredecessors(prePlace).stream().allMatch(t2 -> 
+					sequenceRuleCheck(t2, t1, prePlace, sequentialCompositionStack, petriNet));
 					if (sequentialCompositionAllowed) {
-						for (final ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet.getSuccessors(place)) {
+						for (final ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet.getPredecessors(prePlace)) {
+							// simplify Term resulting TransFormula because various other algorithms
+							// in Ultimate have to work with this term
+							final boolean simplify = true;
+							// try to eliminate auxiliary variables to avoid quantifier alterations
+							// subsequent SMT solver calls during verification
+							final boolean tryAuxVarElimination = true;
+							final IcfgEdge sequentialIcfgEdge = constructSequentialComposition(t2.getSymbol().getSource(),
+									t1.getSymbol().getTarget(), t2.getSymbol(), t1.getSymbol(), simplify,
+									tryAuxVarElimination);
+							// create new element of the sequentialCompositionStack.
+							final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element = new Triple<>(
+									sequentialIcfgEdge, t2, t1);
+							sequentialCompositionStack.add(element);
+							i++;
+							mLogger.info("Element number " + i + " added to the stack. (Y to V)");
+							updateCoEnabledRelation(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
+							updateSequentialCompositions(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
+						}
+					}
+				}
+				else if (petriNet.getPredecessors(postPlace).size() == 1) {
+					boolean sequentialCompositionAllowed = petriNet.getSuccessors(postPlace).stream().allMatch(t2 -> 
+					sequenceRuleCheck(t1, t2, postPlace, sequentialCompositionStack, petriNet));
+					if (sequentialCompositionAllowed) {
+						for (final ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet.getSuccessors(postPlace)) {
 							// simplify Term resulting TransFormula because various other algorithms
 							// in Ultimate have to work with this term
 							final boolean simplify = true;
@@ -246,7 +281,8 @@ public class PetriNetLargeBlockEncoding {
 							final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element = new Triple<>(
 									sequentialIcfgEdge, t1, t2);
 							sequentialCompositionStack.add(element);
-							mLogger.info("Element added to the stack.");
+							i++;
+							mLogger.info("Element number " + i + " added to the stack.");
 							updateCoEnabledRelation(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
 							updateSequentialCompositions(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
 						}
@@ -501,6 +537,7 @@ public class PetriNetLargeBlockEncoding {
 	private boolean isLeftMover(final ITransition<IIcfgTransition<?>, IPredicate> t1) {
 		// Filter which elements of coEnabledRelation are relevant.
 		final Set<IIcfgTransition<?>> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
+		mMoverChecks += coEnabledTransitions.size();
 		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t2, t1.getSymbol()));
 	}
 
@@ -513,6 +550,7 @@ public class PetriNetLargeBlockEncoding {
 	private boolean isRightMover(final ITransition<IIcfgTransition<?>, IPredicate> t1) {
 		// Filter which elements of coEnabledRelation are relevant.
 		final Set<IIcfgTransition<?>> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
+		mMoverChecks += coEnabledTransitions.size();
 		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t1.getSymbol(), t2));
 	}
 
