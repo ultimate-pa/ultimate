@@ -479,7 +479,7 @@ public final class MSODIntOperationsTest {
 		// {-1 } strictSubsetInt {-1, -2, -3, ...}
 		xValuesStem = new int[] { -1 };
 		yValuesStem = new int[] { -1 };
-		lastStemIndex = 3;
+		lastStemIndex = 2;
 		xValuesLoop = new int[] {};
 		yValuesLoop = new int[] { 0 };
 		lastLoopIndex = 1;
@@ -489,7 +489,7 @@ public final class MSODIntOperationsTest {
 		// {-1, -2, -3, ... } strictSubsetInt {-1, -2, -3, ...}
 		xValuesStem = new int[] { -1 };
 		yValuesStem = new int[] { -1 };
-		lastStemIndex = 3;
+		lastStemIndex = 2;
 		xValuesLoop = new int[] { 0 };
 		yValuesLoop = new int[] { 0 };
 		lastLoopIndex = 1;
@@ -537,7 +537,7 @@ public final class MSODIntOperationsTest {
 		xValuesStem = new int[] {};
 		yValuesStem = new int[] { 0 };
 		lastStemIndex = 0;
-		xValuesLoop = new int[] { 1 };
+		xValuesLoop = new int[] { 0 };
 		yValuesLoop = new int[] { 0, 1 };
 		lastLoopIndex = 1;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
@@ -546,7 +546,7 @@ public final class MSODIntOperationsTest {
 		// { 0, -1 } subsetInt {-1, -2, -3, ...}
 		xValuesStem = new int[] { 0, -1 };
 		yValuesStem = new int[] { -1 };
-		lastStemIndex = 3;
+		lastStemIndex = 2;
 		xValuesLoop = new int[] {};
 		yValuesLoop = new int[] { 0 };
 		lastLoopIndex = 1;
@@ -556,7 +556,7 @@ public final class MSODIntOperationsTest {
 		// {-1 } subsetInt {-1, -2, -3, ...}
 		xValuesStem = new int[] { -1 };
 		yValuesStem = new int[] { -1 };
-		lastStemIndex = 3;
+		lastStemIndex = 2;
 		xValuesLoop = new int[] {};
 		yValuesLoop = new int[] { 0 };
 		lastLoopIndex = 1;
@@ -566,7 +566,7 @@ public final class MSODIntOperationsTest {
 		// {-1, -2, -3, ... } subsetInt {-1, -2, -3, ...}
 		xValuesStem = new int[] { -1 };
 		yValuesStem = new int[] { -1 };
-		lastStemIndex = 3;
+		lastStemIndex = 2;
 		xValuesLoop = new int[] { 0 };
 		yValuesLoop = new int[] { 0 };
 		lastLoopIndex = 1;
@@ -605,10 +605,10 @@ public final class MSODIntOperationsTest {
 		// 3 + 2 element { 1, -1, 3, -3,.. }
 		c = Rational.valueOf(2, 1);
 		xValuesStem = new int[] { 3 };
-		yValuesStem = new int[] { 1, -1, 3 };
+		yValuesStem = new int[] { 1, -1, -3, 3 };
 		lastStemIndex = 6;
 		xValuesLoop = new int[] {};
-		yValuesLoop = new int[] { 0, 3 };
+		yValuesLoop = new int[] { 2, 3 };
 		lastLoopIndex = 3;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
 				mMSODOperations.elementAutomaton(mServices, x, c, y));
@@ -616,10 +616,10 @@ public final class MSODIntOperationsTest {
 		// 3 + -2 element { 1, -1, 3, -3,.. }
 		c = Rational.valueOf(-2, 1);
 		xValuesStem = new int[] { 3 };
-		yValuesStem = new int[] { 1, -1, 3 };
+		yValuesStem = new int[] { 1, -1, -3, 3 };
 		lastStemIndex = 6;
 		xValuesLoop = new int[] {};
-		yValuesLoop = new int[] { 0, 3 };
+		yValuesLoop = new int[] { 2, 3 };
 		lastLoopIndex = 3;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
 				mMSODOperations.elementAutomaton(mServices, x, c, y));
@@ -627,8 +627,8 @@ public final class MSODIntOperationsTest {
 		// 2 + 2 element { 1, -1, 3, -3,.. }
 		c = Rational.valueOf(2, 1);
 		xValuesStem = new int[] { 2 };
-		yValuesStem = new int[] { 1, -1, 3 };
-		lastStemIndex = 6;
+		yValuesStem = new int[] { 1, -1, -3 };
+		lastStemIndex = 5;
 		xValuesLoop = new int[] {};
 		yValuesLoop = new int[] { 0, 3 };
 		lastLoopIndex = 3;
@@ -687,7 +687,7 @@ public final class MSODIntOperationsTest {
 		test(true, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
 				mMSODOperations.constElementAutomaton(mServices, c, x));
 
-		// -3 element { -3, 0, 4, -4, 5, -5 }
+		// -3 element { -3, 0, 4, -4, 5, -5, ...}
 		c = Rational.valueOf(-3, 1);
 		xValuesStem = new int[] { 0, -3, 4 };
 		lastStemIndex = 8;
