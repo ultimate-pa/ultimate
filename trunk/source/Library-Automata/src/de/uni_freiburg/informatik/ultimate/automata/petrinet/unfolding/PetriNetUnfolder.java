@@ -160,7 +160,8 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 								+ " conditions, " + mUnfolding.getEvents().size() + " events (" +
 								mStatistics.prettyprintCutOffInformation() + " " +
 								mStatistics.prettyprintCoRelationInformation() + " " +
-								mStatistics.prettyprintPossibleExtensionInformation() + " " +
+								mStatistics.prettyprintPossibleExtensionsMaximalSize() + " " +
+								mStatistics.prettyprintPossibleExtensionCandidatesInformation() + " " +
 								mStatistics.prettyprintCoRelationMaximalDegree() + " " +
 								mStatistics.prettyprintConditionPerPlaceMax() + ")");
 				throw new AutomataOperationCanceledException(rti);
@@ -382,17 +383,21 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 					+ " co-relation queries the response was YES.";
 		}
 
-		public String prettyprintPossibleExtensionInformation() {
+		public String prettyprintPossibleExtensionCandidatesInformation() {
 			return getNumberOfUselessExtensionCandidates() + "/" + getNumberOfExtensionCandidates()
 					+ " useless extension candidates.";
 		}
 
+		public String prettyprintPossibleExtensionsMaximalSize() {
+			return "Maximal size of possible extension queue " + getMaximalSizeOfPossibleExtensions() + ".";
+		}
+
 		public String prettyprintCoRelationMaximalDegree() {
-			return "Maximal degree in co-relation " + mUnfolding.getCoRelation().computeMaximalDegree() + ".";
+			return "Maximal degree in co-relation " + computeCoRelationMaximalDegree() + ".";
 		}
 
 		public String prettyprintConditionPerPlaceMax() {
-			return "Up to " + mUnfolding.computeConditionPerPlaceMax() + " conditions per place.";
+			return "Up to " + computeConditionPerPlaceMax() + " conditions per place.";
 		}
 
 
@@ -432,6 +437,18 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		public int getNumberOfExtensionCandidates() {
 			return ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions)
 					.getUsefulExtensionCandidates() + getNumberOfUselessExtensionCandidates();
+		}
+
+		public int computeCoRelationMaximalDegree() {
+			return mUnfolding.getCoRelation().computeMaximalDegree();
+		}
+
+		public int computeConditionPerPlaceMax() {
+			return mUnfolding.computeConditionPerPlaceMax();
+		}
+
+		public int getMaximalSizeOfPossibleExtensions() {
+			return ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions).getMaximalSize();
 		}
 
 	}

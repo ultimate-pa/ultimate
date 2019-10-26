@@ -328,6 +328,10 @@ public enum StatisticsType {
 	 */
 	PETRI_TRANSITIONS,
 	/**
+	 * Maximal size of the possible extensions queue.
+	 */
+	POSSIBLE_EXTENSIONS_SIZE_MAX,
+	/**
 	 * Amount of transitions a simulation has removed (used in simulation, for compatibility with
 	 * {@link ECountingMeasure}).
 	 */

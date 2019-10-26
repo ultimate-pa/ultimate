@@ -63,6 +63,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 */
 	private static final boolean BUMBLEBEE_B07_OPTIMIZAION = true;
 	private final PriorityQueue<Event<LETTER, PLACE>> mPe;
+	private int mMaximalSize = 0;
 	/**
 	 * If {@link Event} is known to be cut-off event we can move it immediately
 	 * to front because it will not create descendants. This optimization keeps
@@ -126,6 +127,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 					mFastpathCutoffEventList.add(newEvent);
 				} else {
 					final boolean somethingWasAdded = mPe.add(newEvent);
+					mMaximalSize = Integer.max(mMaximalSize, mPe.size());
 					if (!somethingWasAdded) {
 						throw new AssertionError("Event was already in queue.");
 					}
@@ -230,6 +232,12 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	public int getUselessExtensionCandidates() {
 		return mUselessExtensionCandidates;
 	}
+
+	public int getMaximalSize() {
+		return mMaximalSize;
+	}
+
+
 
 
 }

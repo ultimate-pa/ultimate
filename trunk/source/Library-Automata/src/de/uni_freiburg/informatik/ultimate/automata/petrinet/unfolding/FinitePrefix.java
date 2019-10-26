@@ -88,7 +88,9 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 		sb.append(" ");
 		sb.append(mUnfoldingStatistics.prettyprintCoRelationInformation());
 		sb.append(" ");
-		sb.append(mUnfoldingStatistics.prettyprintPossibleExtensionInformation());
+		sb.append(mUnfoldingStatistics.prettyprintPossibleExtensionsMaximalSize());
+		sb.append(" ");
+		sb.append(mUnfoldingStatistics.prettyprintPossibleExtensionCandidatesInformation());
 		sb.append(" ");
 		sb.append(mUnfoldingStatistics.prettyprintCoRelationMaximalDegree());
 		sb.append(" ");
@@ -123,16 +125,18 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 			statistics.addKeyValuePair(StatisticsType.NUMBER_UNREACHABLE_TRANSITIONS,
 					mUnfoldingStatistics.unreachableTransitionsInOperand());
 		}
+		statistics.addKeyValuePair(StatisticsType.POSSIBLE_EXTENSIONS_SIZE_MAX,
+				mUnfoldingStatistics.getMaximalSizeOfPossibleExtensions());
 		statistics.addKeyValuePair(StatisticsType.EXTENSION_CANDIDATES_TOTAL,
 				mUnfoldingStatistics.getNumberOfExtensionCandidates());
 		statistics.addKeyValuePair(StatisticsType.EXTENSION_CANDIDATES_USELESS,
 				mUnfoldingStatistics.getNumberOfUselessExtensionCandidates());
 
 		statistics.addKeyValuePair(StatisticsType.CO_RELATION_MAX_DEGREE,
-				mUnfoldingStatistics.prettyprintCoRelationMaximalDegree());
+				mUnfoldingStatistics.computeCoRelationMaximalDegree());
 
 		statistics.addKeyValuePair(StatisticsType.CONDITION_PER_PLACE_MAX,
-				mUnfoldingStatistics.prettyprintConditionPerPlaceMax());
+				mUnfoldingStatistics.computeConditionPerPlaceMax());
 		return statistics;
 	}
 
