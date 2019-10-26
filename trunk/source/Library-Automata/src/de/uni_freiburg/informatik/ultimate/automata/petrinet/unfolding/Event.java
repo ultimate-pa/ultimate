@@ -54,6 +54,14 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 public final class Event<LETTER, PLACE> implements Serializable {
 	private static final long serialVersionUID = 7162664880110047121L;
 
+
+	/**
+	 * Use the optimization that is outlined in observation B17 in the following
+	 * issue. https://github.com/ultimate-pa/ultimate/issues/448
+	 * Omit order check in cut-off check.
+	 */
+	private static final boolean BUMBLEBEE_B17_OPTIMIZAION = true;
+
 	private final int mHashCode;
 
 	private final Set<Condition<LETTER, PLACE>> mPredecessors;
@@ -275,8 +283,10 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		if (!getMark().equals(event.getMark())) {
 			return false;
 		}
-		if (order.compare(event, this) >= 0) {
-			return false;
+		if (!BUMBLEBEE_B17_OPTIMIZAION) {
+			if (order.compare(event, this) >= 0) {
+				return false;
+			}
 		}
 		setCompanion(event);
 		return true;
