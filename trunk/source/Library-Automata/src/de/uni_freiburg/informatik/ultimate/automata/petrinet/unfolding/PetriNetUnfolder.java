@@ -171,6 +171,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 
 	private boolean computeUnfoldingHelper(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
 		assert !parentIsCutoffEvent(event) : "We must not construct successors of cut-off events.";
+		final boolean isCutOffEvent = mUnfolding.isCutoffEvent(event, mOrder, mSameTransitionCutOff);
 		final boolean succOfEventIsAccpting = mUnfolding.addEvent(event);
 		// assert !unfolding.pairwiseConflictOrCausalRelation(e.getPredecessorConditions());
 		if (succOfEventIsAccpting && mRun == null) {
@@ -179,7 +180,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 				return true;
 			}
 		}
-		if (mUnfolding.isCutoffEvent(event, mOrder, mSameTransitionCutOff)) {
+		if (isCutOffEvent) {
 			mLogger.debug("Constructed     Cut-off-Event: " + event.toString());
 		} else {
 			final long sizeBefore = mPossibleExtensions.size();
