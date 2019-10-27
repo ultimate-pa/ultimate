@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -342,16 +341,21 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				readNwa.addState(false, false, postWrite);
 				readNwa.addState(false, true, postRead);
 				final Set<LETTER> correctWrites = new HashSet<>();
+				final int readCount = mActionCounts.get(read);
 				final Term post = getPostcondition(write, trace, interpolants);
-				for (final LETTER otherWrite : mVariables2Writes.getImage(entry.getKey())) {
-					if (Objects.equals(write, otherWrite)
+				final Set<LETTER> writesOnVar = mVariables2Writes.getImage(entry.getKey());
+				for (final LETTER otherWrite : writesOnVar) {
+					if (otherWrite.equals(read) && readCount == 1) {
+						continue;
+					}
+					if (otherWrite.equals(write)
 							|| writeDoesNotImply(otherWrite, post, trace, interpolants) == LBool.UNSAT) {
 						correctWrites.add(otherWrite);
 					}
 				}
 				// Add all the forward edges and count the actions
 				final Map<LETTER, Integer> remainingCounts = new HashMap<>(mActionCounts);
-				remainingCounts.put(read, remainingCounts.get(read) - 1);
+				remainingCounts.put(read, readCount - 1);
 				readNwa.addInternalTransition(postWrite, read, postRead);
 				for (final LETTER w : correctWrites) {
 					readNwa.addInternalTransition(initial, w, postWrite);
@@ -366,7 +370,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					}
 					readNwa.addInternalTransition(initial, action, initial);
 					readNwa.addInternalTransition(postRead, action, postRead);
-					if (correctWrites.contains(action)) {
+					if (!writesOnVar.contains(action) || correctWrites.contains(action)) {
 						readNwa.addInternalTransition(postWrite, action, postWrite);
 					}
 				}
