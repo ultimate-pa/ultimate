@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWi
 public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGeneratorWithStopwatches
 		implements IStatisticsDataProvider {
 
-
 	private int mMoverChecksPositive = 0;
 	private int mMoverChecksNegative = 0;
 	private int mMoverChecksUnknown = 0;
@@ -59,6 +58,7 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 	public void reportNegativeMoverCheck() {
 		mMoverChecksNegative++;
 	}
+
 	public void reportUnkonwnMoverCheck() {
 		mMoverChecksUnknown++;
 	}
@@ -81,7 +81,8 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 
 	@Override
 	public Object getValue(final String key) {
-		final PetriNetLargeBlockEncodingStatisticsDefinitions keyEnum = Enum.valueOf(PetriNetLargeBlockEncodingStatisticsDefinitions.class, key);
+		final PetriNetLargeBlockEncodingStatisticsDefinitions keyEnum = Enum
+				.valueOf(PetriNetLargeBlockEncodingStatisticsDefinitions.class, key);
 		switch (keyEnum) {
 		case LbeTime:
 			try {
