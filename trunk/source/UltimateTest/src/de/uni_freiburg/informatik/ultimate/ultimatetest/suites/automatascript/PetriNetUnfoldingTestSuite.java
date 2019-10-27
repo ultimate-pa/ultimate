@@ -96,6 +96,9 @@ public class PetriNetUnfoldingTestSuite extends UltimateTestSuite {
 			StatisticsType.NUMBER_CUT_OFF_EVENTS.toString(),
 			StatisticsType.NUMBER_NON_CUT_OFF_EVENTS.toString(),
 			StatisticsType.NUMBER_UNREACHABLE_TRANSITIONS.toString(),
+			StatisticsType.POSSIBLE_EXTENSIONS_SIZE_MAX.toString(),
+			StatisticsType.CO_RELATION_MAX_DEGREE.toString(),
+			StatisticsType.CONDITION_PER_PLACE_MAX.toString(),
 			StatisticsType.EXTENSION_CANDIDATES_TOTAL.toString(),
 			StatisticsType.EXTENSION_CANDIDATES_USELESS.toString(),
 	};
