@@ -84,6 +84,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final AutomataLibraryServices mAutomataServices;
 	private final VpAlphabet<LETTER> mAlphabet;
 	private final McrTraceCheckResult<LETTER> mResult;
+	private final Map<LETTER, Integer> mActionCounts;
 
 	public MCR(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final List<LETTER> trace,
@@ -105,6 +106,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		mActions2TermVars = new HashMap<>();
 		mTraceChecks = new HashSet<>();
 		mActions2Indices = new HashMap<>();
+		mActionCounts = new HashMap<>();
 		// Explore all the interleavings of trace
 		mResult = exploreInterleavings(trace);
 	}
@@ -144,12 +146,6 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		return new McrTraceCheckResult<>(initialTrace, LBool.UNSAT, automaton, new IPredicate[0]);
 	}
 
-	private IPredicate[] getInterpolantsIfAccepted(final NestedWordAutomaton<LETTER, IPredicate> automaton,
-			final List<LETTER> trace) {
-		// TODO: Get an accepting run if possible and return its state sequence, otherwise just return null
-		return null;
-	}
-
 	private void getReadsAndWrites(final List<LETTER> trace) {
 		for (final LETTER action : trace) {
 			final ReadWriteFinder finder = new ReadWriteFinder(action);
@@ -158,6 +154,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				mVariables2Writes.addPair(var, action);
 				mWrites2Variables.addPair(action, var);
 			}
+			mActionCounts.put(action, mActionCounts.getOrDefault(action, 0));
 		}
 	}
 
@@ -194,6 +191,12 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		}
 	}
 
+	private IPredicate[] getInterpolantsIfAccepted(final NestedWordAutomaton<LETTER, IPredicate> automaton,
+			final List<LETTER> trace) {
+		// TODO: Get an accepting run if possible and return its state sequence, otherwise just return null
+		return null;
+	}
+
 	// TODO: Avoid duplicates by caching?
 	private Collection<List<LETTER>> generateSeedInterleavings(final List<LETTER> trace,
 			final IPredicate[] interpolants) {
@@ -227,7 +230,6 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	/**
 	 * Encode a new trace in a formula, that is equivalent to trace, except that write happens right before read.
 	 */
-	// TODO: All the following methods with formulae can be extracted and this can be the only public method
 	private Term getConstraints(final List<LETTER> trace, final LETTER read, final LETTER write,
 			final IPredicate[] interpolants) {
 		final Script script = mManagedScript.getScript();
@@ -331,11 +333,8 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			for (final Entry<String, LETTER> entry : previousWrites.entrySet()) {
 				// TODO: write can be null, handle this
 				final LETTER write = entry.getValue();
-				// TODO: Can we cache these post conditions?
-				final Term post = getPostcondition(write, trace, interpolants);
 				final NestedWordAutomaton<LETTER, String> readNwa =
 						new NestedWordAutomaton<>(mAutomataServices, mAlphabet, factory);
-				// TODO: These predicates are not sound (but should be also not used)
 				final String initial = "q0";
 				final String postWrite = "q1";
 				final String postRead = "q2";
@@ -343,45 +342,45 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				readNwa.addState(false, false, postWrite);
 				readNwa.addState(false, true, postRead);
 				final Set<LETTER> correctWrites = new HashSet<>();
-				final Set<LETTER> incorrectWrites = new HashSet<>();
-				final Set<LETTER> otherActions = new HashSet<>(mActions2TermVars.keySet());
+				final Term post = getPostcondition(write, trace, interpolants);
 				for (final LETTER otherWrite : mVariables2Writes.getImage(entry.getKey())) {
 					if (Objects.equals(write, otherWrite)
 							|| writeDoesNotImply(otherWrite, post, trace, interpolants) == LBool.UNSAT) {
 						correctWrites.add(otherWrite);
-					} else {
-						incorrectWrites.add(otherWrite);
 					}
-					otherActions.remove(otherWrite);
 				}
-				// TODO: Restrict transitions to the number of actions in trace
-				addTransitions(readNwa, initial, otherActions, initial);
-				addTransitions(readNwa, initial, incorrectWrites, initial);
-				addTransitions(readNwa, initial, correctWrites, postWrite);
-				addTransitions(readNwa, postWrite, otherActions, postWrite);
-				addTransitions(readNwa, postWrite, correctWrites, postWrite);
+				// Add all the forward edges and count the actions
+				final Map<LETTER, Integer> remainingCounts = new HashMap<>(mActionCounts);
+				remainingCounts.put(read, remainingCounts.get(read) - 1);
 				readNwa.addInternalTransition(postWrite, read, postRead);
-				addTransitions(readNwa, postRead, mActions2TermVars.keySet(), postRead);
+				for (final LETTER w : correctWrites) {
+					readNwa.addInternalTransition(initial, w, postWrite);
+					if (correctWrites.size() == 1) {
+						remainingCounts.put(w, remainingCounts.get(w) - 1);
+					}
+				}
+				// Add the self-loops for all the actions, that still can happen
+				for (final LETTER action : trace) {
+					if (remainingCounts.get(action) == 0) {
+						continue;
+					}
+					readNwa.addInternalTransition(initial, action, initial);
+					readNwa.addInternalTransition(postRead, action, postRead);
+					if (correctWrites.contains(action)) {
+						readNwa.addInternalTransition(postWrite, action, postWrite);
+					}
+				}
 				if (result == null) {
 					result = readNwa;
 				} else {
 					// TODO: Is there a more efficient intersection with multiple automata?
-					// TODO: What to use as state factory?
 					final Intersect<LETTER, String> intersect =
 							new Intersect<>(mAutomataServices, factory, result, readNwa);
 					result = intersect.getResult();
 				}
 			}
 		}
-		// TODO: Remove self-loops
 		return result;
-	}
-
-	private <T> void addTransitions(final NestedWordAutomaton<LETTER, T> nwa, final T pred,
-			final Collection<LETTER> actions, final T succ) {
-		for (final LETTER action : actions) {
-			nwa.addInternalTransition(pred, action, succ);
-		}
 	}
 
 	private Term getPrecondition(final LETTER action, final List<LETTER> trace, final IPredicate[] interpolants) {
