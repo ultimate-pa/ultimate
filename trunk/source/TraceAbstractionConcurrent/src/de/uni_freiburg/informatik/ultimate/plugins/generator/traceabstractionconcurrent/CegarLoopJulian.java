@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetU
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.UnfoldingOrder;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -80,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -150,6 +152,10 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 				long end_time = System.currentTimeMillis();
 				long difference = end_time - start_time;
 				mLogger.info("Time needed for LBE in milliseconds: " + difference);
+
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+						new StatisticsResult<>(Activator.PLUGIN_NAME, "PetriNetLargeBlockEncoding benchmarks",
+								mLBE.getPetriNetLargeBlockEncodingStatistics()));
 			} else {
 				mAbstraction = cfg;
 			}
