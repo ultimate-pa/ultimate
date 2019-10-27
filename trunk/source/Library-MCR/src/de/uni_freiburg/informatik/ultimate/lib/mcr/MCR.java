@@ -154,7 +154,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				mVariables2Writes.addPair(var, action);
 				mWrites2Variables.addPair(action, var);
 			}
-			mActionCounts.put(action, mActionCounts.getOrDefault(action, 0));
+			mActionCounts.put(action, mActionCounts.getOrDefault(action, 0) + 1);
 		}
 	}
 
