@@ -35,6 +35,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstr
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck,
