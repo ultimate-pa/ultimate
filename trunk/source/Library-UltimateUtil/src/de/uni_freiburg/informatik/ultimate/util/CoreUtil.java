@@ -72,6 +72,8 @@ public class CoreUtil {
 	public static final String OS = System.getProperty("os.name");
 	public static final boolean OS_IS_WINDOWS = OS.toLowerCase().indexOf("win") >= 0;
 
+	private static final String[] PATHEXT = System.getenv("PATHEXT").split(File.pathSeparator);
+
 	public static String getPlatformLineSeparator() {
 		return PLATFORM_LINE_SEPARATOR;
 	}
@@ -147,7 +149,8 @@ public class CoreUtil {
 		if (CoreUtil.OS_IS_WINDOWS) {
 			// Windows uses the Portable Executable format starting with 0x4d5a (ASCII characters MZ)
 			final byte[] exeMagicNumber = { 'M', 'Z' };
-			funLooksLikeExectuable = f -> hasMagicNumber(f, exeMagicNumber);
+			funLooksLikeExectuable =
+					f -> hasMagicNumber(f, exeMagicNumber) && hasWindowsExecutableExtensionAndName(f, name);
 		} else {
 			// Just assume Linux: ELF format executables start with 0x7f454c46 (ASCII characters <DEL>ELF)
 			final byte[] elfMagicNumber = { 0x7f, 'E', 'L', 'F' };
@@ -176,6 +179,20 @@ public class CoreUtil {
 		} catch (final Exception e) {
 			return false;
 		}
+	}
+
+	private static boolean hasWindowsExecutableExtensionAndName(final File file, final String name) {
+		final String filename = file.getName();
+		for (final String ext : PATHEXT) {
+			final int idx = filename.lastIndexOf(ext);
+			if (idx == -1) {
+				continue;
+			}
+			if (name.equals(filename.substring(0, idx))) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static File writeFile(final File file, final String content) throws IOException {
