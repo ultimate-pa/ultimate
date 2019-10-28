@@ -74,8 +74,8 @@ public class PetriAutomizerBackfoldingTest extends AbstractTraceAbstractionTestS
 	 *
 	 */
 	private static final String[] mSettings = {
-		"automizer/PetriAutomizer-default.epf",
-		"automizer/PetriAutomizer-backfolding.epf",
+			"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf",
+			"automizer/svcomp-Reach-32bit-Automizer_Default-PetriNetBackfolding.epf",
 	};
 
 	/**
