@@ -28,6 +28,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternScopeNotImplemented;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -71,11 +77,11 @@ public class PeaToDotTestSuite {
 			return; // Oops, somebody forgot to implement that sh.. ;-)
 		}
 
-		mLogger.info(DotWriterNew.createDotString(pea));
-		mLogger.info(counterTrace.toString());
+		// mLogger.info(DotWriterNew.createDotString(pea));
+		// mLogger.info(counterTrace.toString());
 
 		writeDotToSvg(DotWriterNew.createDotString(pea));
-		writeMarkdown();
+		writeMarkdown(counterTrace.toString());
 	}
 
 	private void writeDotToSvg(final StringBuilder dot) throws IOException, InterruptedException {
@@ -90,15 +96,19 @@ public class PeaToDotTestSuite {
 		process.waitfor();
 	}
 
-	private void writeMarkdown() throws IOException {
-		final String formula = mPattern.toString().replace(mPattern.getId() + ": ", "");
-
+	private void writeMarkdown(final String counterTrace) throws IOException {
+		final File file = new File(ROOT_DIR + MARKDOWN_DIR + mName + ".md");
 		final StringBuilder markdown = new StringBuilder();
+
+		if (!file.exists()) {
+			markdown.append("toc_depth: 2" + "\n\n");
+		}
+
 		markdown.append("### " + mName + " " + mScope + "\n\n");
-		markdown.append(formula + "\n\n");
+		markdown.append(mPattern.toString().replace(mPattern.getId() + ": ", "") + "\n\n");
+		markdown.append(counterTrace + "\n\n");
 		markdown.append("![](/" + IMAGE_DIR + mName + "_" + mScope + ".svg)\n");
 
-		final File file = new File(ROOT_DIR + MARKDOWN_DIR + mName + ".md");
 		final BufferedWriter writer = new BufferedWriter(new FileWriter(file, true));
 		writer.write(markdown.toString());
 		writer.close();
@@ -129,24 +139,7 @@ public class PeaToDotTestSuite {
 
 	@AfterClass
 	public static void afterClass() throws IOException {
-		/*
-		 * final File markdownDir = new File(ROOT_DIR + MARKDOWN_DIR); final
-		 * List<String> filenames = Arrays.stream(markdownDir.list()).filter(a ->
-		 * a.endsWith(".md")) .sorted(new
-		 * PatternNameComparator()).collect(Collectors.toList());
-		 *
-		 * final File file = new File(ROOT_DIR + MARKDOWN_DIR + "includes.md"); final
-		 * Writer writer = new BufferedWriter(new FileWriter(file));
-		 *
-		 * String prev = null; for (final String filename : filenames) { final String[]
-		 * name = filename.split("_|\\."); assert (name.length == 3);
-		 *
-		 * if (prev == null || !name[0].equals(prev)) { writer.write("## " + name[0] +
-		 * System.lineSeparator()); }
-		 *
-		 * writer.write("{!" + MARKDOWN_DIR + filename + "!}" + System.lineSeparator());
-		 * prev = name[0]; } writer.close();
-		 */
+
 	}
 
 	@Parameters()
@@ -159,30 +152,25 @@ public class PeaToDotTestSuite {
 
 	private static final class PatternNameComparator implements Comparator<PatternType> {
 
-		private static final Map<String, Integer> SCOPE_ORDER = new HashMap<>();
+		private static final Map<Class<? extends SrParseScope>, Integer> SCOPE_ORDER = new HashMap<>();
 
 		static {
-			SCOPE_ORDER.put("Globally", 0);
-			SCOPE_ORDER.put("Before", 1);
-			SCOPE_ORDER.put("After", 2);
-			SCOPE_ORDER.put("Between", 3);
-			SCOPE_ORDER.put("AfterUntil", 4);
+			SCOPE_ORDER.put(SrParseScopeGlobally.class, 0);
+			SCOPE_ORDER.put(SrParseScopeBefore.class, 1);
+			SCOPE_ORDER.put(SrParseScopeAfter.class, 2);
+			SCOPE_ORDER.put(SrParseScopeBetween.class, 3);
+			SCOPE_ORDER.put(SrParseScopeAfterUntil.class, 4);
 		}
 
 		@Override
-		public int compare(final PatternType pattern1, final PatternType pattern2) {
-			final String name1 = pattern1.getClass().getSimpleName();
-			final String name2 = pattern1.getClass().getSimpleName();
+		public int compare(final PatternType lhs, final PatternType rhs) {
+			final int order = lhs.getClass().getSimpleName().compareTo(rhs.getClass().getSimpleName());
 
-			final String scope1 = pattern1.getScope().getClass().getSimpleName().replace("SrParseScope", "");
-			final String scope2 = pattern2.getScope().getClass().getSimpleName().replace("SrParseScope", "");
-
-			final int order = name1.compareTo(name2);
 			if (order != 0) {
 				return order;
 			}
 
-			return SCOPE_ORDER.get(scope1) - SCOPE_ORDER.get(scope2);
+			return SCOPE_ORDER.get(lhs.getScope().getClass()) - SCOPE_ORDER.get(rhs.getScope().getClass());
 		}
 	}
 }
