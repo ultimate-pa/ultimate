@@ -6,6 +6,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -37,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 
-	// private static final String ROOT_DIR = "/media/ubuntu/Daten/Projects/hanfor/documentation/docs/";
-	private static final String ROOT_DIR = "F:/repos/hanfor/documentation/docs/";
+	private static final String ROOT_DIR = "/media/ubuntu/Daten/Projects/hanfor/documentation/docs/";
+	// private static final String ROOT_DIR = "F:/repos/hanfor/documentation/docs/";
 	private static final String MARKDOWN_DIR = "usage/patterns/";
 	private static final String IMAGE_DIR = "img/patterns/";
 
@@ -107,12 +109,21 @@ public class PeaToDotTestSuite {
 
 	@BeforeClass
 	public static void beforeClass() throws IOException {
-		// Check if markdown and image directory exist.
+		// Check if root directory exists.
+		assert (Files.isDirectory(Paths.get(ROOT_DIR))) : "Directory not found: '" + ROOT_DIR + "'";
+
 		final File image_dir = new File(ROOT_DIR + IMAGE_DIR);
 		final File markdown_dir = new File(ROOT_DIR + MARKDOWN_DIR);
 
-		assert (image_dir.isDirectory()) : "Directory not found: '" + image_dir + "'";
-		assert (markdown_dir.isDirectory()) : "Directory not found: '" + markdown_dir + "'";
+		// Check if parent directories exist.
+		assert (image_dir.getParentFile().isDirectory()) : "Directory not found: '" + image_dir.getParentFile() + "'";
+		assert (markdown_dir.getParentFile().isDirectory()) : "Directory not found: '" + markdown_dir.getParentFile()
+				+ "'";
+
+		// Check if markdown, image directory exist. If not create them.
+		assert (image_dir.isDirectory() || image_dir.mkdir()) : "Could not create directory: '" + image_dir + "'";
+		assert (markdown_dir.isDirectory() || markdown_dir.mkdir()) : "Could not create directory: '" + markdown_dir
+				+ "'";
 
 		// Delete auto-generated markdown and image files.
 		Stream.of(markdown_dir.listFiles()).filter(a -> a.getName().endsWith(".md")).forEach(a -> a.delete());
