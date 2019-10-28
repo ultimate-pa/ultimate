@@ -145,14 +145,14 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final BoundedPetriNet<LETTER, IPredicate> cfg =
 					CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices, mIcfg,
 							mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
-			if (mPref.useLbeInConcurrentAnalysis()) {
-				long start_time = System.currentTimeMillis();
+			if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
+				final long start_time = System.currentTimeMillis();
 				mLBE = new PetriNetLargeBlockEncoding(mServices, mIcfg.getCfgSmtToolkit(),
 						(BoundedPetriNet<IIcfgTransition<?>, IPredicate>) cfg, mPref.useLbeInConcurrentAnalysis());
 				final BoundedPetriNet<LETTER, IPredicate> lbecfg = (BoundedPetriNet<LETTER, IPredicate>) mLBE.getResult();
 				mAbstraction = lbecfg;
-				long end_time = System.currentTimeMillis();
-				long difference = end_time - start_time;
+				final long end_time = System.currentTimeMillis();
+				final long difference = end_time - start_time;
 				mLogger.info("Time needed for LBE in milliseconds: " + difference);
 
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
