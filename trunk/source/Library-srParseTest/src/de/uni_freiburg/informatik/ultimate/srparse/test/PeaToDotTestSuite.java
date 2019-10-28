@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternScopeNotImplemented;
@@ -62,14 +63,17 @@ public class PeaToDotTestSuite {
 
 	@Test
 	public void testDot() throws IOException, InterruptedException {
-		PhaseEventAutomata pea;
+		final PhaseEventAutomata pea;
+		final CounterTrace counterTrace;
 		try {
 			pea = mPattern.transformToPea(mLogger, mDurationToBounds);
+			counterTrace = mPattern.constructCounterTrace(mDurationToBounds);
 		} catch (final PatternScopeNotImplemented e) {
 			return; // Oops, somebody forgot to implement that sh.. ;-)
 		}
 
 		mLogger.info(DotWriterNew.createDotString(pea));
+		mLogger.info(counterTrace.toString());
 
 		writeDotToSvg(DotWriterNew.createDotString(pea));
 		writeMarkdown();

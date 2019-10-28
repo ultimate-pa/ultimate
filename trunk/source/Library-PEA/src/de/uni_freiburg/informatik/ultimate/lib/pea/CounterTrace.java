@@ -88,7 +88,7 @@ public class CounterTrace {
 
 	@Override
 	public String toString() {
-		return Arrays.stream(getPhases()).map(a -> a.toString(false)).collect(Collectors.joining(";"));
+		return Arrays.stream(getPhases()).map(a -> a.toString(true)).collect(Collectors.joining(";"));
 	}
 
 	public static class DCPhase {
@@ -171,8 +171,9 @@ public class CounterTrace {
 			final String NOEVENT = useUnicode ? "\u229F" : "[-]";
 			final String GEQ = useUnicode ? ZString.GEQ : ">=";
 			final String LEQ = useUnicode ? ZString.LEQ : "<=";
-			final String LCEIL = useUnicode ? "\u23A1" : "[";
-			final String RCEIL = useUnicode ? "\u23A4" : "]";
+
+			final String LCEIL = useUnicode ? "\u2308" : "[";
+			final String RCEIL = useUnicode ? "\u2309" : "]";
 			final String ELL = useUnicode ? "\u2113" : "L";
 
 			final StringBuilder sb = new StringBuilder();

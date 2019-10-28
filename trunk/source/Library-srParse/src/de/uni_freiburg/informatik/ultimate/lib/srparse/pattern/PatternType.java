@@ -67,18 +67,22 @@ public abstract class PatternType {
 
 	public PhaseEventAutomata transformToPea(final ILogger logger, final Map<String, Integer> id2bounds) {
 		if (mPea == null) {
-			final CDD[] cdds = getCddsAsArray();
-			final int[] durations = getDurationsAsIntArray(id2bounds);
-			assert cdds.length == getExpectedCddSize() : "Wrong number of observables for pattern " + getPatternName();
-			assert durations.length == getExpectedDurationSize() : "Wrong number of durations for pattern "
-					+ getPatternName();
-			final CounterTrace ct = transform(cdds, durations);
+			final CounterTrace ct = constructCounterTrace(id2bounds);
 			final String name = getId() + "_" + createPeaSuffix();
-			final Trace2PeaCompilerStateless compiler = new Trace2PeaCompilerStateless(logger, name, ct,
-					id2bounds.keySet());
+			final Trace2PeaCompilerStateless compiler =
+					new Trace2PeaCompilerStateless(logger, name, ct, id2bounds.keySet());
 			mPea = compiler.getResult();
 		}
 		return mPea;
+	}
+
+	public CounterTrace constructCounterTrace(final Map<String, Integer> id2bounds) {
+		final CDD[] cdds = getCddsAsArray();
+		final int[] durations = getDurationsAsIntArray(id2bounds);
+		assert cdds.length == getExpectedCddSize() : "Wrong number of observables for pattern " + getPatternName();
+		assert durations.length == getExpectedDurationSize() : "Wrong number of durations for pattern "
+				+ getPatternName();
+		return transform(cdds, durations);
 	}
 
 	protected abstract CounterTrace transform(CDD[] cdds, int[] durations);
