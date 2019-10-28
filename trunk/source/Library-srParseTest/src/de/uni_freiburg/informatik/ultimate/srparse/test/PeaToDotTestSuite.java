@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -58,7 +59,7 @@ public class PeaToDotTestSuite {
 		mScope = scope.getSimpleName().replace(scope.getSuperclass().getSimpleName(), "");
 	}
 
-	// @Test
+	@Test
 	public void testDot() throws IOException, InterruptedException {
 		PhaseEventAutomata pea;
 		try {

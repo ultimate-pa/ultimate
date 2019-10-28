@@ -90,7 +90,8 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict inequality of the form "x - y < c"
+	 * Returns a {@link NestedWordAutomaton} representing a strict inequality of the
+	 * form "x - y < c"
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int or c is less than 0.
@@ -145,14 +146,15 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict inequality of the form "-x < c".
+	 * Returns a {@link NestedWordAutomaton} representing a strict inequality of the
+	 * form "-x < c".
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type Int or c is less than 0.
 	 */
 	@Override
-	public NestedWordAutomaton<MSODAlphabetSymbol, String>
-			strictNegIneqAutomaton(final AutomataLibraryServices services, final Term x, final Rational c) {
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> strictNegIneqAutomaton(
+			final AutomataLibraryServices services, final Term x, final Rational c) {
 
 		if (!MSODUtils.isIntVariable(x) || c.isNegative()) {
 			throw new IllegalArgumentException("Input x must be an Int variable and c must be >= 0.");
@@ -182,7 +184,8 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict subset relation of the form " X ⊊ Y".
+	 * Returns a {@link NestedWordAutomaton} representing a strict subset relation
+	 * of the form " X ⊊ Y".
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
@@ -246,7 +249,8 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns an {@link INestedWordAutomaton} representing an element relation of the form "x + c ∈ Y".
+	 * Returns an {@link INestedWordAutomaton} representing an element relation of
+	 * the form "x + c ∈ Y".
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int, SetOfInt or c is smaller than 0.
@@ -300,7 +304,8 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing an element relation of the form " c ∈ X".
+	 * Returns a {@link NestedWordAutomaton} representing an element relation of the
+	 * form " c ∈ X".
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type SetOfInt or c is smaller than 0.
