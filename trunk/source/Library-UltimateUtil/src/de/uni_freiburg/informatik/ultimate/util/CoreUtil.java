@@ -71,8 +71,7 @@ public class CoreUtil {
 	private static final String PLATFORM_LINE_SEPARATOR = System.getProperty("line.separator");
 	public static final String OS = System.getProperty("os.name");
 	public static final boolean OS_IS_WINDOWS = OS.toLowerCase().indexOf("win") >= 0;
-
-	private static final String[] PATHEXT = System.getenv("PATHEXT").split(File.pathSeparator);
+	private static final String PATHEXT = System.getenv("PATHEXT");
 
 	public static String getPlatformLineSeparator() {
 		return PLATFORM_LINE_SEPARATOR;
@@ -183,7 +182,11 @@ public class CoreUtil {
 
 	private static boolean hasWindowsExecutableExtensionAndName(final File file, final String name) {
 		final String filename = file.getName();
-		for (final String ext : PATHEXT) {
+
+		if (PATHEXT == null) {
+			return name.equals(filename);
+		}
+		for (final String ext : PATHEXT.split(File.pathSeparator)) {
 			final int idx = filename.lastIndexOf(ext);
 			if (idx == -1) {
 				continue;
