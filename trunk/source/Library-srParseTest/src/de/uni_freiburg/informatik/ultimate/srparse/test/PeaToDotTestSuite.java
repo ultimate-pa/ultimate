@@ -17,7 +17,6 @@ import java.util.stream.Stream;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -61,7 +60,7 @@ public class PeaToDotTestSuite {
 		mScope = scope.getSimpleName().replace(scope.getSuperclass().getSimpleName(), "");
 	}
 
-	@Test
+	// @Test
 	public void testDot() throws IOException, InterruptedException {
 		final PhaseEventAutomata pea;
 		final CounterTrace counterTrace;
@@ -135,16 +134,16 @@ public class PeaToDotTestSuite {
 		 * List<String> filenames = Arrays.stream(markdownDir.list()).filter(a ->
 		 * a.endsWith(".md")) .sorted(new
 		 * PatternNameComparator()).collect(Collectors.toList());
-		 * 
+		 *
 		 * final File file = new File(ROOT_DIR + MARKDOWN_DIR + "includes.md"); final
 		 * Writer writer = new BufferedWriter(new FileWriter(file));
-		 * 
+		 *
 		 * String prev = null; for (final String filename : filenames) { final String[]
 		 * name = filename.split("_|\\."); assert (name.length == 3);
-		 * 
+		 *
 		 * if (prev == null || !name[0].equals(prev)) { writer.write("## " + name[0] +
 		 * System.lineSeparator()); }
-		 * 
+		 *
 		 * writer.write("{!" + MARKDOWN_DIR + filename + "!}" + System.lineSeparator());
 		 * prev = name[0]; } writer.close();
 		 */
@@ -154,10 +153,11 @@ public class PeaToDotTestSuite {
 	public static Collection<Object[]> data() {
 		final Pair<List<PatternType>, Map<String, Integer>> pair = PatternUtil.createAllPatterns();
 
-		return pair.getFirst().stream().map(a -> new Object[] { a, pair.getSecond() }).collect(Collectors.toList());
+		return pair.getFirst().stream().sorted(new PatternNameComparator())
+				.map(a -> new Object[] { a, pair.getSecond() }).collect(Collectors.toList());
 	}
 
-	private static final class PatternNameComparator implements Comparator<String> {
+	private static final class PatternNameComparator implements Comparator<PatternType> {
 
 		private static final Map<String, Integer> SCOPE_ORDER = new HashMap<>();
 
@@ -170,19 +170,19 @@ public class PeaToDotTestSuite {
 		}
 
 		@Override
-		public int compare(final String str1, final String str2) {
-			final String[] s1 = str1.split("_|\\.");
-			final String[] s2 = str2.split("_|\\.");
-			assert (s1.length == 3);
-			assert (s2.length == 3);
+		public int compare(final PatternType pattern1, final PatternType pattern2) {
+			final String name1 = pattern1.getClass().getSimpleName();
+			final String name2 = pattern1.getClass().getSimpleName();
 
-			final int order = s1[0].compareTo(s2[0]);
+			final String scope1 = pattern1.getScope().getClass().getSimpleName().replace("SrParseScope", "");
+			final String scope2 = pattern2.getScope().getClass().getSimpleName().replace("SrParseScope", "");
 
+			final int order = name1.compareTo(name2);
 			if (order != 0) {
 				return order;
 			}
 
-			return SCOPE_ORDER.get(s1[1]) - SCOPE_ORDER.get(s2[1]);
+			return SCOPE_ORDER.get(scope1) - SCOPE_ORDER.get(scope2);
 		}
 	}
 }
