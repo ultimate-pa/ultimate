@@ -78,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncodingBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncodingStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncodingStatisticsGenerator;
@@ -134,7 +135,7 @@ public class PetriNetLargeBlockEncoding {
 	 *            if Petri Net is not 1-safe.
 	 */
 	public PetriNetLargeBlockEncoding(final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
-			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet)
+			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet, final PetriNetLbe petriNetLbeSettings)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mServices = services;
@@ -151,17 +152,25 @@ public class PetriNetLargeBlockEncoding {
 			mCoEnabledRelation = computeCoEnabledRelation(bp);
 
 			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> syntaxCheck = new SyntacticIndependenceRelation<>();
-			if (USE_SEMANTIC_CHECK) {
+			switch (petriNetLbeSettings) {
+			case OFF:
+				throw new IllegalArgumentException("do not call LBE if you don't want to use it");
+			case SEMANTIC_BASED_MOVER_CHECK:
+				// TODO: Add more detail to log message
+				mLogger.info("Semantic Check.");
 				final IIndependenceRelation<IPredicate, IIcfgTransition<?>> semanticCheck = new SemanticIndependenceRelation(mServices, mManagedScript, false, false);
 				final IIndependenceRelation<IPredicate, IIcfgTransition<?>> cachedCheck = new CachedIndependenceRelation<>(semanticCheck);
 				mMoverCheck = new UnionIndependenceRelation<IPredicate, IIcfgTransition<?>>(Arrays.asList(syntaxCheck, cachedCheck));
-			} else {
-				mMoverCheck = syntaxCheck;
-			}
-			if (USE_SEMANTIC_CHECK) {
-				mLogger.info("Semantic Check.");
-			} else {
+				break;
+			case VARIABLE_BASED_MOVER_CHECK:
+				// TODO: Add more detail to log message. Users may wonder:
+				// * which variable is checked?
+				// * is there also a constant check?
 				mLogger.info("Variable Check.");
+				mMoverCheck = syntaxCheck;
+				break;
+			default:
+				throw new AssertionError("unknown value " + petriNetLbeSettings);
 			}
 			BoundedPetriNet<IIcfgTransition<?>, IPredicate> result1 = sequenceRule(services, petriNet);
 			BoundedPetriNet<IIcfgTransition<?>, IPredicate> result2 = sequenceRule(services, result1);
