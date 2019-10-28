@@ -5,10 +5,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -101,8 +99,8 @@ public class PeaToDotTestSuite {
 		markdown.append(formula + "\n\n");
 		markdown.append("![](/" + IMAGE_DIR + mName + "_" + mScope + ".svg)\n");
 
-		final File file = new File(ROOT_DIR + MARKDOWN_DIR + mName + "_" + mScope + ".md");
-		final BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+		final File file = new File(ROOT_DIR + MARKDOWN_DIR + mName + ".md");
+		final BufferedWriter writer = new BufferedWriter(new FileWriter(file, true));
 		writer.write(markdown.toString());
 		writer.close();
 	}
@@ -132,26 +130,24 @@ public class PeaToDotTestSuite {
 
 	@AfterClass
 	public static void afterClass() throws IOException {
-		final File markdownDir = new File(ROOT_DIR + MARKDOWN_DIR);
-		final List<String> filenames = Arrays.stream(markdownDir.list()).filter(a -> a.endsWith(".md"))
-				.sorted(new PatternNameComparator()).collect(Collectors.toList());
-
-		final File file = new File(ROOT_DIR + MARKDOWN_DIR + "includes.md");
-		final Writer writer = new BufferedWriter(new FileWriter(file));
-
-		String prev = null;
-		for (final String filename : filenames) {
-			final String[] name = filename.split("_|\\.");
-			assert (name.length == 3);
-
-			if (prev == null || !name[0].equals(prev)) {
-				writer.write("## " + name[0] + System.lineSeparator());
-			}
-
-			writer.write("{!" + MARKDOWN_DIR + filename + "!}" + System.lineSeparator());
-			prev = name[0];
-		}
-		writer.close();
+		/*
+		 * final File markdownDir = new File(ROOT_DIR + MARKDOWN_DIR); final
+		 * List<String> filenames = Arrays.stream(markdownDir.list()).filter(a ->
+		 * a.endsWith(".md")) .sorted(new
+		 * PatternNameComparator()).collect(Collectors.toList());
+		 * 
+		 * final File file = new File(ROOT_DIR + MARKDOWN_DIR + "includes.md"); final
+		 * Writer writer = new BufferedWriter(new FileWriter(file));
+		 * 
+		 * String prev = null; for (final String filename : filenames) { final String[]
+		 * name = filename.split("_|\\."); assert (name.length == 3);
+		 * 
+		 * if (prev == null || !name[0].equals(prev)) { writer.write("## " + name[0] +
+		 * System.lineSeparator()); }
+		 * 
+		 * writer.write("{!" + MARKDOWN_DIR + filename + "!}" + System.lineSeparator());
+		 * prev = name[0]; } writer.close();
+		 */
 	}
 
 	@Parameters()
