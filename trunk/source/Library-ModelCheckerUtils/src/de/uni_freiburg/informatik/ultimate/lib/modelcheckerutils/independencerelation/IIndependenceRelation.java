@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation;
 
 /**
  * An independence relation that is used in Partial Order or Lipton reductions.

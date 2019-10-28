@@ -1,9 +1,10 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation;
 
 import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
@@ -13,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Xn
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 
 /**
  * An independence relation that implements an SMT-based inclusion or equality
@@ -53,7 +53,7 @@ public class SemanticIndependenceRelation implements IIndependenceRelation<IPred
 			final boolean conditional, final boolean symmetric) {
 		mServices = services;
 		mManagedScript = mgdScript;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 
 		mConditional = conditional;
 		mSymmetric = symmetric;

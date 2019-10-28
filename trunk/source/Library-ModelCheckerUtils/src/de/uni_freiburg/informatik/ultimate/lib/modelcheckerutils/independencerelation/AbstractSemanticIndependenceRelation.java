@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +9,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -27,7 +28,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -76,7 +76,7 @@ public class AbstractSemanticIndependenceRelation implements IIndependenceRelati
 			final boolean conditional, final boolean symmetric) {
 		mServices = services;
 		mManagedScript = mgdScript;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 
 		mChecker = checker;
 		mPredicates = predicates;
@@ -139,7 +139,7 @@ public class AbstractSemanticIndependenceRelation implements IIndependenceRelati
 		return abstraction;
 	}
 
-	private final UnmodifiableTransFormula concretizeAbstraction(HashRelation<IPredicate, IPredicate> abstraction) {
+	private final UnmodifiableTransFormula concretizeAbstraction(final HashRelation<IPredicate, IPredicate> abstraction) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
 
 		// Construct a substitution to apply to postconditions.

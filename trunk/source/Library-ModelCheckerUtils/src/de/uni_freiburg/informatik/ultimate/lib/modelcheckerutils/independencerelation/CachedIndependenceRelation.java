@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation;
 
 import java.util.HashMap;
 import java.util.Map;

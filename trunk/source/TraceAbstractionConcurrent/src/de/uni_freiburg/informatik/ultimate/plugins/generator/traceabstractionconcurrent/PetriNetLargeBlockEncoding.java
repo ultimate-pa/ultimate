@@ -70,6 +70,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation.CachedIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation.SemanticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation.SyntacticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -82,11 +87,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ba
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncodingBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncodingStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncodingStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction.CachedIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction.SemanticIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction.SyntacticIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.reduction.UnionIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
