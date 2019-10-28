@@ -26,7 +26,7 @@
  * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,9 +84,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncodingBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncodingStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncodingStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -112,7 +109,6 @@ public class PetriNetLargeBlockEncoding {
 	private final Map<IIcfgTransition<?>, List<IIcfgTransition<?>>> mSequentialCompositions = new HashMap<>();
 	private final Map<IIcfgTransition<?>, Triple<TermVariable, IIcfgTransition<?>, IIcfgTransition<?>>> mChoiceCompositions = new HashMap<>();
 
-	private final boolean USE_SEMANTIC_CHECK = true;
 	private final IIndependenceRelation<?, IIcfgTransition<?>> mMoverCheck;
 	private int i = 0;
 	private int mMoverChecks = 0;
