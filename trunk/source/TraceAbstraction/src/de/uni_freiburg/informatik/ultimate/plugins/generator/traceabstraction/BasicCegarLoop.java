@@ -176,6 +176,19 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	}
 
+	public enum PetriNetLbe {
+
+		OFF,
+		/**
+		 * TODO: documentation
+		 */
+		SEMANTIC_BASED_MOVER_CHECK,
+		/**
+		 * TODO: documentation
+		 */
+		VARIABLE_BASED_MOVER_CHECK,
+	}
+
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;

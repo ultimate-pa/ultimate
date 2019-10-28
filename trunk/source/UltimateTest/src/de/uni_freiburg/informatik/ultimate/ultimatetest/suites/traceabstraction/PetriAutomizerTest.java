@@ -75,7 +75,8 @@ public class PetriAutomizerTest extends AbstractTraceAbstractionTestSuite {
 	 */
 	private static final String[] mSettings = {
 			"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf",
-			"automizer/svcomp-Reach-32bit-Automizer_Default-PetriNetLbe.epf",
+			"automizer/svcomp-Reach-32bit-Automizer_Default-PetriNetLbeSemanticBasedCheck.epf",
+			"automizer/svcomp-Reach-32bit-Automizer_Default-PetriNetLbeVariableBasedCheck.epf",
 	};
 
 	/**

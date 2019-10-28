@@ -103,7 +103,8 @@ public class Svcomp19FoldersAutomizerConcurrentPetriNetLbe extends AbstractTrace
 	 */
 	private static final String[] SETTINGS_32BIT = {
 		"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf",
-		"automizer/svcomp-Reach-32bit-Automizer_Default-PetriNetLbe.epf",
+		"automizer/svcomp-Reach-32bit-Automizer_Default-PetriNetLbeSemanticBasedCheck.epf",
+		"automizer/svcomp-Reach-32bit-Automizer_Default-PetriNetLbeVariableBasedCheck.epf",
 	};
 
 	private static final String[] SETTINGS_64BIT = {

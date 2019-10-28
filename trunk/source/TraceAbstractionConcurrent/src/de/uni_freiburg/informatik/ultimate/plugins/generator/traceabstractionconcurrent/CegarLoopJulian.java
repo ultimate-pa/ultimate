@@ -54,9 +54,11 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference.LoopSyncMethod;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix2PetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.UnfoldingOrder;
@@ -146,7 +148,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			if (mPref.useLbeInConcurrentAnalysis()) {
 				long start_time = System.currentTimeMillis();
 				mLBE = new PetriNetLargeBlockEncoding(mServices, mIcfg.getCfgSmtToolkit(),
-						(BoundedPetriNet<IIcfgTransition<?>, IPredicate>) cfg);
+						(BoundedPetriNet<IIcfgTransition<?>, IPredicate>) cfg, mPref.useLbeInConcurrentAnalysis());
 				final BoundedPetriNet<LETTER, IPredicate> lbecfg = (BoundedPetriNet<LETTER, IPredicate>) mLBE.getResult();
 				mAbstraction = lbecfg;
 				long end_time = System.currentTimeMillis();
@@ -208,7 +210,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 	@Override
 	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
-		if (mPref.useLbeInConcurrentAnalysis()) {
+		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 			return mLBE.translateExecution(mRcfgProgramExecution);
 		}
 		return super.getRcfgProgramExecution();

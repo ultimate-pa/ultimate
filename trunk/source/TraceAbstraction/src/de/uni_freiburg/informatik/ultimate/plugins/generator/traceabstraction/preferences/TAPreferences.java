@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuild
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
@@ -144,7 +145,7 @@ public final class TAPreferences {
 
 		mHeuristicEmptinessCheck = mPrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK);
-		
+
 		mSMTFeatureExtraction = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION);
 		mSMTFeatureExtractionDumpPath = mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH);
 
@@ -305,8 +306,9 @@ public final class TAPreferences {
 		return mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_ORDER);
 	}
 
-	public boolean useLbeInConcurrentAnalysis() {
-		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LBE_CONCURRENCY);
+	public PetriNetLbe useLbeInConcurrentAnalysis() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LBE_CONCURRENCY,
+				PetriNetLbe.class);
 	}
 
 	public SimplificationTechnique getSimplificationTechnique() {
