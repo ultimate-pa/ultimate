@@ -36,7 +36,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 
-	private static final String ROOT_DIR = "/media/ubuntu/Daten/Projects/hanfor/documentation/docs/";
+	// private static final String ROOT_DIR = "/media/ubuntu/Daten/Projects/hanfor/documentation/docs/";
+	private static final String ROOT_DIR = "F:/repos/hanfor/documentation/docs/";
 	private static final String MARKDOWN_DIR = "usage/patterns/";
 	private static final String IMAGE_DIR = "img/patterns/";
 
@@ -147,15 +148,15 @@ public class PeaToDotTestSuite {
 
 	private static final class PatternNameComparator implements Comparator<String> {
 
-		private static final Map<String, Integer> mScopeOrder = new HashMap<String, Integer>() {
-			{
-				put("Globally", 0);
-				put("Before", 1);
-				put("After", 2);
-				put("Between", 3);
-				put("AfterUntil", 4);
-			}
-		};
+		private static final Map<String, Integer> SCOPE_ORDER = new HashMap<>();
+
+		static {
+			SCOPE_ORDER.put("Globally", 0);
+			SCOPE_ORDER.put("Before", 1);
+			SCOPE_ORDER.put("After", 2);
+			SCOPE_ORDER.put("Between", 3);
+			SCOPE_ORDER.put("AfterUntil", 4);
+		}
 
 		@Override
 		public int compare(final String str1, final String str2) {
@@ -170,7 +171,7 @@ public class PeaToDotTestSuite {
 				return order;
 			}
 
-			return mScopeOrder.get(s1[1]) - mScopeOrder.get(s2[1]);
+			return SCOPE_ORDER.get(s1[1]) - SCOPE_ORDER.get(s2[1]);
 		}
 	}
 }
