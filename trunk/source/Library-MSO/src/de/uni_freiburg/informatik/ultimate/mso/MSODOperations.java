@@ -322,8 +322,7 @@ public final class MSODOperations {
 	}
 
 	/**
-	 * TODO: Deal with empty set, if word length is not 0. Returns a Map containing terms and the disjunction
-	 * corresponding to the numbers encoded in the given stem.
+	 * Returns a Map containing terms and the disjunction corresponding to the numbers encoded in the given stem.
 	 */
 	public Map<Term, Term> constructStemTerm(final Script script, final Map<Term, Set<BigInteger>> stemNumbers) {
 		final Map<Term, Term> result = new HashMap<>();

@@ -17,5 +17,4 @@
 (assert (forall ((y Int)) (=> (and (not (I y)) (<= y 20)) (not (I (+ y 2))))))
 
 (check-sat)
-(get-model)
 (get-value (I))
