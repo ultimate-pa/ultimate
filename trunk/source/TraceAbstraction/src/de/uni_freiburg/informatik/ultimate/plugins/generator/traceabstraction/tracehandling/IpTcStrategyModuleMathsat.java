@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscri
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -73,19 +72,10 @@ public class IpTcStrategyModuleMathsat<LETTER extends IIcfgTransition<?>> extend
 
 	@Override
 	protected ManagedScript constructManagedScript() {
-		final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
-		final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
-		final String baseNameOfDumpedScript = mTaskIdentifier.toString();
-		final String solverName = "TraceCheck_Iteration_" + baseNameOfDumpedScript;
-
-		final String command = SolverBuilder.COMMAND_MATHSAT;
-		final SolverSettings solverSettings = new SolverSettings(false, true, command, 0, null, dumpSmtScriptToFile,
-				pathOfDumpedScript, baseNameOfDumpedScript);
-
-		final SolverMode solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-		final Logics logicForExternalSolver = SolverBuilder.LOGIC_MATHSAT;
-		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverMode, solverSettings,
-				logicForExternalSolver, solverName);
+		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier)
+				.setUseExternalSolver(true, SolverBuilder.COMMAND_MATHSAT, SolverBuilder.LOGIC_MATHSAT)
+				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
+		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, getSolverName());
 		return createExternalManagedScript(solver);
 	}
 

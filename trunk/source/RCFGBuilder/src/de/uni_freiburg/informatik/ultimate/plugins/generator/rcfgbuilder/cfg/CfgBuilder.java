@@ -315,12 +315,14 @@ public class CfgBuilder {
 
 		final Logics logicForExternalSolver =
 				Logics.valueOf(prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
-		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(solverMode,
-				fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, dumpUnsatCoreTrackBenchmark,
-				dumpMainTrackBenchmark, filename, pathOfDumpedScript);
+		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
+				.setUseFakeIncrementalScript(fakeNonIncrementalScript)
+				.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename)
+				.setDumpUnsatCoreTrackBenchmark(dumpUnsatCoreTrackBenchmark)
+				.setDumpMainTrackBenchmark(dumpMainTrackBenchmark)
+				.setUseExternalSolver(true, commandExternalSolver, logicForExternalSolver).setSolverMode(solverMode);
 
-		return SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings, logicForExternalSolver,
-				"CfgBuilderScript");
+		return SolverBuilder.buildAndInitializeSolver(services, solverSettings, "CfgBuilderScript");
 	}
 
 	private static Expression getNegation(final Expression expr) {

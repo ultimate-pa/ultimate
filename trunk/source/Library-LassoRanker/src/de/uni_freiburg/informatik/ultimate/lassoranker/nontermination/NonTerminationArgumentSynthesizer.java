@@ -174,16 +174,17 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 */
 	@Override
 	protected Script constructScript(final ILassoRankerPreferences preferences, final String constraintsName) {
-		final SolverSettings settings = preferences
-				.getSolverConstructionSettings(preferences.getBaseNameOfDumpedScript() + "+" + constraintsName);
 		final SolverMode solverMode;
 		if (preferences.isAnnotateTerms()) {
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 		} else {
 			solverMode = SolverMode.External_ModelsMode;
 		}
+		final SolverSettings settings = preferences.getSolverConstructionSettings(solverMode,
+				preferences.getBaseNameOfDumpedScript() + "+" + constraintsName);
+
 		final String solverId = "NonTerminationArgumentSynthesis solver ";
-		return SolverBuilder.buildAndInitializeSolver(mServices, solverMode, settings, null, solverId);
+		return SolverBuilder.buildAndInitializeSolver(mServices, settings, solverId);
 	}
 
 	@Override

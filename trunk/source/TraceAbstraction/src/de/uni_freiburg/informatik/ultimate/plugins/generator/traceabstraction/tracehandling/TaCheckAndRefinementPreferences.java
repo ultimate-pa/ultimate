@@ -33,9 +33,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -65,7 +69,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final String mCommandExternalSolver;
 	private final boolean mDumpSmtScriptToFile;
 	private final String mPathOfDumpedScript;
-	private final String mLogicForExternalSolver;
+	private final Logics mLogicForExternalSolver;
 	private final RefinementStrategyExceptionBlacklist mExceptionBlacklist;
 
 	// fields that can be read from the IUltimateServiceProvider
@@ -82,6 +86,8 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final IUltimateServiceProvider mServices;
 	private final boolean mUsePredicateTrieBasedPredicateUnifier;
 	private final boolean mUseMCR;
+	private final String mFeatureVectorDumpPath;
+	private final boolean mDumpFeatureVectors;
 
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
@@ -127,6 +133,8 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		mLogicForExternalSolver = taPrefs.logicForExternalSolver();
 		mExceptionBlacklist = taPrefs.getRefinementStrategyExceptionSpecification();
 		mCollectInterpolantStatistics = taPrefs.collectInterpolantStatistics();
+		mDumpFeatureVectors = taPrefs.useSMTFeatureExtraction();
+		mFeatureVectorDumpPath = taPrefs.getSMTFeatureExtractionDumpPath();
 
 		final IPreferenceProvider ultimatePrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAssertCodeBlocksOrder =
@@ -149,6 +157,14 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_COUNTEREXAMPLE);
 		mUsePredicateTrieBasedPredicateUnifier = ultimatePrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER);
+	}
+
+	private String getFeatureVectorsDumpPath() {
+		return mFeatureVectorDumpPath;
+	}
+
+	private boolean dumpFeatureVectors() {
+		return mDumpFeatureVectors;
 	}
 
 	public RefinementStrategy getRefinementStrategy() {
@@ -182,7 +198,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		return mPathOfDumpedScript;
 	}
 
-	public String getLogicForExternalSolver() {
+	public Logics getLogicForExternalSolver() {
 		return mLogicForExternalSolver;
 	}
 
@@ -279,4 +295,18 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	public boolean usePredicateTrieBasedPredicateUnifier() {
 		return mUsePredicateTrieBasedPredicateUnifier;
 	}
+
+	/**
+	 *
+	 * @param identifier
+	 * @return
+	 */
+	public SolverSettings constructSolverSettings(final TaskIdentifier identifier) {
+		return SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(getFakeNonIncrementalSolver())
+				.setDumpFeatureVectors(dumpFeatureVectors(), getFeatureVectorsDumpPath())
+				.setDumpSmtScriptToFile(getDumpSmtScriptToFile(), getPathOfDumpedScript(), identifier.toString())
+				.setUseExternalSolver(true, getCommandExternalSolver(), getLogicForExternalSolver())
+				.setSolverMode(getSolverMode());
+	}
+
 }

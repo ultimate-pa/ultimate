@@ -32,6 +32,8 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConve
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.mapelimination.MapEliminationSettings;
 
@@ -135,15 +137,22 @@ public interface ILassoRankerPreferences {
 	/**
 	 * Construct Settings for building a solver.
 	 *
+	 * @param solverMode
+	 *
 	 * @param filenameDumpedScript
 	 *            basename (without path and file ending) of the SMT script that is dumped if dumpSmtSolverScript is set
 	 *            to true
 	 * @return a Settings object that allows us to build a new solver.
 	 */
-	default SolverSettings getSolverConstructionSettings(final String filenameDumpedScript) {
+	default SolverSettings getSolverConstructionSettings(final SolverMode solverMode,
+			final String filenameDumpedScript) {
 		final long timeoutSmtInterpol = 365 * 24 * 60 * 60 * 1000L;
-		return new SolverSettings(isFakeNonIncrementalScript(), isExternalSolver(), getExternalSolverCommand(),
-				timeoutSmtInterpol, null, isDumpSmtSolverScript(), getPathOfDumpedScript(), filenameDumpedScript);
+
+		return SolverBuilder.constructSolverSettings().setSolverMode(solverMode)
+				.setUseFakeIncrementalScript(isFakeNonIncrementalScript())
+				.setUseExternalSolver(true, getExternalSolverCommand(), null)
+				.setDumpSmtScriptToFile(isDumpSmtSolverScript(), getPathOfDumpedScript(), getBaseNameOfDumpedScript())
+				.setSmtInterpolTimeout(timeoutSmtInterpol);
 	}
 
 	default MapEliminationSettings getMapEliminationSettings(final SimplificationTechnique simplificationTechnique,

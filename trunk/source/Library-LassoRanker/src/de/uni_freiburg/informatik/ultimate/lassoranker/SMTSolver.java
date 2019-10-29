@@ -55,8 +55,8 @@ public class SMTSolver {
 	 */
 	public static Script newScript(final ILassoRankerPreferences preferences, final String constraintsName,
 			final IUltimateServiceProvider services) {
-		final SolverSettings settings = preferences
-				.getSolverConstructionSettings(preferences.getBaseNameOfDumpedScript() + "+" + constraintsName);
+		final SolverSettings settings = preferences.getSolverConstructionSettings(null,
+				preferences.getBaseNameOfDumpedScript() + "+" + constraintsName);
 		final Script script = SolverBuilder.buildScript(services, settings);
 
 		// Set options

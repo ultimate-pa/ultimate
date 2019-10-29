@@ -45,11 +45,10 @@ public class ReqToTestObserver extends BaseObserver {
 	public ReqToTestObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
-
-		final SolverSettings settings = SolverBuilder.constructSolverSettings(SolverMode.External_DefaultMode, false,
-				SolverBuilder.COMMAND_Z3_NO_TIMEOUT);
-		mScript = SolverBuilder.buildAndInitializeSolver(services, SolverMode.External_DefaultMode, settings,
-				Logics.ALL, "RtInconsistencySolver");
+		final SolverSettings settings =
+				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.External_DefaultMode)
+						.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, Logics.ALL);
+		mScript = SolverBuilder.buildAndInitializeSolver(services, settings, "RtInconsistencySolver");
 
 		mManagedScript = new ManagedScript(services, mScript);
 

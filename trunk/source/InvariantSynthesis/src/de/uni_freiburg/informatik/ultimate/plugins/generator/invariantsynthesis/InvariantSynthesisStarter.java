@@ -66,6 +66,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.dangerinvariant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -114,8 +116,8 @@ public class InvariantSynthesisStarter {
 		final XnfConversionTechnique xnfConversionTechnique =
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
-		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mgdScript,
-				icfg.getCfgSmtToolkit().getSymbolTable());
+		final PredicateFactory predicateFactory =
+				new PredicateFactory(mServices, mgdScript, icfg.getCfgSmtToolkit().getSymbolTable());
 		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, mServices, mgdScript, predicateFactory,
 				icfg.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique);
 
@@ -264,9 +266,14 @@ public class InvariantSynthesisStarter {
 		final String pathOfDumpedScript = "dump/";
 		final String baseNameOfDumpedScript =
 				useNonlinearConstraints ? "Nonlinear" + "_" + cfgIdentifier : "Linear" + "_" + cfgIdentifier;
-		final SolverSettings solverSettings =
-				new SolverSettings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver,
-						timeoutSmtInterpol, null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
+
+		// DD 2019-10-29: These solver settings were only used with SolverMode.External_DefaultMode, in
+		// LinearInequalityInvariantPatternProcessorFactory#produceSmtSolver()
+		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
+				.setSolverMode(SolverMode.External_DefaultMode).setUseFakeIncrementalScript(fakeNonIncrementalScript)
+				.setUseExternalSolver(useExternalSolver, commandExternalSolver, null)
+				.setSmtInterpolTimeout(timeoutSmtInterpol)
+				.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 
 		final boolean useUnsatCores = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_UNSAT_CORES);
 		final boolean useLBE = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_LARGE_BLOCK_ENCODING);

@@ -83,7 +83,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.pdr.PdrBenchmark.PdrStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -1138,9 +1137,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		// one to represent the predicates
 		// we extract and one to perform the actual checks
 		final SolverSettings solverSettings =
-				SolverBuilder.constructSolverSettings(SolverMode.Internal_SMTInterpol, false, null);
-		final Script script = SolverBuilder.buildAndInitializeSolver(services, SolverMode.Internal_SMTInterpol,
-				solverSettings, Logics.ALL, "PdrSolver");
+				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol);
+		final Script script = SolverBuilder.buildAndInitializeSolver(services, solverSettings, "PdrSolver");
 
 		csToolkit.getSmtFunctionsAndAxioms().transferSymbols(script);
 		return new ManagedScript(services, script);

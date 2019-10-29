@@ -131,31 +131,11 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		final Linearity linearity = mUseNonlinearConstraints ? Linearity.NONLINEAR : Linearity.LINEAR;
 		final Logics logic = ConstraintSynthesisUtils.getLogic(linearity, useAlsoIntegers);
 
-		Script script = SolverBuilder.buildAndInitializeSolver(mServices, SolverMode.External_DefaultMode,
-				mSolverSettings, logic, "InvariantSynthesis");
+		final SolverSettings settings =
+				mSolverSettings.setSolverMode(SolverMode.External_DefaultMode).setExternalSolverLogics(logic);
+		Script script = SolverBuilder.buildAndInitializeSolver(mServices, settings, "InvariantSynthesis");
 		script = new ScriptWithTermConstructionChecks(script);
 		return script;
-	}
-
-	/**
-	 * Produces SMT solver settings to be used within {@link #produceSmtSolver()}.
-	 *
-	 * @return SMT solver settings to use
-	 */
-	@Deprecated
-	private SolverSettings produceSolverSettings() {
-		final boolean dumpSmtScriptToFile = false;
-		final String pathOfDumpedScript = ".";
-		final String baseNameOfDumpedScript = "contraintSolving";
-		final String solverCommand;
-		if (mUseNonlinearConstraints) {
-			solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";
-		} else {
-			solverCommand = "yices-smt2 --incremental";
-		}
-		final boolean fakeNonIncrementalSolver = false;
-		return new SolverSettings(fakeNonIncrementalSolver, true, solverCommand, -1, null, dumpSmtScriptToFile,
-				pathOfDumpedScript, baseNameOfDumpedScript);
 	}
 
 	@Override

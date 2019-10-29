@@ -269,11 +269,12 @@ public class SmtParser implements ISource {
 			final String command = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getString(SmtParserPreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND);
 
-			SolverSettings solverSettings;
+			SolverSettings solverSettings = SolverBuilder.constructSolverSettings();
 			if (command.isEmpty()) {
-				solverSettings = SolverBuilder.constructSolverSettings(SolverMode.Internal_SMTInterpol, false, "");
+				solverSettings = solverSettings.setSolverMode(SolverMode.Internal_SMTInterpol);
 			} else {
-				solverSettings = SolverBuilder.constructSolverSettings(SolverMode.External_DefaultMode, false, command);
+				solverSettings = solverSettings.setSolverMode(SolverMode.External_DefaultMode)
+						.setUseExternalSolver(true, command, null);
 			}
 
 			final String folderOfDumpedFile = mServices.getPreferenceProvider(Activator.PLUGIN_ID)

@@ -77,19 +77,10 @@ public class IpTcStrategyModuleCvc4<LETTER extends IIcfgTransition<?>> extends I
 
 	@Override
 	protected ManagedScript constructManagedScript() {
-		final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
-		final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
-		final String baseNameOfDumpedScript = mTaskIdentifier.toString();
-		final String solverName = "TraceCheck_Iteration_" + baseNameOfDumpedScript;
-
 		final String command = mUseTimeout ? SolverBuilder.COMMAND_CVC4_TIMEOUT : SolverBuilder.COMMAND_CVC4_NO_TIMEOUT;
-		final SolverSettings solverSettings = new SolverSettings(false, true, command, 0, null, dumpSmtScriptToFile,
-				pathOfDumpedScript, baseNameOfDumpedScript);
-
-		final SolverMode solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-		final Logics logicForExternalSolver = mLogic;
-		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverMode, solverSettings,
-				logicForExternalSolver, solverName);
+		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier)
+				.setUseExternalSolver(true, command, mLogic).setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode);
+		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, getSolverName());
 		return createExternalManagedScript(solver);
 	}
 

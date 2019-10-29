@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 /**
  * Base class for all {@link IpTcStrategyModuleBase} implementations that create an {@link IInterpolatingTraceCheck}
  * using one of the instances of the {@link TraceCheck} family.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -80,5 +80,9 @@ public abstract class IpTcStrategyModuleTraceCheck<T extends IInterpolatingTrace
 	protected ManagedScript createExternalManagedScript(final Script script) {
 		mPrefs.getIcfgContainer().getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferSymbols(script);
 		return new ManagedScript(mServices, script);
+	}
+
+	protected String getSolverName() {
+		return "TraceCheck_Iteration_" + mTaskIdentifier.toString();
 	}
 }

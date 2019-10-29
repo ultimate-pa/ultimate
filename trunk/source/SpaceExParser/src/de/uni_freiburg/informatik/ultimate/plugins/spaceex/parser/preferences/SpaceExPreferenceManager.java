@@ -126,10 +126,12 @@ public class SpaceExPreferenceManager {
 		mLogicForExternalSolver = Logics.valueOf(mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
 				.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
 
-		mSolverSettings = SolverBuilder.constructSolverSettings(mSolverMode, mFakeNonIncrementalScript,
-				mCommandExternalSolver, mDumpSmtScriptToFile, mDumpUsatCoreTrackBenchmark, mDumpMainTrackBenchmark,
-				mModelFilename, mPathOfDumpedScript);
-
+		mSolverSettings = SolverBuilder.constructSolverSettings().setSolverMode(mSolverMode)
+				.setUseFakeIncrementalScript(mFakeNonIncrementalScript)
+				.setUseExternalSolver(true, mCommandExternalSolver, mLogicForExternalSolver)
+				.setDumpSmtScriptToFile(mDumpSmtScriptToFile, mPathOfDumpedScript, mModelFilename)
+				.setDumpUnsatCoreTrackBenchmark(mDumpUsatCoreTrackBenchmark)
+				.setDumpMainTrackBenchmark(mDumpMainTrackBenchmark);
 	}
 
 	private void parseConfigFile(final File configfile) throws Exception {

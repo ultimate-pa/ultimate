@@ -78,19 +78,14 @@ public class IpTcStrategyModuleSmtInterpolSpWp<LETTER extends IIcfgTransition<?>
 
 	@Override
 	protected ManagedScript constructManagedScript() {
-		final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
-		final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
-		final String baseNameOfDumpedScript = mTaskIdentifier.toString();
-		final String solverName = "TraceCheck_Iteration_" + baseNameOfDumpedScript;
-
 		final long timeout = mUseTimeout ? SolverBuilder.TIMEOUT_SMTINTERPOL : SolverBuilder.TIMEOUT_NONE_SMTINTERPOL;
-		final SolverSettings solverSettings = new SolverSettings(false, false, null, timeout, null, dumpSmtScriptToFile,
-				pathOfDumpedScript, baseNameOfDumpedScript);
-
 		final SolverMode solverMode =
 				mArrayInterpolation ? SolverMode.Internal_SMTInterpol : SolverMode.Internal_SMTInterpol_NoArrayInterpol;
-		final Script solver =
-				SolverBuilder.buildAndInitializeSolver(mServices, solverMode, solverSettings, null, solverName);
+
+		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier).setSolverMode(solverMode)
+				.setSmtInterpolTimeout(timeout);
+		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, getSolverName());
+
 		return createExternalManagedScript(solver);
 	}
 

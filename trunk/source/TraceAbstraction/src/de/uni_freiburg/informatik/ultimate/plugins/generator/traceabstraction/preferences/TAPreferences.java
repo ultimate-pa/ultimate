@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Si
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
@@ -130,8 +131,8 @@ public final class TAPreferences {
 		mLimitAnalysisTime = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TIME);
 		mLimitPathProgramCount = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_PATH_PROGRAM);
 
-		mCollectInterpolantStatistics = mPrefs
-				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS);
+		mCollectInterpolantStatistics =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS);
 
 		if (artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			throw new IllegalArgumentException(
@@ -143,11 +144,12 @@ public final class TAPreferences {
 			throw new IllegalArgumentException("There is no interpolant" + "automaton in iteration 0.");
 		}
 
-		mHeuristicEmptinessCheck = mPrefs
-				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK);
+		mHeuristicEmptinessCheck =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK);
 
 		mSMTFeatureExtraction = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION);
-		mSMTFeatureExtractionDumpPath = mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH);
+		mSMTFeatureExtractionDumpPath =
+				mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH);
 
 	}
 
@@ -180,8 +182,8 @@ public final class TAPreferences {
 		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
 	}
 
-	public String logicForExternalSolver() {
-		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC);
+	public Logics logicForExternalSolver() {
+		return Logics.valueOf(mPrefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
 	}
 
 	public boolean dumpSmtScriptToFile() {
@@ -307,8 +309,7 @@ public final class TAPreferences {
 	}
 
 	public PetriNetLbe useLbeInConcurrentAnalysis() {
-		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LBE_CONCURRENCY,
-				PetriNetLbe.class);
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LBE_CONCURRENCY, PetriNetLbe.class);
 	}
 
 	public SimplificationTechnique getSimplificationTechnique() {
@@ -348,8 +349,8 @@ public final class TAPreferences {
 	}
 
 	/**
-	 * @return A positive integer that specifies a time limit in seconds for the
-	 *         analysis of an error location or zero if no limit is set.
+	 * @return A positive integer that specifies a time limit in seconds for the analysis of an error location or zero
+	 *         if no limit is set.
 	 */
 	public int getLimitAnalysisTime() {
 		return mLimitAnalysisTime;

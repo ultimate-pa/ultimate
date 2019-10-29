@@ -36,11 +36,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -49,13 +47,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.pdr.Pdr;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckPathInvariantsWithFallback;
@@ -72,7 +67,6 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 		extends IpTcStrategyModuleTraceCheck<IInterpolatingTraceCheck<LETTER>, LETTER> {
 
 	private final InterpolationTechnique mInterpolationTechnique;
-	private final Logics mLogics;
 
 	public IpTcStrategyModulePreferences(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
@@ -84,7 +78,6 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 		if (mInterpolationTechnique == null) {
 			throw new UnsupportedOperationException("Cannot interpolate without a technique");
 		}
-		mLogics = Logics.valueOf(mPrefs.getLogicForExternalSolver());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -126,13 +119,11 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 			final boolean useUnsatCores = mPrefs.getUseVarsFromUnsatCore();
 			final boolean useAbstractInterpretationPredicates = mPrefs.getUseAbstractInterpretation();
 			final boolean useWpPredicates = mPrefs.getUseWeakestPreconditionForPathInvariants();
-			final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
-			final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
-			final String baseNameOfDumpedScript = mTaskIdentifier.toString();
-			final String solverCommand = SolverBuilder.COMMAND_Z3_TIMEOUT;
-			final boolean fakeNonIncrementalSolver = false;
-			final SolverSettings solverSettings = new SolverSettings(fakeNonIncrementalSolver, true, solverCommand, -1,
-					null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
+
+			final SolverSettings solverSettings =
+					mPrefs.constructSolverSettings(mTaskIdentifier).setUseFakeIncrementalScript(false)
+							.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_TIMEOUT, null);
+
 			final InvariantSynthesisSettings invariantSynthesisSettings = new InvariantSynthesisSettings(solverSettings,
 					useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWpPredicates, true);
 
@@ -150,39 +141,20 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 
 	}
 
-	private IHoareTripleChecker constructHoareTripleChecker() throws AssertionError {
-		return TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-				HoareTripleChecks.MONOLITHIC, mPrefs.getCfgSmtToolkit(), mPredicateUnifier);
-	}
-
 	private ManagedScript constructManagedScript() throws AssertionError {
 		if (mInterpolationTechnique == InterpolationTechnique.PathInvariants) {
 			// Path invariants construct their own solver
 			return null;
 		}
 		if (mPrefs.getUseSeparateSolverForTracechecks()) {
-			final SolverSettings solverSettings = constructSolverSettings();
-			final String solderId = solverSettings.getBaseNameOfDumpedScript();
-			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, mPrefs.getSolverMode(),
-					solverSettings, mLogics, solderId);
+			final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier);
+			final String solverId = solverSettings.getBaseNameOfDumpedScript();
+			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, solverId);
 
 			final ManagedScript mgdScriptTc = new ManagedScript(mServices, tcSolver);
-
 			mPrefs.getIcfgContainer().getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferSymbols(tcSolver);
-
 			return mgdScriptTc;
 		}
 		return mPrefs.getCfgSmtToolkit().getManagedScript();
-	}
-
-	private SolverSettings constructSolverSettings() throws AssertionError {
-		final String filename = mTaskIdentifier + "_TraceCheck";
-		final SolverMode solverMode = mPrefs.getSolverMode();
-		final boolean fakeNonIncrementalSolver = mPrefs.getFakeNonIncrementalSolver();
-		final String commandExternalSolver = mPrefs.getCommandExternalSolver();
-		final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
-		final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
-		return SolverBuilder.constructSolverSettings(solverMode, fakeNonIncrementalSolver, commandExternalSolver,
-				dumpSmtScriptToFile, false, false, filename, pathOfDumpedScript);
 	}
 }
