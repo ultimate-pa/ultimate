@@ -151,12 +151,13 @@ public class SolverBuilder {
 	 */
 	public static SolverSettings constructSolverSettings(final SolverMode solverMode,
 			final boolean fakeNonIncrementalScript, final String commandExternalSolver) throws AssertionError {
-		return constructSolverSettings("", solverMode, fakeNonIncrementalScript, commandExternalSolver, false, "");
+		return constructSolverSettings(solverMode, fakeNonIncrementalScript, commandExternalSolver);
 	}
 
-	public static SolverSettings constructSolverSettings(final String filename, final SolverMode solverMode,
+	public static SolverSettings constructSolverSettings(final SolverMode solverMode,
 			final boolean fakeNonIncrementalScript, final String commandExternalSolver,
-			final boolean dumpSmtScriptToFile, final String pathOfDumpedScript) throws AssertionError {
+			final boolean dumpSmtScriptToFile, final String filename, final String pathOfDumpedScript)
+			throws AssertionError {
 		final boolean useExternalSolver;
 		boolean useDiffWrapper = false;
 
@@ -199,7 +200,7 @@ public class SolverBuilder {
 		}
 		final SolverSettings solverSettings = new SolverSettings(fakeNonIncrementalScript, useExternalSolver,
 				commandExternalSolver, timeoutSmtInterpol, externalInterpolator, dumpSmtScriptToFile,
-				pathOfDumpedScript, filename, useDiffWrapper);
+				pathOfDumpedScript, filename, useDiffWrapper, false, null);
 		return solverSettings;
 	}
 
@@ -405,19 +406,24 @@ public class SolverBuilder {
 		 */
 		private final boolean mUseDiffWrapper;
 
+		private final boolean mDumpFeatureVector;
+
+		private final String mFeatureVectorDumpPath;
+
 		public SolverSettings(final boolean fakeNonIncrementalScript, final boolean useExternalSolver,
 				final String commandExternalSolver, final long timeoutSmtInterpol,
 				final ExternalInterpolator externalInterpolator, final boolean dumpSmtScriptToFile,
 				final String pathOfDumpedScript, final String baseNameOfDumpedScript) {
 			this(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver, timeoutSmtInterpol,
-					externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript, false);
+					externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript, false, false,
+					null);
 		}
 
 		public SolverSettings(final boolean fakeNonIncrementalScript, final boolean useExternalSolver,
 				final String commandExternalSolver, final long timeoutSmtInterpol,
 				final ExternalInterpolator externalInterpolator, final boolean dumpSmtScriptToFile,
-				final String pathOfDumpedScript, final String baseNameOfDumpedScript, final boolean useDiffWrapper) {
-			super();
+				final String pathOfDumpedScript, final String baseNameOfDumpedScript, final boolean useDiffWrapper,
+				final boolean dumpFeatureVector, final String featureVectorDumpPath) {
 			mFakeNonIncrementalScript = fakeNonIncrementalScript;
 			mUseExternalSolver = useExternalSolver;
 			mCommandExternalSolver = commandExternalSolver;
@@ -427,6 +433,8 @@ public class SolverBuilder {
 			mPathOfDumpedScript = pathOfDumpedScript;
 			mBaseNameOfDumpedScript = baseNameOfDumpedScript;
 			mUseDiffWrapper = useDiffWrapper;
+			mDumpFeatureVector = dumpFeatureVector;
+			mFeatureVectorDumpPath = featureVectorDumpPath;
 		}
 
 		public boolean fakeNonIncrementalScript() {
@@ -471,7 +479,22 @@ public class SolverBuilder {
 		public SolverSettings enableDumpSmtScriptToFile(final String folderPathOfDumpedFile,
 				final String basenameOfDumpedFile) {
 			return new SolverSettings(mFakeNonIncrementalScript, mUseExternalSolver, mCommandExternalSolver,
-					mTimeoutSmtInterpol, mExternalInterpolator, true, folderPathOfDumpedFile, basenameOfDumpedFile);
+					mTimeoutSmtInterpol, mExternalInterpolator, true, folderPathOfDumpedFile, basenameOfDumpedFile,
+					mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath);
+		}
+
+		public SolverSettings enableFeatureExtractionDump(final String dumpPath) {
+			return new SolverSettings(mFakeNonIncrementalScript, mUseExternalSolver, mCommandExternalSolver,
+					mTimeoutSmtInterpol, mExternalInterpolator, mDumpSmtScriptToFile, mPathOfDumpedScript,
+					mBaseNameOfDumpedScript, mUseDiffWrapper, true, dumpPath);
+		}
+
+		public boolean dumpFeatureExtractionVector() {
+			return mDumpFeatureVector;
+		}
+
+		public String getFeatureVectorDumpPath() {
+			return mFeatureVectorDumpPath;
 		}
 
 		public String constructFullPathOfDumpedScript() {

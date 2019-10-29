@@ -37,8 +37,8 @@ public class ReqToTestPowersetObserver extends BaseObserver {
 		mLogger = logger;
 		mServices = services;
 
-		final SolverSettings settings = SolverBuilder.constructSolverSettings("", SolverMode.External_DefaultMode,
-				false, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, false, null);
+		final SolverSettings settings = SolverBuilder.constructSolverSettings(SolverMode.External_DefaultMode, false,
+				SolverBuilder.COMMAND_Z3_NO_TIMEOUT);
 		mScript = SolverBuilder.buildAndInitializeSolver(services, SolverMode.External_DefaultMode, settings, false,
 				false, Logics.ALL, "RtInconsistencySolver");
 

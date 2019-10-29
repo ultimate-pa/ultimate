@@ -315,8 +315,8 @@ public class CfgBuilder {
 
 		final Logics logicForExternalSolver =
 				Logics.valueOf(prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
-		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
-				fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
+		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(solverMode, fakeNonIncrementalScript,
+				commandExternalSolver, dumpSmtScriptToFile, filename, pathOfDumpedScript);
 
 		return SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings, dumpUsatCoreTrackBenchmark,
 				dumpMainTrackBenchmark, logicForExternalSolver, "CfgBuilderScript");

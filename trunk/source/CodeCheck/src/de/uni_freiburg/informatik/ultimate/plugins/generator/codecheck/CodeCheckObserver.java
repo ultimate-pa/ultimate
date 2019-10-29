@@ -439,8 +439,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					final boolean dumpSmtScriptToFile = false;
 					final String pathOfDumpedScript = "";
 					final boolean fakeNonIncrementalScript = false;
-					final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
-							fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
+					final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(solverMode, fakeNonIncrementalScript,
+							commandExternalSolver, dumpSmtScriptToFile, filename, pathOfDumpedScript);
 					final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices,
 							mGlobalSettings.getChooseSeparateSolverForTracechecks(), solverSettings, false, false,
 							mGlobalSettings.getSeparateSolverForTracechecksTheory(),

@@ -184,7 +184,7 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 		final String commandExternalSolver = mPrefs.getCommandExternalSolver();
 		final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
-		return SolverBuilder.constructSolverSettings(filename, solverMode, fakeNonIncrementalSolver,
-				commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
+		return SolverBuilder.constructSolverSettings(solverMode, fakeNonIncrementalSolver, commandExternalSolver,
+				dumpSmtScriptToFile, filename, pathOfDumpedScript);
 	}
 }

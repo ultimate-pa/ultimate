@@ -125,8 +125,8 @@ public class SpaceExPreferenceManager {
 
 		mLogicForExternalSolver = Logics.valueOf(mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
 				.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
-		mSolverSettings = SolverBuilder.constructSolverSettings(mModelFilename, mSolverMode, mFakeNonIncrementalScript,
-				mCommandExternalSolver, mDumpSmtScriptToFile, mPathOfDumpedScript);
+		mSolverSettings = SolverBuilder.constructSolverSettings(mSolverMode, mFakeNonIncrementalScript, mCommandExternalSolver,
+				mDumpSmtScriptToFile, mModelFilename, mPathOfDumpedScript);
 
 	}
 
