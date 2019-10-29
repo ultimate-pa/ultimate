@@ -17,7 +17,6 @@ import java.util.stream.Stream;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -80,7 +79,7 @@ public class PeaToDotTestSuite {
 		mScopeName = scopeName.replace(scopePrefix, "");
 	}
 
-	@Test
+	// @Test
 	public void testDot() throws IOException, InterruptedException {
 		final PhaseEventAutomata pea;
 		final CounterTrace counterTrace;
@@ -92,7 +91,7 @@ public class PeaToDotTestSuite {
 			return; // Oops, somebody forgot to implement that sh.. ;-)
 		}
 
-		mLogger.info(DotWriterNew.createDotString(pea));
+		// mLogger.info(DotWriterNew.createDotString(pea));
 
 		writeSvgFile(DotWriterNew.createDotString(pea));
 		writeMarkdownFile(counterTrace.toString());
@@ -100,8 +99,10 @@ public class PeaToDotTestSuite {
 
 	private void writeSvgFile(final String dot) throws IOException, InterruptedException {
 		final File file = new File(IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + ".svg");
-		mLogger.info(file.toString());
+
 		final String[] command = new String[] { "dot", "-Tsvg", "-o", file.toString() };
+		// final String[] command = new String[] { "unflatten", "|", "dot", "-Tsvg",
+		// "-o", file.toString() };
 
 		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServiceProvider);
 		final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
