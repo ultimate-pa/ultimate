@@ -138,9 +138,7 @@ public class SpaceExModelBuilder {
 		procedures.add(HybridTranslatorConstants.PROC_NAME);
 
 		final Script script = SolverBuilder.buildAndInitializeSolver(mServices, mPreferenceManager.getSolverMode(),
-				mPreferenceManager.getSolverSettings(), mPreferenceManager.isDumpUsatCoreTrackBenchmark(),
-				mPreferenceManager.isDumpMainTrackBenchmark(), mPreferenceManager.getLogicForExternalSolver(),
-				"SpaceExTA");
+				mPreferenceManager.getSolverSettings(), mPreferenceManager.getLogicForExternalSolver(), "SpaceExTA");
 
 		final ManagedScript managedScript = new ManagedScript(mServices, script);
 		mVariableManager.setScript(managedScript);

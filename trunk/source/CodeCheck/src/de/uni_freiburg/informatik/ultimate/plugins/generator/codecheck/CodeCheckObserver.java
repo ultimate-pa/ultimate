@@ -433,16 +433,13 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 				ManagedScript mgdScriptTracechecks;
 				if (mGlobalSettings.isUseSeparateSolverForTracechecks()) {
-					final String filename = mOriginalRoot.getIdentifier() + "_TraceCheck_Iteration" + iterationsCount;
 					final SolverMode solverMode = mGlobalSettings.getChooseSeparateSolverForTracechecks();
 					final String commandExternalSolver = mGlobalSettings.getSeparateSolverForTracechecksCommand();
-					final boolean dumpSmtScriptToFile = false;
-					final String pathOfDumpedScript = "";
 					final boolean fakeNonIncrementalScript = false;
-					final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(solverMode, fakeNonIncrementalScript,
-							commandExternalSolver, dumpSmtScriptToFile, filename, pathOfDumpedScript);
+					final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(solverMode,
+							fakeNonIncrementalScript, commandExternalSolver);
 					final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices,
-							mGlobalSettings.getChooseSeparateSolverForTracechecks(), solverSettings, false, false,
+							mGlobalSettings.getChooseSeparateSolverForTracechecks(), solverSettings,
 							mGlobalSettings.getSeparateSolverForTracechecksTheory(),
 							"TraceCheck_Iteration" + iterationsCount);
 

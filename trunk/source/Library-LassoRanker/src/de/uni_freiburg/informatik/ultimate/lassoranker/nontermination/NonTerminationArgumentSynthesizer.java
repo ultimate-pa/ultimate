@@ -183,7 +183,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			solverMode = SolverMode.External_ModelsMode;
 		}
 		final String solverId = "NonTerminationArgumentSynthesis solver ";
-		return SolverBuilder.buildAndInitializeSolver(mServices, solverMode, settings, false, false, null, solverId);
+		return SolverBuilder.buildAndInitializeSolver(mServices, solverMode, settings, null, solverId);
 	}
 
 	@Override

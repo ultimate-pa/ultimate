@@ -98,37 +98,6 @@ public class SolverBuilder {
 	private static final String SOLVER_LOGGER_NAME = "SolverLogger";
 	private static final boolean USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS = false;
 
-	private static Script createExternalSolver(final IUltimateServiceProvider services, final String command,
-			final boolean fakeNonIncrementalScript, final boolean dumpFakeNonIncrementalScript,
-			final String pathOfDumpedFakeNonIncrementalScript, final String basenameOfDumpedFakeNonIcrementalScript,
-			final boolean useDiffWrapper) throws IOException {
-		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
-		Script script;
-		if (fakeNonIncrementalScript) {
-			script = new NonIncrementalScriptor(command, solverLogger, services, "External_FakeNonIncremental",
-					dumpFakeNonIncrementalScript, pathOfDumpedFakeNonIncrementalScript,
-					basenameOfDumpedFakeNonIcrementalScript);
-		} else {
-			script = new Scriptor(command, solverLogger, services, "External");
-		}
-		if (useDiffWrapper) {
-			script = new DiffWrapperScript(script);
-		}
-		return script;
-	}
-
-	private static Script createExternalSolverWithInterpolation(final IUltimateServiceProvider services,
-			final String command, final ExternalInterpolator externalInterpolator, final boolean useDiffWrapper)
-			throws IOException {
-		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
-		Script script = new ScriptorWithGetInterpolants(command, solverLogger, services, externalInterpolator,
-				"ExternalInterpolator");
-		if (useDiffWrapper) {
-			script = new DiffWrapperScript(script);
-		}
-		return script;
-	}
-
 	private static Script wrapScriptWithLoggingScript(final Script script, final ILogger solverLogger,
 			final String fullPathOfDumpedFile) {
 		final Script wrappedScript;
@@ -156,7 +125,8 @@ public class SolverBuilder {
 
 	public static SolverSettings constructSolverSettings(final SolverMode solverMode,
 			final boolean fakeNonIncrementalScript, final String commandExternalSolver,
-			final boolean dumpSmtScriptToFile, final String filename, final String pathOfDumpedScript)
+			final boolean dumpSmtScriptToFile, final boolean dumpUnsatCoreTrackBenchmark,
+			final boolean dumpMainTrackBenchmark, final String dumpScriptFilename, final String pathOfDumpedScript)
 			throws AssertionError {
 		final boolean useExternalSolver;
 		boolean useDiffWrapper = false;
@@ -198,9 +168,10 @@ public class SolverBuilder {
 		default:
 			throw new AssertionError("unknown solver mode");
 		}
-		final SolverSettings solverSettings = new SolverSettings(fakeNonIncrementalScript, useExternalSolver,
-				commandExternalSolver, timeoutSmtInterpol, externalInterpolator, dumpSmtScriptToFile,
-				pathOfDumpedScript, filename, useDiffWrapper, false, null);
+		final SolverSettings solverSettings =
+				new SolverSettings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver,
+						timeoutSmtInterpol, externalInterpolator, dumpSmtScriptToFile, dumpUnsatCoreTrackBenchmark,
+						dumpMainTrackBenchmark, pathOfDumpedScript, dumpScriptFilename, useDiffWrapper, false, null);
 		return solverSettings;
 	}
 
@@ -211,20 +182,27 @@ public class SolverBuilder {
 	 */
 	public static Script buildScript(final IUltimateServiceProvider services, final SolverSettings settings) {
 		final ILogger solverLogger = getSolverLogger(services);
-		Script result;
+		Script script;
 		if (settings.useExternalSolver()) {
+			final String command = settings.getCommandExternalSolver();
 			solverLogger.info("constructing external solver with command" + settings.getCommandExternalSolver());
 			try {
-				if (settings.getExternalInterpolator() == null) {
-					result = createExternalSolver(services, settings.getCommandExternalSolver(),
-							settings.fakeNonIncrementalScript(), settings.dumpSmtScriptToFile(),
-							settings.getPathOfDumpedScript(), settings.getBaseNameOfDumpedScript(),
-							settings.getUseDiffWrapper());
+				final ExternalInterpolator externalInterpolator = settings.getExternalInterpolator();
+				if (externalInterpolator == null) {
+					if (settings.fakeNonIncrementalScript()) {
+						script = new NonIncrementalScriptor(command, solverLogger, services,
+								"External_FakeNonIncremental", settings.dumpSmtScriptToFile(),
+								settings.getPathOfDumpedScript(), settings.getBaseNameOfDumpedScript());
+					} else {
+						script = new Scriptor(command, solverLogger, services, "External");
+					}
 				} else {
-					solverLogger.info(
-							"external solver will use " + settings.getExternalInterpolator() + " interpolation mode");
-					result = createExternalSolverWithInterpolation(services, settings.getCommandExternalSolver(),
-							settings.getExternalInterpolator(), settings.getUseDiffWrapper());
+					solverLogger.info("external solver will use " + externalInterpolator + " interpolation mode");
+					script = new ScriptorWithGetInterpolants(command, solverLogger, services, externalInterpolator,
+							"ExternalInterpolator");
+				}
+				if (settings.getUseDiffWrapper()) {
+					script = new DiffWrapperScript(script);
 				}
 			} catch (final IOException e) {
 				solverLogger.fatal("Unable to construct solver");
@@ -235,106 +213,108 @@ public class SolverBuilder {
 			final LogProxy loggerWrapper = new SmtInterpolLogProxyWrapper(solverLogger);
 			final TerminationRequest termRequest =
 					new SMTInterpolTerminationRequest(services.getProgressMonitorService());
-			result = new SMTInterpol(loggerWrapper, termRequest);
+			script = new SMTInterpol(loggerWrapper, termRequest);
 		}
 		if (settings.dumpSmtScriptToFile()) {
-			result = wrapScriptWithLoggingScript(result, solverLogger, settings.constructFullPathOfDumpedScript());
+			script = wrapScriptWithLoggingScript(script, solverLogger, settings.constructFullPathOfDumpedScript());
 		}
 		if (!settings.useExternalSolver()) {
-			result.setOption(":timeout", settings.getTimeoutSmtInterpol());
+			script.setOption(":timeout", settings.getTimeoutSmtInterpol());
 		}
 		if (USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS) {
-			result = new ScriptWithTermConstructionChecks(result);
+			script = new ScriptWithTermConstructionChecks(script);
 		}
-		return new HistoryRecordingScript(result);
+		if (settings.dumpFeatureExtractionVector()) {
+			script = new SMTFeatureExtractorScript(script, getSolverLogger(services),
+					settings.getFeatureVectorDumpPath());
+		}
+		if (settings.dumpUnsatCoreTrackBenchmark()) {
+			script = new LoggingScriptForUnsatCoreBenchmarks(script, settings.getBaseNameOfDumpedScript(),
+					settings.getPathOfDumpedScript());
+		}
+		if (settings.dumpMainTrackBenchmark()) {
+			script = new LoggingScriptForMainTrackBenchmarks(script, settings.getBaseNameOfDumpedScript(),
+					settings.getPathOfDumpedScript());
+		}
+		return new HistoryRecordingScript(script);
 	}
 
 	public static Script buildAndInitializeSolver(final IUltimateServiceProvider services, final SolverMode solverMode,
-			final SolverSettings solverSettings, final boolean dumpUsatCoreTrackBenchmark,
-			final boolean dumpMainTrackBenchmark, final Logics logicForExternalSolver, final String solverId)
+			final SolverSettings solverSettings, final Logics logicForExternalSolver, final String solverId)
 			throws AssertionError {
 
-		Script script = SolverBuilder.buildScript(services, solverSettings);
-		if (dumpUsatCoreTrackBenchmark) {
-			script = new LoggingScriptForUnsatCoreBenchmarks(script, solverSettings.getBaseNameOfDumpedScript(),
-					solverSettings.getPathOfDumpedScript());
-		}
-		if (dumpMainTrackBenchmark) {
-			script = new LoggingScriptForMainTrackBenchmarks(script, solverSettings.getBaseNameOfDumpedScript(),
-					solverSettings.getPathOfDumpedScript());
-		}
-		final Script result = script;
+		final Script script = SolverBuilder.buildScript(services, solverSettings);
 
 		switch (solverMode) {
 		case External_DefaultMode:
 			if (logicForExternalSolver != null) {
-				result.setLogic(logicForExternalSolver);
+				script.setLogic(logicForExternalSolver);
 			}
 			break;
 		case External_ModelsMode:
-			result.setOption(":produce-models", true);
+			script.setOption(":produce-models", true);
 			if (logicForExternalSolver != null) {
-				result.setLogic(logicForExternalSolver);
+				script.setLogic(logicForExternalSolver);
 			}
 			break;
 		case External_ModelsAndUnsatCoreMode:
-			result.setOption(":produce-models", true);
-			result.setOption(":produce-unsat-cores", true);
+			script.setOption(":produce-models", true);
+			script.setOption(":produce-unsat-cores", true);
 			if (logicForExternalSolver != null) {
-				result.setLogic(logicForExternalSolver);
+				script.setLogic(logicForExternalSolver);
 			}
 			break;
 		case External_PrincessInterpolationMode:
-			result.setOption(":produce-models", true);
-			result.setOption(":produce-interpolants", true);
-			result.setLogic(logicForExternalSolver);
+			script.setOption(":produce-models", true);
+			script.setOption(":produce-interpolants", true);
+			script.setLogic(logicForExternalSolver);
 			break;
 		case External_SMTInterpolInterpolationMode:
-			result.setOption(":produce-models", true);
-			result.setOption(":produce-interpolants", true);
-			result.setOption(":array-interpolation", true);
-			result.setLogic(logicForExternalSolver);
+			script.setOption(":produce-models", true);
+			script.setOption(":produce-interpolants", true);
+			script.setOption(":array-interpolation", true);
+			script.setLogic(logicForExternalSolver);
 			break;
 		case External_Z3InterpolationMode:
-			result.setOption(":produce-models", true);
-			result.setOption(":produce-interpolants", true);
-			result.setLogic(logicForExternalSolver);
+			script.setOption(":produce-models", true);
+			script.setOption(":produce-interpolants", true);
+			script.setLogic(logicForExternalSolver);
 			final Sort indexSort;
 			if (logicForExternalSolver.isArray()) {
 				// add array-ext function
-				indexSort = SmtSortUtils.getIntSort(result);
-				final Sort intSort = SmtSortUtils.getIntSort(result);
-				final Sort intArraySort = SmtSortUtils.getArraySort(result, indexSort, intSort);
-				result.declareFun("array-ext", new Sort[] { intArraySort, intArraySort }, indexSort);
+				indexSort = SmtSortUtils.getIntSort(script);
+				final Sort intSort = SmtSortUtils.getIntSort(script);
+				final Sort intArraySort = SmtSortUtils.getArraySort(script, indexSort, intSort);
+				script.declareFun("array-ext", new Sort[] { intArraySort, intArraySort }, indexSort);
 			} else if (logicForExternalSolver.isBitVector()) {
 				// do nothing. several have to be added here
 			}
 			break;
 		case Internal_SMTInterpol:
-			result.setOption(":produce-models", true);
-			result.setOption(":produce-unsat-cores", true);
-			result.setOption(":produce-interpolants", true);
-			result.setOption(":interpolant-check-mode", true);
-			result.setOption(":proof-transformation", "LU");
-			result.setOption(":array-interpolation", true);
+			script.setOption(":produce-models", true);
+			script.setOption(":produce-unsat-cores", true);
+			script.setOption(":produce-interpolants", true);
+			script.setOption(":interpolant-check-mode", true);
+			script.setOption(":proof-transformation", "LU");
+			script.setOption(":array-interpolation", true);
 			// mScript.setOption(":proof-transformation", "RPI");
 			// mScript.setOption(":proof-transformation", "LURPI");
 			// mScript.setOption(":proof-transformation", "RPILU");
 			// mScript.setOption(":verbosity", 0);
-			result.setLogic("QF_AUFLIRA");
+			script.setLogic("QF_AUFLIRA");
 			break;
 		case Internal_SMTInterpol_NoArrayInterpol:
-			result.setOption(":produce-models", true);
-			result.setOption(":produce-unsat-cores", true);
-			result.setOption(":produce-interpolants", true);
-			result.setOption(":interpolant-check-mode", true);
-			result.setOption(":proof-transformation", "LU");
-			result.setOption(":array-interpolation", false);
+			script.setOption(":produce-models", true);
+			script.setOption(":produce-unsat-cores", true);
+			script.setOption(":produce-interpolants", true);
+			script.setOption(":interpolant-check-mode", true);
+			script.setOption(":proof-transformation", "LU");
+			script.setOption(":array-interpolation", false);
 			// mScript.setOption(":proof-transformation", "RPI");
 			// mScript.setOption(":proof-transformation", "LURPI");
 			// mScript.setOption(":proof-transformation", "RPILU");
 			// mScript.setOption(":verbosity", 0);
-			result.setLogic("QF_AUFLIRA");
+			script.setLogic("QF_AUFLIRA");
 			break;
 		default:
 			throw new AssertionError("unknown solver");
@@ -343,12 +323,12 @@ public class SolverBuilder {
 		final String advertising = System.lineSeparator() + "    SMT script generated on "
 				+ new SimpleDateFormat("yyyy/MM/dd").format(new Date())
 				+ " by Ultimate. http://ultimate.informatik.uni-freiburg.de/" + System.lineSeparator();
-		result.setInfo(":source", advertising);
-		result.setInfo(":smt-lib-version", new BigDecimal("2.5"));
-		result.setInfo(":category", new QuotedObject("industrial"));
-		result.setInfo(":ultimate-id", solverId);
+		script.setInfo(":source", advertising);
+		script.setInfo(":smt-lib-version", new BigDecimal("2.5"));
+		script.setInfo(":category", new QuotedObject("industrial"));
+		script.setInfo(":ultimate-id", solverId);
 
-		return result;
+		return script;
 	}
 
 	private static final class SMTInterpolTerminationRequest implements TerminationRequest {
@@ -410,18 +390,23 @@ public class SolverBuilder {
 
 		private final String mFeatureVectorDumpPath;
 
+		private final boolean mDumpUnsatCoreTrackBenchmark;
+
+		private final boolean mDumpMainTrackBenchmark;
+
 		public SolverSettings(final boolean fakeNonIncrementalScript, final boolean useExternalSolver,
 				final String commandExternalSolver, final long timeoutSmtInterpol,
 				final ExternalInterpolator externalInterpolator, final boolean dumpSmtScriptToFile,
 				final String pathOfDumpedScript, final String baseNameOfDumpedScript) {
 			this(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver, timeoutSmtInterpol,
-					externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript, false, false,
-					null);
+					externalInterpolator, dumpSmtScriptToFile, false, false, pathOfDumpedScript, baseNameOfDumpedScript,
+					false, false, null);
 		}
 
 		public SolverSettings(final boolean fakeNonIncrementalScript, final boolean useExternalSolver,
 				final String commandExternalSolver, final long timeoutSmtInterpol,
 				final ExternalInterpolator externalInterpolator, final boolean dumpSmtScriptToFile,
+				final boolean dumpUnsatCoreTrackBenchmark, final boolean dumpMainTrackBenchmark,
 				final String pathOfDumpedScript, final String baseNameOfDumpedScript, final boolean useDiffWrapper,
 				final boolean dumpFeatureVector, final String featureVectorDumpPath) {
 			mFakeNonIncrementalScript = fakeNonIncrementalScript;
@@ -430,6 +415,8 @@ public class SolverBuilder {
 			mTimeoutSmtInterpol = timeoutSmtInterpol;
 			mExternalInterpolator = externalInterpolator;
 			mDumpSmtScriptToFile = dumpSmtScriptToFile;
+			mDumpUnsatCoreTrackBenchmark = dumpUnsatCoreTrackBenchmark;
+			mDumpMainTrackBenchmark = dumpMainTrackBenchmark;
 			mPathOfDumpedScript = pathOfDumpedScript;
 			mBaseNameOfDumpedScript = baseNameOfDumpedScript;
 			mUseDiffWrapper = useDiffWrapper;
@@ -461,6 +448,14 @@ public class SolverBuilder {
 			return mDumpSmtScriptToFile;
 		}
 
+		public boolean dumpUnsatCoreTrackBenchmark() {
+			return mDumpUnsatCoreTrackBenchmark;
+		}
+
+		public boolean dumpMainTrackBenchmark() {
+			return mDumpMainTrackBenchmark;
+		}
+
 		public String getPathOfDumpedScript() {
 			return mPathOfDumpedScript;
 		}
@@ -476,17 +471,19 @@ public class SolverBuilder {
 			return mUseDiffWrapper;
 		}
 
-		public SolverSettings enableDumpSmtScriptToFile(final String folderPathOfDumpedFile,
+		public SolverSettings setDumpSmtScriptToFile(final boolean enabled, final String folderPathOfDumpedFile,
 				final String basenameOfDumpedFile) {
 			return new SolverSettings(mFakeNonIncrementalScript, mUseExternalSolver, mCommandExternalSolver,
-					mTimeoutSmtInterpol, mExternalInterpolator, true, folderPathOfDumpedFile, basenameOfDumpedFile,
-					mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath);
+					mTimeoutSmtInterpol, mExternalInterpolator, true, mDumpUnsatCoreTrackBenchmark,
+					mDumpMainTrackBenchmark, folderPathOfDumpedFile, basenameOfDumpedFile, mUseDiffWrapper,
+					mDumpFeatureVector, mFeatureVectorDumpPath);
 		}
 
-		public SolverSettings enableFeatureExtractionDump(final String dumpPath) {
+		public SolverSettings setFeatureExtractionDump(final boolean enabled, final String dumpPath) {
 			return new SolverSettings(mFakeNonIncrementalScript, mUseExternalSolver, mCommandExternalSolver,
-					mTimeoutSmtInterpol, mExternalInterpolator, mDumpSmtScriptToFile, mPathOfDumpedScript,
-					mBaseNameOfDumpedScript, mUseDiffWrapper, true, dumpPath);
+					mTimeoutSmtInterpol, mExternalInterpolator, mDumpSmtScriptToFile, mDumpUnsatCoreTrackBenchmark,
+					mDumpMainTrackBenchmark, mPathOfDumpedScript, mBaseNameOfDumpedScript, mUseDiffWrapper, enabled,
+					dumpPath);
 		}
 
 		public boolean dumpFeatureExtractionVector() {

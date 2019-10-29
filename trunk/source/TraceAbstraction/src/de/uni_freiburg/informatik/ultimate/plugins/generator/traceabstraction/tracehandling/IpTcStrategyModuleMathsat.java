@@ -84,10 +84,8 @@ public class IpTcStrategyModuleMathsat<LETTER extends IIcfgTransition<?>> extend
 
 		final SolverMode solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 		final Logics logicForExternalSolver = SolverBuilder.LOGIC_MATHSAT;
-		final boolean dumpUsatCoreTrackBenchmark = false;
-		final boolean dumpMainTrackBenchmark = false;
 		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverMode, solverSettings,
-				dumpUsatCoreTrackBenchmark, dumpMainTrackBenchmark, logicForExternalSolver, solverName);
+				logicForExternalSolver, solverName);
 		return createExternalManagedScript(solver);
 	}
 

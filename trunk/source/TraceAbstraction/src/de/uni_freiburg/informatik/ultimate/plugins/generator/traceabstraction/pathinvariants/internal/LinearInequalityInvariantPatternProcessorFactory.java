@@ -132,7 +132,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		final Logics logic = ConstraintSynthesisUtils.getLogic(linearity, useAlsoIntegers);
 
 		Script script = SolverBuilder.buildAndInitializeSolver(mServices, SolverMode.External_DefaultMode,
-				mSolverSettings, false, false, logic, "InvariantSynthesis");
+				mSolverSettings, logic, "InvariantSynthesis");
 		script = new ScriptWithTermConstructionChecks(script);
 		return script;
 	}

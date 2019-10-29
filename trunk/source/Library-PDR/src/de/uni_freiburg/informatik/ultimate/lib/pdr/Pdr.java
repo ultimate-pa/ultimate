@@ -430,8 +430,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 								new ProofObligation(prePred, predecessor, localLevel - level + 1);
 
 						if (level - 1 == 0) {
-							mSatProofObligations.add(
-									new Pair<>(proofObligation, newProofObligation));
+							mSatProofObligations.add(new Pair<>(proofObligation, newProofObligation));
 							return false;
 						}
 
@@ -578,7 +577,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 							/**
 							 * The rest of the program can make the precondition possible -> proof-obligation cannot be
 							 * blocked, whole program is unsafe.
-							 * 
+							 *
 							 * TODO
 							 */
 						} else if (subTraceResult == LBool.SAT) {
@@ -759,7 +758,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	/**
 	 * Compute conjunction of global frames and the given local frames
-	 * 
+	 *
 	 * @param localFrames
 	 * @param localLevel
 	 */
@@ -789,7 +788,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	/**
 	 * Compute conjunction of global frames and the given local frames
-	 * 
+	 *
 	 * @param localFrames
 	 * @param localLevel
 	 */
@@ -811,7 +810,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	/**
 	 * Initializes a new set of global frames for the give icfg.
-	 * 
+	 *
 	 * @param icfg
 	 * @return
 	 */
@@ -832,7 +831,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	/**
 	 * Initializes a new set of local frames for the given icfg.
-	 * 
+	 *
 	 * @param icfg
 	 * @return
 	 */
@@ -1141,7 +1140,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		final SolverSettings solverSettings =
 				SolverBuilder.constructSolverSettings(SolverMode.Internal_SMTInterpol, false, null);
 		final Script script = SolverBuilder.buildAndInitializeSolver(services, SolverMode.Internal_SMTInterpol,
-				solverSettings, false, false, Logics.ALL, "PdrSolver");
+				solverSettings, Logics.ALL, "PdrSolver");
 
 		csToolkit.getSmtFunctionsAndAxioms().transferSymbols(script);
 		return new ManagedScript(services, script);

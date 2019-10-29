@@ -69,14 +69,11 @@ public class HCGBuilderHelper {
 			final boolean dumpScript = !dumpPath.isEmpty();
 
 			final boolean fakeNonIncrementalSolver = false;
-			mSolverSettings = SolverBuilder.constructSolverSettings(solverMode, fakeNonIncrementalSolver, commandExternalSolver,
-					dumpScript, filename, dumpPath);// "C:\\Temp\\smt");
+			mSolverSettings = SolverBuilder.constructSolverSettings(solverMode, fakeNonIncrementalSolver,
+					commandExternalSolver, dumpScript, false, false, filename, dumpPath);// "C:\\Temp\\smt");
 
 			final Script script = SolverBuilder.buildAndInitializeSolver(services, solverMode, mSolverSettings,
-					// dumpUsatCoreTrackBenchmark,
-					false,
-					// dumpMainTrackBenchmark,
-					false, mLogicForExternalSolver, "HornClauseSolverBackendSolverScript");
+					mLogicForExternalSolver, "HornClauseSolverBackendSolverScript");
 
 			mScript = new ManagedScript(services, script);
 		}

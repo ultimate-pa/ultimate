@@ -88,10 +88,8 @@ public class IpTcStrategyModuleCvc4<LETTER extends IIcfgTransition<?>> extends I
 
 		final SolverMode solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 		final Logics logicForExternalSolver = mLogic;
-		final boolean dumpUsatCoreTrackBenchmark = false;
-		final boolean dumpMainTrackBenchmark = false;
 		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverMode, solverSettings,
-				dumpUsatCoreTrackBenchmark, dumpMainTrackBenchmark, logicForExternalSolver, solverName);
+				logicForExternalSolver, solverName);
 		return createExternalManagedScript(solver);
 	}
 

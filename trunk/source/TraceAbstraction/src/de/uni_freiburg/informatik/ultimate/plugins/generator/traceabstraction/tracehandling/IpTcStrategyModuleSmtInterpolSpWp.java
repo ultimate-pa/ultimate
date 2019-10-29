@@ -89,8 +89,8 @@ public class IpTcStrategyModuleSmtInterpolSpWp<LETTER extends IIcfgTransition<?>
 
 		final SolverMode solverMode =
 				mArrayInterpolation ? SolverMode.Internal_SMTInterpol : SolverMode.Internal_SMTInterpol_NoArrayInterpol;
-		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverMode, solverSettings, false,
-				false, null, solverName);
+		final Script solver =
+				SolverBuilder.buildAndInitializeSolver(mServices, solverMode, solverSettings, null, solverName);
 		return createExternalManagedScript(solver);
 	}
 

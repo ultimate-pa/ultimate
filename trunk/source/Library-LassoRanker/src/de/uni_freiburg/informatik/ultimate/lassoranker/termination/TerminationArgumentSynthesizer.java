@@ -154,7 +154,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			solverMode = SolverMode.External_ModelsMode;
 		}
 		final String solverId = "TerminationArgumentSynthesis solver ";
-		return SolverBuilder.buildAndInitializeSolver(mServices, solverMode, settings, false, false, null, solverId);
+		return SolverBuilder.buildAndInitializeSolver(mServices, solverMode, settings, null, solverId);
 	}
 
 	/**
@@ -430,8 +430,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 
 			// Simplify supporting invariants
 			if (mSettings.isSimplifySupportingInvariants()) {
-				final SupportingInvariantSimplifier tas =
-						new SupportingInvariantSimplifier(mPreferences, mServices);
+				final SupportingInvariantSimplifier tas = new SupportingInvariantSimplifier(mPreferences, mServices);
 				mLogger.info("Simplifying supporting invariants...");
 				final int before = mSupportingInvariants.size();
 				mSupportingInvariants = tas.simplify(mSupportingInvariants);

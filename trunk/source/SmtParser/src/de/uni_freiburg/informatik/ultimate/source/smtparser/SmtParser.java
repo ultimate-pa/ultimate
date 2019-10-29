@@ -279,7 +279,7 @@ public class SmtParser implements ISource {
 			final String folderOfDumpedFile = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getString(SmtParserPreferenceInitializer.LABEL_SMT_DUMP_PATH);
 			if (!folderOfDumpedFile.isEmpty()) {
-				solverSettings = solverSettings.enableDumpSmtScriptToFile(folderOfDumpedFile,
+				solverSettings = solverSettings.setDumpSmtScriptToFile(true, folderOfDumpedFile,
 						"UltimateEliminatorBackEndSolverInput.smt2");
 			}
 

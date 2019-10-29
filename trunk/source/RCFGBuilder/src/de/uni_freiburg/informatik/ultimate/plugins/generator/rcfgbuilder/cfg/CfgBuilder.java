@@ -307,7 +307,7 @@ public class CfgBuilder {
 
 		final String commandExternalSolver = prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
 
-		final boolean dumpUsatCoreTrackBenchmark =
+		final boolean dumpUnsatCoreTrackBenchmark =
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
 
 		final boolean dumpMainTrackBenchmark =
@@ -315,11 +315,12 @@ public class CfgBuilder {
 
 		final Logics logicForExternalSolver =
 				Logics.valueOf(prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
-		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(solverMode, fakeNonIncrementalScript,
-				commandExternalSolver, dumpSmtScriptToFile, filename, pathOfDumpedScript);
+		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(solverMode,
+				fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, dumpUnsatCoreTrackBenchmark,
+				dumpMainTrackBenchmark, filename, pathOfDumpedScript);
 
-		return SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings, dumpUsatCoreTrackBenchmark,
-				dumpMainTrackBenchmark, logicForExternalSolver, "CfgBuilderScript");
+		return SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings, logicForExternalSolver,
+				"CfgBuilderScript");
 	}
 
 	private static Expression getNegation(final Expression expr) {

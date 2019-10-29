@@ -86,8 +86,8 @@ public class IpTcStrategyModuleZ3<LETTER extends IIcfgTransition<?>> extends IpT
 
 		final SolverMode solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 		final Logics logicForExternalSolver = SolverBuilder.LOGIC_Z3;
-		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverMode, solverSettings, false,
-				false, logicForExternalSolver, solverName);
+		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverMode, solverSettings,
+				logicForExternalSolver, solverName);
 		return createExternalManagedScript(solver);
 	}
 

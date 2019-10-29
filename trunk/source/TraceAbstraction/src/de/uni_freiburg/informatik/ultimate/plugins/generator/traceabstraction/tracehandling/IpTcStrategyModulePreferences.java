@@ -162,11 +162,9 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 		}
 		if (mPrefs.getUseSeparateSolverForTracechecks()) {
 			final SolverSettings solverSettings = constructSolverSettings();
-			final boolean dumpUsatCoreTrackBenchmark = false;
-			final boolean dumpMainTrackBenchmark = false;
 			final String solderId = solverSettings.getBaseNameOfDumpedScript();
 			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, mPrefs.getSolverMode(),
-					solverSettings, dumpUsatCoreTrackBenchmark, dumpMainTrackBenchmark, mLogics, solderId);
+					solverSettings, mLogics, solderId);
 
 			final ManagedScript mgdScriptTc = new ManagedScript(mServices, tcSolver);
 
@@ -185,6 +183,6 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 		final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
 		return SolverBuilder.constructSolverSettings(solverMode, fakeNonIncrementalSolver, commandExternalSolver,
-				dumpSmtScriptToFile, filename, pathOfDumpedScript);
+				dumpSmtScriptToFile, false, false, filename, pathOfDumpedScript);
 	}
 }
