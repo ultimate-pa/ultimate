@@ -94,7 +94,7 @@ public class Svcomp19FoldersAutomizerConcurrentPetriNetLbe extends AbstractTrace
 	 */
 	@Override
 	public long getTimeout() {
-		return 120 * 1000;
+		return 60 * 1000;
 	}
 
 	/**
@@ -115,7 +115,7 @@ public class Svcomp19FoldersAutomizerConcurrentPetriNetLbe extends AbstractTrace
 
 	private static final String[] TOOLCHAINS = {
 //		"AutomizerC.xml",
-//		"AutomizerCInline.xml",
+		"AutomizerCInline.xml",
 //		"AutomizerCInlineTransformed.xml",
 		"PetriAutomizerCInline.xml",
 	};
