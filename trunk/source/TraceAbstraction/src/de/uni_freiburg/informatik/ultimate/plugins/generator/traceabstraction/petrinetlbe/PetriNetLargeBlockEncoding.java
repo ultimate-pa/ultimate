@@ -570,8 +570,18 @@ public class PetriNetLargeBlockEncoding {
 	private boolean isLeftMover(final ITransition<IIcfgTransition<?>, IPredicate> t1) {
 		// Filter which elements of coEnabledRelation are relevant.
 		final Set<IIcfgTransition<?>> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
-		mMoverChecks += coEnabledTransitions.size();
-		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t2, t1.getSymbol()));
+		//mMoverChecks += coEnabledTransitions.size();
+		boolean mover = true;
+		for (IIcfgTransition<?> t2 : coEnabledTransitions) {
+			if (!mMoverCheck.contains(null, t2, t1.getSymbol())) {
+				mPetriNetLargeBlockEncodingStatistics.reportNegativeMoverCheck();
+				mover = false;
+				break;
+			}
+			mPetriNetLargeBlockEncodingStatistics.reportPositiveMoverCheck();
+		}
+		//boolean mover = coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t2, t1.getSymbol()));
+		return mover;
 	}
 
 	/**
@@ -583,8 +593,17 @@ public class PetriNetLargeBlockEncoding {
 	private boolean isRightMover(final ITransition<IIcfgTransition<?>, IPredicate> t1) {
 		// Filter which elements of coEnabledRelation are relevant.
 		final Set<IIcfgTransition<?>> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
-		mMoverChecks += coEnabledTransitions.size();
-		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t1.getSymbol(), t2));
+		boolean mover = true;
+		for (IIcfgTransition<?> t2 : coEnabledTransitions) {
+			if (!mMoverCheck.contains(null, t1.getSymbol(), t2)) {
+				mPetriNetLargeBlockEncodingStatistics.reportNegativeMoverCheck();
+				mover = false;
+				break;
+			}
+			mPetriNetLargeBlockEncodingStatistics.reportPositiveMoverCheck();
+		}
+		return mover;
+		//return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t1.getSymbol(), t2));
 	}
 
 	// Methods from IcfgEdgeBuilder.
