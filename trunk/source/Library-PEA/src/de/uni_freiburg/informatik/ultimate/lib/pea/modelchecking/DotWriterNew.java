@@ -1,30 +1,37 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking;
 
-import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Formatter;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 
+/**
+ * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
+ */
 public class DotWriterNew {
 
-	public static StringBuilder createDotString(final PhaseEventAutomata pea) {
-		StringBuilder rtr = new StringBuilder();
+	private static final String LINE_SEP = System.lineSeparator();
 
-		rtr.append("digraph G {" + "\n\n");
-		rtr.append("rankdir=LR;" + "\n");
-		rtr.append("graph [fontname=\"arial\"]" + "\n");
-		rtr.append("node [fontname=\"arial\" shape=rectangle];" + "\n");
-		rtr.append("edge [fontname=\"arial\"]");
-		rtr.append("\n");
+	/*
+	 * Create dot string for a given {@link PhaseEventAutomata}.
+	 */
+	public static String createDotString(final PhaseEventAutomata pea) {
+		final StringBuilder stringBuilder = new StringBuilder();
+		final Formatter fmt = new Formatter(stringBuilder);
+
+		fmt.format("digraph G {%s", LINE_SEP);
+		fmt.format("rankdir=LR;%s", LINE_SEP);
+		fmt.format("graph [fontname=\"arial\"]%s", LINE_SEP);
+		fmt.format("node [fontname=\"arial\" shape=rectangle];%s", LINE_SEP);
+		fmt.format("edge [fontname=\"arial\"]%s", LINE_SEP);
 
 		for (final Phase phase : pea.getInit()) {
 			final String location = phase.getName();
 
-			rtr.append("_" + location + " [style=invis];" + "\n");
-			rtr.append("\t" + "_" + location + " -> " + location + ";" + "\n");
-			rtr.append("\n");
+			fmt.format("_%s [style=invis];%s", location, LINE_SEP);
+			fmt.format("\t_%s -> %s;%s%s", location, location, LINE_SEP, LINE_SEP);
 		}
 
 		for (final Phase phase : pea.getPhases()) {
@@ -36,7 +43,7 @@ public class DotWriterNew {
 			label += "<font COLOR=\"#984ea3\">" + predicate + "</font><br/>";
 			label += "<font COLOR=\"#ff7f00\">" + clock + "</font><br/>>";
 
-			rtr.append(location + " [label=" + label + "];" + "\n");
+			fmt.format("%s [label=%s];%s", location, label, LINE_SEP);
 
 			for (final Transition transition : phase.getTransitions()) {
 				final String src = transition.getSrc().getName();
@@ -48,18 +55,21 @@ public class DotWriterNew {
 					resets += "<br/>" + reset + " :=0";
 				}
 
-				rtr.append("\t" + src + " -> " + dst + " [label=" + "<<font COLOR=\"#377eb8\">" + guard + "</font>"
-						+ resets + ">];" + "\n");
+				fmt.format("\t%s -> %s [label=<<font COLOR=\"#377eb8\">%s</font>%s>];%s", src, dst, guard, resets,
+						LINE_SEP);
 			}
-			rtr.append("\n");
+			fmt.format("%s", LINE_SEP);
 		}
-		rtr.append("}");
+		fmt.format("}");
+		fmt.close();
 
-		final List<String> clocks = pea.getClocks();
-		for (int i = 0; i < clocks.size(); i++) {
-			rtr = new StringBuilder(Pattern.compile(clocks.get(i)).matcher(rtr).replaceAll("c" + String.valueOf(i)));
+		// Replace clock names by names of the form c[0-9].
+		String string = stringBuilder.toString();
+		final AtomicInteger counter = new AtomicInteger(0);
+		for (final String clock : pea.getClocks()) {
+			string = string.replaceAll(clock, "c" + String.valueOf(counter.getAndIncrement()));
 		}
 
-		return rtr;
+		return string;
 	}
 }

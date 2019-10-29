@@ -92,12 +92,15 @@ public class PeaToDotTestSuite {
 			return; // Oops, somebody forgot to implement that sh.. ;-)
 		}
 
+		mLogger.info(DotWriterNew.createDotString(pea));
+
 		writeSvgFile(DotWriterNew.createDotString(pea));
 		writeMarkdownFile(counterTrace.toString());
 	}
 
-	private void writeSvgFile(final StringBuilder dot) throws IOException, InterruptedException {
+	private void writeSvgFile(final String dot) throws IOException, InterruptedException {
 		final File file = new File(IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + ".svg");
+		mLogger.info(file.toString());
 		final String[] command = new String[] { "dot", "-Tsvg", "-o", file.toString() };
 
 		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServiceProvider);
