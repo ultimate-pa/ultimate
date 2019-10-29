@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * TODO: Comment Class TODO: Check inputs.
+ * Solver for Monadic Second Order Difference Logic Formulas TODO: Check inputs.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)

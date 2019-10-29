@@ -478,7 +478,7 @@ public final class MSODOperations {
 
 		// Variable must represent the empty set. Deal with empty word.
 		if (word.length() == 0) {
-			// TODO: Construct lambda expression.
+			// TODO: Construct lambda expression for empty word.
 			final Map<Term, Term> result = new HashMap<>();
 			result.put(SmtUtils.buildNewConstant(script, "emptyWord", SmtSortUtils.BOOL_SORT), null);
 			return result;
@@ -492,7 +492,7 @@ public final class MSODOperations {
 		}
 		// Input Formula defined only for natural numbers, no negative word exists.
 		else {
-			pair = new Pair<>(word, null);
+			pair = new Pair<>(word, new NestedWord());
 		}
 
 		// Extract the numbers encoded in the stems.
@@ -531,13 +531,14 @@ public final class MSODOperations {
 		// Split word into positive and negative part if the input formula is defined for integer numbers.
 		if (mFormulaOperations instanceof MSODFormulaOperationsInt) {
 			pair = splitWordBuchi(script, word);
-			stemPair = new Pair<>(pair.getFirst().getStem(), pair.getSecond().getStem());
+
 		}
 		// Input Formula defined only for natural numbers, no negative word exists.
 		else {
-			pair = new Pair<>(word, null);
-			stemPair = new Pair<>(pair.getFirst().getStem(), null);
+			pair = new Pair<>(word, new NestedLassoWord(new NestedWord(), new NestedWord()));
 		}
+
+		stemPair = new Pair<>(pair.getFirst().getStem(), pair.getSecond().getStem());
 
 		// Extract the numbers encoded in the stems.
 		final Map<Term, Set<BigInteger>> numbers = extractStemNumbers(script, stemPair, terms);
@@ -562,7 +563,6 @@ public final class MSODOperations {
 			loopTermsNeg = constructLoopTerm(script, pair.getSecond().getLoop(), terms, minStemNumber);
 		}
 
-		// TODO: bug, when no index is set, but word is not empty.
 		// Construct final result from stemTerms and loopTerms.
 		for (final Term term : terms) {
 			final Set<Term> set = new HashSet<>();
@@ -579,8 +579,8 @@ public final class MSODOperations {
 			if (!set.isEmpty()) {
 				result.put(term, SmtUtils.or(script, set));
 			}
-			// The variable must represent the empty set.
-			// TODO: Construct lambda expression.
+			// The term variable must represent the empty set.
+			// TODO: Construct lambda expression for empty set.
 			else {
 				result.put(term, term.getTheory().mFalse);
 			}

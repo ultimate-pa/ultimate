@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Simplify handling of {@link Sort}s and {@link MSODAlphabetSymbol} used in MSOD-logic.
- * 
+ *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
@@ -59,16 +59,10 @@ public final class MSODUtils {
 
 	public static final String SET_OF_INT_SORT = "SetOfInt";
 
-	/**
-	 * TODO: Comment.
-	 */
 	public static Sort getSetOfIntSort(final Script script) {
 		return script.sort(SET_OF_INT_SORT);
 	}
 
-	/**
-	 * TODO: Comment.
-	 */
 	public static Sort getSetOfIntSort(final ManagedScript script) {
 		return getSetOfIntSort(script.getScript());
 	}
