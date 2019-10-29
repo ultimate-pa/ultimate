@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledExcep
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -113,6 +114,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DangerInvariantGuesser;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -322,9 +324,23 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
 		} else {
 			final boolean addThreadUsageMonitors = false;
-			final BoundedPetriNet<LETTER, IPredicate> net =
-					CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices, mIcfg,
-							mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
+			final BoundedPetriNet<LETTER, IPredicate> petrifiedCfg = CFG2NestedWordAutomaton
+					.constructPetriNetWithSPredicates(mServices, mIcfg, mStateFactoryForRefinement, mErrorLocs, false,
+							mPredicateFactory, addThreadUsageMonitors);
+			final BoundedPetriNet<LETTER, IPredicate> net;
+			if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
+				final PetriNetLargeBlockEncoding pnlbe = new PetriNetLargeBlockEncoding(mServices,
+						mIcfg.getCfgSmtToolkit(), (BoundedPetriNet<IIcfgTransition<?>, IPredicate>) petrifiedCfg,
+						mPref.useLbeInConcurrentAnalysis());
+				final BoundedPetriNet<LETTER, IPredicate> lbecfg = (BoundedPetriNet<LETTER, IPredicate>) pnlbe
+						.getResult();
+				net = lbecfg;
+				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+						new StatisticsResult<>(Activator.PLUGIN_NAME, "PetriNetLargeBlockEncoding benchmarks",
+								pnlbe.getPetriNetLargeBlockEncodingStatistics()));
+			} else {
+				net = petrifiedCfg;
+			}
 			try {
 				mAbstraction = new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(mServices),
 						mStateFactoryForRefinement, net).getResult();
