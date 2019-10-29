@@ -104,10 +104,10 @@ public class PeaToDotTestSuite {
 			markdown.append("toc_depth: 2" + "\n\n");
 		}
 
-		markdown.append("### " + mName + " " + mScope + "\n\n");
-		markdown.append(mPattern.toString().replace(mPattern.getId() + ": ", "") + "\n\n");
-		markdown.append(counterTrace + "\n\n");
-		markdown.append("![](/" + IMAGE_DIR + mName + "_" + mScope + ".svg)\n");
+		markdown.append("## " + mName + " " + mScope + "\n");
+		markdown.append("```" + "\n" + mPattern.toString().replace(mPattern.getId() + ": ", "") + "\n" + "```" + "\n");
+		markdown.append("```" + "\n" + counterTrace + "\n" + "```" + "\n");
+		markdown.append("![](/" + IMAGE_DIR + mName + "_" + mScope + ".svg)" + "\n\n");
 
 		final BufferedWriter writer = new BufferedWriter(new FileWriter(file, true));
 		writer.write(markdown.toString());
