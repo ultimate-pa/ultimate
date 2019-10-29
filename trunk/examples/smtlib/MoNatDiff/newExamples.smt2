@@ -20,16 +20,9 @@
 ;(assert (and (not (< x 2)) (< y 2) (element x I) (element y I)))
 
 
-; I is the empty set. 
-;(assert (forall ((x Int))  (not (element x I))))
-
-; I is the set of Int/Nat numbers. 
-(assert (forall ((x Int))  (element x I)))
-
 ;(assert (= x 0))
 ;(assert (not (element 0 I)))
 ;(assert (=> (element x I) (element (+ x 1) I)))
 
 (check-sat)
-
 (get-value (I))

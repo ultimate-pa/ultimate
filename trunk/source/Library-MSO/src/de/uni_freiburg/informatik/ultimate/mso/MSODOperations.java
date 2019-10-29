@@ -527,18 +527,19 @@ public final class MSODOperations {
 		// Get the terms from of the accepted word.
 		final Set<Term> terms = word.getStem().getSymbol(0).getTerms();
 
+		final Pair<NestedWord<MSODAlphabetSymbol>, NestedWord<MSODAlphabetSymbol>> stemPair;
 		// Split word into positive and negative part if the input formula is defined for integer numbers.
 		if (mFormulaOperations instanceof MSODFormulaOperationsInt) {
 			pair = splitWordBuchi(script, word);
+			stemPair = new Pair<>(pair.getFirst().getStem(), pair.getSecond().getStem());
 		}
 		// Input Formula defined only for natural numbers, no negative word exists.
 		else {
 			pair = new Pair<>(word, null);
+			stemPair = new Pair<>(pair.getFirst().getStem(), null);
 		}
 
 		// Extract the numbers encoded in the stems.
-		final Pair<NestedWord<MSODAlphabetSymbol>, NestedWord<MSODAlphabetSymbol>> stemPair =
-				new Pair<>(pair.getFirst().getStem(), pair.getSecond().getStem());
 		final Map<Term, Set<BigInteger>> numbers = extractStemNumbers(script, stemPair, terms);
 
 		// Construct resulting stem terms from set of numbers.
@@ -561,6 +562,7 @@ public final class MSODOperations {
 			loopTermsNeg = constructLoopTerm(script, pair.getSecond().getLoop(), terms, minStemNumber);
 		}
 
+		// TODO: bug, when no index is set, but word is not empty.
 		// Construct final result from stemTerms and loopTerms.
 		for (final Term term : terms) {
 			final Set<Term> set = new HashSet<>();
