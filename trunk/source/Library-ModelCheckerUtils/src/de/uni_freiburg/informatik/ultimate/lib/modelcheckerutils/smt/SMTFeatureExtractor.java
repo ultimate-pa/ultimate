@@ -38,36 +38,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class SMTFeatureExtractor {
 
 	// Members
-	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final List<SMTFeature> mFeatures;
 	private final String mDumpPath;
 	private final String mFilename;
 
-	public SMTFeatureExtractor(final ILogger logger, final IUltimateServiceProvider services, final String dump_path) {
+	public SMTFeatureExtractor(final ILogger logger, final String dump_path) {
 		mLogger = logger;
-		mServices = services;
 		mFeatures = new ArrayList<>();
 		mDumpPath = dump_path;
-		final String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern( "uuuu-MM-dd" ));
+		final String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("uuuu-MM-dd"));
 		mFilename = mDumpPath + timestamp + "-smtfeatures.csv";
 		createDumpFile();
 	}
 
-	public void extractFeature(final List<Term> assertions, final double time, final String result) throws IllegalAccessException, IOException {
+	public void extractFeature(final List<Term> assertions, final double time, final String result)
+			throws IllegalAccessException, IOException {
 		mLogger.warn("Extracting feature..");
 		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
 		for (final Term term : assertions) {
 			tc.checkTerm(term);
 		}
 		final SMTFeature feature = new SMTFeature();
-		//feature.assertionStack = tc.getTerm();
+		// feature.assertionStack = tc.getTerm();
 		feature.containsArrays = tc.hasArrays();
 		feature.occuringFunctions = tc.getOccuringFunctionNames();
 		feature.occuringQuantifiers = tc.getOccuringQuantifiers();
@@ -91,10 +89,9 @@ public class SMTFeatureExtractor {
 
 	public void dumpFeature(final SMTFeature feature) throws IllegalAccessException, IOException {
 		mLogger.warn("Writing to file:" + mFilename);
-		try(FileWriter fw = new FileWriter(mFilename, true);
+		try (FileWriter fw = new FileWriter(mFilename, true);
 				BufferedWriter bw = new BufferedWriter(fw);
-				PrintWriter out = new PrintWriter(bw))
-		{
+				PrintWriter out = new PrintWriter(bw)) {
 			mLogger.warn(SMTFeature.getCsvHeader(";"));
 			out.println(feature.toCsv(";"));
 		} catch (final IOException e) {
@@ -104,13 +101,12 @@ public class SMTFeatureExtractor {
 
 	private void createDumpFile() {
 		final File f = new File(mFilename);
-		if(!f.exists()){
+		if (!f.exists()) {
 			try {
 				f.createNewFile();
-				try(FileWriter fw = new FileWriter(mFilename, true);
+				try (FileWriter fw = new FileWriter(mFilename, true);
 						BufferedWriter bw = new BufferedWriter(fw);
-						PrintWriter out = new PrintWriter(bw))
-				{
+						PrintWriter out = new PrintWriter(bw)) {
 					final String header = SMTFeature.getCsvHeader(";");
 					out.println(header);
 				} catch (IOException | IllegalAccessException e) {
@@ -120,7 +116,7 @@ public class SMTFeatureExtractor {
 			} catch (final IOException e) {
 				mLogger.error(e);
 			}
-		}else{
+		} else {
 			mLogger.info("SMT feature dump-file already exists.");
 		}
 	}

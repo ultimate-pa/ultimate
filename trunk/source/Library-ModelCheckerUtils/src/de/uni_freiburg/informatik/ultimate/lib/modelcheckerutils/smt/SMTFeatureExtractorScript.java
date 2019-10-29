@@ -28,22 +28,23 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
 
 public class SMTFeatureExtractorScript extends WrapperScript {
 
 	private final SMTFeatureExtractor mFeatureExtractor;
-	private List<Term> mCurrentAssertionStack;
+	private final Deque<Term> mCurrentAssertionStack;
 	private final ILogger mLogger;
-	private final IUltimateServiceProvider mServices;
 
 	/**
 	 * Create a new script which can extract properties of SMTterms and measure time of checkSat().
@@ -51,13 +52,11 @@ public class SMTFeatureExtractorScript extends WrapperScript {
 	 * @param script
 	 *            The wrapped script.
 	 */
-	public SMTFeatureExtractorScript(final Script script, final ILogger logger, final IUltimateServiceProvider services,
-			final String dump_path) {
+	public SMTFeatureExtractorScript(final Script script, final ILogger logger, final String dumpPath) {
 		super(script);
 		mLogger = logger;
-		mServices = services;
-		mFeatureExtractor = new SMTFeatureExtractor(logger, services, dump_path);
-		mCurrentAssertionStack = new ArrayList<>();
+		mFeatureExtractor = new SMTFeatureExtractor(logger, dumpPath);
+		mCurrentAssertionStack = new ArrayDeque<>();
 	}
 
 	@Override
@@ -70,16 +69,23 @@ public class SMTFeatureExtractorScript extends WrapperScript {
 
 	@Override
 	public void push(final int levels) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		mLogger.warn("PUSH " + levels);
 		super.push(levels);
+		for (int i = levels; i >= 0; i--) {
+			mCurrentAssertionStack.add(StackMarker.INSTANCE);
+		}
 	}
 
 	@Override
 	public void pop(final int levels) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		mLogger.warn("POP " + levels);
 		super.pop(levels);
+		final Iterator<Term> iter = mCurrentAssertionStack.descendingIterator();
+		Term currentTerm = null;
+		for (int i = levels; i >= 0; i--) {
+			while (currentTerm != StackMarker.INSTANCE) {
+				currentTerm = iter.next();
+				iter.remove();
+			}
+		}
 	}
 
 	@Override
@@ -89,12 +95,32 @@ public class SMTFeatureExtractorScript extends WrapperScript {
 		final LBool sat = super.mScript.checkSat();
 		final double analysisTime = (System.nanoTime() - start) / 1000;
 		try {
-			mFeatureExtractor.extractFeature(mCurrentAssertionStack, analysisTime, sat.toString());
-			mCurrentAssertionStack = new ArrayList<>();
+			mFeatureExtractor.extractFeature(
+					mCurrentAssertionStack.stream().filter(a -> a != StackMarker.INSTANCE).collect(Collectors.toList()),
+					analysisTime, sat.toString());
 		} catch (IllegalAccessException | IOException e) {
 			mLogger.error(e);
 		}
 		return sat;
+	}
+
+	private static final class StackMarker extends Term {
+
+		private static final StackMarker INSTANCE = new StackMarker();
+
+		protected StackMarker() {
+			super(-1);
+		}
+
+		@Override
+		public Sort getSort() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		protected void toStringHelper(final ArrayDeque<Object> todo) {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 }
