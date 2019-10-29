@@ -6,9 +6,7 @@
 (declare-fun strictSubsetInt (SetOfInt SetOfInt) Bool)
 
 (declare-fun x () Int)
-(declare-fun y () Int)
 (declare-fun I () SetOfInt)
-
 
 
 ;(exists x: x \in I) /\ (forall x: x \in I ==> x + 1 \in I)

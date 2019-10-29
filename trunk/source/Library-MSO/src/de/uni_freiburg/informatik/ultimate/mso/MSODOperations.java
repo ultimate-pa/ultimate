@@ -322,7 +322,8 @@ public final class MSODOperations {
 	}
 
 	/**
-	 * Returns a Map containing terms and the disjunction corresponding to the numbers encoded in the given stem.
+	 * TODO: Deal with empty set, if word length is not 0. Returns a Map containing terms and the disjunction
+	 * corresponding to the numbers encoded in the given stem.
 	 */
 	public Map<Term, Term> constructStemTerm(final Script script, final Map<Term, Set<BigInteger>> stemNumbers) {
 		final Map<Term, Term> result = new HashMap<>();
@@ -376,7 +377,7 @@ public final class MSODOperations {
 			if (!disjuncts.isEmpty()) {
 				result.put(entry.getKey(), SmtUtils.or(script, disjuncts));
 			} else {
-				result.put(entry.getKey(), null);
+				result.put(entry.getKey(), entry.getKey().getTheory().mFalse);
 			}
 		}
 		return result;
@@ -437,7 +438,7 @@ public final class MSODOperations {
 				}
 				result.put(term, SmtUtils.and(script, conjunct, disjunction));
 			} else {
-				result.put(term, null);
+				result.put(term, term.getTheory().mFalse);
 			}
 		}
 		return result;
@@ -523,6 +524,11 @@ public final class MSODOperations {
 
 		// Get the word of the accepted run.
 		final NestedLassoWord<MSODAlphabetSymbol> word = getWordBuchi(script, services, automaton);
+
+		// No accepted run.
+		if (word == null) {
+			return null;
+		}
 
 		// Deal with empty word.
 		if (word.getStem().length() + word.getLoop().length() == 0) {

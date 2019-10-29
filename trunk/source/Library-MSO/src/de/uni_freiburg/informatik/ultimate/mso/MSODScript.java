@@ -116,7 +116,7 @@ public class MSODScript extends NoopScript {
 
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = traversePostOrder(mAssertionTerm);
 
-			// mLogger.info(automatonToString(automaton, Format.ATS));
+			mLogger.info(automatonToString(automaton, Format.ATS));
 			mModel = mMSODOperations.getResult(this, mAutomataLibrarayServices, automaton);
 
 			if (mModel == null) {
