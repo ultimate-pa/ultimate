@@ -476,6 +476,11 @@ public final class MSODOperations {
 		// Get the word of the accepted run and the contained terms.
 		final NestedWord<MSODAlphabetSymbol> word = getWordWeak(script, services, automaton);
 
+		// No accepted run.
+		if (word == null) {
+			return null;
+		}
+
 		// Variable must represent the empty set. Deal with empty word.
 		if (word.length() == 0) {
 			// TODO: Construct lambda expression for empty word.

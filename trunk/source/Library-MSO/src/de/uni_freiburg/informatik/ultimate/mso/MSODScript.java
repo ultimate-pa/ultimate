@@ -119,6 +119,11 @@ public class MSODScript extends NoopScript {
 			// mLogger.info(automatonToString(automaton, Format.ATS));
 			mModel = mMSODOperations.getResult(this, mAutomataLibrarayServices, automaton);
 
+			if (mModel == null) {
+				mLogger.info("RESULT: UNSAT");
+				return LBool.UNSAT;
+			}
+
 			if (mModel.keySet().toString().contains("emptyWord")) {
 				// TODO: Deal with empty word
 				mLogger.info("Model: EMPTYWORD");
@@ -130,14 +135,9 @@ public class MSODScript extends NoopScript {
 				}
 			}
 
-			if (mModel == null) {
-				result = LBool.UNSAT;
-				mLogger.info("RESULT: UNSAT");
-			} else {
-				result = LBool.SAT;
-				mLogger.info("RESULT: SAT");
-				mLogger.info("MODEL: " + mModel);
-			}
+			result = LBool.SAT;
+			mLogger.info("RESULT: SAT");
+			mLogger.info("MODEL: " + mModel);
 
 		} catch (final Exception e) {
 			mLogger.info(e);
