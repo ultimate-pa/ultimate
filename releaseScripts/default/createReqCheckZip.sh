@@ -42,7 +42,7 @@ echo "Using $TOOLNAME ($LCTOOLNAME) as toolname"
 ADDS=(
     "adds/LICENSE*"
     "adds/*LICENSE"
-    "adds/reqchecker/README.md"
+    "adds/reqchecker/README"
     "adds/reqchecker/explode_script.py"
     "adds/reqchecker/extract_vac_reasons.sh"
     "adds/reqchecker/run_complete_analysis.sh"
@@ -73,7 +73,7 @@ echo "Version is "$VERSION
 TARGETDIR=U${TOOLNAME}-${ARCH}
 CONFIGDIR="$TARGETDIR"/config
 DATADIR="$TARGETDIR"/data
-ZIPFILE=Ultimate${TOOLNAME}-${ARCH}.zip
+ZIPFILE=U${TOOLNAME}-${ARCH}.zip
 SETTINGS=../../trunk/examples/settings/default/${LCTOOLNAME}/*${TOOLNAME}*
 
 # check toolchain argument
@@ -91,14 +91,14 @@ else
 	TESTTOOLCHAIN=
 fi
 
-
 ## removing files and dirs from previous deployments
 if [ -d "$TARGETDIR" ]; then
-	echo "Removing old ""$TARGETDIR"
+	echo "Removing old $TARGETDIR"
 	rm -r "$TARGETDIR"
 fi
+
 if [ -f "${ZIPFILE}" ]; then
-    echo "Removing old .zip file ""${ZIPFILE}"
+    echo "Removing old .zip file ${ZIPFILE}"
 	rm "${ZIPFILE}"
 fi
 
