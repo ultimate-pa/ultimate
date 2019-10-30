@@ -6,11 +6,9 @@ req_file="$1"
 
 ### Default settings
 # This is the path to the repository, which contains the requirements-folder
-req_repo_folder="/path/to/requirements-repository"
+req_repo_folder="/repos/hanfor/example_input"
 # This is the path to the requirements-folder
-req_folder="/path/to/requirements-repository/requirements-folder"
-# Path to the Ultimate repository.
-ultimate_repo_folder="/path/to/ultimate"
+req_folder="/repos/hanfor/example_input"
 # The amount of requirements which are checked together for RT-inconsistency.
 # Careful with this parameter, it will blow up the amount of checks really fast.
 rt_inconsistency_range=2
@@ -18,14 +16,14 @@ rt_inconsistency_range=2
 timeout_per_assertion=900
 
 # Don't touch this, unless you know what you are doing.
+automizer_folder="."
 # Path to the vacuity extractor script.
-vac_extractor="${ultimate_repo_folder}/releaseScripts/default/ReqChecker/extract_vac_reasons.sh"
+vac_extractor="./extract_vac_reasons.sh"
 # Path to Ultimate Automizer (remember those binaries we created earlier? that's what you want!).
-automizer_folder="${ultimate_repo_folder}/releaseScripts/default/UAutomizer-linux"
-reqcheck_toolchain="${ultimate_repo_folder}/trunk/examples/toolchains/ReqCheck.xml"
-reqcheck_settings="${ultimate_repo_folder}/trunk/examples/settings/reqanalyzer/reqanalyzer-nonlin.epf"
-testgen_toolchain="${ultimate_repo_folder}/trunk/examples/toolchains/ReqToTest.xml"
-testgen_settings="${ultimate_repo_folder}/trunk/examples/settings/ReqToTest.epf"
+reqcheck_toolchain="./config/ReqCheck.xml"
+reqcheck_settings="./config/ReqCheck-nonlin.epf"
+testgen_toolchain="./config/ReqToTest.xml"
+testgen_settings="./config/ReqCheck-ReqToTest.epf"
 
 ### Functions
 function prompt {
@@ -161,7 +159,7 @@ function run_testgen {
 }
 
 ### Check parameters
-for i in "$ultimate_repo_folder" "$automizer_folder" "$req_folder" ; do
+for i in "$automizer_folder" "$req_folder" ; do
   if [ ! -d "$i" ]; then
     echo "Folder $i does not exist"
     exit 1
