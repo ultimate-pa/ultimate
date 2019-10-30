@@ -42,9 +42,10 @@ echo "Using $TOOLNAME ($LCTOOLNAME) as toolname"
 ADDS=(
     "adds/LICENSE*"
     "adds/*LICENSE"
-    "ReqChecker/explode_script.py"
-    "ReqChecker/extract_vac_reasons.sh"
-    "ReqChecker/run_complete_analysis.sh"
+    "adds/reqchecker/README.md"
+    "adds/reqchecker/explode_script.py"
+    "adds/reqchecker/extract_vac_reasons.sh"
+    "adds/reqchecker/run_complete_analysis.sh"
 )
 
 # architecture-specific variables
