@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -208,8 +209,9 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			}
 			final Term preRead = getPrecondition(read, trace, interpolants);
 			for (final String var : readVars) {
-				// TODO: Take write=null in account as well (no write before)
-				for (final LETTER write : mVariables2Writes.getImage(var)) {
+				final Set<LETTER> writesWithNull =
+						DataStructureUtils.union(mVariables2Writes.getImage(var), Collections.singleton(null));
+				for (final LETTER write : writesWithNull) {
 					if (writeDoesNotImply(write, preRead, trace, interpolants) == LBool.UNSAT) {
 						continue;
 					}
@@ -217,7 +219,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					// If the constraints are satisfiable, add a trace based on them
 					script.assertTerm(getConstraints(trace, read, write, interpolants));
 					if (script.checkSat() == LBool.SAT) {
-						result.add(constructTraceFromModel(script.getModel()));
+						result.add(constructTraceFromModel(trace, script.getModel()));
 					}
 					script.pop(1);
 				}
@@ -240,11 +242,14 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			final TermVariable var2 = mActions2TermVars.get(entry.getKey());
 			conjuncts.add(SmtUtils.less(script, var1, var2));
 		}
+		// TODO: Refine these conditions, s.t. all other reads read the same value to be sound?
 		conjuncts.addAll(getRwConstraints(read, trace, interpolants));
 		if (write != null) {
 			conjuncts.addAll(getRwConstraints(write, trace, interpolants));
 		}
-		// TODO: Handle this, if write=null
+		// if (write == null) {
+		//
+		// } else
 		conjuncts.addAll(getValueConstraints(read, getPostcondition(write, trace, interpolants), trace, interpolants));
 		return SmtUtils.and(script, conjuncts);
 	}
@@ -266,24 +271,33 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		final TermVariable readVar = mActions2TermVars.get(read);
 		for (final String var : mReads2Variables.getImage(read)) {
 			final List<Term> disjuncts = new ArrayList<>();
-			for (final LETTER write : mVariables2Writes.getImage(var)) {
+			final Set<LETTER> writesWithNull =
+					DataStructureUtils.union(mVariables2Writes.getImage(var), Collections.singleton(null));
+			for (final LETTER write : writesWithNull) {
 				if (writeDoesNotImply(write, constraint, trace, interpolants) != LBool.UNSAT) {
 					continue;
 				}
 				final List<Term> conjuncts = new ArrayList<>();
-				final TermVariable writeVar = mActions2TermVars.get(write);
-				conjuncts.add(SmtUtils.less(script, writeVar, readVar));
+				TermVariable writeVar = null;
+				if (write != null) {
+					writeVar = mActions2TermVars.get(write);
+					conjuncts.add(SmtUtils.less(script, writeVar, readVar));
+				}
 				for (final LETTER otherWrite : mVariables2Writes.getImage(var)) {
 					// TODO: Can we cache writeDoesNotImply?
 					// TODO: Is this the correct condition?
-					if (write.equals(otherWrite)
+					if (otherWrite.equals(write)
 							|| writeDoesNotImply(otherWrite, constraint, trace, interpolants) == LBool.UNSAT) {
 						continue;
 					}
 					final TermVariable otherWriteVar = mActions2TermVars.get(otherWrite);
-					final Term beforeWrite = SmtUtils.less(script, otherWriteVar, writeVar);
 					final Term afterRead = SmtUtils.less(script, readVar, otherWriteVar);
-					conjuncts.add(SmtUtils.or(script, beforeWrite, afterRead));
+					if (write != null) {
+						final Term beforeWrite = SmtUtils.less(script, otherWriteVar, writeVar);
+						conjuncts.add(SmtUtils.or(script, beforeWrite, afterRead));
+					} else {
+						conjuncts.add(afterRead);
+					}
 				}
 				disjuncts.add(SmtUtils.and(script, conjuncts));
 			}
@@ -300,9 +314,8 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		return Util.checkSat(script, SmtUtils.and(script, post, SmtUtils.not(script, constraint)));
 	}
 
-	private List<LETTER> constructTraceFromModel(final Model model) {
-		return mActions2TermVars.keySet().stream()
-				.sorted((a1, a2) -> getIntValue(model, a1).compareTo(getIntValue(model, a2)))
+	private List<LETTER> constructTraceFromModel(final List<LETTER> originalTrace, final Model model) {
+		return originalTrace.stream().sorted((a1, a2) -> getIntValue(model, a1).compareTo(getIntValue(model, a2)))
 				.collect(Collectors.toList());
 	}
 
@@ -330,48 +343,61 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				continue;
 			}
 			for (final Entry<String, LETTER> entry : previousWrites.entrySet()) {
-				// TODO: write can be null, handle this
 				final LETTER write = entry.getValue();
 				final NestedWordAutomaton<LETTER, String> readNwa =
 						new NestedWordAutomaton<>(mAutomataServices, mAlphabet, factory);
+				final Set<LETTER> writesOnVar = mVariables2Writes.getImage(entry.getKey());
+				final int readCount = mActionCounts.get(read);
 				final String initial = "q0";
 				final String postWrite = "q1";
 				final String postRead = "q2";
 				readNwa.addState(true, false, initial);
-				readNwa.addState(false, false, postWrite);
-				readNwa.addState(false, true, postRead);
-				final Set<LETTER> correctWrites = new HashSet<>();
-				final int readCount = mActionCounts.get(read);
-				final Term post = getPostcondition(write, trace, interpolants);
-				final Set<LETTER> writesOnVar = mVariables2Writes.getImage(entry.getKey());
-				for (final LETTER otherWrite : writesOnVar) {
-					if (otherWrite.equals(read) && readCount == 1) {
-						continue;
+				if (write == null) {
+					readNwa.addState(false, true, postRead);
+					readNwa.addInternalTransition(initial, read, postRead);
+					for (final LETTER action : mActionCounts.keySet()) {
+						if (action.equals(read) && readCount == 1) {
+							continue;
+						}
+						if (!writesOnVar.contains(action)) {
+							readNwa.addInternalTransition(initial, action, initial);
+						}
+						readNwa.addInternalTransition(postRead, action, postRead);
 					}
-					if (otherWrite.equals(write)
-							|| writeDoesNotImply(otherWrite, post, trace, interpolants) == LBool.UNSAT) {
-						correctWrites.add(otherWrite);
+				} else {
+					readNwa.addState(false, false, postWrite);
+					readNwa.addState(false, true, postRead);
+					final Set<LETTER> correctWrites = new HashSet<>();
+					final Term post = getPostcondition(write, trace, interpolants);
+					for (final LETTER otherWrite : writesOnVar) {
+						if (otherWrite.equals(read) && readCount == 1) {
+							continue;
+						}
+						if (otherWrite.equals(write)
+								|| writeDoesNotImply(otherWrite, post, trace, interpolants) == LBool.UNSAT) {
+							correctWrites.add(otherWrite);
+						}
 					}
-				}
-				// Add all the forward edges and count the actions
-				final Map<LETTER, Integer> remainingCounts = new HashMap<>(mActionCounts);
-				remainingCounts.put(read, readCount - 1);
-				readNwa.addInternalTransition(postWrite, read, postRead);
-				for (final LETTER w : correctWrites) {
-					readNwa.addInternalTransition(initial, w, postWrite);
-					if (correctWrites.size() == 1) {
-						remainingCounts.put(w, remainingCounts.get(w) - 1);
+					// Add all the forward edges and count the actions
+					final Map<LETTER, Integer> remainingCounts = new HashMap<>(mActionCounts);
+					remainingCounts.put(read, readCount - 1);
+					readNwa.addInternalTransition(postWrite, read, postRead);
+					for (final LETTER w : correctWrites) {
+						readNwa.addInternalTransition(initial, w, postWrite);
+						if (correctWrites.size() == 1) {
+							remainingCounts.put(w, remainingCounts.get(w) - 1);
+						}
 					}
-				}
-				// Add the self-loops for all the actions, that still can happen
-				for (final LETTER action : trace) {
-					if (remainingCounts.get(action) == 0) {
-						continue;
-					}
-					readNwa.addInternalTransition(initial, action, initial);
-					readNwa.addInternalTransition(postRead, action, postRead);
-					if (!writesOnVar.contains(action) || correctWrites.contains(action)) {
-						readNwa.addInternalTransition(postWrite, action, postWrite);
+					// Add the self-loops for all the actions, that still can happen
+					for (final LETTER action : mActionCounts.keySet()) {
+						if (remainingCounts.get(action) == 0) {
+							continue;
+						}
+						readNwa.addInternalTransition(initial, action, initial);
+						readNwa.addInternalTransition(postRead, action, postRead);
+						if (!writesOnVar.contains(action) || correctWrites.contains(action)) {
+							readNwa.addInternalTransition(postWrite, action, postWrite);
+						}
 					}
 				}
 				if (result == null) {
@@ -400,6 +426,9 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	private Term getPostcondition(final LETTER action, final List<LETTER> trace, final IPredicate[] interpolants) {
+		if (action == null) {
+			return mManagedScript.getScript().term("true");
+		}
 		final int index = mActions2Indices.getOrDefault(action, -1);
 		if (index == -1) {
 			throw new UnsupportedOperationException(action + " is not contained in the trace.");
