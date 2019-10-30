@@ -50,9 +50,7 @@ public class PeaToDotTestSuite {
 
 	private static final File ROOT_DIR = new File("/media/ubuntu/Daten/Projects/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/usage/patterns");
-
-	private static final String IMAGE_DIR_RELATIVE = "/img/patterns";
-	private static final File IMAGE_DIR = new File(ROOT_DIR + IMAGE_DIR_RELATIVE);
+	private static final File IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
 
 	private static final String LINE_SEP = System.lineSeparator();
 
@@ -91,8 +89,6 @@ public class PeaToDotTestSuite {
 			return; // Oops, somebody forgot to implement that sh.. ;-)
 		}
 
-		// mLogger.info(DotWriterNew.createDotString(pea));
-
 		writeSvgFile(DotWriterNew.createDotString(pea));
 		writeMarkdownFile(counterTrace.toString());
 	}
@@ -101,9 +97,6 @@ public class PeaToDotTestSuite {
 		final File file = new File(IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + ".svg");
 
 		final String[] command = new String[] { "dot", "-Tsvg", "-o", file.toString() };
-		// final String[] command = new String[] { "unflatten", "|", "dot", "-Tsvg",
-		// "-o", file.toString() };
-
 		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServiceProvider);
 		final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
 		writer.write(dot.toString());
@@ -118,15 +111,15 @@ public class PeaToDotTestSuite {
 		final Formatter fmt = new Formatter(stringBuilder);
 
 		if (!file.exists()) {
-			fmt.format("toc_depth: 2%s%s", LINE_SEP, LINE_SEP);
-			fmt.format("<!-- Auto generated file, do not make changes here. -->%s%s", LINE_SEP, LINE_SEP);
+			fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
+			fmt.format("## %s%s%s", mPatternName, LINE_SEP, LINE_SEP);
 		}
 
-		fmt.format("## %s %s%s", mPatternName, mScopeName, LINE_SEP);
+		fmt.format("### %s %s%s", mPatternName, mScopeName, LINE_SEP);
 		fmt.format("```%s%s%s```%s", LINE_SEP, mPatternString, LINE_SEP, LINE_SEP);
 		fmt.format("```%s%s%s```%s", LINE_SEP, counterTrace, LINE_SEP, LINE_SEP);
-		fmt.format("![](%s/%s_%s.svg)%s", IMAGE_DIR_RELATIVE, mPatternName, mScopeName, LINE_SEP);
-		fmt.close();
+		fmt.format("![](/%s/%s_%s.svg)%s", ROOT_DIR.toPath().relativize(IMAGE_DIR.toPath()), mPatternName, mScopeName,
+				LINE_SEP);
 
 		final BufferedWriter writer = new BufferedWriter(new FileWriter(file, true));
 		writer.write(stringBuilder.toString());
@@ -153,7 +146,24 @@ public class PeaToDotTestSuite {
 
 	@AfterClass
 	public static void afterClass() throws IOException {
+		final IUltimateServiceProvider serviceProvider = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
+		final ILogger logger = serviceProvider.getLoggingService().getLogger("");
 
+		final StringBuilder stringBuilder = new StringBuilder();
+		final Formatter fmt = new Formatter(stringBuilder);
+		fmt.format("toc_depth: 2%s%s", LINE_SEP, LINE_SEP);
+		fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
+		fmt.format("# Patterns%s", LINE_SEP);
+
+		final File[] files = MARKDOWN_DIR.listFiles((dir, name) -> name.toLowerCase().endsWith(".md"));
+		for (final File file : files) {
+			fmt.format("{!%s/%s!}%s", ROOT_DIR.toPath().relativize(MARKDOWN_DIR.toPath()), file.getName(), LINE_SEP);
+		}
+
+		final File file = new File(MARKDOWN_DIR.getParentFile() + "/patterns.md");
+		final BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+		writer.write(stringBuilder.toString());
+		writer.close();
 	}
 
 	@Parameters()
