@@ -1,19 +1,40 @@
 #!/bin/bash
 # script that runs all the various requirement analysis scripts and moves files around in the matching directories
 
+if [ $# -le 3 ]; then
+  echo "Not enough arguments supplied -- use arguments in the following order"
+	echo "1. Requirement file (*.req)"
+	echo "2. The path to the repository which contains the requirements-folder"
+	echo "3. The path to the requirements-folder"
+	echo "(Optional, default: 2) 4. RT-inconsistency range: The amount of requirements which are checked together for RT-inconsistency."
+	echo "(Optional, default: 900) 5. Timeout per assertion: Amount of seconds until analysis of an assertion is timed out."
+  exit 1
+fi
+
 # The requirement file is an argument passed to this script.
 req_file="$1"
 
 ### Default settings
 # This is the path to the repository, which contains the requirements-folder
-req_repo_folder="/repos/hanfor/example_input"
+req_repo_folder="$2"
 # This is the path to the requirements-folder
-req_folder="/repos/hanfor/example_input"
+req_folder="$3"
 # The amount of requirements which are checked together for RT-inconsistency.
 # Careful with this parameter, it will blow up the amount of checks really fast.
-rt_inconsistency_range=2
+rt_inconsistency_range=$4
+if [ -z "$_rt_inconsistency_range" ]
+then
+  # default to 2
+	rt_inconsistency_range=2
+fi
+
 # The time how long a singles assertion is checked.
-timeout_per_assertion=900
+timeout_per_assertion=$5
+if [ -z "$_timeout_per_assertion" ]
+then
+  # default to 900
+	timeout_per_assertion=900
+fi
 
 # Don't touch this, unless you know what you are doing.
 automizer_folder="."
