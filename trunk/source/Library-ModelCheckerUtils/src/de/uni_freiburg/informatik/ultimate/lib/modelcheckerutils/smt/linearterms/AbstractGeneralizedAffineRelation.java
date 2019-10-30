@@ -440,6 +440,20 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		}
 		return divTerm;
 	}
+	
+	private static Term constructDivisibilityConstraint(final Script script, final Term divisor, final Term divident,
+			final boolean negate) {
+		final Term modTerm = SmtUtils.mod(script, divident, divisor);
+		final Term tmp = SmtUtils.binaryEquality(script, modTerm,
+				SmtUtils.constructIntegerValue(script, SmtSortUtils.getIntSort(script), BigInteger.ZERO));
+		final Term result;
+		if (negate) {
+			result = SmtUtils.not(script, tmp);
+		} else {
+			result = tmp;
+		}
+		return result;
+	}
 
 	/*
 	 * construct DivTerm for LESS and GEQ case, where the default divTerm can't be
