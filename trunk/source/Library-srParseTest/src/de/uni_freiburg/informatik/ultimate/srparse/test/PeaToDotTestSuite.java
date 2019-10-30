@@ -118,8 +118,8 @@ public class PeaToDotTestSuite {
 		fmt.format("### %s %s%s", mPatternName, mScopeName, LINE_SEP);
 		fmt.format("```%s%s%s```%s", LINE_SEP, mPatternString, LINE_SEP, LINE_SEP);
 		fmt.format("```%s%s%s```%s", LINE_SEP, counterTrace, LINE_SEP, LINE_SEP);
-		fmt.format("![](/%s/%s_%s.svg)%s", ROOT_DIR.toPath().relativize(IMAGE_DIR.toPath()), mPatternName, mScopeName,
-				LINE_SEP);
+		fmt.format("![](%s/%s/%s_%s.svg)%s", IMAGE_DIR.toPath().relativize(ROOT_DIR.toPath()),
+				ROOT_DIR.toPath().relativize(IMAGE_DIR.toPath()), mPatternName, mScopeName, LINE_SEP);
 
 		final BufferedWriter writer = new BufferedWriter(new FileWriter(file, true));
 		writer.write(stringBuilder.toString());
