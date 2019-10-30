@@ -1,7 +1,6 @@
 #!/bin/bash
 # script that runs all the various requirement analysis scripts and moves files around in the matching directories
-
-if [ $# -le 3 ]; then
+if [ $# -lt 3 ]; then
   echo "Not enough arguments supplied -- use arguments in the following order"
 	echo "1. Requirement file (*.req)"
 	echo "2. The path to the repository which contains the requirements-folder"
@@ -13,18 +12,24 @@ fi
 
 # The requirement file is an argument passed to this script.
 req_file="$1"
+echo "Requirements file: $req_file"
 
 ### Default settings
 # This is the path to the repository, which contains the requirements-folder
 req_repo_folder="$2"
+echo "Requirements-Folder repository: $req_repo_folder"
+
 # This is the path to the requirements-folder
 req_folder="$3"
+echo "Requirements-Folder repository: $req_folder"
+
 # The amount of requirements which are checked together for RT-inconsistency.
 # Careful with this parameter, it will blow up the amount of checks really fast.
 rt_inconsistency_range=$4
 if [ -z "$_rt_inconsistency_range" ]
 then
   # default to 2
+  echo "rt_inconsistency_range not set, default to 2"
 	rt_inconsistency_range=2
 fi
 
@@ -33,6 +38,7 @@ timeout_per_assertion=$5
 if [ -z "$_timeout_per_assertion" ]
 then
   # default to 900
+  echo "timeout_per_assertion not set, default to 900"
 	timeout_per_assertion=900
 fi
 
