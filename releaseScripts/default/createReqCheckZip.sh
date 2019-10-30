@@ -21,11 +21,12 @@ function copy_if_non_empty {
     fi
 }
 
-if [ $# -le 2 ]; then
+if [ $# -lt 4 ]; then
     echo "Not enough arguments supplied -- use arguments in the following order"
 	echo "1. the toolname"
 	echo "2. 'linux' or 'win32' for the target platform"
 	echo "3. ReqCheck toolchain (e.g., 'ReqCheck.xml')"
+	echo "4. TestGen toolchain (e.g., 'ReqToTest.xml')"
     exit 1
 fi
 
