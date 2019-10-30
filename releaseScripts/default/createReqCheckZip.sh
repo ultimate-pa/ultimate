@@ -42,9 +42,6 @@ echo "Using $TOOLNAME ($LCTOOLNAME) as toolname"
 ADDS=(
     "adds/LICENSE*"
     "adds/*LICENSE"
-    "adds/Ultimate.py"
-    "adds/Ultimate.ini"
-    "adds/README"
     "ReqChecker/explode_script.py"
     "ReqChecker/extract_vac_reasons.sh"
     "ReqChecker/run_complete_analysis.sh"
@@ -123,14 +120,6 @@ for add in "${ADDS[@]}" ; do
     fi
     test cp $add "$TARGETDIR"/
 done
-
-
-echo "Modifying Ultimate.py with version and toolname"
-## replacing version value in Ultimate.py
-test sed "s/version =.*/version = \'$VERSION\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
-
-## replacing toolname value in Ultimate.py
-test sed "s/toolname =.*/toolname = \'$TOOLNAME\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
 
 ## creating new zipfile
 echo "Creating .zip"
