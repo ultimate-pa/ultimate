@@ -94,8 +94,7 @@ public class Svcomp19FoldersAutomizerConcurrentPetriNetLbe extends AbstractTrace
 	 */
 	@Override
 	public long getTimeout() {
-		return 60;
-		//return 60 * 1000;
+		return 60 * 1000;
 	}
 
 	/**
