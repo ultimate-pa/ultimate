@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.RegexDag;
 
 /**
  * Transition to mark paths uniquely in {@link RegexDag}.
+ * Usually paths to LOIs, returns, and enter calls are marked.
  * 
  * @author schaetzc@tf.uni-freiburg.de
  */
@@ -52,6 +53,7 @@ public class LocationMarkerTransition implements IIcfgInternalTransition<IcfgLoc
 	 * Creates a new unique mark.
 	 * 
 	 * @param markedTarget Label of the mark. Even two marks with the same label are unique/unequal.
+	 *                     Null is an acceptable label.
 	 */
 	public LocationMarkerTransition(final IcfgLocation markedTarget) {
 		mMarkedTarget = markedTarget;

@@ -30,10 +30,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Stores predicates for locations of interest (LOIs).
- * Since outsiders may not know whether a location is a LOI or not, the store method
- * {@link #storePredicateIfLoi(IcfgLocation, IPredicate)} takes any location and predicate
- * but updates the predicate only if the given location is of interest.
+ * Stores predicates for locations of interest (LOIs) or any other location.
  * <p>
  * This interface has no way to retrieve the stored predicates.
  * Implementing classes must offer methods to retrieve the stored predicates on their own.
@@ -43,12 +40,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 public interface ILoiPredicateStorage {
 
 	/**
-	 * Adds a predicate if the given location is of interest.
+	 * Adds a predicate to the given location.
 	 * Whether the added predicate replaces the old one or is combined with the old one depends on the implementation.
 	 * Usually we expect that predicates are combined and the initial predicate is bottom/false.
 	 *
-	 * @param location Location which may be of interest
-	 * @param addPred Predicate to be stored in case the location is of interest
+	 * @param location l
+	 * @param addPred Predicate to be stored for location l
 	 */
-	void storePredicateIfLoi(IcfgLocation location, IPredicate addPred);
+	void storePredicate(IcfgLocation location, IPredicate addPred);
 }

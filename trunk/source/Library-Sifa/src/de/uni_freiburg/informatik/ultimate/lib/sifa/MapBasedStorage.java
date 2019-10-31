@@ -33,7 +33,6 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 /**
  * Stores predicates for locations of interest using a map.
@@ -42,53 +41,47 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
  */
 public class MapBasedStorage implements ILoiPredicateStorage {
 
-	private final IDomain mDomain;
-	private final SymbolicTools mTools;
 	private final ILogger mLogger;
-	private final Map<IcfgLocation, IPredicate> mPredicatesForLoi = new HashMap<>();
+	private final Map<IcfgLocation, IPredicate> mPredsForLocs = new HashMap<>();
 
-	public MapBasedStorage(final Collection<IcfgLocation> locationsOfInterest,
-			final IDomain domain, final SymbolicTools tools, final ILogger logger) {
-		mDomain = domain;
-		mTools = tools;
+	public MapBasedStorage(final ILogger logger) {
 		mLogger = logger;
-		initPredicates(locationsOfInterest);
-	}
-
-	private void initPredicates(final Collection<IcfgLocation> locationsOfInterest) {
-		final IPredicate bottom = mTools.bottom();
-		locationsOfInterest.forEach(loi -> mPredicatesForLoi.put(loi, bottom));
 	}
 
 	@Override
-	public void storePredicateIfLoi(final IcfgLocation location, final IPredicate addPred) {
-		mPredicatesForLoi.computeIfPresent(location,
-				(loi, oldPred) -> joinLoiPredicate(loi, oldPred, addPred));
-	}
-
-	private IPredicate joinLoiPredicate(final IcfgLocation loi, final IPredicate oldPred, final IPredicate addPred) {
-		logBeforeRegisterLoi(loi, addPred);
-		final IPredicate newPred = mDomain.join(oldPred, addPred);
-		logRegisterLoiDone(loi, addPred, newPred);
-		return newPred;
+	public void storePredicate(final IcfgLocation location, final IPredicate addPred) {
+		logBeforeRegisterLoi(location, addPred);
+		final IPredicate oldPred = mPredsForLocs.put(location, addPred);
+		if (oldPred != null) {
+			// our iteration order should guarantee that each LOI only receives a predicate at most once
+			// see Claus Schaetzle's master's thesis
+			throw new IllegalStateException("Tried to register predicate for LOI which already had a predicate.");
+		}
 	}
 
 	// TODO change logging so that we can use this class even when
 	// LOIs from this class are different from the user's LOIs, for instance in a ICallSummarizer
-
 	private void logBeforeRegisterLoi(final IcfgLocation loi, final IPredicate addPred) {
 		mLogger.debug("LOI %s received the predicate %s", loi, addPred);
 	}
 
-	private void logRegisterLoiDone(final IcfgLocation loi, final IPredicate addedPred, final IPredicate newPred) {
-		if (addedPred == newPred) {
-			mLogger.debug("Updated predicate for LOI %s is identical", loi);
-		} else {
-			mLogger.debug("Updated predicate for LOI %s is %s", loi, newPred);
-		}
+	public Map<IcfgLocation, IPredicate> getMap() {
+		return mPredsForLocs;
 	}
 
-	public Map<IcfgLocation, IPredicate> getMap() {
-		return mPredicatesForLoi;
+	public Map<IcfgLocation, IPredicate> addDefaultsAndGetMap(
+			final Collection<IcfgLocation> locations, final IPredicate defaultPred) {
+		locations.forEach(loc -> mPredsForLocs.putIfAbsent(loc, defaultPred));
+		return mPredsForLocs;
+	}
+
+	public IPredicate getSingletonOrDefault(final IPredicate defaultPred) {
+		if (mPredsForLocs.isEmpty()) {
+			return defaultPred;
+		} else if (mPredsForLocs.size() == 1) {
+			return mPredsForLocs.values().iterator().next();
+		} else {
+			throw new IllegalStateException("Excepted single value but found " + mPredsForLocs);
+		}
 	}
 }

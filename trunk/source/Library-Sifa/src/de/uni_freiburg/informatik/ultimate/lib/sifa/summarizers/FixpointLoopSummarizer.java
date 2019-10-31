@@ -115,7 +115,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 				return mTools.top();
 			}
 			mStats.increment(SifaStats.Key.LOOP_SUMMARIZER_FIXPOINT_ITERATIONS);
-			postState = mDagIpr.interpret(dag, fullOverlay, preState);
+			postState = mDagIpr.interpretForSingleMarker(dag, fullOverlay, preState);
 			if (mFluid.shallBeAbstracted(postState)) {
 				postState = mDomain.alpha(postState);
 			}

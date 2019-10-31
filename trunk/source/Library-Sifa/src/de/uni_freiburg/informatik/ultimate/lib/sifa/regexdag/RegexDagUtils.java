@@ -39,8 +39,10 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.EmptySet;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.LoopPointVisitor;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
 
 public final class RegexDagUtils {
 
@@ -137,6 +139,12 @@ public final class RegexDagUtils {
 			}
 		}
 		return resultLocs;
+	}
+
+	/**  Marks a regex by appending a unique marker literal. */
+	public static IRegex<IIcfgTransition<IcfgLocation>> markRegex(
+			final IRegex<IIcfgTransition<IcfgLocation>> regex, final IcfgLocation finalLocationAsMark) {
+		return Regex.concat(regex, Regex.literal(new LocationMarkerTransition(finalLocationAsMark)));
 	}
 
 }

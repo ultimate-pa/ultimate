@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa;
 
-import java.util.Collection;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -37,23 +36,24 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.EmptySet;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.CallReturnSummary;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.IDagOverlay;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.RegexDagNode;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.RegexDagUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ILoopSummarizer;
 
 /**
- * Interprets the dag of a single procedure or loop.
+ * Interprets the DAG of a single procedure or loop.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
@@ -84,25 +84,18 @@ public class DagInterpreter {
 	}
 
 	/**
-	 * Interprets DAGs which have exactly one sink location.
-	 * Interpretation starts at
-	 *
+	 * Interprets a DAG with starting from its source node using only edges from the overlay
+	 * and returns the computed predicate for the only marker in that overlay.
+	 * Bottom is returned in case the overlay contained no marker or the marker was not reached.
+	 * 
 	 * @return Value of the sink location after interpreting the DAG
+	 * @throws Exception The interpreter reached more than one marker in the overlay
 	 */
-	public IPredicate interpret(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
+	public IPredicate interpretForSingleMarker(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {
-
-		final Collection<IcfgLocation> sinkLocations = RegexDagUtils.sinkLocations(dag, overlay);
-		if (sinkLocations.isEmpty()) {
-			// can happen, for instance if the procedure consists of "f() { label: goto label; }"
-			mLogger.warn("A function never reaches its return");
-			return mTools.bottom();
-		} else if (sinkLocations.size() > 1) {
-			throw new IllegalArgumentException("Expected one sink location but dag had " + sinkLocations.size());
-		}
-		final MapBasedStorage sinkPredStorage = new MapBasedStorage(sinkLocations, mDomain, mTools, mLogger);
+		final MapBasedStorage sinkPredStorage = new MapBasedStorage(mLogger);
 		interpret(dag, overlay, initalInput, sinkPredStorage, ErrorOnEnterCall.instance());
-		return sinkPredStorage.getMap().values().iterator().next();
+		return sinkPredStorage.getSingletonOrDefault(mTools.bottom());
 	}
 
 	/**
@@ -162,6 +155,9 @@ public class DagInterpreter {
 		final IRegex<IIcfgTransition<IcfgLocation>> regex = node.getContent();
 		if (regex instanceof Epsilon) {
 			return input;
+		} else if (regex instanceof EmptySet<?>) {
+			// happens for instance when summarizing the procedure "f() { label: goto label; }"
+			return mTools.bottom();
 		} else if (regex instanceof Literal) {
 			return ipretTrans(((Literal<IIcfgTransition<IcfgLocation>>) regex).getLetter(),
 					input, loiStorage, enterCallRegr);
@@ -176,17 +172,8 @@ public class DagInterpreter {
 			final ILoiPredicateStorage loiStorage) {
 		logIpretLoop();
 		final IPredicate loopSummary = mLoopSummarizer.summarize(loop, input);
-		registerLoiPredsForLoop(loop, loopSummary, loiStorage);
 		logIpretLoopDone();
 		return loopSummary;
-	}
-
-	private static void registerLoiPredsForLoop(final Star<IIcfgTransition<IcfgLocation>> loop,
-			final IPredicate loopSummary, final ILoiPredicateStorage loiStorage) {
-		final IcfgLocation loopPoint = loop.accept(new LoopPointVisitor<>());
-		loiStorage.storePredicateIfLoi(loopPoint, loopSummary);
-		// LOIs inside loops don't have to be considered.
-		// For each LOI we compute a path ending at that LOI. A path cannot end inside a loop.
 	}
 
 	private IPredicate ipretTrans(final IIcfgTransition<IcfgLocation> trans, final IPredicate input,
@@ -210,16 +197,16 @@ public class DagInterpreter {
 	private IPredicate ipretTransAndStoreLoiPred(final IIcfgTransition<IcfgLocation> trans, final IPredicate input,
 			final ILoiPredicateStorage loiStorage) {
 		final IPredicate output;
-		if (trans instanceof CallReturnSummary) {
+		if (trans instanceof LocationMarkerTransition) {
+			loiStorage.storePredicate(trans.getTarget(), input);
+			output = input;
+		} else if (trans instanceof CallReturnSummary) {
 			output = ipretCallReturnSummary((CallReturnSummary) trans, input);
 		} else if (trans instanceof IIcfgInternalTransition) {
 			output = ipretInternal((IIcfgInternalTransition<IcfgLocation>) trans, input);
 		} else {
-			// This case also includes LocationMarkerTransition. Markers should not be reachable in the overlay.
-			// Markers are only used to find nodes after compression and to construct the overlay.
 			throw new UnsupportedOperationException("Unexpected transition type: " + trans.getClass());
 		}
-		loiStorage.storePredicateIfLoi(trans.getTarget(), output);
 		return output;
 	}
 

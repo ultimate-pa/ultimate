@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.DagSizePrinter;
@@ -56,16 +55,16 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 	private final SifaStats mStats;
 
 	private final ILogger mLogger;
-	private final IIcfg<IcfgLocation> mIcfg;
 	private final CallGraph mCallGraph;
 	private final IWorklistWithInputs<String, IPredicate> mEnterCallWorklist;
+	private final Collection<IcfgLocation> mLocsOfInterest;
 	private final MapBasedStorage mLoiPredStorage;
 	private final SymbolicTools mTools;
 	private final ProcedureResourceCache mProcResCache;
 	private final DagInterpreter mDagInterpreter;
 
 	/**
-	 * Creates a new interpret using a custom set of locations of interest.
+	 * Creates a new interpreter for manually specified locations of interest.
 	 *
 	 * @param locationsOfInterest Locations for which predicates shall be computed.
 	 *                            You probably want to use {@link #allErrorLocations(IIcfg)}}.
@@ -87,12 +86,12 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 		mStats.start(SifaStats.Key.OVERALL_TIME);
 		mLogger = logger;
 		mTools = tools;
-		mIcfg = icfg;
+		mLocsOfInterest = locationsOfInterest;
 		logStartingSifa(locationsOfInterest);
 		logBuildingCallGraph();
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
 		logCallGraphComputed();
-		mLoiPredStorage = new MapBasedStorage(locationsOfInterest, domain, tools, logger);
+		mLoiPredStorage = new MapBasedStorage(logger);
 		mEnterCallWorklist = new PriorityWorklist<>(mCallGraph.relevantProceduresTopsorted(), domain::join);
 		mProcResCache = new ProcedureResourceCache(stats, mCallGraph, icfg);
 		enqueInitial();
@@ -114,9 +113,8 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 	/**
 	 * Interprets the ICFG starting at the initial nodes.
 	 *
-	 * @return Map from all locations of interest given in
-	 *         {@link #SymbolicInterpreter(IUltimateServiceProvider, IIcfg, Collection)} to predicates
-	 *         over-approximating the program states at these locations
+	 * @return Map from all locations of interest (specified in the constructor of this class)
+	 *         to invariants (predicates over-approximating the program states at these locations)
 	 */
 	public Map<IcfgLocation, IPredicate> interpret() {
 		mStats.start(SifaStats.Key.OVERALL_TIME);
@@ -130,11 +128,10 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 		}
 		logFinalResults();
 		mStats.stop(SifaStats.Key.OVERALL_TIME);
-		return mLoiPredStorage.getMap();
+		return mLoiPredStorage.addDefaultsAndGetMap(mLocsOfInterest, mTools.bottom());
 	}
 
 	private void interpretLoisInProcedure(final String procedure, final IPredicate initialInput) {
-		mLoiPredStorage.storePredicateIfLoi(mIcfg.getProcedureEntryNodes().get(procedure), initialInput);
 		final ProcedureResources resources = mProcResCache.resourcesOf(procedure);
 		mDagInterpreter.interpret(
 				resources.getRegexDag(), resources.getDagOverlayPathToLoisAndEnterCalls(), initialInput,
@@ -181,7 +178,8 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 
 	private void logFinalResults() {
 		mLogger.info("Interpretation finished");
-		final Map<IcfgLocation, IPredicate> loiToPred = mLoiPredStorage.getMap();
+		final Map<IcfgLocation, IPredicate> loiToPred = mLoiPredStorage
+				.addDefaultsAndGetMap(mLocsOfInterest, mTools.bottom());
 		if (loiToPred.isEmpty()) {
 			mLogger.warn("No locations of interest were given");
 			return;

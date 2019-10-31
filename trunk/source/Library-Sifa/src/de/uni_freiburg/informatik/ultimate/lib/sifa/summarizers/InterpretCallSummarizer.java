@@ -57,7 +57,7 @@ public class InterpretCallSummarizer implements ICallSummarizer {
 		mStats.increment(SifaStats.Key.CALL_SUMMARIZER_CACHE_MISSES);
 
 		final ProcedureResources res = mProcResCache.resourcesOf(callee);
-		final IPredicate result = mDagIpreter.interpret(
+		final IPredicate result = mDagIpreter.interpretForSingleMarker(
 				res.getRegexDag(), res.getDagOverlayPathToReturn(), inputAfterCall);
 
 		mStats.stop(SifaStats.Key.CALL_SUMMARIZER_NEW_COMPUTATION_TIME);

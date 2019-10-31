@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.RegexDag;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.RegexDagUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.RegexStatUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 
@@ -59,12 +60,10 @@ public class StarDagCache {
 	}
 
 	private RegexDag<IIcfgTransition<IcfgLocation>> computeDagOf(final IRegex<IIcfgTransition<IcfgLocation>> regex) {
-		if (regex instanceof Star<?>) {
-			throw new AssertionError("Tried to compute RegexDag for star expression. "
-					+ "Computing such a DAG is possible but probably not what you want. "
-					+ "Either you forgot to call .inner() on the star for which you want to compute a DAG "
-					+ "or your regex is of the form ((expr)*)* which could be simplified to just (expr)*.");
-		}
-		return RegexStatUtils.compress(mStats, RegexStatUtils.regexToDag(mStats, regex));
+		assert !(regex instanceof Star<?>) : "Tried to compute RegexDag for star expression. "
+				+ "Computing such a DAG is possible but probably not what you want. "
+				+ "Either you forgot to call .inner() on the star for which you want to compute a DAG "
+				+ "or your regex is of the form ((expr)*)* which could be simplified to just (expr)*.";
+		return RegexStatUtils.compress(mStats, RegexStatUtils.regexToDag(mStats, RegexDagUtils.markRegex(regex, null)));
 	}
 }
