@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -41,67 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 public interface IDomain {
 
 	// special symbols for copy-pasting: ∀ ¬ ⇒ ⇏ ≢ ≡ α ∪ ∨ ⊆ ⊇
-
-	/**
-	 * Represents the result of an relation check as {@link IDomain#isEqBottom(IPredicate)} or
-	 * {@link IDomain#isSubsetEq(IPredicate, IPredicate)}}.  Since relation checks may over-approximate their inputs,
-	 * results are not only a boolean (here {@link #isTrueForAbstraction()}}) but also include the actually used
-	 * (that is, possibly over-approximated) inputs.
-	 *
-	 * @author schaetzc@tf.uni-freiburg.de
-	 */
-	public static class ResultForAlteredInputs {
-		protected IPredicate mLhs;
-		protected IPredicate mRhs;
-		protected boolean mResult;
-		protected boolean mAbstracted;
-		public ResultForAlteredInputs(final IPredicate lhs, final IPredicate rhs) {
-			this(lhs, rhs, false, false);
-		}
-		public ResultForAlteredInputs(final IPredicate lhs, final IPredicate rhs,
-				final boolean result, final boolean abstracted) {
-			mLhs = lhs;
-			mRhs = rhs;
-			mResult = result;
-			mAbstracted = abstracted;
-		}
-		/**
-		 * @return The left-hand side of the queried check or an over-approximation if {@link #wasAbstracted()}
-		 */
-		public IPredicate getLhs() {
-			return mLhs;
-		}
-		/**
-		 * @return The right-hand side of the queried check or an over-approximation if {@link #wasAbstracted()}
-		 */
-		public IPredicate getRhs() {
-			return mRhs;
-		}
-		/**
-		 * @return {@code someCheck(this.getLhs(), this.getRhs())} (mathematically speaking)
-		 *         where {@code someCheck(originalLhs, originalRhs)} is the procedure returning this result object.
-		 */
-		public boolean isTrueForAbstraction() {
-			return mResult;
-		}
-		/**
-		 * @return The queried check could not be performed on the given inputs.
-		 *         The check was done for over-approximations of the given inputs.
-		 *         The altered inputs can be obtained from {@link #getLhs()} and {@link #getRhs()}.
-		 */
-		public boolean wasAbstracted() {
-			return mAbstracted;
-		}
-		protected void abstractLhs(final Function<IPredicate, IPredicate> alpha) {
-			mAbstracted = true;
-			mLhs = alpha.apply(mLhs);
-		}
-		protected void abstractLhsAndRhs(final Function<IPredicate, IPredicate> alpha) {
-			mAbstracted = true;
-			mLhs = alpha.apply(mLhs);
-			mRhs = alpha.apply(mRhs);
-		}
-	}
 
 	/**
 	 * Joins two abstract states.
@@ -168,4 +107,65 @@ public interface IDomain {
 	 * @return Abstracted predicate
 	 */
 	IPredicate alpha(IPredicate pred);
+
+	/**
+	 * Represents the result of an relation check as {@link IDomain#isEqBottom(IPredicate)} or
+	 * {@link IDomain#isSubsetEq(IPredicate, IPredicate)}}.  Since relation checks may over-approximate their inputs,
+	 * results are not only a boolean (here {@link #isTrueForAbstraction()}}) but also include the actually used
+	 * (that is, possibly over-approximated) inputs.
+	 *
+	 * @author schaetzc@tf.uni-freiburg.de
+	 */
+	public static class ResultForAlteredInputs {
+		protected IPredicate mLhs;
+		protected IPredicate mRhs;
+		protected boolean mResult;
+		protected boolean mAbstracted;
+		public ResultForAlteredInputs(final IPredicate lhs, final IPredicate rhs) {
+			this(lhs, rhs, false, false);
+		}
+		public ResultForAlteredInputs(final IPredicate lhs, final IPredicate rhs,
+				final boolean result, final boolean abstracted) {
+			mLhs = lhs;
+			mRhs = rhs;
+			mResult = result;
+			mAbstracted = abstracted;
+		}
+		/**
+		 * @return The left-hand side of the queried check or an over-approximation if {@link #wasAbstracted()}
+		 */
+		public IPredicate getLhs() {
+			return mLhs;
+		}
+		/**
+		 * @return The right-hand side of the queried check or an over-approximation if {@link #wasAbstracted()}
+		 */
+		public IPredicate getRhs() {
+			return mRhs;
+		}
+		/**
+		 * @return {@code someCheck(this.getLhs(), this.getRhs())} (mathematically speaking)
+		 *         where {@code someCheck(originalLhs, originalRhs)} is the procedure returning this result object.
+		 */
+		public boolean isTrueForAbstraction() {
+			return mResult;
+		}
+		/**
+		 * @return The queried check could not be performed on the given inputs.
+		 *         The check was done for over-approximations of the given inputs.
+		 *         The altered inputs can be obtained from {@link #getLhs()} and {@link #getRhs()}.
+		 */
+		public boolean wasAbstracted() {
+			return mAbstracted;
+		}
+		protected void abstractLhs(final UnaryOperator<IPredicate> alpha) {
+			mAbstracted = true;
+			mLhs = alpha.apply(mLhs);
+		}
+		protected void abstractLhsAndRhs(final UnaryOperator<IPredicate> alpha) {
+			mAbstracted = true;
+			mLhs = alpha.apply(mLhs);
+			mRhs = alpha.apply(mRhs);
+		}
+	}
 }
