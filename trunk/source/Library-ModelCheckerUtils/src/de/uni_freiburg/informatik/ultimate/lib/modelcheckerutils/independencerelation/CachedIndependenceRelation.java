@@ -93,11 +93,14 @@ public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceR
 		return result;
 	}
 
-	public int getCacheSize() {
-		final int positiveSize = mPositiveCache.entrySet().stream()
-				.collect(Collectors.summingInt(e -> e.getValue().size()));
+	public int getNegativeCacheSize() {
 		final int negativeSize = mNegativeCache.entrySet().stream()
 				.collect(Collectors.summingInt(e -> e.getValue().size()));
-		return positiveSize + negativeSize;
+		return negativeSize;
+	}
+	public int getPositiveCacheSize() {
+		final int positiveSize = mPositiveCache.entrySet().stream()
+				.collect(Collectors.summingInt(e -> e.getValue().size()));
+		return positiveSize;
 	}
 }

@@ -114,6 +114,7 @@ public class PetriNetLargeBlockEncoding {
 	private int mMoverChecks = 0;
 	private final IUltimateServiceProvider mServices;
 	private final PetriNetLargeBlockEncodingStatisticsGenerator mPetriNetLargeBlockEncodingStatistics;
+	private final CachedIndependenceRelation<IPredicate, IIcfgTransition<?>> mCachedCheck;
 
 	/**
 	 * Performs Large Block Encoding on Petri Nets. Currently, only the Sequence Rule is being used because the backtranslation
@@ -155,15 +156,17 @@ public class PetriNetLargeBlockEncoding {
 				// TODO: Add more detail to log message
 				mLogger.info("Semantic Check.");
 				final IIndependenceRelation<IPredicate, IIcfgTransition<?>> semanticCheck = new SemanticIndependenceRelation(mServices, mManagedScript, false, false);
-				final IIndependenceRelation<IPredicate, IIcfgTransition<?>> cachedCheck = new CachedIndependenceRelation<>(semanticCheck);
-				mMoverCheck = new UnionIndependenceRelation<IPredicate, IIcfgTransition<?>>(Arrays.asList(syntaxCheck, cachedCheck));
+				mCachedCheck = new CachedIndependenceRelation<>(semanticCheck);
+				mMoverCheck = new UnionIndependenceRelation<IPredicate, IIcfgTransition<?>>(Arrays.asList(syntaxCheck, mCachedCheck));
 				break;
 			case VARIABLE_BASED_MOVER_CHECK:
 				// TODO: Add more detail to log message. Users may wonder:
 				// * which variable is checked?
 				// * is there also a constant check?
 				mLogger.info("Variable Check.");
-				mMoverCheck = syntaxCheck;
+				mCachedCheck = new CachedIndependenceRelation<>(syntaxCheck);
+				mMoverCheck = new UnionIndependenceRelation<IPredicate, IIcfgTransition<?>>(Arrays.asList(syntaxCheck, mCachedCheck));
+				//mMoverCheck = syntaxCheck;
 				break;
 			default:
 				throw new AssertionError("unknown value " + petriNetLbeSettings);
@@ -174,7 +177,11 @@ public class PetriNetLargeBlockEncoding {
 				result1 = sequenceRule(services, result2);
 				result2 = sequenceRule(services, result1);
 			}
-			mLogger.info("Total number of mover checks: " + mMoverChecks);
+			mLogger.info("Checked pairs total: " + mMoverChecks);
+			mLogger.info("Positive Checks: " + mCachedCheck.getPositiveCacheSize());
+			mLogger.info("Negative Checks: " + mCachedCheck.getNegativeCacheSize());
+			mLogger.info("Total Mover Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize()));
+			mLogger.info("Total number of compositions: " + i);
 			mResult = result2;
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
@@ -187,8 +194,14 @@ public class PetriNetLargeBlockEncoding {
 		} finally {
 			mPetriNetLargeBlockEncodingStatistics.stop(PetriNetLargeBlockEncodingStatisticsDefinitions.LbeTime);
 		}
+		mPetriNetLargeBlockEncodingStatistics.reportPositiveMoverCheck(mCachedCheck.getPositiveCacheSize());
+		mPetriNetLargeBlockEncodingStatistics.reportNegativeMoverCheck(mCachedCheck.getNegativeCacheSize());
+		mPetriNetLargeBlockEncodingStatistics.reportMoverChecksTotal(mCachedCheck.getPositiveCacheSize() + mCachedCheck.getNegativeCacheSize());
+		mPetriNetLargeBlockEncodingStatistics.reportCheckedPairsTotal(mMoverChecks);
+		mPetriNetLargeBlockEncodingStatistics.reportTotalNumberOfCompositions(i);
 		mPetriNetLargeBlockEncodingStatistics.setProgramPointsAfterwards(mResult.getPlaces().size());
 		mPetriNetLargeBlockEncodingStatistics.setTransitionsAfterwards(mResult.getTransitions().size());
+		
 	}
 
 	private String generateTimeoutMessage(final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet) {
@@ -290,7 +303,7 @@ public class PetriNetLargeBlockEncoding {
 									sequentialIcfgEdge, t2, t1);
 							sequentialCompositionStack.add(element);
 							i++;
-							mLogger.info("Element number " + i + " added to the stack. (Y to V)");
+							//mLogger.info("Element number " + i + " added to the stack. (Y to V)");
 							updateCoEnabledRelation(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
 							updateSequentialCompositions(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
 						}
@@ -315,7 +328,7 @@ public class PetriNetLargeBlockEncoding {
 									sequentialIcfgEdge, t1, t2);
 							sequentialCompositionStack.add(element);
 							i++;
-							mLogger.info("Element number " + i + " added to the stack.");
+							//mLogger.info("Element number " + i + " added to the stack.");
 							updateCoEnabledRelation(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
 							updateSequentialCompositions(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
 						}
@@ -570,18 +583,8 @@ public class PetriNetLargeBlockEncoding {
 	private boolean isLeftMover(final ITransition<IIcfgTransition<?>, IPredicate> t1) {
 		// Filter which elements of coEnabledRelation are relevant.
 		final Set<IIcfgTransition<?>> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
-		//mMoverChecks += coEnabledTransitions.size();
-		boolean mover = true;
-		for (IIcfgTransition<?> t2 : coEnabledTransitions) {
-			if (!mMoverCheck.contains(null, t2, t1.getSymbol())) {
-				mPetriNetLargeBlockEncodingStatistics.reportNegativeMoverCheck();
-				mover = false;
-				break;
-			}
-			mPetriNetLargeBlockEncodingStatistics.reportPositiveMoverCheck();
-		}
-		//boolean mover = coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t2, t1.getSymbol()));
-		return mover;
+		mMoverChecks += coEnabledTransitions.size();
+		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t2, t1.getSymbol()));
 	}
 
 	/**
@@ -593,17 +596,8 @@ public class PetriNetLargeBlockEncoding {
 	private boolean isRightMover(final ITransition<IIcfgTransition<?>, IPredicate> t1) {
 		// Filter which elements of coEnabledRelation are relevant.
 		final Set<IIcfgTransition<?>> coEnabledTransitions = mCoEnabledRelation.getImage(t1.getSymbol());
-		boolean mover = true;
-		for (IIcfgTransition<?> t2 : coEnabledTransitions) {
-			if (!mMoverCheck.contains(null, t1.getSymbol(), t2)) {
-				mPetriNetLargeBlockEncodingStatistics.reportNegativeMoverCheck();
-				mover = false;
-				break;
-			}
-			mPetriNetLargeBlockEncodingStatistics.reportPositiveMoverCheck();
-		}
-		return mover;
-		//return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t1.getSymbol(), t2));
+		mMoverChecks += coEnabledTransitions.size();
+		return coEnabledTransitions.stream().allMatch(t2 -> mMoverCheck.contains(null, t1.getSymbol(), t2));
 	}
 
 	// Methods from IcfgEdgeBuilder.

@@ -38,6 +38,10 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 	private int mMoverChecksPositive = 0;
 	private int mMoverChecksNegative = 0;
 	private int mMoverChecksUnknown = 0;
+	private int mMoverChecksTotal = 0;
+	// mCheckedPairsTotal != mMoverChecksTotal, because if something had been checked, it won't be checked again.
+	private int mCheckedPairsTotal = 0;
+	private int mTotalNumberOfCompositions = 0;
 	private int mProgramPointsBefore = -1;
 	private int mProgramPointsAfterwards = -1;
 	private int mTransitionsBefore = -1;
@@ -51,16 +55,28 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 		return PetriNetLargeBlockEncodingStatisticsType.getInstance();
 	}
 
-	public void reportPositiveMoverCheck() {
-		mMoverChecksPositive++;
+	public void reportPositiveMoverCheck(int i) {
+		mMoverChecksPositive += i;
 	}
 
-	public void reportNegativeMoverCheck() {
-		mMoverChecksNegative++;
+	public void reportNegativeMoverCheck(int i) {
+		mMoverChecksNegative += i;
 	}
 
 	public void reportUnkonwnMoverCheck() {
 		mMoverChecksUnknown++;
+	}
+	
+	public void reportMoverChecksTotal(int i) {
+		mMoverChecksTotal += i;
+	}
+	
+	public void reportCheckedPairsTotal(int i) {
+		mCheckedPairsTotal += i;
+	}
+	
+	public void reportTotalNumberOfCompositions(int i) {
+		mTotalNumberOfCompositions += i;
 	}
 
 	public void setProgramPointsBefore(final int programPointsBefore) {
@@ -96,6 +112,12 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 			return mMoverChecksPositive;
 		case MoverChecksUnknown:
 			return mMoverChecksUnknown;
+		case MoverChecksTotal:
+			return mMoverChecksTotal;
+		case CheckedPairsTotal:
+			return mCheckedPairsTotal;
+		case TotalNumberOfCompositions:
+			return mTotalNumberOfCompositions;
 		case ProgramPointsAfterwards:
 			return mProgramPointsAfterwards;
 		case ProgramPointsBefore:
