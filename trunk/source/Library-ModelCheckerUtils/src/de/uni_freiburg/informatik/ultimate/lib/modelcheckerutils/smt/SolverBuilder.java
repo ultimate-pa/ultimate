@@ -132,8 +132,9 @@ public class SolverBuilder {
 		final ILogger solverLogger = getSolverLogger(services);
 		Script script;
 		if (settings.useExternalSolver()) {
-			assert settings.getSolverMode() == null || (settings.getSolverMode() != SolverMode.Internal_SMTInterpol
-					&& settings.getSolverMode() != SolverMode.Internal_SMTInterpol_NoArrayInterpol);
+			assert settings.getSolverMode() == null
+					|| (settings.getSolverMode() != SolverMode.Internal_SMTInterpol && settings
+							.getSolverMode() != SolverMode.Internal_SMTInterpol_NoArrayInterpol) : "You set solver mode to Internal* and enabled useExternalSolver";
 			final String command = settings.getCommandExternalSolver();
 			solverLogger.info("constructing external solver with command" + settings.getCommandExternalSolver());
 			try {
