@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencere
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -90,5 +91,13 @@ public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceR
 		}
 		
 		return result;
+	}
+
+	public int getCacheSize() {
+		final int positiveSize = mPositiveCache.entrySet().stream()
+				.collect(Collectors.summingInt(e -> e.getValue().size()));
+		final int negativeSize = mNegativeCache.entrySet().stream()
+				.collect(Collectors.summingInt(e -> e.getValue().size()));
+		return positiveSize + negativeSize;
 	}
 }
