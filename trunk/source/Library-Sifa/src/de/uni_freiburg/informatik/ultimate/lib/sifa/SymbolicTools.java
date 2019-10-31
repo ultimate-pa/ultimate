@@ -206,6 +206,10 @@ public class SymbolicTools {
 		return mFactory.andT(mSimplification, operands);
 	}
 
+	public boolean isBottomLiteral(final IPredicate pred) {
+		return mBottom == pred;
+	}
+
 	public Optional<Boolean> isFalse(final IPredicate pred) {
 		// TODO: Maybe use unifier instead of SMT check
 		if (mBottom.equals(pred)) {

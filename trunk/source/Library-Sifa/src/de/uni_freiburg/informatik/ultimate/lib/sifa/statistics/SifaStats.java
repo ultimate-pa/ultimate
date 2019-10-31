@@ -167,7 +167,7 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		/** Number of procedures entered (excluding CallReturnSummaries) during interpretation of the icfg. */
 		ICFG_INTERPRETER_ENTERED_PROCEDURES(KeyType.COUNTER),
 
-		DAG_INTERPRETER_EARLY_EXIT_QUERIES(KeyType.COUNTER),
+		DAG_INTERPRETER_EARLY_EXIT_QUERIES_NONTRIVIAL(KeyType.COUNTER),
 
 		DAG_INTERPRETER_EARLY_EXITS(KeyType.COUNTER),
 

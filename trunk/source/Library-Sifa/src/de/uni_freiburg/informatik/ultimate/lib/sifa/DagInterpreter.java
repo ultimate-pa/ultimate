@@ -131,15 +131,18 @@ public class DagInterpreter {
 
 	private boolean earlyExitAfterStep(final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay,
 			final RegexDagNode<IIcfgTransition<IcfgLocation>> curNode, final IPredicate curOutput) {
-		mStats.increment(SifaStats.Key.DAG_INTERPRETER_EARLY_EXIT_QUERIES);
-		// frequent check would probably be more expensive than continued interpretation ==> check only before branches
-		final boolean exit = overlay.successorsOf(curNode).size() > 1
-				&& mDomain.isEqBottom(curOutput).isTrueForAbstraction();
-		if (exit) {
+		boolean earlyExit = mTools.isBottomLiteral(curOutput);
+		// frequent non-trivial check would probably be more expensive than continued interpretation
+		// ==> check only before branches
+		if (!earlyExit && overlay.successorsOf(curNode).size() > 1) {
+			mStats.increment(SifaStats.Key.DAG_INTERPRETER_EARLY_EXIT_QUERIES_NONTRIVIAL);
+			earlyExit = mDomain.isEqBottom(curOutput).isTrueForAbstraction();
+		}
+		if (earlyExit) {
 			mStats.increment(SifaStats.Key.DAG_INTERPRETER_EARLY_EXITS);
 			logEarlyExitAfterStep();
 		}
-		return exit;
+		return earlyExit;
 	}
 
 	private void respectTimeout() {
