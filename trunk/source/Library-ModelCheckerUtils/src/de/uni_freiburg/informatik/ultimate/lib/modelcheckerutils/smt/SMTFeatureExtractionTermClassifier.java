@@ -64,7 +64,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 	private final UnionFind<Term> mVariableEquivalenceClasses;
 	private final ArrayList<Integer> mVariableEquivalenceClassSizes;
 	private int mBiggestEquivalenceClass;
-	private final ArrayList<String> mTerms;
+	private final ArrayList<String> mAssertionStack;
 
 	private class MyWalker extends TermWalker {
 		MyWalker(final Term term) {
@@ -178,7 +178,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		mNumberOfQuantifiers = 0;
 		mDAGSize = 0;
 		mTreeSize = 0;
-		mTerms = new ArrayList<>();
+		mAssertionStack = new ArrayList<>();
 		mVariableEquivalenceClasses = new UnionFind<>();
 		mVariableEquivalenceClassSizes = new ArrayList<>();
 		mBiggestEquivalenceClass = 0;
@@ -189,7 +189,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 	 */
 	public void checkTerm(final Term term) {
 		mTermsInWhichWeAlreadyDescended = new HashSet<>();
-		mTerms.add(term.toString());
+		mAssertionStack.add(term.toString());
 		mDAGSize += new DAGSize().size(term);
 		mTreeSize += new DAGSize().treesize(term);
 		mLogger.warn("FULL TERM: " + term.toStringDirect());
@@ -238,8 +238,8 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		return mBiggestEquivalenceClass;
 	}
 
-	public ArrayList<String> getTerm() {
-		return mTerms;
+	public ArrayList<String> getAssertionStack() {
+		return mAssertionStack;
 	}
 
 	public long getTreeSize() {
@@ -277,12 +277,5 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		}
 		return score;
 	}
-
-	public int score() {
-		final int score = 0;
-		// TODO.
-		return mNumberOfFunctions;
-	}
-
 
 }

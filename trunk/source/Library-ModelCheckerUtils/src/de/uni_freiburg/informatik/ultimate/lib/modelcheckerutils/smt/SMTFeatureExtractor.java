@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class SMTFeatureExtractor {
 
-	// Members
 	private final ILogger mLogger;
 	private final List<SMTFeature> mFeatures;
 	private final String mDumpPath;
@@ -65,7 +64,8 @@ public class SMTFeatureExtractor {
 			tc.checkTerm(term);
 		}
 		final SMTFeature feature = new SMTFeature();
-		// feature.assertionStack = tc.getTerm();
+		feature.assertionStack = tc.getAssertionStack();
+		feature.assertionStackHashCode = tc.getAssertionStack().hashCode();
 		feature.containsArrays = tc.hasArrays();
 		feature.occuringFunctions = tc.getOccuringFunctionNames();
 		feature.occuringQuantifiers = tc.getOccuringQuantifiers();
@@ -82,13 +82,13 @@ public class SMTFeatureExtractor {
 		feature.solverresult = result;
 		feature.solvertime = time;
 		mFeatures.add(feature);
-		mLogger.warn("FEATURE: " + feature);
 		dumpFeature(feature);
 
 	}
 
 	public void dumpFeature(final SMTFeature feature) throws IllegalAccessException, IOException {
-		mLogger.warn("Writing to file:" + mFilename);
+		mLogger.info("Writing to file:" + mFilename);
+		mLogger.info("FEATURE: " + feature);
 		try (FileWriter fw = new FileWriter(mFilename, true);
 				BufferedWriter bw = new BufferedWriter(fw);
 				PrintWriter out = new PrintWriter(bw)) {
@@ -117,7 +117,7 @@ public class SMTFeatureExtractor {
 				mLogger.error(e);
 			}
 		} else {
-			mLogger.info("SMT feature dump-file already exists.");
+			mLogger.warn("SMT feature dump-file already exists.");
 		}
 	}
 

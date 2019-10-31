@@ -53,6 +53,7 @@ public class SMTFeature {
 	public Set<Integer> occuringQuantifiers = Collections.emptySet();
 	public boolean containsArrays = false;
 	public ArrayList<String> assertionStack = new ArrayList<>();
+	public int assertionStackHashCode = 0;
 	public String solverresult = "";
 	public double solvertime = 0.0;
 
