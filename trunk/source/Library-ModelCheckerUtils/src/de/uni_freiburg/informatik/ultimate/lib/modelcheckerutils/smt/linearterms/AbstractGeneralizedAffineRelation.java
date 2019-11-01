@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterm
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,6 +13,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtil
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation.AssumptionForSolvability;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolutionBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation.IntricateOperation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.SupportingTerm;
 import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -517,6 +522,102 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		final Term rhsTerm = SmtUtils.sum(script, mAffineTerm.getSort(),
 				rhsSummands.toArray(new Term[rhsSummands.size()]));
 		return rhsTerm;
+	}
+
+
+
+	/**
+	 * Returns a {@link MultiCaseSolvedBinaryRelation} that is equivalent to this
+	 * PolynomialRelation or null if we cannot find such a
+	 * {@link MultiCaseSolvedBinaryRelation}.
+	 */
+	public MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
+			final MultiCaseSolvedBinaryRelation.Xnf xnf) {
+		if (!isVariable(subject)) {
+			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
+				throw new UnsupportedOperationException("subject is not a variable");
+			} else {
+				return null;
+			}
+		}
+		final AVAR abstractVarOfSubject = getTheAbstractVarOfSubject(subject);
+		if (abstractVarOfSubject == null) {
+			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
+				throw new UnsupportedOperationException("subject occurs in several abstract variables");
+			} else {
+				return null;
+			}
+		}
+		final Rational coeffOfSubject = mAffineTerm.getAbstractVariable2Coefficient().get(abstractVarOfSubject);
+		if (coeffOfSubject.equals(Rational.ZERO)) {
+			throw new AssertionError("no abstract variable must have coefficient zero");
+		}
+		if (SmtSortUtils.isBitvecSort(mAffineTerm.getSort()) && !coeffOfSubject.abs().equals(Rational.ONE)) {
+			// for bitvectors we may only divide by 1 or -1
+			// reason: consider bitvectors of length 8 (i.e., 256=0)
+			// then e.g., 2*x = 0 is not equivalent to x = 0 because
+			// for x=128 the first equation hold but the second does not
+			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
+				throw new UnsupportedOperationException(
+						"for bitvector subjects only coefficients 1 and -1 are supported");
+			} else {
+				return null;
+			}
+		}
+
+		final RelationSymbol resultRelationSymbol;
+		if (coeffOfSubject.isNegative()) {
+			// if coefficient is negative we have to use the "swapped" RelationSymbol
+			resultRelationSymbol = BinaryRelation.swapParameters(mRelationSymbol);
+		} else {
+			resultRelationSymbol = mRelationSymbol;
+		}
+
+		final Term simpliySolvableRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
+				coeffOfSubject);
+		final MultiCaseSolutionBuilder mcsb = new MultiCaseSolutionBuilder(subject, xnf);
+		Term rhsTerm;
+		if (simpliySolvableRhsTerm == null) {
+			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
+					Rational.ONE);
+			rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
+			final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
+					Collections.emptyMap());
+			// EQ and DISTINCT need Modulo Assumption
+			if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
+				final boolean negate = mRelationSymbol.equals(RelationSymbol.DISTINCT);
+				final Term divisilityConstraintTerm = constructDivisibilityConstraint(script, rhsTerm,
+						coeffOfSubject.toTerm(mAffineTerm.getSort()), negate);
+				final SupportingTerm divisilityConstraint = new SupportingTerm(divisilityConstraintTerm,
+						IntricateOperation.DIV_BY_INTEGER_CONSTANT, Collections.emptySet());
+				switch (mRelationSymbol) {
+				case DISTINCT:
+					mcsb.conjoinWithDisjunction(sbr, divisilityConstraint);
+					break;
+				case EQ:
+					mcsb.conjoinWithConjunction(sbr, divisilityConstraint);
+					break;
+				case GEQ:
+				case GREATER:
+				case LEQ:
+				case LESS:
+				default:
+					throw new AssertionError("cases not handled here");
+				}
+			}
+			// cases LEQ, LESS, GREATER, GEQ do nothing
+			mcsb.conjoinWithConjunction(sbr);
+			mcsb.reportAdditionalIntricateOperation(IntricateOperation.DIV_BY_INTEGER_CONSTANT);
+		} else {
+			rhsTerm = simpliySolvableRhsTerm;
+			final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
+					Collections.emptyMap());
+			mcsb.conjoinWithConjunction(sbr);
+		}
+		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
+		assert script instanceof INonSolverScript
+				|| isEquivalent(script, mOriginalTerm, result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
+		return result;
 	}
 
 }
