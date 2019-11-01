@@ -342,17 +342,20 @@ public class SmtParser implements ISource {
 			mLogger.info("SMTLIBException " + exc.getMessage());
 			parseEnv1.printError(exc.getMessage());
 		}
+		final String outputFilename;
+		if (directory == null || directory.isEmpty()) {
+			outputFilename = file.getName();
+		} else {
+			outputFilename = directory + File.separator + file.getName();
+		}
 
-		final String outputFilename = directory + File.separator + file.getName();
 		final ParseEnvironment parseEnv2 =
 				new ParseEnvironment(new FilteredLoggingScript(outputFilename, true, cns.getNames()), optionMap);
 		try {
 			parseEnv2.parseScript(file.getAbsolutePath());
 			mLogger.info("Succesfully wrote SMT file " + outputFilename);
 		} catch (final SMTLIBException exc) {
-			mLogger.info("Failed while writing SMT file " + outputFilename);
-			mLogger.error("SMTLIBException " + exc.getMessage());
-			// parseEnv2.printError(exc.getMessage());
+			mLogger.fatal("Failed while writing SMT file " + outputFilename, exc);
 		}
 	}
 
