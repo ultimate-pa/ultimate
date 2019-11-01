@@ -195,9 +195,10 @@ public class PetriNetLargeBlockEncoding {
 		} finally {
 			mPetriNetLargeBlockEncodingStatistics.stop(PetriNetLargeBlockEncodingStatisticsDefinitions.LbeTime);
 		}
-		mPetriNetLargeBlockEncodingStatistics.reportPositiveMoverCheck(mCachedCheck.getPositiveCacheSize());
-		mPetriNetLargeBlockEncodingStatistics.reportNegativeMoverCheck(mCachedCheck.getNegativeCacheSize());
-		mPetriNetLargeBlockEncodingStatistics.reportMoverChecksTotal(mCachedCheck.getPositiveCacheSize() + mCachedCheck.getNegativeCacheSize());
+		mPetriNetLargeBlockEncodingStatistics.reportPositiveMoverCheck(mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize());
+		mPetriNetLargeBlockEncodingStatistics.reportNegativeMoverCheck(mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize());
+		mPetriNetLargeBlockEncodingStatistics.reportMoverChecksTotal(mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize() +
+				mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize());
 		mPetriNetLargeBlockEncodingStatistics.reportCheckedPairsTotal(mMoverChecks);
 		mPetriNetLargeBlockEncodingStatistics.reportTotalNumberOfCompositions(i);
 		mPetriNetLargeBlockEncodingStatistics.setProgramPointsAfterwards(mResult.getPlaces().size());
