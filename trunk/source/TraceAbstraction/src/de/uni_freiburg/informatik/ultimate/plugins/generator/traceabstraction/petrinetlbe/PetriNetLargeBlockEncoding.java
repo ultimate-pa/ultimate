@@ -114,8 +114,6 @@ public class PetriNetLargeBlockEncoding {
 	private int mMoverChecks = 0;
 	private final IUltimateServiceProvider mServices;
 	private final PetriNetLargeBlockEncodingStatisticsGenerator mPetriNetLargeBlockEncodingStatistics;
-	private final CachedIndependenceRelation<IPredicate, IIcfgTransition<?>> mCachedCheck;
-	private final CachedIndependenceRelation<IPredicate, IIcfgTransition<?>> mCachedCheck2;
 
 	/**
 	 * Performs Large Block Encoding on Petri Nets. Currently, only the Sequence Rule is being used because the backtranslation
@@ -148,27 +146,26 @@ public class PetriNetLargeBlockEncoding {
 					new AutomataLibraryServices(services), petriNet).getResult();
 			mCoEnabledRelation = computeCoEnabledRelation(bp);
 
-			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> syntaxCheck = new SyntacticIndependenceRelation<>();
-			mCachedCheck = new CachedIndependenceRelation<>(syntaxCheck);
-			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> semanticCheck;
+			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> variableBasedCheckIr = new SyntacticIndependenceRelation<>();
+			final CachedIndependenceRelation<IPredicate, IIcfgTransition<?>> cachedVariableBasedIr = new CachedIndependenceRelation<>(variableBasedCheckIr);
+			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> semanticBasedCheck;
 			switch (petriNetLbeSettings) {
 			case OFF:
 				throw new IllegalArgumentException("do not call LBE if you don't want to use it");
 			case SEMANTIC_BASED_MOVER_CHECK:
 				// TODO: Add more detail to log message
 				mLogger.info("Semantic Check.");
-				semanticCheck = new SemanticIndependenceRelation(mServices, mManagedScript, false, false);
-				mCachedCheck2 = new CachedIndependenceRelation<>(semanticCheck);
-				mMoverCheck = new UnionIndependenceRelation<IPredicate, IIcfgTransition<?>>(Arrays.asList(mCachedCheck2, mCachedCheck));
+				semanticBasedCheck = new SemanticIndependenceRelation(mServices, mManagedScript, false, false);
+				final CachedIndependenceRelation<IPredicate, IIcfgTransition<?>> cachedSemanticBasedIr = new CachedIndependenceRelation<>(semanticBasedCheck);
+				mMoverCheck = new UnionIndependenceRelation<IPredicate, IIcfgTransition<?>>(Arrays.asList(cachedVariableBasedIr, cachedSemanticBasedIr));
 				break;
 			case VARIABLE_BASED_MOVER_CHECK:
-				semanticCheck = null;
+				semanticBasedCheck = null;
 				// TODO: Add more detail to log message. Users may wonder:
 				// * which variable is checked?
 				// * is there also a constant check?
 				mLogger.info("Variable Check.");
-				mCachedCheck2 = new CachedIndependenceRelation<>(syntaxCheck);
-				mMoverCheck = mCachedCheck;
+				mMoverCheck = cachedVariableBasedIr;
 				break;
 			default:
 				throw new AssertionError("unknown value " + petriNetLbeSettings);
@@ -180,14 +177,14 @@ public class PetriNetLargeBlockEncoding {
 				result2 = sequenceRule(services, result1);
 			}
 			mLogger.info("Checked pairs total: " + mMoverChecks);
-			mLogger.info("Positive Checks: " + (mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize()));
-			mLogger.info("Negative Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize()));
-			mLogger.info("Total Mover Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize() +
-					mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize()));
+//			mLogger.info("Positive Checks: " + (mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize()));
+//			mLogger.info("Negative Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize()));
+//			mLogger.info("Total Mover Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize() +
+//					mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize()));
 			mLogger.info("Total number of compositions: " + i);
 			mResult = result2;
-			mPetriNetLargeBlockEncodingStatistics.extractStatistics((SemanticIndependenceRelation) semanticCheck);
-			mPetriNetLargeBlockEncodingStatistics.extractStatistics((SyntacticIndependenceRelation) syntaxCheck);
+			mPetriNetLargeBlockEncodingStatistics.extractStatistics((SemanticIndependenceRelation) semanticBasedCheck);
+			mPetriNetLargeBlockEncodingStatistics.extractStatistics((SyntacticIndependenceRelation) variableBasedCheckIr);
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
 			aoce.addRunningTaskInfo(runningTaskInfo);
@@ -202,8 +199,8 @@ public class PetriNetLargeBlockEncoding {
 
 //		mPetriNetLargeBlockEncodingStatistics.reportPositiveMoverCheck(mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize());
 //		mPetriNetLargeBlockEncodingStatistics.reportNegativeMoverCheck(mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize());
-		mPetriNetLargeBlockEncodingStatistics.reportMoverChecksTotal(mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize() +
-				mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize());
+//		mPetriNetLargeBlockEncodingStatistics.reportMoverChecksTotal(mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize() +
+//				mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize());
 		mPetriNetLargeBlockEncodingStatistics.reportCheckedPairsTotal(mMoverChecks);
 		mPetriNetLargeBlockEncodingStatistics.reportTotalNumberOfCompositions(i);
 		mPetriNetLargeBlockEncodingStatistics.setProgramPointsAfterwards(mResult.getPlaces().size());
