@@ -1446,6 +1446,21 @@ public final class SmtUtils {
 	}
 
 
+	/**
+	 * Division for reals with the following simplifications.
+	 * <ul>
+	 * <li>initial literals are simplified by division
+	 * <li>initial zero makes the result zero
+	 * <li>a non-initial zero cannot be simplified (semantics of division by zero
+	 * similar to uninterpreted function see
+	 * http://smtlib.cs.uiowa.edu/theories-Reals.shtml)
+	 * <li>intermediate one is dropped
+	 * <li>intermediate literals are simplified by multiplication
+	 * </ul>
+	 *
+	 * See {@link SmtUtilsTest#divRealTest01} for tests. TODO: Apply flattening such
+	 * that (div (div x y) z) becomes (div x y z).
+	 */
 	public static Term divReal(final Script script, final Term... inputParams) {
 		final List<Term> resultParams = new ArrayList<>();
 		if (inputParams.length == 0) {
