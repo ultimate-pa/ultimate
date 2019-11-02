@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -74,7 +75,7 @@ public class Case implements ITermProviderOnDemand {
 	}
 
 	public Set<SupportingTerm> getSupportingTerms() {
-		return mSupportingTerms;
+		return Collections.unmodifiableSet(mSupportingTerms);
 	}
 
 	/**
