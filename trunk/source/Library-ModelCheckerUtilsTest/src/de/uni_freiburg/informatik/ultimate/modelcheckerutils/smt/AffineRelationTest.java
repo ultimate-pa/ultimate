@@ -87,81 +87,75 @@ public class AffineRelationTest {
 	@Test
 	public void relationIntDivDefault() throws NotAffineException {
 		final String inputSTR = "(= (+ 7 x) y )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 
 	}
 
 	@Test
 	public void relationIntDivEQ() throws NotAffineException {
 		final String inputSTR = "(= (* 7 x) y )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 
 	}
 
 	@Test
 	public void relationIntDivEQ2() throws NotAffineException {
 		final String inputSTR = "(= (* 3 x) (* 7 y) )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	@Test
 	public void relationIntDivEQ3() throws NotAffineException {
 		final String inputSTR = "(= (* 3 x) (+ (* 7 y) (* 5 z)) )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	@Test
 	public void relationIntDivEQ4() throws NotAffineException {
 		final String inputSTR = "(= (* 6 (+ y x)) (* 7 z) )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	@Test
 	public void relationIntDivGEQ() throws NotAffineException {
 		final String inputSTR = "(>= (* 3 x) lo )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	@Test
 	public void relationIntDivLEQ() throws NotAffineException {
 		final String inputSTR = "(<= (* 3 x) hi )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	@Test
 	public void relationIntDivDISTINCT() throws NotAffineException {
 		final String inputSTR = "(not(= (* 3 x) y ))";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	@Test
 	public void relationIntDivGREATER() throws NotAffineException {
 		final String inputSTR = "(> (* 3 x) lo )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	@Test
 	public void relationIntDivLESS() throws NotAffineException {
 		final String inputSTR = "(< (* 4 x) hi )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				affRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
-	private SolvedBinaryRelation affRelOnLeftHandSide(final String termAsString, final String varString)
-			throws NotAffineException {
-		final Term var = TermParseUtils.parseTerm(mScript, varString);
-		final SolvedBinaryRelation sbr = AffineRelation
-				.convert(mScript, TermParseUtils.parseTerm(mScript, termAsString)).solveForSubject(mScript, var);
-		return sbr;
+
+	private void testSolveForX(final String inputAsString) throws NotAffineException {
+		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
+		final Term x = TermParseUtils.parseTerm(mScript, "x");
+		testSingleCaseSolveForSubject(inputAsTerm, x);
+	}
+
+	private void testSingleCaseSolveForSubject(final Term inputAsTerm, final Term x) throws NotAffineException {
+		final SolvedBinaryRelation sbr = AffineRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x);
+		Assert.assertTrue(assumptionsImpliesEquality(inputAsTerm, sbr));
 	}
 
 	private boolean assumptionsImpliesEquality(final Term originalTerm, final SolvedBinaryRelation sbr) {
