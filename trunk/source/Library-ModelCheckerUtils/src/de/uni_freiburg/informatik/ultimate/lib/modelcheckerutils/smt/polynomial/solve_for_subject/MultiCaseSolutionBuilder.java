@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -64,26 +65,32 @@ public class MultiCaseSolutionBuilder {
 		}
 		switch (mXnf) {
 		case CNF:
-			mCases.add(constructCase(newConjuncts));
+			mCases.addAll(buildSingletonCases(newConjuncts));
 			break;
 		case DNF:
-			mCases = addToEachCase(newConjuncts);
+			if (mCases.isEmpty()) {
+				mCases.add(new Case(null, Collections.emptySet(), mXnf));
+			}
+			mCases = buildCopyAndAddToEachCase(mCases, newConjuncts);
 			break;
 		default:
 			throw new AssertionError();
 		}
 	}
 
-	public void conjoinWithDisjunction(final Object... newConjuncts) {
+	public void conjoinWithDisjunction(final Object... disjunction) {
 		if (mConstructionFinished) {
 			throw new IllegalStateException("construction already finished");
 		}
 		switch (mXnf) {
 		case CNF:
-			mCases = addToEachCase(newConjuncts);
+			mCases.add(buildCase(disjunction));
 			break;
 		case DNF:
-			mCases.add(constructCase(newConjuncts));
+			if (mCases.isEmpty()) {
+				mCases.add(new Case(null, Collections.emptySet(), mXnf));
+			}
+			mCases = buildProduct(mCases, disjunction);
 			break;
 		default:
 			throw new AssertionError();
@@ -94,18 +101,19 @@ public class MultiCaseSolutionBuilder {
 		mAdditionalIntricateOperations.add(intricateOperation);
 	}
 
-	private Case constructCase(final Object... newConjuncts) throws AssertionError {
+
+	private Case buildCase(final Object... newElems) throws AssertionError {
 		SolvedBinaryRelation solvedBinaryRelation = null;
 		final Set<SupportingTerm> supportingTerms = new HashSet<>();
-		for (final Object newConjunct : newConjuncts) {
-			if (newConjunct instanceof SolvedBinaryRelation) {
+		for (final Object newElem : newElems) {
+			if (newElem instanceof SolvedBinaryRelation) {
 				if (solvedBinaryRelation == null) {
-					solvedBinaryRelation = (SolvedBinaryRelation) newConjunct;
+					solvedBinaryRelation = (SolvedBinaryRelation) newElem;
 				} else {
 					throw new AssertionError("already have a solvedBinayRelation");
 				}
-			} else if (newConjunct instanceof SupportingTerm) {
-				supportingTerms.add((SupportingTerm) newConjunct);
+			} else if (newElem instanceof SupportingTerm) {
+				supportingTerms.add((SupportingTerm) newElem);
 			} else {
 				throw new UnsupportedOperationException();
 			}
@@ -114,21 +122,41 @@ public class MultiCaseSolutionBuilder {
 		return newCase;
 	}
 
-	private List<Case> addToEachCase(final Object... newKonjuncts) throws AssertionError {
-		final List<Case> newCases = new ArrayList<Case>();
-		for (final Case c : mCases) {
+	private List<Case> buildSingletonCases(final Object... newElems) throws AssertionError {
+		final List<Case> result = new ArrayList<Case>();
+		for (final Object newElem : newElems) {
+			if (newElem instanceof SolvedBinaryRelation) {
+				final Case newCase = new Case((SolvedBinaryRelation) newElem, Collections.emptySet(), mXnf);
+				result.add(newCase);
+			} else if (newElem instanceof SupportingTerm) {
+				final Case newCase = new Case(null, Collections.singleton((SupportingTerm) newElem), mXnf);
+				result.add(newCase);
+			} else {
+				throw new UnsupportedOperationException();
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Return a copy of the list of cases, where we added the elements newElems to
+	 * each case.
+	 */
+	private List<Case> buildCopyAndAddToEachCase(final List<Case> cases, final Object... newElems) {
+		final List<Case> newCases = new ArrayList<>();
+		for (final Case c : cases) {
 			SolvedBinaryRelation solvedBinaryRelation = null;
 			final Set<SupportingTerm> supportingTerms = new HashSet<>(c.getSupportingTerms());
 			solvedBinaryRelation = c.getSolvedBinaryRelation();
-			for (final Object newConjunct : newKonjuncts) {
-				if (newConjunct instanceof SolvedBinaryRelation) {
+			for (final Object newElem : newElems) {
+				if (newElem instanceof SolvedBinaryRelation) {
 					if (solvedBinaryRelation == null) {
-						solvedBinaryRelation = (SolvedBinaryRelation) newConjunct;
+						solvedBinaryRelation = (SolvedBinaryRelation) newElem;
 					} else {
 						throw new AssertionError("already have a solvedBinayRelation");
 					}
-				} else if (newConjunct instanceof SupportingTerm) {
-					supportingTerms.add((SupportingTerm) newConjunct);
+				} else if (newElem instanceof SupportingTerm) {
+					supportingTerms.add((SupportingTerm) newElem);
 				} else {
 					throw new UnsupportedOperationException();
 				}
@@ -139,8 +167,42 @@ public class MultiCaseSolutionBuilder {
 		return newCases;
 	}
 
+	/**
+	 * Return a list of cases that contains for each case in the List cases and each
+	 * element elem in newElem a copy of the case that contain additionally elem.
+	 */
+	private List<Case> buildProduct(final List<Case> cases, final Object... newElems) {
+		final List<Case> newCases = new ArrayList<>();
+		for (final Case c : cases) {
+			for (final Object newElem : newElems) {
+				if (c.getSolvedBinaryRelation() != null) {
+					throw new AssertionError("already have a solvedBinayRelation");
+				}
+				if (newElem instanceof SolvedBinaryRelation) {
+					final SolvedBinaryRelation solvedBinaryRelation = (SolvedBinaryRelation) newElem;
+					final Case newCase = new Case(solvedBinaryRelation, c.getSupportingTerms(), mXnf);
+					newCases.add(newCase);
+				} else if (newElem instanceof SupportingTerm) {
+					final Set<SupportingTerm> newSupportingTerms = new HashSet<>(c.getSupportingTerms());
+					newSupportingTerms.add((SupportingTerm) newElem);
+					final Case newCase = new Case(c.getSolvedBinaryRelation(), newSupportingTerms, mXnf);
+					newCases.add(newCase);
+				} else {
+					throw new UnsupportedOperationException();
+				}
+			}
+		}
+		return newCases;
+	}
+
 	public MultiCaseSolvedBinaryRelation buildResult() {
 		mConstructionFinished = true;
-		return new MultiCaseSolvedBinaryRelation(mSubject, mCases, EnumSet.copyOf(mAdditionalIntricateOperations), mXnf);
+		final EnumSet<IntricateOperation> additionalIntricateOperations;
+		if (mAdditionalIntricateOperations.isEmpty()) {
+			additionalIntricateOperations = EnumSet.noneOf(IntricateOperation.class);
+		} else {
+			additionalIntricateOperations = EnumSet.copyOf(mAdditionalIntricateOperations);
+		}
+		return new MultiCaseSolvedBinaryRelation(mSubject, mCases, additionalIntricateOperations, mXnf);
 	}
 }
