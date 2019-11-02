@@ -39,6 +39,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -146,16 +148,25 @@ public class AffineRelationTest {
 		testSolveForX(inputSTR);
 	}
 
-
 	private void testSolveForX(final String inputAsString) throws NotAffineException {
 		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
 		final Term x = TermParseUtils.parseTerm(mScript, "x");
 		testSingleCaseSolveForSubject(inputAsTerm, x);
+		testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.DNF);
+		testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.CNF);
 	}
 
 	private void testSingleCaseSolveForSubject(final Term inputAsTerm, final Term x) throws NotAffineException {
 		final SolvedBinaryRelation sbr = AffineRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x);
 		Assert.assertTrue(assumptionsImpliesEquality(inputAsTerm, sbr));
+	}
+
+	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf)
+			throws NotAffineException {
+		final MultiCaseSolvedBinaryRelation mcsbr = AffineRelation.convert(mScript, inputAsTerm)
+				.solveForSubject(mScript, x, xnf);
+		final Term solvedAsTerm = mcsbr.asTerm(mScript);
+		Assert.assertTrue(SmtUtils.areFormulasEquivalent(inputAsTerm, solvedAsTerm, mScript));
 	}
 
 	private boolean assumptionsImpliesEquality(final Term originalTerm, final SolvedBinaryRelation sbr) {
