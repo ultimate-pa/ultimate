@@ -300,30 +300,15 @@ public class PolynomialTest {
 	}
 	
 	/**
-	 * Result should be 
-	 * <pre>(/ 2.0 x y)</pre>
+	 * The last constant divisors should be pulled out as coefficient.
 	 */
 	@Test
 	public void realDivisionLeftAssoc03() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
 		mScript.declareFun("y", new Sort[0], realSort);
-		final String inputAsString = "(/ 42.0 x y 21.0)";
-		final String expectedOutputAsString = "(/ 2.0 x y)";
-		runDefaultTest(inputAsString, expectedOutputAsString);
-	}
-	
-	/**
-	 * Result should be 
-	 * <pre>(/ (* 2.0 x) x y)</pre>
-	 */
-	@Test
-	public void realDivisionLeftAssoc04() {
-		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
-		mScript.declareFun("x", new Sort[0], realSort);
-		mScript.declareFun("y", new Sort[0], realSort);
-		final String inputAsString = "(/ (* 42.0 x) x y 21.0)";
-		final String expectedOutputAsString = "(/ (* x 2.0) x y)";
+		final String inputAsString = "(/ 42.0 x y 21.0 2.0)";
+		final String expectedOutputAsString = "(* (/ 1.0 42.0) (/ 42.0 x y))";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 
@@ -332,11 +317,11 @@ public class PolynomialTest {
 	 * <pre>(div (+ (* 21 x x) 1) x)</pre>
 	 */
 	@Test
-	public void realDivisionLeftAssoc05() {
+	public void realDivisionLeftAssoc04() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], realSort);
 		final String inputAsString = "(/ (+ (* 42.0 x x) 2.0) 2.0 x 2.0)";
-		final String expectedOutputAsString = "(/ (+ (* 10.5 x x) 0.5) x)";
+		final String expectedOutputAsString = "(* (/ 1.0 2.0) (/ (+ (* 21.0 x x) 1.0) x))";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 	
@@ -369,40 +354,14 @@ public class PolynomialTest {
 	
 	/**
 	 * Result should be 
-	 * <pre>(/ 2.0 x y)</pre>
+	 * <pre>(div (* x 21) x)</pre>
 	 */
 	@Test
 	public void intDivisionLeftAssoc03() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("x", new Sort[0], intSort);
-		mScript.declareFun("y", new Sort[0], intSort);
-		final String inputAsString = "(div 42 x y 21)";
-		runDefaultTest(inputAsString, inputAsString);
-	}
-	
-	/**
-	 * Result should be 
-	 * <pre>(div (* 2 x) x y)</pre>
-	 */
-	@Test
-	public void intDivisionLeftAssoc04() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("x", new Sort[0], intSort);
 		final String inputAsString = "(div (* 42 x) 2 x)";
 		final String expectedOutputAsString = "(div (* x 21) x)";
-		runDefaultTest(inputAsString, expectedOutputAsString);
-	}
-	
-	/**
-	 * Result should be 
-	 * <pre>(div (+ (* 21 x x) 1) x)</pre>
-	 */
-	@Test
-	public void intDivisionLeftAssoc05() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("x", new Sort[0], intSort);
-		final String inputAsString = "(div (+ (* 42 x x) 2) 2 x)";
-		final String expectedOutputAsString = "(div (+ (* 21 x x) 1) x)";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 	
