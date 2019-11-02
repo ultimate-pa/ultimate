@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public enum PetriNetLargeBlockEncodingStatisticsDefinitions implements IStatisticsElement {
 
-	LbeTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+	LbeTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 	ProgramPointsBefore(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
@@ -43,17 +43,25 @@ public enum PetriNetLargeBlockEncodingStatisticsDefinitions implements IStatisti
 
 	TransitionsAfterwards(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	MoverChecksPositive(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+	VarBasedMoverChecksPositive(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	MoverChecksNegative(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+	VarBasedMoverChecksNegative(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	MoverChecksUnknown(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-	
+	SemBasedMoverChecksPositive(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
+	SemBasedMoverChecksNegative(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
+	SemBasedMoverChecksUnknown(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
+	SemBasedMoverCheckTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+
 	MoverChecksTotal(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-	
+
 	CheckedPairsTotal(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-	
+
 	TotalNumberOfCompositions(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
+
 
 	;
 

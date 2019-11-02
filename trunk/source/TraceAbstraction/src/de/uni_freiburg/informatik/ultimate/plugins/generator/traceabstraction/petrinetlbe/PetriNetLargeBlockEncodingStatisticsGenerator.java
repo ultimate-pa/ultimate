@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation.SemanticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation.SyntacticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
@@ -35,9 +37,12 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWi
 public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGeneratorWithStopwatches
 		implements IStatisticsDataProvider {
 
-	private int mMoverChecksPositive = 0;
-	private int mMoverChecksNegative = 0;
-	private int mMoverChecksUnknown = 0;
+	private long mVarBasedMoverChecksPositive = 0;
+	private long mVarBasedMoverChecksNegative = 0;
+	private long mSemBasedMoverChecksPositive = 0;
+	private long mSemBasedMoverChecksNegative = 0;
+	private long mSemBasedMoverChecksUnknown = 0;
+	private long mSemBasedMoverCheckTime = 0;
 	private int mMoverChecksTotal = 0;
 	// mCheckedPairsTotal != mMoverChecksTotal, because if something had been checked, it won't be checked again.
 	private int mCheckedPairsTotal = 0;
@@ -55,27 +60,15 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 		return PetriNetLargeBlockEncodingStatisticsType.getInstance();
 	}
 
-	public void reportPositiveMoverCheck(int i) {
-		mMoverChecksPositive += i;
-	}
-
-	public void reportNegativeMoverCheck(int i) {
-		mMoverChecksNegative += i;
-	}
-
-	public void reportUnkonwnMoverCheck() {
-		mMoverChecksUnknown++;
-	}
-	
-	public void reportMoverChecksTotal(int i) {
+	public void reportMoverChecksTotal(final int i) {
 		mMoverChecksTotal += i;
 	}
-	
-	public void reportCheckedPairsTotal(int i) {
+
+	public void reportCheckedPairsTotal(final int i) {
 		mCheckedPairsTotal += i;
 	}
-	
-	public void reportTotalNumberOfCompositions(int i) {
+
+	public void reportTotalNumberOfCompositions(final int i) {
 		mTotalNumberOfCompositions += i;
 	}
 
@@ -106,12 +99,18 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
-		case MoverChecksNegative:
-			return mMoverChecksNegative;
-		case MoverChecksPositive:
-			return mMoverChecksPositive;
-		case MoverChecksUnknown:
-			return mMoverChecksUnknown;
+		case VarBasedMoverChecksPositive:
+			return mVarBasedMoverChecksPositive;
+		case VarBasedMoverChecksNegative:
+			return mVarBasedMoverChecksNegative;
+		case SemBasedMoverChecksNegative:
+			return mSemBasedMoverChecksNegative;
+		case SemBasedMoverChecksPositive:
+			return mSemBasedMoverChecksPositive;
+		case SemBasedMoverChecksUnknown:
+			return mSemBasedMoverChecksUnknown;
+		case SemBasedMoverCheckTime:
+			return mSemBasedMoverCheckTime;
 		case MoverChecksTotal:
 			return mMoverChecksTotal;
 		case CheckedPairsTotal:
@@ -139,6 +138,22 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 	@Override
 	public Collection<String> getKeys() {
 		return PetriNetLargeBlockEncodingStatisticsType.getInstance().getKeys();
+	}
+
+	public void extractStatistics(final SemanticIndependenceRelation semanticBasedCheck) {
+		if (semanticBasedCheck != null) {
+			mSemBasedMoverChecksPositive = semanticBasedCheck.getPositiveQueries();
+			mSemBasedMoverChecksNegative = semanticBasedCheck.getNegativeQueries();
+			mSemBasedMoverChecksUnknown = semanticBasedCheck.getUnknownQueries();
+			mSemBasedMoverCheckTime = semanticBasedCheck.getComputationTimeNano();
+		}
+
+	}
+
+	public void extractStatistics(final SyntacticIndependenceRelation variableBasedCheck) {
+		mVarBasedMoverChecksPositive = variableBasedCheck.getPositiveQueries();
+		mVarBasedMoverChecksNegative = variableBasedCheck.getNegativeQueries();
+
 	}
 
 }

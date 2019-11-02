@@ -150,17 +150,19 @@ public class PetriNetLargeBlockEncoding {
 
 			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> syntaxCheck = new SyntacticIndependenceRelation<>();
 			mCachedCheck = new CachedIndependenceRelation<>(syntaxCheck);
+			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> semanticCheck;
 			switch (petriNetLbeSettings) {
 			case OFF:
 				throw new IllegalArgumentException("do not call LBE if you don't want to use it");
 			case SEMANTIC_BASED_MOVER_CHECK:
 				// TODO: Add more detail to log message
 				mLogger.info("Semantic Check.");
-				final IIndependenceRelation<IPredicate, IIcfgTransition<?>> semanticCheck = new SemanticIndependenceRelation(mServices, mManagedScript, false, false);
+				semanticCheck = new SemanticIndependenceRelation(mServices, mManagedScript, false, false);
 				mCachedCheck2 = new CachedIndependenceRelation<>(semanticCheck);
 				mMoverCheck = new UnionIndependenceRelation<IPredicate, IIcfgTransition<?>>(Arrays.asList(mCachedCheck2, mCachedCheck));
 				break;
 			case VARIABLE_BASED_MOVER_CHECK:
+				semanticCheck = null;
 				// TODO: Add more detail to log message. Users may wonder:
 				// * which variable is checked?
 				// * is there also a constant check?
@@ -184,6 +186,8 @@ public class PetriNetLargeBlockEncoding {
 					mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize()));
 			mLogger.info("Total number of compositions: " + i);
 			mResult = result2;
+			mPetriNetLargeBlockEncodingStatistics.extractStatistics((SemanticIndependenceRelation) semanticCheck);
+			mPetriNetLargeBlockEncodingStatistics.extractStatistics((SyntacticIndependenceRelation) syntaxCheck);
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), generateTimeoutMessage(petriNet));
 			aoce.addRunningTaskInfo(runningTaskInfo);
@@ -195,15 +199,16 @@ public class PetriNetLargeBlockEncoding {
 		} finally {
 			mPetriNetLargeBlockEncodingStatistics.stop(PetriNetLargeBlockEncodingStatisticsDefinitions.LbeTime);
 		}
-		mPetriNetLargeBlockEncodingStatistics.reportPositiveMoverCheck(mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize());
-		mPetriNetLargeBlockEncodingStatistics.reportNegativeMoverCheck(mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize());
+
+//		mPetriNetLargeBlockEncodingStatistics.reportPositiveMoverCheck(mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize());
+//		mPetriNetLargeBlockEncodingStatistics.reportNegativeMoverCheck(mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize());
 		mPetriNetLargeBlockEncodingStatistics.reportMoverChecksTotal(mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize() +
 				mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize());
 		mPetriNetLargeBlockEncodingStatistics.reportCheckedPairsTotal(mMoverChecks);
 		mPetriNetLargeBlockEncodingStatistics.reportTotalNumberOfCompositions(i);
 		mPetriNetLargeBlockEncodingStatistics.setProgramPointsAfterwards(mResult.getPlaces().size());
 		mPetriNetLargeBlockEncodingStatistics.setTransitionsAfterwards(mResult.getTransitions().size());
-		
+
 	}
 
 	private String generateTimeoutMessage(final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet) {
