@@ -33,12 +33,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 /**
  * A simple and efficient syntax-based independence relation.
  * Two actions are independent if all variable accessed by both of them are only read, not written to.
- * 
+ *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <STATE> This relation is non-conditional, so this parameter is not used.
  */
 public class SyntacticIndependenceRelation<STATE> implements IIndependenceRelation<STATE, IIcfgTransition<?>> {
+
+	private long mPositiveQueries;
+	private long mNegativeQueries;
 
 	@Override
 	public boolean isSymmetric() {
@@ -62,7 +65,23 @@ public class SyntacticIndependenceRelation<STATE> implements IIndependenceRelati
 		final boolean noRWConflict = DataStructureUtils.haveEmptyIntersection(tf1.getInVars().keySet(),
 				tf2.getAssignedVars());
 
-		return noWWConflict && noWRConflict && noRWConflict;
+		final boolean result = noWWConflict && noWRConflict && noRWConflict;
+		if (result) {
+			mPositiveQueries++;
+		} else {
+			mNegativeQueries++;
+		}
+		return result;
 	}
+
+	public long getPositiveQueries() {
+		return mPositiveQueries;
+	}
+
+	public long getNegativeQueries() {
+		return mNegativeQueries;
+	}
+
+
 
 }

@@ -63,6 +63,11 @@ public class SemanticIndependenceRelation implements IIndependenceRelation<IPred
 	private final boolean mConditional;
 	private final boolean mSymmetric;
 
+	private long mPositiveQueries;
+	private long mNegativeQueries;
+	private long mUnknownQueries;
+	private long mComputationTimeNano;
+
 	/**
 	 * Create a new variant of the semantic independence relation.
 	 *
@@ -97,18 +102,41 @@ public class SemanticIndependenceRelation implements IIndependenceRelation<IPred
 
 	@Override
 	public boolean contains(final IPredicate state, final IIcfgTransition<?> a, final IIcfgTransition<?> b) {
+		final long startTime = System.nanoTime();
 		final IPredicate context = mConditional ? state : null;
-		final boolean subset = performInclusionCheck(context, a, b);
+		final LBool subset = performInclusionCheck(context, a, b);
 
+		final LBool result;
 		if (mSymmetric) {
-			final boolean superset = performInclusionCheck(context, b, a);
-			return subset && superset;
+			final LBool superset = performInclusionCheck(context, b, a);
+			if (subset == LBool.UNSAT && superset == LBool.UNSAT) {
+				result = LBool.UNSAT;
+			} else if (subset == LBool.UNKNOWN || superset == LBool.UNKNOWN) {
+				result = LBool.UNKNOWN;
+			} else {
+				result = LBool.SAT;
+			}
 		} else {
-			return subset;
+			result = subset;
 		}
+		switch (result) {
+		case SAT:
+			mNegativeQueries++;
+			break;
+		case UNKNOWN:
+			mUnknownQueries++;
+			break;
+		case UNSAT:
+			mPositiveQueries++;
+			break;
+		default:
+			throw new AssertionError();
+		}
+		mComputationTimeNano += (System.nanoTime() - startTime);
+		return result == LBool.UNSAT;
 	}
 
-	private final boolean performInclusionCheck(final IPredicate context, final IIcfgTransition<?> a,
+	private final LBool performInclusionCheck(final IPredicate context, final IIcfgTransition<?> a,
 			final IIcfgTransition<?> b) {
 		final UnmodifiableTransFormula transFormula1 = compose(a.getTransformula(), b.getTransformula());
 		UnmodifiableTransFormula transFormula2 = compose(b.getTransformula(), a.getTransformula());
@@ -122,7 +150,7 @@ public class SemanticIndependenceRelation implements IIndependenceRelation<IPred
 		}
 
 		final LBool result = TransFormulaUtils.checkImplication(transFormula2, transFormula1, mManagedScript);
-		return result == LBool.UNSAT;
+		return result;
 	}
 
 	private final UnmodifiableTransFormula compose(final UnmodifiableTransFormula first,
@@ -138,4 +166,22 @@ public class SemanticIndependenceRelation implements IIndependenceRelation<IPred
 				tryAuxVarElimination, false, mXnfConversionTechnique, mSimplificationTechnique,
 				Arrays.asList(first, second));
 	}
+
+	public long getPositiveQueries() {
+		return mPositiveQueries;
+	}
+
+	public long getNegativeQueries() {
+		return mNegativeQueries;
+	}
+
+	public long getUnknownQueries() {
+		return mUnknownQueries;
+	}
+
+	public long getComputationTimeNano() {
+		return mComputationTimeNano;
+	}
+
+
 }
