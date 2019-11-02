@@ -316,11 +316,11 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
 			// EQ and DISTINCT need Modulo Assumption
 			if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
-				assumptionMapBuilder.putDivisibleByConstant(rhsTermWithoutDivision, 
+				assumptionMapBuilder.putDivisibleByConstant(rhsTermWithoutDivision,
 															coeffOfSubject.toTerm(mAffineTerm.getSort()));
-			} 
+			}
 			// cases LEQ, LESS, GREATER, GEQ do nothing
-			
+
 		} else {
 			rhsTerm = simpliySolvableRhsTerm;
 		}
@@ -357,7 +357,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 					// Better detect it before adding them.
 					if (SmtSortUtils.isRealSort(mAffineTerm.getSort())){
 						makeRealAssumptions(assumptionMapBuilder, var2exp.getKey());
-						final Term invPower = script.term("/", SmtUtils.rational2Term(script, Rational.ONE, 
+						final Term invPower = script.term("/", SmtUtils.rational2Term(script, Rational.ONE,
 																					  mAffineTerm.getSort()), power);
 						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower, rhsTerm);
 					}else if (SmtSortUtils.isIntSort(mAffineTerm.getSort())) {
@@ -377,7 +377,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		final Term relationToTerm = result.relationToTerm(script);
 		if (!assumptionMapBuilder.isEmpty()) {
 			assert script instanceof INonSolverScript
-					|| assumptionImpliesEquivalence(script, mOriginalTerm, relationToTerm, 
+					|| assumptionImpliesEquivalence(script, mOriginalTerm, relationToTerm,
 													assumptionMapBuilder.getExplicitAssumptionMap())
 						!= LBool.SAT : "transformation to AffineRelation unsound";
 		} else {
@@ -386,11 +386,11 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		}
 		return result;
 	}
-	
+
 	private void makeRealAssumptions(final AssumptionMapBuilder assuMapBuilder, final Term divisor) {
 		assuMapBuilder.putDivisorNotZero(divisor);
 	}
-	
+
 	private void makeIntAssumptions(final AssumptionMapBuilder assuMapBuilder, final Script script, final Term divisor, final Term dividend) {
 		assuMapBuilder.putDivisorNotZero(divisor);
 		// EQ and DISTINCT need Modulo Assumption
@@ -445,8 +445,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		}
 		return divTerm;
 	}
-	
-	private static Term constructDivisibilityConstraint(final Script script, final Term divisor, final Term divident,
+
+	private static Term constructDivisibilityConstraint(final Script script, final Term divident, final Term divisor,
 			final boolean negate) {
 		final Term modTerm = SmtUtils.mod(script, divident, divisor);
 		final Term tmp = SmtUtils.binaryEquality(script, modTerm,
@@ -586,7 +586,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			// EQ and DISTINCT need Modulo Assumption
 			if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
 				final boolean negate = mRelationSymbol.equals(RelationSymbol.DISTINCT);
-				final Term divisilityConstraintTerm = constructDivisibilityConstraint(script, rhsTerm,
+				final Term divisilityConstraintTerm = constructDivisibilityConstraint(script, rhsTermWithoutDivision,
 						coeffOfSubject.toTerm(mAffineTerm.getSort()), negate);
 				final SupportingTerm divisilityConstraint = new SupportingTerm(divisilityConstraintTerm,
 						IntricateOperation.DIV_BY_INTEGER_CONSTANT, Collections.emptySet());
@@ -604,10 +604,13 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 				default:
 					throw new AssertionError("cases not handled here");
 				}
+			} else {
+				// cases LEQ, LESS, GREATER, GEQ: do not add SupportingTerm
+				mcsb.conjoinWithConjunction(sbr);
+				// we have to add this information separately because
+				// there is no SupporingTerm that provides this information
+				mcsb.reportAdditionalIntricateOperation(IntricateOperation.DIV_BY_INTEGER_CONSTANT);
 			}
-			// cases LEQ, LESS, GREATER, GEQ do nothing
-			mcsb.conjoinWithConjunction(sbr);
-			mcsb.reportAdditionalIntricateOperation(IntricateOperation.DIV_BY_INTEGER_CONSTANT);
 		} else {
 			rhsTerm = simpliySolvableRhsTerm;
 			final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
