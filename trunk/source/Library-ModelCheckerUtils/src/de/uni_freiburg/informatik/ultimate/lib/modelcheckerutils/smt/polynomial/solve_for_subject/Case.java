@@ -51,7 +51,7 @@ public class Case implements ITermProviderOnDemand {
 	private final Xnf mXnf;
 
 	/**
-	 * 
+	 *
 	 * @param solvedBinaryRelation
 	 *            The {@link SolvedBinaryRelation} of this case. Can be null it
 	 *            this {@link Case} of a {@link MultiCaseSolvedBinaryRelation}
@@ -89,6 +89,9 @@ public class Case implements ITermProviderOnDemand {
 	@Override
 	public Term asTerm(final Script script) {
 		final Collection<Term> params = mSupportingTerms.stream().map(x -> x.asTerm()).collect(Collectors.toList());
+		if (mSolvedBinaryRelation != null) {
+			params.add(mSolvedBinaryRelation.relationToTerm(script));
+		}
 		final Term result;
 		switch (mXnf) {
 		case CNF:
