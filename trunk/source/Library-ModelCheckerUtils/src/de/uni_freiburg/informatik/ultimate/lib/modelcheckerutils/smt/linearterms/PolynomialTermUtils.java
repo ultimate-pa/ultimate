@@ -107,12 +107,12 @@ public class PolynomialTermUtils {
 		Rational coeff = Rational.ONE;
 		for (int i = polynomialArgs.length - 1; i >= 0 ; i--) {
 			if (polynomialArgs[i].isConstant() && !polynomialArgs[i].getConstant().equals(Rational.ONE)) {
-				coeff.mul(polynomialArgs[i].getConstant());
+				coeff = coeff.mul(polynomialArgs[i].getConstant());
 			}else {
 				break;
 			}
 		}
-		return coeff;
+		return coeff.inverse();
 	}
 	
 	/**

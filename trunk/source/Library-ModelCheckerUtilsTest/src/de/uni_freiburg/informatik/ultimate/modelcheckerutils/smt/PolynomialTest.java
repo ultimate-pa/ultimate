@@ -309,7 +309,7 @@ public class PolynomialTest {
 		mScript.declareFun("y", new Sort[0], realSort);
 		final String inputAsString = "(/ 42.0 x y 21.0 2.0)";
 		final String expectedOutputAsString = "(* (/ 1.0 42.0) (/ 42.0 x y))";
-		runDefaultTest(inputAsString, expectedOutputAsString);
+		runSyntaxWithoutPermutationsTest(inputAsString, expectedOutputAsString);
 	}
 
 	/**
@@ -322,6 +322,19 @@ public class PolynomialTest {
 		mScript.declareFun("x", new Sort[0], realSort);
 		final String inputAsString = "(/ (+ (* 42.0 x x) 2.0) 2.0 x 2.0)";
 		final String expectedOutputAsString = "(* (/ 1.0 2.0) (/ (+ (* 21.0 x x) 1.0) x))";
+		runSyntaxWithoutPermutationsTest(inputAsString, expectedOutputAsString);
+	}
+	
+	/**
+	 * Check that intermediate constants get simplified.
+	 */
+	@Test
+	public void realDivisionLeftAssoc05() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		mScript.declareFun("y", new Sort[0], realSort);
+		final String inputAsString = "(/ 42.0 x 5.0 2.0 y 21.0 2.0)";
+		final String expectedOutputAsString = "(/ 42.0 x 10.0 y 21.0 2.0)";
 		runDefaultTest(inputAsString, expectedOutputAsString);
 	}
 	
