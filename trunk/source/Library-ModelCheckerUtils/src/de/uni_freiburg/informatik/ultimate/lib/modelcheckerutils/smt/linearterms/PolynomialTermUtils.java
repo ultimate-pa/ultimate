@@ -209,7 +209,7 @@ public class PolynomialTermUtils {
 		}else {
 			divider = PolynomialTerm::divide;
 		}
-		IPolynomialTerm newNumerator = null;
+		IPolynomialTerm newNumerator = polynomialArgs[0];
 		final IPolynomialTerm[] binaryDivision = new IPolynomialTerm[2];
 		binaryDivision[0] = polynomialArgs[0];
 		int endOfSimplificationExcluded = 1;
@@ -232,6 +232,7 @@ public class PolynomialTermUtils {
 				endOfSimplificationExcluded--;
 			}
 		}
+
 		Term[] variable = subArrayToTerm(polynomialArgs, endOfSimplificationExcluded - 1, polynomialArgs.length - 1, script);
 		variable[0] = newNumerator.toTerm(script);
 		return variable;

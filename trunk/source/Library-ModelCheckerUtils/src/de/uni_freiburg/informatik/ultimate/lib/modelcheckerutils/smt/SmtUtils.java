@@ -1564,7 +1564,7 @@ public final class SmtUtils {
 				if (nextAsRational == null) {
 					resultParams.add(inputParams[i]);
 				}else {
-					if (nextAsRational.numerator() == BigInteger.ZERO) {
+					if (nextAsRational.numerator() == BigInteger.ONE) {
 						// do nothing
 					}else {
 						resultParams.add(inputParams[i]);
