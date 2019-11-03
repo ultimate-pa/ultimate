@@ -88,12 +88,10 @@ public class PolynomialTermUtils {
 		final Rational coefficient;
 		if (functionSymbol == "/") {
 			coefficient = constructCoefficient(polynomialArgs);
-			Term[] variable = constructFutureVariableReal(polynomialArgs, script);
-			simplifiedVariable = SmtUtils.divReal(script, variable);
+			simplifiedVariable = constructFutureVariableReal(polynomialArgs, script);
 		}else if (functionSymbol == "div") {
 			coefficient = Rational.ONE;
-			Term[] variable = constructFutureVariableInt(polynomialArgs, script);
-			simplifiedVariable = SmtUtils.divInt(script, variable);
+			simplifiedVariable = constructFutureVariableInt(polynomialArgs, script);
 		}else {
 			throw new UnsupportedOperationException("Given type of division unknown.");
 		}
@@ -121,13 +119,13 @@ public class PolynomialTermUtils {
 	 * Return an Array which represents the variable-part (everything but the coefficient, see "calculateCoefficient")
 	 * of the given division, the arguments already in "pure" Term form (e.g. not a PolynomialTerm).
 	 */
-	private static Term[] constructFutureVariableReal(final IPolynomialTerm[] polynomialArgs, final Script script) {
+	private static Term constructFutureVariableReal(final IPolynomialTerm[] polynomialArgs, final Script script) {
 		final IPolynomialTerm numerator = constructNumeratorReal(polynomialArgs, script);
 		final int endOfVariableIncluded = calculateEndOfVariable(polynomialArgs);
 		final int beginOfVariableIncluded = calculateBeginOfVariable(polynomialArgs);
-		Term[] variable = subArrayToTerm(polynomialArgs, beginOfVariableIncluded - 1, endOfVariableIncluded, script);
+		Term[] variable = subArrayToTermSkipOnes(polynomialArgs, beginOfVariableIncluded - 1, endOfVariableIncluded, script);
 		variable[0] = numerator.toTerm(script);
-		return variable;
+		return script.term("/", variable);
 	}
 	
 	/**
@@ -159,12 +157,18 @@ public class PolynomialTermUtils {
 		return beginOfVariableIncluded;
 	}
 	
-	private static Term[] subArrayToTerm(final IPolynomialTerm[] polynomialArgs, final int beginOfVariableIncluded,
+	private static Term[] subArrayToTermSkipOnes(final IPolynomialTerm[] polynomialArgs, final int beginOfVariableIncluded,
 										 final int endOfSubArrayIncl, final Script script) {
-		Term[] subArray = new Term[endOfSubArrayIncl + 1];
+		ArrayList<Term> subList = new ArrayList<>();
 		for (int i = beginOfVariableIncluded; i <= endOfSubArrayIncl; i++) {
-			subArray[i] = polynomialArgs[i].toTerm(script);
+			if (polynomialArgs[i].isConstant() && polynomialArgs[i].getConstant().equals(Rational.ONE)) {
+				//skip it
+			}else {
+				subList.add(polynomialArgs[i].toTerm(script));
+			}
 		}
+		Term[] subArray = new Term[subList.size()];
+		subList.toArray(subArray);
 		return subArray;
 	}
 	
@@ -201,7 +205,7 @@ public class PolynomialTermUtils {
 		}
 	}
 
-	private static Term[] constructFutureVariableInt(final IPolynomialTerm[] polynomialArgs, final Script script) {
+	private static Term constructFutureVariableInt(final IPolynomialTerm[] polynomialArgs, final Script script) {
 		//ALSO TODO: Write tests for divInt
 		final BiFunction<IPolynomialTerm[], Script, IPolynomialTerm> divider;
 		if (polynomialArgs[0].isAffine()) {
@@ -233,9 +237,9 @@ public class PolynomialTermUtils {
 			}
 		}
 
-		Term[] variable = subArrayToTerm(polynomialArgs, endOfSimplificationExcluded - 1, polynomialArgs.length - 1, script);
+		Term[] variable = subArrayToTermSkipOnes(polynomialArgs, endOfSimplificationExcluded - 1, polynomialArgs.length - 1, script);
 		variable[0] = newNumerator.toTerm(script);
-		return variable;
+		return script.term("div", variable);
 	}
 
 	/**
