@@ -1525,6 +1525,21 @@ public final class SmtUtils {
 		}
 	}
 
+	/**
+	 * Division for reals with the following simplifications.
+	 * <ul>
+	 * <li>Initial literals are simplified by division as long as the result is integral.
+	 * <li>A non-initial zero cannot be simplified (semantics of division by zero
+	 * similar to uninterpreted function see
+	 * http://smtlib.cs.uiowa.edu/theories-Reals.shtml).
+	 * This means especially that an initial zero does not make the result zero,
+	 * because 0.0 is not equivalent to (/ 0.0 0.0).
+	 * <li> An intermediate one is dropped.
+	 * </ul>
+	 *
+	 * See {@link SmtUtilsTest#divIntTest01} for tests. TODO: Apply flattening such
+	 * that (div (div x y) z) becomes (div x y z).
+	 */
 	public static Term divInt(final Script script, final Term... inputParams) {
 		final List<Term> resultParams = new ArrayList<>();
 		boolean simplificationPossible = true;

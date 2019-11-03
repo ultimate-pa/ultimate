@@ -238,7 +238,6 @@ public class PolynomialTermUtils {
 	}
 
 	private static Term constructFutureVariableInt(final IPolynomialTerm[] polynomialArgs, final Script script) {
-		//ALSO TODO: Write tests for divInt
 		final BiFunction<IPolynomialTerm[], Script, IPolynomialTerm> divider;
 		if (polynomialArgs[0].isAffine()) {
 			divider = AffineTerm::divide;
@@ -275,24 +274,6 @@ public class PolynomialTermUtils {
 	}
 
 	/**
-	 * This method constructs a new divisionArray by placing the numerator at the first place and then
-	 * copying the oldDivArray from the given startIndex (included) until the end. 
-	 */
-	private static IPolynomialTerm[] rearrangeIntDivision(final IPolynomialTerm numerator, 
-													      final IPolynomialTerm[] oldDivArray,
-													      final int startIndex) {
-		final ArrayList<IPolynomialTerm> newDiv = new ArrayList<>();
-		newDiv.add(numerator);
-		for (int i = startIndex; i < oldDivArray.length ; i++) {
-			newDiv.add(oldDivArray[i]);
-			
-		}
-		IPolynomialTerm[] newDivArray = new IPolynomialTerm[newDiv.size()];
-		newDiv.toArray(newDivArray);
-		return newDivArray;
-	}
-
-	/**
 	 * Generalized method for applying Modulo to the coefficients and the constant of {@link AffineTerm}s and
 	 * {@link PolynomialTerm}s. The type parameter T refers either to {@link AffineTerm} or {@link PolynomialTerm}. The
 	 * type parameter MNL is a {@link Term} for {@link AffineTerm}s and a {@link Monomial} for {@link PolynomialTerm}s.
@@ -318,21 +299,6 @@ public class PolynomialTermUtils {
 		final Rational constant =
 				SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(agAffineTerm.getConstant()), divident));
 		return constructor.apply(agAffineTerm.getSort(), constant, mapBuilder.getBuiltMap());
-	}
-
-	/**
-	 * Returns a shrinked version of a map if possible. Returns the given map otherwise.
-	 * 
-	 * @param <K>
-	 */
-	public static <K, V> Map<K, V> shrinkMap(final Map<K, V> map) {
-		if (map.size() == 0) {
-			return Collections.emptyMap();
-		} else if (map.size() == 1) {
-			final Entry<K, V> entry = map.entrySet().iterator().next();
-			return Collections.singletonMap(entry.getKey(), entry.getValue());
-		}
-		return map;
 	}
 
 	/**
