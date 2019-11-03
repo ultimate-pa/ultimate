@@ -141,6 +141,7 @@ public class PetriNetLargeBlockEncoding {
 		mPetriNetLargeBlockEncodingStatistics.start(PetriNetLargeBlockEncodingStatisticsDefinitions.LbeTime);
 		mPetriNetLargeBlockEncodingStatistics.setProgramPointsBefore(petriNet.getPlaces().size());
 		mPetriNetLargeBlockEncodingStatistics.setTransitionsBefore(petriNet.getTransitions().size());
+		mLogger.info("Starting large block encoding on Petri net that " + petriNet.sizeInformation());
 		try {
 			final BranchingProcess<IIcfgTransition<?>, IPredicate> bp = new FinitePrefix<>(
 					new AutomataLibraryServices(services), petriNet).getResult();
@@ -213,7 +214,8 @@ public class PetriNetLargeBlockEncoding {
 	}
 
 	private String generateTimeoutMessage(final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet) {
-		return "applying PetriNetLargeBlockEncoding to Petri net with " + petriNet.sizeInformation();
+		return "applying PetriNetLargeBlockEncoding to Petri net that " + petriNet.sizeInformation() + " and "
+				+ mCoEnabledRelation.size() + " co-enabled transitions pairs.";
 	}
 
 	/**
