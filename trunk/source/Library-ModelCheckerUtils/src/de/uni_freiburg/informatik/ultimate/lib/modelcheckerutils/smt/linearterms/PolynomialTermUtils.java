@@ -123,7 +123,8 @@ public class PolynomialTermUtils {
 		final IPolynomialTerm numerator = constructNumeratorReal(polynomialArgs, script);
 		final int endOfVariableIncluded = calculateEndOfVariable(polynomialArgs);
 		final int beginOfVariableIncluded = calculateBeginOfVariable(polynomialArgs);
-		Term[] variable = subArrayToTermSkipOnes(polynomialArgs, beginOfVariableIncluded - 1, endOfVariableIncluded, script);
+		Term[] variable = subArrayToTermSimplifyIntermediate(polynomialArgs, beginOfVariableIncluded - 1, 
+															 endOfVariableIncluded, script);
 		variable[0] = numerator.toTerm(script);
 		return script.term("/", variable);
 	}
@@ -166,6 +167,36 @@ public class PolynomialTermUtils {
 				//skip it
 			}else {
 				subList.add(polynomialArgs[i].toTerm(script));
+			}
+		}
+		Term[] subArray = new Term[subList.size()];
+		subList.toArray(subArray);
+		return subArray;
+	}
+	
+	private static Term[] subArrayToTermSimplifyIntermediate(final IPolynomialTerm[] polynomialArgs, final int beginOfVariableIncluded,
+															 final int endOfSubArrayIncl, final Script script) {
+		ArrayList<Term> subList = new ArrayList<>();
+		IPolynomialTerm simplifiedTerm = null;
+		for (int i = beginOfVariableIncluded; i <= endOfSubArrayIncl; i++) {
+			if (!polynomialArgs[i].isConstant() || polynomialArgs[i].getConstant().equals(Rational.ZERO)) {
+				if(simplifiedTerm == null) {
+					//don't add
+				}else {
+					subList.add(simplifiedTerm.toTerm(script));
+					simplifiedTerm = null;
+				}
+				subList.add(polynomialArgs[i].toTerm(script));
+			}else {
+				if (polynomialArgs[i].isConstant() && polynomialArgs[i].getConstant().equals(Rational.ONE)) {
+					//skip it
+				}else {
+					if (simplifiedTerm == null) {
+						simplifiedTerm = polynomialArgs[i];
+					}else {
+						simplifiedTerm = AffineTerm.mul(simplifiedTerm, polynomialArgs[i].getConstant());
+					}
+				}
 			}
 		}
 		Term[] subArray = new Term[subList.size()];
