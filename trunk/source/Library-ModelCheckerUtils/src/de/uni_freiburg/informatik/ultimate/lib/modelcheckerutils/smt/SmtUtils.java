@@ -1445,7 +1445,6 @@ public final class SmtUtils {
 		return script.term("div", dividend, divisor);
 	}
 
-
 	/**
 	 * Division for reals with the following simplifications.
 	 * <ul>
@@ -1526,7 +1525,60 @@ public final class SmtUtils {
 		}
 	}
 
-
+	public static Term divInt(final Script script, final Term... inputParams) {
+		final List<Term> resultParams = new ArrayList<>();
+		boolean simplificationPossible = true;
+		if (inputParams.length == 0) {
+			throw new IllegalArgumentException("int division needs at least one argument");
+		}
+		resultParams.add(inputParams[0]);
+		for (int i = 1; i < inputParams.length; i++) {
+			if (simplificationPossible) {
+				final Rational nextAsRational = tryToConvertToLiteral(inputParams[i]);
+				if (nextAsRational == null) {
+					// cannot simplify - is not at literal
+					resultParams.add(inputParams[i]);
+					simplificationPossible = false;
+				} else {
+					if (nextAsRational.numerator() == BigInteger.ZERO) {
+						// cannot simplify
+						resultParams.add(inputParams[i]);
+						simplificationPossible = false;
+					} else if (nextAsRational.numerator() == BigInteger.ONE && nextAsRational.isIntegral()) {
+						// do nothing
+					} else {
+						final Rational numerator = tryToConvertToLiteral(resultParams.get(0));
+						final Rational resultRat = numerator.div(nextAsRational);
+						if (resultRat.isIntegral()) {
+							final Term resultTerm = resultRat.toTerm(SmtSortUtils.getIntSort(script));
+							resultParams.set(0, resultTerm);
+						}else {
+							// cannot simplify
+							resultParams.add(inputParams[i]);
+							simplificationPossible = false;
+						}
+					}
+				}
+			}else {
+				final Rational nextAsRational = tryToConvertToLiteral(inputParams[i]);
+				if (nextAsRational == null) {
+					resultParams.add(inputParams[i]);
+				}else {
+					if (nextAsRational.numerator() == BigInteger.ZERO) {
+						// do nothing
+					}else {
+						resultParams.add(inputParams[i]);
+					}
+				}
+			}
+		}
+		if (resultParams.size() == 1) {
+			return resultParams.get(0);
+		} else {
+			return script.term("div", resultParams.toArray(new Term[resultParams.size()]));
+		}
+	}
+	
 	/**
 	 * Returns a possibly simplified version of the Term (mod dividend divisor). If dividend and divisor are both
 	 * literals the returned Term is a literal which is equivalent to the result of the operation. If only the divisor

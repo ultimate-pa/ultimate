@@ -214,8 +214,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		if (!divisionPossible(polynomialTerms)) {
 			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this
 			//whole term as an unique variable.
-			final Term term = PolynomialTermUtils.constructSimplifiedTerm("/", polynomialTerms, script);
-			return AffineTerm.constructVariable(term);
+			return PolynomialTermUtils.simplifyImpossibleDivision("/", polynomialTerms, script);
 		}
 		return constructDivision(polynomialTerms, script);
 	}
@@ -228,15 +227,13 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		if (!divisionPossible(polynomialArgs)) {
 			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this
 			//whole term as an unique variable.
-			final Term term = PolynomialTermUtils.constructSimplifiedTerm("div", polynomialArgs, script);
-			return AffineTerm.constructVariable(term);
+			return PolynomialTermUtils.simplifyImpossibleDivision("div", polynomialArgs, script);
 		}
 		final IPolynomialTerm result = constructDivision(polynomialArgs, script);
 		if (result.isIntegral()) {
 			return result;
 		}
-		final Term term = PolynomialTermUtils.constructSimplifiedTerm("div", polynomialArgs, script);
-		return AffineTerm.constructVariable(term);
+		return PolynomialTermUtils.simplifyImpossibleDivision("div", polynomialArgs, script);
 	}
 
 	/**
