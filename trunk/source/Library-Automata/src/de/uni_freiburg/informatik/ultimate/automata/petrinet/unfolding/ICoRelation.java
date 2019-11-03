@@ -144,4 +144,6 @@ public interface ICoRelation<LETTER, PLACE> {
 	 * to c.
 	 */
 	int computeMaximalDegree();
+
+	Set<Event<LETTER, PLACE>> computeCoRelatatedEvents(Event<LETTER, PLACE> e);
 }

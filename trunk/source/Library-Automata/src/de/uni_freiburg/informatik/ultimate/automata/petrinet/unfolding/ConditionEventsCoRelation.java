@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -373,4 +374,25 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 		return streamCoRelatedConditions(cond, transitions).filter(x -> x.getPlace().equals(p))
 				.collect(Collectors.toSet());
 	}
+
+
+	@Override
+	public Set<Event<LETTER, PLACE>> computeCoRelatatedEvents(final Event<LETTER, PLACE> e) {
+		final Set<Condition<LETTER, PLACE>> succCond = e.getSuccessorConditions();
+		if (succCond.isEmpty()) {
+			throw new UnsupportedOperationException("event without successor conditions");
+		}
+		final Iterator<Condition<LETTER, PLACE>> it = succCond.iterator();
+		final Condition<LETTER, PLACE> firstCond = it.next();
+		streamCoRelatedEvents(firstCond).collect(Collectors.toSet());
+		final Set<Event<LETTER, PLACE>> result = streamCoRelatedEvents(firstCond).collect(Collectors.toSet());
+		while(it.hasNext()) {
+			final Condition<LETTER, PLACE> c = it.next();
+			final Set<Event<LETTER, PLACE>> coRelated = streamCoRelatedEvents(c).collect(Collectors.toSet());
+			result.retainAll(coRelated);
+		}
+		return result;
+	}
+
+
 }
