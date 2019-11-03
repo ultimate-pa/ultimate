@@ -45,6 +45,16 @@ public enum PetriNetLargeBlockEncodingStatisticsDefinitions implements IStatisti
 
 	CoEnabledTransitionPairs(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
+	FixpointIterations(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
+	TrivialSequentialCompositions(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
+	ConcurrentSequentialCompositions(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
+	TrivialYvCompositions(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
+	ConcurrentYvCompositions(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
 	VarBasedMoverChecksPositive(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	VarBasedMoverChecksNegative(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),
@@ -62,9 +72,6 @@ public enum PetriNetLargeBlockEncodingStatisticsDefinitions implements IStatisti
 	CheckedPairsTotal(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	TotalNumberOfCompositions(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
-
-
 	;
 
 	private final Class<?> mClazz;

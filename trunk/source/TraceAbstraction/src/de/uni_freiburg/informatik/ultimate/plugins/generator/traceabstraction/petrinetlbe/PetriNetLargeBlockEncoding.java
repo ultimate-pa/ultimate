@@ -175,19 +175,22 @@ public class PetriNetLargeBlockEncoding {
 			default:
 				throw new AssertionError("unknown value " + petriNetLbeSettings);
 			}
-			BoundedPetriNet<IIcfgTransition<?>, IPredicate> result1 = sequenceRule(services, petriNet);
-			BoundedPetriNet<IIcfgTransition<?>, IPredicate> result2 = sequenceRule(services, result1);
-			while (result1.getTransitions().size() != result2.getTransitions().size()) {
-				result1 = sequenceRule(services, result2);
-				result2 = sequenceRule(services, result1);
+			int numberOfFixpointIterations = 1;
+			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultLastIteration = petriNet;
+			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultCurrentIteration = sequenceRule(services, petriNet);
+			while (resultLastIteration.getTransitions().size() != resultCurrentIteration.getTransitions().size()) {
+				numberOfFixpointIterations++;
+				resultLastIteration = resultCurrentIteration;
+				resultCurrentIteration = sequenceRule(services, resultCurrentIteration);
 			}
+			mPetriNetLargeBlockEncodingStatistics.setNumberOfFixpointIterations(numberOfFixpointIterations);
 			mLogger.info("Checked pairs total: " + mMoverChecks);
 //			mLogger.info("Positive Checks: " + (mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize()));
 //			mLogger.info("Negative Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck2.getNegativeCacheSize()));
 //			mLogger.info("Total Mover Checks: " + (mCachedCheck.getNegativeCacheSize() + mCachedCheck.getPositiveCacheSize() +
 //					mCachedCheck2.getNegativeCacheSize() + mCachedCheck2.getPositiveCacheSize()));
 			mLogger.info("Total number of compositions: " + i);
-			mResult = result2;
+			mResult = resultCurrentIteration;
 			mPetriNetLargeBlockEncodingStatistics.extractStatistics((SemanticIndependenceRelation) semanticBasedCheck);
 			mPetriNetLargeBlockEncodingStatistics.extractStatistics((SyntacticIndependenceRelation) variableBasedCheckIr);
 		} catch (final AutomataOperationCanceledException aoce) {
@@ -316,6 +319,13 @@ public class PetriNetLargeBlockEncoding {
 							//mLogger.info("Element number " + i + " added to the stack. (Y to V)");
 							updateCoEnabledRelation(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
 							updateSequentialCompositions(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
+							if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
+								mPetriNetLargeBlockEncodingStatistics.reportComposition(
+										PetriNetLargeBlockEncodingStatisticsDefinitions.TrivialYvCompositions);
+							} else {
+								mPetriNetLargeBlockEncodingStatistics.reportComposition(
+										PetriNetLargeBlockEncodingStatisticsDefinitions.ConcurrentYvCompositions);
+							}
 						}
 					}
 				}
@@ -341,6 +351,13 @@ public class PetriNetLargeBlockEncoding {
 							//mLogger.info("Element number " + i + " added to the stack.");
 							updateCoEnabledRelation(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
 							updateSequentialCompositions(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
+							if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
+								mPetriNetLargeBlockEncodingStatistics.reportComposition(
+										PetriNetLargeBlockEncodingStatisticsDefinitions.TrivialSequentialCompositions);
+							} else {
+								mPetriNetLargeBlockEncodingStatistics.reportComposition(
+										PetriNetLargeBlockEncodingStatisticsDefinitions.ConcurrentSequentialCompositions);
+							}
 						}
 					}
 				}

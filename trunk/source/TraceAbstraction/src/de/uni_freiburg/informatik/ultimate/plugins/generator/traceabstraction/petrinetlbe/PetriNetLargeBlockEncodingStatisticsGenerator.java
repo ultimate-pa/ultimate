@@ -52,6 +52,12 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 	private int mTransitionsBefore = -1;
 	private int mTransitionsAfterwards = -1;
 	private int mCoEnabledTransitionPairs = -1;
+	private int mNumberOfFixpointIterations = -1;
+	private int mTrivialSequentialCompositions = 0;
+	private int mConcurrentSequentialCompositions = 0;
+	private final int mTrivialYvCompositions = 0;
+	private final int mConcurrentYvCompositions = 0;
+
 
 	public PetriNetLargeBlockEncodingStatisticsGenerator() {
 	}
@@ -88,6 +94,8 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 	public void setTransitionsAfterwards(final int transitionsAfterwards) {
 		mTransitionsAfterwards = transitionsAfterwards;
 	}
+
+
 
 	@Override
 	public Object getValue(final String key) {
@@ -128,6 +136,16 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 			return mTransitionsBefore;
 		case CoEnabledTransitionPairs:
 			return mCoEnabledTransitionPairs;
+		case FixpointIterations:
+			return mNumberOfFixpointIterations;
+		case TrivialSequentialCompositions:
+			return mTrivialSequentialCompositions;
+		case ConcurrentSequentialCompositions:
+			return mConcurrentSequentialCompositions;
+		case TrivialYvCompositions:
+			return mTrivialYvCompositions;
+		case ConcurrentYvCompositions:
+			return mConcurrentYvCompositions;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -161,6 +179,29 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 
 	public void setCoEnabledTransitionPairs(final int coEnabledTransitionPairs) {
 		mCoEnabledTransitionPairs = coEnabledTransitionPairs;
+	}
+
+	public void setNumberOfFixpointIterations(final int numberOfFixpointIterations) {
+		mNumberOfFixpointIterations = numberOfFixpointIterations;
+	}
+
+	public void reportComposition(final PetriNetLargeBlockEncodingStatisticsDefinitions pnlbesd) {
+		switch (pnlbesd) {
+		case TrivialSequentialCompositions:
+			mTrivialSequentialCompositions++;
+			break;
+		case ConcurrentSequentialCompositions:
+			mConcurrentSequentialCompositions++;
+			break;
+		case TrivialYvCompositions:
+			mTrivialSequentialCompositions++;
+			break;
+		case ConcurrentYvCompositions:
+			mConcurrentSequentialCompositions++;
+			break;
+		default:
+			throw new UnsupportedOperationException("not an enum for a composition " + pnlbesd);
+		}
 	}
 
 }
