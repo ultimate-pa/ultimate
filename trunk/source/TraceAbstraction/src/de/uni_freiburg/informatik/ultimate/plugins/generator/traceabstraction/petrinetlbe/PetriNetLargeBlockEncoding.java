@@ -317,8 +317,6 @@ public class PetriNetLargeBlockEncoding {
 							sequentialCompositionStack.add(element);
 							i++;
 							//mLogger.info("Element number " + i + " added to the stack. (Y to V)");
-							updateCoEnabledRelation(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
-							updateSequentialCompositions(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
 							if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
 								mPetriNetLargeBlockEncodingStatistics.reportComposition(
 										PetriNetLargeBlockEncodingStatisticsDefinitions.TrivialYvCompositions);
@@ -326,6 +324,8 @@ public class PetriNetLargeBlockEncoding {
 								mPetriNetLargeBlockEncodingStatistics.reportComposition(
 										PetriNetLargeBlockEncodingStatisticsDefinitions.ConcurrentYvCompositions);
 							}
+							updateCoEnabledRelation(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
+							updateSequentialCompositions(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
 						}
 					}
 				}
@@ -349,8 +349,6 @@ public class PetriNetLargeBlockEncoding {
 							sequentialCompositionStack.add(element);
 							i++;
 							//mLogger.info("Element number " + i + " added to the stack.");
-							updateCoEnabledRelation(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
-							updateSequentialCompositions(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
 							if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
 								mPetriNetLargeBlockEncodingStatistics.reportComposition(
 										PetriNetLargeBlockEncodingStatisticsDefinitions.TrivialSequentialCompositions);
@@ -358,6 +356,8 @@ public class PetriNetLargeBlockEncoding {
 								mPetriNetLargeBlockEncodingStatistics.reportComposition(
 										PetriNetLargeBlockEncodingStatisticsDefinitions.ConcurrentSequentialCompositions);
 							}
+							updateCoEnabledRelation(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
+							updateSequentialCompositions(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
 						}
 					}
 				}

@@ -55,8 +55,8 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 	private int mNumberOfFixpointIterations = -1;
 	private int mTrivialSequentialCompositions = 0;
 	private int mConcurrentSequentialCompositions = 0;
-	private final int mTrivialYvCompositions = 0;
-	private final int mConcurrentYvCompositions = 0;
+	private int mTrivialYvCompositions = 0;
+	private int mConcurrentYvCompositions = 0;
 
 
 	public PetriNetLargeBlockEncodingStatisticsGenerator() {
@@ -194,10 +194,10 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 			mConcurrentSequentialCompositions++;
 			break;
 		case TrivialYvCompositions:
-			mTrivialSequentialCompositions++;
+			mTrivialYvCompositions++;
 			break;
 		case ConcurrentYvCompositions:
-			mConcurrentSequentialCompositions++;
+			mConcurrentYvCompositions++;
 			break;
 		default:
 			throw new UnsupportedOperationException("not an enum for a composition " + pnlbesd);
