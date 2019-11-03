@@ -43,6 +43,8 @@ public enum PetriNetLargeBlockEncodingStatisticsDefinitions implements IStatisti
 
 	TransitionsAfterwards(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
+	CoEnabledTransitionPairs(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
 	VarBasedMoverChecksPositive(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	VarBasedMoverChecksNegative(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),

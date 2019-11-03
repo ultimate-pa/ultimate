@@ -144,7 +144,11 @@ public class PetriNetLargeBlockEncoding {
 		try {
 			final BranchingProcess<IIcfgTransition<?>, IPredicate> bp = new FinitePrefix<>(
 					new AutomataLibraryServices(services), petriNet).getResult();
-			mCoEnabledRelation = computeCoEnabledRelation(bp);
+//			mCoEnabledRelation = computeCoEnabledRelation(bp);
+			mCoEnabledRelation = computeCoEnabledRelationEfficiently(bp);
+			final int coEnabledRelationSize = mCoEnabledRelation.size();
+			mLogger.info("Number of co-enabled transitions " + coEnabledRelationSize);
+			mPetriNetLargeBlockEncodingStatistics.setCoEnabledTransitionPairs(coEnabledRelationSize);
 
 			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> variableBasedCheckIr = new SyntacticIndependenceRelation<>();
 			final CachedIndependenceRelation<IPredicate, IIcfgTransition<?>> cachedVariableBasedIr = new CachedIndependenceRelation<>(variableBasedCheckIr);
@@ -553,6 +557,20 @@ public class PetriNetLargeBlockEncoding {
 					final IIcfgTransition<?> symbol2 = event2.getTransition().getSymbol();
 					hashRelation.addPair(symbol1, symbol2);
 				}
+			}
+		}
+		return hashRelation;
+	}
+
+	private HashRelation<IIcfgTransition<?>, IIcfgTransition<?>> computeCoEnabledRelationEfficiently(
+			final BranchingProcess<IIcfgTransition<?>, IPredicate> bp) {
+		final HashRelation<IIcfgTransition<?>, IIcfgTransition<?>> hashRelation = new HashRelation<>();
+		final ICoRelation<IIcfgTransition<?>, IPredicate> coRelation = bp.getCoRelation();
+		final Collection<Event<IIcfgTransition<?>, IPredicate>> events = bp.getEvents();
+		for (final Event<IIcfgTransition<?>, IPredicate> event1 : events) {
+			final Set<Event<IIcfgTransition<?>, IPredicate>> coRelatedEvents = coRelation.computeCoRelatatedEvents(event1);
+			for (final Event<IIcfgTransition<?>, IPredicate> coRelatedEvent : coRelatedEvents) {
+				hashRelation.addPair(event1.getTransition().getSymbol(), coRelatedEvent.getTransition().getSymbol());
 			}
 		}
 		return hashRelation;

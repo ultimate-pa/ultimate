@@ -51,6 +51,7 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 	private int mProgramPointsAfterwards = -1;
 	private int mTransitionsBefore = -1;
 	private int mTransitionsAfterwards = -1;
+	private int mCoEnabledTransitionPairs = -1;
 
 	public PetriNetLargeBlockEncodingStatisticsGenerator() {
 	}
@@ -125,6 +126,8 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 			return mTransitionsAfterwards;
 		case TransitionsBefore:
 			return mTransitionsBefore;
+		case CoEnabledTransitionPairs:
+			return mCoEnabledTransitionPairs;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -154,6 +157,10 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 		mVarBasedMoverChecksPositive = variableBasedCheck.getPositiveQueries();
 		mVarBasedMoverChecksNegative = variableBasedCheck.getNegativeQueries();
 
+	}
+
+	public void setCoEnabledTransitionPairs(final int coEnabledTransitionPairs) {
+		mCoEnabledTransitionPairs = coEnabledTransitionPairs;
 	}
 
 }
