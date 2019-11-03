@@ -134,11 +134,11 @@ public class PolynomialTermUtils {
 	private static int calculateEndOfVariable(final IPolynomialTerm[] polynomialArgs) {
 		int endOfVariableIncluded = polynomialArgs.length - 1;
 		boolean endOfVariableFound = false;
-		for (; endOfVariableFound ; endOfVariableIncluded--) {
-			endOfVariableFound = polynomialArgs[endOfVariableIncluded].isConstant() 
-								 && !polynomialArgs[endOfVariableIncluded].getConstant().equals(Rational.ONE);
-			endOfVariableIncluded++;
+		for (; !endOfVariableFound ; endOfVariableIncluded--) {
+			endOfVariableFound = !polynomialArgs[endOfVariableIncluded].isConstant() 
+								 || polynomialArgs[endOfVariableIncluded].getConstant().equals(Rational.ZERO);
 		}
+		endOfVariableIncluded++;
 		return endOfVariableIncluded;
 	}
 	
@@ -149,11 +149,12 @@ public class PolynomialTermUtils {
 	private static int calculateBeginOfVariable(final IPolynomialTerm[] polynomialArgs) {
 		int beginOfVariableIncluded = 1;
 		boolean beginOfVariableFound = false;
-		for (; beginOfVariableFound ; beginOfVariableIncluded++) {
-			beginOfVariableFound = polynomialArgs[beginOfVariableIncluded].isConstant() 
-								 && !polynomialArgs[beginOfVariableIncluded].getConstant().equals(Rational.ONE);
-			beginOfVariableIncluded--;
+		for (; !beginOfVariableFound ; beginOfVariableIncluded++) {
+			beginOfVariableFound = !polynomialArgs[beginOfVariableIncluded].isConstant()
+								 || polynomialArgs[beginOfVariableIncluded].getConstant().equals(Rational.ZERO);
+			
 		}
+		beginOfVariableIncluded--;
 		return beginOfVariableIncluded;
 	}
 	
