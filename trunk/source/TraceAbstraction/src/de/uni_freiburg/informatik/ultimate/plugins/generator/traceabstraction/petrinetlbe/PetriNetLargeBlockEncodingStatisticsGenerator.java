@@ -171,7 +171,7 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 
 	}
 
-	public void extractStatistics(final SyntacticIndependenceRelation variableBasedCheck) {
+	public void extractStatistics(final SyntacticIndependenceRelation<?> variableBasedCheck) {
 		mVarBasedMoverChecksPositive = variableBasedCheck.getPositiveQueries();
 		mVarBasedMoverChecksNegative = variableBasedCheck.getNegativeQueries();
 
