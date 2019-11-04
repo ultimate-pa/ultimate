@@ -117,7 +117,7 @@ public class Svcomp19FoldersAutomizerConcurrentPetriNetLbe extends AbstractTrace
 //		"AutomizerC.xml",
 		"AutomizerCInline.xml",
 //		"AutomizerCInlineTransformed.xml",
-		"PetriAutomizerCInline.xml",
+//		"PetriAutomizerCInline.xml",
 	};
 	// @formatter:on
 
