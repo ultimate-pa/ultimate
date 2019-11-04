@@ -13,8 +13,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * "{scope}, it is always the case that after "P" holds for "c1" time units,
- * then "S" holds
+ * "{scope}, it is always the case that after "P" holds for at least "c1" time units, then "S" holds
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -74,7 +73,7 @@ public class BndEntryConditionPattern extends PatternType {
 		}
 		sb.append("it is always the case that after \"");
 		sb.append(getCdds().get(1).toBoogieString());
-		sb.append("\" holds for \"");
+		sb.append("\" holds for at least \"");
 		sb.append(getDuration().get(0));
 		sb.append("\" time units, then \"");
 		sb.append(getCdds().get(0).toBoogieString());
