@@ -17,7 +17,6 @@ import java.util.stream.Stream;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -41,8 +40,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Dumps {@link PatternType} to dot and markdown files used in hanfor
- * documentation.
+ * Dumps {@link PatternType} to dot and markdown files used in hanfor documentation.
  *
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
@@ -121,6 +119,7 @@ public class PeaToDotTestSuite {
 		fmt.format("```%s%s%s```%s", LINE_SEP, counterTrace, LINE_SEP, LINE_SEP);
 		fmt.format("![](%s/%s/%s_%s.svg)%s", IMAGE_DIR.toPath().relativize(ROOT_DIR.toPath()),
 				ROOT_DIR.toPath().relativize(IMAGE_DIR.toPath()), mPatternName, mScopeName, LINE_SEP);
+		fmt.close();
 
 		final BufferedWriter writer = new BufferedWriter(new FileWriter(file, true));
 		writer.write(stringBuilder.toString());
@@ -128,7 +127,7 @@ public class PeaToDotTestSuite {
 	}
 
 	@BeforeClass
-	public static void beforeClass() throws IOException {
+	public static void beforeClass() {
 		// Check if root directory exists.
 		assert (Files.isDirectory(ROOT_DIR.toPath())) : "Directory not found: " + ROOT_DIR;
 
@@ -147,9 +146,6 @@ public class PeaToDotTestSuite {
 
 	@AfterClass
 	public static void afterClass() throws IOException {
-		final IUltimateServiceProvider serviceProvider = UltimateMocks.createUltimateServiceProviderMock(LogLevel.INFO);
-		final ILogger logger = serviceProvider.getLoggingService().getLogger("");
-
 		final StringBuilder stringBuilder = new StringBuilder();
 		final Formatter fmt = new Formatter(stringBuilder);
 		fmt.format("toc_depth: 2%s%s", LINE_SEP, LINE_SEP);
@@ -160,6 +156,7 @@ public class PeaToDotTestSuite {
 		for (final File file : files) {
 			fmt.format("{!%s/%s!}%s", ROOT_DIR.toPath().relativize(MARKDOWN_DIR.toPath()), file.getName(), LINE_SEP);
 		}
+		fmt.close();
 
 		final File file = new File(MARKDOWN_DIR.getParentFile() + "/patterns.md");
 		final BufferedWriter writer = new BufferedWriter(new FileWriter(file));
