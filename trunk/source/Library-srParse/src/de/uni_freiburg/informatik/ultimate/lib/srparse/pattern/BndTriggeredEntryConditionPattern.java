@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * "{scope}, it is always the case that if "Q" holds for at least "c1" time units and "R" holds, then "S" holds."
+ * "{scope}, it is always the case that if "P" holds for at least "c1" time units and "Q" holds, then "R" holds."
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
@@ -53,13 +53,13 @@ public class BndTriggeredEntryConditionPattern extends PatternType {
 		assert cdds.length == 3 && durations.length == 1;
 
 		final SrParseScope scope = getScope();
-		final CDD Q = cdds[2];
+		final CDD S = cdds[2];
 		final CDD R = cdds[1];
-		final CDD S = cdds[0];
+		final CDD Q = cdds[0];
 		final int c1 = durations[0];
 
 		if (scope instanceof SrParseScopeGlobally) {
-			return counterTrace(phaseT(), phase(Q, BoundTypes.GREATER, c1), phase(Q.and(R).and(S.negate())), phaseT());
+			return counterTrace(phaseT(), phase(Q, BoundTypes.GREATER, c1), phase(S.negate().and(R).and(Q)), phaseT());
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
@@ -75,13 +75,13 @@ public class BndTriggeredEntryConditionPattern extends PatternType {
 			sb.append(getScope());
 		}
 		sb.append("it is always the case that after \"");
-		sb.append(getCdds().get(2).toBoogieString());
-		sb.append("\" holds for at least\"");
-		sb.append(getDuration().get(0));
-		sb.append("\" time units and\"");
-		sb.append(getCdds().get(1).toBoogieString());
-		sb.append("\" holds, then ");
 		sb.append(getCdds().get(0).toBoogieString());
+		sb.append("\" holds for at least \"");
+		sb.append(getDuration().get(0));
+		sb.append("\" time units and \"");
+		sb.append(getCdds().get(1).toBoogieString());
+		sb.append("\" holds, then \"");
+		sb.append(getCdds().get(2).toBoogieString());
 		sb.append("\" holds");
 		return sb.toString();
 	}
