@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2018-2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2018-2019 University of Freiburg
+ * Copyright (C) 2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -31,39 +31,44 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpgStrategyModule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.ITraceCheckStrategyModule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleMcr;
 
 /**
- * {@link IRefinementStrategy} that first tries SMTInterpol and then PDR to solve the current path program.
- * <p>
- * If the path program is infeasible, it uses a {@link StraightLineInterpolantAutomatonBuilder} for constructing the
- * interpolant automaton.
- *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class DachshundRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+public class McrRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BasicRefinementStrategy<LETTER> {
+
+	public McrRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
+			final RefinementStrategyExceptionBlacklist exceptionBlacklist,
+			final StrategyFactory<LETTER> strategyFactory) {
+		super(factory, createModules(factory, strategyFactory), exceptionBlacklist);
+	}
 
 	@SuppressWarnings("unchecked")
-	public DachshundRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
-			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(factory,
-				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-						InterpolationTechnique.Craig_NestedInterpolation, true), factory.createIpTcStrategyModulePdr() }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+	private static final <LETTER extends IIcfgTransition<?>> StrategyModules<LETTER>
+			createModules(final StrategyModuleFactory<LETTER> factory, final StrategyFactory<LETTER> strategyFactory) {
+		final StrategyModuleMcr<LETTER> mcrModule = factory.createStrategyModuleMcr(strategyFactory);
+		final ITraceCheckStrategyModule<?>[] traceChecks = { mcrModule };
+		final IIpgStrategyModule<?, LETTER>[] interpolantGenerators = new IIpgStrategyModule[] { mcrModule };
+		final IIpAbStrategyModule<LETTER> interpolantAutomatonBuilder = mcrModule;
+		return new StrategyModules<>(traceChecks, interpolantGenerators, interpolantAutomatonBuilder);
 	}
 
 	@Override
 	public String getName() {
-		return RefinementStrategy.DACHSHUND.toString();
+		return RefinementStrategy.MCR.toString();
 	}
 
 	@Override
 	protected boolean needsMoreInterpolants(final List<QualifiedTracePredicates> perfectIpps,
 			final List<QualifiedTracePredicates> imperfectIpps) {
+		// we are only satisfied if we find perfect interpolants or run out of generators
 		return perfectIpps.isEmpty();
 	}
 }

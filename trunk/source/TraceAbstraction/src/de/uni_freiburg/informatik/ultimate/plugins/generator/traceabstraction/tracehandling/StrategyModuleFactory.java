@@ -94,6 +94,23 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 		mPathProgramCache = pathProgramCache;
 	}
 
+	public StrategyModuleFactory(final StrategyModuleFactory<LETTER> oldFactory, final IRun<LETTER, ?> counterExample) {
+		mServices = oldFactory.mServices;
+		mLogger = oldFactory.mLogger;
+		mPrefs = oldFactory.mPrefs;
+		mTaPrefs = oldFactory.mTaPrefs;
+		mCounterexample = counterExample;
+		mPredicateUnifier = oldFactory.mPredicateUnifier;
+		mPredicateFactory = oldFactory.mPredicateFactory;
+		mPrecondition = oldFactory.mPrecondition;
+		mTaskIdentifier = oldFactory.mTaskIdentifier;
+		mAbstraction = oldFactory.mAbstraction;
+		mEmptyStackFactory = oldFactory.mEmptyStackFactory;
+		mCsToolkit = oldFactory.mCsToolkit;
+		mPredFacInterpolAut = oldFactory.mPredFacInterpolAut;
+		mPathProgramCache = oldFactory.mPathProgramCache;
+	}
+
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSmtInterpolCraig(final boolean useTimeout,
 			final InterpolationTechnique technique, final boolean arrayInterpolation,
 			final AssertCodeBlockOrder... order) {
@@ -143,9 +160,17 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 				mPrefs.getIcfgContainer(), mCounterexample, mPredicateUnifier));
 	}
 
-	public IIpTcStrategyModule<?, LETTER> createTrackStrategyPdr() {
+	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModulePdr() {
 		return createModuleWrapperIfNecessary(
 				new IpTcStrategyModulePdr<>(mLogger, mCounterexample, mPredicateUnifier, mPrefs));
+	}
+
+	public StrategyModuleMcr<LETTER> createStrategyModuleMcr(final StrategyFactory<LETTER> strategyFactory) {
+		final boolean useInterpolantConsolidation = mPrefs.getUseInterpolantConsolidation();
+		if (useInterpolantConsolidation) {
+			throw new UnsupportedOperationException("Interpolant consolidation and MCR cannot be combined");
+		}
+		return new StrategyModuleMcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, strategyFactory);
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModulePreferences() {
@@ -157,20 +182,11 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	private IIpTcStrategyModule<?, LETTER>
 			createModuleWrapperIfNecessary(final IIpTcStrategyModule<?, LETTER> trackStrategyModule) {
 		final boolean useInterpolantConsolidation = mPrefs.getUseInterpolantConsolidation();
-		final boolean useMCR = mPrefs.getUseMCR();
-		if (useInterpolantConsolidation && useMCR) {
-			throw new UnsupportedOperationException("Interpolant consolidation and MCR cannot be combined");
-		}
 		if (useInterpolantConsolidation) {
 			return new IpTcStrategyModuleInterpolantConsolidation<>(mServices, mLogger, mPrefs, mPredicateFactory,
 					trackStrategyModule);
 		}
-		if (useMCR) {
-			return new IpTcStrategyModuleMCR<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory,
-					trackStrategyModule);
-		}
 		return trackStrategyModule;
-
 	}
 
 	@SuppressWarnings("unchecked")
@@ -186,8 +202,6 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 		case ABSTRACT_INTERPRETATION:
 			return createIpAbStrategyModuleAbstractInterpretation(
 					(IpTcStrategyModuleAbstractInterpretation<LETTER>) preferenceIpTc);
-		case MCR:
-			return createIpAbStrategyModuleMCR((IpTcStrategyModuleMCR<?, LETTER>) preferenceIpTc);
 		case TOTALINTERPOLATION:
 		default:
 			throw new IllegalArgumentException("Setting " + mTaPrefs.interpolantAutomaton() + " is unsupported");
@@ -212,10 +226,6 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleCanonical() {
 		return new IpAbStrategyModuleCanonical<>(mServices, mLogger, mAbstraction, mCounterexample, mEmptyStackFactory,
 				mPredicateUnifier);
-	}
-
-	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleMCR(final IpTcStrategyModuleMCR<?, LETTER> ipTcSmMCR) {
-		return new IpAbStrategyModuleMCR<>(ipTcSmMCR);
 	}
 
 	public TermClassifier getTermClassifierForTrace() {

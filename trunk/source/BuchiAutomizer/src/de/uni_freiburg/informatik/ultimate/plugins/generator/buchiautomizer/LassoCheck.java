@@ -95,7 +95,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementEngineFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class LassoCheck<LETTER extends IIcfgTransition<?>> {
@@ -193,7 +195,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 	private final List<TerminationAnalysisBenchmark> mTerminationAnalysisBenchmarks = new ArrayList<>();
 	private final List<NonterminationAnalysisBenchmark> mNonterminationAnalysisBenchmarks = new ArrayList<>();
 
-	private final RefinementEngineFactory<LETTER> mRefinementStrategyFactory;
+	private final StrategyFactory<LETTER> mRefinementStrategyFactory;
 
 	private final INestedWordAutomaton<LETTER, IPredicate> mAbstraction;
 
@@ -212,7 +214,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<LETTER, IPredicate> counterexample,
 			final String lassoCheckIdentifier, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final RefinementEngineFactory<LETTER> refinementStrategyFactory,
+			final StrategyFactory<LETTER> refinementStrategyFactory,
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
 			final BuchiCegarLoopBenchmarkGenerator cegarStatistics) throws IOException {
 		mServices = services;
@@ -917,9 +919,11 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		private IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> checkFeasibilityAndComputeInterpolants(
 				final NestedRun<LETTER, IPredicate> run, final TaskIdentifier taskIdentifier) {
 			try {
-				final IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> engine = mRefinementStrategyFactory
-						.runRefinementEngine(run, mAbstraction, taskIdentifier, mStateFactoryForInterpolantAutomaton,
-								IPreconditionProvider.constructDefaultPreconditionProvider());
+				final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.constructStrategy(run,
+						mAbstraction, taskIdentifier, mStateFactoryForInterpolantAutomaton,
+						IPreconditionProvider.constructDefaultPreconditionProvider());
+				final IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> engine =
+						new TraceAbstractionRefinementEngine<>(mLogger, strategy);
 				mCegarStatistics.addRefinementEngineStatistics(engine.getRefinementEngineStatistics());
 				return engine;
 			} catch (final ToolchainCanceledException tce) {

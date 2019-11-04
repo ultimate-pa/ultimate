@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -57,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.LazyTaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.MammothNoAmRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.MammothRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.McrRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.PenguinRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.RubberTaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.SifaTaipanRefinementStrategy;
@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
+public class StrategyFactory<LETTER extends IIcfgTransition<?>> {
 	private final IUltimateServiceProvider mServices;
 	private final TAPreferences mTaPrefs;
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
@@ -84,10 +84,9 @@ public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
 	private final PredicateFactory mPredicateFactory;
 	private final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolAut;
 	private final PathProgramCache<LETTER> mPathProgramCache;
-	private final RefinementStrategy mStrategy;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 
-	public RefinementEngineFactory(final ILogger logger, final IUltimateServiceProvider services,
+	public StrategyFactory(final ILogger logger, final IUltimateServiceProvider services,
 			final TAPreferences taPrefsForInterpolantConsolidation, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IIcfg<?> initialIcfg, final PredicateFactory predicateFactory,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolAut) {
@@ -100,38 +99,30 @@ public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
 		mPredicateFactory = predicateFactory;
 		mPredicateFactoryInterpolAut = predicateFactoryInterpolAut;
 		mPathProgramCache = new PathProgramCache<>(mLogger);
-		mStrategy = mPrefs.getRefinementStrategy();
-	}
-
-	/**
-	 * Creates a strategy, e.g., in a new CEGAR loop iteration.
-	 *
-	 * @param counterexample
-	 *            counterexample
-	 * @param abstraction
-	 *            abstraction
-	 * @param iPreconditionProvider
-	 * @param benchmark
-	 *            benchmark
-	 * @return refinement strategy
-	 */
-	public IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> runRefinementEngine(
-			final IRun<LETTER, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
-			final IPreconditionProvider preconditionProvider) {
-		final IRefinementStrategy<LETTER> strategy =
-				constructStrategy(counterexample, abstraction, taskIdentifier, emptyStackFactory, preconditionProvider);
-		return new TraceAbstractionRefinementEngine<>(mLogger, strategy);
 	}
 
 	public PathProgramCache<LETTER> getPathProgramCache() {
 		return mPathProgramCache;
 	}
 
-	private IRefinementStrategy<LETTER> constructStrategy(final IRun<LETTER, ?> counterexample,
+	/**
+	 * Constructs a {@link IRefinementStrategy} that can be used in conjunction with a {@link IRefinementEngine}.
+	 */
+	public IRefinementStrategy<LETTER> constructStrategy(final IRun<LETTER, ?> counterexample,
 			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final IPreconditionProvider preconditionProvider) {
+		return constructStrategy(counterexample, abstraction, taskIdentifier, emptyStackFactory, preconditionProvider,
+				mPrefs.getRefinementStrategy());
+	}
+
+	/**
+	 * Constructs a {@link IRefinementStrategy} that can be used in conjunction with a {@link IRefinementEngine}.
+	 */
+	public IRefinementStrategy<LETTER> constructStrategy(final IRun<LETTER, ?> counterexample,
+			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+			final IPreconditionProvider preconditionProvider, final RefinementStrategy strategyType) {
 
 		final IPredicateUnifier predicateUnifier = constructPredicateUnifier();
 		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
@@ -142,7 +133,7 @@ public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
 				abstraction, emptyStackFactory, mCfgSmtToolkit, mPredicateFactoryInterpolAut, mPathProgramCache);
 		final RefinementStrategyExceptionBlacklist exceptionBlacklist = mPrefs.getExceptionBlacklist();
 
-		switch (mStrategy) {
+		switch (strategyType) {
 		case FIXED_PREFERENCES:
 			return new FixedRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case PENGUIN:
@@ -181,6 +172,8 @@ public class RefinementEngineFactory<LETTER extends IIcfgTransition<?>> {
 			return new SifaTaipanRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case TOOTHLESS_SIFA_TAIPAN:
 			return new ToothlessSifaTaipanRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
+		case MCR:
+			return new McrRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist, this);
 		default:
 			throw new IllegalArgumentException(
 					"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());

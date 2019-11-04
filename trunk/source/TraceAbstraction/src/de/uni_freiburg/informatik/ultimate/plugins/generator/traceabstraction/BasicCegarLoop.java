@@ -131,7 +131,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementEngineFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils;
@@ -219,7 +220,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private final boolean mFaultLocalizationAngelic;
 	private final Set<IcfgLocation> mHoareAnnotationLocations;
 	private final SearchStrategy mSearchStrategy;
-	private final RefinementEngineFactory<LETTER> mRefinementStrategyFactory;
+	private final StrategyFactory<LETTER> mStrategyFactory;
 	private final PathProgramDumpController<LETTER> mPathProgramDumpController;
 	private final ErrorGeneralizationEngine<LETTER> mErrorGeneralizationEngine;
 	private final boolean mStoreFloydHoareAutomata;
@@ -293,8 +294,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				new TaCheckAndRefinementPreferences<>(mServices, mPref, mInterpolation, mSimplificationTechnique,
 						mXnfConversionTechnique, mCsToolkit, mPredicateFactory, mIcfg);
 
-		mRefinementStrategyFactory = new RefinementEngineFactory<>(mLogger, mServices, mPref, taCheckAndRefinementPrefs,
-				mIcfg, mPredicateFactory, mPredicateFactoryInterpolantAutomata);
+		mStrategyFactory = new StrategyFactory<>(mLogger, mServices, mPref, taCheckAndRefinementPrefs, mIcfg,
+				mPredicateFactory, mPredicateFactoryInterpolantAutomata);
 
 		if (mPref.dumpOnlyReuseAutomata()) {
 			// Construct an empty file. We need this empty file in cases where
@@ -324,16 +325,16 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
 		} else {
 			final boolean addThreadUsageMonitors = false;
-			final BoundedPetriNet<LETTER, IPredicate> petrifiedCfg = CFG2NestedWordAutomaton
-					.constructPetriNetWithSPredicates(mServices, mIcfg, mStateFactoryForRefinement, mErrorLocs, false,
-							mPredicateFactory, addThreadUsageMonitors);
+			final BoundedPetriNet<LETTER, IPredicate> petrifiedCfg =
+					CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices, mIcfg,
+							mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
 			final BoundedPetriNet<LETTER, IPredicate> net;
 			if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 				final PetriNetLargeBlockEncoding pnlbe = new PetriNetLargeBlockEncoding(mServices,
 						mIcfg.getCfgSmtToolkit(), (BoundedPetriNet<IIcfgTransition<?>, IPredicate>) petrifiedCfg,
 						mPref.useLbeInConcurrentAnalysis());
-				final BoundedPetriNet<LETTER, IPredicate> lbecfg = (BoundedPetriNet<LETTER, IPredicate>) pnlbe
-						.getResult();
+				final BoundedPetriNet<LETTER, IPredicate> lbecfg =
+						(BoundedPetriNet<LETTER, IPredicate>) pnlbe.getResult();
 				net = lbecfg;
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 						new StatisticsResult<>(Activator.PLUGIN_NAME, "PetriNetLargeBlockEncoding benchmarks",
@@ -451,15 +452,15 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
 
 		try {
-			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mRefinementStrategyFactory
+			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
 					.getPathProgramCache().getPathProgramCount(mCounterexample)) {
 				final String taskDescription = "bailout by path program count limit in iteration " + mIteration;
 				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
 			}
-
-			mRefinementEngine = mRefinementStrategyFactory.runRefinementEngine(mCounterexample, mAbstraction,
-					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
+			final IRefinementStrategy<LETTER> strategy = mStrategyFactory.constructStrategy(mCounterexample,
+					mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
 					mPredicateFactoryInterpolantAutomata, getPreconditionProvider());
+			mRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy);
 		} catch (final ToolchainCanceledException tce) {
 			final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
 			final String taskDescription = "analyzing trace of length " + mCounterexample.getLength()

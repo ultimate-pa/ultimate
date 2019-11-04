@@ -28,10 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -42,12 +41,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -68,47 +64,45 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 
 	private final ILogger mLogger;
 	private final IRefinementStrategy<LETTER> mStrategy;
-	private final RefinementEngineStatisticsGenerator mRefinementEngineStatistics;
+	private final AutomatonFreeRefinementEngine<LETTER> mAutomatonFreeEngine;
 
-	private final LBool mFeasibility;
-	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mIcfgProgramExecution;
-	private IHoareTripleChecker mHoareTripleChecker;
-	private IPredicateUnifier mPredicateUnifier;
 	private NestedWordAutomaton<LETTER, IPredicate> mInterpolantAutomaton;
 	private List<QualifiedTracePredicates> mUsedTracePredicates;
-	private boolean mSomePerfectSequenceFound;
 
 	public TraceAbstractionRefinementEngine(final ILogger logger, final IRefinementStrategy<LETTER> strategy) {
 		mLogger = logger;
 		mStrategy = strategy;
-		mRefinementEngineStatistics = new RefinementEngineStatisticsGenerator();
-		mFeasibility = executeStrategy();
-		mRefinementEngineStatistics.finishRefinementEngineRun();
+		mAutomatonFreeEngine = new AutomatonFreeRefinementEngine<>(logger, strategy);
+		generateProof();
 	}
 
 	@Override
 	public LBool getCounterexampleFeasibility() {
-		return mFeasibility;
+		return mAutomatonFreeEngine.getCounterexampleFeasibility();
 	}
 
 	@Override
 	public NestedWordAutomaton<LETTER, IPredicate> getInfeasibilityProof() {
+		if (mInterpolantAutomaton == null) {
+			throw new IllegalStateException(
+					"There is no proof because counterexample was " + getCounterexampleFeasibility());
+		}
 		return mInterpolantAutomaton;
 	}
 
 	@Override
 	public boolean somePerfectSequenceFound() {
-		return mSomePerfectSequenceFound;
+		return mAutomatonFreeEngine.somePerfectSequenceFound();
 	}
 
 	@Override
 	public boolean providesIcfgProgramExecution() {
-		return mIcfgProgramExecution != null;
+		return mAutomatonFreeEngine.providesIcfgProgramExecution();
 	}
 
 	@Override
 	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getIcfgProgramExecution() {
-		return mIcfgProgramExecution;
+		return mAutomatonFreeEngine.getIcfgProgramExecution();
 	}
 
 	@Override
@@ -118,92 +112,36 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 
 	@Override
 	public IHoareTripleChecker getHoareTripleChecker() {
-		if (mHoareTripleChecker == null) {
-			final IHoareTripleChecker strategyHtc = mStrategy.getHoareTripleChecker(this);
-			if (strategyHtc != null) {
-				mLogger.info("Using hoare triple checker %s provided by strategy",
-						strategyHtc.getClass().getSimpleName());
-				mHoareTripleChecker = strategyHtc;
-			}
-		}
-		return mHoareTripleChecker;
+		return mAutomatonFreeEngine.getHoareTripleChecker();
 	}
 
 	@Override
 	public IPredicateUnifier getPredicateUnifier() {
-		if (mPredicateUnifier == null) {
-			final IPredicateUnifier strategyUnifier = mStrategy.getPredicateUnifier(this);
-			assert strategyUnifier != null;
-			mLogger.info("Using predicate unifier %s provided by strategy %s",
-					strategyUnifier.getClass().getSimpleName(), mStrategy.getName());
-			mPredicateUnifier = strategyUnifier;
-		}
-		return mPredicateUnifier;
+		return mAutomatonFreeEngine.getPredicateUnifier();
 	}
 
 	@Override
 	public RefinementEngineStatisticsGenerator getRefinementEngineStatistics() {
-		return mRefinementEngineStatistics;
+		return mAutomatonFreeEngine.getRefinementEngineStatistics();
 	}
 
-	/**
-	 * This method is the heart of the refinement engine.<br>
-	 * It first checks feasibility of the counterexample. If infeasible, the method tries to find a perfect interpolant
-	 * sequence. If unsuccessful, it collects all tested sequences. In the end an interpolant automaton is created.
-	 *
-	 * @return counterexample feasibility
-	 */
-	private LBool executeStrategy() {
-		mLogger.info("Executing refinement strategy %s", mStrategy.getName());
-
-		// first, check for feasibility
-		final LBool feasibilityResult = checkFeasibility();
-		if (feasibilityResult == LBool.UNKNOWN) {
-			mLogger.warn("Strategy %s was unsuccessful and could not determine trace feasibility", mStrategy.getName());
-			return feasibilityResult;
+	private void generateProof() {
+		final LBool cexResult = mAutomatonFreeEngine.getCounterexampleFeasibility();
+		if (cexResult != LBool.UNSAT) {
+			mInterpolantAutomaton = null;
+			mUsedTracePredicates = null;
+			return;
 		}
-
-		// trace was feasible, return
-		if (feasibilityResult == LBool.SAT) {
-			mLogger.info("Strategy %s found a feasible trace", mStrategy.getName());
-			return feasibilityResult;
-		}
-
-		// trace is infeasible, extract a proof
-		if (feasibilityResult == LBool.UNSAT) {
-			return generateProof();
-		}
-		throw new UnsupportedOperationException("Unknown LBool: " + feasibilityResult);
-	}
-
-	private LBool generateProof() {
-		final List<QualifiedTracePredicates> perfectIpps = new ArrayList<>();
-		final List<QualifiedTracePredicates> imperfectIpps = new ArrayList<>();
-
-		while (mStrategy.hasNextInterpolantGenerator(perfectIpps, imperfectIpps)) {
-			final IIpgStrategyModule<?, LETTER> interpolantGenerator = tryExecuteInterpolantGenerator();
-			if (interpolantGenerator == null) {
-				continue;
-			}
-			perfectIpps.addAll(interpolantGenerator.getPerfectInterpolantSequences());
-			imperfectIpps.addAll(interpolantGenerator.getImperfectInterpolantSequences());
-			interpolantGenerator.aggregateStatistics(mRefinementEngineStatistics);
-		}
-
-		// strategy has finished providing interpolants, use them to construct the interpolant automaton
-		logStats(perfectIpps, imperfectIpps);
-		if (!perfectIpps.isEmpty()) {
-			mSomePerfectSequenceFound = true;
-		}
-
-		if (perfectIpps.isEmpty() && imperfectIpps.isEmpty()) {
-			mLogger.error("Strategy %s failed to provide any proof altough trace is infeasible", mStrategy.getName());
-			return LBool.UNKNOWN;
-		}
-
+		final Collection<QualifiedTracePredicates> ipps = mAutomatonFreeEngine.getInfeasibilityProof();
 		final IIpAbStrategyModule<LETTER> interpolantAutomatonBuilder = mStrategy.getInterpolantAutomatonBuilder();
 		logModule("Using interpolant automaton builder", interpolantAutomatonBuilder);
 		try {
+
+			final List<QualifiedTracePredicates> perfectIpps =
+					ipps.stream().filter(a -> a.isPerfect()).collect(Collectors.toList());
+			final List<QualifiedTracePredicates> imperfectIpps =
+					ipps.stream().filter(a -> !a.isPerfect()).collect(Collectors.toList());
+			;
 			final IpAbStrategyModuleResult<LETTER> result =
 					interpolantAutomatonBuilder.buildInterpolantAutomaton(perfectIpps, imperfectIpps);
 			mInterpolantAutomaton = result.getAutomaton();
@@ -212,130 +150,6 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 			throw new ToolchainCanceledException(e,
 					new RunningTaskInfo(interpolantAutomatonBuilder.getClass(), "computing interpolant automaton"));
 		}
-		return LBool.UNSAT;
-	}
-
-	private void logStats(final List<QualifiedTracePredicates> perfectIpps,
-			final List<QualifiedTracePredicates> imperfectIpps) {
-		if (!mLogger.isInfoEnabled()) {
-			return;
-		}
-		mLogger.info("Constructing automaton from %s perfect and %s imperfect interpolant sequences.",
-				perfectIpps.size(), imperfectIpps.size());
-		final List<Integer> numberInterpolantsPerfect = new ArrayList<>();
-		final Set<IPredicate> allInterpolants = new HashSet<>();
-		for (final QualifiedTracePredicates qtp : perfectIpps) {
-			numberInterpolantsPerfect.add(new HashSet<>(qtp.getPredicates()).size());
-			allInterpolants.addAll(qtp.getPredicates());
-		}
-		final List<Integer> numberInterpolantsImperfect = new ArrayList<>();
-		for (final QualifiedTracePredicates qtp : imperfectIpps) {
-			numberInterpolantsImperfect.add(new HashSet<>(qtp.getPredicates()).size());
-			allInterpolants.addAll(qtp.getPredicates());
-		}
-		mLogger.info("Number of different interpolants: perfect sequences " + numberInterpolantsPerfect
-				+ " imperfect sequences " + numberInterpolantsImperfect + " total " + allInterpolants.size());
-	}
-
-	private LBool checkFeasibility() {
-		while (mStrategy.hasNextFeasilibityCheck()) {
-			final ITraceCheckStrategyModule<?> currentTraceCheck = mStrategy.nextFeasibilityCheck();
-			logModule("Using trace check", currentTraceCheck);
-			final LBool feasibilityResult = currentTraceCheck.isCorrect();
-			if (feasibilityResult == LBool.SAT) {
-				if (currentTraceCheck.providesRcfgProgramExecution()) {
-					mIcfgProgramExecution = currentTraceCheck.getRcfgProgramExecution();
-				}
-				currentTraceCheck.aggregateStatistics(mRefinementEngineStatistics);
-				return feasibilityResult;
-			} else if (feasibilityResult == LBool.UNSAT) {
-				currentTraceCheck.aggregateStatistics(mRefinementEngineStatistics);
-				return feasibilityResult;
-			}
-			abortIfNecessaryOnUnknown(currentTraceCheck.getTraceCheckReasonUnknown());
-			currentTraceCheck.aggregateStatistics(mRefinementEngineStatistics);
-		}
-		// no trace checker could determine the feasibility of the trace, need to abort
-		return LBool.UNKNOWN;
-	}
-
-	private void abortIfNecessaryOnUnknown(final TraceCheckReasonUnknown tcra) {
-		if (tcra.getException() == null) {
-			return;
-		}
-
-		final ExceptionHandlingCategory exceptionCategory = tcra.getExceptionHandlingCategory();
-		switch (exceptionCategory) {
-		case KNOWN_IGNORE:
-		case KNOWN_DEPENDING:
-		case KNOWN_THROW:
-			if (mLogger.isErrorEnabled()) {
-				mLogger.error("Caught known exception: " + tcra.getException().getMessage());
-			}
-			break;
-		case UNKNOWN:
-			if (mLogger.isErrorEnabled()) {
-				mLogger.error("Caught unknown exception: " + tcra.getException().getMessage());
-			}
-			break;
-		default:
-			throw new IllegalArgumentException("Unknown exception category: " + exceptionCategory);
-		}
-		final boolean throwException =
-				tcra.getExceptionHandlingCategory().throwException(mStrategy.getExceptionBlacklist());
-		if (throwException) {
-			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Global settings require throwing the exception.");
-			}
-			throw new AssertionError(tcra.getException());
-		}
-	}
-
-	private IIpgStrategyModule<?, LETTER> tryExecuteInterpolantGenerator() {
-		final IIpgStrategyModule<?, LETTER> interpolantGenerator = mStrategy.nextInterpolantGenerator();
-		final InterpolantComputationStatus status;
-		try {
-			logModule("Using interpolant generator", interpolantGenerator);
-			status = interpolantGenerator.getInterpolantComputationStatus();
-			if (status.wasComputationSuccesful()) {
-				return interpolantGenerator;
-			}
-		} catch (final ToolchainCanceledException tce) {
-			throw tce;
-		} catch (final Exception e) {
-			if (ExceptionHandlingCategory.UNKNOWN.throwException(mStrategy.getExceptionBlacklist())) {
-				throw new AssertionError(e);
-			}
-			mLogger.fatal("Ignoring exception!", e);
-			return null;
-		}
-
-		final ExceptionHandlingCategory category;
-		switch (status.getStatus()) {
-		case ALGORITHM_FAILED:
-			category = ExceptionHandlingCategory.KNOWN_IGNORE;
-			break;
-		case OTHER:
-			category = ExceptionHandlingCategory.UNKNOWN;
-			break;
-		case SMT_SOLVER_CANNOT_INTERPOLATE_INPUT:
-			category = ExceptionHandlingCategory.KNOWN_IGNORE;
-			break;
-		case SMT_SOLVER_CRASH:
-			category = ExceptionHandlingCategory.KNOWN_DEPENDING;
-			break;
-		case TRACE_FEASIBLE:
-			throw new IllegalStateException("Do not try to interpolate when trace is feasible ");
-		default:
-			throw new AssertionError("unknown case : " + status.getStatus());
-		}
-		final boolean throwException = category.throwException(mStrategy.getExceptionBlacklist());
-		if (throwException) {
-			throw new AssertionError(status.getException());
-		}
-		final String message = status.getException() == null ? "Unknown" : status.getException().getMessage();
-		mLogger.info("Interpolation failed due to " + category + ": " + message);
-		return null;
 	}
 
 	private void logModule(final String msg, final Object module) {

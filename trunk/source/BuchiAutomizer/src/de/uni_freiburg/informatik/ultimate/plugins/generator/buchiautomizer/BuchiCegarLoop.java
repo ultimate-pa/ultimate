@@ -121,7 +121,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementEngineFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
@@ -250,7 +250,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	private ToolchainCanceledException mToolchainCancelledException;
 	private final RankVarConstructor mRankVarConstructor;
 
-	private final RefinementEngineFactory<LETTER> mRefinementStrategyFactory;
+	private final StrategyFactory<LETTER> mRefinementStrategyFactory;
 	private final TaskIdentifier mTaskIdentifier;
 
 	private final INestedWordAutomaton<WitnessEdge, WitnessNode> mWitnessAutomaton;
@@ -339,7 +339,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		final TaCheckAndRefinementPreferences<LETTER> taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences<>(mServices, mPref, mInterpolation, SIMPLIFICATION_TECHNIQUE,
 						XNF_CONVERSION_TEQCHNIQUE, mCsToolkitWithoutRankVars, mPredicateFactory, mIcfg);
-		mRefinementStrategyFactory = new RefinementEngineFactory<>(mLogger, mServices, mPref, taCheckAndRefinementPrefs,
+		mRefinementStrategyFactory = new StrategyFactory<>(mLogger, mServices, mPref, taCheckAndRefinementPrefs,
 				mIcfg, mPredicateFactory, mDefaultStateFactory);
 	}
 
