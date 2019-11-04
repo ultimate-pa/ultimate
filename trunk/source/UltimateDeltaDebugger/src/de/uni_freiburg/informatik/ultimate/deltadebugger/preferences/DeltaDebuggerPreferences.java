@@ -74,6 +74,12 @@ public final class DeltaDebuggerPreferences extends UltimatePreferenceInitialize
 
 	private static final String DEFAULT_INTERESTING_RESULT_TYPE = ExceptionOrErrorResult.class.getSimpleName();
 
+	public static final String LABEL_RESULT_SHORT_DESC_REGEX = "Result short description regex";
+	private static final String DESC_RESULT_SHORT_DESC_REGEX =
+			"The provided string is a regular expression that matches against the short description of one of the results that are "
+					+ "interesting. Use the empty string if all results of this type are interesting.";
+	private static final String DEFAULT_RESULT_SHORT_DESC_REGEX = "";
+
 	public static final String LABEL_RESULT_SHORT_DESC_PREFIX = "Result short description prefix";
 	private static final String DESC_RESULT_SHORT_DESC_PREFIX =
 			"The provided string must be the prefix of the short description of one of the results that are "
@@ -140,6 +146,8 @@ public final class DeltaDebuggerPreferences extends UltimatePreferenceInitialize
 						DESC_RESULT_SHORT_DESC_PREFIX, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_RESULT_LONG_DESC_PREFIX, DEFAULT_RESULT_LONG_DESC_PREFIX,
 						DESC_RESULT_LONG_DESC_PREFIX, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_RESULT_SHORT_DESC_REGEX, DEFAULT_RESULT_SHORT_DESC_REGEX,
+						DESC_RESULT_SHORT_DESC_REGEX, PreferenceType.String),
 
 				new UltimatePreferenceItem<>(LABEL_FORBIDDEN_RESULT_TYPE, DEFAULT_FORBIDDEN_RESULT_TYPE,
 						DESC_FORBIDDEN_RESULT_TYPE, PreferenceType.Combo, VALUES_RESULT_TYPES),

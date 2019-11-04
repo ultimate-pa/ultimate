@@ -159,16 +159,19 @@ public class DeltaDebuggerController extends CommandLineController {
 		final String resultShortPrefix =
 				prefProvider.getString(DeltaDebuggerPreferences.LABEL_RESULT_SHORT_DESC_PREFIX);
 		final String resultLongPrefix = prefProvider.getString(DeltaDebuggerPreferences.LABEL_RESULT_LONG_DESC_PREFIX);
+		final String resultShortRegex = prefProvider.getString(DeltaDebuggerPreferences.LABEL_RESULT_SHORT_DESC_REGEX);
 
 		final Predicate<IResult> predShort =
 				a -> resultShortPrefix.isEmpty() || a.getShortDescription().startsWith(resultShortPrefix);
 		final Predicate<IResult> predLong =
 				a -> resultLongPrefix.isEmpty() || a.getLongDescription().startsWith(resultLongPrefix);
+		final Predicate<IResult> predShortRegex =
+				a -> resultShortRegex.isEmpty() || a.getShortDescription().matches(resultShortRegex);
 
 		final Class<? extends IResult> interestingResultType = DeltaDebuggerPreferences.getInterestingClass(mServices);
 
 		return ResultUtil.filterResults(mResults.get(), interestingResultType).stream()
-				.anyMatch(predShort.and(predLong));
+				.anyMatch(predShort.and(predLong).and(predShortRegex));
 	}
 
 	Optional<String> runDeltaDebuggerLoop(final ICore<RunDefinition> core, final ILogger logger,
