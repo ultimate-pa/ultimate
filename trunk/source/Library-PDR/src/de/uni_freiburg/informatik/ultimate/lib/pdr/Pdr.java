@@ -394,6 +394,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 						mLogger.warn("Found unrelated predecessor");
 						continue;
 					}
+
 					final IPredicate predecessorFrame = localFrames.get(predecessor).get(level - 1).getSecond();
 					final Triple<IPredicate, IAction, IPredicate> query =
 							new Triple<>(predecessorFrame, predecessorTransition, toBeBlocked);
@@ -423,8 +424,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
 								SimplificationTechnique.SIMPLIFY_DDA,
 								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-
 						final IPredicate prePred = mPredicateUnifier.getOrConstructPredicate(pre);
+
 						final ProofObligation newProofObligation =
 								new ProofObligation(prePred, predecessor, localLevel - level + 1);
 
@@ -445,21 +446,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 						 * Query is not satisfiable: strengthen the frames of location.
 						 */
 					} else if (res == LBool.UNSAT) {
-						if (USE_INTERPOLATION
-								&& predecessorTransition.getTransformula().getFormula() != mTruePred.getFormula()) {
-							final IPredicate interpolant =
-									getInterpolant(predecessorTransition, predecessorFrame, toBeBlocked);
-							if (interpolant != null) {
-								final Term pred = SmtUtils.and(mScript.getScript(), not(interpolant).getFormula(),
-										toBeBlocked.getFormula());
-								updateLocalFrames(mPredicateUnifier.getOrConstructPredicate(pred), location, level,
-										localFrames);
-							} else {
-								updateLocalFrames(toBeBlocked, location, level, localFrames);
-							}
-						} else {
-							updateLocalFrames(toBeBlocked, location, level, localFrames);
-						}
+						final IPredicate actualToBeBlocked =
+								computeNewToBeBlocked(toBeBlocked, predecessorTransition, predecessorFrame);
+						updateLocalFrames(actualToBeBlocked, location, level, localFrames);
 						proofObligation.addBlockedQuery(query);
 					} else {
 						mLogger.error(String.format("Internal query %s && %s && %s was unknown!", predecessorFrame,
@@ -498,6 +487,11 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 							((IIcfgReturnTransition) predecessorTransition).getLocalVarsAssignmentOfCall();
 					final UnmodifiableTransFormula assOfCall =
 							returnTrans.getCorrespondingCall().getLocalVarsAssignment();
+					final String procAfterReturn = predecessorTransition.getSucceedingProcedure();
+					final Set<IProgramNonOldVar> modVars =
+							mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(procAfterReturn);
+					final UnmodifiableTransFormula oldVarAssign =
+							mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(procAfterReturn);
 
 					/**
 					 * Get the procedure in form of a trace.
@@ -508,9 +502,27 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					final Set<IcfgLocation> errorLocOfProc = new HashSet<>();
 					errorLocOfProc.add(returnTrans.getTarget());
 
+					final IPredicate poPostReturn;
+					if (true) {
+						poPostReturn = proofObligation.getToBeBlocked();
+					} else {
+
+						// TODO: predtransformer preReturn on ...
+						// TODO: Use the global frame from preCall as callPred
+						final IPredicate callPred = mTruePred;
+						Term pre = mPredTrans.preReturn(toBeBlocked, callPred, assOfRet, assOfCallRet, oldVarAssign,
+								modVars);
+						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
+								SimplificationTechnique.SIMPLIFY_DDA,
+								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+						poPostReturn = mPredicateUnifier.getOrConstructPredicate(pre);
+					}
+
+					// generate proof obligation for last location of procedure
 					final ArrayDeque<ProofObligation> procedurePo = new ArrayDeque<>();
+
 					final ProofObligation initialProofObligation =
-							new ProofObligation(proofObligation.getToBeBlocked(), predecessorTransition.getSource(), 0);
+							new ProofObligation(poPostReturn, predecessorTransition.getSource(), 0);
 
 					procedurePo.add(initialProofObligation);
 
@@ -607,9 +619,28 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				}
 			}
 		}
-		// updateGlobalFrames(localFrames, localLevel);
 		return true;
 
+	}
+
+	private IPredicate computeNewToBeBlocked(final IPredicate toBeBlocked, final IcfgEdge predecessorTransition,
+			final IPredicate predecessorFrame) throws AssertionError {
+		final IPredicate actualToBeBlocked;
+		if (USE_INTERPOLATION && predecessorTransition.getTransformula().getFormula() != mTruePred.getFormula()) {
+			final IPredicate interpolant = getInterpolant(predecessorTransition, predecessorFrame, toBeBlocked);
+			if (interpolant != null) {
+				final Term pred =
+						SmtUtils.and(mScript.getScript(), not(interpolant).getFormula(), toBeBlocked.getFormula());
+				actualToBeBlocked = mPredicateUnifier.getOrConstructPredicate(pred);
+			} else {
+				mLogger.warn("Interpolation yielded UNKNOWN for pF={%s} T=%s pP={%s}", predecessorFrame,
+						predecessorTransition, toBeBlocked);
+				actualToBeBlocked = toBeBlocked;
+			}
+		} else {
+			actualToBeBlocked = toBeBlocked;
+		}
+		return actualToBeBlocked;
 	}
 
 	/**
