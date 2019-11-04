@@ -37,15 +37,15 @@ public final class PatternUtil {
 	public static Pair<List<PatternType>, Map<String, Integer>> createAllPatterns() {
 		// first, create some observables and durartions
 		final int count = 10;
-		final int duration = 50;
+		int duration = 5;
 		final CDD[] patternObs = new CDD[count];
 		final String[] durations = new String[count];
-		final Map<String, Integer> duration2bounds = new HashMap<>();
+		final Map<String, Integer> duration2bounds = Collections.emptyMap();
 
 		for (int i = 0; i < count; ++i) {
 			patternObs[i] = BooleanDecision.create(CoreUtil.alphabeticalSequence(i + 16));
-			durations[i] = "c" + i;
-			duration2bounds.put(durations[i], duration);
+			durations[i] = String.valueOf(duration);
+			duration += 5;
 		}
 
 		// instantiate scopes

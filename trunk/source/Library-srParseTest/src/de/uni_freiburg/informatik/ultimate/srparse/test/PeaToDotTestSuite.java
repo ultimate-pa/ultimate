@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -48,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 
-	private static final File ROOT_DIR = new File("/media/ubuntu/Daten/Projects/hanfor/documentation/docs");
+	private static final File ROOT_DIR = new File("/media/Daten/projects/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/usage/patterns");
 	private static final File IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
 
