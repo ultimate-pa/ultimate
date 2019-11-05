@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -47,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 
-	private static final File ROOT_DIR = new File("/media/Daten/projects/hanfor/documentation/docs");
+	private static final File ROOT_DIR = new File("/mnt/Daten/projects/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/usage/patterns");
 	private static final File IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
 
@@ -76,7 +77,7 @@ public class PeaToDotTestSuite {
 		mScopeName = scopeName.replace(scopePrefix, "");
 	}
 
-	// @Test
+	@Test
 	public void testDot() throws IOException, InterruptedException {
 		final PhaseEventAutomata pea;
 		final CounterTrace counterTrace;
@@ -116,7 +117,7 @@ public class PeaToDotTestSuite {
 
 		fmt.format("### %s %s%s", mPatternName, mScopeName, LINE_SEP);
 		fmt.format("```%s%s%s```%s", LINE_SEP, mPatternString, LINE_SEP, LINE_SEP);
-		fmt.format("```%s%s%s```%s", LINE_SEP, counterTrace, LINE_SEP, LINE_SEP);
+		fmt.format("```%s%s%s```%s", LINE_SEP, "Counterexample: " + counterTrace, LINE_SEP, LINE_SEP);
 		fmt.format("![](%s/%s/%s_%s.svg)%s", IMAGE_DIR.toPath().relativize(ROOT_DIR.toPath()),
 				ROOT_DIR.toPath().relativize(IMAGE_DIR.toPath()), mPatternName, mScopeName, LINE_SEP);
 		fmt.close();
