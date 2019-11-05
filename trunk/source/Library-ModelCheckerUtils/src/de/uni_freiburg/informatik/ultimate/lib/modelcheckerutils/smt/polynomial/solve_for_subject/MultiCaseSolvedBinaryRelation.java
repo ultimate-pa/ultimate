@@ -36,8 +36,10 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ITermProviderOnDemand;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Represents a binary relation that has been solved for a subject x. Unlike
@@ -124,6 +126,11 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 						.flatMap(x -> x.getSupportingTerms().stream()).map(x -> x.getIntricateOperation()))
 				.collect(Collectors.toSet());
 	}
+	
+	public Set<TermVariable> getAuxiliaryVariables() {
+		return mCases.stream().flatMap(x -> x.getAuxiliaryVariables().stream())
+				.collect(Collectors.toSet());
+	}
 
 	public Xnf getXnf() {
 		return mXnf;
@@ -132,17 +139,22 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 	@Override
 	public Term asTerm(final Script script) {
 		final Collection<Term> params = mCases.stream().map(x -> x.asTerm(script)).collect(Collectors.toList());
-		final Term result;
+		final Term body;
+		final int quantifier;
 		switch (mXnf) {
 		case CNF:
-			result = SmtUtils.and(script, params);
+			body = SmtUtils.and(script, params);
+			quantifier = QuantifiedFormula.FORALL;
 			break;
 		case DNF:
-			result = SmtUtils.or(script, params);
+			body = SmtUtils.or(script, params);
+			quantifier = QuantifiedFormula.EXISTS;
 			break;
 		default:
 			throw new AssertionError("unknown case " + mXnf);
 		}
+		final Set<TermVariable> vars = getAuxiliaryVariables();
+		final Term result = SmtUtils.quantifier(script, quantifier, vars, body);
 		return result;
 	}
 
