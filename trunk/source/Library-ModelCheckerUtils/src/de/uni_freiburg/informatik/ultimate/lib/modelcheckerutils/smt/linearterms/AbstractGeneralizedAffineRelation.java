@@ -3,12 +3,15 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterm
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ContainsSubterm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
@@ -17,12 +20,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.SupportingTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
@@ -36,8 +42,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 	protected final RelationSymbol mRelationSymbol;
 	protected final TrivialityStatus mTrivialityStatus;
 	/**
-	 * Affine term ψ such that the relation ψ ▷ 0 is equivalent to the
-	 * mOriginalTerm.
+	 * Affine term ψ such that the relation ψ ▷ 0 is equivalent to the mOriginalTerm.
 	 */
 	protected final AGAT mAffineTerm;
 
@@ -50,8 +55,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 	}
 
 	/**
-	 * Create {@link AffineRelation} from {@link AffineTerm} and
-	 * {@link RelationSymbol}.
+	 * Create {@link AffineRelation} from {@link AffineTerm} and {@link RelationSymbol}.
 	 *
 	 * Resulting relation is then <code><term> <symbol> 0</code>.
 	 */
@@ -145,9 +149,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 	protected abstract AGAT constructConstant(final Sort s, final Rational r);
 
 	/**
-	 * Check if subject occurs in exactly one abstract variable. Assumes that
-	 * subject is variable of at least one abstract variable (throws AssertionError
-	 * otherwise). Returns null if subject occurs in more that one abstract
+	 * Check if subject occurs in exactly one abstract variable. Assumes that subject is variable of at least one
+	 * abstract variable (throws AssertionError otherwise). Returns null if subject occurs in more that one abstract
 	 * variable, returns the abstract variable of the subject otherwise.
 	 */
 	protected abstract AVAR getTheAbstractVarOfSubject(final Term subject);
@@ -211,9 +214,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 	}
 
 	/**
-	 * Returns a term representation of this AffineRelation where each summand
-	 * occurs only positive and the greater-than relation symbols are replaced by
-	 * less-than relation symbols. If the term is equivalent to <i>true</i> (resp.
+	 * Returns a term representation of this AffineRelation where each summand occurs only positive and the greater-than
+	 * relation symbols are replaced by less-than relation symbols. If the term is equivalent to <i>true</i> (resp.
 	 * <i>false</i>) we return <i>true</i> (resp. <i>false</i>).
 	 */
 	public Term positiveNormalForm(final Script script) {
@@ -268,9 +270,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 	}
 
 	/**
-	 * Returns a {@link SolvedBinaryRelation} that is equivalent to this
-	 * PolynomialRelation or null if we cannot find such a
-	 * {@link SolvedBinaryRelation}.
+	 * Returns a {@link SolvedBinaryRelation} that is equivalent to this PolynomialRelation or null if we cannot find
+	 * such a {@link SolvedBinaryRelation}.
 	 */
 	@Override
 	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) {
@@ -312,12 +313,12 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		Term rhsTerm;
 		if (simpliySolvableRhsTerm == null) {
 			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
-																		        Rational.ONE);
+					Rational.ONE);
 			rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
 			// EQ and DISTINCT need Modulo Assumption
 			if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
 				assumptionMapBuilder.putDivisibleByConstant(rhsTermWithoutDivision,
-															coeffOfSubject.toTerm(mAffineTerm.getSort()));
+						coeffOfSubject.toTerm(mAffineTerm.getSort()));
 			}
 			// cases LEQ, LESS, GREATER, GEQ do nothing
 
@@ -334,12 +335,13 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		}
 
 		if (abstractVarOfSubject instanceof Monomial) {
-			for (final Entry<Term, Rational> var2exp : ((Monomial) abstractVarOfSubject).getVariable2Exponent().entrySet()) {
+			for (final Entry<Term, Rational> var2exp : ((Monomial) abstractVarOfSubject).getVariable2Exponent()
+					.entrySet()) {
 				if (var2exp.getKey() == subject) {
-					//do nothing
-				}else {
-					//TODO: Integer sort tests
-					//TODO: Flatten this
+					// do nothing
+				} else {
+					// TODO: Integer sort tests
+					// TODO: Flatten this
 					assert var2exp.getValue().isIntegral();
 					final int exponent = var2exp.getValue().numerator().intValueExact();
 					final Term power;
@@ -349,23 +351,24 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 							factors[i] = var2exp.getKey();
 						}
 						power = SmtUtils.mul(script, mAffineTerm.getSort(), factors);
-					}else {
+					} else {
 						power = var2exp.getKey();
 					}
-					//TODO: Ask Matthias whether it matters much, that redundant assumptions could get added
-					//e.g. when you already have x != 0 and you have to divide by x again.
+					// TODO: Ask Matthias whether it matters much, that redundant assumptions could
+					// get added
+					// e.g. when you already have x != 0 and you have to divide by x again.
 					// Better detect it before adding them.
-					if (SmtSortUtils.isRealSort(mAffineTerm.getSort())){
+					if (SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
 						makeRealAssumptions(assumptionMapBuilder, var2exp.getKey());
-						final Term invPower = script.term("/", SmtUtils.rational2Term(script, Rational.ONE,
-																					  mAffineTerm.getSort()), power);
+						final Term invPower = script.term("/",
+								SmtUtils.rational2Term(script, Rational.ONE, mAffineTerm.getSort()), power);
 						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower, rhsTerm);
-					}else if (SmtSortUtils.isIntSort(mAffineTerm.getSort())) {
+					} else if (SmtSortUtils.isIntSort(mAffineTerm.getSort())) {
 						makeIntAssumptions(assumptionMapBuilder, script, var2exp.getKey(), rhsTerm);
 						final Term invPower = script.term("div", SmtUtils.constructIntValue(script, BigInteger.ZERO),
-																							power);
+								power);
 						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower, rhsTerm);
-					}else {
+					} else {
 						throw new UnsupportedOperationException("PolynomialRelations of this sort are not supported.");
 					}
 				}
@@ -373,13 +376,12 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		}
 
 		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
-																	 assumptionMapBuilder.getExplicitAssumptionMap());
+				assumptionMapBuilder.getExplicitAssumptionMap());
 		final Term relationToTerm = result.relationToTerm(script);
 		if (!assumptionMapBuilder.isEmpty()) {
 			assert script instanceof INonSolverScript
-					|| assumptionImpliesEquivalence(script, mOriginalTerm, relationToTerm,
-													assumptionMapBuilder.getExplicitAssumptionMap())
-						!= LBool.SAT : "transformation to AffineRelation unsound";
+					|| assumptionImpliesEquivalence(script, mOriginalTerm, relationToTerm, assumptionMapBuilder
+							.getExplicitAssumptionMap()) != LBool.SAT : "transformation to AffineRelation unsound";
 		} else {
 			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
 					relationToTerm) != LBool.SAT : "transformation to AffineRelation unsound";
@@ -391,7 +393,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		assuMapBuilder.putDivisorNotZero(divisor);
 	}
 
-	private void makeIntAssumptions(final AssumptionMapBuilder assuMapBuilder, final Script script, final Term divisor, final Term dividend) {
+	private void makeIntAssumptions(final AssumptionMapBuilder assuMapBuilder, final Script script, final Term divisor,
+			final Term dividend) {
 		assuMapBuilder.putDivisorNotZero(divisor);
 		// EQ and DISTINCT need Modulo Assumption
 		if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
@@ -461,8 +464,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 	}
 
 	/*
-	 * construct DivTerm for LESS and GEQ case, where the default divTerm can't be
-	 * used. "secondRat" depends on the sign of the coefficient.
+	 * construct DivTerm for LESS and GEQ case, where the default divTerm can't be used. "secondRat" depends on the sign
+	 * of the coefficient.
 	 */
 	private Term constructDivTerm(final Script script, final Term rhsTermWithoutDivision, final Rational coeffOfSubject,
 			final Rational secondRat) {
@@ -477,11 +480,9 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 	}
 
 	/**
-	 * Try to bring everything but abstractVarOfSubject to the right-hand side. Try
-	 * to divide the coefficient of every other variable and the constant by the
-	 * coeffOfAbstractVar. If the sort is not real and for some coefficient the
-	 * quotient is not integral return null. Otherwise return the {@link Term}
-	 * representation of the right-hand side.
+	 * Try to bring everything but abstractVarOfSubject to the right-hand side. Try to divide the coefficient of every
+	 * other variable and the constant by the coeffOfAbstractVar. If the sort is not real and for some coefficient the
+	 * quotient is not integral return null. Otherwise return the {@link Term} representation of the right-hand side.
 	 */
 	private Term constructRhsForAbstractVariable(final Script script, final AVAR abstractVarOfSubject,
 			final Rational coeffOfAbstractVar) {
@@ -494,7 +495,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 				if (newCoeff.isIntegral() || SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
 					if (entry.getKey() instanceof Monomial) {
 						rhsSummands.add(product(script, newCoeff.negate(), ((Monomial) entry.getKey()).toTerm(script)));
-					}else {
+					} else {
 						rhsSummands.add(product(script, newCoeff.negate(), entry.getKey()));
 					}
 				} else {
@@ -524,23 +525,30 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		return rhsTerm;
 	}
 
-
-
 	/**
-	 * Returns a {@link MultiCaseSolvedBinaryRelation} that is equivalent to this
-	 * PolynomialRelation or null if we cannot find such a
-	 * {@link MultiCaseSolvedBinaryRelation}.
+	 * Returns a {@link MultiCaseSolvedBinaryRelation} that is equivalent to this PolynomialRelation or null if we
+	 * cannot find such a {@link MultiCaseSolvedBinaryRelation}.
 	 */
 	public MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf) {
+		boolean subjectInAllowedSubterm = false;
+		ApplicationTerm allowedSubterm = null;
 		if (!isVariable(subject)) {
 			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
 				throw new UnsupportedOperationException("subject is not a variable");
 			} else {
-				return null;
+				allowedSubterm = searchModOrDivSubterm(mAffineTerm, script, subject);
+				if (allowedSubterm != null) {
+					subjectInAllowedSubterm = true;
+				} else {
+					return null;
+				}
 			}
 		}
-		final AVAR abstractVarOfSubject = getTheAbstractVarOfSubject(subject);
+		AVAR abstractVarOfSubject = getTheAbstractVarOfSubject(subject);
+		if (subjectInAllowedSubterm && (abstractVarOfSubject == null)) {
+			abstractVarOfSubject = (AVAR) subject;
+		}
 		if (abstractVarOfSubject == null) {
 			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
 				throw new UnsupportedOperationException("subject occurs in several abstract variables");
@@ -548,7 +556,12 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 				return null;
 			}
 		}
-		final Rational coeffOfSubject = mAffineTerm.getAbstractVariable2Coefficient().get(abstractVarOfSubject);
+		Rational coeffOfSubject = mAffineTerm.getAbstractVariable2Coefficient().get(abstractVarOfSubject);
+		if (subjectInAllowedSubterm && (coeffOfSubject == null)) {
+			final ConstantTerm coeffTerm = (ConstantTerm) allowedSubterm.getParameters()[1];
+			coeffOfSubject = SmtUtils.convertConstantTermToRational(coeffTerm);
+			// TODO if no constantTErm throw error or handle it
+		}
 		if (coeffOfSubject.equals(Rational.ZERO)) {
 			throw new AssertionError("no abstract variable must have coefficient zero");
 		}
@@ -578,38 +591,72 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		final MultiCaseSolutionBuilder mcsb = new MultiCaseSolutionBuilder(subject, xnf);
 		Term rhsTerm;
 		if (simpliySolvableRhsTerm == null) {
-			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
-					Rational.ONE);
-			rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
-			final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
-					Collections.emptyMap());
-			// EQ and DISTINCT need Modulo Assumption
-			if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
-				final boolean negate = mRelationSymbol.equals(RelationSymbol.DISTINCT);
-				final Term divisilityConstraintTerm = constructDivisibilityConstraint(script, rhsTermWithoutDivision,
-						coeffOfSubject.toTerm(mAffineTerm.getSort()), negate);
-				final SupportingTerm divisilityConstraint = new SupportingTerm(divisilityConstraintTerm,
-						IntricateOperation.DIV_BY_INTEGER_CONSTANT, Collections.emptySet());
-				switch (mRelationSymbol) {
-				case DISTINCT:
-					mcsb.conjoinWithDisjunction(sbr, divisilityConstraint);
-					break;
-				case EQ:
-					mcsb.conjoinWithConjunction(sbr, divisilityConstraint);
-					break;
-				case GEQ:
-				case GREATER:
-				case LEQ:
-				case LESS:
-				default:
-					throw new AssertionError("cases not handled here");
+			if (!subjectInAllowedSubterm) {
+				final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
+						Rational.ONE);
+				rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
+				final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
+						Collections.emptyMap());
+				// EQ and DISTINCT need Modulo Assumption
+				if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
+					final boolean negate = mRelationSymbol.equals(RelationSymbol.DISTINCT);
+					final Term divisilityConstraintTerm = constructDivisibilityConstraint(script,
+							rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort()), negate);
+					final SupportingTerm divisilityConstraint = new SupportingTerm(divisilityConstraintTerm,
+							IntricateOperation.DIV_BY_INTEGER_CONSTANT, Collections.emptySet());
+					switch (mRelationSymbol) {
+					case DISTINCT:
+						mcsb.conjoinWithDisjunction(sbr, divisilityConstraint);
+						break;
+					case EQ:
+						mcsb.conjoinWithConjunction(sbr, divisilityConstraint);
+						break;
+					case GEQ:
+					case GREATER:
+					case LEQ:
+					case LESS:
+					default:
+						throw new AssertionError("cases not handled here");
+					}
+				} else {
+					// cases LEQ, LESS, GREATER, GEQ: do not add SupportingTerm
+					mcsb.conjoinWithConjunction(sbr);
+					// we have to add this information separately because
+					// there is no SupporingTerm that provides this information
+					mcsb.reportAdditionalIntricateOperation(IntricateOperation.DIV_BY_INTEGER_CONSTANT);
 				}
-			} else {
-				// cases LEQ, LESS, GREATER, GEQ: do not add SupportingTerm
-				mcsb.conjoinWithConjunction(sbr);
-				// we have to add this information separately because
-				// there is no SupporingTerm that provides this information
-				mcsb.reportAdditionalIntricateOperation(IntricateOperation.DIV_BY_INTEGER_CONSTANT);
+			} else if (subjectInAllowedSubterm) {
+				final Sort termSort = mAffineTerm.getSort();
+				final TermVariable auxDiv = script.variable("aux_div", termSort);
+				final TermVariable auxMod = script.variable("aux_mod", termSort);
+				final Term multiplication = SmtUtils.mul(script, termSort,
+						SmtUtils.rational2Term(script, coeffOfSubject, termSort), auxDiv);
+				rhsTerm = SmtUtils.sum(script, termSort, auxMod, multiplication);
+				final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
+						Collections.emptyMap());
+
+				// (t = aux_mod)
+				final ApplicationTerm apTerm = (ApplicationTerm) mOriginalTerm;
+				final Set<TermVariable> setAuxVars = new HashSet<>();
+				// setAuxVars.add(auxDiv); // Does not occure in SupportTerms needs to be quantified
+
+				setAuxVars.add(auxMod);
+				final Term auxModEqualsTerm = SmtUtils.binaryEquality(script, apTerm.getParameters()[1], auxMod);
+				final SupportingTerm auxModEquals = new SupportingTerm(auxModEqualsTerm,
+						IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
+
+				// (0<=aux_mod)
+				final Term auxModGreaterZeroTerm = SmtUtils.geq(script, auxMod, Rational.ZERO.toTerm(termSort));
+				final SupportingTerm auxModGreaterZero = new SupportingTerm(auxModGreaterZeroTerm,
+						IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
+
+				// (aux_mod < k)
+				final Term auxModLessCoefTerm = SmtUtils.less(script, auxMod, coeffOfSubject.toTerm(termSort));
+				final SupportingTerm auxModLessCoef = new SupportingTerm(auxModLessCoefTerm,
+						IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
+
+				mcsb.conjoinWithConjunction(sbr, auxModLessCoef, auxModEquals, auxModGreaterZero);
+
 			}
 		} else {
 			rhsTerm = simpliySolvableRhsTerm;
@@ -623,4 +670,38 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		return result;
 	}
 
+	private ApplicationTerm searchModOrDivSubterm(final AGAT affineTerm, final Script script, final Term subject) {
+		if (affineTerm.toTerm(script) instanceof ApplicationTerm) {
+			final ApplicationTerm appAffineTerm = (ApplicationTerm) mAffineTerm.toTerm(script);
+
+			for (final Term para : appAffineTerm.getParameters()) {
+				final ApplicationTerm paraAppTerm = ((ApplicationTerm) para);
+				final boolean containsSubject = new ContainsSubterm(subject).containsSubterm(paraAppTerm);
+				if (containsSubject) {
+					if (paraAppTerm.getFunction().getName().contentEquals("div")) {
+
+						final AGAT recursion = (AGAT) new AffineTermTransformer(script)
+								.transform(paraAppTerm.getParameters()[0]);
+						if (recursion.isVariable(subject)) {
+							throw new UnsupportedOperationException("TODO DIV Subterm");
+							// return paraAppTerm;
+						} else {
+							throw new UnsupportedOperationException("TODO recursion in div subterm");
+						}
+
+					} else if (paraAppTerm.getFunction().getName().contentEquals("mod")) {
+
+						final AGAT recursion = (AGAT) new AffineTermTransformer(script)
+								.transform(paraAppTerm.getParameters()[0]);
+						if (recursion.isVariable(subject)) {
+							return paraAppTerm;
+						} else {
+							throw new UnsupportedOperationException("TODO recursion in mod subterm");
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
 }

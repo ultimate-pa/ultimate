@@ -148,10 +148,47 @@ public class AffineRelationTest {
 		testSolveForX(inputSTR);
 	}
 
+	// @Test
+	public void relationIntModEq() throws NotAffineException {
+		final String inputSTR = "(= (mod x 3) hi )";
+		testSolveForXMultiCaseOnly(inputSTR);
+	}
+
+	// @Test
+	public void relationIntDivEq() throws NotAffineException {
+		final String inputSTR = "(= (div x 3) hi )";
+		testSolveForXMultiCaseOnly(inputSTR);
+	}
+
+	// @Test
+	public void relationIntRecModEq() throws NotAffineException {
+		final String inputSTR = "(= (mod (mod x 7) 3) hi )";
+		testSolveForXMultiCaseOnly(inputSTR);
+	}
+
+	// @Test
+	public void relationIntDefaultModEq() throws NotAffineException {
+		final String inputSTR = "(= (+ (mod (mod y 7) 3)  x) hi )";
+		testSolveForXMultiCaseOnly(inputSTR);
+	}
+
+	// @Test
+	public void relationIntRecDivEq() throws NotAffineException {
+		final String inputSTR = "(= (div (div x 7) 3) hi )";
+		testSolveForXMultiCaseOnly(inputSTR);
+	}
+
 	private void testSolveForX(final String inputAsString) throws NotAffineException {
 		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
 		final Term x = TermParseUtils.parseTerm(mScript, "x");
 		testSingleCaseSolveForSubject(inputAsTerm, x);
+		testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.DNF);
+		testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.CNF);
+	}
+
+	private void testSolveForXMultiCaseOnly(final String inputAsString) throws NotAffineException {
+		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
+		final Term x = TermParseUtils.parseTerm(mScript, "x");
 		testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.DNF);
 		testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.CNF);
 	}
