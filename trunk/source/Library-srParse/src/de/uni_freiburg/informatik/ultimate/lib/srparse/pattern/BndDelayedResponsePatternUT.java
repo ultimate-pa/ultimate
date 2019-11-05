@@ -60,8 +60,8 @@ public class BndDelayedResponsePatternUT extends PatternType {
 		final int c2 = durations[1];
 
 		if (scope instanceof SrParseScopeGlobally) {
-			return counterTrace(phaseT(), phase(R), phase(CDD.TRUE, BoundTypes.GREATEREQUAL, c1),
-					phaseE(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT());
+			return counterTrace(phaseT(), phase(R), phase(CDD.TRUE, BoundTypes.LESSEQUAL, c1),
+					phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT());
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
