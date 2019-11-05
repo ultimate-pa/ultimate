@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.io.FileNotFoundException;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation.Xnf;
+import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -53,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  */
 public class AffineRelationTest {
 
+	private static final boolean WRITE_SCRIPT_TO_FILE = false;
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
 	private ManagedScript mMgdScript;
@@ -63,6 +67,14 @@ public class AffineRelationTest {
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mScript = UltimateMocks.createZ3Script(LogLevel.INFO);
+		if (WRITE_SCRIPT_TO_FILE) {
+			final String file = "AffineRelationTestScript.smt2";
+			try {
+				mScript = new LoggingScript(mScript, file, true);
+			} catch (final FileNotFoundException e) {
+				throw new AssertionError("Cannot write script to " + file);
+			}
+		}
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 		mRealSort = SmtSortUtils.getRealSort(mMgdScript);
