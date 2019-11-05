@@ -117,7 +117,7 @@ public class PeaToDotTestSuite {
 
 		fmt.format("### %s %s%s", mPatternName, mScopeName, LINE_SEP);
 		fmt.format("```%s%s%s```%s", LINE_SEP, mPatternString, LINE_SEP, LINE_SEP);
-		fmt.format("```%s%s%s```%s", LINE_SEP, "Counterexample: " + counterTrace, LINE_SEP, LINE_SEP);
+		fmt.format("```%sCounterexample: %s%s```%s", LINE_SEP, counterTrace, LINE_SEP, LINE_SEP);
 		fmt.format("![](%s/%s/%s_%s.svg)%s", "..", ROOT_DIR.toPath().relativize(IMAGE_DIR.toPath()), mPatternName,
 				mScopeName, LINE_SEP);
 		fmt.close();
