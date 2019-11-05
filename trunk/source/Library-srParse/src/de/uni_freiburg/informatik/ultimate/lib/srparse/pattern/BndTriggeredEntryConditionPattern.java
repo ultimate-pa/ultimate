@@ -62,6 +62,7 @@ public class BndTriggeredEntryConditionPattern extends PatternType {
 			return counterTrace(phaseT(), phase(Q, BoundTypes.GREATER, c1), phase(S.negate().and(R).and(Q)), phaseT());
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+
 	}
 
 	@Override
