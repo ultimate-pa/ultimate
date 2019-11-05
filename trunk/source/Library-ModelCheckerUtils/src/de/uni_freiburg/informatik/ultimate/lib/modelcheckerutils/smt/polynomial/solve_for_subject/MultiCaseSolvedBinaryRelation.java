@@ -44,8 +44,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 /**
  * Represents a binary relation that has been solved for a subject x. Unlike
  * {@link SolvedBinaryRelation} object of this class can also represent binary
- * relations for which a case distinction is necessary.
- * E.g., if we solve y*x<t for subject x the result is the following disjunction.
+ * relations for which a case distinction is necessary. E.g., if we solve y*x<t
+ * for subject x the result is the following disjunction.
+ * 
  * <pre>
  * x < (div t y) ∧ (mod t y) = 0 ∧ y > 0
  * ∨ x > (div t y) ∧ (mod t y) = 0 ∧ y < 0
@@ -59,20 +60,21 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 	public enum IntricateOperation {
 		/**
 		 * Indicates that we had to divide by a non-constant term in order to
-		 * solve the relation. Necessary e.g,. if we want to solve y*x=t for x and
-		 * y is a variable. This operation is intricate because we now have to
-		 * distinguish the cases that y is zero and that y is non-zero. (If the
-		 * relation symbol is an inequality we even have to take into account
-		 * that the relation symbol is "swapped" if y is negative.)
+		 * solve the relation. Necessary e.g,. if we want to solve y*x=t for x
+		 * and y is a variable. This operation is intricate because we now have
+		 * to distinguish the cases that y is zero and that y is non-zero. (If
+		 * the relation symbol is an inequality we even have to take into
+		 * account that the relation symbol is "swapped" if y is negative.)
 		 */
 		DIV_BY_NONCONSTANT,
 		/**
-		 * Indicates that we had to divide by an integer literal in
-		 * order to solve the relation. Necessary e.g,. if we want to solve k*x=t
-		 * for x and k is a (non-zero) integer literal. This operation is intricate because
-		 * if we divide by k, we loose the information that t is divisible by k.
+		 * Indicates that we had to divide by an integer literal in order to
+		 * solve the relation. Necessary e.g,. if we want to solve k*x=t for x
+		 * and k is a (non-zero) integer literal. This operation is intricate
+		 * because if we divide by k, we loose the information that t is
+		 * divisible by k.
 		 */
-		DIV_BY_INTEGER_CONSTANT, 
+		DIV_BY_INTEGER_CONSTANT,
 		/**
 		 * Indicates that we had to multiply by an integer literal in order to
 		 * solve the relation. Necessary e.g,. if we want to solve (div x k)=t
@@ -89,6 +91,7 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 
 	private final Term mSubject;
 	private final List<Case> mCases;
+	private final Set<TermVariable> mAdditionalAuxiliaryVariables;
 	private final EnumSet<IntricateOperation> mAdditionalIntricateOperations;
 	private final Xnf mXnf;
 
@@ -104,10 +107,12 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 	 *            this class represents a disjunction of cases.
 	 */
 	public MultiCaseSolvedBinaryRelation(final Term subject, final List<Case> cases,
+			final Set<TermVariable> additionalAuxiliaryVariables,
 			final EnumSet<IntricateOperation> additionalIntricateOperations, final Xnf xnf) {
 		super();
 		mSubject = subject;
 		mCases = cases;
+		mAdditionalAuxiliaryVariables = additionalAuxiliaryVariables;
 		mAdditionalIntricateOperations = additionalIntricateOperations;
 		mXnf = xnf;
 	}
@@ -126,10 +131,10 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 						.flatMap(x -> x.getSupportingTerms().stream()).map(x -> x.getIntricateOperation()))
 				.collect(Collectors.toSet());
 	}
-	
+
 	public Set<TermVariable> getAuxiliaryVariables() {
-		return mCases.stream().flatMap(x -> x.getAuxiliaryVariables().stream())
-				.collect(Collectors.toSet());
+		return Stream.concat(mAdditionalAuxiliaryVariables.stream(),
+				mCases.stream().flatMap(x -> x.getAuxiliaryVariables().stream())).collect(Collectors.toSet());
 	}
 
 	public Xnf getXnf() {

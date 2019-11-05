@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Builder for {@link MultiCaseSolvedBinaryRelation}.
@@ -47,6 +48,7 @@ public class MultiCaseSolutionBuilder {
 
 	private final Term mSubject;
 	private final Xnf mXnf;
+	private final Set<TermVariable> mAdditionalAuxiliaryVariables;
 	private final Set<IntricateOperation> mAdditionalIntricateOperations;
 	private List<Case> mCases;
 	private boolean mConstructionFinished = false;
@@ -56,6 +58,7 @@ public class MultiCaseSolutionBuilder {
 		mXnf = xnf;
 		mSubject = subject;
 		mCases = new ArrayList<Case>();
+		mAdditionalAuxiliaryVariables = new HashSet<>();
 		mAdditionalIntricateOperations = new HashSet<IntricateOperation>();
 	}
 
@@ -101,6 +104,9 @@ public class MultiCaseSolutionBuilder {
 		mAdditionalIntricateOperations.add(intricateOperation);
 	}
 
+	public void reportAdditionalAuxiliaryVariable(final TermVariable auxiliaryVariable) {
+		mAdditionalAuxiliaryVariables.add(auxiliaryVariable);
+	}
 
 	private Case buildCase(final Object... newElems) throws AssertionError {
 		SolvedBinaryRelation solvedBinaryRelation = null;
@@ -139,8 +145,8 @@ public class MultiCaseSolutionBuilder {
 	}
 
 	/**
-	 * Return a copy of the list of cases, where we added the elements newElems to
-	 * each case.
+	 * Return a copy of the list of cases, where we added the elements newElems
+	 * to each case.
 	 */
 	private List<Case> buildCopyAndAddToEachCase(final List<Case> cases, final Object... newElems) {
 		final List<Case> newCases = new ArrayList<>();
@@ -168,8 +174,9 @@ public class MultiCaseSolutionBuilder {
 	}
 
 	/**
-	 * Return a list of cases that contains for each case in the List cases and each
-	 * element elem in newElem a copy of the case that contain additionally elem.
+	 * Return a list of cases that contains for each case in the List cases and
+	 * each element elem in newElem a copy of the case that contain additionally
+	 * elem.
 	 */
 	private List<Case> buildProduct(final List<Case> cases, final Object... newElems) {
 		final List<Case> newCases = new ArrayList<>();
@@ -203,6 +210,7 @@ public class MultiCaseSolutionBuilder {
 		} else {
 			additionalIntricateOperations = EnumSet.copyOf(mAdditionalIntricateOperations);
 		}
-		return new MultiCaseSolvedBinaryRelation(mSubject, mCases, additionalIntricateOperations, mXnf);
+		return new MultiCaseSolvedBinaryRelation(mSubject, mCases, mAdditionalAuxiliaryVariables,
+				additionalIntricateOperations, mXnf);
 	}
 }
