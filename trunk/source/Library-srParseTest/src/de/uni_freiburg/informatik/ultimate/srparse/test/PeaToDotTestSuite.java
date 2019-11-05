@@ -17,7 +17,6 @@ import java.util.stream.Stream;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -51,6 +50,7 @@ public class PeaToDotTestSuite {
 	private static final File ROOT_DIR = new File("/mnt/Daten/projects/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/usage/patterns");
 	private static final File IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
+	private static final int TOC_DEPTH = 3;
 
 	private static final String LINE_SEP = System.lineSeparator();
 
@@ -77,7 +77,7 @@ public class PeaToDotTestSuite {
 		mScopeName = scopeName.replace(scopePrefix, "");
 	}
 
-	@Test
+	// @Test
 	public void testDot() throws IOException, InterruptedException {
 		final PhaseEventAutomata pea;
 		final CounterTrace counterTrace;
@@ -118,8 +118,8 @@ public class PeaToDotTestSuite {
 		fmt.format("### %s %s%s", mPatternName, mScopeName, LINE_SEP);
 		fmt.format("```%s%s%s```%s", LINE_SEP, mPatternString, LINE_SEP, LINE_SEP);
 		fmt.format("```%s%s%s```%s", LINE_SEP, "Counterexample: " + counterTrace, LINE_SEP, LINE_SEP);
-		fmt.format("![](%s/%s/%s_%s.svg)%s", IMAGE_DIR.toPath().relativize(ROOT_DIR.toPath()),
-				ROOT_DIR.toPath().relativize(IMAGE_DIR.toPath()), mPatternName, mScopeName, LINE_SEP);
+		fmt.format("![](%s/%s/%s_%s.svg)%s", "..", ROOT_DIR.toPath().relativize(IMAGE_DIR.toPath()), mPatternName,
+				mScopeName, LINE_SEP);
 		fmt.close();
 
 		final BufferedWriter writer = new BufferedWriter(new FileWriter(file, true));
@@ -149,7 +149,7 @@ public class PeaToDotTestSuite {
 	public static void afterClass() throws IOException {
 		final StringBuilder stringBuilder = new StringBuilder();
 		final Formatter fmt = new Formatter(stringBuilder);
-		fmt.format("toc_depth: 2%s%s", LINE_SEP, LINE_SEP);
+		fmt.format("toc_depth: %d%s%s", TOC_DEPTH, LINE_SEP, LINE_SEP);
 		fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
 		fmt.format("# Patterns%s", LINE_SEP);
 
