@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIpTcStrategyModule<MCR<LETTER>, LETTER>,
-		IIpAbStrategyModule<LETTER>, Function<List<LETTER>, Pair<LBool, List<IPredicate>>> {
+		IIpAbStrategyModule<LETTER>, Function<List<LETTER>, Pair<LBool, IPredicate[]>> {
 
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<?> mPrefs;
@@ -144,7 +144,7 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 	}
 
 	@Override
-	public Pair<LBool, List<IPredicate>> apply(final List<LETTER> trace) {
+	public Pair<LBool, IPredicate[]> apply(final List<LETTER> trace) {
 		runEngine(trace);
 		final LBool feasibility = mRefinementEngine.getCounterexampleFeasibility();
 		if (feasibility != LBool.UNSAT) {
@@ -159,7 +159,8 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 				break;
 			}
 		}
-		return new Pair<>(feasibility, resultProof.getPredicates());
+		final List<IPredicate> predicates = resultProof.getPredicates();
+		return new Pair<>(feasibility, predicates.toArray(new IPredicate[predicates.size()]));
 	}
 
 	private void runEngine(final List<LETTER> trace) {

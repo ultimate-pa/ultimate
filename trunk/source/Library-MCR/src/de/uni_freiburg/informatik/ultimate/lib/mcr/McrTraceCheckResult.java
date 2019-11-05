@@ -11,10 +11,10 @@ public class McrTraceCheckResult<LETTER extends IIcfgTransition<?>> {
 	private final List<LETTER> mTrace;
 	private final LBool mIsCorrect;
 	private final NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
-	private final List<IPredicate> mInterpolants;
+	private final IPredicate[] mInterpolants;
 
 	public McrTraceCheckResult(final List<LETTER> trace, final LBool isCorrect,
-			final NestedWordAutomaton<LETTER, IPredicate> automaton, final List<IPredicate> interpolants) {
+			final NestedWordAutomaton<LETTER, IPredicate> automaton, final IPredicate[] interpolants) {
 		mTrace = trace;
 		mIsCorrect = isCorrect;
 		mAutomaton = automaton;
@@ -33,7 +33,7 @@ public class McrTraceCheckResult<LETTER extends IIcfgTransition<?>> {
 		return mAutomaton;
 	}
 
-	public List<IPredicate> getInterpolants() {
+	public IPredicate[] getInterpolants() {
 		return mInterpolants;
 	}
 }
