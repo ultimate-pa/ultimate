@@ -27,15 +27,18 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.IDirectedGraph;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 
 /**
@@ -103,6 +106,7 @@ public class RegexDagCompressor<L> {
 			final RegexDagNode<L> predator = worklist.remove();
 			mergeInDirection(predator, neighborsInSearchDirection, neighborsInOtherDirection);
 			neighborsInSearchDirection.apply(predator).stream().filter(visited::add).forEach(worklist::add);
+			eliminateIfEpsilon(predator);
 		}
 	}
 
@@ -110,15 +114,33 @@ public class RegexDagCompressor<L> {
 			final Function<RegexDagNode<L>, Collection<RegexDagNode<L>>> directionBaseToCandidates,
 			final Function<RegexDagNode<L>, Collection<RegexDagNode<L>>> directionCandidatesToBase) {
 		mMergetable.clear();
-		directionBaseToCandidates.apply(baseNode).stream()
-				// ignore nodes that would result in a cycle after merge
-				// also ensures that merges don't affect the workinglist
-				.filter(prey -> directionCandidatesToBase.apply(prey).size() <= 1)
+		safeCandidates(baseNode, directionBaseToCandidates)
 				.forEach(this::addToMergetable);
 		mMergetable.entrySet().stream()
-				.map(this::groupToSingleNode)
-				.filter(RegexDagNode::isEpsilon).findFirst()
-				.ifPresent(mergedEpsilonCandidates -> merge(baseNode, mergedEpsilonCandidates));
+				.forEach(this::groupToSingleNode);
+	}
+
+	/**
+	 * Selects a group of candidates that never creates cycles when being merged in any way.
+	 * <p>
+	 * For example, consider the following graph during forward merging.
+	 * <pre>
+	 *     ,––→ a ·············.
+	 *   base → b → c –,→ d ·····→ sink
+	 *     `––––––––––´
+	 * </pre>
+	 * Here the candidates {a, b} are selected. If d was also selected we could merge it with b which would
+	 * result in graph with cycles. Our selection process is just one of many. We could also select {a, d}, just {a},
+	 * or even {} – more research is needed on what to select to get the best compression results.
+	 *
+	 * @return Either successors or predecessors (depending on direction) of a base node that can be merged without
+	 *         creating a cycle. Whether to merge or not still has to be decided based on the node labels.
+	 */
+	private Set<RegexDagNode<L>> safeCandidates(final RegexDagNode<L> base,
+			final Function<RegexDagNode<L>, Collection<RegexDagNode<L>>> directionBaseToCandidates) {
+		final Set<RegexDagNode<L>> candidates = new LinkedHashSet<>(directionBaseToCandidates.apply(base));
+		candidates.removeAll(IDirectedGraph.transitiveNodes(candidates, directionBaseToCandidates));
+		return candidates;
 	}
 
 	private void addToMergetable(final RegexDagNode<L> node) {
@@ -144,7 +166,7 @@ public class RegexDagCompressor<L> {
 	 * Copies incoming and outgoing edges from the pray node to the predator
 	 * without creating new parallel edges or selfloops.
 	 * <p>
-	 * Unlinks the pray node from all its neighbors but not vice verca, that is,
+	 * Unlinks the pray node from all its neighbors but not vice versa, that is,
 	 * the prey node still has references to its former neighbors
 	 * but the neighbors don't have references to the prey node.
 	 *
@@ -175,12 +197,41 @@ public class RegexDagCompressor<L> {
 		}
 	}
 
+	private void eliminateIfEpsilon(final RegexDagNode<L> epsilon) {
+		if (!epsilon.isEpsilon()) {
+			return;
+		}
+		List<RegexDagNode<L>> in = epsilon.getIncomingNodes();
+		List<RegexDagNode<L>> out = epsilon.getOutgoingNodes();
+		if (in.isEmpty() && out.isEmpty()) {
+			return;
+		} else if (epsilon == mDag.getSource()) {
+			if (out.size() > 1) {
+				// this epsilon cannot be eliminated
+				return;
+			}
+			mDag.setSource(out.get(0));
+		} else if (epsilon == mDag.getSink()) {
+			if (in.size() > 1) {
+				// this epsilon cannot be eliminated
+				return;
+			}
+			mDag.setSink(in.get(0));
+		}
+		// copy lists to allow concurrent iteration and modification
+		in = new ArrayList<>(in);
+		out = new ArrayList<>(out);
+		for (final RegexDagNode<L> inNode : in) {
+			for (final RegexDagNode<L> outNode : out) {
+				inNode.connectOutgoing(outNode);
+			}
+		}
+		in.forEach(epsIn -> epsIn.removeOutgoing(epsilon));
+		out.forEach(epsOut -> epsOut.removeIncoming(epsilon));
+		// no need to delete epsilon's references to incoming and outgoing nodes -- epsilon is deleted anyway
+	}
+
 }
-
-
-
-
-
 
 
 

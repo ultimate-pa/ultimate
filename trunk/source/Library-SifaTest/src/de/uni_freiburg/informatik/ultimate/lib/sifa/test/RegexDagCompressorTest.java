@@ -26,7 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.test;
 
-import static de.uni_freiburg.informatik.ultimate.lib.sifa.test.RegexDagTestUtils.*;
+import static de.uni_freiburg.informatik.ultimate.lib.sifa.test.RegexDagTestUtils.dag;
+import static de.uni_freiburg.informatik.ultimate.lib.sifa.test.RegexDagTestUtils.linearDag;
+import static de.uni_freiburg.informatik.ultimate.lib.sifa.test.RegexDagTestUtils.sortTgf;
+import static de.uni_freiburg.informatik.ultimate.lib.sifa.test.RegexDagTestUtils.toTgf;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -78,10 +81,6 @@ public class RegexDagCompressorTest {
 
 	@Test
 	public void mergeForkOnly() {
-		// TODO
-		// Without changes suddenly failed unexpectedly on monteverdi but not my system, see
-		// https://monteverdi.informatik.uni-freiburg.de/ci/job/Ultimate%20Nightly/2121/
-		// could reproduce once, fixed, worked after fix, failed after removing inputsOfNonReproducalbeTestFails
 		compressAssertEq("0a 1b 2c 3d", "01 13 12 23",
 				dag("0a 1b 2b 3c 4d", "01 13 34 02 24"));
 	}
@@ -101,10 +100,6 @@ public class RegexDagCompressorTest {
 
 	@Test
 	public void example1() {
-		// TODO
-		// Without changes suddenly failed unexpectedly on monteverdi but not my system, see
-		// https://monteverdi.informatik.uni-freiburg.de/ci/job/Ultimate%20Nightly/2121/
-		// could reproduce once, but after fixing mergeForkOnly could no longer reproduce
 		compressAssertEq("0ε 1a 2e 3b 4c 5f 6a", "01 02 13 34 35 42 46 52 65",
 				dag("14ε 1e 2a 3b 4c 5e 6a 7b 8c 9a 10f 11e 12b 13a 0ε",
 				"10 23 50 67 11.0 12.10 13.12 34 78 45 89 10.11 9.10 14.2 14.13 14.6 14.1"));
