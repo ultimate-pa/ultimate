@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.Set;
 import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -73,8 +75,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final Map<LETTER, Map<String, LETTER>> mPreviousWrite;
 	private final Map<LETTER, Term> mActions2TermVars;
 
-	private final ITraceCheckFactory<LETTER> mTraceCheckFactory;
-	private final Collection<IInterpolatingTraceCheck<LETTER>> mTraceChecks;
+	private final Function<List<LETTER>, Pair<LBool, List<IPredicate>>> mProofProvider;
 	private final Map<LETTER, Integer> mActions2Indices;
 	private final AutomataLibraryServices mAutomataServices;
 	private final VpAlphabet<LETTER> mAlphabet;
@@ -83,7 +84,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	public MCR(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final List<LETTER> trace,
-			final ITraceCheckFactory<LETTER> traceCheckFactory) throws AutomataLibraryException {
+			final Function<List<LETTER>, Pair<LBool, List<IPredicate>>> proofProvider) throws AutomataLibraryException {
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
 		mServices = prefs.getUltimateServices();
@@ -92,14 +93,13 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		mAlphabet = new VpAlphabet<>(new HashSet<>(trace));
 		mManagedScript = prefs.getCfgSmtToolkit().getManagedScript();
 		mEmptyStackStateFactory = emptyStackStateFactory;
-		mTraceCheckFactory = traceCheckFactory;
+		mProofProvider = proofProvider;
 		mReads2Variables = new HashRelation<>();
 		mWrites2Variables = new HashRelation<>();
 		mVariables2Writes = new HashRelation<>();
 		mMhbInverse = new HashRelation<>();
 		mPreviousWrite = new HashMap<>();
 		mActions2TermVars = new HashMap<>();
-		mTraceChecks = new HashSet<>();
 		mActions2Indices = new HashMap<>();
 		mActionCounts = new HashMap<>();
 		// Explore all the interleavings of trace
@@ -121,27 +121,34 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			}
 			visited.add(trace);
 			preprocess(trace);
-			IPredicate[] interpolants = getInterpolantsIfAccepted(automaton, trace);
+			List<IPredicate> interpolants = getInterpolantsIfAccepted(automaton, trace);
 			if (interpolants == null) {
-				final IInterpolatingTraceCheck<LETTER> traceCheck = mTraceCheckFactory.getTraceCheck(trace);
-				mTraceChecks.add(traceCheck);
-				final LBool isCorrect = traceCheck.isCorrect();
-				interpolants = traceCheck.getInterpolants();
-				if (isCorrect != LBool.UNSAT) {
+				final Pair<LBool, List<IPredicate>> proof = mProofProvider.apply(trace);
+				final LBool feasibility = proof.getFirst();
+				if (feasibility != LBool.UNSAT) {
 					// We found a feasible error trace
-					return new McrTraceCheckResult<>(trace, isCorrect, automaton, interpolants);
+					return new McrTraceCheckResult<>(trace, feasibility, automaton, null);
 				}
+				interpolants = proof.getSecond();
 				final INestedWordAutomaton<LETTER, ?> mcrAutomaton = getMcrAutomaton(trace, interpolants);
 				// TOOD: Get the interpolants from mcrAutomaton (DAG-interpolation?) and add them to automaton
 			}
 			queue.addAll(generateSeedInterleavings(trace, interpolants));
 		}
 		// All traces are infeasible
+		// TODO: What to use as interpolants?
 		return new McrTraceCheckResult<>(initialTrace, LBool.UNSAT, automaton, null);
 	}
 
 	private void getReadsAndWrites(final List<LETTER> trace) {
-		for (final LETTER action : trace) {
+		for (int i = 0; i < trace.size(); i++) {
+			final LETTER action = trace.get(i);
+			// TODO: There might be duplicate actions, is this a problem?
+			// TODO: => Map indices to varNames
+			// TODO: Can this varName collide?
+			final String varName = "order_" + i;
+			mActions2TermVars.put(action, SmtUtils.buildNewConstant(mManagedScript.getScript(), varName, "Int"));
+			mActions2Indices.put(action, i);
 			final ReadWriteFinder finder = new ReadWriteFinder(action);
 			mReads2Variables.addAllPairs(action, finder.getReadVars());
 			for (final String var : finder.getWrittenVars()) {
@@ -159,7 +166,9 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		mActions2Indices.clear();
 		// TODO: How to construct the MHB relation?
 		final Map<String, LETTER> lastWrittenBy = new HashMap<>();
-		for (final LETTER action : trace) {
+		for (int i = 0; i < trace.size(); i++) {
+			final LETTER action = trace.get(i);
+			mActions2Indices.put(action, i);
 			final Set<String> reads = mReads2Variables.getImage(action);
 			if (!reads.isEmpty()) {
 				final Map<String, LETTER> previousWrites = new HashMap<>();
@@ -172,19 +181,9 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				lastWrittenBy.put(written, action);
 			}
 		}
-		final Script script = mManagedScript.getScript();
-		for (int i = 0; i < trace.size(); i++) {
-			// TODO: There might be duplicate actions, is this a problem?
-			// TODO: => Map indices to varNames
-			// TODO: Can this varName collide?
-			final String varName = "order_" + i;
-			final LETTER action = trace.get(i);
-			mActions2TermVars.put(action, SmtUtils.buildNewConstant(script, varName, "Int"));
-			mActions2Indices.put(action, i);
-		}
 	}
 
-	private IPredicate[] getInterpolantsIfAccepted(final NestedWordAutomaton<LETTER, IPredicate> automaton,
+	private List<IPredicate> getInterpolantsIfAccepted(final NestedWordAutomaton<LETTER, IPredicate> automaton,
 			final List<LETTER> trace) {
 		// TODO: Get an accepting run if possible and return its state sequence, otherwise just return null
 		return null;
@@ -192,7 +191,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	// TODO: Avoid duplicates by caching?
 	private Collection<List<LETTER>> generateSeedInterleavings(final List<LETTER> trace,
-			final IPredicate[] interpolants) {
+			final List<IPredicate> interpolants) {
 		final Script script = mManagedScript.getScript();
 		final List<List<LETTER>> result = new ArrayList<>();
 		final Term[] termVars = mActions2TermVars.values().toArray(new Term[trace.size()]);
@@ -227,7 +226,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	 * Encode a new trace in a formula, that is equivalent to trace, except that write happens right before read.
 	 */
 	private Term getConstraints(final List<LETTER> trace, final LETTER read, final LETTER write,
-			final IPredicate[] interpolants, final String variable) {
+			final List<IPredicate> interpolants, final String variable) {
 		final Script script = mManagedScript.getScript();
 		final List<Term> conjuncts = new ArrayList<>();
 		// Add the MHB-constraints
@@ -248,7 +247,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	private Collection<Term> getRwConstraints(final LETTER action, final List<LETTER> trace,
-			final IPredicate[] interpolants) {
+			final List<IPredicate> interpolants) {
 		final List<Term> result = new ArrayList<>();
 		// TODO
 		// for (final LETTER prevRead : mMhbInverse.getImage(action)) {
@@ -259,7 +258,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	private Collection<Term> getValueConstraints(final LETTER read, final Term constraint, final List<LETTER> trace,
-			final IPredicate[] interpolants) {
+			final List<IPredicate> interpolants) {
 		final Script script = mManagedScript.getScript();
 		final List<Term> result = new ArrayList<>();
 		final Term readVar = mActions2TermVars.get(read);
@@ -298,7 +297,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	private boolean writeImplies(final LETTER write, final Term constraint, final List<LETTER> trace,
-			final IPredicate[] interpolants, final String variable) {
+			final List<IPredicate> interpolants, final String variable) {
 		final Script script = mManagedScript.getScript();
 		final Term post = getPostcondition(write, trace, interpolants, variable);
 		return Util.checkSat(script, SmtUtils.and(script, post, SmtUtils.not(script, constraint))) == LBool.UNSAT;
@@ -323,8 +322,8 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		return rational.numerator();
 	}
 
-	private INestedWordAutomaton<LETTER, ?> getMcrAutomaton(final List<LETTER> trace, final IPredicate[] interpolants)
-			throws AutomataLibraryException {
+	private INestedWordAutomaton<LETTER, ?> getMcrAutomaton(final List<LETTER> trace,
+			final List<IPredicate> interpolants) throws AutomataLibraryException {
 		INestedWordAutomaton<LETTER, String> result = null;
 		final StringFactory factory = new StringFactory();
 		for (final LETTER read : trace) {
@@ -404,7 +403,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		return result;
 	}
 
-	private Term getPrecondition(final LETTER action, final List<LETTER> trace, final IPredicate[] interpolants,
+	private Term getPrecondition(final LETTER action, final List<LETTER> trace, final List<IPredicate> interpolants,
 			final String variable) {
 		final Map<String, LETTER> previousWrites = mPreviousWrite.get(action);
 		if (previousWrites == null) {
@@ -414,7 +413,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	// TODO: Cache this?
-	private Term getPostcondition(final LETTER action, final List<LETTER> trace, final IPredicate[] interpolants,
+	private Term getPostcondition(final LETTER action, final List<LETTER> trace, final List<IPredicate> interpolants,
 			final String variable) {
 		if (action == null) {
 			return mManagedScript.getScript().term("true");
@@ -424,15 +423,11 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			return mManagedScript.getScript().term("false");
 		}
 		// TODO: Somehow abstract other variables away
-		return interpolants[index].getClosedFormula();
+		return interpolants.get(index).getClosedFormula();
 	}
 
 	public NestedWordAutomaton<LETTER, IPredicate> getAutomaton() {
 		return mResult.getAutomaton();
-	}
-
-	public Collection<IInterpolatingTraceCheck<LETTER>> getTraceChecks() {
-		return mTraceChecks;
 	}
 
 	@Override
@@ -442,7 +437,8 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	@Override
 	public IPredicate[] getInterpolants() {
-		return mResult.getInterpolants();
+		final List<IPredicate> interpolants = mResult.getInterpolants();
+		return mResult.getInterpolants().toArray(new IPredicate[interpolants.size()]);
 	}
 
 	@Override
@@ -583,9 +579,5 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			mResult.add(node.getIdentifier());
 			return super.visit(node);
 		}
-	}
-
-	public interface ITraceCheckFactory<LETTER extends IIcfgTransition<?>> {
-		IInterpolatingTraceCheck<LETTER> getTraceCheck(final List<LETTER> trace);
 	}
 }

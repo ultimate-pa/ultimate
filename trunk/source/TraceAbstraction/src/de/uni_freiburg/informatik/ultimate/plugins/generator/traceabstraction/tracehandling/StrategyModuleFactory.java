@@ -94,23 +94,6 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 		mPathProgramCache = pathProgramCache;
 	}
 
-	public StrategyModuleFactory(final StrategyModuleFactory<LETTER> oldFactory, final IRun<LETTER, ?> counterExample) {
-		mServices = oldFactory.mServices;
-		mLogger = oldFactory.mLogger;
-		mPrefs = oldFactory.mPrefs;
-		mTaPrefs = oldFactory.mTaPrefs;
-		mCounterexample = counterExample;
-		mPredicateUnifier = oldFactory.mPredicateUnifier;
-		mPredicateFactory = oldFactory.mPredicateFactory;
-		mPrecondition = oldFactory.mPrecondition;
-		mTaskIdentifier = oldFactory.mTaskIdentifier;
-		mAbstraction = oldFactory.mAbstraction;
-		mEmptyStackFactory = oldFactory.mEmptyStackFactory;
-		mCsToolkit = oldFactory.mCsToolkit;
-		mPredFacInterpolAut = oldFactory.mPredFacInterpolAut;
-		mPathProgramCache = oldFactory.mPathProgramCache;
-	}
-
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSmtInterpolCraig(final boolean useTimeout,
 			final InterpolationTechnique technique, final boolean arrayInterpolation,
 			final AssertCodeBlockOrder... order) {
@@ -170,7 +153,8 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 		if (useInterpolantConsolidation) {
 			throw new UnsupportedOperationException("Interpolant consolidation and MCR cannot be combined");
 		}
-		return new StrategyModuleMcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, strategyFactory);
+		return new StrategyModuleMcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, strategyFactory,
+				mCounterexample, mAbstraction, mTaskIdentifier);
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModulePreferences() {

@@ -331,6 +331,11 @@ public final class TAPreferences {
 				RefinementStrategy.class);
 	}
 
+	public RefinementStrategy getMcrRefinementStrategy() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MCR_REFINEMENT_STRATEGY,
+				RefinementStrategy.class);
+	}
+
 	public RefinementStrategyExceptionBlacklist getRefinementStrategyExceptionSpecification() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 				RefinementStrategyExceptionBlacklist.class);

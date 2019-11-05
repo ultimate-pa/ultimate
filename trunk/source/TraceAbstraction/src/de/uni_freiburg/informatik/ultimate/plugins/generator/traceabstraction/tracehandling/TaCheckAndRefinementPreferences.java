@@ -63,6 +63,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 
 	// fields that can be read from the TAPreferences
 	private final RefinementStrategy mRefinementStrategy;
+	private final RefinementStrategy mMcrRefinementStrategy;
 	private final boolean mUseSeparateSolverForTracechecks;
 	private final SolverMode mSolverMode;
 	private final boolean mFakeNonIncrementalSolver;
@@ -85,7 +86,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final boolean mCollectInterpolantStatistics;
 	private final IUltimateServiceProvider mServices;
 	private final boolean mUsePredicateTrieBasedPredicateUnifier;
-	private final boolean mUseMCR;
 	private final String mFeatureVectorDumpPath;
 	private final boolean mDumpFeatureVectors;
 
@@ -124,6 +124,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		mIcfgContainer = icfgContainer;
 
 		mRefinementStrategy = taPrefs.getRefinementStrategy();
+		mMcrRefinementStrategy = taPrefs.getMcrRefinementStrategy();
 		mUseSeparateSolverForTracechecks = taPrefs.useSeparateSolverForTracechecks();
 		mSolverMode = taPrefs.solverMode();
 		mFakeNonIncrementalSolver = taPrefs.fakeNonIncrementalSolver();
@@ -146,7 +147,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS);
 		mUseInterpolantConsolidation =
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
-		mUseMCR = ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_MCR);
 		mUseNonlinearConstraints = ultimatePrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS);
 		mUseVarsFromUnsatCoreForPathInvariants =
@@ -169,6 +169,10 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 
 	public RefinementStrategy getRefinementStrategy() {
 		return mRefinementStrategy;
+	}
+
+	public RefinementStrategy getMcrRefinementStrategy() {
+		return mMcrRefinementStrategy;
 	}
 
 	@Override
@@ -252,10 +256,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 
 	public boolean getUseInterpolantConsolidation() {
 		return mUseInterpolantConsolidation;
-	}
-
-	public boolean getUseMCR() {
-		return mUseMCR;
 	}
 
 	@Override

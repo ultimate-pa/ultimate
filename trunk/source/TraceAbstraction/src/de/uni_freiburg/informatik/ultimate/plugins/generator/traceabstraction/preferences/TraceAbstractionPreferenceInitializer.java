@@ -102,7 +102,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS =
 			"Use abstract interpretation in PathInvariants";
 	public static final String LABEL_INTERPOLANTS_CONSOLIDATION = "Interpolants consolidation";
-	public static final String LABEL_INTERPOLANTS_MCR = "Maximal causality reduction";
 	public static final String LABEL_INTERPOLANT_AUTOMATON = "Interpolant automaton";
 	public static final String LABEL_DUMPAUTOMATA = "Dump automata to files";
 	public static final String LABEL_AUTOMATAFORMAT = "Output format of dumped automata";
@@ -138,6 +137,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_XNF_CONVERSION_TECHNIQUE = "Xnf conversion technique";
 	public static final String LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY = "Counterexample search strategy";
 	public static final String LABEL_REFINEMENT_STRATEGY = "Trace refinement strategy";
+	public static final String LABEL_MCR_REFINEMENT_STRATEGY = "Trace refinement strategy used in MCR";
 	public static final String LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST = "Trace refinement exception blacklist";
 
 	public static final String VALUE_ABSTRACTION = "Abstraction";
@@ -185,6 +185,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
 			CounterexampleSearchStrategy.BFS;
 	public static final RefinementStrategy DEF_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
+	public static final RefinementStrategy DEF_MCR_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
 	public static final RefinementStrategyExceptionBlacklist DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST =
 			RefinementStrategyExceptionBlacklist.DEPENDING;
 	// public static final boolean DEF_ALL_ERRORS_AT_ONCE = false;
@@ -327,7 +328,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS, Boolean.FALSE,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANTS_CONSOLIDATION, Boolean.FALSE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_INTERPOLANTS_MCR, Boolean.FALSE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_UNSAT_CORES, UnsatCores.CONJUNCT_LEVEL, PreferenceType.Combo,
 						UnsatCores.values()),
 				new UltimatePreferenceItem<>(LABEL_LIVE_VARIABLES, Boolean.TRUE, PreferenceType.Boolean),
@@ -377,6 +377,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Combo, CounterexampleSearchStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY, DEF_REFINEMENT_STRATEGY, PreferenceType.Combo,
 						RefinementStrategy.values()),
+				new UltimatePreferenceItem<>(LABEL_MCR_REFINEMENT_STRATEGY, DEF_MCR_REFINEMENT_STRATEGY,
+						PreferenceType.Combo, RefinementStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 						DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST, DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 						PreferenceType.Combo, RefinementStrategyExceptionBlacklist.values()),
@@ -401,7 +403,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 * Interpolant automaton mode.
 	 */
 	public enum InterpolantAutomaton {
-		CANONICAL, STRAIGHT_LINE, TOTALINTERPOLATION, TOTALINTERPOLATION2, ABSTRACT_INTERPRETATION, MCR
+		CANONICAL, STRAIGHT_LINE, TOTALINTERPOLATION, TOTALINTERPOLATION2, ABSTRACT_INTERPRETATION
 	}
 
 	/**
