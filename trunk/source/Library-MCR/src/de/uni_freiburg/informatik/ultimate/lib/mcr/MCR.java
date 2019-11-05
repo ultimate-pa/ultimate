@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -37,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
@@ -47,13 +45,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
@@ -76,7 +71,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final HashRelation<String, LETTER> mVariables2Writes;
 	private final HashRelation<LETTER, LETTER> mMhbInverse;
 	private final Map<LETTER, Map<String, LETTER>> mPreviousWrite;
-	private final Map<LETTER, TermVariable> mActions2TermVars;
+	private final Map<LETTER, Term> mActions2TermVars;
 
 	private final ITraceCheckFactory<LETTER> mTraceCheckFactory;
 	private final Collection<IInterpolatingTraceCheck<LETTER>> mTraceChecks;
@@ -142,8 +137,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			queue.addAll(generateSeedInterleavings(trace, interpolants));
 		}
 		// All traces are infeasible
-		// TODO: Are these interpolants safe to return?
-		return new McrTraceCheckResult<>(initialTrace, LBool.UNSAT, automaton, new IPredicate[0]);
+		return new McrTraceCheckResult<>(initialTrace, LBool.UNSAT, automaton, null);
 	}
 
 	private void getReadsAndWrites(final List<LETTER> trace) {
@@ -178,15 +172,14 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				lastWrittenBy.put(written, action);
 			}
 		}
-		final Sort intSort = SmtSortUtils.getIntSort(mManagedScript);
 		final Script script = mManagedScript.getScript();
 		for (int i = 0; i < trace.size(); i++) {
 			// TODO: There might be duplicate actions, is this a problem?
+			// TODO: => Map indices to varNames
 			// TODO: Can this varName collide?
 			final String varName = "order_" + i;
 			final LETTER action = trace.get(i);
-			script.declareFun(varName, new Sort[0], intSort);
-			mActions2TermVars.put(action, script.variable(varName, intSort));
+			mActions2TermVars.put(action, SmtUtils.buildNewConstant(script, varName, "Int"));
 			mActions2Indices.put(action, i);
 		}
 	}
@@ -202,6 +195,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			final IPredicate[] interpolants) {
 		final Script script = mManagedScript.getScript();
 		final List<List<LETTER>> result = new ArrayList<>();
+		final Term[] termVars = mActions2TermVars.values().toArray(new Term[trace.size()]);
 		for (final LETTER read : trace) {
 			final Set<String> readVars = mReads2Variables.getImage(read);
 			if (readVars.isEmpty()) {
@@ -217,9 +211,10 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					}
 					script.push(1);
 					// If the constraints are satisfiable, add a trace based on them
-					script.assertTerm(getConstraints(trace, read, write, interpolants, var));
+					final Term constraints = getConstraints(trace, read, write, interpolants, var);
+					script.assertTerm(constraints);
 					if (script.checkSat() == LBool.SAT) {
-						result.add(constructTraceFromModel(trace, script.getModel()));
+						result.add(constructTraceFromModel(trace, script.getValue(termVars)));
 					}
 					script.pop(1);
 				}
@@ -238,8 +233,8 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		// Add the MHB-constraints
 		// TODO: We might want to have this as an option
 		for (final Entry<LETTER, LETTER> entry : mMhbInverse.entrySet()) {
-			final TermVariable var1 = mActions2TermVars.get(entry.getValue());
-			final TermVariable var2 = mActions2TermVars.get(entry.getKey());
+			final Term var1 = mActions2TermVars.get(entry.getValue());
+			final Term var2 = mActions2TermVars.get(entry.getKey());
 			conjuncts.add(SmtUtils.less(script, var1, var2));
 		}
 		// TODO: Refine these conditions, s.t. all other reads read the same value to be sound?
@@ -267,7 +262,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			final IPredicate[] interpolants) {
 		final Script script = mManagedScript.getScript();
 		final List<Term> result = new ArrayList<>();
-		final TermVariable readVar = mActions2TermVars.get(read);
+		final Term readVar = mActions2TermVars.get(read);
 		for (final String var : mReads2Variables.getImage(read)) {
 			final List<Term> disjuncts = new ArrayList<>();
 			final Set<LETTER> writesWithNull =
@@ -277,7 +272,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					continue;
 				}
 				final List<Term> conjuncts = new ArrayList<>();
-				TermVariable writeVar = null;
+				Term writeVar = null;
 				if (write != null) {
 					writeVar = mActions2TermVars.get(write);
 					conjuncts.add(SmtUtils.less(script, writeVar, readVar));
@@ -286,7 +281,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					if (otherWrite.equals(write) || writeImplies(otherWrite, constraint, trace, interpolants, var)) {
 						continue;
 					}
-					final TermVariable otherWriteVar = mActions2TermVars.get(otherWrite);
+					final Term otherWriteVar = mActions2TermVars.get(otherWrite);
 					final Term afterRead = SmtUtils.less(script, readVar, otherWriteVar);
 					if (write != null) {
 						final Term beforeWrite = SmtUtils.less(script, otherWriteVar, writeVar);
@@ -309,14 +304,14 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		return Util.checkSat(script, SmtUtils.and(script, post, SmtUtils.not(script, constraint))) == LBool.UNSAT;
 	}
 
-	private List<LETTER> constructTraceFromModel(final List<LETTER> originalTrace, final Model model) {
-		return originalTrace.stream().sorted((a1, a2) -> getIntValue(model, a1).compareTo(getIntValue(model, a2)))
+	private List<LETTER> constructTraceFromModel(final List<LETTER> originalTrace, final Map<Term, Term> valueMap) {
+		// TODO: For repeating actions sort IntStream.range(0, originalTrace.size()).boxed() instead
+		return originalTrace.stream().sorted((a1, a2) -> getIntValue(valueMap, a1).compareTo(getIntValue(valueMap, a2)))
 				.collect(Collectors.toList());
 	}
 
-	// TODO: Is this the correct way?
-	private BigInteger getIntValue(final Model model, final LETTER action) {
-		final Term term = model.evaluate(mActions2TermVars.get(action));
+	private BigInteger getIntValue(final Map<Term, Term> valueMap, final LETTER action) {
+		final Term term = valueMap.get(mActions2TermVars.get(action));
 		assert term instanceof ConstantTerm;
 		final Object value = ((ConstantTerm) term).getValue();
 		if (value instanceof BigInteger) {
@@ -350,6 +345,7 @@ public class MCR<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				readNwa.addState(true, false, initial);
 				if (write == null) {
 					readNwa.addState(false, true, postRead);
+					// TODO: The transitions are not always internal!
 					readNwa.addInternalTransition(initial, read, postRead);
 					for (final LETTER action : mActionCounts.keySet()) {
 						if (action.equals(read) && readCount == 1) {
