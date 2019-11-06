@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -48,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class PeaToDotTestSuite {
 
 	private static final File ROOT_DIR = new File("/mnt/Daten/projects/hanfor/documentation/docs");
-	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/usage/patterns");
+	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
 	private static final File IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
 	private static final int TOC_DEPTH = 3;
 
@@ -77,7 +78,7 @@ public class PeaToDotTestSuite {
 		mScopeName = scopeName.replace(scopePrefix, "");
 	}
 
-	// @Test
+	@Test
 	public void testDot() throws IOException, InterruptedException {
 		final PhaseEventAutomata pea;
 		final CounterTrace counterTrace;
