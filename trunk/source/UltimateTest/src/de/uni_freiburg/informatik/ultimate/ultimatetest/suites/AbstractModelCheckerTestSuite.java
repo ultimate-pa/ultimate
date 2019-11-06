@@ -43,6 +43,9 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
+ * TODO 20190511 Matthias: The name of this class is not good. It is not
+ * (any more) related to a model checker.
+ *
  */
 public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 
