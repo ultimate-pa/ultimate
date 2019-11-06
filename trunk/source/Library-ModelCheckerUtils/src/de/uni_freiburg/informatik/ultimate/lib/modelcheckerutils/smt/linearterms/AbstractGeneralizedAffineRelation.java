@@ -342,6 +342,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 				} else {
 					// TODO: Integer sort tests
 					// TODO: Flatten this
+					// TODO: Look into the cases again (especially division by variable)
+					// TODO: Use MultiCaseSolvedBinaryAssumption
 					assert var2exp.getValue().isIntegral();
 					final int exponent = var2exp.getValue().numerator().intValueExact();
 					final Term power;
