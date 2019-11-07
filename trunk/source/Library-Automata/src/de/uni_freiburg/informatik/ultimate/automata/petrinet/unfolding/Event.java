@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
  * Event of a {@link BranchingProcess}.
@@ -373,6 +374,14 @@ public final class Event<LETTER, PLACE> implements Serializable {
 
 	public ITransition<LETTER, PLACE> getTransition() {
 		return mTransition;
+	}
+	
+	public int getTotalOrderId() {
+		if (mTransition instanceof Transition) {
+			return ((Transition) mTransition).getTotalOrderId();
+		} else {
+			throw new UnsupportedOperationException("transition does not provide ID");
+		}
 	}
 
 
