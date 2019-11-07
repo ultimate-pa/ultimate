@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateNormalFormUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -59,26 +58,16 @@ public final class MSODUtils {
 
 	public static final String SET_OF_INT_SORT = "SetOfInt";
 
+	/**
+	 * Returns sort SetOfInt.
+	 */
 	public static Sort getSetOfIntSort(final Script script) {
 		return script.sort(SET_OF_INT_SORT);
 	}
 
-	public static Sort getSetOfIntSort(final ManagedScript script) {
-		return getSetOfIntSort(script.getScript());
-	}
-
-	/**
-	 * Returns a set of integer constant that respects the UltimateNormalForm. See {@link UltimateNormalFormUtils}.
-	 */
-	public static Term constructSetOfIntValue(final Script script, final Set<BigInteger> numbers) {
-		final Set<Term> terms = new HashSet<>();
-
-		for (final BigInteger number : numbers) {
-			terms.add(SmtUtils.constructIntValue(script, number));
-		}
-
-		return MSODUtils.getSetOfIntSort(script).getTheory().constant(terms, MSODUtils.getSetOfIntSort(script));
-	}
+	// public static Sort getSetOfIntSort(final ManagedScript script) {
+	// return getSetOfIntSort(script.getScript());
+	// }
 
 	/**
 	 * Returns true if sort is SetOfInt.
@@ -155,6 +144,19 @@ public final class MSODUtils {
 	 */
 	public static boolean isSetOfIntVariable(final Term term) {
 		return isFreeSetOfIntVariable(term) || isQuantifiedSetOfIntVariable(term);
+	}
+
+	/**
+	 * Returns a set of integer constant that respects the UltimateNormalForm. See {@link UltimateNormalFormUtils}.
+	 */
+	public static Term constructSetOfIntValue(final Script script, final Set<BigInteger> numbers) {
+		final Set<Term> terms = new HashSet<>();
+
+		for (final BigInteger number : numbers) {
+			terms.add(SmtUtils.constructIntValue(script, number));
+		}
+
+		return MSODUtils.getSetOfIntSort(script).getTheory().constant(terms, MSODUtils.getSetOfIntSort(script));
 	}
 
 	/**

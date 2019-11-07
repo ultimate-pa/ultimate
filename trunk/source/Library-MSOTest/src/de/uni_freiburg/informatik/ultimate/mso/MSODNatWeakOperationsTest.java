@@ -65,7 +65,7 @@ public final class MSODNatWeakOperationsTest {
 	private Script mScript;
 	private ILogger mLogger;
 
-	MSODSolver mMSODOperations;
+	MSODFormulaOperationsNat mMSODFormulaOperationsNat;
 
 	@Rule
 	public final ExpectedException mNoException = ExpectedException.none();
@@ -80,8 +80,7 @@ public final class MSODNatWeakOperationsTest {
 		mScript.setLogic(Logics.UFLIA);
 		mScript.declareSort("SetOfInt", 0);
 
-		mMSODOperations = new MSODSolver(mServiceProvider, mScript, mLogger, new MSODFormulaOperationsNat(),
-				new MSODAutomataOperationsWeak());
+		mMSODFormulaOperationsNat = new MSODFormulaOperationsNat();
 	}
 
 	private void test(final Boolean result, final NestedWord<MSODAlphabetSymbol> word,
@@ -161,22 +160,22 @@ public final class MSODNatWeakOperationsTest {
 		// 0 < 0
 		c = Rational.valueOf(0, 1);
 		xValues = new int[] { 0 };
-		test(false, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		test(false, getWord(x, xValues), mMSODFormulaOperationsNat.strictIneqAutomaton(mServices, x, c));
 
 		// 0 < 1
 		c = Rational.valueOf(1, 1);
 		xValues = new int[] { 0 };
-		test(true, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		test(true, getWord(x, xValues), mMSODFormulaOperationsNat.strictIneqAutomaton(mServices, x, c));
 
 		// 7 < 11
 		c = Rational.valueOf(11, 1);
 		xValues = new int[] { 7 };
-		test(true, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		test(true, getWord(x, xValues), mMSODFormulaOperationsNat.strictIneqAutomaton(mServices, x, c));
 
 		// 5 < 3
 		c = Rational.valueOf(3, 1);
 		xValues = new int[] { 5 };
-		test(false, getWord(x, xValues), mMSODOperations.strictIneqAutomaton(mServices, x, c));
+		test(false, getWord(x, xValues), mMSODFormulaOperationsNat.strictIneqAutomaton(mServices, x, c));
 	}
 
 	@Test
@@ -196,25 +195,25 @@ public final class MSODNatWeakOperationsTest {
 		c = Rational.valueOf(0, 1);
 		xValues = new int[] { 0 };
 		yValues = new int[] { 0 };
-		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		test(false, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.strictIneqAutomaton(mServices, x, y, c));
 
 		// 1 - 2 < 0
 		c = Rational.valueOf(0, 1);
 		xValues = new int[] { 1 };
 		yValues = new int[] { 2 };
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.strictIneqAutomaton(mServices, x, y, c));
 
 		// 7 - 2 < 5
 		c = Rational.valueOf(5, 1);
 		xValues = new int[] { 7 };
 		yValues = new int[] { 2 };
-		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		test(false, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.strictIneqAutomaton(mServices, x, y, c));
 
 		// 7 - 3 < 5
 		c = Rational.valueOf(5, 1);
 		xValues = new int[] { 7 };
 		yValues = new int[] { 3 };
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.strictIneqAutomaton(mServices, x, y, c));
 	}
 
 	@Test
@@ -230,22 +229,22 @@ public final class MSODNatWeakOperationsTest {
 		// -1 < 0
 		c = Rational.valueOf(0, 1);
 		xValues = new int[] { 1 };
-		test(true, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+		test(true, getWord(x, xValues), mMSODFormulaOperationsNat.strictNegIneqAutomaton(mServices, x, c));
 
 		// -5 < 0
 		c = Rational.valueOf(0, 1);
 		xValues = new int[] { 5 };
-		test(true, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+		test(true, getWord(x, xValues), mMSODFormulaOperationsNat.strictNegIneqAutomaton(mServices, x, c));
 
 		// -7 < 6
 		c = Rational.valueOf(6, 1);
 		xValues = new int[] { 7 };
-		test(true, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+		test(true, getWord(x, xValues), mMSODFormulaOperationsNat.strictNegIneqAutomaton(mServices, x, c));
 
 		// -4 < 5
 		c = Rational.valueOf(5, 1);
 		xValues = new int[] { 4 };
-		test(true, getWord(x, xValues), mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+		test(true, getWord(x, xValues), mMSODFormulaOperationsNat.strictNegIneqAutomaton(mServices, x, c));
 	}
 
 	@Test
@@ -263,37 +262,37 @@ public final class MSODNatWeakOperationsTest {
 		// { } strictSubsetInt { 0 }
 		xValues = new int[] {};
 		yValues = new int[] { 0 };
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.strictSubsetAutomaton(mServices, x, y));
 
 		// { 3, 8 } strictSubsetInt { 1, 3, 4, 8 }
 		xValues = new int[] { 3, 8 };
 		yValues = new int[] { 1, 3, 4, 8 };
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.strictSubsetAutomaton(mServices, x, y));
 
 		// { 3, 5 } strictSubsetInt { 3, 5, 6, 7}
 		xValues = new int[] { 3, 5 };
 		yValues = new int[] { 3, 5, 6, 7 };
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.strictSubsetAutomaton(mServices, x, y));
 
 		// { 1 } strictSubsetInt { 1 }
 		xValues = new int[] { 1 };
 		yValues = new int[] { 1 };
-		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+		test(false, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.strictSubsetAutomaton(mServices, x, y));
 
 		// { 2, 3, 7} strictSubsetInt { 1, 2, 3, 7}
 		xValues = new int[] { 2, 3, 7 };
 		yValues = new int[] { 1, 2, 3, 7 };
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.strictSubsetAutomaton(mServices, x, y));
 
 		// { 0, 1, 4, 7 } strictSubsetInt { 0, 1, 4 }
 		xValues = new int[] { 0, 1, 4, 7 };
 		yValues = new int[] { 0, 1, 4 };
-		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+		test(false, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.strictSubsetAutomaton(mServices, x, y));
 
 		// { 2, 4, 5 } strictSubsetInt { 2, 4, 5 }
 		xValues = new int[] { 2, 4, 5 };
 		yValues = new int[] { 2, 4, 5 };
-		test(false, getWord(x, xValues, y, yValues), mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+		test(false, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.strictSubsetAutomaton(mServices, x, y));
 
 	}
 
@@ -312,47 +311,47 @@ public final class MSODNatWeakOperationsTest {
 		// { } subsetInt { }
 		xValues = new int[] {};
 		yValues = new int[] {};
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.subsetAutomaton(mServices, x, y));
 
 		// { 3, 4 } subsetInt { 1, 3, 4, 8 }
 		xValues = new int[] { 3, 4 };
 		yValues = new int[] { 1, 3, 4, 8 };
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.subsetAutomaton(mServices, x, y));
 
 		// { 2, 5 } subsetInt { 2, 5, 6, 7}
 		xValues = new int[] { 2, 5 };
 		yValues = new int[] { 2, 5, 6, 7 };
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.subsetAutomaton(mServices, x, y));
 
 		// { 1 } subsetInt { 0 }
 		xValues = new int[] { 1 };
 		yValues = new int[] { 0 };
-		test(false, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+		test(false, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.subsetAutomaton(mServices, x, y));
 
 		// { 1, 3, 7} subsetInt { 1, 2, 3, 7}
 		xValues = new int[] { 1, 3, 7 };
 		yValues = new int[] { 1, 2, 3, 7 };
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.subsetAutomaton(mServices, x, y));
 
 		// { 0, 1, 4, 6 } subsetInt { 0, 1, 4 }
 		xValues = new int[] { 0, 1, 4, 6 };
 		yValues = new int[] { 0, 1, 4 };
-		test(false, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+		test(false, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.subsetAutomaton(mServices, x, y));
 
 		// { 2, 3, 5 } subsetInt { 2, 3, 5 }
 		xValues = new int[] { 1, 3, 5 };
 		yValues = new int[] { 1, 3, 5 };
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.subsetAutomaton(mServices, x, y));
 
 		// { 0 } subsetInt { }
 		xValues = new int[] { 0 };
 		yValues = new int[] {};
-		test(false, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+		test(false, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.subsetAutomaton(mServices, x, y));
 
 		// { 5 } subsetInt { }
 		xValues = new int[] { 5 };
 		yValues = new int[] {};
-		test(false, getWord(x, xValues, y, yValues), mMSODOperations.subsetAutomaton(mServices, x, y));
+		test(false, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.subsetAutomaton(mServices, x, y));
 	}
 
 	@Test
@@ -370,37 +369,37 @@ public final class MSODNatWeakOperationsTest {
 		c = Rational.valueOf(0, 1);
 		xValues = new int[] { 0 };
 		yValues = new int[] { 0 };
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.elementAutomaton(mServices, x, c, y));
 
 		// 0 + 1 element { 1 }
 		c = Rational.valueOf(1, 1);
 		xValues = new int[] { 0 };
 		yValues = new int[] { 1 };
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.elementAutomaton(mServices, x, c, y));
 
 		// 0 + 3 element { 2 }
 		c = Rational.valueOf(3, 1);
 		xValues = new int[] { 0 };
 		yValues = new int[] { 2 };
-		test(false, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
+		test(false, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.elementAutomaton(mServices, x, c, y));
 
 		// 2 + 4 element { 2, 4, 6 }
 		c = Rational.valueOf(4, 1);
 		xValues = new int[] { 2 };
 		yValues = new int[] { 2, 4, 6 };
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.elementAutomaton(mServices, x, c, y));
 
 		// 3 + 1 element { 0, 1, 2, 3 }
 		c = Rational.valueOf(1, 1);
 		xValues = new int[] { 3 };
 		yValues = new int[] { 0, 1, 2, 3 };
-		test(false, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
+		test(false, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.elementAutomaton(mServices, x, c, y));
 
 		// 2 + 2 element { 0, 4, 7 }
 		c = Rational.valueOf(2, 1);
 		xValues = new int[] { 2 };
 		yValues = new int[] { 0, 4, 7 };
-		test(true, getWord(x, xValues, y, yValues), mMSODOperations.elementAutomaton(mServices, x, c, y));
+		test(true, getWord(x, xValues, y, yValues), mMSODFormulaOperationsNat.elementAutomaton(mServices, x, c, y));
 	}
 
 	@Test
@@ -417,46 +416,46 @@ public final class MSODNatWeakOperationsTest {
 		// 0 element { 0 }
 		c = Rational.valueOf(0, 1);
 		xValues = new int[] { 0 };
-		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+		test(true, getWord(x, xValues), mMSODFormulaOperationsNat.constElementAutomaton(mServices, c, x));
 
 		// 0 element { 0, 3 }
 		c = Rational.valueOf(0, 1);
 		xValues = new int[] { 0, 3 };
-		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+		test(true, getWord(x, xValues), mMSODFormulaOperationsNat.constElementAutomaton(mServices, c, x));
 
 		// 3 element { 0, 3, 4 }
 		c = Rational.valueOf(3, 1);
 		xValues = new int[] { 0, 3, 4 };
-		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+		test(true, getWord(x, xValues), mMSODFormulaOperationsNat.constElementAutomaton(mServices, c, x));
 
 		// 0 element { }
 		c = Rational.valueOf(0, 1);
 		xValues = new int[] {};
-		test(false, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+		test(false, getWord(x, xValues), mMSODFormulaOperationsNat.constElementAutomaton(mServices, c, x));
 
 		// 0 element { 1 }
 		c = Rational.valueOf(0, 1);
 		xValues = new int[] { 1 };
-		test(false, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+		test(false, getWord(x, xValues), mMSODFormulaOperationsNat.constElementAutomaton(mServices, c, x));
 
 		// 2 element { 1, 3 }
 		c = Rational.valueOf(2, 1);
 		xValues = new int[] { 1, 3 };
-		test(false, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+		test(false, getWord(x, xValues), mMSODFormulaOperationsNat.constElementAutomaton(mServices, c, x));
 
 		// 1 element { 1 }
 		c = Rational.valueOf(1, 1);
 		xValues = new int[] { 1 };
-		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+		test(true, getWord(x, xValues), mMSODFormulaOperationsNat.constElementAutomaton(mServices, c, x));
 
 		// 1 element { 1, 3 }
 		c = Rational.valueOf(1, 1);
 		xValues = new int[] { 1, 3 };
-		test(true, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+		test(true, getWord(x, xValues), mMSODFormulaOperationsNat.constElementAutomaton(mServices, c, x));
 
 		// 1 element { }
 		c = Rational.valueOf(1, 1);
 		xValues = new int[] {};
-		test(false, getWord(x, xValues), mMSODOperations.constElementAutomaton(mServices, c, x));
+		test(false, getWord(x, xValues), mMSODFormulaOperationsNat.constElementAutomaton(mServices, c, x));
 	}
 }

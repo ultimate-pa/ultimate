@@ -63,7 +63,7 @@ public final class MSODIntOperationsTest {
 	private Script mScript;
 	private ILogger mLogger;
 
-	MSODSolver mMSODOperations;
+	MSODFormulaOperationsInt mMSODFormulaOperationsInt;
 
 	@Rule
 	public final ExpectedException mNoException = ExpectedException.none();
@@ -78,8 +78,7 @@ public final class MSODIntOperationsTest {
 		mScript.setLogic(Logics.UFLIA);
 		mScript.declareSort("SetOfInt", 0);
 
-		mMSODOperations = new MSODSolver(mServiceProvider, mScript, mLogger, new MSODFormulaOperationsInt(),
-				new MSODAutomataOperationsBuchi());
+		mMSODFormulaOperationsInt = new MSODFormulaOperationsInt();
 	}
 
 	private void test(final Boolean result, final NestedLassoWord<MSODAlphabetSymbol> word,
@@ -195,7 +194,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] {};
 		lastLoopIndex = 10;
 		test(false, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, c));
 
 		// -1 < 0
 		c = Rational.valueOf(0, 1);
@@ -204,7 +203,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] {};
 		lastLoopIndex = 0;
 		test(true, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, c));
 
 		// -5 < -6
 		c = Rational.valueOf(-6, 1);
@@ -213,7 +212,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] {};
 		lastLoopIndex = 3;
 		test(false, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, c));
 
 		// 3 < -2
 		c = Rational.valueOf(-2, 1);
@@ -222,7 +221,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] {};
 		lastLoopIndex = 0;
 		test(false, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, c));
 
 		// -4 < 3
 		c = Rational.valueOf(3, 1);
@@ -231,7 +230,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] {};
 		lastLoopIndex = 2;
 		test(true, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, c));
 	}
 
 	@Test
@@ -260,7 +259,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] {};
 		lastLoopIndex = 0;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, y, c));
 
 		// 1 - 1 < -3
 		c = Rational.valueOf(-3, 1);
@@ -271,7 +270,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] {};
 		lastLoopIndex = 3;
 		test(false, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, y, c));
 
 		// 2 - 1 < 3
 		c = Rational.valueOf(3, 1);
@@ -282,7 +281,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] {};
 		lastLoopIndex = 1;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, y, c));
 
 		// 2 - 1 < 1
 		c = Rational.valueOf(1, 1);
@@ -293,7 +292,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] {};
 		lastLoopIndex = 0;
 		test(false, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, y, c));
 
 		// -5 - (-2) < -2
 		c = Rational.valueOf(-2, 1);
@@ -304,7 +303,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] {};
 		lastLoopIndex = 2;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, y, c));
 
 		// -1 - (-2) < 0
 		c = Rational.valueOf(0, 1);
@@ -315,7 +314,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] {};
 		lastLoopIndex = 7;
 		test(false, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, y, c));
 
 		// -2 - (-4) < 3
 		c = Rational.valueOf(3, 1);
@@ -326,7 +325,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] {};
 		lastLoopIndex = 0;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, y, c));
 
 		// -2 - (-3) < 1
 		c = Rational.valueOf(1, 1);
@@ -337,7 +336,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] {};
 		lastLoopIndex = 2;
 		test(false, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, y, c));
 
 		// -2 - 5 < 1
 		c = Rational.valueOf(2, 1);
@@ -348,7 +347,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] {};
 		lastLoopIndex = 4;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, y, c));
 
 		// -3 - 2 < 0
 		c = Rational.valueOf(0, 1);
@@ -359,7 +358,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] {};
 		lastLoopIndex = 1;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictIneqAutomaton(mServices, x, y, c));
+				mMSODFormulaOperationsInt.strictIneqAutomaton(mServices, x, y, c));
 	}
 
 	@Test
@@ -382,7 +381,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] {};
 		lastLoopIndex = 2;
 		test(true, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+				mMSODFormulaOperationsInt.strictNegIneqAutomaton(mServices, x, c));
 
 		// -3 < 0
 		c = Rational.valueOf(0, 1);
@@ -391,7 +390,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] {};
 		lastLoopIndex = 0;
 		test(true, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+				mMSODFormulaOperationsInt.strictNegIneqAutomaton(mServices, x, c));
 
 		// -1 < -2
 		c = Rational.valueOf(-2, 1);
@@ -400,7 +399,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] {};
 		lastLoopIndex = 2;
 		test(false, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+				mMSODFormulaOperationsInt.strictNegIneqAutomaton(mServices, x, c));
 
 		// 2 < 3
 		c = Rational.valueOf(3, 1);
@@ -409,7 +408,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] {};
 		lastLoopIndex = 2;
 		test(true, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+				mMSODFormulaOperationsInt.strictNegIneqAutomaton(mServices, x, c));
 
 		// 3 < 2
 		c = Rational.valueOf(2, 1);
@@ -418,7 +417,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] {};
 		lastLoopIndex = 5;
 		test(false, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.strictNegIneqAutomaton(mServices, x, c));
+				mMSODFormulaOperationsInt.strictNegIneqAutomaton(mServices, x, c));
 
 	}
 
@@ -446,7 +445,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] {};
 		lastLoopIndex = 2;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+				mMSODFormulaOperationsInt.strictSubsetAutomaton(mServices, x, y));
 
 		// { 4 } strictSubsetInt { 0 , 2, 4, 6, ..}
 		xValuesStem = new int[] { 4 };
@@ -456,7 +455,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] { 1 };
 		lastLoopIndex = 1;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+				mMSODFormulaOperationsInt.strictSubsetAutomaton(mServices, x, y));
 
 		// { -1, -2, -3, ... } strictSubsetInt {0, -1, 1, -2, 2, ...}
 		xValuesStem = new int[] { -1 };
@@ -466,7 +465,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] { 0, 1 };
 		lastLoopIndex = 1;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+				mMSODFormulaOperationsInt.strictSubsetAutomaton(mServices, x, y));
 
 		// { 0, -1 } strictSubsetInt {-1, -2, -3, ...}
 		xValuesStem = new int[] { 0, -1 };
@@ -476,7 +475,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] { 0 };
 		lastLoopIndex = 1;
 		test(false, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+				mMSODFormulaOperationsInt.strictSubsetAutomaton(mServices, x, y));
 
 		// {-1 } strictSubsetInt {-1, -2, -3, ...}
 		xValuesStem = new int[] { -1 };
@@ -486,7 +485,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] { 0 };
 		lastLoopIndex = 1;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+				mMSODFormulaOperationsInt.strictSubsetAutomaton(mServices, x, y));
 
 		// {-1, -2, -3, ... } strictSubsetInt {-1, -2, -3, ...}
 		xValuesStem = new int[] { -1 };
@@ -496,7 +495,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] { 0 };
 		lastLoopIndex = 1;
 		test(false, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.strictSubsetAutomaton(mServices, x, y));
+				mMSODFormulaOperationsInt.strictSubsetAutomaton(mServices, x, y));
 	}
 
 	@Test
@@ -523,7 +522,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] {};
 		lastLoopIndex = 2;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.subsetAutomaton(mServices, x, y));
+				mMSODFormulaOperationsInt.subsetAutomaton(mServices, x, y));
 
 		// { 4 } subsetInt { 0 , 2, 4, 6, ..}
 		xValuesStem = new int[] { 4 };
@@ -533,7 +532,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] { 1 };
 		lastLoopIndex = 1;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.subsetAutomaton(mServices, x, y));
+				mMSODFormulaOperationsInt.subsetAutomaton(mServices, x, y));
 
 		// { -1, -2, -3, ... } subsetInt {0, 1, -1, 2, -2, ...}
 		xValuesStem = new int[] {};
@@ -543,7 +542,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] { 0, 1 };
 		lastLoopIndex = 1;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.subsetAutomaton(mServices, x, y));
+				mMSODFormulaOperationsInt.subsetAutomaton(mServices, x, y));
 
 		// { 0, -1 } subsetInt {-1, -2, -3, ...}
 		xValuesStem = new int[] { 0, -1 };
@@ -553,7 +552,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] { 0 };
 		lastLoopIndex = 1;
 		test(false, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.subsetAutomaton(mServices, x, y));
+				mMSODFormulaOperationsInt.subsetAutomaton(mServices, x, y));
 
 		// {-1 } subsetInt {-1, -2, -3, ...}
 		xValuesStem = new int[] { -1 };
@@ -563,7 +562,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] { 0 };
 		lastLoopIndex = 1;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.subsetAutomaton(mServices, x, y));
+				mMSODFormulaOperationsInt.subsetAutomaton(mServices, x, y));
 
 		// {-1, -2, -3, ... } subsetInt {-1, -2, -3, ...}
 		xValuesStem = new int[] { -1 };
@@ -573,7 +572,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] { 0 };
 		lastLoopIndex = 1;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.subsetAutomaton(mServices, x, y));
+				mMSODFormulaOperationsInt.subsetAutomaton(mServices, x, y));
 	}
 
 	@Test
@@ -602,7 +601,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] {};
 		lastLoopIndex = 0;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.elementAutomaton(mServices, x, c, y));
+				mMSODFormulaOperationsInt.elementAutomaton(mServices, x, c, y));
 
 		// 3 + 2 element { 1, -1, 3, -3,.. }
 		c = Rational.valueOf(2, 1);
@@ -613,7 +612,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] { 2, 3 };
 		lastLoopIndex = 3;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.elementAutomaton(mServices, x, c, y));
+				mMSODFormulaOperationsInt.elementAutomaton(mServices, x, c, y));
 
 		// 3 + -2 element { 1, -1, 3, -3,.. }
 		c = Rational.valueOf(-2, 1);
@@ -624,7 +623,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] { 2, 3 };
 		lastLoopIndex = 3;
 		test(true, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.elementAutomaton(mServices, x, c, y));
+				mMSODFormulaOperationsInt.elementAutomaton(mServices, x, c, y));
 
 		// 2 + 2 element { 1, -1, 3, -3,.. }
 		c = Rational.valueOf(2, 1);
@@ -635,7 +634,7 @@ public final class MSODIntOperationsTest {
 		yValuesLoop = new int[] { 0, 3 };
 		lastLoopIndex = 3;
 		test(false, getWord(x, xValuesStem, xValuesLoop, y, yValuesStem, yValuesLoop, lastStemIndex, lastLoopIndex),
-				mMSODOperations.elementAutomaton(mServices, x, c, y));
+				mMSODFormulaOperationsInt.elementAutomaton(mServices, x, c, y));
 
 	}
 
@@ -660,7 +659,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] {};
 		lastLoopIndex = 0;
 		test(true, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.constElementAutomaton(mServices, c, x));
+				mMSODFormulaOperationsInt.constElementAutomaton(mServices, c, x));
 
 		// 5 element { 0, 1, -1, 2, -2, ... }
 		c = Rational.valueOf(5, 1);
@@ -669,7 +668,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] { 0 };
 		lastLoopIndex = 0;
 		test(true, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.constElementAutomaton(mServices, c, x));
+				mMSODFormulaOperationsInt.constElementAutomaton(mServices, c, x));
 
 		// -6 element { 0, 1, 2, 3, ... }
 		c = Rational.valueOf(-6, 1);
@@ -678,7 +677,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] { 1 };
 		lastLoopIndex = 1;
 		test(false, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.constElementAutomaton(mServices, c, x));
+				mMSODFormulaOperationsInt.constElementAutomaton(mServices, c, x));
 
 		// -3 element { -3 }
 		c = Rational.valueOf(-3, 1);
@@ -687,7 +686,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] {};
 		lastLoopIndex = 4;
 		test(true, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.constElementAutomaton(mServices, c, x));
+				mMSODFormulaOperationsInt.constElementAutomaton(mServices, c, x));
 
 		// -3 element { -3, 0, 4, -4, 5, -5, ...}
 		c = Rational.valueOf(-3, 1);
@@ -696,7 +695,7 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] { 0 };
 		lastLoopIndex = 0;
 		test(true, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.constElementAutomaton(mServices, c, x));
+				mMSODFormulaOperationsInt.constElementAutomaton(mServices, c, x));
 
 		// -1 element { -3, 0, 4, -4, 5, -5 }
 		c = Rational.valueOf(-1, 1);
@@ -705,6 +704,6 @@ public final class MSODIntOperationsTest {
 		xValuesLoop = new int[] { 0 };
 		lastLoopIndex = 0;
 		test(false, getWord(x, xValuesStem, lastStemIndex, xValuesLoop, lastLoopIndex),
-				mMSODOperations.constElementAutomaton(mServices, c, x));
+				mMSODFormulaOperationsInt.constElementAutomaton(mServices, c, x));
 	}
 }
