@@ -254,28 +254,6 @@ public final class MSODSolver {
 			result.addInternalTransition(transition.getPred(), transition.getLetter(), "f_new");
 		}
 
-		// -------------------------------------------------------------------------------------------------------------
-
-		// if (MSODUtils.containsSort(result.getAlphabet(), MSODUtils.getSetOfIntSort(this).getName()).isEmpty()) {
-		// final Set<MSODAlphabetSymbol> zeros =
-		// MSODUtils.allMatchesAlphabet(result.getAlphabet(), false, quantifiedVariables);
-		//
-		// final Queue<String> states = new LinkedList<>(result.getFinalStates());
-		// final Set<String> additionalFinals = new HashSet<>();
-		//
-		// while (!states.isEmpty()) {
-		// final Set<String> preds = MSODUtils.hierarchicalPredecessorsIncoming(result, states.poll(), zeros);
-		//
-		// for (final String pred : preds) {
-		// if (!result.isFinal(pred) && additionalFinals.add(pred)) {
-		// states.add(pred);
-		// }
-		// }
-		// }
-		//
-		// result = mMSODOperations.makeStatesFinal(mAutomataLibrarayServices, result, additionalFinals);
-		// }
-
 		final Set<Term> freeVars = new HashSet<>(result.getAlphabet().iterator().next().getMap().keySet());
 		freeVars.removeAll(Arrays.asList(quantifiedVariables));
 
@@ -559,95 +537,6 @@ public final class MSODSolver {
 		}
 
 		throw new IllegalArgumentException("Invalid input.");
-	}
-
-	public NestedWordAutomaton<MSODAlphabetSymbol, String> copyAutomaton(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) {
-		return mAutomataOperations.copyAutomaton(services, automaton);
-	}
-
-	public NestedWordAutomaton<MSODAlphabetSymbol, String> trueAutomaton(final AutomataLibraryServices services) {
-		return mFormulaOperations.trueAutomaton(services);
-	}
-
-	public NestedWordAutomaton<MSODAlphabetSymbol, String> falseAutomaton(final AutomataLibraryServices services) {
-		return mFormulaOperations.falseAutomaton(services);
-	}
-
-	public INestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAutomaton(final AutomataLibraryServices services,
-			final Term x, final Rational c) {
-
-		return mFormulaOperations.strictIneqAutomaton(services, x, c);
-	}
-
-	public INestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAutomaton(final AutomataLibraryServices services,
-			final Term x, final Term y, final Rational c) throws AutomataLibraryException {
-
-		return mFormulaOperations.strictIneqAutomaton(services, x, y, c);
-	}
-
-	public INestedWordAutomaton<MSODAlphabetSymbol, String>
-			strictNegIneqAutomaton(final AutomataLibraryServices services, final Term x, final Rational c) {
-
-		return mFormulaOperations.strictNegIneqAutomaton(services, x, c);
-	}
-
-	public INestedWordAutomaton<MSODAlphabetSymbol, String>
-			strictSubsetAutomaton(final AutomataLibraryServices services, final Term x, final Term y) {
-
-		return mFormulaOperations.strictSubsetAutomaton(services, x, y);
-	}
-
-	public INestedWordAutomaton<MSODAlphabetSymbol, String> subsetAutomaton(final AutomataLibraryServices services,
-			final Term x, final Term y) {
-
-		return mFormulaOperations.subsetAutomaton(services, x, y);
-	}
-
-	public INestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomaton(final AutomataLibraryServices services,
-			final Term x, final Rational c, final Term y) throws AutomataLibraryException {
-
-		return mFormulaOperations.elementAutomaton(services, x, c, y);
-	}
-
-	public INestedWordAutomaton<MSODAlphabetSymbol, String>
-			constElementAutomaton(final AutomataLibraryServices services, final Rational c, final Term x) {
-
-		return mFormulaOperations.constElementAutomaton(services, c, x);
-	}
-
-	public NestedWordAutomaton<MSODAlphabetSymbol, String> reconstruct(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<MSODAlphabetSymbol> alphabet,
-			final boolean isExtended) {
-
-		return mAutomataOperations.reconstruct(services, automaton, alphabet, isExtended);
-	}
-
-	public INestedWordAutomaton<MSODAlphabetSymbol, String> complement(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
-
-		return mAutomataOperations.complement(services, automaton);
-	}
-
-	public INestedWordAutomaton<MSODAlphabetSymbol, String> union(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton1,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton2) throws AutomataLibraryException {
-
-		return mAutomataOperations.union(services, automaton1, automaton2);
-	}
-
-	public INestedWordAutomaton<MSODAlphabetSymbol, String> intersect(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton1,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton2) throws AutomataLibraryException {
-
-		return mAutomataOperations.intersect(services, automaton1, automaton2);
-	}
-
-	public INestedWordAutomaton<MSODAlphabetSymbol, String> makeStatesFinal(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<String> states)
-			throws AutomataLibraryException {
-
-		return mAutomataOperations.makeStatesFinal(services, automaton, states);
 	}
 
 	/**
