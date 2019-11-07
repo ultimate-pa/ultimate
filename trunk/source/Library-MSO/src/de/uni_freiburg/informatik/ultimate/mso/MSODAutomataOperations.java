@@ -62,12 +62,26 @@ public abstract class MSODAutomataOperations {
 	 * Constructs an empty automaton.
 	 */
 	public NestedWordAutomaton<MSODAlphabetSymbol, String> emptyAutomaton(final AutomataLibraryServices services) {
+		return new NestedWordAutomaton<>(services, new VpAlphabet<>(new HashSet<>()), new StringFactory());
+	}
 
-		final Set<MSODAlphabetSymbol> alphabet = new HashSet<>();
-		final VpAlphabet<MSODAlphabetSymbol> vpAlphabet = new VpAlphabet<>(alphabet);
-		final StringFactory stringFactory = new StringFactory();
+	/**
+	 * Constructs a copy of the given automaton.
+	 */
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> copyAutomaton(final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) {
 
-		return new NestedWordAutomaton<>(services, vpAlphabet, stringFactory);
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> result = emptyAutomaton(services);
+
+		for (final String state : automaton.getStates()) {
+			result.addState(automaton.isInitial(state), automaton.isFinal(state), state);
+			for (final OutgoingInternalTransition<MSODAlphabetSymbol, String> transition : automaton
+					.internalSuccessors(state)) {
+				result.addInternalTransition(state, transition.getLetter(), transition.getSucc());
+			}
+		}
+
+		return result;
 	}
 
 	/**
@@ -215,8 +229,8 @@ public abstract class MSODAutomataOperations {
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<String> states)
 			throws AutomataOperationCanceledException {
 
-		NestedWordAutomatonReachableStates<MSODAlphabetSymbol, String> nwaReachableStates;
-		nwaReachableStates = new NestedWordAutomatonReachableStates<>(services, automaton);
+		final NestedWordAutomatonReachableStates<MSODAlphabetSymbol, String> nwaReachableStates =
+				new NestedWordAutomatonReachableStates<>(services, automaton);
 
 		final Set<String> finals = new HashSet<>(automaton.getFinalStates());
 		finals.addAll(states);

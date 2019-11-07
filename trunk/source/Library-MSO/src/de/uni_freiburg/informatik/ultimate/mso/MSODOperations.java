@@ -75,13 +75,16 @@ public final class MSODOperations {
 		mAutomataOperations = automataOperations;
 	}
 
-	public NestedWordAutomaton<MSODAlphabetSymbol, String> trueAutomaton(final AutomataLibraryServices services) {
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> copyAutomaton(final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) {
+		return mAutomataOperations.copyAutomaton(services, automaton);
+	}
 
+	public NestedWordAutomaton<MSODAlphabetSymbol, String> trueAutomaton(final AutomataLibraryServices services) {
 		return mFormulaOperations.trueAutomaton(services);
 	}
 
 	public NestedWordAutomaton<MSODAlphabetSymbol, String> falseAutomaton(final AutomataLibraryServices services) {
-
 		return mFormulaOperations.falseAutomaton(services);
 	}
 

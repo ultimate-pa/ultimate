@@ -29,6 +29,8 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -46,8 +48,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
@@ -68,15 +72,15 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Solver for Monadic Second Order Difference Logic Formulas TODO: Check inputs.
+ * Solver for Monadic Second Order Difference Logic Formulas
+ *
+ * TODO Check inputs.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
 public class MSODScript extends NoopScript {
-
-	private final IUltimateServiceProvider mUltimateServiceProvider;
 	private final AutomataLibraryServices mAutomataLibrarayServices;
 	private final MSODOperations mMSODOperations;
 	public final ILogger mLogger;
@@ -84,7 +88,6 @@ public class MSODScript extends NoopScript {
 	private Map<Term, Term> mModel;
 
 	public MSODScript(final IUltimateServiceProvider services, final ILogger logger, final MSODOperations operations) {
-		mUltimateServiceProvider = services;
 		mAutomataLibrarayServices = new AutomataLibraryServices(services);
 		mLogger = logger;
 
@@ -125,7 +128,7 @@ public class MSODScript extends NoopScript {
 			}
 
 			if (mModel.keySet().toString().contains("emptyWord")) {
-				// TODO: Deal with empty word
+				// TODO Deal with empty word
 				mLogger.info("Model: EMPTYWORD");
 				final ConstantFinder cf = new ConstantFinder();
 				final Set<ApplicationTerm> terms = cf.findConstants(mAssertionTerm, true);
@@ -140,7 +143,10 @@ public class MSODScript extends NoopScript {
 			mLogger.info("MODEL: " + mModel);
 
 		} catch (final Exception e) {
-			mLogger.info(e);
+			final StringWriter stringWriter = new StringWriter();
+			final PrintWriter printWriter = new PrintWriter(stringWriter);
+			e.printStackTrace(printWriter);
+			mLogger.info(stringWriter);
 		}
 
 		return result;
@@ -277,36 +283,91 @@ public class MSODScript extends NoopScript {
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processExists(final QuantifiedFormula term)
 			throws Exception {
 
-		INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getSubformula());
+		NestedWordAutomaton<MSODAlphabetSymbol, String> result =
+				(NestedWordAutomaton<MSODAlphabetSymbol, String>) traversePostOrder(term.getSubformula());
+
+		// INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getSubformula());
+
 		mLogger.info("Construct ∃ φ: " + term);
 
+		mLogger.error(result);
+
+		// Get quantified variables.
 		final Term[] quantifiedVariables = term.getVariables();
+		mLogger.warn("Quantified variables: " + Arrays.toString(quantifiedVariables));
 
-		if (MSODUtils.containsSort(result.getAlphabet(), MSODUtils.getSetOfIntSort(this).getName()).isEmpty()) {
-			final Set<MSODAlphabetSymbol> zeros =
-					MSODUtils.allMatchesAlphabet(result.getAlphabet(), false, quantifiedVariables);
+		// Create an alphabet where all free variables are set to zero.
+		final Set<MSODAlphabetSymbol> zeros =
+				MSODUtils.allMatchesAlphabet(result.getAlphabet(), false, quantifiedVariables);
+		mLogger.warn("Alphabet with zeros: " + zeros.toString());
 
-			final Queue<String> states = new LinkedList<>(result.getFinalStates());
-			final Set<String> additionalFinals = new HashSet<>();
+		// Initialize queue with all final states.
+		final Queue<String> states = new LinkedList<>(result.getFinalStates());
+		final Set<String> visited = new HashSet<>();
+		final Set<IncomingInternalTransition<MSODAlphabetSymbol, String>> transitions = new HashSet<>();
+		boolean isInitial = false;
 
-			while (!states.isEmpty()) {
-				final Set<String> preds = MSODUtils.hierarchicalPredecessorsIncoming(result, states.poll(), zeros);
+		while (!states.isEmpty()) {
+			mLogger.warn("queue: " + states);
+			mLogger.warn("visited: " + visited);
+			mLogger.warn("transitions: " + transitions);
+			mLogger.warn("isInitial: " + isInitial);
 
-				for (final String pred : preds) {
-					if (!result.isFinal(pred) && additionalFinals.add(pred)) {
-						states.add(pred);
-					}
+			final String state = states.poll();
+			mLogger.warn("polled: " + state);
+
+			for (final String pred : MSODUtils.hierarchicalPredecessorsIncoming(result, state, zeros)) {
+				if (state.equals(pred) || visited.contains(pred)) {
+					continue;
 				}
-			}
 
-			result = mMSODOperations.makeStatesFinal(mAutomataLibrarayServices, result, additionalFinals);
+				mLogger.warn("pred: " + pred);
+				isInitial = result.isInitial(pred) || isInitial;
+
+				result.internalPredecessors(pred).forEach(a -> transitions.add(a));
+
+				states.add(pred);
+			}
+			visited.add(state);
 		}
+
+		if (!transitions.isEmpty()) {
+			result.addState(isInitial, true, "f_new");
+		}
+
+		for (final IncomingInternalTransition<MSODAlphabetSymbol, String> transition : transitions) {
+			result.addInternalTransition(transition.getPred(), transition.getLetter(), "f_new");
+		}
+
+		// -------------------------------------------------------------------------------------------------------------
+
+		// if (MSODUtils.containsSort(result.getAlphabet(), MSODUtils.getSetOfIntSort(this).getName()).isEmpty()) {
+		// final Set<MSODAlphabetSymbol> zeros =
+		// MSODUtils.allMatchesAlphabet(result.getAlphabet(), false, quantifiedVariables);
+		//
+		// final Queue<String> states = new LinkedList<>(result.getFinalStates());
+		// final Set<String> additionalFinals = new HashSet<>();
+		//
+		// while (!states.isEmpty()) {
+		// final Set<String> preds = MSODUtils.hierarchicalPredecessorsIncoming(result, states.poll(), zeros);
+		//
+		// for (final String pred : preds) {
+		// if (!result.isFinal(pred) && additionalFinals.add(pred)) {
+		// states.add(pred);
+		// }
+		// }
+		// }
+		//
+		// result = mMSODOperations.makeStatesFinal(mAutomataLibrarayServices, result, additionalFinals);
+		// }
 
 		final Set<Term> freeVars = new HashSet<>(result.getAlphabet().iterator().next().getMap().keySet());
 		freeVars.removeAll(Arrays.asList(quantifiedVariables));
 
 		final Set<MSODAlphabetSymbol> reducedAlphabet = MSODUtils.createAlphabet(freeVars.toArray(new Term[0]));
 		result = mMSODOperations.reconstruct(mAutomataLibrarayServices, result, reducedAlphabet, false);
+
+		mLogger.error(result);
 
 		return result;
 	}
@@ -342,6 +403,8 @@ public class MSODScript extends NoopScript {
 		mLogger.info("Construct not φ: " + term);
 
 		result = mMSODOperations.complement(mAutomataLibrarayServices, result);
+
+		mLogger.error(result);
 
 		return result;
 	}

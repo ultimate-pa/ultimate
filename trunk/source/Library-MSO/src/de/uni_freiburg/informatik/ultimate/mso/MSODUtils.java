@@ -304,7 +304,6 @@ public final class MSODUtils {
 
 		final Set<String> predecessors = new HashSet<>();
 		for (final MSODAlphabetSymbol symbol : symbols) {
-
 			for (final IncomingInternalTransition<MSODAlphabetSymbol, String> transition : automaton
 					.internalPredecessors(state, symbol)) {
 
