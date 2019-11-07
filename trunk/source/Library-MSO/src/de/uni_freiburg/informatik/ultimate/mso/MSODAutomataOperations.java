@@ -93,7 +93,7 @@ public abstract class MSODAutomataOperations {
 	public NestedWordAutomaton<MSODAlphabetSymbol, String> intVariableAutomaton(final AutomataLibraryServices services,
 			final Term x) {
 
-		if (!MSODUtils.isIntVariable(x)) {
+		if (!MSODUtils.isIntConstantOrTermVariable(x)) {
 			throw new IllegalArgumentException("Input x must be an Int variable.");
 		}
 

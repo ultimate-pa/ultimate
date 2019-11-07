@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateNormalFormUtils;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -65,10 +64,6 @@ public final class MSODUtils {
 		return script.sort(SET_OF_INT_SORT);
 	}
 
-	// public static Sort getSetOfIntSort(final ManagedScript script) {
-	// return getSetOfIntSort(script.getScript());
-	// }
-
 	/**
 	 * Returns true if sort is SetOfInt.
 	 */
@@ -80,83 +75,63 @@ public final class MSODUtils {
 	 * Returns true if term is an Int constant.
 	 */
 	public static boolean isIntConstant(final Term term) {
-		return term instanceof ConstantTerm && SmtSortUtils.isIntSort(term.getSort());
-	}
-
-	/**
-	 * Returns true if term is a free Int variable.
-	 */
-	public static boolean isFreeIntVariable(final Term term) {
 		return SmtUtils.isConstant(term) && SmtSortUtils.isIntSort(term.getSort());
 	}
 
 	/**
-	 * Returns true if term is a free SetOfInt variable.
+	 * Returns true if term is a SetOfInt constant.
 	 */
-	public static boolean isFreeSetOfIntVariable(final Term term) {
+	public static boolean isSetOfIntConstant(final Term term) {
 		return SmtUtils.isConstant(term) && isSetOfIntSort(term.getSort());
 	}
 
 	/**
-	 * Returns true if term is a quantified Int variable.
+	 * Returns true if term is a Int {@link TermVariable}.
 	 */
-	public static boolean isQuantifiedIntVariable(final Term term) {
+	public static boolean isIntTermVariable(final Term term) {
 		return term instanceof TermVariable && SmtSortUtils.isIntSort(term.getSort());
 	}
 
 	/**
-	 * Returns true if term is a quantified SetOfInt variable.
+	 * Returns true if term is a SetOfInt {@link TermVariable}.
 	 */
-	public static boolean isQuantifiedSetOfIntVariable(final Term term) {
+	public static boolean isSetOfIntTermVariable(final Term term) {
 		return term instanceof TermVariable && isSetOfIntSort(term.getSort());
 	}
 
 	/**
-	 * Returns true if term is a free variable.
+	 * Returns true if term is a constant.
 	 */
-	public static boolean isFreeVariable(final Term term) {
-		return isFreeIntVariable(term) || isFreeSetOfIntVariable(term);
+	public static boolean isConstant(final Term term) {
+		return isIntConstant(term) || isSetOfIntConstant(term);
 	}
 
 	/**
-	 * Returns true if term is a quantified variable.
+	 * Returns true if term is a {@link TermVariable}.
 	 */
-	public static boolean isQuantifiedVariable(final Term term) {
-		return isQuantifiedIntVariable(term) || isQuantifiedSetOfIntVariable(term);
+	public static boolean isTermVariable(final Term term) {
+		return isIntTermVariable(term) || isSetOfIntTermVariable(term);
 	}
 
 	/**
-	 * Returns true if term is a variable.
+	 * Returns true if term is a constant or a {@link TermVariable}.
 	 */
-	public static boolean isVariable(final Term term) {
-		return isFreeVariable(term) || isQuantifiedVariable(term);
+	public static boolean isConstantOrTermVariable(final Term term) {
+		return isConstant(term) || isTermVariable(term);
 	}
 
 	/**
-	 * Returns true if term is an Int variable.
+	 * Returns true if term is an Int constant or an Int {@link TermVariable}.
 	 */
-	public static boolean isIntVariable(final Term term) {
-		return isFreeIntVariable(term) || isQuantifiedIntVariable(term);
+	public static boolean isIntConstantOrTermVariable(final Term term) {
+		return isIntConstant(term) || isIntTermVariable(term);
 	}
 
 	/**
-	 * Returns true if term is a SetOfInt variable.
+	 * Returns true if term is a SetOfInt constant or an SetOfInt {@link TermVariable}.
 	 */
-	public static boolean isSetOfIntVariable(final Term term) {
-		return isFreeSetOfIntVariable(term) || isQuantifiedSetOfIntVariable(term);
-	}
-
-	/**
-	 * Returns a set of integer constant that respects the UltimateNormalForm. See {@link UltimateNormalFormUtils}.
-	 */
-	public static Term constructSetOfIntValue(final Script script, final Set<BigInteger> numbers) {
-		final Set<Term> terms = new HashSet<>();
-
-		for (final BigInteger number : numbers) {
-			terms.add(SmtUtils.constructIntValue(script, number));
-		}
-
-		return MSODUtils.getSetOfIntSort(script).getTheory().constant(terms, MSODUtils.getSetOfIntSort(script));
+	public static boolean isSetOfIntConstantOrTermVariable(final Term term) {
+		return isSetOfIntConstant(term) || isSetOfIntTermVariable(term);
 	}
 
 	/**
@@ -317,8 +292,23 @@ public final class MSODUtils {
 	}
 
 	/**
+	 * Returns a set of integer constant that respects the UltimateNormalForm. See {@link UltimateNormalFormUtils}.
+	 */
+	@Deprecated
+	public static Term constructSetOfIntValue(final Script script, final Set<BigInteger> integers) {
+		final Set<Term> terms = new HashSet<>();
+
+		for (final BigInteger number : integers) {
+			terms.add(SmtUtils.constructIntValue(script, number));
+		}
+
+		return MSODUtils.getSetOfIntSort(script).getTheory().constant(terms, MSODUtils.getSetOfIntSort(script));
+	}
+
+	/**
 	 * Returns a map which holds all terms and their values parsed from given word.
 	 */
+	@Deprecated
 	public static Map<Term, Term> parseMSODNatToTerm(final Script script, final Word<MSODAlphabetSymbol> word) {
 
 		if (word.length() <= 0) {
@@ -331,6 +321,7 @@ public final class MSODUtils {
 	/**
 	 * Returns a map which holds all terms and their values parsed from given word.
 	 */
+	@Deprecated
 	public static Map<Term, Term> parseMSODNatToTerm(final Script script, final Word<MSODAlphabetSymbol> word,
 			final Set<Term> terms) {
 
@@ -370,6 +361,7 @@ public final class MSODUtils {
 	/**
 	 * Returns a map which holds all terms and their values parsed from given word.
 	 */
+	@Deprecated
 	public static Map<Term, Term> parseMSODIntToTerm(final Script script, final Word<MSODAlphabetSymbol> word) {
 
 		if (word.length() <= 0) {
@@ -382,6 +374,7 @@ public final class MSODUtils {
 	/**
 	 * Returns a map which holds all terms and their values parsed from given word.
 	 */
+	@Deprecated
 	public static Map<Term, Term> parseMSODIntToTerm(final Script script, final Word<MSODAlphabetSymbol> word,
 			final Set<Term> terms) {
 

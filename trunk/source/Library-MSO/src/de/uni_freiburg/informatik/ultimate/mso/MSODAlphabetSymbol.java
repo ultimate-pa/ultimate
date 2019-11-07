@@ -111,7 +111,7 @@ public class MSODAlphabetSymbol {
 	 *             if term is not of type Int or SetOfInt.
 	 */
 	public void add(final Term term, final boolean value) {
-		if (!MSODUtils.isVariable(term)) {
+		if (!MSODUtils.isConstantOrTermVariable(term)) {
 			throw new IllegalArgumentException("Input term must be an Int or SetOfInt variable.");
 		}
 

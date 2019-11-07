@@ -58,7 +58,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	public NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAutomaton(final AutomataLibraryServices services,
 			final Term x, final Rational constant) {
 
-		if (!MSODUtils.isIntVariable(x)) {
+		if (!MSODUtils.isIntConstantOrTermVariable(x)) {
 			throw new IllegalArgumentException("Input x must be an Int variable.");
 		}
 
@@ -129,7 +129,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAutomaton(final AutomataLibraryServices services,
 			final Term x, final Term y, final Rational constant) throws AutomataLibraryException {
 
-		if (!MSODUtils.isIntVariable(x) || !MSODUtils.isIntVariable(y)) {
+		if (!MSODUtils.isIntConstantOrTermVariable(x) || !MSODUtils.isIntConstantOrTermVariable(y)) {
 			throw new IllegalArgumentException("Input x, y must be Int variables.");
 		}
 
@@ -441,7 +441,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	public NestedWordAutomaton<MSODAlphabetSymbol, String>
 			strictNegIneqAutomaton(final AutomataLibraryServices services, final Term x, final Rational constant) {
 
-		if (!MSODUtils.isIntVariable(x)) {
+		if (!MSODUtils.isIntConstantOrTermVariable(x)) {
 			throw new IllegalArgumentException("Input x must be an Int variable.");
 		}
 
@@ -513,7 +513,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	public NestedWordAutomaton<MSODAlphabetSymbol, String> strictSubsetAutomaton(final AutomataLibraryServices services,
 			final Term x, final Term y) {
 
-		if (!MSODUtils.isSetOfIntVariable(x) || !MSODUtils.isSetOfIntVariable(y)) {
+		if (!MSODUtils.isSetOfIntConstantOrTermVariable(x) || !MSODUtils.isSetOfIntConstantOrTermVariable(y)) {
 			throw new IllegalArgumentException("Input x, y must be SetOfInt variables.");
 		}
 
@@ -548,7 +548,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	public NestedWordAutomaton<MSODAlphabetSymbol, String> subsetAutomaton(final AutomataLibraryServices services,
 			final Term x, final Term y) {
 
-		if (!MSODUtils.isSetOfIntVariable(x) || !MSODUtils.isSetOfIntVariable(y)) {
+		if (!MSODUtils.isSetOfIntConstantOrTermVariable(x) || !MSODUtils.isSetOfIntConstantOrTermVariable(y)) {
 			throw new IllegalArgumentException("Input x, y must be SetOfInt variables.");
 		}
 
@@ -585,7 +585,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomaton(final AutomataLibraryServices services,
 			final Term x, final Rational constant, final Term y) throws AutomataLibraryException {
 
-		if (!MSODUtils.isIntVariable(x) || !MSODUtils.isSetOfIntVariable(y)) {
+		if (!MSODUtils.isIntConstantOrTermVariable(x) || !MSODUtils.isSetOfIntConstantOrTermVariable(y)) {
 			throw new IllegalArgumentException("Input x, y must be Int respectively SetOfInt variables.");
 		}
 
@@ -899,7 +899,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	public NestedWordAutomaton<MSODAlphabetSymbol, String> constElementAutomaton(final AutomataLibraryServices services,
 			final Rational constant, final Term x) {
 
-		if (!MSODUtils.isSetOfIntVariable(x)) {
+		if (!MSODUtils.isSetOfIntConstantOrTermVariable(x)) {
 			throw new IllegalArgumentException("Input x must be a SetOfInt variable.");
 		}
 

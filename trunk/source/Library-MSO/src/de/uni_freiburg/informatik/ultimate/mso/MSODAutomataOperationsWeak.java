@@ -69,7 +69,7 @@ public class MSODAutomataOperationsWeak extends MSODAutomataOperations {
 
 		// Find all Int variables contained in the alphabet.
 		final Set<Term> intVars = new HashSet<>(result.getAlphabet().iterator().next().getMap().keySet());
-		intVars.removeIf(o -> !MSODUtils.isIntVariable(o));
+		intVars.removeIf(o -> !MSODUtils.isIntConstantOrTermVariable(o));
 
 		// Intersect with an automaton that ensures that each Int variable is matched to exactly one value.
 		for (final Term intVar : intVars) {

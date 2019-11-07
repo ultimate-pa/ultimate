@@ -31,9 +31,7 @@ package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -45,8 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
@@ -107,7 +103,7 @@ public class MSODScript extends NoopScript {
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
-		// mAssertionTerm = mAssertionTerm == null ? term : term("and", new Term[] { mAssertionTerm, term });
+		mAssertionTerm = mAssertionTerm == null ? term : term("and", new Term[] { mAssertionTerm, term });
 		return null;
 	}
 
@@ -163,21 +159,23 @@ public class MSODScript extends NoopScript {
 		}
 
 		for (final Term term : terms) {
-			Term value = mModel.get(term);
+			final Term value = mModel.get(term);
 
-			if (value == null) {
-				if (SmtSortUtils.isIntSort(term.getSort())) {
-					value = SmtUtils.constructIntValue(this, BigInteger.ZERO);
-				}
-
-				if (MSODUtils.isSetOfIntSort(term.getSort())) {
-					value = MSODUtils.constructSetOfIntValue(this, new HashSet<BigInteger>());
-				}
-			}
+			// if (value == null) {
+			// if (SmtSortUtils.isIntSort(term.getSort())) {
+			// value = SmtUtils.constructIntValue(this, BigInteger.ZERO);
+			// }
+			//
+			// if (MSODUtils.isSetOfIntSort(term.getSort())) {
+			// value = MSODUtils.constructSetOfIntValue(this, new HashSet<BigInteger>());
+			// }
+			// }
 			values.put(term, value);
 		}
 
 		return values;
+
+		// throw new UnsupportedOperationException("Not implemented yet.");
 	}
 
 	@Override
