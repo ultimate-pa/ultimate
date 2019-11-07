@@ -62,7 +62,7 @@ public final class MSODNatOperationsTest {
 	private Script mScript;
 	private ILogger mLogger;
 
-	MSODOperations mMSODOperations;
+	MSODSolver mMSODOperations;
 
 	@Rule
 	public final ExpectedException mNoException = ExpectedException.none();
@@ -77,7 +77,7 @@ public final class MSODNatOperationsTest {
 		mScript.setLogic(Logics.UFLIA);
 		mScript.declareSort("SetOfInt", 0);
 
-		mMSODOperations = new MSODOperations(mServiceProvider, mScript, mLogger, new MSODFormulaOperationsNat(),
+		mMSODOperations = new MSODSolver(mServiceProvider, mScript, mLogger, new MSODFormulaOperationsNat(),
 				new MSODAutomataOperationsBuchi());
 	}
 

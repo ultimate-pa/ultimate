@@ -79,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-public final class MSODOperations {
+public final class MSODSolver {
 
 	Script mScript;
 	private final ILogger mLogger;
@@ -87,7 +87,7 @@ public final class MSODOperations {
 	private final MSODFormulaOperations mFormulaOperations;
 	private final MSODAutomataOperations mAutomataOperations;
 
-	public MSODOperations(final IUltimateServiceProvider services, final Script script, final ILogger logger,
+	public MSODSolver(final IUltimateServiceProvider services, final Script script, final ILogger logger,
 			final MSODFormulaOperations formulaOperations, final MSODAutomataOperations automataOperations) {
 
 		mScript = script;

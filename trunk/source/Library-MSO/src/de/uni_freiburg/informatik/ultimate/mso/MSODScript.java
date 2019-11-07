@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class MSODScript extends NoopScript {
 	private final AutomataLibraryServices mAutomataLibrarayServices;
-	private final MSODOperations mMSODOperations;
+	private final MSODSolver mMSODOperations;
 	public final ILogger mLogger;
 	private Term mAssertionTerm;
 	private Map<Term, Term> mModel;
@@ -79,16 +79,16 @@ public class MSODScript extends NoopScript {
 		mLogger = logger;
 
 		if (logic == MSODLogic.MSODNatWeak) {
-			mMSODOperations = new MSODOperations(services, this, logger, new MSODFormulaOperationsNat(),
+			mMSODOperations = new MSODSolver(services, this, logger, new MSODFormulaOperationsNat(),
 					new MSODAutomataOperationsWeak());
 		} else if (logic == MSODLogic.MSODIntWeak) {
-			mMSODOperations = new MSODOperations(services, this, logger, new MSODFormulaOperationsInt(),
+			mMSODOperations = new MSODSolver(services, this, logger, new MSODFormulaOperationsInt(),
 					new MSODAutomataOperationsWeak());
 		} else if (logic == MSODLogic.MSODNat) {
-			mMSODOperations = new MSODOperations(services, this, logger, new MSODFormulaOperationsNat(),
+			mMSODOperations = new MSODSolver(services, this, logger, new MSODFormulaOperationsNat(),
 					new MSODAutomataOperationsBuchi());
 		} else if (logic == MSODLogic.MSODInt) {
-			mMSODOperations = new MSODOperations(services, this, logger, new MSODFormulaOperationsInt(),
+			mMSODOperations = new MSODSolver(services, this, logger, new MSODFormulaOperationsInt(),
 					new MSODAutomataOperationsBuchi());
 		} else {
 			throw new AssertionError("Unknown value: " + logic);
