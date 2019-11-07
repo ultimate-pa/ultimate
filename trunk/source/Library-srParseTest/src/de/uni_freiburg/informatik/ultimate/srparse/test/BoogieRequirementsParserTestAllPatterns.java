@@ -85,7 +85,7 @@ public class BoogieRequirementsParserTestAllPatterns {
 				"it is always the case that \"y >= 5\" holds at least every 2000 time units",
 				"it is always the case that if \"y >= 5\" holds, then \"y <= 5\" holds after at most 2000 time units",
 				"it is always the case that if \"y >= 5\" holds, then \"y <= 5\" holds for at least 2000 time units",
-				"it is always the case that after \"y >= 5\" holds for 2000 time units, then \"y <= 5\" holds",
+				"it is always the case that after \"y >= 5\" holds for at least 2000 time units, then \"y <= 5\" holds",
 				"it is always the case that if \"y <= 5\" holds then \"y >= 5\" holds as well" };
 		final String[] patternNames = new String[] { "BndInvariancePattern", "InstAbsPattern", "UniversalityPattern",
 				"BndExistencePattern", "PrecedencePattern", "MinDurationPattern", "MaxDurationPattern",
