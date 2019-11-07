@@ -1708,7 +1708,8 @@ public class StandardFunctionHandler {
 		final ExpressionResult arg = handleFloatArguments(main, node, loc, name, 1, floatFunction).get(0);
 		final RValue rvalue =
 				mExpressionTranslation.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.getLrValue());
-		return new ExpressionResultBuilder().addAllExceptLrValue(arg).setLrValue(rvalue).build();
+		return this.constructBitvecResultIfNecessary(rvalue, loc, arg, floatFunction);
+		// return new ExpressionResultBuilder().addAllExceptLrValue(arg).setLrValue(rvalue).build();
 	}
 
 	private Result handleBinaryFloatFunction(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1717,26 +1718,21 @@ public class StandardFunctionHandler {
 		final List<ExpressionResult> args = handleFloatArguments(main, node, loc, name, 2, floatFunction);
 		final RValue rvalue = mExpressionTranslation.constructOtherBinaryFloatOperation(loc, floatFunction,
 				(RValue) args.get(0).getLrValue(), (RValue) args.get(1).getLrValue());
-		Expression[] arguments = new Expression[1];
-		arguments[0] = rvalue.getValue();
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		final CPrimitive cType = new CPrimitive(CPrimitives.FLOAT);
-		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
-		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
-		resultBuilder.addAuxVar(auxvarinfo);
-		final CallStatement call = StatementFactory.constructCallStatement(
-				loc,
-				false, new VariableLHS[] {auxvarinfo.getLhs()},
-				"float_to_bitvec32",
-				arguments);
-		resultBuilder.addStatement(call);
-		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.FLOAT)));
-		
-		return resultBuilder.build();
+		return this.constructBitvecResultIfNecessary(rvalue, loc, args, floatFunction);
 		
 		// return new ExpressionResultBuilder().addAllExceptLrValue(args).setLrValue(rvalue).build();
 	}
 
+//	private ExpressionResult convertToFloatIfNecessary(final ILocation loc, final FloatFunction function, final ExpressionResult value) {
+//		final String functionName = function.getFunctionName();
+//		// TODO: remove hardcoded comparison.
+//		if ("signbit".equals(functionName) || "copysign".equals(functionName) || "fmod".equals(functionName)) {
+//			return value;
+//		} else {
+//			return mExpressionTranslation.transformBitvectorToFloat(loc, value, CPrimitives.FLOAT);
+//		}
+//	}
+	
 	private List<ExpressionResult> handleFloatArguments(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final int numberOfArgs, final FloatFunction floatFunction) {
 		final IASTInitializerClause[] arguments = node.getArguments();
@@ -1753,6 +1749,9 @@ public class StandardFunctionHandler {
 					mExprResultTransformer.convertIfNecessary(loc, decayedArgument, floatFunction.getType());
 			rtr.add(convertedArgument);
 		}
+		
+
+
 
 		final CPrimitive typeDeterminedByName = floatFunction.getType();
 		if (typeDeterminedByName != null) {
@@ -2148,5 +2147,40 @@ public class StandardFunctionHandler {
 	private interface IFunctionModelHandler {
 		Result handleFunction(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 				String methodName);
+	}
+	
+
+	private Result constructBitvecResultIfNecessary(RValue rvalue, ILocation loc, ExpressionResult arg,
+			FloatFunction function) {
+		return this.constructBitvecResultIfNecessary(rvalue, loc, new ArrayList<>(java.util.Arrays.asList(arg)), function);
+	}
+	
+	private Result constructBitvecResultIfNecessary(final LRValue rvalue, final ILocation loc, final List<ExpressionResult> args, FloatFunction function) {
+		final String functionName = function.getFunctionName();
+		// TODO: remove hardcoded comparison.
+		if ("signbit".equals(functionName) || "copysign".equals(functionName) || "fmod".equals(functionName)) {
+			return new ExpressionResultBuilder().addAllExceptLrValue(args).setLrValue(rvalue).build();
+		} else {
+			return this.constructBitvecResult(rvalue, loc);
+		}
+	}
+	
+	private Result constructBitvecResult(final LRValue rvalue, final ILocation loc) {
+		Expression[] arguments = new Expression[1];
+		arguments[0] = rvalue.getValue();
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		final CPrimitive cType = new CPrimitive(CPrimitives.FLOAT);
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+		resultBuilder.addAuxVar(auxvarinfo);
+		final CallStatement call = StatementFactory.constructCallStatement(
+				loc,
+				false, new VariableLHS[] {auxvarinfo.getLhs()},
+				"float_to_bitvec32",
+				arguments);
+		resultBuilder.addStatement(call);
+		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.FLOAT)));
+		
+		return resultBuilder.build();
 	}
 }

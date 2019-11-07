@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -43,7 +42,6 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -52,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -97,36 +94,36 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	 */
 	public enum SmtRoundingMode {
 
-	/**
-	 * Round towards the nearest, tie to even.
-	 */
-	RNE("roundNearestTiesToEven"),
+		/**
+		 * Round towards the nearest, tie to even.
+		 */
+		RNE("roundNearestTiesToEven"),
 
-	/**
-	 * Round toward nearest, tie to away.
-	 */
-	RNA("roundNearestTiesToAway"),
+		/**
+		 * Round toward nearest, tie to away.
+		 */
+		RNA("roundNearestTiesToAway"),
 
-	/**
-	 * Round toward positive.
-	 *
-	 * In this mode, a number r is rounded to the least upper floating-point bound.
-	 */
-	RTP("roundTowardPositive"),
+		/**
+		 * Round toward positive.
+		 *
+		 * In this mode, a number r is rounded to the least upper floating-point bound.
+		 */
+		RTP("roundTowardPositive"),
 
-	/**
-	 * Round toward negative.
-	 *
-	 * In this mode, a number r is rounded to the greatest lower floating-point bound.
-	 */
-	RTN("roundTowardNegative"),
+		/**
+		 * Round toward negative.
+		 *
+		 * In this mode, a number r is rounded to the greatest lower floating-point bound.
+		 */
+		RTN("roundTowardNegative"),
 
-	/**
-	 * Round toward zero.
-	 *
-	 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
-	 */
-	RTZ("roundTowardZero");
+		/**
+		 * Round toward zero.
+		 *
+		 * In this mode, a number r is rounded to the closest FP number whose absolute value is closest to zero.
+		 */
+		RTZ("roundTowardZero");
 
 		private final String mSmtIdentifier;
 		private final IdentifierExpression mBoogieExpr;
@@ -589,13 +586,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public ExpressionResult convertFloatToFloat(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
-		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
+		final String prefixedFunctionName =
+				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { getCurrentRoundingMode(), oldExpression },
 				mTypeHandler.getBoogieTypeForCType(newType));
 		final RValue rVal = new RValue(resultExpression, newType, false, false);
-		
+
 		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
 
@@ -646,7 +644,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		// do nothing. not needed for bitvectors
 	}
 
-	
 	// What is int size used for?
 	@Override
 	public Expression concatBits(final ILocation loc, final List<Expression> dataChunks, final int size) {
@@ -695,14 +692,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public Expression constructBinaryComparisonFloatingPointExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
-		
+
 		if (!mFunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
 
-		final Expression floatExp1 = this.transformBitvectorToFloat(loc, exp1, CPrimitives.FLOAT);
-		final Expression floatExp2 = this.transformBitvectorToFloat(loc, exp2, CPrimitives.FLOAT);
-		
+		final Expression exp1float = transformBitvectorToFloat(loc, exp1, CPrimitives.FLOAT);
+		final Expression exp2float = transformBitvectorToFloat(loc, exp2, CPrimitives.FLOAT);
+
 		boolean isNegated = false;
 		final String smtFunctionName;
 		switch (nodeOperator) {
@@ -732,7 +729,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		declareFloatingPointFunction(loc, smtFunctionName, true, false, new CPrimitive(CPrimitives.BOOL), type1, type2);
 		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type1);
 		Expression result = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-				new Expression[] { floatExp1, floatExp2 }, BoogieType.TYPE_BOOL);
+				new Expression[] { exp1float, exp2float }, BoogieType.TYPE_BOOL);
 
 		if (isNegated) {
 			result = ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, result);
@@ -762,13 +759,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression constructArithmeticFloatingPointExpression(final ILocation loc, final int nodeOperator,
-			final Expression exp1Bv, final CPrimitive type1, final Expression exp2Bv, final CPrimitive type2) {
+			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
 		if (!mFunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
-		final Expression exp1 = this.transformBitvectorToFloat(loc,exp1Bv, CPrimitives.FLOAT);
-		final Expression exp2 = this.transformBitvectorToFloat(loc,exp2Bv, CPrimitives.FLOAT);
-		
+
 		boolean isRounded = true;
 		final String smtFunctionName;
 		switch (nodeOperator) {
@@ -806,11 +801,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 		declareFloatingPointFunction(loc, smtFunctionName, false, isRounded, type1, type1, type2);
 		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type1);
-				
-		
-		final Expression resultExp = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName, new Expression[] { exp1, exp2 },
-				mTypeHandler.getBoogieTypeForCType(type1));
-		
+
+		final Expression resultExp = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+				new Expression[] { exp1, exp2 }, mTypeHandler.getBoogieTypeForCType(type1));
+
 		return resultExp;
 	}
 
@@ -1170,12 +1164,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public RValue constructOtherBinaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
-			final RValue firstBitVec, final RValue secondBitVec) {
+			final RValue first, final RValue second) {
 		// TODO Auto-generated method stub
-		
-		final RValue first = new RValue(this.transformBitvectorToFloat(loc,firstBitVec.getValue(), CPrimitives.FLOAT), firstBitVec.getUnderlyingType());
-		final RValue second = new RValue(this.transformBitvectorToFloat(loc,secondBitVec.getValue(), CPrimitives.FLOAT), firstBitVec.getUnderlyingType());
-		
+
 		switch (floatFunction.getFunctionName()) {
 		case "fmin":
 			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.min");
@@ -1197,7 +1188,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			 */
 			// fmod guarantees that the return value is the same sign as the first argument (x)
 			// copies the sign of firts element to remainder value
-			// Copysign might not be correct - fmod does not guarantee -NaNs 
+			// Copysign might not be correct - fmod does not guarantee -NaNs
 			final RValue remainderValue = delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
 			final FloatFunction copySignFunction = FloatFunction.decode("copysign");
 			return constructOtherBinaryFloatOperation(loc, copySignFunction, remainderValue, first);
@@ -1231,7 +1222,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 			return new RValue(firstNaNExpr, typeFirst);
 		case "copysign":
-			
+
 			// TODO: Handle negative NaN, check unsoundness
 			// if second is negative, return arithneg of abs(first), else return abs(first)
 			// final FloatFunction absfloatFunction = FloatFunction.decode("fabs");
@@ -1252,7 +1243,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 			final List<Expression> resultAsList = Arrays.asList(unsignedBitVec, signBit);
 			final Expression result = concatBits(loc, resultAsList, 32);
-			return new RValue(result, (CPrimitive) first.getCType().getUnderlyingType());
+			return new RValue(result, first.getCType().getUnderlyingType());
 		default:
 			break;
 		}
@@ -1327,7 +1318,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					((TypeHandler) mTypeHandler).byteSize2AstType(loc, cprimitive.getPrimitiveCategory(), bytesize);
 			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, new CPrimitive(cprimitive));
 			final ASTType[] params = new ASTType[] { paramASTType };
-			final Attribute[] attributes =	
+			final Attribute[] attributes =
 					generateAttributes(loc, mSettings.overapproximateFloatingPointOperations(), smtFunctionName, null);
 			mFunctionDeclarations.declareFunction(loc, boogieFunctionName, attributes, bvType, params);
 		}
