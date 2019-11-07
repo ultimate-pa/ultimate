@@ -28,20 +28,17 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -289,129 +286,5 @@ public final class MSODUtils {
 		}
 
 		return predecessors;
-	}
-
-	/**
-	 * Returns a set of integer constant that respects the UltimateNormalForm. See {@link UltimateNormalFormUtils}.
-	 */
-	@Deprecated
-	public static Term constructSetOfIntValue(final Script script, final Set<BigInteger> integers) {
-		final Set<Term> terms = new HashSet<>();
-
-		for (final BigInteger number : integers) {
-			terms.add(SmtUtils.constructIntValue(script, number));
-		}
-
-		return MSODUtils.getSetOfIntSort(script).getTheory().constant(terms, MSODUtils.getSetOfIntSort(script));
-	}
-
-	/**
-	 * Returns a map which holds all terms and their values parsed from given word.
-	 */
-	@Deprecated
-	public static Map<Term, Term> parseMSODNatToTerm(final Script script, final Word<MSODAlphabetSymbol> word) {
-
-		if (word.length() <= 0) {
-			return new HashMap<>();
-		}
-
-		return parseMSODNatToTerm(script, word, word.getSymbol(0).getTerms());
-	}
-
-	/**
-	 * Returns a map which holds all terms and their values parsed from given word.
-	 */
-	@Deprecated
-	public static Map<Term, Term> parseMSODNatToTerm(final Script script, final Word<MSODAlphabetSymbol> word,
-			final Set<Term> terms) {
-
-		final Map<Term, Term> result = new HashMap<>();
-		final Map<Term, Set<BigInteger>> values = new HashMap<>();
-
-		for (final Term term : terms) {
-			values.put(term, new HashSet<BigInteger>());
-		}
-
-		for (int i = 0; i < word.length(); i++) {
-			final MSODAlphabetSymbol symbol = word.getSymbol(i);
-
-			for (final Term term : terms) {
-				if (symbol.getMap().get(term)) {
-					values.get(term).add(BigInteger.valueOf(i));
-				}
-			}
-		}
-
-		for (final Term term : values.keySet()) {
-			if (SmtSortUtils.isIntSort(term.getSort())) {
-				assert (values.get(term) != null && values.get(term).size() == 1);
-
-				final BigInteger value = values.get(term).iterator().next();
-				result.put(term, SmtUtils.constructIntValue(script, value));
-			}
-
-			if (MSODUtils.isSetOfIntSort(term.getSort())) {
-				result.put(term, MSODUtils.constructSetOfIntValue(script, values.get(term)));
-			}
-		}
-
-		return result;
-	}
-
-	/**
-	 * Returns a map which holds all terms and their values parsed from given word.
-	 */
-	@Deprecated
-	public static Map<Term, Term> parseMSODIntToTerm(final Script script, final Word<MSODAlphabetSymbol> word) {
-
-		if (word.length() <= 0) {
-			return new HashMap<>();
-		}
-
-		return parseMSODIntToTerm(script, word, word.getSymbol(0).getTerms());
-	}
-
-	/**
-	 * Returns a map which holds all terms and their values parsed from given word.
-	 */
-	@Deprecated
-	public static Map<Term, Term> parseMSODIntToTerm(final Script script, final Word<MSODAlphabetSymbol> word,
-			final Set<Term> terms) {
-
-		final Map<Term, Term> result = new HashMap<>();
-		final Map<Term, Set<BigInteger>> values = new HashMap<>();
-
-		for (final Term term : terms) {
-			values.put(term, new HashSet<BigInteger>());
-		}
-
-		for (int i = 0; i < word.length(); i++) {
-			final MSODAlphabetSymbol symbol = word.getSymbol(i);
-
-			for (final Term term : terms) {
-				if (symbol.getMap().get(term)) {
-					if (i % 2 == 0) {
-						values.get(term).add(BigInteger.valueOf(-i / 2));
-					} else {
-						values.get(term).add(BigInteger.valueOf((i + 1) / 2));
-					}
-				}
-			}
-		}
-
-		for (final Term term : values.keySet()) {
-			if (SmtSortUtils.isIntSort(term.getSort())) {
-				assert (values.get(term) != null && values.get(term).size() == 1);
-
-				final BigInteger value = values.get(term).iterator().next();
-				result.put(term, SmtUtils.constructIntValue(script, value));
-			}
-
-			if (MSODUtils.isSetOfIntSort(term.getSort())) {
-				result.put(term, MSODUtils.constructSetOfIntValue(script, values.get(term)));
-			}
-		}
-
-		return result;
 	}
 }

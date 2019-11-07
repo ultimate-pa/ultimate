@@ -160,16 +160,6 @@ public class MSODScript extends NoopScript {
 
 		for (final Term term : terms) {
 			final Term value = mModel.get(term);
-
-			// if (value == null) {
-			// if (SmtSortUtils.isIntSort(term.getSort())) {
-			// value = SmtUtils.constructIntValue(this, BigInteger.ZERO);
-			// }
-			//
-			// if (MSODUtils.isSetOfIntSort(term.getSort())) {
-			// value = MSODUtils.constructSetOfIntValue(this, new HashSet<BigInteger>());
-			// }
-			// }
 			values.put(term, value);
 		}
 
