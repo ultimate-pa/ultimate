@@ -65,8 +65,7 @@ public final class MSODNatWeakOperationsTest {
 	private Script mScript;
 	private ILogger mLogger;
 
-	MSODOperations mMSODOperations =
-			new MSODOperations(new MSODFormulaOperationsNat(), new MSODAutomataOperationsWeak());
+	MSODOperations mMSODOperations;
 
 	@Rule
 	public final ExpectedException mNoException = ExpectedException.none();
@@ -80,6 +79,9 @@ public final class MSODNatWeakOperationsTest {
 
 		mScript.setLogic(Logics.UFLIA);
 		mScript.declareSort("SetOfInt", 0);
+
+		mMSODOperations = new MSODOperations(mServiceProvider, mScript, mLogger, new MSODFormulaOperationsNat(),
+				new MSODAutomataOperationsWeak());
 	}
 
 	private void test(final Boolean result, final NestedWord<MSODAlphabetSymbol> word,

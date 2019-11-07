@@ -63,8 +63,7 @@ public final class MSODIntOperationsTest {
 	private Script mScript;
 	private ILogger mLogger;
 
-	MSODOperations mMSODOperations =
-			new MSODOperations(new MSODFormulaOperationsInt(), new MSODAutomataOperationsBuchi());
+	MSODOperations mMSODOperations;
 
 	@Rule
 	public final ExpectedException mNoException = ExpectedException.none();
@@ -78,6 +77,9 @@ public final class MSODIntOperationsTest {
 
 		mScript.setLogic(Logics.UFLIA);
 		mScript.declareSort("SetOfInt", 0);
+
+		mMSODOperations = new MSODOperations(mServiceProvider, mScript, mLogger, new MSODFormulaOperationsInt(),
+				new MSODAutomataOperationsBuchi());
 	}
 
 	private void test(final Boolean result, final NestedLassoWord<MSODAlphabetSymbol> word,

@@ -29,8 +29,9 @@ package de.uni_freiburg.informatik.ultimate.source.smtparser;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.mso.MSODScript.MSODLogic;
 
 /**
  *
@@ -41,11 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 public class SmtParserPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public enum SmtParserMode {
-		GenericSmtSolver, MsoSolver, UltimateEliminator, UltimateTreeAutomizer,
-	}
-
-	public enum MsoLogic {
-		MSODInt, MSODNat, MSODIntWeak, MSODNatWeak,
+		GenericSmtSolver, MSODSolver, UltimateEliminator, UltimateTreeAutomizer,
 	}
 
 	public static final String LABEL_SMT_PARSER_MODE = "SmtParser Mode";
@@ -53,7 +50,7 @@ public class SmtParserPreferenceInitializer extends UltimatePreferenceInitialize
 	// @formatter:off
 	public static final String TOOLTIP_SMT_PARSER_MODE =
 			SmtParserMode.GenericSmtSolver.toString() + ": Apply some SMT solver." + System.lineSeparator() +
-			SmtParserMode.MsoSolver.toString() + ": Presume that input uses our MSO logic, apply our MSO Solver." + System.lineSeparator() +
+			SmtParserMode.MSODSolver.toString() + ": Presume that input uses our MSO logic, apply our MSO Solver." + System.lineSeparator() +
 			SmtParserMode.UltimateEliminator.toString() + ": Run UltimateElimintor. " + System.lineSeparator() +
 			SmtParserMode.UltimateTreeAutomizer.toString() + ": Presume that input contains Horn clauses, run UltimateTreeAutomizer.";
 	// @formatter:on
@@ -73,8 +70,8 @@ public class SmtParserPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String LABEL_Directory = "Directory";
 	public static final String DEF_Directory = "";
 
-	public static final String LABEL_MsoLogic = "MSO logic";
-	public static final MsoLogic DEF_MsoLogic = MsoLogic.MSODInt;
+	public static final String LABEL_MSODLogic = "MSOD logic";
+	public static final MSODLogic DEF_MSODLogic = MSODLogic.MSODInt;
 
 	public static final String LABEL_DoLocalSimplifications = "Use SMTUtils to do local simplifications during parsing";
 	public static final boolean DEF_DoLocalSimplifications = true;
@@ -137,13 +134,14 @@ public class SmtParserPreferenceInitializer extends UltimatePreferenceInitialize
 				// new UltimatePreferenceItem<String>(LABEL_Filename,
 				// DEF_Filename, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_Directory, DEF_Directory, PreferenceType.Directory),
-				new UltimatePreferenceItem<>(LABEL_MsoLogic, DEF_MsoLogic, PreferenceType.Combo, MsoLogic.values()),
+				new UltimatePreferenceItem<>(LABEL_MSODLogic, DEF_MSODLogic, PreferenceType.Combo, MSODLogic.values()),
 				new UltimatePreferenceItem<>(LABEL_FilterUnusedDeclarationsMode, DEF_FilterUnusedDeclarationsMode,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DoLocalSimplifications, DEF_DoLocalSimplifications,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_Solver, DEF_Solver, PreferenceType.Combo, SolverMode.values()),
-				new UltimatePreferenceItem<>(LABEL_EXTERNAL_SOLVER_COMMAND, DEF_ExtSolverCommand, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_EXTERNAL_SOLVER_COMMAND, DEF_ExtSolverCommand,
+						PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_SMT_DUMP_PATH, DEF_SmtDumpPath, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_AutomataDumpPath, DEF_AutomataDumpPath, PreferenceType.String),

@@ -55,17 +55,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.mso.MSODAutomataOperationsBuchi;
-import de.uni_freiburg.informatik.ultimate.mso.MSODAutomataOperationsWeak;
-import de.uni_freiburg.informatik.ultimate.mso.MSODFormulaOperationsInt;
-import de.uni_freiburg.informatik.ultimate.mso.MSODFormulaOperationsNat;
-import de.uni_freiburg.informatik.ultimate.mso.MSODOperations;
 import de.uni_freiburg.informatik.ultimate.mso.MSODScript;
+import de.uni_freiburg.informatik.ultimate.mso.MSODScript.MSODLogic;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtInterpolLogProxyWrapper;
-import de.uni_freiburg.informatik.ultimate.source.smtparser.SmtParserPreferenceInitializer.MsoLogic;
 import de.uni_freiburg.informatik.ultimate.source.smtparser.SmtParserPreferenceInitializer.SmtParserMode;
 import de.uni_freiburg.informatik.ultimate.source.smtparser.chc.HCGBuilderHelper;
 import de.uni_freiburg.informatik.ultimate.source.smtparser.chc.HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver;
@@ -189,8 +184,8 @@ public class SmtParser implements ISource {
 				.getString(SmtParserPreferenceInitializer.LABEL_Directory);
 		final SmtParserMode smtParserMode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(SmtParserPreferenceInitializer.LABEL_SMT_PARSER_MODE, SmtParserMode.class);
-		final MsoLogic msoLogic = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getEnum(SmtParserPreferenceInitializer.LABEL_MsoLogic, MsoLogic.class);
+		final MSODLogic msodLogic = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(SmtParserPreferenceInitializer.LABEL_MSODLogic, MSODLogic.class);
 		final boolean filterUnusedDeclarationsMode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(SmtParserPreferenceInitializer.LABEL_FilterUnusedDeclarationsMode);
 
@@ -225,42 +220,9 @@ public class SmtParser implements ISource {
 		}
 			break;
 
-		case MsoSolver: {
+		case MSODSolver: {
 			mLogger.info("Running our experimental MSO solver on input file using ...");
-
-			switch (msoLogic) {
-
-			case MSODNatWeak: {
-				mLogger.info("MSODNatWeak");
-				script = new MSODScript(mServices, mLogger,
-						new MSODOperations(new MSODFormulaOperationsNat(), new MSODAutomataOperationsWeak()));
-			}
-				break;
-
-			case MSODNat: {
-				mLogger.info("MSODNat");
-				script = new MSODScript(mServices, mLogger,
-						new MSODOperations(new MSODFormulaOperationsNat(), new MSODAutomataOperationsBuchi()));
-			}
-				break;
-
-			case MSODIntWeak: {
-				mLogger.info("MSODIntWeak");
-				script = new MSODScript(mServices, mLogger,
-						new MSODOperations(new MSODFormulaOperationsInt(), new MSODAutomataOperationsWeak()));
-			}
-				break;
-
-			case MSODInt: {
-				mLogger.info("MSODInt");
-				script = new MSODScript(mServices, mLogger,
-						new MSODOperations(new MSODFormulaOperationsInt(), new MSODAutomataOperationsBuchi()));
-			}
-				break;
-
-			default:
-				throw new AssertionError("unknown value " + msoLogic);
-			}
+			script = new MSODScript(mServices, mLogger, msodLogic);
 		}
 			break;
 

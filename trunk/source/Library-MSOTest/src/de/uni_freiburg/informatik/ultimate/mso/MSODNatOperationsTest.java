@@ -57,14 +57,12 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
 public final class MSODNatOperationsTest {
-
 	private IUltimateServiceProvider mServiceProvider;
 	private AutomataLibraryServices mServices;
 	private Script mScript;
 	private ILogger mLogger;
 
-	MSODOperations mMSODOperations =
-			new MSODOperations(new MSODFormulaOperationsNat(), new MSODAutomataOperationsBuchi());
+	MSODOperations mMSODOperations;
 
 	@Rule
 	public final ExpectedException mNoException = ExpectedException.none();
@@ -78,6 +76,9 @@ public final class MSODNatOperationsTest {
 
 		mScript.setLogic(Logics.UFLIA);
 		mScript.declareSort("SetOfInt", 0);
+
+		mMSODOperations = new MSODOperations(mServiceProvider, mScript, mLogger, new MSODFormulaOperationsNat(),
+				new MSODAutomataOperationsBuchi());
 	}
 
 	private void test(final Boolean result, final NestedLassoWord<MSODAlphabetSymbol> word,
