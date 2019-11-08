@@ -50,6 +50,10 @@ public final class MSODUtils {
 
 	public static final String SET_OF_INT_SORT = "SetOfInt";
 
+	private MSODUtils() {
+		throw new UnsupportedOperationException("Instantiation of utility class.");
+	}
+
 	/**
 	 * Returns sort SetOfInt.
 	 */

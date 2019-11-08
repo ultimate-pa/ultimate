@@ -31,14 +31,13 @@ package de.uni_freiburg.informatik.ultimate.mso;
 import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * This class provides methods to construct automata corresponding to given MSOD-Formulas over the set of natural
+ * This class provides methods to construct automata that correspond to a given MSOD-Formula over the set of natural
  * numbers.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
@@ -47,8 +46,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict inequality of the form "x < c".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type Int or c is less than 0.
 	 */
@@ -89,8 +86,6 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict inequality of the form "x - y < c"
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int or c is less than 0.
 	 */
@@ -142,8 +137,6 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict inequality of the form "-x < c".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type Int or c is less than 0.
 	 */
@@ -178,8 +171,6 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict subset relation of the form " X ⊊ Y".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
 	 */
@@ -212,8 +203,6 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a subset relation of the form " X ⊆ Y".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
 	 */
@@ -242,10 +231,8 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns an {@link INestedWordAutomaton} representing an element relation of the form "x + c ∈ Y".
-	 *
 	 * @throws IllegalArgumentException
-	 *             if x, y are not of type Int, SetOfInt or c is smaller than 0.
+	 *             if x, y are not of type Int, SetOfInt or c is less than 0.
 	 */
 	@Override
 	public NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomaton(final AutomataLibraryServices services,
@@ -295,10 +282,8 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing an element relation of the form " c ∈ X".
-	 *
 	 * @throws IllegalArgumentException
-	 *             if x is not of type SetOfInt or c is smaller than 0.
+	 *             if x is not of type SetOfInt or c is less than 0.
 	 */
 	@Override
 	public NestedWordAutomaton<MSODAlphabetSymbol, String> constElementAutomaton(final AutomataLibraryServices services,

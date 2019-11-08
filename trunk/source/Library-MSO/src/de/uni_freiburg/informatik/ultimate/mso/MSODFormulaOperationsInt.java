@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * This class provides methods to construct automata corresponding to given MSOD-Formulas over the set of integers
+ * This class provides methods to construct automata that correspond to a given MSOD-Formula over the set of integer
  * numbers.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
@@ -49,8 +49,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict inequality of the form "x < c".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type Int.
 	 */
@@ -114,17 +112,11 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns an {@link INestedWordAutomaton} representing a strict inequality of the form "x - y < c". The automaton
-	 * consists of four parts, one for each of the following case distinctions:
-	 * <ul>
-	 * <li>x >= 0 &and; y >= 0
-	 * <li>x < 0 &and; y < 0
-	 * <li>x >= 0 &and; y < 0
-	 * <li>x < 0 &and; y >= 0
-	 * </ul>
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int.
+	 *
+	 * @throws AutomataLibraryException
+	 *             if construction of {@link Union} fails
 	 */
 	@Override
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAutomaton(final AutomataLibraryServices services,
@@ -150,8 +142,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing one part of the strict inequality automaton of "x - y < c",
-	 * for x >= 0 and y >= 0.
+	 * Returns a {@link NestedWordAutomaton} that represents a part of the
+	 * {@link #strictIneqAutomaton(AutomataLibraryServices, Term, Term, Rational)}. Part: x >= 0 and y >= 0.
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartOne(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
@@ -214,8 +206,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing one part of the strict inequality automaton of "x - y < c",
-	 * for x < 0 and y < 0.
+	 * Returns a {@link NestedWordAutomaton} that represents a part of the
+	 * {@link #strictIneqAutomaton(AutomataLibraryServices, Term, Term, Rational)}. Part: x < 0 and y < 0.
 	 */
 
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartTwo(
@@ -282,8 +274,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing one part of the strict inequality automaton of "x - y < c",
-	 * for x >= 0 and y < 0.
+	 * Returns a {@link NestedWordAutomaton} that represents a part of the
+	 * {@link #strictIneqAutomaton(AutomataLibraryServices, Term, Term, Rational)}. Part: x >= 0 and y < 0.
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartThree(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
@@ -347,8 +339,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing one part of the strict inequality automaton of "x - y < c",
-	 * for x < 0 and y >= 0.
+	 * Returns a {@link NestedWordAutomaton} that represents a part of the
+	 * {@link #strictIneqAutomaton(AutomataLibraryServices, Term, Term, Rational)}. Part: x < 0 and y >= 0.
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartFour(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
@@ -432,8 +424,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict inequality of the form "-x < c".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int.
 	 */
@@ -504,8 +494,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict subset relation of the form " X ⊊ Y".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
 	 */
@@ -539,8 +527,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a subset relation of the form " X ⊆ Y".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
 	 */
@@ -569,17 +555,11 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns an {@link INestedWordAutomaton} representing an element relation of the form "x + c ∈ Y". The automaton
-	 * consists of four parts, one for each of the following case distinctions:
-	 * <ul>
-	 * <li>x + c >= 0 &and; x >= 0
-	 * <li>x + c < 0 &and; x < 0
-	 * <li>x + c >= 0 &and; x < 0
-	 * <li>x + c < 0 &and; x >= 0
-	 * </ul>
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int respectively SetOfInt.
+	 *
+	 * @throws AutomataLibraryException
+	 *             if construction of {@link Union} fails
 	 */
 	@Override
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomaton(final AutomataLibraryServices services,
@@ -604,8 +584,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x+c>=0
-	 * and x>=0
+	 * Returns a {@link NestedWordAutomaton} that represents a part of the
+	 * {@link #elementAutomaton(AutomataLibraryServices, Term, Rational, Term)}. Part: x+c >= 0 and x >= 0.
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartOne(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
@@ -665,8 +645,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x+c<0 and
-	 * x<0.
+	 * Returns a {@link NestedWordAutomaton} that represents a part of the
+	 * {@link #elementAutomaton(AutomataLibraryServices, Term, Rational, Term)}. Part: x+c < 0 and x < 0.
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartTwo(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
@@ -729,8 +709,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c >=
-	 * 0 and x < 0
+	 * Returns a {@link NestedWordAutomaton} that represents a part of the
+	 * {@link #elementAutomaton(AutomataLibraryServices, Term, Rational, Term)}. Part: x+c >= 0 and x < 0.
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartThree(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
@@ -805,8 +785,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing one part of the elementAutomaton of "x + c ∈ Y", for x + c < 0
-	 * and x > = 0
+	 * Returns a {@link NestedWordAutomaton} that represents a part of the
+	 * {@link #elementAutomaton(AutomataLibraryServices, Term, Rational, Term)}. Part: x+c < 0 and x >= 0.
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartFour(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
@@ -880,8 +860,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing an element relation of the form " c ∈ X".
-	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type SetOfInt.
 	 */

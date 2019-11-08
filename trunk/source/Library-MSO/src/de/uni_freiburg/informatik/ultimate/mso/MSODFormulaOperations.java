@@ -35,13 +35,12 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * This class provides methods to construct an automata that correspond to a given MSOD-Formula.
+ * This class provides methods to construct automata that correspond to a given MSOD-Formula.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -49,16 +48,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public abstract class MSODFormulaOperations {
 
 	/**
-	 * Constructs an empty automaton.
+	 * Returns an empty {@link NestedWordAutomaton}.
 	 */
-	public NestedWordAutomaton<MSODAlphabetSymbol, String> emptyAutomaton(final AutomataLibraryServices services) {
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
+			emptyAutomaton(final AutomataLibraryServices services) {
+
 		return new NestedWordAutomaton<>(services, new VpAlphabet<>(new HashSet<>()), new StringFactory());
 	}
 
 	/**
-	 * Constructs an automaton that represents "true".
+	 * Returns an {@link NestedWordAutomaton} that represents "true".
 	 */
-	public NestedWordAutomaton<MSODAlphabetSymbol, String> trueAutomaton(final AutomataLibraryServices services) {
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
+			trueAutomaton(final AutomataLibraryServices services) {
 
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		final MSODAlphabetSymbol symbol = new MSODAlphabetSymbol();
@@ -71,9 +73,10 @@ public abstract class MSODFormulaOperations {
 	}
 
 	/**
-	 * Constructs an automaton that represents "false".
+	 * Returns an {@link NestedWordAutomaton} that represents "false".
 	 */
-	public NestedWordAutomaton<MSODAlphabetSymbol, String> falseAutomaton(final AutomataLibraryServices services) {
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
+			falseAutomaton(final AutomataLibraryServices services) {
 
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		final MSODAlphabetSymbol symbol = new MSODAlphabetSymbol();
@@ -86,51 +89,45 @@ public abstract class MSODFormulaOperations {
 	}
 
 	/**
-	 * Constructs an automaton that represents "x < c".
+	 * Returns an {@link INestedWordAutomaton} that represents a strict inequality of the form "x < c".
 	 */
 	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String>
 			strictIneqAutomaton(final AutomataLibraryServices services, final Term x, final Rational c);
 
 	/**
-	 * Constructs an automaton that represents "x-y < c".
-	 *
-	 * @throws AutomataLibraryException
-	 *             if construction of {@link Union} fails
+	 * Returns an {@link INestedWordAutomaton} that represents a strict inequality of the form "x-y < c".
 	 */
 	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String>
 			strictIneqAutomaton(final AutomataLibraryServices services, final Term x, final Term y, final Rational c)
 					throws AutomataLibraryException;
 
 	/**
-	 * Constructs an automaton that represents "-x < c".
+	 * Returns an {@link INestedWordAutomaton} that represents a strict inequality of the form "-x < c".
 	 */
 	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String>
 			strictNegIneqAutomaton(final AutomataLibraryServices services, final Term x, final Rational c);
 
 	/**
-	 * Constructs an automaton that represents "X strictSubsetInt Y".
+	 * Returns an {@link INestedWordAutomaton} that represents a strict subset relation of the form "X ⊊ Y".
 	 */
 	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String>
 			strictSubsetAutomaton(final AutomataLibraryServices services, final Term x, final Term y);
 
 	/**
-	 * Constructs an automaton that represents "X subsetInt Y".
+	 * Returns an {@link INestedWordAutomaton} that represents a subset relation of the form "X ⊆ Y".
 	 */
 	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String>
 			subsetAutomaton(final AutomataLibraryServices services, final Term x, final Term y);
 
 	/**
-	 * Constructs an automaton that represents "x+c element Y".
-	 *
-	 * @throws AutomataLibraryException
-	 *             if construction of {@link Union} fails
+	 * Returns an {@link INestedWordAutomaton} that represents an element relation of the form "x+c ∈ Y".
 	 */
 	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String>
 			elementAutomaton(final AutomataLibraryServices services, final Term x, final Rational c, final Term y)
 					throws AutomataLibraryException;
 
 	/**
-	 * Constructs an automaton that represents "c element X".
+	 * Returns an {@link INestedWordAutomaton} that represents an element relation of the form "c ∈ X".
 	 */
 	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String>
 			constElementAutomaton(final AutomataLibraryServices services, final Rational c, final Term x);
