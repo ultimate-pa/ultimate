@@ -5,4 +5,4 @@ Input var3 is bool
 CONST MAX_TIME is 50.0
 
 
-req1: req1: Globally It is always the case that after "var1" holds for at least "MAX_TIME" time units and "var2" holds, then "var3" holds
+req1: Globally It is always the case that after "var1" holds for at least "MAX_TIME" time units and "var2" holds, then "var3" holds
