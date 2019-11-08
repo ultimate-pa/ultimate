@@ -292,6 +292,11 @@ public final class AutomatonFreeRefinementEngine<LETTER extends IIcfgTransition<
 		try {
 			logModule("Using interpolant generator", interpolantGenerator);
 			status = interpolantGenerator.getInterpolantComputationStatus();
+			if (status == null) {
+				mLogger.fatal("No interpolant computation status provided, assuming failure");
+				throw new AssertionError(
+						interpolantGenerator.getClass() + " provided no interpolant computation status");
+			}
 			if (status.wasComputationSuccesful()) {
 				return interpolantGenerator;
 			}
