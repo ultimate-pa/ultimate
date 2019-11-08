@@ -1258,9 +1258,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	@Override
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
 		if (isCorrect() == LBool.UNSAT) {
-			return new InterpolantComputationStatus(true, null, null);
+			return new InterpolantComputationStatus();
 		} else if (isCorrect() == LBool.SAT) {
-			return new InterpolantComputationStatus(false, ItpErrorStatus.TRACE_FEASIBLE, null);
+			return new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
 		} else {
 			throw new UnsupportedOperationException();
 		}

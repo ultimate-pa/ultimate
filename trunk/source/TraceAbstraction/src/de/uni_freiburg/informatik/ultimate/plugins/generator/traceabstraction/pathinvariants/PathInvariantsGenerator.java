@@ -150,12 +150,11 @@ public final class PathInvariantsGenerator<LETTER extends IAction> implements II
 			}
 			mLogger.info("Invariants found and " + "processed.");
 			mLogger.info("Got a Invariant map of length " + mInterpolants.length);
-			mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
+			mInterpolantComputationStatus = new InterpolantComputationStatus();
 		} else {
 			mInterpolants = null;
 			mLogger.info("No invariants found.");
-			mInterpolantComputationStatus =
-					new InterpolantComputationStatus(false, ItpErrorStatus.ALGORITHM_FAILED, null);
+			mInterpolantComputationStatus = new InterpolantComputationStatus(ItpErrorStatus.ALGORITHM_FAILED, null);
 		}
 	}
 

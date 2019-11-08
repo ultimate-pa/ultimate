@@ -56,7 +56,24 @@ public class InterpolantComputationStatus {
 	private final ItpErrorStatus mStatus;
 	private final Throwable mException;
 
-	public InterpolantComputationStatus(final boolean computationSuccessful, final ItpErrorStatus status,
+	/**
+	 * Create {@link InterpolantComputationStatus} that signifies success.
+	 */
+	public InterpolantComputationStatus() {
+		this(true, null, null);
+	}
+
+	/**
+	 * Create {@link InterpolantComputationStatus} that signifies failure and give reasons for failure.
+	 *
+	 * @param status
+	 * @param exception
+	 */
+	public InterpolantComputationStatus(final ItpErrorStatus status, final Throwable exception) {
+		this(false, status, exception);
+	}
+
+	private InterpolantComputationStatus(final boolean computationSuccessful, final ItpErrorStatus status,
 			final Throwable exception) {
 		super();
 		mComputationSuccessful = computationSuccessful;

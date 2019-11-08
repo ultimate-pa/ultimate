@@ -741,7 +741,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private AbsIntInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<LETTER> cex,
 				final IPredicate[] sequence, final CachingHoareTripleChecker htc, final AbsIntPredicate<?> preCond,
 				final AbsIntPredicate<?> postCond) {
-			super(predicateUnifier, cex, preCond, postCond, new InterpolantComputationStatus(true, null, null));
+			super(predicateUnifier, cex, preCond, postCond, new InterpolantComputationStatus());
 			mInterpolants = Objects.requireNonNull(sequence);
 			mHtc = Objects.requireNonNull(htc);
 		}
@@ -811,7 +811,7 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		private AbsIntFailedInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<LETTER> cex,
 				final ItpErrorStatus status, final Exception ex) {
-			super(predicateUnifier, cex, null, null, new InterpolantComputationStatus(false, status, ex));
+			super(predicateUnifier, cex, null, null, new InterpolantComputationStatus(status, ex));
 			mReason = new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, ex,
 					ExceptionHandlingCategory.KNOWN_IGNORE);
 		}

@@ -104,7 +104,7 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 		}
 		mInstantiateArrayExt = instanticateArrayExt;
 		if (isCorrect() == LBool.UNSAT) {
-			InterpolantComputationStatus ics = new InterpolantComputationStatus(true, null, null);
+			InterpolantComputationStatus ics = new InterpolantComputationStatus();
 			try {
 				computeInterpolants(new AllIntegers(), interpolation);
 				mTraceCheckBenchmarkGenerator.reportSequenceOfInterpolants(Arrays.asList(mInterpolants),
@@ -130,13 +130,11 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 				}
 				if (e instanceof UnsupportedOperationException && checkIfMessageMeansSolverCannotInterpolate(message)) {
 					// SMTInterpol throws this during interpolation for unsupported fragments such as arrays
-					ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT,
-							e);
+					ics = new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, e);
 				} else if (e instanceof SMTLIBException && "Unsupported non-linear arithmetic".equals(message)) {
 					// SMTInterpol was somehow able to determine satisfiability but detects
 					// non-linear arithmetic during interpolation
-					ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT,
-							e);
+					ics = new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, e);
 				} else {
 					throw e;
 				}
@@ -146,7 +144,7 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 				if (message != null && message.startsWith("Did not find overload for function =")) {
 					// DD: this is a known bug in SMTInterpol; until it is fixed, we catch it here so that we can run
 					// benchmarks
-					ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CRASH, e);
+					ics = new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CRASH, e);
 				} else {
 					throw e;
 				}
@@ -154,11 +152,10 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 
 			mInterpolantComputationStatus = ics;
 		} else if (isCorrect() == LBool.SAT) {
-			mInterpolantComputationStatus =
-					new InterpolantComputationStatus(false, ItpErrorStatus.TRACE_FEASIBLE, null);
+			mInterpolantComputationStatus = new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
 		} else {
 			mInterpolantComputationStatus =
-					new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, null);
+					new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, null);
 		}
 	}
 

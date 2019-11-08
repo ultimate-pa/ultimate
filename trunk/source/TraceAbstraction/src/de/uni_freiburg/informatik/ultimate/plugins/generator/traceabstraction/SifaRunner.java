@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 
 /**
  * {@link IInterpolatingTraceCheck} that performs symbolic interpretation with fluid abstractions (SIFA).
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -108,7 +108,7 @@ public final class SifaRunner<LETTER extends IIcfgTransition<?>> implements IInt
 			mIsCorrect = LBool.UNKNOWN;
 			mTraceCheckReasonUnknown =
 					new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT, tce, ExceptionHandlingCategory.KNOWN_IGNORE);
-			mInterpolantComputationStatus = new InterpolantComputationStatus(true, ItpErrorStatus.OTHER, tce);
+			mInterpolantComputationStatus = new InterpolantComputationStatus(ItpErrorStatus.OTHER, tce);
 			return;
 		}
 
@@ -124,13 +124,12 @@ public final class SifaRunner<LETTER extends IIcfgTransition<?>> implements IInt
 		if (unifier.getFalsePredicate() == mPostcondition) {
 			mIsCorrect = LBool.UNSAT;
 			mTraceCheckReasonUnknown = null;
-			mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
+			mInterpolantComputationStatus = new InterpolantComputationStatus();
 		} else {
 			mIsCorrect = LBool.UNKNOWN;
 			mTraceCheckReasonUnknown = new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, null,
 					ExceptionHandlingCategory.KNOWN_IGNORE);
-			mInterpolantComputationStatus =
-					new InterpolantComputationStatus(true, ItpErrorStatus.ALGORITHM_FAILED, null);
+			mInterpolantComputationStatus = new InterpolantComputationStatus(ItpErrorStatus.ALGORITHM_FAILED, null);
 		}
 		mTracecheckFinishedNormally = true;
 	}

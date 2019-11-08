@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.mcr.MCR;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.Mcr;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.StatelessRun;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -32,14 +32,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIpTcStrategyModule<MCR<LETTER>, LETTER>,
-		IIpAbStrategyModule<LETTER>, Function<List<LETTER>, Pair<LBool, IPredicate[]>> {
+public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIpTcStrategyModule<Mcr<LETTER>, LETTER>,
+		IIpAbStrategyModule<LETTER>, Function<List<LETTER>, Pair<LBool, QualifiedTracePredicates>> {
 
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<?> mPrefs;
 	private final StrategyFactory<LETTER> mStrategyFactory;
 	private final IPredicateUnifier mPredicateUnifier;
-	private MCR<LETTER> mMcr;
+	private Mcr<LETTER> mMcr;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private AutomatonFreeRefinementEngine<LETTER> mRefinementEngine;
 	private IpAbStrategyModuleResult<LETTER> mAutomatonResult;
@@ -104,7 +104,7 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 
 	@Override
 	public Collection<QualifiedTracePredicates> getPerfectInterpolantSequences() {
-		final MCR<LETTER> tc = getOrConstruct();
+		final Mcr<LETTER> tc = getOrConstruct();
 		if (tc.isPerfectSequence()) {
 			return Collections.singleton(new QualifiedTracePredicates(tc.getIpp(), tc.getClass(), true));
 		}
@@ -113,7 +113,7 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 
 	@Override
 	public Collection<QualifiedTracePredicates> getImperfectInterpolantSequences() {
-		final MCR<LETTER> tc = getOrConstruct();
+		final Mcr<LETTER> tc = getOrConstruct();
 		if (!tc.isPerfectSequence()) {
 			return Collections.singleton(new QualifiedTracePredicates(tc.getIpp(), tc.getClass(), false));
 		}
@@ -121,13 +121,12 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 	}
 
 	@Override
-	public MCR<LETTER> getOrConstruct() {
+	public Mcr<LETTER> getOrConstruct() {
 		if (mMcr == null) {
 			try {
-				mMcr = new MCR<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, mCounterexample, this);
+				mMcr = new Mcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, mCounterexample, this);
 			} catch (final AutomataLibraryException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 		return mMcr;
@@ -144,27 +143,23 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 	}
 
 	@Override
-	public Pair<LBool, IPredicate[]> apply(final List<LETTER> trace) {
+	public Pair<LBool, QualifiedTracePredicates> apply(final List<LETTER> trace) {
 		runEngine(trace);
 		final LBool feasibility = mRefinementEngine.getCounterexampleFeasibility();
 		if (feasibility != LBool.UNSAT) {
 			return new Pair<>(feasibility, null);
 		}
 		// Extract interpolants, try to get a perfect sequence
-		final Collection<QualifiedTracePredicates> proves = mRefinementEngine.getInfeasibilityProof();
-		QualifiedTracePredicates resultProof = proves.iterator().next();
-		for (final QualifiedTracePredicates proof : proves) {
-			if (proof.isPerfect()) {
-				resultProof = proof;
-				break;
-			}
+		final Collection<QualifiedTracePredicates> proofs = mRefinementEngine.getInfeasibilityProof();
+		if (proofs.isEmpty()) {
+			return new Pair<>(feasibility, null);
 		}
-		final List<IPredicate> predicates = resultProof.getPredicates();
-		return new Pair<>(feasibility, predicates.toArray(new IPredicate[predicates.size()]));
+		return new Pair<>(feasibility,
+				proofs.stream().filter(a -> a.isPerfect()).findAny().orElse(proofs.stream().findFirst().get()));
 	}
 
 	private void runEngine(final List<LETTER> trace) {
-		final IRun<LETTER, ?> run = new StatelessRun<>(TraceCheckUtils.toNestedWord(mCounterexample));
+		final IRun<LETTER, ?> run = new StatelessRun<>(TraceCheckUtils.toNestedWord(trace));
 		// Run mRefinementEngine for the given trace
 		final RefinementStrategy refinementStrategy = mPrefs.getMcrRefinementStrategy();
 		if (refinementStrategy == RefinementStrategy.MCR) {
