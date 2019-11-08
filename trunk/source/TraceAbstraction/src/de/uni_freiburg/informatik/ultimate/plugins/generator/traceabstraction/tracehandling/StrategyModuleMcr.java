@@ -10,6 +10,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -127,7 +129,11 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 	public Mcr<LETTER> getOrConstruct() {
 		if (mMcr == null) {
 			try {
-				mMcr = new Mcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, mCounterexample, this);
+				// TODO: Is this cast always safe?
+				final VpAlphabet<LETTER> alphabet =
+						((INestedWordAutomaton<LETTER, IPredicate>) mAbstraction).getVpAlphabet();
+				mMcr = new Mcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, mCounterexample, alphabet,
+						this);
 			} catch (final AutomataLibraryException e) {
 				throw new RuntimeException(e);
 			}
