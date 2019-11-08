@@ -37,9 +37,9 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -225,6 +225,18 @@ public class KnoepflesbrunnenBenchmark {
 		final String expectedResultAsString = "(let ((.cse20 (+ i (- 1))) (.cse22 (+ j 1)) (.cse23 (select a j))) (let ((.cse9 (< i j)) (.cse14 (<= V_6 i)) (.cse19 (exists ((?V_7 Int)) (and (<= ?V_7 i) (<= j ?V_7) (<= (select (store a (+ j 1) (select a j)) ?V_7) t)))) (.cse17 (< j 0)) (.cse16 (let ((.cse24 (store a .cse22 .cse23))) (< (select .cse24 i) (select .cse24 .cse20)))) (.cse15 (not (= .cse20 (+ j (- 1))))) (.cse8 (= .cse20 j)) (.cse12 (< i 1)) (.cse0 (<= 0 j)) (.cse11 (forall ((?V_10 Int)) (or (not (<= ?V_10 i)) (< t (select a ?V_10)) (not (<= (+ j 1) ?V_10))))) (.cse1 (= V_5 V_6)) (.cse2 (< t .cse23)) (.cse3 (forall ((?V_11 Int) (?V_12 Int)) (or (not (<= 0 ?V_11)) (not (<= 0 ?V_12)) (not (<= ?V_12 ?V_11)) (<= (select a ?V_12) (select a ?V_11)) (not (<= (+ ?V_11 1) i))))) (.cse4 (<= 0 .cse22)) (.cse5 (<= .cse22 i)) (.cse6 (<= 0 V_5)) (.cse7 (<= 1 i)) (.cse18 (exists ((?V_9 Int) (?V_8 Int)) (and (<= ?V_9 ?V_8) (<= (+ ?V_8 1) i) (<= 0 ?V_8) (<= 0 ?V_9) (let ((.cse21 (store a (+ j 1) (select a j)))) (< (select .cse21 ?V_8) (select .cse21 ?V_9)))))) (.cse13 (<= (select a .cse20) (select a i))) (.cse10 (< i V_6))) (or (and .cse0 .cse1 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse8 .cse9 .cse10) (and .cse0 .cse1 .cse11 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse12 .cse13 .cse10) (and .cse0 .cse1 .cse11 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse9 .cse13 .cse10) (and .cse0 .cse14 .cse1 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse8 .cse10) (and .cse11 .cse3 .cse4 .cse5 .cse15 .cse0 .cse1 .cse16 .cse2 .cse6 .cse7 .cse13 .cse10) (and .cse0 .cse14 .cse1 .cse11 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse13 .cse10) (and .cse0 .cse1 .cse11 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse17 .cse13 .cse10) (and .cse0 .cse1 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse18 .cse8 .cse10) (and .cse11 .cse19 .cse3 .cse4 .cse5 .cse15 .cse0 .cse1 .cse2 .cse6 .cse7 .cse13 .cse10) (and .cse0 .cse1 .cse19 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse8 .cse15 .cse10) (and .cse0 .cse1 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse8 .cse17 .cse10) (and .cse0 .cse1 .cse16 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse8 .cse15 .cse10) (and .cse0 .cse1 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse8 .cse12 .cse10) (and .cse0 .cse11 .cse1 .cse2 .cse3 .cse4 .cse5 .cse6 .cse7 .cse18 .cse13 .cse10))))";
 		QuantifierEliminationTest.runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
+	
+//	@Test
+	public void choirNightTrezor01() {
+		final Sort smtInt = SmtSortUtils.getIntSort(mScript);
+		final Sort array = SmtSortUtils.getArraySort(mScript, smtInt, smtInt);
+		mScript.declareFun("b", new Sort[0], smtInt);
+		final String formulaAsString = "(and (forall ((v_prenex_1 Int)) (or (not (< i v_prenex_1)) (< b v_prenex_1) (< (mod (+ (* b 4294967295) v_prenex_1) 4294967296) 1))) (forall ((a Int)) (or (< (mod (+ b 1) 4294967296) a) (< (mod (+ (* (mod (+ b 1) 4294967296) 4294967295) a) 4294967296) 1) (not (< i a)))))";
+		final String expectedResultAsString = "?";
+		QuantifierEliminationTest.runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+	 
 
 
 }
