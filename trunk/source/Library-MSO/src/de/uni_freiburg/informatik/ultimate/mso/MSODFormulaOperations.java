@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * This class provides methods to construct automata corresponding to given MSOD-Formulas.
+ * This class provides methods to construct an automata that correspond to a given MSOD-Formula.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)

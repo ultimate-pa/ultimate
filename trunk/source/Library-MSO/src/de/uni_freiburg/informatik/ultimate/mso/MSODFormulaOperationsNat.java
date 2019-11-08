@@ -61,9 +61,10 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 		}
 
 		final int cInt = SmtUtils.toInt(c).intValueExact();
-		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
 		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
+
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
 
 		if (c.signum() != 1) {
@@ -75,7 +76,6 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 		automaton.addInternalTransition("final", x0, "final");
 
 		String pred = "init";
-
 		for (int i = 0; i < cInt - 1; i++) {
 			final String state = "c" + i;
 			automaton.addState(false, false, state);
@@ -83,15 +83,13 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 			automaton.addInternalTransition(pred, x0, state);
 			pred = state;
 		}
-
 		automaton.addInternalTransition(pred, x1, "final");
 
 		return automaton;
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict inequality of the
-	 * form "x - y < c"
+	 * Returns a {@link NestedWordAutomaton} representing a strict inequality of the form "x - y < c"
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int or c is less than 0.
@@ -105,12 +103,12 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 		}
 
 		final int cInt = SmtUtils.toInt(c).intValueExact();
+		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
+		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
+		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
+		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(x, y, true, true);
+
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
-		final MSODAlphabetSymbol xy00, xy01, xy10, xy11;
-		xy00 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, false });
-		xy01 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, true });
-		xy10 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, false });
-		xy11 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, true });
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
 		automaton.addState(true, false, "init");
@@ -131,7 +129,6 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 		automaton.addInternalTransition("init", xy11, "final");
 
 		String pred = "s1";
-
 		for (int i = 0; i < cInt - 2; i++) {
 			final String state = "c" + i;
 			automaton.addState(false, false, state);
@@ -139,30 +136,29 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 			automaton.addInternalTransition(pred, xy10, "final");
 			pred = state;
 		}
-
 		automaton.addInternalTransition(pred, xy10, "final");
 
 		return automaton;
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict inequality of the
-	 * form "-x < c".
+	 * Returns a {@link NestedWordAutomaton} representing a strict inequality of the form "-x < c".
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type Int or c is less than 0.
 	 */
 	@Override
-	public NestedWordAutomaton<MSODAlphabetSymbol, String> strictNegIneqAutomaton(
-			final AutomataLibraryServices services, final Term x, final Rational c) {
+	public NestedWordAutomaton<MSODAlphabetSymbol, String>
+			strictNegIneqAutomaton(final AutomataLibraryServices services, final Term x, final Rational c) {
 
 		if (!MSODUtils.isIntConstantOrTermVariable(x) || c.isNegative()) {
 			throw new IllegalArgumentException("Input x must be an Int variable and c must be >= 0.");
 		}
 
-		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
 		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
+
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
 
 		automaton.addState(true, false, "init");
@@ -171,21 +167,18 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 		automaton.addInternalTransition("final", x0, "final");
 
 		String pred = "init";
-
 		if (c.signum() == 0) {
 			automaton.addState(false, false, "s0");
 			automaton.addInternalTransition("init", x0, "s0");
 			pred = "s0";
 		}
-
 		automaton.addInternalTransition(pred, x1, "final");
 
 		return automaton;
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a strict subset relation
-	 * of the form " X ⊊ Y".
+	 * Returns a {@link NestedWordAutomaton} representing a strict subset relation of the form " X ⊊ Y".
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type SetOfInt.
@@ -198,12 +191,12 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 			throw new IllegalArgumentException("Input x, y must be SetOfInt variables.");
 		}
 
+		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
+		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
+		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
+		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(x, y, true, true);
+
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
-		final MSODAlphabetSymbol xy00, xy01, xy10, xy11;
-		xy00 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, false });
-		xy01 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, true });
-		xy10 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, false });
-		xy11 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, true });
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
 		automaton.addState(true, false, "init");
@@ -232,12 +225,12 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 			throw new IllegalArgumentException("Input x, y must be SetOfInt variables.");
 		}
 
+		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
+		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
+		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
+		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(x, y, true, true);
+
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
-		final MSODAlphabetSymbol xy00, xy01, xy10, xy11;
-		xy00 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, false });
-		xy01 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, true });
-		xy10 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, false });
-		xy11 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, true });
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
 		automaton.addState(true, true, "init");
@@ -249,8 +242,7 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	}
 
 	/**
-	 * Returns an {@link INestedWordAutomaton} representing an element relation of
-	 * the form "x + c ∈ Y".
+	 * Returns an {@link INestedWordAutomaton} representing an element relation of the form "x + c ∈ Y".
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x, y are not of type Int, SetOfInt or c is smaller than 0.
@@ -259,17 +251,18 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 	public NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomaton(final AutomataLibraryServices services,
 			final Term x, final Rational c, final Term y) {
 
-		if (!MSODUtils.isIntConstantOrTermVariable(x) || !MSODUtils.isSetOfIntConstantOrTermVariable(y) || c.isNegative()) {
+		if (!MSODUtils.isIntConstantOrTermVariable(x) || !MSODUtils.isSetOfIntConstantOrTermVariable(y)
+				|| c.isNegative()) {
 			throw new IllegalArgumentException("Input x, y must be Int, SetOfInt variables and c must be >= 0.");
 		}
 
 		final int cInt = SmtUtils.toInt(c).intValueExact();
+		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
+		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
+		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
+		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(x, y, true, true);
+
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
-		final MSODAlphabetSymbol xy00, xy01, xy10, xy11;
-		xy00 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, false });
-		xy01 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { false, true });
-		xy10 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, false });
-		xy11 = new MSODAlphabetSymbol(new Term[] { x, y }, new boolean[] { true, true });
 		automaton.getAlphabet().addAll(Arrays.asList(xy00, xy01, xy10, xy11));
 
 		automaton.addState(true, false, "init");
@@ -289,7 +282,6 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 		automaton.addInternalTransition("init", xy11, "s0");
 
 		String pred = "s0";
-
 		for (int i = 0; i < cInt - 1; i++) {
 			final String state = "c" + i;
 			automaton.addState(false, false, state);
@@ -297,15 +289,13 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 			automaton.addInternalTransition(pred, xy01, state);
 			pred = state;
 		}
-
 		automaton.addInternalTransition(pred, xy01, "final");
 
 		return automaton;
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing an element relation of the
-	 * form " c ∈ X".
+	 * Returns a {@link NestedWordAutomaton} representing an element relation of the form " c ∈ X".
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type SetOfInt or c is smaller than 0.
@@ -318,9 +308,10 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 			throw new IllegalArgumentException("Input x must be a SetOfInt variable and c must be >= 0.");
 		}
 		final int cInt = SmtUtils.toInt(c).intValueExact();
-		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
 		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
+
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
 		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
 
 		automaton.addState(true, false, "init");
@@ -329,7 +320,6 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 		automaton.addInternalTransition("final", x1, "final");
 
 		String pred = "init";
-
 		for (int i = 0; i < cInt; i++) {
 			final String state = "c" + i;
 			automaton.addState(false, false, state);
@@ -337,7 +327,6 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 			automaton.addInternalTransition(pred, x1, state);
 			pred = state;
 		}
-
 		automaton.addInternalTransition(pred, x1, "final");
 
 		return automaton;

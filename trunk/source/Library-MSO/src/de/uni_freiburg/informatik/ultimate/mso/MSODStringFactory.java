@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplemen
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 
@@ -50,13 +49,14 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFact
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
 public class MSODStringFactory implements IIntersectionStateFactory<String>, IUnionStateFactory<String>,
-		ISinkStateFactory<String>, IDeterminizeStateFactory<String>, IMinimizationStateFactory<String>,
-		IBuchiIntersectStateFactory<String>, IBuchiComplementFkvStateFactory<String> {
+		IDeterminizeStateFactory<String>, IMinimizationStateFactory<String>, IBuchiIntersectStateFactory<String>,
+		IBuchiComplementFkvStateFactory<String> {
 
 	static final String EMPTY = "€";
 	static final String STATE = "q";
 	static final String SINK = "∅SinkState";
-	BigInteger mCounter;
+
+	private BigInteger mCounter;
 
 	public MSODStringFactory() {
 		mCounter = BigInteger.ZERO;
@@ -106,10 +106,10 @@ public class MSODStringFactory implements IIntersectionStateFactory<String>, IUn
 	 * Returns an unique string.
 	 */
 	private String newString() {
-		final StringBuilder builder = new StringBuilder();
-		builder.append(STATE).append(mCounter.toString());
+		final StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append(STATE).append(mCounter.toString());
 		mCounter = mCounter.add(BigInteger.ONE);
 
-		return builder.toString();
+		return stringBuilder.toString();
 	}
 }

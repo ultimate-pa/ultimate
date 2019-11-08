@@ -87,9 +87,9 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 				automaton.addInternalTransition(pred, x0, state);
 				pred = state;
 			}
-
 			automaton.addInternalTransition(pred, x1, "final");
 		}
+
 		if (c > 0) {
 			automaton.addInternalTransition("init", x1, "final");
 
@@ -109,6 +109,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addInternalTransition("s0", x1, "final");
 			automaton.addInternalTransition("s1", x0, "s0");
 		}
+
 		return automaton;
 	}
 
@@ -156,7 +157,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
-
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
 		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
 		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
@@ -209,6 +209,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 				pred = state;
 			}
 		}
+
 		return automaton;
 	}
 
@@ -221,7 +222,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
-
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
 		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
 		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
@@ -277,6 +277,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 				pred = state;
 			}
 		}
+
 		return automaton;
 	}
 
@@ -288,7 +289,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
-
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
 		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
 		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
@@ -342,6 +342,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			}
 			pred = state0;
 		}
+
 		return automaton;
 	}
 
@@ -353,7 +354,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
-
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
 		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
 		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
@@ -405,7 +405,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			}
 
 			String predInner = state1;
-
 			for (int j = 0; j < 2 * (Math.abs(c) - i); j++) {
 				final String state = "c" + i + "_" + j;
 				automaton.addState(false, false, state);
@@ -428,6 +427,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			}
 			pred = state0;
 		}
+
 		return automaton;
 	}
 
@@ -446,7 +446,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		}
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
-
 		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
 		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
 
@@ -500,6 +499,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addInternalTransition("s2", x0, "s1");
 			automaton.addInternalTransition("s1", x1, "final");
 		}
+
 		return automaton;
 	}
 
@@ -608,11 +608,9 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * and x>=0
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartOne(
-			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
-			throws AutomataLibraryException {
+			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
-
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
 		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
 		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
@@ -656,6 +654,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addInternalTransition(pred, xy10, "final");
 			automaton.addInternalTransition(pred, xy11, "final");
 		}
+
 		if (c > 0) {
 			automaton.addInternalTransition("init", xy10, "s1");
 			automaton.addInternalTransition("init", xy11, "s1");
@@ -670,11 +669,9 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * x<0.
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartTwo(
-			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
-			throws AutomataLibraryException {
+			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
-
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
 		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
 		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
@@ -736,11 +733,9 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * 0 and x < 0
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartThree(
-			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
-			throws AutomataLibraryException {
+			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
-
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
 		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
 		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
@@ -801,10 +796,8 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 					automaton.addInternalTransition(predInner, xy01, state);
 					predInner = state;
 				}
-
 				automaton.addInternalTransition(predInner, xy01, "final");
 			}
-
 			pred = state0;
 		}
 
@@ -816,11 +809,9 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * and x > = 0
 	 */
 	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartFour(
-			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y)
-			throws AutomataLibraryException {
+			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
-
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
 		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
 		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(x, y, true, false);
@@ -865,7 +856,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 					automaton.addInternalTransition(predInner, xy01, state);
 					predInner = state;
 				}
-
 				automaton.addInternalTransition(predInner, xy01, "final");
 			}
 
@@ -880,12 +870,12 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 					automaton.addInternalTransition(predInner, xy01, state);
 					predInner = state;
 				}
-
 				automaton.addInternalTransition(predInner, xy10, "final");
 				automaton.addInternalTransition(predInner, xy11, "final");
 			}
 			pred = state0;
 		}
+
 		return automaton;
 	}
 
@@ -904,7 +894,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		}
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
-
 		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
 		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
 
