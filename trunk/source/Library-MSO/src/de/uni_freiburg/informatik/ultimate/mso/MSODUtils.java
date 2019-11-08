@@ -28,15 +28,11 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -132,17 +128,12 @@ public final class MSODUtils {
 	}
 
 	/**
-	 * Returns the alphabet for the given variable names.
+	 * Returns the MSOD alphabet that contains the given variable names.
 	 */
 	public static Set<MSODAlphabetSymbol> createAlphabet(final Term[] terms) {
 		final Set<MSODAlphabetSymbol> symbols = new HashSet<>();
 
-		if (terms.length == 0) {
-			symbols.add(new MSODAlphabetSymbol());
-			return symbols;
-		}
-
-		for (int i = 0; i < Math.pow(2, terms.length); i++) {
+		for (int i = 0; i < (int) Math.pow(2, terms.length); i++) {
 			final MSODAlphabetSymbol symbol = new MSODAlphabetSymbol();
 
 			for (int j = 0; j < terms.length; j++) {
@@ -156,54 +147,19 @@ public final class MSODUtils {
 	}
 
 	/**
-	 * Returns the alphabet for the given variable names. Alphabet symbols are mapped to its string representation.
-	 */
-	public static Map<String, MSODAlphabetSymbol> createAlphabet(final Term term) {
-		final Map<String, MSODAlphabetSymbol> symbols = new HashMap<>();
-
-		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(term, false);
-		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(term, true);
-
-		symbols.put("x0", x0);
-		symbols.put("x1", x1);
-
-		return symbols;
-	}
-
-	/**
-	 * Returns the alphabet for the given variable names. Alphabet symbols are mapped to its string representation.
-	 */
-	public static Map<String, MSODAlphabetSymbol> createAlphabet(final Term term1, final Term term2) {
-		final Map<String, MSODAlphabetSymbol> symbols = new HashMap<>();
-
-		final Term[] terms = { term1, term2 };
-		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(terms, new boolean[] { false, false });
-		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(terms, new boolean[] { false, true });
-		final MSODAlphabetSymbol xy10 = new MSODAlphabetSymbol(terms, new boolean[] { true, false });
-		final MSODAlphabetSymbol xy11 = new MSODAlphabetSymbol(terms, new boolean[] { true, true });
-
-		symbols.put("xy00", xy00);
-		symbols.put("xy01", xy01);
-		symbols.put("xy10", xy10);
-		symbols.put("xy11", xy11);
-
-		return symbols;
-	}
-
-	/**
 	 * Returns the merged alphabet for given inputs.
 	 */
-	public static Set<MSODAlphabetSymbol> mergeAlphabets(final Set<MSODAlphabetSymbol> s1,
-			final Set<MSODAlphabetSymbol> s2) {
+	public static Set<MSODAlphabetSymbol> mergeAlphabets(final Set<MSODAlphabetSymbol> symbols1,
+			final Set<MSODAlphabetSymbol> symbols2) {
 
 		final Set<Term> terms = new HashSet<>();
 
-		if (!s1.isEmpty()) {
-			terms.addAll(s1.iterator().next().getMap().keySet());
+		if (!symbols1.isEmpty()) {
+			terms.addAll(symbols1.iterator().next().getMap().keySet());
 		}
 
-		if (!s2.isEmpty()) {
-			terms.addAll(s2.iterator().next().getMap().keySet());
+		if (!symbols2.isEmpty()) {
+			terms.addAll(symbols2.iterator().next().getMap().keySet());
 		}
 
 		return createAlphabet(terms.toArray(new Term[terms.size()]));
@@ -216,75 +172,28 @@ public final class MSODUtils {
 			final Term... excludedTerms) {
 
 		final Set<MSODAlphabetSymbol> matches = new HashSet<>();
-
-		for (final MSODAlphabetSymbol symbol : symbols) {
-			if (symbol.allMatches(value, excludedTerms)) {
-				matches.add(symbol);
-			}
-		}
+		symbols.stream().filter(e -> e.allMatches(value, excludedTerms)).forEach(e -> matches.add(e));
 
 		return matches;
 	}
 
-	/*
-	 * Returns all Terms included in the given symbol which match the given sort.
-	 */
-	public static Set<Term> containsSort(final Set<MSODAlphabetSymbol> symbols, final String sort) {
-
-		return containsSort(symbols, new HashSet<>(Arrays.asList(sort)));
-	}
-
-	/*
-	 * Returns all Terms included in the given symbol which match one of the given sorts.
-	 */
-	public static Set<Term> containsSort(final Set<MSODAlphabetSymbol> symbols, final Set<String> sorts) {
-		final Set<Term> result = new HashSet<>();
-
-		for (final MSODAlphabetSymbol symbol : symbols) {
-			result.addAll(symbol.containsSort(sorts));
-		}
-
-		return result;
-	}
-
 	/**
-	 * Returns the successors which are directly reachable with the given symbols from the given state in the given
-	 * automaton.
-	 */
-	public static Set<String> hierarchicalSuccessorsOutgoing(
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final String state,
-			final Set<MSODAlphabetSymbol> symbols) {
-
-		final Set<String> successors = new HashSet<>();
-		for (final MSODAlphabetSymbol symbol : symbols) {
-
-			for (final OutgoingInternalTransition<MSODAlphabetSymbol, String> transition : automaton
-					.internalSuccessors(state, symbol)) {
-
-				successors.add(transition.getSucc());
-			}
-		}
-
-		return successors;
-	}
-
-	/**
-	 * Returns the predecessors which are directly reachable with the given symbols from the given state in the given
-	 * automaton.
+	 * Returns the predecessor states which are directly reachable with the given symbols from the given state in the
+	 * given automaton.
 	 */
 	public static Set<String> hierarchicalPredecessorsIncoming(
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final String state,
 			final Set<MSODAlphabetSymbol> symbols) {
 
-		final Set<String> predecessors = new HashSet<>();
+		final Set<String> states = new HashSet<>();
 		for (final MSODAlphabetSymbol symbol : symbols) {
 			for (final IncomingInternalTransition<MSODAlphabetSymbol, String> transition : automaton
 					.internalPredecessors(state, symbol)) {
 
-				predecessors.add(transition.getPred());
+				states.add(transition.getPred());
 			}
 		}
 
-		return predecessors;
+		return states;
 	}
 }

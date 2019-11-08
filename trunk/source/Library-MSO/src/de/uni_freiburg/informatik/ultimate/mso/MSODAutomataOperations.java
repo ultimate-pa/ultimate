@@ -28,9 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -97,16 +97,18 @@ public abstract class MSODAutomataOperations {
 			throw new IllegalArgumentException("Input x must be an Int variable.");
 		}
 
+		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
+		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
+
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
-		final Map<String, MSODAlphabetSymbol> symbols = MSODUtils.createAlphabet(x);
-		automaton.getAlphabet().addAll(symbols.values());
+		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
 
 		automaton.addState(true, false, "init");
 		automaton.addState(false, true, "final");
 
-		automaton.addInternalTransition("init", symbols.get("x0"), "init");
-		automaton.addInternalTransition("init", symbols.get("x1"), "final");
-		automaton.addInternalTransition("final", symbols.get("x0"), "final");
+		automaton.addInternalTransition("init", x0, "init");
+		automaton.addInternalTransition("init", x1, "final");
+		automaton.addInternalTransition("final", x0, "final");
 
 		return automaton;
 	}

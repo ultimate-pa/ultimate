@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.util.HashSet;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -53,12 +52,7 @@ public abstract class MSODFormulaOperations {
 	 * Constructs an empty automaton.
 	 */
 	public NestedWordAutomaton<MSODAlphabetSymbol, String> emptyAutomaton(final AutomataLibraryServices services) {
-
-		final Set<MSODAlphabetSymbol> alphabet = new HashSet<>();
-		final VpAlphabet<MSODAlphabetSymbol> vpAlphabet = new VpAlphabet<>(alphabet);
-		final StringFactory stringFactory = new StringFactory();
-
-		return new NestedWordAutomaton<>(services, vpAlphabet, stringFactory);
+		return new NestedWordAutomaton<>(services, new VpAlphabet<>(new HashSet<>()), new StringFactory());
 	}
 
 	/**

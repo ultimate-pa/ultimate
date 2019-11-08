@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class MSODScript extends NoopScript {
 	private final AutomataLibraryServices mAutomataLibrarayServices;
-	private final MSODSolver mMSODOperations;
+	private final MSODSolver mMSODSolver;
 	public final ILogger mLogger;
 	private Term mAssertionTerm;
 	private Map<Term, Term> mModel;
@@ -75,16 +75,16 @@ public class MSODScript extends NoopScript {
 		mLogger = logger;
 
 		if (logic == MSODLogic.MSODNatWeak) {
-			mMSODOperations = new MSODSolver(services, this, logger, new MSODFormulaOperationsNat(),
+			mMSODSolver = new MSODSolver(services, this, logger, new MSODFormulaOperationsNat(),
 					new MSODAutomataOperationsWeak());
 		} else if (logic == MSODLogic.MSODIntWeak) {
-			mMSODOperations = new MSODSolver(services, this, logger, new MSODFormulaOperationsInt(),
+			mMSODSolver = new MSODSolver(services, this, logger, new MSODFormulaOperationsInt(),
 					new MSODAutomataOperationsWeak());
 		} else if (logic == MSODLogic.MSODNat) {
-			mMSODOperations = new MSODSolver(services, this, logger, new MSODFormulaOperationsNat(),
+			mMSODSolver = new MSODSolver(services, this, logger, new MSODFormulaOperationsNat(),
 					new MSODAutomataOperationsBuchi());
 		} else if (logic == MSODLogic.MSODInt) {
-			mMSODOperations = new MSODSolver(services, this, logger, new MSODFormulaOperationsInt(),
+			mMSODSolver = new MSODSolver(services, this, logger, new MSODFormulaOperationsInt(),
 					new MSODAutomataOperationsBuchi());
 		} else {
 			throw new AssertionError("Unknown value: " + logic);
@@ -115,10 +115,10 @@ public class MSODScript extends NoopScript {
 		try {
 
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton =
-					mMSODOperations.traversePostOrder(mAssertionTerm);
+					mMSODSolver.traversePostOrder(mAssertionTerm);
 
 			mLogger.info(automatonToString(automaton, Format.ATS));
-			mModel = mMSODOperations.getResult(this, mAutomataLibrarayServices, automaton);
+			mModel = mMSODSolver.getResult(this, mAutomataLibrarayServices, automaton);
 
 			if (mModel == null) {
 				mLogger.info("RESULT: UNSAT");
