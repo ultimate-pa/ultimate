@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -46,6 +47,7 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 	private final List<LETTER> mCounterexample;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final TaskIdentifier mTaskIdentifier;
+	private final List<QualifiedTracePredicates> mUsedPredicates;
 
 	public StrategyModuleMcr(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IPredicateUnifier predicateUnifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
@@ -59,6 +61,7 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 		mCounterexample = counterexample.getWord().asList();
 		mAbstraction = abstraction;
 		mTaskIdentifier = taskIdentifier;
+		mUsedPredicates = new ArrayList<>();
 		runEngine(mCounterexample);
 	}
 
@@ -136,8 +139,7 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 	public IpAbStrategyModuleResult<LETTER> buildInterpolantAutomaton(final List<QualifiedTracePredicates> perfectIpps,
 			final List<QualifiedTracePredicates> imperfectIpps) throws AutomataOperationCanceledException {
 		if (mAutomatonResult == null) {
-			// TODO: What are the predicates?
-			mAutomatonResult = new IpAbStrategyModuleResult<>(mMcr.getAutomaton(), null);
+			mAutomatonResult = new IpAbStrategyModuleResult<>(mMcr.getAutomaton(), mUsedPredicates);
 		}
 		return mAutomatonResult;
 	}
@@ -154,8 +156,10 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 		if (proofs.isEmpty()) {
 			return new Pair<>(feasibility, null);
 		}
-		return new Pair<>(feasibility,
-				proofs.stream().filter(a -> a.isPerfect()).findAny().orElse(proofs.stream().findFirst().get()));
+		final QualifiedTracePredicates predicate =
+				proofs.stream().filter(a -> a.isPerfect()).findAny().orElse(proofs.stream().findFirst().get());
+		mUsedPredicates.add(predicate);
+		return new Pair<>(feasibility, predicate);
 	}
 
 	private void runEngine(final List<LETTER> trace) {
