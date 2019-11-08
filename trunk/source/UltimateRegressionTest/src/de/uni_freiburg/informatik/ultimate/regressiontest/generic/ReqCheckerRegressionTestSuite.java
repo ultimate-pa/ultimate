@@ -233,7 +233,7 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 				return actual.mOverallResultMessage;
 			}
 			final String msg = "%s different. Expected: %s. Actual %s.";
-			if (actual.mNoResults != mNoResults) {
+			if (mNoResults != -1 && actual.mNoResults != mNoResults) {
 				return String.format(msg, "Number of results", mNoResults, actual.mNoResults);
 			}
 			if (DataStructureUtils.isDifferent(actual.mInconsistent, mInconsistent)) {
