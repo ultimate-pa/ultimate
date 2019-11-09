@@ -336,7 +336,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	/**
 	 * set this.companion to e, or, if e is a cut-off event itself to the companion of e.
 	 */
-	private void setCompanion(final Event<LETTER, PLACE> event) {
+	public void setCompanion(final Event<LETTER, PLACE> event) {
 		assert mCompanion == null;
 		if (event.getCompanion() == null) {
 			mCompanion = event;

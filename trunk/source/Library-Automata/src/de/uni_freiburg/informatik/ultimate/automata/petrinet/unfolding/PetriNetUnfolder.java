@@ -74,6 +74,8 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	private PetriNetRun<LETTER, PLACE> mRun;
 
 	private final PetriNetUnfolder<LETTER, PLACE>.Statistics mStatistics = new Statistics();
+	
+	private boolean mUseCutoffChekingPossibleExtention = false;
 
 
 	/**
@@ -115,7 +117,11 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 				throw new IllegalArgumentException();
 		}
 		mUnfolding = new BranchingProcess<>(mServices, operand, mOrder);
-		mPossibleExtensions = new PossibleExtensions<>(mUnfolding, mOrder);
+		if (mUseCutoffChekingPossibleExtention) {
+			mPossibleExtensions = new CuttOffCheckingPossibleExtensions(mUnfolding, mOrder);
+		} else {
+			mPossibleExtensions = new PossibleExtensions<>(mUnfolding, mOrder);
+		}
 
 		computeUnfolding();
 		mLogger.info(mStatistics.prettyprintCutOffInformation());
@@ -171,7 +177,13 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 
 	private boolean computeUnfoldingHelper(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
 		assert !parentIsCutoffEvent(event) : "We must not construct successors of cut-off events.";
-		final boolean isCutOffEvent = mUnfolding.isCutoffEvent(event, mOrder, mSameTransitionCutOff);
+		boolean isCutOffEvent;
+		if (!mUseCutoffChekingPossibleExtention) {
+			isCutOffEvent = mUnfolding.isCutoffEvent(event, mOrder, mSameTransitionCutOff);
+		}
+		else {
+			isCutOffEvent = event.isCutoffEvent();
+		}
 		final boolean succOfEventIsAccpting = mUnfolding.addEvent(event);
 		// assert !unfolding.pairwiseConflictOrCausalRelation(e.getPredecessorConditions());
 		if (succOfEventIsAccpting && mRun == null) {
@@ -362,7 +374,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 				for (final Event<LETTER, PLACE> event2 : events) {
 					mLogger.info("  existing Event has " + event2.getAncestors() + " ancestors and is "
 							+ (event.isCutoffEvent() ? "" : "not ") + "cut-off event");
-					assert event2.getAncestors() == event.getAncestors() || event.isCutoffEvent() : "if there is "
+					assert event2.getAncestors() == event.getAncestors() || event.isCutoffEvent() ||event2.isCutoffEvent() : "if there is "
 							+ "already an event that has the same marking and a different size of "
 							+ "local configuration then the new event must be cut-off event";
 				}
@@ -432,12 +444,11 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		}
 
 		public int getNumberOfUselessExtensionCandidates() {
-			return ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions).getUselessExtensionCandidates();
+			return mPossibleExtensions.getUselessExtensionCandidates();
 		}
 
 		public int getNumberOfExtensionCandidates() {
-			return ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions)
-					.getUsefulExtensionCandidates() + getNumberOfUselessExtensionCandidates();
+			return mPossibleExtensions.getUsefulExtensionCandidates() + getNumberOfUselessExtensionCandidates();
 		}
 
 		public int computeCoRelationMaximalDegree() {
@@ -449,7 +460,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		}
 
 		public int getMaximalSizeOfPossibleExtensions() {
-			return ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions).getMaximalSize();
+			return mPossibleExtensions.getMaximalSize();
 		}
 
 	}
