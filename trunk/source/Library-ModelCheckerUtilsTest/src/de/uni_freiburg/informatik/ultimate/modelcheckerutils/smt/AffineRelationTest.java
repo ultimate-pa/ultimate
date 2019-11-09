@@ -85,6 +85,7 @@ public class AffineRelationTest {
 		declareVar("x", mIntSort); // Subject
 		declareVar("y", mIntSort);
 		declareVar("z", mIntSort);
+		declareVar("b", mIntSort);
 
 	}
 
@@ -189,6 +190,13 @@ public class AffineRelationTest {
 		final String inputSTR = "(= (div (div x 7) 3) hi )";
 		testSolveForXMultiCaseOnly(inputSTR);
 	}
+
+	// @Test
+	public void choirNightTrezor01() throws NotAffineException {
+		final String inputSTR = "(= (mod (+ (* (mod (+ b 1) 4294967296) 4294967295) x) 4294967296) 1)";
+		testSolveForXMultiCaseOnly(inputSTR);
+	}
+
 
 	private void testSolveForX(final String inputAsString) throws NotAffineException {
 		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
