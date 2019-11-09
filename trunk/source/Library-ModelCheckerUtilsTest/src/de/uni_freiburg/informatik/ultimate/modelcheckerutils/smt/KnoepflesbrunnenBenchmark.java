@@ -226,17 +226,17 @@ public class KnoepflesbrunnenBenchmark {
 		QuantifierEliminationTest.runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
-	
+
 //	@Test
 	public void choirNightTrezor01() {
 		final Sort smtInt = SmtSortUtils.getIntSort(mScript);
-		final Sort array = SmtSortUtils.getArraySort(mScript, smtInt, smtInt);
 		mScript.declareFun("b", new Sort[0], smtInt);
+		mScript.declareFun("i", new Sort[0], smtInt);
 		final String formulaAsString = "(and (forall ((v_prenex_1 Int)) (or (not (< i v_prenex_1)) (< b v_prenex_1) (< (mod (+ (* b 4294967295) v_prenex_1) 4294967296) 1))) (forall ((a Int)) (or (< (mod (+ b 1) 4294967296) a) (< (mod (+ (* (mod (+ b 1) 4294967296) 4294967295) a) 4294967296) 1) (not (< i a)))))";
-		final String expectedResultAsString = "?";
+		final String expectedResultAsString = "true";
 		QuantifierEliminationTest.runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
-	 
+
 
 
 }
