@@ -67,7 +67,7 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 	 * issue. https://github.com/ultimate-pa/ultimate/issues/448
 	 */
 	private static final boolean BUMBLEBEE_B07_OPTIMIZAION = true;
-	private final TreeSet<Event<LETTER, PLACE>> mPe;
+	private final PriorityQueue<Event<LETTER, PLACE>> mPe;
 	private int mMaximalSize = 0;
 	/**
 	 * If {@link Event} is known to be cut-off event we can move it immediately
@@ -91,7 +91,7 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 
 	public CuttOffCheckingPossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess, final Comparator<Event<LETTER, PLACE>> order) {
 		mBranchingProcess = branchingProcess;
-		mPe = new TreeSet<>(order);
+		mPe = new PriorityQueue<>(order);;
 		mFastpathCutoffEventList = new ArrayDeque<>();
 		mOrder = order;
 		mMarkingEventMap.put(mBranchingProcess.getDummyRoot().getMark(), mBranchingProcess.getDummyRoot());
@@ -100,7 +100,7 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 	@Override
 	public Event<LETTER, PLACE> remove() {
 		if (mFastpathCutoffEventList.isEmpty()) {
-			return mPe.pollFirst();
+			return mPe.remove();
 		} else {
 			return mFastpathCutoffEventList.removeFirst();
 		}
