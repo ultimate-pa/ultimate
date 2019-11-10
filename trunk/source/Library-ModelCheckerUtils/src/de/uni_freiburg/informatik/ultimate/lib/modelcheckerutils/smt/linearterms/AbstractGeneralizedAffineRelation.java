@@ -658,7 +658,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 						IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 
 				mcsb.conjoinWithConjunction(sbr, auxModLessCoef, auxModEquals, auxModGreaterZero);
-
+				mcsb.reportAdditionalAuxiliaryVariable(auxDiv);
 			}
 		} else {
 			rhsTerm = simpliySolvableRhsTerm;
