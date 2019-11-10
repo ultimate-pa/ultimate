@@ -157,10 +157,6 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			}
 
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
-				final int numberOfUselessExtensionCandidates = ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions)
-						.getUselessExtensionCandidates();
-				final int numberOfExtensionsCandidates = ((PossibleExtensions<LETTER, PLACE>) mPossibleExtensions)
-						.getUsefulExtensionCandidates() + numberOfUselessExtensionCandidates;
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
 						"constructing finite prefix that currently has " + mUnfolding.getConditions().size()
 								+ " conditions, " + mUnfolding.getEvents().size() + " events (" +
