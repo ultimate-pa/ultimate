@@ -91,6 +91,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -1075,6 +1077,19 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			interpolants[i] = lPreds;
 			++i;
 		}
+
+		final IterativePredicateTransformer spt = new IterativePredicateTransformer(
+				mPredicateUnifier.getPredicateFactory(), mScript, mCsToolkit.getModifiableGlobalsTable(), mServices,
+				mTrace, mTruePred, mFalsePred, Collections.emptyMap(), null, SimplificationTechnique.SIMPLIFY_DDA,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mSymbolTable);
+
+		realInterpolants = spt.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout)
+				.getPredicates();
+
+		assert TraceCheckUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
+				mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger,
+				mCfgManagedScript) : "invalid Hoare triple in BP";
+
 		return interpolants;
 	}
 
