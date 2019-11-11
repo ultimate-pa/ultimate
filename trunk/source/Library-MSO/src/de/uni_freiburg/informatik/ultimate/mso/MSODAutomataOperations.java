@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
@@ -129,73 +129,53 @@ public abstract class MSODAutomataOperations {
 	}
 
 	/**
-	 * Returns an {@link INestedWordAutomaton} that represents the MSOD-Complement of the given automaton. The
-	 * MSOD-Complement performs the {@link Complement} and additionally ensures that integer variables are represented
-	 * correctly.
+	 * Returns an {@link INestedWordAutomaton} that is possibly a minimized version of the given automaton.
+	 *
+	 * @throws AutomataOperationCanceledException
+	 *             if minimization is canceled.
 	 */
-	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String> complement(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException;
+	public static INestedWordAutomaton<MSODAlphabetSymbol, String> minimize(final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
+			throws AutomataOperationCanceledException {
+
+		return new MinimizeSevpa<>(services, new MSODStringFactory(), automaton).getResult();
+	}
 
 	/**
-	 * Returns an {@link INestedWordAutomaton} that represents the MSOD-union of the two given automata. The MSOD-union
-	 * performs the union of two automata and additionally ensures that Integer variables are represented correctly in
-	 * the resulting automaton.
+	 * Returns an {@link INestedWordAutomaton} that is the MSOD-union of the two given automata. The MSOD-union performs
+	 * the union of two automata and additionally ensures that Integer variables are represented correctly in the
+	 * resulting automaton.
 	 *
 	 * @throws AutomataLibraryException
 	 *             if construction of {@link Union} fails
+	 *
+	 * @throws AutomataLibraryException
+	 *             if construction of {@link Intersect} fails.
+	 * 
+	 * @throws AutomataOperationCanceledException
+	 *             if minimization is canceled.
 	 */
-	public INestedWordAutomaton<MSODAlphabetSymbol, String> union(final AutomataLibraryServices services,
+	public static INestedWordAutomaton<MSODAlphabetSymbol, String> union(final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton1,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton2) throws AutomataLibraryException {
 
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result =
 				new Union<>(services, new MSODStringFactory(), automaton1, automaton2).getResult();
 
-		result = minimize(services, result);
+		if (!result.getAlphabet().isEmpty()) {
+			// Find all Int variables in the alphabet.
+			final Set<Term> intVars = result.getAlphabet().iterator().next().containsSort(SmtSortUtils.INT_SORT);
 
-		if (result.getAlphabet().isEmpty()) {
-			return result;
+			// Intersect with an automaton that ensures that Int variables are matched to exactly one value.
+			for (final Term intVar : intVars) {
+				INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton;
+				varAutomaton = intVariableAutomaton(services, intVar);
+				varAutomaton = reduceOrExtend(services, varAutomaton, result.getAlphabet(), true);
+				result = new Intersect<>(services, new MSODStringFactory(), result, varAutomaton).getResult();
+			}
 		}
 
-		// Find all Int variables contained in the alphabet.
-		final Set<Term> intVars = result.getAlphabet().iterator().next().containsSort(SmtSortUtils.INT_SORT);
-
-		// Intersect with an automaton that ensures that each Int variable is represented correctly.
-		for (final Term intVar : intVars) {
-			INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton;
-			varAutomaton = intVariableAutomaton(services, intVar);
-			varAutomaton = reduceOrExtend(services, varAutomaton, result.getAlphabet(), true);
-
-			result = intersect(services, result, varAutomaton);
-		}
-
-		return result;
-	}
-
-	/**
-	 * Returns an {@link INestedWordAutomaton} that represents the intersection of the two given automata.
-	 *
-	 * @throws AutomataLibraryException
-	 *             if construction of {@link Intersect} or {@link BuchiIntersect} fails
-	 */
-	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String> intersect(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton1,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton2) throws AutomataLibraryException;
-
-	/**
-	 * Returns an {@link INestedWordAutomaton} that represents a possibly minimized version of the given automaton.
-	 *
-	 * @throws AutomataOperationCanceledException
-	 *             if minimization is canceled
-	 */
-	public INestedWordAutomaton<MSODAlphabetSymbol, String> minimize(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
-			throws AutomataOperationCanceledException {
-
-		final INestedWordAutomaton<MSODAlphabetSymbol, String> result =
-				new MinimizeSevpa<>(services, new MSODStringFactory(), automaton).getResult();
-
-		return result;
+		return minimize(services, result);
 	}
 
 	/**
@@ -204,9 +184,9 @@ public abstract class MSODAutomataOperations {
 	 * @throws AutomataOperationCanceledException
 	 *             if construction of {@link NestedWordAutomatonReachableStates} fails.
 	 */
-	public INestedWordAutomaton<MSODAlphabetSymbol, String> makeStatesFinal(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<String> states)
-			throws AutomataOperationCanceledException {
+	public static INestedWordAutomaton<MSODAlphabetSymbol, String> makeStatesFinal(
+			final AutomataLibraryServices services, final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton,
+			final Set<String> states) throws AutomataOperationCanceledException {
 
 		final NestedWordAutomatonReachableStates<MSODAlphabetSymbol, String> nwaReachableStates =
 				new NestedWordAutomatonReachableStates<>(services, automaton);
@@ -217,4 +197,18 @@ public abstract class MSODAutomataOperations {
 		return new NestedWordAutomatonFilteredStates<>(services, nwaReachableStates, automaton.getStates(),
 				automaton.getInitialStates(), finals);
 	}
+
+	/**
+	 * Returns an {@link INestedWordAutomaton} that is the MSOD-Complement of the given automaton. The MSOD-Complement
+	 * performs the {@link Complement} and additionally ensures that integer variables are represented correctly.
+	 */
+	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String> complement(final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException;
+
+	/**
+	 * Returns an {@link INestedWordAutomaton} that is the intersection of the two given automata.
+	 */
+	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String> intersect(final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton1,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton2) throws AutomataLibraryException;
 }

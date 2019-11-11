@@ -116,7 +116,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 *             if x, y are not of type Int.
 	 *
 	 * @throws AutomataLibraryException
-	 *             if construction of {@link Union} fails
+	 *             if construction of {@link Union} fails.
 	 */
 	@Override
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAutomaton(final AutomataLibraryServices services,
@@ -559,7 +559,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 *             if x, y are not of type Int respectively SetOfInt.
 	 *
 	 * @throws AutomataLibraryException
-	 *             if construction of {@link Union} fails
+	 *             if construction of {@link Union} fails.
 	 */
 	@Override
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomaton(final AutomataLibraryServices services,

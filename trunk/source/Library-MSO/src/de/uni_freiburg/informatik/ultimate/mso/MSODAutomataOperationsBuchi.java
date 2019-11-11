@@ -32,6 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
@@ -49,6 +50,12 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 	/**
 	 * @throws AutomataLibraryException
 	 *             if construction of {@link BuchiComplementFKV} fails.
+	 *
+	 * @throws AutomataLibraryException
+	 *             if construction of {@link BuchiIntersect} fails.
+	 * 
+	 * @throws AutomataOperationCanceledException
+	 *             if minimization is canceled.
 	 */
 	@Override
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> complement(final AutomataLibraryServices services,
@@ -57,43 +64,36 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result =
 				new BuchiComplementFKV<>(services, new MSODStringFactory(), automaton).getResult();
 
-		result = minimize(services, result);
+		if (!result.getAlphabet().isEmpty()) {
+			// Find all Int variables in the alphabet.
+			final Set<Term> intVars = result.getAlphabet().iterator().next().containsSort(SmtSortUtils.INT_SORT);
 
-		if (result.getAlphabet().isEmpty()) {
-			return result;
+			// Intersect with an automaton that ensures that Int variables are matched to exactly one value.
+			for (final Term intVar : intVars) {
+				INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton = intVariableAutomaton(services, intVar);
+				varAutomaton = reduceOrExtend(services, varAutomaton, result.getAlphabet(), true);
+				result = new BuchiIntersect<>(services, new MSODStringFactory(), result, varAutomaton).getResult();
+			}
 		}
 
-		// Find all Int variables contained in the alphabet.
-		final Set<Term> intVars = result.getAlphabet().iterator().next().containsSort(SmtSortUtils.INT_SORT);
-
-		// Intersect with an automaton that ensures that each Int variable is matched to exactly one value.
-		for (final Term intVar : intVars) {
-			INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton;
-			varAutomaton = intVariableAutomaton(services, intVar);
-			varAutomaton = reduceOrExtend(services, varAutomaton, result.getAlphabet(), true);
-
-			result = intersect(services, result, varAutomaton);
-		}
-
-		return result;
+		return minimize(services, result);
 	}
 
 	/**
-	 * Returns an {@link INestedWordAutomaton} that represents the intersection of the two given automata.
-	 *
 	 * @throws AutomataLibraryException
-	 *             if construction of {@link BuchiIntersect} fails
+	 *             if construction of {@link BuchiIntersect} fails.
+	 * 
+	 * @throws AutomataOperationCanceledException
+	 *             if minimization is canceled.
 	 */
 	@Override
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> intersect(final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton1,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton2) throws AutomataLibraryException {
 
-		INestedWordAutomaton<MSODAlphabetSymbol, String> result =
+		final INestedWordAutomaton<MSODAlphabetSymbol, String> result =
 				new BuchiIntersect<>(services, new MSODStringFactory(), automaton1, automaton2).getResult();
 
-		result = minimize(services, result);
-
-		return result;
+		return minimize(services, result);
 	}
 }
