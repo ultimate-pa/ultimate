@@ -28,16 +28,12 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * This class provides methods to manipulate büchi automata used to describe MSOD-Formulas.
@@ -53,7 +49,7 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 	 *
 	 * @throws AutomataLibraryException
 	 *             if construction of {@link BuchiIntersect} fails.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if minimization is canceled.
 	 */
@@ -64,17 +60,7 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result =
 				new BuchiComplementFKV<>(services, new MSODStringFactory(), automaton).getResult();
 
-		if (!result.getAlphabet().isEmpty()) {
-			// Find all Int variables in the alphabet.
-			final Set<Term> intVars = result.getAlphabet().iterator().next().containsSort(SmtSortUtils.INT_SORT);
-
-			// Intersect with an automaton that ensures that Int variables are matched to exactly one value.
-			for (final Term intVar : intVars) {
-				INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton = intVariableAutomaton(services, intVar);
-				varAutomaton = reduceOrExtend(services, varAutomaton, result.getAlphabet(), true);
-				result = new BuchiIntersect<>(services, new MSODStringFactory(), result, varAutomaton).getResult();
-			}
-		}
+		result = intersectWithIntVariableAutomaton(services, result);
 
 		return minimize(services, result);
 	}
@@ -82,7 +68,7 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 	/**
 	 * @throws AutomataLibraryException
 	 *             if construction of {@link BuchiIntersect} fails.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if minimization is canceled.
 	 */

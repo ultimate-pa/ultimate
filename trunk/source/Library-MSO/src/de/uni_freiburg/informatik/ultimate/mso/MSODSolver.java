@@ -327,8 +327,6 @@ public final class MSODSolver {
 			result = mAutomataOperations.intersect(mAutomataLibrarayServices, result, tmp);
 		}
 
-		// result = new MinimizeSevpa<>(mAutomataLibrarayServices, new MSODStringFactory(), result).getResult();
-
 		return result;
 	}
 

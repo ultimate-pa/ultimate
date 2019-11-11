@@ -37,13 +37,12 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
@@ -64,35 +63,6 @@ public abstract class MSODAutomataOperations {
 			emptyAutomaton(final AutomataLibraryServices services) {
 
 		return new NestedWordAutomaton<>(services, new VpAlphabet<>(new HashSet<>()), new StringFactory());
-	}
-
-	/**
-	 * Returns a {@link NestedWordAutomaton} that represents an Int variable.
-	 *
-	 * @throws IllegalArgumentException
-	 *             if x is not of type Int.
-	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
-			intVariableAutomaton(final AutomataLibraryServices services, final Term x) {
-
-		if (!MSODUtils.isIntConstantOrTermVariable(x)) {
-			throw new IllegalArgumentException("Input x must be an Int variable.");
-		}
-
-		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
-		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
-
-		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
-		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
-
-		automaton.addState(true, false, "init");
-		automaton.addState(false, true, "final");
-
-		automaton.addInternalTransition("init", x0, "init");
-		automaton.addInternalTransition("init", x1, "final");
-		automaton.addInternalTransition("final", x0, "final");
-
-		return automaton;
 	}
 
 	/**
@@ -129,6 +99,65 @@ public abstract class MSODAutomataOperations {
 	}
 
 	/**
+	 * Returns a {@link NestedWordAutomaton} that represents an Int variable.
+	 *
+	 * @throws IllegalArgumentException
+	 *             if x is not of type Int.
+	 */
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
+			intVariableAutomaton(final AutomataLibraryServices services, final Term x) {
+
+		if (!MSODUtils.isIntConstantOrTermVariable(x)) {
+			throw new IllegalArgumentException("Input x must be an Int variable.");
+		}
+
+		final MSODAlphabetSymbol x0 = new MSODAlphabetSymbol(x, false);
+		final MSODAlphabetSymbol x1 = new MSODAlphabetSymbol(x, true);
+
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> automaton = emptyAutomaton(services);
+		automaton.getAlphabet().addAll(Arrays.asList(x0, x1));
+
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+
+		automaton.addInternalTransition("init", x0, "init");
+		automaton.addInternalTransition("init", x1, "final");
+		automaton.addInternalTransition("final", x0, "final");
+
+		return automaton;
+	}
+
+	/**
+	 * Returns an {@link INestedWordAutomaton} that is the given automaton intersected with automata that ensure that
+	 * that Int variables are matched to exactly one value.
+	 *
+	 * @throws AutomataLibraryException
+	 *             if construction of {@link Intersect}, {@link BuchiIntersect} fails.
+	 *
+	 */
+	public INestedWordAutomaton<MSODAlphabetSymbol, String> intersectWithIntVariableAutomaton(
+			final AutomataLibraryServices services, final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
+			throws AutomataLibraryException {
+
+		INestedWordAutomaton<MSODAlphabetSymbol, String> result = automaton;
+
+		if (!result.getAlphabet().isEmpty()) {
+			// Find all Int variables in the alphabet.
+			final Set<Term> intVars = automaton.getAlphabet().iterator().next().containsSort(SmtSortUtils.INT_SORT);
+
+			// Intersect with an automata that ensure that Int variables are matched to exactly one value.
+			for (final Term intVar : intVars) {
+				INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton;
+				varAutomaton = intVariableAutomaton(services, intVar);
+				varAutomaton = reduceOrExtend(services, varAutomaton, result.getAlphabet(), true);
+				result = intersect(services, result, varAutomaton);
+			}
+		}
+
+		return result;
+	}
+
+	/**
 	 * Returns an {@link INestedWordAutomaton} that is possibly a minimized version of the given automaton.
 	 *
 	 * @throws AutomataOperationCanceledException
@@ -150,52 +179,21 @@ public abstract class MSODAutomataOperations {
 	 *             if construction of {@link Union} fails
 	 *
 	 * @throws AutomataLibraryException
-	 *             if construction of {@link Intersect} fails.
-	 * 
+	 *             if construction of {@link Intersect}, {@link BuchiIntersect} fails.
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if minimization is canceled.
 	 */
-	public static INestedWordAutomaton<MSODAlphabetSymbol, String> union(final AutomataLibraryServices services,
+	public INestedWordAutomaton<MSODAlphabetSymbol, String> union(final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton1,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton2) throws AutomataLibraryException {
 
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result =
 				new Union<>(services, new MSODStringFactory(), automaton1, automaton2).getResult();
 
-		if (!result.getAlphabet().isEmpty()) {
-			// Find all Int variables in the alphabet.
-			final Set<Term> intVars = result.getAlphabet().iterator().next().containsSort(SmtSortUtils.INT_SORT);
-
-			// Intersect with an automaton that ensures that Int variables are matched to exactly one value.
-			for (final Term intVar : intVars) {
-				INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton;
-				varAutomaton = intVariableAutomaton(services, intVar);
-				varAutomaton = reduceOrExtend(services, varAutomaton, result.getAlphabet(), true);
-				result = new Intersect<>(services, new MSODStringFactory(), result, varAutomaton).getResult();
-			}
-		}
+		result = intersectWithIntVariableAutomaton(services, result);
 
 		return minimize(services, result);
-	}
-
-	/**
-	 * Returns an automaton where additionally the given states are made final.
-	 *
-	 * @throws AutomataOperationCanceledException
-	 *             if construction of {@link NestedWordAutomatonReachableStates} fails.
-	 */
-	public static INestedWordAutomaton<MSODAlphabetSymbol, String> makeStatesFinal(
-			final AutomataLibraryServices services, final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton,
-			final Set<String> states) throws AutomataOperationCanceledException {
-
-		final NestedWordAutomatonReachableStates<MSODAlphabetSymbol, String> nwaReachableStates =
-				new NestedWordAutomatonReachableStates<>(services, automaton);
-
-		final Set<String> finals = new HashSet<>(automaton.getFinalStates());
-		finals.addAll(states);
-
-		return new NestedWordAutomatonFilteredStates<>(services, nwaReachableStates, automaton.getStates(),
-				automaton.getInitialStates(), finals);
 	}
 
 	/**
