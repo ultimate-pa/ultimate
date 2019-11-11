@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -40,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
@@ -59,39 +58,22 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public abstract class MSODAutomataOperations {
 
 	/**
-	 * Constructs an empty automaton.
+	 * Returns an empty {@link NestedWordAutomaton}.
 	 */
-	public NestedWordAutomaton<MSODAlphabetSymbol, String> emptyAutomaton(final AutomataLibraryServices services) {
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
+			emptyAutomaton(final AutomataLibraryServices services) {
+
 		return new NestedWordAutomaton<>(services, new VpAlphabet<>(new HashSet<>()), new StringFactory());
 	}
 
 	/**
-	 * Constructs a copy of the given automaton.
-	 */
-	public NestedWordAutomaton<MSODAlphabetSymbol, String> copyAutomaton(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) {
-
-		final NestedWordAutomaton<MSODAlphabetSymbol, String> result = emptyAutomaton(services);
-
-		for (final String state : automaton.getStates()) {
-			result.addState(automaton.isInitial(state), automaton.isFinal(state), state);
-			for (final OutgoingInternalTransition<MSODAlphabetSymbol, String> transition : automaton
-					.internalSuccessors(state)) {
-				result.addInternalTransition(state, transition.getLetter(), transition.getSucc());
-			}
-		}
-
-		return result;
-	}
-
-	/**
-	 * Returns a {@link NestedWordAutomaton} representing represents an Int variable.
+	 * Returns a {@link NestedWordAutomaton} that represents an Int variable.
 	 *
 	 * @throws IllegalArgumentException
 	 *             if x is not of type Int.
 	 */
-	public NestedWordAutomaton<MSODAlphabetSymbol, String> intVariableAutomaton(final AutomataLibraryServices services,
-			final Term x) {
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
+			intVariableAutomaton(final AutomataLibraryServices services, final Term x) {
 
 		if (!MSODUtils.isIntConstantOrTermVariable(x)) {
 			throw new IllegalArgumentException("Input x must be an Int variable.");
@@ -114,16 +96,13 @@ public abstract class MSODAutomataOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} representing a copy of the given automaton with the extended or reduced
-	 * alphabet.
+	 * Returns a {@link NestedWordAutomaton} that is a copy of the given automaton with reduced or extended alphabet.
 	 */
-	public NestedWordAutomaton<MSODAlphabetSymbol, String> reconstruct(final AutomataLibraryServices services,
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String> reduceOrExtend(final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<MSODAlphabetSymbol> alphabet,
 			final boolean isExtended) {
 
-		final NestedWordAutomaton<MSODAlphabetSymbol, String> result;
-
-		result = emptyAutomaton(services);
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> result = emptyAutomaton(services);
 		result.getAlphabet().addAll(alphabet);
 
 		for (final String state : automaton.getStates()) {
@@ -131,16 +110,17 @@ public abstract class MSODAutomataOperations {
 		}
 
 		for (final String state : automaton.getStates()) {
-
 			for (final OutgoingInternalTransition<MSODAlphabetSymbol, String> transition : automaton
 					.internalSuccessors(state)) {
 
-				final Iterator<MSODAlphabetSymbol> itMatches =
-						isExtended ? alphabet.stream().filter(e -> e.contains(transition.getLetter())).iterator()
-								: alphabet.stream().filter(e -> transition.getLetter().contains(e)).iterator();
+				if (isExtended) {
+					alphabet.stream().filter(e -> e.contains(transition.getLetter()))
+							.forEach(e -> result.addInternalTransition(state, e, transition.getSucc()));
+				}
 
-				while (itMatches.hasNext()) {
-					result.addInternalTransition(state, itMatches.next(), transition.getSucc());
+				if (!isExtended) {
+					alphabet.stream().filter(e -> transition.getLetter().contains(e))
+							.forEach(e -> result.addInternalTransition(state, e, transition.getSucc()));
 				}
 			}
 		}
@@ -149,12 +129,9 @@ public abstract class MSODAutomataOperations {
 	}
 
 	/**
-	 * Returns an {@link INestedWordAutomaton} that represents the MSOD-complement of the two given automata. The
-	 * MSOD-complement performs the complement of two automata and additionally ensures that Integer variables are
-	 * represented correctly in the resulting automaton.
-	 *
-	 * @throws AutomataLibraryException
-	 *             if construction of {@link Complement} or {@link BuchiComplementFKV} fails
+	 * Returns an {@link INestedWordAutomaton} that represents the MSOD-Complement of the given automaton. The
+	 * MSOD-Complement performs the {@link Complement} and additionally ensures that integer variables are represented
+	 * correctly.
 	 */
 	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String> complement(final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException;
@@ -187,7 +164,7 @@ public abstract class MSODAutomataOperations {
 		for (final Term intVar : intVars) {
 			INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton;
 			varAutomaton = intVariableAutomaton(services, intVar);
-			varAutomaton = reconstruct(services, varAutomaton, result.getAlphabet(), true);
+			varAutomaton = reduceOrExtend(services, varAutomaton, result.getAlphabet(), true);
 
 			result = intersect(services, result, varAutomaton);
 		}

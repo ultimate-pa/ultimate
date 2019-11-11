@@ -98,7 +98,7 @@ public class MSODAlphabetSymbol {
 	}
 
 	/**
-	 * Returns the terms contained in this alphabet symbol.
+	 * Returns a set view of the terms contained in this alphabet symbol.
 	 */
 	public final Set<Term> getTerms() {
 		return mMap.keySet();
@@ -146,29 +146,20 @@ public class MSODAlphabetSymbol {
 	/*
 	 * Returns a set with terms that match the given sorts.
 	 */
-	public Set<Term> containsSort(final String sort) {
-
-		return containsSort(new HashSet<>(Arrays.asList(sort)));
-	}
-
-	/*
-	 * Returns a set with terms that match the given sorts.
-	 */
-	public Set<Term> containsSort(final Set<String> sorts) {
+	public Set<Term> containsSort(final String... sorts) {
 		final Set<Term> result = new HashSet<>();
 
 		for (final Term term : getTerms()) {
-			if (sorts.contains(term.getSort().getName())) {
-				result.add(term);
+			for (final String sort : sorts) {
+				if (term.getSort().getName().equals(sort)) {
+					result.add(term);
+				}
 			}
 		}
 
 		return result;
 	}
 
-	/**
-	 * Returns a string representation of this alphabet symbol.
-	 */
 	@Override
 	public String toString() {
 		String str = new String();

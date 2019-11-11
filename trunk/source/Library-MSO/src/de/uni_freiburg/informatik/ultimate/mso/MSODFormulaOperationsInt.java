@@ -145,7 +145,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * Returns a {@link NestedWordAutomaton} that represents a part of the
 	 * {@link #strictIneqAutomaton(AutomataLibraryServices, Term, Term, Rational)}. Part: x >= 0 and y >= 0.
 	 */
-	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartOne(
+	private static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartOne(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -210,7 +210,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * {@link #strictIneqAutomaton(AutomataLibraryServices, Term, Term, Rational)}. Part: x < 0 and y < 0.
 	 */
 
-	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartTwo(
+	private static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartTwo(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -277,7 +277,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * Returns a {@link NestedWordAutomaton} that represents a part of the
 	 * {@link #strictIneqAutomaton(AutomataLibraryServices, Term, Term, Rational)}. Part: x >= 0 and y < 0.
 	 */
-	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartThree(
+	private static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartThree(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -342,7 +342,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * Returns a {@link NestedWordAutomaton} that represents a part of the
 	 * {@link #strictIneqAutomaton(AutomataLibraryServices, Term, Term, Rational)}. Part: x < 0 and y >= 0.
 	 */
-	private NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartFour(
+	private static NestedWordAutomaton<MSODAlphabetSymbol, String> strictIneqAtomatonPartFour(
 			final AutomataLibraryServices services, final Term x, final Term y, final Rational constant) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -587,7 +587,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * Returns a {@link NestedWordAutomaton} that represents a part of the
 	 * {@link #elementAutomaton(AutomataLibraryServices, Term, Rational, Term)}. Part: x+c >= 0 and x >= 0.
 	 */
-	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartOne(
+	private static NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartOne(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -648,7 +648,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * Returns a {@link NestedWordAutomaton} that represents a part of the
 	 * {@link #elementAutomaton(AutomataLibraryServices, Term, Rational, Term)}. Part: x+c < 0 and x < 0.
 	 */
-	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartTwo(
+	private static NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartTwo(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -712,7 +712,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * Returns a {@link NestedWordAutomaton} that represents a part of the
 	 * {@link #elementAutomaton(AutomataLibraryServices, Term, Rational, Term)}. Part: x+c >= 0 and x < 0.
 	 */
-	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartThree(
+	private static NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartThree(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
@@ -788,7 +788,7 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * Returns a {@link NestedWordAutomaton} that represents a part of the
 	 * {@link #elementAutomaton(AutomataLibraryServices, Term, Rational, Term)}. Part: x+c < 0 and x >= 0.
 	 */
-	private NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartFour(
+	private static NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartFour(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
 
 		final int c = SmtUtils.toInt(constant).intValueExact();

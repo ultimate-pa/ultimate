@@ -258,7 +258,7 @@ public final class MSODSolver {
 		freeVars.removeAll(Arrays.asList(quantifiedVariables));
 
 		final Set<MSODAlphabetSymbol> reducedAlphabet = MSODUtils.createAlphabet(freeVars.toArray(new Term[0]));
-		result = mAutomataOperations.reconstruct(mAutomataLibrarayServices, result, reducedAlphabet, false);
+		result = MSODAutomataOperations.reduceOrExtend(mAutomataLibrarayServices, result, reducedAlphabet, false);
 
 		mLogger.error(result);
 
@@ -271,7 +271,7 @@ public final class MSODSolver {
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processTrue() {
 		mLogger.info("Construct true");
 
-		return mFormulaOperations.trueAutomaton(mAutomataLibrarayServices);
+		return MSODFormulaOperations.trueAutomaton(mAutomataLibrarayServices);
 	}
 
 	/**
@@ -280,7 +280,7 @@ public final class MSODSolver {
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processFalse() {
 		mLogger.info("Construct false");
 
-		return mFormulaOperations.falseAutomaton(mAutomataLibrarayServices);
+		return MSODFormulaOperations.falseAutomaton(mAutomataLibrarayServices);
 	}
 
 	/**
@@ -321,8 +321,8 @@ public final class MSODSolver {
 			Set<MSODAlphabetSymbol> symbols;
 			symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
 
-			result = mAutomataOperations.reconstruct(mAutomataLibrarayServices, result, symbols, true);
-			tmp = mAutomataOperations.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
+			result = MSODAutomataOperations.reduceOrExtend(mAutomataLibrarayServices, result, symbols, true);
+			tmp = MSODAutomataOperations.reduceOrExtend(mAutomataLibrarayServices, tmp, symbols, true);
 
 			result = mAutomataOperations.intersect(mAutomataLibrarayServices, result, tmp);
 		}
@@ -349,8 +349,8 @@ public final class MSODSolver {
 			Set<MSODAlphabetSymbol> symbols;
 			symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
 
-			result = mAutomataOperations.reconstruct(mAutomataLibrarayServices, result, symbols, true);
-			tmp = mAutomataOperations.reconstruct(mAutomataLibrarayServices, tmp, symbols, true);
+			result = MSODAutomataOperations.reduceOrExtend(mAutomataLibrarayServices, result, symbols, true);
+			tmp = MSODAutomataOperations.reduceOrExtend(mAutomataLibrarayServices, tmp, symbols, true);
 
 			result = mAutomataOperations.union(mAutomataLibrarayServices, result, tmp);
 		}

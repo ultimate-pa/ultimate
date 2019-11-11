@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtil
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * This class provides methods to manipulate Buchi automata used to describe MSOD-Formulas.
+ * This class provides methods to manipulate büchi automata used to describe MSOD-Formulas.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -47,12 +47,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 
 	/**
-	 * Returns an {@link INestedWordAutomaton} that represents the MSOD-Büchi-complement of the two given automata. The
-	 * MSOD-Büchi-complement performs the Büchi-complement of two automata and additionally ensures that Integer
-	 * variables are represented correctly in the resulting automaton.
-	 *
 	 * @throws AutomataLibraryException
-	 *             if construction of {@link BuchiComplementFKV} fails
+	 *             if construction of {@link BuchiComplementFKV} fails.
 	 */
 	@Override
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> complement(final AutomataLibraryServices services,
@@ -74,7 +70,7 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 		for (final Term intVar : intVars) {
 			INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton;
 			varAutomaton = intVariableAutomaton(services, intVar);
-			varAutomaton = reconstruct(services, varAutomaton, result.getAlphabet(), true);
+			varAutomaton = reduceOrExtend(services, varAutomaton, result.getAlphabet(), true);
 
 			result = intersect(services, result, varAutomaton);
 		}

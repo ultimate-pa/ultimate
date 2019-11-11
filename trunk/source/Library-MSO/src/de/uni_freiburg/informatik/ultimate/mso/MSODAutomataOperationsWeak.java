@@ -28,8 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inters
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * This class provides methods to manipulate finite automata used to describe Weak-MSOD-Formulas.
+ * This class provides methods to manipulate finite automata used to describe MSOD-Formulas.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -47,10 +47,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class MSODAutomataOperationsWeak extends MSODAutomataOperations {
 
 	/**
-	 * Returns an {@link INestedWordAutomaton} that represents the MSOD-complement of the two given automata. The
-	 * MSOD-complement performs the complement of two automata and additionally ensures that Integer variables are
-	 * represented correctly in the resulting automaton.
-	 *
 	 * @throws AutomataLibraryException
 	 *             if construction of {@link Complement} fails
 	 */
@@ -67,16 +63,14 @@ public class MSODAutomataOperationsWeak extends MSODAutomataOperations {
 			return result;
 		}
 
-		// Find all Int variables contained in the alphabet.
-		final Set<Term> intVars = new HashSet<>(result.getAlphabet().iterator().next().getMap().keySet());
-		intVars.removeIf(o -> !MSODUtils.isIntConstantOrTermVariable(o));
+		// Find all Int variables in the alphabet.
+		final Set<Term> intVars = result.getAlphabet().iterator().next().getTerms().stream()
+				.filter(e -> MSODUtils.isIntConstantOrTermVariable(e)).collect(Collectors.toSet());
 
-		// Intersect with an automaton that ensures that each Int variable is matched to exactly one value.
+		// Intersect with an automaton that ensures that Int variables are matched to exactly one value.
 		for (final Term intVar : intVars) {
-			INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton;
-			varAutomaton = intVariableAutomaton(services, intVar);
-			varAutomaton = reconstruct(services, varAutomaton, result.getAlphabet(), true);
-
+			INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton = intVariableAutomaton(services, intVar);
+			varAutomaton = reduceOrExtend(services, varAutomaton, result.getAlphabet(), true);
 			result = intersect(services, result, varAutomaton);
 		}
 
