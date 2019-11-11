@@ -111,9 +111,11 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		final NestedWordAutomaton<LETTER, IPredicate> automaton =
 				new NestedWordAutomaton<>(mAutomataServices, mAlphabet, mEmptyStackStateFactory);
 		automaton.addState(true, false, getPrecondition());
+		automaton.addState(false, true, getPostcondition());
+		IPredicate[] initialInterpolants = null;
 		while (!queue.isEmpty()) {
 			final List<LETTER> trace = queue.remove();
-			if (visited.add(trace)) {
+			if (!visited.add(trace)) {
 				continue;
 			}
 			preprocess(trace);
@@ -126,22 +128,45 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					return new McrTraceCheckResult<>(trace, feasibility, automaton, null);
 				}
 				interpolants = proof.getSecond().getPredicates();
-				final INestedWordAutomaton<LETTER, String> mcrAutomaton = getMcrAutomaton(trace, interpolants);
+				if (trace == initialTrace) {
+					initialInterpolants = interpolants.toArray(new IPredicate[interpolants.size()]);
+				}
+				final INestedWordAutomaton<LETTER, ?> mcrAutomaton = getMcrAutomaton(trace, interpolants);
 				updateInterpolantAutomaton(automaton, mcrAutomaton, trace, interpolants);
 			}
 			queue.addAll(generateSeedInterleavings(trace, interpolants));
 		}
 		// All traces are infeasible
-		// TODO: What to use as interpolants?
-		return new McrTraceCheckResult<>(initialTrace, LBool.UNSAT, automaton, new IPredicate[0]);
+		return new McrTraceCheckResult<>(initialTrace, LBool.UNSAT, automaton, initialInterpolants);
 	}
 
-	private void updateInterpolantAutomaton(final NestedWordAutomaton<LETTER, IPredicate> interpolantAutomaton,
-			final INestedWordAutomaton<LETTER, String> mcrAutomaton, final List<LETTER> trace,
+	private <STATE> void updateInterpolantAutomaton(final NestedWordAutomaton<LETTER, IPredicate> interpolantAutomaton,
+			final INestedWordAutomaton<LETTER, STATE> mcrAutomaton, final List<LETTER> trace,
 			final List<IPredicate> interpolants) {
-		// TODO: Get an interpolant automaton from the given automaton, i.e. label all states with predicates and add
-		// transitions based on them
+		final Map<STATE, IPredicate> stateMap = new HashMap<>();
+		// TODO: Fill stateMap using interpolation via API (pick traces until all states covered)
+		// Add all the new predicates as states
+		for (final IPredicate predicate : stateMap.values()) {
+			if (!interpolantAutomaton.contains(predicate)) {
+				interpolantAutomaton.addState(false, false, predicate);
+			}
+		}
+		// TODO: Get all transitions from mcrAutomaton (excluding self-loops) and add them mapped with stateMap to
+		// interpolantAutomaton
+		// TODO: Add interpolant based transitions for the fresh states
+	}
 
+	private List<LETTER> constructTrace(final IPredicate precondition, final List<LETTER> trace,
+			final IPredicate postcondition) {
+		final List<LETTER> newTrace = new ArrayList<>(trace.size() + 2);
+		// TODO: Construct an assumption from precondition
+		final LETTER assumePre = null;
+		newTrace.add(assumePre);
+		newTrace.addAll(trace);
+		// TODO: Construct an assumption from postcondition (negated)
+		final LETTER assumeNotPost = null;
+		newTrace.add(assumeNotPost);
+		return newTrace;
 	}
 
 	private void getReadsAndWrites(final List<LETTER> trace) {
@@ -326,7 +351,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		return rational.numerator();
 	}
 
-	private INestedWordAutomaton<LETTER, String> getMcrAutomaton(final List<LETTER> trace,
+	private INestedWordAutomaton<LETTER, ?> getMcrAutomaton(final List<LETTER> trace,
 			final List<IPredicate> interpolants) throws AutomataLibraryException {
 		INestedWordAutomaton<LETTER, String> result = null;
 		final StringFactory factory = new StringFactory();

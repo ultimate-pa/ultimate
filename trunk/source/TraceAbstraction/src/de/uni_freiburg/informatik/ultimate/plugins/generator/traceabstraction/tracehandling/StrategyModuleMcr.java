@@ -64,22 +64,21 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 		mAbstraction = abstraction;
 		mTaskIdentifier = taskIdentifier;
 		mUsedPredicates = new ArrayList<>();
-		runEngine(mCounterexample);
 	}
 
 	@Override
 	public LBool isCorrect() {
-		return mRefinementEngine.getCounterexampleFeasibility();
+		return getOrConstruct().isCorrect();
 	}
 
 	@Override
 	public boolean providesRcfgProgramExecution() {
-		return mRefinementEngine.providesIcfgProgramExecution();
+		return getOrConstruct().providesRcfgProgramExecution();
 	}
 
 	@Override
 	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
-		return mRefinementEngine.getIcfgProgramExecution();
+		return getOrConstruct().getRcfgProgramExecution();
 	}
 
 	@Override
@@ -89,12 +88,13 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 
 	@Override
 	public IHoareTripleChecker getHoareTripleChecker() {
+		getOrConstruct();
 		return mRefinementEngine.getHoareTripleChecker();
 	}
 
 	@Override
 	public IPredicateUnifier getPredicateUnifier() {
-		return mRefinementEngine.getPredicateUnifier();
+		return mPredicateUnifier;
 	}
 
 	@Override
@@ -152,7 +152,16 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 
 	@Override
 	public Pair<LBool, QualifiedTracePredicates> apply(final List<LETTER> trace) {
-		runEngine(trace);
+		final IRun<LETTER, ?> run = new StatelessRun<>(TraceCheckUtils.toNestedWord(trace));
+		// Run mRefinementEngine for the given trace
+		final RefinementStrategy refinementStrategy = mPrefs.getMcrRefinementStrategy();
+		if (refinementStrategy == RefinementStrategy.MCR) {
+			throw new IllegalStateException("MCR cannot used with MCR as internal strategy.");
+		}
+		final IRefinementStrategy<LETTER> strategy =
+				mStrategyFactory.constructStrategy(run, mAbstraction, mTaskIdentifier, mEmptyStackFactory,
+						IPreconditionProvider.constructDefaultPreconditionProvider(), refinementStrategy);
+		mRefinementEngine = new AutomatonFreeRefinementEngine<>(mLogger, strategy);
 		final LBool feasibility = mRefinementEngine.getCounterexampleFeasibility();
 		if (feasibility != LBool.UNSAT) {
 			return new Pair<>(feasibility, null);
@@ -166,18 +175,5 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 				proofs.stream().filter(a -> a.isPerfect()).findAny().orElse(proofs.stream().findFirst().get());
 		mUsedPredicates.add(predicate);
 		return new Pair<>(feasibility, predicate);
-	}
-
-	private void runEngine(final List<LETTER> trace) {
-		final IRun<LETTER, ?> run = new StatelessRun<>(TraceCheckUtils.toNestedWord(trace));
-		// Run mRefinementEngine for the given trace
-		final RefinementStrategy refinementStrategy = mPrefs.getMcrRefinementStrategy();
-		if (refinementStrategy == RefinementStrategy.MCR) {
-			throw new IllegalStateException("MCR cannot used with MCR as internal strategy.");
-		}
-		final IRefinementStrategy<LETTER> strategy =
-				mStrategyFactory.constructStrategy(run, mAbstraction, mTaskIdentifier, mEmptyStackFactory,
-						IPreconditionProvider.constructDefaultPreconditionProvider(), refinementStrategy);
-		mRefinementEngine = new AutomatonFreeRefinementEngine<>(mLogger, strategy);
 	}
 }
