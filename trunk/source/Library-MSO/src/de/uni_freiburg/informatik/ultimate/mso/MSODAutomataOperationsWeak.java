@@ -60,7 +60,7 @@ public class MSODAutomataOperationsWeak extends MSODAutomataOperations {
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result =
 				new Complement<>(services, new MSODStringFactory(), automaton).getResult();
 
-		result = intersectWithIntVariableAutomaton(services, result);
+		result = fixIntVariables(services, result);
 
 		return minimize(services, result);
 	}

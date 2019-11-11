@@ -768,9 +768,9 @@ public final class MSODSolver {
 
 		for (final Term term : terms) {
 			// No IntSort variable should have indices enabled in its loop.
-			if (SmtSortUtils.isIntSort(term.getSort())) {
-				throw new InternalError("Integer representation is corrupted.");
-			}
+			// if (SmtSortUtils.isIntSort(term.getSort())) {
+			// throw new InternalError("Integer representation is corrupted.");
+			// }
 
 			final Set<Term> disjuncts = new HashSet<>();
 

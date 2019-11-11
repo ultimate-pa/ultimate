@@ -133,9 +133,12 @@ public abstract class MSODAutomataOperations {
 	 *
 	 * @throws AutomataLibraryException
 	 *             if construction of {@link Intersect}, {@link BuchiIntersect} fails.
+	 * 
+	 * @throws AutomataOperationCanceledException
+	 *             if minimization is canceled.
 	 *
 	 */
-	public INestedWordAutomaton<MSODAlphabetSymbol, String> intersectWithIntVariableAutomaton(
+	public INestedWordAutomaton<MSODAlphabetSymbol, String> fixIntVariables(
 			final AutomataLibraryServices services, final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
 			throws AutomataLibraryException {
 
@@ -191,7 +194,7 @@ public abstract class MSODAutomataOperations {
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result =
 				new Union<>(services, new MSODStringFactory(), automaton1, automaton2).getResult();
 
-		result = intersectWithIntVariableAutomaton(services, result);
+		result = fixIntVariables(services, result);
 
 		return minimize(services, result);
 	}
