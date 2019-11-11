@@ -1,3 +1,4 @@
+(set-info :status sat)
 (set-logic UFLIA)
 
 (declare-sort SetOfInt 0)
