@@ -12,6 +12,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.smtsolver.external
 Import-Package: de.uni_freiburg.informatik.ultimate.acsl.parser,
+ de.uni_freiburg.informatik.ultimate.automata.nestedword,
  de.uni_freiburg.informatik.ultimate.mso,
  junit.framework,
  org.junit,
