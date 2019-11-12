@@ -61,25 +61,25 @@ public class BndEntryConditionPattern extends PatternType {
 
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			ct = counterTrace(phaseT(), phase(P, BoundTypes.GREATER, c1), phase(S.negate()), phaseT());
+			ct = counterTrace(phaseT(), phase(P, BoundTypes.GREATEREQUAL, c1), phase(S.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD Q = scope.getCdd1();
-			ct = counterTrace(phase(Q.negate()), phase(P.and(Q.negate()), BoundTypes.GREATER, c1),
+			ct = counterTrace(phase(Q.negate()), phase(P.and(Q.negate()), BoundTypes.GREATEREQUAL, c1),
 					phase(S.negate().and(Q.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();
 			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()),
-					phase(P.and(R.negate()), BoundTypes.GREATER, c1), phase(S.negate().and(R.negate())), phaseT());
+					phase(P.and(R.negate()), BoundTypes.GREATEREQUAL, c1), phase(S.negate().and(R.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD Q = scope.getCdd1();
-			ct = counterTrace(phaseT(), phase(Q), phaseT(), phase(P, BoundTypes.GREATER, c1), phase(S.negate()),
+			ct = counterTrace(phaseT(), phase(Q), phaseT(), phase(P, BoundTypes.GREATEREQUAL, c1), phase(S.negate()),
 					phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();
 			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()),
-					phase(P.and(R.negate()), BoundTypes.GREATER, c1), phase(S.negate().and(R.negate())),
+					phase(P.and(R.negate()), BoundTypes.GREATEREQUAL, c1), phase(S.negate().and(R.negate())),
 					phase(R.negate()), phase(R), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
