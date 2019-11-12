@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class BndReccurrencePattern extends PatternType {
-	public BndReccurrencePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+public class BndRecurrencePattern extends PatternType {
+	public BndRecurrencePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
@@ -103,7 +103,7 @@ public class BndReccurrencePattern extends PatternType {
 
 	@Override
 	public PatternType rename(final String newName) {
-		return new BndReccurrencePattern(getScope(), newName, getCdds(), getDuration());
+		return new BndRecurrencePattern(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override
