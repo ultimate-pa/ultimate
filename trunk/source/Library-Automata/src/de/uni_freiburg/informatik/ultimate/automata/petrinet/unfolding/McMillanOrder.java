@@ -11,7 +11,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
  * @param <PLACE>
  *            place content type
  */
-public class McMillanOrder<LETTER, PLACE> implements IOrder<LETTER, PLACE> {
+public class McMillanOrder<LETTER, PLACE> extends EventOrder<LETTER, PLACE> {
 
 	@Override
 	public int compare(final Configuration<LETTER, PLACE> o1, final Configuration<LETTER, PLACE> o2) {

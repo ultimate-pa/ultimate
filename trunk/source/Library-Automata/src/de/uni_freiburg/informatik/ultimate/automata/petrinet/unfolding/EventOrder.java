@@ -40,11 +40,14 @@ import java.util.Comparator;
  * @param <PLACE>
  *            place content type
  */
-public interface IOrder<LETTER, PLACE> extends Comparator<Event<LETTER, PLACE>> {
+public abstract class EventOrder<LETTER, PLACE> implements Comparator<Event<LETTER, PLACE>> {
+	
+	private int mComparisonCounter = 0;
 
 	/** Compares two events by comparing their local configurations. */
 	@Override
-	default int compare(final Event<LETTER, PLACE> o1, final Event<LETTER, PLACE> o2) {
+	public int compare(final Event<LETTER, PLACE> o1, final Event<LETTER, PLACE> o2) {
+		mComparisonCounter++;
 		if (o1 == o2) {
 			return 0;
 		}
@@ -62,5 +65,9 @@ public interface IOrder<LETTER, PLACE> extends Comparator<Event<LETTER, PLACE>> 
 	 *            second configuration
 	 * @return the value according to {@link Comparator}
 	 */
-	int compare(Configuration<LETTER, PLACE> o1, Configuration<LETTER, PLACE> o2);
+	protected abstract int compare(Configuration<LETTER, PLACE> o1, Configuration<LETTER, PLACE> o2);
+	
+	public int getNumberOfComparisons() {
+		return mComparisonCounter;
+	}
 }

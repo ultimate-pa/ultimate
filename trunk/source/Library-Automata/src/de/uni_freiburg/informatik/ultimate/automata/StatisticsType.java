@@ -246,6 +246,10 @@ public enum StatisticsType {
 	 */
 	NUMBER_CUT_OFF_EVENTS,
 	/**
+	 * Number of event pairs that were compared.
+	 */
+	NUMBER_EVENT_COMPARISONS,
+	/**
 	 * Number of pairs in a preprocessing.
 	 */
 	NUMBER_INITIAL_PAIRS,

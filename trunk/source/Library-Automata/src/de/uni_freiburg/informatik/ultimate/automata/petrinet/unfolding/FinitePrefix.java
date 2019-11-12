@@ -90,6 +90,8 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 		sb.append(" ");
 		sb.append(mUnfoldingStatistics.prettyprintPossibleExtensionsMaximalSize());
 		sb.append(" ");
+		sb.append(mUnfoldingStatistics.prettyprintNumberOfEventComparisons());
+		sb.append(" ");
 		sb.append(mUnfoldingStatistics.prettyprintPossibleExtensionCandidatesInformation());
 		sb.append(" ");
 		sb.append(mUnfoldingStatistics.prettyprintCoRelationMaximalDegree());
@@ -121,6 +123,8 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 				mUnfoldingStatistics.getCoRelationQueriesNo());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_CUT_OFF_EVENTS, mUnfoldingStatistics.getCutOffEvents());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_NON_CUT_OFF_EVENTS, mUnfoldingStatistics.getNonCutOffEvents());
+		statistics.addKeyValuePair(StatisticsType.NUMBER_EVENT_COMPARISONS,
+				mUnfoldingStatistics.getNumberOfEventComparisons());
 		if (mOperand instanceof IPetriNet) {
 			statistics.addKeyValuePair(StatisticsType.NUMBER_UNREACHABLE_TRANSITIONS,
 					mUnfoldingStatistics.unreachableTransitionsInOperand());

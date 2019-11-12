@@ -14,7 +14,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
  * @param <PLACE>
  *            place content type
  */
-public class EsparzaRoemerVoglerOrder<LETTER, PLACE> implements IOrder<LETTER, PLACE> {
+public class EsparzaRoemerVoglerOrder<LETTER, PLACE> extends EventOrder<LETTER, PLACE> {
 	
 	@Override
 	public int compare(Configuration<LETTER, PLACE> c1, Configuration<LETTER, PLACE> c2) {

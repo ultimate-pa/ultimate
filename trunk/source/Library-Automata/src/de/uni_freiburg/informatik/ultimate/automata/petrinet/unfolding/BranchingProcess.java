@@ -93,7 +93,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 */
 	private final HashRelation<PLACE, ITransition<LETTER, PLACE>> mYetKnownPredecessorTransitions = new HashRelation<>();
 
-	private final IOrder<LETTER, PLACE> mOrder;
+	private final EventOrder<LETTER, PLACE> mOrder;
 
 	private int mConditionSerialnumberCounter = 0;
 
@@ -111,7 +111,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	private final boolean mNewFiniteComprehensivePrefixMode = false;
 
 	public BranchingProcess(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> net,
-			final IOrder<LETTER, PLACE> order) throws PetriNetNot1SafeException {
+			final EventOrder<LETTER, PLACE> order) throws PetriNetNot1SafeException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNet = net;
@@ -460,7 +460,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		return "has " + mConditions.size() + " conditions, " + (mEvents.size() - 1) + " events";
 	}
 
-	public IOrder<LETTER, PLACE> getOrder() {
+	public EventOrder<LETTER, PLACE> getOrder() {
 		return mOrder;
 	}
 

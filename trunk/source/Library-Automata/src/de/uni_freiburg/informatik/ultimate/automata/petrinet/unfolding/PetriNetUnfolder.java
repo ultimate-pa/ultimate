@@ -68,14 +68,14 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mOperand;
 	private final boolean mStopIfAcceptingRunFound;
 	private final boolean mSameTransitionCutOff;
-	private final IOrder<LETTER, PLACE>  mOrder;
+	private final EventOrder<LETTER, PLACE>  mOrder;
 	private final IPossibleExtensions<LETTER, PLACE> mPossibleExtensions;
 	private final BranchingProcess<LETTER, PLACE> mUnfolding;
 	private PetriNetRun<LETTER, PLACE> mRun;
 
 	private final PetriNetUnfolder<LETTER, PLACE>.Statistics mStatistics = new Statistics();
 	
-	private boolean mUseCutoffChekingPossibleExtention = false;
+	private final boolean mUseCutoffChekingPossibleExtention = false;
 
 
 	/**
@@ -163,6 +163,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 								mStatistics.prettyprintCutOffInformation() + " " +
 								mStatistics.prettyprintCoRelationInformation() + " " +
 								mStatistics.prettyprintPossibleExtensionsMaximalSize() + " " +
+								mStatistics.prettyprintNumberOfEventComparisons() + " " +
 								mStatistics.prettyprintPossibleExtensionCandidatesInformation() + " " +
 								mStatistics.prettyprintCoRelationMaximalDegree() + " " +
 								mStatistics.prettyprintConditionPerPlaceMax() + ")");
@@ -408,6 +409,10 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		public String prettyprintConditionPerPlaceMax() {
 			return "Up to " + computeConditionPerPlaceMax() + " conditions per place.";
 		}
+		
+		public String prettyprintNumberOfEventComparisons() {
+			return "Compared " + getNumberOfEventComparisons() + " event pairs.";
+		}
 
 
 
@@ -425,6 +430,10 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 
 		public int getNonCutOffEvents() {
 			return mNonCutOffEvents;
+		}
+		
+		public int getNumberOfEventComparisons() {
+			return mOrder.getNumberOfComparisons();
 		}
 
 		/**

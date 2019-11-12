@@ -9,10 +9,10 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
  * @param <PLACE>
  *            place content type
  */
-public class ErvEqualMarkingOrder<LETTER, PLACE> implements IOrder<LETTER, PLACE> {
+public class ErvEqualMarkingOrder<LETTER, PLACE> extends EventOrder<LETTER, PLACE> {
 	
-	private final IOrder<LETTER, PLACE> mMcMillanOrder = new McMillanOrder<>();
-	private final IOrder<LETTER, PLACE> mErvOrder = new EsparzaRoemerVoglerOrder<>();
+	private final EventOrder<LETTER, PLACE> mMcMillanOrder = new McMillanOrder<>();
+	private final EventOrder<LETTER, PLACE> mErvOrder = new EsparzaRoemerVoglerOrder<>();
 	
 	@Override
 	public int compare(final Event<LETTER, PLACE> o1, final Event<LETTER, PLACE> o2) {
