@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
+@Deprecated
 public final class MSODIntOperationsTest {
 	private IUltimateServiceProvider mServiceProvider;
 	private AutomataLibraryServices mServices;
