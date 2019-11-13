@@ -149,9 +149,9 @@ public class PeaToDotTestSuite {
 	public static void afterClass() throws IOException {
 		final StringBuilder stringBuilder = new StringBuilder();
 		final Formatter fmt = new Formatter(stringBuilder);
-		fmt.format("toc_depth: %d%s%s", TOC_DEPTH, LINE_SEP, LINE_SEP);
+		// fmt.format("toc_depth: %d%s%s", TOC_DEPTH, LINE_SEP, LINE_SEP);
 		fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
-		fmt.format("# Patterns%s", LINE_SEP);
+		// fmt.format("# Patterns%s", LINE_SEP);
 
 		final File[] files = MARKDOWN_DIR.listFiles((dir, name) -> name.toLowerCase().endsWith(".md"));
 		for (final File file : files) {
@@ -159,7 +159,7 @@ public class PeaToDotTestSuite {
 		}
 		fmt.close();
 
-		final File file = new File(MARKDOWN_DIR.getParentFile() + "/patterns.md");
+		final File file = new File(MARKDOWN_DIR + "/includeAllPatterns.md");
 		final BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 		writer.write(stringBuilder.toString());
 		writer.close();
