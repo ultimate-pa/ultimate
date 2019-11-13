@@ -91,8 +91,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -517,21 +515,21 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 								SimplificationTechnique.SIMPLIFY_DDA,
 								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 						poPostReturn = mPredicateUnifier.getOrConstructPredicate(pre);
-						
+
 						// Other idea: create formula of old(y) = y and add that to the frames.
-						final UnmodifiableTransFormula oldies =
-								mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(predecessorTransition.getPrecedingProcedure());
-						
+						final UnmodifiableTransFormula oldies = mCsToolkit.getOldVarsAssignmentCache()
+								.getOldVarsAssignment(predecessorTransition.getPrecedingProcedure());
+
 						final Map<Term, Term> substitutionMappingPrePred = new HashMap<>();
-						
+
 						for (final Entry<IProgramVar, TermVariable> inVars : oldies.getInVars().entrySet()) {
 							substitutionMappingPrePred.put(inVars.getValue(), inVars.getKey().getTermVariable());
 						}
-						
+
 						for (final Entry<IProgramVar, TermVariable> outVars : oldies.getOutVars().entrySet()) {
 							substitutionMappingPrePred.put(outVars.getValue(), outVars.getKey().getTermVariable());
 						}
-						
+
 						final Substitution sub = new Substitution(mScript, substitutionMappingPrePred);
 						final Term newOldies = sub.transform(oldies.getFormula());
 						final IPredicate oldiePred = mPredicateUnifier.getOrConstructPredicate(newOldies);
@@ -563,7 +561,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 						final ProofObligation newProofObligation = procSatProofObligations.getSecond();
 						final IcfgLocation newLocation = returnTrans.getCallerProgramPoint();
 
-						
 						final IPredicate callPred = mTruePred;
 						Term pre = mPredTrans.preReturn(toBeBlocked, callPred, assOfRet, assOfCallRet, oldVarAssign,
 								modVars);
@@ -571,7 +568,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 								SimplificationTechnique.SIMPLIFY_DDA,
 								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 						poPostReturn = mPredicateUnifier.getOrConstructPredicate(pre);
-						
+
 						final ProofObligation newLocalProofObligation =
 								new ProofObligation(newProofObligation.getToBeBlocked(), newLocation, 0);
 
@@ -1078,17 +1075,18 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			++i;
 		}
 
-		final IterativePredicateTransformer spt = new IterativePredicateTransformer(
-				mPredicateUnifier.getPredicateFactory(), mScript, mCsToolkit.getModifiableGlobalsTable(), mServices,
-				mTrace, mTruePred, mFalsePred, Collections.emptyMap(), null, SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mSymbolTable);
-
-		realInterpolants = spt.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout)
-				.getPredicates();
-
-		assert TraceCheckUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
-				mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger,
-				mCfgManagedScript) : "invalid Hoare triple in BP";
+		// final IterativePredicateTransformer spt = new IterativePredicateTransformer(
+		// mPredicateUnifier.getPredicateFactory(), mScript, mCsToolkit.getModifiableGlobalsTable(), mServices,
+		// mTrace, mTruePred, mFalsePred, Collections.emptyMap(), null, SimplificationTechnique.SIMPLIFY_DDA,
+		// XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mSymbolTable);
+		//
+		// realInterpolants = spt.computeWeakestPreconditionSequence(rtf, postprocs, false,
+		// mAlternatingQuantifierBailout)
+		// .getPredicates();
+		//
+		// assert TraceCheckUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
+		// mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger,
+		// mCfgManagedScript) : "invalid Hoare triple in BP";
 
 		return interpolants;
 	}
