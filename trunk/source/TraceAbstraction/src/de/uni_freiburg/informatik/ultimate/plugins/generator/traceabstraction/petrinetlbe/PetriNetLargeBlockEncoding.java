@@ -176,8 +176,9 @@ public class PetriNetLargeBlockEncoding {
 				throw new AssertionError("unknown value " + petriNetLbeSettings);
 			}
 			int numberOfFixpointIterations = 1;
-			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultLastIteration = petriNet;
-			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultCurrentIteration = sequenceRule(services, petriNet);
+			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultLastIteration =
+					CopySubnet.copy(new AutomataLibraryServices(services), petriNet, new HashSet<>(petriNet.getTransitions()), petriNet.getAlphabet());
+			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultCurrentIteration = sequenceRule(services, resultLastIteration);
 			while (resultLastIteration.getTransitions().size() != resultCurrentIteration.getTransitions().size()) {
 				numberOfFixpointIterations++;
 				resultLastIteration = resultCurrentIteration;
