@@ -235,7 +235,7 @@ public class MSODFormulaOperationsNatTest {
 	@Test
 	public void strictIneqAutomatonXYC() throws AutomataLibraryException {
 		mLogger.info("--------------------------------------------------");
-		mLogger.info("Test strictIneqAutomaton x-y < c...");
+		mLogger.info("Test strictIneqAutomaton x-y < c ...");
 
 		Rational c;
 		final Term x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
@@ -273,4 +273,244 @@ public class MSODFormulaOperationsNatTest {
 		test(true, parseLassoWord(x, y, "000001 0", "000010 0"), mOperations.strictIneqAutomaton(mALS, x, y, c));
 		test(true, parseLassoWord(x, y, "0000010 00", "0000100 00"), mOperations.strictIneqAutomaton(mALS, x, y, c));
 	}
+
+	/**
+	 * Test Cases for -x < c
+	 */
+	@Test
+	public void strictNegIneqAutomaton() throws AutomataLibraryException {
+		mLogger.info("--------------------------------------------------");
+		mLogger.info("Test strictNegIneqAutomaton -x < c ...");
+		Rational c;
+		final Term x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
+
+		// true: -(1) < 0
+		c = Rational.valueOf(0, 1);
+		test(true, parseWord(x, "01"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+		test(true, parseWord(x, "01000"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+
+		test(true, parseLassoWord(x, "01 00"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+		test(true, parseLassoWord(x, "01000 0"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+
+		// false: -(0) < 0
+		c = Rational.valueOf(0, 1);
+		test(false, parseWord(x, "1"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+		test(false, parseWord(x, "100"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+
+		test(false, parseLassoWord(x, "1 000"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+		test(false, parseLassoWord(x, "10000 00"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+
+		// true: -(4) < 3
+		c = Rational.valueOf(3, 1);
+		test(true, parseWord(x, "00001"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+		test(true, parseWord(x, "0000100"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+
+		test(true, parseLassoWord(x, "00001 000"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+		test(true, parseLassoWord(x, "00001000 00"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+
+		// true: -(2) < 2
+		c = Rational.valueOf(2, 1);
+		test(true, parseWord(x, "001"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+		test(true, parseWord(x, "00100"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+
+		test(true, parseLassoWord(x, "001 000"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+		test(true, parseLassoWord(x, "001000 00"), mOperations.strictNegIneqAutomaton(mALS, x, c));
+	}
+
+	/**
+	 * Test Cases for x strictSubsetInt y
+	 */
+	@Test
+	public void strictSubsetAutomaton() throws AutomataLibraryException {
+		mLogger.info("--------------------------------------------------");
+		mLogger.info("Test strictSubsetAutomaton x strictSubsetInt y ...");
+
+		final Term x = mScript.variable("x", MSODUtils.getSetOfIntSort(mScript));
+		final Term y = mScript.variable("y", MSODUtils.getSetOfIntSort(mScript));
+
+		// true: { } subsetInt { 2 }
+		test(true, parseWord(x, y, "000", "001"), mOperations.strictSubsetAutomaton(mALS, x, y));
+		test(true, parseWord(x, y, "0000", "0010"), mOperations.strictSubsetAutomaton(mALS, x, y));
+
+		test(true, parseLassoWord(x, y, "000 00", "001 00"), mOperations.strictSubsetAutomaton(mALS, x, y));
+		test(true, parseLassoWord(x, y, "0000 0", "0010 0"), mOperations.strictSubsetAutomaton(mALS, x, y));
+
+		// false: { 1 } strictSubsetInt { 1 }
+		test(false, parseWord(x, y, "01", "01"), mOperations.strictSubsetAutomaton(mALS, x, y));
+		test(false, parseWord(x, y, "010", "010"), mOperations.strictSubsetAutomaton(mALS, x, y));
+
+		test(false, parseLassoWord(x, y, "01 00", "01 00"), mOperations.strictSubsetAutomaton(mALS, x, y));
+		test(false, parseLassoWord(x, y, "0100 0", "0100 0"), mOperations.strictSubsetAutomaton(mALS, x, y));
+
+		// true: { 0, 2 } strictSubsetInt { 0, 1, 2 }
+		test(true, parseWord(x, y, "101", "111"), mOperations.strictSubsetAutomaton(mALS, x, y));
+		test(true, parseWord(x, y, "1010", "1110"), mOperations.strictSubsetAutomaton(mALS, x, y));
+
+		test(true, parseLassoWord(x, y, "101 00", "111 00"), mOperations.strictSubsetAutomaton(mALS, x, y));
+		test(true, parseLassoWord(x, y, "10100 0", "11100 0"), mOperations.strictSubsetAutomaton(mALS, x, y));
+
+		// false: { 0, 2 } strictSubsetInt { 0, 1, 3 }
+		test(false, parseWord(x, y, "1010", "1101"), mOperations.strictSubsetAutomaton(mALS, x, y));
+		test(false, parseWord(x, y, "10100", "11010"), mOperations.strictSubsetAutomaton(mALS, x, y));
+
+		test(false, parseLassoWord(x, y, "1010 00", "1101 00"), mOperations.strictSubsetAutomaton(mALS, x, y));
+		test(false, parseLassoWord(x, y, "10100 0", "11010 0"), mOperations.strictSubsetAutomaton(mALS, x, y));
+
+		// true: { 2, 4, ...} subsetInt { 0, 1, 2, 3, 4, ... }
+		test(true, parseLassoWord(x, y, "00101 01", "11111 11"), mOperations.strictSubsetAutomaton(mALS, x, y));
+		test(true, parseLassoWord(x, y, "001010 10", "111111 11"), mOperations.strictSubsetAutomaton(mALS, x, y));
+
+		// false: { 0, 1, 2, ...} subsetInt { 0, 2 }
+		test(false, parseLassoWord(x, y, "111 1", "101 0"), mOperations.strictSubsetAutomaton(mALS, x, y));
+		test(false, parseLassoWord(x, y, "1111 11", "1010 00"), mOperations.strictSubsetAutomaton(mALS, x, y));
+
+		// true: { 0, 2 } subsetInt { 0, 2, 4, ... }
+		test(true, parseLassoWord(x, y, "101 00", "101 01"), mOperations.strictSubsetAutomaton(mALS, x, y));
+		test(true, parseLassoWord(x, y, "1010 00", "1010 10"), mOperations.strictSubsetAutomaton(mALS, x, y));
+	}
+
+	/**
+	 * Test Cases for x strictSubsetInt y
+	 */
+	@Test
+	public void subsetAutomaton() throws AutomataLibraryException {
+		mLogger.info("--------------------------------------------------");
+		mLogger.info("Test subsetAutomaton x subsetInt y ...");
+
+		final Term x = mScript.variable("x", MSODUtils.getSetOfIntSort(mScript));
+		final Term y = mScript.variable("y", MSODUtils.getSetOfIntSort(mScript));
+
+		// true: { } subsetInt { }
+		test(true, parseWord(x, y, "0", "0"), mOperations.subsetAutomaton(mALS, x, y));
+		test(true, parseWord(x, y, "000", "000"), mOperations.subsetAutomaton(mALS, x, y));
+
+		test(true, parseLassoWord(x, y, "000 00", "000 00"), mOperations.subsetAutomaton(mALS, x, y));
+		test(true, parseLassoWord(x, y, "0000 0", "0000 0"), mOperations.subsetAutomaton(mALS, x, y));
+
+		// false: { 1 } subsetInt { }
+		test(false, parseWord(x, y, "01", "00"), mOperations.subsetAutomaton(mALS, x, y));
+		test(false, parseWord(x, y, "010", "000"), mOperations.subsetAutomaton(mALS, x, y));
+
+		test(false, parseLassoWord(x, y, "010 00", "000 00"), mOperations.subsetAutomaton(mALS, x, y));
+		test(false, parseLassoWord(x, y, "0100 0", "0000 0"), mOperations.subsetAutomaton(mALS, x, y));
+
+		// true: { 0, 1 } subsetInt { 0, 1, 3}
+		test(true, parseWord(x, y, "1100", "1101"), mOperations.subsetAutomaton(mALS, x, y));
+		test(true, parseWord(x, y, "11000", "11010"), mOperations.subsetAutomaton(mALS, x, y));
+
+		test(true, parseLassoWord(x, y, "1100 00", "1101 00"), mOperations.subsetAutomaton(mALS, x, y));
+		test(true, parseLassoWord(x, y, "11000 0", "11010 0"), mOperations.subsetAutomaton(mALS, x, y));
+
+		// true: { 0, 1, 2, ...} subsetInt { 0, 1, 2, ...}
+		test(true, parseLassoWord(x, y, "1 1", "1 1"), mOperations.subsetAutomaton(mALS, x, y));
+		test(true, parseLassoWord(x, y, "11 11", "11 11"), mOperations.subsetAutomaton(mALS, x, y));
+
+		// true: { 0, 1, 2} subsetInt { 0, 1, 2, ...}
+		test(true, parseLassoWord(x, y, "111 0", "111 1"), mOperations.subsetAutomaton(mALS, x, y));
+		test(true, parseLassoWord(x, y, "111 00", "111 11"), mOperations.subsetAutomaton(mALS, x, y));
+
+		// false: { 0, 2, ...} subsetInt { 0, 2 }
+		test(false, parseLassoWord(x, y, "101 01", "101 00"), mOperations.subsetAutomaton(mALS, x, y));
+		test(false, parseLassoWord(x, y, "1010 10", "1010 00"), mOperations.subsetAutomaton(mALS, x, y));
+	}
+
+	/**
+	 * Test Cases for x+c element y.
+	 */
+	@Test
+	public void elementAutomaton() throws AutomataLibraryException {
+		mLogger.info("--------------------------------------------------");
+		mLogger.info("Test elementAutomaton x+c element y ...");
+		Rational c;
+		final Term x = mScript.variable("x", SmtSortUtils.getIntSort(mScript));
+		final Term y = mScript.variable("y", MSODUtils.getSetOfIntSort(mScript));
+
+		// true: 0+0 element { 0 }
+		c = Rational.valueOf(0, 1);
+		test(true, parseWord(x, y, "1", "1"), mOperations.elementAutomaton(mALS, x, c, y));
+		test(true, parseWord(x, y, "100", "100"), mOperations.elementAutomaton(mALS, x, c, y));
+
+		test(true, parseLassoWord(x, y, "1 0", "1 0"), mOperations.elementAutomaton(mALS, x, c, y));
+		test(true, parseLassoWord(x, y, "1000 0", "1000 0"), mOperations.elementAutomaton(mALS, x, c, y));
+
+		// true: 1+1 element { 2 }
+		c = Rational.valueOf(1, 1);
+		test(true, parseWord(x, y, "010", "001"), mOperations.elementAutomaton(mALS, x, c, y));
+		test(true, parseWord(x, y, "0100", "0010"), mOperations.elementAutomaton(mALS, x, c, y));
+
+		test(true, parseLassoWord(x, y, "010 0", "001 0"), mOperations.elementAutomaton(mALS, x, c, y));
+		test(true, parseLassoWord(x, y, "0100 0", "0010 0"), mOperations.elementAutomaton(mALS, x, c, y));
+
+		// false: 0+2 element { 0, 1, 3 }
+		c = Rational.valueOf(2, 1);
+		test(false, parseWord(x, y, "1000", "1101"), mOperations.elementAutomaton(mALS, x, c, y));
+		test(false, parseWord(x, y, "10000", "11010"), mOperations.elementAutomaton(mALS, x, c, y));
+
+		test(false, parseLassoWord(x, y, "1000 0", "1101 0"), mOperations.elementAutomaton(mALS, x, c, y));
+		test(false, parseLassoWord(x, y, "10000 00", "11010 00"), mOperations.elementAutomaton(mALS, x, c, y));
+
+		// true: 1+1 element { 0, 1, 2, ... }
+		c = Rational.valueOf(1, 1);
+		test(true, parseLassoWord(x, y, "01 0", "11 1"), mOperations.elementAutomaton(mALS, x, c, y));
+		test(true, parseLassoWord(x, y, "010 00", "111 11"), mOperations.elementAutomaton(mALS, x, c, y));
+
+		// false: 2+3 element { 0, 2, ... }
+		c = Rational.valueOf(3, 1);
+		test(false, parseLassoWord(x, y, "001 00", "101 01"), mOperations.elementAutomaton(mALS, x, c, y));
+		test(false, parseLassoWord(x, y, "0010 00", "1010 10"), mOperations.elementAutomaton(mALS, x, c, y));
+	}
+
+	/**
+	 * Test Cases for c element x.
+	 */
+	@Test
+	public void constElementAutomaton() throws AutomataLibraryException {
+		mLogger.info("--------------------------------------------------");
+		mLogger.info("Test constElementAutomaton c element x ...");
+		Rational c;
+		final Term x = mScript.variable("x", MSODUtils.getSetOfIntSort(mScript));
+
+		// true: 0 element { 0, 3 }
+		c = Rational.valueOf(0, 1);
+		test(true, parseWord(x, "1001"), mOperations.constElementAutomaton(mALS, c, x));
+		test(true, parseWord(x, "1001000"), mOperations.constElementAutomaton(mALS, c, x));
+
+		test(true, parseLassoWord(x, "1001 0"), mOperations.constElementAutomaton(mALS, c, x));
+		test(true, parseLassoWord(x, "1001 00"), mOperations.constElementAutomaton(mALS, c, x));
+
+		// false: 1 element { 2 }
+		c = Rational.valueOf(1, 1);
+		test(false, parseWord(x, "001"), mOperations.constElementAutomaton(mALS, c, x));
+		test(false, parseWord(x, "00100"), mOperations.constElementAutomaton(mALS, c, x));
+
+		test(false, parseLassoWord(x, "001 0"), mOperations.constElementAutomaton(mALS, c, x));
+		test(false, parseLassoWord(x, "0010 00"), mOperations.constElementAutomaton(mALS, c, x));
+
+		// true: 2 element { 1, 2 }
+		c = Rational.valueOf(2, 1);
+		test(true, parseWord(x, "011"), mOperations.constElementAutomaton(mALS, c, x));
+		test(true, parseWord(x, "01100"), mOperations.constElementAutomaton(mALS, c, x));
+
+		test(true, parseLassoWord(x, "011 0"), mOperations.constElementAutomaton(mALS, c, x));
+		test(true, parseLassoWord(x, "0110 00"), mOperations.constElementAutomaton(mALS, c, x));
+
+		// false: 2 element { }
+		c = Rational.valueOf(2, 1);
+		test(false, parseWord(x, "0"), mOperations.constElementAutomaton(mALS, c, x));
+		test(false, parseWord(x, "0000"), mOperations.constElementAutomaton(mALS, c, x));
+
+		test(false, parseLassoWord(x, "0 0"), mOperations.constElementAutomaton(mALS, c, x));
+		test(false, parseLassoWord(x, "00 00"), mOperations.constElementAutomaton(mALS, c, x));
+
+		// true: 4 element { 0, 1, 3, 4, 5 , ...}
+		c = Rational.valueOf(4, 1);
+		test(true, parseLassoWord(x, "1101 1"), mOperations.constElementAutomaton(mALS, c, x));
+		test(true, parseLassoWord(x, "110 11"), mOperations.constElementAutomaton(mALS, c, x));
+
+		// false: 2 element { 0, 1, 3, 4, 5 , ...}
+		c = Rational.valueOf(2, 1);
+		test(false, parseLassoWord(x, "1101 1"), mOperations.constElementAutomaton(mALS, c, x));
+		test(false, parseLassoWord(x, "110 11"), mOperations.constElementAutomaton(mALS, c, x));
+	}
+
 }
