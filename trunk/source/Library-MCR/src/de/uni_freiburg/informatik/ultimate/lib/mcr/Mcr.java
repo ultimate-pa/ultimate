@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -65,9 +66,10 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final HashRelation<LETTER, IProgramVar> mReads2Variables;
 	private final HashRelation<LETTER, IProgramVar> mWrites2Variables;
 	private final HashRelation<IProgramVar, LETTER> mVariables2Writes;
-	private final HashRelation<LETTER, LETTER> mMhbInverse;
 	private final Map<LETTER, Map<IProgramVar, LETTER>> mPreviousWrite;
 	private final Map<LETTER, Term> mActions2TermVars;
+	private final Map<String, List<LETTER>> mThreads2SortedActions;
+	private final HashRelation<LETTER, String> mActions2Threads;
 
 	private final IProofProvider<LETTER> mProofProvider;
 	private final Map<LETTER, Integer> mActions2Indices;
@@ -90,11 +92,12 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		mReads2Variables = new HashRelation<>();
 		mWrites2Variables = new HashRelation<>();
 		mVariables2Writes = new HashRelation<>();
-		mMhbInverse = new HashRelation<>();
 		mPreviousWrite = new HashMap<>();
 		mActions2TermVars = new HashMap<>();
 		mActions2Indices = new HashMap<>();
 		mActionCounts = new HashMap<>();
+		mThreads2SortedActions = new HashMap<>();
+		mActions2Threads = new HashRelation<>();
 		// Explore all the interleavings of trace
 		mResult = exploreInterleavings(trace);
 	}
@@ -158,14 +161,32 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	private void preprocess(final List<LETTER> trace) {
-		mMhbInverse.clear();
 		mPreviousWrite.clear();
 		mActions2Indices.clear();
-		// TODO: How to construct the MHB relation?
+		mThreads2SortedActions.clear();
+		mActions2Threads.clear();
 		final Map<IProgramVar, LETTER> lastWrittenBy = new HashMap<>();
 		for (int i = 0; i < trace.size(); i++) {
 			final LETTER action = trace.get(i);
 			mActions2Indices.put(action, i);
+			final String currentThread = action.getPrecedingProcedure();
+			mActions2Threads.addPair(action, currentThread);
+			List<LETTER> threadActions = mThreads2SortedActions.get(currentThread);
+			if (threadActions == null) {
+				threadActions = new ArrayList<>();
+				mThreads2SortedActions.put(currentThread, threadActions);
+			}
+			threadActions.add(action);
+			final String nextThread = action.getSucceedingProcedure();
+			if (currentThread != nextThread) {
+				mActions2Threads.addPair(action, nextThread);
+				threadActions = mThreads2SortedActions.get(nextThread);
+				if (threadActions == null) {
+					threadActions = new ArrayList<>();
+					mThreads2SortedActions.put(nextThread, threadActions);
+				}
+				threadActions.add(action);
+			}
 			final Set<IProgramVar> reads = mReads2Variables.getImage(action);
 			if (!reads.isEmpty()) {
 				final Map<IProgramVar, LETTER> previousWrites = new HashMap<>();
@@ -228,17 +249,18 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		final Script script = mManagedScript.getScript();
 		final List<Term> conjuncts = new ArrayList<>();
 		// Add the MHB-constraints
-		// TODO: We might want to have this as an option
-		for (final Entry<LETTER, LETTER> entry : mMhbInverse.entrySet()) {
-			final Term var1 = mActions2TermVars.get(entry.getValue());
-			final Term var2 = mActions2TermVars.get(entry.getKey());
-			conjuncts.add(SmtUtils.less(script, var1, var2));
+		for (final List<LETTER> threadActions : mThreads2SortedActions.values()) {
+			final Iterator<LETTER> iterator = threadActions.iterator();
+			LETTER currentAction = iterator.next();
+			while (iterator.hasNext()) {
+				final LETTER nextAction = iterator.next();
+				conjuncts.add(
+						SmtUtils.less(script, mActions2TermVars.get(currentAction), mActions2TermVars.get(nextAction)));
+				currentAction = nextAction;
+			}
 		}
-		// TODO: Refine these conditions, s.t. all other reads read the same value to be sound?
 		conjuncts.addAll(getRwConstraints(read, trace, interpolants));
-		if (write != null) {
-			conjuncts.addAll(getRwConstraints(write, trace, interpolants));
-		}
+		conjuncts.addAll(getRwConstraints(write, trace, interpolants));
 		final Term post = getPostcondition(write, trace, interpolants, var);
 		conjuncts.addAll(getValueConstraints(read, post, trace, interpolants));
 		return SmtUtils.and(script, conjuncts);
@@ -247,11 +269,18 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private Collection<Term> getRwConstraints(final LETTER action, final List<LETTER> trace,
 			final List<IPredicate> interpolants) {
 		final List<Term> result = new ArrayList<>();
-		// TODO
-		// for (final LETTER prevRead : mMhbInverse.getImage(action)) {
-		// final Term preRead = getPrecondition(prevRead, trace, interpolants);
-		// result.addAll(getValueConstraints(prevRead, preRead, trace, interpolants));
-		// }
+		for (final String thread : mActions2Threads.getImage(action)) {
+			for (final LETTER otherAction : mThreads2SortedActions.get(thread)) {
+				for (final IProgramVar var : mReads2Variables.getImage(otherAction)) {
+					final Term preRead = getPrecondition(otherAction, trace, interpolants, var);
+					result.addAll(getValueConstraints(otherAction, preRead, trace, interpolants));
+				}
+				// We only need to constraint all actions up to action, so we are done here
+				if (otherAction == action) {
+					break;
+				}
+			}
+		}
 		return result;
 	}
 
@@ -269,6 +298,8 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					continue;
 				}
 				final List<Term> conjuncts = new ArrayList<>();
+				// TODO: This can lead to infinite recursion, catch this error and better cache the results
+				conjuncts.addAll(getRwConstraints(write, trace, interpolants));
 				Term writeVar = null;
 				if (write != null) {
 					writeVar = mActions2TermVars.get(write);
