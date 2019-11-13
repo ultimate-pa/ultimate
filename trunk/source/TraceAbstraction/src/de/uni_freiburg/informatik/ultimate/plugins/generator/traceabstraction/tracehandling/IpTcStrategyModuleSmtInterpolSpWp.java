@@ -63,12 +63,12 @@ public class IpTcStrategyModuleSmtInterpolSpWp<LETTER extends IIcfgTransition<?>
 
 	public IpTcStrategyModuleSmtInterpolSpWp(final TaskIdentifier taskIdentifier,
 			final IUltimateServiceProvider services, final TaCheckAndRefinementPreferences<LETTER> prefs,
-			final IRun<LETTER, ?> counterExample, final IPredicate precondition,
+			final IRun<LETTER, ?> counterExample, final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory, final boolean useTimeout,
 			final InterpolationTechnique interpolationTechnique, final boolean arrayInterpolation) {
-		super(taskIdentifier, services, prefs, counterExample, precondition, assertionOrderModulation, predicateUnifier,
-				predicateFactory);
+		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
+				predicateUnifier, predicateFactory);
 		mUseTimeout = useTimeout;
 		mInterpolationTechnique = interpolationTechnique;
 		mArrayInterpolation = arrayInterpolation;

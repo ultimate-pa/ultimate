@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
@@ -153,9 +154,13 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 		if (refinementStrategy == RefinementStrategy.MCR) {
 			throw new IllegalStateException("MCR cannot used with MCR as internal strategy.");
 		}
-		final IRefinementStrategy<LETTER> strategy =
-				mStrategyFactory.constructStrategy(run, mAbstraction, mTaskIdentifier, mEmptyStackFactory,
-						IPreconditionProvider.constructDefaultPreconditionProvider(), refinementStrategy);
+
+		final IPreconditionProvider preconditionProvider = IPreconditionProvider.constructDefaultPreconditionProvider();
+		final IPostconditionProvider postconditionProvider =
+				IPostconditionProvider.constructDefaultPostconditionProvider();
+
+		final IRefinementStrategy<LETTER> strategy = mStrategyFactory.constructStrategy(run, mAbstraction,
+				mTaskIdentifier, mEmptyStackFactory, preconditionProvider, postconditionProvider, refinementStrategy);
 		mRefinementEngine = new AutomatonFreeRefinementEngine<>(mLogger, strategy);
 		final LBool feasibility = mRefinementEngine.getCounterexampleFeasibility();
 		if (feasibility != LBool.UNSAT) {

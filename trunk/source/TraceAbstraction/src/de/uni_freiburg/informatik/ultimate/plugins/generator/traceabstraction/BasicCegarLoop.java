@@ -459,7 +459,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			}
 			final IRefinementStrategy<LETTER> strategy = mStrategyFactory.constructStrategy(mCounterexample,
 					mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
-					mPredicateFactoryInterpolantAutomata, getPreconditionProvider());
+					mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider());
 			mRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy);
 		} catch (final ToolchainCanceledException tce) {
 			final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
@@ -1102,5 +1102,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	public IPreconditionProvider getPreconditionProvider() {
 		return IPreconditionProvider.constructDefaultPreconditionProvider();
+	}
+
+	public IPostconditionProvider getPostconditionProvider() {
+		return IPostconditionProvider.constructDefaultPostconditionProvider();
 	}
 }

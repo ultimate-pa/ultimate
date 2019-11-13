@@ -61,6 +61,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	private final IRun<LETTER, ?> mCounterexample;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IPredicate mPrecondition;
+	private final IPredicate mPostcondition;
 	private final PredicateFactory mPredicateFactory;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
@@ -72,7 +73,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 
 	public StrategyModuleFactory(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefs,
-			final IRun<LETTER, ?> counterExample, final IPredicate precondition,
+			final IRun<LETTER, ?> counterExample, final IPredicate precondition, final IPredicate postcondition,
 			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory,
 			final IAutomaton<LETTER, IPredicate> abstraction,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final CfgSmtToolkit csToolkit,
@@ -86,6 +87,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = predicateFactory;
 		mPrecondition = precondition;
+		mPostcondition = postcondition;
 		mTaskIdentifier = taskIdentifier;
 		mAbstraction = abstraction;
 		mEmptyStackFactory = emptyStackFactory;
@@ -97,58 +99,64 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSmtInterpolCraig(final boolean useTimeout,
 			final InterpolationTechnique technique, final boolean arrayInterpolation,
 			final AssertCodeBlockOrder... order) {
-		return createModuleWrapperIfNecessary(
-				new IpTcStrategyModuleSmtInterpolCraig<>(mTaskIdentifier, mServices, mPrefs, mCounterexample,
-						mPrecondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
-						mPredicateUnifier, mPredicateFactory, useTimeout, technique, arrayInterpolation));
+		return createModuleWrapperIfNecessary(new IpTcStrategyModuleSmtInterpolCraig<>(mTaskIdentifier, mServices,
+				mPrefs, mCounterexample, mPrecondition, mPostcondition,
+				new AssertionOrderModulation<>(mPathProgramCache, mLogger, order), mPredicateUnifier, mPredicateFactory,
+				useTimeout, technique, arrayInterpolation));
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSmtInterpolSpWp(final boolean useTimeout,
 			final InterpolationTechnique technique, final boolean arrayInterpolation,
 			final AssertCodeBlockOrder... order) {
-		return createModuleWrapperIfNecessary(
-				new IpTcStrategyModuleSmtInterpolSpWp<>(mTaskIdentifier, mServices, mPrefs, mCounterexample,
-						mPrecondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
-						mPredicateUnifier, mPredicateFactory, useTimeout, technique, arrayInterpolation));
+		return createModuleWrapperIfNecessary(new IpTcStrategyModuleSmtInterpolSpWp<>(mTaskIdentifier, mServices,
+				mPrefs, mCounterexample, mPrecondition, mPostcondition,
+				new AssertionOrderModulation<>(mPathProgramCache, mLogger, order), mPredicateUnifier, mPredicateFactory,
+				useTimeout, technique, arrayInterpolation));
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleZ3(final boolean useTimeout,
 			final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
-		return createModuleWrapperIfNecessary(new IpTcStrategyModuleZ3<>(mTaskIdentifier, mServices, mPrefs,
-				mCounterexample, mPrecondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
-				mPredicateUnifier, mPredicateFactory, useTimeout, technique));
+		return createModuleWrapperIfNecessary(
+				new IpTcStrategyModuleZ3<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
+						mPostcondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
+						mPredicateUnifier, mPredicateFactory, useTimeout, technique));
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleMathsat(final InterpolationTechnique technique,
 			final AssertCodeBlockOrder... order) {
-		return createModuleWrapperIfNecessary(new IpTcStrategyModuleMathsat<>(mTaskIdentifier, mServices, mPrefs,
-				mCounterexample, mPrecondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
-				mPredicateUnifier, mPredicateFactory, technique));
+		return createModuleWrapperIfNecessary(
+				new IpTcStrategyModuleMathsat<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
+						mPostcondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
+						mPredicateUnifier, mPredicateFactory, technique));
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleCVC4(final boolean useTimeout,
 			final InterpolationTechnique technique, final Logics logic, final AssertCodeBlockOrder... order) {
-		return createModuleWrapperIfNecessary(new IpTcStrategyModuleCvc4<>(mTaskIdentifier, mServices, mPrefs,
-				mCounterexample, mPrecondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
-				mPredicateUnifier, mPredicateFactory, useTimeout, technique, logic));
+		return createModuleWrapperIfNecessary(
+				new IpTcStrategyModuleCvc4<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
+						mPostcondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
+						mPredicateUnifier, mPredicateFactory, useTimeout, technique, logic));
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleAbstractInterpretation() {
+		// TODO: Pre and Postconditions other than true and false
 		return createModuleWrapperIfNecessary(new IpTcStrategyModuleAbstractInterpretation<>(mCounterexample,
 				mPredicateUnifier, mServices, mPrefs.getIcfgContainer(), mPathProgramCache, mTaPrefs));
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSifa() {
+		// TODO: Pre and Postconditions other than true and false
 		return createModuleWrapperIfNecessary(new IpTcStrategyModuleSifa<>(mServices, mLogger,
 				mPrefs.getIcfgContainer(), mCounterexample, mPredicateUnifier));
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModulePdr() {
-		return createModuleWrapperIfNecessary(
-				new IpTcStrategyModulePdr<>(mLogger, mCounterexample, mPredicateUnifier, mPrefs));
+		return createModuleWrapperIfNecessary(new IpTcStrategyModulePdr<>(mLogger, mPrecondition, mPostcondition,
+				mCounterexample, mPredicateUnifier, mPrefs));
 	}
 
 	public StrategyModuleMcr<LETTER> createStrategyModuleMcr(final StrategyFactory<LETTER> strategyFactory) {
+		// TODO: Pre and Postconditions other than true and false
 		final boolean useInterpolantConsolidation = mPrefs.getUseInterpolantConsolidation();
 		if (useInterpolantConsolidation) {
 			throw new UnsupportedOperationException("Interpolant consolidation and MCR cannot be combined");
@@ -159,12 +167,13 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModulePreferences() {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModulePreferences<>(mTaskIdentifier, mServices, mPrefs,
-				mCounterexample, mPrecondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger),
-				mPredicateUnifier, mPredicateFactory));
+				mCounterexample, mPrecondition, mPostcondition,
+				new AssertionOrderModulation<>(mPathProgramCache, mLogger), mPredicateUnifier, mPredicateFactory));
 	}
 
 	private IIpTcStrategyModule<?, LETTER>
 			createModuleWrapperIfNecessary(final IIpTcStrategyModule<?, LETTER> trackStrategyModule) {
+		// TODO: Pre and Postconditions other than true and false?
 		final boolean useInterpolantConsolidation = mPrefs.getUseInterpolantConsolidation();
 		if (useInterpolantConsolidation) {
 			return new IpTcStrategyModuleInterpolantConsolidation<>(mServices, mLogger, mPrefs, mPredicateFactory,

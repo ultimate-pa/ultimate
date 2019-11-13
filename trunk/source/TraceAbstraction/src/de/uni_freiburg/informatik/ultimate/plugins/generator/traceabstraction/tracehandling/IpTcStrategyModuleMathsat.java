@@ -60,11 +60,11 @@ public class IpTcStrategyModuleMathsat<LETTER extends IIcfgTransition<?>> extend
 
 	public IpTcStrategyModuleMathsat(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
-			final IPredicate precondition, final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory,
-			final InterpolationTechnique interpolationTechnique) {
-		super(taskIdentifier, services, prefs, counterExample, precondition, assertionOrderModulation, predicateUnifier,
-				predicateFactory);
+			final IPredicate precondition, final IPredicate postcondition,
+			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
+			final PredicateFactory predicateFactory, final InterpolationTechnique interpolationTechnique) {
+		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
+				predicateUnifier, predicateFactory);
 		mInterpolationTechnique = interpolationTechnique;
 		assert Arrays.stream(SUPPORTED_TECHNIQUES).anyMatch(
 				a -> a == mInterpolationTechnique) : "Unsupported interpolation technique " + mInterpolationTechnique;

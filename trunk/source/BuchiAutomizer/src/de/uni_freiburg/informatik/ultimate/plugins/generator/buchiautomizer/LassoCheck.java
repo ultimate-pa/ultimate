@@ -90,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -921,7 +922,8 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			try {
 				final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.constructStrategy(run,
 						mAbstraction, taskIdentifier, mStateFactoryForInterpolantAutomaton,
-						IPreconditionProvider.constructDefaultPreconditionProvider());
+						IPreconditionProvider.constructDefaultPreconditionProvider(),
+						IPostconditionProvider.constructDefaultPostconditionProvider());
 				final IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> engine =
 						new TraceAbstractionRefinementEngine<>(mLogger, strategy);
 				mCegarStatistics.addRefinementEngineStatistics(engine.getRefinementEngineStatistics());

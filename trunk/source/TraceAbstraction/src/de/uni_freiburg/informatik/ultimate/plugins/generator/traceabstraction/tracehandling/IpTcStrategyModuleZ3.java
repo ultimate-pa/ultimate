@@ -61,11 +61,12 @@ public class IpTcStrategyModuleZ3<LETTER extends IIcfgTransition<?>> extends IpT
 
 	public IpTcStrategyModuleZ3(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
-			final IPredicate precondition, final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory, final boolean useTimeout,
+			final IPredicate precondition, final IPredicate postcondition,
+			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
+			final PredicateFactory predicateFactory, final boolean useTimeout,
 			final InterpolationTechnique interpolationTechnique) {
-		super(taskIdentifier, services, prefs, counterExample, precondition, assertionOrderModulation, predicateUnifier,
-				predicateFactory);
+		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
+				predicateUnifier, predicateFactory);
 		mUseTimeout = useTimeout;
 		mInterpolationTechnique = interpolationTechnique;
 		assert Arrays.stream(SUPPORTED_TECHNIQUES).anyMatch(

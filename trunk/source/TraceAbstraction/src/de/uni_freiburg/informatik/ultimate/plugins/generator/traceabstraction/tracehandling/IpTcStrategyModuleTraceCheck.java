@@ -56,12 +56,14 @@ public abstract class IpTcStrategyModuleTraceCheck<T extends IInterpolatingTrace
 	protected final IRun<LETTER, ?> mCounterexample;
 	protected final IPredicateUnifier mPredicateUnifier;
 	protected final IPredicate mPrecondition;
+	protected final IPredicate mPostcondition;
 	protected final PredicateFactory mPredicateFactory;
 
 	public IpTcStrategyModuleTraceCheck(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
-			final IPredicate precondition, final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory) {
+			final IPredicate precondition, final IPredicate postcondition,
+			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
+			final PredicateFactory predicateFactory) {
 		mServices = services;
 		mPrefs = prefs;
 		mAssertionOrderModulation = assertionOrderModulation;
@@ -69,6 +71,7 @@ public abstract class IpTcStrategyModuleTraceCheck<T extends IInterpolatingTrace
 		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = predicateFactory;
 		mPrecondition = precondition;
+		mPostcondition = postcondition;
 		mTaskIdentifier = taskIdentifier;
 	}
 

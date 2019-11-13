@@ -55,10 +55,11 @@ public abstract class IpTcStrategyModuleCraig<LETTER extends IIcfgTransition<?>>
 
 	public IpTcStrategyModuleCraig(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
-			final IPredicate precondition, final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory) {
-		super(taskIdentifier, services, prefs, counterExample, precondition, assertionOrderModulation, predicateUnifier,
-				predicateFactory);
+			final IPredicate precondition, final IPredicate postcondition,
+			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
+			final PredicateFactory predicateFactory) {
+		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
+				predicateUnifier, predicateFactory);
 	}
 
 	@Override
@@ -69,14 +70,13 @@ public abstract class IpTcStrategyModuleCraig<LETTER extends IIcfgTransition<?>>
 
 		final AssertCodeBlockOrder assertionOrder =
 				mAssertionOrderModulation.get(mCounterexample, interpolationTechnique);
-		final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 		final ManagedScript managedScript = constructManagedScript();
 
 		final boolean instanticateArrayExt = true;
 		final boolean innerRecursiveNestedInterpolationCall = false;
-		return new InterpolatingTraceCheckCraig<>(mPrecondition, postcondition, new TreeMap<Integer, IPredicate>(),
+		return new InterpolatingTraceCheckCraig<>(mPrecondition, mPostcondition, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(mCounterexample.getWord()),
 				TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())), mServices,
 				mPrefs.getCfgSmtToolkit(), managedScript, mPredicateFactory, mPredicateUnifier, assertionOrder,

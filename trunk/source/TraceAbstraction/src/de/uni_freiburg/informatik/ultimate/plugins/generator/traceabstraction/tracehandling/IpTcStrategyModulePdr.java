@@ -30,13 +30,14 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.pdr.Pdr;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 
 /**
  * Creates {@link IInterpolatingTraceCheck} using {@link Pdr}.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -47,19 +48,25 @@ public class IpTcStrategyModulePdr<LETTER extends IIcfgTransition<?>>
 	private final IPredicateUnifier mPredicateUnifier;
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	private final ILogger mLogger;
+	private final IPredicate mPrecondition;
+	private final IPredicate mPostcondition;
 
-	public IpTcStrategyModulePdr(final ILogger logger, final IRun<LETTER, ?> counterexample,
-			final IPredicateUnifier predicateUnifier, final TaCheckAndRefinementPreferences<LETTER> prefs) {
+	public IpTcStrategyModulePdr(final ILogger logger, final IPredicate precondition, final IPredicate postcondition,
+			final IRun<LETTER, ?> counterexample, final IPredicateUnifier predicateUnifier,
+			final TaCheckAndRefinementPreferences<LETTER> prefs) {
 		super();
 		mCounterExample = counterexample;
 		mPredicateUnifier = predicateUnifier;
 		mLogger = logger;
 		mPrefs = prefs;
+		mPrecondition = precondition;
+		mPostcondition = postcondition;
 	}
 
 	@Override
 	protected IInterpolatingTraceCheck<LETTER> construct() {
-		return new Pdr<>(mLogger, mPrefs, mPredicateUnifier, mCounterExample.getWord().asList());
+		return new Pdr<>(mLogger, mPrefs, mPredicateUnifier, mPrecondition, mPostcondition,
+				mCounterExample.getWord().asList());
 	}
 
 	@Override

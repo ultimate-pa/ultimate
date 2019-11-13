@@ -156,11 +156,18 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final int mLevel;
 
 	public Pdr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
-			final List<LETTER> counterexample) {
+			final IPredicate precondition, final IPredicate postcondition, final List<LETTER> counterexample) {
 		// from params
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
 		mTrace = counterexample;
+
+		if (!SmtUtils.isTrueLiteral(precondition.getFormula())) {
+			throw new UnsupportedOperationException("Currently, only precondition true is supported");
+		}
+		if (!SmtUtils.isFalseLiteral(postcondition.getFormula())) {
+			throw new UnsupportedOperationException("Currently, only postcondition false is supported");
+		}
 
 		mInvarSpot = -1;
 		mLevel = 0;

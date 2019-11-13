@@ -70,10 +70,11 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 
 	public IpTcStrategyModulePreferences(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
-			final IPredicate precondition, final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory) {
-		super(taskIdentifier, services, prefs, counterExample, precondition, assertionOrderModulation, predicateUnifier,
-				predicateFactory);
+			final IPredicate precondition, final IPredicate postcondition,
+			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
+			final PredicateFactory predicateFactory) {
+		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
+				predicateUnifier, predicateFactory);
 		mInterpolationTechnique = mPrefs.getInterpolationTechnique();
 		if (mInterpolationTechnique == null) {
 			throw new UnsupportedOperationException("Cannot interpolate without a technique");
@@ -85,7 +86,6 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 	protected IInterpolatingTraceCheck<LETTER> construct() {
 		final AssertCodeBlockOrder assertionOrder =
 				mAssertionOrderModulation.get(mCounterexample, mInterpolationTechnique);
-		final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 		final TreeMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
@@ -99,7 +99,7 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 		case Craig_TreeInterpolation:
 			final boolean instanticateArrayExt = true;
 			final boolean innerRecursiveNestedInterpolationCall = false;
-			return new InterpolatingTraceCheckCraig<>(mPrecondition, postcondition, pendingContexts, nestedWord,
+			return new InterpolatingTraceCheckCraig<>(mPrecondition, mPostcondition, pendingContexts, nestedWord,
 					sequenceOfProgramPoints, mServices, mPrefs.getCfgSmtToolkit(), managedScript, mPredicateFactory,
 					mPredicateUnifier, assertionOrder, mPrefs.computeCounterexample(),
 					mPrefs.collectInterpolantStatistics(), mInterpolationTechnique, instanticateArrayExt,
@@ -108,7 +108,7 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
-			return new TraceCheckSpWp<>(mPrecondition, postcondition, pendingContexts, nestedWord,
+			return new TraceCheckSpWp<>(mPrecondition, mPostcondition, pendingContexts, nestedWord,
 					mPrefs.getCfgSmtToolkit(), assertionOrder, mPrefs.getUnsatCores(), mPrefs.getUseLiveVariables(),
 					mServices, mPrefs.computeCounterexample(), mPredicateFactory, mPredicateUnifier,
 					mInterpolationTechnique, managedScript, xnfConversionTechnique, simplificationTechnique,
@@ -127,14 +127,14 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 			final InvariantSynthesisSettings invariantSynthesisSettings = new InvariantSynthesisSettings(solverSettings,
 					useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWpPredicates, true);
 
-			return new InterpolatingTraceCheckPathInvariantsWithFallback<>(mPrecondition, postcondition,
+			return new InterpolatingTraceCheckPathInvariantsWithFallback<>(mPrecondition, mPostcondition,
 					pendingContexts, (NestedRun<LETTER, IPredicate>) mCounterexample, mPrefs.getCfgSmtToolkit(),
 					assertionOrder, mServices, mPrefs.computeCounterexample(), mPredicateFactory, mPredicateUnifier,
 					invariantSynthesisSettings, xnfConversionTechnique, simplificationTechnique, icfgContainer,
 					mPrefs.collectInterpolantStatistics());
 		case PDR:
 			return new Pdr<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs, mPredicateUnifier,
-					mCounterexample.getWord().asList());
+					mPrecondition, mPostcondition, mCounterexample.getWord().asList());
 		default:
 			throw new UnsupportedOperationException("Unsupported interpolation technique: " + mInterpolationTechnique);
 		}

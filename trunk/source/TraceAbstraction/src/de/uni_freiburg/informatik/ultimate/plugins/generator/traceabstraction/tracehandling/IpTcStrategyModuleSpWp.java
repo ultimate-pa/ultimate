@@ -58,10 +58,11 @@ public abstract class IpTcStrategyModuleSpWp<LETTER extends IIcfgTransition<?>>
 
 	public IpTcStrategyModuleSpWp(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IRun<LETTER, ?> counterExample,
-			final IPredicate precondition, final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory) {
-		super(taskIdentifier, services, prefs, counterExample, precondition, assertionOrderModulation, predicateUnifier,
-				predicateFactory);
+			final IPredicate precondition, final IPredicate postcondition,
+			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
+			final PredicateFactory predicateFactory) {
+		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
+				predicateUnifier, predicateFactory);
 	}
 
 	@Override
@@ -100,12 +101,11 @@ public abstract class IpTcStrategyModuleSpWp<LETTER extends IIcfgTransition<?>>
 
 		final AssertCodeBlockOrder assertionOrder =
 				mAssertionOrderModulation.get(mCounterexample, interpolationTechnique);
-		final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 		final ManagedScript managedScript = constructManagedScript();
 
-		return new TraceCheckSpWp<>(mPrecondition, postcondition, new TreeMap<Integer, IPredicate>(),
+		return new TraceCheckSpWp<>(mPrecondition, mPostcondition, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), assertionOrder,
 				mPrefs.getUnsatCores(), mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(),
 				mPredicateFactory, mPredicateUnifier, interpolationTechnique, managedScript, xnfConversionTechnique,

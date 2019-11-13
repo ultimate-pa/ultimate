@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
@@ -111,9 +112,9 @@ public class StrategyFactory<LETTER extends IIcfgTransition<?>> {
 	public IRefinementStrategy<LETTER> constructStrategy(final IRun<LETTER, ?> counterexample,
 			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
-			final IPreconditionProvider preconditionProvider) {
+			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider) {
 		return constructStrategy(counterexample, abstraction, taskIdentifier, emptyStackFactory, preconditionProvider,
-				mPrefs.getRefinementStrategy());
+				postconditionProvider, mPrefs.getRefinementStrategy());
 	}
 
 	/**
@@ -122,15 +123,18 @@ public class StrategyFactory<LETTER extends IIcfgTransition<?>> {
 	public IRefinementStrategy<LETTER> constructStrategy(final IRun<LETTER, ?> counterexample,
 			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
-			final IPreconditionProvider preconditionProvider, final RefinementStrategy strategyType) {
+			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider,
+			final RefinementStrategy strategyType) {
 
 		final IPredicateUnifier predicateUnifier = constructPredicateUnifier();
 		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
+		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
 		mPathProgramCache.addRun(counterexample);
 
-		final StrategyModuleFactory<LETTER> strategyModuleFactory = new StrategyModuleFactory<>(taskIdentifier,
-				mServices, mLogger, mPrefs, mTaPrefs, counterexample, precondition, predicateUnifier, mPredicateFactory,
-				abstraction, emptyStackFactory, mCfgSmtToolkit, mPredicateFactoryInterpolAut, mPathProgramCache);
+		final StrategyModuleFactory<LETTER> strategyModuleFactory =
+				new StrategyModuleFactory<>(taskIdentifier, mServices, mLogger, mPrefs, mTaPrefs, counterexample,
+						precondition, postcondition, predicateUnifier, mPredicateFactory, abstraction,
+						emptyStackFactory, mCfgSmtToolkit, mPredicateFactoryInterpolAut, mPathProgramCache);
 		final RefinementStrategyExceptionBlacklist exceptionBlacklist = mPrefs.getExceptionBlacklist();
 
 		switch (strategyType) {
