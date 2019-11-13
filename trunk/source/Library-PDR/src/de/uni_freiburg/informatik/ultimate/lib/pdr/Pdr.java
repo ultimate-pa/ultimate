@@ -39,6 +39,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.OldVarsAssignmentCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -83,6 +85,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.pdr.PdrBenchmark.PdrStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.TraceInterpolationException;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.DefaultTransFormulas;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -1082,18 +1088,28 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			++i;
 		}
 
-		// final IterativePredicateTransformer spt = new IterativePredicateTransformer(
-		// mPredicateUnifier.getPredicateFactory(), mScript, mCsToolkit.getModifiableGlobalsTable(), mServices,
-		// mTrace, mTruePred, mFalsePred, Collections.emptyMap(), null, SimplificationTechnique.SIMPLIFY_DDA,
-		// XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mSymbolTable);
-		//
-		// realInterpolants = spt.computeWeakestPreconditionSequence(rtf, postprocs, false,
-		// mAlternatingQuantifierBailout)
-		// .getPredicates();
-		//
-		// assert TraceCheckUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
-		// mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger,
-		// mCfgManagedScript) : "invalid Hoare triple in BP";
+		final NestedWord<LETTER> nestedWord = TraceCheckUtils.toNestedWord(mTrace);
+
+		final IterativePredicateTransformer spt =
+				new IterativePredicateTransformer(mPredicateUnifier.getPredicateFactory(), mScript,
+						mCsToolkit.getModifiableGlobalsTable(), mServices, nestedWord, mTruePred, mFalsePred,
+						Collections.emptySortedMap(), null, SimplificationTechnique.SIMPLIFY_DDA,
+						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mSymbolTable);
+
+		final OldVarsAssignmentCache oldVarsAssignmentCache = mCsToolkit.getOldVarsAssignmentCache();
+		final DefaultTransFormulas rtf = new DefaultTransFormulas(nestedWord, mTruePred, mFalsePred,
+				Collections.emptySortedMap(), oldVarsAssignmentCache, false);
+
+		List<IPredicate> realInterpolants;
+		try {
+			realInterpolants =
+					spt.computeWeakestPreconditionSequence(rtf, Collections.emptyList(), false, false).getPredicates();
+		} catch (final TraceInterpolationException e) {
+			throw new RuntimeException(e);
+		}
+
+		assert TraceCheckUtils.checkInterpolantsInductivityBackward(realInterpolants, nestedWord, mTruePred, mFalsePred,
+				Collections.emptyMap(), "BP", mCsToolkit, mLogger, mScript) : "invalid Hoare triple in BP";
 
 		return interpolants;
 	}
