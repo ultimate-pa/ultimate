@@ -41,6 +41,7 @@ import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -129,14 +130,14 @@ public class DebugFileWriterDietsch {
 		for (final Entry<RootEdge, List<List<CodeBlock>>> en : procToTraces.entrySet()) {
 			outerLoopPrefix: {
 				for (int i = 0;; ++i) {
-					final CodeBlock acc = en.getValue().get(0).get(i);
+					final IActionWithBranchEncoders acc = en.getValue().get(0).get(i);
 
 					for (final List<CodeBlock> trace : en.getValue()) {
 						if (trace.size() > maxTraceLength) {
 							maxTraceLength = trace.size();
 						}
 						if (i < trace.size()) {
-							final CodeBlock current = trace.get(i);
+							final IActionWithBranchEncoders current = trace.get(i);
 							if (acc != current) {
 								prefixPos = i;
 								break outerLoopPrefix;
@@ -154,12 +155,12 @@ public class DebugFileWriterDietsch {
 		for (final Entry<RootEdge, List<List<CodeBlock>>> en : procToTraces.entrySet()) {
 			outerLoopSuffix: {
 				for (int i = 1;; ++i) {
-					final CodeBlock acc = en.getValue().get(0).get(en.getValue().get(0).size() - i);
+					final IActionWithBranchEncoders acc = en.getValue().get(0).get(en.getValue().get(0).size() - i);
 					int j = -1;
 					for (final List<CodeBlock> trace : en.getValue()) {
 						j = trace.size() - i;
 						if (j > 0) {
-							final CodeBlock current = trace.get(j);
+							final IActionWithBranchEncoders current = trace.get(j);
 							if (acc != current) {
 								suffixOffset = i;
 								break outerLoopSuffix;

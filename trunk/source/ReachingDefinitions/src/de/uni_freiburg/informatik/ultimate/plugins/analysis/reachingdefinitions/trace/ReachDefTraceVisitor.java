@@ -33,6 +33,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
@@ -81,7 +82,7 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 	@Override
 	protected void visit(SequentialComposition c) {
 		final List<Statement> stmts = new ArrayList<>();
-		for (final CodeBlock cb : c.getCodeBlocks()) {
+		for (final IActionWithBranchEncoders cb : c.getCodeBlocks()) {
 			if (cb instanceof StatementSequence) {
 				stmts.addAll(((StatementSequence) cb).getStatements());
 			} else {

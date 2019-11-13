@@ -86,9 +86,8 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Converts Strings in upper case, e.g. THIS_IS_A_NAME, to CamelCase, e.g.,
-	 * ThisIsAName. If the string already contains some lower-case characters, no
-	 * conversion is performed.
+	 * Converts Strings in upper case, e.g. THIS_IS_A_NAME, to CamelCase, e.g., ThisIsAName. If the string already
+	 * contains some lower-case characters, no conversion is performed.
 	 *
 	 * @param value
 	 *            The string that should be converted.
@@ -114,10 +113,9 @@ public class CoreUtil {
 
 	/**
 	 * @param cl
-	 *            A classloader that has access to version.properties (i.e., the one
-	 *            the core uses)
-	 * @return a string describing the state of the current git repository or null
-	 *         iff version.properties does not exist.
+	 *            A classloader that has access to version.properties (i.e., the one the core uses)
+	 * @return a string describing the state of the current git repository or null iff version.properties does not
+	 *         exist.
 	 */
 	public static String readGitVersion(final ClassLoader cl) {
 		final Properties properties = new Properties();
@@ -138,14 +136,11 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Traverses the OS' PATH and searches for a file that fulfills the following
-	 * conditions.
+	 * Traverses the OS' PATH and searches for a file that fulfills the following conditions.
 	 * <ul>
-	 * <li>The filename starts with {@code <name>} (Windows) or is {@code <name>}
-	 * (other platforms),
+	 * <li>The filename starts with {@code <name>} (Windows) or is {@code <name>} (other platforms),
 	 * <li>the current process is allowed to execute it,
-	 * <li>it looks like some known executable binary (i.e., has the right magic
-	 * numbers in the beginning).
+	 * <li>it looks like some known executable binary (i.e., has the right magic numbers in the beginning).
 	 * </ul>
 	 */
 	public static File findExecutableBinaryOnPath(final String name) {
@@ -154,8 +149,8 @@ public class CoreUtil {
 			// Windows uses the Portable Executable format starting with 0x4d5a (ASCII
 			// characters MZ)
 			final byte[] exeMagicNumber = { 'M', 'Z' };
-			funLooksLikeExectuable = f -> hasMagicNumber(f, exeMagicNumber)
-					&& hasWindowsExecutableExtensionAndName(f, name);
+			funLooksLikeExectuable =
+					f -> hasMagicNumber(f, exeMagicNumber) && hasWindowsExecutableExtensionAndName(f, name);
 		} else {
 			// Just assume Linux: ELF format executables start with 0x7f454c46 (ASCII
 			// characters <DEL>ELF)
@@ -273,8 +268,8 @@ public class CoreUtil {
 	}
 
 	public static List<String> readFileLineByLine(final String filename) throws IOException {
-		final BufferedReader br = new BufferedReader(
-				new InputStreamReader(new FileInputStream(new File(filename)), "UTF8"));
+		final BufferedReader br =
+				new BufferedReader(new InputStreamReader(new FileInputStream(new File(filename)), "UTF8"));
 		final List<String> rtr = new ArrayList<>();
 		try {
 			String line = br.readLine();
@@ -289,14 +284,14 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Convert the given String to a path and read from the file there line by line,
-	 * calling the supplied consumer for each line.
+	 * Convert the given String to a path and read from the file there line by line, calling the supplied consumer for
+	 * each line.
 	 *
 	 * @throws IOException
 	 */
 	public static void readFileLineByLine(final String filename, final Consumer<String> consumer) throws IOException {
-		final BufferedReader br = new BufferedReader(
-				new InputStreamReader(new FileInputStream(new File(filename)), "UTF8"));
+		final BufferedReader br =
+				new BufferedReader(new InputStreamReader(new FileInputStream(new File(filename)), "UTF8"));
 		try {
 			String line = br.readLine();
 			while (line != null) {
@@ -323,8 +318,8 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Get the extension of a file, i.e., the part of the filename after the last
-	 * '.'. If there is no extension, return an empty string.
+	 * Get the extension of a file, i.e., the part of the filename after the last '.'. If there is no extension, return
+	 * an empty string.
 	 *
 	 * @param file
 	 *            The file for which the extension should be obtained.
@@ -344,16 +339,13 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Returns all elements of a collection that match the check defined by
-	 * predicate.
+	 * Returns all elements of a collection that match the check defined by predicate.
 	 *
 	 * @param collection
 	 *            The collection you want to filter. May not be null.
 	 * @param predicate
-	 *            The predicate you want to use to filter said collection. May not
-	 *            be null.
-	 * @return A new collection that only contains elements for which
-	 *         {@link IPredicate#check(Object)} returned true.
+	 *            The predicate you want to use to filter said collection. May not be null.
+	 * @return A new collection that only contains elements for which {@link IPredicate#check(Object)} returned true.
 	 */
 	public static <E> Collection<E> where(final Collection<E> collection, final Predicate<E> predicate) {
 		final ArrayList<E> rtr = new ArrayList<>();
@@ -366,8 +358,7 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Returns a {@link Set} of elements that are created by applying the reducer to
-	 * every element in the collection.
+	 * Returns a {@link Set} of elements that are created by applying the reducer to every element in the collection.
 	 *
 	 * @param collection
 	 *            May not be null.
@@ -416,16 +407,14 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Indents a (possibly multiline) String such that the resulting StringBuilder
-	 * object contains the same String, but indented with the indentPrefix. It also
-	 * converts line breaks to the system-specific line separator.
+	 * Indents a (possibly multiline) String such that the resulting StringBuilder object contains the same String, but
+	 * indented with the indentPrefix. It also converts line breaks to the system-specific line separator.
 	 *
 	 * @param original
 	 * @param indentPrefix
 	 * @param forceRemoveLastLinebreak
-	 *            When true, the last linebreak will always be removed, when false,
-	 *            an existing last line break will be preserved (but converted to
-	 *            system-specific line break)
+	 *            When true, the last linebreak will always be removed, when false, an existing last line break will be
+	 *            preserved (but converted to system-specific line break)
 	 * @return
 	 */
 	public static StringBuilder indentMultilineString(final String original, final String indentPrefix,
@@ -445,13 +434,21 @@ public class CoreUtil {
 		return sb;
 	}
 
+	public static String addIndentation(final int indentation, final String s) {
+		final StringBuilder sb = new StringBuilder("");
+		for (int i = 0; i < indentation; i++) {
+			sb.append("    ");
+		}
+		sb.append(s);
+		return sb.toString();
+	}
+
 	public static String getCurrentDateTimeAsString() {
 		return new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS").format(Calendar.getInstance().getTime());
 	}
 
 	/**
-	 * Flattens a string, i.e. removes all line breaks and replaces them with
-	 * separator
+	 * Flattens a string, i.e. removes all line breaks and replaces them with separator
 	 */
 	public static StringBuilder flatten(final String original, final String separator) {
 		final StringBuilder sb = new StringBuilder();
@@ -495,8 +492,7 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Create a copy of one or more arrays. If there are more than one array,
-	 * concatenate all of them.
+	 * Create a copy of one or more arrays. If there are more than one array, concatenate all of them.
 	 */
 	@SafeVarargs
 	public static <T> T[] concatAll(final T[] first, final T[]... rest) {
@@ -520,9 +516,8 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Determines if an {@link Iterable} is sorted according to the natural
-	 * comparator. The order of objects that are equal according to the natural
-	 * ordering is irrelevant.
+	 * Determines if an {@link Iterable} is sorted according to the natural comparator. The order of objects that are
+	 * equal according to the natural ordering is irrelevant.
 	 *
 	 * @param iterable
 	 *            The {@link Iterable} that should be checked.
@@ -547,9 +542,8 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Determines if an {@link Iterable} is sorted according to the provided
-	 * {@link Comparator}omparator. The order of objects that are equal according to
-	 * the comparator is irrelevant.
+	 * Determines if an {@link Iterable} is sorted according to the provided {@link Comparator}omparator. The order of
+	 * objects that are equal according to the comparator is irrelevant.
 	 *
 	 * @param iterable
 	 *            The {@link Iterable} that should be checked.
@@ -576,8 +570,7 @@ public class CoreUtil {
 	}
 
 	/**
-	 * @return a new {@link Map} that contains all key-value pairs of map whose key
-	 *         is contained in filter.
+	 * @return a new {@link Map} that contains all key-value pairs of map whose key is contained in filter.
 	 */
 	public static <K, V> Map<K, V> constructFilteredMap(final Map<K, V> map, final Collection<K> filter) {
 		final HashMap<K, V> result = new HashMap<>();
@@ -602,8 +595,7 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Converts a number of bytes to a human readable String containing the byte
-	 * number as the highest compatible unit.
+	 * Converts a number of bytes to a human readable String containing the byte number as the highest compatible unit.
 	 *
 	 * @param bytes
 	 *            A number of bytes
@@ -632,8 +624,7 @@ public class CoreUtil {
 	}
 
 	/***
-	 * Returns a String representation of a collection by calling toString on each
-	 * object in the collection.
+	 * Returns a String representation of a collection by calling toString on each object in the collection.
 	 *
 	 * @param collection
 	 * @param delimiter
@@ -662,8 +653,7 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Returns a String representation of time as a fraction of the largest whole
-	 * unit.
+	 * Returns a String representation of time as a fraction of the largest whole unit.
 	 *
 	 * I.e. 1001ms becomes 1,001s, 25h become 1,041d.
 	 *
@@ -680,8 +670,7 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Returns a String representation of time as a fraction of the largest whole
-	 * unit.
+	 * Returns a String representation of time as a fraction of the largest whole unit.
 	 *
 	 * I.e. 1001ms becomes 1,001s, 25h become 1,041d.
 	 *
@@ -779,8 +768,7 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Recursively delete the contents of the specified folder if the filter accepts
-	 * them.
+	 * Recursively delete the contents of the specified folder if the filter accepts them.
 	 */
 	public static void deleteDirectoryContentsIf(final File folder, final FileFilter filter) {
 		final File[] files = folder.listFiles();
@@ -807,10 +795,8 @@ public class CoreUtil {
 	 * Note: Performs poorly for very long sequences.
 	 *
 	 * @param i
-	 *            the index of the sequence. Must be larger 0 or you get the empty
-	 *            string.
-	 * @return 0 -> A, 1 -> B, 2 -> C, ... 25 -> Z, 26 -> AA, 27 -> AB, ... , 700 ->
-	 *         ZY, 701 -> ZZ, 702 -> AAA, ...
+	 *            the index of the sequence. Must be larger 0 or you get the empty string.
+	 * @return 0 -> A, 1 -> B, 2 -> C, ... 25 -> Z, 26 -> AA, 27 -> AB, ... , 700 -> ZY, 701 -> ZZ, 702 -> AAA, ...
 	 *
 	 */
 	public static String alphabeticalSequence(final int i) {

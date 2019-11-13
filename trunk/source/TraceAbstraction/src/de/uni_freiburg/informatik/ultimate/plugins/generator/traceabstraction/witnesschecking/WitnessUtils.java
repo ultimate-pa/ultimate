@@ -38,31 +38,33 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class WitnessUtils {
-	
-	public enum Property { NON_REACHABILITY, TERMINATION };
-	
+
+	public enum Property {
+		NON_REACHABILITY, TERMINATION
+	};
 
 	public WitnessUtils() {
 		// do not instantiate
 	}
-	
-	public static <LETTER extends IIcfgTransition<?>>  IDoubleDeckerAutomaton<LETTER, IPredicate> constructIcfgAndWitnessProduct(
-			final IUltimateServiceProvider services, final IAutomaton<LETTER, IPredicate> abstraction,
-			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final PredicateFactoryRefinement stateFactoryForRefinement, final ILogger logger, final Property property)
-			throws AutomataOperationCanceledException {
-		final WitnessProductAutomaton<LETTER> wpa = new WitnessProductAutomaton<LETTER>(services,
-				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction, witnessAutomaton,
-				csToolkit, predicateFactory, stateFactoryForRefinement);
-		
+
+	public static <LETTER extends IIcfgTransition<?>> IDoubleDeckerAutomaton<LETTER, IPredicate>
+			constructIcfgAndWitnessProduct(final IUltimateServiceProvider services,
+					final IAutomaton<LETTER, IPredicate> abstraction,
+					final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
+					final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+					final PredicateFactoryRefinement stateFactoryForRefinement, final ILogger logger,
+					final Property property) throws AutomataOperationCanceledException {
+		final WitnessProductAutomaton<LETTER> wpa = new WitnessProductAutomaton<>(services,
+				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction, witnessAutomaton, csToolkit,
+				predicateFactory, stateFactoryForRefinement);
+
 		final LineCoverageCalculator<LETTER> origCoverage = new LineCoverageCalculator<>(services, abstraction);
 		final IDoubleDeckerAutomaton<LETTER, IPredicate> newAbstraction;
 		switch (property) {

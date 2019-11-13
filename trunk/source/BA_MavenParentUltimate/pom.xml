@@ -540,6 +540,7 @@
         <module>../Library-SMTLIB</module>
         <module>../Library-srParse</module>
         <module>../Library-Sifa</module>
+        <module>../Library-TraceCheckerUtils</module>
         <module>../Library-UltimateCore</module>
         <module>../Library-UltimateModel</module>
         <module>../Library-UltimateUtil</module>

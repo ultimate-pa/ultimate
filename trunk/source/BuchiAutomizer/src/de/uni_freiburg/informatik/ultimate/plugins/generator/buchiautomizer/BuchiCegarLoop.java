@@ -93,9 +93,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Si
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.TraceCheckResult;
@@ -112,13 +114,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.au
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.InterpolationPreferenceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
@@ -339,8 +339,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		final TaCheckAndRefinementPreferences<LETTER> taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences<>(mServices, mPref, mInterpolation, SIMPLIFICATION_TECHNIQUE,
 						XNF_CONVERSION_TEQCHNIQUE, mCsToolkitWithoutRankVars, mPredicateFactory, mIcfg);
-		mRefinementStrategyFactory = new StrategyFactory<>(mLogger, mServices, mPref, taCheckAndRefinementPrefs,
-				mIcfg, mPredicateFactory, mDefaultStateFactory);
+		mRefinementStrategyFactory = new StrategyFactory<>(mLogger, mServices, mPref, taCheckAndRefinementPrefs, mIcfg,
+				mPredicateFactory, mDefaultStateFactory);
 	}
 
 	NestedLassoRun<LETTER, IPredicate> getCounterexample() {
@@ -1019,7 +1019,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		final int numOfTrans = new NumberOfTransitions<>(new AutomataLibraryServices(mServices), automaton).getResult();
 		final boolean includeDiff = BenchmarkRecord.includeDiffTransition();
 		final int numOfTransOfDiff = includeDiff
-				? new NumberOfTransitions<>(new AutomataLibraryServices(mServices), mAbstraction).getResult() : 0;
+				? new NumberOfTransitions<>(new AutomataLibraryServices(mServices), mAbstraction).getResult()
+				: 0;
 		if (isFinite) {
 			BenchmarkRecord.addInterpolantOrDifferenceAutomaton(mIteration, automaton.size(), numOfTrans, 3,
 					mAbstraction.size(), numOfTransOfDiff);

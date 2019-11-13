@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -146,7 +147,7 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 					// We ignore Call- and Return-Edges
 					// They will be processed later
 					// TODO: The intuition behind this is unclear!
-					final CodeBlock block = ((IBasicEdge) edge).getOriginalEdge();
+					final IActionWithBranchEncoders block = ((IBasicEdge) edge).getOriginalEdge();
 					if (block instanceof Call) {
 						containsCallReturnEdge = true;
 						continue;

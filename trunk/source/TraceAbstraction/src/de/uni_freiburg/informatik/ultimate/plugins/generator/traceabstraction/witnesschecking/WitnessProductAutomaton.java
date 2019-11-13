@@ -51,6 +51,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
@@ -58,8 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicateWithWitnessNode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -100,7 +101,7 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 		private ISLPredicate constructNewResultState(final IPredicate cfgAutomatonState, final WitnessNode witnessNode,
 				final Integer stutteringSteps) {
-			return mPredicateFactory.newTrueSLPredicateWithWitnessNode(
+			return SPredicateWithWitnessNode.construct(mPredicateFactory,
 					((ISLPredicate) cfgAutomatonState).getProgramPoint(), witnessNode, stutteringSteps);
 		}
 
@@ -128,8 +129,9 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 	public WitnessProductAutomaton(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> controlFlowAutomaton,
-			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final IEmptyStackStateFactory<IPredicate> stateFactory) {
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final IEmptyStackStateFactory<IPredicate> stateFactory) {
 		mWitnessLocationMatcher = new WitnessLocationMatcher<>(services, controlFlowAutomaton, witnessAutomaton);
 		mControlFlowAutomaton = controlFlowAutomaton;
 		mWitnessAutomaton = witnessAutomaton;
@@ -228,7 +230,7 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		final ProductState ps = mResult2Product.get(state);
 		return mControlFlowAutomaton.lettersCall(ps.getCfgAutomatonState());
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturn(final IPredicate state, final IPredicate hier) {
 		final ProductState ps = mResult2Product.get(state);
@@ -397,7 +399,7 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 				visitedNodes.add(trans.getSucc());
 				for (final OutgoingInternalTransition<WitnessEdge, WitnessNode> out : mWitnessAutomaton
 						.internalSuccessors(trans.getSucc())) {
-					result.addAll(skipNonLETTEREdges(out, visitedNodes));	
+					result.addAll(skipNonLETTEREdges(out, visitedNodes));
 				}
 			}
 		}
@@ -503,5 +505,5 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		sb.append(correspondingLocations);
 		return sb.toString();
 	}
-	
+
 }

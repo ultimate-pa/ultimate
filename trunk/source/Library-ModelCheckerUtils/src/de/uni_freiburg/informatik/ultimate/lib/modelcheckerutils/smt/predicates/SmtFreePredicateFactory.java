@@ -82,6 +82,14 @@ public class SmtFreePredicateFactory {
 		return pred;
 	}
 
+	public <T extends IPredicate> T construct(final PredicateConstructorFunction<T> funPredicateConstructor) {
+		return funPredicateConstructor.construct(constructFreshSerialNumber());
+	}
+
+	public static interface PredicateConstructorFunction<T extends IPredicate> {
+		public T construct(int serial);
+	}
+
 	private static final class AuxiliaryTerm extends Term {
 
 		private final String mName;

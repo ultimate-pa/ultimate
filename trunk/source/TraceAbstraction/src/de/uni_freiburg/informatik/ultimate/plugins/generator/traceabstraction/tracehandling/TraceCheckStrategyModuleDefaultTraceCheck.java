@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementEngineStatisticsGenerator.RefinementEngineStatisticsDefinitions;
 
 public class TraceCheckStrategyModuleDefaultTraceCheck<LETTER extends IIcfgTransition<?>>
@@ -57,9 +57,8 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<LETTER extends IIcfgTrans
 
 	protected TraceCheckStrategyModuleDefaultTraceCheck(final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs,
-			final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IRun<LETTER, ?> counterexample, final IPredicateUnifier predicateUnifier,
-			final IPredicate precondition) {
+			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IRun<LETTER, ?> counterexample,
+			final IPredicateUnifier predicateUnifier, final IPredicate precondition) {
 		mServices = services;
 		mPrefs = prefs;
 		mAssertionOrderModulation = assertionOrderModulation;

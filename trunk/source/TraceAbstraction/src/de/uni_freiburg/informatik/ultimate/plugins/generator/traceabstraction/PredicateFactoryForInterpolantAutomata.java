@@ -45,13 +45,12 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 
 public class PredicateFactoryForInterpolantAutomata
 		implements ISenwaStateFactory<IPredicate>, IBlackWhiteStateFactory<IPredicate>,
@@ -128,7 +127,7 @@ public class PredicateFactoryForInterpolantAutomata
 		}
 		IcfgLocation[] programPoints;
 		if (c1 instanceof ISLPredicate) {
-			programPoints = new BoogieIcfgLocation[2];
+			programPoints = new IcfgLocation[2];
 			programPoints[0] = ((ISLPredicate) c1).getProgramPoint();
 		} else if (c1 instanceof IMLPredicate) {
 			final IMLPredicate mlpred = (IMLPredicate) c1;

@@ -55,8 +55,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.IncrementalImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
@@ -65,20 +65,20 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Xn
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.TraceInterpolationException;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.DefaultTransFormulas;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp.UnifyPostprocessor;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.DefaultTransFormulas;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp.UnifyPostprocessor;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
@@ -275,8 +275,8 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 						public Set<IPredicate> constructValue(final HashRelation<LETTER, IPredicate> constrainers) {
 							final Set<Term> programStatesWithSucc_Term = new HashSet<>();
 							for (final Entry<LETTER, IPredicate> entry : constrainers.entrySet()) {
-								final Term pre = mPreInternalCc
-										.getOrConstruct(new Pair<>(entry.getValue(), entry.getKey()));
+								final Term pre =
+										mPreInternalCc.getOrConstruct(new Pair<>(entry.getValue(), entry.getKey()));
 								programStatesWithSucc_Term.add(pre);
 							}
 							final IPredicate programStatesWithSucc_Pred = predicateFactory.newPredicate(
@@ -373,8 +373,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 								.internalSuccessors(pred)) {
 							for (final IPredicate succInDanger : abstState2dangStates.getImage(out.getSucc())) {
 								final LBool isContributing = mIntersectionWithPreInternalCc
-										.getOrConstruct(new Triple<>(covered,
-												out.getLetter(), succInDanger));
+										.getOrConstruct(new Triple<>(covered, out.getLetter(), succInDanger));
 								if (isContributing == LBool.SAT) {
 									result.addInternalTransition(
 											disjunctionProvider
@@ -464,8 +463,8 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			}
 			assert result.getStates().contains(succInDanger);
 			final LBool checkSatRes;
-			checkSatRes = mIntersectionWithPreInternalCc.getOrConstruct(
-					new Triple<>(newState, out.getLetter(), succInDanger));
+			checkSatRes = mIntersectionWithPreInternalCc
+					.getOrConstruct(new Triple<>(newState, out.getLetter(), succInDanger));
 			if (checkSatRes != LBool.UNSAT) {
 				// edge probably (result might be unknown) contributed, so we add it
 				result.addInternalTransition(newState, out.getLetter(), succInDanger);

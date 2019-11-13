@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.BuchiProgr
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -868,7 +869,7 @@ public final class ProductGenerator {
 	}
 
 	private StatementSequence createNewStatementSequence(final BoogieIcfgLocation currentpp,
-			final StatementSequence originalSS, final BoogieIcfgLocation targetpp, final CodeBlock letter,
+			final StatementSequence originalSS, final BoogieIcfgLocation targetpp, final IActionWithBranchEncoders letter,
 			final boolean isProgramStep) {
 		final List<Statement> stmts = new ArrayList<>();
 		if (originalSS != null) {
@@ -891,7 +892,7 @@ public final class ProductGenerator {
 		return newSS;
 	}
 
-	private static List<Statement> checkLetter(final CodeBlock letter) {
+	private static List<Statement> checkLetter(final IActionWithBranchEncoders letter) {
 		if (letter == null) {
 			return Collections.emptyList();
 		}

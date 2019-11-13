@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
@@ -186,7 +187,7 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 						// TODO: What about branchencoders in the IAction context?
 						if (currentAction instanceof CodeBlock) {
 							beforeFirstPendingCall
-									.add(((CodeBlock) currentAction).getTransitionFormulaWithBranchEncoders());
+									.add(((IActionWithBranchEncoders) currentAction).getTransitionFormulaWithBranchEncoders());
 						} else {
 							// things that are no codeblock cannot have branch encoders
 							throw new UnsupportedOperationException("No codeblock, no branch encoders");

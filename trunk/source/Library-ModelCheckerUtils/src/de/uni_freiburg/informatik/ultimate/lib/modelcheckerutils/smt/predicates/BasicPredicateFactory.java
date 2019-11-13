@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUti
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -226,6 +226,14 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 
 	private Term getFalse() {
 		return mScript.term("false");
+	}
+
+	public <T extends IPredicate> T construct(final PredicateConstructorFunction<T> funPredicateConstructor) {
+		return funPredicateConstructor.construct(constructFreshSerialNumber(), mScript);
+	}
+
+	public static interface PredicateConstructorFunction<T extends IPredicate> {
+		public T construct(int serial, Script script);
 	}
 
 }

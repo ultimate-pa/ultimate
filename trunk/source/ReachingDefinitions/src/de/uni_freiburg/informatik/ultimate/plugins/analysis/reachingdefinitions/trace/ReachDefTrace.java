@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IndexedStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
@@ -81,7 +82,7 @@ public class ReachDefTrace {
 		
 		if (mLogger.isDebugEnabled()) {
 			final StringBuilder sb = new StringBuilder();
-			for (final CodeBlock letter : traceCopy) {
+			for (final IActionWithBranchEncoders letter : traceCopy) {
 				sb.append("[").append(letter).append("] ");
 			}
 			mLogger.debug("RD DAGs for " + sb);
@@ -196,7 +197,7 @@ public class ReachDefTrace {
 		}
 	}
 
-	private boolean checkElement(CodeBlock current) {
+	private boolean checkElement(IActionWithBranchEncoders current) {
 		if (current instanceof StatementSequence) {
 			final StatementSequence ss = (StatementSequence) current;
 			return ss.getStatements().size() < 2;
@@ -206,7 +207,7 @@ public class ReachDefTrace {
 			return true;
 		} else if (current instanceof SequentialComposition) {
 			final SequentialComposition sc = (SequentialComposition) current;
-			for (final CodeBlock cb : sc.getCodeBlocks()) {
+			for (final IActionWithBranchEncoders cb : sc.getCodeBlocks()) {
 				if (!checkElement(cb)) {
 					return false;
 				}

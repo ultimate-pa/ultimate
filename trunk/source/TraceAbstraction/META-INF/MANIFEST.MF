@@ -25,7 +25,8 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.pdr,
  de.uni_freiburg.informatik.ultimate.lib.mcr,
  de.uni_freiburg.informatik.ultimate.plugins.sifa,
- de.uni_freiburg.informatik.ultimate.lib.sifa
+ de.uni_freiburg.informatik.ultimate.lib.sifa,
+ de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
@@ -33,11 +34,11 @@ Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstr
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantconsolidation,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences,
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking

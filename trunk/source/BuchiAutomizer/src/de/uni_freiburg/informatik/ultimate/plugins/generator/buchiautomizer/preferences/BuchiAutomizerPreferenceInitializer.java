@@ -31,10 +31,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 
 public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceInitializer {
@@ -168,7 +168,7 @@ public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceIniti
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_000_000)),
 				new UltimatePreferenceItem<>(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 						InterpolationTechnique.ForwardPredicates, PreferenceType.Combo,
-						TraceAbstractionPreferenceInitializer.InterpolationTechnique.values()),
+						InterpolationTechnique.values()),
 				new UltimatePreferenceItem<>(LABEL_USE_EXTERNAL_SOLVER_RANK, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_EXTERNAL_SOLVER_COMMAND_RANK, DEF_EXTERNAL_SOLVER_COMMAND_RANK,
 						PreferenceType.String),

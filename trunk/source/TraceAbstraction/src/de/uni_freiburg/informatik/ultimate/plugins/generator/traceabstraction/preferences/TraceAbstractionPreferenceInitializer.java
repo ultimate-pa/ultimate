@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuild
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
@@ -404,14 +405,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 */
 	public enum InterpolantAutomaton {
 		CANONICAL, STRAIGHT_LINE, TOTALINTERPOLATION, TOTALINTERPOLATION2, ABSTRACT_INTERPRETATION
-	}
-
-	/**
-	 * Interpolation technique.
-	 */
-	public enum InterpolationTechnique {
-		Craig_NestedInterpolation, Craig_TreeInterpolation, ForwardPredicates, BackwardPredicates, FPandBP,
-		FPandBPonlyIfFpWasNotPerfect, PathInvariants, PDR
 	}
 
 	/**

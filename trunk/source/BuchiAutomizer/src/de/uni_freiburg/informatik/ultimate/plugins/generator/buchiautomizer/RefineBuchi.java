@@ -78,25 +78,25 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckSpWp;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.BuchiComplementationConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.NcsbImplementation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 
 public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 
@@ -186,9 +186,9 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		assert !bspm.getHondaPredicate().getFormula().toString().equals("false");
 		assert !bspm.getRankEqAndSi().getFormula().toString().equals("false");
 		final PredicateUnifier pu = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
-				mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique,
-				mXnfConversionTechnique, bspm.getStemPrecondition(), bspm.getHondaPredicate(),
-				bspm.getRankEqAndSi(), bspm.getStemPostcondition(), bspm.getRankDecreaseAndBound(), bspm.getSiConjunction());
+				mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
+				bspm.getStemPrecondition(), bspm.getHondaPredicate(), bspm.getRankEqAndSi(),
+				bspm.getStemPostcondition(), bspm.getRankDecreaseAndBound(), bspm.getSiConjunction());
 		IPredicate[] stemInterpolants;
 		InterpolatingTraceCheck<LETTER> traceCheck;
 		if (BuchiCegarLoop.isEmptyStem(mCounterexample)) {
@@ -685,8 +685,9 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final NestedWord<LETTER> stem, final IPredicate[] stemInterpolants, final IPredicate honda,
 			final NestedWord<LETTER> loop, final IPredicate[] loopInterpolants,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction) {
-		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), abstraction.getVpAlphabet(), (IEmptyStackStateFactory<IPredicate>) abstraction.getStateFactory());
+		final NestedWordAutomaton<LETTER, IPredicate> result =
+				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), abstraction.getVpAlphabet(),
+						(IEmptyStackStateFactory<IPredicate>) abstraction.getStateFactory());
 		final boolean emptyStem = stem.length() == 0;
 		if (emptyStem) {
 			result.addState(true, true, honda);

@@ -34,13 +34,13 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.Preprocessi
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark.LassoAnalysisResults;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.LassoCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.SynthesisResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.TraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerator {

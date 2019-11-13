@@ -31,8 +31,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;

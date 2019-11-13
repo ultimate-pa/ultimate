@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -64,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public abstract class CodeBlock extends IcfgEdge {
+public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEncoders {
 
 	/**
 	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
@@ -124,6 +125,7 @@ public abstract class CodeBlock extends IcfgEdge {
 		return mTransitionFormula;
 	}
 
+	@Override
 	public UnmodifiableTransFormula getTransitionFormulaWithBranchEncoders() {
 		return mTransitionFormulaWithBranchEncoders;
 	}

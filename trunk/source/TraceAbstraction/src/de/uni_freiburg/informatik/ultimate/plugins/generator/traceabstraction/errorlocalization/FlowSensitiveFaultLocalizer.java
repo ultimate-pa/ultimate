@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -71,8 +72,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscri
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.TraceInterpolationException;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -80,13 +87,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.RelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker.ERelevanceStatus;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
@@ -170,70 +171,70 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Construct conglomerate for the sub-graph.
-	 * @return 
 	 * 
+	 * @return
+	 *
 	 */
 	private UnmodifiableTransFormula constructConglomerate(final Integer startPosition, final Integer endPosition,
-			final Set<IcfgEdge> subGraphEdges, final NestedRun<LETTER, IPredicate> counterexample, 
+			final Set<IcfgEdge> subGraphEdges, final NestedRun<LETTER, IPredicate> counterexample,
 			final IIcfg<IcfgLocation> IIcfg) {
-		
-		final IcfgLocation startLocation = 
+
+		final IcfgLocation startLocation =
 				((ISLPredicate) counterexample.getStateAtPosition(startPosition)).getProgramPoint();
 		IcfgEdge startLocErrorEdge = null;
-		
+
 		final Set<IcfgLocation> endLocations = new HashSet<>();
-		final IcfgLocation endLocation = 
+		final IcfgLocation endLocation =
 				((ISLPredicate) counterexample.getStateAtPosition(endPosition + 1)).getProgramPoint();
 		endLocations.add(endLocation);
 		// Location before the start location
-		final IcfgLocation preStartLocation = 	
-				((ISLPredicate) counterexample.getStateAtPosition(startPosition-1)).getProgramPoint();
-				
+		final IcfgLocation preStartLocation =
+				((ISLPredicate) counterexample.getStateAtPosition(startPosition - 1)).getProgramPoint();
+
 		for (final IcfgEdge edge : preStartLocation.getOutgoingEdges()) {
 			final IcfgLocation succLoc = edge.getTarget();
-			if(succLoc == startLocation) {
+			if (succLoc == startLocation) {
 				startLocErrorEdge = edge;
 			}
 		}
-		final AcyclicSubgraphMerger asm = new AcyclicSubgraphMerger(mServices, IIcfg, subGraphEdges, startLocation, startLocErrorEdge, endLocations);
+		final AcyclicSubgraphMerger asm = new AcyclicSubgraphMerger(mServices, IIcfg, subGraphEdges, startLocation,
+				startLocErrorEdge, endLocations);
 		return asm.getTransFormula(endLocation);
 	}
-	
-	
+
 	/**
-	 * From within the branch, compute the final
-	 * branch-out location.
-	 * 
+	 * From within the branch, compute the final branch-out location.
+	 *
 	 * @param startLocation
 	 * @param endLocation
 	 * @param informationFromCfg
-	 * @param counterexample 
+	 * @param counterexample
 	 * @return
 	 */
 	private Map<Integer, Set<IcfgEdge>> computeBranchOutLocation(final int startLocation, final int endLocation,
 			final Map<Integer, Map<Integer, Set<IcfgEdge>>> informationFromCfg,
-				final NestedRun<LETTER,IPredicate> counterexample){
-		final Map<Integer, Set<IcfgEdge>> result = new HashMap<>(); 
+			final NestedRun<LETTER, IPredicate> counterexample) {
+		final Map<Integer, Set<IcfgEdge>> result = new HashMap<>();
 		final Set<IcfgEdge> subgraphEdges = new HashSet<>();
 		// Add the edges of the trace
 		subgraphEdges.addAll(computePathEdges(counterexample, startLocation, endLocation));
 		Integer branchOut = startLocation;
-		for(int i=endLocation; i>= startLocation; i--) {
+		for (int i = endLocation; i >= startLocation; i--) {
 			final Map<Integer, Set<IcfgEdge>> branchIn = informationFromCfg.get(i);
-			if(branchIn != null) {
+			if (branchIn != null) {
 				final ArrayList<Integer> branchOuts = new ArrayList<>(branchIn.keySet());
 				// Unionize all alternative path edges.
-				for(final Integer subBranchOut : branchOuts) {
+				for (final Integer subBranchOut : branchOuts) {
 					subgraphEdges.addAll(branchIn.get(subBranchOut));
 				}
 				branchOuts.sort(Collections.reverseOrder());
-				if(branchOuts.get(0) < branchOut) {
-					Map<Integer, Set<IcfgEdge>> updatedBranchOut = computeBranchOutLocation(branchOuts.get(0), i, 
-							informationFromCfg, counterexample);
-					for (Integer k: updatedBranchOut.keySet()) {
+				if (branchOuts.get(0) < branchOut) {
+					final Map<Integer, Set<IcfgEdge>> updatedBranchOut =
+							computeBranchOutLocation(branchOuts.get(0), i, informationFromCfg, counterexample);
+					for (final Integer k : updatedBranchOut.keySet()) {
 						branchOut = k;
 						subgraphEdges.addAll(updatedBranchOut.get(k));
 					}
@@ -243,72 +244,78 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		result.put(branchOut, subgraphEdges);
 		return result;
 	}
-	
+
 	/**
 	 * Post process information from CFG.
-	 * @param counterexample 
-	 * @param informationFromCfg 
-	 * @param startLocation, start location in error trace
-	 * @param endLocation, end location in the error trace
-	 * @return 
+	 * 
+	 * @param counterexample
+	 * @param informationFromCfg
+	 * @param startLocation,
+	 *            start location in error trace
+	 * @param endLocation,
+	 *            end location in the error trace
+	 * @return
 	 */
-	
-	private Map<Integer, Map<Integer, Set<IcfgEdge>>> postProcessInformationFromCFG(NestedRun<LETTER, IPredicate> counterexample,
-			final Map<Integer, Map<Integer, Set<IcfgEdge>>> informationFromCfg, final int startLocation, 
-				 final int endLocation) {
+
+	private Map<Integer, Map<Integer, Set<IcfgEdge>>> postProcessInformationFromCFG(
+			final NestedRun<LETTER, IPredicate> counterexample,
+			final Map<Integer, Map<Integer, Set<IcfgEdge>>> informationFromCfg, final int startLocation,
+			final int endLocation) {
 		// Now we have to take the union of the edges
 		final Map<Integer, Map<Integer, Set<IcfgEdge>>> result = new HashMap<>();
-		for(int i = endLocation; i >= startLocation; i --) {
+		for (int i = endLocation; i >= startLocation; i--) {
 			// Check if i is a branch-in Location.
 			final Map<Integer, Set<IcfgEdge>> branchIn = informationFromCfg.get(i);
 			// If yes, get the minimum branch-out location
 			Integer branchOut = null;
 			Map<Integer, Set<IcfgEdge>> finalBranchOut = new HashMap<>();
-			if(branchIn != null) {
-				result.put(i, branchIn); // Add all the information.				
-				final ArrayList<Integer> branchOuts = new ArrayList<>(branchIn.keySet());			
+			if (branchIn != null) {
+				result.put(i, branchIn); // Add all the information.
+				final ArrayList<Integer> branchOuts = new ArrayList<>(branchIn.keySet());
 				Collections.sort(branchOuts);
 				branchOut = branchOuts.get(0);
 				finalBranchOut = computeBranchOutLocation(branchOut, i, informationFromCfg, counterexample);
-				for(Integer k : finalBranchOut.keySet()) {
-					if(result.get(i).get(k) != null) {
+				for (final Integer k : finalBranchOut.keySet()) {
+					if (result.get(i).get(k) != null) {
 						result.get(i).get(k).addAll(finalBranchOut.get(k));
 					} else {
 						result.get(i).putAll(finalBranchOut);
 					}
 				}
-			}		
+			}
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Return all the edges in a path in the CFG
-	 * 
+	 *
 	 */
-	
-	private Set<IcfgEdge> computePathEdges(final NestedRun<LETTER, IPredicate> trace, Integer startState, Integer endState) {
-		
+
+	private Set<IcfgEdge> computePathEdges(final NestedRun<LETTER, IPredicate> trace, final Integer startState,
+			final Integer endState) {
+
 		final Set<IcfgEdge> pathEdges = new HashSet<>();
-		for(int state = startState; state < endState; state++) {
+		for (int state = startState; state < endState; state++) {
 			final IcfgLocation currentICFGloc = ((ISLPredicate) trace.getStateAtPosition(state)).getProgramPoint();
-			final IcfgLocation nextICFGloc = ((ISLPredicate) trace.getStateAtPosition(state+1)).getProgramPoint();
+			final IcfgLocation nextICFGloc = ((ISLPredicate) trace.getStateAtPosition(state + 1)).getProgramPoint();
 			for (final IcfgEdge edge : currentICFGloc.getOutgoingEdges()) {
 				final IcfgLocation succLoc = edge.getTarget();
-				if(succLoc == nextICFGloc) {
+				if (succLoc == nextICFGloc) {
 					pathEdges.add(edge);
 				}
 			}
 		}
 		return pathEdges;
 	}
-	
+
 	/**
 	 * COMPUTE INFORMATION FROM CFG
-	 * 
+	 *
 	 */
-	private Map<Integer, Map<Integer, Set<IcfgEdge>>> computeInformationFromCFG(final NestedRun<LETTER, IPredicate> trace, 
-			final INestedWordAutomaton<LETTER, IPredicate> cfg, final ManagedScript csToolkit) {
+	private Map<Integer, Map<Integer, Set<IcfgEdge>>> computeInformationFromCFG(
+			final NestedRun<LETTER, IPredicate> trace, final INestedWordAutomaton<LETTER, IPredicate> cfg,
+			final ManagedScript csToolkit) {
 		// Get all the edges in the path in the trace.
 		final Map<Integer, Map<Integer, Set<IcfgEdge>>> result = new HashMap<>();
 		// Create a Map of Programpoints in the CFG to States of the CFG.
@@ -320,13 +327,13 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		}
 		// Trace elements (transitions) of the given path in the CFG.
 		final List<LETTER> traceElements = new ArrayList<>();
-		for(int i = 0; i < trace.getLength() -1 ; i++) {
+		for (int i = 0; i < trace.getLength() - 1; i++) {
 			traceElements.add(trace.getSymbol(i));
 		}
-		// For each state s, find out if there is an outgoing edge from 
-		// s to s1, such that s1 is not in the counterexample. 
+		// For each state s, find out if there is an outgoing edge from
+		// s to s1, such that s1 is not in the counterexample.
 		// Check if there is a path from s1 back to the error trace. This is called
-		// an alternative path. 
+		// an alternative path.
 		//
 		// Save the alternative path, and recursively find alternative paths for
 		// the alternative path we just found.
@@ -347,8 +354,8 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			// Iterate over all the immediate succesors of s1 in the CFG.
 			for (final OutgoingInternalTransition<LETTER, IPredicate> transition : immediateSuccesors) {
 				final IPredicate immediateSuccesor = transition.getSucc();
-				if(traceElements.contains(transition.getLetter())) {
-					// do nothing because this transition is present in 
+				if (traceElements.contains(transition.getLetter())) {
+					// do nothing because this transition is present in
 					// the given trace.
 				} else {
 					// the transition is not in the given trace.
@@ -363,20 +370,20 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 						// state of the start state back to the given trace.
 						alternativePath = alternativePath.concatenate(remainingPath);
 						// Add all the edges of the alternative path
-						subgraphEdges.addAll(computePathEdges(alternativePath, 0, alternativePath.getLength() -1));
-						Map<Integer, Map<Integer, Set<IcfgEdge>>> subResult = 
+						subgraphEdges.addAll(computePathEdges(alternativePath, 0, alternativePath.getLength() - 1));
+						final Map<Integer, Map<Integer, Set<IcfgEdge>>> subResult =
 								computeInformationFromCFG(alternativePath, cfg, csToolkit);
 						// Add all the edges of the alternative paths
-						for(final Integer key : subResult.keySet()) {
-							for(final Integer subKey : subResult.get(key).keySet()) {
+						for (final Integer key : subResult.keySet()) {
+							for (final Integer subKey : subResult.get(key).keySet()) {
 								subgraphEdges.addAll(subResult.get(key).get(subKey));
 							}
 						}
 						// The state in the given trace where the alternative path ends
 						final IPredicate lastStateOfAlternativePath =
-								alternativePath.getStateAtPosition(alternativePath.getLength() - 1);		
-						final List<Integer> endPosition = computeEndpointOfAlternativePath(trace,
-								posOfStartState, lastStateOfAlternativePath);
+								alternativePath.getStateAtPosition(alternativePath.getLength() - 1);
+						final List<Integer> endPosition =
+								computeEndpointOfAlternativePath(trace, posOfStartState, lastStateOfAlternativePath);
 						for (final Integer i : endPosition) {
 							// If the Branch-In Location is not in the map, then add it.
 							subgraphEdges.addAll(computePathEdges(trace, posOfStartState, i));
@@ -384,15 +391,15 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 								// add to the result
 								final Map<Integer, Set<IcfgEdge>> branchInPosMap = new HashMap<>();
 								// Since in the alternative path, we do not include the first element,
-								// hence we have to add 1 on all locations.							
-									branchInPosMap.put(posOfStartState, subgraphEdges);
-									result.put(i - 1, branchInPosMap);
+								// hence we have to add 1 on all locations.
+								branchInPosMap.put(posOfStartState, subgraphEdges);
+								result.put(i - 1, branchInPosMap);
 							} else {
 								// It is in the map,
 								// add to result
 								// Since in the alternative path, we do not include the first element,
 								// hence we have to add 1 on all locations.
-									result.get(i - 1).put(posOfStartState, subgraphEdges);
+								result.get(i - 1).put(posOfStartState, subgraphEdges);
 							}
 						}
 					}
@@ -535,7 +542,8 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final boolean relevanceCriterion1uc = relevanceCriterionVariables[0];
 			final boolean relevanceCriterion1gf = relevanceCriterionVariables[1];
 			final boolean relevanceCriterion3db = relevanceCriterionVariables[2];
-			lastErrorAdmittingFlag |= relevanceCriterion3db; // if true, that means we already have found the last error admitting statement.
+			lastErrorAdmittingFlag |= relevanceCriterion3db; // if true, that means we already have found the last error
+																// admitting statement.
 			{
 				mErrorLocalizationStatisticsGenerator.reportIcfgEdge();
 				if (relevanceCriterion1uc) {
@@ -618,59 +626,62 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 
 	/**
 	 * Computes the Statements relevant to the flow sensitive analysis in the trace.
-	 * @param postProcessedResults 
-	 * @param counterexample trace
-	 * @param iIcfg 
+	 * 
+	 * @param postProcessedResults
+	 * @param counterexample
+	 *            trace
+	 * @param iIcfg
 	 */
 	private IPredicate computeRelevantStatements_FlowSensitive(final NestedWord<LETTER> counterexampleWord,
 			final int startLocation, final int endLocation, final IPredicate weakestPreconditionBranchEndlocation,
 			final PredicateTransformer<Term, IPredicate, TransFormula> pt, final FaultLocalizationRelevanceChecker rc,
 			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable,
-			final TracePredicates strongestPostconditionSequence, Map<Integer, Map<Integer, Set<IcfgEdge>>> postProcessedResults, 
-			final NestedRun<LETTER,IPredicate> counterexample, final IIcfg<IcfgLocation> IIcfg) {
+			final TracePredicates strongestPostconditionSequence,
+			final Map<Integer, Map<Integer, Set<IcfgEdge>>> postProcessedResults,
+			final NestedRun<LETTER, IPredicate> counterexample, final IIcfg<IcfgLocation> IIcfg) {
 		IPredicate weakestPreconditionLeft = weakestPreconditionBranchEndlocation;
 		for (int position = endLocation; position >= startLocation; position--) {
 			final LETTER statement = counterexampleWord.getSymbol(position);
-			
+
 			final Map<Integer, Set<IcfgEdge>> branchIn = postProcessedResults.get(position);
 			Integer branchOutPosition = null;
 			Set<IcfgEdge> subGraphEdges = null;
 			UnmodifiableTransFormula mergedFormula = null;
-			if(branchIn != null && !branchIn.isEmpty()) {
+			if (branchIn != null && !branchIn.isEmpty()) {
 				final ArrayList<Integer> branchIn2 = new ArrayList<>(branchIn.keySet());
 				branchIn2.sort(Collections.reverseOrder());
 				branchOutPosition = computeCorrespondingBranchOutLocation(branchIn2, startLocation);
 				subGraphEdges = branchIn.get(branchOutPosition);
-				
+
 			} else {
 				branchOutPosition = null;
 			}
 			final IPredicate weakestPreconditionRight = weakestPreconditionLeft;
-			if(branchOutPosition != null) {
+			if (branchOutPosition != null) {
 				branchIn.remove(branchOutPosition);
 				final int positionBranchIn = position;
-				
-				mergedFormula = constructConglomerate(branchOutPosition, position, subGraphEdges, counterexample, IIcfg);
+
+				mergedFormula =
+						constructConglomerate(branchOutPosition, position, subGraphEdges, counterexample, IIcfg);
 				position = branchOutPosition;
-				final Term wpTerm = computeWp(weakestPreconditionRight, mergedFormula,
-						csToolkit.getManagedScript().getScript(), csToolkit.getManagedScript(), pt,
-						mApplyQuantifierElimination);
+				final Term wpTerm =
+						computeWp(weakestPreconditionRight, mergedFormula, csToolkit.getManagedScript().getScript(),
+								csToolkit.getManagedScript(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = mPredicateFactory.newPredicate(wpTerm);
-				final boolean isRelevant = checkBranchRelevance(branchOutPosition, positionBranchIn,
-						mergedFormula, weakestPreconditionLeft, weakestPreconditionRight,
-						counterexampleWord, csToolkit, modifiableGlobalsTable, strongestPostconditionSequence);
+				final boolean isRelevant = checkBranchRelevance(branchOutPosition, positionBranchIn, mergedFormula,
+						weakestPreconditionLeft, weakestPreconditionRight, counterexampleWord, csToolkit,
+						modifiableGlobalsTable, strongestPostconditionSequence);
 				if (isRelevant) {
 					// If the branch is Relevant. Recursion
 					weakestPreconditionLeft = computeRelevantStatements_FlowSensitive(counterexampleWord,
 							branchOutPosition, positionBranchIn, weakestPreconditionRight, pt, rc, csToolkit,
-							modifiableGlobalsTable, strongestPostconditionSequence,
-							postProcessedResults, counterexample, IIcfg);
+							modifiableGlobalsTable, strongestPostconditionSequence, postProcessedResults,
+							counterexample, IIcfg);
 					// If the branch is relevant, then the wp should come from inside the branch.
 					// That is why weakestPreconditionLeft is coming from inside the branch now.
 				} else {
 					// Don't do anything.
-					mLogger.debug(
-							" - - Irrelevant Branch - - - [BlockEncodedFormula:" + mergedFormula + " ]");
+					mLogger.debug(" - - Irrelevant Branch - - - [BlockEncodedFormula:" + mergedFormula + " ]");
 				}
 
 			} else {
@@ -777,19 +788,18 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 
 	private void doFlowSensitiveAnalysis(final NestedRun<LETTER, IPredicate> counterexample,
 			final IPredicate truePredicate, final INestedWordAutomaton<LETTER, IPredicate> cfg,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final CfgSmtToolkit csToolkit, IIcfg<IcfgLocation> IIcfg) {
+			final ModifiableGlobalsTable modifiableGlobalsTable, final CfgSmtToolkit csToolkit,
+			final IIcfg<IcfgLocation> IIcfg) {
 		mLogger.info("Starting flow-sensitive error relevancy analysis");
-		
 
-		
 		// get information from CFG but instead of fromulas, put edges
 		final Map<Integer, Map<Integer, Set<IcfgEdge>>> informationFromCfg2 =
 				computeInformationFromCFG(counterexample, cfg, csToolkit.getManagedScript());
-		
+
 		// Post process branching informations
-		final Map<Integer, Map<Integer, Set<IcfgEdge>>> postProcessedResults = postProcessInformationFromCFG(counterexample, informationFromCfg2, 
-				0, counterexample.getLength()-1);
-		
+		final Map<Integer, Map<Integer, Set<IcfgEdge>>> postProcessedResults =
+				postProcessInformationFromCFG(counterexample, informationFromCfg2, 0, counterexample.getLength() - 1);
+
 		// Count branches in the trace.
 		int numberOfBranches = 0;
 		final Collection<Map<Integer, Set<IcfgEdge>>> listOfValues = postProcessedResults.values();
@@ -892,36 +902,34 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		}
 		return angelicStatus;
 	}
-	
-	/** Return the Angelic score of an error trace and hence
-	 * the assertion violation.
-	 * A score of 1 means it is highly "interesting" for the
-	 * user from a debugging point of view.
-	 * 
-	 * A score of 0 would mean that the assertion violation
-	 * is totally dependent on the values coming from the 
+
+	/**
+	 * Return the Angelic score of an error trace and hence the assertion violation. A score of 1 means it is highly
+	 * "interesting" for the user from a debugging point of view.
+	 *
+	 * A score of 0 would mean that the assertion violation is totally dependent on the values coming from the
 	 * environment.
-	 * 
-	 * @return double, The rank of the trace between  0 and 1.
+	 *
+	 * @return double, The rank of the trace between 0 and 1.
 	 */
 	private double getAngelicScore() {
 		double angelicScore = 0;
 		int numberOfAberrantStatements = 0;
 		int totalNumberofAberrantStatements = 0;
 		for (int i = 0; i < mRelevanceOfTrace.length; i++) {
-			if (((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2UC() || 
-					((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion1UC()) {
+			if (((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2UC()
+					|| ((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion1UC()) {
 				numberOfAberrantStatements++;
 				totalNumberofAberrantStatements++;
-			} else if(((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2GF() ||
-					((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion1GF()) {
+			} else if (((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2GF()
+					|| ((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion1GF()) {
 				totalNumberofAberrantStatements++;
 			}
 		}
-		if(totalNumberofAberrantStatements != 0){ 
+		if (totalNumberofAberrantStatements != 0) {
 			angelicScore = (double) numberOfAberrantStatements / totalNumberofAberrantStatements;
-			 
-			 }
+
+		}
 		return angelicScore;
 	}
 }

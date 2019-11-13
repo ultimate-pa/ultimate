@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 public final class Dumper {
 	private final PrintWriter mIterationPW;
@@ -115,7 +116,7 @@ public final class Dumper {
 			for (int i = 0; i < counterexample.length(); i++) {
 
 				if (run instanceof NestedRun) {
-					line = AbstractCegarLoop.addIndentation(indentation,
+					line = CoreUtil.addIndentation(indentation,
 							"Location" + i + ": " + ((ISLPredicate) stateSequence.get(i)).getProgramPoint());
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug(line);
@@ -126,7 +127,7 @@ public final class Dumper {
 				if (counterexample.isCallPosition(i)) {
 					indentation++;
 				}
-				line = AbstractCegarLoop.addIndentation(indentation,
+				line = CoreUtil.addIndentation(indentation,
 						"Statement" + i + ": " + counterexample.getSymbol(i).getPrettyPrintedStatements());
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(line);
