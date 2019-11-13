@@ -939,9 +939,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			return ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
 					ROUNDING_MODE_BOOGIE_TYPE, ULTIMATE_VAR_CURRENT_ROUNDING_MODE,
 					DeclarationInformation.DECLARATIONINFO_GLOBAL);
-		} else {
-			return mCurrentRoundingMode;
 		}
+		return mCurrentRoundingMode;
 	}
 
 	@Override
@@ -1392,9 +1391,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final Expression condRTZ = ExpressionFactory.constructIfThenElseExpression(loc, eqRTZ, zero, condRNE);
 
 			return new RValue(condRTZ, intCPrimitive);
-		} else {
-			return new RValue(mCurrentRoundingModeMacroValue, intCPrimitive);
 		}
+		return new RValue(mCurrentRoundingModeMacroValue, intCPrimitive);
 	}
 
 	@Override

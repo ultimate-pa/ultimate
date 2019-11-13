@@ -64,15 +64,9 @@ public class FloatFunction {
 			"fmod", // see 7.12.10.1
 			"fdim" // see 7.12.12.1
 	};
-	
-	public static final Set<String> CONVERT_TO_BITVEC = new HashSet<String>(Arrays.asList("sqrt", "fabs",
-			"fmin", "fmax",
-			"trunc",
-			"round", "lround", "llround",
-			"floor", "ceil",
-			"sin",
-			"remainder",
-			"fmod", "fdim"));
+
+	public static final Set<String> CONVERT_TO_BITVEC = new HashSet<>(Arrays.asList("sqrt", "fabs", "fmin", "fmax",
+			"trunc", "round", "lround", "llround", "floor", "ceil", "sin", "remainder", "fmod", "fdim"));
 
 	private static final String[] TYPE_SUFFIXES = { "f", "d", "l" };
 

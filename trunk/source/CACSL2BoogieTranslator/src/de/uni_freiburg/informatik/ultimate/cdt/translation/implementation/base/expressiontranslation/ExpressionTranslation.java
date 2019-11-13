@@ -132,8 +132,8 @@ public abstract class ExpressionTranslation {
 			final CPrimitive type) {
 		if (type.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 
-			final Expression expFloat = this.transformBitvectorToFloat(loc,exp, CPrimitives.FLOAT);
-			
+			final Expression expFloat = transformBitvectorToFloat(loc, exp, CPrimitives.FLOAT);
+
 			return constructUnaryFloatingPointExpression(loc, nodeOperator, expFloat, type);
 		}
 		return constructUnaryIntegerExpression(loc, nodeOperator, exp, type);
@@ -146,9 +146,9 @@ public abstract class ExpressionTranslation {
 			if (type1.getGeneralType() == CPrimitiveCategory.FLOATTYPE
 					|| type2.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 
-				final Expression first = this.transformBitvectorToFloat(loc,exp1, CPrimitives.FLOAT);
-				final Expression second = this.transformBitvectorToFloat(loc,exp2, CPrimitives.FLOAT);
-				
+				final Expression first = transformBitvectorToFloat(loc, exp1, CPrimitives.FLOAT);
+				final Expression second = transformBitvectorToFloat(loc, exp2, CPrimitives.FLOAT);
+
 				return constructArithmeticFloatingPointExpression(loc, nodeOperator, first, type1, second, type2);
 			}
 			return constructArithmeticIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
