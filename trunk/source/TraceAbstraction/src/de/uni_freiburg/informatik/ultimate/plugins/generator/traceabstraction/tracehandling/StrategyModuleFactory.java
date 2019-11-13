@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -139,13 +140,13 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleAbstractInterpretation() {
-		// TODO: Pre and Postconditions other than true and false
+		isOnlyDefaultPrePostConditions();
 		return createModuleWrapperIfNecessary(new IpTcStrategyModuleAbstractInterpretation<>(mCounterexample,
 				mPredicateUnifier, mServices, mPrefs.getIcfgContainer(), mPathProgramCache, mTaPrefs));
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSifa() {
-		// TODO: Pre and Postconditions other than true and false
+		isOnlyDefaultPrePostConditions();
 		return createModuleWrapperIfNecessary(new IpTcStrategyModuleSifa<>(mServices, mLogger,
 				mPrefs.getIcfgContainer(), mCounterexample, mPredicateUnifier));
 	}
@@ -156,7 +157,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	}
 
 	public StrategyModuleMcr<LETTER> createStrategyModuleMcr(final StrategyFactory<LETTER> strategyFactory) {
-		// TODO: Pre and Postconditions other than true and false
+		isOnlyDefaultPrePostConditions();
 		final boolean useInterpolantConsolidation = mPrefs.getUseInterpolantConsolidation();
 		if (useInterpolantConsolidation) {
 			throw new UnsupportedOperationException("Interpolant consolidation and MCR cannot be combined");
@@ -173,9 +174,9 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 
 	private IIpTcStrategyModule<?, LETTER>
 			createModuleWrapperIfNecessary(final IIpTcStrategyModule<?, LETTER> trackStrategyModule) {
-		// TODO: Pre and Postconditions other than true and false?
 		final boolean useInterpolantConsolidation = mPrefs.getUseInterpolantConsolidation();
 		if (useInterpolantConsolidation) {
+			isOnlyDefaultPrePostConditions();
 			return new IpTcStrategyModuleInterpolantConsolidation<>(mServices, mLogger, mPrefs, mPredicateFactory,
 					trackStrategyModule);
 		}
@@ -227,6 +228,15 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 
 	public IPredicateUnifier getDefaultPredicateUnifier() {
 		return mPredicateUnifier;
+	}
+
+	private void isOnlyDefaultPrePostConditions() {
+		if (!SmtUtils.isTrueLiteral(mPrecondition.getFormula())) {
+			throw new UnsupportedOperationException("Currently, only precondition true is supported");
+		}
+		if (!SmtUtils.isFalseLiteral(mPostcondition.getFormula())) {
+			throw new UnsupportedOperationException("Currently, only postcondition false is supported");
+		}
 	}
 
 }
