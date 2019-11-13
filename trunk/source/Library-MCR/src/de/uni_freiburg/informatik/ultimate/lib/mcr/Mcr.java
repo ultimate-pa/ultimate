@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -70,7 +69,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final Map<LETTER, Map<IProgramVar, LETTER>> mPreviousWrite;
 	private final Map<LETTER, Term> mActions2TermVars;
 
-	private final Function<List<LETTER>, Pair<LBool, QualifiedTracePredicates>> mProofProvider;
+	private final IProofProvider<LETTER> mProofProvider;
 	private final Map<LETTER, Integer> mActions2Indices;
 	private final AutomataLibraryServices mAutomataServices;
 	private final VpAlphabet<LETTER> mAlphabet;
@@ -79,9 +78,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	public Mcr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final List<LETTER> trace,
-			final Set<LETTER> alphabet,
-			final Function<List<LETTER>, Pair<LBool, QualifiedTracePredicates>> proofProvider)
-			throws AutomataLibraryException {
+			final Set<LETTER> alphabet, final IProofProvider<LETTER> proofProvider) throws AutomataLibraryException {
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
 		mServices = prefs.getUltimateServices();
@@ -120,7 +117,8 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			preprocess(trace);
 			List<IPredicate> interpolants = getInterpolantsIfAccepted(automatonBuilder.getResult(), trace);
 			if (interpolants.isEmpty()) {
-				final Pair<LBool, QualifiedTracePredicates> proof = mProofProvider.apply(trace);
+				final Pair<LBool, QualifiedTracePredicates> proof =
+						mProofProvider.getProof(trace, getPrecondition(), getPostcondition());
 				final LBool feasibility = proof.getFirst();
 				if (feasibility != LBool.UNSAT) {
 					// We found a feasible error trace
@@ -529,5 +527,10 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		Set<IProgramVar> getWrittenVars() {
 			return mWrittenVars;
 		}
+	}
+
+	public interface IProofProvider<LETTER extends IIcfgTransition<?>> {
+		Pair<LBool, QualifiedTracePredicates> getProof(List<LETTER> trace, IPredicate precondition,
+				IPredicate postcondition);
 	}
 }

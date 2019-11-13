@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
@@ -15,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.Mcr;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.StatelessRun;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.Mcr.IProofProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -34,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIpTcStrategyModule<Mcr<LETTER>, LETTER>,
-		IIpAbStrategyModule<LETTER>, Function<List<LETTER>, Pair<LBool, QualifiedTracePredicates>> {
+public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
+		implements IIpTcStrategyModule<Mcr<LETTER>, LETTER>, IIpAbStrategyModule<LETTER>, IProofProvider<LETTER> {
 
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<?> mPrefs;
@@ -147,7 +146,8 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 	}
 
 	@Override
-	public Pair<LBool, QualifiedTracePredicates> apply(final List<LETTER> trace) {
+	public Pair<LBool, QualifiedTracePredicates> getProof(final List<LETTER> trace, final IPredicate precondition,
+			final IPredicate postcondition) {
 		final IRun<LETTER, ?> run = new StatelessRun<>(TraceCheckUtils.toNestedWord(trace));
 		// Run mRefinementEngine for the given trace
 		final RefinementStrategy refinementStrategy = mPrefs.getMcrRefinementStrategy();
@@ -155,9 +155,8 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIp
 			throw new IllegalStateException("MCR cannot used with MCR as internal strategy.");
 		}
 
-		final IPreconditionProvider preconditionProvider = IPreconditionProvider.constructDefaultPreconditionProvider();
-		final IPostconditionProvider postconditionProvider =
-				IPostconditionProvider.constructDefaultPostconditionProvider();
+		final IPreconditionProvider preconditionProvider = (predicateUnifer) -> precondition;
+		final IPostconditionProvider postconditionProvider = (predicateUnifer) -> postcondition;
 
 		final IRefinementStrategy<LETTER> strategy = mStrategyFactory.constructStrategy(run, mAbstraction,
 				mTaskIdentifier, mEmptyStackFactory, preconditionProvider, postconditionProvider, refinementStrategy);

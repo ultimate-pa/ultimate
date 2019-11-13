@@ -7,14 +7,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Function;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.Mcr.IProofProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -23,13 +22,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
-	private final Function<List<LETTER>, Pair<LBool, QualifiedTracePredicates>> mProofProvider;
+	private final IProofProvider<LETTER> mProofProvider;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 
 	public McrInterpolantAutomatonBuilder(final AutomataLibraryServices services, final VpAlphabet<LETTER> vpAlphabet,
-			final IEmptyStackStateFactory<IPredicate> emptyStateFactory,
-			final Function<List<LETTER>, Pair<LBool, QualifiedTracePredicates>> proofProvider,
+			final IEmptyStackStateFactory<IPredicate> emptyStateFactory, final IProofProvider<LETTER> proofProvider,
 			final IPredicate precondition, final IPredicate postcondition) {
 		mProofProvider = proofProvider;
 		mPrecondition = precondition;
@@ -81,6 +79,7 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 					newStates.addAll(states);
 					newStates.add(nextState);
 					if (stateCovered) {
+						// We found a postcondition in the stateMap, so we can interpolate the trace
 						fillStateMap(newTrace, newStates, stateMap);
 					} else {
 						traceQueue.add(newTrace);
@@ -134,17 +133,18 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final IPredicate newCondition = stateMap.get(states.get(i));
 			if (newCondition != null) {
 				if (newTraceFound) {
-					// TODO: Check for feasibility
-					// final Pair<LBool, QualifiedTracePredicates> result =
-					// mProofProvider.apply(constructTrace(precondition, trace.subList(start, i), newCondition));
-					// if (result.getFirst() == LBool.UNSAT) {
-					// final List<IPredicate> predicates = result.getSecond().getPredicates();
-					// for (int j = 0; j < predicates.size(); j++) {
-					// stateMap.put(states.get(start + j + 1), predicates.get(j));
-					// }
-					// } else {
-					// // TODO: We found a feasible trace, somehow remove it from the automaton
-					// }
+					final Pair<LBool, QualifiedTracePredicates> result =
+							mProofProvider.getProof(trace.subList(start, i), precondition, newCondition);
+					if (result.getFirst() == LBool.UNSAT) {
+						final List<IPredicate> predicates = result.getSecond().getPredicates();
+						for (int j = 0; j < predicates.size(); j++) {
+							stateMap.put(states.get(start + j + 1), predicates.get(j));
+						}
+					} else {
+						// We found a feasible trace, somehow remove it from the automaton
+						// TODO: For now just throw an exception
+						throw new IllegalStateException("We found a feasible trace in the automaton.");
+					}
 					start = i;
 					precondition = newCondition;
 					newTraceFound = false;
@@ -158,16 +158,8 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
-	private List<LETTER> constructTrace(final IPredicate precondition, final List<LETTER> trace,
-			final IPredicate postcondition) {
-		final List<LETTER> newTrace = new ArrayList<>(trace.size() + 2);
-		// TODO: Construct an assumption from precondition
-		final LETTER assumePre = null;
-		newTrace.add(assumePre);
-		newTrace.addAll(trace);
-		// TODO: Construct an assumption from postcondition (negated)
-		final LETTER assumeNotPost = null;
-		newTrace.add(assumeNotPost);
-		return newTrace;
+	@Override
+	public String toString() {
+		return mResult.toString();
 	}
 }
