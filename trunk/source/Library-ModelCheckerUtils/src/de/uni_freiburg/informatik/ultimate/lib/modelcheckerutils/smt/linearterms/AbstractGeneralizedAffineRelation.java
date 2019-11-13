@@ -335,46 +335,38 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		}
 
 		if (abstractVarOfSubject instanceof Monomial) {
+			//TODO 13.11.2019: When we divide by variables we could actually sometimes simplify the resulting division,
+			//in the case that this variable is not zero (and therefore we can simplify f.ex. x/x to 1).
+			//At the moment this seems like much work relative to little effect, so I was asked to leave this comment
+			//here for the future.
 			for (final Entry<Term, Rational> var2exp : ((Monomial) abstractVarOfSubject).getVariable2Exponent()
 					.entrySet()) {
 				if (var2exp.getKey() == subject) {
 					// do nothing
 				} else {
 					// TODO: Integer sort tests
-					// TODO: Ask Matthias whether using the PolynomialTermTransformer here is wanted. 
-					// Further ask Matthias why we don't use the AGAT class as container for rhsTerm but switch to "Term".
-					// TODO: Look into the cases again (especially division by variable)
 					// TODO: Use MultiCaseSolvedBinaryAssumption
 					assert var2exp.getValue().isIntegral();
 					final int exponent = var2exp.getValue().numerator().intValueExact();
-					final Term power;
+					final Term[] rhsDivision = new Term[exponent + 1];
+					rhsDivision[0] = rhsTerm;
 					if (exponent >= 2) {
-						final Term[] factors = new Term[exponent];
-						for (int i = 0; i < exponent; i++) {
-							factors[i] = var2exp.getKey();
+						for (int i = 1; i < exponent + 1; i++) {
+							rhsDivision[i] = var2exp.getKey();
 						}
-						power = SmtUtils.mul(script, mAffineTerm.getSort(), factors);
 					} else {
-						power = var2exp.getKey();
+						rhsDivision[1] = var2exp.getKey();
 					}
-					// TODO: Ask Matthias whether it matters much, that redundant assumptions could
+					// Asked Matthias whether it matters much, that redundant assumptions could
 					// get added
 					// e.g. when you already have x != 0 and you have to divide by x again.
 					// Better detect it before adding them.
 					if (SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
 						makeRealAssumptions(assumptionMapBuilder, var2exp.getKey());
-						final Term invPower = script.term("/",
-								SmtUtils.rational2Term(script, Rational.ONE, mAffineTerm.getSort()), power);
-						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower, rhsTerm);
-						//Transform the rhs into our wanted representation (e.g. flattening it)
-						rhsTerm = ((IPolynomialTerm) new PolynomialTermTransformer(script).transform(rhsTerm)).toTerm(script);
+						rhsTerm = SmtUtils.divReal(script, rhsDivision);
 					} else if (SmtSortUtils.isIntSort(mAffineTerm.getSort())) {
 						makeIntAssumptions(assumptionMapBuilder, script, var2exp.getKey(), rhsTerm);
-						final Term invPower = script.term("div", SmtUtils.constructIntValue(script, BigInteger.ZERO),
-								power);
-						//Transform the rhs into our wanted representation (e.g. flattening it)
-						rhsTerm = ((IPolynomialTerm) new PolynomialTermTransformer(script).transform(rhsTerm)).toTerm(script);
-						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower, rhsTerm);
+						rhsTerm = SmtUtils.divInt(script, rhsDivision);
 					} else {
 						throw new UnsupportedOperationException("PolynomialRelations of this sort are not supported.");
 					}
