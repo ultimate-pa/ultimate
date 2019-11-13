@@ -28,7 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -51,9 +53,9 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 	private final ILogger mLogger;
 
 	private Set<Term> mTermsInWhichWeAlreadyDescended;
-	private final Set<String> mOccuringSortNames;
-	private final Set<String> mOccuringFunctionNames;
-	private final Set<Integer> mOccuringQuantifiers;
+	private final Map<String, Integer> mOccuringSortNames;
+	private final Map<String, Integer> mOccuringFunctionNames;
+	private final Map<Integer, Integer> mOccuringQuantifiers;
 	private boolean mHasArrays;
 	private int mNumberOfArrays;
 	private int mNumberOfVariables;
@@ -81,7 +83,14 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 				if(!term.toStringDirect().equals("true") && !term.toStringDirect().equals("false")
 						&& ((term instanceof TermVariable) || isApplicationTermWithArityZero(term))) {
 					final Sort currentSort = term.getSort();
-					mOccuringSortNames.add(currentSort.toString());
+					final String currentSortName = term.getSort().toString();
+					// Count occurrences of sorts.
+					if(mOccuringSortNames.containsKey(currentSortName)) {
+						mOccuringSortNames.put(currentSortName, mOccuringSortNames.get(currentSortName) + 1);
+					}else {
+						mOccuringSortNames.put(currentSortName, 1);
+					}
+
 					if (currentSort.isArraySort()) {
 						mHasArrays = true;
 						mNumberOfArrays += 1;
@@ -102,7 +111,12 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 			final int numberOfParameters = term.getParameters().length;
 			if(numberOfParameters > 0) {
 				final String functionName = term.getFunction().getName();
-				mOccuringFunctionNames.add(functionName);
+				// Count occurrences of functions.
+				if(mOccuringFunctionNames.containsKey(functionName)) {
+					mOccuringFunctionNames.put(functionName, mOccuringFunctionNames.get(functionName) + 1);
+				}else {
+					mOccuringFunctionNames.put(functionName, 1);
+				}
 				mLogger.warn("######################## START #######################");
 				mLogger.warn("FUNCTION: " + functionName);
 				mLogger.warn("TERM: " + term.toStringDirect());
@@ -153,7 +167,12 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 
 		@Override
 		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
-			mOccuringQuantifiers.add(term.getQuantifier());
+			final int quantifier = term.getQuantifier();
+			if(mOccuringQuantifiers.containsKey(term.getQuantifier())) {
+				mOccuringQuantifiers.put(quantifier, mOccuringQuantifiers.get(quantifier) + 1);
+			}else {
+				mOccuringQuantifiers.put(quantifier, 1);
+			}
 			mNumberOfQuantifiers += 1;
 			walker.enqueueWalker(new MyWalker(term.getSubformula()));
 		}
@@ -168,9 +187,9 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 	public SMTFeatureExtractionTermClassifier(final ILogger logger) {
 		super();
 		mLogger = logger;
-		mOccuringSortNames = new HashSet<>();
-		mOccuringFunctionNames = new HashSet<>();
-		mOccuringQuantifiers = new HashSet<>();
+		mOccuringSortNames = new HashMap<>();
+		mOccuringFunctionNames = new HashMap<>();
+		mOccuringQuantifiers = new HashMap<>();
 		mHasArrays = false;
 		mNumberOfArrays = 0;
 		mNumberOfVariables = 0;
@@ -218,15 +237,15 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		return mNumberOfArrays;
 	}
 
-	public Set<String> getOccuringFunctionNames() {
+	public Map<String, Integer> getOccuringFunctionNames() {
 		return mOccuringFunctionNames;
 	}
 
-	public Set<Integer> getOccuringQuantifiers() {
+	public Map<Integer, Integer> getOccuringQuantifiers() {
 		return mOccuringQuantifiers;
 	}
 
-	public Set<String> getOccuringSortNames() {
+	public Map<String, Integer> getOccuringSortNames() {
 		return mOccuringSortNames;
 	}
 

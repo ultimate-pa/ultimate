@@ -29,8 +29,9 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Struct to store a featurevector which contains several properties of a SMT Term.
@@ -48,13 +49,14 @@ public class SMTFeature {
 	public int dependencyScore = 0;
 	public ArrayList<Integer> variableEquivalenceClassSizes;
 	public int biggestEquivalenceClass;
-	public Set<String> occuringSorts = Collections.emptySet();
-	public Set<String> occuringFunctions = Collections.emptySet();
-	public Set<Integer> occuringQuantifiers = Collections.emptySet();
+	public Map<String, Integer> occuringSorts = new HashMap<>();
+	public Map<String, Integer> occuringFunctions = new HashMap<>();
+	public Map<Integer, Integer> occuringQuantifiers = new HashMap<>();
 	public boolean containsArrays = false;
 	public ArrayList<String> assertionStack = new ArrayList<>();
 	public int assertionStackHashCode = 0;
 	public String solverresult = "";
+	public String solvername = "";
 	public double solvertime = 0.0;
 
 	@Override
@@ -65,19 +67,39 @@ public class SMTFeature {
 			sb.append(toCsv(";"));
 			return sb.toString();
 		} catch (final IllegalAccessException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return "";
 	}
 
+	private String mapToJson(final Map<?,?> map) {
+		return "{"+map.entrySet().stream()
+				.map(e -> "\""+ e.getKey() + "\"" + ":" + String.valueOf(e.getValue()) + "")
+				.collect(Collectors.joining(", "))+"}";
+
+	}
+
 	public String toCsv(final String delimiter) throws IllegalAccessException {
 		final StringBuilder sb = new StringBuilder();
-		final Field[] fields = getClass().getDeclaredFields();
 		final ArrayList<String> values = new ArrayList<>();
-		for (final Field field : fields) {
-			values.add(field.get(this).toString());
-		}
+		values.add(String.valueOf(numberOfFunctions));
+		values.add(String.valueOf(numberOfQuantifiers));
+		values.add(String.valueOf(numberOfVariables));
+		values.add(String.valueOf(numberOfArrays));
+		values.add(String.valueOf(dagsize));
+		values.add(String.valueOf(treesize));
+		values.add(String.valueOf(dependencyScore));
+		values.add(String.valueOf(variableEquivalenceClassSizes));
+		values.add(String.valueOf(biggestEquivalenceClass));
+		values.add(mapToJson(occuringSorts));
+		values.add(mapToJson(occuringFunctions));
+		values.add(mapToJson(occuringQuantifiers));
+		values.add(String.valueOf(containsArrays));
+		values.add(String.valueOf(assertionStack));
+		values.add(String.valueOf(assertionStackHashCode));
+		values.add(String.valueOf(solverresult));
+		values.add(String.valueOf(solvername));
+		values.add(String.valueOf(solvertime));
 		sb.append(String.join(delimiter,values));
 		return sb.toString();
 	}
