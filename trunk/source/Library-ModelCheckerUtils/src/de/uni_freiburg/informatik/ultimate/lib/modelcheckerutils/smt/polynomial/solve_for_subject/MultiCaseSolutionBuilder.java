@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -98,6 +99,17 @@ public class MultiCaseSolutionBuilder {
 		default:
 			throw new AssertionError();
 		}
+	}
+	
+	/**
+	 * Let the {@link MultiCaseSolutionBuilder} store the conjunction of its
+	 * current content and the input of this method. The input of this method is
+	 * a disjunctive normal form (DNF) given as a collection of collections. The
+	 * inner collections represent conjunctions the outer collection represents
+	 * a disjunction of these conjunctions.
+	 */
+	public void conjoinWithDnf(final Collection<Collection<?>> dnf) {
+		// Will be implemented by Matthias
 	}
 
 	public void reportAdditionalIntricateOperation(final IntricateOperation intricateOperation) {
