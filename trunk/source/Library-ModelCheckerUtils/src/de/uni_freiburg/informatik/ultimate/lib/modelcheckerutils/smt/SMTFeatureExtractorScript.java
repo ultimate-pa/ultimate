@@ -97,7 +97,7 @@ public class SMTFeatureExtractorScript extends WrapperScript {
 		try {
 			mFeatureExtractor.extractFeature(
 					mCurrentAssertionStack.stream().filter(a -> a != StackMarker.INSTANCE).collect(Collectors.toList()),
-					analysisTime, sat.toString());
+					analysisTime, sat.toString(), mScript.getInfo(":name").toString());
 		} catch (IllegalAccessException | IOException e) {
 			mLogger.error(e);
 		}

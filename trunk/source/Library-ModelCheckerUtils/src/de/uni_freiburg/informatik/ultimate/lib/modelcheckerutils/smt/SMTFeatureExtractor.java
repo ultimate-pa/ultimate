@@ -56,7 +56,7 @@ public class SMTFeatureExtractor {
 		createDumpFile();
 	}
 
-	public void extractFeature(final List<Term> assertions, final double time, final String result)
+	public void extractFeature(final List<Term> assertions, final double time, final String result, final String solvername)
 			throws IllegalAccessException, IOException {
 		mLogger.warn("Extracting feature..");
 		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
@@ -81,14 +81,15 @@ public class SMTFeatureExtractor {
 		feature.biggestEquivalenceClass = tc.getBiggestEquivalenceClass();
 		feature.solverresult = result;
 		feature.solvertime = time;
+		feature.solvername = solvername;
 		mFeatures.add(feature);
 		dumpFeature(feature);
 
 	}
 
 	public void dumpFeature(final SMTFeature feature) throws IllegalAccessException, IOException {
-		mLogger.info("Writing to file:" + mFilename);
-		mLogger.info("FEATURE: " + feature);
+		mLogger.warn("Writing to file:" + mFilename);
+		mLogger.warn("FEATURE: " + feature);
 		try (FileWriter fw = new FileWriter(mFilename, true);
 				BufferedWriter bw = new BufferedWriter(fw);
 				PrintWriter out = new PrintWriter(bw)) {
