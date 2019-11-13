@@ -341,7 +341,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 					// do nothing
 				} else {
 					// TODO: Integer sort tests
-					// TODO: Flatten this
+					// TODO: Ask Matthias whether using the PolynomialTermTransformer here is wanted. 
+					// Further ask Matthias why we don't use the AGAT class as container for rhsTerm but switch to "Term".
 					// TODO: Look into the cases again (especially division by variable)
 					// TODO: Use MultiCaseSolvedBinaryAssumption
 					assert var2exp.getValue().isIntegral();
@@ -365,10 +366,14 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 						final Term invPower = script.term("/",
 								SmtUtils.rational2Term(script, Rational.ONE, mAffineTerm.getSort()), power);
 						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower, rhsTerm);
+						//Transform the rhs into our wanted representation (e.g. flattening it)
+						rhsTerm = ((IPolynomialTerm) new PolynomialTermTransformer(script).transform(rhsTerm)).toTerm(script);
 					} else if (SmtSortUtils.isIntSort(mAffineTerm.getSort())) {
 						makeIntAssumptions(assumptionMapBuilder, script, var2exp.getKey(), rhsTerm);
 						final Term invPower = script.term("div", SmtUtils.constructIntValue(script, BigInteger.ZERO),
 								power);
+						//Transform the rhs into our wanted representation (e.g. flattening it)
+						rhsTerm = ((IPolynomialTerm) new PolynomialTermTransformer(script).transform(rhsTerm)).toTerm(script);
 						rhsTerm = SmtUtils.mul(script, mAffineTerm.getSort(), invPower, rhsTerm);
 					} else {
 						throw new UnsupportedOperationException("PolynomialRelations of this sort are not supported.");

@@ -123,6 +123,8 @@ public class PolynomialTermUtils {
 		final IPolynomialTerm numerator = constructNumeratorReal(polynomialArgs, script);
 		final int endOfVariableIncluded = calculateEndOfVariable(polynomialArgs);
 		final int beginOfVariableIncluded = calculateBeginOfVariable(polynomialArgs);
+		//Tell the method to include one more Element at the beginning, because that's where we will insert the
+		//new numerator.
 		Term[] variable = subArrayToTermSimplifyIntermediate(polynomialArgs, beginOfVariableIncluded - 1, 
 															 endOfVariableIncluded, script);
 		variable[0] = numerator.toTerm(script);
@@ -159,21 +161,9 @@ public class PolynomialTermUtils {
 		return beginOfVariableIncluded;
 	}
 	
-	private static Term[] subArrayToTermSkipOnes(final IPolynomialTerm[] polynomialArgs, final int beginOfVariableIncluded,
-										 final int endOfSubArrayIncl, final Script script) {
-		ArrayList<Term> subList = new ArrayList<>();
-		for (int i = beginOfVariableIncluded; i <= endOfSubArrayIncl; i++) {
-			if (polynomialArgs[i].isConstant() && polynomialArgs[i].getConstant().equals(Rational.ONE)) {
-				//skip it
-			}else {
-				subList.add(polynomialArgs[i].toTerm(script));
-			}
-		}
-		Term[] subArray = new Term[subList.size()];
-		subList.toArray(subArray);
-		return subArray;
-	}
-	
+	/**
+	 * Does what the name suggests, except it does not simplify the very first 1.
+	 */
 	private static Term[] subArrayToTermSimplifyIntermediate(final IPolynomialTerm[] polynomialArgs, final int beginOfVariableIncluded,
 															 final int endOfSubArrayIncl, final Script script) {
 		ArrayList<Term> subList = new ArrayList<>();
@@ -189,7 +179,10 @@ public class PolynomialTermUtils {
 				subList.add(polynomialArgs[i].toTerm(script));
 			}else {
 				if (polynomialArgs[i].isConstant() && polynomialArgs[i].getConstant().equals(Rational.ONE)) {
-					//skip it
+					//skip it, except it is the very first 1
+					if (i == beginOfVariableIncluded) {
+						subList.add(polynomialArgs[i].toTerm(script));
+					}
 				}else {
 					if (simplifiedTerm == null) {
 						simplifiedTerm = polynomialArgs[i];
@@ -267,10 +260,33 @@ public class PolynomialTermUtils {
 				endOfSimplificationExcluded--;
 			}
 		}
-
-		Term[] variable = subArrayToTermSkipOnes(polynomialArgs, endOfSimplificationExcluded - 1, polynomialArgs.length - 1, script);
+		//Tell the method to include one more Element at the beginning, because that's where we will insert the
+		//new numerator.
+		Term[] variable = subArrayToTermSkipOnes(polynomialArgs, endOfSimplificationExcluded - 1, 
+												 polynomialArgs.length - 1, script);
 		variable[0] = newNumerator.toTerm(script);
 		return script.term("div", variable);
+	}
+
+	/**
+	 * Does what the name suggests, except it does not simplify the very first 1.
+	 */
+	private static Term[] subArrayToTermSkipOnes(final IPolynomialTerm[] polynomialArgs, final int beginOfVariableIncluded,
+										 final int endOfSubArrayIncl, final Script script) {
+		ArrayList<Term> subList = new ArrayList<>();
+		for (int i = beginOfVariableIncluded; i <= endOfSubArrayIncl; i++) {
+			if (polynomialArgs[i].isConstant() && polynomialArgs[i].getConstant().equals(Rational.ONE)) {
+				//skip it, except it is the very first 1
+				if (i == beginOfVariableIncluded) {
+					subList.add(polynomialArgs[i].toTerm(script));
+				}
+			}else {
+				subList.add(polynomialArgs[i].toTerm(script));
+			}
+		}
+		Term[] subArray = new Term[subList.size()];
+		subList.toArray(subArray);
+		return subArray;
 	}
 
 	/**
