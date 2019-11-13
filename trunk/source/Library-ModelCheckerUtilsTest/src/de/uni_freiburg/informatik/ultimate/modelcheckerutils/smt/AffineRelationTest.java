@@ -191,7 +191,7 @@ public class AffineRelationTest {
 		testSolveForXMultiCaseOnly(inputSTR);
 	}
 
-	// @Test
+	@Test
 	public void choirNightTrezor01() throws NotAffineException {
 		final String inputSTR = "(= (mod (+ (* (mod (+ b 1) 4294967296) 4294967295) x) 4294967296) 1)";
 		testSolveForXMultiCaseOnly(inputSTR);

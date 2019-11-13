@@ -335,10 +335,10 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		}
 
 		if (abstractVarOfSubject instanceof Monomial) {
-			//TODO 13.11.2019: When we divide by variables we could actually sometimes simplify the resulting division,
-			//in the case that this variable is not zero (and therefore we can simplify f.ex. x/x to 1).
-			//At the moment this seems like much work relative to little effect, so I was asked to leave this comment
-			//here for the future.
+			// TODO 13.11.2019: When we divide by variables we could actually sometimes simplify the resulting division,
+			// in the case that this variable is not zero (and therefore we can simplify f.ex. x/x to 1).
+			// At the moment this seems like much work relative to little effect, so I was asked to leave this comment
+			// here for the future.
 			for (final Entry<Term, Rational> var2exp : ((Monomial) abstractVarOfSubject).getVariable2Exponent()
 					.entrySet()) {
 				if (var2exp.getKey() == subject) {
@@ -631,8 +631,10 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 				final Term multiplication = SmtUtils.mul(script, termSort,
 						SmtUtils.rational2Term(script, coeffOfSubject, termSort), auxDiv);
 				rhsTerm = SmtUtils.sum(script, termSort, auxMod, multiplication);
-				final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
-						Collections.emptyMap());
+
+				final SolvedBinaryRelation sbr = AffineRelation
+						.convert(script, SmtUtils.binaryEquality(script, allowedSubterm.getParameters()[0], rhsTerm))
+						.solveForSubject(script, subject);
 
 				// (t = aux_mod)
 				final ApplicationTerm apTerm = (ApplicationTerm) mOriginalTerm;
