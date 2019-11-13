@@ -15,6 +15,7 @@ from functools import reduce
   !v iff the following log line is the one we want to show
 """
 known_exceptions = {
+    "AssertionError: at least one of both input predicates is unknown":True,
 	"command is only available in interactive mode": True,
     "Argument of \"settings\" has invalid value": True,
     "encountered a call to a var args function, var args are not supported at the moment": True,
@@ -284,7 +285,7 @@ def process_direct_call_log(file):
         for line in lines:
             if not line:
                 continue
-            if line.startswith("java"):
+            if "/java " in line or line.startswith("java"):
                 call = line
                 debug('Found Ultimate call {}'.format(call))
             elif line.startswith("This is Ultimate"):
@@ -292,6 +293,8 @@ def process_direct_call_log(file):
                 debug('Found Ultimate version {}'.format(version))
             else:
                 result = scan_line(line, result, lines)
+        if call is None:
+            print(file + " has no call")
         return [Result(result, call, version)]
 
 
