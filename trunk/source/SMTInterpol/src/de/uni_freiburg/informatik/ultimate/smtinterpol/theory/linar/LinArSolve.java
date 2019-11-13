@@ -127,6 +127,9 @@ public class LinArSolve implements ITheory {
 	/** Number of literals created due to composites. */
 	int mCompositeCreateLit;
 
+	int mCountGetUpperBound;
+	long mTimeGetUpperBound;
+
 	// Statistics
 	int mNumCuts;
 	int mNumBranches;
@@ -1195,14 +1198,15 @@ public class LinArSolve implements ITheory {
 			}
 			logger.info("Number of variables: " + mLinvars.size()
 					+ " nonbasic: " + basicVars + " shared: " + mSharedVars.size());
-			logger.info("Time for fix Oob          : " + mFixTime / 1000000);// NOCHECKSTYLE
-			logger.info("Time for pivoting         : " + mPivotTime / 1000000);// NOCHECKSTYLE
-			logger.info("Time for bound computation: " + mPropBoundTime / 1000000);// NOCHECKSTYLE
-			logger.info("Time for bound setting    : " + mPropBoundSetTime / 1000000);// NOCHECKSTYLE
-			logger.info("Time for bound comp(back) : " + mBacktrackPropTime/1000000);// NOCHECKSTYLE
+			logger.info("Time for fix Oob          : " + mFixTime / 1000000);
+			logger.info("Time for pivoting         : " + mPivotTime / 1000000);
+			logger.info("Time for bound computation: " + mPropBoundTime / 1000000);
+			logger.info("Time for bound setting    : " + mPropBoundSetTime / 1000000);
+			logger.info("Time for bound comp(back) : " + mBacktrackPropTime / 1000000);
 			logger.info("Composite::createLit: " + mCompositeCreateLit);
 			logger.info("Number of cuts: " + mNumCuts);
-			logger.info("Time for cut-generation: " + mCutGenTime / 1000000);// NOCHECKSTYLE
+			logger.info("Time for cut-generation: " + mCutGenTime / 1000000);
+			logger.info("Count/Time for getUpperBound: %d / %.3f", mCountGetUpperBound, mTimeGetUpperBound / 1e9);
 			logger.info("Number of branchings: " + mNumBranches);
 		}
 	}
@@ -2021,11 +2025,11 @@ public class LinArSolve implements ITheory {
 		if (mat.isConstant()) {
 			shared.setLinVar(Rational.ZERO, null, mat.getConstant().mReal);
 		} else {
-			final Rational normFactor = mat.getGCD().inverse();
+			final Rational normFactor = mat.getGCD();
 			final Rational offset = mat.getConstant().mReal;
-			mat.mul(normFactor);
+			mat.div(normFactor);
 			final LinVar linVar = generateLinVar(getSummandMap(mat));
-			shared.setLinVar(normFactor.inverse(), linVar, offset);
+			shared.setLinVar(normFactor, linVar, offset);
 		}
 	}
 
@@ -2101,13 +2105,15 @@ public class LinArSolve implements ITheory {
 				{"CompLits", mCompositeCreateLit},
 				{"Cuts", mNumCuts},
 				{"Branches", mNumBranches},
+				{"GetUpperBound", mCountGetUpperBound},
 				{"Times", new Object[][]{
-					{"Pivot", mPivotTime / 1000000},// NOCHECKSTYLE
-					{"Fix", mFixTime / 1000000}, // NOCHECKSTYLE
-					{"BoundComp", mPropBoundTime / 1000000},// NOCHECKSTYLE
-					{"BoundSet", mPropBoundSetTime / 1000000},// NOCHECKSTYLE
-					{"BoundBack", mBacktrackPropTime / 1000000},// NOCHECKSTYLE
-					{"CutGen", mCutGenTime / 1000000}}// NOCHECKSTYLE
+					{"Pivot", mPivotTime / 1000000},
+					{"Fix", mFixTime / 1000000},
+					{"BoundComp", mPropBoundTime / 1000000},
+					{"BoundSet", mPropBoundSetTime / 1000000},
+					{"BoundBack", mBacktrackPropTime / 1000000},
+					{"CutGen", mCutGenTime / 1000000},
+					{"GetUpperBound", mTimeGetUpperBound / 1000000}}
 				}
 			}};
 	}
@@ -2179,49 +2185,23 @@ public class LinArSolve implements ITheory {
 	}
 
 	public InfinitesimalNumber getUpperBound(final MutableAffineTerm at) {
+		long start = System.nanoTime();
+		mCountGetUpperBound++;
 		if (at.isConstant()) {
+			mTimeGetUpperBound += System.nanoTime() - start;
 			return at.getConstant();
 		}
-		HashMap<LinVar, Rational> row = new HashMap<>();
-		InfinitesimalNumber offset = at.getConstant();
-		for (Entry<LinVar, Rational> entry : at.getSummands().entrySet()) {
-			unsimplifyAndAdd(entry.getKey(), entry.getValue(), row);
-		}
 
-		// check if we have the variable already as a linvar.
-		final Rational normFactor = at.getGCD().inverse();
-		{
-			MutableAffineTerm at2 = new MutableAffineTerm();
-			at2.add(Rational.ONE, at);
-			at2.mul(normFactor);
-			LinVar var;
-			if (at2.getSummands().size() == 1) {
-				final Map.Entry<LinVar, Rational> me = at2.getSummands().entrySet().iterator().next();
-				assert me.getValue().equals(Rational.ONE);
-				var = me.getKey();
-			} else {
-				var = mTerms.get(at2.getSummands());
-			}
-			// original at is (var + at.getOffset()) / normFactor
-			if (var != null) {
-				InfinitesimalNumber bound = normFactor.signum() > 0 ? var.getTightUpperBound()
-						: var.getTightLowerBound();
-				return bound.sub(at2.getConstant()).div(normFactor);
-			}
-		}
+		// get the linvar for the normalized mutable affine term
+		final InfinitesimalNumber offset = at.getConstant();
+		final Rational normFactor = at.getGCD();
+		MutableAffineTerm atNormalized = new MutableAffineTerm();
+		atNormalized.add(normFactor.inverse(), at);
+		LinVar var = generateLinVar(atNormalized.getSummands());
 
-		// we only compute the bound from the current tableaux, i.e., only consider the bounds of the current non-basic
-		// variables.
-		InfinitesimalNumber bound = InfinitesimalNumber.ZERO;
-		for (Entry<LinVar, Rational> entry : row.entrySet()) {
-			LinVar lv = entry.getKey();
-			Rational coeff = entry.getValue();
-			InfinitesimalNumber lvbound = coeff.isNegative() ? lv.getTightLowerBound() : lv.getTightUpperBound();
-			if (lvbound.isInfinity())
-				return InfinitesimalNumber.POSITIVE_INFINITY;
-			bound = bound.add(lvbound.mul(coeff));
-		}
-		bound = bound.add(offset);
-		return bound;
+		// check the bounds of the linvar
+		InfinitesimalNumber bound = normFactor.signum() > 0 ? var.getTightUpperBound() : var.getTightLowerBound();
+		mTimeGetUpperBound += System.nanoTime() - start;
+		return bound.mul(normFactor).sub(offset);
 	}
 }

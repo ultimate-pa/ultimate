@@ -70,46 +70,16 @@ public class CCAppTerm extends CCTerm {
 	}
 
 	/**
-	 * Searches the current mCCPar list of args and func to find an application term that is congruent to this term. The
-	 * congruence is detected by finding a CCAppTerm that is in both parent lists.
-	 *
-	 * @param func
-	 *            A term on the path from this.mFunc to this.mFunc.mRepStar.
-	 * @param arg
-	 *            A term on the path from this.mArg to this.mArg.mRepStar.
-	 * @return The congruent CCAppTerm appearing in both terms.
-	 */
-	private CCAppTerm findCongruentAppTerm(CCTerm func, CCTerm arg) {
-		final CCParentInfo argInfo = arg.mCCPars.getInfo(func.mParentPosition);
-		final CCParentInfo funcInfo = func.mCCPars.getInfo(0);
-		if (argInfo != null && funcInfo != null) {
-			for (final Parent p : argInfo.mCCParents) {
-				if (p.getData() != this) {
-					for (final Parent q : funcInfo.mCCParents) {
-						if (p.getData() == q.getData()) {
-							return p.getData();
-						}
-					}
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
 	 * Add this app term to the parent info lists of its function and argument. Also adds it to the mCCPars of all the
 	 * oldReps on the path to the repStar, which is necessary for unmerging correctly.
 	 *
 	 * @param engine
 	 *            the congruence closure engine.
-	 * @return the first term that is congruent to the current application term. I.e., the first term that would have
-	 *         been merged if the term would have existed earlier.
 	 */
-	public CCAppTerm addParentInfo(CClosure engine) {
+	public void addParentInfo(CClosure engine) {
 		CCTerm func = mFunc;
 		CCTerm arg = mArg;
 
-		CCAppTerm congruentAppTerm = null;
 		/*
 		 * Store the parent info in all mCCPars of the representatives occuring on the path to the root, so that it is
 		 * still present when we unmerge later.
@@ -117,11 +87,7 @@ public class CCAppTerm extends CCTerm {
 		 * Also find the first congruent application term.
 		 */
 		while (func.mRep != func || arg.mRep != arg) {
-			if (congruentAppTerm == null) {
-				congruentAppTerm = findCongruentAppTerm(func, arg);
-			}
-
-			if (func.mRep == func || arg.mRep != arg && arg.mMergeTime > func.mMergeTime) {
+			if (arg.mMergeTime < func.mMergeTime) {
 				// Reverse arg rep
 				arg.mCCPars.addParentInfo(func.mParentPosition, mRightParInfo, false, null);
 				arg = arg.mRep;
@@ -131,12 +97,8 @@ public class CCAppTerm extends CCTerm {
 				func = func.mRep;
 			}
 		}
-		if (congruentAppTerm == null) {
-			congruentAppTerm = findCongruentAppTerm(func, arg);
-		}
 		func.mCCPars.addParentInfo(0, mLeftParInfo, true, engine);
 		arg.mCCPars.addParentInfo(func.mParentPosition, mRightParInfo, true, engine);
-		return congruentAppTerm;
 	}
 
 	public void unlinkParentInfos() {

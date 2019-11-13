@@ -27,8 +27,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 
 /**
  * Code to find a function application for a given function symbol that has the given term as argument at the given
- * position. Executing this code will install a trigger in ...? such that all new function applications with these
- * properties are noticed. The remaining code can be executed for each new function application.
+ * position. Executing this code will install a trigger in the CClosure such that all new function applications with
+ * these properties are noticed. The remaining code can be executed for each new function application.
  * 
  * @author Tanja Schindler
  */

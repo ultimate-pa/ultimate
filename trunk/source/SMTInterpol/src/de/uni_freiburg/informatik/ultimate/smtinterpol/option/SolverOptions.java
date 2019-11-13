@@ -58,6 +58,8 @@ public class SolverOptions {
 	public static final String CHECK_TYPE = ":check-type";
 	public static final String SIMPLIFY_CHECK_TYPE = ":simplify-check-type";
 	public static final String EPR = ":epr";
+	public static final String E_MATCHING = ":e-matching";
+	public static final String UNKNOWN_TERM_DAWGS = ":unknown-term-dawgs";
 
 	SolverOptions(final OptionMap options, final LogProxy logger) {
 		mTimeout = new LongOption(0, true, "Soft timeout in milliseconds for "
@@ -132,6 +134,10 @@ public class SolverOptions {
 		options.addOption(CHECK_TYPE, mCheckType);
 		options.addOption(EPR, new BooleanOption(false, false,
 				"Assume formula is in EPR fragment. This give an error if the formula is outside EPR."));
+		options.addOption(E_MATCHING, new BooleanOption(true, false,
+				"Quantifier Theory: Use E-matching for conflict and unit search."));
+		options.addOption(UNKNOWN_TERM_DAWGS, new BooleanOption(false, false,
+				"Quantifier Theory: Use fourth instance value UNKNOWN_TERM as default in literal dawgs."));
 
 		// simplifier options
 		options.addOption(SIMPLIFY_CHECK_TYPE, mSimpCheckType);

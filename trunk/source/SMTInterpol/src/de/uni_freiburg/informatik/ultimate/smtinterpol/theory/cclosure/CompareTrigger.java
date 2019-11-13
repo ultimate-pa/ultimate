@@ -24,5 +24,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
  * @author Tanja Schindler
  */
 public abstract class CompareTrigger extends SimpleListable<CompareTrigger> {
+	public abstract CCTerm getLhs();
+
+	public abstract CCTerm getRhs();
+
 	public abstract void activate();
 }

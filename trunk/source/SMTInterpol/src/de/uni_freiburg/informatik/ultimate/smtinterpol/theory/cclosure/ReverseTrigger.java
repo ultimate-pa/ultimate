@@ -18,11 +18,28 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
 
 /**
- * @author Tanja Schindler
+ * @author Tanja Schindler, Jochen Hoenicke
  */
 public abstract class ReverseTrigger extends SimpleListable<ReverseTrigger> {
+	/**
+	 * Get the argument on which the reverse trigger is installed.
+	 * 
+	 * @return the argument term.
+	 */
+	public abstract CCTerm getArgument();
+
+	/**
+	 * Get the position in the function application where the argument should be.
+	 * 
+	 * @return the position (0 for first argument).
+	 */
+	public abstract int getArgPosition();
+
+	public abstract FunctionSymbol getFunctionSymbol();
+
 	public abstract void activate(final CCAppTerm appTerm);
 }

@@ -19,6 +19,7 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
@@ -133,7 +134,7 @@ public class WeakCongruencePath extends CongruencePath {
 	 */
 	public Clause computeWeakeqExt(CCTerm a, CCTerm b, boolean produceProofs) {
 		assert a != b;
-		final HashSet<CCTerm> storeIndices = new HashSet<CCTerm>();
+		final LinkedHashSet<CCTerm> storeIndices = new LinkedHashSet<CCTerm>();
 		final Cursor start = new Cursor(a, mArrayTheory.mCongRoots.get(a.getRepresentative()));
 		final Cursor dest = new Cursor(b, mArrayTheory.mCongRoots.get(b.getRepresentative()));
 		final SubPath path = collectPathPrimary(start, dest, storeIndices, produceProofs);
@@ -161,7 +162,7 @@ public class WeakCongruencePath extends CongruencePath {
 	 */
 	private WeakSubPath computeWeakPath(CCTerm array1, CCTerm array2, CCTerm index, boolean produceProofs) {
 
-		final HashSet<CCTerm> storeIndices = new HashSet<CCTerm>();
+		final LinkedHashSet<CCTerm> storeIndices = new LinkedHashSet<CCTerm>();
 		final CCTerm indexRep = index.getRepresentative();
 		final Cursor cursor1 = new Cursor(array1, mArrayTheory.mCongRoots.get(array1.getRepresentative()));
 		final Cursor cursor2 = new Cursor(array2, mArrayTheory.mCongRoots.get(array2.getRepresentative()));

@@ -28,7 +28,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -87,7 +86,8 @@ public class SubstitutionHelper {
 
 		assert !mSigma.isEmpty();
 
-		final List<Term> substitutedLitTerms = new ArrayList<>(); // We also need duplicates here for proof production.
+		final List<Term> substitutedLitTerms = new ArrayList<>(mGroundLits.length + mQuantLits.length);
+		// We also need duplicates here for proof production.
 		final Set<ILiteral> resultingGroundLits = new LinkedHashSet<>();
 		final Set<ILiteral> resultingQuantLits = new LinkedHashSet<>();
 
@@ -134,7 +134,7 @@ public class SubstitutionHelper {
 								mClausifier.createMutableAffinTerm(lhs, mSource);
 						newAtom = mQuantTheory.getLinAr().generateConstraint(msum, false);
 					} else {
-						newAtom = mQuantTheory.getQuantInequality(atomTerm, isPos, mSource, atomApp.getParameters()[0]);
+						newAtom = mQuantTheory.getQuantInequality(isPos, mSource, atomApp.getParameters()[0]);
 					}
 				} else if (atomApp.getFunction().getName() == "=") {
 					final Term lhs = atomApp.getParameters()[0];
@@ -146,7 +146,7 @@ public class SubstitutionHelper {
 						assert eq != EqualityProxy.getTrueProxy() && eq != EqualityProxy.getFalseProxy();
 						newAtom = eq.getLiteral(mSource);
 					} else {
-						newAtom = mQuantTheory.getQuantEquality(atomTerm, isPos, mSource, atomApp.getParameters()[0],
+						newAtom = mQuantTheory.getQuantEquality(isPos, mSource, atomApp.getParameters()[0],
 								atomApp.getParameters()[1]);
 					}
 				} else { // Predicates
@@ -264,39 +264,39 @@ public class SubstitutionHelper {
 
 		// Normalize term.
 		Term normalized = substituted;
-		boolean isAuxLit = false;
 		final TermCompiler compiler = mClausifier.getTermCompiler();
-		if (atom instanceof QuantEquality && ((QuantEquality) atom).getLhs() instanceof ApplicationTerm) {
-			final FunctionSymbol func = ((ApplicationTerm) ((QuantEquality) atom).getLhs()).getFunction();
-			isAuxLit = func.getName().startsWith("@AUX");
-			if (isAuxLit) { // Normalize the arguments.
-				assert substituted instanceof ApplicationTerm;
-				final ApplicationTerm subsApp = (ApplicationTerm) substituted;
-				assert subsApp.getFunction().getName() == "=";
-				assert subsApp.getParameters()[1] == mQuantTheory.getTheory().mTrue;
-				assert subsApp.getParameters()[0] instanceof ApplicationTerm;
-				final ApplicationTerm subsAuxTerm = (ApplicationTerm) subsApp.getParameters()[0];
-				assert subsAuxTerm.getFunction() == func;
+
+		if (atom instanceof QuantBoundConstraint) {
+			normalized = compiler.transform(substituted);
+		} else { // Normalize lhs and rhs separately
+			assert substituted instanceof ApplicationTerm;
+			final ApplicationTerm subsEq = (ApplicationTerm) substituted;
+			assert subsEq.getFunction().getName() == "=";
+			final Term subsLhs = subsEq.getParameters()[0];
+			final Term subsRhs = subsEq.getParameters()[1];
+
+			if (subsLhs instanceof ApplicationTerm
+					&& ((ApplicationTerm) subsLhs).getFunction().getName().startsWith("@AUX")) {
+				assert subsRhs == mQuantTheory.getTheory().mTrue;
+				final ApplicationTerm subsAuxTerm = (ApplicationTerm) subsLhs;
 				final Term[] oldArgs = subsAuxTerm.getParameters();
 				final Term[] normalizedArgs = new Term[oldArgs.length];
 				for (int i = 0; i < oldArgs.length; i++) {
 					normalizedArgs[i] = compiler.transform(oldArgs[i]);
 				}
-				final Term normalizedAuxTerm = mQuantTheory.getTheory().term(func, normalizedArgs);
+				final Term normalizedAuxTerm =
+						mQuantTheory.getTheory().term(((ApplicationTerm) subsLhs).getFunction(), normalizedArgs);
 				normalized = mQuantTheory.getTheory().term("=", normalizedAuxTerm, mQuantTheory.getTheory().mTrue);
+			} else {
+				final Term normalizedLhs = compiler.transform(subsLhs);
+				final Term normalizedRhs = compiler.transform(subsRhs);
+				normalized = mQuantTheory.getTheory().term("=", normalizedLhs, normalizedRhs);
 			}
 		}
-		if (!isAuxLit) {
-			normalized = compiler.transform(substituted);
-			if (normalized.getSort() == mQuantTheory.getTheory().getBooleanSort()
-					&& normalized.getFreeVars().length > 0) {
-				normalized = mQuantTheory.getTheory().term("=", normalized, mQuantTheory.getTheory().mTrue);
-			}
-		}
+
 		// TODO Proof production.
 
-		// Simplify true and false equality literals similar to EqualityProxy.
-		// (TermCompiler already takes care of <= literals).
+		// Simplify equality literals similar to EqualityProxy. (TermCompiler already takes care of <= literals).
 		Term simplified = normalized;
 		assert simplified instanceof ApplicationTerm;
 		ApplicationTerm appTerm = (ApplicationTerm) simplified;

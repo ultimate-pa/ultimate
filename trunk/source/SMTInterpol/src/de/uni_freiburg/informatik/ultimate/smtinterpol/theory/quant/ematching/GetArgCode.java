@@ -38,8 +38,7 @@ public class GetArgCode implements ICode {
 	private final ICode mRemainingCode;
 
 	public GetArgCode(final EMatching eMatching, final int appTermRegIndex, final FunctionSymbol func, final int argPos,
-			final int outRegIndex,
-			final ICode remainingCode) {
+			final int outRegIndex, final ICode remainingCode) {
 		mEMatching = eMatching;
 		mAppTermRegIndex = appTermRegIndex;
 		mFunc = func;

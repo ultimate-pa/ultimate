@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -311,7 +311,7 @@ public class CCProofGenerator {
 
 	private HashMap<SymmetricPair<CCTerm>, Literal> mEqualityLiterals;
 	private HashMap<SymmetricPair<CCTerm>, ProofInfo> mPathProofMap;
-	private HashSet<SymmetricPair<CCTerm>> mAllEqualities;
+	private LinkedHashSet<SymmetricPair<CCTerm>> mAllEqualities;
 
 	public CCProofGenerator(final CCAnnotation arrayAnnot) {
 		mAnnot = arrayAnnot;
@@ -335,7 +335,7 @@ public class CCProofGenerator {
 	 *         the array lemma.
 	 */
 	public Term toTerm(final Clause clause, final Theory theory) {
-		mAllEqualities = new HashSet<>();
+		mAllEqualities = new LinkedHashSet<>();
 		// Store all clause literals
 		collectClauseLiterals(clause);
 		// Create a proof info for each sub path that isn't an asserted equality.

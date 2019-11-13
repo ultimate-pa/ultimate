@@ -21,16 +21,12 @@ package system;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FilenameFilter;
-import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Deque;
 
-import org.eclipse.core.runtime.FileLocator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,23 +39,11 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SolverOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
-import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 @RunWith(Parameterized.class)
 public class SystemTest {
 
-	public File mFile;
-
-	public SystemTest(final File file) {
-		mFile = file;
-	}
-
-	@Test
-	public void testSystem() throws FileNotFoundException {
-		performTest(mFile);
-	}
-
-	private static void performTest(final File f) throws SMTLIBException, FileNotFoundException {
+	private void performTest(final File f) throws SMTLIBException, FileNotFoundException {
 		System.out.println("Testing " + f.getAbsolutePath());
 		final DefaultLogger logger = new DefaultLogger();
 		final OptionMap options = new OptionMap(logger, true);
@@ -119,34 +103,17 @@ public class SystemTest {
 		return true;
 	}
 
-	@Parameters(name = "{0}")
-	public static Collection<File> testFiles() throws URISyntaxException, IOException {
-
+	@Parameters // (name = "{0}")
+	public static Collection<File> testFiles() throws URISyntaxException, FileNotFoundException {
 		final Collection<File> testFiles = new ArrayList<>();
-		final File f = ReflectionUtil.getClassFolder(SystemTest.class, FileLocator::toFileURL);
 
-		if (f == null) {
-			throw new AssertionError("Could not find test file folder");
-		}
-
-		File parent = f.getParentFile();
-		File[] lst = null;
-		// find directory named test below SMTInterpolTest and above f
-		final FilenameFilter filter = (FilenameFilter) (dir, name1) -> name1.equals("test");
-		while (parent != null) {
-			lst = parent.listFiles(filter);
-			if (lst != null && lst.length > 0) {
-				break;
-			}
-			parent = parent.getParentFile();
-		}
-		assert lst != null && lst.length > 0 : "Could not find any tests starting from File " + f.getAbsolutePath();
-
-		final Deque<File> todo = new ArrayDeque<>();
-		if (lst.length > 1) {
-			System.out.println("More than one test directory found");
-		}
-		todo.addAll(Arrays.asList(lst));
+		final String name = SystemTest.class.getPackage().getName();
+		final URL url = SystemTest.class.getClassLoader().getResource(name);
+		final File f = new File(url.toURI());
+		final File testDir = new File(f.getParentFile().getParentFile(), "test");
+		assert testDir.exists();
+		final ArrayDeque<File> todo = new ArrayDeque<>();
+		todo.add(testDir);
 		while (!todo.isEmpty()) {
 			final File file = todo.removeFirst();
 			if (file.isDirectory()) {
@@ -160,5 +127,16 @@ public class SystemTest {
 			}
 		}
 		return testFiles;
+	}
+
+	public File mFile;
+
+	public SystemTest(final File file) {
+		mFile = file;
+	}
+
+	@Test
+	public void testSystem() throws FileNotFoundException {
+		performTest(mFile);
 	}
 }

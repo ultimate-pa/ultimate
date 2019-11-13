@@ -26,9 +26,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CClosure;
 
 /**
- * Code to find a function application for a given function symbol. Executing this code will install a trigger in ...?
- * such that all new function applications with this function symbol are noticed. The remaining code can be executed for
- * each new function application.
+ * Code to find a function application for a given function symbol. Executing this code will install a trigger in the
+ * CClosure such that all new function applications with this function symbol are noticed. The remaining code can be
+ * executed for each new function application.
  * 
  * @author Tanja Schindler
  */

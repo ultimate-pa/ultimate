@@ -21,6 +21,7 @@ package de.uni_freiburg.informatik.ultimate.logic;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -141,7 +142,7 @@ public class ComputeFreeVariables extends NonRecursive.TermWalker {
 			public void walk(NonRecursive walker) {
 				final TermVariable[] vars = letTerm.getVariables();
 				final Term[] vals = letTerm.getValues();
-				final HashSet<TermVariable> free = new HashSet<TermVariable>();
+				final HashSet<TermVariable> free = new LinkedHashSet<TermVariable>();
 				free.addAll(Arrays.asList(letTerm.getSubTerm().getFreeVars()));
 				free.removeAll(Arrays.asList(vars));
 				for (final Term v : vals) {
@@ -166,7 +167,7 @@ public class ComputeFreeVariables extends NonRecursive.TermWalker {
 		walker.enqueueWalker(new NonRecursive.Walker() {
 			@Override
 			public void walk(NonRecursive walker) {
-				final HashSet<TermVariable> free = new HashSet<TermVariable>();
+				final HashSet<TermVariable> free = new LinkedHashSet<TermVariable>();
 				free.addAll(Arrays.asList(quant.getSubformula().getFreeVars()));
 				free.removeAll(Arrays.asList(quant.getVariables()));
 				if (free.isEmpty()) {
@@ -185,9 +186,9 @@ public class ComputeFreeVariables extends NonRecursive.TermWalker {
 		walker.enqueueWalker(new NonRecursive.Walker() {
 			@Override
 			public void walk(NonRecursive walker) {
-				final HashSet<TermVariable> free = new HashSet<TermVariable>();
+				final HashSet<TermVariable> free = new LinkedHashSet<TermVariable>();
 				for (int i = 0; i < match.getCases().length; i++) {
-					final HashSet<TermVariable> freeCase = new HashSet<TermVariable>();
+					final HashSet<TermVariable> freeCase = new LinkedHashSet<TermVariable>();
 					freeCase.addAll(Arrays.asList(match.getCases()[i].getFreeVars()));
 					freeCase.removeAll(Arrays.asList(match.getVariables()[i]));
 					free.addAll(freeCase);

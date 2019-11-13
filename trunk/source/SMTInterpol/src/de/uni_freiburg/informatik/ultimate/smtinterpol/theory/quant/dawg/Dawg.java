@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.util.Pair;
-import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 /**
@@ -91,7 +91,7 @@ public class Dawg<LETTER, VALUE> {
 		int hash = value.hashCode();
 		Dawg<LETTER, VALUE> constDawg = null;
 		for (Dawg<?, ?> dawg : sUnifier.iterateHashCode(hash)) {
-			if (dawg.isFinal() && dawg.mFinal == value) {
+			if (dawg.isFinal() && dawg.mFinal.equals(value)) {
 				constDawg = (Dawg<LETTER, VALUE>) dawg;
 				break;
 			}
@@ -108,7 +108,7 @@ public class Dawg<LETTER, VALUE> {
 
 	/**
 	 * Create the dawg that is one level deeper than this and maps every first letter to this Dawg. Equivalent to
-	 * {@code createDawg(Collections.emptyMap(), this}.
+	 * {@code createDawg(Collections.emptyMap(), this)}.
 	 * 
 	 * @return the created Dawg.
 	 */
@@ -126,20 +126,12 @@ public class Dawg<LETTER, VALUE> {
 	 * 
 	 * @return the created Dawg.
 	 */
-	@SuppressWarnings("unchecked")
 	public static <LETTER, VALUE> Dawg<LETTER, VALUE> createDawg(Map<LETTER, Dawg<LETTER, VALUE>> transitions,
 			Dawg<LETTER, VALUE> elseTransition) {
 		if (transitions.isEmpty()) {
 			return elseTransition.createParent();
 		}
-		int hash = HashUtils.hashJenkins(elseTransition.hashCode(), transitions);
-		for (Dawg<?, ?> dawg : sUnifier.iterateHashCode(hash)) {
-			if (dawg.mTransitions.equals(transitions) && dawg.mElseTransition == elseTransition) {
-				return (Dawg<LETTER, VALUE>) dawg;
-			}
-		}
 		Dawg<LETTER, VALUE> dawg = new Dawg<>(transitions, elseTransition);
-		sUnifier.put(hash, dawg);
 		return dawg;
 	}
 
@@ -165,7 +157,7 @@ public class Dawg<LETTER, VALUE> {
 			return createConst(0, value);
 		} else {
 			LETTER firstLetter = key.get(offset);
-			HashMap<LETTER, Dawg<LETTER, VALUE>> newTransitions = new HashMap<>();
+			HashMap<LETTER, Dawg<LETTER, VALUE>> newTransitions = new LinkedHashMap<>();
 			if (firstLetter == null) {
 				Dawg<LETTER, VALUE> elseDest = mElseTransition.insert(key, value, offset + 1);
 				for (Map.Entry<LETTER, Dawg<LETTER, VALUE>> oldTrans : mTransitions.entrySet()) {
@@ -207,7 +199,7 @@ public class Dawg<LETTER, VALUE> {
 			if (mTransitions.isEmpty() && other.mTransitions.isEmpty()) {
 				result = elseCase.createParent();
 			} else {
-				Map<LETTER, Dawg<LETTER, V3>> newTransitions = new HashMap<>();
+				Map<LETTER, Dawg<LETTER, V3>> newTransitions = new LinkedHashMap<>();
 				for (Map.Entry<LETTER, Dawg<LETTER, VALUE>> entry : mTransitions.entrySet()) {
 					LETTER key = entry.getKey();
 					Dawg<LETTER, V3> combined =
@@ -262,7 +254,7 @@ public class Dawg<LETTER, VALUE> {
 			if (mTransitions.isEmpty()) {
 				result = elseCase.createParent();
 			} else {
-				Map<LETTER, Dawg<LETTER, V2>> newTransitions = new HashMap<>();
+				Map<LETTER, Dawg<LETTER, V2>> newTransitions = new LinkedHashMap<>();
 				for (Map.Entry<LETTER, Dawg<LETTER, VALUE>> entry : mTransitions.entrySet()) {
 					LETTER key = entry.getKey();
 					Dawg<LETTER, V2> mapped = entry.getValue().mapInternal(map, cache);

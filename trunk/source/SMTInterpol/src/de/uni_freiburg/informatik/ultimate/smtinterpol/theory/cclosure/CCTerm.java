@@ -378,7 +378,7 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 		assert(engine.mMergeDepth == engine.mMerges.size());
 		src.mMergeTime = ++engine.mMergeDepth;
 		engine.mMerges.push(lhs);
-		engine.mEngine.getLogger().debug(new DebugMessage("M {0} {1}", this, lhs));
+		engine.mEngine.getLogger().debug("M %s %s", this, lhs);
 		assert(engine.mMerges.size() == engine.mMergeDepth);
 
 		if (Config.PROFILE_TIME) {
@@ -511,6 +511,9 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 					// E-Matching
 					if (!srcParentInfo.mReverseTriggers.isEmpty()) {
 						for (CCAppTerm.Parent parent : destParentInfo.mCCParents) {
+							if (parent.isMarked()) {
+								continue;
+							}
 							List<CCTerm> appTerms = Collections.singletonList(parent.getData());
 							while (appTerms.get(0).mIsFunc) {
 								appTerms = CClosure.getApplications(appTerms);
@@ -524,6 +527,9 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 					}
 					if (!destParentInfo.mReverseTriggers.isEmpty()) {
 						for (CCAppTerm.Parent parent : srcParentInfo.mCCParents) {
+							if (parent.isMarked()) {
+								continue;
+							}
 							List<CCTerm> appTerms = Collections.singletonList(parent.getData());
 							while (appTerms.get(0).mIsFunc) {
 								appTerms = CClosure.getApplications(appTerms);

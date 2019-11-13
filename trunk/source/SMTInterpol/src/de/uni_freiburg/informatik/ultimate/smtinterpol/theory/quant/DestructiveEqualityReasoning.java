@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -90,10 +91,9 @@ class DestructiveEqualityReasoning {
 	}
 
 	/**
-	 * Return the state of the clause.
+	 * Check if the clause is trivially true.
 	 * 
-	 * @return Fullfilled, if the clause is trivially true; Conflict, if the clause is trivially false; Normal
-	 *         otherwise.
+	 * @return true, if the clause is trivially true; false otherwise.
 	 */
 	public boolean isTriviallyTrue() {
 		return mIsTriviallyTrue;
@@ -174,7 +174,7 @@ class DestructiveEqualityReasoning {
 			final Set<TermVariable> visited = new HashSet<>();
 			for (final TermVariable var : groundAndVarSubsForVar.keySet()) {
 				if (!visited.contains(var)) {
-					final Set<TermVariable> varsWithSameSubs = new HashSet<>();
+					final Set<TermVariable> varsWithSameSubs = new LinkedHashSet<>();
 					Term subs = var;
 					while (subs instanceof TermVariable && !visited.contains(subs)) {
 						visited.add((TermVariable) subs);

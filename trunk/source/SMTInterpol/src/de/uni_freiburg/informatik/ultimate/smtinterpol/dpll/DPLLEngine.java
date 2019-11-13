@@ -427,7 +427,7 @@ public class DPLLEngine {
 	 * @return a conflict clause if a conflict was detected.
 	 */
 	@SuppressWarnings("unused")
-	private Clause setLiteral(final Literal literal) {
+	public Clause setLiteral(final Literal literal) {
 		mLogger.debug("S %s", literal);
 		final DPLLAtom atom = literal.getAtom();
 		assert atom.mDecideStatus == null;
@@ -981,7 +981,7 @@ public class DPLLEngine {
 		}
 	}
 
-	private void backtrackLiteral(final Literal literal) {
+	public void backtrackLiteral(final Literal literal) {
 		long time;
 		mLogger.debug("B %s", literal);
 		final DPLLAtom atom = literal.getAtom();
@@ -1280,6 +1280,9 @@ public class DPLLEngine {
 				}
 			}
 			return true;
+		} catch (final OutOfMemoryError eOOM) {
+			setCompleteness(INCOMPLETE_MEMOUT);
+			return true;
 		} catch (final RuntimeException eUnknown) {
 			if (System.getProperty("smtinterpol.ddfriendly") != null) {
 				System.exit(3);
@@ -1565,7 +1568,7 @@ public class DPLLEngine {
 		return (Clause) expl;
 	}
 
-	private final void increaseDecideLevel() {
+	public final void increaseDecideLevel() {
 		mLogger.debug("Decide@%d", mDecideStack.size());
 		mCurrentDecideLevel++;
 		assert mCurrentDecideLevel >= 0 : "Decidelevel negative";
@@ -1574,7 +1577,7 @@ public class DPLLEngine {
 		}
 	}
 
-	private final void decreaseDecideLevel() {
+	public final void decreaseDecideLevel() {
 		mCurrentDecideLevel--;
 		assert mCurrentDecideLevel >= 0 : "Decidelevel negative";
 		for (final ITheory t : mTheories) {

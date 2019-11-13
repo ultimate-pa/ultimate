@@ -78,7 +78,7 @@ public class PatternCompiler {
 	}
 
 	/**
-	 * Collect the term infos for an array of terms.
+	 * Collect the term infos for the given terms.
 	 */
 	private void collectTermInfos(final Term[] terms) {
 		for (final Term t : terms) {
@@ -95,6 +95,7 @@ public class PatternCompiler {
 		if (mTermInfos.containsKey(term)) {
 			info = mTermInfos.get(term);
 			info.mNumOccur++;
+			return;
 		} else {
 			info = new TermInfo(getNextFreeRegIndex());
 		}

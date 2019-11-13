@@ -55,6 +55,21 @@ public class EMReverseTrigger extends de.uni_freiburg.informatik.ultimate.smtint
 	}
 
 	@Override
+	public CCTerm getArgument() {
+		return mArg;
+	}
+
+	@Override
+	public int getArgPosition() {
+		return mArgPos;
+	}
+
+	@Override
+	public FunctionSymbol getFunctionSymbol() {
+		return mFunc;
+	}
+
+	@Override
 	public void activate(final CCAppTerm appTerm) {
 		final CCTerm[] updatedRegister = Arrays.copyOf(mRegister, mRegister.length);
 		updatedRegister[mOutRegIndex] = appTerm;

@@ -22,6 +22,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
@@ -109,7 +110,7 @@ public class CongruencePath {
 	public CongruencePath(CClosure closure) {
 		mClosure = closure;
 		mVisited = new HashMap<SymmetricPair<CCTerm>, SubPath>();
-		mAllLiterals = new HashSet<Literal>();
+		mAllLiterals = new LinkedHashSet<Literal>();
 		mTodo = new ArrayDeque<SymmetricPair<CCTerm>>();
 		mAllPaths = new ArrayDeque<SubPath>();
 	}

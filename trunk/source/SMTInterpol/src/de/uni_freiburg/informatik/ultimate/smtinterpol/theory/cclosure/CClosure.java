@@ -81,6 +81,44 @@ public class CClosure implements ITheory {
 		return term;
 	}
 
+	/**
+	 * Searches for the congruent term of {@code CCAppTerm(func,arg)} that would have been merged on the lowest decision
+	 * level.
+	 *
+	 * @param func
+	 *            A term on the path from this.mFunc to this.mFunc.mRepStar.
+	 * @param arg
+	 *            A term on the path from this.mArg to this.mArg.mRepStar.
+	 * @return The congruent CCAppTerm or null if there is no congruent application.
+	 */
+	private CCAppTerm findCongruentAppTerm(CCTerm func, CCTerm arg) {
+		final CCParentInfo argInfo = arg.getRepresentative().mCCPars.getInfo(func.mParentPosition);
+		int congruenceLevel = Integer.MAX_VALUE;
+		CCAppTerm congruentTerm = null;
+		// Look for all congruent terms for the argument.
+		for (final Parent p : argInfo.mCCParents) {
+			CCAppTerm papp = p.getData();
+			CCTerm pfunc = papp.getFunc();
+			CCTerm parg = papp.getArg();
+			if (pfunc.getRepresentative() != func.getRepresentative()) {
+				// this term is not congruent
+				continue;
+			}
+			if (pfunc == func && parg == arg) {
+				// this is the app term for which we search a congruent term; skip it
+				continue;
+			}
+			// compute the level where the congruence occurred
+			int level = Math.max(getDecideLevelForPath(pfunc, func), getDecideLevelForPath(parg, arg));
+			// store the congruence with the smallest level
+			if (level < congruenceLevel) {
+				congruenceLevel = level;
+				congruentTerm = papp;
+			}
+		}
+		return congruentTerm;
+	}
+
 	public CCAppTerm createAppTerm(final boolean isFunc, final CCTerm func, final CCTerm arg) {
 		assert func.mIsFunc;
 		final CCParentInfo info = arg.mRepStar.mCCPars.getExistingParentInfo(func.mParentPosition);
@@ -96,7 +134,9 @@ public class CClosure implements ITheory {
 		}
 		final CCAppTerm term = new CCAppTerm(isFunc,
 				isFunc ? func.mParentPosition + 1 : 0, func, arg, null, this);
-		final CCAppTerm congruentTerm = term.addParentInfo(this);
+		term.addParentInfo(this);
+		final CCAppTerm congruentTerm = findCongruentAppTerm(func, arg);
+		mEngine.getLogger().debug("createAppTerm %s congruent: %s", term, congruentTerm);
 		if (congruentTerm != null) {
 			// Here, we do not have the resulting term in the equivalence class
 			// Mark pending congruence
@@ -137,8 +177,7 @@ public class CClosure implements ITheory {
 		if (numArgs == 0) {
 			CCBaseTerm term = mSymbolicTerms.get(sym);
 			if (term == null) {
-				term = new CCBaseTerm(
-				        args.length > 0, mNumFunctionPositions, sym, null);
+				term = new CCBaseTerm(args.length > 0, mNumFunctionPositions, sym, null);
 				mNumFunctionPositions += args.length;
 				mSymbolicTerms.put(sym, term);
 			}
@@ -252,7 +291,9 @@ public class CClosure implements ITheory {
 
 		List<CCTerm> funcApps = new ArrayList<>();
 		for (final Parent parent : info.mCCParents) {
-			funcApps.add(parent.getData());
+			if (!parent.isMarked()) {
+				funcApps.add(parent.getData());
+			}
 		}
 		for (int i = argPos + 1; i < sym.getParameterSorts().length; i++) {
 			funcApps = getApplications(funcApps);
@@ -261,32 +302,104 @@ public class CClosure implements ITheory {
 	}
 
 	/**
-	 * Insert a Compare trigger that will be activated as soon as the two given CCTerms are equal.
+	 * Insert a Compare trigger that will be activated as soon as the two given CCTerms are equal. It is inserted into
+	 * the pair hash tables and all intermediate pair infos.
 	 *
-	 * @param lhs
+	 * @param t1
 	 *            the first CCTerm.
-	 * @param rhs
+	 * @param t2
 	 *            the second CCTerm.
 	 * @param trigger
 	 *            the Compare trigger.
 	 */
-	public void insertCompareTrigger(CCTerm lhs, CCTerm rhs, final CompareTrigger trigger) {
-		lhs = lhs.getRepresentative();
-		rhs = rhs.getRepresentative();
-		assert lhs != rhs;
-		CCTermPairHash.Info info = mPairHash.getInfo(lhs, rhs);
-		if (info == null) {
-			info = new CCTermPairHash.Info(lhs, rhs);
-			mPairHash.add(info);
+	public void insertCompareTrigger(CCTerm t1, CCTerm t2, final CompareTrigger trigger) {
+		assert t1.getRepresentative() != t2.getRepresentative();
+		assert !trigger.inList();
+		while (true) {
+			// make t1 the term that was merged before t2 was merged.
+			if (t1.mMergeTime > t2.mMergeTime) {
+				final CCTerm tmp = t1;
+				t1 = t2;
+				t2 = tmp;
+			}
+
+			// if t1 is its own representative, then t2 should also be the representative because of merge time
+			if (t1.mRep == t1) {
+				assert t2.mRep == t2;
+				// Insert this entry into the pair hash, create it if necessary.
+				CCTermPairHash.Info info = mPairHash.getInfo(t1, t2);
+				if (info == null) {
+					info = new CCTermPairHash.Info(t1, t2);
+					mPairHash.add(info);
+				}
+				info.mCompareTriggers.prependIntoJoined(trigger, true);
+				break;
+			}
+
+			// find the pair info entry in the pair info list of t1 or create a new one.
+			assert t1.mRep != t2;
+			boolean found = false;
+			for (final CCTermPairHash.Info.Entry pentry : t1.mPairInfos) {
+				final CCTermPairHash.Info info = pentry.getInfo();
+				// info might have blocked compare triggers but no eqlits
+				// assert (!info.eqlits.isEmpty());
+				if (pentry.mOther == t2) {
+					info.mCompareTriggers.prependIntoJoined(trigger, false);
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				// we need to create a new entry.
+				final CCTermPairHash.Info info = new CCTermPairHash.Info(t1, t2);
+				info.mRhsEntry.unlink();
+				info.mCompareTriggers.prependIntoJoined(trigger, false);
+			}
+			t1 = t1.mRep;
 		}
-		info.mCompareTriggers.append(trigger);
 	}
 
 	/**
 	 * Remove a given Compare trigger.
 	 */
 	public void removeCompareTrigger(final CompareTrigger trigger) {
-		trigger.removeFromList();
+		CCTerm t1 = trigger.getLhs();
+		CCTerm t2 = trigger.getRhs();
+		while (true) {
+			// make t1 the term that was merged before t2 was merged.
+			if (t1.mMergeTime > t2.mMergeTime) {
+				final CCTerm tmp = t1;
+				t1 = t2;
+				t2 = tmp;
+			}
+
+			// if t1 is its own representative, then t2 should also be the representative because of merge time
+			if (t1.mRep == t1) {
+				assert t2.mRep == t2;
+				// Insert this entry into the pair hash, create it if necessary.
+				CCTermPairHash.Info info = mPairHash.getInfo(t1, t2);
+				assert info != null;
+				info.mCompareTriggers.undoPrependIntoJoined(trigger, true);
+				break;
+			}
+
+			// find the pair info entry in the pair info list of t1 or create a new one.
+			// isLast is set if t1 was merged with t2; in this case the equality entry lists were not joined.
+			assert t1.mRep != t2;
+			boolean found = false;
+			for (final CCTermPairHash.Info.Entry pentry : t1.mPairInfos) {
+				final CCTermPairHash.Info info = pentry.getInfo();
+				// info might have blocked compare triggers but no eqlits
+				// assert (!info.eqlits.isEmpty());
+				if (pentry.mOther == t2) {
+					info.mCompareTriggers.undoPrependIntoJoined(trigger, false);
+					found = true;
+					break;
+				}
+			}
+			assert found;
+			t1 = t1.mRep;
+		}
 	}
 
 	/**
@@ -305,10 +418,14 @@ public class CClosure implements ITheory {
 	public void insertReverseTrigger(final FunctionSymbol sym, CCTerm arg, final int argPos,
 			final ReverseTrigger trigger) {
 		final CCTerm func = getFuncTerm(sym);
-		arg = arg.getRepresentative();
 		final int parentPos = func.mParentPosition + argPos;
+		while (arg != arg.mRep) {
+			final CCParentInfo info = arg.mCCPars.createInfo(parentPos);
+			info.mReverseTriggers.prependIntoJoined(trigger, false);
+			arg = arg.mRep;
+		}
 		final CCParentInfo info = arg.mCCPars.createInfo(parentPos);
-		info.mReverseTriggers.append(trigger);
+		info.mReverseTriggers.prependIntoJoined(trigger, true);
 	}
 
 	/**
@@ -330,7 +447,26 @@ public class CClosure implements ITheory {
 	 * Remove a given Reverse trigger.
 	 */
 	public void removeReverseTrigger(final ReverseTrigger trigger) {
-		trigger.removeFromList();
+		final CCTerm func = getFuncTerm(trigger.getFunctionSymbol());
+		CCTerm termWithTrigger;
+		final int parentPos;
+		if (trigger.getArgPosition() < 0) {
+			/* this is a find trigger */
+			assert func == func.mRep;
+			termWithTrigger = func;
+			parentPos = 0;
+		} else {
+			/* this is a reverse trigger */
+			termWithTrigger = trigger.getArgument();
+			parentPos = func.mParentPosition + trigger.getArgPosition();
+		}
+		while (termWithTrigger != termWithTrigger.mRep) {
+			final CCParentInfo info = termWithTrigger.mCCPars.createInfo(parentPos);
+			info.mReverseTriggers.undoPrependIntoJoined(trigger, false);
+			termWithTrigger = termWithTrigger.mRep;
+		}
+		final CCParentInfo info = termWithTrigger.mCCPars.createInfo(parentPos);
+		info.mReverseTriggers.undoPrependIntoJoined(trigger, true);
 	}
 
 	/**
@@ -417,22 +553,40 @@ public class CClosure implements ITheory {
 		return false;
 	}
 
+	/**
+	 * Insert an equality entry into the pair hash table and all pair infos of the intermediate representatives.
+	 * 
+	 * @param t1
+	 *            one side of the equality.
+	 * @param t2
+	 *            the other side of the equality
+	 * @param eqentry
+	 *            the equality entry that should be inserted into the pair infos.
+	 */
 	public void insertEqualityEntry(CCTerm t1, CCTerm t2, final CCEquality.Entry eqentry) {
-		if (t1.mMergeTime > t2.mMergeTime) {
-			final CCTerm tmp = t1;
-			t1 = t2;
-			t2 = tmp;
-		}
-
-		if (t1.mRep == t1) {
-			assert t2.mRep == t2;
-			CCTermPairHash.Info info = mPairHash.getInfo(t1, t2);
-			if (info == null) {
-				info = new CCTermPairHash.Info(t1, t2);
-				mPairHash.add(info);
+		while (true) {
+			// make t1 the term that was merged before t2 was merged.
+			if (t1.mMergeTime > t2.mMergeTime) {
+				final CCTerm tmp = t1;
+				t1 = t2;
+				t2 = tmp;
 			}
-			info.mEqlits.prependIntoJoined(eqentry, true);
-		} else {
+
+			// if t1 is its own representative, then t2 should also be the representative because of merge time
+			if (t1.mRep == t1) {
+				assert t2.mRep == t2;
+				// Insert this entry into the pair hash, create it if necessary.
+				CCTermPairHash.Info info = mPairHash.getInfo(t1, t2);
+				if (info == null) {
+					info = new CCTermPairHash.Info(t1, t2);
+					mPairHash.add(info);
+				}
+				info.mEqlits.prependIntoJoined(eqentry, true);
+				break;
+			}
+
+			// find the pair info entry in the pair info list of t1 or create a new one.
+			// isLast is set if t1 was merged with t2; in this case the equality entry lists were not joined.
 			final boolean isLast = t1.mRep == t2;
 			boolean found = false;
 			for (final CCTermPairHash.Info.Entry pentry : t1.mPairInfos) {
@@ -446,13 +600,15 @@ public class CClosure implements ITheory {
 				}
 			}
 			if (!found) {
+				// we need to create a new entry.
 				final CCTermPairHash.Info info = new CCTermPairHash.Info(t1, t2);
 				info.mRhsEntry.unlink();
 				info.mEqlits.prependIntoJoined(eqentry, isLast);
 			}
-			if (!isLast) {
-				insertEqualityEntry(t1.mRep, t2, eqentry);
+			if (isLast) {
+				break;
 			}
+			t1 = t1.mRep;
 		}
 	}
 
@@ -753,12 +909,7 @@ public class CClosure implements ITheory {
 
 	@Override
 	public Clause checkpoint() {
-		// TODO Move some functionality from setLiteral here.
-		while (!mPendingCongruences.isEmpty()/* || root.next != root */) {
-			final Clause res = buildCongruence(true);
-			return res;// NOPMD
-		}
-		return null;
+		return buildCongruence(true);
 	}
 
 	public Term convertTermToSMT(final CCTerm t) {
@@ -856,7 +1007,7 @@ public class CClosure implements ITheory {
 	@Override
 	public Clause backtrackComplete() {
 		mPendingLits.clear();
-		return null;
+		return buildCongruence(true);
 	}
 
 	@Override
@@ -910,6 +1061,7 @@ public class CClosure implements ITheory {
 				// FIXME: backtracking should filter pending congruences
 			}
 			if (res != null) {
+				mEngine.getLogger().debug("buildCongruence: conflict %s", res);
 				return res;
 			}
 		}
@@ -1003,7 +1155,6 @@ public class CClosure implements ITheory {
 
 	@Override
 	public void pop(final Object object, final int targetlevel) {
-		buildCongruence(false);
 		final StackData sd = (StackData) object;
 		for (int i = mAllTerms.size() - 1; i >= sd.mAllTermsSize; --i) {
 			final CCTerm t = mAllTerms.get(i);

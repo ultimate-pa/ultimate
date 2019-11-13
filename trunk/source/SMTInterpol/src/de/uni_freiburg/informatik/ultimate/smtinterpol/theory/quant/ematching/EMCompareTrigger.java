@@ -30,15 +30,28 @@ public class EMCompareTrigger extends de.uni_freiburg.informatik.ultimate.smtint
 
 	private final EMatching mEMatching;
 	private final ICode mRemainingCode;
+	private final CCTerm mLhs;
+	private final CCTerm mRhs;
 	private final CCTerm[] mRegister;
 	private final int mDecisionLevel;
 
-	public EMCompareTrigger(final EMatching eMatching, final ICode remainingCode, final CCTerm[] register,
+	public EMCompareTrigger(final EMatching eMatching, final CCTerm lhs, final CCTerm rhs, final ICode remainingCode,
+			final CCTerm[] register,
 			final int decisionLevel) {
 		mEMatching = eMatching;
+		mLhs = lhs;
+		mRhs = rhs;
 		mRemainingCode = remainingCode;
 		mRegister = register;
 		mDecisionLevel = decisionLevel;
+	}
+
+	public CCTerm getLhs() {
+		return mLhs;
+	}
+
+	public CCTerm getRhs() {
+		return mRhs;
 	}
 
 	@Override

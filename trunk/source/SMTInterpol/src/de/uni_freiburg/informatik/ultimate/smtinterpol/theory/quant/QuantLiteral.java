@@ -26,7 +26,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ILiteral;
  * Represents a quantified literal.
  * <p>
  * It stores the term, as well as the underlying atom and the negated literal. It also stores whether the literal lies
- * in the almost uninterpreted fragment.
+ * in the almost uninterpreted fragment, i.e., it is essentially uninterpreted or arithmetical, and whether it can be
+ * used for DER.
  *
  * @author Tanja Schindler
  *
