@@ -28,12 +28,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -89,6 +89,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -110,7 +111,7 @@ public class PetriNetLargeBlockEncoding {
 	private final HashRelation<IIcfgTransition<?>, IIcfgTransition<?>> mCoEnabledRelation;
 
 	private final Map<IIcfgTransition<?>, List<IIcfgTransition<?>>> mSequentialCompositions = new HashMap<>();
-	private final Map<IIcfgTransition<?>, Triple<TermVariable, IIcfgTransition<?>, IIcfgTransition<?>>> mChoiceCompositions = new HashMap<>();
+	private final Map<IIcfgTransition<?>, Set<Pair<IIcfgTransition<?>, TermVariable>>> mChoiceCompositions = new HashMap<>();
 
 	private final IIndependenceRelation<?, IIcfgTransition<?>> mMoverCheck;
 	private int i = 0;
@@ -178,15 +179,20 @@ public class PetriNetLargeBlockEncoding {
 			default:
 				throw new AssertionError("unknown value " + petriNetLbeSettings);
 			}
-			int numberOfFixpointIterations = 1;
-			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultLastIteration =
+
+
+			int numberOfFixpointIterations = 0;
+			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultLastIteration;
+			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultCurrentIteration =
 					CopySubnet.copy(new AutomataLibraryServices(services), petriNet, new HashSet<>(petriNet.getTransitions()), petriNet.getAlphabet());
-			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultCurrentIteration = sequenceRule(services, resultLastIteration);
-			while (resultLastIteration.getTransitions().size() != resultCurrentIteration.getTransitions().size()) {
+			do {
 				numberOfFixpointIterations++;
 				resultLastIteration = resultCurrentIteration;
-				resultCurrentIteration = sequenceRule(services, resultCurrentIteration);
-			}
+				resultCurrentIteration = sequenceRule(services, resultLastIteration);
+				resultCurrentIteration = choiceRule(services, resultCurrentIteration);
+			} while (resultLastIteration.getTransitions().size() != resultCurrentIteration.getTransitions().size());
+
+
 			mPetriNetLargeBlockEncodingStatistics.setNumberOfFixpointIterations(numberOfFixpointIterations);
 			mLogger.info("Checked pairs total: " + mMoverChecks);
 //			mLogger.info("Positive Checks: " + (mCachedCheck.getPositiveCacheSize() + mCachedCheck2.getPositiveCacheSize()));
@@ -252,6 +258,12 @@ public class PetriNetLargeBlockEncoding {
 				if (petriNet.getPredecessors(t1).equals(petriNet.getPredecessors(t2))
 						&& petriNet.getSuccessors(t1).equals(petriNet.getSuccessors(t2)) && onlyInternal(t1.getSymbol())
 						&& onlyInternal(t2.getSymbol())) {
+
+					// Make sure transitions not involved in any pending compositions
+					if (choiceStack.stream().anyMatch(e -> e.getFirst() == t1 || e.getFirst() == t2 || e.getSecond() == t2 || e.getSecond() == t2)) {
+						continue;
+					}
+
 					final List<IIcfgTransition<?>> cfgTransitionsToRemove = new ArrayList<>();
 					cfgTransitionsToRemove.add(t1.getSymbol());
 					cfgTransitionsToRemove.add(t2.getSymbol());
@@ -263,7 +275,9 @@ public class PetriNetLargeBlockEncoding {
 							choiceIcfgEdge, t1, t2);
 					choiceStack.add(element);
 					updateCoEnabledRelation(choiceIcfgEdge, t1.getSymbol(), t2.getSymbol());
-					updateChoiceCompositions(choiceIcfgEdge, t1.getSymbol(), t2.getSymbol(), null /* TODO */);
+
+					mPetriNetLargeBlockEncodingStatistics.reportComposition(
+							PetriNetLargeBlockEncodingStatisticsDefinitions.ChoiceCompositions);
 				}
 			}
 		}
@@ -272,9 +286,12 @@ public class PetriNetLargeBlockEncoding {
 		return newNet;
 	}
 
-	private void updateChoiceCompositions(final IcfgEdge choiceIcfgEdge, final IIcfgTransition<?> t1, final IIcfgTransition<?> t2,
-			final TermVariable indicator) {
-		mChoiceCompositions.put(choiceIcfgEdge, new Triple<>(indicator, t1, t2));
+	private void updateChoiceCompositions(final IcfgEdge choiceIcfgEdge, final Map<TermVariable, IIcfgTransition<?>> indicators) {
+		final Set<Pair<IIcfgTransition<?>, TermVariable>> pairs = new HashSet<>();
+		for (Map.Entry<TermVariable, IIcfgTransition<?>> entry : indicators.entrySet()) {
+			pairs.add(new Pair<>(entry.getValue(), entry.getKey()));
+		}
+		mChoiceCompositions.put(choiceIcfgEdge, pairs);
 	}
 
 	/**
@@ -405,15 +422,13 @@ public class PetriNetLargeBlockEncoding {
 	}
 
 	/**
-	 * Adapted code from BlockEncodingBacktranslator used to translate an execution from the new net to an execution of the old net.
-	 * NOTE: Does not handle choice rule yet!
-	 * @param execution
-	 *            The execution of the new Petri Net.
-	 * @return the corresponding execution of the old Petri Net.
+	 * Translates an execution from the new net to an execution of the old net.
+	 * (Code adapted from BlockEncodingBacktranslator)
+	 *
+	 * @param execution The execution of the new Petri Net.
+	 * @return The corresponding execution of the old Petri Net.
 	 */
 	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> translateExecution(final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> execution) {
-		// TODO: handling of choice rule
-
 		if (execution == null) {
 			throw new IllegalArgumentException("execution is null");
 		}
@@ -434,20 +449,17 @@ public class PetriNetLargeBlockEncoding {
 			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> currentATE = oldIcfgPe.getTraceElement(i);
 			final IIcfgTransition<IcfgLocation> transition = currentATE.getTraceElement();
 
-			if (mSequentialCompositions.containsKey(transition)) {
-				final List<IIcfgTransition<?>> mappedEdges = mSequentialCompositions.get(transition);
-				final Iterator<IIcfgTransition<?>> iter = mappedEdges.iterator();
-				while (iter.hasNext()) {
-					final IIcfgTransition<?> currentEdge = iter.next();
-					// TODO: try to avoid this unchecked cast
-					newTrace.add((AtomicTraceElement) AtomicTraceElementBuilder.fromReplaceElementAndStep(currentATE, currentEdge).build());
-					if (iter.hasNext()) {
-						newValues.add(null);
-						newBranchEncoders.add(null);
-					}
+			final Collection<IIcfgTransition<?>> newTransitions = translateBack(transition, oldBranchEncoders[i]);
+			int j = 0;
+			for (IIcfgTransition<?> newTransition : newTransitions) {
+				newTrace.add((AtomicTraceElement) AtomicTraceElementBuilder.fromReplaceElementAndStep(currentATE, newTransition).build());
+				j++;
+
+				// If more transitions to come, set the intermediate state to null
+				if (j < newTransitions.size()) {
+					newValues.add(null);
+					newBranchEncoders.add(null);
 				}
-			} else {
-				newTrace.add(currentATE);
 			}
 
 			final ProgramState<Term> newProgramState = oldIcfgPe.getProgramState(i);
@@ -463,6 +475,58 @@ public class PetriNetLargeBlockEncoding {
 
 		return new IcfgProgramExecution(newTrace, newValuesMap,
 				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]), oldIcfgPe.isConcurrent());
+	}
+
+	/**
+	 * Translate a transition that is the result of arbitrarily nested sequential and choice compositions
+	 * back to the sequence of original transitions.
+	 *
+	 * @param transition The transition to translate back.
+	 * @param branchEncoders Branch encoders indicating which branch of a choice composition was taken.
+	 */
+	private Collection<IIcfgTransition<?>> translateBack(IIcfgTransition<?> transition, Map<TermVariable, Boolean> branchEncoders) {
+		final ArrayDeque<IIcfgTransition<?>> result = new ArrayDeque<>();
+
+		final ArrayDeque<IIcfgTransition<?>> stack = new ArrayDeque<>();
+		stack.push(transition);
+
+		while (!stack.isEmpty()) {
+			final IIcfgTransition<?> current = stack.pop();
+
+			if (mSequentialCompositions.containsKey(current)) {
+				final List<IIcfgTransition<?>> sequence = mSequentialCompositions.get(current);
+				assert sequence != null;
+
+				// Put the transitions making up this composition on the stack.
+				// Last transition in the sequence is on top.
+				for (final IIcfgTransition<?> component : sequence) {
+					stack.push(component);
+				}
+			}
+			else if (mChoiceCompositions.containsKey(current)) {
+				final Set<Pair<IIcfgTransition<?>, TermVariable>> choices = mChoiceCompositions.get(current);
+				assert choices != null;
+
+				boolean choiceFound = false;
+				for (Pair<IIcfgTransition<?>, TermVariable> choice : choices) {
+					final TermVariable indicator = choice.getSecond();
+					assert branchEncoders.get(indicator) != null : "Branch indicator value was unknown";
+					if (branchEncoders.get(indicator)) {
+						stack.push(choice.getFirst());
+						choiceFound = true;
+						break;
+					}
+				}
+				assert choiceFound : "Could not determine correct choice for choice composition";
+			}
+			else {
+				// Transition is assumed to be original.
+				// As the last transition of a sequence is handled first (top of stack, see above),
+				// we must prepend this transition to the result (instead of appending).
+				result.addFirst(current);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -676,7 +740,7 @@ public class PetriNetLargeBlockEncoding {
 
 	public IcfgEdge constructParallelComposition(final IcfgLocation source, final IcfgLocation target,
 			final List<IIcfgTransition<?>> transitions) {
-		assert onlyInternal(transitions) : "You cannot have calls or returns in normal sequential compositions";
+		assert onlyInternal(transitions) : "You cannot have calls or returns in normal parallel compositions";
 		final List<UnmodifiableTransFormula> transFormulas = transitions.stream().map(IcfgUtils::getTransformula)
 				.collect(Collectors.toList());
 		final UnmodifiableTransFormula[] tfArray = transFormulas
@@ -696,6 +760,10 @@ public class PetriNetLargeBlockEncoding {
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransitionWithBranchEncoders(source, target, null,
 				parallelTf, parallelWithBranchIndicators, branchIndicator2edge);
 		ModelUtils.mergeAnnotations(transitions, rtr);
+
+		// Update info for back translation
+		updateChoiceCompositions(rtr, branchIndicator2edge);
+
 		return rtr;
 	}
 

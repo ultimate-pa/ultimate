@@ -55,6 +55,8 @@ public enum PetriNetLargeBlockEncodingStatisticsDefinitions implements IStatisti
 
 	ConcurrentYvCompositions(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
+	ChoiceCompositions(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+
 	VarBasedMoverChecksPositive(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	VarBasedMoverChecksNegative(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),

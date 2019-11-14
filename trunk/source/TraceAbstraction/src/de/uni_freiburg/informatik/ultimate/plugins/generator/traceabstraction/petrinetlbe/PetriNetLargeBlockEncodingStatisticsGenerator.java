@@ -57,6 +57,7 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 	private int mConcurrentSequentialCompositions = 0;
 	private int mTrivialYvCompositions = 0;
 	private int mConcurrentYvCompositions = 0;
+	private int mChoiceCompositions = 0;
 
 
 	public PetriNetLargeBlockEncodingStatisticsGenerator() {
@@ -146,6 +147,8 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 			return mTrivialYvCompositions;
 		case ConcurrentYvCompositions:
 			return mConcurrentYvCompositions;
+		case ChoiceCompositions:
+			return mChoiceCompositions;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -198,6 +201,9 @@ public class PetriNetLargeBlockEncodingStatisticsGenerator extends StatisticsGen
 			break;
 		case ConcurrentYvCompositions:
 			mConcurrentYvCompositions++;
+			break;
+		case ChoiceCompositions:
+			mChoiceCompositions++;
 			break;
 		default:
 			throw new UnsupportedOperationException("not an enum for a composition " + pnlbesd);
