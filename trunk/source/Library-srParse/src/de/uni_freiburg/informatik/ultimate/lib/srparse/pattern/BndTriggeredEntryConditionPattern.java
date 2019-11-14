@@ -49,7 +49,6 @@ public class BndTriggeredEntryConditionPattern extends PatternType {
 
 	@Override
 	protected CounterTrace transform(final CDD[] cdds, final int[] durations) {
-		// TODO Chcek order
 		assert cdds.length == 3 && durations.length == 1;
 
 		final SrParseScope scope = getScope();
@@ -59,7 +58,8 @@ public class BndTriggeredEntryConditionPattern extends PatternType {
 		final int c1 = durations[0];
 
 		if (scope instanceof SrParseScopeGlobally) {
-			return counterTrace(phaseT(), phase(Q, BoundTypes.GREATER, c1), phase(S.negate().and(R).and(Q)), phaseT());
+			return counterTrace(phaseT(), phase(Q, BoundTypes.GREATEREQUAL, c1), phase(S.negate().and(R).and(Q)),
+					phaseT());
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 
