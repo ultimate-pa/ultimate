@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -75,10 +76,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerel
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation.SemanticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation.SyntacticIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.independencerelation.UnionIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -678,12 +681,36 @@ public class PetriNetLargeBlockEncoding {
 				.collect(Collectors.toList());
 		final UnmodifiableTransFormula[] tfArray = transFormulas
 				.toArray(new UnmodifiableTransFormula[transFormulas.size()]);
+		// TODO Matthias 2019-11-13: Serial number should be unique!!!?!
+		// Maybe we should move these constructions to the edge factory
+		// which can construct unique serial numbers
 		final int serialNumber = HashUtils.hashHsieh(293, (Object[]) tfArray);
 		final UnmodifiableTransFormula parallelTf = TransFormulaUtils.parallelComposition(mLogger, mServices,
 				serialNumber, mManagedScript, null, false, mXnfConversionTechnique, tfArray);
-		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, parallelTf);
+		final LinkedHashMap<TermVariable, IIcfgTransition<?>> branchIndicator2edge = constructBranchIndicatorToEdgeMapping(
+				serialNumber, mManagedScript, transitions);
+		final TermVariable[] branchIndicatorArray = branchIndicator2edge.keySet()
+				.toArray(new TermVariable[branchIndicator2edge.size()]);
+		final UnmodifiableTransFormula parallelWithBranchIndicators = TransFormulaUtils.parallelComposition(mLogger,
+				mServices, serialNumber, mManagedScript, branchIndicatorArray, false, mXnfConversionTechnique, tfArray);
+		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransitionWithBranchEncoders(source, target, null,
+				parallelTf, parallelWithBranchIndicators, branchIndicator2edge);
 		ModelUtils.mergeAnnotations(transitions, rtr);
 		return rtr;
+	}
+
+	private static LinkedHashMap<TermVariable, IIcfgTransition<?>> constructBranchIndicatorToEdgeMapping(
+			final int serialNumber, final ManagedScript managedScript, final List<IIcfgTransition<?>> transitions) {
+		final LinkedHashMap<TermVariable, IIcfgTransition<?>> result = new LinkedHashMap<>();
+		managedScript.lock(result);
+		for (int i = 0; i < transitions.size(); i++) {
+			final String varname = "BraInd" + i + "of" + serialNumber;
+			final Sort boolSort = SmtSortUtils.getBoolSort(managedScript.getScript());
+			final TermVariable tv = managedScript.constructFreshTermVariable(varname, boolSort);
+			result.put(tv, transitions.get(i));
+		}
+		managedScript.unlock(result);
+		return result;
 	}
 
 	public PetriNetLargeBlockEncodingBenchmarks getPetriNetLargeBlockEncodingStatistics() {

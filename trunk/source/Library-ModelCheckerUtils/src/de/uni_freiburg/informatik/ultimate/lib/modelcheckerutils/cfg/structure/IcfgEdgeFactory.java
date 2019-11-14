@@ -26,10 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure;
 
+import java.util.LinkedHashMap;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SerialProvider;
 
 /**
@@ -60,6 +63,15 @@ public final class IcfgEdgeFactory {
 
 	public IcfgInternalTransition createInternalTransition(final IcfgLocation source, final IcfgLocation target,
 			final IPayload payload, final UnmodifiableTransFormula transFormula) {
+		return new IcfgInternalTransition(source, target, payload, transFormula, getNextFreeId());
+	}
+
+	public IcfgInternalTransition createInternalTransitionWithBranchEncoders(final IcfgLocation source,
+			final IcfgLocation target, final IPayload payload, final UnmodifiableTransFormula transFormula,
+			final UnmodifiableTransFormula transFormulaWithBranchIndicators,
+			final LinkedHashMap<TermVariable, IIcfgTransition<?>> branchIndicator2edge) {
+		// TODO return new IcfgInternalTransitionWithBranchEncoder(source, target, payload, transFormula,
+		// transFormulaWithBranchIndicators, branchIndicator2edge, getNextFreeId());
 		return new IcfgInternalTransition(source, target, payload, transFormula, getNextFreeId());
 	}
 
@@ -94,5 +106,7 @@ public final class IcfgEdgeFactory {
 	private int getNextFreeId() {
 		return mSerial.getFreshSerial();
 	}
+
+
 
 }
