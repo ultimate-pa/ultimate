@@ -257,6 +257,14 @@ public class MSODFormulaOperationsNatTest {
 		test(true, parseLassoWord(x, y, "010 0", "001 0"), mOperations.strictIneqAutomaton(mALS, x, y, c));
 		test(true, parseLassoWord(x, y, "0100 00", "0010 00"), mOperations.strictIneqAutomaton(mALS, x, y, c));
 
+		// false: 1-0 < 1
+		c = Rational.valueOf(1, 1);
+		test(false, parseWord(x, y, "010", "100"), mOperations.strictIneqAutomaton(mALS, x, y, c));
+		test(false, parseWord(x, y, "0100", "1000"), mOperations.strictIneqAutomaton(mALS, x, y, c));
+
+		test(false, parseLassoWord(x, y, "010 0", "100 0"), mOperations.strictIneqAutomaton(mALS, x, y, c));
+		test(false, parseLassoWord(x, y, "0100 00", "1000 00"), mOperations.strictIneqAutomaton(mALS, x, y, c));
+
 		// false: 5-3 < 2
 		c = Rational.valueOf(2, 1);
 		test(false, parseWord(x, y, "0000010", "0001000"), mOperations.strictIneqAutomaton(mALS, x, y, c));
