@@ -1100,18 +1100,24 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		final DefaultTransFormulas rtf = new DefaultTransFormulas(nestedWord, mTruePred, mFalsePred,
 				Collections.emptySortedMap(), oldVarsAssignmentCache, false);
 
-		List<IPredicate> realInterpolants;
+		List<IPredicate> postProcessedInterpolants;
 		try {
-			realInterpolants =
+			postProcessedInterpolants =
 					spt.computeWeakestPreconditionSequence(rtf, Collections.emptyList(), false, false).getPredicates();
 		} catch (final TraceInterpolationException e) {
 			throw new RuntimeException(e);
 		}
 
-		assert TraceCheckUtils.checkInterpolantsInductivityBackward(realInterpolants, nestedWord, mTruePred, mFalsePred,
-				Collections.emptyMap(), "BP", mCsToolkit, mLogger, mScript) : "invalid Hoare triple in BP";
+		assert TraceCheckUtils.checkInterpolantsInductivityBackward(postProcessedInterpolants, nestedWord, mTruePred,
+				mFalsePred, Collections.emptyMap(), "BP", mCsToolkit, mLogger, mScript) : "invalid Hoare triple in BP";
 
-		return interpolants;
+		final IPredicate[] unifiedInterpolant = new IPredicate[postProcessedInterpolants.size()];
+		final Iterator<IPredicate> iter = postProcessedInterpolants.iterator();
+		for (int j = 0; j < unifiedInterpolant.length; ++j) {
+			unifiedInterpolant[j] = mPredicateUnifier.getOrConstructPredicate(iter.next());
+		}
+
+		return unifiedInterpolant;
 	}
 
 	/**
