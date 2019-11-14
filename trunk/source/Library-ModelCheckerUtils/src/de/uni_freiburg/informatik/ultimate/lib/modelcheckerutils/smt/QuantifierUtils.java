@@ -31,6 +31,7 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
@@ -304,5 +305,13 @@ public class QuantifierUtils {
 		}
 	}
 
-
+	public static RelationSymbol getDerOperator(final int quantifier) {
+		if (quantifier == 0) {
+			return RelationSymbol.EQ;
+		} else if (quantifier == 1) {
+			return RelationSymbol.DISTINCT;
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+	}
 }
