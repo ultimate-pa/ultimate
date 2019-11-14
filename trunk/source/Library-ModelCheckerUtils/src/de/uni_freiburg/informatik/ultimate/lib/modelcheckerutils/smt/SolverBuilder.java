@@ -92,6 +92,7 @@ public class SolverBuilder {
 	public static final Logics LOGIC_CVC4_DEFAULT = Logics.AUFLIRA;
 	public static final Logics LOGIC_CVC4_BITVECTORS = Logics.AUFBV;
 	public static final Logics LOGIC_MATHSAT = Logics.ALL;
+	public static final Logics LOGIC_SMTINTERPOL = Logics.QF_AUFLIRA;
 
 	public static final boolean USE_DIFF_WRAPPER_SCRIPT = true;
 
@@ -133,8 +134,8 @@ public class SolverBuilder {
 		Script script;
 		if (settings.useExternalSolver()) {
 			assert settings.getSolverMode() == null
-					|| (settings.getSolverMode() != SolverMode.Internal_SMTInterpol && settings
-							.getSolverMode() != SolverMode.Internal_SMTInterpol_NoArrayInterpol) : "You set solver mode to Internal* and enabled useExternalSolver";
+					|| settings.getSolverMode() != SolverMode.Internal_SMTInterpol && settings
+							.getSolverMode() != SolverMode.Internal_SMTInterpol_NoArrayInterpol : "You set solver mode to Internal* and enabled useExternalSolver";
 			final String command = settings.getCommandExternalSolver();
 			solverLogger.info("constructing external solver with command" + settings.getCommandExternalSolver());
 			try {
@@ -257,7 +258,7 @@ public class SolverBuilder {
 			// mScript.setOption(":proof-transformation", "LURPI");
 			// mScript.setOption(":proof-transformation", "RPILU");
 			// mScript.setOption(":verbosity", 0);
-			script.setLogic("QF_AUFLIRA");
+			script.setLogic(LOGIC_SMTINTERPOL.toString());
 			break;
 		case Internal_SMTInterpol_NoArrayInterpol:
 			script.setOption(":produce-models", true);
@@ -270,7 +271,7 @@ public class SolverBuilder {
 			// mScript.setOption(":proof-transformation", "LURPI");
 			// mScript.setOption(":proof-transformation", "RPILU");
 			// mScript.setOption(":verbosity", 0);
-			script.setLogic("QF_AUFLIRA");
+			script.setLogic(LOGIC_SMTINTERPOL.toString());
 			break;
 		default:
 			throw new AssertionError("unknown solver");
@@ -457,7 +458,7 @@ public class SolverBuilder {
 		}
 
 		public SolverSettings setDumpUnsatCoreTrackBenchmark(final boolean enable) {
-			assert !enable || (mDumpSmtScriptToFile && mPathOfDumpedScript != null && mBaseNameOfDumpedScript != null);
+			assert !enable || mDumpSmtScriptToFile && mPathOfDumpedScript != null && mBaseNameOfDumpedScript != null;
 			return new SolverSettings(mSolverMode, mFakeNonIncrementalScript, mUseExternalSolver,
 					mExternalSolverCommand, mExternalSolverLogics, mTimeoutSmtInterpol, mExternalInterpolator,
 					mDumpSmtScriptToFile, enable, mDumpMainTrackBenchmark, mPathOfDumpedScript, mBaseNameOfDumpedScript,
@@ -465,7 +466,7 @@ public class SolverBuilder {
 		}
 
 		public SolverSettings setDumpMainTrackBenchmark(final boolean enable) {
-			assert !enable || (mDumpSmtScriptToFile && mPathOfDumpedScript != null && mBaseNameOfDumpedScript != null);
+			assert !enable || mDumpSmtScriptToFile && mPathOfDumpedScript != null && mBaseNameOfDumpedScript != null;
 			return new SolverSettings(mSolverMode, mFakeNonIncrementalScript, mUseExternalSolver,
 					mExternalSolverCommand, mExternalSolverLogics, mTimeoutSmtInterpol, mExternalInterpolator,
 					mDumpSmtScriptToFile, mDumpUnsatCoreTrackBenchmark, enable, mPathOfDumpedScript,
