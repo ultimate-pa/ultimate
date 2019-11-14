@@ -100,7 +100,7 @@ public class MultiCaseSolutionBuilder {
 			throw new AssertionError();
 		}
 	}
-	
+
 	/**
 	 * Let the {@link MultiCaseSolutionBuilder} store the conjunction of its
 	 * current content and the input of this method. The input of this method is
@@ -109,7 +109,23 @@ public class MultiCaseSolutionBuilder {
 	 * a disjunction of these conjunctions.
 	 */
 	public void conjoinWithDnf(final Collection<Collection<?>> dnf) {
-		// Will be implemented by Matthias
+		if (mConstructionFinished) {
+			throw new IllegalStateException("construction already finished");
+		}
+		switch (mXnf) {
+		case CNF:
+			throw new UnsupportedOperationException("not yet implemented");
+		case DNF:
+			final List<Case> resultCases = new ArrayList<Case>();
+			for (final Collection<?> conjunction : dnf) {
+				resultCases.addAll(buildCopyAndAddToEachCase(mCases, conjunction.toArray()));
+			}
+			mCases = resultCases;
+			break;
+		default:
+			throw new AssertionError();
+		}
+
 	}
 
 	public void reportAdditionalIntricateOperation(final IntricateOperation intricateOperation) {
