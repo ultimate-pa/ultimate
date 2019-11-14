@@ -13,8 +13,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * {scope}, it is always the case that once "P" becomes satisfied, it holds for
- * at least "c1" time units
+ * {scope}, it is always the case that once "P" becomes satisfied, it holds for at least "c1" time units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -43,8 +42,7 @@ public class MinDurationPattern extends PatternType {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();
 			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()), phase(P.negate().and(R.negate())),
-					phase(P.and(R.negate()), BoundTypes.LESS, c1), phase(R.negate().and(P.negate())), phase(R.negate()),
-					phaseT());
+					phase(P.and(R.negate()), BoundTypes.LESS, c1), phase(R.negate().and(P.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD Q = scope.getCdd1();
 			ct = counterTrace(phaseT(), phase(Q), phaseT(), phase(P.negate()), phase(P, BoundTypes.LESS, c1),
