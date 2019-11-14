@@ -31,11 +31,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * Workaround that will be improved in the next days.
  * Find the expected result for an SV-COMP benchmark. Starting from SV-COMP 2020
  * the expected results are given by YAML files. This class does not use a
  * proper YAML parser and is a hack that should work for the YAML files that are
@@ -46,23 +49,14 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
  *
  */
 public class YamlBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractExpectedResultFinder<OVERALL_RESULT> {
-	private final String mPropertyFile;
-	private final OVERALL_RESULT mPositiveResult;
-	private final OVERALL_RESULT mNegativeResult;
 	private static final String VERDICT_TRUE = "expected_verdict: true";
 	private static final String VERDICT_FALSE = "expected_verdict: false";
+	private final NestedMap2<String, String, OVERALL_RESULT> mResultMap;
 
-
-
-	public YamlBasedExpectedResultFinder(final String propertyFile, final OVERALL_RESULT positiveResult,
-			final OVERALL_RESULT negativeResult) {
+	public YamlBasedExpectedResultFinder(final NestedMap2<String, String, OVERALL_RESULT> resultMap) {
 		super();
-		mPropertyFile = propertyFile;
-		mPositiveResult = positiveResult;
-		mNegativeResult = negativeResult;
+		mResultMap = resultMap;
 	}
-
-
 
 	@Override
 	public void findExpectedResult(final UltimateRunDefinition ultimateRunDefinition) {
@@ -70,41 +64,18 @@ public class YamlBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractExpec
 		final String[] basenameAndExtension = file.getAbsolutePath().split("\\.(?=[^\\.]+$)");
 		final String yamlFilename = basenameAndExtension[0] + ".yml";
 		final File yamlFile = new File(yamlFilename);
-		final BufferedReader br;
+		final Set<OVERALL_RESULT> expectedResult = new HashSet<>();
 		try {
-			br = new BufferedReader(new FileReader(yamlFile));
-			String line = br.readLine();
-			while (line != null) {
-				if (line.contains(mPropertyFile)) {
-					final String nextLine = br.readLine();
-					if (nextLine == null) {
-						super.mExpectedResult = null;
-						super.mEvaluationStatus = ExpectedResultFinderStatus.ERROR;
-						super.mExpectedResultEvaluation = "Cannot understand YAML file";
-					} else {
-						if (nextLine.contains(VERDICT_TRUE)) {
-							super.mEvaluationStatus = ExpectedResultFinderStatus.EXPECTED_RESULT_FOUND;
-							super.mExpectedResult = mPositiveResult;
-							super.mExpectedResultEvaluation = "Expected result: " + mExpectedResult;
-						} else if (nextLine.contains(VERDICT_FALSE)) {
-							super.mEvaluationStatus = ExpectedResultFinderStatus.EXPECTED_RESULT_FOUND;
-							super.mExpectedResult = mNegativeResult;
-							super.mExpectedResultEvaluation = "Expected result: " + mExpectedResult;
-						} else {
-							super.mExpectedResult = null;
-							super.mEvaluationStatus = ExpectedResultFinderStatus.ERROR;
-							super.mExpectedResultEvaluation = "Cannot understand YAML file";
-						}
-					}
-					br.close();
-					return;
+			for (final String propertyFile : mResultMap.keySet()) {
+				final OVERALL_RESULT resultForPropertyFile = extractResultForPropertyFile(yamlFile, propertyFile);
+				if (resultForPropertyFile != null) {
+					expectedResult.add(resultForPropertyFile);
 				}
-				line = br.readLine();
 			}
+		} catch (final UnsupportedOperationException uae) {
 			super.mExpectedResult = null;
-			super.mEvaluationStatus = ExpectedResultFinderStatus.NO_EXPECTED_RESULT_FOUND;
-			super.mExpectedResultEvaluation = "YAML file does not contain expected result";
-			br.close();
+			super.mEvaluationStatus = ExpectedResultFinderStatus.ERROR;
+			super.mExpectedResultEvaluation = uae.toString();
 		} catch (final FileNotFoundException fnfe) {
 			super.mExpectedResult = null;
 			super.mEvaluationStatus = ExpectedResultFinderStatus.NO_EXPECTED_RESULT_FOUND;
@@ -112,6 +83,68 @@ public class YamlBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractExpec
 		} catch (final IOException e) {
 			throw new AssertionError("unable to read file " + file);
 		}
+		if (expectedResult.isEmpty()) {
+			super.mExpectedResult = null;
+			super.mEvaluationStatus = ExpectedResultFinderStatus.NO_EXPECTED_RESULT_FOUND;
+			super.mExpectedResultEvaluation = "Neither filename nor path nor first line contains a keyword that defines the expected result";
+		} else if (expectedResult.size() == 1) {
+			super.mExpectedResult = expectedResult.iterator().next();
+			super.mEvaluationStatus = ExpectedResultFinderStatus.EXPECTED_RESULT_FOUND;
+			super.mExpectedResultEvaluation = "Expected result: " + mExpectedResult;
+		} else {
+			super.mExpectedResult = null;
+			super.mEvaluationStatus = ExpectedResultFinderStatus.ERROR;
+			super.mExpectedResultEvaluation = "Error: annotation given by keywords is inconsitent";
+		}
+	}
+
+	private OVERALL_RESULT extractResultForPropertyFile(final File yamlFile, final String propertyFile)
+			throws IOException {
+		final BufferedReader br = new BufferedReader(new FileReader(yamlFile));
+		String line = br.readLine();
+		while (line != null) {
+			if (line.contains(propertyFile)) {
+				final String nextLine = br.readLine();
+				if (nextLine == null) {
+					throw new UnsupportedOperationException("Cannot understand YAML file");
+				} else {
+					if (nextLine.contains(VERDICT_TRUE)) {
+						br.close();
+						return mResultMap.get(propertyFile, String.valueOf(true));
+					} else if (nextLine.contains(VERDICT_FALSE)) {
+						final Map<String, OVERALL_RESULT> map = mResultMap.get(propertyFile);
+						if (map.containsKey(String.valueOf(false))) {
+							// there are no subproperties for this property
+							br.close();
+							return mResultMap.get(propertyFile, String.valueOf(false));
+						} else {
+							final String secondNextLine = br.readLine();
+							final String subproperty = getSubproperty(secondNextLine, map.keySet());
+							if (subproperty == null) {
+								throw new UnsupportedOperationException("Cannot understand YAML file");
+							} else {
+								br.close();
+								return mResultMap.get(propertyFile, subproperty);
+							}
+						}
+					}
+				}
+			}
+			line = br.readLine();
+		}
+		return null;
+	}
+
+	private static String getSubproperty(final String secondNextLine, final Set<String> subproperties) {
+		if (secondNextLine == null) {
+			return null;
+		}
+		for (final String subProperty : subproperties) {
+			if (secondNextLine.contains(subProperty)) {
+				return subProperty;
+			}
+		}
+		return null;
 	}
 
 }

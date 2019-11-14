@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.Terminatio
 import de.uni_freiburg.informatik.ultimate.test.reporting.INonIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestLogfile;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  *
@@ -492,7 +493,64 @@ public final class TestUtil {
 		map.putAll(constructFilenameKeywordMap_SvcompOverflow());
 		return map;
 	}
+	
+	
+	public static final String SVCOMP_PROP_NOOVERFLOW = "no-overflow.prp";
+	public static final String SVCOMP_PROP_TERMINATION = "termination.prp";
+	public static final String SVCOMP_PROP_UNREACHCALL = "unreach-call.prp";
+	public static final String SVCOMP_PROP_VALIDMEMCLEANUP = "valid-memcleanup.prp";
+	public static final String SVCOMP_PROP_VALIDMEMSAFETY = "valid-memsafety.prp";
+	public static final String SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDFREE = "valid-free";
+	public static final String SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDDEREF = "valid-dref";
+	public static final String SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDMEMTRACK = "valid-memtrack";
 
+	public static NestedMap2<String, String, SafetyCheckerOverallResult> constructPropertyMapSvcompSafety(
+			final String... propertyFiles) {
+		final NestedMap2<String, String, SafetyCheckerOverallResult> map = new NestedMap2<>();
+		for (final String propertyFile : propertyFiles) {
+			switch (propertyFile) {
+			case SVCOMP_PROP_NOOVERFLOW:
+			case SVCOMP_PROP_UNREACHCALL:
+				map.put(propertyFile, String.valueOf(true), SafetyCheckerOverallResult.SAFE);
+				map.put(propertyFile, String.valueOf(false), SafetyCheckerOverallResult.UNSAFE);
+				break;
+			case SVCOMP_PROP_VALIDMEMCLEANUP:
+				map.put(propertyFile, String.valueOf(true), SafetyCheckerOverallResult.SAFE);
+				map.put(propertyFile, String.valueOf(false), SafetyCheckerOverallResult.UNSAFE_MEMTRACK);
+				break;
+			case SVCOMP_PROP_VALIDMEMSAFETY:
+				map.put(propertyFile, String.valueOf(true), SafetyCheckerOverallResult.SAFE);
+				map.put(propertyFile, SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDFREE, SafetyCheckerOverallResult.UNSAFE_FREE);
+				map.put(propertyFile, SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDDEREF,
+						SafetyCheckerOverallResult.UNSAFE_DEREF);
+				map.put(propertyFile, SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDMEMTRACK,
+						SafetyCheckerOverallResult.UNSAFE_MEMTRACK);
+				break;
+			default:
+				throw new AssertionError("unknown property file " + propertyFile);
+			}
+			
+		}
+		return map;
+	}
+	
+	public static NestedMap2<String, String, TerminationAnalysisOverallResult> constructPropertyMapSvcompTermination(
+			final String... propertyFiles) {
+		final NestedMap2<String, String, TerminationAnalysisOverallResult> map = new NestedMap2<>();
+		for (final String propertyFile : propertyFiles) {
+			switch (propertyFile) {
+			case SVCOMP_PROP_TERMINATION:
+				map.put(propertyFile, String.valueOf(true), TerminationAnalysisOverallResult.TERMINATING);
+				map.put(propertyFile, String.valueOf(false), TerminationAnalysisOverallResult.NONTERMINATING);
+				break;
+			default:
+				throw new AssertionError("unknown property file " + propertyFile);
+			}
+			
+		}
+		return map;
+	}
+	
 	/**
 	 * Returns a map from SV-COMP filename keywords to verification results for the error function reachability
 	 * specification.
@@ -505,7 +563,7 @@ public final class TestUtil {
 		map.put(".*_false-unreach-call.*", SafetyCheckerOverallResult.UNSAFE);
 		return map;
 	}
-
+	
 	/**
 	 * Returns a map from SV-COMP filename keywords to verification results for memsafety specification.
 	 */
@@ -613,6 +671,7 @@ public final class TestUtil {
 		map.put("#termcomp16-someonesaidno", TerminationAnalysisOverallResult.NONTERMINATING);
 		return map;
 	}
+	
 
 	/**
 	 * Returns the first line of File file as String.

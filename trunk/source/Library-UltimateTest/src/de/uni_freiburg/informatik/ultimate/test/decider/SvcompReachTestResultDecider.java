@@ -31,8 +31,12 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.YamlBasedExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyCheckerOverallResult;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
+ * Workaround that will be fixed in the next days.
+ * 
  * Use keywords in filename to decide correctness of SV-COMP reachability benchmarks.
  *
  * @author heizmann@informatik.uni-freiburg.de
@@ -60,7 +64,10 @@ public class SvcompReachTestResultDecider extends SafetyCheckTestResultDecider {
 
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
-		return new YamlBasedExpectedResultFinder("unreach-call.prp", SafetyCheckerOverallResult.SAFE, SafetyCheckerOverallResult.UNSAFE);
+		final NestedMap2<String, String, SafetyCheckerOverallResult> map = TestUtil.constructPropertyMapSvcompSafety(
+				TestUtil.SVCOMP_PROP_NOOVERFLOW, TestUtil.SVCOMP_PROP_UNREACHCALL, TestUtil.SVCOMP_PROP_VALIDMEMCLEANUP,
+				TestUtil.SVCOMP_PROP_VALIDMEMSAFETY);
+		return new YamlBasedExpectedResultFinder<SafetyCheckerOverallResult>(map);
 	}
 
 }

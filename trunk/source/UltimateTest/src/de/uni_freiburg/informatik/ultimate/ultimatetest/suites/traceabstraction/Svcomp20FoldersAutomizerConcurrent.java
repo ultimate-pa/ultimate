@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
 public class Svcomp20FoldersAutomizerConcurrent extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	 private static final int FILES_PER_DIR_LIMIT = 10;
+	 private static final int FILES_PER_DIR_LIMIT = 1;
 	private static final int FILE_OFFSET = 0;
 
 	private static final String STANDARD_DOT_C_PATTERN = ".*\\.c";
@@ -89,7 +89,7 @@ public class Svcomp20FoldersAutomizerConcurrent extends AbstractTraceAbstraction
 	 */
 	@Override
 	public long getTimeout() {
-		return 120 * 1000;
+		return 10 * 1000;
 	}
 
 	/**
