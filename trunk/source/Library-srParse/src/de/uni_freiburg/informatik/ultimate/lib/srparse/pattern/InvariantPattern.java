@@ -38,7 +38,7 @@ public class InvariantPattern extends PatternType {
 			ct = counterTrace(phaseT(), phase(P), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD Q = scope.getCdd1();
-			ct = counterTrace(phase(Q.negate()), phase(P.and(Q.negate())), phase(Q.negate()), phaseT());
+			ct = counterTrace(phase(Q.negate()), phase(P.and(Q.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();
