@@ -89,7 +89,7 @@ public class BoogieRequirementsParserTestAllPatterns {
 				"it is always the case that if \"y <= 5\" holds then \"y >= 5\" holds as well" };
 		final String[] patternNames = new String[] { "BndInvariancePattern", "InstAbsPattern", "UniversalityPattern",
 				"BndExistencePattern", "PrecedencePattern", "MinDurationPattern", "MaxDurationPattern",
-				"BndReccurrencePattern", "BndResponsePatternUT", "BndInvariancePattern", "BndEntryConditionPattern",
+				"BndRecurrencePattern", "BndResponsePatternUT", "BndInvariancePattern", "BndEntryConditionPattern",
 				"InvariantPattern" };
 
 		for (int i = 0; i < scope.length; i++) {
