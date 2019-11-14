@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE UnitTest Library.
- * 
+ *
  * The ULTIMATE UnitTest Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE UnitTest Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE UnitTest Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,9 +45,9 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
  * <ul>
  * For each occurrence the keywords have to be given as a Map<String, OVERALL_RESULT>. If you do not want to check some
  * occurrences (e.g., do not want to check the path, you may use an empty Map or null.
- * 
+ *
  * This IExpectedResultFinder takes neither settings nor toolchain into account.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <OVERALL_RESULT>
@@ -105,16 +105,17 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractEx
 			}
 		}
 		if (expectedResult.isEmpty()) {
-			mExpectedResult = null;
-			mEvaluationStatus = ExpectedResultFinderStatus.NO_EXPECTED_RESULT_FOUND;
-			mExpectedResultEvaluation = "Neither filename nor path nor first line contains a keyword that defines the expected result";
+			super.mExpectedResult = null;
+			super.mEvaluationStatus = ExpectedResultFinderStatus.NO_EXPECTED_RESULT_FOUND;
+			super.mExpectedResultEvaluation = "Neither filename nor path nor first line contains a keyword that defines the expected result";
 		} else if (expectedResult.size() == 1) {
-			mExpectedResult = expectedResult.iterator().next();
-			mEvaluationStatus = ExpectedResultFinderStatus.EXPECTED_RESULT_FOUND;
-			mExpectedResultEvaluation = "Expected result: " + mExpectedResult;
+			super.mExpectedResult = expectedResult.iterator().next();
+			super.mEvaluationStatus = ExpectedResultFinderStatus.EXPECTED_RESULT_FOUND;
+			super.mExpectedResultEvaluation = "Expected result: " + mExpectedResult;
 		} else {
-			mEvaluationStatus = ExpectedResultFinderStatus.ERROR;
-			mExpectedResultEvaluation = "Error: annotation given by keywords is inconsitent";
+			super.mExpectedResult = null;
+			super.mEvaluationStatus = ExpectedResultFinderStatus.ERROR;
+			super.mExpectedResultEvaluation = "Error: annotation given by keywords is inconsitent";
 		}
 	}
 
