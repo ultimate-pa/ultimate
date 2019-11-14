@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Comple
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 
 /**
- * This class provides methods to manipulate finite automata used to describe MSOD-Formulas.
+ * This class provides methods to manipulate finite automata that correspond to MSOD-Formulas.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)

@@ -176,7 +176,7 @@ public class MSODScript extends NoopScript {
 	/**
 	 * Returns a string representation of the given automaton. (only for debugging)
 	 */
-	private String automatonToString(final IAutomaton<?, ?> automaton, final Format format) {
+	public String automatonToString(final IAutomaton<?, ?> automaton, final Format format) {
 		AutomatonDefinitionPrinter<?, ?> printer;
 		printer = new AutomatonDefinitionPrinter<>(mAutomataLibrarayServices, "", Format.ATS, automaton);
 

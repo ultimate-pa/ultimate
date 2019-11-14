@@ -115,13 +115,18 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 		automaton.addInternalTransition("s0", xy01, "final");
 		automaton.addInternalTransition("final", xy00, "final");
 
-		if (c.signum() == 0) {
+		if (cInt == 0) {
+			return automaton;
+		}
+
+		automaton.addInternalTransition("init", xy11, "final");
+
+		if (cInt == 1) {
 			return automaton;
 		}
 
 		automaton.addState(false, false, "s1");
 		automaton.addInternalTransition("init", xy01, "s1");
-		automaton.addInternalTransition("init", xy11, "final");
 
 		String pred = "s1";
 		for (int i = 0; i < cInt - 2; i++) {

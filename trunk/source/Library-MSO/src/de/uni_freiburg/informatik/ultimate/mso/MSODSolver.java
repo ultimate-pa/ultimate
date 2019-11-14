@@ -36,27 +36,26 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Queue;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
@@ -74,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * This class provides methods to construct and manipulate automata used to describe MSOD-Formulas.
+ * This class provides methods to construct and manipulate automata that correspond to MSOD-Formulas.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -95,6 +94,16 @@ public final class MSODSolver {
 		mAutomataLibrarayServices = new AutomataLibraryServices(services);
 		mFormulaOperations = formulaOperations;
 		mAutomataOperations = automataOperations;
+	}
+
+	/**
+	 * Returns a string representation of the given automaton. (only for debugging)
+	 */
+	public String automatonToString(final IAutomaton<?, ?> automaton, final Format format) {
+		AutomatonDefinitionPrinter<?, ?> printer;
+		printer = new AutomatonDefinitionPrinter<>(mAutomataLibrarayServices, "", Format.ATS, automaton);
+
+		return printer.getDefinitionAsString();
 	}
 
 	/**
@@ -179,88 +188,43 @@ public final class MSODSolver {
 	}
 
 	/**
-	 * Returns automaton that represents "forall φ". Performs equivalent transformation to existential quantifier and
-	 * calls {@link #traversePostOrder(Term)} with the result".
+	 * Returns automaton that represents "∀ φ". Performs equivalent transformation to ¬∃ ¬φ and calls
+	 * {@link #traversePostOrder(Term)} with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processForall(final QuantifiedFormula term)
 			throws Exception {
 
-		final Term subformula = SmtUtils.not(mScript, term.getSubformula());
-		final Term exists =
-				SmtUtils.not(mScript, mScript.quantifier(QuantifiedFormula.EXISTS, term.getVariables(), subformula));
+		final Term exists = SmtUtils.not(mScript, mScript.quantifier(QuantifiedFormula.EXISTS, term.getVariables(),
+				SmtUtils.not(mScript, term.getSubformula())));
 
 		return traversePostOrder(exists);
 	}
 
 	/**
-	 * Returns automaton that represents "exists φ".
+	 * Returns automaton that represents "∃ φ".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processExists(final QuantifiedFormula term)
 			throws Exception {
 
-		NestedWordAutomaton<MSODAlphabetSymbol, String> result =
-				(NestedWordAutomaton<MSODAlphabetSymbol, String>) traversePostOrder(term.getSubformula());
+		INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getSubformula());
 
-		// INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getSubformula());
-
+		mLogger.info(automatonToString(result, Format.ATS));
 		mLogger.info("Construct ∃ φ: " + term);
-
-		mLogger.error(result);
 
 		// Get quantified variables.
 		final Term[] quantifiedVariables = term.getVariables();
-		mLogger.warn("Quantified variables: " + Arrays.toString(quantifiedVariables));
 
 		// Create an alphabet where all free variables are set to zero.
 		final Set<MSODAlphabetSymbol> zeros =
 				MSODUtils.allMatchesAlphabet(result.getAlphabet(), false, quantifiedVariables);
-		mLogger.warn("Alphabet with zeros: " + zeros.toString());
 
-		// Initialize queue with all final states.
-		final Queue<String> states = new LinkedList<>(result.getFinalStates());
-		final Set<String> visited = new HashSet<>();
-		final Set<IncomingInternalTransition<MSODAlphabetSymbol, String>> transitions = new HashSet<>();
-		boolean isInitial = false;
-
-		while (!states.isEmpty()) {
-			mLogger.warn("queue: " + states);
-			mLogger.warn("visited: " + visited);
-			mLogger.warn("transitions: " + transitions);
-			mLogger.warn("isInitial: " + isInitial);
-
-			final String state = states.poll();
-			mLogger.warn("polled: " + state);
-
-			for (final String pred : MSODUtils.hierarchicalPredecessorsIncoming(result, state, zeros)) {
-				if (state.equals(pred) || visited.contains(pred)) {
-					continue;
-				}
-
-				mLogger.warn("pred: " + pred);
-				isInitial = result.isInitial(pred) || isInitial;
-
-				result.internalPredecessors(pred).forEach(a -> transitions.add(a));
-
-				states.add(pred);
-			}
-			visited.add(state);
-		}
-
-		if (!transitions.isEmpty()) {
-			result.addState(isInitial, true, "f_new");
-		}
-
-		for (final IncomingInternalTransition<MSODAlphabetSymbol, String> transition : transitions) {
-			result.addInternalTransition(transition.getPred(), transition.getLetter(), "f_new");
-		}
+		result = MSODAutomataOperations.project(result, zeros);
 
 		final Set<Term> freeVars = new HashSet<>(result.getAlphabet().iterator().next().getMap().keySet());
 		freeVars.removeAll(Arrays.asList(quantifiedVariables));
 
 		final Set<MSODAlphabetSymbol> reducedAlphabet = MSODUtils.createAlphabet(freeVars.toArray(new Term[0]));
 		result = MSODAutomataOperations.reduceOrExtend(mAutomataLibrarayServices, result, reducedAlphabet, false);
-
-		mLogger.error(result);
 
 		return result;
 	}
@@ -377,10 +341,16 @@ public final class MSODSolver {
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processEqual(final ApplicationTerm term) throws Exception {
 
+		for (final Term t : term.getParameters()) {
+			mLogger.error("TERM: " + t);
+		}
+
 		final Term[] terms = term.getParameters();
 		final Term lessEqual = SmtUtils.leq(mScript, terms[0], terms[1]);
 		final Term greaterEqual = SmtUtils.not(mScript, SmtUtils.less(mScript, terms[0], terms[1]));
 		final Term equal = SmtUtils.and(mScript, lessEqual, greaterEqual);
+
+		mLogger.error("equal: " + equal);
 
 		return traversePostOrder(equal);
 	}
@@ -454,11 +424,13 @@ public final class MSODSolver {
 			}
 
 			if (var1.getValue().equals(Rational.ONE)) {
+				mLogger.error("x: " + var1.getKey() + ", y: " + var2.getKey() + ", c: " + constant);
 				return mFormulaOperations.strictIneqAutomaton(mAutomataLibrarayServices, var1.getKey(), var2.getKey(),
 						constant);
 			}
 
 			if (var2.getValue().equals(Rational.ONE)) {
+				mLogger.error("x: " + var2.getKey() + ", y: " + var1.getKey() + ", c: " + constant);
 				return mFormulaOperations.strictIneqAutomaton(mAutomataLibrarayServices, var2.getKey(), var1.getKey(),
 						constant);
 			}

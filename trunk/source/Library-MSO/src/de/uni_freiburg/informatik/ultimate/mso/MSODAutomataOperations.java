@@ -28,7 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -43,13 +45,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Comple
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * This class provides methods to manipulate automata used to describe MSOD-Formulas.
+ * This class provides methods to manipulate automata that correspond to MSOD-Formulas.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -99,6 +102,46 @@ public abstract class MSODAutomataOperations {
 	}
 
 	/**
+	 * Returns a {@link NestedWordAutomaton} that
+	 */
+	public static INestedWordAutomaton<MSODAlphabetSymbol, String> project(
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<MSODAlphabetSymbol> symbols) {
+
+		final NestedWordAutomaton<MSODAlphabetSymbol, String> result =
+				(NestedWordAutomaton<MSODAlphabetSymbol, String>) automaton;
+
+		final Set<IncomingInternalTransition<MSODAlphabetSymbol, String>> transitions = new HashSet<>();
+		final Deque<String> queue = new ArrayDeque<>(result.getFinalStates());
+		final Set<String> visited = new HashSet<>();
+		boolean isInitial = false;
+
+		while (!queue.isEmpty()) {
+			final String state = queue.pop();
+
+			for (final String pred : MSODUtils.hierarchicalPredecessorsIncoming(result, state, symbols)) {
+
+				if (!visited.add(state)) {
+					continue;
+				}
+
+				isInitial = isInitial || result.isInitial(pred);
+				result.internalPredecessors(pred).forEach(a -> transitions.add(a));
+				queue.add(pred);
+			}
+		}
+
+		if (!result.contains("f_new")) {
+			result.addState(isInitial, true, "f_new");
+		}
+
+		for (final IncomingInternalTransition<MSODAlphabetSymbol, String> transition : transitions) {
+			result.addInternalTransition(transition.getPred(), transition.getLetter(), "f_new");
+		}
+
+		return result;
+	}
+
+	/**
 	 * Returns a {@link NestedWordAutomaton} that represents an Int variable.
 	 *
 	 * @throws IllegalArgumentException
@@ -133,14 +176,13 @@ public abstract class MSODAutomataOperations {
 	 *
 	 * @throws AutomataLibraryException
 	 *             if construction of {@link Intersect}, {@link BuchiIntersect} fails.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if minimization is canceled.
 	 *
 	 */
-	public INestedWordAutomaton<MSODAlphabetSymbol, String> fixIntVariables(
-			final AutomataLibraryServices services, final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
-			throws AutomataLibraryException {
+	public INestedWordAutomaton<MSODAlphabetSymbol, String> fixIntVariables(final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result = automaton;
 
