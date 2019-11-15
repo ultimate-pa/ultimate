@@ -16,4 +16,4 @@
 (assert (forall ((y Int)) (=> (element y I) (not (element (+ y 1) I)))))
 
 (check-sat)
-(get-value (x I))
+(get-value (I))
