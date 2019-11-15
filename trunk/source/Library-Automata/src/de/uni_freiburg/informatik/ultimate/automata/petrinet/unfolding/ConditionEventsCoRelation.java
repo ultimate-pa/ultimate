@@ -65,6 +65,8 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	 */
 	private final HashRelation3<Condition<LETTER, PLACE>, ITransition<LETTER, PLACE>, Event<LETTER, PLACE>> mCoRelation = new HashRelation3<>();
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
+	
+	private final Boolean mUseConditionMarking = true;
 
 	/**
 	 * Constructor.
@@ -148,16 +150,23 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 		// csucc is not in the local configuration of e.
 		{
 			// new method siblings
-			final Set<Event<LETTER, PLACE>> ancestorEvents = new HashSet<>(e.getLocalConfiguration());
-			ancestorEvents.add(mBranchingProcess.getDummyRoot());
-			for (final Event<LETTER, PLACE> parent : ancestorEvents) {
-				if (parent.equals(e)) {
-					continue;
-				}
-				for (final Condition<LETTER, PLACE> c : parent.getSuccessorConditions()) {
-					if (!someSuccessorEventIsAncestorOfE(c, e)) {
+			if (mUseConditionMarking) {
+				for (final Condition<LETTER, PLACE> c : e.getConditionMark()) {
+					if (!e.getSuccessorConditions().contains(c))
 						mCoRelation.addTriple(c, e.getTransition(), e);
-//						newCoRelation.addPair(c,e);
+				}
+			} else {
+				final Set<Event<LETTER, PLACE>> ancestorEvents = new HashSet<>(e.getLocalConfiguration());
+				ancestorEvents.add(mBranchingProcess.getDummyRoot());
+				for (final Event<LETTER, PLACE> parent : ancestorEvents) {
+					if (parent.equals(e)) {
+						continue;
+					}
+					for (final Condition<LETTER, PLACE> c : parent.getSuccessorConditions()) {
+						if (!someSuccessorEventIsAncestorOfE(c, e)) {
+							mCoRelation.addTriple(c, e.getTransition(), e);
+							// newCoRelation.addPair(c,e);
+						}
 					}
 				}
 			}
