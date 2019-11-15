@@ -114,6 +114,9 @@ public class PetriNetLargeBlockEncoding {
 	private final Map<IIcfgTransition<?>, Set<Pair<IIcfgTransition<?>, TermVariable>>> mChoiceCompositions = new HashMap<>();
 
 	private final IIndependenceRelation<?, IIcfgTransition<?>> mMoverCheck;
+	private final CachedIndependenceRelation<IPredicate, IIcfgTransition<?>> mCachedVariableBasedIr;
+	private final CachedIndependenceRelation<IPredicate, IIcfgTransition<?>> mCachedSemanticBasedIr;
+
 	private int i = 0;
 	private int mMoverChecks = 0;
 	private final IUltimateServiceProvider mServices;
@@ -156,7 +159,7 @@ public class PetriNetLargeBlockEncoding {
 			mPetriNetLargeBlockEncodingStatistics.setCoEnabledTransitionPairs(coEnabledRelationSize);
 
 			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> variableBasedCheckIr = new SyntacticIndependenceRelation<>();
-			final CachedIndependenceRelation<IPredicate, IIcfgTransition<?>> cachedVariableBasedIr = new CachedIndependenceRelation<>(variableBasedCheckIr);
+			mCachedVariableBasedIr = new CachedIndependenceRelation<>(variableBasedCheckIr);
 			final IIndependenceRelation<IPredicate, IIcfgTransition<?>> semanticBasedCheck;
 			switch (petriNetLbeSettings) {
 			case OFF:
@@ -165,16 +168,17 @@ public class PetriNetLargeBlockEncoding {
 				// TODO: Add more detail to log message
 				mLogger.info("Semantic Check.");
 				semanticBasedCheck = new SemanticIndependenceRelation(mServices, mManagedScript, false, false);
-				final CachedIndependenceRelation<IPredicate, IIcfgTransition<?>> cachedSemanticBasedIr = new CachedIndependenceRelation<>(semanticBasedCheck);
-				mMoverCheck = new UnionIndependenceRelation<IPredicate, IIcfgTransition<?>>(Arrays.asList(cachedVariableBasedIr, cachedSemanticBasedIr));
+				mCachedSemanticBasedIr = new CachedIndependenceRelation<>(semanticBasedCheck);
+				mMoverCheck = new UnionIndependenceRelation<IPredicate, IIcfgTransition<?>>(Arrays.asList(mCachedVariableBasedIr, mCachedSemanticBasedIr));
 				break;
 			case VARIABLE_BASED_MOVER_CHECK:
 				semanticBasedCheck = null;
+				mCachedSemanticBasedIr = null;
 				// TODO: Add more detail to log message. Users may wonder:
 				// * which variable is checked?
 				// * is there also a constant check?
 				mLogger.info("Variable Check.");
-				mMoverCheck = cachedVariableBasedIr;
+				mMoverCheck = mCachedVariableBasedIr;
 				break;
 			default:
 				throw new AssertionError("unknown value " + petriNetLbeSettings);
@@ -231,6 +235,15 @@ public class PetriNetLargeBlockEncoding {
 				+ mCoEnabledRelation.size() + " co-enabled transitions pairs.";
 	}
 
+	private void transferMoverProperties(IIcfgTransition<?> composition, IIcfgTransition<?> t1, IIcfgTransition<?> t2) {
+		if (mCachedVariableBasedIr != null) {
+			mCachedVariableBasedIr.mergeIndependencies(t1, t2, composition);
+		}
+		if (mCachedSemanticBasedIr != null) {
+			mCachedSemanticBasedIr.mergeIndependencies(t1, t2, composition);
+		}
+	}
+
 	/**
 	 * Performs the choice rule on a Petri Net.
 	 * NOTE: This rule is not used yet because the backtranslation does not work.
@@ -275,6 +288,7 @@ public class PetriNetLargeBlockEncoding {
 							choiceIcfgEdge, t1, t2);
 					choiceStack.add(element);
 					updateCoEnabledRelation(choiceIcfgEdge, t1.getSymbol(), t2.getSymbol());
+					transferMoverProperties(choiceIcfgEdge, t1.getSymbol(), t2.getSymbol());
 
 					mPetriNetLargeBlockEncodingStatistics.reportComposition(
 							PetriNetLargeBlockEncodingStatisticsDefinitions.ChoiceCompositions);
@@ -347,6 +361,7 @@ public class PetriNetLargeBlockEncoding {
 							}
 							updateCoEnabledRelation(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
 							updateSequentialCompositions(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
+							transferMoverProperties(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
 						}
 					}
 				}

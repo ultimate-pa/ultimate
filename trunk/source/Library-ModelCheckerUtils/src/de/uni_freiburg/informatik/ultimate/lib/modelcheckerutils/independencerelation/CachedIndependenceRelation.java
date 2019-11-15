@@ -33,17 +33,17 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * An independence relation that caches the result of an underlying relation.
- * To be used with computation-intensive independence relations.
+ * An independence relation that caches the result of an underlying relation. To
+ * be used with computation-intensive independence relations.
  * 
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceRelation<STATE, LETTER> {
-	
+
 	private final IIndependenceRelation<STATE, LETTER> mUnderlying;
 	private final Map<STATE, HashRelation<LETTER, LETTER>> mPositiveCache = new HashMap<>();
 	private final Map<STATE, HashRelation<LETTER, LETTER>> mNegativeCache = new HashMap<>();
-	
+
 	public CachedIndependenceRelation(final IIndependenceRelation<STATE, LETTER> underlying) {
 		mUnderlying = underlying;
 	}
@@ -64,7 +64,7 @@ public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceR
 		if (!isConditional()) {
 			stateKey = null;
 		}
-		
+
 		HashRelation<LETTER, LETTER> positive = mPositiveCache.get(stateKey);
 		if (positive == null) {
 			positive = new HashRelation<>();
@@ -74,7 +74,7 @@ public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceR
 		if (negative == null) {
 			negative = new HashRelation<>();
 		}
-		
+
 		if (positive.containsPair(a, b) || (isSymmetric() && positive.containsPair(b, a))) {
 			return true;
 		} else if (negative.containsPair(a, b) || (isSymmetric() && positive.containsPair(b, a))) {
@@ -89,7 +89,7 @@ public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceR
 			negative.addPair(a, b);
 			mNegativeCache.put(stateKey, negative);
 		}
-		
+
 		return result;
 	}
 
@@ -98,9 +98,61 @@ public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceR
 				.collect(Collectors.summingInt(e -> e.getValue().size()));
 		return negativeSize;
 	}
+
 	public int getPositiveCacheSize() {
 		final int positiveSize = mPositiveCache.entrySet().stream()
 				.collect(Collectors.summingInt(e -> e.getValue().size()));
 		return positiveSize;
+	}
+
+	/**
+	 * Merges cached independencies for two letters into a combined letter. If both
+	 * are independent from some third letter c, the combined letter will be
+	 * independent from c as well. The independencies for the two original letters
+	 * will be removed from the cache.
+	 *
+	 * This method can be used to transfer knowledge about letters to a (sequential
+	 * or choice) composition of these letters. The caller must ensure soundness, it
+	 * is not checked against the underlying relation (as this would defeat the
+	 * purpose).
+	 *
+	 * Known dependencies are not transferred, but simply removed from the cache.
+	 *
+	 * @param a
+	 *            The first letter
+	 * @param b
+	 *            The second letter
+	 * @param ab
+	 *            The combination (e.g. sequential composition) of the previous two
+	 *            letters.
+	 */
+	public void mergeIndependencies(LETTER a, LETTER b, LETTER ab) {
+		for (final STATE state : mPositiveCache.keySet()) {
+			final HashRelation<LETTER, LETTER> relation = mPositiveCache.get(state);
+			// (a, c) + (b, c) -> (ab, c)
+			for (final LETTER c : relation.getImage(a)) {
+				if (relation.containsPair(b, c)) {
+					relation.addPair(ab, c);
+				}
+			}
+			// (c, a) + (c, b) -> (c, ab)
+			for (final LETTER c : relation.getDomain()) {
+				if (relation.containsPair(c, a) && relation.containsPair(c, b)) {
+					relation.addPair(c, ab);
+				}
+			}
+			relation.removeDomainElement(a);
+			relation.removeDomainElement(b);
+			relation.removeRangeElement(a);
+			relation.removeRangeElement(b);
+		}
+
+		for (final STATE state : mNegativeCache.keySet()) {
+			final HashRelation<LETTER, LETTER> relation = mNegativeCache.get(state);
+			relation.removeDomainElement(a);
+			relation.removeDomainElement(b);
+			relation.removeRangeElement(a);
+			relation.removeRangeElement(b);
+		}
 	}
 }
