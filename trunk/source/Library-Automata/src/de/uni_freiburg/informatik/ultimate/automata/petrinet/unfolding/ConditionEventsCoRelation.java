@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER, PLACE> {
 	private static final boolean EXTENDED_ASSERTION_CHECKING = false;
+	private static final boolean USE_CONDITION_MARKING = true;
 	private long mQueryCounterYes;
 	private long mQueryCounterNo;
 
@@ -66,7 +67,6 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	private final HashRelation3<Condition<LETTER, PLACE>, ITransition<LETTER, PLACE>, Event<LETTER, PLACE>> mCoRelation = new HashRelation3<>();
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
 	
-	private final Boolean mUseConditionMarking = true;
 
 	/**
 	 * Constructor.
@@ -150,7 +150,7 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 		// csucc is not in the local configuration of e.
 		{
 			// new method siblings
-			if (mUseConditionMarking) {
+			if (USE_CONDITION_MARKING) {
 				for (final Condition<LETTER, PLACE> c : e.getConditionMark()) {
 					if (!e.getSuccessorConditions().contains(c))
 						mCoRelation.addTriple(c, e.getTransition(), e);
