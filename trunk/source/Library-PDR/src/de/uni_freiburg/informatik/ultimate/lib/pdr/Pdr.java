@@ -1241,7 +1241,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				SolverBuilder.constructSolverSettings().setSolverMode(SolverMode.Internal_SMTInterpol);
 		final Script script = SolverBuilder.buildAndInitializeSolver(services, solverSettings, "PdrSolver");
 
-		csToolkit.getSmtFunctionsAndAxioms().transferSymbols(script);
+		csToolkit.getSmtFunctionsAndAxioms().transferAllSymbols(script);
 		return new ManagedScript(services, script);
 	}
 

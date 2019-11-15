@@ -445,7 +445,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							"TraceCheck_Iteration" + iterationsCount);
 
 					mgdScriptTracechecks = new ManagedScript(mServices, tcSolver);
-					mOriginalRoot.getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferSymbols(tcSolver);
+					mOriginalRoot.getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferAllSymbols(tcSolver);
 				} else {
 					mgdScriptTracechecks = mCsToolkit.getManagedScript();
 				}

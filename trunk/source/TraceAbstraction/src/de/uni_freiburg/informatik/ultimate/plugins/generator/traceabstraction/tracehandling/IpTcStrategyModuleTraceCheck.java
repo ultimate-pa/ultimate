@@ -81,7 +81,7 @@ public abstract class IpTcStrategyModuleTraceCheck<T extends IInterpolatingTrace
 	}
 
 	protected ManagedScript createExternalManagedScript(final Script script) {
-		mPrefs.getIcfgContainer().getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferSymbols(script);
+		mPrefs.getIcfgContainer().getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferAllSymbols(script);
 		return new ManagedScript(mServices, script);
 	}
 

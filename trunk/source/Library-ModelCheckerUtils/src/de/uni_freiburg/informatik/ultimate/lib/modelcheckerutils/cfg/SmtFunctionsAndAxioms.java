@@ -128,6 +128,8 @@ public class SmtFunctionsAndAxioms {
 		return new SmtFunctionsAndAxioms(newAxiomsPred, mScript);
 	}
 
+	// TODO: We also want a transfer function that transfers only some variables s.t. trace checks can be more focused
+
 	/**
 	 * Define all symbols defined by the underlying {@link Script} instance of this {@link SmtFunctionsAndAxioms}
 	 * instance in a fresh script and assert all Axioms there.
@@ -135,7 +137,7 @@ public class SmtFunctionsAndAxioms {
 	 * @param script
 	 *            the fresh script.
 	 */
-	public void transferSymbols(final Script script) {
+	public void transferAllSymbols(final Script script) {
 		HistoryRecordingScript.transferHistoryFromRecord(mScript, script);
 
 		final NonDeclaringTermTransferrer tt = new NonDeclaringTermTransferrer(script);

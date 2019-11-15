@@ -152,7 +152,7 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, solverId);
 
 			final ManagedScript mgdScriptTc = new ManagedScript(mServices, tcSolver);
-			mPrefs.getIcfgContainer().getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferSymbols(tcSolver);
+			mPrefs.getIcfgContainer().getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferAllSymbols(tcSolver);
 			return mgdScriptTc;
 		}
 		return mPrefs.getCfgSmtToolkit().getManagedScript();
