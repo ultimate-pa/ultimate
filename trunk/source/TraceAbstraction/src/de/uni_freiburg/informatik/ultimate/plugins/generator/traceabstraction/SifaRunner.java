@@ -189,11 +189,6 @@ public final class SifaRunner<LETTER extends IIcfgTransition<?>> implements IInt
 	}
 
 	@Override
-	public ToolchainCanceledException getToolchainCanceledExpection() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
 		return mTraceCheckReasonUnknown;
 	}

@@ -166,9 +166,6 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
-		if (traceCheck.getToolchainCanceledExpection() != null) {
-			throw traceCheck.getToolchainCanceledExpection();
-		}
 		return traceCheck;
 	}
 

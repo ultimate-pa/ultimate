@@ -323,9 +323,6 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
 		mBenchmarkGenerator.addTraceCheckData(tc.getStatistics());
-		if (tc.getToolchainCanceledExpection() != null) {
-			throw tc.getToolchainCanceledExpection();
-		}
 		if (tc.isCorrect() == LBool.UNSAT) {
 			mBenchmarkGenerator.incrementUsefullRunGeq2();
 			final int additionalInterpolants = addInterpolants(run.getStateSequence(), tc.getInterpolants());

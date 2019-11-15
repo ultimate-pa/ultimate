@@ -617,9 +617,6 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
-		if (itc.getToolchainCanceledExpection() != null) {
-			throw itc.getToolchainCanceledExpection();
-		}
 		return itc;
 	}
 

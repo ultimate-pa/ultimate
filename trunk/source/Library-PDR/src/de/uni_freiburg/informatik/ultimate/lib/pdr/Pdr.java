@@ -154,7 +154,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	private boolean mTraceCheckFinishedNormally;
 	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mFeasibleProgramExecution;
-	private ToolchainCanceledException mToolchainCanceledException;
 	private LBool mIsTraceCorrect;
 	private IPredicate[] mInterpolants;
 	private TraceCheckReasonUnknown mReasonUnknown;
@@ -213,7 +212,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		} catch (final ToolchainCanceledException tce) {
 			mTraceCheckFinishedNormally = false;
 			mIsTraceCorrect = LBool.UNKNOWN;
-			mToolchainCanceledException = tce;
 			mReasonUnknown = new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT, tce,
 					ExceptionHandlingCategory.KNOWN_DEPENDING);
 		} catch (final SMTLIBException e) {
@@ -1285,11 +1283,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mPdrBenchmark;
-	}
-
-	@Override
-	public ToolchainCanceledException getToolchainCanceledExpection() {
-		return mToolchainCanceledException;
 	}
 
 	@Override

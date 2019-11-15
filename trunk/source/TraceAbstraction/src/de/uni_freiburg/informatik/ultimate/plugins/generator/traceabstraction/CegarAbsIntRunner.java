@@ -783,11 +783,6 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 
 		@Override
-		public ToolchainCanceledException getToolchainCanceledExpection() {
-			return null;
-		}
-
-		@Override
 		public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
 			throw new UnsupportedOperationException();
 		}
@@ -850,11 +845,6 @@ public final class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		@Override
 		public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
 			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public ToolchainCanceledException getToolchainCanceledExpection() {
-			return null;
 		}
 
 		@Override

@@ -456,10 +456,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					mgdScriptTracechecks.getScript().exit();
 				}
 
-				if (traceCheck.getToolchainCanceledExpection() != null) {
-					throw traceCheck.getToolchainCanceledExpection();
-				}
-
 				final LBool isSafe = traceCheck.isCorrect();
 				benchmarkGenerator.addTraceCheckData(traceCheck.getStatistics());
 

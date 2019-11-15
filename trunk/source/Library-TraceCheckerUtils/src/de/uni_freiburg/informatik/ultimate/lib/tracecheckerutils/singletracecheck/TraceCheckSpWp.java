@@ -171,9 +171,6 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
 		try {
 			computeInterpolantsUsingUnsatCore(interpolatedPositions);
-		} catch (final ToolchainCanceledException tce) {
-			mLogger.info("Timeout while computing interpolants");
-			mToolchainCanceledException = tce;
 		} finally {
 			mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
 		}
@@ -470,9 +467,6 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 		final TraceCheck<? extends IAction> tc = new TraceCheck<>(rv.getPrecondition(), rv.getPostcondition(),
 				new TreeMap<Integer, IPredicate>(), rv.getTrace(), rv, mServices, mCsToolkit,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY, false, true, true);
-		if (tc.getToolchainCanceledExpection() != null) {
-			throw tc.getToolchainCanceledExpection();
-		}
 		final boolean result = tc.isCorrect() != LBool.SAT;
 		return result;
 	}

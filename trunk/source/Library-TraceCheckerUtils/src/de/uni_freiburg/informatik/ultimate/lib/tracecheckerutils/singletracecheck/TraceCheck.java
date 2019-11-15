@@ -335,9 +335,6 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 			final TraceCheck<? extends IAction> tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
 					mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(), withBE, mServices,
 					mCsToolkit, mTcSmtManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
-			if (tc.getToolchainCanceledExpection() != null) {
-				throw tc.getToolchainCanceledExpection();
-			}
 			assert tc.isCorrect() == LBool.SAT : "result of second trace check is " + tc.isCorrect()
 					+ tc.getTraceCheckReasonUnknown().getReason();
 			return tc.getRcfgProgramExecution();
@@ -455,11 +452,6 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 			return mTraceCheckBenchmarkGenerator;
 		}
 		return null;
-	}
-
-	@Override
-	public ToolchainCanceledException getToolchainCanceledExpection() {
-		return mToolchainCanceledException;
 	}
 
 	private void lockAndPrepareSolverForTraceCheck() {

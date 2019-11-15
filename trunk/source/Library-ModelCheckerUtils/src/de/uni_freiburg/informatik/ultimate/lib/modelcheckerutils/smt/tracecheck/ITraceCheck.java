@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck
 
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -74,19 +73,6 @@ public interface ITraceCheck {
 	IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution();
 
 	IStatisticsDataProvider getStatistics();
-
-	/**
-	 * If during a trace check a {@link ToolchainCanceledException} occurs, the {@link ITraceCheck} may catch this
-	 * exception and perform cleanup. Users of {@link ITraceCheck} can then call this method to check whether such an
-	 * exception occured and rethrow it if necessary.
-	 *
-	 * @return the {@link ToolchainCanceledException} that was thrown if the computation was cancelled. If the
-	 *         computation was not cancelled, we return null.
-	 * @deprecated DD: cleanup should happen in a finally block inside of ITraceCheck. If callers need to perform
-	 *             cleanup, they themselves can add a finally block.
-	 */
-	@Deprecated
-	ToolchainCanceledException getToolchainCanceledExpection();
 
 	/**
 	 * If the result of {@link #isCorrect()} is {@link LBool#UNKNOWN}m this method can be called to obtain more

@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantconsolidation;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -75,11 +74,6 @@ public class InterpolatingTraceCheckWithConsolidation<TC extends IInterpolantGen
 	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return super.getStatistics();
-	}
-
-	@Override
-	public ToolchainCanceledException getToolchainCanceledExpection() {
-		return getInterpolantGenerator().getToolchainCanceledExpection();
 	}
 
 	@Override
