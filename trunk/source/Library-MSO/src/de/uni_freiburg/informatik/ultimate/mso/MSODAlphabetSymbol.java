@@ -187,11 +187,6 @@ public class MSODAlphabetSymbol {
 			return false;
 		}
 
-		if (this == obj) {
-			return true;
-		}
-
-		final MSODAlphabetSymbol other = (MSODAlphabetSymbol) obj;
-		return mMap.equals(other.mMap);
+		return this == obj || ((MSODAlphabetSymbol) obj).mMap.equals(mMap);
 	}
 }

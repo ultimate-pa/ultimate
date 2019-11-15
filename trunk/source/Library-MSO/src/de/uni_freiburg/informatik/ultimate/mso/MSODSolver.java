@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inters
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AbstractGeneralizedAffineRelation.TransformInequality;
@@ -214,17 +215,23 @@ public final class MSODSolver {
 		// Get quantified variables.
 		final Term[] quantifiedVariables = term.getVariables();
 
-		// Create an alphabet where all free variables are set to zero.
-		final Set<MSODAlphabetSymbol> zeros =
-				MSODUtils.allMatchesAlphabet(result.getAlphabet(), false, quantifiedVariables);
-
-		result = MSODAutomataOperations.project(result, zeros);
-
 		final Set<Term> freeVars = new HashSet<>(result.getAlphabet().iterator().next().getMap().keySet());
+
+		freeVars.forEach(e -> mLogger.warn("vars: " + e));
+		Arrays.stream(term.getVariables()).forEach(e -> mLogger.warn("quantified vars: " + e));
+		Arrays.stream(term.getFreeVars()).forEach(e -> mLogger.warn("free vars: " + e));
+		(new ConstantFinder()).findConstants(term, true).forEach(e -> mLogger.warn("const: " + e));
+
 		freeVars.removeAll(Arrays.asList(quantifiedVariables));
 
 		final Set<MSODAlphabetSymbol> reducedAlphabet = MSODUtils.createAlphabet(freeVars.toArray(new Term[0]));
 		result = MSODAutomataOperations.reduceOrExtend(mAutomataLibrarayServices, result, reducedAlphabet, false);
+
+		// Create an alphabet where all free variables are set to zero.
+		final Set<MSODAlphabetSymbol> zeros = MSODUtils.allMatchesAlphabet(result.getAlphabet(), false);
+		mLogger.warn("zeros: " + zeros);
+
+		result = MSODAutomataOperations.project(result, zeros);
 
 		return result;
 	}

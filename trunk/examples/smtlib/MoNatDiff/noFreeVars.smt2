@@ -10,7 +10,8 @@
 (declare-fun I () SetOfInt)
 
 
-(assert (exists ((x Int)) (exists ((I SetOfInt)) (and (=> (element x I) (element (+ x 1) I)) (= (- x y) 0) (element x I) (= x 5) ))))
+(assert (exists ((I SetOfInt) (x Int))  (and (=> (element x I) (element (+ x 1) I)) (= (- x y) 0) (element x I) (= x 5) )))
+;(assert (exists ((x Int)) (exists ((I SetOfInt)) (and (=> (element x I) (element (+ x 1) I)) (= (- x y) 0) (element x I) (= x 5) ))))
 ;(assert  (and (= (- x y) 0) (element x I) (= x 5) ))
 
 ; x = 5 && y = x && (x in I => x+1 in I)  
