@@ -1088,6 +1088,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			++i;
 		}
 
+		// TODO: Use fresh solver here that supports quantifiers; NPE in clausifier is due to SMTInterpol choking on
+		// quantifier
+
 		final NestedWord<LETTER> nestedWord = TraceCheckUtils.toNestedWord(mTrace);
 
 		final IterativePredicateTransformer spt =
