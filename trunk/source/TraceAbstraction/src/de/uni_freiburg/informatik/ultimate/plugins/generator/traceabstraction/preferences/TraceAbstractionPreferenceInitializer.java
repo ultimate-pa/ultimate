@@ -252,7 +252,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String DESC_SMT_FEATURE_EXTRACTION = "We Extract SMT features during analysis and dump them.";
 
 	public static final String LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH = "SMT feature Extraction Dump Path.";
-	public static final String DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH = "/tmp/";
+	public static final String DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH = ".";
 	public static final String DESC_SMT_FEATURE_EXTRACTION_DUMP_PATH =
 			"We Extract SMT features during analysis and dump them to the given path";
 
