@@ -522,7 +522,7 @@ public class TermCompiler extends TermTransformer {
 					 * We don't support const over non-infinite index sorts. So we require the sort to be internal and
 					 * non-bool. Non-bool is already checked earlier.
 					 */
-					throw new SMTLIBException("Const is only supported for inifinite index sort");
+					throw new SMTLIBException("Const is only supported for infinite index sort");
 				}
 				break;
 			}
@@ -578,12 +578,15 @@ public class TermCompiler extends TermTransformer {
 
 	@Override
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
+		final Theory theory = old.getTheory();
+		if (!theory.getLogic().isQuantified()) {
+			throw new SMTLIBException("Quantifier in quantifier-free logic");
+		}
 		if (old.getQuantifier() == QuantifiedFormula.EXISTS) {
 			setResult(mTracker.exists(old, newBody));
 		} else {
 			// We should create (forall (x) (newBody x))
 			// This becomes (not (exists (x) (not (newBody x))))
-			final Theory theory = old.getTheory();
 			final Term notNewBody = mTracker.congruence(mTracker.reflexivity(theory.term("not", old.getSubformula())),
 					new Term[] { newBody });
 			setResult(mUtils.convertNot(mTracker.forall(old, notNewBody)));
