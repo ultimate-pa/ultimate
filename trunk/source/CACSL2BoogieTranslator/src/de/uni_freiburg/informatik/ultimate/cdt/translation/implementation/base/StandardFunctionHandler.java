@@ -231,12 +231,12 @@ public class StandardFunctionHandler {
 		fill(map, "pthread_mutex_lock", this::handlePthread_mutex_lock);
 		fill(map, "pthread_mutex_unlock", this::handlePthread_mutex_unlock);
 		fill(map, "pthread_exit", this::handlePthread_exit);
-		fill(map, "pthread_cond_init", die);
-		fill(map, "pthread_cond_wait", die);
-		fill(map, "pthread_cond_signal", die);
-		fill(map, "pthread_cond_destroy", die);
-		fill(map, "pthread_cond_broadcast", die);
-		fill(map, "pthread_mutex_destroy", skip);
+		fill(map, "pthread_cond_init", this::handlePthread_success);
+		fill(map, "pthread_cond_wait", this::handlePthread_cond_wait);
+		fill(map, "pthread_cond_signal", this::handlePthread_success);
+		fill(map, "pthread_cond_broadcast", this::handlePthread_success);
+		fill(map, "pthread_cond_destroy", this::handlePthread_success);
+		fill(map, "pthread_mutex_destroy", this::handlePthread_success);
 		// the following three occur at SV-COMP 2019 only in one benchmark
 		fill(map, "pthread_attr_init", die);
 		fill(map, "pthread_attr_setdetachstate", die);
@@ -938,7 +938,7 @@ public class StandardFunctionHandler {
 	}
 
 	/**
-	 * TOOD pthread support
+	 * TODO pthread support
 	 */
 	private Result handlePthread_create(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
@@ -1057,8 +1057,18 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
+	// We assume success and return 0 without any additional checks.
+	private Result handlePthread_success(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.setLrValue(new RValue(
+				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO),
+				new CPrimitive(CPrimitives.INT)));
+		return builder.build();
+	}
+
 	/**
-	 * TOOD pthread support
+	 * TODO pthread support
 	 */
 	private Result handlePthread_join(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
@@ -1147,6 +1157,31 @@ public class StandardFunctionHandler {
 	}
 
 	/**
+	 * Implements handing for pthread_cond_wait. Since spurious wake-ups are
+	 * possible (and covered by SVCOMP benchmarks), we do not actually wait. We
+	 * merely unlock and lock the mutex.
+	 */
+	private Result handlePthread_cond_wait(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 2, name, arguments);
+
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+
+		final ExpressionResult unlock = createPthread_mutex_unlock(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(unlock);
+
+		final ExpressionResult lock = createPthread_mutex_lock(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(lock);
+
+		builder.setLrValue(new RValue(
+				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO),
+				new CPrimitive(CPrimitives.INT)));
+		return builder.build();
+	}
+
+	/**
 	 * We assume that the mutex type is PTHREAD_MUTEX_NORMAL which means that if we lock a mutex that that is already
 	 * locked, then the thread blocks.
 	 */
@@ -1156,8 +1191,12 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 1, name, arguments);
 
+		return createPthread_mutex_lock(main, loc, arguments[0]);
+	}
+
+	private ExpressionResult createPthread_mutex_lock(final IDispatcher main, final ILocation loc, final IASTInitializerClause mutex) {
 		final ExpressionResult arg =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
 
 		// final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
 		// // we assume that function is always successful and returns 0
@@ -1194,13 +1233,17 @@ public class StandardFunctionHandler {
 	 */
 	private Result handlePthread_mutex_unlock(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
-
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 1, name, arguments);
 
+		return createPthread_mutex_unlock(main, loc, arguments[0]);
+	}
+
+	private ExpressionResult createPthread_mutex_unlock(final IDispatcher main, final ILocation loc, final IASTInitializerClause mutex) {
+		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
+
 		final ExpressionResult arg =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
 
 		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
 		// we assume that function is always successful and returns 0
