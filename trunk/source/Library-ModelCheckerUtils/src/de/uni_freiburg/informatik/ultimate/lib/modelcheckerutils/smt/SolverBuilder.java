@@ -92,7 +92,7 @@ public class SolverBuilder {
 	public static final Logics LOGIC_CVC4_DEFAULT = Logics.AUFLIRA;
 	public static final Logics LOGIC_CVC4_BITVECTORS = Logics.AUFBV;
 	public static final Logics LOGIC_MATHSAT = Logics.ALL;
-	public static final Logics LOGIC_SMTINTERPOL = Logics.AUFLIRA;
+	public static final Logics LOGIC_SMTINTERPOL = Logics.QF_AUFLIRA;
 
 	public static final boolean USE_DIFF_WRAPPER_SCRIPT = true;
 
