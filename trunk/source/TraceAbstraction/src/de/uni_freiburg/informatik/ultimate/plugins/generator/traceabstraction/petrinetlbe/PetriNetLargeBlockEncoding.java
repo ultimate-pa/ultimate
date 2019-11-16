@@ -150,9 +150,12 @@ public class PetriNetLargeBlockEncoding {
 		mPetriNetLargeBlockEncodingStatistics.setTransitionsBefore(petriNet.getTransitions().size());
 		mLogger.info("Starting large block encoding on Petri net that " + petriNet.sizeInformation());
 		try {
+			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriCopy = CopySubnet.copy(
+					new AutomataLibraryServices(services), petriNet, new HashSet<>(petriNet.getTransitions()),
+					petriNet.getAlphabet(), true);
 			final BranchingProcess<IIcfgTransition<?>, IPredicate> bp = new FinitePrefix<>(
-					new AutomataLibraryServices(services), petriNet).getResult();
-//			mCoEnabledRelation = computeCoEnabledRelation(bp);
+					new AutomataLibraryServices(services), petriCopy).getResult();
+
 			mCoEnabledRelation = computeCoEnabledRelationEfficiently(bp);
 			final int coEnabledRelationSize = mCoEnabledRelation.size();
 			mLogger.info("Number of co-enabled transitions " + coEnabledRelationSize);
@@ -187,8 +190,7 @@ public class PetriNetLargeBlockEncoding {
 
 			int numberOfFixpointIterations = 0;
 			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultLastIteration;
-			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultCurrentIteration =
-					CopySubnet.copy(new AutomataLibraryServices(services), petriNet, new HashSet<>(petriNet.getTransitions()), petriNet.getAlphabet());
+			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultCurrentIteration = petriCopy;
 			do {
 				numberOfFixpointIterations++;
 				resultLastIteration = resultCurrentIteration;
@@ -392,9 +394,24 @@ public class PetriNetLargeBlockEncoding {
 								mPetriNetLargeBlockEncodingStatistics.reportComposition(
 										PetriNetLargeBlockEncodingStatisticsDefinitions.ConcurrentSequentialCompositions);
 							}
-							updateCoEnabledRelation(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
 							updateSequentialCompositions(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
+							transferMoverProperties(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
+
+							// Transfer co-enabled pairs for t1 to sequentialIcfgEdge.
+							// Do not delete until loop is done, other compositions need this info.
+							mCoEnabledRelation.removeDomainElement(t2.getSymbol());
+							mCoEnabledRelation.removeRangeElement(t2.getSymbol());
+							for (IIcfgTransition<?> t3 : mCoEnabledRelation.getImage(t1.getSymbol())) {
+								mCoEnabledRelation.addPair(sequentialIcfgEdge, t3);
+							}
+							for (IIcfgTransition<?> t3 : mCoEnabledRelation.getDomain()) {
+								if (mCoEnabledRelation.containsPair(t3,  t1.getSymbol())) {
+									mCoEnabledRelation.addPair(t3, sequentialIcfgEdge);
+								}
+							}
 						}
+						mCoEnabledRelation.removeDomainElement(t1.getSymbol());
+						mCoEnabledRelation.removeRangeElement(t1.getSymbol());
 					}
 				}
 			}
