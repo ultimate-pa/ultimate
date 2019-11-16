@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER, PLACE> {
 	private static final boolean EXTENDED_ASSERTION_CHECKING = false;
-	private static final boolean USE_CONDITION_MARKING = true;
 	private long mQueryCounterYes;
 	private long mQueryCounterNo;
 
@@ -66,7 +65,7 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	 */
 	private final HashRelation3<Condition<LETTER, PLACE>, ITransition<LETTER, PLACE>, Event<LETTER, PLACE>> mCoRelation = new HashRelation3<>();
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
-	
+
 
 	/**
 	 * Constructor.
@@ -118,134 +117,32 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	@Override
 	public void update(final Event<LETTER, PLACE> e) {
 		if (e.getTransition() == null) {
+			// e is out initial dummy event
 			assert e.getPredecessorConditions().isEmpty() : "not initial event";
 			return;
 		}
-//		final HashRelation<Condition<LETTER, PLACE>, Event<LETTER, PLACE>> newCoRelation = new HashRelation<>();
-//		final HashRelation<Condition<LETTER, PLACE>, Event<LETTER, PLACE>> oldCoRelation = new HashRelation<>();
 		// An existing condition c is in co-relation with e if the predecessor event
 		// of c is in co-relation with all predecessor events of e.
 		// Successor conditions of e are in co-relation with all events e' that are
 		// in co-relation with all predecessor conditions of e.
-		{
-			// new method - continuity
-			final Set<Event<LETTER, PLACE>>[] coRelatedEvents = e.getPredecessorConditions().stream()
-					.map(x -> streamCoRelatedEvents(x).collect(Collectors.toSet()))
-					.toArray(Set[]::new);
-			final Set<Event<LETTER, PLACE>> intersection = DataStructureUtils.intersection(Arrays.asList(coRelatedEvents));
-			for (final Event<LETTER, PLACE> coRelatedEvent : intersection) {
-				for (final Condition<LETTER, PLACE> c : e.getSuccessorConditions()) {
-					mCoRelation.addTriple(c, coRelatedEvent.getTransition(), coRelatedEvent);
-//					newCoRelation.addPair(c, coRelatedEvent);
-				}
-				for (final Condition<LETTER, PLACE> c : coRelatedEvent.getSuccessorConditions()) {
-					mCoRelation.addTriple(c, e.getTransition(), e);
-//					newCoRelation.addPair(c, e);
-				}
+		final Set<Event<LETTER, PLACE>>[] coRelatedEvents = e.getPredecessorConditions().stream()
+				.map(x -> streamCoRelatedEvents(x).collect(Collectors.toSet())).toArray(Set[]::new);
+		final Set<Event<LETTER, PLACE>> intersection = DataStructureUtils.intersection(Arrays.asList(coRelatedEvents));
+		for (final Event<LETTER, PLACE> coRelatedEvent : intersection) {
+			for (final Condition<LETTER, PLACE> c : e.getSuccessorConditions()) {
+				mCoRelation.addTriple(c, coRelatedEvent.getTransition(), coRelatedEvent);
+			}
+			for (final Condition<LETTER, PLACE> c : coRelatedEvent.getSuccessorConditions()) {
+				mCoRelation.addTriple(c, e.getTransition(), e);
 			}
 		}
-
-		// for each (strict) ancestor event anct, the anct-successor c is in
-		// co-relation with e if for each successor event csucc of c
-		// csucc is not in the local configuration of e.
-		{
-			// new method siblings
-			if (USE_CONDITION_MARKING) {
-				for (final Condition<LETTER, PLACE> c : e.getConditionMark()) {
-					if (!e.getSuccessorConditions().contains(c))
-						mCoRelation.addTriple(c, e.getTransition(), e);
-				}
-			} else {
-				final Set<Event<LETTER, PLACE>> ancestorEvents = new HashSet<>(e.getLocalConfiguration());
-				ancestorEvents.add(mBranchingProcess.getDummyRoot());
-				for (final Event<LETTER, PLACE> parent : ancestorEvents) {
-					if (parent.equals(e)) {
-						continue;
-					}
-					for (final Condition<LETTER, PLACE> c : parent.getSuccessorConditions()) {
-						if (!someSuccessorEventIsAncestorOfE(c, e)) {
-							mCoRelation.addTriple(c, e.getTransition(), e);
-							// newCoRelation.addPair(c,e);
-						}
-					}
-				}
-			}
+		for (final Condition<LETTER, PLACE> c : e.getConditionMark()) {
+			if (!e.getSuccessorConditions().contains(c))
+				mCoRelation.addTriple(c, e.getTransition(), e);
 		}
 
-//		{
-//			// old method
-//			for (final Event<LETTER, PLACE> e1 : mBranchingProcess.getEvents()) {
-//				if (isInIrreflexiveCoRelation(e, e1)) {
-//					for (final Condition<LETTER, PLACE> c : e1.getSuccessorConditions()) {
-//						assert !e.getPredecessorConditions().contains(c);
-//						assert !e.getSuccessorConditions().contains(c);
-//						oldCoRelation.addPair(c,e);
-//					}
-//				}
-//			}
-//
-//			for (final Condition<LETTER, PLACE> c : e.getConditionMark()) {
-//				if (!e.getSuccessorConditions().contains(c)) {
-//					assert !e.getSuccessorConditions().contains(c);
-//					assert !mBranchingProcess.inCausalRelation(c, e) : c + " , " + e
-//					+ " in causal relation, not in co-relation!";
-//					oldCoRelation.addPair(c,e);
-//				}
-//			}
-//		}
-
-		// Original plan: insert all siblings of predecessors of e, that are not
-		// predecessors of e.
-		// Problem: there is a situation where this might be incorrect.
-
-		// Solution: only add Conditions that build a CoSet with the new Events
-		// Predecessors.
-
-		// Next Problem: this is incomplete.
-		// There may be nodes, that are in co-relation with
-		// the newly added Event e that are NOT siblings of
-		// the predecessor-conditions of e.
-
-		// Solution: iterate through all ancestors and do this
-
-		// (this is the old code)
-		/*
-		for (Condition<LETTER, PLACE> c : e.getPredecessorConditions()) {
-			for (Condition<LETTER, PLACE> sibling : c.getPredecessorEvent()
-					.getSuccessorConditions()) {
-				if (!e.getPredecessorConditions().contains(sibling)
-						&& isCoset(e.getPredecessorConditions(), sibling)) {
-					assert (!e.getSuccessorConditions().contains(sibling));
-					coRelation.get(sibling).add(e);
-				}
-			}
-		}
-		*/
-//		oldCoRelation.addAll(mCoRelation);
-//		newCoRelation.addAll(mCoRelation);
-//		assert oldCoRelation.equals(newCoRelation) : "old " + oldCoRelation + " new: " + newCoRelation;
-//		mCoRelation.addAll(newCoRelation);
 	}
 
-	private boolean someSuccessorEventIsAncestorOfE(final Condition<LETTER, PLACE> c, final Event<LETTER, PLACE> e) {
-		for (final Event<LETTER, PLACE> succEvent : c.getSuccessorEvents()) {
-			if (e.getLocalConfiguration().contains(succEvent)) {
-					return true;
-			}
-		}
-		return false;
-	}
-
-	/*
-	private void add(Condition<LETTER, PLACE> c, Event<LETTER, PLACE> e) {
-		Set<Event<LETTER, PLACE>> eSet = coRelation.get(c);
-		if (eSet == null) {
-			eSet = new HashSet<Event<LETTER, PLACE>>();
-			coRelation.put(c, eSet);
-		}
-		eSet.add(e);
-	}
-	*/
 
 	@Override
 	public boolean isInCoRelation(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
