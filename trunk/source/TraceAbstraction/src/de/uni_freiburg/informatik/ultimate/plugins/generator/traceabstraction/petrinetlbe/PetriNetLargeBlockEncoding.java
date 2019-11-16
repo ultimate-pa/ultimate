@@ -418,7 +418,6 @@ public class PetriNetLargeBlockEncoding {
 		List<IIcfgTransition<?>> right;
 		if (mSequentialCompositions.containsKey(t1)) {
 			left = mSequentialCompositions.get(t1);
-			mSequentialCompositions.remove(t1);
 		} else {
 			left = new ArrayList<IIcfgTransition<?>>();
 			left.add(t1);
@@ -426,7 +425,6 @@ public class PetriNetLargeBlockEncoding {
 
 		if (mSequentialCompositions.containsKey(t2)) {
 			right = mSequentialCompositions.get(t2);
-			mSequentialCompositions.remove(t2);
 		} else {
 			right = new ArrayList<IIcfgTransition<?>>();
 			right.add(t2);
