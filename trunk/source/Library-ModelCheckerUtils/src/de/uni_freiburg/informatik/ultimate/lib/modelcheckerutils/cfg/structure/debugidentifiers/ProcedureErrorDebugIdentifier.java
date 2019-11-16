@@ -63,7 +63,7 @@ public class ProcedureErrorDebugIdentifier extends StringDebugIdentifier {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + mId;
-		result = prime * result + mType.hashCode();
+		result = prime * result + mType.toString().hashCode();
 		result = prime * result + getPrefix().hashCode();
 		return result;
 	}
