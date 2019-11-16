@@ -356,7 +356,7 @@ public class Check extends ModernAnnotations {
 
 	@Override
 	public int hashCode() {
-		return mSpec.hashCode();
+		return toString().hashCode();
 	}
 
 	@Override
