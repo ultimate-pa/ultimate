@@ -44,17 +44,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgJoinThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IForkActionThreadCurrent.ForkSmtArguments;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier.ProcedureErrorType;
@@ -380,7 +380,7 @@ public class ThreadInstanceAdder {
 	 * Construct the {@link ThreadInstance} objects but does not yet add
 	 * {@link IProgramVar}s and error locations to the {@link IIcfg}.
 	 */
-	public Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> constructThreadInstances(
+	public static Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> constructThreadInstances(
 			final IIcfg<? extends IcfgLocation> icfg,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
 			final boolean addThreadInUseViolationVariablesAndErrorLocation) {
@@ -390,15 +390,6 @@ public class ThreadInstanceAdder {
 		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : forkCurrentThreads) {
 			final String procedureName = fork.getNameOfForkedProcedure();
 			final String threadInstanceId = generateThreadInstanceId(i, procedureName);
-			final BoogieNonOldVar threadInUseVar;
-			if (addThreadInUseViolationVariablesAndErrorLocation) {
-				threadInUseVar = constructThreadInUseVariable(threadInstanceId, mgdScript);
-			} else {
-				threadInUseVar = null;
-			}
-			final BoogieNonOldVar[] threadIdVars = constructThreadIdVariable(threadInstanceId, mgdScript,
-					fork.getForkSmtArguments().getThreadIdArguments().getTerms());
-
 			final IcfgLocation errorLocation;
 			if (addThreadInUseViolationVariablesAndErrorLocation) {
 				final DebugIdentifier debugIdentifier = new ProcedureErrorDebugIdentifier(fork.getPrecedingProcedure(),
@@ -412,15 +403,33 @@ public class ThreadInstanceAdder {
 			} else {
 				errorLocation = null;
 			}
-			final ThreadInstance ti =
-					new ThreadInstance(threadInstanceId, procedureName, threadIdVars, threadInUseVar, errorLocation);
+			final ThreadInstance ti = constructThreadInstance(addThreadInUseViolationVariablesAndErrorLocation,
+					mgdScript, fork, procedureName, threadInstanceId, errorLocation);
 			result.put(fork, ti);
 			i++;
 		}
 		return result;
 	}
 
-	private String generateThreadInstanceId(final int i, final String procedureName) {
+	private static ThreadInstance constructThreadInstance(
+			final boolean addThreadInUseViolationVariablesAndErrorLocation, final ManagedScript mgdScript,
+			final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork, final String procedureName,
+			final String threadInstanceId, final IcfgLocation errorLocation) {
+		final BoogieNonOldVar threadInUseVar;
+		if (addThreadInUseViolationVariablesAndErrorLocation) {
+			threadInUseVar = constructThreadInUseVariable(threadInstanceId, mgdScript);
+		} else {
+			threadInUseVar = null;
+		}
+		final BoogieNonOldVar[] threadIdVars = constructThreadIdVariable(threadInstanceId, mgdScript,
+				fork.getForkSmtArguments().getThreadIdArguments().getTerms());
+
+		final ThreadInstance ti =
+				new ThreadInstance(threadInstanceId, procedureName, threadIdVars, threadInUseVar, errorLocation);
+		return ti;
+	}
+
+	private static String generateThreadInstanceId(final int i, final String procedureName) {
 		return "Thread" + i + "_" + procedureName;
 	}
 
