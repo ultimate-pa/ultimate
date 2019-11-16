@@ -76,6 +76,8 @@ public final class AutomatonFreeRefinementEngine<LETTER extends IIcfgTransition<
 	private boolean mSomePerfectSequenceFound;
 	private List<QualifiedTracePredicates> mQualifiedTracePredicates;
 
+	private String mUsedTraceCheckFingerprint;
+
 	public AutomatonFreeRefinementEngine(final ILogger logger, final IRefinementStrategy<LETTER> strategy) {
 		mLogger = logger;
 		mStrategy = strategy;
@@ -235,6 +237,7 @@ public final class AutomatonFreeRefinementEngine<LETTER extends IIcfgTransition<
 	private LBool checkFeasibility() {
 		while (mStrategy.hasNextFeasilibityCheck()) {
 			final ITraceCheckStrategyModule<?> currentTraceCheck = mStrategy.nextFeasibilityCheck();
+			mUsedTraceCheckFingerprint = getModuleFingerprintString(currentTraceCheck);
 			logModule("Using trace check", currentTraceCheck);
 			final LBool feasibilityResult = currentTraceCheck.isCorrect();
 			if (feasibilityResult == LBool.SAT) {
@@ -325,7 +328,9 @@ public final class AutomatonFreeRefinementEngine<LETTER extends IIcfgTransition<
 			category = ExceptionHandlingCategory.KNOWN_DEPENDING;
 			break;
 		case TRACE_FEASIBLE:
-			throw new IllegalStateException("Do not try to interpolate when trace is feasible ");
+			final String msg = String.format("Tracecheck %s said UNSAT, interpolant generator %s failed with %s",
+					mUsedTraceCheckFingerprint, getModuleFingerprintString(interpolantGenerator), status.getStatus());
+			throw new IllegalStateException(msg);
 		default:
 			throw new AssertionError("unknown case : " + status.getStatus());
 		}
@@ -339,7 +344,11 @@ public final class AutomatonFreeRefinementEngine<LETTER extends IIcfgTransition<
 	}
 
 	private void logModule(final String msg, final Object module) {
-		mLogger.info("%s %s [%s]", msg, module.getClass().getSimpleName(), module.hashCode());
+		mLogger.info("%s %s", msg, getModuleFingerprintString(module));
+	}
+
+	private static String getModuleFingerprintString(final Object obj) {
+		return String.format("%s [%s]", obj.getClass().getSimpleName(), obj.hashCode());
 	}
 
 }
