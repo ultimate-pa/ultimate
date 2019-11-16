@@ -74,7 +74,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	private final UnionFind<Condition<LETTER, PLACE>> mRepresentatives;
 	private final IFinitePrefix2PetriNetStateFactory<PLACE> mStateFactory;
 	private final boolean mUsePetrification = false;
-	private final boolean mExtendedBackfolding = false;
 	private final boolean mUseBackfoldingIds = false;
 
 	/**
@@ -216,38 +215,38 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 
 		PriorityQueue<Event<LETTER, PLACE>> eventQueue;
 		final Set<Event<LETTER, PLACE>> releventEvents = new HashSet<>(bp.getEvents());
-		if (mExtendedBackfolding) {
-			eventQueue = new PriorityQueue<>(bp.getOrder());
-			eventQueue.addAll(bp.getEvents());
-			while (!eventQueue.isEmpty()) {
-				final Event<LETTER, PLACE> e1 = eventQueue.poll();
-				if (e1.getPredecessorConditions().isEmpty())
-					continue;
-				assert (releventEvents
-						.contains(e1)) : "The events in the PQ must be relevent events according to our order";
-				for (final Event<LETTER, PLACE> e2 : releventEvents) {
-					if (e1.equals(e2)) {
-						continue;
-					}
-					if (e1.getTransition().equals(e2.getTransition())
-							&& mRepresentatives.find(e1.getPredecessorConditions())
-									.equals(mRepresentatives.find(e2.getPredecessorConditions()))) {
-						if (!mRepresentatives.find(e1.getSuccessorConditions())
-								.equals(mRepresentatives.find(e2.getSuccessorConditions()))) {
-							mergeConditions(e1.getSuccessorConditions(), e2.getSuccessorConditions());
-							assert (eventQueue.containsAll(
-									e1.getSuccessorEvents())) : "Succesors of an Event in the PQ must be in the PQ";
 
-						}
-						releventEvents.remove(e1);
-						if (mUseBackfoldingIds) {
-							BackfoldingId.put(e2, BackfoldingId.get(e1));
-						}
-						break;
+		eventQueue = new PriorityQueue<>(bp.getOrder());
+		eventQueue.addAll(bp.getEvents());
+		while (!eventQueue.isEmpty()) {
+			final Event<LETTER, PLACE> e1 = eventQueue.poll();
+			if (e1.getPredecessorConditions().isEmpty())
+				continue;
+			assert (releventEvents
+					.contains(e1)) : "The events in the PQ must be relevent events according to our order";
+			for (final Event<LETTER, PLACE> e2 : releventEvents) {
+				if (e1.equals(e2)) {
+					continue;
+				}
+				if (e1.getTransition().equals(e2.getTransition())
+						&& mRepresentatives.find(e1.getPredecessorConditions())
+								.equals(mRepresentatives.find(e2.getPredecessorConditions()))) {
+					if (!mRepresentatives.find(e1.getSuccessorConditions())
+							.equals(mRepresentatives.find(e2.getSuccessorConditions()))) {
+						mergeConditions(e1.getSuccessorConditions(), e2.getSuccessorConditions());
+						assert (eventQueue.containsAll(
+								e1.getSuccessorEvents())) : "Succesors of an Event in the PQ must be in the PQ";
+
 					}
+					releventEvents.remove(e1);
+					if (mUseBackfoldingIds) {
+						BackfoldingId.put(e2, BackfoldingId.get(e1));
+					}
+					break;
 				}
 			}
 		}
+		
 
 		final Map<Condition<LETTER, PLACE>, PLACE> placeMap = new HashMap<>();
 		for (final Condition<LETTER, PLACE> c : bp.getConditions()) {
