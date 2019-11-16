@@ -98,10 +98,20 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	private int mConditionSerialnumberCounter = 0;
 
 	/**
-	 * Relation between the hashcode of {@link Event} {@link Marking}s and Events.
-	 * Hashcode is the key, allows us to check find cut-off events more quickly.
+	 * Relation between the hashcode of {@link Event} {@link Marking}s and all
+	 * non-cut-off Events that have this {@link Marking}. Hashcode is the key,
+	 * allows us to check find cut-off events more quickly.
+	 * <p>
+	 * 2019-11-16 Matthias: I have some doubts that this optimization (hashcode
+	 * instead of {@link Marking}) brings a measureable speedup but it makes the
+	 * code more complicated. I case we have total {@link EventOrder} the image of
+	 * the relation has size one and hence we could use a map instead of a relation.
+	 * I guess that using a map instead of a relation will not bring a significant
+	 * speedup and will only reduce the memory consumption by 64 byes (initial size
+	 * of HashSet) per non-cut-off event.
+	 * </p>
 	 */
-	private final HashRelation<Integer, Event<LETTER, PLACE>> mMarkingEventRelation = new HashRelation<>();
+	private final HashRelation<Integer, Event<LETTER, PLACE>> mMarkingNonCutoffEventRelation = new HashRelation<>();
 
 	/**
 	 * #Backfolding
@@ -156,7 +166,9 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 			}
 		}
 		mEvents.add(event);
-		mMarkingEventRelation.addPair(event.getMark().hashCode(), event);
+		if (!event.isCutoffEvent()) {
+			mMarkingNonCutoffEventRelation.addPair(event.getMark().hashCode(), event);
+		}
 		for (final Condition<LETTER, PLACE> c : event.getPredecessorConditions()) {
 			assert !c.getPredecessorEvent().isCutoffEvent() : "Cut-off events must not have successors.";
 			c.addSuccesssor(event);
@@ -208,7 +220,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 */
 	public boolean isCutoffEvent(final Event<LETTER, PLACE> event, final Comparator<Event<LETTER, PLACE>> order,
 			final boolean sameTransitionCutOff) {
-		for (final Event<LETTER, PLACE> ev : mMarkingEventRelation.getImage(event.getMark().hashCode())) {
+		for (final Event<LETTER, PLACE> ev : mMarkingNonCutoffEventRelation.getImage(event.getMark().hashCode())) {
 			if (mNewFiniteComprehensivePrefixMode) {
 				if (event.checkCutOffAndSetCompanionForComprehensivePrefix(ev, order, this, sameTransitionCutOff)) {
 					return true;
