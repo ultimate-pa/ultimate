@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Object that represents a binary relation (i.e. a set of ordered pairs). Given an element of this relation (d,r)
@@ -509,5 +510,9 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 			}
 
 		};
+	}
+
+	public Set<R> projectToRange() {
+		return entrySet().stream().map(x -> x.getValue()).collect(Collectors.toSet());
 	}
 }

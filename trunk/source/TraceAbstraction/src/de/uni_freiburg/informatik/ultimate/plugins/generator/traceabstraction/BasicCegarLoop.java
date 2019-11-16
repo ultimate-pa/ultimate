@@ -324,7 +324,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mAbstraction = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(mServices, super.mIcfg,
 					mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
 		} else {
-			final boolean addThreadUsageMonitors = false;
+			final boolean addThreadUsageMonitors = true;
 			final BoundedPetriNet<LETTER, IPredicate> petrifiedCfg =
 					CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices, mIcfg,
 							mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);

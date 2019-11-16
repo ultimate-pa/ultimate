@@ -99,13 +99,13 @@ public class ThreadInstanceAdder {
 	public IIcfg<IcfgLocation> connectThreadInstances(final IIcfg<IcfgLocation> icfg,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
 			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads,
-			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap2,
+			final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap,
 			final BlockEncodingBacktranslator backtranslator, final boolean addThreadInUseViolationEdges) {
 		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fct : forkCurrentThreads) {
-			final ThreadInstance ti = threadInstanceMap2.get(fct);
-
-			addForkOtherThreadTransition(fct, ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg,
-					ti.getThreadInstanceName(), backtranslator, addThreadInUseViolationEdges);
+			for (final ThreadInstance ti : threadInstanceMap.getImage(fct)) {
+				addForkOtherThreadTransition(fct, ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg,
+						ti.getThreadInstanceName(), backtranslator, addThreadInUseViolationEdges);
+			}
 		}
 
 		// For each implemented procedure, add a JoinOtherThreadTransition from the exit
@@ -113,7 +113,7 @@ public class ThreadInstanceAdder {
 		// to all target locations of each JoinCurrentThreadEdge
 		for (final IIcfgJoinTransitionThreadCurrent<IcfgLocation> jot : joinCurrentThreads) {
 			// if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
-			for (final ThreadInstance ti : threadInstanceMap2.values()) {
+			for (final ThreadInstance ti : threadInstanceMap.projectToRange()) {
 				final boolean threadIdCompatible = isThreadIdCompatible(ti.getIdVars(),
 						jot.getJoinSmtArguments().getThreadIdArguments().getTerms());
 				final boolean returnValueCompatible =
@@ -380,33 +380,36 @@ public class ThreadInstanceAdder {
 	 * Construct the {@link ThreadInstance} objects but does not yet add
 	 * {@link IProgramVar}s and error locations to the {@link IIcfg}.
 	 */
-	public static Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> constructThreadInstances(
+	public static HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> constructThreadInstances(
 			final IIcfg<? extends IcfgLocation> icfg,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
 			final boolean addThreadInUseViolationVariablesAndErrorLocation) {
-		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> result = new HashMap<>();
+		final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> result = new HashRelation<>();
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		int i = 0;
-		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : forkCurrentThreads) {
-			final String procedureName = fork.getNameOfForkedProcedure();
-			final String threadInstanceId = generateThreadInstanceId(i, procedureName);
-			final IcfgLocation errorLocation;
-			if (addThreadInUseViolationVariablesAndErrorLocation) {
-				final DebugIdentifier debugIdentifier = new ProcedureErrorDebugIdentifier(fork.getPrecedingProcedure(),
-						i, ProcedureErrorType.INUSE_VIOLATION);
-				errorLocation = new IcfgLocation(debugIdentifier, fork.getPrecedingProcedure());
-				ModelUtils.copyAnnotations(fork, errorLocation);
-				// 2018-09-28 Matthias: Questionable if this is an assert. Maybe we should
-				// introduce an InUseViolation.
-				final Check check = new Check(Spec.ASSERT);
-				check.annotate(errorLocation);
-			} else {
-				errorLocation = null;
+		final int threadInstanceMax = 3;
+		for (int j = 1; j <= threadInstanceMax; j++) {
+			for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : forkCurrentThreads) {
+				final String procedureName = fork.getNameOfForkedProcedure();
+				final String threadInstanceId = generateThreadInstanceId(i, procedureName, j, threadInstanceMax);
+				final IcfgLocation errorLocation;
+				if (addThreadInUseViolationVariablesAndErrorLocation) {
+					final DebugIdentifier debugIdentifier = new ProcedureErrorDebugIdentifier(
+							fork.getPrecedingProcedure(), i, ProcedureErrorType.INUSE_VIOLATION);
+					errorLocation = new IcfgLocation(debugIdentifier, fork.getPrecedingProcedure());
+					ModelUtils.copyAnnotations(fork, errorLocation);
+					// 2018-09-28 Matthias: Questionable if this is an assert. Maybe we should
+					// introduce an InUseViolation.
+					final Check check = new Check(Spec.ASSERT);
+					check.annotate(errorLocation);
+				} else {
+					errorLocation = null;
+				}
+				final ThreadInstance ti = constructThreadInstance(addThreadInUseViolationVariablesAndErrorLocation,
+						mgdScript, fork, procedureName, threadInstanceId, errorLocation);
+				result.addPair(fork, ti);
+				i++;
 			}
-			final ThreadInstance ti = constructThreadInstance(addThreadInUseViolationVariablesAndErrorLocation,
-					mgdScript, fork, procedureName, threadInstanceId, errorLocation);
-			result.put(fork, ti);
-			i++;
 		}
 		return result;
 	}
@@ -429,8 +432,9 @@ public class ThreadInstanceAdder {
 		return ti;
 	}
 
-	private static String generateThreadInstanceId(final int i, final String procedureName) {
-		return "Thread" + i + "_" + procedureName;
+	private static String generateThreadInstanceId(final int forkNumber, final String procedureName,
+			final int threadInstanceNumber, final int threadInstanceMax) {
+		return procedureName + "Thread" + threadInstanceNumber + "of" +  threadInstanceMax + "ForFork" + forkNumber;
 	}
 
 	private static BoogieNonOldVar constructThreadInUseVariable(final String threadInstanceId,
@@ -465,14 +469,14 @@ public class ThreadInstanceAdder {
 	}
 
 	CfgSmtToolkit constructNewToolkit(final CfgSmtToolkit cfgSmtToolkit,
-			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap,
+			final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap,
 			final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinTransitions,
 			final boolean addThreadInUseViolationVariables) {
 		final DefaultIcfgSymbolTable newSymbolTable =
 				new DefaultIcfgSymbolTable(cfgSmtToolkit.getSymbolTable(), cfgSmtToolkit.getProcedures());
 		final HashRelation<String, IProgramNonOldVar> proc2Globals =
 				new HashRelation<>(cfgSmtToolkit.getModifiableGlobalsTable().getProcToGlobals());
-		for (final ThreadInstance ti : threadInstanceMap.values()) {
+		for (final ThreadInstance ti : threadInstanceMap.projectToRange()) {
 			if (addThreadInUseViolationVariables) {
 				addVar(ti.getInUseVar(), newSymbolTable, proc2Globals, cfgSmtToolkit.getProcedures());
 			}

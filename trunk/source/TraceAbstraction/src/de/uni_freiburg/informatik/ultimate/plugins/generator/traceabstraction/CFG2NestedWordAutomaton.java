@@ -273,7 +273,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		final Map<String, IPredicate> threadInstance2inUseState = new HashMap<>();
 		if (addThreadUsageMonitors) {
 			final Collection<ThreadInstance> threadInstances = icfg.getCfgSmtToolkit().getConcurrencyInformation()
-					.getThreadInstanceMap().values();
+					.getThreadInstanceMap().projectToRange();
 			for (final ThreadInstance ti : threadInstances) {
 				IPredicate threadNotInUsePredicate;
 				{
