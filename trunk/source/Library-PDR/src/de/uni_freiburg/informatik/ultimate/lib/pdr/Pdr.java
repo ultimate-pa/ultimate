@@ -498,6 +498,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 							((IIcfgReturnTransition) predecessorTransition).getLocalVarsAssignmentOfCall();
 					final UnmodifiableTransFormula assOfCall =
 							returnTrans.getCorrespondingCall().getLocalVarsAssignment();
+
 					final String procAfterReturn = predecessorTransition.getSucceedingProcedure();
 					final Set<IProgramNonOldVar> modVars =
 							mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(procAfterReturn);
@@ -573,15 +574,20 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 						final IcfgLocation newLocation = returnTrans.getCallerProgramPoint();
 
 						final IPredicate callPred = mTruePred;
-						Term pre = mPredTrans.preReturn(toBeBlocked, callPred, assOfRet, assOfCallRet, oldVarAssign,
-								modVars);
+						Term pre = mPredTrans.preReturn(newProofObligation.getToBeBlocked(), callPred, assOfRet,
+								assOfCallRet, oldVarAssign, modVars);
 						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
 								SimplificationTechnique.SIMPLIFY_DDA,
 								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 						poPostReturn = mPredicateUnifier.getOrConstructPredicate(pre);
 
-						final ProofObligation newLocalProofObligation =
-								new ProofObligation(newProofObligation.getToBeBlocked(), newLocation, 0);
+						final ProofObligation newLocalProofObligation;
+						if (poPostReturn != mTruePred) {
+							newLocalProofObligation = new ProofObligation(poPostReturn, newLocation, 0);
+						} else {
+							newLocalProofObligation =
+									new ProofObligation(newProofObligation.getToBeBlocked(), newLocation, 0);
+						}
 
 						final List<LETTER> subTrace = getSubTrace(newLocation);
 						if (mLogger.isDebugEnabled()) {
@@ -824,7 +830,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	/**
-	 * Compute conjunction of global frames and the given local frames
+	 * Compute disjunction of global frames and the given local frames
 	 *
 	 * @param localFrames
 	 * @param localLevel
@@ -854,7 +860,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	/**
-	 * Compute conjunction of global frames and the given local frames
+	 * Compute disjunction of the global frames of a concrete program location This is used for updating return
+	 * lcoations if the corresponding procedure has been proven unsat
 	 *
 	 * @param localFrames
 	 * @param localLevel
@@ -1102,12 +1109,23 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				Collections.emptySortedMap(), oldVarsAssignmentCache, false);
 
 		List<IPredicate> postProcessedInterpolants;
+
 		try {
 			postProcessedInterpolants =
 					spt.computeWeakestPreconditionSequence(rtf, Collections.emptyList(), false, false).getPredicates();
 		} catch (final TraceInterpolationException e) {
 			throw new RuntimeException(e);
 		}
+
+		// It looks like the PDR predicates aren't used yet
+		/*
+		 * final List<IPredicate> pdrUnifiedWithPostProcessed = new ArrayList<IPredicate>(); for (int k = 0; k <
+		 * postProcessedInterpolants.size(); ++k) { final Term pdrUnifiedTerm = SmtUtils.and(mScript.getScript(),
+		 * postProcessedInterpolants.get(k).getFormula(), interpolants[k].getFormula());
+		 * pdrUnifiedWithPostProcessed.add(mPredicateUnifier.getOrConstructPredicate(pdrUnifiedTerm)); } assert
+		 * TraceCheckUtils.checkInterpolantsInductivityBackward(pdrUnifiedWithPostProcessed, nestedWord, mTruePred,
+		 * mFalsePred, Collections.emptyMap(), "BP", mCsToolkit, mLogger, mScript) : "invalid Hoare triple in BP";
+		 */
 
 		assert TraceCheckUtils.checkInterpolantsInductivityBackward(postProcessedInterpolants, nestedWord, mTruePred,
 				mFalsePred, Collections.emptyMap(), "BP", mCsToolkit, mLogger, mScript) : "invalid Hoare triple in BP";
@@ -1117,6 +1135,14 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		for (int j = 0; j < unifiedInterpolant.length; ++j) {
 			unifiedInterpolant[j] = mPredicateUnifier.getOrConstructPredicate(iter.next());
 		}
+
+		/*
+		 * final IPredicate[] unifiedInterpolant = new IPredicate[pdrUnifiedWithPostProcessed.size()]; final
+		 * Iterator<IPredicate> iter = pdrUnifiedWithPostProcessed.iterator();
+		 * 
+		 * for (int j = 0; j < unifiedInterpolant.length; ++j) { unifiedInterpolant[j] =
+		 * mPredicateUnifier.getOrConstructPredicate(iter.next()); }
+		 */
 
 		return unifiedInterpolant;
 	}

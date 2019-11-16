@@ -1,4 +1,4 @@
-// #Unsafe
+// #Safe
 /* 
  * Simple Program for Checking PDRs interprocedual capabilities
  *
@@ -20,5 +20,5 @@ modifies y;
     assume (y == x);
     call inc();
 	call inc();
-    assert (y != x + 2);
+    assert (y == x + 2);
 }
