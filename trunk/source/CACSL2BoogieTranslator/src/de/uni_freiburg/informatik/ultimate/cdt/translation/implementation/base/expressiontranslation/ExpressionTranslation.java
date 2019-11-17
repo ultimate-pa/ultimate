@@ -140,18 +140,15 @@ public abstract class ExpressionTranslation {
 	}
 
 	public final Expression constructArithmeticExpression(final ILocation loc, final int nodeOperator,
-			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
+			final Expression first, final CPrimitive type1, final Expression second, final CPrimitive type2) {
 		// TODO: Check that types coincide
 		try {
 			if (type1.getGeneralType() == CPrimitiveCategory.FLOATTYPE
 					|| type2.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 
-				final Expression first = transformBitvectorToFloat(loc, exp1, CPrimitives.FLOAT);
-				final Expression second = transformBitvectorToFloat(loc, exp2, CPrimitives.FLOAT);
-
 				return constructArithmeticFloatingPointExpression(loc, nodeOperator, first, type1, second, type2);
 			}
-			return constructArithmeticIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
+			return constructArithmeticIntegerExpression(loc, nodeOperator, first, type1, second, type2);
 		} catch (final ArithmeticException ex) {
 			String msg;
 			if (ex.getMessage().contains("divide by zero")) {
