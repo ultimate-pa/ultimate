@@ -157,11 +157,15 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 		default:
 			throw new UnsupportedOperationException("unsupportedInterpolation");
 		}
-		if (isCorrect() == LBool.UNSAT) {
+		final LBool result = isCorrect();
+		if (result == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers(), interpolation);
 			mInterpolantComputationStatus = new InterpolantComputationStatus();
-		} else {
+		} else if (result == LBool.SAT) {
 			mInterpolantComputationStatus = new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
+		} else {
+			mInterpolantComputationStatus =
+					new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, null);
 		}
 	}
 
