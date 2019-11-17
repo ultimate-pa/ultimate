@@ -307,7 +307,8 @@ public final class AutomatonFreeRefinementEngine<LETTER extends IIcfgTransition<
 			throw tce;
 		} catch (final Exception e) {
 			if (ExceptionHandlingCategory.UNKNOWN.throwException(mStrategy.getExceptionBlacklist())) {
-				throw new AssertionError(e);
+				mLogger.fatal("Exception during interpolant generation: " + e.getClass().getSimpleName());
+				throw e;
 			}
 			mLogger.fatal("Ignoring exception!", e);
 			return null;
