@@ -186,14 +186,22 @@ public class CoreUtil {
 		final String filename = file.getName();
 
 		if (PATHEXT == null) {
-			return name.equals(filename);
+			return name.equalsIgnoreCase(filename);
 		}
+
+		final String lcName = name.toLowerCase();
+		final String lcFilename = filename.toLowerCase();
+
 		for (final String ext : PATHEXT.split(File.pathSeparator)) {
-			final int idx = filename.lastIndexOf(ext);
+			final String lcExt = ext.toLowerCase();
+			if (!lcFilename.endsWith(lcExt)) {
+				continue;
+			}
+			final int idx = lcFilename.lastIndexOf(lcExt);
 			if (idx == -1) {
 				continue;
 			}
-			if (name.equals(filename.substring(0, idx))) {
+			if (lcName.equals(lcFilename.substring(0, idx))) {
 				return true;
 			}
 		}
@@ -428,7 +436,7 @@ public class CoreUtil {
 		}
 
 		final char last = original.charAt(original.length() - 1);
-		if (forceRemoveLastLinebreak || (last != '\n' && last != '\r')) {
+		if (forceRemoveLastLinebreak || last != '\n' && last != '\r') {
 			sb.replace(sb.length() - lineSeparator.length(), sb.length(), "");
 		}
 		return sb;
@@ -800,7 +808,7 @@ public class CoreUtil {
 	 *
 	 */
 	public static String alphabeticalSequence(final int i) {
-		return i < 0 ? "" : alphabeticalSequence((i / 26) - 1) + (char) (65 + i % 26);
+		return i < 0 ? "" : alphabeticalSequence(i / 26 - 1) + (char) (65 + i % 26);
 	}
 
 	public static String getStackTrace(final Throwable t) {
