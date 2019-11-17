@@ -188,23 +188,23 @@ public class Svcomp20FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 	 * "trunk/examples/settings/",
 	 */
 	private static final String[] SETTINGS_32BIT = {
-		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
+		"default/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
 //		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default-PENGUIN.epf",
-		"svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf",
+		"default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf",
 //		"automizer/DumpDifficultPathProgramsFromBoogie_svcomp-Reach-64bit-Automizer.epf"
 	};
-	
+
 	private static final String[] SETTINGS_64BIT = {
-		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
+//		"default/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
 //		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default-PENGUIN.epf",
-//		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf",
+//		"default/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf",
 //		"automizer/DumpDifficultPathProgramsFromBoogie_svcomp-Reach-64bit-Automizer.epf"
 	};
-	
 
 
-	
-	
+
+
+
 	private static final String[] TOOLCHAINS = {
 		"AutomizerC.xml",
 //		"AutomizerCInline.xml",
