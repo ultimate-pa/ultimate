@@ -30,8 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
@@ -51,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants.ExternalInterpolator;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtInterpolLogProxyWrapper;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * Wrapper that constructs SMTInterpol or an external solver.
@@ -90,7 +89,7 @@ public class SolverBuilder {
 	public static final long TIMEOUT_NONE_SMTINTERPOL = 0L;
 	public static final Logics LOGIC_Z3 = Logics.ALL;
 	public static final Logics LOGIC_CVC4_DEFAULT = Logics.AUFLIRA;
-	public static final Logics LOGIC_CVC4_BITVECTORS = Logics.AUFBV;
+	public static final Logics LOGIC_CVC4_BITVECTORS = Logics.ALL;
 	public static final Logics LOGIC_MATHSAT = Logics.ALL;
 	public static final Logics LOGIC_SMTINTERPOL = Logics.QF_AUFLIRA;
 
@@ -277,9 +276,9 @@ public class SolverBuilder {
 			throw new AssertionError("unknown solver");
 		}
 
-		final String advertising = System.lineSeparator() + "    SMT script generated on "
-				+ new SimpleDateFormat("yyyy/MM/dd").format(new Date())
-				+ " by Ultimate. http://ultimate.informatik.uni-freiburg.de/" + System.lineSeparator();
+		final String advertising = "SMT script generated on " + CoreUtil.getIsoUtcTimestamp()
+				+ " by Ultimate (https://ultimate.informatik.uni-freiburg.de/)";
+
 		script.setInfo(":source", advertising);
 		script.setInfo(":smt-lib-version", new BigDecimal("2.5"));
 		script.setInfo(":category", new QuotedObject("industrial"));
