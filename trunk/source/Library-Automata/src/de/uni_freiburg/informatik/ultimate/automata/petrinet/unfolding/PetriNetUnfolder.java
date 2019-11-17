@@ -116,9 +116,9 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			default:
 				throw new IllegalArgumentException();
 		}
-		mUnfolding = new BranchingProcess<>(mServices, operand, mOrder);
+		mUnfolding = new BranchingProcess<>(mServices, operand, mOrder, mUseCutoffChekingPossibleExtention);
 		if (mUseCutoffChekingPossibleExtention) {
-			mPossibleExtensions = new CuttOffCheckingPossibleExtensions(mUnfolding, mOrder);
+			mPossibleExtensions = new CuttOffCheckingPossibleExtensions<>(mUnfolding, mOrder);
 		} else {
 			mPossibleExtensions = new PossibleExtensions<>(mUnfolding, mOrder);
 		}

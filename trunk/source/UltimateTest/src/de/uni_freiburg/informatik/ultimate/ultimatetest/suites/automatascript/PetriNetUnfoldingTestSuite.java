@@ -74,14 +74,15 @@ public class PetriNetUnfoldingTestSuite extends UltimateTestSuite {
 			"examples/Automata/PetriNet",
 			"examples/Automata/regression/pn",
 			"examples/Automata/benchmarks/pn",
+//			"examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/subTwoHourMarathon"
 	};
 
 	private static final String[] FILE_ENDINGS = { ".ats" };
 
 	private static final String[] SETTINGS = {
-//			"AutomataScript/finitePrefix.epf",
+			"AutomataScript/finitePrefix.epf",
 //			"AutomataScript/finitePrefix2PetriNet.epf",
-			"AutomataScript/finitePrefix2PetriNetB.epf"
+//			"AutomataScript/finitePrefix2PetriNetB.epf"
 			};
 
 	private static final String[] INTERESTING_COLUMNS = {

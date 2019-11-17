@@ -119,9 +119,10 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * a "finite comprehensive prefix".
 	 */
 	private final boolean mNewFiniteComprehensivePrefixMode = false;
+	private final boolean mUseCutoffChekingPossibleExtention;
 
 	public BranchingProcess(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> net,
-			final EventOrder<LETTER, PLACE> order) throws PetriNetNot1SafeException {
+			final EventOrder<LETTER, PLACE> order, final boolean useCutoffChekingPossibleExtention) throws PetriNetNot1SafeException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNet = net;
@@ -130,6 +131,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		mConditions = new HashSet<>();
 		mEvents = new HashSet<>();
 		mCoRelation = new ConditionEventsCoRelation<>(this);
+		mUseCutoffChekingPossibleExtention = useCutoffChekingPossibleExtention;
 
 		// add a dummy event as root. its successors are the initial conditions.
 		mDummyRoot = new Event<>(this);
@@ -166,7 +168,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 			}
 		}
 		mEvents.add(event);
-		if (!event.isCutoffEvent()) {
+		if (!mUseCutoffChekingPossibleExtention && !event.isCutoffEvent()) {
 			mMarkingNonCutoffEventRelation.addPair(event.getMark().hashCode(), event);
 		}
 		for (final Condition<LETTER, PLACE> c : event.getPredecessorConditions()) {
@@ -219,7 +221,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * @see Event#checkCutOffAndSetCompanion(Event, Comparator, boolean)
 	 */
 	public boolean isCutoffEvent(final Event<LETTER, PLACE> event, final Comparator<Event<LETTER, PLACE>> order,
-			final boolean sameTransitionCutOff) {
+		final boolean sameTransitionCutOff) {
 		for (final Event<LETTER, PLACE> ev : mMarkingNonCutoffEventRelation.getImage(event.getMark().hashCode())) {
 			if (mNewFiniteComprehensivePrefixMode) {
 				if (event.checkCutOffAndSetCompanionForComprehensivePrefix(ev, order, this, sameTransitionCutOff)) {

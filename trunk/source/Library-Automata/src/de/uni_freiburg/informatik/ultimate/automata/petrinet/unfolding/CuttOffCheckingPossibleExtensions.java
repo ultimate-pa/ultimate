@@ -134,7 +134,8 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 			newEvent.setCompanion(eventWithSameMarking);
 			return true;
 		} else {
-			assert (mPe.remove(eventWithSameMarking)) : "An event which is smaller than a fresh event must be in the queue";
+			boolean eventWithSameMarkingWasInTheMainQueu = mPe.remove(eventWithSameMarking);
+			assert(eventWithSameMarkingWasInTheMainQueu);
 			mFastpathCutoffEventList.add(eventWithSameMarking);
 			eventWithSameMarking.setCompanion(newEvent);
 			return false;
