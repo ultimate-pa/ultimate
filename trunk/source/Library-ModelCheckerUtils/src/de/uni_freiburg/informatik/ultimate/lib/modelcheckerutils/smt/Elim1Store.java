@@ -54,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.Mult
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
@@ -733,10 +735,10 @@ public class Elim1Store {
 				final Term implication;
 				if (quantifier == QuantifiedFormula.EXISTS) {
 					implication = SmtUtils.or(mgdScript.getScript(),
-							SmtUtils.not(mgdScript.getScript(), indexEqualityTerm), valueEqualityTerm);
+							notWith1StepPush(mgdScript, indexEqualityTerm), valueEqualityTerm);
 				} else if (quantifier == QuantifiedFormula.FORALL) {
 					implication = SmtUtils.and(mgdScript.getScript(),
-							SmtUtils.not(mgdScript.getScript(), indexEqualityTerm), valueEqualityTerm);
+							notWith1StepPush(mgdScript, indexEqualityTerm), valueEqualityTerm);
 				} else {
 					throw new AssertionError("unknown quantifier");
 				}
@@ -744,6 +746,16 @@ public class Elim1Store {
 			}
 		}
 		return new Pair<List<Term>, List<Term>>(resultConjuncts1case, resultConjuncts2cases);
+	}
+
+	private static Term notWith1StepPush(final ManagedScript mgdScript, final Term term) {
+		final Term libraryPush = NnfTransformer.pushNot1StepInside(mgdScript.getScript(), term,
+				QuantifierHandling.CRASH);
+		if (libraryPush == null) {
+			return SmtUtils.not(mgdScript.getScript(), term);
+		} else {
+			return libraryPush;
+		}
 	}
 
 	private static boolean selectTermsWithsimilarArray(final Term term1, final Term term2) {
