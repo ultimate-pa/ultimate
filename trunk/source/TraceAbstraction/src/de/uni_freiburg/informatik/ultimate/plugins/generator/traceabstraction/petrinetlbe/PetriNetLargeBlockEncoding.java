@@ -423,24 +423,21 @@ public class PetriNetLargeBlockEncoding {
 	 *            The second transition that had been sequentially composed.
 	 */
 	private void updateSequentialCompositions(final IcfgEdge sequentialIcfgEdge, final IIcfgTransition<?> t1, final IIcfgTransition<?> t2) {
-		List<IIcfgTransition<?>> left;
-		List<IIcfgTransition<?>> right;
+		List<IIcfgTransition<?>> combined = new ArrayList<>();
+
 		if (mSequentialCompositions.containsKey(t1)) {
-			left = mSequentialCompositions.get(t1);
+			combined.addAll(mSequentialCompositions.get(t1));
 		} else {
-			left = new ArrayList<IIcfgTransition<?>>();
-			left.add(t1);
+			combined.add(t1);
 		}
 
 		if (mSequentialCompositions.containsKey(t2)) {
-			right = mSequentialCompositions.get(t2);
+			combined.addAll(mSequentialCompositions.get(t2));
 		} else {
-			right = new ArrayList<IIcfgTransition<?>>();
-			right.add(t2);
+			combined.add(t2);
 		}
 
-		left.addAll(right);
-		mSequentialCompositions.put(sequentialIcfgEdge, left);
+		mSequentialCompositions.put(sequentialIcfgEdge, combined);
 	}
 
 	/**
