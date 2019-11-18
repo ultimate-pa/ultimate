@@ -4,6 +4,7 @@ if [ ! "$1" ]; then
     exit
 fi
 
+# note this is not used at the moment, except for the check below
 mem=$((STAREXEC_MAX_MEM - 4096))
 
 if [[ $mem -le 0 ]]; then
@@ -20,7 +21,7 @@ fi
 
 outputfile=$path/output.txt
 
-java  -Dosgi.configuration.area=config/  -Xmx${mem}M -Xss4m -jar ./../Ultimate/plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar  -data "$TMPDIR" -tc ./../AutomizerCHC_wBE.xml -s ./../AutomizerCHC_Goto.epf -i "$1" &> $outputfile
+java  -Dosgi.configuration.area=config/  -Xmx54000M -Xss4m -jar ./../Ultimate/plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar  -data "$TMPDIR" -tc ./../AutomizerCHC.xml -s ./../AutomizerCHC_No_Goto.epf -i "$1" &> $outputfile
 
 RESULT_UNSAFE=`cat $outputfile | grep "CounterExampleResult"`
 RESULT_SAFE=`cat $outputfile | grep "PositiveResult"`
