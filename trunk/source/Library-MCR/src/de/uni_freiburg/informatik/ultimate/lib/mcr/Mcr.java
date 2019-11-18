@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -21,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -109,7 +111,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		queue.add(initialTrace);
 		final McrInterpolantAutomatonBuilder<LETTER> automatonBuilder =
 				new McrInterpolantAutomatonBuilder<>(mAutomataServices, mAlphabet, mEmptyStackStateFactory,
-						mProofProvider, getPrecondition(), getPostcondition());
+						mProofProvider, getPrecondition(), getPostcondition(), mPredicateUnifier);
 		IPredicate[] initialInterpolants = null;
 		while (!queue.isEmpty()) {
 			final List<LETTER> trace = queue.remove();
@@ -341,8 +343,33 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	private INestedWordAutomaton<LETTER, ?> getMcrAutomaton(final List<LETTER> trace,
 			final List<IPredicate> interpolants) throws AutomataLibraryException {
-		INestedWordAutomaton<LETTER, String> result = null;
+		final List<INestedWordAutomaton<LETTER, String>> automata = new ArrayList<>();
 		final StringFactory factory = new StringFactory();
+		// Construct automata for the MHB relation
+		for (final List<LETTER> threadActions : mThreads2SortedActions.values()) {
+			final Set<LETTER> otherActions = new HashSet<>(trace);
+			final NestedWordAutomaton<LETTER, String> nwa =
+					new NestedWordAutomaton<>(mAutomataServices, mAlphabet, factory);
+			otherActions.removeAll(threadActions);
+			final List<String> states =
+					IntStream.rangeClosed(0, threadActions.size()).mapToObj(x -> "q" + x).collect(Collectors.toList());
+			final String initial = states.get(0);
+			nwa.addState(true, false, initial);
+			for (final LETTER otherAction : otherActions) {
+				nwa.addInternalTransition(initial, otherAction, initial);
+			}
+			for (int i = 0; i < threadActions.size(); i++) {
+				final String currentState = states.get(i);
+				final String nextState = states.get(i + 1);
+				nwa.addState(false, i + 1 == threadActions.size(), nextState);
+				nwa.addInternalTransition(currentState, threadActions.get(i), nextState);
+				for (final LETTER otherAction : otherActions) {
+					nwa.addInternalTransition(nextState, otherAction, nextState);
+				}
+			}
+			automata.add(nwa);
+		}
+		// Construct automata for each read to be preceded by the specific (or a "similar") write
 		for (final LETTER read : trace) {
 			final Map<IProgramVar, LETTER> previousWrites = mPreviousWrite.get(read);
 			if (previousWrites == null) {
@@ -405,14 +432,22 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 						}
 					}
 				}
-				if (result == null) {
-					result = nwa;
-				} else {
-					// TODO: Is there a more efficient intersection with multiple automata?
-					final Intersect<LETTER, String> intersect =
-							new Intersect<>(mAutomataServices, factory, result, nwa);
-					result = intersect.getResult();
-				}
+				automata.add(nwa);
+			}
+		}
+		return intersect(automata, factory);
+	}
+
+	private <STATE> INestedWordAutomaton<LETTER, STATE> intersect(
+			final Collection<INestedWordAutomaton<LETTER, STATE>> automata,
+			final IIntersectionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		INestedWordAutomaton<LETTER, STATE> result = null;
+		for (final INestedWordAutomaton<LETTER, STATE> a : automata) {
+			if (result == null) {
+				result = a;
+			} else {
+				final Intersect<LETTER, STATE> intersect = new Intersect<>(mAutomataServices, stateFactory, result, a);
+				result = intersect.getResult();
 			}
 		}
 		return result;

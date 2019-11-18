@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.lib.mcr.Mcr.IProofProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -25,13 +26,15 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final IProofProvider<LETTER> mProofProvider;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
+	private final IPredicateUnifier mPredicateUnifier;
 
 	public McrInterpolantAutomatonBuilder(final AutomataLibraryServices services, final VpAlphabet<LETTER> vpAlphabet,
 			final IEmptyStackStateFactory<IPredicate> emptyStateFactory, final IProofProvider<LETTER> proofProvider,
-			final IPredicate precondition, final IPredicate postcondition) {
+			final IPredicate precondition, final IPredicate postcondition, final IPredicateUnifier predicateUnifier) {
 		mProofProvider = proofProvider;
-		mPrecondition = precondition;
-		mPostcondition = postcondition;
+		mPredicateUnifier = predicateUnifier;
+		mPrecondition = mPredicateUnifier.getOrConstructPredicate(precondition);
+		mPostcondition = mPredicateUnifier.getOrConstructPredicate(postcondition);
 		mResult = new NestedWordAutomaton<>(services, vpAlphabet, emptyStateFactory);
 		mResult.addState(true, false, precondition);
 		mResult.addState(false, true, postcondition);
@@ -52,7 +55,7 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		STATE currentState = initialState;
 		for (int i = 0; i < initialInterpolants.size(); i++) {
 			currentState = getSuccessor(currentState, initialTrace.get(i), mcrAutomaton);
-			stateMap.put(currentState, initialInterpolants.get(i));
+			stateMap.put(currentState, mPredicateUnifier.getOrConstructPredicate(initialInterpolants.get(i)));
 		}
 		final LinkedList<List<LETTER>> traceQueue = new LinkedList<>();
 		final LinkedList<List<STATE>> stateQueue = new LinkedList<>();
@@ -138,7 +141,8 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 					if (result.getFirst() == LBool.UNSAT) {
 						final List<IPredicate> predicates = result.getSecond().getPredicates();
 						for (int j = 0; j < predicates.size(); j++) {
-							stateMap.put(states.get(start + j + 1), predicates.get(j));
+							stateMap.put(states.get(start + j + 1),
+									mPredicateUnifier.getOrConstructPredicate(predicates.get(j)));
 						}
 					} else {
 						// We found a feasible trace, somehow remove it from the automaton
