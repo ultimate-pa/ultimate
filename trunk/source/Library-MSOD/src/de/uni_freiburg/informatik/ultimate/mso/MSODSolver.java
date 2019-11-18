@@ -213,7 +213,7 @@ public final class MSODSolver {
 		mLogger.info("Construct ∃ φ: " + term);
 
 		// Get free variables and constants.
-		final List<Term> freeVariables = Arrays.asList(term.getFreeVars());
+		final List<Term> freeVariables = new ArrayList<>(Arrays.asList(term.getFreeVars()));
 		freeVariables.addAll((new ConstantFinder()).findConstants(term, true));
 
 		final Set<MSODAlphabetSymbol> reducedAlphabet = MSODUtils.createAlphabet(freeVariables.toArray(new Term[0]));
