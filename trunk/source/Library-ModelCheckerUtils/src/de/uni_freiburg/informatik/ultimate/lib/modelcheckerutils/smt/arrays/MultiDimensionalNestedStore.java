@@ -109,7 +109,13 @@ public class MultiDimensionalNestedStore {
 //		return s;
 //	}
 
-	public MultiDimensionalStore getInnermost(final int k) {
+	/**
+	 * @deprecated 2019-11-18 Unused and buggy: does not work correctly if term
+	 *             does not have form where every n-dimensional store occurs
+	 *             explicitly.
+	 */
+	@Deprecated
+	private MultiDimensionalStore getInnermost(final int k) {
 		if (k < 1) {
 			throw new IllegalArgumentException("must extract at least one MultiDimensionalStore");
 		}
@@ -118,6 +124,15 @@ public class MultiDimensionalNestedStore {
 		}
 		MultiDimensionalStore mds = MultiDimensionalStore.convert(mTerm);
 		for (int i = 0; i < mIndices.size() - k; i++) {
+			mds = MultiDimensionalStore.convert(mds.getArray());
+		}
+		assert mArray == mds.getArray();
+		return mds;
+	}
+	
+	public MultiDimensionalStore getInnermost() {
+		MultiDimensionalStore mds = MultiDimensionalStore.convert(mTerm);
+		while (mds.getArray() != mArray) {
 			mds = MultiDimensionalStore.convert(mds.getArray());
 		}
 		assert mArray == mds.getArray();
@@ -218,5 +233,6 @@ public class MultiDimensionalNestedStore {
 		return new MultiDimensionalNestedStore(script, array,
 				ArrayIndex.appendEntriesAtBeginning(mIndices, indexEntries), mValues);
 	}
+
 
 }

@@ -274,7 +274,7 @@ public class ArrayOccurrenceAnalysis {
 								throw new AssertionError("downgrade");
 							}
 							nas = new MultiDimensionalNestedStore(MultiDimensionalStore
-									.convert(nas.getInnermost(1).getStoreTerm(), mDimensionUpperLimit));
+									.convert(nas.getInnermost().getStoreTerm(), mDimensionUpperLimit));
 							assert nas.getArray() == mWantedArray;
 						}
 						assert nas.getArray() == mWantedArray;
