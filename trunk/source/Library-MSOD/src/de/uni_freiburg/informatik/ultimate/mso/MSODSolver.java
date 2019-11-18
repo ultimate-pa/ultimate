@@ -220,10 +220,10 @@ public final class MSODSolver {
 		result = MSODAutomataOperations.reduceOrExtend(mAutomataLibrarayServices, result, reducedAlphabet, false);
 
 		// Create an alphabet where all free variables are set to zero.
-		final Set<MSODAlphabetSymbol> zeros = MSODUtils.allMatchesAlphabet(result.getAlphabet(), false);
-		mLogger.warn("zeros: " + zeros);
+		final MSODAlphabetSymbol zero = new MSODAlphabetSymbol(freeVariables, false);
+		mLogger.warn("zero: " + zero);
 
-		result = MSODAutomataOperations.project(result, zeros);
+		result = MSODAutomataOperations.project(result, zero);
 
 		return result;
 	}

@@ -28,11 +28,11 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
-import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -74,20 +74,11 @@ public class MSODAlphabetSymbol {
 	}
 
 	/**
-	 * Constructor for alphabet symbol that contains multiple variables.
-	 *
-	 * @throws InvalidParameterException
-	 *             if lengths of terms and values differ.
+	 * Constructor for alphabet symbol that contains multiple variables matching the given value.
 	 */
-	public MSODAlphabetSymbol(final Term[] terms, final boolean[] values) {
-		if (terms.length != values.length) {
-			throw new InvalidParameterException("Input terms, values of different length.");
-		}
-
+	public MSODAlphabetSymbol(final List<Term> terms, final boolean value) {
 		mMap = new HashMap<>();
-		for (int i = 0; i < terms.length; i++) {
-			add(terms[i], values[i]);
-		}
+		terms.forEach(e -> add(e, value));
 	}
 
 	/**

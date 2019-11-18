@@ -186,20 +186,18 @@ public final class MSODUtils {
 	}
 
 	/**
-	 * Returns the predecessor states from which the given state is directly reachable with the given symbols in the
+	 * Returns the predecessor states from which the given state is directly reachable with the given symbol in the
 	 * {@link INestedWordAutomaton}.
 	 */
 	public static Set<String> hierarchicalPredecessorsIncoming(
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final String state,
-			final Set<MSODAlphabetSymbol> symbols) {
+			final MSODAlphabetSymbol symbol) {
 
 		final Set<String> result = new HashSet<>();
-		for (final MSODAlphabetSymbol symbol : symbols) {
-			for (final IncomingInternalTransition<MSODAlphabetSymbol, String> transition : automaton
-					.internalPredecessors(state, symbol)) {
+		for (final IncomingInternalTransition<MSODAlphabetSymbol, String> transition : automaton
+				.internalPredecessors(state, symbol)) {
 
-				result.add(transition.getPred());
-			}
+			result.add(transition.getPred());
 		}
 
 		return result;

@@ -104,8 +104,8 @@ public abstract class MSODAutomataOperations {
 	/**
 	 * Returns a {@link NestedWordAutomaton} that
 	 */
-	public static INestedWordAutomaton<MSODAlphabetSymbol, String> project(
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<MSODAlphabetSymbol> symbols) {
+	public static INestedWordAutomaton<MSODAlphabetSymbol, String>
+			project(final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final MSODAlphabetSymbol symbol) {
 
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> result =
 				(NestedWordAutomaton<MSODAlphabetSymbol, String>) automaton;
@@ -118,7 +118,7 @@ public abstract class MSODAutomataOperations {
 		while (!queue.isEmpty()) {
 			final String state = queue.pop();
 
-			for (final String pred : MSODUtils.hierarchicalPredecessorsIncoming(result, state, symbols)) {
+			for (final String pred : MSODUtils.hierarchicalPredecessorsIncoming(result, state, symbol)) {
 
 				if (!visited.add(state)) {
 					continue;
