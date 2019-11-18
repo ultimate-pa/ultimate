@@ -117,9 +117,11 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 				}else {
 					mOccuringFunctionNames.put(functionName, 1);
 				}
-				mLogger.warn("######################## START #######################");
-				mLogger.warn("FUNCTION: " + functionName);
-				mLogger.warn("TERM: " + term.toStringDirect());
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("######################## TERM CLASSIFIER #######################");
+					mLogger.debug("FUNCTION: " + functionName);
+					mLogger.debug("TERM: " + term.toStringDirect());
+				}
 				final Term[] termParameters = term.getParameters();
 				for (int i = 0; i < (termParameters.length - 1); i++) {
 					final Term term1 = termParameters[i];
@@ -127,13 +129,15 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 					if ((isApplicationTermWithArityZero(term1) || (term1 instanceof TermVariable)) && (isApplicationTermWithArityZero(term2) || (term2 instanceof TermVariable) )) {
 						final Term rep1 = mVariableEquivalenceClasses.findAndConstructEquivalenceClassIfNeeded(term1);
 						final Term rep2 = mVariableEquivalenceClasses.findAndConstructEquivalenceClassIfNeeded(term2);
-						mLogger.warn("REP1: " + rep1.toStringDirect());
-						mLogger.warn("REP2: " + rep2.toStringDirect());
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug("####### Unionfind Representatives ########");
+							mLogger.debug("REP1: " + rep1.toStringDirect());
+							mLogger.debug("REP2: " + rep2.toStringDirect());
+							mLogger.debug("##########################################");
+						}
 						mVariableEquivalenceClasses.union(rep1, rep2);
 					}
 				}
-				mLogger.warn("######################### END #########################");
-
 				mNumberOfFunctions += 1;
 			}else {
 				mNumberOfVariables += 1;
@@ -211,10 +215,12 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		mAssertionStack.add(term.toString());
 		mDAGSize += new DAGSize().size(term);
 		mTreeSize += new DAGSize().treesize(term);
-		mLogger.warn("FULL TERM: " + term.toStringDirect());
 		run(new MyWalker(term));
 		mTermsInWhichWeAlreadyDescended = null;
-		mLogger.warn("UNION FIND: "  + mVariableEquivalenceClasses.toString());
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("FULL TERM: " + term.toStringDirect());
+			mLogger.debug("UNION FIND: "  + mVariableEquivalenceClasses.toString());
+		}
 	}
 
 	public int getDAGSize() {

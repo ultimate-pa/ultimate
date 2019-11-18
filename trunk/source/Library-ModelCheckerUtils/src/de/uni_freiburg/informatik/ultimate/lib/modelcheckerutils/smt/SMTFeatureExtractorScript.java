@@ -62,7 +62,6 @@ public class SMTFeatureExtractorScript extends WrapperScript {
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
 		// TODO Auto-generated method stub
-		mLogger.warn("ASSERT: " + term.toStringDirect());
 		mCurrentAssertionStack.add(term);
 		return super.assertTerm(term);
 	}
@@ -90,7 +89,6 @@ public class SMTFeatureExtractorScript extends WrapperScript {
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
-		mLogger.warn("CHECK SAT");
 		final double start = System.nanoTime();
 		final LBool sat = super.mScript.checkSat();
 		final double analysisTime = (System.nanoTime() - start) / 1000;

@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -44,21 +45,21 @@ public class SMTFeatureExtractor {
 
 	private final ILogger mLogger;
 	private final List<SMTFeature> mFeatures;
-	private final String mDumpPath;
-	private final String mFilename;
+	private final Path mDumpPath;
+	private final Path mFilename;
 
 	public SMTFeatureExtractor(final ILogger logger, final String dump_path) {
 		mLogger = logger;
 		mFeatures = new ArrayList<>();
-		mDumpPath = dump_path;
+		mDumpPath = new File(dump_path).toPath();
+
 		final String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("uuuu-MM-dd"));
-		mFilename = mDumpPath + timestamp + "-smtfeatures.csv";
+		mFilename = mDumpPath.resolve(timestamp + "-smtfeatures.csv");
 		createDumpFile();
 	}
 
 	public void extractFeature(final List<Term> assertions, final double time, final String result, final String solvername)
 			throws IllegalAccessException, IOException {
-		mLogger.warn("Extracting feature..");
 		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
 		for (final Term term : assertions) {
 			tc.checkTerm(term);
@@ -88,12 +89,17 @@ public class SMTFeatureExtractor {
 	}
 
 	public void dumpFeature(final SMTFeature feature) throws IllegalAccessException, IOException {
-		mLogger.warn("Writing to file:" + mFilename);
-		mLogger.warn("FEATURE: " + feature);
-		try (FileWriter fw = new FileWriter(mFilename, true);
+
+		try (FileWriter fw = new FileWriter(mFilename.toString(), true);
 				BufferedWriter bw = new BufferedWriter(fw);
 				PrintWriter out = new PrintWriter(bw)) {
-			mLogger.warn(SMTFeature.getCsvHeader(";"));
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("################## SMT DUMP #####################");
+				mLogger.debug("Writing to file:" + mFilename);
+				mLogger.debug(SMTFeature.getCsvHeader(";"));
+				mLogger.debug("FEATURE: " + feature);
+				mLogger.debug("#################################################");
+			}
 			out.println(feature.toCsv(";"));
 		} catch (final IOException e) {
 			throw new IOException(e);
@@ -101,11 +107,11 @@ public class SMTFeatureExtractor {
 	}
 
 	private void createDumpFile() {
-		final File f = new File(mFilename);
+		final File f = new File(mFilename.toString());
 		if (!f.exists()) {
 			try {
 				f.createNewFile();
-				try (FileWriter fw = new FileWriter(mFilename, true);
+				try (FileWriter fw = new FileWriter(mFilename.toString(), true);
 						BufferedWriter bw = new BufferedWriter(fw);
 						PrintWriter out = new PrintWriter(bw)) {
 					final String header = SMTFeature.getCsvHeader(";");
@@ -117,8 +123,6 @@ public class SMTFeatureExtractor {
 			} catch (final IOException e) {
 				mLogger.error(e);
 			}
-		} else {
-			mLogger.warn("SMT feature dump-file already exists.");
 		}
 	}
 
