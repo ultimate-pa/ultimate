@@ -225,7 +225,7 @@ public class AbstractSemanticIndependenceRelation implements IIndependenceRelati
 			transFormula2 = compose(guard, transFormula2);
 		}
 
-		final LBool result = TransFormulaUtils.checkImplication(transFormula2, transFormula1, mManagedScript);
+		final LBool result = TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);
 		return result == LBool.UNSAT;
 	}
 
