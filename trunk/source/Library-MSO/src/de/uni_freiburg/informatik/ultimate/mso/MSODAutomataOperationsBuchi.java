@@ -62,10 +62,10 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 
 		// TODO: Remove if {@link BuchiComplementFKV} supports automaton with empty set of states.
 		if (automaton.getStates().isEmpty()) {
-			new Complement<>(services, new MSODStringFactory(), automaton).getResult();
+			result = new Complement<>(services, new MSODStringFactory(), automaton).getResult();
 		}
 		if (!automaton.getStates().isEmpty()) {
-			new BuchiComplementFKV<>(services, new MSODStringFactory(), automaton).getResult();
+			result = new BuchiComplementFKV<>(services, new MSODStringFactory(), automaton).getResult();
 		}
 
 		result = fixIntVariables(services, result);
