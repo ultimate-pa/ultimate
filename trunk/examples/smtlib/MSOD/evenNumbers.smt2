@@ -11,12 +11,10 @@
 (declare-fun I () SetOfInt)
 
 ; I contains all even numbers including 0.
-;(assert (< x 0))
-(assert (not (< x 0)))
-;(assert (= x 0) )
-;(assert (element x I))
-;(assert (forall ((y Int)) (=> (element y I) (element (+ y 2) I))))
-;(assert (forall ((z Int)) (=> (element z I) (not (element (+ z 1) I)))))
+(assert (= x 0) )
+(assert (element x I))
+(assert (forall ((y Int)) (=> (element y I) (element (+ y 2) I))))
+(assert (forall ((z Int)) (=> (element z I) (not (element (+ z 1) I)))))
 
 (check-sat)
-(get-value (x))
+(get-value (x I))
