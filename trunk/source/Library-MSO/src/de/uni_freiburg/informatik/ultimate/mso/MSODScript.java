@@ -36,9 +36,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -110,14 +107,14 @@ public class MSODScript extends NoopScript {
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		mLogger.info("INPUT: " + mAssertionTerm);
-		LBool result = LBool.UNKNOWN;
+		final LBool result = LBool.UNKNOWN;
 
 		try {
 
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton =
 					mMSODSolver.traversePostOrder(mAssertionTerm);
 
-			mLogger.info(automatonToString(automaton, Format.ATS));
+			mLogger.info(MSODUtils.automatonToString(mAutomataLibrarayServices, automaton));
 			mModel = mMSODSolver.getResult(this, mAutomataLibrarayServices, automaton);
 
 			if (mModel == null) {
@@ -171,15 +168,5 @@ public class MSODScript extends NoopScript {
 	@Override
 	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
 		throw new UnsupportedOperationException();
-	}
-
-	/**
-	 * Returns a string representation of the given automaton. (only for debugging)
-	 */
-	public String automatonToString(final IAutomaton<?, ?> automaton, final Format format) {
-		AutomatonDefinitionPrinter<?, ?> printer;
-		printer = new AutomatonDefinitionPrinter<>(mAutomataLibrarayServices, "", Format.ATS, automaton);
-
-		return printer.getDefinitionAsString();
 	}
 }

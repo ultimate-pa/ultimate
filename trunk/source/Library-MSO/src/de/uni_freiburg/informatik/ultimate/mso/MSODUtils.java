@@ -31,6 +31,10 @@ package de.uni_freiburg.informatik.ultimate.mso;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
@@ -199,5 +203,15 @@ public final class MSODUtils {
 		}
 
 		return result;
+	}
+
+	/**
+	 * Returns a string representation of the given automaton.
+	 */
+	public static String automatonToString(final AutomataLibraryServices services, final IAutomaton<?, ?> automaton) {
+		final AutomatonDefinitionPrinter<?, ?> printer =
+				new AutomatonDefinitionPrinter<>(services, "", Format.ATS, automaton);
+
+		return printer.getDefinitionAsString();
 	}
 }

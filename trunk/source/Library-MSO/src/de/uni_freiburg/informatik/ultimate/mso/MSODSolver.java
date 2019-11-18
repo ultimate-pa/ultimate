@@ -215,16 +215,11 @@ public final class MSODSolver {
 		// Get quantified variables.
 		final Term[] quantifiedVariables = term.getVariables();
 
-		final Set<Term> freeVars = new HashSet<>(result.getAlphabet().iterator().next().getMap().keySet());
+		// Get free variables and constants.
+		final List<Term> freeVariables = Arrays.asList(term.getFreeVars());
+		freeVariables.addAll((new ConstantFinder()).findConstants(term, true));
 
-		freeVars.forEach(e -> mLogger.warn("vars: " + e));
-		Arrays.stream(term.getVariables()).forEach(e -> mLogger.warn("quantified vars: " + e));
-		Arrays.stream(term.getFreeVars()).forEach(e -> mLogger.warn("free vars: " + e));
-		(new ConstantFinder()).findConstants(term, true).forEach(e -> mLogger.warn("const: " + e));
-
-		freeVars.removeAll(Arrays.asList(quantifiedVariables));
-
-		final Set<MSODAlphabetSymbol> reducedAlphabet = MSODUtils.createAlphabet(freeVars.toArray(new Term[0]));
+		final Set<MSODAlphabetSymbol> reducedAlphabet = MSODUtils.createAlphabet(freeVariables.toArray(new Term[0]));
 		result = MSODAutomataOperations.reduceOrExtend(mAutomataLibrarayServices, result, reducedAlphabet, false);
 
 		// Create an alphabet where all free variables are set to zero.

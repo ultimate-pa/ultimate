@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 
 /**
  * This class provides methods to manipulate Büchi automata that correspond to MSOD-Formulas.
@@ -57,8 +58,15 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 	public INestedWordAutomaton<MSODAlphabetSymbol, String> complement(final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 
-		INestedWordAutomaton<MSODAlphabetSymbol, String> result =
-				new BuchiComplementFKV<>(services, new MSODStringFactory(), automaton).getResult();
+		INestedWordAutomaton<MSODAlphabetSymbol, String> result = null;
+
+		// TODO: Remove if {@link BuchiComplementFKV} supports automaton with empty set of states.
+		if (automaton.getStates().isEmpty()) {
+			new Complement<>(services, new MSODStringFactory(), automaton).getResult();
+		}
+		if (!automaton.getStates().isEmpty()) {
+			new BuchiComplementFKV<>(services, new MSODStringFactory(), automaton).getResult();
+		}
 
 		result = fixIntVariables(services, result);
 
