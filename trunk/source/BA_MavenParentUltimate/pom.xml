@@ -532,7 +532,7 @@
         <module>../Library-log4j</module>
         <module>../Library-MCR</module>
         <module>../Library-ModelCheckerUtils</module>
-        <module>../Library-MSO</module>
+        <module>../Library-MSOD</module>
         <module>../Library-ojAlgo</module>
         <module>../Library-PathExpressions</module>
         <module>../Library-PDR</module>
@@ -569,6 +569,7 @@
         <module>../WitnessParser</module>
         <module>../WitnessPrinter</module>
         <module>../UltimateEliminatorController</module>
+        
 	</modules>
 
 	<profiles>
