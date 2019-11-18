@@ -80,7 +80,7 @@ public class IpTcStrategyModuleSmtInterpolCraig<LETTER extends IIcfgTransition<?
 				mArrayInterpolation ? SolverMode.Internal_SMTInterpol : SolverMode.Internal_SMTInterpol_NoArrayInterpol;
 
 		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier).setSolverMode(solverMode)
-				.setSmtInterpolTimeout(timeout);
+				.setSmtInterpolTimeout(timeout).setSolverLogics(SolverBuilder.LOGIC_SMTINTERPOL);
 		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, getSolverName());
 		return createExternalManagedScript(solver);
 	}
