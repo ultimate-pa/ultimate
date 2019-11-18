@@ -107,7 +107,7 @@ public class MSODScript extends NoopScript {
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		mLogger.info("INPUT: " + mAssertionTerm);
-		final LBool result = LBool.UNKNOWN;
+		LBool result = LBool.UNKNOWN;
 
 		try {
 
