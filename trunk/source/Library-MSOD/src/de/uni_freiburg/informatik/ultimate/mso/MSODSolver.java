@@ -3,26 +3,26 @@
  * Copyright (C) 2019 Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
- * This file is part of the ULTIMATE MSO Library package.
+ * This file is part of the ULTIMATE MSOD Library package.
  *
- * The ULTIMATE MSO Library package library is free software: you can redistribute it and/or modify
+ * The ULTIMATE MSOD Library package library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE MSO Library package library is distributed in the hope that it will be useful,
+ * The ULTIMATE MSOD Library package library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE MSO Library package. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE MSOD Library package. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE MSO Library package, or any covered work, by linking
+ * If you modify the ULTIMATE MSOD Library package, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE MSO Library package library grant you additional permission
+ * licensors of the ULTIMATE MSOD Library package library grant you additional permission
  * to convey the resulting work.
  */
 
@@ -211,9 +211,6 @@ public final class MSODSolver {
 
 		mLogger.info(automatonToString(result, Format.ATS));
 		mLogger.info("Construct ∃ φ: " + term);
-
-		// Get quantified variables.
-		final Term[] quantifiedVariables = term.getVariables();
 
 		// Get free variables and constants.
 		final List<Term> freeVariables = Arrays.asList(term.getFreeVars());
@@ -517,8 +514,9 @@ public final class MSODSolver {
 	 * @throws AutomataLibraryException
 	 *             if {@link IsEmpty} fails
 	 */
-	public NestedWord<MSODAlphabetSymbol> getWordWeak(final Script script, final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
+	public static NestedWord<MSODAlphabetSymbol> getWordWeak(final Script script,
+			final AutomataLibraryServices services, final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
+			throws AutomataLibraryException {
 
 		NestedWord<MSODAlphabetSymbol> result = null;
 
@@ -538,8 +536,9 @@ public final class MSODSolver {
 	 * @throws AutomataLibraryException
 	 *             if {@link BuchiIsEmpty} fails
 	 */
-	public NestedLassoWord<MSODAlphabetSymbol> getWordBuchi(final Script script, final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
+	public static NestedLassoWord<MSODAlphabetSymbol> getWordBuchi(final Script script,
+			final AutomataLibraryServices services, final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
+			throws AutomataLibraryException {
 
 		NestedLassoWord<MSODAlphabetSymbol> result = null;
 
@@ -557,8 +556,8 @@ public final class MSODSolver {
 	 * Returns a pair of NestedWords. First value contains only the positive part, second value only the negative part
 	 * of the given NestedWord.
 	 */
-	public Pair<NestedWord<MSODAlphabetSymbol>, NestedWord<MSODAlphabetSymbol>> splitWordWeak(final Script script,
-			final NestedWord<MSODAlphabetSymbol> word) {
+	public static Pair<NestedWord<MSODAlphabetSymbol>, NestedWord<MSODAlphabetSymbol>>
+			splitWordWeak(final Script script, final NestedWord<MSODAlphabetSymbol> word) {
 		NestedWord<MSODAlphabetSymbol> wordPos = new NestedWord<>();
 		NestedWord<MSODAlphabetSymbol> wordNeg = new NestedWord<>();
 
@@ -585,7 +584,7 @@ public final class MSODSolver {
 	 * Returns a pair of NestedLassoWords. First value contains only the positive part, second value only the negative
 	 * part of the given NestedLassoWord.
 	 */
-	public Pair<NestedLassoWord<MSODAlphabetSymbol>, NestedLassoWord<MSODAlphabetSymbol>>
+	public static Pair<NestedLassoWord<MSODAlphabetSymbol>, NestedLassoWord<MSODAlphabetSymbol>>
 			splitWordBuchi(final Script script, NestedLassoWord<MSODAlphabetSymbol> word) {
 		NestedLassoWord<MSODAlphabetSymbol> lassoWordPos = new NestedLassoWord<>(null, null);
 		NestedLassoWord<MSODAlphabetSymbol> lassoWordNeg = new NestedLassoWord<>(null, null);
@@ -639,7 +638,7 @@ public final class MSODSolver {
 	/**
 	 * Returns a Map containing terms and the set of numbers encoded in the stem.
 	 */
-	public Map<Term, Set<BigInteger>> extractStemNumbers(final Script script,
+	public static Map<Term, Set<BigInteger>> extractStemNumbers(final Script script,
 			final Pair<NestedWord<MSODAlphabetSymbol>, NestedWord<MSODAlphabetSymbol>> pair, final Set<Term> terms) {
 
 		final Map<Term, Set<BigInteger>> result = new HashMap<>();
@@ -674,7 +673,7 @@ public final class MSODSolver {
 	/**
 	 * Returns a Map containing terms and the disjunction corresponding to the numbers encoded in the given stem.
 	 */
-	public Map<Term, Term> constructStemTerm(final Script script, final Map<Term, Set<BigInteger>> stemNumbers) {
+	public static Map<Term, Term> constructStemTerm(final Script script, final Map<Term, Set<BigInteger>> stemNumbers) {
 		final Map<Term, Term> result = new HashMap<>();
 
 		for (final Entry<Term, Set<BigInteger>> entry : stemNumbers.entrySet()) {
@@ -735,7 +734,7 @@ public final class MSODSolver {
 	/**
 	 * Returns a Map containing terms and the disjunction corresponding to the numbers encoded in the given loop.
 	 */
-	public Map<Term, Term> constructLoopTerm(final Script script, final NestedWord<MSODAlphabetSymbol> loop,
+	public static Map<Term, Term> constructLoopTerm(final Script script, final NestedWord<MSODAlphabetSymbol> loop,
 			final Set<Term> terms, final int stemNumber) {
 		final Map<Term, Term> result = new HashMap<>();
 		final BigInteger loopLength = BigInteger.valueOf(loop.length());
@@ -847,7 +846,7 @@ public final class MSODSolver {
 		}
 		// Input Formula defined only for natural numbers, no negative word exists.
 		else {
-			pair = new Pair<>(word, new NestedWord());
+			pair = new Pair<>(word, new NestedWord<>());
 		}
 
 		// Extract the numbers encoded in the stems.
@@ -895,7 +894,7 @@ public final class MSODSolver {
 		}
 		// Input Formula defined only for natural numbers, no negative word exists.
 		else {
-			pair = new Pair<>(word, new NestedLassoWord(new NestedWord(), new NestedWord()));
+			pair = new Pair<>(word, new NestedLassoWord<>(new NestedWord<>(), new NestedWord<>()));
 		}
 
 		stemPair = new Pair<>(pair.getFirst().getStem(), pair.getSecond().getStem());
