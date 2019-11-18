@@ -199,51 +199,57 @@ public class SolverBuilder {
 		}
 
 		final Script script = SolverBuilder.buildScript(services, solverSettings);
-		final Logics logicForExternalSolver = solverSettings.getExternalSolverLogics();
+		final Logics logic = solverSettings.getExternalSolverLogics();
 
 		switch (solverSettings.getSolverMode()) {
 		case External_DefaultMode:
-			if (logicForExternalSolver != null) {
-				script.setLogic(logicForExternalSolver);
+			if (logic != null) {
+				script.setLogic(logic);
 			}
 			break;
 		case External_ModelsMode:
 			script.setOption(":produce-models", true);
-			if (logicForExternalSolver != null) {
-				script.setLogic(logicForExternalSolver);
+			if (logic != null) {
+				script.setLogic(logic);
 			}
 			break;
 		case External_ModelsAndUnsatCoreMode:
 			script.setOption(":produce-models", true);
 			script.setOption(":produce-unsat-cores", true);
-			if (logicForExternalSolver != null) {
-				script.setLogic(logicForExternalSolver);
+			if (logic != null) {
+				script.setLogic(logic);
 			}
 			break;
 		case External_PrincessInterpolationMode:
 			script.setOption(":produce-models", true);
 			script.setOption(":produce-interpolants", true);
-			script.setLogic(logicForExternalSolver);
+			if (logic != null) {
+				script.setLogic(logic);
+			}
 			break;
 		case External_SMTInterpolInterpolationMode:
 			script.setOption(":produce-models", true);
 			script.setOption(":produce-interpolants", true);
 			script.setOption(":array-interpolation", true);
-			script.setLogic(logicForExternalSolver);
+			if (logic != null) {
+				script.setLogic(logic);
+			}
 			break;
 		case External_Z3InterpolationMode:
 			script.setOption(":produce-models", true);
 			script.setOption(":produce-interpolants", true);
-			script.setLogic(logicForExternalSolver);
-			final Sort indexSort;
-			if (logicForExternalSolver.isArray()) {
-				// add array-ext function
-				indexSort = SmtSortUtils.getIntSort(script);
-				final Sort intSort = SmtSortUtils.getIntSort(script);
-				final Sort intArraySort = SmtSortUtils.getArraySort(script, indexSort, intSort);
-				script.declareFun("array-ext", new Sort[] { intArraySort, intArraySort }, indexSort);
-			} else if (logicForExternalSolver.isBitVector()) {
-				// do nothing. several have to be added here
+			if (logic != null) {
+				script.setLogic(logic);
+				final Sort indexSort;
+				if (logic.isArray()) {
+					// add array-ext function
+					indexSort = SmtSortUtils.getIntSort(script);
+					final Sort intSort = SmtSortUtils.getIntSort(script);
+					final Sort intArraySort = SmtSortUtils.getArraySort(script, indexSort, intSort);
+					script.declareFun("array-ext", new Sort[] { intArraySort, intArraySort }, indexSort);
+				} else if (logic.isBitVector()) {
+					// do nothing. several have to be added here
+				}
 			}
 			break;
 		case Internal_SMTInterpol:
@@ -257,7 +263,11 @@ public class SolverBuilder {
 			// mScript.setOption(":proof-transformation", "LURPI");
 			// mScript.setOption(":proof-transformation", "RPILU");
 			// mScript.setOption(":verbosity", 0);
-			script.setLogic(LOGIC_SMTINTERPOL.toString());
+			if (logic != null) {
+				script.setLogic(logic);
+			} else {
+				script.setLogic(LOGIC_SMTINTERPOL.toString());
+			}
 			break;
 		case Internal_SMTInterpol_NoArrayInterpol:
 			script.setOption(":produce-models", true);
@@ -270,7 +280,11 @@ public class SolverBuilder {
 			// mScript.setOption(":proof-transformation", "LURPI");
 			// mScript.setOption(":proof-transformation", "RPILU");
 			// mScript.setOption(":verbosity", 0);
-			script.setLogic(LOGIC_SMTINTERPOL.toString());
+			if (logic != null) {
+				script.setLogic(logic);
+			} else {
+				script.setLogic(LOGIC_SMTINTERPOL.toString());
+			}
 			break;
 		default:
 			throw new AssertionError("unknown solver");
@@ -501,7 +515,7 @@ public class SolverBuilder {
 					mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath);
 		}
 
-		public SolverSettings setExternalSolverLogics(final Logics logics) {
+		public SolverSettings setSolverLogics(final Logics logics) {
 			return new SolverSettings(mSolverMode, mFakeNonIncrementalScript, mUseExternalSolver,
 					mExternalSolverCommand, logics, mTimeoutSmtInterpol, mExternalInterpolator, mDumpSmtScriptToFile,
 					mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, mPathOfDumpedScript, mBaseNameOfDumpedScript,
