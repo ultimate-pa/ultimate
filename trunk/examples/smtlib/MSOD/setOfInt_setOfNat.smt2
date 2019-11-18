@@ -6,7 +6,6 @@
 (declare-fun strictSubsetInt (SetOfInt SetOfInt) Bool)
 
 (declare-fun x () Int)
-
 (declare-fun I () SetOfInt)
 
 ; I is the set of Int/Nat numbers. 
