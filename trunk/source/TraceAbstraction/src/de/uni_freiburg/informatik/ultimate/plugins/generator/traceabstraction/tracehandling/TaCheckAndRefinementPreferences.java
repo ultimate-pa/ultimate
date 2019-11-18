@@ -302,11 +302,17 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	 * @return
 	 */
 	public SolverSettings constructSolverSettings(final TaskIdentifier identifier) {
-		return SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(getFakeNonIncrementalSolver())
-				.setDumpFeatureVectors(dumpFeatureVectors(), getFeatureVectorsDumpPath())
-				.setDumpSmtScriptToFile(getDumpSmtScriptToFile(), getPathOfDumpedScript(), identifier.toString())
-				.setUseExternalSolver(true, getCommandExternalSolver(), getLogicForExternalSolver())
-				.setSolverMode(getSolverMode());
+		final SolverSettings settings =
+				SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(getFakeNonIncrementalSolver())
+						.setDumpFeatureVectors(dumpFeatureVectors(), getFeatureVectorsDumpPath())
+						.setDumpSmtScriptToFile(getDumpSmtScriptToFile(), getPathOfDumpedScript(),
+								identifier.toString())
+
+						.setSolverMode(getSolverMode());
+		if (getUseSeparateSolverForTracechecks()) {
+			return settings.setUseExternalSolver(true, getCommandExternalSolver(), getLogicForExternalSolver());
+		}
+		return settings;
 	}
 
 }
