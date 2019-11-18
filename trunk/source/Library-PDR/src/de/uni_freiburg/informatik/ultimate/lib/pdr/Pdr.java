@@ -515,6 +515,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					final UnmodifiableTransFormula assOfCall =
 							returnTrans.getCorrespondingCall().getLocalVarsAssignment();
 
+					final String procBeforeReturn = predecessorTransition.getPrecedingProcedure();
 					final String procAfterReturn = predecessorTransition.getSucceedingProcedure();
 					final Set<IProgramNonOldVar> modVars =
 							mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(procAfterReturn);
@@ -598,12 +599,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 						poPostReturn = mLocalPredicateUnifier.getOrConstructPredicate(pre);
 
 						final ProofObligation newLocalProofObligation;
-						// if (poPostReturn != mTruePred) {
-						// newLocalProofObligation = new ProofObligation(poPostReturn, newLocation, 0);
-						// } else {
-						newLocalProofObligation =
-								new ProofObligation(newProofObligation.getToBeBlocked(), newLocation, 0);
-						// }
+						if (poPostReturn != mTruePred) {
+							newLocalProofObligation = new ProofObligation(poPostReturn, newLocation, 0);
+						} else {
+							newLocalProofObligation =
+									new ProofObligation(newProofObligation.getToBeBlocked(), newLocation, 0);
+						}
 
 						final List<LETTER> subTrace = getSubTrace(newLocation);
 						if (mLogger.isDebugEnabled()) {
