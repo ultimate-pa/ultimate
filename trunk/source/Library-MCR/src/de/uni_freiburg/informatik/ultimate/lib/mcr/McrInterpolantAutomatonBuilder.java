@@ -32,9 +32,9 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final IEmptyStackStateFactory<IPredicate> emptyStateFactory, final IProofProvider<LETTER> proofProvider,
 			final IPredicate precondition, final IPredicate postcondition, final IPredicateUnifier predicateUnifier) {
 		mProofProvider = proofProvider;
+		mPrecondition = precondition;
+		mPostcondition = postcondition;
 		mPredicateUnifier = predicateUnifier;
-		mPrecondition = mPredicateUnifier.getOrConstructPredicate(precondition);
-		mPostcondition = mPredicateUnifier.getOrConstructPredicate(postcondition);
 		mResult = new NestedWordAutomaton<>(services, vpAlphabet, emptyStateFactory);
 		mResult.addState(true, false, precondition);
 		mResult.addState(false, true, postcondition);
