@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.EqualityWriteRelation;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.Mcr;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.Mcr.IProofProvider;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.StatelessRun;
@@ -128,8 +129,9 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
 	public Mcr<LETTER> getOrConstruct() {
 		if (mMcr == null) {
 			try {
+				// TODO: Make the write relation an option
 				mMcr = new Mcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, mCounterexample,
-						mAbstraction.getAlphabet(), this);
+						mAbstraction.getAlphabet(), this, new EqualityWriteRelation<>());
 			} catch (final AutomataLibraryException e) {
 				throw new RuntimeException(e);
 			}
