@@ -9,6 +9,7 @@ import re
 import signal
 import subprocess
 import sys
+import xml.etree.ElementTree as elementtree
 from stat import ST_MODE
 from functools import lru_cache
 
@@ -154,7 +155,7 @@ class _CallFailed(Exception):
 class _ExitCode:
     _exit_codes = ["SUCCESS", "FAIL_OPEN_SUBPROCESS", "FAIL_NO_INPUT_FILE", "FAIL_NO_WITNESS_TO_VALIDATE",
                    "FAIL_MULTIPLE_FILES", "FAIL_NO_TOOLCHAIN_FOUND", "FAIL_NO_SETTINGS_FILE_FOUND",
-                   "FAIL_ULTIMATE_ERROR", "FAIL_SIGNAL", "FAIL_NO_JAVA", "FAIL_NO_SPEC", "FAIL_NO_ARCH" ]
+                   "FAIL_ULTIMATE_ERROR", "FAIL_SIGNAL", "FAIL_NO_JAVA", "FAIL_NO_SPEC", "FAIL_NO_ARCH", "FAIL_WRONG_WITNESS_TYPE" ]
 
     def __init__(self):
         pass
@@ -458,6 +459,20 @@ def check_dir(d):
         raise argparse.ArgumentTypeError("Directory %s does not exist" % d)
     return d
 
+def check_witness_type(witness, type):
+    tree = elementtree.parse(witness)
+    root = tree.getroot()
+    namespace = '{http://graphml.graphdrawing.org/xmlns}'
+    query = ".//{0}graph/{0}data[@key='witness-type']".format(namespace)
+    elem = tree.find(query)
+    if elem is not None:
+        if type == elem.text:
+            return
+        else:
+            print('Provided witness file has type "{}", but you specified witness type "{}"'.format(elem.text, type))
+    else:
+        print('Could not find node with xpath query "{}" in witness file "{}", XML malformed?'.format(query, witness))
+    sys.exit(ExitCode.FAIL_WRONG_WITNESS_TYPE)
 
 def debug_environment():
     # first, list all environment variables
@@ -544,19 +559,22 @@ def parse_args():
                         help='Print Ultimate\'s full output to stderr after verification ends')
     parser.add_argument('--envdebug', action='store_true',
                         help='Before doing anything, print as much information about the environment as possible')
-    parser.add_argument('--validate', nargs=1, metavar='<file>', type=check_file,
-                        help='Activate witness validation mode (if supported) and specify a .graphml file as witness')
     parser.add_argument('--spec', metavar='<file>', nargs=1, type=check_file,
                         help='An property (.prp) file from SVCOMP')
     parser.add_argument('--architecture', choices=['32bit', '64bit'],
                         help='Choose which architecture (defined as per SV-COMP rules) should be assumed')
     parser.add_argument('--file', metavar='<file>', nargs=1, type=check_file,
                         help='One C file')
+    parser.add_argument('--validate', nargs=1, metavar='<file>', type=check_file,
+                        help='Activate witness validation mode (if supported) and specify a .graphml file as witness')
+    parser.add_argument('--witness-type', choices=['correctness_witness', 'violation_witness'],
+                        help='Specify the type of witness you want to validate')
     parser.add_argument('--witness-dir', nargs=1, metavar='<dir>', type=check_dir,
                         help='Specify the directory in which witness files should be saved; default is besides '
                              'the script')
     parser.add_argument('--witness-name', nargs=1,
                         help='Specify a filename for the generated witness; default is witness.graphml')
+
 
     args, extras = parser.parse_known_args()
 
@@ -593,6 +611,8 @@ def parse_args():
 
     if args.validate:
         witness = args.validate[0]
+        if args.witness_type:
+            check_witness_type(witness, args.witness_type)
 
     if args.config:
         configdir = args.config[0]
