@@ -65,7 +65,7 @@ public class SMTFeatureExtractor {
 			tc.checkTerm(term);
 		}
 		final SMTFeature feature = new SMTFeature();
-		feature.assertionStack = tc.getAssertionStack();
+		//feature.assertionStack = tc.getAssertionStack();
 		feature.assertionStackHashCode = tc.getAssertionStack().hashCode();
 		feature.containsArrays = tc.hasArrays();
 		feature.occuringFunctions = tc.getOccuringFunctionNames();
