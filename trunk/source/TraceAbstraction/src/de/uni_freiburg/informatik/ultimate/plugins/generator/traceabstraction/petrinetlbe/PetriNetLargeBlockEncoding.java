@@ -46,10 +46,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.CopySubnet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -88,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -108,7 +103,7 @@ public class PetriNetLargeBlockEncoding {
 	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 	private final IcfgEdgeFactory mEdgeFactory;
 	private final ManagedScript mManagedScript;
-	private final HashRelation<IIcfgTransition<?>, IIcfgTransition<?>> mCoEnabledRelation;
+	private final CoenabledRelation<IIcfgTransition<?>> mCoEnabledRelation;
 
 	private final Map<IIcfgTransition<?>, List<IIcfgTransition<?>>> mSequentialCompositions = new HashMap<>();
 	private final Map<IIcfgTransition<?>, Set<Pair<IIcfgTransition<?>, TermVariable>>> mChoiceCompositions = new HashMap<>();
@@ -150,13 +145,8 @@ public class PetriNetLargeBlockEncoding {
 		mPetriNetLargeBlockEncodingStatistics.setTransitionsBefore(petriNet.getTransitions().size());
 		mLogger.info("Starting large block encoding on Petri net that " + petriNet.sizeInformation());
 		try {
-			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriCopy = CopySubnet.copy(
-					new AutomataLibraryServices(services), petriNet, new HashSet<>(petriNet.getTransitions()),
-					petriNet.getAlphabet(), true);
-			final BranchingProcess<IIcfgTransition<?>, IPredicate> bp = new FinitePrefix<>(
-					new AutomataLibraryServices(services), petriCopy).getResult();
+			mCoEnabledRelation = CoenabledRelation.fromPetriNet(new AutomataLibraryServices(services), petriNet);
 
-			mCoEnabledRelation = computeCoEnabledRelationEfficiently(bp);
 			final int coEnabledRelationSize = mCoEnabledRelation.size();
 			mLogger.info("Number of co-enabled transitions " + coEnabledRelationSize);
 			mPetriNetLargeBlockEncodingStatistics.setCoEnabledTransitionPairs(coEnabledRelationSize);
@@ -190,7 +180,9 @@ public class PetriNetLargeBlockEncoding {
 
 			int numberOfFixpointIterations = 0;
 			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultLastIteration;
-			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultCurrentIteration = petriCopy;
+			BoundedPetriNet<IIcfgTransition<?>, IPredicate> resultCurrentIteration = CopySubnet.copy(
+					new AutomataLibraryServices(services), petriNet, new HashSet<>(petriNet.getTransitions()),
+					petriNet.getAlphabet(), true);;
 			do {
 				numberOfFixpointIterations++;
 				resultLastIteration = resultCurrentIteration;
@@ -289,13 +281,18 @@ public class PetriNetLargeBlockEncoding {
 					final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element = new Triple<>(
 							choiceIcfgEdge, t1, t2);
 					choiceStack.add(element);
-					updateCoEnabledRelation(choiceIcfgEdge, t1.getSymbol(), t2.getSymbol());
 					transferMoverProperties(choiceIcfgEdge, t1.getSymbol(), t2.getSymbol());
 
 					mPetriNetLargeBlockEncodingStatistics.reportComposition(
 							PetriNetLargeBlockEncodingStatisticsDefinitions.ChoiceCompositions);
+
+					// Transfer co-enabled pairs for t1 to choiceIcfgEdge.
+					// Do not delete until loop is done, other compositions need this info.
+					mCoEnabledRelation.copyRelationships(t1.getSymbol(), choiceIcfgEdge);
+					mCoEnabledRelation.deleteElement(t2.getSymbol());
 				}
 			}
+			mCoEnabledRelation.deleteElement(t1.getSymbol());
 		}
 		final BoundedPetriNet<IIcfgTransition<?>, IPredicate> newNet = copyPetriNetWithModification(services, petriNet,
 				choiceStack);
@@ -361,10 +358,14 @@ public class PetriNetLargeBlockEncoding {
 								mPetriNetLargeBlockEncodingStatistics.reportComposition(
 										PetriNetLargeBlockEncodingStatisticsDefinitions.ConcurrentYvCompositions);
 							}
-							updateCoEnabledRelation(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
 							updateSequentialCompositions(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
 							transferMoverProperties(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
+
+							// Transfer co-enabled pairs for t2 to sequentialIcfgEdge.
+							mCoEnabledRelation.copyRelationships(t2.getSymbol(), sequentialIcfgEdge);
+							mCoEnabledRelation.deleteElement(t2.getSymbol());
 						}
+						mCoEnabledRelation.deleteElement(t1.getSymbol());
 					}
 				}
 				else if (petriNet.getPredecessors(postPlace).size() == 1) {
@@ -399,19 +400,10 @@ public class PetriNetLargeBlockEncoding {
 
 							// Transfer co-enabled pairs for t1 to sequentialIcfgEdge.
 							// Do not delete until loop is done, other compositions need this info.
-							mCoEnabledRelation.removeDomainElement(t2.getSymbol());
-							mCoEnabledRelation.removeRangeElement(t2.getSymbol());
-							for (IIcfgTransition<?> t3 : mCoEnabledRelation.getImage(t1.getSymbol())) {
-								mCoEnabledRelation.addPair(sequentialIcfgEdge, t3);
-							}
-							for (IIcfgTransition<?> t3 : mCoEnabledRelation.getDomain()) {
-								if (mCoEnabledRelation.containsPair(t3,  t1.getSymbol())) {
-									mCoEnabledRelation.addPair(t3, sequentialIcfgEdge);
-								}
-							}
+							mCoEnabledRelation.copyRelationships(t1.getSymbol(), sequentialIcfgEdge);
+							mCoEnabledRelation.deleteElement(t2.getSymbol());
 						}
-						mCoEnabledRelation.removeDomainElement(t1.getSymbol());
-						mCoEnabledRelation.removeRangeElement(t1.getSymbol());
+						mCoEnabledRelation.deleteElement(t1.getSymbol());
 					}
 				}
 			}
@@ -634,80 +626,6 @@ public class PetriNetLargeBlockEncoding {
 		final BoundedPetriNet<IIcfgTransition<?>, IPredicate> newNet = CopySubnet
 				.copy(new AutomataLibraryServices(services), petriNet, transitionsToKeep, newAlphabet);
 		return newNet;
-	}
-
-	/**
-	 * Updates the mCoEnabledRelation. Since we use the update function, we do not have to compute the branching process multiple times.
-	 * @param composedIcfgEdge
-	 *            The new IcfgEdge of the Petri Net consisting of t1 and t2.
-	 * @param t1
-	 *            The first transition that had been composed.
-	 * @param t2
-	 *            The second transition that had been composed.
-	 */
-	private void updateCoEnabledRelation(final IcfgEdge composedIcfgEdge, final IIcfgTransition<?> t1, final IIcfgTransition<?> t2) {
-		mCoEnabledRelation.replaceDomainElement(t1, composedIcfgEdge);
-		mCoEnabledRelation.replaceRangeElement(t1, composedIcfgEdge);
-		mCoEnabledRelation.removeDomainElement(t2);
-		mCoEnabledRelation.removeRangeElement(t2);
-	}
-
-	/**
-	 * Computes the mCoEnabledRelation. This relation is needed in order to determine which transitions can be melted.
-	 * @param bp
-	 *            The branching process of the Petri Net.
-	 * @return the co-enabled relation of the Petri Net.
-	 */
-	private HashRelation<IIcfgTransition<?>, IIcfgTransition<?>> computeCoEnabledRelation(
-			final BranchingProcess<IIcfgTransition<?>, IPredicate> bp) {
-		final HashRelation<IIcfgTransition<?>, IIcfgTransition<?>> hashRelation = new HashRelation<>();
-		final ICoRelation<IIcfgTransition<?>, IPredicate> coRelation = bp.getCoRelation();
-		final Collection<Event<IIcfgTransition<?>, IPredicate>> events = bp.getEvents();
-		for (final Event<IIcfgTransition<?>, IPredicate> event1 : events) {
-			for (final Event<IIcfgTransition<?>, IPredicate> event2 : events) {
-				if (event1 == bp.getDummyRoot() || event2 == bp.getDummyRoot()) {
-					continue;
-				}
-				final boolean coEnabled = isInCoRelation(event1, event2, coRelation);
-				if (coEnabled) {
-					final IIcfgTransition<?> symbol1 = event1.getTransition().getSymbol();
-					final IIcfgTransition<?> symbol2 = event2.getTransition().getSymbol();
-					hashRelation.addPair(symbol1, symbol2);
-				}
-			}
-		}
-		return hashRelation;
-	}
-
-	private HashRelation<IIcfgTransition<?>, IIcfgTransition<?>> computeCoEnabledRelationEfficiently(
-			final BranchingProcess<IIcfgTransition<?>, IPredicate> bp) {
-		final HashRelation<IIcfgTransition<?>, IIcfgTransition<?>> hashRelation = new HashRelation<>();
-		final ICoRelation<IIcfgTransition<?>, IPredicate> coRelation = bp.getCoRelation();
-		final Collection<Event<IIcfgTransition<?>, IPredicate>> events = bp.getEvents();
-		for (final Event<IIcfgTransition<?>, IPredicate> event1 : events) {
-			final Set<Event<IIcfgTransition<?>, IPredicate>> coRelatedEvents = coRelation.computeCoRelatatedEvents(event1);
-			for (final Event<IIcfgTransition<?>, IPredicate> coRelatedEvent : coRelatedEvents) {
-				hashRelation.addPair(event1.getTransition().getSymbol(), coRelatedEvent.getTransition().getSymbol());
-			}
-		}
-		return hashRelation;
-	}
-
-	// TODO: use new builtin method? (but correct spelling)
-	/**
-	 * Checks if two events are in co-relation. (This is needed for the computation of mCoEnabledRelation)
-	 * @param e1
-	 *            First event.
-	 * @param e2
-	 *            Second event.
-	 * @param coRelation
-	 *            The co-relation of the Petri Net unfolding.
-	 * @return true iff e1 and e2 are in co-relation.
-	 */
-	private boolean isInCoRelation(final Event<IIcfgTransition<?>, IPredicate> e1,
-			final Event<IIcfgTransition<?>, IPredicate> e2,
-			final ICoRelation<IIcfgTransition<?>, IPredicate> coRelation) {
-		return e2.getPredecessorConditions().stream().allMatch(condition -> coRelation.isInCoRelation(condition, e1));
 	}
 
 	public BoundedPetriNet<IIcfgTransition<?>, IPredicate> getResult() {
