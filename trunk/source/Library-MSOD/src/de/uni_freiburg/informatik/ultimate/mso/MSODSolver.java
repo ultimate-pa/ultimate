@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -65,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineTermTransformer;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -110,10 +108,13 @@ public final class MSODSolver {
 	/**
 	 * Traverses term in post order.
 	 *
+	 * @throws Exception
+	 *
 	 * @throws AutomataLibraryException
 	 *             iff π = 4.
 	 */
-	public INestedWordAutomaton<MSODAlphabetSymbol, String> traversePostOrder(final Term term) throws Exception {
+	public INestedWordAutomaton<MSODAlphabetSymbol, String> traversePostOrder(final Term term)
+			throws AutomataLibraryException {
 		mLogger.info("Traverse term: " + term);
 
 		if (term instanceof QuantifiedFormula) {
@@ -193,7 +194,7 @@ public final class MSODSolver {
 	 * {@link #traversePostOrder(Term)} with the result.
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processForall(final QuantifiedFormula term)
-			throws Exception {
+			throws AutomataLibraryException {
 
 		final Term exists = SmtUtils.not(mScript, mScript.quantifier(QuantifiedFormula.EXISTS, term.getVariables(),
 				SmtUtils.not(mScript, term.getSubformula())));
@@ -205,7 +206,7 @@ public final class MSODSolver {
 	 * Returns automaton that represents "∃ φ".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processExists(final QuantifiedFormula term)
-			throws Exception {
+			throws AutomataLibraryException {
 
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getSubformula());
 		mLogger.info("Construct ∃ φ: " + term);
@@ -246,11 +247,10 @@ public final class MSODSolver {
 	/**
 	 * Returns automaton that represents "¬φ".
 	 *
-	 * @throws AutomataLibraryException
-	 *             if construction of {@link Complement} or {@link Intersect} fails.
+	 * @throws Exception
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processNegation(final ApplicationTerm term)
-			throws AutomataLibraryException, Exception {
+			throws AutomataLibraryException {
 
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getParameters()[0]);
 		mLogger.info("Construct not φ: " + term);
@@ -267,7 +267,7 @@ public final class MSODSolver {
 	 *             if construction of {@link Intersect} fails.
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processConjunction(final ApplicationTerm term)
-			throws AutomataLibraryException, Exception {
+			throws AutomataLibraryException {
 
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getParameters()[0]);
 		mLogger.info("Construct φ and ψ (0): " + term);
@@ -292,7 +292,7 @@ public final class MSODSolver {
 	 * {@link #traversePostOrder(Term)} with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processDisjunction(final ApplicationTerm term)
-			throws Exception {
+			throws AutomataLibraryException {
 
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getParameters()[0]);
 		mLogger.info("Construct φ and ψ (0): " + term);
@@ -317,7 +317,7 @@ public final class MSODSolver {
 	 * {@link #traversePostOrder(Term)} with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processImplication(final ApplicationTerm term)
-			throws Exception {
+			throws AutomataLibraryException {
 
 		final Term[] terms = term.getParameters();
 		for (int i = 0; i < terms.length - 1; i++) {
@@ -331,7 +331,8 @@ public final class MSODSolver {
 	 * Returns automaton that represents "t = c". Performs equivalent transformation to "(t <= c) ∧ ¬(t < c)" and calls
 	 * {@link #traversePostOrder(Term)} with the result".
 	 */
-	private INestedWordAutomaton<MSODAlphabetSymbol, String> processEqual(final ApplicationTerm term) throws Exception {
+	private INestedWordAutomaton<MSODAlphabetSymbol, String> processEqual(final ApplicationTerm term)
+			throws AutomataLibraryException {
 
 		for (final Term t : term.getParameters()) {
 			mLogger.error("TERM: " + t);
@@ -352,7 +353,7 @@ public final class MSODSolver {
 	 * {@link #traversePostOrder(Term)} with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processGreater(final ApplicationTerm term)
-			throws Exception {
+			throws AutomataLibraryException {
 
 		final Term[] terms = term.getParameters();
 		final Term greater = SmtUtils.not(mScript, SmtUtils.leq(mScript, terms[0], terms[1]));
@@ -365,7 +366,7 @@ public final class MSODSolver {
 	 * {@link #traversePostOrder(Term)} with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processGreaterEqual(final ApplicationTerm term)
-			throws Exception {
+			throws AutomataLibraryException {
 
 		final Term[] terms = term.getParameters();
 		final Term greaterEqual = SmtUtils.not(mScript, SmtUtils.less(mScript, terms[0], terms[1]));
@@ -376,13 +377,10 @@ public final class MSODSolver {
 	/**
 	 * Returns automaton that represents "t < c" or "t <= c".
 	 *
-	 * @throws NotAffineException
-	 *             if construction of {@link AffineRelation} fails.
-	 *
 	 * @throws AutomataLibraryException
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processLessOrLessEqual(final ApplicationTerm term)
-			throws NotAffineException, AutomataLibraryException {
+			throws AutomataLibraryException {
 
 		final AffineRelation affineRelation =
 				AffineRelation.convert(mScript, term, TransformInequality.NONSTRICT2STRICT);
@@ -466,6 +464,7 @@ public final class MSODSolver {
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processElement(final ApplicationTerm term)
 			throws AutomataLibraryException {
+
 		if (term.getParameters().length != 2) {
 			throw new IllegalArgumentException("Element must have exactly two parameters.");
 		}
