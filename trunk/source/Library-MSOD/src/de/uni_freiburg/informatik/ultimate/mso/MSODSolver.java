@@ -617,7 +617,6 @@ public final class MSODSolver {
 		}
 
 		// Create positive resp. negative LassoWords.
-
 		final NestedWord<MSODAlphabetSymbol> loopPos = NestedWord.nestedWord(new Word<>(symbolP));
 		final NestedWord<MSODAlphabetSymbol> loopNeg = NestedWord.nestedWord(new Word<>(symbolN));
 
