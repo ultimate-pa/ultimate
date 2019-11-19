@@ -270,6 +270,7 @@ public class PetriNetLargeBlockEncoding {
 		final List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> choiceStack =
 				new ArrayList<>();
 		for (final ITransition<IIcfgTransition<?>, IPredicate> t1 : transitions) {
+			boolean composed = false;
 			for (final ITransition<IIcfgTransition<?>, IPredicate> t2 : transitions) {
 				if (t1.equals(t2)) {
 					continue;
@@ -304,9 +305,13 @@ public class PetriNetLargeBlockEncoding {
 					// Do not delete until loop is done, other compositions need this info.
 					mCoEnabledRelation.copyRelationships(t1.getSymbol(), choiceIcfgEdge);
 					mCoEnabledRelation.deleteElement(t2.getSymbol());
+
+					composed = true;
 				}
 			}
-			mCoEnabledRelation.deleteElement(t1.getSymbol());
+			if (composed) {
+				mCoEnabledRelation.deleteElement(t1.getSymbol());
+			}
 		}
 		final BoundedPetriNet<IIcfgTransition<?>, IPredicate> newNet =
 				copyPetriNetWithModification(services, petriNet, choiceStack);
@@ -383,7 +388,10 @@ public class PetriNetLargeBlockEncoding {
 							mCoEnabledRelation.copyRelationships(t2.getSymbol(), sequentialIcfgEdge);
 							mCoEnabledRelation.deleteElement(t2.getSymbol());
 						}
-						mCoEnabledRelation.deleteElement(t1.getSymbol());
+						if (!petriNet.getPredecessors(prePlace).isEmpty()) {
+							// only delete it if composition actually took place
+							mCoEnabledRelation.deleteElement(t1.getSymbol());
+						}
 					}
 				} else if (petriNet.getPredecessors(postPlace).size() == 1) {
 					final boolean sequentialCompositionAllowed = petriNet.getSuccessors(postPlace).stream()
@@ -420,7 +428,10 @@ public class PetriNetLargeBlockEncoding {
 							mCoEnabledRelation.copyRelationships(t1.getSymbol(), sequentialIcfgEdge);
 							mCoEnabledRelation.deleteElement(t2.getSymbol());
 						}
-						mCoEnabledRelation.deleteElement(t1.getSymbol());
+						if (!petriNet.getSuccessors(postPlace).isEmpty()) {
+							// only delete it if composition actually took place
+							mCoEnabledRelation.deleteElement(t1.getSymbol());
+						}
 					}
 				}
 			}
