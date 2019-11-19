@@ -803,26 +803,46 @@ public class PostProcessor {
 		}
 		if (mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
 
-			// set #valid[0] = 0 (i.e., the memory at the NULL-pointer is not allocated)
-			final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-			final Expression literalThatRepresentsFalse = mMemoryHandler.getBooleanArrayHelper().constructFalse();
-			final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(translationUnitLoc,
-					zero, mMemoryHandler.getValidArrayLhs(translationUnitLoc), literalThatRepresentsFalse);
-			initStatements.add(0, assignment);
-
-			// set the value of the NULL-constant to NULL = { base : 0, offset : 0 }
-			final VariableLHS slhs = ExpressionFactory.constructVariableLHS(translationUnitLoc,
-					mTypeHandler.getBoogiePointerType(), SFO.NULL, DeclarationInformation.DECLARATIONINFO_GLOBAL);
-			initStatements.add(0,
-					StatementFactory.constructAssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
-							new Expression[] { ExpressionFactory.constructStructConstructor(translationUnitLoc,
-									new String[] { "base", "offset" },
-									new Expression[] { mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-											mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO),
-											mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-													mExpressionTranslation.getCTypeOfPointerComponents(),
-													BigInteger.ZERO) }) }));
+			{
+				// set #valid[0] = 0 (i.e., the memory at the NULL-pointer is
+				// not allocated)
+				final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
+						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+				final Expression literalThatRepresentsFalse = mMemoryHandler.getBooleanArrayHelper().constructFalse();
+				final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(
+						translationUnitLoc, zero, mMemoryHandler.getValidArrayLhs(translationUnitLoc),
+						literalThatRepresentsFalse);
+				initStatements.add(0, assignment);
+			}
+			{
+				// set the value of the NULL-constant to NULL = { base : 0,
+				// offset : 0 }
+				final VariableLHS slhs = ExpressionFactory.constructVariableLHS(translationUnitLoc,
+						mTypeHandler.getBoogiePointerType(), SFO.NULL, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+				initStatements.add(0,
+						StatementFactory.constructAssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
+								new Expression[] { ExpressionFactory.constructStructConstructor(
+										translationUnitLoc, new String[] { "base", "offset" }, new Expression[] {
+												mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
+														mExpressionTranslation.getCTypeOfPointerComponents(),
+														BigInteger.ZERO),
+												mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
+														mExpressionTranslation.getCTypeOfPointerComponents(),
+														BigInteger.ZERO) }) }));
+			}
+			{
+				// Add assume(0 < #StackHeapBarrier) to ensure that the null pointer is on the heap.
+				final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
+						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+				final Expression zeroSmallerStackHeapBarrier = mExpressionTranslation
+						.constructBinaryComparisonIntegerExpression(translationUnitLoc,
+								IASTBinaryExpression.op_lessThan,
+								zero,
+								mExpressionTranslation.getCTypeOfPointerComponents(),
+								mMemoryHandler.getStackHeapBarrier(translationUnitLoc),
+								mExpressionTranslation.getCTypeOfPointerComponents());
+				initStatements.add(new AssumeStatement(translationUnitLoc, zeroSmallerStackHeapBarrier));
+			}
 		}
 
 		// initializes current rounding mode var
@@ -843,6 +863,7 @@ public class PostProcessor {
 		mStaticObjectsHandler.freeze();
 		initStatements.addAll(mStaticObjectsHandler.getStatementsForUltimateInit());
 		initStatements.addAll(staticObjectInitStatements);
+		
 
 		// because we process declarations out of order in CHandler , we need to reorder them here
 		final Comparator<? super BoogieASTNode> c =

@@ -173,7 +173,7 @@ public class MemoryHandler {
 		 * The {@link MemoryModelDeclarations#ULTIMATE_STACK_HEAP_BARRIER} allows us to partition the addresses of our
 		 * memory arrays into a stack and a heap. The {@link MemoryModelDeclarations#ULTIMATE_STACK_HEAP_BARRIER} is a
 		 * constant whose value is not determined. Each pointer whose address-base is strictly smaller than the barrier
-		 * points to the stack, each pointer whose address-base is strictly greater than the barrier points to the heap.
+		 * points to the heap, each pointer whose address-base is strictly greater than the barrier points to the stack.
 		 */
 		ULTIMATE_STACK_HEAP_BARRIER("#StackHeapBarrier"),
 
@@ -692,13 +692,11 @@ public class MemoryHandler {
 			}
 
 			{
-				// assert (#StackHeapBarrier < ~addr!base);
+				// assert (~addr!base < #StackHeapBarrier);
 				final Expression inHeapArea = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-						IASTBinaryExpression.op_lessThan, getStackHeapBarrier(loc),
+						IASTBinaryExpression.op_lessThan, getPointerBaseAddress(pointerToBeFreed.getValue(), loc),
 						mExpressionTranslation.getCTypeOfPointerComponents(),
-						getPointerBaseAddress(pointerToBeFreed.getValue(), loc),
-						mExpressionTranslation.getCTypeOfPointerComponents());
-
+						getStackHeapBarrier(loc), mExpressionTranslation.getCTypeOfPointerComponents());
 				final AssertStatement assertInHeapArea = new AssertStatement(loc, inHeapArea);
 				check.annotate(assertInHeapArea);
 				result.add(assertInHeapArea);
@@ -2472,22 +2470,23 @@ public class MemoryHandler {
 						ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE), nr0),
 				Collections.emptySet()));
 		if (memArea == MemoryArea.STACK) {
+			// #StackHeapBarrier < res!base 
+			specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
+					mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
+							IASTBinaryExpression.op_lessThan,
+							getStackHeapBarrier(tuLoc),
+							mExpressionTranslation.getCTypeOfPointerComponents(), 
+							ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE),
+							mExpressionTranslation.getCTypeOfPointerComponents()),
+					Collections.emptySet()));
+		}
+		if (memArea == MemoryArea.HEAP) {
 			// res!base < #StackHeapBarrier
 			specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
 					mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
 							IASTBinaryExpression.op_lessThan,
 							ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE),
 							mExpressionTranslation.getCTypeOfPointerComponents(), getStackHeapBarrier(tuLoc),
-							mExpressionTranslation.getCTypeOfPointerComponents()),
-					Collections.emptySet()));
-		}
-		if (memArea == MemoryArea.HEAP) {
-			// #StackHeapBarrier < res!base
-			specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
-					mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
-							IASTBinaryExpression.op_lessThan, getStackHeapBarrier(tuLoc),
-							mExpressionTranslation.getCTypeOfPointerComponents(),
-							ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE),
 							mExpressionTranslation.getCTypeOfPointerComponents()),
 					Collections.emptySet()));
 		}
