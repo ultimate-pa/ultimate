@@ -714,7 +714,7 @@ public class Elim1Store {
 					continue;
 				case NOT_EQUAL:
 					if (indexEqualityTerm != null) {
-						resultConjuncts1case.add(SmtUtils.not(mgdScript.getScript(), indexEqualityTerm));
+						resultConjuncts1case.add(Elim1Store.notWith1StepPush(mgdScript.getScript(), indexEqualityTerm));
 						continue;
 					} else {
 						throw new AssertionError("input was inconsistent");
@@ -735,10 +735,10 @@ public class Elim1Store {
 				final Term implication;
 				if (quantifier == QuantifiedFormula.EXISTS) {
 					implication = SmtUtils.or(mgdScript.getScript(),
-							notWith1StepPush(mgdScript, indexEqualityTerm), valueEqualityTerm);
+							notWith1StepPush(mgdScript.getScript(), indexEqualityTerm), valueEqualityTerm);
 				} else if (quantifier == QuantifiedFormula.FORALL) {
 					implication = SmtUtils.and(mgdScript.getScript(),
-							notWith1StepPush(mgdScript, indexEqualityTerm), valueEqualityTerm);
+							notWith1StepPush(mgdScript.getScript(), indexEqualityTerm), valueEqualityTerm);
 				} else {
 					throw new AssertionError("unknown quantifier");
 				}
@@ -748,11 +748,10 @@ public class Elim1Store {
 		return new Pair<List<Term>, List<Term>>(resultConjuncts1case, resultConjuncts2cases);
 	}
 
-	private static Term notWith1StepPush(final ManagedScript mgdScript, final Term term) {
-		final Term libraryPush = NnfTransformer.pushNot1StepInside(mgdScript.getScript(), term,
-				QuantifierHandling.CRASH);
+	public static Term notWith1StepPush(final Script script, final Term term) {
+		final Term libraryPush = NnfTransformer.pushNot1StepInside(script, term, QuantifierHandling.CRASH);
 		if (libraryPush == null) {
-			return SmtUtils.not(mgdScript.getScript(), term);
+			return SmtUtils.not(script, term);
 		} else {
 			return libraryPush;
 		}
@@ -831,7 +830,7 @@ public class Elim1Store {
 					}
 
 					final Term succedent = newValueInCell;
-					final Term negatedAntecedent = SmtUtils.not(mgdScript.getScript(), indexEquality);
+					final Term negatedAntecedent = Elim1Store.notWith1StepPush(mgdScript.getScript(), indexEquality);
 					final Term positiveCase = QuantifierUtils.applyCorrespondingFiniteConnective(mgdScript.getScript(),
 							quantifier, negatedAntecedent, succedent);
 					resultConjuncts2cases.add(positiveCase);

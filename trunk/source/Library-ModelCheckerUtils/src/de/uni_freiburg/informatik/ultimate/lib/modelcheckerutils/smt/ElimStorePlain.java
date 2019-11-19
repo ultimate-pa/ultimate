@@ -430,7 +430,7 @@ public class ElimStorePlain {
 												mMgdScript.getScript(), eTask.getQuantifier(), definitions));
 							}
 							final Term equals = SmtUtils.binaryEquality(mMgdScript.getScript(), effectiveIndex1, effectiveIndex2);
-							final Term distinct = SmtUtils.not(mMgdScript.getScript(), equals);
+							final Term distinct = Elim1Store.notWith1StepPush(mMgdScript.getScript(), equals);
 							final Term posContext = SmtUtils.and(mMgdScript.getScript(), eTask.getContext(), equals);
 							final EliminationTaskWithContext posTask = new EliminationTaskWithContext(eTask.getQuantifier(), eTask.getEliminatees(), effectiveTerm, posContext);
 							final EliminationTaskWithContext posRes = doElimAllRec(posTask);
