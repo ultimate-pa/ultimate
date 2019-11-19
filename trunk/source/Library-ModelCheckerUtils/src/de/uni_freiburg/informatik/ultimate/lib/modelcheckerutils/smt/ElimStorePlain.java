@@ -343,10 +343,10 @@ public class ElimStorePlain {
 			final Term replacedInNnf = new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP).transform(replaced);
 			sosTerm = replacedInNnf;
 			sosAoa = new ArrayOccurrenceAnalysis(mMgdScript.getScript(), sosTerm, eliminatee);
-			if(!varOccurs(eliminatee, replaced) || RETURN_AFTER_SOS) {
+			if(!varOccurs(eliminatee, replacedInNnf) || RETURN_AFTER_SOS) {
 				aiem.unlockSolver();
 				return new EliminationTaskWithContext(eTask.getQuantifier(), newAuxVars,
-						replaced, eTask.getContext());
+						replacedInNnf, eTask.getContext());
 			}
 		}
 		aiem.unlockSolver();
