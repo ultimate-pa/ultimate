@@ -135,7 +135,9 @@ public final class HistoryRecordingScript extends WrapperScript {
 	 *            {@link Script}.
 	 */
 	public void transferHistoryFromRecord(final Script script) {
-		for (final ISmtDeclarable elem : mHistory) {
+		final Iterator<ISmtDeclarable> iter = mHistory.descendingIterator();
+		while (iter.hasNext()) {
+			final ISmtDeclarable elem = iter.next();
 			if (elem instanceof StackMarker) {
 				script.push(1);
 				continue;
