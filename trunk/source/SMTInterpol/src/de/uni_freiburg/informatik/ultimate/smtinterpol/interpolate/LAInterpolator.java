@@ -118,6 +118,18 @@ public class LAInterpolator {
 	}
 
 	/**
+	 * Get the F part of an {@code LA(s,k,F)} term. This assumes the term is an LA term.
+	 *
+	 * @param term
+	 *            The LA term.
+	 * @return the F part.
+	 */
+	public static Term getF(final Term term) {
+		assert isLATerm(term);
+		return ((AnnotatedTerm) term).getSubterm();
+	}
+
+	/**
 	 * Compute the literals and corresponding Farkas coefficients for this LA lemma
 	 */
 	private HashMap<Term, Rational> getFarkasCoeffs(final InterpolatorClauseTermInfo clauseInfo) {

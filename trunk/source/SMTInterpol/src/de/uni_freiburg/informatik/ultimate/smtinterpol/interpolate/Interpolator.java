@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SolverOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
@@ -805,12 +806,53 @@ public class Interpolator extends NonRecursive {
 			mReplacement = replacement;
 		}
 
+		private static boolean isSMTAffineTerm(Term term) {
+			if (!term.getSort().isNumericSort()) {
+				return false;
+			}
+			if (term instanceof ApplicationTerm) {
+				FunctionSymbol fsym = ((ApplicationTerm) term).getFunction();
+				return fsym.isIntern() && (fsym.getName() == "+" || fsym.getName() == "-" || fsym.getName() == "*"
+						|| fsym.getName() == "to_real");
+			} else if (term instanceof ConstantTerm) {
+				return true;
+			}
+			return false;
+		}
+
 		@Override
 		public void convert(final Term oldTerm) {
-			if (LAInterpolator.isLATerm(oldTerm)) {
+			if (isSMTAffineTerm(oldTerm)) {
+				final SMTAffineTerm oldAffine = new SMTAffineTerm(oldTerm);
+				final Term[] oldSummands =
+						oldAffine.getSummands().keySet().toArray(new Term[oldAffine.getSummands().size()]);
+				/* recurse into LA term */
+				enqueueWalker(new Walker() {
+					@Override
+					public void walk(final NonRecursive engine) {
+						final Substitutor me = (Substitutor) engine;
+						final Term[] newSummands = me.getConverted(oldSummands);
+						// did we change something?
+						if (newSummands == oldSummands) {
+							me.setResult(oldTerm);
+							return;
+						}
+						// create new SMTAffineTerm from newSummands and old coefficients
+						final SMTAffineTerm newAffine = new SMTAffineTerm();
+						for (int i = 0; i < oldSummands.length; i++) {
+							newAffine.add(oldAffine.getSummands().get(oldSummands[i]), newSummands[i]);
+						}
+						newAffine.add(oldAffine.getConstant());
+						// create the new LA term
+						me.setResult(newAffine.toTerm(oldTerm.getSort()));
+					}
+				});
+				pushTerms(oldSummands);
+				return;
+			} else if (LAInterpolator.isLATerm(oldTerm)) {
 				final InterpolatorAffineTerm oldS = LAInterpolator.getS(oldTerm);
 				final InfinitesimalNumber oldK = LAInterpolator.getK(oldTerm);
-				final Term oldF = ((AnnotatedTerm) oldTerm).getSubterm();
+				final Term oldF = LAInterpolator.getF(oldTerm);
 				final Term[] oldSummands =
 						oldS.getSummands().keySet().toArray(new Term[oldS.getSummands().size()]);
 				/* recurse into LA term */
