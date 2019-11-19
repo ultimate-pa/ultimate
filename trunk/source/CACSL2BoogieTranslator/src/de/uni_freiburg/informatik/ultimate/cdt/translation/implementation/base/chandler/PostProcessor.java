@@ -831,13 +831,13 @@ public class PostProcessor {
 														BigInteger.ZERO) }) }));
 			}
 			{
-				// Add assume(0 < #StackHeapBarrier) to ensure that the null pointer is on the heap.
+				// Add assume(0 < #StackHeapBarrier) to ensure that the null
+				// pointer is on the heap.
 				final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 				final Expression zeroSmallerStackHeapBarrier = mExpressionTranslation
 						.constructBinaryComparisonIntegerExpression(translationUnitLoc,
-								IASTBinaryExpression.op_lessThan,
-								zero,
+								IASTBinaryExpression.op_lessThan, zero,
 								mExpressionTranslation.getCTypeOfPointerComponents(),
 								mMemoryHandler.getStackHeapBarrier(translationUnitLoc),
 								mExpressionTranslation.getCTypeOfPointerComponents());
