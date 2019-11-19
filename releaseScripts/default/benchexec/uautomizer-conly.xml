@@ -1,8 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-1.9.dtd">
-<benchmark tool="ultimateautomizer" timelimit="15 min" memlimit="15 GB" cpuCores="8">
-
-<require cpuModel="Intel Xeon E3-1230 v5 @ 3.40 GHz" cpuCores="8"/>
+<benchmark tool="ultimateautomizer" timelimit="60s" memlimit="4 GB" cpuCores="1">
 
   <resultfiles>**.graphml</resultfiles>
   
