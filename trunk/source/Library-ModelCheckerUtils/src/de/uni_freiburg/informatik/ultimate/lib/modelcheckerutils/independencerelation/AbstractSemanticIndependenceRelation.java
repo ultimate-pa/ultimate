@@ -214,15 +214,15 @@ public class AbstractSemanticIndependenceRelation implements IIndependenceRelati
 	// Avoid that.
 	private final boolean performInclusionCheck(final IPredicate context, final UnmodifiableTransFormula a,
 			final UnmodifiableTransFormula b) {
-		final UnmodifiableTransFormula transFormula1 = compose(a, b);
-		UnmodifiableTransFormula transFormula2 = compose(b, a);
+		UnmodifiableTransFormula transFormula1 = compose(a, b);
+		final UnmodifiableTransFormula transFormula2 = compose(b, a);
 
 		if (context != null) {
 			// TODO: This represents conjunction with guard (precondition) as composition
 			// with assume. Is this a good way?
 			final UnmodifiableTransFormula guard = TransFormulaBuilder.constructTransFormulaFromPredicate(context,
 					mManagedScript);
-			transFormula2 = compose(guard, transFormula2);
+			transFormula1 = compose(guard, transFormula1);
 		}
 
 		final LBool result = TransFormulaUtils.checkImplication(transFormula1, transFormula2, mManagedScript);
