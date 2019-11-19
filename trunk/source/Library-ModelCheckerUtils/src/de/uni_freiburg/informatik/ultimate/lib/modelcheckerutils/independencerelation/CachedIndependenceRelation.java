@@ -77,7 +77,7 @@ public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceR
 
 		if (positive.containsPair(a, b) || (isSymmetric() && positive.containsPair(b, a))) {
 			return true;
-		} else if (negative.containsPair(a, b) || (isSymmetric() && positive.containsPair(b, a))) {
+		} else if (negative.containsPair(a, b) || (isSymmetric() && negative.containsPair(b, a))) {
 			return false;
 		}
 
