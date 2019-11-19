@@ -86,6 +86,7 @@ known_wrapper_errors = {
     "Ultimate.py: error: argument --validate: File": True,
     "Checking for LTL property": True,
     "WARNING: YOUR LOGFILE WAS TOO LONG, SOME LINES IN THE MIDDLE WERE REMOVED.": True,
+    "Skipped default analysis because property is memsafety" : True,
 }
 
 version_matcher = re.compile('^.*(\d+\.\d+\.\d+-\w+).*$')
