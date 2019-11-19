@@ -120,6 +120,9 @@ class _PropParser:
     def is_mem_deref_memtrack(self):
         return self.mem_deref and self.mem_memtrack
 
+    def is_mem_memtrack(self):
+        return self.mem_memtrack
+
     def is_mem_cleanup(self):
         return self.mem_cleanup
 
@@ -336,7 +339,10 @@ def run_ultimate(ultimate_call, prop):
             if line.find(mem_free_false_string) != -1:
                 result_msg = 'valid-free'
             if line.find(mem_memtrack_false_string) != -1:
-                result_msg = 'valid-memtrack'
+                if prop.is_mem_cleanup():
+                    result_msg = 'valid-memcleanup'
+                else:
+                    result_msg = 'valid-memtrack'
             if line.find(overflow_false_string) != -1:
                 result = 'FALSE'
                 result_msg = 'OVERFLOW'
