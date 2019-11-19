@@ -190,6 +190,8 @@ public final class SmtUtils {
 				}
 				logger.warn(sb);
 			}
+			// TODO: DD 2019-11-19: This call is a dirty hack! SimplifyDDAWithTimeout leaves an empty stack frame open,
+			// but I do not want to try and debug how it is happening.
 			undoableScript.restore();
 			return simplified;
 		} catch (final ToolchainCanceledException t) {
