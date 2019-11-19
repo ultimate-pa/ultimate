@@ -296,23 +296,13 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		return mUsePredicateTrieBasedPredicateUnifier;
 	}
 
-	/**
-	 *
-	 * @param identifier
-	 * @return
-	 */
 	public SolverSettings constructSolverSettings(final TaskIdentifier identifier) {
-		final SolverSettings settings =
-				SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(getFakeNonIncrementalSolver())
-						.setDumpFeatureVectors(dumpFeatureVectors(), getFeatureVectorsDumpPath())
-						.setDumpSmtScriptToFile(getDumpSmtScriptToFile(), getPathOfDumpedScript(),
-								identifier.toString())
-
-						.setSolverMode(getSolverMode());
-		if (getUseSeparateSolverForTracechecks()) {
-			return settings.setUseExternalSolver(true, getCommandExternalSolver(), getLogicForExternalSolver());
-		}
-		return settings;
+		return SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(getFakeNonIncrementalSolver())
+				.setDumpFeatureVectors(dumpFeatureVectors(), getFeatureVectorsDumpPath())
+				.setDumpSmtScriptToFile(getDumpSmtScriptToFile(), getPathOfDumpedScript(), identifier.toString())
+				.setUseExternalSolver(getUseSeparateSolverForTracechecks(), getCommandExternalSolver(),
+						getLogicForExternalSolver())
+				.setSolverMode(getSolverMode());
 	}
 
 }

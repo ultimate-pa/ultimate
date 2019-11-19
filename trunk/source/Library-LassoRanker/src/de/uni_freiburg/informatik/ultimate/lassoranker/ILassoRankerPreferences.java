@@ -148,9 +148,8 @@ public interface ILassoRankerPreferences {
 			final String filenameDumpedScript) {
 		final long timeoutSmtInterpol = 365 * 24 * 60 * 60 * 1000L;
 
-		return SolverBuilder.constructSolverSettings().setSolverMode(solverMode)
-				.setUseFakeIncrementalScript(isFakeNonIncrementalScript())
-				.setUseExternalSolver(true, getExternalSolverCommand(), null)
+		return SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(isFakeNonIncrementalScript())
+				.setUseExternalSolver(true, getExternalSolverCommand(), null).setSolverMode(solverMode)
 				.setDumpSmtScriptToFile(isDumpSmtSolverScript(), getPathOfDumpedScript(), getBaseNameOfDumpedScript())
 				.setSmtInterpolTimeout(timeoutSmtInterpol);
 	}

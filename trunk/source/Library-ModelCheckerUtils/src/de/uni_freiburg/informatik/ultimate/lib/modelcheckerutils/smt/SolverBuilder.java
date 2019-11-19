@@ -509,10 +509,10 @@ public class SolverBuilder {
 		}
 
 		public SolverSettings setUseFakeIncrementalScript(final boolean enable) {
-			return new SolverSettings(mSolverMode, enable, mUseExternalSolver, mExternalSolverCommand,
-					mSolverLogics, mTimeoutSmtInterpol, mExternalInterpolator, mDumpSmtScriptToFile,
-					mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, mPathOfDumpedScript, mBaseNameOfDumpedScript,
-					mUseDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath);
+			return new SolverSettings(mSolverMode, enable, mUseExternalSolver, mExternalSolverCommand, mSolverLogics,
+					mTimeoutSmtInterpol, mExternalInterpolator, mDumpSmtScriptToFile, mDumpUnsatCoreTrackBenchmark,
+					mDumpMainTrackBenchmark, mPathOfDumpedScript, mBaseNameOfDumpedScript, mUseDiffWrapper,
+					mDumpFeatureVector, mFeatureVectorDumpPath);
 		}
 
 		public SolverSettings setSolverLogics(final Logics logics) {
@@ -523,15 +523,20 @@ public class SolverBuilder {
 		}
 
 		/**
-		 * Set the {@link SolverMode} of these settings and automatically adjust values for
-		 * {@link #useExternalSolver()}, {@link #useDiffWrapper()}, {@link #getTimeoutSmtInterpol()}, and
-		 * {@link #getExternalInterpolator()}.
+		 * Set the {@link SolverMode} of these settings and automatically adjust values for the following fields.
+		 * <ul>
+		 * <li>{@link #useExternalSolver()}
+		 * <li>{@link #useDiffWrapper()}
+		 * <li>{@link #getTimeoutSmtInterpol()}
+		 * <li>{@link #getExternalInterpolator()}
+		 * <li>{@link #getSolverLogics()} (only for {@link SolverMode}s Internal*)
+		 * </ul>
 		 *
 		 * You may change these fields afterwards.
 		 *
 		 * If you want to explicitly disable {@link SolverMode} (e.g., for usage with
 		 * {@link SolverBuilder#buildScript(IUltimateServiceProvider, SolverSettings)}, use null as parameter. Note that
-		 * in this case, the values for the four fields mentioned above are not changed.
+		 * in this case, the values for the fields mentioned above are not changed.
 		 */
 		public SolverSettings setSolverMode(final SolverMode solverMode) {
 			if (solverMode == null) {
@@ -546,6 +551,7 @@ public class SolverBuilder {
 			final boolean useDiffWrapper;
 			final int timeoutSmtInterpol;
 			final ExternalInterpolator externalInterpolator;
+			final Logics logics;
 
 			switch (solverMode) {
 			case External_DefaultMode:
@@ -555,24 +561,28 @@ public class SolverBuilder {
 				timeoutSmtInterpol = -1;
 				externalInterpolator = null;
 				useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
+				logics = mSolverLogics;
 				break;
 			case External_PrincessInterpolationMode:
 				useExternalSolver = true;
 				timeoutSmtInterpol = -1;
 				externalInterpolator = ExternalInterpolator.PRINCESS;
 				useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
+				logics = mSolverLogics;
 				break;
 			case External_SMTInterpolInterpolationMode:
 				useExternalSolver = true;
 				timeoutSmtInterpol = -1;
 				externalInterpolator = ExternalInterpolator.SMTINTERPOL;
 				useDiffWrapper = false;
+				logics = mSolverLogics;
 				break;
 			case External_Z3InterpolationMode:
 				useExternalSolver = true;
 				timeoutSmtInterpol = -1;
 				externalInterpolator = ExternalInterpolator.IZ3;
 				useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
+				logics = mSolverLogics;
 				break;
 			case Internal_SMTInterpol_NoArrayInterpol:
 			case Internal_SMTInterpol:
@@ -580,13 +590,14 @@ public class SolverBuilder {
 				timeoutSmtInterpol = -1;
 				externalInterpolator = null;
 				useDiffWrapper = false;
+				logics = LOGIC_SMTINTERPOL;
 				break;
 			default:
 				throw new AssertionError("unknown solver mode " + solverMode);
 			}
 
 			return new SolverSettings(solverMode, mFakeNonIncrementalScript, useExternalSolver, mExternalSolverCommand,
-					mSolverLogics, timeoutSmtInterpol, externalInterpolator, mDumpSmtScriptToFile,
+					logics, timeoutSmtInterpol, externalInterpolator, mDumpSmtScriptToFile,
 					mDumpUnsatCoreTrackBenchmark, mDumpMainTrackBenchmark, mPathOfDumpedScript, mBaseNameOfDumpedScript,
 					useDiffWrapper, mDumpFeatureVector, mFeatureVectorDumpPath);
 		}
