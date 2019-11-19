@@ -189,8 +189,8 @@ public final class MSODSolver {
 	}
 
 	/**
-	 * Returns automaton that represents "∀ φ". Performs equivalent transformation to ¬∃ ¬φ and calls
-	 * {@link #traversePostOrder(Term)} with the result".
+	 * Returns automaton that represents "∀ φ". Performs equivalent transformation to "¬∃ ¬φ" and calls
+	 * {@link #traversePostOrder(Term)} with the result.
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processForall(final QuantifiedFormula term)
 			throws Exception {
@@ -244,7 +244,7 @@ public final class MSODSolver {
 	}
 
 	/**
-	 * Returns automaton that represents "not φ".
+	 * Returns automaton that represents "¬φ".
 	 *
 	 * @throws AutomataLibraryException
 	 *             if construction of {@link Complement} or {@link Intersect} fails.
@@ -257,13 +257,11 @@ public final class MSODSolver {
 
 		result = mAutomataOperations.complement(mAutomataLibrarayServices, result);
 
-		mLogger.error(result);
-
 		return result;
 	}
 
 	/**
-	 * Returns automaton that represents "φ and ... and ψ".
+	 * Returns automaton that represents "φ ∧ ... ∧ ψ".
 	 *
 	 * @throws AutomataLibraryException
 	 *             if construction of {@link Intersect} fails.
@@ -278,8 +276,7 @@ public final class MSODSolver {
 			INestedWordAutomaton<MSODAlphabetSymbol, String> tmp = traversePostOrder(term.getParameters()[i]);
 			mLogger.info("Construct φ and ψ (" + i + "): " + term);
 
-			Set<MSODAlphabetSymbol> symbols;
-			symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
+			final Set<MSODAlphabetSymbol> symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
 
 			result = MSODAutomataOperations.project(mAutomataLibrarayServices, result, symbols, true);
 			tmp = MSODAutomataOperations.project(mAutomataLibrarayServices, tmp, symbols, true);
@@ -291,7 +288,7 @@ public final class MSODSolver {
 	}
 
 	/**
-	 * Returns automaton that represents "φ or ... or ψ". Performs equivalent transformation to conjunction and calls
+	 * Returns automaton that represents "φ ∨ ... ∨ ψ". Performs equivalent transformation to conjunction and calls
 	 * {@link #traversePostOrder(Term)} with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processDisjunction(final ApplicationTerm term)
@@ -304,8 +301,7 @@ public final class MSODSolver {
 			INestedWordAutomaton<MSODAlphabetSymbol, String> tmp = traversePostOrder(term.getParameters()[i]);
 			mLogger.info("Construct φ and ψ (" + i + "): " + term);
 
-			Set<MSODAlphabetSymbol> symbols;
-			symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
+			final Set<MSODAlphabetSymbol> symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
 
 			result = MSODAutomataOperations.project(mAutomataLibrarayServices, result, symbols, true);
 			tmp = MSODAutomataOperations.project(mAutomataLibrarayServices, tmp, symbols, true);
@@ -317,7 +313,7 @@ public final class MSODSolver {
 	}
 
 	/**
-	 * Returns automaton that represents "φ implies ψ". Performs equivalent transformation to "not φ and ψ" and calls
+	 * Returns automaton that represents "φ ⇒ ψ". Performs equivalent transformation to "¬φ ∧ ψ" and calls
 	 * {@link #traversePostOrder(Term)} with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processImplication(final ApplicationTerm term)
@@ -332,7 +328,7 @@ public final class MSODSolver {
 	}
 
 	/**
-	 * Returns automaton that represents "t = c". Performs equivalent transformation to "t <= c and not t < c" and calls
+	 * Returns automaton that represents "t = c". Performs equivalent transformation to "(t <= c) ∧ ¬(t < c)" and calls
 	 * {@link #traversePostOrder(Term)} with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processEqual(final ApplicationTerm term) throws Exception {
@@ -352,7 +348,7 @@ public final class MSODSolver {
 	}
 
 	/**
-	 * Returns automaton that represents "t > c". Performs equivalent transformation to "not t <= c" and calls
+	 * Returns automaton that represents "t > c". Performs equivalent transformation to "¬(t <= c)" and calls
 	 * {@link #traversePostOrder(Term)} with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processGreater(final ApplicationTerm term)
@@ -365,7 +361,7 @@ public final class MSODSolver {
 	}
 
 	/**
-	 * Returns automaton that represents "t >= c". Performs equivalent transformation to "not t < c" and calls
+	 * Returns automaton that represents "t >= c". Performs equivalent transformation to "¬(t < c)" and calls
 	 * {@link #traversePostOrder(Term)} with the result".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processGreaterEqual(final ApplicationTerm term)
@@ -436,7 +432,7 @@ public final class MSODSolver {
 	}
 
 	/**
-	 * Returns automaton that represents "X strictSubset Y".
+	 * Returns automaton that represents "X ⊊ Y".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processStrictSubset(final ApplicationTerm term) {
 		mLogger.info("Construct X strictSubset Y: " + term);
@@ -450,7 +446,7 @@ public final class MSODSolver {
 	}
 
 	/**
-	 * Returns automaton that represents "X subset Y".
+	 * Returns automaton that represents "X ⊆ Y".
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processSubset(final ApplicationTerm term) {
 		mLogger.info("Construct X subset Y: " + term);
@@ -464,7 +460,7 @@ public final class MSODSolver {
 	}
 
 	/**
-	 * Returns automaton that represents "t element X".
+	 * Returns automaton that represents "t ∈ X".
 	 *
 	 * @throws AutomataLibraryException
 	 */

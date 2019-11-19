@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -65,15 +64,18 @@ public abstract class MSODAutomataOperations {
 	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
 			emptyAutomaton(final AutomataLibraryServices services) {
 
-		return new NestedWordAutomaton<>(services, new VpAlphabet<>(new HashSet<>()), new StringFactory());
+		return new NestedWordAutomaton<>(services, new VpAlphabet<>(new HashSet<>()), new MSODStringFactory());
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} that is the projection of the given automaton onto the given alphabet.
+	 * Returns an {@link INestedWordAutomaton} that is the projection of the given automaton onto the given alphabet.
+	 *
+	 * @throws AutomataOperationCanceledException
+	 *             if minimization is canceled.
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> project(final AutomataLibraryServices services,
+	public static INestedWordAutomaton<MSODAlphabetSymbol, String> project(final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<MSODAlphabetSymbol> alphabet,
-			final boolean isExtended) {
+			final boolean isExtended) throws AutomataLibraryException {
 
 		alphabet.containsAll(automaton.getAlphabet());
 
@@ -100,7 +102,7 @@ public abstract class MSODAutomataOperations {
 			}
 		}
 
-		return result;
+		return new MinimizeSevpa<>(services, new MSODStringFactory(), result).getResult();
 	}
 
 	/**
@@ -194,14 +196,15 @@ public abstract class MSODAutomataOperations {
 
 		if (!result.getAlphabet().isEmpty()) {
 			// Find all Int variables in the alphabet.
-			final Set<Term> intVars = automaton.getAlphabet().iterator().next().containsSort(SmtSortUtils.INT_SORT);
+			final Set<Term> intVariables = result.getAlphabet().iterator().next().containsSort(SmtSortUtils.INT_SORT);
 
 			// Intersect with an automata that ensure that Int variables are matched to exactly one value.
-			for (final Term intVar : intVars) {
-				INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton;
-				varAutomaton = intVariableAutomaton(services, intVar);
-				varAutomaton = project(services, varAutomaton, result.getAlphabet(), true);
-				result = intersect(services, result, varAutomaton);
+			for (final Term intVariable : intVariables) {
+				INestedWordAutomaton<MSODAlphabetSymbol, String> variableAutomaton =
+						intVariableAutomaton(services, intVariable);
+
+				variableAutomaton = project(services, variableAutomaton, result.getAlphabet(), true);
+				result = intersect(services, result, variableAutomaton);
 			}
 		}
 

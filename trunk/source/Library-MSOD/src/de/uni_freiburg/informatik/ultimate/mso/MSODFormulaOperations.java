@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -53,7 +52,7 @@ public abstract class MSODFormulaOperations {
 	public static NestedWordAutomaton<MSODAlphabetSymbol, String>
 			emptyAutomaton(final AutomataLibraryServices services) {
 
-		return new NestedWordAutomaton<>(services, new VpAlphabet<>(new HashSet<>()), new StringFactory());
+		return new NestedWordAutomaton<>(services, new VpAlphabet<>(new HashSet<>()), new MSODStringFactory());
 	}
 
 	/**
