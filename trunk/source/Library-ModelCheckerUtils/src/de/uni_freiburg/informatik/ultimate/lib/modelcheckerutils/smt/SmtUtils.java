@@ -190,7 +190,7 @@ public final class SmtUtils {
 				}
 				logger.warn(sb);
 			}
-
+			undoableScript.restore();
 			return simplified;
 		} catch (final ToolchainCanceledException t) {
 			// we try to preserve the script if a timeout occurred
@@ -1449,17 +1449,15 @@ public final class SmtUtils {
 	 * Division for reals with the following simplifications.
 	 * <ul>
 	 * <li>Initial literals are simplified by division.
-	 * <li>A non-initial zero cannot be simplified (semantics of division by zero
-	 * similar to uninterpreted function see
-	 * http://smtlib.cs.uiowa.edu/theories-Reals.shtml).
-	 * This means especially that an initial zero does not make the result zero,
-	 * because 0.0 is not equivalent to (/ 0.0 0.0).
-	 * <li> An intermediate one is dropped.
-	 * <li> Intermediate literals are simplified by multiplication.
+	 * <li>A non-initial zero cannot be simplified (semantics of division by zero similar to uninterpreted function see
+	 * http://smtlib.cs.uiowa.edu/theories-Reals.shtml). This means especially that an initial zero does not make the
+	 * result zero, because 0.0 is not equivalent to (/ 0.0 0.0).
+	 * <li>An intermediate one is dropped.
+	 * <li>Intermediate literals are simplified by multiplication.
 	 * </ul>
 	 *
-	 * See {@link SmtUtilsTest#divRealTest01} for tests. TODO: Apply flattening such
-	 * that (div (div x y) z) becomes (div x y z).
+	 * See {@link SmtUtilsTest#divRealTest01} for tests. TODO: Apply flattening such that (div (div x y) z) becomes (div
+	 * x y z).
 	 */
 	public static Term divReal(final Script script, final Term... inputParams) {
 		final List<Term> resultParams = new ArrayList<>();
@@ -1529,16 +1527,14 @@ public final class SmtUtils {
 	 * Division for reals with the following simplifications.
 	 * <ul>
 	 * <li>Initial literals are simplified by division as long as the result is integral.
-	 * <li>A non-initial zero cannot be simplified (semantics of division by zero
-	 * similar to uninterpreted function see
-	 * http://smtlib.cs.uiowa.edu/theories-Reals.shtml).
-	 * This means especially that an initial zero does not make the result zero,
-	 * because 0.0 is not equivalent to (/ 0.0 0.0).
-	 * <li> An intermediate one is dropped.
+	 * <li>A non-initial zero cannot be simplified (semantics of division by zero similar to uninterpreted function see
+	 * http://smtlib.cs.uiowa.edu/theories-Reals.shtml). This means especially that an initial zero does not make the
+	 * result zero, because 0.0 is not equivalent to (/ 0.0 0.0).
+	 * <li>An intermediate one is dropped.
 	 * </ul>
 	 *
-	 * See {@link SmtUtilsTest#divIntTest01} for tests. TODO: Apply flattening such
-	 * that (div (div x y) z) becomes (div x y z).
+	 * See {@link SmtUtilsTest#divIntTest01} for tests. TODO: Apply flattening such that (div (div x y) z) becomes (div
+	 * x y z).
 	 */
 	public static Term divInt(final Script script, final Term... inputParams) {
 		final List<Term> resultParams = new ArrayList<>();
@@ -1567,21 +1563,21 @@ public final class SmtUtils {
 						if (resultRat.isIntegral()) {
 							final Term resultTerm = resultRat.toTerm(SmtSortUtils.getIntSort(script));
 							resultParams.set(0, resultTerm);
-						}else {
+						} else {
 							// cannot simplify
 							resultParams.add(inputParams[i]);
 							simplificationPossible = false;
 						}
 					}
 				}
-			}else {
+			} else {
 				final Rational nextAsRational = tryToConvertToLiteral(inputParams[i]);
 				if (nextAsRational == null) {
 					resultParams.add(inputParams[i]);
-				}else {
+				} else {
 					if (nextAsRational.numerator() == BigInteger.ONE) {
 						// do nothing
-					}else {
+					} else {
 						resultParams.add(inputParams[i]);
 					}
 				}
@@ -1593,7 +1589,7 @@ public final class SmtUtils {
 			return script.term("div", resultParams.toArray(new Term[resultParams.size()]));
 		}
 	}
-	
+
 	/**
 	 * Returns a possibly simplified version of the Term (mod dividend divisor). If dividend and divisor are both
 	 * literals the returned Term is a literal which is equivalent to the result of the operation. If only the divisor
@@ -1699,8 +1695,8 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Check if term represents a literal. If this is the case, then return its
-	 * value as a {@link Rational} otherwise return true.
+	 * Check if term represents a literal. If this is the case, then return its value as a {@link Rational} otherwise
+	 * return true.
 	 */
 	public static Rational tryToConvertToLiteral(final Term term) {
 		final Rational result;
