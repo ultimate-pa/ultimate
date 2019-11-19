@@ -8,7 +8,7 @@
 (declare-fun x () Int)
 (declare-fun I () SetOfInt)
 
-; I is the set of Int/Nat numbers. 
+; I is the set of Int/Nat numbers. Result: sat (IntBuchi, NatBuchi), unsat (IntWeak, NatWeak)
 (assert (forall ((x Int))  (element x I)))
 
 (check-sat)

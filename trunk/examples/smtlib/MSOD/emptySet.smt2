@@ -8,7 +8,7 @@
 (declare-fun x () Int)
 (declare-fun I () SetOfInt)
 
-; I is the empty set. 
+; I is the empty set. Result: sat 
 (assert (forall ((x Int))  (not (element x I))))
 
 (check-sat)
