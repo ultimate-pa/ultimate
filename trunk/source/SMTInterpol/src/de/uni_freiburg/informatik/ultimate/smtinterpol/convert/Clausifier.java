@@ -517,11 +517,12 @@ public class Clausifier {
 				assert qf.getQuantifier() == QuantifiedFormula.EXISTS;
 				final Term converted = convertQuantifiedSubformula(positive, qf);
 				// FIXME: real proof rule?
-				Term rewrite = mTracker.buildRewrite(mAxiom, converted, ProofConstants.RW_SORRY);
+				Term rewrite =
+						mTracker.buildRewrite(mTracker.getProvedTerm(mAxiom), converted, ProofConstants.RW_SORRY);
 				if (isNotTerm(converted)) {
 					rewrite = mUtils.convertNot(rewrite);
 				}
-				pushOperation(new AddAsAxiom(rewrite, mSource));
+				pushOperation(new AddAsAxiom(mTracker.getRewriteProof(mAxiom, rewrite), mSource));
 				return;
 			}
 			buildClause(mAxiom, mSource);
@@ -804,7 +805,8 @@ public class Clausifier {
 				assert qf.getQuantifier() == QuantifiedFormula.EXISTS;
 				final Term converted = convertQuantifiedSubformula(positive, qf);
 				// FIXME: real proof rule?
-				rewrite = mTracker.buildRewrite(rewrite, converted, ProofConstants.RW_SORRY);
+				rewrite = mTracker.transitivity(rewrite,
+						mTracker.buildRewrite(mTracker.getProvedTerm(rewrite), converted, ProofConstants.RW_SORRY));
 				if (isNotTerm(converted)) {
 					rewrite = mUtils.convertNot(rewrite);
 				}

@@ -479,22 +479,24 @@ public class SMTInterpol extends NoopScript {
 			if (mEngine.hasModel()) {
 				result = LBool.SAT;
 				if (mSolverOptions.isModelCheckModeActive()) {
-					mModel = new de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model(mClausifier, getTheory(),
+					try {
+						mModel = new de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model(mClausifier,
+								getTheory(),
 							mSolverOptions.isModelsPartial());
-					if (mDDFriendly && !mModel.checkTypeValues(mLogger)) {
-						System.exit(1);
-					}
-					for (final Term asserted : mAssertions) {
-						final Term checkedResult = mModel.evaluate(asserted);
-						if (checkedResult != getTheory().mTrue) {
-							if (mDDFriendly) {
-								System.exit(1);
-							}
-							mLogger.fatal("Model does not satisfy " + asserted.toStringDirect());
-							// for (Term t : getSatisfiedLiterals())
-							// if (m_Model.evaluate(t) != getTheory().TRUE)
-							// m_Logger.fatal("Unsat lit: " + t.toStringDirect());
+						if (mDDFriendly && !mModel.checkTypeValues(mLogger)) {
+							System.exit(1);
 						}
+						for (final Term asserted : mAssertions) {
+							final Term checkedResult = mModel.evaluate(asserted);
+							if (checkedResult != getTheory().mTrue) {
+								if (mDDFriendly) {
+									System.exit(1);
+								}
+								mLogger.fatal("Model does not satisfy " + asserted.toStringDirect());
+							}
+						}
+					} catch (UnsupportedOperationException ex) {
+						mLogger.warn("Model check mode not working: %s", ex.getMessage());
 					}
 				}
 			} else {

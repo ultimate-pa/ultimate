@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ITheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.FunctionValue.Index;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CClosure;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.EprTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.EprTheorySettings;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinArSolve;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTheory;
@@ -90,19 +91,26 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 			mFuncVals.put(at.getFunction(), value);
 		}
 		// Extract different theories
-		final CClosure cc = clausifier.getCClosure();
+		CClosure cc = null;
 		LinArSolve la = null;
 		ArrayTheory array = null;
 		for (final ITheory theory : clausifier.getEngine().getAttachedTheories()) {
-			if (theory instanceof LinArSolve) {
+			if (theory instanceof CClosure) {
+				cc = (CClosure) theory;
+			} else if (theory instanceof LinArSolve) {
 				la = (LinArSolve) theory;
 			} else if (theory instanceof ArrayTheory) {
 				array = (ArrayTheory) theory;
 			} else if (theory instanceof QuantifierTheory) {
-				throw new InternalError("Modelproduction for theory not implemented: " + theory);
-			} else if (theory != cc
-					&& !(theory == clausifier.getEprTheory() && EprTheorySettings.FullInstatiationMode)) {
-				throw new InternalError("Modelproduction for theory not implemented: " + theory);
+				if (!((QuantifierTheory) theory).getQuantClauses().isEmpty()) {
+					throw new UnsupportedOperationException("Modelproduction for quantifier theory not implemented.");
+				}
+			} else if (theory instanceof EprTheory) {
+				if (!EprTheorySettings.FullInstatiationMode) {
+					throw new UnsupportedOperationException("Modelproduction for EPR theory not implemented.");
+				}
+			} else {
+				throw new InternalError("Unknown theory: " + theory);
 			}
 		}
 		final SharedTermEvaluator ste = new SharedTermEvaluator(la);

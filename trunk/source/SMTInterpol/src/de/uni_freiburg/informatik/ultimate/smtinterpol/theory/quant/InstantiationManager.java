@@ -70,7 +70,7 @@ public class InstantiationManager {
 	private final EMatching mEMatching;
 
 	private final Map<QuantClause, Dawg<SharedTerm, InstanceValue>> mClauseDawgs;
-	private final Map<QuantClause, Map<List<SharedTerm>, Literal[]>> mClauseInstances;
+	private final Map<QuantClause, Map<List<SharedTerm>, InstClause>> mClauseInstances;
 
 	private final InstanceValue mDefaultValueForLitDawgs;
 
@@ -121,8 +121,8 @@ public class InstantiationManager {
 	 * 
 	 * @return the clause instances.
 	 */
-	public Set<List<Literal>> findConflictAndUnitInstancesWithNewEMatching() {
-		final Set<List<Literal>> conflictAndUnitClauses = new LinkedHashSet<>();
+	public Set<InstClause> findConflictAndUnitInstancesWithNewEMatching() {
+		final Set<InstClause> conflictAndUnitClauses = new LinkedHashSet<>();
 
 		// New Quant Clauses may be added when new instances are computed (e.g. axioms for ite terms)
 		final List<QuantClause> currentQuantClauses = new ArrayList<>();
@@ -139,9 +139,9 @@ public class InstantiationManager {
 						if (mQuantTheory.getEngine().isTerminationRequested()) {
 							return Collections.emptySet();
 						}
-						final Literal[] instLits = computeClauseInstance(qClause, subs);
-						if (instLits != null) {
-							conflictAndUnitClauses.add(Arrays.asList(instLits));
+						final InstClause inst = computeClauseInstance(qClause, subs);
+						if (inst != null) {
+							conflictAndUnitClauses.add(inst);
 						}
 					}
 				}
@@ -156,8 +156,8 @@ public class InstantiationManager {
 	 *
 	 * @return A Set of potentially conflicting and unit instances.
 	 */
-	public Set<List<Literal>> findConflictAndUnitInstances() {
-		final Set<List<Literal>> conflictAndUnitClauses = new LinkedHashSet<>();
+	public Set<InstClause> findConflictAndUnitInstances() {
+		final Set<InstClause> conflictAndUnitClauses = new LinkedHashSet<>();
 		// New Quant Clauses may be added when new instances are computed (e.g. axioms for ite terms)
 		final List<QuantClause> currentQuantClauses = new ArrayList<>();
 		currentQuantClauses.addAll(mQuantTheory.getQuantClauses());
@@ -165,15 +165,15 @@ public class InstantiationManager {
 			if (quantClause.hasTrueGroundLits()) {
 				continue;
 			}
-			final Set<List<SharedTerm>> allInstantiations = computeAllSubstitutions(quantClause);
-			for (List<SharedTerm> inst : allInstantiations) {
+			final Set<List<SharedTerm>> allSubstitutions = computeAllSubstitutions(quantClause);
+			for (List<SharedTerm> subs : allSubstitutions) {
 				if (mClausifier.getEngine().isTerminationRequested())
 					return Collections.emptySet();
-				final InstanceValue clauseValue = evaluateClauseInstance(quantClause, inst);
+				final InstanceValue clauseValue = evaluateClauseInstance(quantClause, subs);
 				if (clauseValue != InstanceValue.TRUE) {
-					final Literal[] instLits = computeClauseInstance(quantClause, inst);
-					if (instLits != null) {
-						conflictAndUnitClauses.add(Arrays.asList(instLits));
+					final InstClause inst = computeClauseInstance(quantClause, subs);
+					if (inst != null) {
+						conflictAndUnitClauses.add(inst);
 					}
 				}
 			}
@@ -203,10 +203,10 @@ public class InstantiationManager {
 				if (mClausifier.getEngine().isTerminationRequested()) {
 					return null;
 				}
-				final Literal[] instLits = computeClauseInstance(quantClause, subs);
-				if (instLits != null) {
+				final InstClause inst = computeClauseInstance(quantClause, subs);
+				if (inst != null) {
 					boolean isConflict = true;
-					for (Literal lit : instLits) {
+					for (Literal lit : inst.mLits) {
 						if (lit.getAtom().getDecideStatus() == lit) { // instance satisfied TODO Avoid creating those
 							continue outer;
 						}
@@ -215,7 +215,7 @@ public class InstantiationManager {
 						}
 					}
 					if (isConflict) {
-						return new Clause(instLits);
+						return inst.toClause(mQuantTheory.getEngine().isProofGenerationEnabled());
 					} else { // a new not yet satisfied instance has been created
 						return null;
 					}
@@ -792,7 +792,7 @@ public class InstantiationManager {
 	 *
 	 * @return the set of ground literals, or null if the clause would be trivially true.
 	 */
-	private Literal[] computeClauseInstance(final QuantClause clause, final List<SharedTerm> subs) {
+	private InstClause computeClauseInstance(final QuantClause clause, final List<SharedTerm> subs) {
 		assert mClauseInstances.containsKey(clause);
 		if (mClauseInstances.get(clause).containsKey(subs)) {
 			return mClauseInstances.get(clause).get(subs);
@@ -810,12 +810,14 @@ public class InstantiationManager {
 			assert instHelper.getResultingQuantLits().length == 0;
 			resultingLits = instHelper.getResultingGroundLits();
 		}
-		mClauseInstances.get(clause).put(subs, resultingLits);
+		final InstClause inst =
+				resultingLits != null ? new InstClause(clause, subs, Arrays.asList(resultingLits), -1) : null; // TODO
+		mClauseInstances.get(clause).put(subs, inst);
 		if (resultingLits != null) {
 			mQuantTheory.getLogger().debug("Quant: instantiating quant clause %s results in %s", clause,
 					Arrays.asList(resultingLits));
 		}
-		return resultingLits;
+		return inst;
 	}
 
 	/**

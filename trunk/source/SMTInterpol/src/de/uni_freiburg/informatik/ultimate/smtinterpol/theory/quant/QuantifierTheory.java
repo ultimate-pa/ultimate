@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -155,9 +154,9 @@ public class QuantifierTheory implements ITheory {
 				assert instClause.mNumUndefLits > 0;
 				instClause.mNumUndefLits -= 1;
 				if (instClause.isConflict()) {
-					mLogger.debug("Quant conflict: %1s", instClause);
+					mLogger.debug("Quant conflict: %s", instClause);
 					mConflictCount++;
-					return new Clause(instClause.mLits.toArray(new Literal[instClause.mLits.size()]));
+					return instClause.toClause(mEngine.isProofGenerationEnabled());
 				}
 			}
 		}
@@ -175,7 +174,7 @@ public class QuantifierTheory implements ITheory {
 		if (Config.PROFILE_TIME) {
 			time = System.nanoTime();
 		}
-		final Collection<List<Literal>> conflictAndUnitInstances;
+		final Collection<InstClause> conflictAndUnitInstances;
 		if (mUseEMatching) {
 			mEMatching.run();
 			conflictAndUnitInstances = mInstantiationManager.findConflictAndUnitInstancesWithNewEMatching();
@@ -241,16 +240,16 @@ public class QuantifierTheory implements ITheory {
 				return null;
 			}
 			final Literal lit = entry.getKey();
-			for (final InstClause clause : entry.getValue()) {
-				if (clause.isUnit()) {
-					final Clause expl = new Clause(clause.mLits.toArray(new Literal[clause.mLits.size()]));
+			for (final InstClause inst : entry.getValue()) {
+				if (inst.isUnit()) {
+					final Clause expl = inst.toClause(mEngine.isProofGenerationEnabled());
 					lit.getAtom().mExplanation = expl;
 					mEngine.learnClause(expl);
 					mPropCount++;
 					mLogger.debug("Quant Prop: %s Reason: %s", lit, lit.getAtom().mExplanation);
 					return lit;
 				} else {
-					mLogger.debug("Not propagated: %s Clause: %s", lit, clause.mLits);
+					mLogger.debug("Not propagated: %s Clause: %s", lit, inst.mLits);
 				}
 			}
 		}
@@ -708,11 +707,11 @@ public class QuantifierTheory implements ITheory {
 	 *            a set of potential conflict and unit clauses
 	 * @return a conflict
 	 */
-	private Clause addPotentialConflictAndUnitClauses(final Collection<List<Literal>> instances) {
+	private Clause addPotentialConflictAndUnitClauses(final Collection<InstClause> instances) {
 		if (instances == null) {
 			return null;
 		}
-		for (final List<Literal> clause : instances) {
+		for (final InstClause inst : instances) {
 			if (mEngine.isTerminationRequested()) {
 				return null;
 			}
@@ -720,7 +719,7 @@ public class QuantifierTheory implements ITheory {
 			boolean isTrueInst = false;
 			int numUndef = 0;
 			// Count the number of undefined literals
-			for (final Literal lit : clause) {
+			for (final Literal lit : inst.mLits) {
 				if (lit.getAtom().getDecideStatus() == lit) {
 					isTrueInst = true;
 					continue;
@@ -733,8 +732,8 @@ public class QuantifierTheory implements ITheory {
 				continue; // Don't add true instances.
 				// TODO They should be detected during literal evaluation, but it doesn't work as expected, see below.
 			}
-			final InstClause instClause = new InstClause(clause, numUndef);
-			for (final Literal lit : clause) {
+			inst.mNumUndefLits = numUndef;
+			for (final Literal lit : inst.mLits) {
 				// assert lit.getAtom().getDecideStatus() != lit;
 				// TODO It happens that the assertion is violated. Not sure whether evaluation of literals (as terms)
 				// works correctly, even with CC.
@@ -743,49 +742,13 @@ public class QuantifierTheory implements ITheory {
 					if (!mPotentialConflictAndUnitClauses.containsKey(lit)) {
 						mPotentialConflictAndUnitClauses.put(lit, new LinkedHashSet<>());
 					}
-					mPotentialConflictAndUnitClauses.get(lit).add(instClause);
+					mPotentialConflictAndUnitClauses.get(lit).add(inst);
 				}
 			}
 			if (isConflict) {
-				return new Clause(clause.toArray(new Literal[clause.size()]));
+				return inst.toClause(mEngine.isProofGenerationEnabled());
 			}
 		}
 		return null;
-	}
-
-	private class InstClause {
-		private final List<Literal> mLits;
-		protected int mNumUndefLits;
-
-		InstClause(final List<Literal> lits, final int numUndefLits) {
-			mLits = lits;
-			mNumUndefLits = numUndefLits;
-		}
-
-		boolean isConflict() {
-			return mNumUndefLits == 0;
-		}
-
-		boolean isUnit() {
-			return mNumUndefLits == 1;
-		}
-
-		@Override
-		public int hashCode() {
-			return mLits.hashCode();
-		}
-
-		@Override
-		public boolean equals(final Object other) {
-			if (other instanceof InstClause) {
-				return mLits.equals(((InstClause) other).mLits);
-			}
-			return false;
-		}
-
-		@Override
-		public String toString() {
-			return mLits.toString();
-		}
 	}
 }

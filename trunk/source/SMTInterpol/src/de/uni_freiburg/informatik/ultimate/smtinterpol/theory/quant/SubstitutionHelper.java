@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ILiteral;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffineTerm;
 
@@ -265,9 +266,11 @@ public class SubstitutionHelper {
 		// Normalize term.
 		Term normalized = substituted;
 		final TermCompiler compiler = mClausifier.getTermCompiler();
+		final IProofTracker tracker = mClausifier.getTracker();
 
 		if (atom instanceof QuantBoundConstraint) {
-			normalized = compiler.transform(substituted);
+			// TODO store rewrite proof
+			normalized = tracker.getProvedTerm(compiler.transform(substituted));
 		} else { // Normalize lhs and rhs separately
 			assert substituted instanceof ApplicationTerm;
 			final ApplicationTerm subsEq = (ApplicationTerm) substituted;
@@ -282,14 +285,14 @@ public class SubstitutionHelper {
 				final Term[] oldArgs = subsAuxTerm.getParameters();
 				final Term[] normalizedArgs = new Term[oldArgs.length];
 				for (int i = 0; i < oldArgs.length; i++) {
-					normalizedArgs[i] = compiler.transform(oldArgs[i]);
+					normalizedArgs[i] = tracker.getProvedTerm(compiler.transform(oldArgs[i]));
 				}
 				final Term normalizedAuxTerm =
 						mQuantTheory.getTheory().term(((ApplicationTerm) subsLhs).getFunction(), normalizedArgs);
 				normalized = mQuantTheory.getTheory().term("=", normalizedAuxTerm, mQuantTheory.getTheory().mTrue);
 			} else {
-				final Term normalizedLhs = compiler.transform(subsLhs);
-				final Term normalizedRhs = compiler.transform(subsRhs);
+				final Term normalizedLhs = tracker.getProvedTerm(compiler.transform(subsLhs));
+				final Term normalizedRhs = tracker.getProvedTerm(compiler.transform(subsRhs));
 				normalized = mQuantTheory.getTheory().term("=", normalizedLhs, normalizedRhs);
 			}
 		}

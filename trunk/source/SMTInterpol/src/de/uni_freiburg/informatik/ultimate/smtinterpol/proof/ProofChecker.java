@@ -238,6 +238,34 @@ public class ProofChecker extends NonRecursive {
 	}
 
 	/**
+	 * The proof walker that handles a {@literal @}exists application after its arguments are converted. It just calls
+	 * the walkExists function.
+	 */
+	static class ExistsWalker implements Walker {
+		final ApplicationTerm mTerm;
+
+		public ExistsWalker(final ApplicationTerm term) {
+			assert term.getFunction().getName().equals(ProofConstants.FN_EXISTS);
+			mTerm = term;
+		}
+
+		public void enqueue(final ProofChecker engine) {
+			final Term[] params = mTerm.getParameters();
+			engine.enqueueWalker(this);
+			assert params.length == 1;
+			assert params[0] instanceof AnnotatedTerm;
+			engine.enqueueWalker(new ProofWalker(((AnnotatedTerm) params[0]).getSubterm()));
+		}
+
+		@Override
+		public void walk(final NonRecursive engine) {
+			final ProofChecker checker = (ProofChecker) engine;
+			Term subProof = checker.stackPop();
+			checker.stackPush(checker.walkExists(mTerm, subProof), mTerm);
+		}
+	}
+
+	/**
 	 * The proof walker that handles a {@literal @}trans application after its arguments are converted. It just calls
 	 * the walkTransitivity function.
 	 */
@@ -423,6 +451,10 @@ public class ProofChecker extends NonRecursive {
 			new ClauseWalker(proofTerm).enqueue(this);
 			break;
 
+		case ProofConstants.FN_EXISTS:
+			new ExistsWalker(proofTerm).enqueue(this);
+			break;
+
 		default:
 			reportError("Unknown proof rule " + rulename + ".");
 			stackPush(null, proofTerm);
@@ -469,6 +501,8 @@ public class ProofChecker extends NonRecursive {
 			checkTrichotomy(clause);
 		} else if (lemmaType == ":EQ") {
 			checkEQLemma(clause);
+		} else if (lemmaType == ":inst") {
+			reportWarning("Quantifier instantiation lemmas are not checked!");
 		} else {
 			reportError("Cannot deal with lemma " + lemmaType);
 			mLogger.error(annTerm);
@@ -1722,7 +1756,7 @@ public class ProofChecker extends NonRecursive {
 				offset++;
 			}
 			if (offset == funcParams.length) {
-				reportError("cannot find rewritten parameter in @cong: " + subProofs[i] + " in " + funcParams);
+				reportError("cannot find rewritten parameter in @cong: " + subProofs[i] + " in " + funcTerm);
 				offset = 0;
 			} else {
 				newFuncParams[offset] = argRewrite[1];
@@ -1733,6 +1767,35 @@ public class ProofChecker extends NonRecursive {
 		final Theory theory = congruenceApp.getTheory();
 		final Term newEquality = theory.term("=", ((ApplicationTerm) subProofs[0]).getParameters()[0],
 				theory.term(((ApplicationTerm) funcTerm).getFunction(), newFuncParams));
+		return newEquality;
+	}
+
+	Term walkExists(final ApplicationTerm existsApp, final Term subProof) {
+		// sanity check (caller and typechecker should ensure this
+		assert existsApp.getFunction().getName() == ProofConstants.FN_EXISTS;
+		/* Check that subproof is an equality */
+		if (!isApplication("=", subProof) || ((ApplicationTerm) subProof).getParameters().length != 2) {
+			// don't report errors if sub proof already failed
+			if (subProof != null) {
+				reportError("@exists on a proof of a non-equality: " + subProof);
+			}
+			return null;
+		}
+		
+		AnnotatedTerm annotatedTerm = (AnnotatedTerm) existsApp.getParameters()[0];
+		Annotation varAnnot = annotatedTerm.getAnnotations()[0];
+		if (annotatedTerm.getAnnotations().length != 1
+			|| varAnnot.getKey() != ":vars"
+			|| !(varAnnot.getValue() instanceof TermVariable[])) {
+			reportError("@exists with malformed annotation: " + existsApp);
+		}
+		TermVariable[] vars = (TermVariable[]) varAnnot.getValue();
+
+		/* compute the proven equality (= (exists (...) lhs) (exists (...) rhs)) */
+		Term lhs = ((ApplicationTerm) subProof).getParameters()[0];
+		Term rhs = ((ApplicationTerm) subProof).getParameters()[1];
+		final Theory theory = existsApp.getTheory();
+		final Term newEquality = theory.term("=", theory.exists(vars, lhs), theory.exists(vars, rhs));
 		return newEquality;
 	}
 
@@ -1876,6 +1939,11 @@ public class ProofChecker extends NonRecursive {
 			break;
 		case ":intern":
 			okay = checkRewriteIntern(eqParams[0], eqParams[1]);
+			break;
+		case ":forallExists":
+		case ":sorry":
+			reportWarning("rule " + rewriteRule + " not checked!");
+			okay = true;
 			break;
 		default:
 			okay = false;

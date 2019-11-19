@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
@@ -194,6 +195,19 @@ public class QuantClause {
 		for (int i = 0; i < mVars.length; i++) {
 			mInterestingTermsForVars[i].clear();
 		}
+	}
+
+	public Term toTerm(final Theory theory) {
+		final int groundLength = mGroundLits.length;
+		final int quantLength = mQuantLits.length;
+		final Term[] litTerms = new Term[groundLength + quantLength];
+		for (int i = 0; i < groundLength; i++) {
+			litTerms[0] = mGroundLits[i].getSMTFormula(theory);
+		}
+		for (int i = 0; i < quantLength; i++) {
+			litTerms[i + groundLength] = mQuantLits[i].getTerm();
+		}
+		return theory.or(litTerms);
 	}
 
 	/**
