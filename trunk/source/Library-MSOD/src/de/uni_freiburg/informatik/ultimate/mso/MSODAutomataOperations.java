@@ -69,11 +69,13 @@ public abstract class MSODAutomataOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} that is a copy of the given automaton with reduced or extended alphabet.
+	 * Returns a {@link NestedWordAutomaton} that is the projection of the given automaton onto the given alphabet.
 	 */
-	public static NestedWordAutomaton<MSODAlphabetSymbol, String> reduceOrExtend(final AutomataLibraryServices services,
+	public static NestedWordAutomaton<MSODAlphabetSymbol, String> project(final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final Set<MSODAlphabetSymbol> alphabet,
 			final boolean isExtended) {
+
+		alphabet.containsAll(automaton.getAlphabet());
 
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> result = emptyAutomaton(services);
 		result.getAlphabet().addAll(alphabet);
@@ -102,10 +104,15 @@ public abstract class MSODAutomataOperations {
 	}
 
 	/**
-	 * Returns a {@link NestedWordAutomaton} that
+	 * Returns an {@link INestedWordAutomaton} extended automaton that additionally accepts a word "w" if the word
+	 * "w∘symbol" is accepted in the given automaton.
+	 *
+	 * @throws AutomataOperationCanceledException
+	 *             if minimization is canceled.
 	 */
-	public static INestedWordAutomaton<MSODAlphabetSymbol, String>
-			project(final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final MSODAlphabetSymbol symbol) {
+	public static INestedWordAutomaton<MSODAlphabetSymbol, String> saturate(final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton, final MSODAlphabetSymbol symbol)
+			throws AutomataLibraryException {
 
 		final NestedWordAutomaton<MSODAlphabetSymbol, String> result =
 				(NestedWordAutomaton<MSODAlphabetSymbol, String>) automaton;
@@ -130,15 +137,14 @@ public abstract class MSODAutomataOperations {
 			}
 		}
 
-		if (!result.contains("f_new")) {
-			result.addState(isInitial, true, "f_new");
-		}
+		final String state = ((MSODStringFactory) result.getStateFactory()).newString();
+		result.addState(isInitial, true, state);
 
 		for (final IncomingInternalTransition<MSODAlphabetSymbol, String> transition : transitions) {
-			result.addInternalTransition(transition.getPred(), transition.getLetter(), "f_new");
+			result.addInternalTransition(transition.getPred(), transition.getLetter(), state);
 		}
 
-		return result;
+		return new MinimizeSevpa<>(services, new MSODStringFactory(), result).getResult();
 	}
 
 	/**
@@ -194,25 +200,12 @@ public abstract class MSODAutomataOperations {
 			for (final Term intVar : intVars) {
 				INestedWordAutomaton<MSODAlphabetSymbol, String> varAutomaton;
 				varAutomaton = intVariableAutomaton(services, intVar);
-				varAutomaton = reduceOrExtend(services, varAutomaton, result.getAlphabet(), true);
+				varAutomaton = project(services, varAutomaton, result.getAlphabet(), true);
 				result = intersect(services, result, varAutomaton);
 			}
 		}
 
 		return result;
-	}
-
-	/**
-	 * Returns an {@link INestedWordAutomaton} that is possibly a minimized version of the given automaton.
-	 *
-	 * @throws AutomataOperationCanceledException
-	 *             if minimization is canceled.
-	 */
-	public static INestedWordAutomaton<MSODAlphabetSymbol, String> minimize(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
-			throws AutomataOperationCanceledException {
-
-		return new MinimizeSevpa<>(services, new MSODStringFactory(), automaton).getResult();
 	}
 
 	/**
@@ -238,7 +231,7 @@ public abstract class MSODAutomataOperations {
 
 		result = fixIntVariables(services, result);
 
-		return minimize(services, result);
+		return new MinimizeSevpa<>(services, new MSODStringFactory(), result).getResult();
 	}
 
 	/**

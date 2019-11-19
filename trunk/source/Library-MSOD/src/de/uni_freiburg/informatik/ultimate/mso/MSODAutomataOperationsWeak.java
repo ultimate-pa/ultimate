@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 
 /**
  * This class provides methods to manipulate finite automata that correspond to MSOD-Formulas.
@@ -62,7 +63,7 @@ public class MSODAutomataOperationsWeak extends MSODAutomataOperations {
 
 		result = fixIntVariables(services, result);
 
-		return minimize(services, result);
+		return new MinimizeSevpa<>(services, new MSODStringFactory(), result).getResult();
 	}
 
 	/**
@@ -80,6 +81,6 @@ public class MSODAutomataOperationsWeak extends MSODAutomataOperations {
 		final INestedWordAutomaton<MSODAlphabetSymbol, String> result =
 				new Intersect<>(services, new MSODStringFactory(), automaton1, automaton2).getResult();
 
-		return minimize(services, result);
+		return new MinimizeSevpa<>(services, new MSODStringFactory(), result).getResult();
 	}
 }

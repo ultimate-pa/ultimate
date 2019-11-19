@@ -208,22 +208,19 @@ public final class MSODSolver {
 			throws Exception {
 
 		INestedWordAutomaton<MSODAlphabetSymbol, String> result = traversePostOrder(term.getSubformula());
-
-		mLogger.info(automatonToString(result, Format.ATS));
 		mLogger.info("Construct ∃ φ: " + term);
 
 		// Get free variables and constants.
 		final List<Term> freeVariables = new ArrayList<>(Arrays.asList(term.getFreeVars()));
 		freeVariables.addAll((new ConstantFinder()).findConstants(term, true));
 
-		final Set<MSODAlphabetSymbol> reducedAlphabet = MSODUtils.createAlphabet(freeVariables.toArray(new Term[0]));
-		result = MSODAutomataOperations.reduceOrExtend(mAutomataLibrarayServices, result, reducedAlphabet, false);
+		// Project automaton onto free variables.
+		final Set<MSODAlphabetSymbol> alphabet = MSODUtils.createAlphabet(freeVariables);
+		result = MSODAutomataOperations.project(mAutomataLibrarayServices, result, alphabet, false);
 
-		// Create an alphabet where all free variables are set to zero.
+		// Saturate language of automaton such that it accepts words introduced by projection.
 		final MSODAlphabetSymbol zero = new MSODAlphabetSymbol(freeVariables, false);
-		mLogger.warn("zero: " + zero);
-
-		result = MSODAutomataOperations.project(result, zero);
+		result = MSODAutomataOperations.saturate(mAutomataLibrarayServices, result, zero);
 
 		return result;
 	}
@@ -284,8 +281,8 @@ public final class MSODSolver {
 			Set<MSODAlphabetSymbol> symbols;
 			symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
 
-			result = MSODAutomataOperations.reduceOrExtend(mAutomataLibrarayServices, result, symbols, true);
-			tmp = MSODAutomataOperations.reduceOrExtend(mAutomataLibrarayServices, tmp, symbols, true);
+			result = MSODAutomataOperations.project(mAutomataLibrarayServices, result, symbols, true);
+			tmp = MSODAutomataOperations.project(mAutomataLibrarayServices, tmp, symbols, true);
 
 			result = mAutomataOperations.intersect(mAutomataLibrarayServices, result, tmp);
 		}
@@ -310,8 +307,8 @@ public final class MSODSolver {
 			Set<MSODAlphabetSymbol> symbols;
 			symbols = MSODUtils.mergeAlphabets(result.getAlphabet(), tmp.getAlphabet());
 
-			result = MSODAutomataOperations.reduceOrExtend(mAutomataLibrarayServices, result, symbols, true);
-			tmp = MSODAutomataOperations.reduceOrExtend(mAutomataLibrarayServices, tmp, symbols, true);
+			result = MSODAutomataOperations.project(mAutomataLibrarayServices, result, symbols, true);
+			tmp = MSODAutomataOperations.project(mAutomataLibrarayServices, tmp, symbols, true);
 
 			result = mAutomataOperations.union(mAutomataLibrarayServices, result, tmp);
 		}

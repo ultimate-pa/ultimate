@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 
 /**
  * This class provides methods to manipulate Büchi automata that correspond to MSOD-Formulas.
@@ -70,7 +71,7 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 
 		result = fixIntVariables(services, result);
 
-		return minimize(services, result);
+		return new MinimizeSevpa<>(services, new MSODStringFactory(), result).getResult();
 	}
 
 	/**
@@ -88,6 +89,6 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 		final INestedWordAutomaton<MSODAlphabetSymbol, String> result =
 				new BuchiIntersect<>(services, new MSODStringFactory(), automaton1, automaton2).getResult();
 
-		return minimize(services, result);
+		return new MinimizeSevpa<>(services, new MSODStringFactory(), result).getResult();
 	}
 }

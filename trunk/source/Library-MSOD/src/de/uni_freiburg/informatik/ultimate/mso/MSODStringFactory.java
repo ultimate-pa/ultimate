@@ -105,7 +105,7 @@ public class MSODStringFactory implements IIntersectionStateFactory<String>, IUn
 	/**
 	 * Returns an unique string.
 	 */
-	private String newString() {
+	public String newString() {
 		final StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append(STATE).append(mCounter.toString());
 		mCounter = mCounter.add(BigInteger.ONE);

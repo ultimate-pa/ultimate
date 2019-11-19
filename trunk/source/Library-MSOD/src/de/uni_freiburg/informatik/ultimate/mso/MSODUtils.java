@@ -28,7 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -138,15 +140,15 @@ public final class MSODUtils {
 	/**
 	 * Returns the MSOD alphabet that contains the given variable names.
 	 */
-	public static Set<MSODAlphabetSymbol> createAlphabet(final Term... terms) {
+	public static Set<MSODAlphabetSymbol> createAlphabet(final List<Term> terms) {
 		final Set<MSODAlphabetSymbol> symbols = new HashSet<>();
 
-		for (int i = 0; i < (int) Math.pow(2, terms.length); i++) {
+		for (int i = 0; i < (int) Math.pow(2, terms.size()); i++) {
 			final MSODAlphabetSymbol symbol = new MSODAlphabetSymbol();
 
-			for (int j = 0; j < terms.length; j++) {
+			for (int j = 0; j < terms.size(); j++) {
 				final int value = (i / (int) Math.pow(2, j)) % 2;
-				symbol.add(terms[j], value == 1);
+				symbol.add(terms.get(j), value == 1);
 			}
 			symbols.add(symbol);
 		}
@@ -170,7 +172,7 @@ public final class MSODUtils {
 			terms.addAll(symbols2.iterator().next().getMap().keySet());
 		}
 
-		return createAlphabet(terms.toArray(new Term[terms.size()]));
+		return createAlphabet(new ArrayList<>(terms));
 	}
 
 	/**

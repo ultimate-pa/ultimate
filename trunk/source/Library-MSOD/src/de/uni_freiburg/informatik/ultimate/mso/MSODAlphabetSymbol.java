@@ -110,7 +110,8 @@ public class MSODAlphabetSymbol {
 	}
 
 	/**
-	 * Returns true if all variables of the given alphabet symbol are included in this alphabet symbol.
+	 * Returns true if all entries (variable and corresponding value) of the given alphabet symbol are included in this
+	 * alphabet symbol.
 	 */
 	public boolean contains(final MSODAlphabetSymbol alphabetSymbol) {
 		return mMap.entrySet().containsAll(alphabetSymbol.mMap.entrySet());
