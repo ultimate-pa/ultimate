@@ -237,6 +237,7 @@ public class MemoryHandler {
 
 		private boolean strcpyRequirements(final RequiredMemoryModelFeatures rmmf, final TranslationSettings settings) {
 			boolean changedSomething = false;
+			rmmf.reportDataOnHeapRequired(CPrimitives.CHAR);
 			for (final CPrimitives prim : new HashSet<>(rmmf.mDataOnHeapRequired)) {
 				changedSomething |= rmmf.reportUncheckedWriteRequired(prim);
 			}
@@ -1386,8 +1387,6 @@ public class MemoryHandler {
 		final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.OFFSET);
 		decl.add(loopCtrAux.getVarDec());
 
-		final CPrimitive charCType = new CPrimitive(CPrimitives.CHAR);
-
 		final Expression srcId = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
 				mTypeHandler.getBoogiePointerType(), SFO.STRCPY_SRC,
 				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, strcpyMmDecl.getName()));
@@ -1399,10 +1398,10 @@ public class MemoryHandler {
 		final List<Statement> loopBody = new ArrayList<>();
 		{
 			final Expression currentSrc = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, srcId,
-					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()), charCType,
+					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()), new CPrimitive(CPrimitives.CHAR),
 					hook);
 			final Expression currentDest = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, destId,
-					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()), charCType,
+					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()), new CPrimitive(CPrimitives.CHAR),
 					hook);
 
 			/*
@@ -1445,7 +1444,7 @@ public class MemoryHandler {
 
 			final Expression srcAcc;
 			{
-				final ExpressionResult srcAccExpRes = this.getReadCall(currentSrc, charCType, hook);
+				final ExpressionResult srcAccExpRes = this.getReadCall(currentSrc, new CPrimitive(CPrimitives.CHAR), hook);
 				srcAcc = srcAccExpRes.getLrValue().getValue();
 				loopBody.addAll(srcAccExpRes.getStatements());
 				decl.addAll(srcAccExpRes.getDeclarations());
@@ -1458,17 +1457,17 @@ public class MemoryHandler {
 			 */
 			{
 				final List<Statement> writeCall = getWriteCall(ignoreLoc,
-						LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, charCType, null), srcAcc,
-						charCType, true, hook);
+						LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, new CPrimitive(CPrimitives.CHAR), null), srcAcc,
+						new CPrimitive(CPrimitives.CHAR), true, hook);
 				loopBody.addAll(writeCall);
 			}
 
 			/* if (#memory_int[currentSrc] == 0) { break; } */
 			{
 				final Expression zero =
-						mTypeSizes.constructLiteralForIntegerType(ignoreLoc, charCType, BigInteger.ZERO);
+						mTypeSizes.constructLiteralForIntegerType(ignoreLoc, new CPrimitive(CPrimitives.CHAR), BigInteger.ZERO);
 				final Expression exitCondition = mExpressionTranslation.constructBinaryComparisonExpression(ignoreLoc,
-						IASTBinaryExpression.op_equals, srcAcc, charCType, zero, charCType);
+						IASTBinaryExpression.op_equals, srcAcc, new CPrimitive(CPrimitives.CHAR), zero, new CPrimitive(CPrimitives.CHAR));
 				final Statement exitIfNull = new IfStatement(ignoreLoc, exitCondition,
 						new Statement[] { new BreakStatement(ignoreLoc) }, new Statement[0]);
 				loopBody.add(exitIfNull);
@@ -3167,7 +3166,7 @@ public class MemoryHandler {
 	 * Construct assert statements that do memsafety checks for {@link pointerValue} if the corresponding settings are
 	 * active. settings concerned are: - "Pointer base address is valid at dereference" - "Pointer to allocated memory
 	 * at dereference"
-	 * 
+	 *
 	 * @param loc
 	 *            TODO
 	 * @param pointerValue
@@ -3612,7 +3611,7 @@ public class MemoryHandler {
 		 * <li>
 		 * <li>make all members of this class unmodifiable from this point on
 		 * </ul>
-		 * 
+		 *
 		 * @param settings
 		 */
 		public void finish(final TranslationSettings settings) {

@@ -88,7 +88,8 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 		super.getInitialAbstraction();
 		mReuseAutomata = new ArrayList<>();
 		// TODO just ignore automata from other error locations for now
-		// for (final Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier> pair :
+		// for (final Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier> pair
+		// :
 		// mFloydHoareAutomataFromOtherErrorLocations) {
 		// mReuseAutomata.add(new Pair<>(pair.getFirst(), pair.getSecond()));
 		// }
@@ -101,26 +102,24 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
 		mReuseStats.continueTime();
 		mReuseAutomatonAccepted = false;
-		final Iterator<Pair<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>, IPredicateUnifier>> iter =
-				mReuseAutomata.iterator();
+		final Iterator<Pair<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>, IPredicateUnifier>> iter = mReuseAutomata
+				.iterator();
 		while (iter.hasNext()) {
-			final Pair<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>, IPredicateUnifier> reuseAutPair =
-					iter.next();
+			final Pair<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>, IPredicateUnifier> reuseAutPair = iter
+					.next();
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> reuseAut = reuseAutPair.getFirst();
 			boolean cexAccepted;
 			try {
 
 				if (reuseAut instanceof AbstractInterpolantAutomaton) {
-					final AbstractInterpolantAutomaton<LETTER> aiReuseAut =
-							(AbstractInterpolantAutomaton<LETTER>) reuseAut;
+					final AbstractInterpolantAutomaton<LETTER> aiReuseAut = (AbstractInterpolantAutomaton<LETTER>) reuseAut;
 					mReuseStats.addBeforeAcceptanceTransitions(aiReuseAut.computeNumberOfInternalTransitions());
 				}
 
 				cexAccepted = new Accepts<>(new AutomataLibraryServices(mServices), reuseAut,
 						(NestedWord<LETTER>) mCounterexample.getWord(), true, true).getResult();
 				if (reuseAut instanceof AbstractInterpolantAutomaton) {
-					final AbstractInterpolantAutomaton<LETTER> aiReuseAut =
-							(AbstractInterpolantAutomaton<LETTER>) reuseAut;
+					final AbstractInterpolantAutomaton<LETTER> aiReuseAut = (AbstractInterpolantAutomaton<LETTER>) reuseAut;
 					mReuseStats.addAfterAcceptanceTransitions(aiReuseAut.computeNumberOfInternalTransitions());
 				}
 
@@ -138,7 +137,8 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 		}
 		mReuseStats.stopTime();
 		mReuseStats.announceNextNonreuseIteration();
-		// None of the preexisting automata accepts the counterexample - make a non-reuse iteration
+		// None of the preexisting automata accepts the counterexample - make a
+		// non-reuse iteration
 		return super.isCounterexampleFeasible();
 	}
 
@@ -153,15 +153,14 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		if (mReuseAutomatonAccepted) {
 			mReuseStats.continueTime();
-			final Pair<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>, IPredicateUnifier> reuseAutPair =
-					mAutomatonAcceptingCounterexample;
+			final Pair<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>, IPredicateUnifier> reuseAutPair = mAutomatonAcceptingCounterexample;
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> reuseAut = reuseAutPair.getFirst();
 			if (reuseAut instanceof AbstractInterpolantAutomaton) {
 				final AbstractInterpolantAutomaton<LETTER> aiReuseAut = (AbstractInterpolantAutomaton<LETTER>) reuseAut;
 				mReuseStats.addBeforeDiffTransitions(aiReuseAut.computeNumberOfInternalTransitions());
 			}
-			final PowersetDeterminizer<LETTER, IPredicate> psd =
-					new PowersetDeterminizer<>(reuseAut, true, mPredicateFactoryInterpolantAutomata);
+			final PowersetDeterminizer<LETTER, IPredicate> psd = new PowersetDeterminizer<>(reuseAut, true,
+					mPredicateFactoryInterpolantAutomata);
 			final boolean explointSigmaStarConcatOfIA = true;
 			IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> diff;
 			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,

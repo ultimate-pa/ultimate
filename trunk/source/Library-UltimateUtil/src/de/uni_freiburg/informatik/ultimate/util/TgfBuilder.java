@@ -84,7 +84,7 @@ public class TgfBuilder<N> {
 
 	private static String labelOf(final Object nodeOrEdge) {
 		// A newline in a label would break the TGF format
-		return nodeOrEdge.toString().replace('\n', '¶');
+		return nodeOrEdge.toString().replace('\n', '@');
 	}
 
 	@Override
