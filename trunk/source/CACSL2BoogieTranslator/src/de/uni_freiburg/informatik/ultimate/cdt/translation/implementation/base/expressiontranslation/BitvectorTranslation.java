@@ -225,8 +225,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			arguments = new Expression[] { getCurrentRoundingMode(), realValue };
 		}
 		final String functionName = SFO.getBoogieFunctionName(smtFunctionName, type);
-		return ExpressionFactory.constructFunctionApplication(loc, functionName, arguments,
-				mTypeHandler.getBoogieTypeForCType(type));
+		final BoogieType boogieType =  mTypeHandler.getBoogieTypeForCType(type);
+		final Expression fpExp = ExpressionFactory.constructFunctionApplication(loc, functionName, arguments,
+				boogieType);
+		final String toBitvecFunctionName = SFO.getBoogieFunctionName("to_sbv", type);
+		return ExpressionFactory.constructFunctionApplication(loc, toBitvecFunctionName, new Expression[] {fpExp}, boogieType);
 	}
 
 	@Override
