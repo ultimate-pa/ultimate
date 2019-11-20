@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-1.9.dtd">
+<benchmark tool="ultimateautomizer" timelimit="15 min" memlimit="15 GB" cpuCores="2">
+  <resultfiles>**.graphml</resultfiles>
+  <option name="--full-output"/>
+
+
+<rundefinition name="sv-comp20_unsound_64">
+  <tasks name="ReachSafety-64">
+    <includesfile>../sv-benchmarks/c/unsounds-unreach-call.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="MemSafety-64">
+    <includesfile>../sv-benchmarks/c/unsounds-valid-deref_valid-free_valid-memtrack.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="MemCleanup-64">
+    <includesfile>../sv-benchmarks/c/unsounds-valid-memcleanup.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/valid-memcleanup.prp</propertyfile>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  
+  <tasks name="NoOverflows-64">
+    <includesfile>../sv-benchmarks/c/unsounds-no-overflow.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/no-overflow.prp</propertyfile>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  
+  <tasks name="Termination-64">
+    <includesfile>../sv-benchmarks/c/unsounds-termination.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/termination.prp</propertyfile>
+    <option name="--architecture">64bit</option>
+  </tasks>
+</rundefinition>
+
+<rundefinition name="sv-comp20_unsound_32">
+  <tasks name="ReachSafety-32">
+    <includesfile>../sv-benchmarks/c/unsounds-unreach-call.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="MemSafety-32">
+    <includesfile>../sv-benchmarks/c/unsounds-valid-deref_valid-free_valid-memtrack.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/valid-memsafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="MemCleanup-32">
+    <includesfile>../sv-benchmarks/c/unsounds-valid-memcleanup.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/valid-memcleanup.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="NoOverflows-32">
+    <includesfile>../sv-benchmarks/c/unsounds-no-overflow.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/no-overflow.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="Termination-32">
+    <includesfile>../sv-benchmarks/c/unsounds-termination.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/termination.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+</rundefinition>
+
+</benchmark>
