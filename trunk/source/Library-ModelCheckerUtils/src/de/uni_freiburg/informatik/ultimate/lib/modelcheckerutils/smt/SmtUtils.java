@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.DnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -193,7 +194,14 @@ public final class SmtUtils {
 			// TODO: DD 2019-11-19: This call is a dirty hack! SimplifyDDAWithTimeout leaves an empty stack frame open,
 			// but I do not want to try and debug how it is happening.
 			undoableScript.restore();
-			return simplified;
+			if (simplified != formula) {
+				// TODO: Matthias 2019-11-19 SimplifyDDA can produce nested
+				// conjunctions or disjunctions. Use UnfTransformer to get
+				// rid of these.
+				return new UnfTransformer(mgScript.getScript()).transform(simplified);
+			} else {
+				return simplified;
+			}
 		} catch (final ToolchainCanceledException t) {
 			// we try to preserve the script if a timeout occurred
 			final int dirtyLevels = undoableScript.restore();
