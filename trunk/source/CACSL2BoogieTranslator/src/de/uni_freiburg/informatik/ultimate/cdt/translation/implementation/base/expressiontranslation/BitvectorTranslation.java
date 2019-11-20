@@ -1177,7 +1177,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		if ("fmod".equals(func_name) || "signbit".equals(func_name) || "copysign".equals(func_name)) {
 			return argument;
 		} else {
-			return new RValue(transformBitvectorToFloat(loc, argument.getValue(), CPrimitives.FLOAT),
+			return new RValue(transformBitvectorToFloat(loc, argument.getValue(), ((CPrimitive) argument.getCType()).getType()),
 					argument.getCType());
 		}
 	}

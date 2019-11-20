@@ -132,7 +132,7 @@ public abstract class ExpressionTranslation {
 			final CPrimitive type) {
 		if (type.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 
-			final Expression expFloat = transformBitvectorToFloat(loc, exp, CPrimitives.FLOAT);
+			final Expression expFloat = transformBitvectorToFloat(loc, exp, type.getType());
 
 			return constructUnaryFloatingPointExpression(loc, nodeOperator, expFloat, type);
 		}
