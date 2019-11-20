@@ -561,6 +561,12 @@ public class PetriNetLargeBlockEncoding {
 				final Set<Pair<IIcfgTransition<?>, TermVariable>> choices = mChoiceCompositions.get(current);
 				assert choices != null;
 
+				if (branchEncoders == null) {
+					mLogger.warn("Failed to translate choice composition: Branch encoders not available.");
+					result.addFirst(current);
+					continue;
+				}
+
 				boolean choiceFound = false;
 				for (final Pair<IIcfgTransition<?>, TermVariable> choice : choices) {
 					final TermVariable indicator = choice.getSecond();
