@@ -1331,14 +1331,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector,
 			final CPrimitives floatType) {
-		final FloatingPointSize floatingPointSize = mTypeSizes.getFloatingPointSize(floatType);
-		final Expression significantBits = extractBits(loc, bitvector, floatingPointSize.getSignificant() - 1, 0);
-		final Expression exponentBits =
-				extractBits(loc, bitvector, floatingPointSize.getSignificant() - 1 + floatingPointSize.getExponent(),
-						floatingPointSize.getSignificant() - 1);
-		final Expression signBit = extractBits(loc, bitvector,
-				floatingPointSize.getSignificant() - 1 + floatingPointSize.getExponent() + 1,
-				floatingPointSize.getSignificant() - 1 + floatingPointSize.getExponent());
+		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(floatType);
+		final Expression significantBits = extractBits(loc, bitvector, fps.getSignificant() - 1, 0);
+		final Expression exponentBits = extractBits(loc, bitvector, fps.getDataSize() - 1, fps.getSignificant() - 1);
+		final Expression signBit = extractBits(loc, bitvector, fps.getDataSize(), fps.getDataSize() - 1);
 		final String smtFunctionName = "fp";
 		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, new CPrimitive(floatType));
 		final Expression result = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
