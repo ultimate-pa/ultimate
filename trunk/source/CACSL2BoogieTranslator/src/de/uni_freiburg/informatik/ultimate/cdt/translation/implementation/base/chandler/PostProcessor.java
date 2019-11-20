@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -144,7 +143,7 @@ public class PostProcessor {
 
 	private final TranslationSettings mSettings;
 
-	private final FunctionHandler mFunctionhandler;
+	private final FunctionHandler mFunctionHandler;
 
 	private final Map<String, Integer> mFunctionToIndex;
 
@@ -188,7 +187,7 @@ public class PostProcessor {
 		mProcedureManager = procedureManager;
 		mMemoryHandler = memoryHandler;
 		mInitHandler = initHandler;
-		mFunctionhandler = functionhandler;
+		mFunctionHandler = functionhandler;
 		mCHandler = chandler;
 	}
 
@@ -228,16 +227,14 @@ public class PostProcessor {
 			}
 		}
 
-		decl.addAll(createFloatToBitvectorProcedure(loc));
-
 		decl.addAll(declareFunctionPointerProcedures());
-
 		decl.addAll(declareConversionFunctions());
 
 		if (mSettings.isBitvectorTranslation()) {
 			decl.addAll(declarePrimitiveDataTypeSynonyms(loc));
 
 			if (mTypeHandler.areFloatingTypesNeeded()) {
+				decl.addAll(createFloatToBitvectorProcedure(loc));
 				decl.addAll(declareRoundingModeDataTypes(loc));
 				decl.addAll(declareFloatDataTypes(loc));
 				if (mSettings.isFesetroundEnabled()) {
@@ -533,7 +530,8 @@ public class PostProcessor {
 			floatCPrimitives = CPrimitives.LONGDOUBLE;
 			break;
 		}
-		final ASTType floatAstType = mTypeHandler.cType2AstType(loc, new CPrimitive(floatCPrimitives));
+		final CPrimitive cType = new CPrimitive(floatCPrimitives);
+		final ASTType floatAstType = mTypeHandler.cType2AstType(loc, cType);
 		final BoogieType floatBoogieType = (BoogieType) floatAstType.getBoogieType();
 
 		final VarList[] inVarList = new VarList[] { new VarList(loc, new String[] { inVar }, floatAstType) };
@@ -552,12 +550,22 @@ public class PostProcessor {
 		final Expression outVarExp = ExpressionFactory.constructIdentifierExpression(loc, floatBoogieType, outVar,
 				new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, functionName));
 
+		final Expression inVarToFloat =
+				mExpressionTranslation.transformBitvectorToFloat(loc, inVarExp, floatCPrimitives);
 		final Expression outVarToFloat =
 				mExpressionTranslation.transformBitvectorToFloat(loc, outVarExp, floatCPrimitives);
 
-		final EnsuresSpecification spec = mProcedureManager.constructEnsuresSpecification(loc, false,
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, inVarExp, outVarToFloat),
-				Collections.emptySet());
+		final String smtFunctionName = "fp.eq";
+		final String fullFunctionName = SFO.getBoogieFunctionName("fp.eq", cType);
+		final Expression comparison = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+				new Expression[] { inVarToFloat, outVarToFloat }, BoogieType.TYPE_BOOL);
+
+		// declare fp.eq as necessary
+		mExpressionTranslation.declareFloatingPointFunction(loc, smtFunctionName, true, false,
+				new CPrimitive(CPrimitives.BOOL), cType, cType);
+
+		final EnsuresSpecification spec =
+				mProcedureManager.constructEnsuresSpecification(loc, false, comparison, Collections.emptySet());
 
 		specs.add(spec);
 
@@ -600,7 +608,7 @@ public class PostProcessor {
 	private ArrayList<Declaration> declareFunctionPointerProcedures() {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ArrayList<Declaration> result = new ArrayList<>();
-		for (final ProcedureSignature cFunc : mFunctionhandler.getFunctionsSignaturesWithFunctionPointers()) {
+		for (final ProcedureSignature cFunc : mFunctionHandler.getFunctionsSignaturesWithFunctionPointers()) {
 			final String procName = cFunc.toString();
 
 			final VarList[] inParams = mProcedureManager.getProcedureDeclaration(procName).getInParams();
@@ -706,7 +714,7 @@ public class PostProcessor {
 					builder.getStatements().toArray(new Statement[builder.getStatements().size()]),
 					dispatchingProcedureName);
 		} else if (fittingFunctions.size() == 1) {
-			final ExpressionResult rex = (ExpressionResult) mFunctionhandler.makeTheFunctionCallItself(loc,
+			final ExpressionResult rex = (ExpressionResult) mFunctionHandler.makeTheFunctionCallItself(loc,
 					fittingFunctions.get(0), new ExpressionResultBuilder(), args);
 
 			final boolean voidReturnType = outParam.length == 0;
@@ -748,7 +756,7 @@ public class PostProcessor {
 				funcCallResult = auxvar.getExp();
 			}
 
-			final ExpressionResult firstElseRex = (ExpressionResult) mFunctionhandler.makeTheFunctionCallItself(loc,
+			final ExpressionResult firstElseRex = (ExpressionResult) mFunctionHandler.makeTheFunctionCallItself(loc,
 					fittingFunctions.get(0), new ExpressionResultBuilder(), args);
 			for (final Declaration dec : firstElseRex.getDeclarations()) {
 				builder.addDeclaration(dec);
@@ -766,7 +774,7 @@ public class PostProcessor {
 			IfStatement currentIfStmt = null;
 
 			for (int i = 1; i < fittingFunctions.size(); i++) {
-				final ExpressionResult currentRex = (ExpressionResult) mFunctionhandler.makeTheFunctionCallItself(loc,
+				final ExpressionResult currentRex = (ExpressionResult) mFunctionHandler.makeTheFunctionCallItself(loc,
 						fittingFunctions.get(i), new ExpressionResultBuilder(), args);
 				for (final Declaration dec : currentRex.getDeclarations()) {
 					builder.addDeclaration(dec);

@@ -949,6 +949,13 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
+	public void declareFloatingPointFunction(final ILocation loc, final String smtFunctionName,
+			final boolean boogieResultTypeBool, final boolean isRounded, final CPrimitive resultCType,
+			final CPrimitive... paramCType) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public RValue constructBuiltinFegetround(final ILocation loc) {
 		throw new UnsupportedOperationException("fegetround not supported in non-bitprecise translation");
 	}

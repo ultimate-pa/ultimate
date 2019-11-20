@@ -447,6 +447,10 @@ public abstract class ExpressionTranslation {
 	public abstract void declareBinaryBitvectorFunctionsForAllIntegerDatatypes(final ILocation loc,
 			final String[] bitvectorFunctions);
 
+	public abstract void declareFloatingPointFunction(final ILocation loc, final String smtFunctionName,
+			final boolean boogieResultTypeBool, final boolean isRounded, final CPrimitive resultCType,
+			final CPrimitive... paramCType);
+
 	public Expression constructOverapproximationFloatLiteral(final ILocation loc, final String val,
 			final CPrimitive type) {
 		final String functionName = "floatingLiteral_" + makeBoogieIdentifierSuffix(val) + "_" + type;

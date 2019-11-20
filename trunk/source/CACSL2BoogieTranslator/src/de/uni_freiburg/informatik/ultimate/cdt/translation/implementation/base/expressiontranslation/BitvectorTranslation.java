@@ -448,7 +448,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				boogieResultTypeBool, resultCType, paramCType);
 	}
 
-	private void declareFloatingPointFunction(final ILocation loc, final String smtFunctionName,
+	@Override
+	public void declareFloatingPointFunction(final ILocation loc, final String smtFunctionName,
 			final boolean boogieResultTypeBool, final boolean isRounded, final CPrimitive resultCType,
 			final CPrimitive... paramCType) {
 		declareFloatingPointFunction(loc, smtFunctionName, boogieResultTypeBool, isRounded, resultCType, null,
@@ -1177,7 +1178,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		if ("fmod".equals(func_name) || "signbit".equals(func_name) || "copysign".equals(func_name)) {
 			return argument;
 		} else {
-			return new RValue(transformBitvectorToFloat(loc, argument.getValue(), ((CPrimitive) argument.getCType()).getType()),
+			return new RValue(
+					transformBitvectorToFloat(loc, argument.getValue(), ((CPrimitive) argument.getCType()).getType()),
 					argument.getCType());
 		}
 	}
