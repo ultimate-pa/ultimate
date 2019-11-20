@@ -250,6 +250,10 @@ public class TypeSizes {
 		return maxValue;
 	}
 
+	public FloatingPointSize getFloatingPointSize(final CPrimitive cPrimitive) {
+		return getFloatingPointSize(cPrimitive.getType());
+	}
+
 	/**
 	 * @return FloatingPointSize of a float, double, or long double.
 	 */
