@@ -29,11 +29,12 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  *
@@ -42,11 +43,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class ConcurrencyInformation {
 
-	private final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> mThreadInstanceMap;
+	private final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> mThreadInstanceMap;
 	private final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> mJoinTransitions;
 
 	public ConcurrencyInformation(
-			final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap,
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap,
 			final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinTransitions) {
 		mThreadInstanceMap = threadInstanceMap;
 		mJoinTransitions = joinTransitions;
@@ -55,7 +56,7 @@ public class ConcurrencyInformation {
 	/**
 	 * Map is empty if program is not a concurrent program.
 	 */
-	public HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> getThreadInstanceMap() {
+	public Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> getThreadInstanceMap() {
 		return mThreadInstanceMap;
 	}
 

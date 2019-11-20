@@ -108,7 +108,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			threadErrorLocations = Collections.emptySet();
 		} else {
 			threadErrorLocations = csToolkit.getConcurrencyInformation().getThreadInstanceMap().entrySet().stream()
-					.map(x -> x.getValue().getErrorLocation()).collect(Collectors.toSet());
+					.flatMap(x -> x.getValue().stream().map(y -> y.getErrorLocation())).collect(Collectors.toSet());
 		}
 
 		final Map<String, Set<? extends IcfgLocation>> proc2errNodes = (Map) petrifiedIcfg.getProcedureErrorNodes();

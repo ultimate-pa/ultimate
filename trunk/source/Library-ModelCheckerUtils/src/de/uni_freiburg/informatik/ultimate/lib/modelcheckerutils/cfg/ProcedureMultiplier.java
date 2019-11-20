@@ -92,7 +92,7 @@ public class ProcedureMultiplier {
 
 	public ProcedureMultiplier(final IUltimateServiceProvider services, final BasicIcfg<IcfgLocation> icfg,
 			final HashRelation<String, String> copyDirectives, final BlockEncodingBacktranslator backtranslator,
-			final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap,
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
 			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads) {
 		super();
@@ -223,9 +223,9 @@ public class ProcedureMultiplier {
 							target.addIncoming(newForkEdge);
 							// add to thread instance mapping
 							forkCurrentThreads.add(newForkEdge);
-							final Set<ThreadInstance> threadInstance = threadInstanceMap.getImage(oldForkEdge);
-							assert threadInstance != null;
-							threadInstanceMap.addAllPairs(newForkEdge, threadInstance);
+							final List<ThreadInstance> threadInstances = threadInstanceMap.get(oldForkEdge);
+							assert threadInstances != null;
+							threadInstanceMap.put(newForkEdge, threadInstances);
 						} else if (outEdge instanceof IcfgJoinThreadCurrentTransition) {
 							// mainly copy and paste form IcfgInternalTransition
 							final IcfgJoinThreadCurrentTransition oldJoinEdge =

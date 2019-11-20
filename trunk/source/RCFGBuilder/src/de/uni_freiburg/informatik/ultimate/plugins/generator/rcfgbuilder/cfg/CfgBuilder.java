@@ -124,7 +124,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * This class generates a recursive control flow graph (in the style of POPL'10 - Heizmann, Hoenicke, Podelski - Nested
@@ -157,7 +156,7 @@ public class CfgBuilder {
 
 	private final Collection<Summary> mImplementationSummarys = new ArrayList<>();
 
-	private final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> mForks = new HashRelation<>();
+	private final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> mForks = new HashMap<>();
 	private final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> mJoins = new ArrayList<>();
 
 	private final RCFGBacktranslator mRcfgBacktranslator;
@@ -1412,7 +1411,7 @@ public class CfgBuilder {
 				forkCurrentThreadEdge = mCbf.constructForkCurrentThread(locNode, forkCurrentNode, st, true);
 				final IIcfgElement cb = forkCurrentThreadEdge;
 				ModelUtils.copyAnnotations(st, cb);
-				mForks.addPair(forkCurrentThreadEdge, null);
+				mForks.put(forkCurrentThreadEdge, null);
 			} else {
 				forkCurrentThreadEdge = mCbf.constructForkCurrentThread(locNode, forkCurrentNode, st, false);
 				final IIcfgElement cb = forkCurrentThreadEdge;

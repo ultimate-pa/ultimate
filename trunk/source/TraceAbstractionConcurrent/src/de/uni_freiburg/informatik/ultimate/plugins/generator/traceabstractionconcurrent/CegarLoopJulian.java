@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -446,7 +445,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		final boolean threadInUseCheckEnabled =
 				!mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()
 						&& mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().entrySet()
-								.iterator().next().getValue().getInUseVar() != null;
+								.iterator().next().getValue().get(0).getInUseVar() != null;
 		if (threadInUseCheckEnabled) {
 			return predicateUnifier -> {
 				final ConcurrencyInformation ci = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
@@ -454,7 +453,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 					return predicateUnifier.getTruePredicate();
 				}
 				final Set<IProgramNonOldVar> threadInUseVars = ci.getThreadInstanceMap().entrySet().stream()
-						.map(Entry::getValue).map(ThreadInstance::getInUseVar).collect(Collectors.toSet());
+						.flatMap(x -> x.getValue().stream()).map(ThreadInstance::getInUseVar).collect(Collectors.toSet());
 				final List<Term> negated = threadInUseVars.stream().map(
 						x -> SmtUtils.not(mIcfg.getCfgSmtToolkit().getManagedScript().getScript(), x.getTermVariable()))
 						.collect(Collectors.toList());

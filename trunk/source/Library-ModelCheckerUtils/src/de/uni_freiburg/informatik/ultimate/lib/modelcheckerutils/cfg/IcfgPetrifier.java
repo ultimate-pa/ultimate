@@ -83,7 +83,7 @@ public class IcfgPetrifier {
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 
 		final Collection<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads = icfg.getCfgSmtToolkit()
-				.getConcurrencyInformation().getThreadInstanceMap().getDomain();
+				.getConcurrencyInformation().getThreadInstanceMap().keySet();
 		final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads = icfg.getCfgSmtToolkit()
 				.getConcurrencyInformation().getJoinTransitions();
 
@@ -104,26 +104,26 @@ public class IcfgPetrifier {
 		// TODO Matthias: Variables only needed for predicates in monitor
 		final boolean addThreadInUseViolationVariablesAndErrorLocation = true;
 				// (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY);
-		final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap = adder
+		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap = adder
 				.constructThreadInstances(mPetrifiedIcfg, newForkCurrentThreads,
 						addThreadInUseViolationVariablesAndErrorLocation);
 		final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(mPetrifiedIcfg.getCfgSmtToolkit(),
 				threadInstanceMap, newJoinCurrentThreads, addThreadInUseViolationVariablesAndErrorLocation);
 		((BasicIcfg<IcfgLocation>) mPetrifiedIcfg).setCfgSmtToolkit(cfgSmtToolkit);
 		final HashRelation<String, String> copyDirectives = ProcedureMultiplier
-				.generateCopyDirectives(threadInstanceMap.projectToRange());
+				.generateCopyDirectives(getAllInstances(threadInstanceMap));
 		new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) mPetrifiedIcfg, copyDirectives, backtranslator,
 				threadInstanceMap, newForkCurrentThreads, newJoinCurrentThreads);
 		if (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY) {
 			ThreadInstanceAdder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) mPetrifiedIcfg,
-					threadInstanceMap.projectToRange());
+					getAllInstances(threadInstanceMap));
 		}
 
 		final boolean addThreadInUseViolationEdges = (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY);
 		adder.connectThreadInstances(mPetrifiedIcfg, newForkCurrentThreads, newJoinCurrentThreads,
 				threadInstanceMap, backtranslator, addThreadInUseViolationEdges);
 
-		final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(threadInstanceMap.projectToRange(),
+		final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(getAllInstances(threadInstanceMap),
 				addThreadInUseViolationEdges);
 		backtranslator.setVariableBlacklist(auxiliaryThreadVariables);
 		mBacktranslator = backtranslator;
@@ -155,5 +155,10 @@ public class IcfgPetrifier {
 	}
 
 
+
+	static List<ThreadInstance> getAllInstances(
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap) {
+		return threadInstanceMap.entrySet().stream().flatMap(x -> x.getValue().stream()).collect(Collectors.toList());
+	}
 
 }

@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -99,10 +100,10 @@ public class ThreadInstanceAdder {
 	public IIcfg<IcfgLocation> connectThreadInstances(final IIcfg<IcfgLocation> icfg,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
 			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads,
-			final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap,
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap,
 			final BlockEncodingBacktranslator backtranslator, final boolean addThreadInUseViolationEdges) {
 		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fct : forkCurrentThreads) {
-			for (final ThreadInstance ti : threadInstanceMap.getImage(fct)) {
+			for (final ThreadInstance ti : threadInstanceMap.get(fct)) {
 				addForkOtherThreadTransition(fct, ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg,
 						ti.getThreadInstanceName(), backtranslator, addThreadInUseViolationEdges);
 			}
@@ -113,7 +114,7 @@ public class ThreadInstanceAdder {
 		// to all target locations of each JoinCurrentThreadEdge
 		for (final IIcfgJoinTransitionThreadCurrent<IcfgLocation> jot : joinCurrentThreads) {
 			// if (mBoogieDeclarations.getProcImplementation().containsKey(procName)) {
-			for (final ThreadInstance ti : threadInstanceMap.projectToRange()) {
+			for (final ThreadInstance ti : IcfgPetrifier.getAllInstances(threadInstanceMap)) {
 				final boolean threadIdCompatible = isThreadIdCompatible(ti.getIdVars(),
 						jot.getJoinSmtArguments().getThreadIdArguments().getTerms());
 				final boolean returnValueCompatible =
@@ -380,16 +381,17 @@ public class ThreadInstanceAdder {
 	 * Construct the {@link ThreadInstance} objects but does not yet add
 	 * {@link IProgramVar}s and error locations to the {@link IIcfg}.
 	 */
-	public static HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> constructThreadInstances(
+	public static Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> constructThreadInstances(
 			final IIcfg<? extends IcfgLocation> icfg,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
 			final boolean addThreadInUseViolationVariablesAndErrorLocation) {
-		final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> result = new HashRelation<>();
+		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> result = new HashMap<>();
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		int i = 0;
 		final int threadInstanceMax = 3;
-		for (int j = 1; j <= threadInstanceMax; j++) {
-			for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : forkCurrentThreads) {
+		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : forkCurrentThreads) {
+			final List<ThreadInstance> threadInstances = new ArrayList<>();
+			for (int j = 1; j <= threadInstanceMax; j++) {
 				final String procedureName = fork.getNameOfForkedProcedure();
 				final String threadInstanceId = generateThreadInstanceId(i, procedureName, j, threadInstanceMax);
 				final IcfgLocation errorLocation;
@@ -407,9 +409,10 @@ public class ThreadInstanceAdder {
 				}
 				final ThreadInstance ti = constructThreadInstance(addThreadInUseViolationVariablesAndErrorLocation,
 						mgdScript, fork, procedureName, threadInstanceId, errorLocation);
-				result.addPair(fork, ti);
-				i++;
+				threadInstances.add(ti);
 			}
+			result.put(fork, threadInstances);
+			i++;
 		}
 		return result;
 	}
@@ -469,14 +472,14 @@ public class ThreadInstanceAdder {
 	}
 
 	CfgSmtToolkit constructNewToolkit(final CfgSmtToolkit cfgSmtToolkit,
-			final HashRelation<IIcfgForkTransitionThreadCurrent<IcfgLocation>, ThreadInstance> threadInstanceMap,
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap,
 			final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinTransitions,
 			final boolean addThreadInUseViolationVariables) {
 		final DefaultIcfgSymbolTable newSymbolTable =
 				new DefaultIcfgSymbolTable(cfgSmtToolkit.getSymbolTable(), cfgSmtToolkit.getProcedures());
 		final HashRelation<String, IProgramNonOldVar> proc2Globals =
 				new HashRelation<>(cfgSmtToolkit.getModifiableGlobalsTable().getProcToGlobals());
-		for (final ThreadInstance ti : threadInstanceMap.projectToRange()) {
+		for (final ThreadInstance ti : IcfgPetrifier.getAllInstances(threadInstanceMap)) {
 			if (addThreadInUseViolationVariables) {
 				addVar(ti.getInUseVar(), newSymbolTable, proc2Globals, cfgSmtToolkit.getProcedures());
 			}
@@ -492,6 +495,7 @@ public class ThreadInstanceAdder {
 				cfgSmtToolkit.getOutParams(), cfgSmtToolkit.getIcfgEdgeFactory(), concurrencyInformation,
 				cfgSmtToolkit.getSmtFunctionsAndAxioms());
 	}
+
 
 	private static void addVar(final IProgramNonOldVar var, final DefaultIcfgSymbolTable newSymbolTable,
 			final HashRelation<String, IProgramNonOldVar> proc2Globals, final Set<String> allProcedures) {
