@@ -171,6 +171,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings.SettingsChange;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ArrayHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CCharacterConstant;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CStringLiteral;
@@ -238,6 +239,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.LTLExpressionExtractor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -359,6 +361,11 @@ public class CHandler {
 	private final boolean mIsPrerun;
 
 	private Map<String, IASTNode> mFunctionTable;
+
+	/** Set this flag if you want to trigger a restart of the translation with different settings */
+	private boolean mRestartTranslationWithDifferentSettings;
+
+	private TranslationSettings.SettingsChange mSettingsChangeForTranslationRestart;
 
 	/**
 	 * Constructor for CHandler in pre-run mode.
@@ -518,6 +525,31 @@ public class CHandler {
 	 */
 	public ExpressionResultTransformer getExpressionResultTransformer() {
 		return mExprResultTransformer;
+	}
+
+	private void signalTranslationRestartWithDifferentSettings(
+			final TranslationSettings.SettingsChange settingsChange) {
+		assert mIsPrerun : "currently only checking the restart flag after the prerunner -- might change it perhaps "
+				+ "(in MainTranslator).";
+
+		mRestartTranslationWithDifferentSettings = true;
+
+		if (mSettingsChangeForTranslationRestart == null) {
+			mSettingsChangeForTranslationRestart = settingsChange;
+		} else if (mSettingsChangeForTranslationRestart.equals(settingsChange)) {
+			// nothing to do
+		} else {
+			throw new UnsupportedOperationException("More than one settings change for restart is not yet implemented"
+					+ "(might implement a SettingsChange.combine method, perhaps)");
+		}
+	}
+
+	public boolean restartTranslationWithDifferentSettings() {
+		return mRestartTranslationWithDifferentSettings;
+	}
+
+	public SettingsChange getSettingsChangeForTranslationRestart() {
+		return mSettingsChangeForTranslationRestart;
 	}
 
 	/**
@@ -887,6 +919,62 @@ public class CHandler {
 		}
 		expr = mExprResultTransformer.makeRepresentationReadyForConversion(expr, loc, newCType, node);
 		checkUnsupportedPointerCast(expr, loc, newCType);
+
+		if (mSettings.isAdaptMemoryModelResolutionOnPointerCasts()
+				&& mIsPrerun
+				&& mSettings.getMemoryModelPreference().isBitVectorMemoryModel()) {
+			final CType exprType = expr.getLrValue().getCType().getUnderlyingType();
+			if ((exprType instanceof CArray || exprType instanceof CPointer)
+					&& (newCType instanceof CArray || newCType instanceof CPointer)) {
+				// memory model adaptation might be necessary
+
+				final CType operandValueType;
+				{
+					if (exprType instanceof CArray) {
+						operandValueType = ((CArray) exprType).getValueType().getUnderlyingType();
+					} else {
+						operandValueType = ((CPointer) exprType).getPointsToType().getUnderlyingType();
+					}
+				}
+
+				final Expression operandTypeByteSizeExp =
+						mTypeSizeComputer.constructBytesizeExpression(loc, operandValueType, node);
+				final BigInteger operandTypeByteSize =
+						mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), node);
+
+				final CType castTargetValueType;
+				{
+					if (newCType instanceof CArray) {
+						castTargetValueType = ((CArray) newCType).getValueType().getUnderlyingType();
+					} else {
+						castTargetValueType = ((CPointer) newCType).getPointsToType().getUnderlyingType();
+					}
+				}
+
+				final Expression castTargetByteSizeExp =
+						mTypeSizeComputer.constructBytesizeExpression(loc, castTargetValueType, node);
+				final BigInteger castTargetByteSize =
+						mTypeSizes.extractIntegerValue(castTargetByteSizeExp, mTypeSizeComputer.getSizeT(), node);
+
+				if (castTargetByteSize.compareTo(operandTypeByteSize) > 0
+						&& BigInteger.valueOf(mSettings.getMemoryModelPreference().getByteSize())
+						.compareTo(operandTypeByteSize) > 0) {
+					// memory model resolution is strictly bigger than the operand's type's, and the operand is cast to
+					// a bigger type --> signal a restart of the translation with a memory model precise enough for the
+					// operands
+					mLogger.info("Found a cast between two array/pointer types where the value type is smaller than the"
+							+ " cast-to type, and where that value type is smaller than our current memory model "
+							+ " resolution");
+					mLogger.info(" at location: " + loc);
+					mLogger.info(" current memory model: " + mSettings.getMemoryModelPreference());
+
+					signalTranslationRestartWithDifferentSettings(
+							new TranslationSettings.SettingsChange(
+									MemoryModel.getPreciseEnoughMemoryModelFor(operandTypeByteSize.intValueExact())));
+				}
+			}
+		}
+
 		expr = mExprResultTransformer.rexBoolToInt(expr, loc);
 		expr = mExprResultTransformer.performImplicitConversion(expr, newCType, loc);
 		return expr;
