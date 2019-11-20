@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -71,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -835,10 +837,10 @@ public class ExpressionResultTransformer {
 		if (oldType instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) oldType;
 			if (cPrimitive.isIntegerType()) {
-				return mExprTrans.convertIfNecessary(loc, rexp, newType);
+				return convertIfNecessary(loc, rexp, newType);
 			}
 			if (cPrimitive.isRealFloatingType()) {
-				return mExprTrans.convertIfNecessary(loc, rexp, newType);
+				return convertIfNecessary(loc, rexp, newType);
 			}
 			if (cPrimitive.getType().equals(CPrimitives.VOID)) {
 				throw new IncorrectSyntaxException(loc, "cannot convert from void");
@@ -849,7 +851,7 @@ public class ExpressionResultTransformer {
 			throw new IncorrectSyntaxException(loc, "cannot convert pointer to float");
 		}
 		if (oldType instanceof CEnum) {
-			return mExprTrans.convertIfNecessary(loc, rexp, newType);
+			return convertIfNecessary(loc, rexp, newType);
 		}
 		if (oldType instanceof CArray) {
 			throw new AssertionError("cannot convert from CArray");
@@ -861,6 +863,178 @@ public class ExpressionResultTransformer {
 			throw new UnsupportedSyntaxException(loc, "conversion from CStruct not implemented.");
 		}
 		throw new AssertionError("unknown type " + newType);
+	}
+
+	/**
+	 * Apply usual arithmetic conversion according to 6.3.1.8 of the C11 standard. Therefore we determine the determine
+	 * the CType of the result. Afterwards we convert both operands to the result CType.
+	 *
+	 * TODO: This is not correct for complex types. E.g., if double and complex float are operands, the complex float is
+	 * converted to a complex double not to a (real double). Fixing this will be postponed until we want to support
+	 * complex types.
+	 *
+	 * @return A Pair of new {@link ExpressionResult}s, first for left and second for right.
+	 */
+	public Pair<ExpressionResult, ExpressionResult> usualArithmeticConversions(final ILocation loc,
+			ExpressionResult leftRex, ExpressionResult rightRex) {
+		final CPrimitive leftPrimitive =
+				(CPrimitive) CEnum.replaceEnumWithInt(leftRex.getLrValue().getCType().getUnderlyingType());
+		final CPrimitive rightPrimitive =
+				(CPrimitive) CEnum.replaceEnumWithInt(leftRex.getLrValue().getCType().getUnderlyingType());
+		if (leftPrimitive.isIntegerType()) {
+			leftRex = doIntegerPromotion(loc, leftRex);
+		}
+		if (rightPrimitive.isIntegerType()) {
+			rightRex = doIntegerPromotion(loc, rightRex);
+		}
+
+		final CPrimitive resultType = determineResultOfUsualArithmeticConversions(
+				(CPrimitive) leftRex.getLrValue().getCType().getUnderlyingType(),
+				(CPrimitive) rightRex.getLrValue().getCType().getUnderlyingType());
+
+		leftRex = convertIfNecessary(loc, leftRex, resultType);
+		rightRex = convertIfNecessary(loc, rightRex, resultType);
+
+		if (!leftRex.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
+			throw new AssertionError("conversion failed");
+		}
+		if (!rightRex.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
+			throw new AssertionError("conversion failed");
+		}
+		return new Pair<>(leftRex, rightRex);
+	}
+
+	private CPrimitive determineResultOfUsualArithmeticConversions(final CPrimitive leftPrimitive,
+			final CPrimitive rightPrimitive) {
+		if (leftPrimitive.getGeneralType() == CPrimitiveCategory.FLOATTYPE
+				|| rightPrimitive.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
+			if (leftPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE
+					|| rightPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE) {
+				throw new UnsupportedOperationException("complex types not yet supported");
+			} else if (leftPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE
+					|| rightPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE) {
+				throw new UnsupportedOperationException("complex types not yet supported");
+			} else if (leftPrimitive.getType() == CPrimitives.COMPLEX_FLOAT
+					|| rightPrimitive.getType() == CPrimitives.COMPLEX_FLOAT) {
+				throw new UnsupportedOperationException("complex types not yet supported");
+			} else if (leftPrimitive.getType() == CPrimitives.LONGDOUBLE
+					|| rightPrimitive.getType() == CPrimitives.LONGDOUBLE) {
+				return new CPrimitive(CPrimitives.LONGDOUBLE);
+			} else if (leftPrimitive.getType() == CPrimitives.DOUBLE
+					|| rightPrimitive.getType() == CPrimitives.DOUBLE) {
+				return new CPrimitive(CPrimitives.DOUBLE);
+			} else if (leftPrimitive.getType() == CPrimitives.FLOAT || rightPrimitive.getType() == CPrimitives.FLOAT) {
+				return new CPrimitive(CPrimitives.FLOAT);
+			} else {
+				throw new AssertionError("unknown FLOATTYPE " + leftPrimitive + ", " + rightPrimitive);
+			}
+		} else if (leftPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE
+				&& rightPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE) {
+			return determineResultOfUsualArithmeticConversions_Integer(leftPrimitive, rightPrimitive);
+		} else {
+			throw new AssertionError(
+					"unsupported combination of CPrimitives: " + leftPrimitive + " and " + rightPrimitive);
+		}
+	}
+
+	/**
+	 * Perform the integer promotions a specified in C11 6.3.1.1.2 on the operand.
+	 */
+	public final ExpressionResult doIntegerPromotion(final ILocation loc, final ExpressionResult operand) {
+		final CType ctype = CEnum.replaceEnumWithInt(operand.getLrValue().getCType().getUnderlyingType());
+		if (!(ctype instanceof CPrimitive)) {
+			throw new IllegalArgumentException("integer promotions not applicable to " + ctype);
+		}
+		final CPrimitive cPrimitive = (CPrimitive) ctype;
+		if (integerPromotionNeeded(cPrimitive)) {
+			final CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
+			return mExprTrans.convertIntToInt(loc, operand, promotedType);
+		}
+		return operand;
+	}
+
+	public CPrimitive determineResultOfUsualArithmeticConversions_Integer(final CPrimitive typeLeft,
+			final CPrimitive typeRight) {
+
+		if (typeLeft.equals(typeRight)) {
+			return typeLeft;
+		} else if (mTypeSizes.isUnsigned(typeLeft) && mTypeSizes.isUnsigned(typeRight)
+				|| !mTypeSizes.isUnsigned(typeLeft) && !mTypeSizes.isUnsigned(typeRight)) {
+			final Integer sizeLeft = mTypeSizes.getSize(typeLeft.getType());
+			final Integer sizeRight = mTypeSizes.getSize(typeRight.getType());
+
+			if (sizeLeft.compareTo(sizeRight) >= 0) {
+				return typeLeft;
+			}
+			return typeRight;
+		} else {
+			CPrimitive unsignedType;
+			CPrimitive signedType;
+
+			if (mTypeSizes.isUnsigned(typeLeft)) {
+				unsignedType = typeLeft;
+				signedType = typeRight;
+			} else {
+				unsignedType = typeRight;
+				signedType = typeLeft;
+			}
+
+			if (mTypeSizes.getSize(unsignedType.getType()).compareTo(mTypeSizes.getSize(signedType.getType())) >= 0) {
+				return unsignedType;
+			}
+			return signedType;
+		}
+	}
+
+	private static boolean integerPromotionNeeded(final CPrimitive cPrimitive) {
+		return cPrimitive.getType().equals(CPrimitive.CPrimitives.CHAR)
+				|| cPrimitive.getType().equals(CPrimitive.CPrimitives.SCHAR)
+				|| cPrimitive.getType().equals(CPrimitive.CPrimitives.SHORT)
+				|| cPrimitive.getType().equals(CPrimitive.CPrimitives.UCHAR)
+				|| cPrimitive.getType().equals(CPrimitive.CPrimitives.USHORT);
+	}
+
+	private CPrimitive determineResultOfIntegerPromotion(final CPrimitive cPrimitive) {
+		final int sizeOfArgument = mTypeSizes.getSize(cPrimitive.getType());
+		final int sizeofInt = mTypeSizes.getSize(CPrimitive.CPrimitives.INT);
+
+		if (sizeOfArgument < sizeofInt || !mTypeSizes.isUnsigned(cPrimitive)) {
+			return new CPrimitive(CPrimitives.INT);
+		}
+		return new CPrimitive(CPrimitives.UINT);
+	}
+
+	/**
+	 * Convert ResultExpression to resultType if its type is not already resultType.
+	 */
+	public ExpressionResult convertIfNecessary(final ILocation loc, final ExpressionResult operand,
+			final CPrimitive resultType) {
+		if (operand.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
+			// do nothing
+			return operand;
+		}
+		if (operand.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
+			if (resultType.isIntegerType()) {
+				return mExprTrans.convertIntToInt(loc, operand, resultType);
+			}
+			if (resultType.isRealFloatingType()) {
+				return mExprTrans.convertIntToFloat(loc, operand, resultType);
+			}
+			throw new UnsupportedSyntaxException(loc,
+					"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
+		}
+		if (operand.getLrValue().getCType().getUnderlyingType().isRealFloatingType()) {
+			if (resultType.isIntegerType()) {
+				return mExprTrans.convertFloatToInt(loc, operand, resultType);
+			}
+			if (resultType.isRealFloatingType()) {
+				return mExprTrans.convertFloatToFloat(loc, operand, resultType);
+			}
+			throw new UnsupportedSyntaxException(loc,
+					"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
+		}
+		throw new UnsupportedSyntaxException(loc,
+				"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
 	}
 
 	/**

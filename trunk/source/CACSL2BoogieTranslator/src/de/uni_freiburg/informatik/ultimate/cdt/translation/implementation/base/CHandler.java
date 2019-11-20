@@ -1975,7 +1975,7 @@ public class CHandler {
 		assert expr.getLrValue().getCType().isIntegerType();
 		// 6.8.4.2-5: "The integer promotions are performed on the controlling
 		// expression."
-		expr = mExpressionTranslation.doIntegerPromotion(loc, expr);
+		expr = mExprResultTransformer.doIntegerPromotion(loc, expr);
 
 		resultBuilder.addAllExceptLrValue(expr);
 
@@ -3770,7 +3770,7 @@ public class CHandler {
 		if (!rType.isIntegerType() || !lType.isIntegerType()) {
 			throw new UnsupportedOperationException("operands have to have integer types");
 		}
-		final ExpressionResult leftPromoted = mExpressionTranslation.doIntegerPromotion(loc, left);
+		final ExpressionResult leftPromoted = mExprResultTransformer.doIntegerPromotion(loc, left);
 		final CPrimitive typeOfResult = (CPrimitive) leftPromoted.getLrValue().getCType();
 		final ExpressionResult rightConverted =
 				mExprResultTransformer.performImplicitConversion(right, typeOfResult, loc);
@@ -3826,7 +3826,7 @@ public class CHandler {
 			throw new UnsupportedOperationException("operands have to have integer types");
 		}
 		final Pair<ExpressionResult, ExpressionResult> newOps =
-				mExpressionTranslation.usualArithmeticConversions(loc, left, right);
+				mExprResultTransformer.usualArithmeticConversions(loc, left, right);
 		left = newOps.getFirst();
 		right = newOps.getSecond();
 		final CPrimitive typeOfResult = (CPrimitive) left.getLrValue().getCType().getUnderlyingType();
@@ -3884,7 +3884,7 @@ public class CHandler {
 		final CType typeOfResult;
 		if (lType.isArithmeticType() && rType.isArithmeticType()) {
 			final Pair<ExpressionResult, ExpressionResult> newOps =
-					mExpressionTranslation.usualArithmeticConversions(loc, left, right);
+					mExprResultTransformer.usualArithmeticConversions(loc, left, right);
 			left = newOps.getFirst();
 			right = newOps.getSecond();
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
@@ -4072,7 +4072,7 @@ public class CHandler {
 			 * the result.
 			 */
 			final Pair<ExpressionResult, ExpressionResult> newOps =
-					mExpressionTranslation.usualArithmeticConversions(loc, opPositive, opNegative);
+					mExprResultTransformer.usualArithmeticConversions(loc, opPositive, opNegative);
 			opPositive = newOps.getFirst();
 			opNegative = newOps.getSecond();
 			resultCType = opPositive.getLrValue().getCType();
@@ -4252,7 +4252,7 @@ public class CHandler {
 				}
 			} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
 				final Pair<ExpressionResult, ExpressionResult> newOps =
-						mExpressionTranslation.usualArithmeticConversions(loc, left, right);
+						mExprResultTransformer.usualArithmeticConversions(loc, left, right);
 				left = newOps.getFirst();
 				right = newOps.getSecond();
 			} else {
@@ -4291,7 +4291,7 @@ public class CHandler {
 			right = addDivisionByZeroCheck(loc, right);
 		}
 		final Pair<ExpressionResult, ExpressionResult> newOps =
-				mExpressionTranslation.usualArithmeticConversions(loc, left, right);
+				mExprResultTransformer.usualArithmeticConversions(loc, left, right);
 		left = newOps.getFirst();
 		right = newOps.getSecond();
 		final CPrimitive typeOfResult = (CPrimitive) left.getLrValue().getCType().getUnderlyingType();
@@ -4371,7 +4371,7 @@ public class CHandler {
 		if (lType instanceof CPrimitive && rType instanceof CPrimitive) {
 			assert lType.isRealType() && rType.isRealType() : "no real type";
 			final Pair<ExpressionResult, ExpressionResult> newOps =
-					mExpressionTranslation.usualArithmeticConversions(loc, left, right);
+					mExprResultTransformer.usualArithmeticConversions(loc, left, right);
 			left = newOps.getFirst();
 			right = newOps.getSecond();
 			result = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
@@ -4465,7 +4465,7 @@ public class CHandler {
 			}
 			if (inputType.isArithmeticType()) {
 				operand = mExprResultTransformer.rexBoolToInt(operand, loc);
-				operand = mExpressionTranslation.doIntegerPromotion(loc, operand);
+				operand = mExprResultTransformer.doIntegerPromotion(loc, operand);
 			}
 			return operand;
 		}
@@ -4475,7 +4475,7 @@ public class CHandler {
 				throw new UnsupportedOperationException("arithmetic type required");
 			}
 			operand = mExprResultTransformer.rexBoolToInt(operand, loc);
-			operand = mExpressionTranslation.doIntegerPromotion(loc, operand);
+			operand = mExprResultTransformer.doIntegerPromotion(loc, operand);
 			final CPrimitive resultType = (CPrimitive) operand.getLrValue().getCType();
 			final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(operand);
 			if (op == IASTUnaryExpression.op_minus && resultType.isIntegerType()) {

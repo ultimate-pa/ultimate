@@ -756,10 +756,10 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
 		final CPointer charPointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-		final ExpressionResult dest = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main,
-				loc, arguments[0], charPointerType);
-		final ExpressionResult src = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main,
-				loc, arguments[1], charPointerType);
+		final ExpressionResult dest = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
+				arguments[0], charPointerType);
+		final ExpressionResult src = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
+				arguments[1], charPointerType);
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		resultBuilder.addAllExceptLrValue(dest);
@@ -953,8 +953,8 @@ public class StandardFunctionHandler {
 			// we do not have a void pointer but a pthread_t pointer
 			// but this incorrectness will currently not have a
 			// negative effect
-			argThreadIdPointer =
-					mExprResultTransformer.performImplicitConversion(tmp, new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+			argThreadIdPointer = mExprResultTransformer.performImplicitConversion(tmp,
+					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
 		}
 		final ExpressionResult argThreadAttributes =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
@@ -964,8 +964,8 @@ public class StandardFunctionHandler {
 		{
 			final ExpressionResult tmp =
 					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[3]);
-			startRoutineArguments =
-					mExprResultTransformer.performImplicitConversion(tmp, new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+			startRoutineArguments = mExprResultTransformer.performImplicitConversion(tmp,
+					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
 		}
 		// We hope that the function is not given by a function pointer that is stored
 		// in a variable but directly by the function name
@@ -1089,8 +1089,8 @@ public class StandardFunctionHandler {
 			// loc,
 			// arguments[1]);
 			final ExpressionResult tmp = (ExpressionResult) main.dispatch(arguments[1]);
-			argAddressOfResultPointer =
-					mExprResultTransformer.performImplicitConversion(tmp, new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+			argAddressOfResultPointer = mExprResultTransformer.performImplicitConversion(tmp,
+					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
 		}
 
 		// Object that will build our result
@@ -1137,8 +1137,8 @@ public class StandardFunctionHandler {
 
 		final ExpressionResult arg =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
-		final ExpressionResult transformedArg =
-				mExprResultTransformer.performImplicitConversion(arg, new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+		final ExpressionResult transformedArg = mExprResultTransformer.performImplicitConversion(arg,
+				new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
 
 		final IBoogieType type = mTypeHandler.getBoogiePointerType();
 		final String identifier = SFO.RES;
@@ -1157,9 +1157,8 @@ public class StandardFunctionHandler {
 	}
 
 	/**
-	 * Implements handing for pthread_cond_wait. Since spurious wake-ups are
-	 * possible (and covered by SVCOMP benchmarks), we do not actually wait. We
-	 * merely unlock and lock the mutex.
+	 * Implements handing for pthread_cond_wait. Since spurious wake-ups are possible (and covered by SVCOMP
+	 * benchmarks), we do not actually wait. We merely unlock and lock the mutex.
 	 */
 	private Result handlePthread_cond_wait(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
@@ -1194,9 +1193,9 @@ public class StandardFunctionHandler {
 		return createPthread_mutex_lock(main, loc, arguments[0]);
 	}
 
-	private ExpressionResult createPthread_mutex_lock(final IDispatcher main, final ILocation loc, final IASTInitializerClause mutex) {
-		final ExpressionResult arg =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
+	private ExpressionResult createPthread_mutex_lock(final IDispatcher main, final ILocation loc,
+			final IASTInitializerClause mutex) {
+		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
 
 		// final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
 		// // we assume that function is always successful and returns 0
@@ -1239,11 +1238,11 @@ public class StandardFunctionHandler {
 		return createPthread_mutex_unlock(main, loc, arguments[0]);
 	}
 
-	private ExpressionResult createPthread_mutex_unlock(final IDispatcher main, final ILocation loc, final IASTInitializerClause mutex) {
+	private ExpressionResult createPthread_mutex_unlock(final IDispatcher main, final ILocation loc,
+			final IASTInitializerClause mutex) {
 		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
 
-		final ExpressionResult arg =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
+		final ExpressionResult arg = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mutex);
 
 		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
 		// we assume that function is always successful and returns 0
@@ -1329,7 +1328,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult decayedArgument =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		final ExpressionResult convertedArgument =
-				mExpressionTranslation.convertIfNecessary(loc, decayedArgument, new CPrimitive(CPrimitives.INT));
+				mExprResultTransformer.convertIfNecessary(loc, decayedArgument, new CPrimitive(CPrimitives.INT));
 		final ExpressionResult arg = convertedArgument;
 
 		return mExpressionTranslation.constructBuiltinFesetround(loc, (RValue) arg.getLrValue(), mAuxVarInfoBuilder);
@@ -1382,10 +1381,10 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, name, arguments);
 
-		final ExpressionResult nmemb = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main,
-				loc, arguments[0], mTypeSizeComputer.getSizeT());
-		final ExpressionResult size = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main,
-				loc, arguments[1], mTypeSizeComputer.getSizeT());
+		final ExpressionResult nmemb = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
+				arguments[0], mTypeSizeComputer.getSizeT());
+		final ExpressionResult size = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
+				arguments[1], mTypeSizeComputer.getSizeT());
 
 		final Expression product = mExpressionTranslation.constructArithmeticExpression(loc,
 				IASTBinaryExpression.op_multiply, nmemb.getLrValue().getValue(), mTypeSizeComputer.getSizeT(),
@@ -1489,11 +1488,11 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 2, methodName, arguments);
 
 		final CType voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
-		final ExpressionResult ptr = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main,
-				loc, arguments[0], voidPointerType);
+		final ExpressionResult ptr = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
+				arguments[0], voidPointerType);
 
-		final ExpressionResult size = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main,
-				loc, arguments[1], mTypeSizeComputer.getSizeT());
+		final ExpressionResult size = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
+				arguments[1], mTypeSizeComputer.getSizeT());
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		resultBuilder.addAllExceptLrValue(ptr);
@@ -1612,8 +1611,7 @@ public class StandardFunctionHandler {
 		final List<Expression> args = new ArrayList<>();
 		final List<ExpressionResult> results = new ArrayList<>();
 		for (final IASTInitializerClause inParam : node.getArguments()) {
-			ExpressionResult in =
-					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, inParam);
+			ExpressionResult in = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, inParam);
 			if (in.getLrValue().getValue() == null) {
 				final String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 				throw new IncorrectSyntaxException(loc, msg);
@@ -1667,7 +1665,7 @@ public class StandardFunctionHandler {
 			final ExpressionResult decayedArgument =
 					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, argument);
 			final ExpressionResult convertedArgument =
-					mExpressionTranslation.convertIfNecessary(loc, decayedArgument, floatFunction.getType());
+					mExprResultTransformer.convertIfNecessary(loc, decayedArgument, floatFunction.getType());
 			rtr.add(convertedArgument);
 		}
 
@@ -1675,7 +1673,7 @@ public class StandardFunctionHandler {
 		if (typeDeterminedByName != null) {
 			final List<ExpressionResult> newRtr = new ArrayList<>();
 			for (final ExpressionResult arg : rtr) {
-				newRtr.add(mExpressionTranslation.convertIfNecessary(loc, arg, typeDeterminedByName));
+				newRtr.add(mExprResultTransformer.convertIfNecessary(loc, arg, typeDeterminedByName));
 			}
 			return newRtr;
 		}
@@ -1774,7 +1772,7 @@ public class StandardFunctionHandler {
 		ExpressionResult rightOp =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
 		final Pair<ExpressionResult, ExpressionResult> newOps =
-				mExpressionTranslation.usualArithmeticConversions(loc, leftOp, rightOp);
+				mExprResultTransformer.usualArithmeticConversions(loc, leftOp, rightOp);
 		leftOp = newOps.getFirst();
 		rightOp = newOps.getSecond();
 
@@ -1842,12 +1840,12 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
 		final CPointer voidType = new CPointer(new CPrimitive(CPrimitives.VOID));
-		final ExpressionResult dest = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main,
-				loc, arguments[0], voidType);
-		final ExpressionResult src = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main,
-				loc, arguments[1], voidType);
-		final ExpressionResult size = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main,
-				loc, arguments[2], mTypeSizeComputer.getSizeT());
+		final ExpressionResult dest = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
+				arguments[0], voidType);
+		final ExpressionResult src = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
+				arguments[1], voidType);
+		final ExpressionResult size = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
+				arguments[2], mTypeSizeComputer.getSizeT());
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		resultBuilder.addAllExceptLrValue(dest);
