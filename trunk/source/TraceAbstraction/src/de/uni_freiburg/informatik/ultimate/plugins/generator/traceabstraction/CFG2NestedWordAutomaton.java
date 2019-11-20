@@ -324,21 +324,22 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 						final IPredicate succCurrentThread = nodes2States.get(currentThreadLoc);
 						final List<IPredicate> threadInUse = fork2inUseState.get(current);
 						final List<IPredicate> threadNotInUse = fork2notinUseState.get(current);
+						Set<IPredicate> predecessors;
+						Set<IPredicate> successors;
 						if (addThreadUsageMonitors) {
-							for (int i = 0; i < threadInUse.size(); i++) {
-								Set<IPredicate> predecessors;
-								Set<IPredicate> successors;
-								predecessors = new HashSet<>(Arrays.asList(state, threadNotInUse.get(i)));
-								successors = new HashSet<>(Arrays.asList(succCurrentThread, succState, threadInUse.get(i)));
-								net.addTransition((LETTER) edge, predecessors, successors);
+							final int i = getThreadInstanceNumber(current, edge.getSucceedingProcedure(),
+									icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap());
+							predecessors = new HashSet<>(Arrays.asList(state, threadNotInUse.get(i)));
+							successors = new HashSet<>(Arrays.asList(succCurrentThread, succState, threadInUse.get(i)));
+							for (int j = 0; j < i; j++) {
+								predecessors.add(threadInUse.get(j));
+								successors.add(threadInUse.get(j));
 							}
 						} else {
-							Set<IPredicate> predecessors;
-							Set<IPredicate> successors;
 							predecessors = Collections.singleton(state);
 							successors = new HashSet<>(Arrays.asList(succCurrentThread, succState));
-							net.addTransition((LETTER) edge, predecessors, successors);
 						}
+						net.addTransition((LETTER) edge, predecessors, successors);
 					} else if (edge instanceof IIcfgJoinTransitionThreadCurrent) {
 						// add nothing, in the Petri net we only use the IIcfgJoinTransitionOtherThread
 					} else if (edge instanceof IIcfgJoinTransitionThreadOther) {
@@ -380,6 +381,20 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 		return net;
+	}
+
+	private static int getThreadInstanceNumber(final IIcfgForkTransitionThreadCurrent<?> current,
+			final String threadInstanceName,
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap) {
+		final List<ThreadInstance> threadInstances = threadInstanceMap.get(current);
+		int i = 0;
+		for (final ThreadInstance threadInstance : threadInstances) {
+			if (threadInstance.getThreadInstanceName().equals(threadInstanceName)) {
+				return i;
+			}
+			i++;
+		}
+		throw new IllegalStateException("did not find thread instance " + threadInstanceName);
 	}
 
 	/**
