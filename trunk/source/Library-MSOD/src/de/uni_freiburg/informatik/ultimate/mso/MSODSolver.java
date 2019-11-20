@@ -43,6 +43,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
@@ -498,6 +499,31 @@ public final class MSODSolver {
 		}
 
 		throw new IllegalArgumentException("Invalid input.");
+	}
+
+	/**
+	 * Returns a {@link NestedLassoWord} accepted by the given automaton, or null if language of automaton is empty. In
+	 * case of finite automata the loop is an empty {@link NestedWord}.
+	 *
+	 * @throws AutomataLibraryException
+	 *             if {@link IsEmpty} fails.
+	 */
+	public NestedLassoWord<MSODAlphabetSymbol> getWord(final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
+			throws AutomataOperationCanceledException {
+
+		if (mAutomataOperations instanceof MSODAutomataOperationsWeak) {
+			final NestedRun<MSODAlphabetSymbol, String> run = (new IsEmpty<>(services, automaton)).getNestedRun();
+			return run != null ? new NestedLassoWord<>(run.getWord(), new NestedWord<>()) : null;
+		}
+
+		if (mAutomataOperations instanceof MSODAutomataOperationsBuchi) {
+			final NestedLassoRun<MSODAlphabetSymbol, String> run =
+					(new BuchiIsEmpty<>(services, automaton)).getAcceptingNestedLassoRun();
+			return run != null ? run.getNestedLassoWord() : null;
+		}
+
+		throw new IllegalArgumentException("Unsupported automata operations.");
 	}
 
 	/**
