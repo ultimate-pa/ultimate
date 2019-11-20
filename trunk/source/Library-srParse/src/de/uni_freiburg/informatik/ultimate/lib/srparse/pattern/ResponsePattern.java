@@ -40,6 +40,7 @@ public class ResponsePattern extends PatternType {
 			// intervalls gelten
 			// TODO: Das leads-to scheint falsch
 			ct = counterTrace(phaseT(), phase(P.and(S.negate())), phase(S.negate()), phaseT());
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		} else if (scope instanceof SrParseScopeBefore) {
 			// Before Q, it is always the case that if P holds then S eventually holds.
 			// ¬(|¬Q|;|P ∧ ¬S ∧ ¬Q|;|¬S ∧ ¬Q|;|Q|; true)
