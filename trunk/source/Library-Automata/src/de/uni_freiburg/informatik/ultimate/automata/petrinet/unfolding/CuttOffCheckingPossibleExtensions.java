@@ -67,8 +67,10 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 	 * issue. https://github.com/ultimate-pa/ultimate/issues/448
 	 */
 	private static final boolean BUMBLEBEE_B07_OPTIMIZAION = true;
-	private final PriorityQueue<Event<LETTER, PLACE>> mPe;
+	private final PriorityQueue<Event<LETTER, PLACE>> mPePq;
+	private final TreeSet<Event<LETTER, PLACE>> mPeTreeSet;
 	private int mMaximalSize = 0;
+	private static final boolean USE_PQ = true;
 	/**
 	 * If {@link Event} is known to be cut-off event we can move it immediately
 	 * to front because it will not create descendants. This optimization keeps
@@ -91,7 +93,8 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 
 	public CuttOffCheckingPossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess, final Comparator<Event<LETTER, PLACE>> order) {
 		mBranchingProcess = branchingProcess;
-		mPe = new PriorityQueue<>(order);;
+		mPePq = new PriorityQueue<>(order);;
+		mPeTreeSet = new TreeSet<>(order);
 		mFastpathCutoffEventList = new ArrayDeque<>();
 		mOrder = order;
 		mMarkingEventMap.put(mBranchingProcess.getDummyRoot().getMark(), mBranchingProcess.getDummyRoot());
@@ -100,7 +103,11 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 	@Override
 	public Event<LETTER, PLACE> remove() {
 		if (mFastpathCutoffEventList.isEmpty()) {
-			return mPe.remove();
+			if (USE_PQ) {
+				return mPePq.remove();
+			} else {
+				return mPeTreeSet.pollFirst();
+			}
 		} else {
 			return mFastpathCutoffEventList.removeFirst();
 		}
@@ -134,7 +141,12 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 			newEvent.setCompanion(eventWithSameMarking);
 			return true;
 		} else {
-			boolean eventWithSameMarkingWasInTheMainQueu = mPe.remove(eventWithSameMarking);
+			boolean eventWithSameMarkingWasInTheMainQueu;
+			if (USE_PQ) {
+				eventWithSameMarkingWasInTheMainQueu = mPePq.remove(eventWithSameMarking);
+			} else {
+				eventWithSameMarkingWasInTheMainQueu = mPePq.remove(eventWithSameMarking);
+			}
 			assert(eventWithSameMarkingWasInTheMainQueu);
 			mFastpathCutoffEventList.add(eventWithSameMarking);
 			eventWithSameMarking.setCompanion(newEvent);
@@ -155,8 +167,13 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 					mFastpathCutoffEventList.add(newEvent);
 				} else {
 					mMarkingEventMap.put(newEvent.getMark(), newEvent);
-					final boolean somethingWasAdded = mPe.add(newEvent);
-					mMaximalSize = Integer.max(mMaximalSize, mPe.size());
+					final boolean somethingWasAdded;
+					if (USE_PQ) {
+						somethingWasAdded = mPePq.add(newEvent);
+					} else {
+						somethingWasAdded = mPeTreeSet.add(newEvent);
+					}
+					mMaximalSize = Integer.max(mMaximalSize, mPePq.size());
 					if (!somethingWasAdded) {
 						throw new AssertionError("Event was already in queue.");
 					}
@@ -246,12 +263,12 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 
 	@Override
 	public boolean isEmpy() {
-		return mPe.isEmpty() && mFastpathCutoffEventList.isEmpty();
+		return mPePq.isEmpty() && mFastpathCutoffEventList.isEmpty();
 	}
 
 	@Override
 	public int size() {
-		return mPe.size() + mFastpathCutoffEventList.size();
+		return mPePq.size() + mFastpathCutoffEventList.size();
 	}
 
 	public int getUsefulExtensionCandidates() {
@@ -265,8 +282,4 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 	public int getMaximalSize() {
 		return mMaximalSize;
 	}
-
-
-
-
 }
