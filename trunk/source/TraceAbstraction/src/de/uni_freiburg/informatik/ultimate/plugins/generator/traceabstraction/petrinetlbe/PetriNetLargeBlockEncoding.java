@@ -4,26 +4,26 @@
  * Copyright (C) 2019 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
- * This file is part of the ULTIMATE TraceAbstractionConcurrent plug-in.
+ * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
- * The ULTIMATE TraceAbstractionConcurrent plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE TraceAbstractionConcurrent plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceAbstractionConcurrent plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceAbstractionConcurrent plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe;
@@ -97,6 +97,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class PetriNetLargeBlockEncoding {
 
+	public static int MAX_ITERATIONS = Integer.MAX_VALUE;
+
 	private final ILogger mLogger;
 	private final BoundedPetriNet<IIcfgTransition<?>, IPredicate> mResult;
 	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
@@ -105,6 +107,7 @@ public class PetriNetLargeBlockEncoding {
 	private final IcfgEdgeFactory mEdgeFactory;
 	private final ManagedScript mManagedScript;
 	private final CoenabledRelation<IIcfgTransition<?>> mCoEnabledRelation;
+	private final CoenabledRelation<IIcfgTransition<?>> mOriginalCoEnabledRelation;
 
 	private final Map<IIcfgTransition<?>, List<IIcfgTransition<?>>> mSequentialCompositions = new HashMap<>();
 	private final Map<IIcfgTransition<?>, Set<Pair<IIcfgTransition<?>, TermVariable>>> mChoiceCompositions =
@@ -149,6 +152,7 @@ public class PetriNetLargeBlockEncoding {
 		mLogger.info("Starting large block encoding on Petri net that " + petriNet.sizeInformation());
 		try {
 			mCoEnabledRelation = CoenabledRelation.fromPetriNet(new AutomataLibraryServices(services), petriNet);
+			mOriginalCoEnabledRelation = CoenabledRelation.fromPetriNet(new AutomataLibraryServices(services), petriNet);
 
 			final int coEnabledRelationSize = mCoEnabledRelation.size();
 			mLogger.info("Number of co-enabled transitions " + coEnabledRelationSize);
@@ -192,7 +196,9 @@ public class PetriNetLargeBlockEncoding {
 				resultLastIteration = resultCurrentIteration;
 				resultCurrentIteration = sequenceRule(services, resultLastIteration);
 				resultCurrentIteration = choiceRule(services, resultCurrentIteration);
-			} while (resultLastIteration.getTransitions().size() != resultCurrentIteration.getTransitions().size());
+
+				//checkInvariant(resultCurrentIteration);
+			} while (resultLastIteration.getTransitions().size() != resultCurrentIteration.getTransitions().size() && numberOfFixpointIterations < MAX_ITERATIONS);
 
 			mPetriNetLargeBlockEncodingStatistics.setNumberOfFixpointIterations(numberOfFixpointIterations);
 			mLogger.info("Checked pairs total: " + mMoverChecks);
@@ -327,6 +333,30 @@ public class PetriNetLargeBlockEncoding {
 		mChoiceCompositions.put(choiceIcfgEdge, pairs);
 	}
 
+	private void checkInvariant(final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet) {
+		// map all branch encoders to true – we don't care which branch is taken
+		final HashMap<TermVariable, Boolean> encoders = new HashMap<>(mChoiceCompositions.size() * 2);
+		for (Set<Pair<IIcfgTransition<?>, TermVariable>> x : mChoiceCompositions.values()) {
+			for (Pair<IIcfgTransition<?>, TermVariable> y : x) {
+				encoders.put(y.getSecond(), true);
+			}
+		}
+
+		final HashSet<IIcfgTransition<?>> errors = new HashSet<>();
+		for (ITransition<IIcfgTransition<?>, IPredicate> t : petriNet.getTransitions()) {
+			Set<IIcfgTransition<?>> coen = mCoEnabledRelation.getImage(t.getSymbol());
+			IIcfgTransition<?> first = translateBack(t.getSymbol(), encoders).iterator().next();
+			Set<IIcfgTransition<?>> originalCoen = mOriginalCoEnabledRelation.getImage(first);
+			Set<IIcfgTransition<?>> translatedCoen = coen.stream().flatMap(x -> translateBack(x, encoders).stream()).collect(Collectors.toSet());
+			if (!originalCoen.equals(translatedCoen)) {
+				errors.add(t.getSymbol());
+			}
+		}
+		if (!errors.isEmpty()) {
+			throw new AssertionError("incorrect coenabled");
+		}
+	}
+
 	/**
 	 * Performs the sequence rule on the Petri Net.
 	 *
@@ -357,6 +387,11 @@ public class PetriNetLargeBlockEncoding {
 					final boolean sequentialCompositionAllowed = petriNet.getPredecessors(prePlace).stream()
 							.allMatch(t2 -> sequenceRuleCheck(t2, t1, prePlace, sequentialCompositionStack, petriNet));
 					if (sequentialCompositionAllowed) {
+						if (petriNet.getPredecessors(prePlace).size() == 1) {
+							mLogger.info("straight-line composition");
+						} else if (petriNet.getPredecessors(prePlace).size() > 1) {
+							mLogger.info("Y-V composition with " + petriNet.getPredecessors(prePlace).size() + " arms");
+						}
 						for (final ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet
 								.getPredecessors(prePlace)) {
 							// simplify Term resulting TransFormula because various other algorithms
@@ -397,6 +432,11 @@ public class PetriNetLargeBlockEncoding {
 					final boolean sequentialCompositionAllowed = petriNet.getSuccessors(postPlace).stream()
 							.allMatch(t2 -> sequenceRuleCheck(t1, t2, postPlace, sequentialCompositionStack, petriNet));
 					if (sequentialCompositionAllowed) {
+						if (petriNet.getSuccessors(postPlace).size() == 1) {
+							mLogger.info("upside-straight-line composition");
+						} else if (petriNet.getSuccessors(postPlace).size() > 1) {
+							mLogger.info("upside-Y-V composition with " + petriNet.getSuccessors(postPlace).size() + " legs");
+						}
 						for (final ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet.getSuccessors(postPlace)) {
 							// simplify Term resulting TransFormula because various other algorithms
 							// in Ultimate have to work with this term
