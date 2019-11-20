@@ -539,8 +539,9 @@ public class CHandler {
 		} else if (mSettingsChangeForTranslationRestart.equals(settingsChange)) {
 			// nothing to do
 		} else {
-			throw new UnsupportedOperationException("More than one settings change for restart is not yet implemented"
-					+ "(might implement a SettingsChange.combine method, perhaps)");
+			mLogger.warn("More than one settings change for restart is not yet implemented; using only the first "
+					+ "one to be reported");
+			// do nothing
 		}
 	}
 
