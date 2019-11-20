@@ -31,6 +31,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -39,12 +40,15 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
@@ -55,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -1010,32 +1015,37 @@ public class ExpressionResultTransformer {
 	 */
 	public ExpressionResult convertIfNecessary(final ILocation loc, final ExpressionResult operand,
 			final CPrimitive resultType) {
-		if (operand.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
+		final ExpressionResult exprResult;
+		final CType operandType = operand.getLrValue().getCType().getUnderlyingType();
+		if (operandType.equals(resultType)) {
 			// do nothing
-			return operand;
-		}
-		if (operand.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
-			if (resultType.isIntegerType()) {
-				return mExprTrans.convertIntToInt(loc, operand, resultType);
+			exprResult = operand;
+		} else if(resultType.isIntegerType()) {
+			if (operandType.isIntegerType()) {
+				exprResult = mExprTrans.convertIntToInt(loc, operand, resultType);
+			} else if (operandType.isFloatingType()) {
+				exprResult = mExprTrans.convertFloatToInt(loc, operand, resultType);
+			} else {
+				throw new UnsupportedSyntaxException(loc,
+						"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
 			}
-			if (resultType.isRealFloatingType()) {
-				return mExprTrans.convertIntToFloat(loc, operand, resultType);
+		} else if(resultType.isFloatingType()) {
+			final ExpressionResult expr;
+			if (operandType.isIntegerType()) {
+				expr = mExprTrans.convertIntToFloat(loc, operand, resultType);
+				exprResult = constructBitvecResult(expr.getLrValue(), loc);
+			} else if (operandType.isFloatingType()) {
+				expr = mExprTrans.convertFloatToFloat(loc, operand, resultType);
+				exprResult = constructBitvecResult(expr.getLrValue(), loc);
+			} else {
+				throw new UnsupportedSyntaxException(loc,
+						"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
 			}
+		} else {
 			throw new UnsupportedSyntaxException(loc,
 					"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
 		}
-		if (operand.getLrValue().getCType().getUnderlyingType().isRealFloatingType()) {
-			if (resultType.isIntegerType()) {
-				return mExprTrans.convertFloatToInt(loc, operand, resultType);
-			}
-			if (resultType.isRealFloatingType()) {
-				return mExprTrans.convertFloatToFloat(loc, operand, resultType);
-			}
-			throw new UnsupportedSyntaxException(loc,
-					"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
-		}
-		throw new UnsupportedSyntaxException(loc,
-				"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
+		return exprResult;
 	}
 
 	/**
@@ -1059,6 +1069,40 @@ public class ExpressionResultTransformer {
 	private interface ITransformationFunction {
 		ExpressionResult apply(final ExpressionResultTransformer ert, final ExpressionResult expr,
 				final CType targetCType, final ILocation loc, final IASTNode hook);
+	}
+	
+	public ExpressionResult constructBitvecResultIfNecessary(RValue rvalue, ILocation loc, ExpressionResult arg,
+			FloatFunction function) {
+		return this.constructBitvecResultIfNecessary(rvalue, loc, new ArrayList<>(java.util.Arrays.asList(arg)), function);
+	}
+	
+	public ExpressionResult constructBitvecResultIfNecessary(final LRValue rvalue, final ILocation loc, final List<ExpressionResult> args, FloatFunction function) {
+		final String functionName = function.getFunctionName();
+		// TODO: remove hardcoded comparison.
+		if ("signbit".equals(functionName) || "copysign".equals(functionName) || "fmod".equals(functionName)) {
+			return new ExpressionResultBuilder().addAllExceptLrValue(args).setLrValue(rvalue).build();
+		} else {
+			return this.constructBitvecResult(rvalue, loc);
+		}
+	}
+	
+	private ExpressionResult constructBitvecResult(final LRValue rvalue, final ILocation loc) {
+		Expression[] arguments = new Expression[1];
+		arguments[0] = rvalue.getValue();
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		final CPrimitive cType = (CPrimitive) rvalue.getCType();
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+		resultBuilder.addAuxVar(auxvarinfo);
+		final CallStatement call = StatementFactory.constructCallStatement(
+				loc,
+				false, new VariableLHS[] {auxvarinfo.getLhs()},
+				"float_to_bitvec" + Integer.toString(mTypeSizes.getFloatingPointSize(cType).getBitSize()),
+				arguments);
+		resultBuilder.addStatement(call);
+		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), cType));
+		
+		return resultBuilder.build();
 	}
 
 }
