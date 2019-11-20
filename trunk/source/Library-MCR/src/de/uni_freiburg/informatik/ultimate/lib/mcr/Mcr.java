@@ -119,8 +119,8 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				continue;
 			}
 			preprocess(trace);
-			List<IPredicate> interpolants = getInterpolantsIfAccepted(automatonBuilder.getResult(), trace);
-			if (interpolants.isEmpty()) {
+			List<IPredicate> interpolants = automatonBuilder.getInterpolantsIfAccepted(trace);
+			if (interpolants != null) {
 				final Pair<LBool, QualifiedTracePredicates> proof =
 						mProofProvider.getProof(trace, getPrecondition(), getPostcondition());
 				final LBool feasibility = proof.getFirst();
@@ -200,7 +200,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	private List<IPredicate> getInterpolantsIfAccepted(final NestedWordAutomaton<LETTER, IPredicate> automaton,
-			final List<LETTER> trace) {
+			final List<LETTER> trace) throws AutomataLibraryException {
 		// TODO: Get an accepting run if possible and return its state sequence, otherwise just return null
 		// TODO: Use DeterministicInterpolantAutomaton
 		return Collections.emptyList();

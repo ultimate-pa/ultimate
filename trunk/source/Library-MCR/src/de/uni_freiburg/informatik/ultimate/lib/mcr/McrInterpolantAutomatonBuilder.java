@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.mcr;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -92,6 +93,38 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 		addStatesAndTransitions(mcrAutomaton, stateMap);
+	}
+
+	// TODO: Use DeterministicInterpolantAutomaton
+	public List<IPredicate> getInterpolantsIfAccepted(final List<LETTER> trace) {
+		final List<Map<IPredicate, IPredicate>> precedessorTrace = new ArrayList<>();
+		final Map<IPredicate, IPredicate> initialPrecedessors = new HashMap<>();
+		for (final IPredicate initial : mResult.getInitialStates()) {
+			initialPrecedessors.put(initial, null);
+		}
+		precedessorTrace.add(initialPrecedessors);
+		for (final LETTER action : trace) {
+			final Map<IPredicate, IPredicate> newPrecedessors = new HashMap<>();
+			for (final IPredicate state : precedessorTrace.get(precedessorTrace.size() - 1).keySet()) {
+				for (final OutgoingInternalTransition<LETTER, IPredicate> outgoing : mResult.internalSuccessors(state,
+						action)) {
+					newPrecedessors.put(outgoing.getSucc(), state);
+				}
+			}
+			precedessorTrace.add(newPrecedessors);
+		}
+		for (final IPredicate state : precedessorTrace.get(precedessorTrace.size() - 1).keySet()) {
+			if (mResult.isFinal(state)) {
+				final IPredicate[] stateSequence = new IPredicate[precedessorTrace.size()];
+				IPredicate currentState = state;
+				for (int i = precedessorTrace.size() - 1; i >= 0; i--) {
+					stateSequence[i] = currentState;
+					currentState = precedessorTrace.get(i).get(currentState);
+				}
+				return Arrays.asList(stateSequence);
+			}
+		}
+		return null;
 	}
 
 	private <STATE> STATE getSuccessor(final STATE currentState, final LETTER action,
