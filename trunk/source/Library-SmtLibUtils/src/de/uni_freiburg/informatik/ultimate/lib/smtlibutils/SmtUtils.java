@@ -701,10 +701,10 @@ public final class SmtUtils {
 	 */
 	private static Term bitvectorEquality(final Script script, final Term lhs, final Term rhs) {
 		if (!SmtSortUtils.isBitvecSort(lhs.getSort())) {
-			throw new UnsupportedOperationException("need BitVec sort");
+			throw new UnsupportedOperationException("need BitVec sort, but got " + lhs.getSort());
 		}
 		if (!SmtSortUtils.isBitvecSort(rhs.getSort())) {
-			throw new UnsupportedOperationException("need BitVec sort");
+			throw new UnsupportedOperationException("need BitVec sort, but got " + rhs.getSort());
 		}
 		final BitvectorConstant fstbw = BitvectorUtils.constructBitvectorConstant(lhs);
 		if (fstbw != null) {

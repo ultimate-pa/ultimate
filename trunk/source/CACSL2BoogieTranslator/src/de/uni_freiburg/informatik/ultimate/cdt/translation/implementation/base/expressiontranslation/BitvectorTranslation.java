@@ -697,8 +697,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
 
-		final Expression exp1float = transformBitvectorToFloat(loc, exp1, CPrimitives.FLOAT);
-		final Expression exp2float = transformBitvectorToFloat(loc, exp2, CPrimitives.FLOAT);
+		final Expression exp1float = transformBitvectorToFloat(loc, exp1, type1.getType());
+		final Expression exp2float = transformBitvectorToFloat(loc, exp2, type2.getType());
 
 		boolean isNegated = false;
 		final String smtFunctionName;
