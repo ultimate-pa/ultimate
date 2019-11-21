@@ -7,6 +7,7 @@
 
 (declare-fun x () Int)
 (declare-fun y () Int)
+(declare-fun z () Int)
 (declare-fun I () SetOfInt)
 
 (assert (= y (- 3)))
@@ -20,4 +21,4 @@
 
 
 (check-sat)
-(get-value (I))
+(get-value (y z I))
