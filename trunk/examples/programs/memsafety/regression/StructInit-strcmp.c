@@ -1,7 +1,7 @@
 //#Safe
 /*  
    Extract from bftpd_3.c 
-   
+   We reported unsafe because we reordered the init statements in the translation acording to the source location, i.e., we moved the init of "c1" after the init of "commands[]", which left the struct in the array uninitialized. 
 */
 
 struct command {
