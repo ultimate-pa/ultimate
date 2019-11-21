@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PreRunner.PreRunnerResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings.SettingsChange;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
@@ -138,60 +139,73 @@ public class MainTranslator {
 
 		final CTranslationResultReporter reporter = new CTranslationResultReporter(mServices, mLogger);
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final TranslationSettings translationSettings = new TranslationSettings(ups);
+
+		TranslationSettings translationSettings = new TranslationSettings(ups);
+
 		mLogger.info(
 				"Starting translation in" + (translationSettings.isSvcompMode() ? " SV-COMP mode " : " normal mode"));
 
-		// TODO: Line Directive mapping doesn't work with multiple TUs right now
-		final DecoratorNode ldmNode = nodes.stream().findFirst().get().getRootNode();
-		assert ldmNode.getCNode() != null;
-		assert ldmNode.getCNode() instanceof IASTTranslationUnit;
 
-		final IASTTranslationUnit tu = (IASTTranslationUnit) ldmNode.getCNode();
-		final LineDirectiveMapping lineDirectiveMapping = new LineDirectiveMapping(tu.getRawSignature());
-		final LocationFactory locationFactory = new LocationFactory(lineDirectiveMapping);
-		final CACSL2BoogieBacktranslatorMapping backtranslatorMapping = new CACSL2BoogieBacktranslatorMapping();
+		while (true) {
 
-		final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
-		final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst);
-		final TypeSizes typeSizes = new TypeSizes(ups, translationSettings, flatSymbolTable);
+			// TODO: Line Directive mapping doesn't work with multiple TUs right now
+			final DecoratorNode ldmNode = nodes.stream().findFirst().get().getRootNode();
+			assert ldmNode.getCNode() != null;
+			assert ldmNode.getCNode() instanceof IASTTranslationUnit;
 
-		// final ExplorativeVisitor evv = executePreRun(new ExplorativeVisitor(mLogger), nodes);
+			final IASTTranslationUnit tu = (IASTTranslationUnit) ldmNode.getCNode();
+			final LineDirectiveMapping lineDirectiveMapping = new LineDirectiveMapping(tu.getRawSignature());
+			final LocationFactory locationFactory = new LocationFactory(lineDirectiveMapping);
+			final CACSL2BoogieBacktranslatorMapping backtranslatorMapping = new CACSL2BoogieBacktranslatorMapping();
 
-		// Build the function table
-		final Map<String, IASTNode> functionTable =
-				executePreRun(new FunctionTableBuilder(flatSymbolTable), nodes).getFunctionTable();
+			final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
+			final FlatSymbolTable flatSymbolTable = new FlatSymbolTable(mLogger, mst);
+			final TypeSizes typeSizes = new TypeSizes(ups, translationSettings, flatSymbolTable);
 
-		final PreRunner preRunner = executePreRun(new PreRunner(flatSymbolTable, functionTable), nodes);
-		// final NewPreRunner newPreRunner = executePreRun(new NewPreRunner(flatSymbolTable, functionTable,
-		// nameHandler), nodes);
-		final PreRunnerResult preRunnerResult = preRunner.getResult();
+			// final ExplorativeVisitor evv = executePreRun(new ExplorativeVisitor(mLogger), nodes);
 
-		final Set<IASTDeclaration> reachableDeclarations = initReachableDeclarations(nodes, functionTable,
-				preRunnerResult.getFunctionToIndex(), translationSettings.getCheckedMethod());
+			// Build the function table
+			final Map<String, IASTNode> functionTable =
+					executePreRun(new FunctionTableBuilder(flatSymbolTable), nodes).getFunctionTable();
 
-		mLogger.info("Built tables and reachable declarations");
-		final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler(mLogger);
-		final TypeHandler prerunTypeHandler = new TypeHandler(reporter, nameHandler, typeSizes, flatSymbolTable,
-				translationSettings, locationFactory, prerunStaticObjectsHandler);
+			final PreRunner preRunner = executePreRun(new PreRunner(flatSymbolTable, functionTable), nodes);
+			// final NewPreRunner newPreRunner = executePreRun(new NewPreRunner(flatSymbolTable, functionTable,
+			// nameHandler), nodes);
+			final PreRunnerResult preRunnerResult = preRunner.getResult();
 
-		final ExpressionTranslation prerunExpressionTranslation =
-				createExpressionTranslation(translationSettings, flatSymbolTable, typeSizes, prerunTypeHandler);
+			final Set<IASTDeclaration> reachableDeclarations = initReachableDeclarations(nodes, functionTable,
+					preRunnerResult.getFunctionToIndex(), translationSettings.getCheckedMethod());
 
-		final CHandler prerunCHandler = new CHandler(mServices, mLogger, backtranslatorMapping, translationSettings,
-				flatSymbolTable, functionTable, prerunExpressionTranslation, locationFactory, typeSizes,
-				reachableDeclarations, prerunTypeHandler, reporter, nameHandler, prerunStaticObjectsHandler,
-				preRunnerResult.getFunctionToIndex(), preRunnerResult.getVariablesOnHeap());
+			mLogger.info("Built tables and reachable declarations");
+			final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler(mLogger);
+			final TypeHandler prerunTypeHandler = new TypeHandler(reporter, nameHandler, typeSizes, flatSymbolTable,
+					translationSettings, locationFactory, prerunStaticObjectsHandler);
 
-		final PRDispatcher prerunDispatcher = new PRDispatcher(prerunCHandler, locationFactory, prerunTypeHandler);
-		prerunDispatcher.dispatch(nodes);
-		mLogger.info("Completed pre-run");
+			final ExpressionTranslation prerunExpressionTranslation =
+					createExpressionTranslation(translationSettings, flatSymbolTable, typeSizes, prerunTypeHandler);
 
-		final CHandlerTranslationResult result = performMainRun(translationSettings, prerunCHandler, reporter,
-				locationFactory, witnessInvariants, backtranslatorMapping, nodes, prerunTypeHandler, mst, typeSizes);
-		mLogger.info("Completed translation");
+			final CHandler prerunCHandler = new CHandler(mServices, mLogger, backtranslatorMapping, translationSettings,
+					flatSymbolTable, functionTable, prerunExpressionTranslation, locationFactory, typeSizes,
+					reachableDeclarations, prerunTypeHandler, reporter, nameHandler, prerunStaticObjectsHandler,
+					preRunnerResult.getFunctionToIndex(), preRunnerResult.getVariablesOnHeap());
 
-		return result.getNode();
+			final PRDispatcher prerunDispatcher = new PRDispatcher(prerunCHandler, locationFactory, prerunTypeHandler);
+			prerunDispatcher.dispatch(nodes);
+
+			if (prerunCHandler.restartTranslationWithDifferentSettings()) {
+				final SettingsChange settingsChange = prerunCHandler.getSettingsChangeForTranslationRestart();
+				translationSettings = settingsChange.applyChangeTo(translationSettings);
+				mLogger.info("Restarting translation with changed settings: " + settingsChange);
+				continue;
+			}
+			mLogger.info("Completed pre-run");
+
+			final CHandlerTranslationResult result = performMainRun(translationSettings, prerunCHandler, reporter,
+					locationFactory, witnessInvariants, backtranslatorMapping, nodes, prerunTypeHandler, mst, typeSizes);
+			mLogger.info("Completed translation");
+
+			return result.getNode();
+		}
 	}
 
 	private CHandlerTranslationResult performMainRun(final TranslationSettings translationSettings,

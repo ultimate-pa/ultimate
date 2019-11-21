@@ -809,9 +809,9 @@ public class PostProcessor {
 				final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 				final Expression literalThatRepresentsFalse = mMemoryHandler.getBooleanArrayHelper().constructFalse();
-				final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(
-						translationUnitLoc, zero, mMemoryHandler.getValidArrayLhs(translationUnitLoc),
-						literalThatRepresentsFalse);
+				final AssignmentStatement assignment =
+						MemoryHandler.constructOneDimensionalArrayUpdate(translationUnitLoc, zero,
+								mMemoryHandler.getValidArrayLhs(translationUnitLoc), literalThatRepresentsFalse);
 				initStatements.add(0, assignment);
 			}
 			{
@@ -821,11 +821,10 @@ public class PostProcessor {
 						mTypeHandler.getBoogiePointerType(), SFO.NULL, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 				initStatements.add(0,
 						StatementFactory.constructAssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
-								new Expression[] { ExpressionFactory.constructStructConstructor(
-										translationUnitLoc, new String[] { "base", "offset" }, new Expression[] {
-												mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-														mExpressionTranslation.getCTypeOfPointerComponents(),
-														BigInteger.ZERO),
+								new Expression[] { ExpressionFactory.constructStructConstructor(translationUnitLoc,
+										new String[] { "base", "offset" },
+										new Expression[] { mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
+												mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO),
 												mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
 														mExpressionTranslation.getCTypeOfPointerComponents(),
 														BigInteger.ZERO) }) }));
@@ -835,8 +834,8 @@ public class PostProcessor {
 				// pointer is on the heap.
 				final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-				final Expression zeroSmallerStackHeapBarrier = mExpressionTranslation
-						.constructBinaryComparisonIntegerExpression(translationUnitLoc,
+				final Expression zeroSmallerStackHeapBarrier =
+						mExpressionTranslation.constructBinaryComparisonIntegerExpression(translationUnitLoc,
 								IASTBinaryExpression.op_lessThan, zero,
 								mExpressionTranslation.getCTypeOfPointerComponents(),
 								mMemoryHandler.getStackHeapBarrier(translationUnitLoc),
@@ -861,15 +860,18 @@ public class PostProcessor {
 		}
 
 		mStaticObjectsHandler.freeze();
-		initStatements.addAll(mStaticObjectsHandler.getStatementsForUltimateInit());
-		initStatements.addAll(staticObjectInitStatements);
-		
 
 		// because we process declarations out of order in CHandler , we need to reorder them here
+		// we do this before we add the init statements from SOH and SO
 		final Comparator<? super BoogieASTNode> c =
 				(o1, o2) -> Integer.compare(o1.getLocation().getStartLine(), o2.getLocation().getStartLine());
 		initDecl.sort(c);
 		initStatements.sort(c);
+
+		final List<Statement> sohInitStatements = mStaticObjectsHandler.getStatementsForUltimateInit();
+		initStatements.addAll(sohInitStatements);
+		initStatements.addAll(staticObjectInitStatements);
+
 		/*
 		 * note that we only have to deal with the implementation part of the procedure, the declaration is managed by
 		 * the FunctionHandler

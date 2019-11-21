@@ -27,10 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
@@ -62,8 +62,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class StaticObjectsHandler {
 
-	private final Collection<Declaration> mGlobalDeclarations;
-	private final Collection<Statement> mStatementsForUltimateInit;
+	private final List<Declaration> mGlobalDeclarations;
+	private final List<Statement> mStatementsForUltimateInit;
 
 	private boolean mIsFrozen;
 	private final Map<VariableDeclaration, CDeclaration> mVariableDeclarationToAssociatedCDeclaration;
@@ -87,12 +87,12 @@ public class StaticObjectsHandler {
 	 * Returns all Boogie declarations that need to be added to the translated program in global scope
 	 *
 	 */
-	public Collection<Declaration> getGlobalDeclarations() {
+	public List<Declaration> getGlobalDeclarations() {
 		assert mIsFrozen;
 		return mGlobalDeclarations;
 	}
 
-	public Collection<Statement> getStatementsForUltimateInit() {
+	public List<Statement> getStatementsForUltimateInit() {
 		assert mIsFrozen;
 		return mStatementsForUltimateInit;
 	}
@@ -143,7 +143,7 @@ public class StaticObjectsHandler {
 		final TypeDeclaration oldBoogieDec = mIncompleteType2TypeDecl.remove(incompleteType);
 		if (oldBoogieDec == null) {
 			// already completed
-//			throw new AssertionError("can only complete incomplete types: " + incompleteType);
+			// throw new AssertionError("can only complete incomplete types: " + incompleteType);
 			return;
 		}
 		final CDeclaration oldCDec = mTypeDeclarationToCDeclaration.get(oldBoogieDec);
@@ -179,7 +179,7 @@ public class StaticObjectsHandler {
 		mGlobalDeclarations.add(varDec);
 	}
 
-	public void addStatementsForUltimateInit(final Collection<Statement> stmts) {
+	public void addStatementsForUltimateInit(final List<Statement> stmts) {
 		assert !mIsFrozen;
 		for (final Statement stmt : stmts) {
 			mStatementsForUltimateInit.add(stmt);

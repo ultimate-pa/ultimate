@@ -120,7 +120,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			}
 			preprocess(trace);
 			List<IPredicate> interpolants = automatonBuilder.getInterpolantsIfAccepted(trace);
-			if (interpolants != null) {
+			if (interpolants == null) {
 				final Pair<LBool, QualifiedTracePredicates> proof =
 						mProofProvider.getProof(trace, getPrecondition(), getPostcondition());
 				final LBool feasibility = proof.getFirst();

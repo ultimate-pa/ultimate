@@ -214,14 +214,15 @@ public class MemoryHandler {
 			}
 		}
 
-		private boolean allocRequirements(final RequiredMemoryModelFeatures rmmf, final TranslationSettings settings) {
+		private static boolean allocRequirements(final RequiredMemoryModelFeatures rmmf,
+				final TranslationSettings settings) {
 			boolean changedSomething = false;
 			changedSomething |= rmmf.requireMemoryModelInfrastructure();
 			changedSomething |= rmmf.require(MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER);
 			return changedSomething;
 		}
 
-		private boolean reallocRequirements(final RequiredMemoryModelFeatures rmmf,
+		private static boolean reallocRequirements(final RequiredMemoryModelFeatures rmmf,
 				final TranslationSettings settings) {
 			boolean changedSomething = false;
 			changedSomething |= rmmf.requireMemoryModelInfrastructure();
@@ -235,7 +236,8 @@ public class MemoryHandler {
 			return changedSomething;
 		}
 
-		private boolean strcpyRequirements(final RequiredMemoryModelFeatures rmmf, final TranslationSettings settings) {
+		private static boolean strcpyRequirements(final RequiredMemoryModelFeatures rmmf,
+				final TranslationSettings settings) {
 			boolean changedSomething = false;
 			rmmf.reportDataOnHeapRequired(CPrimitives.CHAR);
 			for (final CPrimitives prim : new HashSet<>(rmmf.mDataOnHeapRequired)) {
@@ -247,7 +249,7 @@ public class MemoryHandler {
 			return changedSomething;
 		}
 
-		private boolean meminitRequirements(final RequiredMemoryModelFeatures rmmf,
+		private static boolean meminitRequirements(final RequiredMemoryModelFeatures rmmf,
 				final TranslationSettings settings) {
 			boolean changedSomething = false;
 			if (settings.useConstantArrays()) {
@@ -266,7 +268,7 @@ public class MemoryHandler {
 			return changedSomething;
 		}
 
-		boolean memcpyOrMemmoveRequirements(final RequiredMemoryModelFeatures mmf) {
+		private static boolean memcpyOrMemmoveRequirements(final RequiredMemoryModelFeatures mmf) {
 			boolean changedSomething = false;
 			// TODO: using members instead of getters here to avoid "checkIsFrozen" calls -- not nice..
 			for (final CPrimitives prim : new HashSet<>(mmf.mDataOnHeapRequired)) {
@@ -695,8 +697,8 @@ public class MemoryHandler {
 				// assert (~addr!base < #StackHeapBarrier);
 				final Expression inHeapArea = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
 						IASTBinaryExpression.op_lessThan, getPointerBaseAddress(pointerToBeFreed.getValue(), loc),
-						mExpressionTranslation.getCTypeOfPointerComponents(),
-						getStackHeapBarrier(loc), mExpressionTranslation.getCTypeOfPointerComponents());
+						mExpressionTranslation.getCTypeOfPointerComponents(), getStackHeapBarrier(loc),
+						mExpressionTranslation.getCTypeOfPointerComponents());
 				final AssertStatement assertInHeapArea = new AssertStatement(loc, inHeapArea);
 				check.annotate(assertInHeapArea);
 				result.add(assertInHeapArea);
@@ -1396,11 +1398,11 @@ public class MemoryHandler {
 		final List<Statement> loopBody = new ArrayList<>();
 		{
 			final Expression currentSrc = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, srcId,
-					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()), new CPrimitive(CPrimitives.CHAR),
-					hook);
+					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
+					new CPrimitive(CPrimitives.CHAR), hook);
 			final Expression currentDest = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, destId,
-					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()), new CPrimitive(CPrimitives.CHAR),
-					hook);
+					new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
+					new CPrimitive(CPrimitives.CHAR), hook);
 
 			/*
 			 * do pointer validity checks for current pointers (src/dest + offset) (using #valid and #length)
@@ -1442,7 +1444,8 @@ public class MemoryHandler {
 
 			final Expression srcAcc;
 			{
-				final ExpressionResult srcAccExpRes = this.getReadCall(currentSrc, new CPrimitive(CPrimitives.CHAR), hook);
+				final ExpressionResult srcAccExpRes =
+						this.getReadCall(currentSrc, new CPrimitive(CPrimitives.CHAR), hook);
 				srcAcc = srcAccExpRes.getLrValue().getValue();
 				loopBody.addAll(srcAccExpRes.getStatements());
 				decl.addAll(srcAccExpRes.getDeclarations());
@@ -1454,18 +1457,20 @@ public class MemoryHandler {
 			 * offset: src!offset + #t~offset * 3 }];
 			 */
 			{
-				final List<Statement> writeCall = getWriteCall(ignoreLoc,
-						LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, new CPrimitive(CPrimitives.CHAR), null), srcAcc,
-						new CPrimitive(CPrimitives.CHAR), true, hook);
+				final List<Statement> writeCall = getWriteCall(
+						ignoreLoc, LRValueFactory.constructHeapLValue(mTypeHandler, currentDest,
+								new CPrimitive(CPrimitives.CHAR), null),
+						srcAcc, new CPrimitive(CPrimitives.CHAR), true, hook);
 				loopBody.addAll(writeCall);
 			}
 
 			/* if (#memory_int[currentSrc] == 0) { break; } */
 			{
-				final Expression zero =
-						mTypeSizes.constructLiteralForIntegerType(ignoreLoc, new CPrimitive(CPrimitives.CHAR), BigInteger.ZERO);
+				final Expression zero = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
+						new CPrimitive(CPrimitives.CHAR), BigInteger.ZERO);
 				final Expression exitCondition = mExpressionTranslation.constructBinaryComparisonExpression(ignoreLoc,
-						IASTBinaryExpression.op_equals, srcAcc, new CPrimitive(CPrimitives.CHAR), zero, new CPrimitive(CPrimitives.CHAR));
+						IASTBinaryExpression.op_equals, srcAcc, new CPrimitive(CPrimitives.CHAR), zero,
+						new CPrimitive(CPrimitives.CHAR));
 				final Statement exitIfNull = new IfStatement(ignoreLoc, exitCondition,
 						new Statement[] { new BreakStatement(ignoreLoc) }, new Statement[0]);
 				loopBody.add(exitIfNull);
@@ -2141,10 +2146,8 @@ public class MemoryHandler {
 		if (useSelectInsteadOfStore) {
 			return ensuresArrayHasValue(loc, valueModification.apply(valueExpr), ptrModification.apply(ptrExpr),
 					memArray);
-		} else {
-			return ensuresArrayUpdate(loc, valueModification.apply(valueExpr), ptrModification.apply(ptrExpr),
-					memArray);
 		}
+		return ensuresArrayUpdate(loc, valueModification.apply(valueExpr), ptrModification.apply(ptrExpr), memArray);
 	}
 
 	// #memory_$Pointer$ == old(#memory_X)[#ptr := #memory_X[#ptr]];
@@ -2470,12 +2473,11 @@ public class MemoryHandler {
 						ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE), nr0),
 				Collections.emptySet()));
 		if (memArea == MemoryArea.STACK) {
-			// #StackHeapBarrier < res!base 
+			// #StackHeapBarrier < res!base
 			specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
 					mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
-							IASTBinaryExpression.op_lessThan,
-							getStackHeapBarrier(tuLoc),
-							mExpressionTranslation.getCTypeOfPointerComponents(), 
+							IASTBinaryExpression.op_lessThan, getStackHeapBarrier(tuLoc),
+							mExpressionTranslation.getCTypeOfPointerComponents(),
 							ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE),
 							mExpressionTranslation.getCTypeOfPointerComponents()),
 					Collections.emptySet()));
@@ -2898,8 +2900,8 @@ public class MemoryHandler {
 		return result;
 	}
 
-	private Statement getInitializationForHeapArrayAtAddress(final ILocation loc, final HeapDataArray relevantHeapArray,
-			final HeapLValue baseAddress) {
+	private static Statement getInitializationForHeapArrayAtAddress(final ILocation loc,
+			final HeapDataArray relevantHeapArray, final HeapLValue baseAddress) {
 		return StatementFactory.constructAssignmentStatement(loc,
 				new VariableLHS[] { relevantHeapArray.getVariableLHS() },
 				new Expression[] { ExpressionFactory.constructFunctionApplication(loc,
@@ -2909,7 +2911,7 @@ public class MemoryHandler {
 						(BoogieType) relevantHeapArray.getIdentifierExpression().getType()) });
 	}
 
-	private String getNameOfHeapInitFunction(final HeapDataArray relevantHeapArray) {
+	private static String getNameOfHeapInitFunction(final HeapDataArray relevantHeapArray) {
 		return SFO.AUXILIARY_FUNCTION_PREFIX + SFO.INIT_TO_ZERO_AT_ADDRESS + relevantHeapArray.getName();
 	}
 

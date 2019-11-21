@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -28,6 +31,7 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final IPredicateUnifier mPredicateUnifier;
+	private final Set<List<IPredicate>> mCachedPredicates;
 
 	public McrInterpolantAutomatonBuilder(final AutomataLibraryServices services, final VpAlphabet<LETTER> vpAlphabet,
 			final IEmptyStackStateFactory<IPredicate> emptyStateFactory, final IProofProvider<LETTER> proofProvider,
@@ -39,6 +43,7 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		mResult = new NestedWordAutomaton<>(services, vpAlphabet, emptyStateFactory);
 		mResult.addState(true, false, precondition);
 		mResult.addState(false, true, postcondition);
+		mCachedPredicates = new HashSet<>();
 	}
 
 	public NestedWordAutomaton<LETTER, IPredicate> getResult() {
@@ -169,18 +174,11 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final IPredicate newCondition = stateMap.get(states.get(i));
 			if (newCondition != null) {
 				if (newTraceFound) {
-					final Pair<LBool, QualifiedTracePredicates> result =
-							mProofProvider.getProof(trace.subList(start, i), precondition, newCondition);
-					if (result.getFirst() == LBool.UNSAT) {
-						final List<IPredicate> predicates = result.getSecond().getPredicates();
-						for (int j = 0; j < predicates.size(); j++) {
-							stateMap.put(states.get(start + j + 1),
-									mPredicateUnifier.getOrConstructPredicate(predicates.get(j)));
-						}
-					} else {
-						// We found a feasible trace, somehow remove it from the automaton
-						// TODO: For now just throw an exception
-						throw new IllegalStateException("We found a feasible trace in the automaton.");
+					final List<IPredicate> predicates =
+							getInterpolants(trace.subList(start, i), precondition, newCondition);
+					for (int j = 0; j < predicates.size(); j++) {
+						stateMap.put(states.get(start + j + 1),
+								mPredicateUnifier.getOrConstructPredicate(predicates.get(j)));
 					}
 					start = i;
 					precondition = newCondition;
@@ -193,6 +191,27 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				newTraceFound = true;
 			}
 		}
+
+	}
+
+	private List<IPredicate> getInterpolants(final List<LETTER> trace, final IPredicate precondition,
+			final IPredicate postcondition) {
+		for (final List<IPredicate> predicates : mCachedPredicates) {
+			// TODO: Check for matching predicates (using HoareTripleChecker?)
+			if (false) {
+				return predicates;
+			}
+		}
+		final Pair<LBool, QualifiedTracePredicates> result =
+				mProofProvider.getProof(trace, precondition, postcondition);
+		if (result.getFirst() != LBool.UNSAT) {
+			// We found a feasible trace, somehow remove it from the automaton
+			// TODO: For now just throw an exception
+			throw new IllegalStateException("We found a feasible trace in the automaton.");
+		}
+		final List<IPredicate> predicates = result.getSecond().getPredicates();
+		mCachedPredicates.add(predicates);
+		return predicates;
 	}
 
 	@Override

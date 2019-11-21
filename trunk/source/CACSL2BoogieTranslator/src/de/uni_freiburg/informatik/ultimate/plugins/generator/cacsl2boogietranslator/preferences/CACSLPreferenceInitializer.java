@@ -119,6 +119,12 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"Use SMT constant arrays for default initialization of variables.";
 	public static final String LABEL_USE_STORE_CHAINS = "Use store chains";
 
+	public static final String LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS = "Adapt memory model on pointer casts if necessary";
+	public static final String DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS = "When a pointer to a value with a small type "
+			+ "(e.g. char) is cast to a larger pointer type (e.g. int*), and the memory model resolution is larger than "
+			+ "the values's pointed to type size (for char: 1 Byte), the memory model is unsound. When this setting is "
+			+ "on we attempt to detect this case, and automatically set the memory model to a higher resolution.";
+
 	public enum PointerCheckMode {
 		IGNORE, ASSUME, ASSERTandASSUME
 	}
@@ -140,7 +146,52 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 
 		HoenickeLindenmann_4ByteResolution,
 
-		HoenickeLindenmann_8ByteResolution,
+		HoenickeLindenmann_8ByteResolution;
+
+		public int getByteSize() {
+			switch (this) {
+				case HoenickeLindenmann_1ByteResolution:
+					return 1;
+				case HoenickeLindenmann_2ByteResolution:
+					return 2;
+				case HoenickeLindenmann_4ByteResolution:
+					return 4;
+				case HoenickeLindenmann_8ByteResolution:
+					return 8;
+				case HoenickeLindenmann_Original:
+					throw new AssertionError("HoenickeLindenmann_Original has no associated byte size");
+				default:
+					throw new AssertionError("missing case/MemoryModel?");
+			}
+		}
+
+		public boolean isBitVectorMemoryModel() {
+			switch (this) {
+				case HoenickeLindenmann_1ByteResolution:
+				case HoenickeLindenmann_2ByteResolution:
+				case HoenickeLindenmann_4ByteResolution:
+				case HoenickeLindenmann_8ByteResolution:
+					return true;
+				case HoenickeLindenmann_Original:
+					return false;
+				default:
+					throw new AssertionError("missing case/MemoryModel?");
+			}
+		}
+
+		public static MemoryModel getPreciseEnoughMemoryModelFor(final int byteSize) {
+			if (byteSize >= 8) {
+				return HoenickeLindenmann_8ByteResolution;
+			} else if (byteSize >= 4) {
+				return HoenickeLindenmann_4ByteResolution;
+			} else if (byteSize >= 2) {
+				return HoenickeLindenmann_2ByteResolution;
+			} else if (byteSize >= 1) {
+				return HoenickeLindenmann_1ByteResolution;
+			} else {
+				throw new IllegalArgumentException("byte size smaller than 1 makes no sense");
+			}
+		}
 	}
 
 	public enum PointerIntegerConversion {
@@ -254,7 +305,12 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_USE_CONSTANT_ARRAYS, false, DESC_USE_CONSTANT_ARRAYS,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_USE_STORE_CHAINS, false, "Only for benchmarking -- do not use",
-						PreferenceType.Boolean), };
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS,
+						false,
+						DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS,
+						PreferenceType.Boolean)
+				};
 
 	}
 }
