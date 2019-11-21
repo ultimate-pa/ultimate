@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -112,21 +113,40 @@ public class IcfgPetrifier {
 		((BasicIcfg<IcfgLocation>) mPetrifiedIcfg).setCfgSmtToolkit(cfgSmtToolkit);
 		final HashRelation<String, String> copyDirectives = ProcedureMultiplier
 				.generateCopyDirectives(getAllInstances(threadInstanceMap));
+		// Note that threadInstanceMap, newForkCurrentThreads, and
+		// newJoinCurrentThreads are modified because the
+		// ProcedureMultiplier might introduce new
+		// IcfgForkThreadCurrentTransitions, namely in the case where
+		// a forked transition contains a fork.
 		new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) mPetrifiedIcfg, copyDirectives, backtranslator,
 				threadInstanceMap, newForkCurrentThreads, newJoinCurrentThreads);
 		if (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY) {
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> inUseErroLocationMap =
+					constructInUseErrorLocations(threadInstanceMap.keySet());
 			ThreadInstanceAdder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) mPetrifiedIcfg,
 					getAllInstances(threadInstanceMap));
 		}
-
 		final boolean addThreadInUseViolationEdges = (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY);
-		adder.connectThreadInstances(mPetrifiedIcfg, newForkCurrentThreads, newJoinCurrentThreads,
-				threadInstanceMap, backtranslator, addThreadInUseViolationEdges);
+		adder.connectThreadInstances(mPetrifiedIcfg, newForkCurrentThreads, newJoinCurrentThreads, threadInstanceMap,
+				backtranslator, addThreadInUseViolationEdges);
 
 		final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(getAllInstances(threadInstanceMap),
 				addThreadInUseViolationEdges);
 		backtranslator.setVariableBlacklist(auxiliaryThreadVariables);
 		mBacktranslator = backtranslator;
+	}
+
+
+	private Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> constructInUseErrorLocations(
+			final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> keySet) {
+		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> result = new HashMap<>();
+		int errorLocationId = 0;
+		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : keySet) {
+			final IcfgLocation errLoc = ThreadInstanceAdder.constructErrorLocation(errorLocationId, fork);
+			result.put(fork, errLoc);
+			errorLocationId++;
+		}
+		return result;
 	}
 
 

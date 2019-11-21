@@ -347,7 +347,11 @@ public class ThreadInstanceAdder {
 	 *
 	 * @param mgdScript
 	 * @return A {@link TransFormula} that represents the assume statement {@code var == true}.
+	 * @deprecated ThreadInUse violations are currently handled via a monitor
+	 *             (i.e., certain places of the petri net). Yet unclear if we
+	 *             re-introduce the threadInUse variables in the future.
 	 */
+	@Deprecated
 	private static UnmodifiableTransFormula constructThreadInUseViolationAssumption(
 			final IProgramNonOldVar threadInUseVar, final ManagedScript mgdScript) {
 		final Map<IProgramVar, TermVariable> inVars =
@@ -364,8 +368,13 @@ public class ThreadInstanceAdder {
 	 * TODO Concurrent Boogie:
 	 *
 	 * @param mgdScript
-	 * @return A {@link TransFormula} that represents the assignment statement {@code var := false}.
+	 * @return A {@link TransFormula} that represents the assignment statement
+	 *         {@code var := false}.
+	 * @deprecated ThreadInUse violations are currently handled via a monitor
+	 *             (i.e., certain places of the petri net). Yet unclear if we
+	 *             re-introduce the threadInUse variables in the future.
 	 */
+	@Deprecated
 	private static UnmodifiableTransFormula constructThreadNotInUseAssingment(final IProgramNonOldVar threadInUseVar,
 			final ManagedScript mgdScript) {
 		final Map<IProgramVar, TermVariable> outVars =
@@ -396,14 +405,7 @@ public class ThreadInstanceAdder {
 				final String threadInstanceId = generateThreadInstanceId(i, procedureName, j, threadInstanceMax);
 				final IcfgLocation errorLocation;
 				if (addThreadInUseViolationVariablesAndErrorLocation) {
-					final DebugIdentifier debugIdentifier = new ProcedureErrorDebugIdentifier(
-							fork.getPrecedingProcedure(), i, ProcedureErrorType.INUSE_VIOLATION);
-					errorLocation = new IcfgLocation(debugIdentifier, fork.getPrecedingProcedure());
-					ModelUtils.copyAnnotations(fork, errorLocation);
-					// 2018-09-28 Matthias: Questionable if this is an assert. Maybe we should
-					// introduce an InUseViolation.
-					final Check check = new Check(Spec.ASSERT);
-					check.annotate(errorLocation);
+					errorLocation = constructErrorLocation(i, fork);
 				} else {
 					errorLocation = null;
 				}
@@ -415,6 +417,20 @@ public class ThreadInstanceAdder {
 			i++;
 		}
 		return result;
+	}
+
+	static IcfgLocation constructErrorLocation(final int i,
+			final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork) {
+		final IcfgLocation errorLocation;
+		final DebugIdentifier debugIdentifier = new ProcedureErrorDebugIdentifier(
+				fork.getPrecedingProcedure(), i, ProcedureErrorType.INUSE_VIOLATION);
+		errorLocation = new IcfgLocation(debugIdentifier, fork.getPrecedingProcedure());
+		ModelUtils.copyAnnotations(fork, errorLocation);
+		// 2018-09-28 Matthias: Questionable if this is an assert. Maybe we should
+		// introduce an InUseViolation.
+		final Check check = new Check(Spec.ASSERT);
+		check.annotate(errorLocation);
+		return errorLocation;
 	}
 
 	private static ThreadInstance constructThreadInstance(
