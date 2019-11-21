@@ -21,7 +21,6 @@ def parse_args():
     argparser.add_argument('-o', '--output', type=str, nargs=1, metavar='<file>', 
             help='Write the unsound paths to a number of files with this prefix')
 
-
     args = argparser.parse_args()
 
     return args
@@ -52,7 +51,8 @@ def run_subprocess(command, error_msg, die=True):
 
 def download_xml(folder, url):
     url = url.rstrip()
-    run_subprocess(['wget', '-t', '3', '-q', '--directory-prefix', folder, url], "Error downloading {}".format(url), True)
+    if url:
+        run_subprocess(['wget', '-t', '3', '-q', '--directory-prefix', folder, url], "Error downloading {}".format(url), True)
 
 def extract_xml(file):
     run_subprocess(['bzip2', '-d', file], "Error extracting {} with bzip2".format(file),False)
