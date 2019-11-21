@@ -527,11 +527,58 @@ public final class MSODSolver {
 	}
 
 	/**
+	 *
+	 */
+	public int indexToNumber(final int index) {
+		if (mFormulaOperations instanceof MSODFormulaOperationsNat) {
+			return index;
+		}
+
+		if (mFormulaOperations instanceof MSODFormulaOperationsInt) {
+			return index % 2 == 0 ? (index + 1) / 2 : -(index + 1) / 2;
+		}
+
+		throw new IllegalArgumentException("Unsupported formula operations.");
+	}
+
+	public void getResult(final ILogger logger, final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
+
+		final NestedLassoWord<MSODAlphabetSymbol> word = getWord(services, automaton);
+
+		if (word == null) {
+			return;
+		}
+
+		final Map<Term, List<Integer>> stem = new HashMap<>();
+		for (int i = 0; i < word.getStem().length(); i++) {
+			final MSODAlphabetSymbol symbol = word.getStem().getSymbol(i);
+			final int value = indexToNumber(i);
+
+			for (final Entry<Term, Boolean> entry : symbol.getMap().entrySet()) {
+				if (!entry.getValue()) {
+					continue;
+				}
+
+				List<Integer> values = stem.get(entry.getKey());
+				if (values == null) {
+					values = new ArrayList<>();
+					stem.put(entry.getKey(), values);
+				}
+				values.add(value);
+			}
+		}
+
+		stem.entrySet().forEach(e -> logger.info(e.getKey() + " " + e.getValue()));
+	}
+
+	/**
 	 * Returns a {@link NestedWord} accepted by the given automaton, or null if language of automaton is empty.
 	 *
 	 * @throws AutomataLibraryException
 	 *             if {@link IsEmpty} fails
 	 */
+	@Deprecated
 	public static NestedWord<MSODAlphabetSymbol> getWordWeak(final Script script,
 			final AutomataLibraryServices services, final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
 			throws AutomataLibraryException {
@@ -554,6 +601,7 @@ public final class MSODSolver {
 	 * @throws AutomataLibraryException
 	 *             if {@link BuchiIsEmpty} fails
 	 */
+	@Deprecated
 	public static NestedLassoWord<MSODAlphabetSymbol> getWordBuchi(final Script script,
 			final AutomataLibraryServices services, final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
 			throws AutomataLibraryException {
@@ -815,7 +863,7 @@ public final class MSODSolver {
 	 *
 	 * @throws AutomataLibraryException
 	 */
-	public Map<Term, Term> getResult(final Script script, final AutomataLibraryServices services,
+	public Map<Term, Term> getResultOld(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 		if (mAutomataOperations instanceof MSODAutomataOperationsWeak) {
 			return getResultWeak(script, services, automaton);
