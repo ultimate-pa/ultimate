@@ -280,8 +280,8 @@ public class InitializationHandler {
 				LRValueFactory.constructHeapLValue(mTypeHandler, auxVarRValue.getValue(), auxVarType, null);
 
 		final InitializerInfo initInfo = constructInitInfoFromCStringLiteral(loc, stringLiteral, auxVarType, hook);
-		return initCArray(loc, hlv, auxVarType, initInfo, true,
-				useConstantArrayForOnHeapDefaultInit(auxVarType, initInfo, hook), true, hook);
+		final boolean usingOnHeapInitViaConstArray = useConstantArrayForOnHeapDefaultInit(auxVarType, initInfo, hook);
+		return initCArray(loc, hlv, auxVarType, initInfo, true, usingOnHeapInitViaConstArray, true, hook);
 	}
 
 	/**
@@ -1236,8 +1236,8 @@ public class InitializationHandler {
 			final InitializerResult first, final IASTNode hook) {
 
 		final ExpressionResult er = first.getRootExpressionResult();
-		final ExpressionResult expressionResultSwitched = mExprResultTransformer
-				.makeRepresentationReadyForConversionAndRexBoolToInt(er, loc, targetCType, hook);
+		final ExpressionResult expressionResultSwitched =
+				mExprResultTransformer.makeRepresentationReadyForConversionAndRexBoolToInt(er, loc, targetCType, hook);
 
 		// TODO: 2018-09-05 Matthias: The following workaround may now be not required any more.
 		// 2017-11-19 Matthias: introduced workaround to omit conversion

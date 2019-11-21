@@ -527,8 +527,8 @@ public class CHandler {
 		return mExprResultTransformer;
 	}
 
-	private void signalTranslationRestartWithDifferentSettings(
-			final TranslationSettings.SettingsChange settingsChange) {
+	private void
+			signalTranslationRestartWithDifferentSettings(final TranslationSettings.SettingsChange settingsChange) {
 		assert mIsPrerun : "currently only checking the restart flag after the prerunner -- might change it perhaps "
 				+ "(in MainTranslator).";
 
@@ -921,8 +921,7 @@ public class CHandler {
 		expr = mExprResultTransformer.makeRepresentationReadyForConversion(expr, loc, newCType, node);
 		checkUnsupportedPointerCast(expr, loc, newCType);
 
-		if (mSettings.isAdaptMemoryModelResolutionOnPointerCasts()
-				&& mIsPrerun
+		if (mSettings.isAdaptMemoryModelResolutionOnPointerCasts() && mIsPrerun
 				&& mSettings.getMemoryModelPreference().isBitVectorMemoryModel()) {
 			final CType exprType = expr.getLrValue().getCType().getUnderlyingType();
 			if ((exprType instanceof CArray || exprType instanceof CPointer)
@@ -959,7 +958,7 @@ public class CHandler {
 
 				if (castTargetByteSize.compareTo(operandTypeByteSize) > 0
 						&& BigInteger.valueOf(mSettings.getMemoryModelPreference().getByteSize())
-						.compareTo(operandTypeByteSize) > 0) {
+								.compareTo(operandTypeByteSize) > 0) {
 					// memory model resolution is strictly bigger than the operand's type's, and the operand is cast to
 					// a bigger type --> signal a restart of the translation with a memory model precise enough for the
 					// operands
@@ -969,9 +968,8 @@ public class CHandler {
 					mLogger.info(" at location: " + loc);
 					mLogger.info(" current memory model: " + mSettings.getMemoryModelPreference());
 
-					signalTranslationRestartWithDifferentSettings(
-							new TranslationSettings.SettingsChange(
-									MemoryModel.getPreciseEnoughMemoryModelFor(operandTypeByteSize.intValueExact())));
+					signalTranslationRestartWithDifferentSettings(new TranslationSettings.SettingsChange(
+							MemoryModel.getPreciseEnoughMemoryModelFor(operandTypeByteSize.intValueExact())));
 				}
 			}
 		}
@@ -1673,7 +1671,7 @@ public class CHandler {
 			final LocalLValue llv = new LocalLValue(aux.getLhs(), cType, null);
 			if (mProcedureManager.isGlobalScope()) {
 				final CallStatement malloc = mMemoryHandler.getUltimateMemAllocCall(llv, loc, node, MemoryArea.STACK);
-				mStaticObjectsHandler.addStatementsForUltimateInit(Collections.singleton(malloc));
+				mStaticObjectsHandler.addStatementsForUltimateInit(Collections.singletonList(malloc));
 
 			} else {
 				final LocalLValueILocationPair llvp = new LocalLValueILocationPair(llv, loc);
