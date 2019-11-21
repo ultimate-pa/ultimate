@@ -33,9 +33,11 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -535,10 +537,43 @@ public final class MSODSolver {
 		}
 
 		if (mFormulaOperations instanceof MSODFormulaOperationsInt) {
-			return index % 2 == 0 ? (index + 1) / 2 : -(index + 1) / 2;
+			return (index % 2 == 0 ? 1 : -1) * (index + 1) / 2;
 		}
 
 		throw new IllegalArgumentException("Unsupported formula operations.");
+	}
+
+	/**
+	 *
+	 */
+	public Map<Term, Deque<Integer>> wordToNumbers(final NestedWord<MSODAlphabetSymbol> word, final int offset) {
+		final Map<Term, Deque<Integer>> result = new HashMap<>();
+
+		for (int i = 0; i < word.length(); i++) {
+			final MSODAlphabetSymbol symbol = word.getSymbol(i);
+			final int value = indexToNumber(i + offset);
+
+			for (final Entry<Term, Boolean> entry : symbol.getMap().entrySet()) {
+				if (!entry.getValue()) {
+					continue;
+				}
+
+				Deque<Integer> values = result.get(entry.getKey());
+				if (values == null) {
+					values = new LinkedList<>();
+					result.put(entry.getKey(), values);
+				}
+
+				if (value < 0) {
+					values.addFirst(value);
+					continue;
+				}
+
+				values.addLast(value);
+			}
+		}
+
+		return result;
 	}
 
 	public void getResult(final ILogger logger, final AutomataLibraryServices services,
@@ -550,26 +585,13 @@ public final class MSODSolver {
 			return;
 		}
 
-		final Map<Term, List<Integer>> stem = new HashMap<>();
-		for (int i = 0; i < word.getStem().length(); i++) {
-			final MSODAlphabetSymbol symbol = word.getStem().getSymbol(i);
-			final int value = indexToNumber(i);
+		logger.info(word);
 
-			for (final Entry<Term, Boolean> entry : symbol.getMap().entrySet()) {
-				if (!entry.getValue()) {
-					continue;
-				}
-
-				List<Integer> values = stem.get(entry.getKey());
-				if (values == null) {
-					values = new ArrayList<>();
-					stem.put(entry.getKey(), values);
-				}
-				values.add(value);
-			}
-		}
-
+		final Map<Term, Deque<Integer>> stem = wordToNumbers(word.getStem(), 0);
 		stem.entrySet().forEach(e -> logger.info(e.getKey() + " " + e.getValue()));
+
+		final Map<Term, Deque<Integer>> loop = wordToNumbers(word.getLoop(), word.getStem().length());
+		loop.entrySet().forEach(e -> logger.info(e.getKey() + " " + e.getValue()));
 	}
 
 	/**
