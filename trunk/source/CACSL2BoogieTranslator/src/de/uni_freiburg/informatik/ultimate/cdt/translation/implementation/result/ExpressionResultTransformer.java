@@ -1079,7 +1079,8 @@ public class ExpressionResultTransformer {
 	public ExpressionResult constructBitvecResultIfNecessary(final LRValue rvalue, final ILocation loc, final List<ExpressionResult> args, FloatFunction function) {
 		final String functionName = function.getFunctionName();
 		// TODO: remove hardcoded comparison.
-		if ("signbit".equals(functionName) || "copysign".equals(functionName) || "fmod".equals(functionName)) {
+		if ("signbit".equals(functionName) || "copysign".equals(functionName) || "fmod".equals(functionName) 
+				|| !rvalue.getCType().isFloatingType()) {
 			return new ExpressionResultBuilder().addAllExceptLrValue(args).setLrValue(rvalue).build();
 		} else {
 			return this.constructBitvecResult(rvalue, loc);
