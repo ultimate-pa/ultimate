@@ -108,15 +108,12 @@ public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceR
 	/**
 	 * Merges cached independencies for two letters into a combined letter. If both
 	 * are independent from some third letter c, the combined letter will be
-	 * independent from c as well. The independencies for the two original letters
-	 * will be removed from the cache.
+	 * independent from c as well.
 	 *
 	 * This method can be used to transfer knowledge about letters to a (sequential
 	 * or choice) composition of these letters. The caller must ensure soundness, it
 	 * is not checked against the underlying relation (as this would defeat the
 	 * purpose).
-	 *
-	 * Known dependencies are not transferred, but simply removed from the cache.
 	 *
 	 * @param a
 	 *            The first letter
@@ -141,18 +138,19 @@ public class CachedIndependenceRelation<STATE, LETTER> implements IIndependenceR
 					relation.addPair(c, ab);
 				}
 			}
-			relation.removeDomainElement(a);
-			relation.removeDomainElement(b);
-			relation.removeRangeElement(a);
-			relation.removeRangeElement(b);
 		}
+	}
 
+	public void removeFromCache(LETTER a) {
+		for (final STATE state : mPositiveCache.keySet()) {
+			final HashRelation<LETTER, LETTER> relation = mPositiveCache.get(state);
+			relation.removeDomainElement(a);
+			relation.removeRangeElement(a);
+		}
 		for (final STATE state : mNegativeCache.keySet()) {
 			final HashRelation<LETTER, LETTER> relation = mNegativeCache.get(state);
 			relation.removeDomainElement(a);
-			relation.removeDomainElement(b);
 			relation.removeRangeElement(a);
-			relation.removeRangeElement(b);
 		}
 	}
 }

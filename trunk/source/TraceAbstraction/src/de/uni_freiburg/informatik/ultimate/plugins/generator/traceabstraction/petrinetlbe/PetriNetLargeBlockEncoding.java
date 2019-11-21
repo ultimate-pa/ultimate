@@ -84,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PetriNetLbe;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -195,11 +194,13 @@ public class PetriNetLargeBlockEncoding {
 			do {
 				numberOfFixpointIterations++;
 				resultLastIteration = resultCurrentIteration;
-				resultCurrentIteration = sequenceRule(services, resultLastIteration);
-				resultCurrentIteration = choiceRule(services, resultCurrentIteration);
 
-				//checkInvariant(resultCurrentIteration);
-			} while (resultLastIteration.getTransitions().size() != resultCurrentIteration.getTransitions().size() && numberOfFixpointIterations < MAX_ITERATIONS);
+				resultCurrentIteration = sequenceRule(services, resultLastIteration);
+				//checkInvariant(resultCurrentIteration); // NOTE: does not handle choice compositions correctly
+
+				resultCurrentIteration = choiceRule(services, resultCurrentIteration);
+			} while (resultLastIteration.getTransitions().size() != resultCurrentIteration.getTransitions().size()
+					&& numberOfFixpointIterations < MAX_ITERATIONS);
 
 			mPetriNetLargeBlockEncodingStatistics.setNumberOfFixpointIterations(numberOfFixpointIterations);
 			mLogger.info("Checked pairs total: " + mMoverChecks);
@@ -256,9 +257,19 @@ public class PetriNetLargeBlockEncoding {
 		}
 	}
 
+	private void removeMoverProperties(final IIcfgTransition<?> transition) {
+		if (mCachedVariableBasedIr != null) {
+			mCachedVariableBasedIr.removeFromCache(transition);
+		}
+		if (mCachedSemanticBasedIr != null) {
+			mCachedSemanticBasedIr.removeFromCache(transition);
+		}
+	}
+
 	/**
-	 * Performs the choice rule on a Petri Net. NOTE: This rule is not used yet because the backtranslation does not
-	 * work.
+	 * Performs the choice rule on a Petri Net.
+	 *
+	 * NOTE: Backtranslation for this rule is not yet fully implemented.
 	 *
 	 * @param services
 	 *            A {@link IUltimateServiceProvider} instance.
@@ -274,54 +285,57 @@ public class PetriNetLargeBlockEncoding {
 			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		final Collection<ITransition<IIcfgTransition<?>, IPredicate>> transitions = petriNet.getTransitions();
-		final List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> choiceStack =
-				new ArrayList<>();
+
+		final Set<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> pendingCompositions = new HashSet<>();
+		final Set<ITransition<IIcfgTransition<?>, IPredicate>> composedTransitions = new HashSet<>();
+
 		for (final ITransition<IIcfgTransition<?>, IPredicate> t1 : transitions) {
-			boolean composed = false;
 			for (final ITransition<IIcfgTransition<?>, IPredicate> t2 : transitions) {
 				if (t1.equals(t2)) {
 					continue;
 				}
+
 				// Check if Pre- and Postset are identical for t1 and t2.
 				if (petriNet.getPredecessors(t1).equals(petriNet.getPredecessors(t2))
 						&& petriNet.getSuccessors(t1).equals(petriNet.getSuccessors(t2)) && onlyInternal(t1.getSymbol())
 						&& onlyInternal(t2.getSymbol())) {
 
+					assert mCoEnabledRelation.getImage(t1.getSymbol()).equals(mCoEnabledRelation.getImage(t2.getSymbol()));
+
 					// Make sure transitions not involved in any pending compositions
-					if (choiceStack.stream().anyMatch(e -> e.getFirst() == t1 || e.getFirst() == t2
-							|| e.getSecond() == t2 || e.getSecond() == t2)) {
+					if (composedTransitions.contains(t1) || composedTransitions.contains(t2)) {
 						continue;
 					}
 
-					final List<IIcfgTransition<?>> cfgTransitionsToRemove = new ArrayList<>();
-					cfgTransitionsToRemove.add(t1.getSymbol());
-					cfgTransitionsToRemove.add(t2.getSymbol());
 					final IcfgEdge choiceIcfgEdge = constructParallelComposition(t1.getSymbol().getSource(),
-							t2.getSymbol().getTarget(), cfgTransitionsToRemove);
+							t2.getSymbol().getTarget(), Arrays.asList(t1.getSymbol(), t2.getSymbol()));
 
 					// Create new element of choiceStack.
-					final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element =
-							new Triple<>(choiceIcfgEdge, t1, t2);
-					choiceStack.add(element);
-					transferMoverProperties(choiceIcfgEdge, t1.getSymbol(), t2.getSymbol());
+					pendingCompositions.add(new Triple<>(choiceIcfgEdge, t1, t2));
+					composedTransitions.add(t1);
+					composedTransitions.add(t2);
 
 					mPetriNetLargeBlockEncodingStatistics
 							.reportComposition(PetriNetLargeBlockEncodingStatisticsDefinitions.ChoiceCompositions);
-
-					// Transfer co-enabled pairs for t1 to choiceIcfgEdge.
-					// Do not delete until loop is done, other compositions need this info.
-					mCoEnabledRelation.copyRelationships(t1.getSymbol(), choiceIcfgEdge);
-					mCoEnabledRelation.deleteElement(t2.getSymbol());
-
-					composed = true;
 				}
-			}
-			if (composed) {
-				mCoEnabledRelation.deleteElement(t1.getSymbol());
 			}
 		}
 		final BoundedPetriNet<IIcfgTransition<?>, IPredicate> newNet =
-				copyPetriNetWithModification(services, petriNet, choiceStack, null, null, null);
+				copyPetriNetWithModification(services, petriNet, pendingCompositions, composedTransitions);
+
+		// update information for composed transition
+		for (Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> composition : pendingCompositions) {
+			mCoEnabledRelation.copyRelationships(composition.getSecond().getSymbol(), composition.getFirst());
+			transferMoverProperties(composition.getFirst(), composition.getSecond().getSymbol(),
+					composition.getThird().getSymbol());
+		}
+
+		// delete obsolete information
+		for (ITransition<IIcfgTransition<?>, IPredicate> t : composedTransitions) {
+			mCoEnabledRelation.deleteElement(t.getSymbol());
+			removeMoverProperties(t.getSymbol());
+		}
+
 		return newNet;
 	}
 
@@ -374,109 +388,123 @@ public class PetriNetLargeBlockEncoding {
 	private BoundedPetriNet<IIcfgTransition<?>, IPredicate> sequenceRule(final IUltimateServiceProvider services,
 			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		// simplify Term resulting TransFormula because various other algorithms
-		// in Ultimate have to work with this term
-		final boolean simplify = true;
-		// try to eliminate auxiliary variables to avoid quantifier alterations
-		// subsequent SMT solver calls during verification
-		final boolean tryAuxVarElimination = true;
 		final Collection<ITransition<IIcfgTransition<?>, IPredicate>> transitions = petriNet.getTransitions();
-		final List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> sequentialCompositionStack =
-				new ArrayList<>();
-		final List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> sequentialCompositionStackYtoV =
-				new ArrayList<>();
-		final List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> sequentialCompositionStackYtoVReversed =
-				new ArrayList<>();
-		final HashRelation<ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> 
-		sequentialCompositionRelation = new HashRelation<>();
-		final Set<ITransition<IIcfgTransition<?>, IPredicate>> fullSequentialComposition = new HashSet<>();
+
+		final Set<ITransition<IIcfgTransition<?>, IPredicate>> obsoleteTransitions = new HashSet<>();
+		final Set<ITransition<IIcfgTransition<?>, IPredicate>> composedTransitions = new HashSet<>();
+		final Set<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> pendingCompositions = new HashSet<>();
+
 		for (final ITransition<IIcfgTransition<?>, IPredicate> t1 : transitions) {
+			if (composedTransitions.contains(t1)) {
+				continue;
+			}
+
 			final Set<IPredicate> t1PostSet = petriNet.getSuccessors(t1);
 			final Set<IPredicate> t1PreSet = petriNet.getPredecessors(t1);
-			if (t1PostSet.size() == 1) {
-				final IPredicate prePlace = t1PreSet.iterator().next();
-				final IPredicate postPlace = t1PostSet.iterator().next();
-				// Y to V check.
-				if (petriNet.getSuccessors(prePlace).size() == 1 && petriNet.getPredecessors(prePlace).size() > 1) {
-						for (ITransition<IIcfgTransition<?>, IPredicate> t2: petriNet.getPredecessors(prePlace)) {
-							if (sequenceRuleCheck(t2, t1, prePlace, sequentialCompositionStack, petriNet)) {
-								final IcfgEdge sequentialIcfgEdge = constructSequentialComposition(
-								t2.getSymbol().getSource(), t1.getSymbol().getTarget(), t2.getSymbol(),
-								t1.getSymbol(), simplify, tryAuxVarElimination);
-								// create new element of the sequentialCompositionStack.
-								final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element =
-										new Triple<>(sequentialIcfgEdge, t2, t1);
-								sequentialCompositionStack.add(element);
-								sequentialCompositionStackYtoV.add(element);
-								sequentialCompositionRelation.addPair(t1, t2);
-								mNoOfCompositions++;
-								if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
-									mPetriNetLargeBlockEncodingStatistics.reportComposition(
-											PetriNetLargeBlockEncodingStatisticsDefinitions.TrivialYvCompositions);
-								} else {
-									mPetriNetLargeBlockEncodingStatistics.reportComposition(
-											PetriNetLargeBlockEncodingStatisticsDefinitions.ConcurrentYvCompositions);
-								}
-								updateSequentialCompositions(sequentialIcfgEdge, t2.getSymbol(), t1.getSymbol());
-								transferMoverProperties(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
 
-								// Transfer co-enabled pairs for t2 to sequentialIcfgEdge.
-								mCoEnabledRelation.copyRelationships(t2.getSymbol(), sequentialIcfgEdge);
-								mCoEnabledRelation.deleteElement(t2.getSymbol());
-							}
-						}
-						if (sequentialCompositionRelation.getImage(t1).equals(petriNet.getPredecessors(prePlace))) {
-							fullSequentialComposition.add(t1);
-							if (!petriNet.getPredecessors(prePlace).isEmpty()) {
-								// only delete it if composition actually took place
-								mCoEnabledRelation.deleteElement(t1.getSymbol());
-							}
-						}
-				} else if (petriNet.getPredecessors(postPlace).size() == 1) {
+			if (t1PostSet.size() != 1) {
+				// TODO: this isn't relevant for Y-V, is it?
+				continue;
+			}
 
-						for (ITransition<IIcfgTransition<?>, IPredicate> t2: petriNet.getSuccessors(postPlace)) {
-							if (sequenceRuleCheck(t1, t2, postPlace, sequentialCompositionStack, petriNet)) {
-								final IcfgEdge sequentialIcfgEdge = constructSequentialComposition(
-									t1.getSymbol().getSource(), t2.getSymbol().getTarget(), t1.getSymbol(),
-									t2.getSymbol(), simplify, tryAuxVarElimination);
-								// create new element of the sequentialCompositionStack.
-								final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> element =
-									new Triple<>(sequentialIcfgEdge, t1, t2);
-							sequentialCompositionStack.add(element);
-							sequentialCompositionStackYtoVReversed.add(element);
-							sequentialCompositionRelation.addPair(t1, t2);
-							mNoOfCompositions++;
-							if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
-								mPetriNetLargeBlockEncodingStatistics.reportComposition(
-										PetriNetLargeBlockEncodingStatisticsDefinitions.TrivialSequentialCompositions);
-							} else {
-								mPetriNetLargeBlockEncodingStatistics.reportComposition(
-										PetriNetLargeBlockEncodingStatisticsDefinitions.ConcurrentSequentialCompositions);
-							}
-							updateSequentialCompositions(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
-							transferMoverProperties(sequentialIcfgEdge, t1.getSymbol(), t2.getSymbol());
+			final IPredicate prePlace = t1PreSet.iterator().next();
+			final IPredicate postPlace = t1PostSet.iterator().next();
 
-							// Transfer co-enabled pairs for t1 to sequentialIcfgEdge.
-							// Do not delete until loop is done, other compositions need this info.
-							mCoEnabledRelation.copyRelationships(t1.getSymbol(), sequentialIcfgEdge);
-							mCoEnabledRelation.deleteElement(t2.getSymbol());
+			// Y to V check
+			if (petriNet.getSuccessors(prePlace).size() == 1 && petriNet.getPredecessors(prePlace).size() > 1) {
+
+				boolean completeComposition = true;
+				boolean composed = false;
+
+				for (ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet.getPredecessors(prePlace)) {
+					final boolean canCompose = !composedTransitions.contains(t2)
+							&& sequenceRuleCheck(t2, t1, prePlace, petriNet);
+					completeComposition = completeComposition && canCompose;
+
+					if (canCompose) {
+						final IcfgEdge sequentialIcfgEdge = constructSequentialComposition(t2.getSymbol().getSource(),
+								t1.getSymbol().getTarget(), t2.getSymbol(), t1.getSymbol());
+
+						// create new element of the sequentialCompositionStack.
+						pendingCompositions.add(new Triple<>(sequentialIcfgEdge, t2, t1));
+						composedTransitions.add(t1);
+						composedTransitions.add(t2);
+						obsoleteTransitions.add(t2);
+						composed = true;
+
+						mNoOfCompositions++;
+						if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
+							mPetriNetLargeBlockEncodingStatistics.reportComposition(
+									PetriNetLargeBlockEncodingStatisticsDefinitions.TrivialYvCompositions);
+						} else {
+							mPetriNetLargeBlockEncodingStatistics.reportComposition(
+									PetriNetLargeBlockEncodingStatisticsDefinitions.ConcurrentYvCompositions);
 						}
-					}
-				if (sequentialCompositionRelation.getImage(t1).equals(petriNet.getSuccessors(postPlace))) {
-					fullSequentialComposition.add(t1);
-					if (!petriNet.getPredecessors(prePlace).isEmpty()) {
-						// only delete it if composition actually took place
-						mCoEnabledRelation.deleteElement(t1.getSymbol());
 					}
 				}
+				if (completeComposition && composed) {
+					obsoleteTransitions.add(t1);
+				}
+
+			} else if (petriNet.getPredecessors(postPlace).size() == 1) {
+
+				boolean completeComposition = true;
+				boolean composed = false;
+
+				for (ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet.getSuccessors(postPlace)) {
+					final boolean canCompose = !composedTransitions.contains(t2)
+							&& sequenceRuleCheck(t1, t2, postPlace, petriNet);
+					completeComposition = completeComposition && canCompose;
+
+					if (canCompose) {
+						final IcfgEdge sequentialIcfgEdge = constructSequentialComposition(t1.getSymbol().getSource(),
+								t2.getSymbol().getTarget(), t1.getSymbol(), t2.getSymbol());
+
+						// create new element of the sequentialCompositionStack.
+						pendingCompositions.add(new Triple<>(sequentialIcfgEdge, t1, t2));
+						composedTransitions.add(t1);
+						composedTransitions.add(t2);
+						obsoleteTransitions.add(t2);
+						composed = true;
+
+						mNoOfCompositions++;
+						if (mCoEnabledRelation.getImage(t1.getSymbol()).isEmpty()) {
+							mPetriNetLargeBlockEncodingStatistics.reportComposition(
+									PetriNetLargeBlockEncodingStatisticsDefinitions.TrivialSequentialCompositions);
+						} else {
+							mPetriNetLargeBlockEncodingStatistics.reportComposition(
+									PetriNetLargeBlockEncodingStatisticsDefinitions.ConcurrentSequentialCompositions);
+						}
+					}
+				}
+				if (completeComposition && composed) {
+					obsoleteTransitions.add(t1);
 				}
 			}
+
 		}
-		final BoundedPetriNet<IIcfgTransition<?>, IPredicate> newNet =
-				copyPetriNetWithModification(services, petriNet, sequentialCompositionStack, fullSequentialComposition,
-						sequentialCompositionStackYtoV, sequentialCompositionStackYtoVReversed);
+		final BoundedPetriNet<IIcfgTransition<?>, IPredicate> newNet = copyPetriNetWithModification(services, petriNet,
+				pendingCompositions, obsoleteTransitions);
+
+		// update information for composed transition
+		for (Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> composition : pendingCompositions) {
+			mCoEnabledRelation.copyRelationships(composition.getSecond().getSymbol(), composition.getFirst());
+			updateSequentialCompositions(composition.getFirst(), composition.getSecond().getSymbol(),
+					composition.getThird().getSymbol());
+			transferMoverProperties(composition.getFirst(), composition.getSecond().getSymbol(),
+					composition.getThird().getSymbol());
+		}
+
+		// delete obsolete information
+		for (ITransition<IIcfgTransition<?>, IPredicate> t : obsoleteTransitions) {
+			mCoEnabledRelation.deleteElement(t.getSymbol());
+			removeMoverProperties(t.getSymbol());
+			mSequentialCompositions.remove(t.getSymbol());
+		}
+
 		return newNet;
 	}
+
 	/**
 	 * Updates the mSequentialCompositions. This is needed for the backtranslation.
 	 *
@@ -633,31 +661,17 @@ public class PetriNetLargeBlockEncoding {
 	 *            The second transition that might be sequentially composed.
 	 * @param place
 	 *            The place connecting t1 and t2.
-	 * @param sequentialCompositionStack
-	 *            A stack containing Triples (a1, a2, a3), where a1 is the sequential composition of a2 and a3.
 	 * @param petriNet
 	 *            The Petri Net.
 	 * @return true iff the sequence rule can be performed.
 	 */
 	private boolean sequenceRuleCheck(final ITransition<IIcfgTransition<?>, IPredicate> t1,
 			final ITransition<IIcfgTransition<?>, IPredicate> t2, final IPredicate place,
-			final List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> sequentialCompositionStack,
 			final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet) {
-		if (petriNet.getPredecessors(t2).size() == 1 && !petriNet.getSuccessors(t2).contains(place)
-				&& onlyInternal(t1.getSymbol()) && onlyInternal(t2.getSymbol())) {
-			if (isRightMover(t1) || isLeftMover(t2)) {
-				for (final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> triple : sequentialCompositionStack) {
-					if (triple.getThird() == t1 || triple.getSecond() == t2) {
-						return false;
-					}
-				}
-			} else {
-				return false;
-			}
-		} else {
-			return false;
-		}
-		return true;
+
+		return onlyInternal(t1.getSymbol()) && onlyInternal(t2.getSymbol())
+				&& petriNet.getPredecessors(t2).size() == 1 && !petriNet.getSuccessors(t2).contains(place)
+				&& (isRightMover(t1) || isLeftMover(t2));
 	}
 
 	/**
@@ -667,8 +681,8 @@ public class PetriNetLargeBlockEncoding {
 	 *            A {@link IUltimateServiceProvider} instance.
 	 * @param petriNet
 	 *            The original Petri Net.
-	 * @param compositionStack
-	 *            A Stack that contains Triples (t1, t2, t3), where t1 is the new IcfgEdge consisting of the old
+	 * @param pendingCompositions
+	 *            A set that contains Triples (t1, t2, t3), where t1 is the new IcfgEdge consisting of the old
 	 *            ITransitions t2 and t3.
 	 * @return a new Petri Net with composed edges and without the edges that are not needed anymore.
 	 * @throws AutomataOperationCanceledException
@@ -678,12 +692,11 @@ public class PetriNetLargeBlockEncoding {
 	 */
 	private static BoundedPetriNet<IIcfgTransition<?>, IPredicate> copyPetriNetWithModification(
 			final IUltimateServiceProvider services, final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet,
-			final List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> compositionStack,
-			final Set<ITransition<IIcfgTransition<?>, IPredicate>> fullSequentialComposition,
-			final List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> compositionStackYtoV,
-			final List<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> compositionStackYtoVReversed)
+			final Set<Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>>> pendingCompositions,
+			final Set<ITransition<IIcfgTransition<?>, IPredicate>> obsoleteTransitions)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		for (final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> triplet : compositionStack) {
+
+		for (final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> triplet : pendingCompositions) {
 			petriNet.getAlphabet().add(triplet.getFirst());
 			petriNet.addTransition(triplet.getFirst(), petriNet.getPredecessors(triplet.getSecond()),
 					petriNet.getSuccessors(triplet.getThird()));
@@ -691,38 +704,11 @@ public class PetriNetLargeBlockEncoding {
 
 		final Set<ITransition<IIcfgTransition<?>, IPredicate>> transitionsToKeep =
 				new HashSet<>(petriNet.getTransitions());
+		transitionsToKeep.removeAll(obsoleteTransitions);
 
-		final Set<IIcfgTransition<?>> newAlphabet = new HashSet<>();
-		for (Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> triplet : compositionStack) {
-			transitionsToKeep.remove(triplet.getThird());
-			transitionsToKeep.remove(triplet.getSecond());
-		}
-		if (compositionStackYtoV != null) {
-		for (final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> triplet : compositionStackYtoV) {
-			newAlphabet.add(triplet.getFirst());
-			if (fullSequentialComposition != null && !fullSequentialComposition.contains(triplet.getThird())) {
-				transitionsToKeep.add(triplet.getThird());
-			}
-		}
-		}
-		if (compositionStackYtoVReversed != null) {
-		for (final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> triplet : compositionStackYtoVReversed) {
-			newAlphabet.add(triplet.getFirst());
-			// If partially composed:
-			if (fullSequentialComposition != null && !fullSequentialComposition.contains(triplet.getSecond())) {
-				transitionsToKeep.add(triplet.getSecond());
-			}
-		}
-		}
-		for (final ITransition<IIcfgTransition<?>, IPredicate> transition : transitionsToKeep) {
-			newAlphabet.add(transition.getSymbol());
-		}
 		// Create new net
-		final BoundedPetriNet<IIcfgTransition<?>, IPredicate> newNet =
-				CopySubnet.copy(new AutomataLibraryServices(services), petriNet, transitionsToKeep, newAlphabet);
-		return newNet;
+		return CopySubnet.copy(new AutomataLibraryServices(services), petriNet, transitionsToKeep);
 	}
-
 
 	public BoundedPetriNet<IIcfgTransition<?>, IPredicate> getResult() {
 		return mResult;
@@ -765,8 +751,14 @@ public class PetriNetLargeBlockEncoding {
 	}
 
 	public IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
-			final IIcfgTransition<?> first, final IIcfgTransition<?> second, final boolean simplify,
-			final boolean tryAuxVarElimination) {
+			final IIcfgTransition<?> first, final IIcfgTransition<?> second) {
+		// simplify Term resulting TransFormula because various other algorithms
+		// in Ultimate have to work with this term
+		final boolean simplify = true;
+		// try to eliminate auxiliary variables to avoid quantifier alterations
+		// subsequent SMT solver calls during verification
+		final boolean tryAuxVarElimination = true;
+
 		final List<IIcfgTransition<?>> codeblocks = Arrays.asList(new IIcfgTransition<?>[] { first, second });
 		return constructSequentialComposition(source, target, codeblocks, simplify, tryAuxVarElimination);
 	}
@@ -830,5 +822,4 @@ public class PetriNetLargeBlockEncoding {
 	public PetriNetLargeBlockEncodingBenchmarks getPetriNetLargeBlockEncodingStatistics() {
 		return new PetriNetLargeBlockEncodingBenchmarks(mPetriNetLargeBlockEncodingStatistics);
 	}
-
 }
