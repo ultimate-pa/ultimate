@@ -193,6 +193,9 @@ public class MainTranslator {
 
 			if (prerunCHandler.restartTranslationWithDifferentSettings()) {
 				final SettingsChange settingsChange = prerunCHandler.getSettingsChangeForTranslationRestart();
+				if (!translationSettings.isBitvectorTranslation()) {
+					throw settingsChange.constructException("Not using bitvector translation");
+				}
 				translationSettings = settingsChange.applyChangeTo(translationSettings);
 				mLogger.info("Restarting translation with changed settings: " + settingsChange);
 				continue;
