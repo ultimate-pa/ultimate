@@ -746,7 +746,7 @@ def main():
     # actually run Ultimate, first in integer mode
     result, result_msg, overapprox, ultimate_output, error_path = run_ultimate(ultimate_call, prop)
 
-    if overapprox:
+    if overapprox or result.startswith('ERROR'):
         try:
             settings_file = get_settings_path(True, settings_search_string)
         except _AbortButPrint:
