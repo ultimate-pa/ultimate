@@ -76,6 +76,9 @@ public class IntervalDomain implements IDomain {
 
 	@Override
 	public IPredicate join(final IPredicate lhs, final IPredicate rhs) {
+		// TODO benchmark and evaluate naive join compared to alpha-join
+		return mTools.or(lhs, rhs);
+		/*
 		// TODO using return mTools.or(lhs, rhs) is still an option.
 		//      Should we use it sometimes (for instance when inputs are not already cached as intervalDnfs)?
 		Collection<Map<TermVariable, Interval>> joinedIntervalDnf = new ArrayList<>();
@@ -85,6 +88,7 @@ public class IntervalDomain implements IDomain {
 			joinedIntervalDnf = Collections.singleton(joinToSingleConjunction(joinedIntervalDnf));
 		}
 		return toPredicate(joinedIntervalDnf);
+		*/
 	}
 
 	private Map<TermVariable, Interval> join(
@@ -123,7 +127,10 @@ public class IntervalDomain implements IDomain {
 
 	@Override
 	public IPredicate alpha(final IPredicate pred) {
-		final Collection<Map<TermVariable, Interval>> intervalDnf = toIntervals(pred);
+		Collection<Map<TermVariable, Interval>> intervalDnf = toIntervals(pred);
+		if (intervalDnf.size() > mMaxDisjuncts) {
+			intervalDnf = Collections.singleton(joinToSingleConjunction(intervalDnf));
+		}
 		return toPredicate(intervalDnf);
 	}
 

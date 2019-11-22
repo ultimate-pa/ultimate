@@ -57,7 +57,9 @@ public class ExplicitValueDomain implements IDomain {
 
 	@Override
 	public IPredicate join(final IPredicate first, final IPredicate second) {
-		return joinAccordingToMax(mTools.or(first, second));
+		// TODO benchmark and evaluate naive join compared to alpha-join
+		// return joinAccordingToMax(mTools.or(first, second));
+		return mTools.or(first, second);
 	}
 
 	@Override
