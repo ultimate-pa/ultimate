@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -108,8 +109,9 @@ public class IcfgPetrifier {
 		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap = adder
 				.constructThreadInstances(mPetrifiedIcfg, newForkCurrentThreads,
 						addThreadInUseViolationVariablesAndErrorLocation);
+		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> inUseErrorNodeMap = new HashMap<>();
 		final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(mPetrifiedIcfg.getCfgSmtToolkit(),
-				threadInstanceMap, newJoinCurrentThreads, addThreadInUseViolationVariablesAndErrorLocation);
+				threadInstanceMap, inUseErrorNodeMap, newJoinCurrentThreads, addThreadInUseViolationVariablesAndErrorLocation);
 		((BasicIcfg<IcfgLocation>) mPetrifiedIcfg).setCfgSmtToolkit(cfgSmtToolkit);
 		final HashRelation<String, String> copyDirectives = ProcedureMultiplier
 				.generateCopyDirectives(getAllInstances(threadInstanceMap));
@@ -120,15 +122,19 @@ public class IcfgPetrifier {
 		// a forked transition contains a fork.
 		new ProcedureMultiplier(mServices, (BasicIcfg<IcfgLocation>) mPetrifiedIcfg, copyDirectives, backtranslator,
 				threadInstanceMap, newForkCurrentThreads, newJoinCurrentThreads);
-		if (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY) {
-			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> inUseErroLocationMap =
-					constructInUseErrorLocations(threadInstanceMap.keySet());
-			ThreadInstanceAdder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) mPetrifiedIcfg,
-					getAllInstances(threadInstanceMap));
+		fillErrorNodeMap(threadInstanceMap.keySet(), inUseErrorNodeMap);
+		for (final Entry<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> entry : inUseErrorNodeMap
+				.entrySet()) {
+			((BasicIcfg<IcfgLocation>) mPetrifiedIcfg).addLocation(entry.getValue(), false, true, false, false, false);
 		}
-		final boolean addThreadInUseViolationEdges = (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY);
+//		if (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY) {
+//			ThreadInstanceAdder.addInUseErrorLocations((BasicIcfg<IcfgLocation>) mPetrifiedIcfg,
+//					getAllInstances(threadInstanceMap));
+//		}
+		final boolean addThreadInUseViolationEdges = true;
+				//(icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY);
 		adder.connectThreadInstances(mPetrifiedIcfg, newForkCurrentThreads, newJoinCurrentThreads, threadInstanceMap,
-				backtranslator, addThreadInUseViolationEdges);
+				inUseErrorNodeMap, backtranslator, addThreadInUseViolationEdges);
 
 		final Set<Term> auxiliaryThreadVariables = collectAxiliaryThreadVariables(getAllInstances(threadInstanceMap),
 				addThreadInUseViolationEdges);
@@ -137,18 +143,15 @@ public class IcfgPetrifier {
 	}
 
 
-	private Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> constructInUseErrorLocations(
-			final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> keySet) {
-		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> result = new HashMap<>();
-		int errorLocationId = 0;
-		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : keySet) {
-			final IcfgLocation errLoc = ThreadInstanceAdder.constructErrorLocation(errorLocationId, fork);
-			result.put(fork, errLoc);
-			errorLocationId++;
+	private void fillErrorNodeMap(final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkTransitions,
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> inUseErrorNodeMap) {
+		int errorNodeId = 0;
+		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : forkTransitions) {
+			final IcfgLocation errNode = ThreadInstanceAdder.constructErrorLocation(errorNodeId, fork);
+			inUseErrorNodeMap.put(fork, errNode);
+			errorNodeId++;
 		}
-		return result;
 	}
-
 
 	private static Set<Term> collectAxiliaryThreadVariables(final Collection<ThreadInstance> values,
 			final boolean addThreadInUseViolationEdges) {

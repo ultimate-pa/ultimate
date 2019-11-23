@@ -44,12 +44,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 public class ConcurrencyInformation {
 
 	private final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> mThreadInstanceMap;
+	private final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> mInUseErrorNodeMap;
 	private final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> mJoinTransitions;
 
 	public ConcurrencyInformation(
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap,
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> inUseErrorNodeMap,
 			final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinTransitions) {
 		mThreadInstanceMap = threadInstanceMap;
+		mInUseErrorNodeMap = inUseErrorNodeMap;
 		mJoinTransitions = joinTransitions;
 	}
 
@@ -58,6 +61,14 @@ public class ConcurrencyInformation {
 	 */
 	public Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> getThreadInstanceMap() {
 		return mThreadInstanceMap;
+	}
+
+
+	/**
+	 * Map is null if program is not a concurrent program.
+	 */
+	public Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> getInUseErrorNodeMap() {
+		return mInUseErrorNodeMap;
 	}
 
 	public Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> getJoinTransitions() {

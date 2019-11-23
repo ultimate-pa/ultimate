@@ -276,6 +276,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<IPredicate>> fork2inUseState = new HashMap<>();
 		final Map<String, IPredicate> threadInstance2notinUseState = new HashMap<>();
 		final Map<String, IPredicate> threadInstance2inUseState = new HashMap<>();
+		final Map<LETTER, IIcfgForkTransitionThreadCurrent<IcfgLocation>> errorEdge2fork = new HashMap<>();
 		if (addThreadUsageMonitors) {
 			for (final Entry<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> entry : icfg
 					.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().entrySet()) {
@@ -303,6 +304,12 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 				fork2notinUseState.put(entry.getKey(), notinUseStates);
 				fork2inUseState.put(entry.getKey(), inUseStates);
 			}
+			for (final Entry<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> entry : icfg
+					.getCfgSmtToolkit().getConcurrencyInformation().getInUseErrorNodeMap().entrySet()) {
+				final IcfgLocation errorNode = entry.getValue();
+				final LETTER errorEdge = (LETTER) errorNode.getIncomingEdges().get(0);
+				errorEdge2fork.put(errorEdge, entry.getKey());
+			}
 		}
 
 		// add transitions
@@ -313,8 +320,17 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 					final IcfgLocation succLoc = edge.getTarget();
 					final IPredicate succState = nodes2States.get(succLoc);
 					if (edge instanceof IIcfgInternalTransition<?>) {
-						net.addTransition((LETTER) edge, Collections.singleton(state),
-								Collections.singleton(succState));
+						if (addThreadUsageMonitors && errorEdge2fork.containsKey(edge)) {
+							final List<IPredicate> threadInUse = fork2inUseState.get(errorEdge2fork.get(edge));
+							final Set<IPredicate> predecessors = new HashSet<>(threadInUse);
+							final Set<IPredicate> successors = new HashSet<>(threadInUse);
+							predecessors.add(state);
+							successors.add(succState);
+							net.addTransition((LETTER) edge, predecessors, successors);
+						} else {
+							net.addTransition((LETTER) edge, Collections.singleton(state),
+									Collections.singleton(succState));
+						}
 					} else if (edge instanceof IIcfgForkTransitionThreadCurrent) {
 						// add nothing, in the Petri net we only use the IIcfgForkTransitionOtherThread
 					} else if (edge instanceof IIcfgForkTransitionThreadOther) {

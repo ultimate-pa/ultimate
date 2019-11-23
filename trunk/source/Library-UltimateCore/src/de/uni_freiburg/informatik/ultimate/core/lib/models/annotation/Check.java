@@ -144,6 +144,10 @@ public class Check extends ModernAnnotations {
 		 * Check for requirements. Checks for incompleteness.
 		 */
 		INCOMPLETE,
+		/**
+		 * Check if a petrified ICFG does provide enough thread instances.
+		 */
+		SUFFICIENT_THREAD_INSTANCES
 
 	}
 
@@ -252,6 +256,8 @@ public class Check extends ModernAnnotations {
 			return "consistent";
 		case INCOMPLETE:
 			return "incomplete";
+		case SUFFICIENT_THREAD_INSTANCES:
+			return "petrification did provide enough thread instances (tool internal message, not intended for end users)";
 		default:
 			return "a specification is correct but has no positive message: " + spec;
 		}
@@ -301,6 +307,8 @@ public class Check extends ModernAnnotations {
 			return "inconsistent";
 		case INCOMPLETE:
 			return "incomplete";
+		case SUFFICIENT_THREAD_INSTANCES:
+			return "petrification did not provide enough thread instances (tool internal message, not intended for end users)";
 		default:
 			return "a specification may be violated but has no negative message: " + spec;
 		}

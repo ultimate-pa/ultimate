@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IJoinActionThreadCurrent.JoinSmtArguments;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgForkThreadOtherTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgInternalTransition;
@@ -101,8 +103,21 @@ public class ThreadInstanceAdder {
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
 			final List<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinCurrentThreads,
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap,
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> inUseErrorNodeMap,
 			final BlockEncodingBacktranslator backtranslator, final boolean addThreadInUseViolationEdges) {
 		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fct : forkCurrentThreads) {
+			if (addThreadInUseViolationEdges) {
+				final IcfgLocation callerNode = fct.getSource();
+				final IcfgLocation errorNode = inUseErrorNodeMap.get(fct);
+				final IcfgEdgeFactory ef = icfg.getCfgSmtToolkit().getIcfgEdgeFactory();
+				final UnmodifiableTransFormula errorTransformula = TransFormulaBuilder
+						.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
+				final IcfgInternalTransition errorTransition = ef.createInternalTransition(callerNode, errorNode,
+						new Payload(), errorTransformula);
+				callerNode.addOutgoing(errorTransition);
+				errorNode.addIncoming(errorTransition);
+//				integrateEdge(fct, backtranslator, callerNode, errorNode, errorTransition);
+			}
 			for (final ThreadInstance ti : threadInstanceMap.get(fct)) {
 				addForkOtherThreadTransition(fct, ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg,
 						ti.getThreadInstanceName(), backtranslator, addThreadInUseViolationEdges);
@@ -227,27 +242,32 @@ public class ThreadInstanceAdder {
 
 		final IcfgForkThreadOtherTransition forkThreadOther =
 				ef.createForkThreadOtherTransition(callerNode, calleeEntryLoc, null, forkTransformula, fct);
-		callerNode.addOutgoing(forkThreadOther);
-		calleeEntryLoc.addIncoming(forkThreadOther);
-
-		// hack to get the original fork
-		final IIcfgTransition<IcfgLocation> originalEdge = getOriginalEdge(fct, backtranslator);
-		backtranslator.mapEdges(forkThreadOther, originalEdge);
-		if (addThreadInUseViolationEdges) {
-			// Add the assume statement for the error location and construct the
-			final UnmodifiableTransFormula forkErrorTransFormula =
-					constructThreadInUseViolationAssumption(threadInUseVar, icfg.getCfgSmtToolkit().getManagedScript());
-			final IcfgInternalTransition errorTransition =
-					ef.createInternalTransition(callerNode, errorNode, null, forkErrorTransFormula);
-			callerNode.addOutgoing(errorTransition);
-			errorNode.addIncoming(errorTransition);
-		}
+		integrateEdge(fct, backtranslator, callerNode, calleeEntryLoc, forkThreadOther);
+//		if (addThreadInUseViolationEdges) {
+//			// Add the assume statement for the error location and construct the
+//			final UnmodifiableTransFormula forkErrorTransFormula =
+//					constructThreadInUseViolationAssumption(threadInUseVar, icfg.getCfgSmtToolkit().getManagedScript());
+//			final IcfgInternalTransition errorTransition =
+//					ef.createInternalTransition(callerNode, errorNode, null, forkErrorTransFormula);
+//			callerNode.addOutgoing(errorTransition);
+//			errorNode.addIncoming(errorTransition);
+//		}
 
 		// TODO Matthias 2018-09-15: Set overapproximations for both edges
 		final Map<String, ILocation> overapproximations = new HashMap<>();
 		if (!overapproximations.isEmpty()) {
 			new Overapprox(overapproximations).annotate(fct);
 		}
+	}
+
+	private void integrateEdge(final IIcfgForkTransitionThreadCurrent<IcfgLocation> originProvider,
+			final BlockEncodingBacktranslator backtranslator, final IcfgLocation source, final IcfgLocation target,
+			final IcfgEdge newEdge) {
+		source.addOutgoing(newEdge);
+		target.addIncoming(newEdge);
+		// hack to get the original fork
+		final IIcfgTransition<IcfgLocation> originalEdge = getOriginalEdge(originProvider, backtranslator);
+		backtranslator.mapEdges(newEdge, originalEdge);
 	}
 
 	private IIcfgTransition<IcfgLocation> getOriginalEdge(final IIcfgTransition<IcfgLocation> newEdge,
@@ -426,9 +446,7 @@ public class ThreadInstanceAdder {
 				fork.getPrecedingProcedure(), i, ProcedureErrorType.INUSE_VIOLATION);
 		errorLocation = new IcfgLocation(debugIdentifier, fork.getPrecedingProcedure());
 		ModelUtils.copyAnnotations(fork, errorLocation);
-		// 2018-09-28 Matthias: Questionable if this is an assert. Maybe we should
-		// introduce an InUseViolation.
-		final Check check = new Check(Spec.ASSERT);
+		final Check check = new Check(Spec.SUFFICIENT_THREAD_INSTANCES);
 		check.annotate(errorLocation);
 		return errorLocation;
 	}
@@ -489,12 +507,13 @@ public class ThreadInstanceAdder {
 
 	CfgSmtToolkit constructNewToolkit(final CfgSmtToolkit cfgSmtToolkit,
 			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap,
+			final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> inUseErrorNodeMap,
 			final Collection<IIcfgJoinTransitionThreadCurrent<IcfgLocation>> joinTransitions,
 			final boolean addThreadInUseViolationVariables) {
-		final DefaultIcfgSymbolTable newSymbolTable =
-				new DefaultIcfgSymbolTable(cfgSmtToolkit.getSymbolTable(), cfgSmtToolkit.getProcedures());
-		final HashRelation<String, IProgramNonOldVar> proc2Globals =
-				new HashRelation<>(cfgSmtToolkit.getModifiableGlobalsTable().getProcToGlobals());
+		final DefaultIcfgSymbolTable newSymbolTable = new DefaultIcfgSymbolTable(cfgSmtToolkit.getSymbolTable(),
+				cfgSmtToolkit.getProcedures());
+		final HashRelation<String, IProgramNonOldVar> proc2Globals = new HashRelation<>(
+				cfgSmtToolkit.getModifiableGlobalsTable().getProcToGlobals());
 		for (final ThreadInstance ti : IcfgPetrifier.getAllInstances(threadInstanceMap)) {
 			if (addThreadInUseViolationVariables) {
 				addVar(ti.getInUseVar(), newSymbolTable, proc2Globals, cfgSmtToolkit.getProcedures());
@@ -505,13 +524,12 @@ public class ThreadInstanceAdder {
 		}
 		newSymbolTable.finishConstruction();
 		final ConcurrencyInformation concurrencyInformation = new ConcurrencyInformation(threadInstanceMap,
-				joinTransitions);
+				inUseErrorNodeMap, joinTransitions);
 		return new CfgSmtToolkit(new ModifiableGlobalsTable(proc2Globals), cfgSmtToolkit.getManagedScript(),
 				newSymbolTable, cfgSmtToolkit.getProcedures(), cfgSmtToolkit.getInParams(),
 				cfgSmtToolkit.getOutParams(), cfgSmtToolkit.getIcfgEdgeFactory(), concurrencyInformation,
 				cfgSmtToolkit.getSmtFunctionsAndAxioms());
 	}
-
 
 	private static void addVar(final IProgramNonOldVar var, final DefaultIcfgSymbolTable newSymbolTable,
 			final HashRelation<String, IProgramNonOldVar> proc2Globals, final Set<String> allProcedures) {
