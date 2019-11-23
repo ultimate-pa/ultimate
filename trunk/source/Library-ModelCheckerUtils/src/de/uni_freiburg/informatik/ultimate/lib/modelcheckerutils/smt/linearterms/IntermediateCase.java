@@ -42,7 +42,7 @@ public class IntermediateCase extends Case {
 	 * except that it now also consists of the SolvedBinaryRelation represented by
 	 * "subject mRelationSymbol mIntermediateRhs"
 	 */
-	public Case finalizeCase(Term subject) {
+	public Case finalizeCase(final Term subject) {
 		return new Case(new SolvedBinaryRelation(subject, mIntermediateRhs, mIntermediateRelationSymbol, 
 						Collections.emptyMap()), mSupportingTerms, mXnf);
 	}
