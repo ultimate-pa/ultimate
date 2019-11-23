@@ -1,3 +1,5 @@
+// #Unsafe
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -15,6 +17,7 @@ void *myThread(void *vargp)
     ++s; ++g;
  
     printf("Thread ID: %d, Static: %d, Global: %d\n", *myid, ++s, ++g);
+    //@ assert s < 3;
 }
  
 int main()

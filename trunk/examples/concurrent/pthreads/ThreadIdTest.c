@@ -1,3 +1,4 @@
+// #Safe
 #include <pthread.h>
 #include <stdio.h>
 
@@ -29,7 +30,7 @@ int main() {
     pthread_join(first_th_id, &y);
     int *final = (int *)y;
     printf("%d\n", *final);
-	//@ assert \false;
+	//@ assert x == 0 || x == 1;
     
     return 0;
 }

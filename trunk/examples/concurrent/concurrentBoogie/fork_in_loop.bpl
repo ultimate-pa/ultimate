@@ -1,3 +1,4 @@
+// #Unsafe
 /*
  * This example shows, that the fork statement is not working in a loop if it 
  * is not getting joined until the next iteration. Except the loop has only 
@@ -29,7 +30,9 @@ implementation ULTIMATE.start()
         x := x + 1;
     }
     
-    join x;
+    join 1;
+    join 2;
+    assert false;
 }
 
 
