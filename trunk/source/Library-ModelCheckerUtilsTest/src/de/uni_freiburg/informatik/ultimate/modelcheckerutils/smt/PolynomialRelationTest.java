@@ -34,10 +34,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -87,52 +90,45 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationRealDefault() throws NotAffineException {
 		final String inputSTR = "(= (+ 7.0 x) y )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				polyRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 
 	}
 
 	@Test
 	public void relationRealEQ() throws NotAffineException {
 		final String inputSTR = "(= (* 7.0 x) y )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				polyRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 
 	}
 
 	@Test
 	public void relationRealEQ2() throws NotAffineException {
 		final String inputSTR = "(= (* 3.0 x) (* 7.0 y) )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				polyRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	@Test
 	public void relationRealEQ3() throws NotAffineException {
 		final String inputSTR = "(= (* 3.0 x) (+ (* 7.0 y) (* 5.0 z)) )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				polyRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	@Test
 	public void relationRealEQ4() throws NotAffineException {
 		final String inputSTR = "(= (* 6.0 (+ y x)) (* 7.0 z) )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				polyRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	@Test
 	public void relationRealPolyEQ5() throws NotAffineException {
 		final String inputSTR = "(= (* 6.0 (* y x)) (+ 3.0 (* z z)))";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				polyRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 	
 	@Test
 	public void relationRealPolyEQ6() throws NotAffineException {
 		final String inputSTR = "(= (* z (+ 6.0 (* (* y y) x))) (+ 3.0 (* z z)))";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				polyRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 	
 	@Test
@@ -154,8 +150,7 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationRealPolyWithDivisionsEQ9() throws NotAffineException {
 		final String inputSTR = "(= (/ (+ 6.0 (* (/ z y) x)) 2.0) (+ 3.0 (/ y z)))";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				polyRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 	
 	@Test
@@ -167,36 +162,31 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationRealGEQ() throws NotAffineException {
 		final String inputSTR = "(>= (* 3.0 x) lo )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				polyRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	@Test
 	public void relationRealLEQ() throws NotAffineException {
 		final String inputSTR = "(<= (* 3.0 x) hi )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				polyRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	@Test
 	public void relationRealDISTINCT() throws NotAffineException {
 		final String inputSTR = "(not(= (* 3.0 x) y ))";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				polyRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	@Test
 	public void relationRealGREATER() throws NotAffineException {
 		final String inputSTR = "(> (* 3.0 x) lo )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				polyRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	@Test
 	public void relationRealLESS() throws NotAffineException {
 		final String inputSTR = "(< (* 4.0 x) hi )";
-		Assert.assertTrue(assumptionsImpliesEquality(TermParseUtils.parseTerm(mScript, inputSTR),
-				polyRelOnLeftHandSide(inputSTR, "x")));
+		testSolveForX(inputSTR);
 	}
 
 	private SolvedBinaryRelation polyRelOnLeftHandSide(final String termAsString, final String varString)
@@ -205,6 +195,34 @@ public class PolynomialRelationTest {
 		final SolvedBinaryRelation sbr = PolynomialRelation
 				.convert(mScript, TermParseUtils.parseTerm(mScript, termAsString)).solveForSubject(mScript, var);
 		return sbr;
+	}
+	
+	private void testSolveForX(final String inputAsString) throws NotAffineException {
+		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
+		final Term x = TermParseUtils.parseTerm(mScript, "x");
+		testSingleCaseSolveForSubject(inputAsTerm, x);
+		testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.DNF);
+		testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.CNF);
+	}
+
+	private void testSolveForXMultiCaseOnly(final String inputAsString) throws NotAffineException {
+		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
+		final Term x = TermParseUtils.parseTerm(mScript, "x");
+		testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.DNF);
+		// testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.CNF);
+	}
+
+	private void testSingleCaseSolveForSubject(final Term inputAsTerm, final Term x) throws NotAffineException {
+		final SolvedBinaryRelation sbr = PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x);
+		Assert.assertTrue(assumptionsImpliesEquality(inputAsTerm, sbr));
+	}
+
+	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf)
+			throws NotAffineException {
+		final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.convert(mScript, inputAsTerm)
+				.solveForSubject(mScript, x, xnf);
+		final Term solvedAsTerm = mcsbr.asTerm(mScript);
+		Assert.assertTrue(SmtUtils.areFormulasEquivalent(inputAsTerm, solvedAsTerm, mScript));
 	}
 
 	private boolean assumptionsImpliesEquality(final Term originalTerm, final SolvedBinaryRelation sbr) {

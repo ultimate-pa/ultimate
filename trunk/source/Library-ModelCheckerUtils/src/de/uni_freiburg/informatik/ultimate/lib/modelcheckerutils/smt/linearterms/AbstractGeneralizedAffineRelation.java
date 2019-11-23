@@ -716,7 +716,9 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 				|| isEquivalent(script, mOriginalTerm, result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		return result;
 		// TODO: Integer sort
-		// TODO: Write MultiCaseSolvedBinaryAssumption-tests
+		// TODO: Write PolynomialTests for Less etc. at least one each
+		// TODO: Ask Matthias, whether the "null"-Tests in PolynomialRelation are obsolete, since some
+		// functionality has been added now.
 	}
 	
 	private Case constructDivByVarEqualZeroCase(final Script script, 
