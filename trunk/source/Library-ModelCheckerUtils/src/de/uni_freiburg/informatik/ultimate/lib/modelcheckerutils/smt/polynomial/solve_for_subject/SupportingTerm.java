@@ -75,5 +75,16 @@ public class SupportingTerm implements ITermProvider {
 	public Term asTerm() {
 		return mTerm;
 	}
+	
+	@Override
+	public String toString() {
+		String info = mTerm.toString();
+		info = info + ", " + mIntricateOperation.toString();
+		info = info + ", AuxVars: ";
+		for (TermVariable termVar : mNewAuxiliaryVariables) {
+			info = info + termVar.toString() + ", ";
+		}
+		return info;
+	}
 
 }

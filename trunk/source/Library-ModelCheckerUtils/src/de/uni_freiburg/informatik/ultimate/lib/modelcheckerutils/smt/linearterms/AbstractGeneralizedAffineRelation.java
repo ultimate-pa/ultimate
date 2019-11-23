@@ -608,10 +608,18 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 							IntricateOperation.DIV_BY_INTEGER_CONSTANT, Collections.emptySet());
 					switch (mRelationSymbol) {
 					case DISTINCT:
-						mcsb.conjoinWithDisjunction(sbr, divisibilityConstraint);
+						if (!(abstractVarOfSubject instanceof Monomial)) {
+							mcsb.conjoinWithDisjunction(sbr, divisibilityConstraint);
+						}else {
+							mcsb.conjoinWithDisjunction(divisibilityConstraint);
+						}
 						break;
 					case EQ:
-						mcsb.conjoinWithConjunction(sbr, divisibilityConstraint);
+						if (!(abstractVarOfSubject instanceof Monomial)) {
+							mcsb.conjoinWithConjunction(sbr, divisibilityConstraint);
+						}else {
+							mcsb.conjoinWithConjunction(divisibilityConstraint);
+						}
 						break;
 					case GEQ:
 					case GREATER:
@@ -622,7 +630,9 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 					}
 				} else {
 					// cases LEQ, LESS, GREATER, GEQ: do not add SupportingTerm
-					mcsb.conjoinWithConjunction(sbr);
+					if (!(abstractVarOfSubject instanceof Monomial)) {
+						mcsb.conjoinWithConjunction(sbr);
+					}
 					// we have to add this information separately because
 					// there is no SupporingTerm that provides this information
 					mcsb.reportAdditionalIntricateOperation(IntricateOperation.DIV_BY_INTEGER_CONSTANT);
@@ -664,9 +674,11 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			}
 		} else {
 			rhsTerm = simplySolvableRhsTerm;
-			final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
-					Collections.emptyMap());
-			mcsb.conjoinWithConjunction(sbr);
+			if (!(abstractVarOfSubject instanceof Monomial)) {
+				final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
+						Collections.emptyMap());
+				mcsb.conjoinWithConjunction(sbr);
+			}
 		}
 		if (abstractVarOfSubject instanceof Monomial) {
 			// TODO 13.11.2019: When we divide by variables we could actually sometimes simplify the resulting division,
@@ -677,12 +689,12 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			// here for the future.
 			final Collection<Case> finishedCases = new ArrayList<>();
 			Collection<IntermediateCase> previousCases = new ArrayList<>();
-			Collection<IntermediateCase> continuableCases = new ArrayList<>();
+			Collection<IntermediateCase> nextCases = new ArrayList<>();
 			
 			final Set<SupportingTerm> supp = Collections.emptySet();
 			final IntermediateCase startCase = new IntermediateCase(supp, MultiCaseSolvedBinaryRelation.Xnf.DNF, 
 																	rhsTerm, resultRelationSymbol);
-			continuableCases.add(startCase);
+			previousCases.add(startCase);
 			
 			for (final Entry<Term, Rational> var2exp : ((Monomial) abstractVarOfSubject).getVariable2Exponent()
 					.entrySet()) {
@@ -693,15 +705,17 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 						finishedCases.add(constructDivByVarEqualZeroCase(script, previousCase, var2exp.getKey()));
 						if ((mRelationSymbol.equals(RelationSymbol.EQ)) 
 							 || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
-							continuableCases.add(constructDivByVarDistinctZeroCase(script, previousCase, var2exp));
+							nextCases.add(constructDivByVarDistinctZeroCase(script, previousCase, var2exp));
 						}else {
-							continuableCases.add(constructDivByVarLessZeroCase(script, previousCase, var2exp));
-							continuableCases.add(constructDivByVarGreaterZeroCase(script, previousCase, var2exp));
+							nextCases.add(constructDivByVarLessZeroCase(script, previousCase, var2exp));
+							nextCases.add(constructDivByVarGreaterZeroCase(script, previousCase, var2exp));
 						}
 					}
+					previousCases = nextCases;
+					nextCases = new ArrayList<>();
 				}
 			}
-			for(IntermediateCase finishedCase : continuableCases) {
+			for(IntermediateCase finishedCase : previousCases) {
 				finishedCases.add(finishedCase.finalizeCase(subject));
 			}
 			final Collection<Collection<?>> dnf = new ArrayList<>();
@@ -709,9 +723,11 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 				dnf.add(transformCaseIntoCollection(c));
 			}
 			//TODO: Check if this will work
+			//TODO: Implements new conjoinWithDnf that takes Cases as input
 			mcsb.conjoinWithDnf(dnf);
 		}
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
+		final Term debug = result.asTerm(script);
 		assert script instanceof INonSolverScript
 				|| isEquivalent(script, mOriginalTerm, result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		return result;
@@ -719,6 +735,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		// TODO: Write PolynomialTests for Less etc. at least one each
 		// TODO: Ask Matthias, whether the "null"-Tests in PolynomialRelation are obsolete, since some
 		// functionality has been added now.
+		//TODO: Think about some better way to do the Monomial Handling instead of having to exclude some operations earlier
 	}
 	
 	private Case constructDivByVarEqualZeroCase(final Script script, 
