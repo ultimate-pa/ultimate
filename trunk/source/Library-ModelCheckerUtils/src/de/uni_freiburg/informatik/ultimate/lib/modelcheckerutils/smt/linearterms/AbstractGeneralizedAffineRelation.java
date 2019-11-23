@@ -722,12 +722,11 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			for (Case c : finishedCases) {
 				dnf.add(transformCaseIntoCollection(c));
 			}
-			//TODO: Check if this will work
-			//TODO: Implements new conjoinWithDnf that takes Cases as input
+			//TODO: Ask matthias whether he wants to keep this conjoinWithDnf or whether I shall replace it with
+			//conjoinWithDnf(Collection<Case>).
 			mcsb.conjoinWithDnf(dnf);
 		}
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
-		final Term debug = result.asTerm(script);
 		assert script instanceof INonSolverScript
 				|| isEquivalent(script, mOriginalTerm, result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		return result;
@@ -735,7 +734,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		// TODO: Write PolynomialTests for Less etc. at least one each
 		// TODO: Ask Matthias, whether the "null"-Tests in PolynomialRelation are obsolete, since some
 		// functionality has been added now.
-		//TODO: Think about some better way to do the Monomial Handling instead of having to exclude some operations earlier
+		//TODO: Think about whether we want Monomial handling in its own method.
+		//TODO: Ask Matthias whether the subjectInAllowedSubterm-case is disjunct to the abstractVarOfSubject being a Monomial.
 	}
 	
 	private Case constructDivByVarEqualZeroCase(final Script script, 
