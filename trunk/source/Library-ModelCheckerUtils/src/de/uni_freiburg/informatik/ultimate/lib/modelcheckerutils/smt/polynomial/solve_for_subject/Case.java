@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class Case implements ITermProviderOnDemand {
 
-	private final SolvedBinaryRelation mSolvedBinaryRelation;
-	private final Set<SupportingTerm> mSupportingTerms;
-	private final Xnf mXnf;
+	protected final SolvedBinaryRelation mSolvedBinaryRelation;
+	protected final Set<SupportingTerm> mSupportingTerms;
+	protected final Xnf mXnf;
 
 	/**
 	 *

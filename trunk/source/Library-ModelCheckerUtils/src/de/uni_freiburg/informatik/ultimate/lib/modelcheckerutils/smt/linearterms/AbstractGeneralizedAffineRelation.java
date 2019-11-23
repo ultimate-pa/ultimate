@@ -2,8 +2,10 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterm
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -16,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtil
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation.AssumptionForSolvability;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.Case;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolutionBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation.IntricateOperation;
@@ -269,125 +272,6 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		return mAffineTerm;
 	}
 
-	/**
-	 * Returns a {@link SolvedBinaryRelation} that is equivalent to this PolynomialRelation or null if we cannot find
-	 * such a {@link SolvedBinaryRelation}.
-	 */
-	@Override
-	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) {
-		if (!isVariable(subject)) {
-			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
-				throw new UnsupportedOperationException("subject is not a variable");
-			} else {
-				return null;
-			}
-		}
-		final AVAR abstractVarOfSubject = getTheAbstractVarOfSubject(subject);
-		if (abstractVarOfSubject == null) {
-			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
-				throw new UnsupportedOperationException("subject occurs in several abstract variables");
-			} else {
-				return null;
-			}
-		}
-		final Rational coeffOfSubject = mAffineTerm.getAbstractVariable2Coefficient().get(abstractVarOfSubject);
-		if (coeffOfSubject.equals(Rational.ZERO)) {
-			throw new AssertionError("no abstract variable must have coefficient zero");
-		}
-		if (SmtSortUtils.isBitvecSort(mAffineTerm.getSort()) && !coeffOfSubject.abs().equals(Rational.ONE)) {
-			// for bitvectors we may only divide by 1 or -1
-			// reason: consider bitvectors of length 8 (i.e., 256=0)
-			// then e.g., 2*x = 0 is not equivalent to x = 0 because
-			// for x=128 the first equation hold but the second does not
-			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
-				throw new UnsupportedOperationException(
-						"for bitvector subjects only coefficients 1 and -1 are supported");
-			} else {
-				return null;
-			}
-		}
-
-		final Term simpliySolvableRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
-				coeffOfSubject);
-		final AssumptionMapBuilder assumptionMapBuilder = new AssumptionMapBuilder(script);
-		Term rhsTerm;
-		if (simpliySolvableRhsTerm == null) {
-			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
-					Rational.ONE);
-			rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
-			// EQ and DISTINCT need Modulo Assumption
-			if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
-				assumptionMapBuilder.putDivisibleByConstant(rhsTermWithoutDivision,
-						coeffOfSubject.toTerm(mAffineTerm.getSort()));
-			}
-			// cases LEQ, LESS, GREATER, GEQ do nothing
-
-		} else {
-			rhsTerm = simpliySolvableRhsTerm;
-		}
-
-		final RelationSymbol resultRelationSymbol;
-		if (coeffOfSubject.isNegative()) {
-			// if coefficient is negative we have to use the "swapped" RelationSymbol
-			resultRelationSymbol = BinaryRelation.swapParameters(mRelationSymbol);
-		} else {
-			resultRelationSymbol = mRelationSymbol;
-		}
-
-		if (abstractVarOfSubject instanceof Monomial) {
-			// TODO 13.11.2019: When we divide by variables we could actually sometimes simplify the resulting division,
-			// in the case that this variable is not zero (and therefore we can simplify f.ex. x/x to 1).
-			// At the moment this seems like much work relative to little effect, so I was asked to leave this comment
-			// here for the future.
-			for (final Entry<Term, Rational> var2exp : ((Monomial) abstractVarOfSubject).getVariable2Exponent()
-					.entrySet()) {
-				if (var2exp.getKey() == subject) {
-					// do nothing
-				} else {
-					// TODO: Integer sort tests
-					// TODO: Use MultiCaseSolvedBinaryAssumption
-					assert var2exp.getValue().isIntegral();
-					final int exponent = var2exp.getValue().numerator().intValueExact();
-					final Term[] rhsDivision = new Term[exponent + 1];
-					rhsDivision[0] = rhsTerm;
-					if (exponent >= 2) {
-						for (int i = 1; i < exponent + 1; i++) {
-							rhsDivision[i] = var2exp.getKey();
-						}
-					} else {
-						rhsDivision[1] = var2exp.getKey();
-					}
-					// Asked Matthias whether it matters much, that redundant assumptions could
-					// get added
-					// e.g. when you already have x != 0 and you have to divide by x again.
-					// Better detect it before adding them.
-					if (SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
-						makeRealAssumptions(assumptionMapBuilder, var2exp.getKey());
-						rhsTerm = SmtUtils.divReal(script, rhsDivision);
-					} else if (SmtSortUtils.isIntSort(mAffineTerm.getSort())) {
-						makeIntAssumptions(assumptionMapBuilder, script, var2exp.getKey(), rhsTerm);
-						rhsTerm = SmtUtils.divInt(script, rhsDivision);
-					} else {
-						throw new UnsupportedOperationException("PolynomialRelations of this sort are not supported.");
-					}
-				}
-			}
-		}
-
-		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
-				assumptionMapBuilder.getExplicitAssumptionMap());
-		final Term relationToTerm = result.relationToTerm(script);
-		if (!assumptionMapBuilder.isEmpty()) {
-			assert script instanceof INonSolverScript
-					|| assumptionImpliesEquivalence(script, mOriginalTerm, relationToTerm, assumptionMapBuilder
-							.getExplicitAssumptionMap()) != LBool.SAT : "transformation to AffineRelation unsound";
-		} else {
-			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
-					relationToTerm) != LBool.SAT : "transformation to AffineRelation unsound";
-		}
-		return result;
-	}
-
 	private void makeRealAssumptions(final AssumptionMapBuilder assuMapBuilder, final Term divisor) {
 		assuMapBuilder.putDivisorNotZero(divisor);
 	}
@@ -525,6 +409,125 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 	}
 
 	/**
+	 * Returns a {@link SolvedBinaryRelation} that is equivalent to this PolynomialRelation or null if we cannot find
+	 * such a {@link SolvedBinaryRelation}.
+	 */
+	@Override
+	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) {
+		if (!isVariable(subject)) {
+			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
+				throw new UnsupportedOperationException("subject is not a variable");
+			} else {
+				return null;
+			}
+		}
+		final AVAR abstractVarOfSubject = getTheAbstractVarOfSubject(subject);
+		if (abstractVarOfSubject == null) {
+			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
+				throw new UnsupportedOperationException("subject occurs in several abstract variables");
+			} else {
+				return null;
+			}
+		}
+		final Rational coeffOfSubject = mAffineTerm.getAbstractVariable2Coefficient().get(abstractVarOfSubject);
+		if (coeffOfSubject.equals(Rational.ZERO)) {
+			throw new AssertionError("no abstract variable must have coefficient zero");
+		}
+		if (SmtSortUtils.isBitvecSort(mAffineTerm.getSort()) && !coeffOfSubject.abs().equals(Rational.ONE)) {
+			// for bitvectors we may only divide by 1 or -1
+			// reason: consider bitvectors of length 8 (i.e., 256=0)
+			// then e.g., 2*x = 0 is not equivalent to x = 0 because
+			// for x=128 the first equation hold but the second does not
+			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
+				throw new UnsupportedOperationException(
+						"for bitvector subjects only coefficients 1 and -1 are supported");
+			} else {
+				return null;
+			}
+		}
+	
+		final Term simpliySolvableRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
+				coeffOfSubject);
+		final AssumptionMapBuilder assumptionMapBuilder = new AssumptionMapBuilder(script);
+		Term rhsTerm;
+		if (simpliySolvableRhsTerm == null) {
+			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
+					Rational.ONE);
+			rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
+			// EQ and DISTINCT need Modulo Assumption
+			if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
+				assumptionMapBuilder.putDivisibleByConstant(rhsTermWithoutDivision,
+						coeffOfSubject.toTerm(mAffineTerm.getSort()));
+			}
+			// cases LEQ, LESS, GREATER, GEQ do nothing
+	
+		} else {
+			rhsTerm = simpliySolvableRhsTerm;
+		}
+	
+		final RelationSymbol resultRelationSymbol;
+		if (coeffOfSubject.isNegative()) {
+			// if coefficient is negative we have to use the "swapped" RelationSymbol
+			resultRelationSymbol = BinaryRelation.swapParameters(mRelationSymbol);
+		} else {
+			resultRelationSymbol = mRelationSymbol;
+		}
+	
+		if (abstractVarOfSubject instanceof Monomial) {
+			// TODO 13.11.2019: When we divide by variables we could actually sometimes simplify the resulting division,
+			// in the case that this variable is not zero (and therefore we can simplify f.ex. x/x to 1).
+			// At the moment this seems like much work relative to little effect, so I was asked to leave this comment
+			// here for the future.
+			for (final Entry<Term, Rational> var2exp : ((Monomial) abstractVarOfSubject).getVariable2Exponent()
+					.entrySet()) {
+				if (var2exp.getKey() == subject) {
+					// do nothing
+				} else {
+					// TODO: Integer sort tests
+					// TODO: Use MultiCaseSolvedBinaryAssumption
+					assert var2exp.getValue().isIntegral();
+					final int exponent = var2exp.getValue().numerator().intValueExact();
+					final Term[] rhsDivision = new Term[exponent + 1];
+					rhsDivision[0] = rhsTerm;
+					if (exponent >= 2) {
+						for (int i = 1; i < exponent + 1; i++) {
+							rhsDivision[i] = var2exp.getKey();
+						}
+					} else {
+						rhsDivision[1] = var2exp.getKey();
+					}
+					// Asked Matthias whether it matters much, that redundant assumptions could
+					// get added
+					// e.g. when you already have x != 0 and you have to divide by x again.
+					// Better detect it before adding them.
+					if (SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
+						makeRealAssumptions(assumptionMapBuilder, var2exp.getKey());
+						rhsTerm = SmtUtils.divReal(script, rhsDivision);
+					} else if (SmtSortUtils.isIntSort(mAffineTerm.getSort())) {
+						makeIntAssumptions(assumptionMapBuilder, script, var2exp.getKey(), rhsTerm);
+						rhsTerm = SmtUtils.divInt(script, rhsDivision);
+					} else {
+						throw new UnsupportedOperationException("PolynomialRelations of this sort are not supported.");
+					}
+				}
+			}
+		}
+	
+		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
+				assumptionMapBuilder.getExplicitAssumptionMap());
+		final Term relationToTerm = result.relationToTerm(script);
+		if (!assumptionMapBuilder.isEmpty()) {
+			assert script instanceof INonSolverScript
+					|| assumptionImpliesEquivalence(script, mOriginalTerm, relationToTerm, assumptionMapBuilder
+							.getExplicitAssumptionMap()) != LBool.SAT : "transformation to AffineRelation unsound";
+		} else {
+			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
+					relationToTerm) != LBool.SAT : "transformation to AffineRelation unsound";
+		}
+		return result;
+	}
+
+	/**
 	 * Returns a {@link MultiCaseSolvedBinaryRelation} that is equivalent to this PolynomialRelation or null if we
 	 * cannot find such a {@link MultiCaseSolvedBinaryRelation}.
 	 */
@@ -585,11 +588,11 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			resultRelationSymbol = mRelationSymbol;
 		}
 
-		final Term simpliySolvableRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
+		final Term simplySolvableRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 				coeffOfSubject);
 		final MultiCaseSolutionBuilder mcsb = new MultiCaseSolutionBuilder(subject, xnf);
 		Term rhsTerm;
-		if (simpliySolvableRhsTerm == null) {
+		if (simplySolvableRhsTerm == null) {
 			if (!subjectInAllowedSubterm) {
 				final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 						Rational.ONE);
@@ -599,16 +602,16 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 				// EQ and DISTINCT need Modulo Assumption
 				if ((mRelationSymbol.equals(RelationSymbol.EQ)) || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
 					final boolean negate = mRelationSymbol.equals(RelationSymbol.DISTINCT);
-					final Term divisilityConstraintTerm = constructDivisibilityConstraint(script,
+					final Term divisibilityConstraintTerm = constructDivisibilityConstraint(script,
 							rhsTermWithoutDivision, coeffOfSubject.toTerm(mAffineTerm.getSort()), negate);
-					final SupportingTerm divisilityConstraint = new SupportingTerm(divisilityConstraintTerm,
+					final SupportingTerm divisibilityConstraint = new SupportingTerm(divisibilityConstraintTerm,
 							IntricateOperation.DIV_BY_INTEGER_CONSTANT, Collections.emptySet());
 					switch (mRelationSymbol) {
 					case DISTINCT:
-						mcsb.conjoinWithDisjunction(sbr, divisilityConstraint);
+						mcsb.conjoinWithDisjunction(sbr, divisibilityConstraint);
 						break;
 					case EQ:
-						mcsb.conjoinWithConjunction(sbr, divisilityConstraint);
+						mcsb.conjoinWithConjunction(sbr, divisibilityConstraint);
 						break;
 					case GEQ:
 					case GREATER:
@@ -624,7 +627,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 					// there is no SupporingTerm that provides this information
 					mcsb.reportAdditionalIntricateOperation(IntricateOperation.DIV_BY_INTEGER_CONSTANT);
 				}
-			} else if (subjectInAllowedSubterm) {
+			} else {
 				final Sort termSort = mAffineTerm.getSort();
 				final TermVariable auxDiv = script.variable("aux_div", termSort);
 				final TermVariable auxMod = script.variable("aux_mod", termSort);
@@ -660,17 +663,171 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 				mcsb.reportAdditionalAuxiliaryVariable(auxDiv);
 			}
 		} else {
-			rhsTerm = simpliySolvableRhsTerm;
+			rhsTerm = simplySolvableRhsTerm;
 			final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
 					Collections.emptyMap());
 			mcsb.conjoinWithConjunction(sbr);
+		}
+		if (abstractVarOfSubject instanceof Monomial) {
+			// TODO 13.11.2019: When we divide by variables we could actually sometimes simplify the resulting division,
+			// in the case that this variable is not zero (and therefore we can simplify f.ex. x/x to 1).
+			// Also we could sometimes get Conjuncts like x!=0, that are already in the case distinction.
+			// Handle this in the MultiCaseSolutionBuilder?
+			// At the moment this seems like much work relative to little effect, so I was asked to leave this comment
+			// here for the future.
+			final Collection<Case> finishedCases = new ArrayList<>();
+			Collection<IntermediateCase> previousCases = new ArrayList<>();
+			Collection<IntermediateCase> continuableCases = new ArrayList<>();
+			
+			final Set<SupportingTerm> supp = Collections.emptySet();
+			final IntermediateCase startCase = new IntermediateCase(supp, MultiCaseSolvedBinaryRelation.Xnf.DNF, 
+																	rhsTerm, resultRelationSymbol);
+			continuableCases.add(startCase);
+			
+			for (final Entry<Term, Rational> var2exp : ((Monomial) abstractVarOfSubject).getVariable2Exponent()
+					.entrySet()) {
+				if (var2exp.getKey() == subject) {
+					// do nothing
+				} else {
+					for (final IntermediateCase previousCase : previousCases) {
+						finishedCases.add(constructDivByVarEqualZeroCase(script, previousCase, var2exp.getKey()));
+						if ((mRelationSymbol.equals(RelationSymbol.EQ)) 
+							 || (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
+							continuableCases.add(constructDivByVarDistinctZeroCase(script, previousCase, var2exp));
+						}else {
+							continuableCases.add(constructDivByVarLessZeroCase(script, previousCase, var2exp));
+							continuableCases.add(constructDivByVarGreaterZeroCase(script, previousCase, var2exp));
+						}
+					}
+				}
+			}
+			for(IntermediateCase finishedCase : continuableCases) {
+				finishedCases.add(finishedCase.finalizeCase(subject));
+			}
+			final Collection<Collection<?>> dnf = new ArrayList<>();
+			for (Case c : finishedCases) {
+				dnf.add(transformCaseIntoCollection(c));
+			}
+			//TODO: Check if this will work
+			mcsb.conjoinWithDnf(dnf);
 		}
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
 		assert script instanceof INonSolverScript
 				|| isEquivalent(script, mOriginalTerm, result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		return result;
+		// TODO: Integer sort
+		// TODO: Write MultiCaseSolvedBinaryAssumption-tests
+	}
+	
+	private Case constructDivByVarEqualZeroCase(final Script script, 
+												final IntermediateCase previousCase, 
+												final Term var) {
+		final Term rhs = previousCase.getIntermediateRhs();
+		final Set<SupportingTerm> suppTerms = new LinkedHashSet<>(previousCase.getSupportingTerms());
+		final Term zeroTerm = SmtUtils.rational2Term(script, Rational.ZERO, mAffineTerm.getSort());
+		final Term varEqualZero = SmtUtils.binaryEquality(script, zeroTerm, var);
+		suppTerms.add(new SupportingTerm(varEqualZero, 
+										 IntricateOperation.DIV_BY_NONCONSTANT, 
+										 Collections.emptySet()));
+		final Term rhsEqualZeroTerm = SmtUtils.binaryEquality(script, zeroTerm, rhs);
+		//TODO: Ask Matthias: Same IntricateOperation here?
+		suppTerms.add(new SupportingTerm(rhsEqualZeroTerm,
+										 IntricateOperation.DIV_BY_NONCONSTANT,
+										 Collections.emptySet()));
+		return new Case(null, suppTerms, MultiCaseSolvedBinaryRelation.Xnf.DNF);
 	}
 
+	private IntermediateCase constructDivByVarDistinctZeroCase(final Script script, 
+											   	   			   final IntermediateCase previousCase, 
+											   	   			   final Entry<Term, Rational> var2exp) {
+		final RelationSymbol relSym = previousCase.getIntermediateRelationSymbol();
+		final Term rhs = previousCase.getIntermediateRhs();
+		final Set<SupportingTerm> suppTerms = new LinkedHashSet<>(previousCase.getSupportingTerms());
+		final Term zeroTerm = SmtUtils.rational2Term(script, Rational.ZERO, mAffineTerm.getSort());
+		
+		assert var2exp.getValue().isIntegral();
+		final int exp = var2exp.getValue().numerator().intValueExact();
+		final Term rhsDividedByVar = divideTermByPower(script, rhs, var2exp.getKey(), exp);
+		
+		final Term varDistinctZero = SmtUtils.distinct(script, zeroTerm, var2exp.getKey());
+		suppTerms.add(new SupportingTerm(varDistinctZero, 
+										 IntricateOperation.DIV_BY_NONCONSTANT,
+										 Collections.emptySet()));
+		return new IntermediateCase(suppTerms, MultiCaseSolvedBinaryRelation.Xnf.DNF, rhsDividedByVar, relSym);
+	}
+	
+	private IntermediateCase constructDivByVarGreaterZeroCase(final Script script, 
+   			   											   final IntermediateCase previousCase, 
+   			   											   final Entry<Term, Rational> var2exp) {
+		final RelationSymbol relSym = previousCase.getIntermediateRelationSymbol();
+		final Term rhs = previousCase.getIntermediateRhs();
+		final Set<SupportingTerm> suppTerms = new LinkedHashSet<>(previousCase.getSupportingTerms());
+		final Term zeroTerm = SmtUtils.rational2Term(script, Rational.ZERO, mAffineTerm.getSort());
+		
+		assert var2exp.getValue().isIntegral();
+		final int exp = var2exp.getValue().numerator().intValueExact();
+		final Term rhsDividedByVar = divideTermByPower(script, rhs, var2exp.getKey(), exp);
+		
+		final Term varGreaterZero = SmtUtils.greater(script, var2exp.getKey(), zeroTerm);
+		suppTerms.add(new SupportingTerm(varGreaterZero,
+										 IntricateOperation.DIV_BY_NONCONSTANT,
+										 Collections.emptySet()));
+		return new IntermediateCase(suppTerms, MultiCaseSolvedBinaryRelation.Xnf.DNF, rhsDividedByVar, relSym);
+	}
+	
+	private IntermediateCase constructDivByVarLessZeroCase(final Script script, 
+				   											  final IntermediateCase previousCase, 
+				   											  final Entry<Term, Rational> var2exp) {
+		final RelationSymbol relSym = previousCase.getIntermediateRelationSymbol();
+		final Term rhs = previousCase.getIntermediateRhs();
+		final Set<SupportingTerm> suppTerms = new LinkedHashSet<>(previousCase.getSupportingTerms());
+		final Term zeroTerm = SmtUtils.rational2Term(script, Rational.ZERO, mAffineTerm.getSort());
+		
+		assert var2exp.getValue().isIntegral();
+		final int exp = var2exp.getValue().numerator().intValueExact();
+		final Term rhsDividedByVar = divideTermByPower(script, rhs, var2exp.getKey(), exp);
+		
+		final Term varLessZero = SmtUtils.less(script, var2exp.getKey(), zeroTerm);
+		suppTerms.add(new SupportingTerm(varLessZero,
+										 IntricateOperation.DIV_BY_NONCONSTANT,
+										 Collections.emptySet()));
+		return new IntermediateCase(suppTerms, MultiCaseSolvedBinaryRelation.Xnf.DNF,
+	   								rhsDividedByVar, BinaryRelation.swapParameters(relSym));
+	}
+	
+	private Term divideTermByPower(Script script, Term dividend, Term divisor, int exponent) {
+		final Term[] division = new Term[exponent + 1];
+		division[0] = dividend;
+		if (exponent >= 2) {
+			for (int i = 1; i < exponent + 1; i++) {
+				division[i] = divisor;
+			}
+		} else {
+			division[1] = divisor;
+		}
+		if (SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
+			return SmtUtils.divReal(script, division);
+		} else if (SmtSortUtils.isIntSort(mAffineTerm.getSort())) {
+			return SmtUtils.divInt(script, division);
+		} else {
+			throw new UnsupportedOperationException("PolynomialRelations of this sort are not supported.");
+		}
+	}
+	
+	private ArrayList<?> transformCaseIntoCollection(Case c){
+		//TODO: Ask Matthias whether AuxiliaryVariables never occur? I couldn't find them handled 
+		//in buildCopyAndAddToEachCase(List<Case>, Object...) in MultiCaseSolutionBuilder either
+		ArrayList<Object> collection = new ArrayList<>();
+		for (SupportingTerm supp : c.getSupportingTerms()) {
+			collection.add(supp);
+		}
+		if (c.getSolvedBinaryRelation() == null) {
+			return collection;
+		}
+		collection.add(c.getSolvedBinaryRelation());
+		return collection;
+	}
+	
 	private ApplicationTerm searchModOrDivSubterm(final AGAT affineTerm, final Script script, final Term subject) {
 		if (affineTerm.toTerm(script) instanceof ApplicationTerm) {
 			final ApplicationTerm appAffineTerm = (ApplicationTerm) mAffineTerm.toTerm(script);
