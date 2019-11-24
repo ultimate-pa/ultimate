@@ -569,17 +569,26 @@ public class ElimStorePlain {
 				resultingCorrespondingJuncts[i] = res.getTerm();
 			}
 		}
-		Term currentTerm2 = compose(dualJunctWithoutEliminatee, eTaskForVar.getQuantifier(),
-				Arrays.asList(resultingCorrespondingJuncts));
-		final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, currentTerm2,
+		final boolean pushContextInside = true;
+		final Term preliminaryResult;
+		if (pushContextInside) {
+			preliminaryResult = compose(dualJunctWithoutEliminatee, eTaskForVar.getQuantifier(),
+					Arrays.asList(resultingCorrespondingJuncts));
+		} else {
+			final Term resultingCorrespondingJunction = QuantifierUtils.applyCorrespondingFiniteConnective(
+					mMgdScript.getScript(), eTaskForVar.getQuantifier(), Arrays.asList(resultingCorrespondingJuncts));
+			preliminaryResult = QuantifierUtils.applyDualFiniteConnective(mMgdScript.getScript(),
+					eTaskForVar.getQuantifier(), resultingCorrespondingJunction, dualJunctWithoutEliminatee);
+		}
+		final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, preliminaryResult,
 				eTaskForVar.getContext(), mServices,
 				mSimplificationTechnique);
 		final String sizeMessage = String.format("treesize reduction %d, result has %2.1f percent of original size",
 				esr.getReductionOfTreeSize(), esr.getReductionRatioInPercent());
 		mLogger.info(sizeMessage);
-		currentTerm2 = esr.getSimplifiedTerm();
+		final Term simplifiedResult = esr.getSimplifiedTerm();
 		final EliminationTaskWithContext res = new EliminationTaskWithContext(eTaskForVar.getQuantifier(),
-				newElimnateesForVar, currentTerm2, eTaskForVar.getContext());
+				newElimnateesForVar, simplifiedResult, eTaskForVar.getContext());
 		return res;
 	}
 
