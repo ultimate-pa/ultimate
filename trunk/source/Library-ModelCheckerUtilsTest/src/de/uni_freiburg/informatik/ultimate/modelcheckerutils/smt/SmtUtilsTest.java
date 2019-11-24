@@ -217,6 +217,13 @@ public class SmtUtilsTest {
 		Assert.assertTrue(outputIsCorrect);
 	}
 
+	/**
+	 * 2019-11-24 Matthias: Small test that triggers the following Exception.
+	 *
+	 * <pre>
+	 * SMTLIBException: Undeclared function symbol (const Int): de.uni_freiburg.informatik.ultimate.logic.NoopScript.term(NoopScript.java:478)]
+	 * </pre>
+	 */
 	@Test
 	public void constIntBug() {
 		final HistoryRecordingScript hrs = new HistoryRecordingScript(mScript);
