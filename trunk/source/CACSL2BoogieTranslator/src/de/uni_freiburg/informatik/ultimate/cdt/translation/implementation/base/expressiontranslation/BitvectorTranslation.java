@@ -582,26 +582,28 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public ExpressionResult convertIntToFloat(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
+		final CPrimitive conversionType = new CPrimitive(newType, true);
 		final String prefixedFunctionName =
-				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
+				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), conversionType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { getCurrentRoundingMode(), oldExpression },
-				mTypeHandler.getBoogieTypeForCType(newType));
-		final RValue rVal = new RValue(resultExpression, newType, false, false);
+				mTypeHandler.getBoogieTypeForCType(conversionType));
+		final RValue rVal = new RValue(resultExpression, conversionType, false, false);
 		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
 
 	@Override
 	public ExpressionResult convertFloatToFloat(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
+		final CPrimitive conversionType = new CPrimitive(newType, true);
 		final String prefixedFunctionName =
-				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
+				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), conversionType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { getCurrentRoundingMode(), oldExpression },
-				mTypeHandler.getBoogieTypeForCType(newType));
-		final RValue rVal = new RValue(resultExpression, newType, false, false);
+				mTypeHandler.getBoogieTypeForCType(conversionType));
+		final RValue rVal = new RValue(resultExpression, conversionType, false, false);
 
 		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
@@ -1341,15 +1343,16 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector,
 			final CPrimitives floatType) {
+		final CPrimitive conversionType = new CPrimitive(floatType, true);
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(floatType);
 		final Expression significantBits = extractBits(loc, bitvector, fps.getSignificant() - 1, 0);
 		final Expression exponentBits = extractBits(loc, bitvector, fps.getDataSize() - 1, fps.getSignificant() - 1);
 		final Expression signBit = extractBits(loc, bitvector, fps.getDataSize(), fps.getDataSize() - 1);
 		final String smtFunctionName = "fp";
-		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, new CPrimitive(floatType));
+		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, conversionType);
 		final Expression result = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
 				new Expression[] { signBit, exponentBits, significantBits },
-				mTypeHandler.getBoogieTypeForCType(new CPrimitive(floatType)));
+				mTypeHandler.getBoogieTypeForCType(conversionType));
 		return result;
 
 	}

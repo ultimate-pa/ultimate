@@ -47,7 +47,7 @@ public abstract class CType {
 	private final boolean mIsRestrict;
 	private final boolean mIsVolatile;
 	private final boolean mIsExtern;
-	private final boolean mIsSmtFloat;
+	private final boolean mIsShadowed;
 
 	/**
 	 * Constructor.
@@ -60,13 +60,22 @@ public abstract class CType {
 	}
 	
 	public CType(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
-			final boolean isExtern, final boolean isSmtFloat) {
+			final boolean isExtern, final boolean isShadowed) {
 		mIsConst = isConst;
 		mIsInline = isInline;
 		mIsRestrict = isRestrict;
 		mIsVolatile = isVolatile;
 		mIsExtern = isExtern;
-		mIsSmtFloat = isSmtFloat;
+		mIsShadowed = isShadowed;
+	}
+	
+	public CType(final CType base, final boolean shadowed) {
+		this(base.isConst(),
+				base.isInline(),
+				base.isRestrict(),
+				base.isVolatile(),
+				base.isExtern(),
+				shadowed);
 	}
 	
 	public boolean isConst() {
@@ -90,7 +99,7 @@ public abstract class CType {
 	}
 	
 	public boolean isSmtFloat() {
-		return mIsSmtFloat;
+		return mIsShadowed;
 	}
 
 	public abstract boolean isIncomplete();

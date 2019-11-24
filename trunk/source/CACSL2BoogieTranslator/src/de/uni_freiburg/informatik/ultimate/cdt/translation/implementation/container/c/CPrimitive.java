@@ -129,11 +129,22 @@ public class CPrimitive extends CType {
 	 */
 	private final CPrimitiveCategory mGeneralType;
 
-	public CPrimitive(final CPrimitives type) {
+	public CPrimitive(final CPrimitives type, final boolean shadowed) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false);
+		super(false, false, false, false, false, shadowed);
 		mType = type;
 		mGeneralType = getGeneralType(type);
+	}
+	
+	public CPrimitive(final CPrimitives type) {
+		// FIXME: integrate those flags -- you will also need to change the equals method if you do
+		this(type, false);
+	}
+	
+	public CPrimitive(final CPrimitive base, final boolean shadowed) {
+		super(base.getUnderlyingType(), shadowed);
+		mType = base.getType();
+		mGeneralType = getGeneralType(mType);
 	}
 
 	/**
