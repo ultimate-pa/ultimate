@@ -105,4 +105,34 @@ public class Case implements ITermProviderOnDemand {
 		}
 		return result;
 	}
+	
+	@Override
+	public String toString() {
+		String junctor;
+		String result;
+		switch (mXnf) {
+		case CNF:
+			junctor = " \\/ ";
+			break;
+		case DNF:
+			junctor = " /\\ ";
+			break;
+		default:
+			throw new AssertionError("unknown case " + mXnf);
+		}
+		if (mSolvedBinaryRelation == null) {
+			result = "{";
+		}else {
+			result = "{" + mSolvedBinaryRelation.toString();
+		}
+		for (final SupportingTerm supp : mSupportingTerms) {
+			if (result == "{") {
+				result = result + supp.toString();
+			}else {
+				result = result + junctor + supp.toString();
+			}
+		}
+		result = result + "}";
+		return result;
+	}
 }

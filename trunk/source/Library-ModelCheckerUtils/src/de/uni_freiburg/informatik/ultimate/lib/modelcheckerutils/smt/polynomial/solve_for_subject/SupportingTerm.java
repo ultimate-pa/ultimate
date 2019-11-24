@@ -78,12 +78,14 @@ public class SupportingTerm implements ITermProvider {
 	
 	@Override
 	public String toString() {
-		String info = mTerm.toString();
+		String info = "[";
+		info = info + mTerm.toString();
 		info = info + ", " + mIntricateOperation.toString();
 		info = info + ", AuxVars: ";
-		for (TermVariable termVar : mNewAuxiliaryVariables) {
+		for (final TermVariable termVar : mNewAuxiliaryVariables) {
 			info = info + termVar.toString() + ", ";
 		}
+		info = info + "]";
 		return info;
 	}
 

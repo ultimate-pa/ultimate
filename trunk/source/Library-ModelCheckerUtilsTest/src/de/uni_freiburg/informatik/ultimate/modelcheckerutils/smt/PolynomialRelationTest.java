@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
@@ -132,6 +131,12 @@ public class PolynomialRelationTest {
 	}
 	
 	@Test
+	public void relationRealPolyEQ7() throws NotAffineException {
+		final String inputSTR = "(= (* 3.0 x (/ y z) z 5.0) (* y z)))";
+		testSolveForX(inputSTR);
+	}
+	
+	@Test
 	public void relationRealPolyMultipleSubjectsEQ7() throws NotAffineException {
 		final String inputSTR = "(= (* z (+ 6.0 (* (* x y) x))) (+ 3.0 (* z z)))";
 		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "x"));
@@ -160,33 +165,63 @@ public class PolynomialRelationTest {
 	}
 	
 	@Test
-	public void relationRealGEQ() throws NotAffineException {
+	public void relationRealGEQ01() throws NotAffineException {
 		final String inputSTR = "(>= (* 3.0 x) lo )";
 		testSolveForX(inputSTR);
 	}
+	
+	@Test
+	public void relationRealPolyGEQ02() throws NotAffineException {
+		final String inputSTR = "(>= (* 3.0 x (/ y z) z 5.0) (* y lo))";
+		testSolveForXMultiCaseOnly(inputSTR);
+	}
 
 	@Test
-	public void relationRealLEQ() throws NotAffineException {
+	public void relationRealLEQ01() throws NotAffineException {
 		final String inputSTR = "(<= (* 3.0 x) hi )";
 		testSolveForX(inputSTR);
 	}
+	
+	@Test
+	public void relationRealPolyLEQ02() throws NotAffineException {
+		final String inputSTR = "(<= (* 3.0 x (/ y z) z 5.0) (* y hi))";
+		testSolveForXMultiCaseOnly(inputSTR);
+	}
 
 	@Test
-	public void relationRealDISTINCT() throws NotAffineException {
+	public void relationRealDISTINCT01() throws NotAffineException {
 		final String inputSTR = "(not(= (* 3.0 x) y ))";
 		testSolveForX(inputSTR);
 	}
-
+	
 	@Test
-	public void relationRealGREATER() throws NotAffineException {
-		final String inputSTR = "(> (* 3.0 x) lo )";
+	public void relationRealPolyDISTINCT02() throws NotAffineException {
+		final String inputSTR = "(not(= (* 3.0 x (/ y z) z 5.0) (* y z)))";
 		testSolveForX(inputSTR);
 	}
 
 	@Test
-	public void relationRealLESS() throws NotAffineException {
+	public void relationRealGREATER01() throws NotAffineException {
+		final String inputSTR = "(> (* 3.0 x) lo )";
+		testSolveForX(inputSTR);
+	}
+	
+	@Test
+	public void relationRealPolyGREATER02() throws NotAffineException {
+		final String inputSTR = "(> (* 3.0 x (/ y z) z 5.0) (* y lo))";
+		testSolveForXMultiCaseOnly(inputSTR);
+	}
+
+	@Test
+	public void relationRealLESS01() throws NotAffineException {
 		final String inputSTR = "(< (* 4.0 x) hi )";
 		testSolveForX(inputSTR);
+	}
+	
+	@Test
+	public void relationRealPolyLESS02() throws NotAffineException {
+		final String inputSTR = "(< (* 3.0 x (/ y z) z 5.0) (* y hi))";
+		testSolveForXMultiCaseOnly(inputSTR);
 	}
 
 	private SolvedBinaryRelation polyRelOnLeftHandSide(final String termAsString, final String varString)

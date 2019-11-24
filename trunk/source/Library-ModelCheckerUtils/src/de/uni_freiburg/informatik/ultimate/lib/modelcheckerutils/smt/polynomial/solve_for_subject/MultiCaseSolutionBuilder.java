@@ -120,8 +120,9 @@ public class MultiCaseSolutionBuilder {
 			for (final Collection<?> conjunction : dnf) {
 				if (mCases.isEmpty()) {
 					resultCases.add(buildCase(conjunction.toArray()));
+				}else {
+					resultCases.addAll(buildCopyAndAddToEachCase(mCases, conjunction.toArray()));
 				}
-				resultCases.addAll(buildCopyAndAddToEachCase(mCases, conjunction.toArray()));
 			}
 			mCases = resultCases;
 			break;

@@ -754,6 +754,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			mcsb.conjoinWithDnf(dnf);
 		}
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
+		final Term debug = result.asTerm(script);
 		if (!subjectInAllowedSubterm) {
 			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
 					result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
@@ -769,14 +770,37 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 
 	private Case constructDivByVarEqualZeroCase(final Script script, final IntermediateCase previousCase,
 			final Term var) {
+		final RelationSymbol relSym = previousCase.getIntermediateRelationSymbol();
 		final Term rhs = previousCase.getIntermediateRhs();
 		final Set<SupportingTerm> suppTerms = new LinkedHashSet<>(previousCase.getSupportingTerms());
 		final Term zeroTerm = SmtUtils.rational2Term(script, Rational.ZERO, mAffineTerm.getSort());
 		final Term varEqualZero = SmtUtils.binaryEquality(script, zeroTerm, var);
 		suppTerms.add(new SupportingTerm(varEqualZero, IntricateOperation.DIV_BY_NONCONSTANT, Collections.emptySet()));
-		final Term rhsEqualZeroTerm = SmtUtils.binaryEquality(script, zeroTerm, rhs);
+		final Term rhsRelationZeroTerm;
+		switch(relSym) {
+		case EQ:
+			rhsRelationZeroTerm = SmtUtils.binaryEquality(script, zeroTerm, rhs);
+			break;
+		case DISTINCT:
+			rhsRelationZeroTerm = SmtUtils.distinct(script, zeroTerm, rhs);
+			break;
+		case LEQ:
+			rhsRelationZeroTerm = SmtUtils.leq(script, zeroTerm, rhs);
+			break;
+		case LESS:
+			rhsRelationZeroTerm = SmtUtils.less(script, zeroTerm, rhs);
+			break;
+		case GEQ:
+			rhsRelationZeroTerm = SmtUtils.geq(script, zeroTerm, rhs);
+			break;
+		case GREATER:
+			rhsRelationZeroTerm = SmtUtils.greater(script, zeroTerm, rhs);
+			break;
+		default:
+			throw new UnsupportedOperationException("No such RelationSymbol known.");
+		}
 		suppTerms.add(
-				new SupportingTerm(rhsEqualZeroTerm, IntricateOperation.DIV_BY_NONCONSTANT, Collections.emptySet()));
+				new SupportingTerm(rhsRelationZeroTerm, IntricateOperation.DIV_BY_NONCONSTANT, Collections.emptySet()));
 		return new Case(null, suppTerms, MultiCaseSolvedBinaryRelation.Xnf.DNF);
 	}
 
