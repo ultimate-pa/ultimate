@@ -953,12 +953,27 @@ public class CHandler {
 			castTargetValueType = ((CPointer) castTargetType).getPointsToType().getUnderlyingType();
 		}
 
-		final Expression operandTypeByteSizeExp =
+		final Expression operandTypeByteSizeExp;
+		try {
+			operandTypeByteSizeExp =
 				mTypeSizeComputer.constructBytesizeExpression(loc, operandValueType, node);
+		} catch (final UnsupportedOperationException e) {
+			mLogger.debug("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
+					+ "model");
+			return;
+		}
 		final BigInteger operandTypeByteSize =
 				mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), node);
-		final Expression castTargetByteSizeExp =
+
+		final Expression castTargetByteSizeExp;
+		try {
+			castTargetByteSizeExp =
 				mTypeSizeComputer.constructBytesizeExpression(loc, castTargetValueType, node);
+		} catch (final UnsupportedOperationException e) {
+			mLogger.debug("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
+					+ "model");
+			return;
+		}
 		final BigInteger castTargetByteSize =
 				mTypeSizes.extractIntegerValue(castTargetByteSizeExp, mTypeSizeComputer.getSizeT(), node);
 
