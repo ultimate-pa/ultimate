@@ -931,26 +931,26 @@ public class CHandler {
 	}
 
 	private void checkIfNecessaryMemoryModelAdaption(final IASTCastExpression node, final ILocation loc,
-			final CType newCType, final ExpressionResult expr) {
-		final CType exprType = expr.getLrValue().getCType().getUnderlyingType();
-		if ((!(exprType instanceof CArray) && !(exprType instanceof CPointer))
-				|| (!(newCType instanceof CArray) && !(newCType instanceof CPointer))) {
+			final CType castTargetType, final ExpressionResult operand) {
+		final CType operandType = operand.getLrValue().getCType().getUnderlyingType();
+		if ((!(operandType instanceof CArray) && !(operandType instanceof CPointer))
+				|| (!(castTargetType instanceof CArray) && !(castTargetType instanceof CPointer))) {
 			return;
 		}
 
 		// memory model adaptation might be necessary
 		final CType operandValueType;
-		if (exprType instanceof CArray) {
-			operandValueType = ((CArray) exprType).getValueType().getUnderlyingType();
+		if (operandType instanceof CArray) {
+			operandValueType = ((CArray) operandType).getValueType().getUnderlyingType();
 		} else {
-			operandValueType = ((CPointer) exprType).getPointsToType().getUnderlyingType();
+			operandValueType = ((CPointer) operandType).getPointsToType().getUnderlyingType();
 		}
 
 		final CType castTargetValueType;
-		if (newCType instanceof CArray) {
-			castTargetValueType = ((CArray) newCType).getValueType().getUnderlyingType();
+		if (castTargetType instanceof CArray) {
+			castTargetValueType = ((CArray) castTargetType).getValueType().getUnderlyingType();
 		} else {
-			castTargetValueType = ((CPointer) newCType).getPointsToType().getUnderlyingType();
+			castTargetValueType = ((CPointer) castTargetType).getPointsToType().getUnderlyingType();
 		}
 
 		final Expression operandTypeByteSizeExp =
@@ -982,6 +982,15 @@ public class CHandler {
 					+ "model resolution";
 		} else {
 			// no need to change memory model
+			return;
+		}
+
+
+		if (operandTypeByteSize.intValueExact() == 0) {
+			// operand's type has size 0 -- not sure what makes sense to do here, doing nothing
+			// case where I encountered it was a struct with a 0-sized array in it; if someone wants to read more on
+			// that phenomenon:
+			//  https://stackoverflow.com/questions/52630441/c-struct-with-zero-sized-array-members
 			return;
 		}
 
