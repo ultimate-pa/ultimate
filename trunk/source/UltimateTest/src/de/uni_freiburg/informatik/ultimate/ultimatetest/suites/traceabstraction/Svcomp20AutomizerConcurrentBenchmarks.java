@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
 public class Svcomp20AutomizerConcurrentBenchmarks extends AbstractTraceAbstractionTestSuite {
 
 	private static final boolean USE_SAFE_BENCHMARKS = true;
-	private static final boolean USE_UNSAFE_BENCHMARKS = false;
+	private static final boolean USE_UNSAFE_BENCHMARKS = true;
 	private static final int TIMEOUT = 60; // seconds
 
 	// @formatter:off
