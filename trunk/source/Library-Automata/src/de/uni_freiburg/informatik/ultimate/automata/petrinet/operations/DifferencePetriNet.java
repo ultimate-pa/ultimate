@@ -359,8 +359,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 
 	@Override
 	public String sizeInformation() {
-		// TODO Auto-generated method stub
-		return "not available";
+		return "will be constructed on-demand";
 	}
 
 	@Override

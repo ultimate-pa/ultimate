@@ -33,9 +33,11 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -527,11 +529,78 @@ public final class MSODSolver {
 	}
 
 	/**
+	 *
+	 */
+	public int indexToNumber(final int index) {
+		if (mFormulaOperations instanceof MSODFormulaOperationsNat) {
+			return index;
+		}
+
+		if (mFormulaOperations instanceof MSODFormulaOperationsInt) {
+			return (index % 2 == 0 ? 1 : -1) * (index + 1) / 2;
+		}
+
+		throw new IllegalArgumentException("Unsupported formula operations.");
+	}
+
+	/**
+	 *
+	 */
+	public Map<Term, Deque<Integer>> wordToNumbers(final NestedWord<MSODAlphabetSymbol> word, final int offset) {
+		final Map<Term, Deque<Integer>> result = new HashMap<>();
+
+		for (int i = 0; i < word.length(); i++) {
+			final MSODAlphabetSymbol symbol = word.getSymbol(i);
+			final int value = indexToNumber(i + offset);
+
+			for (final Entry<Term, Boolean> entry : symbol.getMap().entrySet()) {
+				if (!entry.getValue()) {
+					continue;
+				}
+
+				Deque<Integer> values = result.get(entry.getKey());
+				if (values == null) {
+					values = new LinkedList<>();
+					result.put(entry.getKey(), values);
+				}
+
+				if (value < 0) {
+					values.addFirst(value);
+					continue;
+				}
+
+				values.addLast(value);
+			}
+		}
+
+		return result;
+	}
+
+	public void getResult(final ILogger logger, final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
+
+		final NestedLassoWord<MSODAlphabetSymbol> word = getWord(services, automaton);
+
+		if (word == null) {
+			return;
+		}
+
+		logger.info(word);
+
+		final Map<Term, Deque<Integer>> stem = wordToNumbers(word.getStem(), 0);
+		stem.entrySet().forEach(e -> logger.info(e.getKey() + " " + e.getValue()));
+
+		final Map<Term, Deque<Integer>> loop = wordToNumbers(word.getLoop(), word.getStem().length());
+		loop.entrySet().forEach(e -> logger.info(e.getKey() + " " + e.getValue()));
+	}
+
+	/**
 	 * Returns a {@link NestedWord} accepted by the given automaton, or null if language of automaton is empty.
 	 *
 	 * @throws AutomataLibraryException
 	 *             if {@link IsEmpty} fails
 	 */
+	@Deprecated
 	public static NestedWord<MSODAlphabetSymbol> getWordWeak(final Script script,
 			final AutomataLibraryServices services, final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
 			throws AutomataLibraryException {
@@ -554,6 +623,7 @@ public final class MSODSolver {
 	 * @throws AutomataLibraryException
 	 *             if {@link BuchiIsEmpty} fails
 	 */
+	@Deprecated
 	public static NestedLassoWord<MSODAlphabetSymbol> getWordBuchi(final Script script,
 			final AutomataLibraryServices services, final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
 			throws AutomataLibraryException {
@@ -815,7 +885,7 @@ public final class MSODSolver {
 	 *
 	 * @throws AutomataLibraryException
 	 */
-	public Map<Term, Term> getResult(final Script script, final AutomataLibraryServices services,
+	public Map<Term, Term> getResultOld(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 		if (mAutomataOperations instanceof MSODAutomataOperationsWeak) {
 			return getResultWeak(script, services, automaton);

@@ -1,4 +1,4 @@
-//#Safe
+//#Unsafe
 /*
  * Implementation of Fischer's mutual exclusion protocol.
  * 

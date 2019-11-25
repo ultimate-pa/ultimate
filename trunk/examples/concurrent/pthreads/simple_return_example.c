@@ -1,3 +1,4 @@
+// #Safe
 #include <pthread.h>
 #include <stdio.h>
 
@@ -19,6 +20,7 @@ int main() {
     pthread_join(thread_id, &ret_val);
     int *x = (int *)ret_val;
 
-    //@ assert x == 10;
+	int a = *x;
+    //@ assert a == 10;
     return 0;
 }

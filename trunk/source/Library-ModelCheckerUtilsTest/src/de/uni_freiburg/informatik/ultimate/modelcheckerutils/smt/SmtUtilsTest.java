@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.UnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -145,7 +148,7 @@ public class SmtUtilsTest {
 		mScript.declareFun(name, new Sort[0], sort);
 		return mScript.term(name);
 	}
-	
+
 	@Test
 	public void divRealTest01() {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
@@ -171,7 +174,7 @@ public class SmtUtilsTest {
 		final String expectedOutputAsString03 = "(/ (/ 7.0 2.0) x (/ 23.0 2.0))";
 		divRealTest(inputAsString03, expectedOutputAsString03);
 	}
-	
+
 	@Test
 	public void divIntTest01() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
@@ -212,5 +215,20 @@ public class SmtUtilsTest {
 		mLogger.info("Expected output: " + expectedOutputAsTerm);
 		final boolean outputIsCorrect = expectedOutputAsTerm.equals(outputAsTerm);
 		Assert.assertTrue(outputIsCorrect);
+	}
+
+	/**
+	 * 2019-11-24 Matthias: Small test that triggers the following Exception.
+	 *
+	 * <pre>
+	 * SMTLIBException: Undeclared function symbol (const Int): de.uni_freiburg.informatik.ultimate.logic.NoopScript.term(NoopScript.java:478)]
+	 * </pre>
+	 */
+	@Test
+	public void constIntBug() {
+		final HistoryRecordingScript hrs = new HistoryRecordingScript(mScript);
+		final String inputAsString = "((as const (Array Int Int)) 0)";
+		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
+		new TermTransferrer(hrs, hrs, Collections.emptyMap(), true).transform(inputAsTerm);
 	}
 }

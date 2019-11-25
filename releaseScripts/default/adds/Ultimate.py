@@ -744,15 +744,9 @@ def main():
         ultimate_call = ultimate_call + extras
 
     # actually run Ultimate, first in integer mode
-    
-    if prop.is_any_mem():
-        # skip running in integer mode if we have a memsafety property 
-        overapprox = True
-        ultimate_output = "Skipped default analysis because property is memsafety\n"
-    else:
-        result, result_msg, overapprox, ultimate_output, error_path = run_ultimate(ultimate_call, prop)
+    result, result_msg, overapprox, ultimate_output, error_path = run_ultimate(ultimate_call, prop)
 
-    if overapprox:
+    if overapprox or result.startswith('ERROR') or result.startswith('UNKNOWN'):
         try:
             settings_file = get_settings_path(True, settings_search_string)
         except _AbortButPrint:

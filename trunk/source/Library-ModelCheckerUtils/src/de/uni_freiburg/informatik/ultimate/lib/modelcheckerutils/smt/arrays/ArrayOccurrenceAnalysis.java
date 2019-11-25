@@ -269,6 +269,8 @@ public class ArrayOccurrenceAnalysis {
 								.getDimension() != new MultiDimensionalSort(mWantedArray.getSort()).getDimension()) {
 							throw new AssertionError("downgrade");
 						}
+						// TODO 2019-11-24 Matthias: unify downgrade for
+						// MultiDimensionalNestedStore and MultiDimensionalSelectOverNestedStore
 						if (nas.getDimension() > mDimensionUpperLimit) {
 							if (THROW_ERROR_BEFORE_DOWNGRADE) {
 								throw new AssertionError("downgrade");
@@ -297,6 +299,17 @@ public class ArrayOccurrenceAnalysis {
 							MultiDimensionalSelectOverNestedStore.convert(mScript, term);
 					if (asos != null) {
 						if (asos.getNestedStore().getArray().equals(mWantedArray)) {
+							if (asos.getNestedStore().getDimension() > mDimensionUpperLimit) {
+								// TODO 2019-11-24 Matthias: unify downgrade for
+								// MultiDimensionalNestedStore and MultiDimensionalSelectOverNestedStore
+								if (THROW_ERROR_BEFORE_DOWNGRADE) {
+									throw new AssertionError("downgrade");
+								}
+								for (final Term t : term.getParameters()) {
+									walker.enqueueWalker(new MyWalker(t));
+								}
+								return;
+							}
 							mArraySelectOverStores.add(asos);
 							for (final Term indexEntry : asos.getSelect().getIndex()) {
 								walker.enqueueWalker(new MyWalker(indexEntry));

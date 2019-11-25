@@ -921,62 +921,79 @@ public class CHandler {
 		expr = mExprResultTransformer.makeRepresentationReadyForConversion(expr, loc, newCType, node);
 		checkUnsupportedPointerCast(expr, loc, newCType);
 
-		if (mSettings.isAdaptMemoryModelResolutionOnPointerCasts() && mIsPrerun
-				&& mSettings.getMemoryModelPreference().isBitVectorMemoryModel()) {
-			final CType exprType = expr.getLrValue().getCType().getUnderlyingType();
-			if ((exprType instanceof CArray || exprType instanceof CPointer)
-					&& (newCType instanceof CArray || newCType instanceof CPointer)) {
-				// memory model adaptation might be necessary
-
-				final CType operandValueType;
-				{
-					if (exprType instanceof CArray) {
-						operandValueType = ((CArray) exprType).getValueType().getUnderlyingType();
-					} else {
-						operandValueType = ((CPointer) exprType).getPointsToType().getUnderlyingType();
-					}
-				}
-
-				final Expression operandTypeByteSizeExp =
-						mTypeSizeComputer.constructBytesizeExpression(loc, operandValueType, node);
-				final BigInteger operandTypeByteSize =
-						mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), node);
-
-				final CType castTargetValueType;
-				{
-					if (newCType instanceof CArray) {
-						castTargetValueType = ((CArray) newCType).getValueType().getUnderlyingType();
-					} else {
-						castTargetValueType = ((CPointer) newCType).getPointsToType().getUnderlyingType();
-					}
-				}
-
-				final Expression castTargetByteSizeExp =
-						mTypeSizeComputer.constructBytesizeExpression(loc, castTargetValueType, node);
-				final BigInteger castTargetByteSize =
-						mTypeSizes.extractIntegerValue(castTargetByteSizeExp, mTypeSizeComputer.getSizeT(), node);
-
-				if (castTargetByteSize.compareTo(operandTypeByteSize) > 0
-						&& BigInteger.valueOf(mSettings.getMemoryModelPreference().getByteSize())
-								.compareTo(operandTypeByteSize) > 0) {
-					// memory model resolution is strictly bigger than the operand's type's, and the operand is cast to
-					// a bigger type --> signal a restart of the translation with a memory model precise enough for the
-					// operands
-					mLogger.info("Found a cast between two array/pointer types where the value type is smaller than the"
-							+ " cast-to type, and where that value type is smaller than our current memory model "
-							+ " resolution");
-					mLogger.info(" at location: " + loc);
-					mLogger.info(" current memory model: " + mSettings.getMemoryModelPreference());
-
-					signalTranslationRestartWithDifferentSettings(new TranslationSettings.SettingsChange(
-							MemoryModel.getPreciseEnoughMemoryModelFor(operandTypeByteSize.intValueExact())));
-				}
-			}
+		if (mSettings.isAdaptMemoryModelResolutionOnPointerCasts() && mIsPrerun) {
+			checkIfNecessaryMemoryModelAdaption(node, loc, newCType, expr);
 		}
 
 		expr = mExprResultTransformer.rexBoolToInt(expr, loc);
 		expr = mExprResultTransformer.performImplicitConversion(expr, newCType, loc);
 		return expr;
+	}
+
+	private void checkIfNecessaryMemoryModelAdaption(final IASTCastExpression node, final ILocation loc,
+			final CType newCType, final ExpressionResult expr) {
+		final CType exprType = expr.getLrValue().getCType().getUnderlyingType();
+		if ((!(exprType instanceof CArray) && !(exprType instanceof CPointer))
+				|| (!(newCType instanceof CArray) && !(newCType instanceof CPointer))) {
+			return;
+		}
+
+		// memory model adaptation might be necessary
+		final CType operandValueType;
+		if (exprType instanceof CArray) {
+			operandValueType = ((CArray) exprType).getValueType().getUnderlyingType();
+		} else {
+			operandValueType = ((CPointer) exprType).getPointsToType().getUnderlyingType();
+		}
+
+		final CType castTargetValueType;
+		if (newCType instanceof CArray) {
+			castTargetValueType = ((CArray) newCType).getValueType().getUnderlyingType();
+		} else {
+			castTargetValueType = ((CPointer) newCType).getPointsToType().getUnderlyingType();
+		}
+
+		final Expression operandTypeByteSizeExp =
+				mTypeSizeComputer.constructBytesizeExpression(loc, operandValueType, node);
+		final BigInteger operandTypeByteSize =
+				mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT(), node);
+		final Expression castTargetByteSizeExp =
+				mTypeSizeComputer.constructBytesizeExpression(loc, castTargetValueType, node);
+		final BigInteger castTargetByteSize =
+				mTypeSizes.extractIntegerValue(castTargetByteSizeExp, mTypeSizeComputer.getSizeT(), node);
+
+		if (castTargetByteSize.compareTo(operandTypeByteSize) <= 0) {
+			// type sizes are already compatible
+			return;
+		}
+
+		final String msg;
+		if (mSettings.getMemoryModelPreference() == MemoryModel.HoenickeLindenmann_Original) {
+			// memory model has no resolution and the operand is
+			// cast to a bigger type
+			msg = "Found a cast between two array/pointer types where the value type is smaller than the "
+					+ "cast-to type while using memory model " + MemoryModel.HoenickeLindenmann_Original;
+		} else if (BigInteger.valueOf(mSettings.getMemoryModelPreference().getByteSize())
+				.compareTo(operandTypeByteSize) > 0) {
+			// memory model resolution is strictly bigger than the operand's type's, and the operand is
+			// cast to a bigger type
+			msg = "Found a cast between two array/pointer types where the value type is smaller than the"
+					+ " cast-to type, and where that value type is smaller than our current memory "
+					+ "model resolution";
+		} else {
+			// no need to change memory model
+			return;
+		}
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(msg);
+			mLogger.debug(" at location: " + loc);
+			mLogger.debug(" current memory model: " + mSettings.getMemoryModelPreference());
+		}
+		// signal a restart of the translation with a memory model precise
+		// enough for the operands
+		signalTranslationRestartWithDifferentSettings(new TranslationSettings.SettingsChange(loc, msg,
+				MemoryModel.getPreciseEnoughMemoryModelFor(operandTypeByteSize.intValueExact())));
 	}
 
 	public Result visit(final IDispatcher main, final IASTCompoundStatement node) {

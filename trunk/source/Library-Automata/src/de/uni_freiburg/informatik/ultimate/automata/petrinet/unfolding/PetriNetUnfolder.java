@@ -62,6 +62,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *            place content type
  */
 public final class PetriNetUnfolder<LETTER, PLACE> {
+	private static final boolean EXTENDED_ASSERTION_CHECKING = false;
+
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
@@ -74,7 +76,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	private PetriNetRun<LETTER, PLACE> mRun;
 
 	private final PetriNetUnfolder<LETTER, PLACE>.Statistics mStatistics = new Statistics();
-	
+
 	private final boolean mUseCutoffChekingPossibleExtention = false;
 
 
@@ -230,7 +232,9 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			final ConditionMarking<LETTER, PLACE> initialMarking) throws PetriNetNot1SafeException {
 		assert event != mUnfolding.getDummyRoot();
 		assert !event.getPredecessorConditions().isEmpty();
-		assert !mUnfolding.pairwiseConflictOrCausalRelation(event.getPredecessorConditions());
+		if (EXTENDED_ASSERTION_CHECKING) {
+			assert !mUnfolding.pairwiseConflictOrCausalRelation(event.getPredecessorConditions());
+		}
 		PetriNetRun<LETTER, PLACE> run = new PetriNetRun<>(initialMarking.getMarking());
 		ConditionMarking<LETTER, PLACE> current = initialMarking;
 		for (final Condition<LETTER, PLACE> c : event.getPredecessorConditions()) {
@@ -409,7 +413,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		public String prettyprintConditionPerPlaceMax() {
 			return "Up to " + computeConditionPerPlaceMax() + " conditions per place.";
 		}
-		
+
 		public String prettyprintNumberOfEventComparisons() {
 			return "Compared " + getNumberOfEventComparisons() + " event pairs.";
 		}
@@ -431,7 +435,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		public int getNonCutOffEvents() {
 			return mNonCutOffEvents;
 		}
-		
+
 		public int getNumberOfEventComparisons() {
 			return mOrder.getNumberOfComparisons();
 		}

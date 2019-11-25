@@ -1,3 +1,4 @@
+// #Unsafe
 #include <pthread.h>
 #include <stdio.h>
 
@@ -20,6 +21,7 @@ int main() {
         printf("Successfully joined thread %d\n", x);
         x++;
     }
+    //@ assert \false;
 
     return 0;
 }

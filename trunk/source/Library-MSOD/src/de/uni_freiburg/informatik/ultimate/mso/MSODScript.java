@@ -28,18 +28,13 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
@@ -106,7 +101,7 @@ public class MSODScript extends NoopScript {
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		mLogger.info("INPUT: " + mAssertionTerm);
-		LBool result = LBool.UNKNOWN;
+		final LBool result = LBool.UNKNOWN;
 
 		try {
 
@@ -114,33 +109,33 @@ public class MSODScript extends NoopScript {
 					mMSODSolver.traversePostOrder(mAssertionTerm);
 
 			mLogger.info(MSODUtils.automatonToString(mAutomataLibrarayServices, automaton));
-			mModel = mMSODSolver.getResult(this, mAutomataLibrarayServices, automaton);
 
-			if (mModel == null) {
-				mLogger.info("RESULT: UNSAT");
-				return LBool.UNSAT;
-			}
+			mMSODSolver.getResult(mLogger, mAutomataLibrarayServices, automaton);
 
-			if (mModel.keySet().toString().contains("emptyWord")) {
-				// TODO Deal with empty word
-				mLogger.info("Model: EMPTYWORD");
-				final ConstantFinder cf = new ConstantFinder();
-				final Set<ApplicationTerm> terms = cf.findConstants(mAssertionTerm, true);
-				mModel.clear();
-				for (final Term t : terms) {
-					mModel.put(t, mAssertionTerm.getTheory().mFalse);
-				}
-			}
-
-			result = LBool.SAT;
-			mLogger.info("RESULT: SAT");
-			mLogger.info("MODEL: " + mModel);
+			// mModel = mMSODSolver.getResultOld(this, mAutomataLibrarayServices, automaton);
+			//
+			// if (mModel == null) {
+			// mLogger.info("RESULT: UNSAT");
+			// return LBool.UNSAT;
+			// }
+			//
+			// if (mModel.keySet().toString().contains("emptyWord")) {
+			// // TODO Deal with empty word
+			// mLogger.info("Model: EMPTYWORD");
+			// final ConstantFinder cf = new ConstantFinder();
+			// final Set<ApplicationTerm> terms = cf.findConstants(mAssertionTerm, true);
+			// mModel.clear();
+			// for (final Term t : terms) {
+			// mModel.put(t, mAssertionTerm.getTheory().mFalse);
+			// }
+			// }
+			//
+			// result = LBool.SAT;
+			// mLogger.info("RESULT: SAT");
+			// mLogger.info("MODEL: " + mModel);
 
 		} catch (final Exception e) {
-			final StringWriter stringWriter = new StringWriter();
-			final PrintWriter printWriter = new PrintWriter(stringWriter);
-			e.printStackTrace(printWriter);
-			mLogger.info(stringWriter);
+			mLogger.error(e);
 		}
 
 		return result;

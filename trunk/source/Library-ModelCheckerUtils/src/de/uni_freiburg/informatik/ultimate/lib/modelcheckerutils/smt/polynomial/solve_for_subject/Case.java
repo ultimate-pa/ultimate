@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class Case implements ITermProviderOnDemand {
 
-	private final SolvedBinaryRelation mSolvedBinaryRelation;
-	private final Set<SupportingTerm> mSupportingTerms;
-	private final Xnf mXnf;
+	protected final SolvedBinaryRelation mSolvedBinaryRelation;
+	protected final Set<SupportingTerm> mSupportingTerms;
+	protected final Xnf mXnf;
 
 	/**
 	 *
@@ -103,6 +103,36 @@ public class Case implements ITermProviderOnDemand {
 		default:
 			throw new AssertionError("unknown case " + mXnf);
 		}
+		return result;
+	}
+	
+	@Override
+	public String toString() {
+		String junctor;
+		String result;
+		switch (mXnf) {
+		case CNF:
+			junctor = " \\/ ";
+			break;
+		case DNF:
+			junctor = " /\\ ";
+			break;
+		default:
+			throw new AssertionError("unknown case " + mXnf);
+		}
+		if (mSolvedBinaryRelation == null) {
+			result = "{";
+		}else {
+			result = "{" + mSolvedBinaryRelation.toString();
+		}
+		for (final SupportingTerm supp : mSupportingTerms) {
+			if (result == "{") {
+				result = result + supp.toString();
+			}else {
+				result = result + junctor + supp.toString();
+			}
+		}
+		result = result + "}";
 		return result;
 	}
 }

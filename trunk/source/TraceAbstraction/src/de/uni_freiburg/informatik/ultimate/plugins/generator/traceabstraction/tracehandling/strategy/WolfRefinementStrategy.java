@@ -31,14 +31,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpTcStrategyModule;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyModuleFactory;
 
@@ -59,18 +59,16 @@ public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>> extends B
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <LETTER extends IIcfgTransition<?>> IIpTcStrategyModule<?, LETTER>[]
+	static <LETTER extends IIcfgTransition<?>> IIpTcStrategyModule<?, LETTER>[]
 			createModules(final StrategyModuleFactory<LETTER> factory) {
 
 		final TermClassifier tc = factory.getTermClassifierForTrace();
 		final List<IIpTcStrategyModule<?, LETTER>> rtr = new ArrayList<>();
-		if (RefinementStrategyUtils.hasNoFloats(tc)) {
-			rtr.add(factory.createIpTcStrategyModuleCVC4(false, InterpolationTechnique.FPandBP,
-					SolverBuilder.LOGIC_CVC4_BITVECTORS));
-		} else if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
-			// floats, but no quantifiers and no extensions
+		if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
+			// no quantifiers and no FP_TO_IEEE_BV_EXTENSION
 			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBP));
 		}
+		rtr.add(factory.createIpTcStrategyModuleCVC4(false, InterpolationTechnique.FPandBP, Logics.ALL));
 		rtr.add(factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}

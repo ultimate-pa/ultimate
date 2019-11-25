@@ -118,7 +118,11 @@ public class MultiCaseSolutionBuilder {
 		case DNF:
 			final List<Case> resultCases = new ArrayList<Case>();
 			for (final Collection<?> conjunction : dnf) {
-				resultCases.addAll(buildCopyAndAddToEachCase(mCases, conjunction.toArray()));
+				if (mCases.isEmpty()) {
+					resultCases.add(buildCase(conjunction.toArray()));
+				}else {
+					resultCases.addAll(buildCopyAndAddToEachCase(mCases, conjunction.toArray()));
+				}
 			}
 			mCases = resultCases;
 			break;

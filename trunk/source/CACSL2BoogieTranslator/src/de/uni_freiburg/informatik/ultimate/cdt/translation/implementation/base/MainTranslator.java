@@ -145,7 +145,6 @@ public class MainTranslator {
 		mLogger.info(
 				"Starting translation in" + (translationSettings.isSvcompMode() ? " SV-COMP mode " : " normal mode"));
 
-
 		while (true) {
 
 			// TODO: Line Directive mapping doesn't work with multiple TUs right now
@@ -194,14 +193,18 @@ public class MainTranslator {
 
 			if (prerunCHandler.restartTranslationWithDifferentSettings()) {
 				final SettingsChange settingsChange = prerunCHandler.getSettingsChangeForTranslationRestart();
+				if (!translationSettings.isBitvectorTranslation()) {
+					throw settingsChange.constructException("Not using bitvector translation");
+				}
 				translationSettings = settingsChange.applyChangeTo(translationSettings);
 				mLogger.info("Restarting translation with changed settings: " + settingsChange);
 				continue;
 			}
 			mLogger.info("Completed pre-run");
 
-			final CHandlerTranslationResult result = performMainRun(translationSettings, prerunCHandler, reporter,
-					locationFactory, witnessInvariants, backtranslatorMapping, nodes, prerunTypeHandler, mst, typeSizes);
+			final CHandlerTranslationResult result =
+					performMainRun(translationSettings, prerunCHandler, reporter, locationFactory, witnessInvariants,
+							backtranslatorMapping, nodes, prerunTypeHandler, mst, typeSizes);
 			mLogger.info("Completed translation");
 
 			return result.getNode();

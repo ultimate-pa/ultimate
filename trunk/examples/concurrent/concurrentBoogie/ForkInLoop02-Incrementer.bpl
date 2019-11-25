@@ -1,5 +1,6 @@
+// Unsafe
 /*
- *  
+ * We need three thread instance to find a counterexample.
  * Author: Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Date: 2019-11-20
  * 

@@ -212,7 +212,7 @@ public class CfgBuilder {
 		backtranslator.setTerm2Expression(mBoogie2Smt.getTerm2Expression());
 		mRcfgBacktranslator = backtranslator;
 
-		final ConcurrencyInformation ci = new ConcurrencyInformation(mForks, mJoins);
+		final ConcurrencyInformation ci = new ConcurrencyInformation(mForks, null, mJoins);
 		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2Smt, ci);
 		mCbf = mIcfg.getCodeBlockFactory();
 		mCbf.storeFactory(mServices.getStorage());

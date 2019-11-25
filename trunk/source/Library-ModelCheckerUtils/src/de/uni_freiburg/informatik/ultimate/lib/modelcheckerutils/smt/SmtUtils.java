@@ -1312,7 +1312,7 @@ public final class SmtUtils {
 			result = BitvectorUtils.termWithLocalSimplification(script, funcname, toBigIntegerArray(indices), params);
 			break;
 		default:
-			result = script.term(funcname, indices, null, params);
+			result = script.term(funcname, indices, resultSort, params);
 			break;
 		}
 		assert !DEBUG_ASSERT_ULTIMATE_NORMAL_FORM
