@@ -332,8 +332,9 @@ public class TraceAbstractionStarter {
 		if (root.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
 			icfg = root;
 		} else {
-			final IcfgPetrifier icfgPetrifier =
-					new IcfgPetrifier(mServices, root, IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY);
+			final int numberOfThreadInstances = 3;
+			final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, root,
+					IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY, numberOfThreadInstances);
 			final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
 			mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 			icfg = petrifiedIcfg;

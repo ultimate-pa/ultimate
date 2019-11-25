@@ -413,16 +413,15 @@ public class ThreadInstanceAdder {
 	public static Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> constructThreadInstances(
 			final IIcfg<? extends IcfgLocation> icfg,
 			final List<IIcfgForkTransitionThreadCurrent<IcfgLocation>> forkCurrentThreads,
-			final boolean addThreadInUseViolationVariablesAndErrorLocation) {
+			final boolean addThreadInUseViolationVariablesAndErrorLocation, final int numberOfThreadInstances) {
 		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> result = new HashMap<>();
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		int i = 0;
-		final int threadInstanceMax = 3;
 		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : forkCurrentThreads) {
 			final List<ThreadInstance> threadInstances = new ArrayList<>();
-			for (int j = 1; j <= threadInstanceMax; j++) {
+			for (int j = 1; j <= numberOfThreadInstances; j++) {
 				final String procedureName = fork.getNameOfForkedProcedure();
-				final String threadInstanceId = generateThreadInstanceId(i, procedureName, j, threadInstanceMax);
+				final String threadInstanceId = generateThreadInstanceId(i, procedureName, j, numberOfThreadInstances);
 				final IcfgLocation errorLocation;
 				if (addThreadInUseViolationVariablesAndErrorLocation) {
 					errorLocation = constructErrorLocation(i, fork);

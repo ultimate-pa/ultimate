@@ -92,8 +92,9 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) {
 		final IIcfg<? extends IcfgLocation> inputIcfg = (IIcfg) root;
-		final IcfgPetrifier icfgPetrifier =
-				new IcfgPetrifier(mServices, inputIcfg, IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY);
+		final int numberOfThreadInstances = 3;
+		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, inputIcfg,
+				IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY, numberOfThreadInstances);
 		final IIcfg<? extends IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
 		mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 		final TAPreferences taPrefs = new TAPreferences(mServices);

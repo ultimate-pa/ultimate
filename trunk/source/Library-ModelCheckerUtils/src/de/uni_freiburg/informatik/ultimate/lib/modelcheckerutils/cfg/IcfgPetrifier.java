@@ -79,7 +79,7 @@ public class IcfgPetrifier {
 
 
 	public IcfgPetrifier(final IUltimateServiceProvider services, final IIcfg<?> icfg,
-			final IcfgConstructionMode icfgConstructionMode) {
+			final IcfgConstructionMode icfgConstructionModefinal, final int numberOfThreadInstances) {
 
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
@@ -108,7 +108,7 @@ public class IcfgPetrifier {
 				// (icfgConstructionMode == IcfgConstructionMode.CHECK_THREAD_INSTANCE_SUFFICIENCY);
 		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> threadInstanceMap = adder
 				.constructThreadInstances(mPetrifiedIcfg, newForkCurrentThreads,
-						addThreadInUseViolationVariablesAndErrorLocation);
+						addThreadInUseViolationVariablesAndErrorLocation, numberOfThreadInstances);
 		final Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation> inUseErrorNodeMap = new HashMap<>();
 		final CfgSmtToolkit cfgSmtToolkit = adder.constructNewToolkit(mPetrifiedIcfg.getCfgSmtToolkit(),
 				threadInstanceMap, inUseErrorNodeMap, newJoinCurrentThreads, addThreadInUseViolationVariablesAndErrorLocation);
