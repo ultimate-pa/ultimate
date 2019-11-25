@@ -15,6 +15,7 @@ from functools import reduce
   !v iff the following log line is the one we want to show
 """
 known_exceptions = {
+    "UnsupportedOperationException: Unsupported type":True,
     "AssertionError: at least one of both input predicates is unknown":True,
 	"command is only available in interactive mode": True,
     "Argument of \"settings\" has invalid value": True,
