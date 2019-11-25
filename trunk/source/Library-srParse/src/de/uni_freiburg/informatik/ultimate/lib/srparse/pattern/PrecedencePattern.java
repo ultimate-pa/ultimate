@@ -49,7 +49,7 @@ public class PrecedencePattern extends PatternType {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();
 			ct = counterTrace(phaseT(), phase(Q.and(S.negate()).and(R.negate())), phase(S.negate().and(R.negate())),
-					phase(P.and(R.negate()).and(S.negate())), phase(R.negate()), phase(R), phaseT());
+					phase(P.and(R.negate())), phase(R.negate()), phase(R), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
