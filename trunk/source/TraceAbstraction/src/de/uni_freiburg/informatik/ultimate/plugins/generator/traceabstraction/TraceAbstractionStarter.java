@@ -352,15 +352,12 @@ public class TraceAbstractionStarter {
 				icfg.getCfgSmtToolkit(), predicateFactory1, taBenchmark, errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile,
 				computeHoareAnnotation);
 		final Result result = clres.getOverallResult();
-		if (result == Result.UNSAFE) {
-			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> te = clres.getProgramExecution().getTraceElement(clres.getProgramExecution().getLength()-1);
-			final IcfgLocation tar = te.getTraceElement().getTarget();
-			final Check check = Check.getAnnotation(tar);
-			if (check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES)) {
-				reportResult(new GenericResult(Activator.PLUGIN_ID, "unable to analyze concurrent program", "unable to analyze", Severity.WARNING));
-				mOverallResult = Result.UNKNOWN;
-				return Result.UNKNOWN;
-			}
+		final boolean insufficientThreadInstances = hasInsufficientThreadInstances(clres);
+
+		if (insufficientThreadInstances) {
+			reportResult(new GenericResult(Activator.PLUGIN_ID, "unable to analyze concurrent program", "unable to analyze", Severity.WARNING));
+			mOverallResult = Result.UNKNOWN;
+			return Result.UNKNOWN;
 		}
 
 		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
@@ -376,6 +373,19 @@ public class TraceAbstractionStarter {
 		return result;
 	}
 
+	private static boolean hasInsufficientThreadInstances(final CegarLoopResult<IIcfgTransition<?>> clres) {
+		final boolean insufficientThreadInstances;
+		if (clres.getOverallResult() == Result.UNSAFE) {
+			final AtomicTraceElement<IIcfgTransition<IcfgLocation>> te = clres.getProgramExecution()
+					.getTraceElement(clres.getProgramExecution().getLength() - 1);
+			final IcfgLocation tar = te.getTraceElement().getTarget();
+			final Check check = Check.getAnnotation(tar);
+			insufficientThreadInstances = check.getSpec().contains(Spec.SUFFICIENT_THREAD_INSTANCES);
+		} else {
+			insufficientThreadInstances = false;
+		}
+		return insufficientThreadInstances;
+	}
 
 
 	private Result iterate(final DebugIdentifier name, final IIcfg<IcfgLocation> root, final TAPreferences taPrefs,
