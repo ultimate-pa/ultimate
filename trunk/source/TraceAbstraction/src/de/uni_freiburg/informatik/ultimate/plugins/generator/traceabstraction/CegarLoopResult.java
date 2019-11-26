@@ -36,10 +36,10 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -64,44 +64,63 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class CegarLoopResult<LETTER extends IIcfgTransition<?>> {
-	
+
 	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
 
 	private final Result mOverallResult;
-	private final List<IResult> mResults;
+	private final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mProgramExecution;
+	private final List<UnprovabilityReason> mUnprovabilityReasons;
+	private final IRunningTaskStackProvider mRunningTaskStackProvider;
 	private final CegarLoopStatisticsGenerator mCegarLoopStatisticsGenerator;
 	private final IElement mArtifact;
 	private final List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> mFloydHoareAutomata;
-	
-	public CegarLoopResult(final Result overallResult, final List<IResult> results,
+
+	public CegarLoopResult(final Result overallResult,
+			final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> programExecution,
+			final List<UnprovabilityReason> unprovabilityReasons, final IRunningTaskStackProvider runningTaskStackProvider,
 			final CegarLoopStatisticsGenerator cegarLoopStatisticsGenerator, final IElement artifact,
 			final List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> floydHoareAutomata) {
 		super();
 		mOverallResult = overallResult;
-		mResults = results;
+		mProgramExecution = programExecution;
+		mUnprovabilityReasons = unprovabilityReasons;
+		mRunningTaskStackProvider = runningTaskStackProvider;
 		mCegarLoopStatisticsGenerator = cegarLoopStatisticsGenerator;
 		mArtifact = artifact;
 		mFloydHoareAutomata = floydHoareAutomata;
 	}
+
 	public Result getOverallResult() {
 		return mOverallResult;
 	}
-	public List<IResult> getResults() {
-		return mResults;
+
+	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getProgramExecution() {
+		return mProgramExecution;
 	}
+
+	public List<UnprovabilityReason> getUnprovabilityReasons() {
+		return mUnprovabilityReasons;
+	}
+
+	public IRunningTaskStackProvider getRunningTaskStackProvider() {
+		return mRunningTaskStackProvider;
+	}
+
 	public CegarLoopStatisticsGenerator getCegarLoopStatisticsGenerator() {
 		return mCegarLoopStatisticsGenerator;
 	}
+
 	public IElement getArtifact() {
 		return mArtifact;
 	}
+
 	public List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> getFloydHoareAutomata() {
 		return mFloydHoareAutomata;
 	}
-	
-	
-	
-	public static <LETTER extends IIcfgTransition<?>> CegarLoopResult iterate(final IUltimateServiceProvider services, final DebugIdentifier name, final IIcfg<IcfgLocation> root, final TAPreferences taPrefs,
+
+
+	public static <LETTER extends IIcfgTransition<?>> CegarLoopResult iterate(final IUltimateServiceProvider services,
+			final DebugIdentifier name, final IIcfg<IcfgLocation> root, final TAPreferences taPrefs,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
@@ -116,21 +135,49 @@ public class CegarLoopResult<LETTER extends IIcfgTransition<?>> {
 				root.getCfgSmtToolkit(), predicateFactory, errNodesOfAllProc, rawFloydHoareAutomataFromFile,
 				computeHoareAnnotation);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
+
 		final Result result = basicCegarLoop.iterate();
 		basicCegarLoop.finish();
 
+		final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> programExecution;
+		if (result == Result.UNSAFE || result == Result.UNKNOWN) {
+			programExecution = basicCegarLoop.getRcfgProgramExecution();
+		} else {
+			programExecution = null;
+		}
+
+		final List<UnprovabilityReason> unprovabilityReasons;
+		if (result == Result.UNKNOWN) {
+			unprovabilityReasons = new ArrayList<>();
+			unprovabilityReasons.add(basicCegarLoop.getReasonUnknown());
+			unprovabilityReasons.addAll(UnprovabilityReason.getUnprovabilityReasons(programExecution));
+		} else {
+			unprovabilityReasons = null;
+		}
+
+		final IRunningTaskStackProvider runningTaskStackProvider;
+		if (result == Result.TIMEOUT || result == Result.USER_LIMIT_ITERATIONS
+				|| result == Result.USER_LIMIT_PATH_PROGRAM || result == Result.USER_LIMIT_TIME
+				|| result == Result.USER_LIMIT_TRACEHISTOGRAM) {
+			runningTaskStackProvider = basicCegarLoop.getRunningTaskStackProvider();
+		} else {
+			runningTaskStackProvider = null;
+		}
+
+		final CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator = basicCegarLoop.getCegarLoopBenchmark();
+		cegarLoopBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
+
 		final List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> floydHoareAutomata;
 		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
-			final LinkedHashSet<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> fhs = basicCegarLoop.getFloydHoareAutomata();
+			final LinkedHashSet<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> fhs = basicCegarLoop
+					.getFloydHoareAutomata();
 			floydHoareAutomata = new ArrayList<>();
 			floydHoareAutomata.addAll(fhs);
 		} else {
 			floydHoareAutomata = null;
 		}
 
-		final Result overallResult = computeOverallResult(errorLocs, basicCegarLoop, result);
-
-		if (computeHoareAnnotation && overallResult == Result.SAFE) {
+		if (computeHoareAnnotation && result == Result.SAFE) {
 			basicCegarLoop.computeCFGHoareAnnotation();
 
 			// final Set<? extends IcfgLocation> locsForHoareAnnotation =
@@ -140,15 +187,11 @@ public class CegarLoopResult<LETTER extends IIcfgTransition<?>> {
 
 			writeHoareAnnotationToLogger(services, root);
 		}
-		final CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator = basicCegarLoop.getCegarLoopBenchmark();
-		cegarLoopBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
-		// TODO: Stop AI clock
-		taBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 
-		final List<IResult> results = null;
-		return new CegarLoopResult<LETTER>(overallResult, results, cegarLoopBenchmarkGenerator, basicCegarLoop.getArtifact(), floydHoareAutomata);
+		return new CegarLoopResult<LETTER>(result, programExecution, unprovabilityReasons, runningTaskStackProvider,
+				cegarLoopBenchmarkGenerator, basicCegarLoop.getArtifact(), floydHoareAutomata);
 	}
-	
+
 	private static <LETTER extends IIcfgTransition<?>> BasicCegarLoop<LETTER> constructCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name, final IIcfg<IcfgLocation> root,
 			final TAPreferences taPrefs, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final Collection<IcfgLocation> errorLocs, final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
@@ -188,7 +231,7 @@ public class CegarLoopResult<LETTER extends IIcfgTransition<?>> {
 		}
 		return result;
 	}
-	
+
 	private static void writeHoareAnnotationToLogger(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> root) {
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		for (final Entry<String, Map<DebugIdentifier, IcfgLocation>> proc2label2pp : root.getProgramPoints()
@@ -210,7 +253,7 @@ public class CegarLoopResult<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 	}
-	
+
 	private static String prettyPrintProgramPoint(final IcfgLocation pp) {
 		final ILocation loc = ILocation.getAnnotation(pp);
 		if (loc == null) {
@@ -227,36 +270,9 @@ public class CegarLoopResult<LETTER extends IIcfgTransition<?>> {
 		}
 		return sb.toString();
 	}
-	
-	private static Result computeOverallResult(final Collection<IcfgLocation> errorLocs,
-			final BasicCegarLoop<?> basicCegarLoop, final Result result) {
-		final Result overallResult = Result.SAFE;
-		switch (result) {
-		case SAFE:
-//			reportPositiveResults(errorLocs);
-			return overallResult;
-		case UNSAFE:
-//			reportCounterexampleResult(basicCegarLoop.getRcfgProgramExecution());
-			return result;
-		case TIMEOUT:
-		case USER_LIMIT_ITERATIONS:
-		case USER_LIMIT_PATH_PROGRAM:
-		case USER_LIMIT_TIME:
-		case USER_LIMIT_TRACEHISTOGRAM:
-//			reportLimitResult(result, errorLocs, basicCegarLoop.getRunningTaskStackProvider());
-			return overallResult != Result.UNSAFE ? result : overallResult;
-		case UNKNOWN:
-			final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> pe = basicCegarLoop.getRcfgProgramExecution();
-			final List<UnprovabilityReason> unprovabilityReasons = new ArrayList<>();
-			unprovabilityReasons.add(basicCegarLoop.getReasonUnknown());
-			unprovabilityReasons.addAll(UnprovabilityReason.getUnprovabilityReasons(pe));
-//			reportUnproveableResult(pe, unprovabilityReasons);
-			return overallResult != Result.UNSAFE ? result : overallResult;
-		default:
-			throw new IllegalArgumentException();
-		}
-	}
 
-	
+
+
+
 
 }
