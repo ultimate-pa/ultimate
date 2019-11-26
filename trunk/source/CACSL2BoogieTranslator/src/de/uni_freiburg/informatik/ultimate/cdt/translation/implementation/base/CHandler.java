@@ -4659,8 +4659,13 @@ public class CHandler {
 			}
 			final Expression bwexpr = mExpressionTranslation.constructUnaryExpression(loc, op,
 					operand.getLrValue().getValue(), resultType);
+			// TODO: bitvec procedure here
 			final RValue rval = new RValue(bwexpr, resultType, false);
-			return result.setLrValue(rval).build();
+			if (resultType.isFloatingType() ) {
+				return mExprResultTransformer.constructBitvecResult(rval, loc);
+			} else {
+				return result.setLrValue(rval).build();
+			}
 		default:
 			throw new IllegalArgumentException("not a unary arithmetic operator " + op);
 		}

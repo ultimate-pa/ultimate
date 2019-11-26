@@ -1035,8 +1035,12 @@ public class ExpressionResultTransformer {
 				expr = mExprTrans.convertIntToFloat(loc, operand, resultType);
 				exprResult = constructBitvecResult(expr.getLrValue(), loc);
 			} else if (operandType.isFloatingType()) {
-				expr = mExprTrans.convertFloatToFloat(loc, operand, resultType);
-				exprResult = constructBitvecResult(expr.getLrValue(), loc);
+				if (operand.getLrValue().getCType().isShadowed()) {
+					expr = mExprTrans.convertFloatToFloat(loc, operand, resultType);
+					exprResult = constructBitvecResult(expr.getLrValue(), loc);
+				} else {
+					exprResult = operand;
+				}
 			} else {
 				throw new UnsupportedSyntaxException(loc,
 						"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
@@ -1087,7 +1091,7 @@ public class ExpressionResultTransformer {
 		}
 	}
 	
-	private ExpressionResult constructBitvecResult(final LRValue rvalue, final ILocation loc) {
+	public ExpressionResult constructBitvecResult(final LRValue rvalue, final ILocation loc) {
 		Expression[] arguments = new Expression[1];
 		arguments[0] = rvalue.getValue();
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();

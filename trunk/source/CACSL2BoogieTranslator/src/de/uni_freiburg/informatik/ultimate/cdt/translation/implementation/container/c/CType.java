@@ -98,7 +98,7 @@ public abstract class CType {
 		return mIsExtern;
 	}
 	
-	public boolean isSmtFloat() {
+	public boolean isShadowed() {
 		return mIsShadowed;
 	}
 

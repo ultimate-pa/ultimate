@@ -1185,7 +1185,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	private RValue convertToFloatIfNecessary(final ILocation loc, final FloatFunction floatFunction,
 			final RValue argument) {
 		final String func_name = floatFunction.getFunctionName();
-		if ("fmod".equals(func_name) || "signbit".equals(func_name) || "copysign".equals(func_name)) {
+		// Does not convert to smt float if it already is one.
+		if ("fmod".equals(func_name) || "signbit".equals(func_name) || "copysign".equals(func_name) || argument.getCType().isShadowed()) {
 			return argument;
 		} else {
 			return new RValue(
