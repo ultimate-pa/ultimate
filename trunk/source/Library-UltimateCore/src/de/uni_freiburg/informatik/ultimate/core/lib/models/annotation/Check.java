@@ -171,7 +171,7 @@ public class Check extends ModernAnnotations {
 		this(EnumSet.of(spec), funPositiveMessageProvider, funNegativeMessageProvider);
 	}
 
-	protected Check(final EnumSet<Spec> newSpec) {
+	public Check(final EnumSet<Spec> newSpec) {
 		assert newSpec != null && !newSpec.isEmpty();
 		mSpec = newSpec;
 		mPosMsgProvider = Check::getPositiveMessage;
@@ -369,21 +369,24 @@ public class Check extends ModernAnnotations {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final Check other = (Check) obj;
 		if (mSpec == null) {
-			if (other.mSpec != null)
+			if (other.mSpec != null) {
 				return false;
-		} else if (!mSpec.equals(other.mSpec))
+			}
+		} else if (!mSpec.equals(other.mSpec)) {
 			return false;
+		}
 		return true;
 	}
-
-
 
 }
