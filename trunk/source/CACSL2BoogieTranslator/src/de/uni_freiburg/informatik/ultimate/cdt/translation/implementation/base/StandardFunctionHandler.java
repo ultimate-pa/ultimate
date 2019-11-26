@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1875,10 +1876,20 @@ public class StandardFunctionHandler {
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc) {
 		final boolean checkSvcompErrorfunction = mSettings.checkSvcompErrorFunction();
+		final boolean checkMemoryleakInMain = mSettings.checkMemoryLeakInMain();
 		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
 		Statement st;
-		if (checkSvcompErrorfunction) {
-			final Check check = new Check(Spec.ERROR_FUNCTION);
+		if (checkSvcompErrorfunction || checkMemoryleakInMain) {
+			final Check check;
+			if (checkSvcompErrorfunction) {
+				if (checkMemoryleakInMain) {
+					check = new Check(EnumSet.of(Spec.ERROR_FUNCTION, Spec.MEMORY_LEAK));
+				} else {
+					check = new Check(Spec.ERROR_FUNCTION);
+				}
+			} else {
+				check = new Check(EnumSet.of(Spec.MEMORY_LEAK));
+			}
 			st = new AssertStatement(loc, falseLiteral);
 			check.annotate(st);
 		} else {
