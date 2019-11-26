@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public final class PetriNetUnfolder<LETTER, PLACE> {
 	private static final boolean EXTENDED_ASSERTION_CHECKING = false;
-	private static final boolean B20_OPTIMIZATION = true;
+	private static final boolean B20_OPTIMIZATION = false;
 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
