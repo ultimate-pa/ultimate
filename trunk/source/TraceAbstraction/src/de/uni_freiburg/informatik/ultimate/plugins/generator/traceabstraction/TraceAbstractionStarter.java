@@ -171,9 +171,8 @@ public class TraceAbstractionStarter {
 		mArtifact = null;
 
 		if (taPrefs.allErrorLocsAtOnce()) {
-			iterateNew(AllErrorsAtOnceDebugIdentifier.INSTANCE, icfg, taPrefs, csToolkit, predicateFactory,
-					traceAbstractionBenchmark, errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile,
-					computeHoareAnnotation);
+			iterateNew(AllErrorsAtOnceDebugIdentifier.INSTANCE, icfg, taPrefs, predicateFactory, traceAbstractionBenchmark,
+					errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation);
 		} else {
 			final IProgressMonitorService progmon = mServices.getProgressMonitorService();
 			final int numberOfErrorLocs = errNodesOfAllProc.size();
@@ -324,41 +323,57 @@ public class TraceAbstractionStarter {
 
 
 	private Result iterateNew(final DebugIdentifier name, final IIcfg<IcfgLocation> root, final TAPreferences taPrefs,
-			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
-			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
+			final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks taBenchmark,
+			final Collection<IcfgLocation> errorLocs, final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final boolean computeHoareAnnotation) {
-		IIcfg<IcfgLocation> icfg;
+		final CegarLoopResult<IIcfgTransition<?>> clres;
 		if (root.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
-			icfg = root;
+			clres = CegarLoopResult.iterate(mServices, name, root, taPrefs,
+					root.getCfgSmtToolkit(), predicateFactory, taBenchmark, errorLocs, witnessAutomaton, rawFloydHoareAutomataFromFile,
+					computeHoareAnnotation);
 		} else {
-			final int numberOfThreadInstances = 3;
-			final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, root,
-					IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY, numberOfThreadInstances);
-			final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
-			mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
-			icfg = petrifiedIcfg;
+			CegarLoopResult<IIcfgTransition<?>> concurClres = null;
+			int numberOfThreadInstances = 1;
+			while (true) {
+				mLogger.info("Constructing petrified ICFG for " + numberOfThreadInstances + " thread instances.");
+				final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, root,
+						IcfgConstructionMode.ASSUME_THREAD_INSTANCE_SUFFICIENCY, numberOfThreadInstances);
+				final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
+				final PredicateFactory predicateFactory1 = new PredicateFactory(mServices,
+						petrifiedIcfg.getCfgSmtToolkit().getManagedScript(), petrifiedIcfg.getCfgSmtToolkit().getSymbolTable());
+				final Map<String, Set<IcfgLocation>> proc2errNodes = petrifiedIcfg.getProcedureErrorNodes();
+				final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
+				for (final Collection<IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
+					errNodesOfAllProc.addAll(errNodeOfProc);
+				}
+				concurClres = CegarLoopResult.iterate(mServices, name, petrifiedIcfg, taPrefs, petrifiedIcfg.getCfgSmtToolkit(),
+						predicateFactory1, taBenchmark, errNodesOfAllProc, witnessAutomaton,
+						rawFloydHoareAutomataFromFile, computeHoareAnnotation);
+				final boolean insufficientThreadInstances = hasInsufficientThreadInstances(concurClres);
+				if (insufficientThreadInstances) {
+					if (false) {
+						reportResult(new GenericResult(Activator.PLUGIN_ID, "unable to analyze concurrent program",
+								"unable to analyze", Severity.WARNING));
+						mOverallResult = Result.UNKNOWN;
+						return Result.UNKNOWN;
+					} else {
+						mLogger.warn(numberOfThreadInstances
+								+ " thread instances were not sufficient, I will increast this number and restart the analysis");
+						numberOfThreadInstances++;
+						continue;
+					}
+				} else {
+					clres = concurClres;
+					mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
+					break;
+				}
+			}
 		}
-		final PredicateFactory predicateFactory1 = new PredicateFactory(mServices, icfg.getCfgSmtToolkit().getManagedScript(),
-				icfg.getCfgSmtToolkit().getSymbolTable());
-		final Map<String, Set<IcfgLocation>> proc2errNodes = icfg.getProcedureErrorNodes();
-		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
-		for (final Collection<IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
-			errNodesOfAllProc.addAll(errNodeOfProc);
-		}
-
-		final CegarLoopResult<IIcfgTransition<?>> clres = CegarLoopResult.iterate(mServices, name, icfg, taPrefs,
-				icfg.getCfgSmtToolkit(), predicateFactory1, taBenchmark, errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile,
-				computeHoareAnnotation);
 		final Result result = clres.getOverallResult();
-		final boolean insufficientThreadInstances = hasInsufficientThreadInstances(clres);
 
-		if (insufficientThreadInstances) {
-			reportResult(new GenericResult(Activator.PLUGIN_ID, "unable to analyze concurrent program", "unable to analyze", Severity.WARNING));
-			mOverallResult = Result.UNKNOWN;
-			return Result.UNKNOWN;
-		}
+
+
 
 		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
 			mFloydHoareAutomataFromOtherErrorLocations.addAll(clres.getFloydHoareAutomata());
