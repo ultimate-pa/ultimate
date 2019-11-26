@@ -204,6 +204,37 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 		}
 		return new Configuration<>(events, newmin);
 	}
+	
+	/**
+	 * improved implementation of removeMin.
+	 * @return A new Configuration that contains the set difference between the original configuration and its minimum
+	 *         regarding the casual relation.
+	 *         <p>
+	 *         requires, that getMin() has been called.
+	 */
+	public Configuration<LETTER, PLACE> removeMinB20() {
+		assert mMin != null : "getMin() must have been called before removeMin()";
+		assert !mMin.isEmpty() : "The minimum of a configuration must not be empty.";
+		final HashSet<Event<LETTER, PLACE>> events = new HashSet<>(mEvents);
+		events.removeAll(mMin);
+		final Set<Event<LETTER, PLACE>> min = Event.getSuccessorEvents(mMin);
+		min.retainAll(events);
+		final HashSet<Event<LETTER, PLACE>> newmin = new HashSet<>();
+		for (final Event<LETTER, PLACE> e : min) {
+			final Set<Event<LETTER, PLACE>> predEventsOfE = e.getPredecessorEvents();
+			boolean eIsInMin = true;
+			for (Event<LETTER, PLACE> predEvent : predEventsOfE) {
+				if (events.contains(predEvent)) {
+					eIsInMin = false;
+					break;
+				}
+			}
+			if (eIsInMin) {
+				newmin.add(e);
+			}
+		}
+		return new Configuration<>(events, newmin);
+	}
 
 	@Override
 	public boolean removeAll(final Collection<?> arg0) {

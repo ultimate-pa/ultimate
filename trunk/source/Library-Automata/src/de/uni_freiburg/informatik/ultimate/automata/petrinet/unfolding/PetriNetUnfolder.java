@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public final class PetriNetUnfolder<LETTER, PLACE> {
 	private static final boolean EXTENDED_ASSERTION_CHECKING = false;
+	private static final boolean B20_OPTIMIZATION = true;
 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
@@ -113,7 +114,11 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 				mOrder = new ErvEqualMarkingOrder<>();
 				break;
 			case ERV:
-				mOrder = new EsparzaRoemerVoglerOrder<>();
+				if (B20_OPTIMIZATION){
+					mOrder = new EsparzaRoemerVoglerOrderB20<>();
+				} else {
+					mOrder = new EsparzaRoemerVoglerOrder<>();
+				}
 				break;
 			default:
 				throw new IllegalArgumentException();
