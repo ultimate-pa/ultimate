@@ -89,7 +89,6 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTName;
-import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTNullStatement;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
@@ -933,8 +932,8 @@ public class CHandler {
 	private void checkIfNecessaryMemoryModelAdaption(final IASTCastExpression node, final ILocation loc,
 			final CType castTargetType, final ExpressionResult operand) {
 		final CType operandType = operand.getLrValue().getCType().getUnderlyingType();
-		if ((!(operandType instanceof CArray) && !(operandType instanceof CPointer))
-				|| (!(castTargetType instanceof CArray) && !(castTargetType instanceof CPointer))) {
+		if (!(operandType instanceof CArray) && !(operandType instanceof CPointer)
+				|| !(castTargetType instanceof CArray) && !(castTargetType instanceof CPointer)) {
 			return;
 		}
 
@@ -955,8 +954,7 @@ public class CHandler {
 
 		final Expression operandTypeByteSizeExp;
 		try {
-			operandTypeByteSizeExp =
-				mTypeSizeComputer.constructBytesizeExpression(loc, operandValueType, node);
+			operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, operandValueType, node);
 		} catch (final UnsupportedOperationException e) {
 			mLogger.debug("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
 					+ "model");
@@ -967,8 +965,7 @@ public class CHandler {
 
 		final Expression castTargetByteSizeExp;
 		try {
-			castTargetByteSizeExp =
-				mTypeSizeComputer.constructBytesizeExpression(loc, castTargetValueType, node);
+			castTargetByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, castTargetValueType, node);
 		} catch (final UnsupportedOperationException e) {
 			mLogger.debug("saw a pointer cast to a type that we could not get a type size for, not adapting memory "
 					+ "model");
@@ -1000,12 +997,11 @@ public class CHandler {
 			return;
 		}
 
-
 		if (operandTypeByteSize.intValueExact() == 0) {
 			// operand's type has size 0 -- not sure what makes sense to do here, doing nothing
 			// case where I encountered it was a struct with a 0-sized array in it; if someone wants to read more on
 			// that phenomenon:
-			//  https://stackoverflow.com/questions/52630441/c-struct-with-zero-sized-array-members
+			// https://stackoverflow.com/questions/52630441/c-struct-with-zero-sized-array-members
 			return;
 		}
 
@@ -2288,8 +2284,7 @@ public class CHandler {
 				if (simpleDecl.getDeclSpecifier() instanceof IASTElaboratedTypeSpecifier
 						|| simpleDecl.getDeclSpecifier() instanceof ICASTCompositeTypeSpecifier
 						|| simpleDecl.getDeclarators().length > 0
-								&& simpleDecl.getDeclarators()[0] instanceof CASTFunctionDeclarator
-						|| simpleDecl.getDeclSpecifier() instanceof IASTNamedTypeSpecifier) {
+								&& simpleDecl.getDeclarators()[0] instanceof CASTFunctionDeclarator) {
 					complexNodes.add(child);
 				} else {
 					processTUchild(main, mDeclarations, child);
@@ -3735,8 +3730,8 @@ public class CHandler {
 			if (witnessInvariant != null) {
 				specList.add(witnessInvariant);
 			}
-			if ((node instanceof IASTForStatement) || (node instanceof IASTWhileStatement)
-					|| (node instanceof IASTDoStatement)) {
+			if (node instanceof IASTForStatement || node instanceof IASTWhileStatement
+					|| node instanceof IASTDoStatement) {
 				for (int i = 0; i < mContract.size(); i++) {
 					// retranslate ACSL specification needed e.g., in cases
 					// where ids of function parameters differ from is in ACSL
