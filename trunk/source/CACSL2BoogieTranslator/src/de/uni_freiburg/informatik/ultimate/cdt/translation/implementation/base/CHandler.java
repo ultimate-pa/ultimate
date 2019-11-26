@@ -89,6 +89,7 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTName;
+import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTNullStatement;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
@@ -2281,10 +2282,12 @@ public class CHandler {
 			}
 			if (child instanceof IASTSimpleDeclaration) {
 				final IASTSimpleDeclaration simpleDecl = (IASTSimpleDeclaration) child;
-				if (simpleDecl.getDeclSpecifier() instanceof IASTElaboratedTypeSpecifier
-						|| simpleDecl.getDeclSpecifier() instanceof ICASTCompositeTypeSpecifier
-						|| simpleDecl.getDeclarators().length > 0
-								&& simpleDecl.getDeclarators()[0] instanceof CASTFunctionDeclarator) {
+				final IASTDeclSpecifier declSpecifier = simpleDecl.getDeclSpecifier();
+				final IASTDeclarator[] declarators = simpleDecl.getDeclarators();
+				if (declSpecifier instanceof IASTElaboratedTypeSpecifier
+						|| declSpecifier instanceof ICASTCompositeTypeSpecifier
+						|| declarators.length > 0 && simpleDecl.getDeclarators()[0] instanceof CASTFunctionDeclarator
+						|| declSpecifier instanceof IASTNamedTypeSpecifier) {
 					complexNodes.add(child);
 				} else {
 					processTUchild(main, mDeclarations, child);
