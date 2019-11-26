@@ -1880,6 +1880,14 @@ public class StandardFunctionHandler {
 		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
 		Statement st;
 		if (checkSvcompErrorfunction || checkMemoryleakInMain) {
+			// TODO 2017-11-26 Matthias: Workaround for memcleanup property.
+			// Rationale: If we reach the SV-COMP error function (which has
+			// is similar to the abort function) memory was not deallocated.
+			// Proper solution: Check #valid array for all functions that
+			// do not return (e.g., also abort and exit). Depending on the
+			// discussion about the exact meaning of valid-memcleanup we
+			// need separate arrays for stack and heap.
+			// https://github.com/sosy-lab/sv-benchmarks/pull/1001
 			final Check check;
 			if (checkSvcompErrorfunction) {
 				if (checkMemoryleakInMain) {
