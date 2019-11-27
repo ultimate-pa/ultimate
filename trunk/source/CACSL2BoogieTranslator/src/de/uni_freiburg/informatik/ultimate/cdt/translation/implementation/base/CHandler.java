@@ -69,7 +69,6 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
-import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionList;
@@ -89,7 +88,6 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTName;
-import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTNullStatement;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
@@ -121,7 +119,6 @@ import org.eclipse.cdt.core.dom.ast.c.ICASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTLiteralExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CVariable;
 
@@ -1481,7 +1478,10 @@ public class CHandler {
 		final boolean intFromPtr;
 		DeclarationInformation declarationInformation;
 
-		if (mSymbolTable.containsCSymbol(node, cId) && !mProcedureManager.hasProcedure(cIdMp)) {
+		if (mSymbolTable.containsCSymbol(node, cId)) {
+			if (mProcedureManager.hasProcedure(cIdMp)) {
+				mLogger.warn("Possible shadowing of function " + cId);
+			}
 			// a local variable
 			final SymbolTableValue stv = mSymbolTable.findCSymbol(node, cId);
 			bId = stv.getBoogieName();
@@ -1489,7 +1489,10 @@ public class CHandler {
 			useHeap = isHeapVar(bId);
 			intFromPtr = stv.isIntFromPointer();
 			declarationInformation = stv.getDeclarationInformation();
-		} else if (mSymbolTable.containsCSymbol(node, cIdMp) && !mProcedureManager.hasProcedure(cIdMp)) {
+		} else if (mSymbolTable.containsCSymbol(node, cIdMp)) {
+			if (mProcedureManager.hasProcedure(cIdMp)) {
+				mLogger.warn("Possible shadowing of function " + cId);
+			}
 			// we have a normal variable
 			final SymbolTableValue stv = mSymbolTable.findCSymbol(node, cIdMp);
 			bId = stv.getBoogieName();
@@ -2269,37 +2272,13 @@ public class CHandler {
 			mDeclarations.addAll(acslResultBuilder.getDeclarations());
 		}
 
-		// delayed processing of IASTFunctionDefinitions and structs
-		// This is a workaround. Invariants my use global variables that
-		// are not yet declared.
-		// Better solution: obtain function signature in a first pass
-		// process function body in a second pass
-		final List<IASTNode> complexNodes = new ArrayList<>();
+		// NOTE: Hack for ACSL was removed; we should first process C and then ACSL.
 		for (final IASTNode child : node.getChildren()) {
 			// Ignore included declarations which might cause problems
 			if (!child.isPartOfTranslationUnitFile()) {
 				continue;
 			}
-			if (child instanceof IASTSimpleDeclaration) {
-				final IASTSimpleDeclaration simpleDecl = (IASTSimpleDeclaration) child;
-				final IASTDeclSpecifier declSpecifier = simpleDecl.getDeclSpecifier();
-				final IASTDeclarator[] declarators = simpleDecl.getDeclarators();
-				if (declSpecifier instanceof IASTElaboratedTypeSpecifier
-						|| declSpecifier instanceof ICASTCompositeTypeSpecifier
-						|| declarators.length > 0 && simpleDecl.getDeclarators()[0] instanceof CASTFunctionDeclarator
-						|| declSpecifier instanceof IASTNamedTypeSpecifier) {
-					complexNodes.add(child);
-				} else {
-					processTUchild(main, mDeclarations, child);
-				}
-			} else if (child instanceof IASTFunctionDefinition) {
-				complexNodes.add(child);
-			} else {
-				processTUchild(main, mDeclarations, child);
-			}
-		}
-		for (final IASTNode funcDef : complexNodes) {
-			processTUchild(main, mDeclarations, funcDef);
+			processTUchild(main, mDeclarations, child);
 		}
 
 		// TODO(thrax): Check if decl should be passed as null.
@@ -3463,10 +3442,7 @@ public class CHandler {
 				IASTBinaryExpression.op_minus, ptr1Offset, mExpressionTranslation.getCTypeOfPointerComponents(),
 				ptr2Offset, mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression typesize = mMemoryHandler.calculateSizeOf(loc, pointsToType, hook);
-		final CPrimitive typesizeType = new CPrimitive(CPrimitives.INT);
-		// TODO: typesizeType and .getCTypeOfPointerComponents() might be
-		// different then one expression has to be converted into the type of
-		// the other
+		final CPrimitive typesizeType = mExpressionTranslation.getCTypeOfPointerComponents();
 		final Expression offsetDifferenceDividedByTypesize =
 				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_divide,
 						offsetDifference, mExpressionTranslation.getCTypeOfPointerComponents(), typesize, typesizeType);
@@ -3897,7 +3873,7 @@ public class CHandler {
 			throw new UnsupportedOperationException("operands have to have integer types");
 		}
 		final ExpressionResult leftPromoted = mExprResultTransformer.doIntegerPromotion(loc, left);
-		final CPrimitive typeOfResult = (CPrimitive) leftPromoted.getLrValue().getCType();
+		final CPrimitive typeOfResult = (CPrimitive) leftPromoted.getLrValue().getCType().getUnderlyingType();
 		final ExpressionResult rightConverted =
 				mExprResultTransformer.performImplicitConversion(right, typeOfResult, loc);
 

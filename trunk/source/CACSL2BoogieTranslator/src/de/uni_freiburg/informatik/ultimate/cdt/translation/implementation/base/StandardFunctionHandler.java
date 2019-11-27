@@ -619,10 +619,12 @@ public class StandardFunctionHandler {
 		 *
 		 * 7.22.5.1 The bsearch function
 		 * 7.22.5.2 The qsort function
+		 * void qsort( void *ptr, size_t count, size_t size, int (*comp)(const void *, const void *) );
 		 * @formatter:on
 		 */
 		fill(map, "bsearch", die);
-		fill(map, "qsort", die);
+		fill(map, "qsort", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 4,
+				new CPointer(new CPrimitive(CPrimitives.VOID))));
 
 		/**
 		 * @formatter:off

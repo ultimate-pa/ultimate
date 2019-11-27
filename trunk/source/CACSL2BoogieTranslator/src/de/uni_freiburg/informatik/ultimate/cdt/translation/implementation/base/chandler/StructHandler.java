@@ -302,7 +302,7 @@ public class StructHandler {
 			 * <code> struct { int a; int b; } = { .b = 2 }; </code>
 			 */
 			throw new UnsupportedSyntaxException(loc, "Designators in initializers beyond simple struct field "
-					+ "designators are currently unsupported");
+					+ "designators are currently unsupported: " + node.getRawSignature());
 		}
 		final CASTFieldDesignator fieldDesignator = (CASTFieldDesignator) node.getDesignators()[0];
 		final String fieldDesignatorName = fieldDesignator.getName().toString();
