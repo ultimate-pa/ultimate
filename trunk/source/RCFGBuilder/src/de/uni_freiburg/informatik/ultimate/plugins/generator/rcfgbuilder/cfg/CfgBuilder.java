@@ -443,6 +443,17 @@ public class CfgBuilder {
 		final Overapprox oa = Overapprox.getAnnotation(st);
 		return oa != null;
 	}
+	
+	private static boolean isStartOfAtomicBlock(final BoogieIcfgLocation bil) {
+		// TODO atomictodo
+		return false;
+	}
+	
+	private static boolean isEndOfAtomicBlock(final BoogieIcfgLocation bil) {
+		// TODO atomictodo
+		return false;
+	}
+
 
 	/**
 	 * Provides two informations that can be obtained by traversing all statements.
