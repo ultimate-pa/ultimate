@@ -32,8 +32,12 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 
 /**
@@ -82,5 +86,18 @@ public class MSODAutomataOperationsWeak extends MSODAutomataOperations {
 				new Intersect<>(services, new MSODStringFactory(), automaton1, automaton2).getResult();
 
 		return new MinimizeSevpa<>(services, new MSODStringFactory(), result).getResult();
+	}
+
+	/**
+	 * @throws AutomataLibraryException
+	 *             if {@link IsEmpty} fails.
+	 */
+	@Override
+	public NestedLassoWord<MSODAlphabetSymbol> getWord(final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
+			throws AutomataOperationCanceledException {
+
+		final NestedRun<MSODAlphabetSymbol, String> run = (new IsEmpty<>(services, automaton)).getNestedRun();
+		return run != null ? new NestedLassoWord<>(run.getWord(), new NestedWord<>()) : null;
 	}
 }

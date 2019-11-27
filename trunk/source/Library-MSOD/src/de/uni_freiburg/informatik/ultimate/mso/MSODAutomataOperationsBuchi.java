@@ -34,6 +34,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIntersect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 
@@ -89,5 +92,20 @@ public class MSODAutomataOperationsBuchi extends MSODAutomataOperations {
 				new BuchiIntersect<>(services, new MSODStringFactory(), automaton1, automaton2).getResult();
 
 		return new MinimizeSevpa<>(services, new MSODStringFactory(), result).getResult();
+	}
+
+	/**
+	 * @throws AutomataLibraryException
+	 *             if {@link BuchiIsEmpty} fails.
+	 */
+	@Override
+	public NestedLassoWord<MSODAlphabetSymbol> getWord(final AutomataLibraryServices services,
+			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
+			throws AutomataOperationCanceledException {
+
+		final NestedLassoRun<MSODAlphabetSymbol, String> run =
+				(new BuchiIsEmpty<>(services, automaton)).getAcceptingNestedLassoRun();
+
+		return run != null ? run.getNestedLassoWord() : null;
 	}
 }

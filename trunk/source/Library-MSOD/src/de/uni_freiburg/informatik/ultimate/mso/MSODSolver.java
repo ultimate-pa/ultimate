@@ -39,18 +39,13 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
@@ -496,31 +491,6 @@ public final class MSODSolver {
 		throw new IllegalArgumentException("Invalid input.");
 	}
 
-	/**
-	 * Returns a {@link NestedLassoWord} accepted by the given automaton, or null if language of automaton is empty. In
-	 * case of finite automata the loop is an empty {@link NestedWord}.
-	 *
-	 * @throws AutomataLibraryException
-	 *             if {@link IsEmpty} fails.
-	 */
-	public NestedLassoWord<MSODAlphabetSymbol> getWord(final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
-			throws AutomataOperationCanceledException {
-
-		if (mAutomataOperations instanceof MSODAutomataOperationsWeak) {
-			final NestedRun<MSODAlphabetSymbol, String> run = (new IsEmpty<>(services, automaton)).getNestedRun();
-			return run != null ? new NestedLassoWord<>(run.getWord(), new NestedWord<>()) : null;
-		}
-
-		if (mAutomataOperations instanceof MSODAutomataOperationsBuchi) {
-			final NestedLassoRun<MSODAlphabetSymbol, String> run =
-					(new BuchiIsEmpty<>(services, automaton)).getAcceptingNestedLassoRun();
-			return run != null ? run.getNestedLassoWord() : null;
-		}
-
-		throw new IllegalArgumentException("Unsupported automata operation.");
-	}
-
 	// -----------------------------------------------------------------------------------------------------------------
 
 	/**
@@ -647,7 +617,7 @@ public final class MSODSolver {
 	public Map<Term, Term> getResult(final Script script, final ILogger logger, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 
-		NestedLassoWord<MSODAlphabetSymbol> word = getWord(services, automaton);
+		NestedLassoWord<MSODAlphabetSymbol> word = mAutomataOperations.getWord(services, automaton);
 
 		if (word == null) {
 			return null;
@@ -658,13 +628,13 @@ public final class MSODSolver {
 			word = new NestedLassoWord<>(word.getStem(), word.getLoop().concatenate(word.getLoop()));
 		}
 
-		logger.info("word: " + word);
+		logger.info("Word:" + word);
 
-		logger.info("stem ------------------------------------------------------");
+		logger.info("Stem:");
 		final Map<Term, List<Integer>> stem = wordToNumbers(word.getStem(), 0);
 		stem.entrySet().forEach(e -> logger.info(e.getKey() + " " + e.getValue()));
 
-		logger.info("loop ------------------------------------------------------");
+		logger.info("Loop:");
 		final Map<Term, List<Integer>> loop = wordToNumbers(word.getLoop(), word.getStem().length());
 		loop.entrySet().forEach(e -> logger.info(e.getKey() + " " + e.getValue()));
 
