@@ -169,7 +169,8 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModulePreferences() {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModulePreferences<>(mTaskIdentifier, mServices, mPrefs,
 				mCounterexample, mPrecondition, mPostcondition,
-				new AssertionOrderModulation<>(mPathProgramCache, mLogger), mPredicateUnifier, mPredicateFactory));
+				new AssertionOrderModulation<>(mPathProgramCache, mLogger, mPrefs.getAssertCodeBlocksOrder()),
+				mPredicateUnifier, mPredicateFactory));
 	}
 
 	private IIpTcStrategyModule<?, LETTER>
