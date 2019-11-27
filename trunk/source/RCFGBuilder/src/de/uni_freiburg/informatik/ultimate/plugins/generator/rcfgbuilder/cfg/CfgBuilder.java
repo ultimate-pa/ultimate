@@ -269,8 +269,18 @@ public class CfgBuilder {
 			addCallTransitionAndReturnTransition(se, mSimplificationTechnique);
 		}
 
-		if (mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
-			new LargeBlockEncoding();
+		switch (mCodeBlockSize) {
+		case LoopFreeBlock:
+			new LargeBlockEncoding(InternalLbeMode.ALL);
+			break;
+		case SequenceOfStatements:
+			new LargeBlockEncoding(InternalLbeMode.ONLY_ATOMIC_BLOCK);
+			break;
+		case SingleStatement:
+			new LargeBlockEncoding(InternalLbeMode.ONLY_ATOMIC_BLOCK);
+			break;
+		default:
+			throw new AssertionError("unknown value: " + mCodeBlockSize);
 		}
 
 		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
@@ -447,12 +457,12 @@ public class CfgBuilder {
 		return oa != null;
 	}
 	
-	private static boolean isStartOfAtomicBlock(final BoogieIcfgLocation bil) {
+	private static boolean isStartOfAtomicBlock(final IcfgLocation node) {
 		// TODO atomictodo
 		return false;
 	}
 	
-	private static boolean isEndOfAtomicBlock(final BoogieIcfgLocation bil) {
+	private static boolean isEndOfAtomicBlock(final IcfgLocation node) {
 		// TODO atomictodo
 		return false;
 	}
@@ -1598,23 +1608,31 @@ public class CfgBuilder {
 		}
 	}
 
+	/**
+	 * Defines which statements will be composed.
+	 */
+	enum InternalLbeMode { ONLY_ATOMIC_BLOCK, ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS, ALL }
+	
 	private class LargeBlockEncoding {
+		
+		private final InternalLbeMode mInternalLbeMode;
 
 		Set<BoogieIcfgLocation> mSequentialQueue = new HashSet<>();
 		Map<BoogieIcfgLocation, List<CodeBlock>> mParallelQueue = new HashMap<>();
 		final boolean mSimplifyCodeBlocks;
 
-		public LargeBlockEncoding() {
+		public LargeBlockEncoding(final InternalLbeMode internalLbeMode) {
+			mInternalLbeMode = internalLbeMode;
 			mSimplifyCodeBlocks = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLIFY);
 
 			for (final String proc : mIcfg.getProgramPoints().keySet()) {
 				for (final DebugIdentifier position : mIcfg.getProgramPoints().get(proc).keySet()) {
 					final BoogieIcfgLocation pp = mIcfg.getProgramPoints().get(proc).get(position);
-					if (superfluousSequential(pp)) {
+					if (isIntermediateNodeOfSequentialCompositionCandidate(pp)) {
 						mSequentialQueue.add(pp);
 					} else {
-						final List<CodeBlock> list = superfluousParallel(pp);
+						final List<CodeBlock> list = computeOutgoingCandidatesForParallelComposition(pp);
 						if (list != null) {
 							mParallelQueue.put(pp, list);
 						}
@@ -1650,7 +1668,7 @@ public class CfgBuilder {
 			mCbf.constructSequentialComposition(predecessor, successor, mSimplifyCodeBlocks, false, sequence,
 					mXnfConversionTechnique, mSimplificationTechnique);
 			if (!mSequentialQueue.contains(predecessor)) {
-				final List<CodeBlock> outEdges = superfluousParallel(predecessor);
+				final List<CodeBlock> outEdges = computeOutgoingCandidatesForParallelComposition(predecessor);
 				if (outEdges != null) {
 					mParallelQueue.put(predecessor, outEdges);
 				}
@@ -1664,20 +1682,20 @@ public class CfgBuilder {
 			final BoogieIcfgLocation successor = (BoogieIcfgLocation) outgoing.get(0).getTarget();
 			mCbf.constructParallelComposition(pp, successor, Collections.unmodifiableList(outgoing),
 					mXnfConversionTechnique, mSimplificationTechnique);
-			if (superfluousSequential(pp)) {
+			if (isIntermediateNodeOfSequentialCompositionCandidate(pp)) {
 				mSequentialQueue.add(pp);
 			} else {
-				final List<CodeBlock> list = superfluousParallel(pp);
+				final List<CodeBlock> list = computeOutgoingCandidatesForParallelComposition(pp);
 				if (list != null) {
 					mParallelQueue.put(pp, list);
 				}
 			}
-			if (superfluousSequential(successor)) {
+			if (isIntermediateNodeOfSequentialCompositionCandidate(successor)) {
 				mSequentialQueue.add(successor);
 			}
 		}
 
-		private boolean superfluousSequential(final BoogieIcfgLocation pp) {
+		private boolean isIntermediateNodeOfSequentialCompositionCandidate(final BoogieIcfgLocation pp) {
 			if (pp.getIncomingEdges().size() != 1) {
 				return false;
 			}
@@ -1708,7 +1726,18 @@ public class CfgBuilder {
 			assert outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition
 					|| outgoing instanceof ParallelComposition || outgoing instanceof Summary
 					|| outgoing instanceof GotoEdge;
-			return true;
+			switch (mInternalLbeMode) {
+			case ALL:
+				return true;
+			case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
+				// TODO #FaultLocalization
+				throw new UnsupportedOperationException();
+			case ONLY_ATOMIC_BLOCK:
+				return !isStartOfAtomicBlock(pp) && !isEndOfAtomicBlock(pp)
+						&& isStartOfAtomicBlock(incoming.getSource()) || isEndOfAtomicBlock(outgoing.getTarget());
+			default:
+				throw new AssertionError("unknown value " + mInternalLbeMode);
+			}
 		}
 
 		/**
@@ -1718,25 +1747,58 @@ public class CfgBuilder {
 		 *         ProgramPoint, if there can be such a list with more than one element. Otherwise (each outgoing edge
 		 *         leads to a different ProgramPoint) return null.
 		 */
-		private List<CodeBlock> superfluousParallel(final BoogieIcfgLocation pp) {
+		private List<CodeBlock> computeOutgoingCandidatesForParallelComposition(final BoogieIcfgLocation pp) {
+			if (!canBePredecessorOfParallelComposition(pp)) {
+				return null;
+			}
 			List<CodeBlock> result = null;
 			final Map<BoogieIcfgLocation, List<CodeBlock>> succ2edge = new HashMap<>();
 			for (final IcfgEdge edge : pp.getOutgoingEdges()) {
 				if (!(edge instanceof Return) && !(edge instanceof Summary)) {
 					final CodeBlock cb = (CodeBlock) edge;
 					final BoogieIcfgLocation succ = (BoogieIcfgLocation) cb.getTarget();
-					List<CodeBlock> edges = succ2edge.get(succ);
-					if (edges == null) {
-						edges = new ArrayList<>();
-						succ2edge.put(succ, edges);
-					}
-					edges.add(cb);
-					if (result == null && edges.size() > 1) {
-						result = edges;
+					if (canBeSuccessorOfParallelComposition(succ)) {
+						List<CodeBlock> edges = succ2edge.get(succ);
+						if (edges == null) {
+							edges = new ArrayList<>();
+							succ2edge.put(succ, edges);
+						}
+						edges.add(cb);
+						if (result == null && edges.size() > 1) {
+							result = edges;
+						}
 					}
 				}
 			}
 			return result;
+		}
+
+		private boolean canBePredecessorOfParallelComposition(final BoogieIcfgLocation pp) {
+			switch (mInternalLbeMode) {
+			case ALL:
+				return true;
+			case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
+				// TODO #FaultLocalization
+				throw new UnsupportedOperationException();
+			case ONLY_ATOMIC_BLOCK:
+				return isStartOfAtomicBlock(pp);
+			default:
+				throw new AssertionError("unknown value " + mInternalLbeMode);
+			}
+		}
+		
+		private boolean canBeSuccessorOfParallelComposition(final BoogieIcfgLocation pp) {
+			switch (mInternalLbeMode) {
+			case ALL:
+				return true;
+			case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
+				// TODO #FaultLocalization
+				throw new UnsupportedOperationException();
+			case ONLY_ATOMIC_BLOCK:
+				return isEndOfAtomicBlock(pp);
+			default:
+				throw new AssertionError("unknown value " + mInternalLbeMode);
+			}
 		}
 	}
 }
