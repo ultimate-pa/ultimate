@@ -33,11 +33,9 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -528,10 +526,12 @@ public final class MSODSolver {
 		throw new IllegalArgumentException("Unsupported automata operations.");
 	}
 
+	// -----------------------------------------------------------------------------------------------------------------
+
 	/**
 	 *
 	 */
-	public int indexToNumber(final int index) {
+	public int indexToInteger(final int index) {
 		if (mFormulaOperations instanceof MSODFormulaOperationsNat) {
 			return index;
 		}
@@ -546,53 +546,184 @@ public final class MSODSolver {
 	/**
 	 *
 	 */
-	public Map<Term, Deque<Integer>> wordToNumbers(final NestedWord<MSODAlphabetSymbol> word, final int offset) {
-		final Map<Term, Deque<Integer>> result = new HashMap<>();
+	public Pair<Integer, Integer> stemBounds(final int length) {
+		int lower = -1, upper = 0;
+
+		if (mFormulaOperations instanceof MSODFormulaOperationsNat) {
+			upper = indexToInteger(length);
+		}
+
+		if (mFormulaOperations instanceof MSODFormulaOperationsInt) {
+			lower = Math.min(indexToInteger(length), indexToInteger(length + 1));
+			upper = Math.max(indexToInteger(length), indexToInteger(length + 1));
+		}
+
+		return new Pair<>(lower, upper);
+	}
+
+	/**
+	 *
+	 */
+	public Map<Term, List<Integer>> wordToNumbers(final NestedWord<MSODAlphabetSymbol> word, final int offset) {
+		final Map<Term, List<Integer>> result = new HashMap<>();
 
 		for (int i = 0; i < word.length(); i++) {
+			final int value = indexToInteger(i + offset);
 			final MSODAlphabetSymbol symbol = word.getSymbol(i);
-			final int value = indexToNumber(i + offset);
 
 			for (final Entry<Term, Boolean> entry : symbol.getMap().entrySet()) {
+				result.putIfAbsent(entry.getKey(), new ArrayList<>());
+
 				if (!entry.getValue()) {
 					continue;
 				}
 
-				Deque<Integer> values = result.get(entry.getKey());
-				if (values == null) {
-					values = new LinkedList<>();
-					result.put(entry.getKey(), values);
-				}
-
 				if (value < 0) {
-					values.addFirst(value);
+					result.get(entry.getKey()).add(0, value);
 					continue;
 				}
 
-				values.addLast(value);
+				result.get(entry.getKey()).add(value);
 			}
 		}
 
 		return result;
 	}
 
-	public void getResult(final ILogger logger, final AutomataLibraryServices services,
+	public static Term stemResult(final Script script, final Term term, final List<Integer> numbers) {
+
+		if (term.getSort().equals(SmtSortUtils.getIntSort(script))) {
+			assert (numbers.size() == 1) : "Int variable must have exactly one value.";
+			return MSODUtils.intConstant(script, numbers.get(0));
+		}
+
+		Term result = script.term("false");
+		final Term x = term.getTheory().createTermVariable("x", SmtSortUtils.getIntSort(script));
+		Integer start = null;
+
+		for (int i = 0; i < numbers.size(); i++) {
+
+			if (i + 1 < numbers.size() && numbers.get(i) == numbers.get(i + 1) - 1) {
+				if (start == null) {
+					start = numbers.get(i);
+				}
+				continue;
+			}
+
+			if (start == null) {
+				final Term eq = SmtUtils.binaryEquality(script, x, MSODUtils.intConstant(script, numbers.get(i)));
+				result = SmtUtils.or(script, result, eq);
+				continue;
+			}
+
+			final Term geq = SmtUtils.geq(script, x, MSODUtils.intConstant(script, start));
+			final Term leq = SmtUtils.leq(script, x, MSODUtils.intConstant(script, numbers.get(i)));
+			result = SmtUtils.or(script, result, SmtUtils.and(script, geq, leq));
+			start = null;
+		}
+
+		return result;
+	}
+
+	public static Term loopResultPartial(final Script script, final Term term, final List<Integer> numbers,
+			final Integer bound, final int loopLength) {
+
+		Term result = script.term("false");
+		final Term x = term.getTheory().createTermVariable("x", SmtSortUtils.getIntSort(script));
+		Integer start = null;
+
+		for (int i = 0; i < numbers.size(); i++) {
+
+			if (i + 1 < numbers.size() && numbers.get(i) == numbers.get(i + 1) - 1) {
+				if (start == null) {
+					start = numbers.get(i);
+				}
+				continue;
+			}
+
+			final Term lhs = SmtUtils.mod(script, x, MSODUtils.intConstant(script, loopLength));
+
+			if (start == null) {
+				final Term rhs = MSODUtils.intConstant(script, numbers.get(i) % loopLength);
+				final Term eq = SmtUtils.binaryEquality(script, lhs, rhs);
+				result = SmtUtils.or(script, result, eq);
+				continue;
+			}
+
+			final Term geq = SmtUtils.geq(script, lhs, MSODUtils.intConstant(script, start % loopLength));
+			final Term leq = SmtUtils.leq(script, lhs, MSODUtils.intConstant(script, numbers.get(i) % loopLength));
+			result = SmtUtils.or(script, result, SmtUtils.and(script, geq, leq));
+			start = null;
+		}
+
+		final Term stemNumber = MSODUtils.intConstant(script, bound);
+		final Term stemBound = (bound < 0) ? SmtUtils.leq(script, x, stemNumber) : SmtUtils.geq(script, x, stemNumber);
+
+		return SmtUtils.and(script, result, stemBound);
+	}
+
+	public static Term loopResult(final Script script, final Term term, final List<Integer> numbers,
+			final Pair<Integer, Integer> bounds, final int loopLength) {
+
+		final List<Integer> neg = new ArrayList<>();
+		final List<Integer> pos = new ArrayList<>();
+
+		for (final Integer number : numbers) {
+			if (number < 0) {
+				neg.add(number);
+				continue;
+			}
+			pos.add(number);
+		}
+
+		final Term t1 = loopResultPartial(script, term, neg, bounds.getFirst(), loopLength);
+		final Term t2 = loopResultPartial(script, term, pos, bounds.getSecond(), loopLength);
+
+		return SmtUtils.or(script, t1, t2);
+	}
+
+	public void getResult(final Script script, final ILogger logger, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 
-		final NestedLassoWord<MSODAlphabetSymbol> word = getWord(services, automaton);
+		NestedLassoWord<MSODAlphabetSymbol> word = getWord(services, automaton);
 
 		if (word == null) {
 			return;
 		}
 
-		logger.info(word);
+		// Unfold loop once if loop length is odd.
+		if (mFormulaOperations instanceof MSODFormulaOperationsInt && word.getLoop().length() % 2 != 0) {
+			word = new NestedLassoWord<>(word.getStem(), word.getLoop().concatenate(word.getLoop()));
+		}
 
-		final Map<Term, Deque<Integer>> stem = wordToNumbers(word.getStem(), 0);
+		logger.info("word: " + word);
+
+		logger.info("stem ------------------------------------------------------");
+		final Map<Term, List<Integer>> stem = wordToNumbers(word.getStem(), 0);
 		stem.entrySet().forEach(e -> logger.info(e.getKey() + " " + e.getValue()));
 
-		final Map<Term, Deque<Integer>> loop = wordToNumbers(word.getLoop(), word.getStem().length());
+		logger.info("loop ------------------------------------------------------");
+		final Map<Term, List<Integer>> loop = wordToNumbers(word.getLoop(), word.getStem().length());
 		loop.entrySet().forEach(e -> logger.info(e.getKey() + " " + e.getValue()));
+
+		final int stemLength = word.getStem().length();
+		final int loopLength = mFormulaOperations instanceof MSODFormulaOperationsInt ? word.getLoop().length() / 2
+				: word.getLoop().length();
+
+		final Pair<Integer, Integer> stemBounds = stemBounds(stemLength);
+
+		final Map<Term, Term> results = new HashMap<>();
+		stem.entrySet().forEach(e -> results.put(e.getKey(), stemResult(script, e.getKey(), e.getValue())));
+
+		// TODO
+		loop.entrySet().forEach(
+				e -> results.put(e.getKey(), loopResult(script, e.getKey(), e.getValue(), stemBounds, loopLength)));
+
+		logger.info("result terms ----------------------------------------------");
+		results.entrySet().forEach(e -> logger.info(e.getKey() + ": " + e.getValue()));
 	}
+
+	// -----------------------------------------------------------------------------------------------------------------
 
 	/**
 	 * Returns a {@link NestedWord} accepted by the given automaton, or null if language of automaton is empty.
@@ -644,6 +775,7 @@ public final class MSODSolver {
 	 * Returns a pair of NestedWords. First value contains only the positive part, second value only the negative part
 	 * of the given NestedWord.
 	 */
+	@Deprecated
 	public static Pair<NestedWord<MSODAlphabetSymbol>, NestedWord<MSODAlphabetSymbol>>
 			splitWordWeak(final Script script, final NestedWord<MSODAlphabetSymbol> word) {
 		NestedWord<MSODAlphabetSymbol> wordPos = new NestedWord<>();
@@ -672,6 +804,7 @@ public final class MSODSolver {
 	 * Returns a pair of NestedLassoWords. First value contains only the positive part, second value only the negative
 	 * part of the given NestedLassoWord.
 	 */
+	@Deprecated
 	public static Pair<NestedLassoWord<MSODAlphabetSymbol>, NestedLassoWord<MSODAlphabetSymbol>>
 			splitWordBuchi(final Script script, NestedLassoWord<MSODAlphabetSymbol> word) {
 		NestedLassoWord<MSODAlphabetSymbol> lassoWordPos = new NestedLassoWord<>(null, null);
@@ -725,6 +858,7 @@ public final class MSODSolver {
 	/**
 	 * Returns a Map containing terms and the set of numbers encoded in the stem.
 	 */
+	@Deprecated
 	public static Map<Term, Set<BigInteger>> extractStemNumbers(final Script script,
 			final Pair<NestedWord<MSODAlphabetSymbol>, NestedWord<MSODAlphabetSymbol>> pair, final Set<Term> terms) {
 
@@ -760,6 +894,7 @@ public final class MSODSolver {
 	/**
 	 * Returns a Map containing terms and the disjunction corresponding to the numbers encoded in the given stem.
 	 */
+	@Deprecated
 	public static Map<Term, Term> constructStemTerm(final Script script, final Map<Term, Set<BigInteger>> stemNumbers) {
 		final Map<Term, Term> result = new HashMap<>();
 
@@ -821,6 +956,7 @@ public final class MSODSolver {
 	/**
 	 * Returns a Map containing terms and the disjunction corresponding to the numbers encoded in the given loop.
 	 */
+	@Deprecated
 	public static Map<Term, Term> constructLoopTerm(final Script script, final NestedWord<MSODAlphabetSymbol> loop,
 			final Set<Term> terms, final int stemNumber) {
 		final Map<Term, Term> result = new HashMap<>();
@@ -885,6 +1021,7 @@ public final class MSODSolver {
 	 *
 	 * @throws AutomataLibraryException
 	 */
+	@Deprecated
 	public Map<Term, Term> getResultOld(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 		if (mAutomataOperations instanceof MSODAutomataOperationsWeak) {
@@ -904,6 +1041,7 @@ public final class MSODSolver {
 	 * @throws UnsupportedOperationException
 	 *             if representation of Integer variable is corrupted
 	 */
+	@Deprecated
 	public Map<Term, Term> getResultWeak(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
 			throws AutomataLibraryException, UnsupportedOperationException {
@@ -951,6 +1089,7 @@ public final class MSODSolver {
 	 * @throws UnsupportedOperationException
 	 *             if representation of Integer variable is corrupted
 	 */
+	@Deprecated
 	public Map<Term, Term> getResultBuchi(final Script script, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton)
 			throws AutomataLibraryException, UnsupportedOperationException {

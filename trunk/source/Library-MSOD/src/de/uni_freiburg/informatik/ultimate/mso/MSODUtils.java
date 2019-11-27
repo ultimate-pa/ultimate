@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -135,6 +136,13 @@ public final class MSODUtils {
 	 */
 	public static boolean isSetOfIntConstantOrTermVariable(final Term term) {
 		return isSetOfIntConstant(term) || isSetOfIntTermVariable(term);
+	}
+
+	/**
+	 * TODO: Maybe overload in {@link SmtUtils}.
+	 */
+	public static Term intConstant(final Script script, final int number) {
+		return SmtUtils.constructIntValue(script, BigInteger.valueOf(number));
 	}
 
 	/**

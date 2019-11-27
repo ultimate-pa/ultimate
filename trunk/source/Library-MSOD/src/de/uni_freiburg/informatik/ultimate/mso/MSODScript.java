@@ -110,7 +110,7 @@ public class MSODScript extends NoopScript {
 
 			mLogger.info(MSODUtils.automatonToString(mAutomataLibrarayServices, automaton));
 
-			mMSODSolver.getResult(mLogger, mAutomataLibrarayServices, automaton);
+			mMSODSolver.getResult(this, mLogger, mAutomataLibrarayServices, automaton);
 
 			// mModel = mMSODSolver.getResultOld(this, mAutomataLibrarayServices, automaton);
 			//
