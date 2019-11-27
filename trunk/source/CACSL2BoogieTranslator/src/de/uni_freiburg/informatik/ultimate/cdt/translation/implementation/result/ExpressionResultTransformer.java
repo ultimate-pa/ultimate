@@ -1020,7 +1020,7 @@ public class ExpressionResultTransformer {
 		if (operandType.equals(resultType)) {
 			// do nothing
 			exprResult = operand;
-		} else if(resultType.isIntegerType()) {
+		} else if (resultType.isIntegerType()) {
 			if (operandType.isIntegerType()) {
 				exprResult = mExprTrans.convertIntToInt(loc, operand, resultType);
 			} else if (operandType.isFloatingType()) {
@@ -1029,7 +1029,7 @@ public class ExpressionResultTransformer {
 				throw new UnsupportedSyntaxException(loc,
 						"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
 			}
-		} else if(resultType.isFloatingType()) {
+		} else if (resultType.isFloatingType()) {
 			final ExpressionResult expr;
 			if (operandType.isIntegerType()) {
 				expr = mExprTrans.convertIntToFloat(loc, operand, resultType);
@@ -1074,39 +1074,38 @@ public class ExpressionResultTransformer {
 		ExpressionResult apply(final ExpressionResultTransformer ert, final ExpressionResult expr,
 				final CType targetCType, final ILocation loc, final IASTNode hook);
 	}
-	
-	public ExpressionResult constructBitvecResultIfNecessary(RValue rvalue, ILocation loc, ExpressionResult arg,
-			FloatFunction function) {
-		return this.constructBitvecResultIfNecessary(rvalue, loc, new ArrayList<>(java.util.Arrays.asList(arg)), function);
+
+	public ExpressionResult constructBitvecResultIfNecessary(final RValue rvalue, final ILocation loc,
+			final ExpressionResult arg, final FloatFunction function) {
+		return this.constructBitvecResultIfNecessary(rvalue, loc, new ArrayList<>(java.util.Arrays.asList(arg)),
+				function);
 	}
-	
-	public ExpressionResult constructBitvecResultIfNecessary(final LRValue rvalue, final ILocation loc, final List<ExpressionResult> args, FloatFunction function) {
+
+	public ExpressionResult constructBitvecResultIfNecessary(final LRValue rvalue, final ILocation loc,
+			final List<ExpressionResult> args, final FloatFunction function) {
 		final String functionName = function.getFunctionName();
 		// TODO: remove hardcoded comparison.
-		if ("signbit".equals(functionName) || "copysign".equals(functionName) || "fmod".equals(functionName) 
+		if ("signbit".equals(functionName) || "copysign".equals(functionName) || "fmod".equals(functionName)
 				|| !rvalue.getCType().isFloatingType()) {
 			return new ExpressionResultBuilder().addAllExceptLrValue(args).setLrValue(rvalue).build();
-		} else {
-			return this.constructBitvecResult(rvalue, loc);
 		}
+		return constructBitvecResult(rvalue, loc);
 	}
-	
+
 	public ExpressionResult constructBitvecResult(final LRValue rvalue, final ILocation loc) {
-		Expression[] arguments = new Expression[1];
+		final Expression[] arguments = new Expression[1];
 		arguments[0] = rvalue.getValue();
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final CPrimitive cType = (CPrimitive) rvalue.getCType();
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 		resultBuilder.addAuxVar(auxvarinfo);
-		final CallStatement call = StatementFactory.constructCallStatement(
-				loc,
-				false, new VariableLHS[] {auxvarinfo.getLhs()},
-				"float_to_bitvec" + Integer.toString(mTypeSizes.getFloatingPointSize(cType).getBitSize()),
-				arguments);
+		final CallStatement call = StatementFactory.constructCallStatement(loc, false,
+				new VariableLHS[] { auxvarinfo.getLhs() },
+				"float_to_bitvec" + Integer.toString(mTypeSizes.getFloatingPointSize(cType).getBitSize()), arguments);
 		resultBuilder.addStatement(call);
 		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), cType));
-		
+
 		return resultBuilder.build();
 	}
 
