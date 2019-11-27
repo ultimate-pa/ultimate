@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -41,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Xn
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -156,5 +159,41 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 			return mgdScriptTc;
 		}
 		return mPrefs.getCfgSmtToolkit().getManagedScript();
+	}
+
+	@Override
+	public Collection<QualifiedTracePredicates> getPerfectInterpolantSequences() {
+		final IInterpolatingTraceCheck<LETTER> tc = getOrConstruct();
+		if (tc instanceof TraceCheckSpWp<?>) {
+			final TraceCheckSpWp<?> spwpTc = (TraceCheckSpWp<?>) tc;
+			final Collection<QualifiedTracePredicates> rtr = new ArrayList<>();
+
+			if (spwpTc.wasForwardPredicateComputationRequested() && spwpTc.isForwardSequencePerfect()) {
+				rtr.add(new QualifiedTracePredicates(spwpTc.getForwardIpp(), spwpTc.getClass(), true));
+			}
+			if (spwpTc.wasBackwardSequenceConstructed() && spwpTc.isBackwardSequencePerfect()) {
+				rtr.add(new QualifiedTracePredicates(spwpTc.getBackwardIpp(), spwpTc.getClass(), true));
+			}
+			return rtr;
+		}
+		return super.getPerfectInterpolantSequences();
+	}
+
+	@Override
+	public Collection<QualifiedTracePredicates> getImperfectInterpolantSequences() {
+		final IInterpolatingTraceCheck<LETTER> tc = getOrConstruct();
+		if (tc instanceof TraceCheckSpWp<?>) {
+			final TraceCheckSpWp<?> spwpTc = (TraceCheckSpWp<?>) tc;
+			final Collection<QualifiedTracePredicates> rtr = new ArrayList<>();
+
+			if (spwpTc.wasForwardPredicateComputationRequested() && !spwpTc.isForwardSequencePerfect()) {
+				rtr.add(new QualifiedTracePredicates(spwpTc.getForwardIpp(), spwpTc.getClass(), false));
+			}
+			if (spwpTc.wasBackwardSequenceConstructed() && !spwpTc.isBackwardSequencePerfect()) {
+				rtr.add(new QualifiedTracePredicates(spwpTc.getBackwardIpp(), spwpTc.getClass(), false));
+			}
+			return rtr;
+		}
+		return super.getImperfectInterpolantSequences();
 	}
 }
