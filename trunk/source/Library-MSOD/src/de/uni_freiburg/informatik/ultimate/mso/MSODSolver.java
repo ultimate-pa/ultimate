@@ -495,44 +495,6 @@ public final class MSODSolver {
 	/**
 	 *
 	 */
-	public static Term stemResult(final Script script, final Term term, final List<Integer> numbers) {
-
-		if (term.getSort().equals(SmtSortUtils.getIntSort(script))) {
-			assert (numbers.size() == 1) : "Int variable must have exactly one value.";
-			return MSODUtils.intConstant(script, numbers.get(0));
-		}
-
-		Term result = script.term("false");
-		final Term x = term.getTheory().createTermVariable("x", SmtSortUtils.getIntSort(script));
-		Integer start = null;
-
-		for (int i = 0; i < numbers.size(); i++) {
-
-			if (i + 1 < numbers.size() && numbers.get(i) == numbers.get(i + 1) - 1) {
-				if (start == null) {
-					start = numbers.get(i);
-				}
-				continue;
-			}
-
-			if (start == null) {
-				final Term eq = SmtUtils.binaryEquality(script, x, MSODUtils.intConstant(script, numbers.get(i)));
-				result = SmtUtils.or(script, result, eq);
-				continue;
-			}
-
-			final Term geq = SmtUtils.geq(script, x, MSODUtils.intConstant(script, start));
-			final Term leq = SmtUtils.leq(script, x, MSODUtils.intConstant(script, numbers.get(i)));
-			result = SmtUtils.or(script, result, SmtUtils.and(script, geq, leq));
-			start = null;
-		}
-
-		return result;
-	}
-
-	/**
-	 *
-	 */
 	public static Term loopResultPartial(final Script script, final Term term, final List<Integer> numbers,
 			final Integer bound, final int loopLength) {
 
