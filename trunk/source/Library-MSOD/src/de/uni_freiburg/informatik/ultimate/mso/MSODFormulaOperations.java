@@ -28,11 +28,17 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -46,6 +52,35 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
 public abstract class MSODFormulaOperations {
+
+	/**
+	 * Returns a map term to numbers from the given {@link NestedWord}.
+	 */
+	public Map<Term, List<Integer>> wordToNumbers(final NestedWord<MSODAlphabetSymbol> word, final int offset) {
+		final Map<Term, List<Integer>> result = new HashMap<>();
+
+		for (int i = 0; i < word.length(); i++) {
+			final int value = indexToInteger(i + offset);
+			final MSODAlphabetSymbol symbol = word.getSymbol(i);
+
+			for (final Entry<Term, Boolean> entry : symbol.getMap().entrySet()) {
+				result.putIfAbsent(entry.getKey(), new ArrayList<>());
+
+				if (!entry.getValue()) {
+					continue;
+				}
+
+				if (value < 0) {
+					result.get(entry.getKey()).add(0, value);
+					continue;
+				}
+
+				result.get(entry.getKey()).add(value);
+			}
+		}
+
+		return result;
+	}
 
 	/**
 	 * Returns an empty {@link NestedWordAutomaton}.

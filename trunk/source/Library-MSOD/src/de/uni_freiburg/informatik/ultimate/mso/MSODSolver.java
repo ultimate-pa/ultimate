@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -496,32 +495,6 @@ public final class MSODSolver {
 	/**
 	 *
 	 */
-	public Map<Term, List<Integer>> wordToNumbers(final NestedWord<MSODAlphabetSymbol> word, final int offset) {
-		final Map<Term, List<Integer>> result = new HashMap<>();
-
-		for (int i = 0; i < word.length(); i++) {
-			final int value = mFormulaOperations.indexToInteger(i + offset);
-			final MSODAlphabetSymbol symbol = word.getSymbol(i);
-
-			for (final Entry<Term, Boolean> entry : symbol.getMap().entrySet()) {
-				result.putIfAbsent(entry.getKey(), new ArrayList<>());
-
-				if (!entry.getValue()) {
-					continue;
-				}
-
-				if (value < 0) {
-					result.get(entry.getKey()).add(0, value);
-					continue;
-				}
-
-				result.get(entry.getKey()).add(value);
-			}
-		}
-
-		return result;
-	}
-
 	public static Term stemResult(final Script script, final Term term, final List<Integer> numbers) {
 
 		if (term.getSort().equals(SmtSortUtils.getIntSort(script))) {
@@ -557,6 +530,9 @@ public final class MSODSolver {
 		return result;
 	}
 
+	/**
+	 *
+	 */
 	public static Term loopResultPartial(final Script script, final Term term, final List<Integer> numbers,
 			final Integer bound, final int loopLength) {
 
@@ -594,6 +570,9 @@ public final class MSODSolver {
 		return SmtUtils.and(script, result, stemBound);
 	}
 
+	/**
+	 *
+	 */
 	public static Term loopResult(final Script script, final Term term, final List<Integer> numbers,
 			final Pair<Integer, Integer> bounds, final int loopLength) {
 
@@ -614,6 +593,9 @@ public final class MSODSolver {
 		return SmtUtils.or(script, t1, t2);
 	}
 
+	/**
+	 *
+	 */
 	public Map<Term, Term> getResult(final Script script, final ILogger logger, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 
