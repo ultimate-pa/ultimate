@@ -101,39 +101,15 @@ public class MSODScript extends NoopScript {
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		mLogger.info("INPUT: " + mAssertionTerm);
-		final LBool result = LBool.UNKNOWN;
+		LBool result = LBool.UNKNOWN;
 
 		try {
-
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton =
 					mMSODSolver.traversePostOrder(mAssertionTerm);
-
 			mLogger.info(MSODUtils.automatonToString(mAutomataLibrarayServices, automaton));
 
-			mMSODSolver.getResult(this, mLogger, mAutomataLibrarayServices, automaton);
-
-			// mModel = mMSODSolver.getResultOld(this, mAutomataLibrarayServices, automaton);
-			//
-			// if (mModel == null) {
-			// mLogger.info("RESULT: UNSAT");
-			// return LBool.UNSAT;
-			// }
-			//
-			// if (mModel.keySet().toString().contains("emptyWord")) {
-			// // TODO Deal with empty word
-			// mLogger.info("Model: EMPTYWORD");
-			// final ConstantFinder cf = new ConstantFinder();
-			// final Set<ApplicationTerm> terms = cf.findConstants(mAssertionTerm, true);
-			// mModel.clear();
-			// for (final Term t : terms) {
-			// mModel.put(t, mAssertionTerm.getTheory().mFalse);
-			// }
-			// }
-			//
-			// result = LBool.SAT;
-			// mLogger.info("RESULT: SAT");
-			// mLogger.info("MODEL: " + mModel);
-
+			mModel = mMSODSolver.getResult(this, mLogger, mAutomataLibrarayServices, automaton);
+			result = mModel != null ? LBool.SAT : LBool.UNSAT;
 		} catch (final Exception e) {
 			mLogger.error(e);
 		}
@@ -155,8 +131,6 @@ public class MSODScript extends NoopScript {
 		}
 
 		return values;
-
-		// throw new UnsupportedOperationException("Not implemented yet.");
 	}
 
 	@Override

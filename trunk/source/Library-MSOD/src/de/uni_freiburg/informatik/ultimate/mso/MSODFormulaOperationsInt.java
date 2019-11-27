@@ -914,4 +914,17 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 		return automaton;
 	}
+
+	/**
+	 * @throws IllegalArgumentException
+	 *             if index is less than 0.
+	 */
+	@Override
+	public int indexToInteger(final int index) {
+		if (index < 0) {
+			throw new IllegalArgumentException("Index must be >= 0.");
+		}
+
+		return (index % 2 == 0 ? 1 : -1) * (index + 1) / 2;
+	}
 }

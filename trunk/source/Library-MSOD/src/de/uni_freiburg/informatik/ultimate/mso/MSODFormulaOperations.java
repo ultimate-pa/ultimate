@@ -130,4 +130,9 @@ public abstract class MSODFormulaOperations {
 	 */
 	public abstract INestedWordAutomaton<MSODAlphabetSymbol, String>
 			constElementAutomaton(final AutomataLibraryServices services, final Rational c, final Term x);
+
+	/**
+	 * Returns integer value that corresponds to the given index.
+	 */
+	public abstract int indexToInteger(final int index);
 }

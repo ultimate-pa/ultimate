@@ -321,4 +321,17 @@ public final class MSODFormulaOperationsNat extends MSODFormulaOperations {
 
 		return automaton;
 	}
+
+	/**
+	 * @throws IllegalArgumentException
+	 *             if index is less than 0.
+	 */
+	@Override
+	public int indexToInteger(final int index) {
+		if (index < 0) {
+			throw new IllegalArgumentException("Index must be >= 0.");
+		}
+
+		return index;
+	}
 }
