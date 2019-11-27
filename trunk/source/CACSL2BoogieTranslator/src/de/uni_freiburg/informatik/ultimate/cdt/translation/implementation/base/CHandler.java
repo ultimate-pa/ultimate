@@ -208,6 +208,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionWithIncompleteTypeResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResultBuilder;
@@ -2351,7 +2352,7 @@ public class CHandler {
 		case IASTUnaryExpression.op_bracketedPrimary:
 			return operand;
 		case IASTUnaryExpression.op_sizeof:
-			final CType operandType = operand.getLrValue().getCType().getUnderlyingType();
+			final CType operandType = operand.getCType().getUnderlyingType();
 			return new ExpressionResult(
 					new RValue(mMemoryHandler.calculateSizeOf(loc, operandType, node), mTypeSizeComputer.getSizeT()),
 					Collections.emptySet());
@@ -3556,7 +3557,10 @@ public class CHandler {
 		final CPointer pointer = (CPointer) rValue.getCType().getUnderlyingType();
 		final CType pointedType = pointer.getPointsToType();
 		if (pointedType.isIncomplete()) {
-			throw new IncorrectSyntaxException(loc, "Pointer dereference of incomplete type");
+			return new ExpressionWithIncompleteTypeResult(rop.getStatements(),
+				LRValueFactory.constructHeapLValue(mTypeHandler, rValue.getValue(), pointedType, null),
+				rop.getDeclarations(), rop.getAuxVars(), rop.getOverapprs());
+
 		}
 
 		return new ExpressionResult(rop.getStatements(),

@@ -42,6 +42,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 
 /**
@@ -137,6 +138,10 @@ public class ExpressionResult extends Result {
 
 	public LRValue getLrValue() {
 		return mLrVal;
+	}
+
+	public CType getCType() {
+		return mLrVal.getCType();
 	}
 
 	public List<Statement> getStatements() {
