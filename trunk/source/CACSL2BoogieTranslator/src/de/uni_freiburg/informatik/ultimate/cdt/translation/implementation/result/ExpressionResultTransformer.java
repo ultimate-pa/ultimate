@@ -1093,19 +1093,20 @@ public class ExpressionResultTransformer {
 	}
 
 	public ExpressionResult constructBitvecResult(final LRValue rvalue, final ILocation loc) {
-		final Expression[] arguments = new Expression[1];
-		arguments[0] = rvalue.getValue();
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final CPrimitive cType = (CPrimitive) rvalue.getCType();
+		assert cType.isSmtFloat() : "not an SMT float";
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 		resultBuilder.addAuxVar(auxvarinfo);
+
+		final Expression[] arguments = new Expression[] { rvalue.getValue() };
 		final CallStatement call = StatementFactory.constructCallStatement(loc, false,
 				new VariableLHS[] { auxvarinfo.getLhs() },
 				"float_to_bitvec" + Integer.toString(mTypeSizes.getFloatingPointSize(cType).getBitSize()), arguments);
 		resultBuilder.addStatement(call);
-		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), cType));
-
+		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), cType.setIsSmtFloat(false)));
 		return resultBuilder.build();
 	}
 
