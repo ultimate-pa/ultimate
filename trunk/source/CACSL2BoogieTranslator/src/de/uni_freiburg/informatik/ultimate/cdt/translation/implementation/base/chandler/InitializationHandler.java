@@ -43,6 +43,9 @@ import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTArrayDesignator;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
@@ -80,16 +83,21 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult.ArrayDesignator;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult.Designator;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult.StructDesignator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -1276,12 +1284,19 @@ public class InitializationHandler {
 		 * index otherwise it just counts up.
 		 */
 		int currentCellIndex = -1;
-		while (currentCellIndex < bound - 1 && !rest.isEmpty()) {
+		while (currentCellIndex < bound && !rest.isEmpty()) {
 			if (rest.peekFirst().hasRootDesignator()) {
-				assert targetCType instanceof CStructOrUnion : "array designators not yet supported and should not (yet)"
-						+ " show up here";
-				currentCellIndex = CTranslationUtil.findIndexOfStructField((CStructOrUnion) targetCType,
-						rest.peekFirst().getRootDesignator());
+				final Designator designator = rest.peekFirst().getRootDesignator();
+				if (designator instanceof ArrayDesignator) {
+					assert targetCType instanceof CArray;
+					currentCellIndex = ((ArrayDesignator) designator).getArrayCellId();
+				} else if (designator instanceof StructDesignator) {
+					assert targetCType instanceof CStructOrUnion;
+					currentCellIndex = CTranslationUtil.findIndexOfStructField((CStructOrUnion) targetCType,
+						((StructDesignator) designator).getStructFieldId());
+				} else {
+					throw new AssertionError("missing case (designator)?");
+				}
 			} else {
 				currentCellIndex++;
 			}
@@ -1595,4 +1610,91 @@ public class InitializationHandler {
 			return "?";
 		}
 	}
+
+	/**
+	 * Handle IASTDesignatedInitializer.
+	 *
+	 * Note: designators can be complex.
+	 *
+	 * Example from C11 6.7.9.35: <code> struct { int a[3], b; } w[] = { [0].a = {1}, [1].a[0] = 2 };</code>
+	 *
+	 * Currently we only support designators that refer to a struct field, like in
+	 *
+	 * <code> struct { int a; int b; } = { .b = 2 }; </code>
+	 *
+	 * @param main
+	 *            a reference to the main IDispatcher.
+	 * @param node
+	 *            the node to translate.
+	 * @return the translation result.
+	 */
+	public Result handleDesignatedInitializer(final IDispatcher main,
+			final LocationFactory locationFactory,
+			final MemoryHandler memoryHandler,
+			final StructHandler structHandler,
+			final CASTDesignatedInitializer node) {
+		final ILocation loc = locationFactory.createCLocation(node);
+		if (node.getDesignators().length == 1 && (node.getDesignators()[0] instanceof CASTFieldDesignator)) {
+			// a field designator, as in "struct field"
+			final CASTFieldDesignator fieldDesignator = (CASTFieldDesignator) node.getDesignators()[0];
+			final String fieldDesignatorName = fieldDesignator.getName().toString();
+			final Result innerInitializerResult = main.dispatch(node.getOperand());
+			if (innerInitializerResult instanceof InitializerResult) {
+
+				final InitializerResult initializerResult = (InitializerResult) innerInitializerResult;
+				assert !initializerResult.hasRootDesignator();
+
+				final InitializerResultBuilder irBuilder = new InitializerResultBuilder(initializerResult);
+				irBuilder.setRootDesignator(fieldDesignatorName);
+
+				return irBuilder.build();
+			} else if (innerInitializerResult instanceof ExpressionResult) {
+				return new InitializerResultBuilder().setRootExpressionResult((ExpressionResult) innerInitializerResult)
+						.setRootDesignator(fieldDesignatorName).build();
+			} else {
+				throw new UnsupportedSyntaxException(loc, "Unexpected result");
+			}
+		} else if (node.getDesignators().length == 1 && (node.getDesignators()[0] instanceof CASTArrayDesignator)) {
+			// designator denotes some field in an array;
+			// one designator means a one-dimensional array "access" (I think)
+			final CASTArrayDesignator arrayDesignator = (CASTArrayDesignator) node.getDesignators()[0];
+			final int arrayCellNr = getArrayCellNrFromArrayDesignator(main, loc, arrayDesignator, node);
+
+			final Result innerInitializerResult = main.dispatch(node.getOperand());
+			if (innerInitializerResult instanceof InitializerResult) {
+
+				final InitializerResult initializerResult = (InitializerResult) innerInitializerResult;
+				assert !initializerResult.hasRootDesignator();
+
+				final InitializerResultBuilder irBuilder = new InitializerResultBuilder(initializerResult);
+				irBuilder.setRootDesignator(arrayCellNr);
+
+				return irBuilder.build();
+			} else if (innerInitializerResult instanceof ExpressionResult) {
+				return new InitializerResultBuilder().setRootExpressionResult((ExpressionResult) innerInitializerResult)
+						.setRootDesignator(arrayCellNr).build();
+			} else {
+				throw new UnsupportedSyntaxException(loc, "Unexpected result");
+			}
+		} else {
+			throw new UnsupportedSyntaxException(loc, "Designators in initializers beyond simple "
+					+ "designators are currently unsupported: " + node.getRawSignature());
+		}
+	}
+
+	private int getArrayCellNrFromArrayDesignator(final IDispatcher main, final ILocation loc,
+			final CASTArrayDesignator arrayDesignator, final CASTDesignatedInitializer hook) {
+			final Result subscriptExpressionResult = main.dispatch(arrayDesignator.getSubscriptExpression());
+			if (!(subscriptExpressionResult instanceof ExpressionResult)) {
+				throw new UnsupportedSyntaxException(loc, "Designators in initializers beyond simple "
+						+ "designators are currently unsupported: " + hook.getRawSignature());
+			}
+			final ExpressionResult expressionResultSwitched =
+					mExprResultTransformer.switchToRValue((ExpressionResult) subscriptExpressionResult, loc, hook);
+
+			return mTypeSizes.extractIntegerValue((RValue) expressionResultSwitched.getLrValue(), hook)
+					.intValueExact();
+	}
+
 }
+

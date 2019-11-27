@@ -33,8 +33,6 @@ import java.util.List;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -50,14 +48,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.BitfieldInformation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
@@ -277,51 +272,6 @@ public class StructHandler {
 				IASTBinaryExpression.op_plus, addressOffsetOfFieldOwner, mTypeSizeAndOffsetComputer.getSizeT(),
 				fieldOffset.getAddressOffsetAsExpression(loc), mTypeSizeAndOffsetComputer.getSizeT());
 		return result;
-	}
-
-	/**
-	 * Handle IASTDesignatedInitializer.
-	 *
-	 * @param main
-	 *            a reference to the main IDispatcher.
-	 * @param node
-	 *            the node to translate.
-	 * @return the translation result.
-	 */
-	public Result handleDesignatedInitializer(final IDispatcher main, final MemoryHandler memoryHandler,
-			final StructHandler structHandler, final CASTDesignatedInitializer node) {
-		final ILocation loc = mLocationFactory.createCLocation(node);
-		if (node.getDesignators().length != 1 || !(node.getDesignators()[0] instanceof CASTFieldDesignator)) {
-			/*
-			 * Designators can be complex.
-			 *
-			 * Example from C11 6.7.9.35: <code> struct { int a[3], b; } w[] = { [0].a = {1}, [1].a[0] = 2 };</code>
-			 *
-			 * Currently we only support designators that refer to a struct field, like in
-			 *
-			 * <code> struct { int a; int b; } = { .b = 2 }; </code>
-			 */
-			throw new UnsupportedSyntaxException(loc, "Designators in initializers beyond simple struct field "
-					+ "designators are currently unsupported: " + node.getRawSignature());
-		}
-		final CASTFieldDesignator fieldDesignator = (CASTFieldDesignator) node.getDesignators()[0];
-		final String fieldDesignatorName = fieldDesignator.getName().toString();
-		final Result innerInitializerResult = main.dispatch(node.getOperand());
-		if (innerInitializerResult instanceof InitializerResult) {
-
-			final InitializerResult initializerResult = (InitializerResult) innerInitializerResult;
-			assert !initializerResult.hasRootDesignator();
-
-			final InitializerResultBuilder irBuilder = new InitializerResultBuilder(initializerResult);
-			irBuilder.setRootDesignator(fieldDesignatorName);
-
-			return irBuilder.build();
-		} else if (innerInitializerResult instanceof ExpressionResult) {
-			return new InitializerResultBuilder().setRootExpressionResult((ExpressionResult) innerInitializerResult)
-					.setRootDesignator(fieldDesignatorName).build();
-		} else {
-			throw new UnsupportedSyntaxException(loc, "Unexpected result");
-		}
 	}
 
 }

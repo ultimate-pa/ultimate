@@ -675,7 +675,7 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final CASTDesignatedInitializer node) {
-		return mStructHandler.handleDesignatedInitializer(main, mMemoryHandler, mStructHandler, node);
+		return mInitHandler.handleDesignatedInitializer(main, mLocationFactory, mMemoryHandler, mStructHandler, node);
 	}
 
 	public Result visit(final IDispatcher main, final IASTArraySubscriptExpression node) {

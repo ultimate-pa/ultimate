@@ -68,7 +68,7 @@ public class InitializerResult extends Result {
 	 * The RValue in mExpressionResult may have a designator. This field stores it.
 	 * (Can happen only if we are inside a nested initializer.)
 	 */
-	private final String mRootDesignator;
+	private final Designator mRootDesignator;
 
 	private final List<InitializerResult> mChildren;
 
@@ -80,7 +80,7 @@ public class InitializerResult extends Result {
 	 * @param treeNodeIdToRValue
 	 * @param treeNodeIdToDesignatorName
 	 */
-	public InitializerResult(final BoogieASTNode node, final String rootDesignator,
+	public InitializerResult(final BoogieASTNode node, final Designator rootDesignator,
 			final ExpressionResult expressionResult, final List<InitializerResult> children) {
 		super(node);
 		mRootDesignator = rootDesignator;
@@ -88,7 +88,7 @@ public class InitializerResult extends Result {
 		mChildren = children == null ? null : Collections.unmodifiableList(children);
 	}
 
-	public String getRootDesignator() {
+	public Designator getRootDesignator() {
 		return mRootDesignator;
 	}
 
@@ -145,4 +145,41 @@ public class InitializerResult extends Result {
 		}
 		throw new AssertionError("found no value in initializer");
 	}
+
+	public static abstract class Designator { }
+
+	public static class StructDesignator extends Designator {
+		final String mStructFieldId;
+
+		public StructDesignator(final String structFieldId) {
+			mStructFieldId = structFieldId;
+		}
+
+		public String getStructFieldId() {
+			return mStructFieldId;
+		}
+
+		@Override
+		public String toString() {
+			return "." + mStructFieldId;
+		}
+	}
+
+	public static class ArrayDesignator extends Designator {
+		final Integer mArrayCellId;
+
+		public ArrayDesignator(final Integer arrayCellId) {
+			mArrayCellId = arrayCellId;
+		}
+
+		public Integer getArrayCellId() {
+			return mArrayCellId;
+		}
+
+		@Override
+		public String toString() {
+			return "[" + mArrayCellId + "]";
+		}
+	}
 }
+
