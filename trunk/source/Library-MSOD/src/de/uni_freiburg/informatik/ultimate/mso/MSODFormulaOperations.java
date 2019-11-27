@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This class provides methods to construct automata that correspond to a given MSOD-Formula.
@@ -135,4 +136,9 @@ public abstract class MSODFormulaOperations {
 	 * Returns integer value that corresponds to the given index.
 	 */
 	public abstract int indexToInteger(final int index);
+
+	/**
+	 * Returns the exclusive stem bounds.
+	 */
+	public abstract Pair<Integer, Integer> stemBounds(final int length);
 }

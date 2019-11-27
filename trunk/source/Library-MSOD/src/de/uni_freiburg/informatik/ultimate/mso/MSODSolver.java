@@ -518,28 +518,10 @@ public final class MSODSolver {
 			return run != null ? run.getNestedLassoWord() : null;
 		}
 
-		throw new IllegalArgumentException("Unsupported automata operations.");
+		throw new IllegalArgumentException("Unsupported automata operation.");
 	}
 
 	// -----------------------------------------------------------------------------------------------------------------
-
-	/**
-	 *
-	 */
-	public Pair<Integer, Integer> stemBounds(final int length) {
-		int lower = -1, upper = 0;
-
-		if (mFormulaOperations instanceof MSODFormulaOperationsNat) {
-			upper = mFormulaOperations.indexToInteger(length);
-		}
-
-		if (mFormulaOperations instanceof MSODFormulaOperationsInt) {
-			lower = Math.min(mFormulaOperations.indexToInteger(length), mFormulaOperations.indexToInteger(length + 1));
-			upper = Math.max(mFormulaOperations.indexToInteger(length), mFormulaOperations.indexToInteger(length + 1));
-		}
-
-		return new Pair<>(lower, upper);
-	}
 
 	/**
 	 *
@@ -690,7 +672,7 @@ public final class MSODSolver {
 		final int loopLength = mFormulaOperations instanceof MSODFormulaOperationsInt ? word.getLoop().length() / 2
 				: word.getLoop().length();
 
-		final Pair<Integer, Integer> stemBounds = stemBounds(stemLength);
+		final Pair<Integer, Integer> stemBounds = mFormulaOperations.stemBounds(stemLength);
 
 		final Map<Term, Term> results = new HashMap<>();
 		for (final Term term : stem.keySet()) {
