@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inters
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ConstantFinder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AbstractGeneralizedAffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
@@ -491,69 +490,6 @@ public final class MSODSolver {
 	}
 
 	// -----------------------------------------------------------------------------------------------------------------
-
-	/**
-	 *
-	 */
-	public static Term loopResultPartial(final Script script, final Term term, final List<Integer> numbers,
-			final Integer bound, final int loopLength) {
-
-		Term result = script.term("false");
-		final Term x = term.getTheory().createTermVariable("x", SmtSortUtils.getIntSort(script));
-		Integer start = null;
-
-		for (int i = 0; i < numbers.size(); i++) {
-
-			if (i + 1 < numbers.size() && numbers.get(i) == numbers.get(i + 1) - 1) {
-				if (start == null) {
-					start = numbers.get(i);
-				}
-				continue;
-			}
-
-			final Term lhs = SmtUtils.mod(script, x, MSODUtils.intConstant(script, loopLength));
-
-			if (start == null) {
-				final Term rhs = MSODUtils.intConstant(script, numbers.get(i) % loopLength);
-				final Term eq = SmtUtils.binaryEquality(script, lhs, rhs);
-				result = SmtUtils.or(script, result, eq);
-				continue;
-			}
-
-			final Term geq = SmtUtils.geq(script, lhs, MSODUtils.intConstant(script, start % loopLength));
-			final Term leq = SmtUtils.leq(script, lhs, MSODUtils.intConstant(script, numbers.get(i) % loopLength));
-			result = SmtUtils.or(script, result, SmtUtils.and(script, geq, leq));
-			start = null;
-		}
-
-		final Term stemNumber = MSODUtils.intConstant(script, bound);
-		final Term stemBound = (bound < 0) ? SmtUtils.leq(script, x, stemNumber) : SmtUtils.geq(script, x, stemNumber);
-
-		return SmtUtils.and(script, result, stemBound);
-	}
-
-	/**
-	 *
-	 */
-	public static Term loopResult(final Script script, final Term term, final List<Integer> numbers,
-			final Pair<Integer, Integer> bounds, final int loopLength) {
-
-		final List<Integer> neg = new ArrayList<>();
-		final List<Integer> pos = new ArrayList<>();
-
-		for (final Integer number : numbers) {
-			if (number < 0) {
-				neg.add(number);
-				continue;
-			}
-			pos.add(number);
-		}
-
-		final Term t1 = loopResultPartial(script, term, neg, bounds.getFirst(), loopLength);
-		final Term t2 = loopResultPartial(script, term, pos, bounds.getSecond(), loopLength);
-
-		return SmtUtils.or(script, t1, t2);
-	}
 
 	/**
 	 *
