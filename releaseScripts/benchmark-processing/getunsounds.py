@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 
 import xml.etree.ElementTree as ET
 import os
@@ -75,7 +75,10 @@ def parse_xml(filename):
             value = column.get('value')
 
             if key == "category" and value == "wrong":
-                unsound.setdefault(run.attrib['properties'],set()).add(run.get('name'))
+                property = run.attrib['properties']
+                architecture = re.sub('--architecture ', '', run.attrib['options'])
+                key = property + '_' + architecture
+                unsound.setdefault(key, set()).add(run.get('name'))
     return unsound
 
 def process_url_file(url_file, target_dir):
