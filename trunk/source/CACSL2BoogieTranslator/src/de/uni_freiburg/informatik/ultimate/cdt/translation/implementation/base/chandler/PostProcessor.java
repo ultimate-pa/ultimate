@@ -550,15 +550,13 @@ public class PostProcessor {
 		final Expression outVarExp = ExpressionFactory.constructIdentifierExpression(loc, floatBoogieType, outVar,
 				new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, functionName));
 
-		final Expression inVarToFloat =
-				mExpressionTranslation.transformBitvectorToFloat(loc, inVarExp, floatCPrimitives);
 		final Expression outVarToFloat =
 				mExpressionTranslation.transformBitvectorToFloat(loc, outVarExp, floatCPrimitives);
 
 		final String smtFunctionName = "fp.eq";
 		final String fullFunctionName = SFO.getBoogieFunctionName("fp.eq", cType);
 		final Expression comparison = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-				new Expression[] { inVarToFloat, outVarToFloat }, BoogieType.TYPE_BOOL);
+				new Expression[] { inVarExp, outVarToFloat }, BoogieType.TYPE_BOOL);
 
 		// declare fp.eq as necessary
 		mExpressionTranslation.declareFloatingPointFunction(loc, smtFunctionName, true, false,
