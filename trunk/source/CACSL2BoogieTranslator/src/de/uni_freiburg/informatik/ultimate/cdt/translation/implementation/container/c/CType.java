@@ -47,37 +47,21 @@ public abstract class CType {
 	private final boolean mIsRestrict;
 	private final boolean mIsVolatile;
 	private final boolean mIsExtern;
-	private final boolean mIsShadowed;
+	private final boolean mIsSmtFloat;
 
 	/**
 	 * Constructor.
-	 *
-	 * @param isExtern
 	 */
 	public CType(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
-			final boolean isExtern) {
-		this(isConst, isInline, isRestrict, isVolatile, isExtern, false);
-	}
-	
-	public CType(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
-			final boolean isExtern, final boolean isShadowed) {
+			final boolean isExtern, final boolean isSmtFloat) {
 		mIsConst = isConst;
 		mIsInline = isInline;
 		mIsRestrict = isRestrict;
 		mIsVolatile = isVolatile;
 		mIsExtern = isExtern;
-		mIsShadowed = isShadowed;
+		mIsSmtFloat = isSmtFloat;
 	}
-	
-	public CType(final CType base, final boolean shadowed) {
-		this(base.isConst(),
-				base.isInline(),
-				base.isRestrict(),
-				base.isVolatile(),
-				base.isExtern(),
-				shadowed);
-	}
-	
+
 	public boolean isConst() {
 		return mIsConst;
 	}
@@ -97,9 +81,18 @@ public abstract class CType {
 	public boolean isExtern() {
 		return mIsExtern;
 	}
-	
-	public boolean isShadowed() {
-		return mIsShadowed;
+
+	/**
+	 * Our float handling sometimes requires that we use SMT floats and SMT bitvectors interchangeably in Boogie. For
+	 * example, we might have a Boogie function fp.to_sbv that takes a Boogie bitvector as argument and returns a Boogie
+	 * bitvector.
+	 *
+	 * On an SMT level, we actually expect a SMT float here and convert it to an SMT bitvector. A correct solution would
+	 * replicate the SMT float types in Boogie, but so far we do not have such an extension and hence track it only
+	 * during the translation.
+	 */
+	public boolean isSmtFloat() {
+		return mIsSmtFloat;
 	}
 
 	public abstract boolean isIncomplete();

@@ -582,9 +582,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public ExpressionResult convertIntToFloat(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
-		final CPrimitive conversionType = new CPrimitive(newType, true);
-		final String prefixedFunctionName =
-				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), conversionType);
+		final CPrimitive conversionType = newType.setIsSmtFloat(true);
+		final String prefixedFunctionName = declareConversionFunction(loc,
+				(CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), conversionType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { getCurrentRoundingMode(), oldExpression },
@@ -596,9 +596,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public ExpressionResult convertFloatToFloat(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
-		final CPrimitive conversionType = new CPrimitive(newType, true);
-		final String prefixedFunctionName =
-				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), conversionType);
+		final CPrimitive conversionType = newType.setIsSmtFloat(true);
+		final String prefixedFunctionName = declareConversionFunction(loc,
+				(CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), conversionType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { getCurrentRoundingMode(), oldExpression },
@@ -1186,7 +1186,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final RValue argument) {
 		final String func_name = floatFunction.getFunctionName();
 		// Does not convert to smt float if it already is one.
-		if ("fmod".equals(func_name) || "signbit".equals(func_name) || "copysign".equals(func_name) || argument.getCType().isShadowed()) {
+		if ("fmod".equals(func_name) || "signbit".equals(func_name) || "copysign".equals(func_name)
+				|| argument.getCType().isSmtFloat()) {
 			return argument;
 		} else {
 			return new RValue(
@@ -1344,7 +1345,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector,
 			final CPrimitives floatType) {
-		final CPrimitive conversionType = new CPrimitive(floatType, true);
+		final CPrimitive conversionType = new CPrimitive(floatType).setIsSmtFloat(true);
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(floatType);
 		final Expression significantBits = extractBits(loc, bitvector, fps.getSignificant() - 1, 0);
 		final Expression exponentBits = extractBits(loc, bitvector, fps.getDataSize() - 1, fps.getSignificant() - 1);

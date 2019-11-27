@@ -1035,7 +1035,7 @@ public class ExpressionResultTransformer {
 				expr = mExprTrans.convertIntToFloat(loc, operand, resultType);
 				exprResult = constructBitvecResult(expr.getLrValue(), loc);
 			} else if (operandType.isFloatingType()) {
-				if (operand.getLrValue().getCType().isShadowed()) {
+				if (operand.getLrValue().getCType().isSmtFloat()) {
 					expr = mExprTrans.convertFloatToFloat(loc, operand, resultType);
 					exprResult = constructBitvecResult(expr.getLrValue(), loc);
 				} else {
