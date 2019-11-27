@@ -511,11 +511,11 @@ public final class MSODSolver {
 		logger.info("Word:" + word);
 
 		logger.info("Stem:");
-		final Map<Term, List<Integer>> stem = wordToNumbers(word.getStem(), 0);
+		final Map<Term, List<Integer>> stem = mFormulaOperations.wordToNumbers(word.getStem(), 0);
 		stem.entrySet().forEach(e -> logger.info(e.getKey() + " " + e.getValue()));
 
 		logger.info("Loop:");
-		final Map<Term, List<Integer>> loop = wordToNumbers(word.getLoop(), word.getStem().length());
+		final Map<Term, List<Integer>> loop = mFormulaOperations.wordToNumbers(word.getLoop(), word.getStem().length());
 		loop.entrySet().forEach(e -> logger.info(e.getKey() + " " + e.getValue()));
 
 		final int stemLength = word.getStem().length();
@@ -526,8 +526,8 @@ public final class MSODSolver {
 
 		final Map<Term, Term> results = new HashMap<>();
 		for (final Term term : stem.keySet()) {
-			results.put(term, SmtUtils.or(script, stemResult(script, term, stem.get(term)),
-					loopResult(script, term, loop.get(term), stemBounds, loopLength)));
+			results.put(term, SmtUtils.or(script, MSODFormulaOperations.stemResult(script, term, stem.get(term)),
+					MSODFormulaOperations.loopResult(script, term, loop.get(term), stemBounds, loopLength)));
 		}
 
 		logger.info("result terms ----------------------------------------------");
