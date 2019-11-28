@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -85,11 +84,7 @@ public class MSODScript extends NoopScript {
 		mLogger.info("Input term: " + mAssertionTerm);
 
 		try {
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton =
-					mMSODSolver.traversePostOrder(mAssertionTerm);
-			mLogger.info(MSODUtils.automatonToString(mAutomataLibrarayServices, automaton));
-
-			mModel = mMSODSolver.getResult(this, mLogger, mAutomataLibrarayServices, automaton);
+			mModel = mMSODSolver.getResult(this, mLogger, mAutomataLibrarayServices, mAssertionTerm);
 
 			if (mModel != null) {
 				mLogger.info("SAT");

@@ -510,17 +510,16 @@ public final class MSODSolver {
 		throw new IllegalArgumentException("Invalid input.");
 	}
 
-	// -----------------------------------------------------------------------------------------------------------------
-
 	/**
 	 *
 	 */
 	public Map<Term, Term> getResult(final Script script, final ILogger logger, final AutomataLibraryServices services,
-			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
+			final Term term) throws AutomataLibraryException {
 
-		NestedLassoWord<MSODAlphabetSymbol> word = null;
+		final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = traversePostOrder(term);
+		mLogger.info(MSODUtils.automatonToString(mAutomataLibrarayServices, automaton));
 
-		word = mAutomataOperations.getWord(services, automaton);
+		NestedLassoWord<MSODAlphabetSymbol> word = mAutomataOperations.getWord(services, automaton);
 
 		if (word == null) {
 			return null;
@@ -530,8 +529,7 @@ public final class MSODSolver {
 		if (mFormulaOperations instanceof MSODFormulaOperationsInt && word.getLoop().length() % 2 != 0) {
 			word = new NestedLassoWord<>(word.getStem(), word.getLoop().concatenate(word.getLoop()));
 		}
-
-		logger.info("Word:" + word);
+		logger.info("Word: " + word);
 
 		final Map<Term, List<Integer>> stem = mFormulaOperations.wordToNumbers(word.getStem(), 0);
 		final Map<Term, List<Integer>> loop = mFormulaOperations.wordToNumbers(word.getLoop(), word.getStem().length());
@@ -543,9 +541,9 @@ public final class MSODSolver {
 		final Pair<Integer, Integer> stemBounds = mFormulaOperations.stemBounds(stemLength);
 
 		final Map<Term, Term> results = new HashMap<>();
-		for (final Term term : stem.keySet()) {
-			results.put(term, SmtUtils.or(script, MSODFormulaOperations.stemResult(script, term, stem.get(term)),
-					MSODFormulaOperations.loopResult(script, term, loop.get(term), stemBounds, loopLength)));
+		for (final Term key : stem.keySet()) {
+			results.put(key, SmtUtils.or(script, MSODFormulaOperations.stemResult(script, key, stem.get(key)),
+					MSODFormulaOperations.loopResult(script, key, loop.get(key), stemBounds, loopLength)));
 		}
 
 		return results;
