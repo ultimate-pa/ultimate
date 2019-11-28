@@ -1614,26 +1614,20 @@ public class CHandler {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 
 		// translate type
-		CType cType;
-		{
-			final IASTTypeId typeId = node.getTypeId();
-			final TypesResult declSpecifierResult = (TypesResult) main.dispatch(typeId.getDeclSpecifier());
-			mCurrentDeclaredTypes.push(declSpecifierResult);
-			final DeclaratorResult declaratorResult = (DeclaratorResult) main.dispatch(typeId.getAbstractDeclarator());
-			mCurrentDeclaredTypes.pop();
+		final IASTTypeId typeId = node.getTypeId();
+		final TypesResult declSpecifierResult = (TypesResult) main.dispatch(typeId.getDeclSpecifier());
+		mCurrentDeclaredTypes.push(declSpecifierResult);
+		final DeclaratorResult declaratorResult = (DeclaratorResult) main.dispatch(typeId.getAbstractDeclarator());
+		mCurrentDeclaredTypes.pop();
 
-			final CDeclaration cDeclaration = declaratorResult.getDeclaration();
-			assert !cDeclaration.hasInitializer() : "unexpected, inspect this case";
-			assert !cDeclaration.isOnHeap() : "unexpected, inspect this case";
-			cType = cDeclaration.getType().getUnderlyingType();
-		}
+		final CDeclaration cDeclaration = declaratorResult.getDeclaration();
+		assert !cDeclaration.hasInitializer() : "unexpected, inspect this case";
+		assert !cDeclaration.isOnHeap() : "unexpected, inspect this case";
+		final CType cType = cDeclaration.getType().getUnderlyingType();
 
 		// translate initializer
-		final InitializerResult ir;
-		{
-			final IASTInitializer initializer = node.getInitializer();
-			ir = (InitializerResult) main.dispatch(initializer);
-		}
+		final IASTInitializer initializer = node.getInitializer();
+		final InitializerResult ir = (InitializerResult) main.dispatch(initializer);
 
 		final boolean isAddressTaken = node.getParent() instanceof IASTUnaryExpression
 				&& ((IASTUnaryExpression) node.getParent()).getOperator() == IASTUnaryExpression.op_amper;
@@ -3558,8 +3552,8 @@ public class CHandler {
 		final CType pointedType = pointer.getPointsToType();
 		if (pointedType.isIncomplete()) {
 			return new ExpressionWithIncompleteTypeResult(rop.getStatements(),
-				LRValueFactory.constructHeapLValue(mTypeHandler, rValue.getValue(), pointedType, null),
-				rop.getDeclarations(), rop.getAuxVars(), rop.getOverapprs());
+					LRValueFactory.constructHeapLValue(mTypeHandler, rValue.getValue(), pointedType, null),
+					rop.getDeclarations(), rop.getAuxVars(), rop.getOverapprs());
 
 		}
 

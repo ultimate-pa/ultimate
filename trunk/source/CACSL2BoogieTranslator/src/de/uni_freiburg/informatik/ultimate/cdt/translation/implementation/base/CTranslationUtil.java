@@ -176,12 +176,13 @@ public class CTranslationUtil {
 	}
 
 	/**
-	 * According to 6.2.5.21 of C11 the structure types and the array types (but not
-	 * the union types) are called aggregate types.
+	 * According to 6.2.5.21 of C11 the structure types and the array types (but not the union types) are called
+	 * aggregate types.
 	 */
 	public static boolean isAggregateType(final CType valueTypeRaw) {
 		final CType valueType = valueTypeRaw.getUnderlyingType();
-		return (valueType instanceof CStructOrUnion && (((CStructOrUnion) valueType).isStructOrUnion() == StructOrUnion.STRUCT)
+		return (valueType instanceof CStructOrUnion
+				&& (((CStructOrUnion) valueType).isStructOrUnion() == StructOrUnion.STRUCT)
 				|| valueType instanceof CArray);
 	}
 
@@ -203,6 +204,10 @@ public class CTranslationUtil {
 		final BigInteger extracted = typeSizes.extractIntegerValue(dimRVal, hook);
 		if (extracted == null) {
 			throw new IllegalArgumentException("only call this for non-varlength first dimension types");
+		}
+
+		if (extracted.equals(BigInteger.valueOf(CArray.INCOMPLETE_ARRY_MAGIC_NUMBER))) {
+			throw new IllegalArgumentException("This array type is incomplete! Cannot extract actual dimensions.");
 		}
 
 		final int dimInt = Integer.parseUnsignedInt(extracted.toString());
@@ -411,13 +416,11 @@ public class CTranslationUtil {
 		}
 	}
 
-
 	/**
 	 * Returns the value of an expression in case the expression is a literal.
 	 * </p>
-	 * Warning: This method is not suitable for obtaining the value of C
-	 * expressions. If you also want to get integer values of constants (in the
-	 * sense of variables that got statically some value assigned) then use
+	 * Warning: This method is not suitable for obtaining the value of C expressions. If you also want to get integer
+	 * values of constants (in the sense of variables that got statically some value assigned) then use
 	 * {@link TypeSizes#extractIntegerValue(Expression, CType, IASTNode)}
 	 *
 	 */
@@ -491,8 +494,7 @@ public class CTranslationUtil {
 			String currentTypeString = getSmtSortStringForBoogieType(boogieArrayType.getValueType());
 			for (int i = boogieArrayType.getIndexCount() - 1; i >= 0; i--) {
 				currentTypeString = String.format("(Array %s %s)",
-						getSmtSortStringForBoogieType(boogieArrayType.getIndexType(i)),
-						currentTypeString);
+						getSmtSortStringForBoogieType(boogieArrayType.getIndexType(i)), currentTypeString);
 			}
 			return currentTypeString;
 		} else {
@@ -520,8 +522,7 @@ public class CTranslationUtil {
 	}
 
 	/**
-	 * The given hook may be a plain expression, in that case it is returned.
-	 * If the given hook is a Compound
+	 * The given hook may be a plain expression, in that case it is returned. If the given hook is a Compound
 	 *
 	 * @param hook
 	 * @return
@@ -542,9 +543,9 @@ public class CTranslationUtil {
 			return 1;
 		} else if (cType instanceof CFunction) {
 			assert false : "this is unexpected, a CFunction that is not wrapped inside a CPointer";
-		 	return 1;
+			return 1;
 		} else if (cType instanceof CStructOrUnion && CStructOrUnion.isUnion(cType)) {
-		 	return 1;
+			return 1;
 		} else if (cType instanceof CStructOrUnion && !CStructOrUnion.isUnion(cType)) {
 			final CStructOrUnion cStruct = (CStructOrUnion) cType;
 			long sum = 0;
@@ -560,7 +561,7 @@ public class CTranslationUtil {
 			return innerCount * bound;
 		} else {
 			assert false : "missed cType case?";
-		 	return 1;
+			return 1;
 		}
 	}
 }

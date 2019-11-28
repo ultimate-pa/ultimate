@@ -1267,16 +1267,14 @@ public class InitializationHandler {
 
 		final int bound;
 		CType cellType = null;
-		{
-			if (targetCType instanceof CArray) {
-				cellType = ((CArray) targetCType).getValueType();
-				bound = CTranslationUtil.getConstantFirstDimensionOfArray((CArray) targetCType, mTypeSizes, hook);
-				if (CTranslationUtil.isToplevelVarlengthArray((CArray) targetCType, mTypeSizes, hook)) {
-					throw new UnsupportedOperationException("varlenght not yet supported here");
-				}
-			} else {
-				bound = ((CStructOrUnion) targetCType).getFieldCount();
+		if (targetCType instanceof CArray) {
+			cellType = ((CArray) targetCType).getValueType();
+			bound = CTranslationUtil.getConstantFirstDimensionOfArray((CArray) targetCType, mTypeSizes, hook);
+			if (CTranslationUtil.isToplevelVarlengthArray((CArray) targetCType, mTypeSizes, hook)) {
+				throw new UnsupportedOperationException("varlenght not yet supported here");
 			}
+		} else {
+			bound = ((CStructOrUnion) targetCType).getFieldCount();
 		}
 
 		/*
