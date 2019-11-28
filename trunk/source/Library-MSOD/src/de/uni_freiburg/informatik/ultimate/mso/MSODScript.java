@@ -64,22 +64,7 @@ public class MSODScript extends NoopScript {
 	public MSODScript(final IUltimateServiceProvider services, final ILogger logger, final MSODLogic logic) {
 		mAutomataLibrarayServices = new AutomataLibraryServices(services);
 		mLogger = logger;
-
-		if (logic == MSODLogic.MSODNatWeak) {
-			mMSODSolver = new MSODSolver(services, this, logger, new MSODFormulaOperationsNat(),
-					new MSODAutomataOperationsWeak());
-		} else if (logic == MSODLogic.MSODIntWeak) {
-			mMSODSolver = new MSODSolver(services, this, logger, new MSODFormulaOperationsInt(),
-					new MSODAutomataOperationsWeak());
-		} else if (logic == MSODLogic.MSODNat) {
-			mMSODSolver = new MSODSolver(services, this, logger, new MSODFormulaOperationsNat(),
-					new MSODAutomataOperationsBuchi());
-		} else if (logic == MSODLogic.MSODInt) {
-			mMSODSolver = new MSODSolver(services, this, logger, new MSODFormulaOperationsInt(),
-					new MSODAutomataOperationsBuchi());
-		} else {
-			throw new AssertionError("Unknown value: " + logic);
-		}
+		mMSODSolver = new MSODSolver(services, this, logger, logic);
 	}
 
 	@Override

@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.mso.MSODScript.MSODLogic;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -75,13 +76,32 @@ public final class MSODSolver {
 	private final MSODAutomataOperations mAutomataOperations;
 
 	public MSODSolver(final IUltimateServiceProvider services, final Script script, final ILogger logger,
-			final MSODFormulaOperations formulaOperations, final MSODAutomataOperations automataOperations) {
+			final MSODLogic logic) {
 
 		mScript = script;
 		mLogger = logger;
 		mAutomataLibrarayServices = new AutomataLibraryServices(services);
-		mFormulaOperations = formulaOperations;
-		mAutomataOperations = automataOperations;
+
+		switch (logic) {
+		case MSODNatWeak:
+			mFormulaOperations = new MSODFormulaOperationsNat();
+			mAutomataOperations = new MSODAutomataOperationsWeak();
+			break;
+		case MSODIntWeak:
+			mFormulaOperations = new MSODFormulaOperationsInt();
+			mAutomataOperations = new MSODAutomataOperationsWeak();
+			break;
+		case MSODNat:
+			mFormulaOperations = new MSODFormulaOperationsNat();
+			mAutomataOperations = new MSODAutomataOperationsBuchi();
+			break;
+		case MSODInt:
+			mFormulaOperations = new MSODFormulaOperationsInt();
+			mAutomataOperations = new MSODAutomataOperationsBuchi();
+			break;
+		default:
+			throw new IllegalArgumentException("Unknown logic: " + logic);
+		}
 	}
 
 	/**
