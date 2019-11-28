@@ -1938,15 +1938,16 @@ public class MemoryHandler {
 
 		final boolean useSelectInsteadOfStore = writeMode == HeapWriteMode.SELECT;
 
-		final List<Expression> conjuncts = new ArrayList<>();
+		final List<Expression> indices = new ArrayList<>();
+		final List<Expression> values = new ArrayList<>();
 		if (rda.getBytesize() == heapDataArray.getSize()) {
-			conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray,
-					returnValue, x -> x, inPtrExp, x -> x, useSelectInsteadOfStore));
+			indices.add(inPtrExp);
+			values.add(returnValue);
 		} else if (rda.getBytesize() < heapDataArray.getSize()) {
-			final Function<Expression, Expression> valueExtension =
-					x -> mExpressionTranslation.signExtend(loc, x, rda.getBytesize() * 8, heapDataArray.getSize() * 8);
-			conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray,
-					returnValue, valueExtension, inPtrExp, x -> x, useSelectInsteadOfStore));
+			final Function<Expression, Expression> valueExtension = x -> mExpressionTranslation.signExtend(loc, x,
+					rda.getBytesize() * 8, heapDataArray.getSize() * 8);
+			indices.add(inPtrExp);
+			values.add(valueExtension.apply(returnValue));
 		} else {
 			assert rda.getBytesize() % heapDataArray.getSize() == 0 : "incompatible sizes";
 			for (int i = 0; i < rda.getBytesize() / heapDataArray.getSize(); i++) {
@@ -1955,17 +1956,22 @@ public class MemoryHandler {
 				extractBits = x -> mExpressionTranslation.extractBits(loc, x,
 						heapDataArray.getSize() * (currentI + 1) * 8, heapDataArray.getSize() * currentI * 8);
 				if (i == 0) {
-					conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray,
-							returnValue, extractBits, inPtrExp, x -> x, useSelectInsteadOfStore));
+					indices.add(inPtrExp);
+					values.add(extractBits.apply(returnValue));
+
 				} else {
 					final BigInteger additionalOffset = BigInteger.valueOf(i * heapDataArray.getSize());
 					final Function<Expression, Expression> pointerAddition =
 							x -> addIntegerConstantToPointer(loc, x, additionalOffset);
-					conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray,
-							returnValue, extractBits, inPtrExp, pointerAddition, useSelectInsteadOfStore));
+							indices.add(pointerAddition.apply(inPtrExp));
+							values.add(extractBits.apply(returnValue));
 				}
 			}
 		}
+		final List<Expression> conjuncts = new ArrayList<>();
+		conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray,
+				values, indices, useSelectInsteadOfStore));
+
 
 		final Set<VariableLHS> modifiedGlobals = useSelectInsteadOfStore ? Collections.emptySet()
 				: heapDataArrays.stream().map(hda -> hda.getVariableLHS()).collect(Collectors.toSet());
@@ -2001,20 +2007,18 @@ public class MemoryHandler {
 	}
 
 	private static List<Expression> constructConjunctsForWriteEnsuresSpecification(final ILocation loc,
-			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray, final Expression value,
-			final Function<Expression, Expression> valueModification, final IdentifierExpression inPtrExp,
-			final Function<Expression, Expression> ptrModification, final boolean useSelectInsteadOfStore) {
+			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray, final List<Expression> values,
+			final List<Expression> indices, final boolean useSelectInsteadOfStore) {
 		final List<Expression> conjuncts = new ArrayList<>();
 		for (final HeapDataArray other : heapDataArrays) {
 			if (heapDataArray == other) {
-				conjuncts.add(constructHeapArrayUpdateForWriteEnsures(loc, value, valueModification, inPtrExp,
-						ptrModification, other, useSelectInsteadOfStore));
+				conjuncts.add(constructHeapArrayUpdateForWriteEnsures(loc, values, indices, other, useSelectInsteadOfStore));
 			} else {
 				if (useSelectInsteadOfStore) {
 					// do nothing (no need to havoc an uninitialized memory cell)
 				} else {
 					conjuncts.add(
-							constructHeapArrayHardlyModifiedForWriteEnsures(loc, inPtrExp, ptrModification, other));
+							constructHeapArrayHardlyModifiedForWriteEnsures(loc, indices, other));
 				}
 			}
 
@@ -2137,26 +2141,41 @@ public class MemoryHandler {
 		return ExpressionFactory.constructArrayStoreExpression(loc, arr, singletonIndex, newValue);
 	}
 
+	private static Expression constructNestedOneDimensionalArrayStore(final ILocation loc, final Expression arr,
+			final List<Expression> indices, final List<Expression> newValues) {
+		assert indices.size() == newValues.size();
+		Expression result = arr;
+		for (int i = 0; i<indices.size(); i++) {
+			final Expression[] singletonIndex = new Expression[] { indices.get(i) };
+			result = ExpressionFactory.constructArrayStoreExpression(loc, result, singletonIndex, newValues.get(i));
+		}
+		return result;
+	}
+
 	// ensures #memory_X == old(#memory_X)[#ptr := #value];
-	private static Expression constructHeapArrayUpdateForWriteEnsures(final ILocation loc, final Expression valueExpr,
-			final Function<Expression, Expression> valueModification, final IdentifierExpression ptrExpr,
-			final Function<Expression, Expression> ptrModification, final HeapDataArray hda,
+	private static Expression constructHeapArrayUpdateForWriteEnsures(final ILocation loc,
+			final List<Expression> valueExprs, final List<Expression> ptrExprs, final HeapDataArray hda,
 			final boolean useSelectInsteadOfStore) {
 		final Expression memArray = hda.getIdentifierExpression();
 		if (useSelectInsteadOfStore) {
-			return ensuresArrayHasValue(loc, valueModification.apply(valueExpr), ptrModification.apply(ptrExpr),
-					memArray);
+			return ensuresArrayHasValues(loc, valueExprs, ptrExprs, memArray);
+		} else {
+			return ensuresArrayNestedUpdate(loc, valueExprs, ptrExprs, memArray);
 		}
-		return ensuresArrayUpdate(loc, valueModification.apply(valueExpr), ptrModification.apply(ptrExpr), memArray);
 	}
 
 	// #memory_$Pointer$ == old(#memory_X)[#ptr := #memory_X[#ptr]];
 	private static Expression constructHeapArrayHardlyModifiedForWriteEnsures(final ILocation loc,
-			final IdentifierExpression ptrExpr, final Function<Expression, Expression> ptrModification,
+			final List<Expression> idxExprs,
 			final HeapDataArray hda) {
 		final Expression memArray = hda.getIdentifierExpression();
-		final Expression aae = constructOneDimensionalArrayAccess(loc, memArray, ptrExpr);
-		return ensuresArrayUpdate(loc, aae, ptrModification.apply(ptrExpr), memArray);
+		final List<Expression> newNondetValues = new ArrayList<>();
+		for (int i=0; i<idxExprs.size(); i++) {
+			newNondetValues.add(constructOneDimensionalArrayAccess(loc, memArray, idxExprs.get(i)));
+		}
+//		final Expression memArray = hda.getIdentifierExpression();
+//		final Expression aae = constructOneDimensionalArrayAccess(loc, memArray, ptrExpr);
+		return ensuresArrayNestedUpdate(loc, newNondetValues, idxExprs, memArray);
 	}
 
 	/**
@@ -2171,6 +2190,16 @@ public class MemoryHandler {
 		return eq;
 	}
 
+	private static Expression ensuresArrayNestedUpdate(final ILocation loc, final List<Expression> newValues, final List<Expression> indices,
+			final Expression arrayExpr) {
+		final Expression oldArray =
+				ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD, arrayExpr);
+		final Expression ase = constructNestedOneDimensionalArrayStore(loc, oldArray, indices, newValues);
+		final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, arrayExpr, ase);
+		return eq;
+	}
+
+
 	/**
 	 * arr[index] == value
 	 */
@@ -2180,6 +2209,15 @@ public class MemoryHandler {
 				ExpressionFactory.constructNestedArrayAccessExpression(loc, arrayExpr, new Expression[] { index });
 		final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, select, value);
 		return eq;
+	}
+
+	private static Expression ensuresArrayHasValues(final ILocation loc, final List<Expression> values, final List<Expression> indices,
+			final Expression arrayExpr) {
+		final List<Expression> conjuncts = new ArrayList<>();
+		for (int i=0; i<values.size(); i++) {
+			conjuncts.add(ensuresArrayHasValue(loc, values.get(i), indices.get(i), arrayExpr));
+		}
+		return ExpressionFactory.and(loc, conjuncts);
 	}
 
 	/**
