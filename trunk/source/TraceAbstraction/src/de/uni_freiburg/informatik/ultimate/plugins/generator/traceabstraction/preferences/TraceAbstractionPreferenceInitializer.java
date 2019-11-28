@@ -81,7 +81,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final int DEF_USERLIMIT_ITERATIONS = 1_000_000;
 
 	public static final String LABEL_LBE_CONCURRENCY = "Large block encoding in concurrent analysis";
-	private static final PetriNetLbe DEF_LBE_CONCURRENCY = PetriNetLbe.OFF;
+	private static final PetriNetLbe DEF_LBE_CONCURRENCY = PetriNetLbe.SEMANTIC_BASED_MOVER_CHECK;
 
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_ALL_ERRORS_AT_ONCE = "Stop after first violation was found";
