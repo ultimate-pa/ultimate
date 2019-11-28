@@ -1249,7 +1249,7 @@ public class InitializationHandler {
 
 		// TODO: 2018-09-05 Matthias: The following workaround may now be not required any more.
 		// 2017-11-19 Matthias: introduced workaround to omit conversion
-		if (expressionResultSwitched.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
+		if (targetCType instanceof CArray) {
 			// omit conversion
 			return expressionResultSwitched;
 		}
@@ -1293,7 +1293,7 @@ public class InitializationHandler {
 				} else if (designator instanceof StructDesignator) {
 					assert targetCType instanceof CStructOrUnion;
 					currentCellIndex = CTranslationUtil.findIndexOfStructField((CStructOrUnion) targetCType,
-						((StructDesignator) designator).getStructFieldId());
+							((StructDesignator) designator).getStructFieldId());
 				} else {
 					throw new AssertionError("missing case (designator)?");
 				}
@@ -1628,10 +1628,8 @@ public class InitializationHandler {
 	 *            the node to translate.
 	 * @return the translation result.
 	 */
-	public Result handleDesignatedInitializer(final IDispatcher main,
-			final LocationFactory locationFactory,
-			final MemoryHandler memoryHandler,
-			final StructHandler structHandler,
+	public Result handleDesignatedInitializer(final IDispatcher main, final LocationFactory locationFactory,
+			final MemoryHandler memoryHandler, final StructHandler structHandler,
 			final CASTDesignatedInitializer node) {
 		final ILocation loc = locationFactory.createCLocation(node);
 		if (node.getDesignators().length == 1 && (node.getDesignators()[0] instanceof CASTFieldDesignator)) {
@@ -1684,17 +1682,15 @@ public class InitializationHandler {
 
 	private int getArrayCellNrFromArrayDesignator(final IDispatcher main, final ILocation loc,
 			final CASTArrayDesignator arrayDesignator, final CASTDesignatedInitializer hook) {
-			final Result subscriptExpressionResult = main.dispatch(arrayDesignator.getSubscriptExpression());
-			if (!(subscriptExpressionResult instanceof ExpressionResult)) {
-				throw new UnsupportedSyntaxException(loc, "Designators in initializers beyond simple "
-						+ "designators are currently unsupported: " + hook.getRawSignature());
-			}
-			final ExpressionResult expressionResultSwitched =
-					mExprResultTransformer.switchToRValue((ExpressionResult) subscriptExpressionResult, loc, hook);
+		final Result subscriptExpressionResult = main.dispatch(arrayDesignator.getSubscriptExpression());
+		if (!(subscriptExpressionResult instanceof ExpressionResult)) {
+			throw new UnsupportedSyntaxException(loc, "Designators in initializers beyond simple "
+					+ "designators are currently unsupported: " + hook.getRawSignature());
+		}
+		final ExpressionResult expressionResultSwitched =
+				mExprResultTransformer.switchToRValue((ExpressionResult) subscriptExpressionResult, loc, hook);
 
-			return mTypeSizes.extractIntegerValue((RValue) expressionResultSwitched.getLrValue(), hook)
-					.intValueExact();
+		return mTypeSizes.extractIntegerValue((RValue) expressionResultSwitched.getLrValue(), hook).intValueExact();
 	}
 
 }
-
