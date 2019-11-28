@@ -1910,6 +1910,9 @@ public class StandardFunctionHandler {
 			}
 			st = new AssertStatement(loc, falseLiteral);
 			check.annotate(st);
+			if (checkMemoryleakInMain && mSettings.isSvcompMemtrackCompatibilityMode()) {
+				new Overapprox("memtrack", loc).annotate(st);
+			}
 		} else {
 			st = new AssumeStatement(loc, falseLiteral);
 		}
