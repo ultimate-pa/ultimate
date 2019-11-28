@@ -55,7 +55,7 @@ public class InitializerResultBuilder {
 	/**
 	 * The list holding the children elements.
 	 */
-	private List<InitializerResult> mChildren = new ArrayList<>();
+	private List<InitializerResult> mChildren = null;
 
 	public InitializerResultBuilder() {
 		// do nothing
@@ -77,6 +77,9 @@ public class InitializerResultBuilder {
 	}
 
 	public void addChild(final InitializerResult r) {
+		if (mChildren == null) {
+			mChildren = new ArrayList<>();
+		}
 		mChildren.add(r);
 	}
 
