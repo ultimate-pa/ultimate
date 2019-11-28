@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.mso.MSODSolver.MSODLogic;
 public class MSODScript extends NoopScript {
 	private final AutomataLibraryServices mAutomataLibrarayServices;
 	private final MSODSolver mMSODSolver;
-	public final ILogger mLogger;
+	private final ILogger mLogger;
 	private Term mAssertionTerm;
 	private Map<Term, Term> mModel;
 

@@ -154,17 +154,14 @@ public class MSODAlphabetSymbol {
 
 	@Override
 	public String toString() {
-		String str = new String();
-
 		if (mMap.isEmpty()) {
 			return "ε";
 		}
-
+		final StringBuilder sb = new StringBuilder();
 		for (final Map.Entry<Term, Boolean> entry : mMap.entrySet()) {
-			str += entry.getKey().toString() + "=" + (entry.getValue() ? "1 " : "0 ");
+			sb.append(entry.getKey().toString()).append("=").append((entry.getValue() ? "1 " : "0 "));
 		}
-
-		return str.trim();
+		return sb.toString().trim();
 	}
 
 	@Override

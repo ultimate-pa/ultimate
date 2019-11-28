@@ -72,7 +72,7 @@ public final class MSODSolver {
 		MSODInt, MSODNat, MSODIntWeak, MSODNatWeak,
 	}
 
-	Script mScript;
+	private final Script mScript;
 	private final ILogger mLogger;
 	private final AutomataLibraryServices mAutomataLibrarayServices;
 	private final MSODFormulaOperations mFormulaOperations;
@@ -111,10 +111,8 @@ public final class MSODSolver {
 	 * Returns a string representation of the given automaton. (only for debugging)
 	 */
 	public String automatonToString(final IAutomaton<?, ?> automaton, final Format format) {
-		AutomatonDefinitionPrinter<?, ?> printer;
-		printer = new AutomatonDefinitionPrinter<>(mAutomataLibrarayServices, "", Format.ATS, automaton);
-
-		return printer.getDefinitionAsString();
+		return new AutomatonDefinitionPrinter<>(mAutomataLibrarayServices, "", Format.ATS, automaton)
+				.getDefinitionAsString();
 	}
 
 	/**
