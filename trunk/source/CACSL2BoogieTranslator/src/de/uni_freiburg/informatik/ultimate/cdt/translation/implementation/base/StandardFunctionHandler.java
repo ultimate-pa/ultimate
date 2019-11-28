@@ -1878,7 +1878,8 @@ public class StandardFunctionHandler {
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc) {
 		final boolean checkSvcompErrorfunction = mSettings.checkSvcompErrorFunction();
-		final boolean checkMemoryleakInMain = mSettings.checkMemoryLeakInMain();
+		final boolean checkMemoryleakInMain = mSettings.checkMemoryLeakInMain()
+				&& mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired();
 		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
 		Statement st;
 		if (checkSvcompErrorfunction || checkMemoryleakInMain) {
