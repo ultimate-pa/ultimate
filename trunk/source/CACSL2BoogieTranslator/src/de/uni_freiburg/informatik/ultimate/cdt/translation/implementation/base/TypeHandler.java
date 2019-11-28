@@ -741,7 +741,7 @@ public class TypeHandler implements ITypeHandler {
 			return BoogieType.TYPE_ERROR;
 		}
 		final BoogieType result = (BoogieType) asttype.getBoogieType();
-		assert result != null;
+		assert result != null : asttype + " has no underlying Boogie type";
 		return result;
 	}
 
