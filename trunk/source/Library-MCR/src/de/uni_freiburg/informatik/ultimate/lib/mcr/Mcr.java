@@ -111,7 +111,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		queue.add(initialTrace);
 		final McrInterpolantAutomatonBuilder<LETTER> automatonBuilder =
 				new McrInterpolantAutomatonBuilder<>(mAutomataServices, mAlphabet, mEmptyStackStateFactory,
-						mProofProvider, getPrecondition(), getPostcondition(), mPredicateUnifier);
+						mProofProvider, getPrecondition(), getPostcondition(), mPredicateUnifier, mLogger);
 		IPredicate[] initialInterpolants = null;
 		while (!queue.isEmpty()) {
 			final List<LETTER> trace = queue.remove();
@@ -197,13 +197,6 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				lastWrittenBy.put(written, action);
 			}
 		}
-	}
-
-	private List<IPredicate> getInterpolantsIfAccepted(final NestedWordAutomaton<LETTER, IPredicate> automaton,
-			final List<LETTER> trace) throws AutomataLibraryException {
-		// TODO: Get an accepting run if possible and return its state sequence, otherwise just return null
-		// TODO: Use DeterministicInterpolantAutomaton
-		return Collections.emptyList();
 	}
 
 	// TODO: Avoid duplicates by caching?
