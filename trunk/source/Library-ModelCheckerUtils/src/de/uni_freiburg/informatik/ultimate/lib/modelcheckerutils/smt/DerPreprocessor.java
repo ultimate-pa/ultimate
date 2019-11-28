@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ElimStorePlain.ElimStorePlainException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
@@ -91,7 +92,7 @@ public class DerPreprocessor extends TermTransformer {
 
 	public DerPreprocessor(final IUltimateServiceProvider services, final ManagedScript mgdScript, final int quantifier,
 			final TermVariable eliminatee, final Term input, final List<BinaryEqualityRelation> bers,
-			final ArrayIndexEqualityManager aiem) {
+			final ArrayIndexEqualityManager aiem) throws ElimStorePlainException {
 		final HashRelation<DerCase, BinaryEqualityRelation> classification = classify(mgdScript.getScript(), bers,
 				eliminatee);
 		boolean existsEqualityThatIsNotOnTopLevel = false;
@@ -185,7 +186,7 @@ public class DerPreprocessor extends TermTransformer {
 	}
 
 	private static HashRelation<DerCase, BinaryEqualityRelation> classify(final Script script,
-			final List<BinaryEqualityRelation> bers, final TermVariable eliminatee) {
+			final List<BinaryEqualityRelation> bers, final TermVariable eliminatee) throws ElimStorePlainException {
 		final HashRelation<DerCase, BinaryEqualityRelation> result = new HashRelation<>();
 		for (final BinaryEqualityRelation ber : bers) {
 			final Term otherSide = getOtherSide(ber, eliminatee);
@@ -207,9 +208,9 @@ public class DerPreprocessor extends TermTransformer {
 		return otherSide;
 	}
 
-	private static DerCase classify(final Script script, final Term otherSide, final TermVariable eliminatee) {
+	private static DerCase classify(final Script script, final Term otherSide, final TermVariable eliminatee) throws ElimStorePlainException {
 		if (!Arrays.asList(otherSide.getFreeVars()).contains(eliminatee)) {
-			throw new AssertionError("This case should habe been handled by DER");
+			throw new ElimStorePlain.ElimStorePlainException("This case should habe been handled by DER");
 		}
 		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.convert(script, otherSide);
 		if (mdns != null) {
