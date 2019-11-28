@@ -262,6 +262,13 @@ public class StandardFunctionHandler {
 		fill(map, "memset", this::handleMemset);
 
 		/*
+		 * See https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
+		 */
+		fill(map, "__builtin_popcount", die);
+		fill(map, "__builtin_popcountl", die);
+		fill(map, "__builtin_popcountll", die);
+
+		/*
 		 * The GNU C online documentation at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016 says:
 		 * "— Built-in Function: void * __builtin_return_address (unsigned int level) This function returns the return
 		 * address of the current function, or of one of its callers. The level argument is number of frames to scan up
