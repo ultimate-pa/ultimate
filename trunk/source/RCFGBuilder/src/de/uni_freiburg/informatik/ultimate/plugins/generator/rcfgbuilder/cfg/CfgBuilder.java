@@ -446,15 +446,6 @@ public class CfgBuilder {
 		final Overapprox oa = Overapprox.getAnnotation(st);
 		return oa != null;
 	}
-	
-	private static boolean isStartOfAtomicBlock(final BoogieIcfgLocation bil) {
-		return AtomicBlockInfo.isStartOfAtomicBlock(node);
-	}
-	
-	private static boolean isEndOfAtomicBlock(final BoogieIcfgLocation bil) {
-		return AtomicBlockInfo.isEndOfAtomicBlock(node);
-	}
-
 
 	/**
 	 * Provides two informations that can be obtained by traversing all statements.
@@ -1133,8 +1124,7 @@ public class CfgBuilder {
 
 		private void endCurrentStatementSequence(final Statement nextSt) {
 			final DebugIdentifier locName = constructLocDebugIdentifier(nextSt);
-			final BoogieIcfgLocation locNode =
-					new BoogieIcfgLocation(locName, mCurrentProcedureName, false, nextSt);
+			final BoogieIcfgLocation locNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, nextSt);
 			((CodeBlock) mCurrent).connectTarget(locNode);
 			mCurrent = locNode;
 			mProcLocNodes.put(locName, locNode);
