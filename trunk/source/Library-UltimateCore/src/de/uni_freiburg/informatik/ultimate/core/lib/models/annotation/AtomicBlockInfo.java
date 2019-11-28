@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
  *
@@ -39,32 +40,38 @@ public class AtomicBlockInfo extends ModernAnnotations {
 
 	private static final long serialVersionUID = -8370873908642083605L;
 
-	public static enum Marker {
-		ATOMIC_BEGIN, ATOMIC_END
-	}
+	private final boolean mBeginAtomic;
+	private final boolean mEndAtomic;
 
-	private final Marker mMarker;
-
-	private AtomicBlockInfo(Marker marker) {
-		mMarker = marker;
-	}
-
-	public Marker getMarker() {
-		return mMarker;
+	private AtomicBlockInfo(final boolean beginAtomic, final boolean endAtomic) {
+		mBeginAtomic = beginAtomic;
+		mEndAtomic = endAtomic;
 	}
 
 	public static void addBeginAnnotation(IElement element) {
-		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(Marker.ATOMIC_BEGIN));
+		final boolean isEnd = isEndOfAtomicBlock(element);
+		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(true, isEnd));
 	}
 
 	public static void addEndAnnotation(IElement element) {
-		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(Marker.ATOMIC_END));
+		final boolean isBegin = isStartOfAtomicBlock(element);
+		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(isBegin, true));
+	}
+
+	@Override
+	public IAnnotations merge(final IAnnotations other) {
+		if (other instanceof AtomicBlockInfo) {
+			final boolean isBegin = ((AtomicBlockInfo)other).mBeginAtomic || mBeginAtomic;
+			final boolean isEnd = ((AtomicBlockInfo)other).mEndAtomic || mEndAtomic;
+			return new AtomicBlockInfo(isBegin, isEnd);
+		}
+		return super.merge(other);
 	}
 
 	public static boolean isStartOfAtomicBlock(IElement element) {
 		final AtomicBlockInfo annotation = ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(), x -> (AtomicBlockInfo)x);
 		if (annotation != null) {
-			return annotation.getMarker() == Marker.ATOMIC_BEGIN;
+			return annotation.mBeginAtomic;
 		}
 		return false;
 	}
@@ -72,7 +79,7 @@ public class AtomicBlockInfo extends ModernAnnotations {
 	public static boolean isEndOfAtomicBlock(IElement element) {
 		final AtomicBlockInfo annotation = ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(), x -> (AtomicBlockInfo)x);
 		if (annotation != null) {
-			return annotation.getMarker() == Marker.ATOMIC_END;
+			return annotation.mEndAtomic;
 		}
 		return false;
 	}

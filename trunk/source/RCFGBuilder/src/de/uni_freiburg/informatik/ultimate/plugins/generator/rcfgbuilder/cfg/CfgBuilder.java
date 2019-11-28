@@ -1670,8 +1670,8 @@ public class CfgBuilder {
 		private void composeSequential(final BoogieIcfgLocation pp) {
 			assert pp.getIncomingEdges().size() > 0;
 			assert pp.getOutgoingEdges().size() > 0;
-			for (final IcfgEdge incoming : pp.getIncomingEdges()) {
-				for (final IcfgEdge outgoing : pp.getOutgoingEdges()) {
+			for (final IcfgEdge incoming : new ArrayList<>(pp.getIncomingEdges())) {
+				for (final IcfgEdge outgoing : new ArrayList<>(pp.getOutgoingEdges())) {
 					final BoogieIcfgLocation predecessor = (BoogieIcfgLocation) incoming.getSource();
 					final BoogieIcfgLocation successor = (BoogieIcfgLocation) outgoing.getTarget();
 					final List<CodeBlock> sequence = Arrays.asList((CodeBlock) incoming, (CodeBlock) outgoing);
@@ -1724,9 +1724,15 @@ public class CfgBuilder {
 				if (incoming instanceof Call) {
 					return false;
 				}
+				if (incoming instanceof IIcfgForkTransitionThreadCurrent
+						|| incoming instanceof IIcfgForkTransitionThreadOther
+						|| incoming instanceof IIcfgJoinTransitionThreadCurrent
+						|| incoming instanceof IIcfgJoinTransitionThreadOther) {
+					return false;
+				}
 				assert incoming instanceof StatementSequence || incoming instanceof SequentialComposition
 						|| incoming instanceof ParallelComposition || incoming instanceof Summary
-						|| incoming instanceof GotoEdge;
+						|| incoming instanceof GotoEdge : "unexpected type of incoming edge: " + incoming.getClass().getSimpleName();
 				beginAtomic = beginAtomic && isStartOfAtomicBlock(incoming.getSource());
 			}
 
@@ -1737,15 +1743,16 @@ public class CfgBuilder {
 						|| outgoing instanceof IIcfgForkTransitionThreadOther
 						|| outgoing instanceof IIcfgJoinTransitionThreadCurrent
 						|| outgoing instanceof IIcfgJoinTransitionThreadOther) {
-					throw new IllegalStateException(
-							"fork and join should never be part of a composition. Are you accidentally using a block encoding that is not suitable for concurrent programs?");
+					return false;
+					//throw new IllegalStateException(
+					//		"fork and join should never be part of a composition. Are you accidentally using a block encoding that is not suitable for concurrent programs?");
 				}
 				if (outgoing instanceof Return) {
 					return false;
 				}
 				assert outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition
 						|| outgoing instanceof ParallelComposition || outgoing instanceof Summary
-						|| outgoing instanceof GotoEdge;
+						|| outgoing instanceof GotoEdge : "unexpected type of outgoing edge: " + outgoing.getClass().getSimpleName();
 				endAtomic = endAtomic && isEndOfAtomicBlock(outgoing.getTarget());
 			}
 			switch (mInternalLbeMode) {
