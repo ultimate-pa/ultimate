@@ -468,8 +468,6 @@ public final class MSODSolver {
 
 	/**
 	 * Returns automaton that represents "t ∈ X".
-	 *
-	 * @throws AutomataLibraryException
 	 */
 	private INestedWordAutomaton<MSODAlphabetSymbol, String> processElement(final ApplicationTerm term)
 			throws AutomataLibraryException {
@@ -517,7 +515,9 @@ public final class MSODSolver {
 	public Map<Term, Term> getResult(final Script script, final ILogger logger, final AutomataLibraryServices services,
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton) throws AutomataLibraryException {
 
-		NestedLassoWord<MSODAlphabetSymbol> word = mAutomataOperations.getWord(services, automaton);
+		NestedLassoWord<MSODAlphabetSymbol> word = null;
+
+		word = mAutomataOperations.getWord(services, automaton);
 
 		if (word == null) {
 			return null;
@@ -549,9 +549,6 @@ public final class MSODSolver {
 			results.put(term, SmtUtils.or(script, MSODFormulaOperations.stemResult(script, term, stem.get(term)),
 					MSODFormulaOperations.loopResult(script, term, loop.get(term), stemBounds, loopLength)));
 		}
-
-		logger.info("result terms ----------------------------------------------");
-		results.entrySet().forEach(e -> logger.info(e.getKey() + ": " + e.getValue()));
 
 		return results;
 	}

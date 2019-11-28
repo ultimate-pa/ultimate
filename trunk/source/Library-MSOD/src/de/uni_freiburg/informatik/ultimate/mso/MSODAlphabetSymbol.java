@@ -157,7 +157,7 @@ public class MSODAlphabetSymbol {
 		String str = new String();
 
 		if (mMap.isEmpty()) {
-			return "empty";
+			return "ε";
 		}
 
 		for (final Map.Entry<Term, Boolean> entry : mMap.entrySet()) {

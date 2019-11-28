@@ -10,3 +10,4 @@
 (assert (exists ((I SetOfInt) (x Int))  (and (=> (element x I) (element (+ x 1) I)) (element x I) (= x 5) )))
 
 (check-sat)
+(get-value (x))

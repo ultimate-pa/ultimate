@@ -85,8 +85,7 @@ public class MSODScript extends NoopScript {
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
-		mLogger.info("INPUT: " + mAssertionTerm);
-		LBool result = LBool.UNKNOWN;
+		mLogger.info("Input term: " + mAssertionTerm);
 
 		try {
 			final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton =
@@ -94,28 +93,38 @@ public class MSODScript extends NoopScript {
 			mLogger.info(MSODUtils.automatonToString(mAutomataLibrarayServices, automaton));
 
 			mModel = mMSODSolver.getResult(this, mLogger, mAutomataLibrarayServices, automaton);
-			result = mModel != null ? LBool.SAT : LBool.UNSAT;
+
+			if (mModel != null) {
+				mLogger.info("SAT");
+				mModel.entrySet().forEach(e -> mLogger.info(e.getKey() + ": " + e.getValue()));
+				return LBool.SAT;
+			}
+
 		} catch (final Exception e) {
 			mLogger.error(e);
 		}
 
-		return result;
+		mLogger.info("UNSAT");
+		return LBool.UNSAT;
 	}
 
 	@Override
 	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException {
-		final Map<Term, Term> values = new HashMap<>();
+		final Map<Term, Term> result = new HashMap<>();
 
 		if (mModel == null) {
-			return values;
+			return result;
 		}
 
 		for (final Term term : terms) {
 			final Term value = mModel.get(term);
-			values.put(term, value);
+
+			if (value != null) {
+				result.put(term, value);
+			}
 		}
 
-		return values;
+		return result;
 	}
 
 	@Override
