@@ -1282,7 +1282,7 @@ public class InitializationHandler {
 		 * index otherwise it just counts up.
 		 */
 		int currentCellIndex = -1;
-		while (currentCellIndex < bound && !rest.isEmpty()) {
+		while (!rest.isEmpty() && (currentCellIndex < bound - 1 || rest.peekFirst().hasRootDesignator())) {
 			if (rest.peekFirst().hasRootDesignator()) {
 				final Designator designator = rest.peekFirst().getRootDesignator();
 				if (designator instanceof ArrayDesignator) {
