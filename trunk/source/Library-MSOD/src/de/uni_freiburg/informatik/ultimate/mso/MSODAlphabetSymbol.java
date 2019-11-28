@@ -40,7 +40,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Represents a MSOD-alphabet symbol. Each MSOD-alphabet symbol has a HashMap of term-value pairs.
+ * An {@link MSODAlphabetSymbol} represents a MSOD-alphabet symbol. Each MSOD-alphabet symbol has a mapping from terms
+ * to values.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
