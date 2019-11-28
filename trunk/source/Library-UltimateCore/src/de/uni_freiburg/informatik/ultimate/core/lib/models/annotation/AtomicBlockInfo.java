@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 /**
  *
@@ -58,5 +59,21 @@ public class AtomicBlockInfo extends ModernAnnotations {
 
 	public static void addEndAnnotation(IElement element) {
 		element.getPayload().getAnnotations().put(AtomicBlockInfo.class.getName(), new AtomicBlockInfo(Marker.ATOMIC_END));
+	}
+
+	public static boolean isStartOfAtomicBlock(IElement element) {
+		final AtomicBlockInfo annotation = ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(), x -> (AtomicBlockInfo)x);
+		if (annotation != null) {
+			return annotation.getMarker() == Marker.ATOMIC_BEGIN;
+		}
+		return false;
+	}
+
+	public static boolean isEndOfAtomicBlock(IElement element) {
+		final AtomicBlockInfo annotation = ModelUtils.getAnnotation(element, AtomicBlockInfo.class.getName(), x -> (AtomicBlockInfo)x);
+		if (annotation != null) {
+			return annotation.getMarker() == Marker.ATOMIC_END;
+		}
+		return false;
 	}
 }

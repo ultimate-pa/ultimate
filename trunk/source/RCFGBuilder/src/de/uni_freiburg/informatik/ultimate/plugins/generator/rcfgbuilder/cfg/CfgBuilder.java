@@ -458,13 +458,11 @@ public class CfgBuilder {
 	}
 	
 	private static boolean isStartOfAtomicBlock(final IcfgLocation node) {
-		// TODO atomictodo
-		return false;
+		return AtomicBlockInfo.isStartOfAtomicBlock(node);
 	}
 	
 	private static boolean isEndOfAtomicBlock(final IcfgLocation node) {
-		// TODO atomictodo
-		return false;
+		return AtomicBlockInfo.isEndOfAtomicBlock(node);
 	}
 
 
