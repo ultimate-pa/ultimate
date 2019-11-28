@@ -1944,8 +1944,8 @@ public class MemoryHandler {
 			indices.add(inPtrExp);
 			values.add(returnValue);
 		} else if (rda.getBytesize() < heapDataArray.getSize()) {
-			final Function<Expression, Expression> valueExtension = x -> mExpressionTranslation.signExtend(loc, x,
-					rda.getBytesize() * 8, heapDataArray.getSize() * 8);
+			final Function<Expression, Expression> valueExtension =
+					x -> mExpressionTranslation.signExtend(loc, x, rda.getBytesize() * 8, heapDataArray.getSize() * 8);
 			indices.add(inPtrExp);
 			values.add(valueExtension.apply(returnValue));
 		} else {
@@ -1963,15 +1963,14 @@ public class MemoryHandler {
 					final BigInteger additionalOffset = BigInteger.valueOf(i * heapDataArray.getSize());
 					final Function<Expression, Expression> pointerAddition =
 							x -> addIntegerConstantToPointer(loc, x, additionalOffset);
-							indices.add(pointerAddition.apply(inPtrExp));
-							values.add(extractBits.apply(returnValue));
+					indices.add(pointerAddition.apply(inPtrExp));
+					values.add(extractBits.apply(returnValue));
 				}
 			}
 		}
 		final List<Expression> conjuncts = new ArrayList<>();
-		conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray,
-				values, indices, useSelectInsteadOfStore));
-
+		conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, values,
+				indices, useSelectInsteadOfStore));
 
 		final Set<VariableLHS> modifiedGlobals = useSelectInsteadOfStore ? Collections.emptySet()
 				: heapDataArrays.stream().map(hda -> hda.getVariableLHS()).collect(Collectors.toSet());
@@ -2007,18 +2006,18 @@ public class MemoryHandler {
 	}
 
 	private static List<Expression> constructConjunctsForWriteEnsuresSpecification(final ILocation loc,
-			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray, final List<Expression> values,
-			final List<Expression> indices, final boolean useSelectInsteadOfStore) {
+			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray,
+			final List<Expression> values, final List<Expression> indices, final boolean useSelectInsteadOfStore) {
 		final List<Expression> conjuncts = new ArrayList<>();
 		for (final HeapDataArray other : heapDataArrays) {
 			if (heapDataArray == other) {
-				conjuncts.add(constructHeapArrayUpdateForWriteEnsures(loc, values, indices, other, useSelectInsteadOfStore));
+				conjuncts.add(
+						constructHeapArrayUpdateForWriteEnsures(loc, values, indices, other, useSelectInsteadOfStore));
 			} else {
 				if (useSelectInsteadOfStore) {
 					// do nothing (no need to havoc an uninitialized memory cell)
 				} else {
-					conjuncts.add(
-							constructHeapArrayHardlyModifiedForWriteEnsures(loc, indices, other));
+					conjuncts.add(constructHeapArrayHardlyModifiedForWriteEnsures(loc, indices, other));
 				}
 			}
 
@@ -2145,7 +2144,7 @@ public class MemoryHandler {
 			final List<Expression> indices, final List<Expression> newValues) {
 		assert indices.size() == newValues.size();
 		Expression result = arr;
-		for (int i = 0; i<indices.size(); i++) {
+		for (int i = 0; i < indices.size(); i++) {
 			final Expression[] singletonIndex = new Expression[] { indices.get(i) };
 			result = ExpressionFactory.constructArrayStoreExpression(loc, result, singletonIndex, newValues.get(i));
 		}
@@ -2166,15 +2165,14 @@ public class MemoryHandler {
 
 	// #memory_$Pointer$ == old(#memory_X)[#ptr := #memory_X[#ptr]];
 	private static Expression constructHeapArrayHardlyModifiedForWriteEnsures(final ILocation loc,
-			final List<Expression> idxExprs,
-			final HeapDataArray hda) {
+			final List<Expression> idxExprs, final HeapDataArray hda) {
 		final Expression memArray = hda.getIdentifierExpression();
 		final List<Expression> newNondetValues = new ArrayList<>();
-		for (int i=0; i<idxExprs.size(); i++) {
+		for (int i = 0; i < idxExprs.size(); i++) {
 			newNondetValues.add(constructOneDimensionalArrayAccess(loc, memArray, idxExprs.get(i)));
 		}
-//		final Expression memArray = hda.getIdentifierExpression();
-//		final Expression aae = constructOneDimensionalArrayAccess(loc, memArray, ptrExpr);
+		// final Expression memArray = hda.getIdentifierExpression();
+		// final Expression aae = constructOneDimensionalArrayAccess(loc, memArray, ptrExpr);
 		return ensuresArrayNestedUpdate(loc, newNondetValues, idxExprs, memArray);
 	}
 
@@ -2190,15 +2188,14 @@ public class MemoryHandler {
 		return eq;
 	}
 
-	private static Expression ensuresArrayNestedUpdate(final ILocation loc, final List<Expression> newValues, final List<Expression> indices,
-			final Expression arrayExpr) {
+	private static Expression ensuresArrayNestedUpdate(final ILocation loc, final List<Expression> newValues,
+			final List<Expression> indices, final Expression arrayExpr) {
 		final Expression oldArray =
 				ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD, arrayExpr);
 		final Expression ase = constructNestedOneDimensionalArrayStore(loc, oldArray, indices, newValues);
 		final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, arrayExpr, ase);
 		return eq;
 	}
-
 
 	/**
 	 * arr[index] == value
@@ -2211,10 +2208,10 @@ public class MemoryHandler {
 		return eq;
 	}
 
-	private static Expression ensuresArrayHasValues(final ILocation loc, final List<Expression> values, final List<Expression> indices,
-			final Expression arrayExpr) {
+	private static Expression ensuresArrayHasValues(final ILocation loc, final List<Expression> values,
+			final List<Expression> indices, final Expression arrayExpr) {
 		final List<Expression> conjuncts = new ArrayList<>();
-		for (int i=0; i<values.size(); i++) {
+		for (int i = 0; i < values.size(); i++) {
 			conjuncts.add(ensuresArrayHasValue(loc, values.get(i), indices.get(i), arrayExpr));
 		}
 		return ExpressionFactory.and(loc, conjuncts);
@@ -3431,8 +3428,9 @@ public class MemoryHandler {
 				return false;
 			}
 			if (mMemoryModelInfrastructureRequiredHasBeenQueried) {
-				throw new AssertionError(
-						"someone already asked if memory model infrastructure was required and we " + "said no");
+				final String msg =
+						"someone already asked if memory model infrastructure was required and we " + "said no";
+				assert false : msg;
 			}
 			mMemoryModelInfrastructureRequired = true;
 			require(MemoryModelDeclarations.ULTIMATE_LENGTH);
