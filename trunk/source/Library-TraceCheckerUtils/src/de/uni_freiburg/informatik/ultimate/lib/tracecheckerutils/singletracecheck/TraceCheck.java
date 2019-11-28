@@ -138,7 +138,6 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 	protected NestedSsaBuilder mNsb;
 	protected final TraceCheckStatisticsGenerator mTraceCheckBenchmarkGenerator;
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
-	protected ToolchainCanceledException mToolchainCanceledException;
 	protected final IIcfgSymbolTable mBoogie2SmtSymbolTable;
 	protected final FeasibilityCheckResult mFeasibilityResult;
 
@@ -243,8 +242,16 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 					}
 				}
 			}
-		} catch (final ToolchainCanceledException tce) {
-			mToolchainCanceledException = tce;
+		} catch (final ToolchainCanceledException e) {
+			feasibilityResult = new FeasibilityCheckResult(LBool.UNKNOWN,
+					new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT, e, ExceptionHandlingCategory.KNOWN_THROW),
+					false);
+		} catch (final SMTLIBException e) {
+			feasibilityResult =
+					new FeasibilityCheckResult(LBool.UNKNOWN, TraceCheckReasonUnknown.constructReasonUnknown(e), true);
+		} catch (final Exception e) {
+			feasibilityResult = new FeasibilityCheckResult(LBool.UNKNOWN,
+					new TraceCheckReasonUnknown(Reason.SOLVER_CRASH_OTHER, e, ExceptionHandlingCategory.UNKNOWN), true);
 		} finally {
 			mFeasibilityResult = feasibilityResult;
 			mProvidesIcfgProgramExecution = providesIcfgProgramExecution;
@@ -448,7 +455,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 
 	@Override
 	public TraceCheckStatisticsGenerator getStatistics() {
-		if (mTraceCheckFinished || mToolchainCanceledException != null) {
+		if (mTraceCheckFinished) {
 			return mTraceCheckBenchmarkGenerator;
 		}
 		return null;

@@ -159,8 +159,17 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 		}
 		final LBool result = isCorrect();
 		if (result == LBool.UNSAT) {
-			computeInterpolants(new AllIntegers(), interpolation);
-			mInterpolantComputationStatus = new InterpolantComputationStatus();
+			InterpolantComputationStatus actualInterpolationComputationStatus = null;
+			try {
+				computeInterpolants(new AllIntegers(), interpolation);
+				actualInterpolationComputationStatus = new InterpolantComputationStatus();
+			} catch (final ToolchainCanceledException ex) {
+				throw ex;
+			} catch (final Throwable ex) {
+				actualInterpolationComputationStatus =
+						new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CRASH, ex);
+			}
+			mInterpolantComputationStatus = actualInterpolationComputationStatus;
 		} else if (result == LBool.SAT) {
 			mInterpolantComputationStatus = new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
 		} else {
