@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.mso.MSODScript.MSODLogic;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -68,6 +67,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
 public final class MSODSolver {
+
+	public enum MSODLogic {
+		MSODInt, MSODNat, MSODIntWeak, MSODNatWeak,
+	}
 
 	Script mScript;
 	private final ILogger mLogger;
@@ -530,13 +533,8 @@ public final class MSODSolver {
 
 		logger.info("Word:" + word);
 
-		logger.info("Stem:");
 		final Map<Term, List<Integer>> stem = mFormulaOperations.wordToNumbers(word.getStem(), 0);
-		stem.entrySet().forEach(e -> logger.info(e.getKey() + " " + e.getValue()));
-
-		logger.info("Loop:");
 		final Map<Term, List<Integer>> loop = mFormulaOperations.wordToNumbers(word.getLoop(), word.getStem().length());
-		loop.entrySet().forEach(e -> logger.info(e.getKey() + " " + e.getValue()));
 
 		final int stemLength = word.getStem().length();
 		final int loopLength = mFormulaOperations instanceof MSODFormulaOperationsInt ? word.getLoop().length() / 2

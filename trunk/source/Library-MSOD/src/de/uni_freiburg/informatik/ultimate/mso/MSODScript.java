@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.mso.MSODSolver.MSODLogic;
 
 /**
  * Solver for Monadic Second Order Difference Logic Formulas
@@ -56,10 +57,6 @@ public class MSODScript extends NoopScript {
 	public final ILogger mLogger;
 	private Term mAssertionTerm;
 	private Map<Term, Term> mModel;
-
-	public enum MSODLogic {
-		MSODInt, MSODNat, MSODIntWeak, MSODNatWeak,
-	}
 
 	public MSODScript(final IUltimateServiceProvider services, final ILogger logger, final MSODLogic logic) {
 		mAutomataLibrarayServices = new AutomataLibraryServices(services);
