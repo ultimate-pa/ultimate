@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.source.smtparser;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.MSODResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
  * @author Daniel Dietsch
  */
 public class ResultReportingWrapperScript extends WrapperScript {
-
 	private final IUltimateServiceProvider mServices;
 
 	public ResultReportingWrapperScript(final Script wrappedScript, final IUltimateServiceProvider services) {
@@ -49,6 +48,7 @@ public class ResultReportingWrapperScript extends WrapperScript {
 	@Override
 	public LBool checkSat() throws SMTLIBException {
 		final LBool result = super.checkSat();
+
 		switch (result) {
 		case SAT:
 			// TODO: mServices.getResultService().reportResult(pluginId, result);
@@ -60,12 +60,11 @@ public class ResultReportingWrapperScript extends WrapperScript {
 		default:
 			throw new UnsupportedOperationException("Unknown case: " + result);
 		}
-		final String checkSatResult = result.toString();
-		final IResult ultResult = new GenericResult(Activator.PLUGIN_ID, "MSODResult",
-				"MSOD resulted in " + checkSatResult, Severity.INFO);
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, ultResult);
+
+		final IResult msodResult = new MSODResult(Activator.PLUGIN_ID, "MSODResult",
+				"MSOD resulted in: " + result.toString(), result, Severity.INFO);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, msodResult);
 
 		return result;
 	}
-
 }
