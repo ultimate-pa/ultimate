@@ -222,7 +222,8 @@ public class SmtParser implements ISource {
 
 		case MSODSolver: {
 			mLogger.info("Running our experimental MSO solver on input file using ...");
-			script = new MSODScript(mServices, mLogger, msodLogic);
+
+			script = new ResultReportingWrapperScript(new MSODScript(mServices, mLogger, msodLogic), mServices);
 		}
 			break;
 
