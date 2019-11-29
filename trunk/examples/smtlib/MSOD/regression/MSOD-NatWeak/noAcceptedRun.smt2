@@ -12,4 +12,3 @@
 (assert (forall ((x Int))  (element x I)))
 
 (check-sat)
-(get-value (I))
