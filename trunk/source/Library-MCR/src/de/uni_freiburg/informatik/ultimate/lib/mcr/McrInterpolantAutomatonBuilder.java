@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -54,29 +53,29 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	// TODO: Use DeterministicInterpolantAutomaton
 	public List<IPredicate> getInterpolantsIfAccepted(final List<LETTER> trace) {
-		final List<Map<IPredicate, IPredicate>> precedessorTrace = new ArrayList<>();
-		final Map<IPredicate, IPredicate> initialPrecedessors = new HashMap<>();
+		final List<Map<IPredicate, IPredicate>> predecessorTrace = new ArrayList<>();
+		final Map<IPredicate, IPredicate> initialPredecessors = new HashMap<>();
 		for (final IPredicate initial : mResult.getInitialStates()) {
-			initialPrecedessors.put(initial, null);
+			initialPredecessors.put(initial, null);
 		}
-		precedessorTrace.add(initialPrecedessors);
+		predecessorTrace.add(initialPredecessors);
 		for (final LETTER action : trace) {
-			final Map<IPredicate, IPredicate> newPrecedessors = new HashMap<>();
-			for (final IPredicate state : precedessorTrace.get(precedessorTrace.size() - 1).keySet()) {
+			final Map<IPredicate, IPredicate> newPredecessors = new HashMap<>();
+			for (final IPredicate state : predecessorTrace.get(predecessorTrace.size() - 1).keySet()) {
 				for (final OutgoingInternalTransition<LETTER, IPredicate> outgoing : mResult.internalSuccessors(state,
 						action)) {
-					newPrecedessors.put(outgoing.getSucc(), state);
+					newPredecessors.put(outgoing.getSucc(), state);
 				}
 			}
-			precedessorTrace.add(newPrecedessors);
+			predecessorTrace.add(newPredecessors);
 		}
-		for (final IPredicate state : precedessorTrace.get(precedessorTrace.size() - 1).keySet()) {
+		for (final IPredicate state : predecessorTrace.get(predecessorTrace.size() - 1).keySet()) {
 			if (mResult.isFinal(state)) {
-				final IPredicate[] stateSequence = new IPredicate[precedessorTrace.size()];
+				final IPredicate[] stateSequence = new IPredicate[predecessorTrace.size()];
 				IPredicate currentState = state;
-				for (int i = precedessorTrace.size() - 1; i >= 0; i--) {
+				for (int i = predecessorTrace.size() - 1; i >= 0; i--) {
 					stateSequence[i] = currentState;
-					currentState = precedessorTrace.get(i).get(currentState);
+					currentState = predecessorTrace.get(i).get(currentState);
 				}
 				return Arrays.asList(stateSequence);
 			}
@@ -92,8 +91,8 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final List<STATE> initialStates = new ArrayList<>();
 		STATE currentState = initialState;
 		initialStates.add(currentState);
-		for (int i = 0; i < initialInterpolants.size(); i++) {
-			currentState = getSuccessor(currentState, initialTrace.get(i), mcrAutomaton);
+		for (final LETTER action : initialTrace) {
+			currentState = getSuccessor(currentState, action, mcrAutomaton);
 			initialStates.add(currentState);
 		}
 		coverStates(initialTrace, initialStates, initialInterpolants, mPrecondition, mPostcondition, stateMap,
@@ -132,10 +131,8 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				}
 			}
 		}
-		// TODO: Is this sound and necessary?
-		addMissingTransitions(mcrAutomaton, stateMap);
 		mLogger.info(mResult);
-		mLogger.warn("MCR Automaton construction finsihed. Had to interpolate " + count + " traces.");
+		mLogger.warn("MCR Automaton construction finished. Had to interpolate " + count + " traces.");
 	}
 
 	private <STATE> STATE getSuccessor(final STATE currentState, final LETTER action,
@@ -150,21 +147,6 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		throw new IllegalStateException("No acyclic successor of + " + currentState + " under " + action);
 	}
 
-	private <STATE> void addMissingTransitions(final INestedWordAutomaton<LETTER, STATE> mcrAutomaton,
-			final Map<STATE, IPredicate> stateMap) {
-		for (final Entry<STATE, IPredicate> entry : stateMap.entrySet()) {
-			final STATE oldState = entry.getKey();
-			for (final OutgoingInternalTransition<LETTER, STATE> edge : mcrAutomaton.internalSuccessors(oldState)) {
-				final STATE succ = edge.getSucc();
-				if (succ == oldState) {
-					// Ignore self-loops
-					continue;
-				}
-				mResult.addInternalTransition(entry.getValue(), edge.getLetter(), stateMap.get(succ));
-			}
-		}
-	}
-
 	private <STATE> int visitTrace(final List<LETTER> trace, final List<STATE> states,
 			final Map<STATE, IPredicate> stateMap, final INestedWordAutomaton<LETTER, STATE> mcrAutomaton) {
 		int numberOfInterpolations = 0;
@@ -175,9 +157,6 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final IPredicate newCondition = stateMap.get(states.get(i));
 			if (newCondition != null) {
 				if (newTraceFound) {
-					if (i - start < 2) {
-						continue;
-					}
 					final List<LETTER> newTrace = trace.subList(start, i);
 					final List<STATE> newStates = states.subList(start, i + 1);
 					final List<IPredicate> interpolants = getInterpolants(newTrace, precondition, newCondition);
@@ -200,7 +179,12 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private <STATE> void coverStates(final List<LETTER> trace, final List<STATE> states,
 			final List<IPredicate> interpolants, final IPredicate precondition, final IPredicate postcondition,
 			final Map<STATE, IPredicate> stateMap, final INestedWordAutomaton<LETTER, STATE> mcrAutomaton) {
-		assert states.size() == interpolants.size() + 2 && trace.size() == interpolants.size() + 1;
+		if (states.size() != interpolants.size() + 2) {
+			throw new IllegalArgumentException("Sizes of states and interpolants do not match.");
+		}
+		if (trace.size() != interpolants.size() + 1) {
+			throw new IllegalArgumentException("Sizes of trace and interpolants do not match.");
+		}
 		// Add the interpolants to the resulting automaton and to stateMap and add the transitions from trace
 		IPredicate currentInterpolant = precondition;
 		stateMap.put(states.get(0), precondition);
@@ -215,7 +199,7 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		}
 		stateMap.put(states.get(states.size() - 1), postcondition);
 		mResult.addInternalTransition(currentInterpolant, trace.get(trace.size() - 1), postcondition);
-		// Try to merge states if the have the same sucessors
+		// Try to merge states if the have the same successors
 		final Set<STATE> visited = new HashSet<>();
 		final LinkedList<STATE> queue = new LinkedList<>();
 		// We just need to check given states and their predecessors
@@ -225,11 +209,10 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		}
 		while (!queue.isEmpty()) {
 			final STATE state = queue.remove();
-			if (!visited.add(state)) {
+			final IPredicate predicate = stateMap.get(state);
+			if (predicate == null || !visited.add(state)) {
 				continue;
 			}
-			final IPredicate predicate = stateMap.get(state);
-			assert predicate != null;
 			for (final OutgoingInternalTransition<LETTER, IPredicate> predicateEdge : mResult
 					.internalSuccessors(predicate)) {
 				for (final OutgoingInternalTransition<LETTER, STATE> edge : mcrAutomaton.internalSuccessors(state,
@@ -248,7 +231,7 @@ public class McrInterpolantAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				mProofProvider.getProof(trace, precondition, postcondition);
 		if (result.getFirst() != LBool.UNSAT) {
 			// We found a feasible trace, somehow remove it from the automaton
-			// TODO: For now just throw an exception
+			// TODO: Can this happen? For now just throw an exception
 			throw new IllegalStateException("We found a feasible trace in the automaton.");
 		}
 		final List<IPredicate> predicates = result.getSecond().getPredicates();
