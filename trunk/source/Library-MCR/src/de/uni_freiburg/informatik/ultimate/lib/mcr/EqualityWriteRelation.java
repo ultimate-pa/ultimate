@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 
 public class EqualityWriteRelation<LETTER extends IIcfgTransition<?>> implements IWriteRelation<LETTER> {
 	@Override
-	public boolean canBeReplacedBy(final LETTER write1, final LETTER write2, final IProgramVar var,
+	public boolean areRelated(final LETTER write1, final LETTER write2, final IProgramVar var,
 			final List<LETTER> trace, final List<IPredicate> interpolants) {
 		return Objects.equals(write1, write2);
 	}

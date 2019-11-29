@@ -23,7 +23,7 @@ public class InterpolantBasedWriteRelation<LETTER extends IIcfgTransition<?>> im
 	}
 
 	@Override
-	public boolean canBeReplacedBy(final LETTER write1, final LETTER write2, final IProgramVar var,
+	public boolean areRelated(final LETTER write1, final LETTER write2, final IProgramVar var,
 			final List<LETTER> trace, final List<IPredicate> interpolants) {
 		if (Objects.equals(write1, write2)) {
 			return true;

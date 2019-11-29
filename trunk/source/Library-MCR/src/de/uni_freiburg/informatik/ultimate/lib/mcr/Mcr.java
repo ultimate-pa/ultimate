@@ -215,7 +215,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				final Set<LETTER> writesWithNull =
 						DataStructureUtils.union(mVariables2Writes.getImage(var), Collections.singleton(null));
 				for (final LETTER write : writesWithNull) {
-					if (mWriteRelation.canBeReplacedBy(write, previousWrites.get(var), var, trace, interpolants)) {
+					if (mWriteRelation.areRelated(write, previousWrites.get(var), var, trace, interpolants)) {
 						continue;
 					}
 					script.push(1);
@@ -284,7 +284,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			final Set<LETTER> writesWithNull =
 					DataStructureUtils.union(mVariables2Writes.getImage(var), Collections.singleton(null));
 			for (final LETTER write : writesWithNull) {
-				if (!mWriteRelation.canBeReplacedBy(write, writeToBeRead, var, trace, interpolants)) {
+				if (!mWriteRelation.areRelated(write, writeToBeRead, var, trace, interpolants)) {
 					continue;
 				}
 				final List<Term> conjuncts = new ArrayList<>();
@@ -296,7 +296,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					conjuncts.add(SmtUtils.less(script, writeVar, readVar));
 				}
 				for (final LETTER otherWrite : mVariables2Writes.getImage(var)) {
-					if (mWriteRelation.canBeReplacedBy(otherWrite, writeToBeRead, var, trace, interpolants)) {
+					if (mWriteRelation.areRelated(otherWrite, writeToBeRead, var, trace, interpolants)) {
 						continue;
 					}
 					final Term otherWriteVar = mActions2TermVars.get(otherWrite);
@@ -399,7 +399,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 						if (otherWrite.equals(read) && readCount == 1) {
 							continue;
 						}
-						if (mWriteRelation.canBeReplacedBy(otherWrite, write, var, trace, interpolants)) {
+						if (mWriteRelation.areRelated(otherWrite, write, var, trace, interpolants)) {
 							correctWrites.add(otherWrite);
 						}
 					}
@@ -532,7 +532,11 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	public interface IWriteRelation<LETTER extends IIcfgTransition<?>> {
-		boolean canBeReplacedBy(LETTER write1, LETTER write2, IProgramVar var, List<LETTER> trace,
+		/**
+		 * Returns true iff write1 and write2 are related writes on var int the trace, given these interpolants. To be a
+		 * useful relation, write1 must be at least as strong as writ2 on the given var.
+		 */
+		boolean areRelated(LETTER write1, LETTER write2, IProgramVar var, List<LETTER> trace,
 				List<IPredicate> interpolants);
 	}
 }
