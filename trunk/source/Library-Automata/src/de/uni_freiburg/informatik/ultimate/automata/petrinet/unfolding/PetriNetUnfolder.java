@@ -114,11 +114,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 				mOrder = new ErvEqualMarkingOrder<>();
 				break;
 			case ERV:
-				if (B20_OPTIMIZATION){
-					mOrder = new EsparzaRoemerVoglerOrderB20<>();
-				} else {
-					mOrder = new EsparzaRoemerVoglerOrder<>();
-				}
+				mOrder = new EsparzaRoemerVoglerOrder<>();
 				break;
 			default:
 				throw new IllegalArgumentException();
