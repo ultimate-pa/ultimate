@@ -23,7 +23,7 @@ int main(void) {
 	{
 		// test with array that is "on-heap"
 		int b[1] = { 7 };
-		int *p = &b; // obtaining address requires that array is "on-heap"
+		int *p = &b[0]; // obtaining address requires that array is "on-heap"
 		int y = ++b[0] + 5;
 		//@ assert y == 13;
 		if (b[0] != 8) {
