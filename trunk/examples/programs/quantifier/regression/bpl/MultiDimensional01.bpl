@@ -1,5 +1,5 @@
 // #Safe
-// Reveals but in quantifier elimination.
+// Reveals bug in quantifier elimination.
 // Occurs while computing WP.
 // 
 // Author: heizmann@informatik.uni-freiburg.de
