@@ -11,7 +11,7 @@
 
 int nonMain() {
 	char *src = malloc(3*sizeof(char));
-	char *dst = (*src+1);
+	char *dst = src+1;
     *src = 'a';
     *(src+1) = 'b';
 	void *res = memmove(dst,src,2);

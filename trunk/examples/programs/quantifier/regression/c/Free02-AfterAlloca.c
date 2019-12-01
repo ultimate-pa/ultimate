@@ -9,6 +9,7 @@
  */
 
 #include <stdlib.h>
+#include <alloca.h>
 
 int main() {
     int *p = alloca(sizeof(int));

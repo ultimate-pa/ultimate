@@ -13,5 +13,5 @@ int main(void)
 	if (*x != 23) {
 		//@ assert \false;
 	}
-	return;
+	return 0;
 }

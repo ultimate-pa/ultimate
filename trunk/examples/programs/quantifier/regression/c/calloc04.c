@@ -16,8 +16,9 @@ void imon_probe() {
 
 int g;
 
-void main(void) {
+int nonMain(void) {
 	g = 0;
 	imon_probe();
+	return 0;
 }
 

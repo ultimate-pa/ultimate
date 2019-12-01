@@ -29,8 +29,11 @@
  *  	at de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp.computeInterpolantsUsingUnsatCore(TraceCheckSpWp.java:283)
  */
 
-void __VERIFIER_assert(int cond) {       ERROR: __VERIFIER_error();   }
-void main ( ) {
+void __VERIFIER_assert(int cond) {       
+	//@ assert \false;
+}
+
+int main (void) {
   int a[1];
    
   int i = 0;

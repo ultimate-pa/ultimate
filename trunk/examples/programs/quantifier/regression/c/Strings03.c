@@ -8,6 +8,6 @@
 
 int main(void) {
     char *string = "grimes";
-    char not_a_letter = string[6];
+    char not_a_letter = string[7];
     return 0;
 }
