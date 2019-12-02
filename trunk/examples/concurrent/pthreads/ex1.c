@@ -1,3 +1,8 @@
+/*
+ * Author: Lars Nitzke, 
+ *         Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Date: Spring 2019
+ */
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>

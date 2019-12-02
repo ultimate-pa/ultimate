@@ -1,3 +1,8 @@
+/*
+ * Author: Lars Nitzke, 
+ *         Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Date: Spring 2019
+ */
 #include <pthread.h>
 #include <stdio.h>
 
@@ -20,7 +25,7 @@ int main() {
     int par = 5;
     pthread_create(&thread_id, NULL, foo, NULL);
 
-    pthread_join(thread_id, NULL);
+//     pthread_join(thread_id, NULL);
 
 
     return 0;

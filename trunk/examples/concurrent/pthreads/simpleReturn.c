@@ -1,4 +1,10 @@
 // #Safe
+/*
+ * Author: Lars Nitzke, 
+ *         Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Date: Spring 2019
+ */
+
 #include <pthread.h>
 #include <stdio.h>
 
