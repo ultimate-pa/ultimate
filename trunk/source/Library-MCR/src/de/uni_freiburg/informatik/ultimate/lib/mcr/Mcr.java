@@ -140,14 +140,16 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	private void getReadsAndWrites(final List<LETTER> trace) {
-		for (int i = 0; i < trace.size(); i++) {
-			final LETTER action = trace.get(i);
-			// TODO: There might be duplicate actions, is this a problem?
-			// TODO: => Map indices to varNames
+		for (final LETTER action : trace) {
 			final TermVariable tv =
 					mManagedScript.constructFreshTermVariable("order", SmtSortUtils.getIntSort(mManagedScript));
 			final String varName = ProgramVarUtils.generateConstantIdentifierForAuxVar(tv);
-			mActions2TermVars.put(action, SmtUtils.buildNewConstant(mManagedScript.getScript(), varName, "Int"));
+			final Term constant = SmtUtils.buildNewConstant(mManagedScript.getScript(), varName, "Int");
+			if (mActions2TermVars.put(action, constant) != null) {
+				// For now throw an exception for duplicate actions
+				// TODO: Fix this using the indices instead
+				throw new IllegalArgumentException("For now MCR cannot handle duplicate actions");
+			}
 			final TransFormula transformula = action.getTransformula();
 			mReads2Variables.addAllPairs(action, transformula.getInVars().keySet());
 			for (final IProgramVar var : transformula.getAssignedVars()) {
