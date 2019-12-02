@@ -75,7 +75,6 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final AutomataLibraryServices mAutomataServices;
 	private final VpAlphabet<LETTER> mAlphabet;
 	private final McrTraceCheckResult<LETTER> mResult;
-	private final Map<LETTER, Integer> mActionCounts;
 	private final IWriteRelation<LETTER> mWriteRelation;
 
 	public Mcr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
@@ -96,7 +95,6 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		mVariables2Writes = new HashRelation<>();
 		mPreviousWrite = new HashMap<>();
 		mActions2TermVars = new HashMap<>();
-		mActionCounts = new HashMap<>();
 		mThreads2SortedActions = new HashMap<>();
 		mActions2Threads = new HashRelation<>();
 		// Explore all the interleavings of trace
@@ -156,7 +154,6 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				mVariables2Writes.addPair(var, action);
 				mWrites2Variables.addPair(action, var);
 			}
-			mActionCounts.put(action, mActionCounts.getOrDefault(action, 0) + 1);
 		}
 	}
 
@@ -374,7 +371,6 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				final NestedWordAutomaton<LETTER, String> nwa =
 						new NestedWordAutomaton<>(mAutomataServices, mAlphabet, factory);
 				final Set<LETTER> writesOnVar = mVariables2Writes.getImage(var);
-				final int readCount = mActionCounts.get(read);
 				final String initial = "q0";
 				final String postWrite = "q1";
 				final String postRead = "q2";
@@ -382,10 +378,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				if (write == null) {
 					nwa.addState(false, true, postRead);
 					nwa.addInternalTransition(initial, read, postRead);
-					for (final LETTER action : mActionCounts.keySet()) {
-						if (action.equals(read) && readCount == 1) {
-							continue;
-						}
+					for (final LETTER action : trace) {
 						if (!writesOnVar.contains(action)) {
 							nwa.addInternalTransition(initial, action, initial);
 						}
@@ -396,28 +389,12 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					nwa.addState(false, true, postRead);
 					final Set<LETTER> correctWrites = new HashSet<>();
 					for (final LETTER otherWrite : writesOnVar) {
-						if (otherWrite.equals(read) && readCount == 1) {
-							continue;
-						}
 						if (mWriteRelation.areRelated(otherWrite, write, var, trace, interpolants)) {
 							correctWrites.add(otherWrite);
 						}
 					}
-					// Add all the forward edges and count the actions
-					final Map<LETTER, Integer> remainingCounts = new HashMap<>(mActionCounts);
-					remainingCounts.put(read, readCount - 1);
-					nwa.addInternalTransition(postWrite, read, postRead);
-					for (final LETTER w : correctWrites) {
-						nwa.addInternalTransition(initial, w, postWrite);
-						if (correctWrites.size() == 1) {
-							remainingCounts.put(w, remainingCounts.get(w) - 1);
-						}
-					}
 					// Add the self-loops for all the actions, that still can happen
-					for (final LETTER action : mActionCounts.keySet()) {
-						if (remainingCounts.get(action) == 0) {
-							continue;
-						}
+					for (final LETTER action : trace) {
 						nwa.addInternalTransition(initial, action, initial);
 						nwa.addInternalTransition(postRead, action, postRead);
 						if (!writesOnVar.contains(action) || correctWrites.contains(action)) {
