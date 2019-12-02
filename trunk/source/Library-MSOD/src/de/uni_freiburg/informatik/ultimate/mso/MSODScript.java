@@ -94,6 +94,7 @@ public class MSODScript extends NoopScript {
 
 		} catch (final Exception e) {
 			mLogger.error(e);
+			return LBool.UNKNOWN;
 		}
 
 		mLogger.info("UNSAT");
