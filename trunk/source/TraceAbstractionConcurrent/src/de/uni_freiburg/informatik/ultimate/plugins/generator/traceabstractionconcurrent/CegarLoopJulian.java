@@ -106,6 +106,12 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 	private static final boolean DEBUG_WRITE_NET_HASH_CODES = false;
 
+	/**
+	 * Write result of RemoveUnreachable to file if runtime of this operation in
+	 * seconds is greater than this number.
+	 */
+	private static final int DEBUG_DUMP_REMOVEUNREACHABLERESULT_THRESHOLD = 24 * 60 * 60;
+
 	private BranchingProcess<LETTER, IPredicate> mUnfolding;
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
@@ -268,10 +274,12 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		}
 
 		if (mRemoveUnreachable) {
+			final long start = System.nanoTime();
 			mAbstraction = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable<>(
 					new AutomataLibraryServices(mServices), (BoundedPetriNet<LETTER, IPredicate>) mAbstraction)
 							.getResult();
-			if (mPref.dumpAutomata()) {
+			final long end = System.nanoTime();
+			if (mPref.dumpAutomata() || (end-start) > DEBUG_DUMP_REMOVEUNREACHABLERESULT_THRESHOLD * 1_000_000_000L) {
 				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
 						+ "_AbstractionAfterRemoveUnreachable";
 				super.writeAutomatonToFile(mAbstraction, filename);
