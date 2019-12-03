@@ -33,6 +33,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
@@ -59,6 +60,7 @@ public class AffineRelationTest {
 
 	private static final boolean WRITE_SCRIPT_TO_FILE = false;
 	private IUltimateServiceProvider mServices;
+	private ILogger mLogger;
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private Sort mRealSort;
@@ -67,6 +69,7 @@ public class AffineRelationTest {
 	@Before
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
+		mLogger = mServices.getLoggingService().getLogger(this.getClass().getSimpleName());
 		mScript = UltimateMocks.createZ3Script(LogLevel.INFO);
 		if (WRITE_SCRIPT_TO_FILE) {
 			final String file = "AffineRelationTestScript.smt2";
@@ -304,8 +307,7 @@ public class AffineRelationTest {
 		final Term solvedAsTerm = mcsbr.asTerm(mScript);
 		final LBool equivalent = SmtUtils.checkEquivalence(inputAsTerm, solvedAsTerm, mScript);
 		if (equivalent == LBool.UNKNOWN) {
-			mServices.getLoggingService().getLogger(this.getClass())
-					.warn("unable to check equivalence of input " + inputAsTerm + " and output " + solvedAsTerm);
+			mLogger.warn("unable to check equivalence of input " + inputAsTerm + " and output " + solvedAsTerm);
 		}
 		Assert.assertTrue("Unable to confirm equivalence of input " + inputAsTerm + " and output " + solvedAsTerm,
 				equivalent == LBool.UNSAT);
