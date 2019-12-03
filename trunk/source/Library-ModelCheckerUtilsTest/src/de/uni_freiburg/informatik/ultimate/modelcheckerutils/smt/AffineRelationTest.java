@@ -36,8 +36,11 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
@@ -59,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 public class AffineRelationTest {
 
 	private static final boolean WRITE_SCRIPT_TO_FILE = false;
+	private static final boolean USE_QUANTIFIER_ELIMINATION_TO_SIMPLIFY_INPUT_OF_EQUIVALENCE_CHECK = false;
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
 	private Script mScript;
@@ -305,7 +309,14 @@ public class AffineRelationTest {
 		final MultiCaseSolvedBinaryRelation mcsbr = AffineRelation.convert(mScript, inputAsTerm)
 				.solveForSubject(mScript, x, xnf);
 		final Term solvedAsTerm = mcsbr.asTerm(mScript);
-		final LBool equivalent = SmtUtils.checkEquivalence(inputAsTerm, solvedAsTerm, mScript);
+		final Term tmp;
+		if (USE_QUANTIFIER_ELIMINATION_TO_SIMPLIFY_INPUT_OF_EQUIVALENCE_CHECK) {
+		tmp = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, solvedAsTerm,
+				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		} else {
+			tmp = solvedAsTerm;
+		}
+		final LBool equivalent = SmtUtils.checkEquivalence(inputAsTerm, tmp, mScript);
 		if (equivalent == LBool.UNKNOWN) {
 			mLogger.warn("unable to check equivalence of input " + inputAsTerm + " and output " + solvedAsTerm);
 		}
