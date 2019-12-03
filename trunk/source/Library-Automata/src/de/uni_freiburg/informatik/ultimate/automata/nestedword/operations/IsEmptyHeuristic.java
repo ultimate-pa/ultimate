@@ -153,7 +153,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
 				throw new AutomataOperationCanceledException(rti);
 			}
-			mLogger.info("----");
+			mLogger.debug("----");
 			final Item current = worklist.poll();
 			mLogger.info("Cur " + current);
 			if (mIsGoalState.test(current.mTargetState)) {
@@ -173,12 +173,11 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					}
 				}
 
-				final int expectedCost = costSoFar
-						+ heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
+				final int expectedCost = costSoFar + heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
 				final boolean rem = worklist.remove(succ);
 				if (!rem && !closed.add(succ)) {
 					// if
-					mLogger.info("REM " + rem);
+					mLogger.debug("REM " + rem);
 					continue;
 				}
 				succ.setExpectedCostToTarget(expectedCost);
@@ -187,7 +186,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				}
 				succ.setCostSoFar(costSoFar);
 				worklist.add(succ);
-				mLogger.info("Add " + succ);
+				mLogger.debug("Add " + succ);
 			}
 		}
 		return null;
