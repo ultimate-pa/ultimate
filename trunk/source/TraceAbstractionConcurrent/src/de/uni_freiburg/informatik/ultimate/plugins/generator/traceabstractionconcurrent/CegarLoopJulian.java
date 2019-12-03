@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference.LoopSyncMethod;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
@@ -103,6 +104,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 	private static final boolean USE_ON_DEMAND_RESULT = false;
 
+	private static final boolean DEBUG_WRITE_NET_HASH_CODES = false;
+
 	private BranchingProcess<LETTER, IPredicate> mUnfolding;
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
@@ -145,6 +148,9 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final BoundedPetriNet<LETTER, IPredicate> cfg =
 					CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices, mIcfg,
 							mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
+			if (DEBUG_WRITE_NET_HASH_CODES) {
+				mLogger.debug(PetriNetUtils.printHashCodesOfInternalDataStructures(cfg));
+			}
 			if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
 				final long start_time = System.currentTimeMillis();
 				mLBE = new PetriNetLargeBlockEncoding(mServices, mIcfg.getCfgSmtToolkit(),

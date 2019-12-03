@@ -94,4 +94,29 @@ public final class PetriNetUtils {
 		return new PetriNet2FiniteAutomaton<>(mServices, stateFactory, net).getResult();
 	}
 
+	/**
+	 * List hash codes of Petri net's internal objects. Useful for detecting
+	 * nondeterminism. Should only be used for debugging.
+	 */
+	public static <LETTER, PLACE> String printHashCodesOfInternalDataStructures(
+			final BoundedPetriNet<LETTER, PLACE> net) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("HashCodes of PetriNet data structures ");
+		sb.append(System.lineSeparator());
+		int placeCounter = 0;
+		for (final PLACE place : net.getInitialPlaces()) {
+			sb.append("Place " + placeCounter + ": " + place.hashCode());
+			sb.append(System.lineSeparator());
+			placeCounter++;
+		}
+		int transitionCounter = 0;
+		for (final ITransition<LETTER, PLACE> trans : net.getTransitions()) {
+			sb.append(trans.hashCode());
+			sb.append("Place " + transitionCounter + ": " + trans.hashCode());
+			sb.append(System.lineSeparator());
+			transitionCounter++;
+		}
+		return sb.toString();
+	}
+
 }
