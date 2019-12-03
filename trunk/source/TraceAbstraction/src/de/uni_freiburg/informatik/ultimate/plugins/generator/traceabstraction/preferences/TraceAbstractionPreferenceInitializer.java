@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.EmptinessCheckHeuristic.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
@@ -215,16 +216,16 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "exists s.t. it can be reused by later verification runs.";
 	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE =
 			"Try to re-use interpolant automata from input files and/or previous runs. " + FloydHoareAutomataReuse.NONE
-					+ " disables the re-use, all other settings enable it. You can specifiy additional .ats files as"
-					+ " input and the containing NWAs will be treated as additional interpolant automata. When "
-					+ LABEL_ALL_ERRORS_AT_ONCE + " is false, this setting will additionally try to re-use the automata "
-					+ "from previous runs. " + FloydHoareAutomataReuse.EAGER
-					+ " will compute the difference with the initial abstraction and "
-					+ "all additional interpolant automatas before the first iteration of a run. "
-					+ FloydHoareAutomataReuse.LAZY_IN_ORDER + " tries in each iteration after a potential "
-					+ "counterexample is found if one of the re-usable interpolant automata accepts the counterexample. "
-					+ "If this is the case, this automaton is substracted from the current abstraction and removed from "
-					+ "the set of reusable interpolant automata.";
+			+ " disables the re-use, all other settings enable it. You can specifiy additional .ats files as"
+			+ " input and the containing NWAs will be treated as additional interpolant automata. When "
+			+ LABEL_ALL_ERRORS_AT_ONCE + " is false, this setting will additionally try to re-use the automata "
+			+ "from previous runs. " + FloydHoareAutomataReuse.EAGER
+			+ " will compute the difference with the initial abstraction and "
+			+ "all additional interpolant automatas before the first iteration of a run. "
+			+ FloydHoareAutomataReuse.LAZY_IN_ORDER + " tries in each iteration after a potential "
+			+ "counterexample is found if one of the re-usable interpolant automata accepts the counterexample. "
+			+ "If this is the case, this automaton is substracted from the current abstraction and removed from "
+			+ "the set of reusable interpolant automata.";
 	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
 			"Specifies how to compute successors on-demand for re-use interpolant automata.";
 
@@ -247,6 +248,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String DESC_HEURISTIC_EMPTINESS_CHECK =
 			"Use heuristics to traverse/explorew a NWA during the check emptiness";
 
+	public static final String LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD = "Scoring method to Use during heuristic emptiness check";
+	public static final ScoringMethod DEF_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD = ScoringMethod.DAGSIZE;
+	public static final String DESC_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD =
+			"Defines what Scoring method is used to score outgoing transitions of a NWA during the emptiness check.";
+
 	public static final String LABEL_SMT_FEATURE_EXTRACTION = "Extract SMT features during analysis";
 	public static final boolean DEF_SMT_FEATURE_EXTRACTION = false;
 	public static final String DESC_SMT_FEATURE_EXTRACTION = "We Extract SMT features during analysis and dump them.";
@@ -266,130 +272,132 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(LABEL_INTERPROCEDUTAL, DEF_INTERPROCEDUTAL, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ALL_ERRORS_AT_ONCE, DEF_ALL_ERRORS_AT_ONCE, DESC_ALL_ERRORS_AT_ONCE,
-						PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_INTERPROCEDUTAL, DEF_INTERPROCEDUTAL, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_ALL_ERRORS_AT_ONCE, DEF_ALL_ERRORS_AT_ONCE, DESC_ALL_ERRORS_AT_ONCE,
+					PreferenceType.Boolean),
 
-				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE, DEF_FLOYD_HOARE_AUTOMATA_REUSE,
-						DESC_FLOYD_HOARE_AUTOMATA_REUSE, PreferenceType.Combo, FloydHoareAutomataReuse.values()),
-				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT,
-						DEF_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT, DESC_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT,
-						PreferenceType.Combo, FloydHoareAutomataReuseEnhancement.values()),
+			new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE, DEF_FLOYD_HOARE_AUTOMATA_REUSE,
+					DESC_FLOYD_HOARE_AUTOMATA_REUSE, PreferenceType.Combo, FloydHoareAutomataReuse.values()),
+			new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT,
+					DEF_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT, DESC_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT,
+					PreferenceType.Combo, FloydHoareAutomataReuseEnhancement.values()),
 
-				new UltimatePreferenceItem<>(LABEL_USERLIMIT_ITERATIONS, DEF_USERLIMIT_ITERATIONS,
-						DESC_USERLIMIT_ITERATIONS, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_000_000)),
-				new UltimatePreferenceItem<>(LABEL_USERLIMIT_TIME, DEF_USERLIMIT_TIME, DESC_USERLIMIT_TIME,
-						PreferenceType.Integer, IUltimatePreferenceItemValidator.ONLY_POSITIVE),
-				new UltimatePreferenceItem<>(LABEL_USERLIMIT_PATH_PROGRAM, DEF_USERLIMIT_PATH_PROGRAM,
-						DESC_USERLIMIT_PATH_PROGRAM, PreferenceType.Integer,
-						IUltimatePreferenceItemValidator.ONLY_POSITIVE),
-				new UltimatePreferenceItem<>(LABEL_USERLIMIT_TRACE_HISTOGRAM, DEF_USERLIMIT_TRACE_HISTOGRAM,
-						DESC_USERLIMIT_TRACE_HISTOGRAM, PreferenceType.Integer,
-						IUltimatePreferenceItemValidator.ONLY_POSITIVE),
+			new UltimatePreferenceItem<>(LABEL_USERLIMIT_ITERATIONS, DEF_USERLIMIT_ITERATIONS,
+					DESC_USERLIMIT_ITERATIONS, PreferenceType.Integer,
+					new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_000_000)),
+			new UltimatePreferenceItem<>(LABEL_USERLIMIT_TIME, DEF_USERLIMIT_TIME, DESC_USERLIMIT_TIME,
+					PreferenceType.Integer, IUltimatePreferenceItemValidator.ONLY_POSITIVE),
+			new UltimatePreferenceItem<>(LABEL_USERLIMIT_PATH_PROGRAM, DEF_USERLIMIT_PATH_PROGRAM,
+					DESC_USERLIMIT_PATH_PROGRAM, PreferenceType.Integer,
+					IUltimatePreferenceItemValidator.ONLY_POSITIVE),
+			new UltimatePreferenceItem<>(LABEL_USERLIMIT_TRACE_HISTOGRAM, DEF_USERLIMIT_TRACE_HISTOGRAM,
+					DESC_USERLIMIT_TRACE_HISTOGRAM, PreferenceType.Integer,
+					IUltimatePreferenceItemValidator.ONLY_POSITIVE),
 
-				new UltimatePreferenceItem<>(LABEL_COMPUTE_COUNTEREXAMPLE, DEF_COMPUTE_COUNTEREXAMPLE,
-						DESC_COMPUTE_COUNTEREXAMPLE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS,
-						DEF_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS, DESC_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS,
-						PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_COMPUTE_COUNTEREXAMPLE, DEF_COMPUTE_COUNTEREXAMPLE,
+					DESC_COMPUTE_COUNTEREXAMPLE, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS,
+					DEF_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS, DESC_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS,
+					PreferenceType.Boolean),
 
-				new UltimatePreferenceItem<>(LABEL_ARTIFACT, Artifact.RCFG, PreferenceType.Combo, Artifact.values()),
-				new UltimatePreferenceItem<>(LABEL_WATCHITERATION, DEF_WATCHITERATION, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
-				new UltimatePreferenceItem<>(LABEL_HOARE, DEF_HOARE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_HOARE_POSITIONS, DEF_HOARE_POSITIONS, PreferenceType.Combo,
-						HoareAnnotationPositions.values()),
+			new UltimatePreferenceItem<>(LABEL_ARTIFACT, Artifact.RCFG, PreferenceType.Combo, Artifact.values()),
+			new UltimatePreferenceItem<>(LABEL_WATCHITERATION, DEF_WATCHITERATION, PreferenceType.Integer,
+					new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
+			new UltimatePreferenceItem<>(LABEL_HOARE, DEF_HOARE, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_HOARE_POSITIONS, DEF_HOARE_POSITIONS, PreferenceType.Combo,
+					HoareAnnotationPositions.values()),
 
-				new UltimatePreferenceItem<>(LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
-						DEF_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER, DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SEPARATE_SOLVER, DEF_SEPARATE_SOLVER, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_SOLVER, DEF_SOLVER, PreferenceType.Combo,
-						SolverMode.values()),
-				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT,
-						RcfgPreferenceInitializer.DEF_FAKE_NON_INCREMENTAL_SCRIPT, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND,
-						DEF_EXTERNAL_SOLVER_COMMAND, PreferenceType.String),
-				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC,
-						RcfgPreferenceInitializer.DEF_EXT_SOLVER_LOGIC, PreferenceType.String),
-				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_DUMP_TO_FILE, Boolean.FALSE,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_DUMP_PATH,
-						RcfgPreferenceInitializer.DEF_DUMP_PATH, PreferenceType.Directory),
+			new UltimatePreferenceItem<>(LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
+					DEF_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER, DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_SEPARATE_SOLVER, DEF_SEPARATE_SOLVER, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_SOLVER, DEF_SOLVER, PreferenceType.Combo,
+					SolverMode.values()),
+			new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT,
+					RcfgPreferenceInitializer.DEF_FAKE_NON_INCREMENTAL_SCRIPT, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND,
+					DEF_EXTERNAL_SOLVER_COMMAND, PreferenceType.String),
+			new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC,
+					RcfgPreferenceInitializer.DEF_EXT_SOLVER_LOGIC, PreferenceType.String),
+			new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_DUMP_TO_FILE, Boolean.FALSE,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_DUMP_PATH,
+					RcfgPreferenceInitializer.DEF_DUMP_PATH, PreferenceType.Directory),
 
-				new UltimatePreferenceItem<>(LABEL_INTERPOLATED_LOCS, DEF_INTERPOLANTS, PreferenceType.Combo,
-						InterpolationTechnique.values()),
-				new UltimatePreferenceItem<>(LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS, Boolean.FALSE,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_UNSAT_CORES_IN_PATHINVARIANTS, Boolean.FALSE,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_WEAKEST_PRECONDITION_IN_PATHINVARIANTS, Boolean.FALSE,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS, Boolean.FALSE,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_INTERPOLANTS_CONSOLIDATION, Boolean.FALSE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_UNSAT_CORES, UnsatCores.CONJUNCT_LEVEL, PreferenceType.Combo,
-						UnsatCores.values()),
-				new UltimatePreferenceItem<>(LABEL_LIVE_VARIABLES, Boolean.TRUE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
-						AssertCodeBlockOrder.NOT_INCREMENTALLY, PreferenceType.Combo, AssertCodeBlockOrder.values()),
-				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_AUTOMATON, InterpolantAutomaton.STRAIGHT_LINE,
-						PreferenceType.Combo, InterpolantAutomaton.values()),
-				new UltimatePreferenceItem<>(LABEL_DUMPAUTOMATA, DEF_DUMPAUTOMATA, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_AUTOMATAFORMAT, DEF_AUTOMATAFORMAT, PreferenceType.Combo,
-						Format.values()),
-				new UltimatePreferenceItem<>(LABEL_DUMPPATH, DEF_DUMPPATH, PreferenceType.Directory),
-				new UltimatePreferenceItem<>(LABEL_DUMP_ONLY_REUSE, DEF_ONLY_REUSE, DESC_DUMP_ONLY_REUSE,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
-						InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION, PreferenceType.Combo,
-						InterpolantAutomatonEnhancement.values()),
-				new UltimatePreferenceItem<>(LABEL_HOARE_TRIPLE_CHECKS, HoareTripleChecks.INCREMENTAL,
-						PreferenceType.Combo, HoareTripleChecks.values()),
-				new UltimatePreferenceItem<>(LABEL_LANGUAGE_OPERATION, LanguageOperation.DIFFERENCE,
-						PreferenceType.Combo, LanguageOperation.values()),
-				new UltimatePreferenceItem<>(LABEL_DIFFERENCE_SENWA, DEF_DIFFERENCE_SENWA, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_MINIMIZE, Minimization.MINIMIZE_SEVPA, PreferenceType.Combo,
-						Minimization.values()),
-				new UltimatePreferenceItem<>(LABEL_CONCURRENCY, Concurrency.PETRI_NET, PreferenceType.Combo,
-						Concurrency.values()),
-				new UltimatePreferenceItem<>(LABEL_ORDER, DEF_ORDER, PreferenceType.Combo,
-						new String[] { VALUE_KMM, VALUE_EVR, VALUE_EVR_MARK }),
-				new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_UNFOLDING2NET, DEF_UNFOLDING2NET, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_LBE_CONCURRENCY, DEF_LBE_CONCURRENCY, PreferenceType.Combo,
-						PetriNetLbe.values()),
-				new UltimatePreferenceItem<>(LABEL_ABSINT_MODE, DEF_ABSINT_MODE, PreferenceType.Combo,
-						AbstractInterpretationMode.values()),
-				new UltimatePreferenceItem<>(LABEL_ABSINT_ALWAYS_REFINE, DEF_ABSINT_ALWAYS_REFINE,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE,
-						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE, DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE,
-						PreferenceType.Combo, RelevanceAnalysisMode.values()),
-				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE,
-						DEF_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE, DESC_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SIMPLIFICATION_TECHNIQUE, DEF_SIMPLIFICATION_TECHNIQUE,
-						PreferenceType.Combo, SimplificationTechnique.values()),
-				new UltimatePreferenceItem<>(LABEL_XNF_CONVERSION_TECHNIQUE, DEF_XNF_CONVERSION_TECHNIQUE,
-						PreferenceType.Combo, XnfConversionTechnique.values()),
-				new UltimatePreferenceItem<>(LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY, DEF_COUNTEREXAMPLE_SEARCH_STRATEGY,
-						PreferenceType.Combo, CounterexampleSearchStrategy.values()),
-				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY, DEF_REFINEMENT_STRATEGY, PreferenceType.Combo,
-						RefinementStrategy.values()),
-				new UltimatePreferenceItem<>(LABEL_MCR_REFINEMENT_STRATEGY, DEF_MCR_REFINEMENT_STRATEGY,
-						PreferenceType.Combo, RefinementStrategy.values()),
-				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
-						DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST, DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
-						PreferenceType.Combo, RefinementStrategyExceptionBlacklist.values()),
-				new UltimatePreferenceItem<>(LABEL_HEURISTIC_EMPTINESS_CHECK, DEF_HEURISTIC_EMPTINESS_CHECK,
-						DESC_HEURISTIC_EMPTINESS_CHECK, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION, DEF_SMT_FEATURE_EXTRACTION,
-						DESC_SMT_FEATURE_EXTRACTION, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH,
-						DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH, DESC_SMT_FEATURE_EXTRACTION_DUMP_PATH,
-						PreferenceType.Directory), };
+			new UltimatePreferenceItem<>(LABEL_INTERPOLATED_LOCS, DEF_INTERPOLANTS, PreferenceType.Combo,
+					InterpolationTechnique.values()),
+			new UltimatePreferenceItem<>(LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS, Boolean.FALSE,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_UNSAT_CORES_IN_PATHINVARIANTS, Boolean.FALSE,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_WEAKEST_PRECONDITION_IN_PATHINVARIANTS, Boolean.FALSE,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS, Boolean.FALSE,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_INTERPOLANTS_CONSOLIDATION, Boolean.FALSE, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_UNSAT_CORES, UnsatCores.CONJUNCT_LEVEL, PreferenceType.Combo,
+					UnsatCores.values()),
+			new UltimatePreferenceItem<>(LABEL_LIVE_VARIABLES, Boolean.TRUE, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, PreferenceType.Combo, AssertCodeBlockOrder.values()),
+			new UltimatePreferenceItem<>(LABEL_INTERPOLANT_AUTOMATON, InterpolantAutomaton.STRAIGHT_LINE,
+					PreferenceType.Combo, InterpolantAutomaton.values()),
+			new UltimatePreferenceItem<>(LABEL_DUMPAUTOMATA, DEF_DUMPAUTOMATA, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_AUTOMATAFORMAT, DEF_AUTOMATAFORMAT, PreferenceType.Combo,
+					Format.values()),
+			new UltimatePreferenceItem<>(LABEL_DUMPPATH, DEF_DUMPPATH, PreferenceType.Directory),
+			new UltimatePreferenceItem<>(LABEL_DUMP_ONLY_REUSE, DEF_ONLY_REUSE, DESC_DUMP_ONLY_REUSE,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
+					InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION, PreferenceType.Combo,
+					InterpolantAutomatonEnhancement.values()),
+			new UltimatePreferenceItem<>(LABEL_HOARE_TRIPLE_CHECKS, HoareTripleChecks.INCREMENTAL,
+					PreferenceType.Combo, HoareTripleChecks.values()),
+			new UltimatePreferenceItem<>(LABEL_LANGUAGE_OPERATION, LanguageOperation.DIFFERENCE,
+					PreferenceType.Combo, LanguageOperation.values()),
+			new UltimatePreferenceItem<>(LABEL_DIFFERENCE_SENWA, DEF_DIFFERENCE_SENWA, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_MINIMIZE, Minimization.MINIMIZE_SEVPA, PreferenceType.Combo,
+					Minimization.values()),
+			new UltimatePreferenceItem<>(LABEL_CONCURRENCY, Concurrency.PETRI_NET, PreferenceType.Combo,
+					Concurrency.values()),
+			new UltimatePreferenceItem<>(LABEL_ORDER, DEF_ORDER, PreferenceType.Combo,
+					new String[] { VALUE_KMM, VALUE_EVR, VALUE_EVR_MARK }),
+			new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_UNFOLDING2NET, DEF_UNFOLDING2NET, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_LBE_CONCURRENCY, DEF_LBE_CONCURRENCY, PreferenceType.Combo,
+					PetriNetLbe.values()),
+			new UltimatePreferenceItem<>(LABEL_ABSINT_MODE, DEF_ABSINT_MODE, PreferenceType.Combo,
+					AbstractInterpretationMode.values()),
+			new UltimatePreferenceItem<>(LABEL_ABSINT_ALWAYS_REFINE, DEF_ABSINT_ALWAYS_REFINE,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE,
+					DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE, DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE,
+					PreferenceType.Combo, RelevanceAnalysisMode.values()),
+			new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE,
+					DEF_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE, DESC_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_SIMPLIFICATION_TECHNIQUE, DEF_SIMPLIFICATION_TECHNIQUE,
+					PreferenceType.Combo, SimplificationTechnique.values()),
+			new UltimatePreferenceItem<>(LABEL_XNF_CONVERSION_TECHNIQUE, DEF_XNF_CONVERSION_TECHNIQUE,
+					PreferenceType.Combo, XnfConversionTechnique.values()),
+			new UltimatePreferenceItem<>(LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY, DEF_COUNTEREXAMPLE_SEARCH_STRATEGY,
+					PreferenceType.Combo, CounterexampleSearchStrategy.values()),
+			new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY, DEF_REFINEMENT_STRATEGY, PreferenceType.Combo,
+					RefinementStrategy.values()),
+			new UltimatePreferenceItem<>(LABEL_MCR_REFINEMENT_STRATEGY, DEF_MCR_REFINEMENT_STRATEGY,
+					PreferenceType.Combo, RefinementStrategy.values()),
+			new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
+					DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST, DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
+					PreferenceType.Combo, RefinementStrategyExceptionBlacklist.values()),
+			new UltimatePreferenceItem<>(LABEL_HEURISTIC_EMPTINESS_CHECK, DEF_HEURISTIC_EMPTINESS_CHECK,
+					DESC_HEURISTIC_EMPTINESS_CHECK, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD, DEF_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
+					DESC_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD, PreferenceType.Combo, ScoringMethod.values()),
+			new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION, DEF_SMT_FEATURE_EXTRACTION,
+					DESC_SMT_FEATURE_EXTRACTION, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH,
+					DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH, DESC_SMT_FEATURE_EXTRACTION_DUMP_PATH,
+					PreferenceType.Directory), };
 
 	}
 

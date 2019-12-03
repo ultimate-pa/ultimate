@@ -226,7 +226,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private final boolean mStoreFloydHoareAutomata;
 	private final LinkedHashSet<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> mFloydHoareAutomata =
 			new LinkedHashSet<>();
-	private final ScoringMethod mScoringMethod = ScoringMethod.NUM_FUNCTIONS;
 
 	protected boolean mFallbackToFpIfInterprocedural = false;
 	protected HoareAnnotationFragments<LETTER> mHaf;
@@ -235,6 +234,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
 	private boolean mFirstReuseDump = true;
 	private boolean mUseHeuristicEmptinessCheck = false;
+	private ScoringMethod mScoringMethod = ScoringMethod.NUM_FUNCTIONS;
 
 	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -243,7 +243,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		super(services, name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
 				services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mPathProgramDumpController = new PathProgramDumpController<>(mServices, mPref, mIcfg);
-		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1) {
+		if (mFallbackToFpIfInterprocedural && (rootNode.getProcedureEntryNodes().size() > 1)) {
 			if (interpolation == InterpolationTechnique.FPandBP) {
 				mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
 				mInterpolation = InterpolationTechnique.ForwardPredicates;
@@ -316,6 +316,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 		// Heuristic Emptiness Check
 		mUseHeuristicEmptinessCheck = taPrefs.useHeuristicEmptinessCheck();
+		mScoringMethod = taPrefs.HeuristicEmptinessCheckScoringMethod();
 	}
 
 	@Override
@@ -359,7 +360,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 
 		if (mComputeHoareAnnotation
-				&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
+				&& (mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles)) {
 			final INestedWordAutomaton<LETTER, IPredicate> nwa =
 					(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
 			for (final IPredicate pred : nwa.getStates()) {
@@ -413,7 +414,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			checkForDangerInvariantAndReport();
 		}
 
-		if (mPref.hasLimitTraceHistogram() && traceHistogram.getMax() > mPref.getLimitTraceHistogram()) {
+		if (mPref.hasLimitTraceHistogram() && (traceHistogram.getMax() > mPref.getLimitTraceHistogram())) {
 			final String taskDescription =
 					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + mIteration;
 			throw new TaskCanceledException(UserDefinedLimit.TRACE_HISTOGRAM, getClass(), taskDescription);
@@ -452,8 +453,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
 
 		try {
-			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
-					.getPathProgramCache().getPathProgramCount(mCounterexample)) {
+			if (mPref.hasLimitPathProgramCount() && (mPref.getLimitPathProgramCount() < mStrategyFactory
+					.getPathProgramCache().getPathProgramCount(mCounterexample))) {
 				final String taskDescription = "bailout by path program count limit in iteration " + mIteration;
 				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
 			}
@@ -464,7 +465,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		} catch (final ToolchainCanceledException tce) {
 			final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
 			final String taskDescription = "analyzing trace of length " + mCounterexample.getLength()
-					+ " with TraceHistMax " + traceHistogramMax;
+			+ " with TraceHistMax " + traceHistogramMax;
 			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 			throw tce;
 		}
@@ -480,7 +481,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(mCounterexample.getWord());
 			}
 
-			if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE && feasibility == LBool.SAT) {
+			if ((mFaultLocalizationMode != RelevanceAnalysisMode.NONE) && (feasibility == LBool.SAT)) {
 				final INestedWordAutomaton<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton
 						.constructAutomatonWithSPredicates(mServices, super.mIcfg, mStateFactoryForRefinement,
 								super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
@@ -540,7 +541,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	private static boolean
-			isInterpolantAutomatonOfSingleStateType(final INestedWordAutomaton<?, IPredicate> automaton) {
+	isInterpolantAutomatonOfSingleStateType(final INestedWordAutomaton<?, IPredicate> automaton) {
 		Class<? extends IPredicate> typeofState = null;
 		for (final IPredicate state : automaton.getStates()) {
 			if (typeofState == null) {
@@ -645,7 +646,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private boolean checkPathProgramRemoval()
 			throws AutomataLibraryException, AutomataOperationCanceledException, AssertionError {
 		final boolean pathProgramShouldHaveBeenRemoved = mRefinementEngine.somePerfectSequenceFound()
-				&& mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NONE;
+				&& (mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NONE);
 		if (!pathProgramShouldHaveBeenRemoved) {
 			return true;
 		}
@@ -660,7 +661,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final PathProgram pp = ppcr.getPathProgram();
 		final IcfgLocation errorLoc =
 				((ISLPredicate) mCounterexample.getStateSequence().get(mCounterexample.getStateSequence().size() - 1))
-						.getProgramPoint();
+				.getProgramPoint();
 		final VpAlphabet<LETTER> newVpAlphabet =
 				CFG2NestedWordAutomaton.extractVpAlphabet(mIcfg, !mPref.interprocedural());
 		final VpAlphabet<LETTER> oldVpAlphabet =
@@ -684,7 +685,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
 			final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode,
 			final boolean useErrorAutomaton, final AutomatonType automatonType)
-			throws AutomataLibraryException, AutomataOperationCanceledException, AssertionError {
+					throws AutomataLibraryException, AutomataOperationCanceledException, AssertionError {
 		try {
 			mLogger.debug("Start constructing difference");
 			final PowersetDeterminizer<LETTER, IPredicate> psd =
@@ -711,7 +712,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			} finally {
 				if (enhanceMode != InterpolantAutomatonEnhancement.NONE) {
 					assert subtrahend instanceof AbstractInterpolantAutomaton : "if enhancement is used, we need AbstractInterpolantAutomaton";
-					((AbstractInterpolantAutomaton<LETTER>) subtrahend).switchToReadonlyMode();
+				((AbstractInterpolantAutomaton<LETTER>) subtrahend).switchToReadonlyMode();
 				}
 			}
 
@@ -827,7 +828,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private void checkEnhancement(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> inputInterpolantAutomaton,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> interpolantAutomaton)
-			throws AutomataLibraryException, AssertionError, AutomataOperationCanceledException {
+					throws AutomataLibraryException, AssertionError, AutomataOperationCanceledException {
 		if (!new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
 				(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult()) {
 
@@ -904,10 +905,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	private DeterministicInterpolantAutomaton<LETTER>
-			constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
-					final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
-					final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
-					final InterpolantAutomatonEnhancement enhanceMode) {
+	constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
+			final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
+			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+			final InterpolantAutomatonEnhancement enhanceMode) {
 		final boolean conservativeSuccessorCandidateSelection =
 				enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
 		final boolean cannibalize = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
@@ -955,45 +956,45 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	 */
 	protected void minimizeAbstraction(final PredicateFactoryRefinement predicateFactoryRefinement,
 			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)
-			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
+					throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
 
 		final Function<IPredicate, Set<IcfgLocation>> lcsProvider =
 				x -> (x instanceof ISLPredicate ? Collections.singleton(((ISLPredicate) x).getProgramPoint())
 						: new HashSet<>(Arrays.asList(((IMLPredicate) x).getProgramPoints())));
-		AutomataMinimization<Set<IcfgLocation>, IPredicate, LETTER> am;
-		try {
-			am = new AutomataMinimization<>(mServices, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
-					minimization, mComputeHoareAnnotation, mIteration, predicateFactoryRefinement,
-					MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata, mInterpolAutomaton,
-					MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider, true);
-		} catch (final AutomataMinimizationTimeout e) {
-			mCegarLoopBenchmark.addAutomataMinimizationData(e.getStatistics());
-			throw e.getAutomataOperationCanceledException();
-		}
-		mCegarLoopBenchmark.addAutomataMinimizationData(am.getStatistics());
-		final boolean newAutomatonWasBuilt = am.newAutomatonWasBuilt();
-
-		if (newAutomatonWasBuilt) {
-			// postprocessing after minimization
-			final IDoubleDeckerAutomaton<LETTER, IPredicate> newAbstraction = am.getMinimizedAutomaton();
-
-			// extract Hoare annotation
-			if (mComputeHoareAnnotation) {
-				final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
-				if (oldState2newState == null) {
-					throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
+				AutomataMinimization<Set<IcfgLocation>, IPredicate, LETTER> am;
+				try {
+					am = new AutomataMinimization<>(mServices, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
+							minimization, mComputeHoareAnnotation, mIteration, predicateFactoryRefinement,
+							MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata, mInterpolAutomaton,
+							MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider, true);
+				} catch (final AutomataMinimizationTimeout e) {
+					mCegarLoopBenchmark.addAutomataMinimizationData(e.getStatistics());
+					throw e.getAutomataOperationCanceledException();
 				}
-				mHaf.updateOnMinimization(oldState2newState, newAbstraction);
-			}
+				mCegarLoopBenchmark.addAutomataMinimizationData(am.getStatistics());
+				final boolean newAutomatonWasBuilt = am.newAutomatonWasBuilt();
 
-			// statistics
-			final int oldSize = mAbstraction.size();
-			final int newSize = newAbstraction.size();
-			assert oldSize == 0 || oldSize >= newSize : "Minimization increased state space";
+				if (newAutomatonWasBuilt) {
+					// postprocessing after minimization
+					final IDoubleDeckerAutomaton<LETTER, IPredicate> newAbstraction = am.getMinimizedAutomaton();
 
-			// use result
-			mAbstraction = newAbstraction;
-		}
+					// extract Hoare annotation
+					if (mComputeHoareAnnotation) {
+						final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
+						if (oldState2newState == null) {
+							throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
+						}
+						mHaf.updateOnMinimization(oldState2newState, newAbstraction);
+					}
+
+					// statistics
+					final int oldSize = mAbstraction.size();
+					final int newSize = newAbstraction.size();
+					assert (oldSize == 0) || (oldSize >= newSize) : "Minimization increased state space";
+
+					// use result
+					mAbstraction = newAbstraction;
+				}
 	}
 
 	@Override
@@ -1016,8 +1017,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	@Override
 	public IElement getArtifact() {
-		if (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON
-				|| mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
+		if ((mPref.artifact() == Artifact.ABSTRACTION) || (mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON)
+				|| (mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON)) {
 
 			if (mArtifactAutomaton == null) {
 				mLogger.warn("Preferred Artifact not available," + " visualizing the RCFG instead");
@@ -1084,12 +1085,12 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private static SearchStrategy getSearchStrategy(final IPreferenceProvider mPrefs) {
 		switch (mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY,
 				CounterexampleSearchStrategy.class)) {
-		case BFS:
-			return SearchStrategy.BFS;
-		case DFS:
-			return SearchStrategy.DFS;
-		default:
-			throw new IllegalArgumentException();
+				case BFS:
+					return SearchStrategy.BFS;
+				case DFS:
+					return SearchStrategy.DFS;
+				default:
+					throw new IllegalArgumentException();
 		}
 	}
 

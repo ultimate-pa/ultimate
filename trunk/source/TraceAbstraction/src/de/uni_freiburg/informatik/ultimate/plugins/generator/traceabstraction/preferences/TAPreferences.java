@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.EmptinessCheckHeuristic.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -71,6 +72,7 @@ public final class TAPreferences {
 	private final int mLimitPathProgramCount;
 	private final boolean mCollectInterpolantStatistics;
 	private final boolean mHeuristicEmptinessCheck;
+	private final ScoringMethod mHeuristicEmptinessCheckScoringMethod;
 	private final boolean mSMTFeatureExtraction;
 	private final String mSMTFeatureExtractionDumpPath;
 
@@ -139,13 +141,15 @@ public final class TAPreferences {
 					"Show negated interpolant" + "automaton not possible when using difference.");
 		}
 
-		if (mWatchIteration == 0
-				&& (artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON || artifact() == Artifact.INTERPOLANT_AUTOMATON)) {
+		if ((mWatchIteration == 0)
+				&& ((artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) || (artifact() == Artifact.INTERPOLANT_AUTOMATON))) {
 			throw new IllegalArgumentException("There is no interpolant" + "automaton in iteration 0.");
 		}
 
 		mHeuristicEmptinessCheck =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK);
+
+		mHeuristicEmptinessCheckScoringMethod = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD, ScoringMethod.class);
 
 		mSMTFeatureExtraction = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION);
 		mSMTFeatureExtractionDumpPath =
@@ -375,6 +379,9 @@ public final class TAPreferences {
 
 	public boolean useHeuristicEmptinessCheck() {
 		return mHeuristicEmptinessCheck;
+	}
+	public ScoringMethod HeuristicEmptinessCheckScoringMethod() {
+		return mHeuristicEmptinessCheckScoringMethod;
 	}
 
 	public boolean useSMTFeatureExtraction() {
