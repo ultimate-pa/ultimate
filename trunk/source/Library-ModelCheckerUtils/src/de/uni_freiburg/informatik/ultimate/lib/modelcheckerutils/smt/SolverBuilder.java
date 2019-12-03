@@ -60,21 +60,31 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 public class SolverBuilder {
 
 	public enum SolverMode {
-		Internal_SMTInterpol,
+		Internal_SMTInterpol(false),
 
-		Internal_SMTInterpol_NoArrayInterpol,
+		Internal_SMTInterpol_NoArrayInterpol(false),
 
-		External_PrincessInterpolationMode,
+		External_PrincessInterpolationMode(true),
 
-		External_SMTInterpolInterpolationMode,
+		External_SMTInterpolInterpolationMode(true),
 
-		External_Z3InterpolationMode,
+		External_Z3InterpolationMode(true),
 
-		External_ModelsAndUnsatCoreMode,
+		External_ModelsAndUnsatCoreMode(true),
 
-		External_ModelsMode,
+		External_ModelsMode(true),
 
-		External_DefaultMode,
+		External_DefaultMode(true);
+
+		private final boolean mIsExternal;
+
+		private SolverMode(final boolean isExternal) {
+			mIsExternal = isExternal;
+		}
+
+		public boolean isExternal() {
+			return mIsExternal;
+		}
 	}
 
 	public static final String COMMAND_Z3_NO_TIMEOUT = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
