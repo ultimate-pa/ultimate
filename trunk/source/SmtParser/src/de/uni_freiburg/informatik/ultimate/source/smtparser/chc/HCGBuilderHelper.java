@@ -47,15 +47,11 @@ public class HCGBuilderHelper {
 
 	public static class ConstructAndInitializeBackendSmtSolver {
 
-		private SolverSettings mSolverSettings;
-		private Logics mLogicForExternalSolver;
-		private ManagedScript mScript;
+		private final SolverSettings mSolverSettings;
+		private final Logics mLogicForExternalSolver;
+		private final ManagedScript mScript;
 
 		public ConstructAndInitializeBackendSmtSolver(final IUltimateServiceProvider services, final String filename) {
-			constructAndInitializeBackendSmtSolver(services, filename);
-		}
-
-		void constructAndInitializeBackendSmtSolver(final IUltimateServiceProvider services, final String filename) {
 			final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 			final SolverMode solverMode = prefs.getEnum(SmtParserPreferenceInitializer.LABEL_Solver, SolverMode.class);
 
@@ -69,11 +65,15 @@ public class HCGBuilderHelper {
 			final boolean dumpScript = !dumpPath.isEmpty();
 
 			final boolean fakeNonIncrementalSolver = false;
-
-			SolverBuilder.constructSolverSettings().setSolverMode(solverMode)
+			final SolverSettings settings = SolverBuilder.constructSolverSettings().setSolverMode(solverMode)
 					.setUseFakeIncrementalScript(fakeNonIncrementalSolver)
-					.setUseExternalSolver(true, commandExternalSolver, mLogicForExternalSolver)
 					.setDumpSmtScriptToFile(dumpScript, dumpPath, filename);
+
+			if (solverMode.isExternal()) {
+				mSolverSettings = settings.setUseExternalSolver(true, commandExternalSolver, mLogicForExternalSolver);
+			} else {
+				mSolverSettings = settings;
+			}
 
 			final Script script = SolverBuilder.buildAndInitializeSolver(services, mSolverSettings,
 					"HornClauseSolverBackendSolverScript");
