@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
@@ -301,7 +302,13 @@ public class AffineRelationTest {
 		final MultiCaseSolvedBinaryRelation mcsbr = AffineRelation.convert(mScript, inputAsTerm)
 				.solveForSubject(mScript, x, xnf);
 		final Term solvedAsTerm = mcsbr.asTerm(mScript);
-		Assert.assertTrue(SmtUtils.areFormulasEquivalent(inputAsTerm, solvedAsTerm, mScript));
+		final LBool equivalent = SmtUtils.checkEquivalence(inputAsTerm, solvedAsTerm, mScript);
+		if (equivalent == LBool.UNKNOWN) {
+			mServices.getLoggingService().getLogger(this.getClass())
+					.warn("unable to check equivalence of input " + inputAsTerm + " and output " + solvedAsTerm);
+		}
+		Assert.assertTrue("Unable to confirm equivalence of input " + inputAsTerm + " and output " + solvedAsTerm,
+				equivalent == LBool.UNSAT);
 	}
 
 	private boolean assumptionsImpliesEquality(final Term originalTerm, final SolvedBinaryRelation sbr) {

@@ -2088,8 +2088,17 @@ public final class SmtUtils {
 	 * Returns true iff the boolean formulas formula1 and formula2 are equivalent w.r.t script.
 	 */
 	public static boolean areFormulasEquivalent(final Term formula1, final Term formula2, final Script script) {
+		return checkEquivalence(formula1, formula2, script) == LBool.UNSAT;
+	}
+	
+	/**
+	 * @return LBool.UNSAT if SMT solver was able to prove that both formulas
+	 *         are equivalent, LBool.SAT if SMT solver was able to prove that
+	 *         both formulas are not equivalent, and LBool.UNKNOWN otherwise.
+	 */
+	public static LBool checkEquivalence(final Term formula1, final Term formula2, final Script script) {
 		final Term notEq = binaryBooleanNotEquals(script, formula1, formula2);
-		return Util.checkSat(script, notEq) == LBool.UNSAT;
+		return Util.checkSat(script, notEq);
 	}
 
 	/**
