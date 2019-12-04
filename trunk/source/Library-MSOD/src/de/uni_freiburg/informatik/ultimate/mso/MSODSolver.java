@@ -516,6 +516,7 @@ public final class MSODSolver {
 
 		final INestedWordAutomaton<MSODAlphabetSymbol, String> automaton = traversePostOrder(term);
 		mLogger.info(MSODUtils.automatonToString(mAutomataLibrarayServices, automaton));
+		mLogger.info("info: " + automaton.sizeInformation());
 
 		NestedLassoWord<MSODAlphabetSymbol> word = mAutomataOperations.getWord(services, automaton);
 
