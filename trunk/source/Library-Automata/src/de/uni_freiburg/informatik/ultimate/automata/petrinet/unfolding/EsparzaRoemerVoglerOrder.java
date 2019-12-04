@@ -40,8 +40,8 @@ public class EsparzaRoemerVoglerOrder<LETTER, PLACE> extends EventOrder<LETTER, 
 			if (result != 0) {
 				return result;
 			}
-			c1 = c1.removeMinB20();
-			c2 = c2.removeMinB20();
+			c1 = c1.removeMin();
+			c2 = c2.removeMin();
 		}
 	}
 }
