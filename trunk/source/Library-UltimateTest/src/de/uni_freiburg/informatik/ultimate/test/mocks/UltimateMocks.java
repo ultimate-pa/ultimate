@@ -60,6 +60,12 @@ public class UltimateMocks {
 		return createSolver("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in", defaultLogLevel);
 	}
 
+	public static Script createCVC4Script(final LogLevel defaultLogLevel) {
+		// tlimit is given in milliseconds
+		return createSolver("cvc4 --incremental --print-success --lang smt --rewrite-divk --tlimit-per=12000",
+				defaultLogLevel);
+	}
+
 	public static Script createSolver(final String solverCommand, final LogLevel defaultLogLevel) {
 		final IUltimateServiceProvider services = createUltimateServiceProviderMock(defaultLogLevel);
 		try {
