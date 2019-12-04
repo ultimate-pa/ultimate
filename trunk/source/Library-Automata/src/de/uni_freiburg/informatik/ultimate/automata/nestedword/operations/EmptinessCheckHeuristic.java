@@ -25,7 +25,6 @@
  * to convey the resulting work.
  */
 
-
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import java.util.HashMap;
@@ -40,11 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE, LETTER> {
 
 	public enum ScoringMethod {
-		NUM_FUNCTIONS,
-		NUM_VARIABLES,
-		DAGSIZE,
-		DEPENDENCY,
-		BIGGEST_EQUIVALENCE_CLASS
+		NUM_FUNCTIONS, NUM_VARIABLES, DAGSIZE, DEPENDENCY, BIGGEST_EQUIVALENCE_CLASS
 	}
 
 	private final ILogger mLogger;
@@ -52,7 +47,7 @@ public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE,
 	private final HashMap<LETTER, Integer> mCheckedTransitions;
 	private final ScoringMethod mScoringMethod;
 
-	public EmptinessCheckHeuristic(final ILogger logger, final ScoringMethod scoringMethod){
+	public EmptinessCheckHeuristic(final ILogger logger, final ScoringMethod scoringMethod) {
 		mLogger = logger;
 		mTermClassifier = new SMTFeatureExtractionTermClassifier(mLogger);
 		mCheckedTransitions = new HashMap<>();
@@ -61,26 +56,27 @@ public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE,
 
 	public void checkTransition(final LETTER trans) {
 		UnmodifiableTransFormula transformula = null;
-		if(trans instanceof StatementSequence) {
+		if (trans instanceof StatementSequence) {
 			transformula = ((StatementSequence) trans).getTransformula();
-		} else if(trans instanceof SequentialComposition) {
+		} else if (trans instanceof SequentialComposition) {
 			transformula = ((SequentialComposition) trans).getTransformula();
-		}
-		else {
-			throw new UnsupportedOperationException("Currently this function only supports transitions of type 'StatementSequence' or 'SequentialComposition'. The passed transition has type: " + trans.getClass().getCanonicalName());
+		} else {
+			throw new UnsupportedOperationException(
+					"Currently this function only supports transitions of type 'StatementSequence' or 'SequentialComposition'. The passed transition has type: "
+							+ trans.getClass().getCanonicalName());
 		}
 		final Term formula = transformula.getFormula();
 		mTermClassifier.checkTerm(formula);
 		int score = 0;
 		if (mScoringMethod == ScoringMethod.DEPENDENCY) {
 			score = mTermClassifier.getDependencyScore();
-		}else if (mScoringMethod == ScoringMethod.NUM_FUNCTIONS) {
+		} else if (mScoringMethod == ScoringMethod.NUM_FUNCTIONS) {
 			score = mTermClassifier.getNumberOfFunctions();
-		}else if (mScoringMethod == ScoringMethod.NUM_VARIABLES) {
+		} else if (mScoringMethod == ScoringMethod.NUM_VARIABLES) {
 			score = mTermClassifier.getNumberOfVariables();
-		}else if (mScoringMethod == ScoringMethod.DAGSIZE) {
+		} else if (mScoringMethod == ScoringMethod.DAGSIZE) {
 			score = mTermClassifier.getDAGSize();
-		}else if (mScoringMethod == ScoringMethod.BIGGEST_EQUIVALENCE_CLASS) {
+		} else if (mScoringMethod == ScoringMethod.BIGGEST_EQUIVALENCE_CLASS) {
 			score = mTermClassifier.getBiggestEquivalenceClass();
 		} else {
 			throw new UnsupportedOperationException("Unsupported ScoringMethod " + mScoringMethod.toString());

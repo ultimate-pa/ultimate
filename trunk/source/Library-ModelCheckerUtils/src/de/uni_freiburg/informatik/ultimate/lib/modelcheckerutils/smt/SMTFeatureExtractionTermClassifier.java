@@ -47,8 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
-
-public class SMTFeatureExtractionTermClassifier extends NonRecursive{
+public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 
 	private final ILogger mLogger;
 
@@ -67,126 +66,6 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 	private final ArrayList<Integer> mVariableEquivalenceClassSizes;
 	private int mBiggestEquivalenceClass;
 	private final ArrayList<String> mAssertionStack;
-
-	private class MyWalker extends TermWalker {
-		MyWalker(final Term term) {
-			super(term);
-		}
-
-		@Override
-		public void walk(final NonRecursive walker) {
-			if (mTermsInWhichWeAlreadyDescended.contains(getTerm())) {
-				// do nothing
-			} else {
-				final Term term = getTerm();
-				// Add sorts only if term is TermVariable or ApplicationTerm with arity 0.
-				if(!term.toStringDirect().equals("true") && !term.toStringDirect().equals("false")
-						&& ((term instanceof TermVariable) || isApplicationTermWithArityZero(term))) {
-					final Sort currentSort = term.getSort();
-					final String currentSortName = term.getSort().toString();
-					// Count occurrences of sorts.
-					if(mOccuringSortNames.containsKey(currentSortName)) {
-						mOccuringSortNames.put(currentSortName, mOccuringSortNames.get(currentSortName) + 1);
-					}else {
-						mOccuringSortNames.put(currentSortName, 1);
-					}
-
-					if (currentSort.isArraySort()) {
-						mHasArrays = true;
-						mNumberOfArrays += 1;
-					}
-				}
-				super.walk(walker);
-			}
-		}
-
-		@Override
-		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
-			mTermsInWhichWeAlreadyDescended.add(term);
-			walker.enqueueWalker(new MyWalker(term.getSubterm()));
-		}
-
-		@Override
-		public void walk(final NonRecursive walker, final ApplicationTerm term) {
-			final int numberOfParameters = term.getParameters().length;
-			if(numberOfParameters > 0) {
-				final String functionName = term.getFunction().getName();
-				// Count occurrences of functions.
-				if(mOccuringFunctionNames.containsKey(functionName)) {
-					mOccuringFunctionNames.put(functionName, mOccuringFunctionNames.get(functionName) + 1);
-				}else {
-					mOccuringFunctionNames.put(functionName, 1);
-				}
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("######################## TERM CLASSIFIER #######################");
-					mLogger.debug("FUNCTION: " + functionName);
-					mLogger.debug("TERM: " + term.toStringDirect());
-				}
-				final Term[] termParameters = term.getParameters();
-				for (int i = 0; i < (termParameters.length - 1); i++) {
-					final Term term1 = termParameters[i];
-					final Term term2 = termParameters[i+1];
-					if ((isApplicationTermWithArityZero(term1) || (term1 instanceof TermVariable)) && (isApplicationTermWithArityZero(term2) || (term2 instanceof TermVariable) )) {
-						final Term rep1 = mVariableEquivalenceClasses.findAndConstructEquivalenceClassIfNeeded(term1);
-						final Term rep2 = mVariableEquivalenceClasses.findAndConstructEquivalenceClassIfNeeded(term2);
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug("####### Unionfind Representatives ########");
-							mLogger.debug("REP1: " + rep1.toStringDirect());
-							mLogger.debug("REP2: " + rep2.toStringDirect());
-							mLogger.debug("##########################################");
-						}
-						mVariableEquivalenceClasses.union(rep1, rep2);
-					}
-				}
-				mNumberOfFunctions += 1;
-			}else {
-				mNumberOfVariables += 1;
-			}
-
-			mTermsInWhichWeAlreadyDescended.add(term);
-			for (final Term t : term.getParameters()) {
-				walker.enqueueWalker(new MyWalker(t));
-			}
-		}
-
-		@Override
-		public void walk(final NonRecursive walker, final ConstantTerm term) {
-			// cannot descend
-		}
-
-		@Override
-		public void walk(final NonRecursive walker, final LetTerm term) {
-			mTermsInWhichWeAlreadyDescended.add(term);
-			walker.enqueueWalker(new MyWalker(term.getSubTerm()));
-			for (final Term v : term.getValues()) {
-				walker.enqueueWalker(new MyWalker(v));
-			}
-
-		}
-
-		@Override
-		public void walk(final NonRecursive walker, final MatchTerm term) {
-			throw new UnsupportedOperationException("not yet implemented: MatchTerm");
-		}
-
-		@Override
-		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
-			final int quantifier = term.getQuantifier();
-			if(mOccuringQuantifiers.containsKey(term.getQuantifier())) {
-				mOccuringQuantifiers.put(quantifier, mOccuringQuantifiers.get(quantifier) + 1);
-			}else {
-				mOccuringQuantifiers.put(quantifier, 1);
-			}
-			mNumberOfQuantifiers += 1;
-			walker.enqueueWalker(new MyWalker(term.getSubformula()));
-		}
-
-		@Override
-		public void walk(final NonRecursive walker, final TermVariable term) {
-			// cannot descend
-		}
-	}
-
 
 	public SMTFeatureExtractionTermClassifier(final ILogger logger) {
 		super();
@@ -219,7 +98,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 		mTermsInWhichWeAlreadyDescended = null;
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("FULL TERM: " + term.toStringDirect());
-			mLogger.debug("UNION FIND: "  + mVariableEquivalenceClasses.toString());
+			mLogger.debug("UNION FIND: " + mVariableEquivalenceClasses.toString());
 		}
 	}
 
@@ -282,7 +161,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 	private boolean isApplicationTermWithArityZero(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appterm = (ApplicationTerm) term;
-			if(appterm.getParameters().length == 0) {
+			if (appterm.getParameters().length == 0) {
 				return true;
 			}
 		}
@@ -301,6 +180,130 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive{
 			score += Math.pow(classSize, 2);
 		}
 		return score;
+	}
+
+	private class MyWalker extends TermWalker {
+		MyWalker(final Term term) {
+			super(term);
+		}
+
+		@Override
+		public void walk(final NonRecursive walker) {
+			if (mTermsInWhichWeAlreadyDescended.contains(getTerm())) {
+				// do nothing
+			} else {
+				final Term term = getTerm();
+				// Add sorts only if term is TermVariable or ApplicationTerm with arity 0.
+				if (!term.toStringDirect().equals("true") && !term.toStringDirect().equals("false")
+						&& ((term instanceof TermVariable) || isApplicationTermWithArityZero(term))) {
+					final Sort currentSort = term.getSort();
+					final String currentSortName = term.getSort().toString();
+					// Count occurrences of sorts.
+					if (mOccuringSortNames.containsKey(currentSortName)) {
+						mOccuringSortNames.put(currentSortName, mOccuringSortNames.get(currentSortName) + 1);
+					} else {
+						mOccuringSortNames.put(currentSortName, 1);
+					}
+
+					if (currentSort.isArraySort()) {
+						mHasArrays = true;
+						mNumberOfArrays += 1;
+					}
+				}
+				super.walk(walker);
+			}
+		}
+
+		@Override
+		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
+			mTermsInWhichWeAlreadyDescended.add(term);
+			walker.enqueueWalker(new MyWalker(term.getSubterm()));
+		}
+
+		@Override
+		public void walk(final NonRecursive walker, final ApplicationTerm term) {
+			final int numberOfParameters = term.getParameters().length;
+			if (numberOfParameters > 0) {
+				final String functionName = term.getFunction().getName();
+				// Count occurrences of functions.
+				if (mOccuringFunctionNames.containsKey(functionName)) {
+					mOccuringFunctionNames.put(functionName, mOccuringFunctionNames.get(functionName) + 1);
+				} else {
+					mOccuringFunctionNames.put(functionName, 1);
+				}
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("######################## TERM CLASSIFIER #######################");
+					mLogger.debug("FUNCTION: " + functionName);
+					mLogger.debug("TERM: " + term.toStringDirect());
+				}
+				final Term[] termParameters = term.getParameters();
+				for (int i = 0; i < (termParameters.length - 1); i++) {
+					final Term term1 = termParameters[i];
+					final Term term2 = termParameters[i + 1];
+					if ((isApplicationTermWithArityZero(term1) || (term1 instanceof TermVariable))
+							&& (isApplicationTermWithArityZero(term2) || (term2 instanceof TermVariable))) {
+						final Term rep1 = mVariableEquivalenceClasses.findAndConstructEquivalenceClassIfNeeded(term1);
+						final Term rep2 = mVariableEquivalenceClasses.findAndConstructEquivalenceClassIfNeeded(term2);
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug("####### Unionfind Representatives ########");
+							mLogger.debug("REP1: " + rep1.toStringDirect());
+							mLogger.debug("REP2: " + rep2.toStringDirect());
+							mLogger.debug("##########################################");
+						}
+						mVariableEquivalenceClasses.union(rep1, rep2);
+					}
+				}
+				mNumberOfFunctions += 1;
+			} else {
+				mNumberOfVariables += 1;
+			}
+
+			mTermsInWhichWeAlreadyDescended.add(term);
+			for (final Term t : term.getParameters()) {
+				walker.enqueueWalker(new MyWalker(t));
+			}
+		}
+
+		@Override
+		public void walk(final NonRecursive walker, final ConstantTerm term) {
+			// cannot descend
+		}
+
+		@Override
+		public void walk(final NonRecursive walker, final LetTerm term) {
+			mTermsInWhichWeAlreadyDescended.add(term);
+			walker.enqueueWalker(new MyWalker(term.getSubTerm()));
+			for (final Term v : term.getValues()) {
+				walker.enqueueWalker(new MyWalker(v));
+			}
+
+		}
+
+		@Override
+		public void walk(final NonRecursive walker, final MatchTerm term) {
+			throw new UnsupportedOperationException("not yet implemented: MatchTerm");
+		}
+
+		@Override
+		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
+			final int quantifier = term.getQuantifier();
+			if (mOccuringQuantifiers.containsKey(term.getQuantifier())) {
+				mOccuringQuantifiers.put(quantifier, mOccuringQuantifiers.get(quantifier) + 1);
+			} else {
+				mOccuringQuantifiers.put(quantifier, 1);
+			}
+			mNumberOfQuantifiers += 1;
+			walker.enqueueWalker(new MyWalker(term.getSubformula()));
+		}
+
+		@Override
+		public void walk(final NonRecursive walker, final TermVariable term) {
+			// cannot descend
+		}
+	}
+
+	public UnionFind<Term> getEquivalenceClasses() {
+		return mVariableEquivalenceClasses;
 	}
 
 }
