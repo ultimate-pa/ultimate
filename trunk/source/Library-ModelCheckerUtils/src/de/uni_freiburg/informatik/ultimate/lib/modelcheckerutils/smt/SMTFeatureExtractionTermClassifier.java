@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -63,6 +64,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 	private int mDAGSize;
 	private long mTreeSize;
 	private final UnionFind<Term> mVariableEquivalenceClasses;
+	private Map<Integer, Set<Term>> mTermsets;
 	private final ArrayList<Integer> mVariableEquivalenceClassSizes;
 	private int mBiggestEquivalenceClass;
 	private final ArrayList<String> mAssertionStack;
@@ -82,6 +84,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		mTreeSize = 0;
 		mAssertionStack = new ArrayList<>();
 		mVariableEquivalenceClasses = new UnionFind<>();
+		mTermsets = new HashMap<>();
 		mVariableEquivalenceClassSizes = new ArrayList<>();
 		mBiggestEquivalenceClass = 0;
 	}
@@ -220,6 +223,102 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 			walker.enqueueWalker(new MyWalker(term.getSubterm()));
 		}
 
+		private void collectVariables(final ApplicationTerm term, final String functionname, final int eq_class_id){
+			mLogger.warn("TERM:      " + term.toStringDirect());
+			mLogger.warn("FUNC:      " + functionname);
+			mLogger.warn("EQCLASS_ID " + eq_class_id);
+			mLogger.warn("Current termsets: " + mTermsets.toString());
+			final Term[] termParameters = term.getParameters();
+			for (int i = 0; i < (termParameters.length - 1); i++) {
+				final Term term1 = termParameters[i];
+				final Term term2 = termParameters[i + 1];
+				if ((isApplicationTermWithArityZero(term1) || (term1 instanceof TermVariable))
+						&& (isApplicationTermWithArityZero(term2) || (term2 instanceof TermVariable))) {
+					// Both terms are Terms of Arity 0 or Termvariables.
+					if(functionname.equals("and")) {
+						// If the function is and, both go into the same termset.
+						final Set<Term> termset = new HashSet<>();
+						termset.add(term1);
+						termset.add(term2);
+
+						termset.addAll(mTermsets.getOrDefault(eq_class_id, Collections.EMPTY_SET));
+						mTermsets.put(eq_class_id, termset);
+
+					} else if (functionname.equals("or")) {
+						// if the function is or, both are in separate sets.
+						final Set<Term> termset1 = new HashSet<>();
+						termset1.add(term1);
+
+						final Set<Term> termset2 = new HashSet<>();
+						termset2.add(term2);
+
+						termset1.addAll(mTermsets.getOrDefault(eq_class_id, Collections.EMPTY_SET));
+						mTermsets.put(eq_class_id, termset1);
+
+						// create new eq_class
+						mTermsets.put(mTermsets.size() +1 , termset2);
+					}
+
+				} else if (isApplicationTermWithArityZero(term1) && (term2 instanceof ConstantTerm)){
+					// Constant terms go into the current termset
+					final Set<Term> termset = new HashSet<>();
+					termset.add(term1);
+					termset.addAll(mTermsets.getOrDefault(eq_class_id, Collections.EMPTY_SET));
+					mTermsets.put(eq_class_id, termset);
+
+				}else if (isApplicationTermWithArityZero(term2) && (term1 instanceof ConstantTerm)){
+					// Constant terms go into the current termset
+					final Set<Term> termset = new HashSet<>();
+					termset.add(term2);
+					termset.addAll(mTermsets.getOrDefault(eq_class_id, Collections.EMPTY_SET));
+					mTermsets.put(eq_class_id, termset);
+
+				} else if (isApplicationTermWithArityZero(term1) || (term1 instanceof TermVariable)){
+					// If we are here, term1 is a Termvariable or an Applicationterm with arity 0
+					// In this case we can add this term to the current termset.
+					final Set<Term> termset = new HashSet<>();
+					termset.add(term1);
+					termset.addAll(mTermsets.getOrDefault(eq_class_id, Collections.EMPTY_SET));
+					mTermsets.put(eq_class_id, termset);
+
+
+					// Term 2 has to be explored further. If the function is "or", we create a new termset.
+					int new_class_id = eq_class_id;
+					if(functionname.equals("or")) {
+						new_class_id += mTermsets.size() +1;
+					}
+					if (term2 instanceof ApplicationTerm) {
+						collectVariables((ApplicationTerm)term2, ((ApplicationTerm) term2).getFunction().getName(),new_class_id);
+					}
+
+				} else if (isApplicationTermWithArityZero(term2) || (term2 instanceof TermVariable)){
+					final Set<Term> termset = new HashSet<>();
+					termset.add(term2);
+					termset.addAll(mTermsets.getOrDefault(eq_class_id, Collections.EMPTY_SET));
+					mTermsets.put(eq_class_id, termset);
+
+					int new_eq_class_id = eq_class_id;
+					if(functionname.equals("or")) {
+						new_eq_class_id = mTermsets.size() +1;
+					}
+					if (term1 instanceof ApplicationTerm) {
+						collectVariables((ApplicationTerm)term1, ((ApplicationTerm) term1).getFunction().getName(),new_eq_class_id);
+					}
+				}else {
+					if ((term1 instanceof ApplicationTerm) && (term2 instanceof ApplicationTerm)) {
+						collectVariables((ApplicationTerm)term1, ((ApplicationTerm) term1).getFunction().getName(),eq_class_id);
+
+						int new_eq_class_id = eq_class_id;
+						if(functionname.equals("or")) {
+							new_eq_class_id = mTermsets.size() +1;
+						}
+						// Term 2 is a new EQ class
+						collectVariables((ApplicationTerm)term2, ((ApplicationTerm) term2).getFunction().getName(),new_eq_class_id);
+					}
+				}
+			}
+		}
+
 		@Override
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			final int numberOfParameters = term.getParameters().length;
@@ -236,23 +335,15 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 					mLogger.debug("FUNCTION: " + functionName);
 					mLogger.debug("TERM: " + term.toStringDirect());
 				}
-				final Term[] termParameters = term.getParameters();
-				for (int i = 0; i < (termParameters.length - 1); i++) {
-					final Term term1 = termParameters[i];
-					final Term term2 = termParameters[i + 1];
-					if ((isApplicationTermWithArityZero(term1) || (term1 instanceof TermVariable))
-							&& (isApplicationTermWithArityZero(term2) || (term2 instanceof TermVariable))) {
-						final Term rep1 = mVariableEquivalenceClasses.findAndConstructEquivalenceClassIfNeeded(term1);
-						final Term rep2 = mVariableEquivalenceClasses.findAndConstructEquivalenceClassIfNeeded(term2);
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug("####### Unionfind Representatives ########");
-							mLogger.debug("REP1: " + rep1.toStringDirect());
-							mLogger.debug("REP2: " + rep2.toStringDirect());
-							mLogger.debug("##########################################");
-						}
-						mVariableEquivalenceClasses.union(rep1, rep2);
-					}
-				}
+				mTermsets = new HashMap<>();
+				final int eq_class_id  = 0;
+				collectVariables(term, functionName, eq_class_id);
+				mTermsets.forEach((k,v) -> {
+					v.forEach(e -> {
+						mVariableEquivalenceClasses.findAndConstructEquivalenceClassIfNeeded(e);
+					});
+					mVariableEquivalenceClasses.union(v);
+				});
 				mNumberOfFunctions += 1;
 			} else {
 				mNumberOfVariables += 1;

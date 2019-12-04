@@ -62,9 +62,37 @@ public class SmtFeatureExtractionTest {
 		mLogger = mServices.getLoggingService().getLogger("lol");
 		mScript.setLogic(Logics.ALL);
 	}
+	@Test
+	public void CheckSingleTerm() {
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+
+		final String names = "ABCDE";
+		for (int i = 0; i < names.length(); ++i) {
+			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
+		}
+
+		final Term input = TermParseUtils.parseTerm(mScript, "(= A 0)");
+		final LBool isSat = SmtUtils.checkSatTerm(mScript, input);
+		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
+		tc.checkTerm(input);
+
+		mLogger.info("Original:               " + input.toStringDirect());
+		mLogger.info("Original isSat:         " + isSat);
+		mLogger.info("Original equiv classes: " + tc.getEquivalenceClasses());
+		mLogger.info("Original #Vars:         " + tc.getNumberOfVariables());
+		mLogger.info("Original Functions:         " + tc.getOccuringFunctionNames());
+		mLogger.info("Original Sorts:         " + tc.getOccuringSortNames());
+		mLogger.info("Original Quantifiers:         " + tc.getNumberOfQuantifiers());
+		Assert.assertEquals(tc.getEquivalenceClasses().toString(),"{[A]=A}");
+		Assert.assertEquals(tc.getNumberOfVariables(), 1);
+		Assert.assertEquals(tc.getOccuringFunctionNames().toString(), "{==1}");
+		Assert.assertEquals(tc.getOccuringSortNames().toString(), "{Int=1}");
+		Assert.assertEquals(tc.getNumberOfQuantifiers(), 0);
+	}
+
 
 	@Test
-	public void testSubstitutionWithLocalSimplification1() {
+	public void CheckAndTerm() {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
 		final String names = "ABCDE";
@@ -74,15 +102,133 @@ public class SmtFeatureExtractionTest {
 
 		final Term input = TermParseUtils.parseTerm(mScript, "(and (= A (+ B 1)) (= C 0))");
 		final LBool isSat = SmtUtils.checkSatTerm(mScript, input);
-
 		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
 		tc.checkTerm(input);
 
 		mLogger.info("Original:               " + input.toStringDirect());
 		mLogger.info("Original isSat:         " + isSat);
-		mLogger.info("Original equiv classes: " + tc.getEquivalenceClasses().getAllElements());
+		mLogger.info("Original equiv classes: " + tc.getEquivalenceClasses());
 		mLogger.info("Original #Vars:         " + tc.getNumberOfVariables());
-		Assert.assertTrue(true);
+		mLogger.info("Original Functions:         " + tc.getOccuringFunctionNames());
+		mLogger.info("Original Sorts:         " + tc.getOccuringSortNames());
+		mLogger.info("Original Quantifiers:         " + tc.getNumberOfQuantifiers());
+		Assert.assertEquals(tc.getEquivalenceClasses().toString(),"{[A, B, C]=B}");
+		Assert.assertEquals(tc.getNumberOfVariables(), 3);
+		Assert.assertEquals(tc.getOccuringFunctionNames().toString(), "{and=1, +=1, ==2}");
+		Assert.assertEquals(tc.getOccuringSortNames().toString(), "{Int=3}");
+		Assert.assertEquals(tc.getNumberOfQuantifiers(), 0);
+	}
+
+	@Test
+	public void CheckOrTerm() {
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+
+		final String names = "ABCDE";
+		for (int i = 0; i < names.length(); ++i) {
+			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
+		}
+
+		final Term input = TermParseUtils.parseTerm(mScript, "(or (= A (+ B 1)) (= C 0))");
+		final LBool isSat = SmtUtils.checkSatTerm(mScript, input);
+		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
+		tc.checkTerm(input);
+
+		mLogger.info("Original:               " + input.toStringDirect());
+		mLogger.info("Original isSat:         " + isSat);
+		mLogger.info("Original equiv classes: " + tc.getEquivalenceClasses());
+		mLogger.info("Original #Vars:         " + tc.getNumberOfVariables());
+		mLogger.info("Original Functions:         " + tc.getOccuringFunctionNames());
+		mLogger.info("Original Sorts:         " + tc.getOccuringSortNames());
+		mLogger.info("Original Quantifiers:         " + tc.getNumberOfQuantifiers());
+		Assert.assertEquals(tc.getEquivalenceClasses().toString(),"{[C]=C, [A, B]=B}");
+		Assert.assertEquals(tc.getNumberOfVariables(), 3);
+		Assert.assertEquals(tc.getOccuringFunctionNames().toString(), "{or=1, +=1, ==2}");
+		Assert.assertEquals(tc.getOccuringSortNames().toString(), "{Int=3}");
+		Assert.assertEquals(tc.getNumberOfQuantifiers(), 0);
+	}
+
+	@Test
+	public void CheckOrAndTerm() {
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+
+		final String names = "ABCDE";
+		for (int i = 0; i < names.length(); ++i) {
+			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
+		}
+
+		final Term input = TermParseUtils.parseTerm(mScript, "(or (and (= A (+ B 1)) (= D 1)) (= C 0))");
+		final LBool isSat = SmtUtils.checkSatTerm(mScript, input);
+		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
+		tc.checkTerm(input);
+
+		mLogger.info("Original:               " + input.toStringDirect());
+		mLogger.info("Original isSat:         " + isSat);
+		mLogger.info("Original equiv classes: " + tc.getEquivalenceClasses());
+		mLogger.info("Original #Vars:         " + tc.getNumberOfVariables());
+		mLogger.info("Original Functions:         " + tc.getOccuringFunctionNames());
+		mLogger.info("Original Sorts:         " + tc.getOccuringSortNames());
+		mLogger.info("Original Quantifiers:         " + tc.getNumberOfQuantifiers());
+		Assert.assertEquals(tc.getEquivalenceClasses().toString(),"{[C]=C, [A, B, D]=B}");
+		Assert.assertEquals(tc.getNumberOfVariables(), 4);
+		Assert.assertEquals(tc.getOccuringFunctionNames().toString(), "{or=1, and=1, +=1, ==3}");
+		Assert.assertEquals(tc.getOccuringSortNames().toString(), "{Int=4}");
+		Assert.assertEquals(tc.getNumberOfQuantifiers(), 0);
+	}
+
+	@Test
+	public void CheckOrOrTerm() {
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+
+		final String names = "ABCDE";
+		for (int i = 0; i < names.length(); ++i) {
+			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
+		}
+
+		final Term input = TermParseUtils.parseTerm(mScript, "(or (or (= A (+ B 1)) (= D 1)) (= C 0))");
+		final LBool isSat = SmtUtils.checkSatTerm(mScript, input);
+		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
+		tc.checkTerm(input);
+
+		mLogger.info("Original:               " + input.toStringDirect());
+		mLogger.info("Original isSat:         " + isSat);
+		mLogger.info("Original equiv classes: " + tc.getEquivalenceClasses());
+		mLogger.info("Original #Vars:         " + tc.getNumberOfVariables());
+		mLogger.info("Original Functions:         " + tc.getOccuringFunctionNames());
+		mLogger.info("Original Sorts:         " + tc.getOccuringSortNames());
+		mLogger.info("Original Quantifiers:         " + tc.getNumberOfQuantifiers());
+		Assert.assertEquals(tc.getEquivalenceClasses().toString(),"{[C]=C, [A, B]=B, [D]=D}");
+		Assert.assertEquals(tc.getNumberOfVariables(), 4);
+		Assert.assertEquals(tc.getOccuringFunctionNames().toString(), "{or=2, +=1, ==3}");
+		Assert.assertEquals(tc.getOccuringSortNames().toString(), "{Int=4}");
+		Assert.assertEquals(tc.getNumberOfQuantifiers(), 0);
+	}
+
+	@Test
+	public void CheckOrOrAndTerm() {
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+
+		final String names = "ABCDE";
+		for (int i = 0; i < names.length(); ++i) {
+			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
+		}
+
+		final Term input = TermParseUtils.parseTerm(mScript, "(or (or (and (= A 0) (= D 1)) (= E 0)) (= C 0))");
+		final LBool isSat = SmtUtils.checkSatTerm(mScript, input);
+		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
+		tc.checkTerm(input);
+
+		mLogger.info("Original:               " + input.toStringDirect());
+		mLogger.info("Original isSat:         " + isSat);
+		mLogger.info("Original equiv classes: " + tc.getEquivalenceClasses());
+		mLogger.info("Original #Vars:         " + tc.getNumberOfVariables());
+		mLogger.info("Original Functions:         " + tc.getOccuringFunctionNames());
+		mLogger.info("Original Sorts:         " + tc.getOccuringSortNames());
+		mLogger.info("Original Quantifiers:         " + tc.getNumberOfQuantifiers());
+		Assert.assertEquals(tc.getEquivalenceClasses().toString(),"{[C]=C, [E]=E, [A, D]=D}");
+		Assert.assertEquals(tc.getNumberOfVariables(), 4);
+		Assert.assertEquals(tc.getOccuringFunctionNames().toString(), "{or=2, and=1, ==4}");
+		Assert.assertEquals(tc.getOccuringSortNames().toString(), "{Int=4}");
+		Assert.assertEquals(tc.getNumberOfQuantifiers(), 0);
 	}
 
 	private Term declareVar(final String name, final Sort sort) {
