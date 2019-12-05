@@ -54,11 +54,9 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference.LoopSyncMethod;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix2PetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.UnfoldingOrder;
@@ -137,42 +135,32 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
-		final boolean useTildeInitWorkaround = mIcfg.getProcedureEntryNodes().containsKey("~init");
-		if (useTildeInitWorkaround) {
-			mLogger.warn(
-					"Program has a \"~init\" procedure. Ultimate will use the old wokaround for concurrent programs");
-			final Cfg2NetJulian<LETTER> cFG2Automaton = new Cfg2NetJulian<>(mIcfg, mPredicateFactoryResultChecking,
-					mCsToolkit, mPredicateFactory, mServices, mXnfConversionTechnique, mSimplificationTechnique);
-			mAbstraction = cFG2Automaton.getResult();
-		} else {
-			final IcfgLocation initialNode = mIcfg.getProcedureEntryNodes().get(TraceAbstractionStarter.ULTIMATE_START);
-			if (initialNode == null) {
-				throw new UnsupportedOperationException("Program must have " + TraceAbstractionStarter.ULTIMATE_START
-						+ " procedure (this is the procedure where all executions start)");
-			}
-			final boolean addThreadUsageMonitors = true;
-			final BoundedPetriNet<LETTER, IPredicate> cfg =
-					CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(mServices, mIcfg,
-							mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
-			if (DEBUG_WRITE_NET_HASH_CODES) {
-				mLogger.debug(PetriNetUtils.printHashCodesOfInternalDataStructures(cfg));
-			}
-			if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
-				final long start_time = System.currentTimeMillis();
-				mLBE = new PetriNetLargeBlockEncoding(mServices, mIcfg.getCfgSmtToolkit(),
-						(BoundedPetriNet<IIcfgTransition<?>, IPredicate>) cfg, mPref.useLbeInConcurrentAnalysis());
-				final BoundedPetriNet<LETTER, IPredicate> lbecfg = (BoundedPetriNet<LETTER, IPredicate>) mLBE.getResult();
-				mAbstraction = lbecfg;
-				final long end_time = System.currentTimeMillis();
-				final long difference = end_time - start_time;
-				mLogger.info("Time needed for LBE in milliseconds: " + difference);
+		final IcfgLocation initialNode = mIcfg.getProcedureEntryNodes().get(TraceAbstractionStarter.ULTIMATE_START);
+		if (initialNode == null) {
+			throw new UnsupportedOperationException("Program must have " + TraceAbstractionStarter.ULTIMATE_START
+					+ " procedure (this is the procedure where all executions start)");
+		}
+		final boolean addThreadUsageMonitors = true;
+		final BoundedPetriNet<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(
+				mServices, mIcfg, mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory,
+				addThreadUsageMonitors);
+		if (DEBUG_WRITE_NET_HASH_CODES) {
+			mLogger.debug(PetriNetUtils.printHashCodesOfInternalDataStructures(cfg));
+		}
+		if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
+			final long start_time = System.currentTimeMillis();
+			mLBE = new PetriNetLargeBlockEncoding(mServices, mIcfg.getCfgSmtToolkit(),
+					(BoundedPetriNet<IIcfgTransition<?>, IPredicate>) cfg, mPref.useLbeInConcurrentAnalysis());
+			final BoundedPetriNet<LETTER, IPredicate> lbecfg = (BoundedPetriNet<LETTER, IPredicate>) mLBE.getResult();
+			mAbstraction = lbecfg;
+			final long end_time = System.currentTimeMillis();
+			final long difference = end_time - start_time;
+			mLogger.info("Time needed for LBE in milliseconds: " + difference);
 
-				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-						new StatisticsResult<>(Activator.PLUGIN_NAME, "PetriNetLargeBlockEncoding benchmarks",
-								mLBE.getPetriNetLargeBlockEncodingStatistics()));
-			} else {
-				mAbstraction = cfg;
-			}
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, new StatisticsResult<>(Activator.PLUGIN_NAME,
+					"PetriNetLargeBlockEncoding benchmarks", mLBE.getPetriNetLargeBlockEncodingStatistics()));
+		} else {
+			mAbstraction = cfg;
 		}
 
 		if (mIteration <= mPref.watchIteration()
