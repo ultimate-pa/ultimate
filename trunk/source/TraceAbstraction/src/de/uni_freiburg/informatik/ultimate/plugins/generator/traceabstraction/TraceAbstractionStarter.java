@@ -425,7 +425,7 @@ public class TraceAbstractionStarter {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 		final BasicCegarLoop<? extends IIcfgTransition<?>> basicCegarLoop =
-				constructCegarLoop(name, icfg, taPrefs, icfg.getCfgSmtToolkit(), predicateFactory1, errNodesOfAllProc,
+				constructCegarLoop(name, icfg, taPrefs, icfg.getCfgSmtToolkit(), predicateFactory1, errorLocs,
 						rawFloydHoareAutomataFromFile, computeHoareAnnotation);
 		final Result result = basicCegarLoop.iterate();
 		if (result == Result.UNSAFE) {
