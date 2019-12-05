@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -98,7 +98,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
+public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
 
 	private static final boolean USE_ON_DEMAND_RESULT = false;
 
@@ -125,7 +125,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 	private PetriNetLargeBlockEncoding mLBE;
 
-	public CegarLoopJulian(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
+	public CegarLoopForPetriNet(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks timingStatistics,
 			final TAPreferences taPrefs, final Collection<IcfgLocation> errorLocs,
 			final IUltimateServiceProvider services) {
