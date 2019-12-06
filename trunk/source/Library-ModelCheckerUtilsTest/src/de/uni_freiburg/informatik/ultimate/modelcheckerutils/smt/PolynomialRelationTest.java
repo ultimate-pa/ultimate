@@ -73,7 +73,6 @@ public class PolynomialRelationTest {
 		declareVar("x", mRealSort); // Subject
 		declareVar("y", mRealSort);
 		declareVar("z", mRealSort);
-
 	}
 
 	private Term declareVar(final String name, final Sort sort) {
@@ -89,51 +88,51 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationRealDefault() throws NotAffineException {
 		final String inputSTR = "(= (+ 7.0 x) y )";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 
 	}
 
 	@Test
 	public void relationRealEQ() throws NotAffineException {
 		final String inputSTR = "(= (* 7.0 x) y )";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 
 	}
 
 	@Test
 	public void relationRealEQ2() throws NotAffineException {
 		final String inputSTR = "(= (* 3.0 x) (* 7.0 y) )";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 	}
 
 	@Test
 	public void relationRealEQ3() throws NotAffineException {
 		final String inputSTR = "(= (* 3.0 x) (+ (* 7.0 y) (* 5.0 z)) )";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 	}
 
 	@Test
 	public void relationRealEQ4() throws NotAffineException {
 		final String inputSTR = "(= (* 6.0 (+ y x)) (* 7.0 z) )";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 	}
 
 	@Test
 	public void relationRealPolyEQ5() throws NotAffineException {
 		final String inputSTR = "(= (* 6.0 (* y x)) (+ 3.0 (* z z)))";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 	}
 	
 	@Test
 	public void relationRealPolyEQ6() throws NotAffineException {
 		final String inputSTR = "(= (* z (+ 6.0 (* (* y y) x))) (+ 3.0 (* z z)))";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 	}
 	
 	@Test
 	public void relationRealPolyEQ7() throws NotAffineException {
 		final String inputSTR = "(= (* 3.0 x (/ y z) z 5.0) (* y z)))";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 	}
 	
 	@Test
@@ -155,7 +154,7 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationRealPolyWithDivisionsEQ9() throws NotAffineException {
 		final String inputSTR = "(= (/ (+ 6.0 (* (/ z y) x)) 2.0) (+ 3.0 (/ y z)))";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 	}
 	
 	@Test
@@ -167,82 +166,110 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationRealGEQ01() throws NotAffineException {
 		final String inputSTR = "(>= (* 3.0 x) lo )";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 	}
 	
 	@Test
 	public void relationRealPolyGEQ02() throws NotAffineException {
 		final String inputSTR = "(>= (* 3.0 x (/ y z) z 5.0) (* y lo))";
-		testSolveForXMultiCaseOnly(inputSTR);
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
 	}
 
 	@Test
 	public void relationRealLEQ01() throws NotAffineException {
 		final String inputSTR = "(<= (* 3.0 x) hi )";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 	}
 	
 	@Test
 	public void relationRealPolyLEQ02() throws NotAffineException {
 		final String inputSTR = "(<= (* 3.0 x (/ y z) z 5.0) (* y hi))";
-		testSolveForXMultiCaseOnly(inputSTR);
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
 	}
 
 	@Test
 	public void relationRealDISTINCT01() throws NotAffineException {
 		final String inputSTR = "(not(= (* 3.0 x) y ))";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 	}
 	
 	@Test
 	public void relationRealPolyDISTINCT02() throws NotAffineException {
 		final String inputSTR = "(not(= (* 3.0 x (/ y z) z 5.0) (* y z)))";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 	}
 
 	@Test
 	public void relationRealGREATER01() throws NotAffineException {
 		final String inputSTR = "(> (* 3.0 x) lo )";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 	}
 	
 	@Test
 	public void relationRealPolyGREATER02() throws NotAffineException {
 		final String inputSTR = "(> (* 3.0 x (/ y z) z 5.0) (* y lo))";
-		testSolveForXMultiCaseOnly(inputSTR);
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
 	}
 
 	@Test
 	public void relationRealLESS01() throws NotAffineException {
 		final String inputSTR = "(< (* 4.0 x) hi )";
-		testSolveForX(inputSTR);
+		testSolveForSubject(inputSTR, "x");
 	}
 	
 	@Test
 	public void relationRealPolyLESS02() throws NotAffineException {
 		final String inputSTR = "(< (* 3.0 x (/ y z) z 5.0) (* y hi))";
-		testSolveForXMultiCaseOnly(inputSTR);
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
+	}
+	
+	@Test
+	public void relationBvPolyEQ01() throws NotAffineException{
+		final String inputSTR = "(= (bvmul (_ bv255 8) xb) (bvmul (_ bv64 8) yb yb yb))";
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("xb", new Sort[0], bv8);
+		mScript.declareFun("yb", new Sort[0], bv8);
+		testSolveForSubject(inputSTR, "xb");
+	}
+	
+	@Test
+	public void relationBvPolyEQ02() throws NotAffineException{
+		final String inputSTR = "(= (bvmul (_ bv252 8) xb) (bvmul (_ bv64 8) yb yb yb))";
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("xb", new Sort[0], bv8);
+		mScript.declareFun("yb", new Sort[0], bv8);
+		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "xb"));
+	}
+	
+	@Test
+	public void relationBvPolyEQ03() throws NotAffineException{
+		final String inputSTR = "(= (bvmul (_ bv255 8) xb yb) (bvmul (_ bv64 8) yb yb yb))";
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("xb", new Sort[0], bv8);
+		mScript.declareFun("yb", new Sort[0], bv8);
+		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "xb"));
 	}
 
-	private SolvedBinaryRelation polyRelOnLeftHandSide(final String termAsString, final String varString)
+	private MultiCaseSolvedBinaryRelation polyRelOnLeftHandSide(final String termAsString, final String varString)
 			throws NotAffineException {
 		final Term var = TermParseUtils.parseTerm(mScript, varString);
-		final SolvedBinaryRelation sbr = PolynomialRelation
-				.convert(mScript, TermParseUtils.parseTerm(mScript, termAsString)).solveForSubject(mScript, var);
+		final MultiCaseSolvedBinaryRelation sbr = PolynomialRelation
+				.convert(mScript, TermParseUtils.parseTerm(mScript, termAsString)).solveForSubject(mScript, var, Xnf.DNF);
 		return sbr;
 	}
 	
-	private void testSolveForX(final String inputAsString) throws NotAffineException {
+	private void testSolveForSubject(final String inputAsString, final String subject) throws NotAffineException {
 		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
-		final Term x = TermParseUtils.parseTerm(mScript, "x");
+		final Term x = TermParseUtils.parseTerm(mScript, subject);
 		testSingleCaseSolveForSubject(inputAsTerm, x);
 		testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.DNF);
 		//testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.CNF); this is not yet implemented?
 	}
 
-	private void testSolveForXMultiCaseOnly(final String inputAsString) throws NotAffineException {
+	private void testSolveForSubjectMultiCaseOnly(final String inputAsString, final String subject) 
+			throws NotAffineException {
 		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
-		final Term x = TermParseUtils.parseTerm(mScript, "x");
+		final Term x = TermParseUtils.parseTerm(mScript, subject);
 		testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.DNF);
 		// testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.CNF);
 	}

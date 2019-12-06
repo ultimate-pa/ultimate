@@ -475,7 +475,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			resultRelationSymbol = mRelationSymbol;
 		}
 
-		if (abstractVarOfSubject instanceof Monomial) {
+		if (abstractVarOfSubject instanceof Monomial && !SmtSortUtils.isBitvecSort(mAffineTerm.getSort())) {
 			// TODO 13.11.2019: When we divide by variables we could actually sometimes simplify the resulting division,
 			// in the case that this variable is not zero (and therefore we can simplify f.ex. x/x to 1).
 			// At the moment this seems like much work relative to little effect, so I was asked to leave this comment
@@ -609,14 +609,14 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 							IntricateOperation.DIV_BY_INTEGER_CONSTANT, Collections.emptySet());
 					switch (mRelationSymbol) {
 					case DISTINCT:
-						if (!(abstractVarOfSubject instanceof Monomial)) {
+						if (!divisionByVariablesNecessary(abstractVarOfSubject)) {
 							mcsb.conjoinWithDisjunction(sbr, divisibilityConstraint);
 						} else {
 							mcsb.conjoinWithDisjunction(divisibilityConstraint);
 						}
 						break;
 					case EQ:
-						if (!(abstractVarOfSubject instanceof Monomial)) {
+						if (!divisionByVariablesNecessary(abstractVarOfSubject)) {
 							mcsb.conjoinWithConjunction(sbr, divisibilityConstraint);
 						} else {
 							mcsb.conjoinWithConjunction(divisibilityConstraint);
@@ -631,7 +631,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 					}
 				} else {
 					// cases LEQ, LESS, GREATER, GEQ: do not add SupportingTerm
-					if (!(abstractVarOfSubject instanceof Monomial)) {
+					if (!divisionByVariablesNecessary(abstractVarOfSubject)) {
 						mcsb.conjoinWithConjunction(sbr);
 					}
 					// we have to add this information separately because
@@ -701,13 +701,13 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			}
 		} else {
 			rhsTerm = simplySolvableRhsTerm;
-			if (!(abstractVarOfSubject instanceof Monomial)) {
+			if (!divisionByVariablesNecessary(abstractVarOfSubject)) {
 				final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
 						Collections.emptyMap());
 				mcsb.conjoinWithConjunction(sbr);
 			}
 		}
-		if (abstractVarOfSubject instanceof Monomial) {
+		if (divisionByVariablesNecessary(abstractVarOfSubject)) {
 			// TODO 13.11.2019: When we divide by variables we could actually sometimes simplify the resulting division,
 			// in the case that this variable is not zero (and therefore we can simplify f.ex. x/x to 1).
 			// Also we could sometimes get Conjuncts like x!=0, that are already in the case distinction.
@@ -754,20 +754,24 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			mcsb.conjoinWithDnf(dnf);
 		}
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
-		final Term debug = result.asTerm(script);
 		if (!subjectInAllowedSubterm) {
 			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
 					result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		}
 		return result;
 		// TODO: Integer sort
-		// TODO: Write PolynomialTests for Less etc. at least one each
+		// TODO: Don't divide by Variables if the Term has Bitvector sort. Also write a test for this.
 		// TODO: Ask Matthias, whether the "null"-Tests in PolynomialRelation are obsolete, since some
 		// functionality has been added now.
+		// TODO: Ask Matthias, whether the relationsymbol has to be swapped if we divide by Bitvector "-1"
 		// TODO: Ask Matthias whether the subjectInAllowedSubterm-case is disjunct to the abstractVarOfSubject being a
 		// Monomial.
 	}
 
+	private boolean divisionByVariablesNecessary(final Term abstractVarOfSubject) {
+		return abstractVarOfSubject instanceof Monomial && !SmtSortUtils.isBitvecSort(mAffineTerm.getSort());
+	}
+	
 	private Case constructDivByVarEqualZeroCase(final Script script, final IntermediateCase previousCase,
 			final Term var) {
 		final RelationSymbol relSym = previousCase.getIntermediateRelationSymbol();
