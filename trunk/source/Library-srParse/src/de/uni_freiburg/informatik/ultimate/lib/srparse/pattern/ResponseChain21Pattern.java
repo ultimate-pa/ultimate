@@ -11,8 +11,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 /**
  * TODO: fix description
  *
- * {scope}, it is always the case that if "" holds and is succeeded by "P", then
- * "S" eventually holds after "T"
+ * {scope}, it is always the case that if "" holds and is succeeded by "P", then "S" eventually holds after "T"
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -28,22 +27,24 @@ public class ResponseChain21Pattern extends PatternType {
 	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
 		final SrParseScope scope = getScope();
 		// note: P and Q are reserved for scope, cdds are parsed in reverse order
-		final CDD R = getCdds().get(2);
-		final CDD S = getCdds().get(1);
-		final CDD T = getCdds().get(0);
+		final CDD U = cdds[3];
+		final CDD T = cdds[2];
+		final CDD S = cdds[1];
+		final CDD R = cdds[0];
 
+		final CounterTrace ct;
 		if (scope instanceof SrParseScopeBefore) {
 			final CDD P = getScope().getCdd1();
-			final CounterTrace ct = counterTrace(phase(P.negate()), phase(S.and(P.negate()).and(T.negate())),
-					phase(P.negate()), phase(T.and(P.negate())), phase(R.negate().and(P.negate())), phase(P), phaseT());
+			ct = counterTrace(phase(P.negate()), phase(R.and(P.negate()).and(S.negate())),
+					phase(P.negate().and(S).and(R.negate())), phase(P.negate()), phase(P.negate().and(U)),
+					phase(P.negate().and(T.negate())), phase(P), phaseT());
 
 			return ct;
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = getScope().getCdd1();
 			final CDD Q = getScope().getCdd2();
-			final CounterTrace ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
-					phase(S.and(Q.negate()).and(T.negate())), phase(Q.negate()), phase(T.and(Q.negate())),
-					phase(R.negate().and(Q.negate())), phase(Q), phaseT());
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R.negate())),
+					phase(Q), phaseT());
 
 			return ct;
 		}
@@ -61,13 +62,13 @@ public class ResponseChain21Pattern extends PatternType {
 			sb.append(getScope());
 		}
 		sb.append("it is always the case that if \"");
-		sb.append(getCdds().get(3).toBoogieString());
-		sb.append("\" holds and is succeeded by \"");
-		sb.append(getCdds().get(2).toBoogieString());
-		sb.append("\", then \"");
-		sb.append(getCdds().get(1).toBoogieString());
-		sb.append("\" eventually holds after \"");
 		sb.append(getCdds().get(0).toBoogieString());
+		sb.append("\" holds and is succeeded by \"");
+		sb.append(getCdds().get(1).toBoogieString());
+		sb.append("\", then \"");
+		sb.append(getCdds().get(2).toBoogieString());
+		sb.append("\" eventually holds after \"");
+		sb.append(getCdds().get(3).toBoogieString());
 		sb.append("\"");
 		return sb.toString();
 	}
