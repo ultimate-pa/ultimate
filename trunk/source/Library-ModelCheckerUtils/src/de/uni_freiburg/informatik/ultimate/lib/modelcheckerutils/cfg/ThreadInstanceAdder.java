@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
@@ -227,12 +228,18 @@ public class ThreadInstanceAdder {
 			final UnmodifiableTransFormula threadIdAssignment = fsa.constructThreadIdAssignment(
 					icfg.getCfgSmtToolkit().getSymbolTable(), icfg.getCfgSmtToolkit().getManagedScript(),
 					Arrays.asList(threadIdVars));
+			final Set<IProgramVar> localVarsWithoutInParams = icfg.getCfgSmtToolkit().getSymbolTable()
+					.getLocals(threadInstanceName).stream()
+					.filter(x -> !icfg.getCfgSmtToolkit().getInParams().get(threadInstanceName).contains(x))
+					.collect(Collectors.toSet());
+			final UnmodifiableTransFormula havocOfLocalVars = TransFormulaUtils.constructHavoc(localVarsWithoutInParams,
+					icfg.getCfgSmtToolkit().getManagedScript());
 			if (addThreadInUseViolationEdges) {
 				final UnmodifiableTransFormula threadInUseAssignment = constructForkInUseAssignment(threadInUseVar,
 						icfg.getCfgSmtToolkit().getManagedScript());
-				conjuncts = Arrays.asList(parameterAssignment, threadIdAssignment, threadInUseAssignment);
+				conjuncts = Arrays.asList(parameterAssignment, threadIdAssignment, threadInUseAssignment, havocOfLocalVars);
 			} else {
-				conjuncts = Arrays.asList(parameterAssignment, threadIdAssignment);
+				conjuncts = Arrays.asList(parameterAssignment, threadIdAssignment, havocOfLocalVars);
 			}
 			forkTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
 					icfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
