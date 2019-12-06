@@ -54,19 +54,7 @@ public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE,
 		mScoringMethod = scoringMethod;
 	}
 
-	public void checkTransition(final LETTER trans) {
-		UnmodifiableTransFormula transformula = null;
-		if (trans instanceof StatementSequence) {
-			transformula = ((StatementSequence) trans).getTransformula();
-		} else if (trans instanceof SequentialComposition) {
-			transformula = ((SequentialComposition) trans).getTransformula();
-		} else {
-			throw new UnsupportedOperationException(
-					"Currently this function only supports transitions of type 'StatementSequence' or 'SequentialComposition'. The passed transition has type: "
-							+ trans.getClass().getCanonicalName());
-		}
-		final Term formula = transformula.getFormula();
-		mTermClassifier.checkTerm(formula);
+	private int get_score() {
 		int score = 0;
 		if (mScoringMethod == ScoringMethod.DEPENDENCY) {
 			score = mTermClassifier.getDependencyScore();
@@ -81,7 +69,25 @@ public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE,
 		} else {
 			throw new UnsupportedOperationException("Unsupported ScoringMethod " + mScoringMethod.toString());
 		}
-		mCheckedTransitions.put(trans, score);
+		return score;
+	}
+
+	public void checkTransition(final LETTER trans) {
+		UnmodifiableTransFormula transformula = null;
+		if (trans instanceof StatementSequence) {
+			transformula = ((StatementSequence) trans).getTransformula();
+		} else if (trans instanceof SequentialComposition) {
+			transformula = ((SequentialComposition) trans).getTransformula();
+		} else {
+			throw new UnsupportedOperationException(
+					"Currently this function only supports transitions of type 'StatementSequence' or 'SequentialComposition'. The passed transition has type: "
+							+ trans.getClass().getCanonicalName());
+		}
+
+		final Term formula = transformula.getFormula();
+		mTermClassifier.checkTerm(formula);
+		final int score = get_score();
+		mCheckedTransitions.put(trans, 1/score);
 	}
 
 	@Override
