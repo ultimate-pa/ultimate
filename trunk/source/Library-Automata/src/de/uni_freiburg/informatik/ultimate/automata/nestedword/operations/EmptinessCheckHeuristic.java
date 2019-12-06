@@ -32,44 +32,23 @@ import java.util.HashMap;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
 public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE, LETTER> {
 
-	public enum ScoringMethod {
-		NUM_FUNCTIONS, NUM_VARIABLES, DAGSIZE, DEPENDENCY, BIGGEST_EQUIVALENCE_CLASS
-	}
-
 	private final ILogger mLogger;
 	private final SMTFeatureExtractionTermClassifier mTermClassifier;
-	private final HashMap<LETTER, Integer> mCheckedTransitions;
+	private final HashMap<LETTER, Double> mCheckedTransitions;
 	private final ScoringMethod mScoringMethod;
 
 	public EmptinessCheckHeuristic(final ILogger logger, final ScoringMethod scoringMethod) {
 		mLogger = logger;
-		mTermClassifier = new SMTFeatureExtractionTermClassifier(mLogger);
+		mTermClassifier = new SMTFeatureExtractionTermClassifier(logger);
 		mCheckedTransitions = new HashMap<>();
 		mScoringMethod = scoringMethod;
-	}
-
-	private int get_score() {
-		int score = 0;
-		if (mScoringMethod == ScoringMethod.DEPENDENCY) {
-			score = mTermClassifier.getDependencyScore();
-		} else if (mScoringMethod == ScoringMethod.NUM_FUNCTIONS) {
-			score = mTermClassifier.getNumberOfFunctions();
-		} else if (mScoringMethod == ScoringMethod.NUM_VARIABLES) {
-			score = mTermClassifier.getNumberOfVariables();
-		} else if (mScoringMethod == ScoringMethod.DAGSIZE) {
-			score = mTermClassifier.getDAGSize();
-		} else if (mScoringMethod == ScoringMethod.BIGGEST_EQUIVALENCE_CLASS) {
-			score = mTermClassifier.getBiggestEquivalenceClass();
-		} else {
-			throw new UnsupportedOperationException("Unsupported ScoringMethod " + mScoringMethod.toString());
-		}
-		return score;
 	}
 
 	public void checkTransition(final LETTER trans) {
@@ -86,12 +65,12 @@ public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE,
 
 		final Term formula = transformula.getFormula();
 		mTermClassifier.checkTerm(formula);
-		final int score = get_score();
-		mCheckedTransitions.put(trans, 1/score);
+		final double score = mTermClassifier.get_score(mScoringMethod);
+		mCheckedTransitions.put(trans, score);
 	}
 
 	@Override
-	public int getHeuristicValue(final STATE state, final STATE stateK, final LETTER trans) {
+	public double getHeuristicValue(final STATE state, final STATE stateK, final LETTER trans) {
 		if (!mCheckedTransitions.containsKey(trans)) {
 			checkTransition(trans);
 		}

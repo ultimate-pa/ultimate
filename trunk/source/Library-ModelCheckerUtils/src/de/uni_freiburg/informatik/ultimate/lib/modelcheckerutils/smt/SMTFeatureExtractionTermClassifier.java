@@ -102,6 +102,10 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		mTermsInWhichWeAlreadyDescended = null;
 	}
 
+	public enum ScoringMethod {
+		NUM_FUNCTIONS, NUM_VARIABLES, DAGSIZE, DEPENDENCY, BIGGEST_EQUIVALENCE_CLASS, AVERAGE_EQUIVALENCE_CLASS, NUMBER_OF_EQUIVALENCE_CLASSES
+	}
+
 	public int getDAGSize() {
 		return mDAGSize;
 	}
@@ -160,6 +164,28 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 
 	public UnionFind<Term> getEquivalenceClasses() {
 		return mVariableEquivalenceClasses;
+	}
+
+	public double get_score(final ScoringMethod scoringMethod) {
+		int score = 0;
+		if (scoringMethod == ScoringMethod.DEPENDENCY) {
+			score = getDependencyScore();
+		} else if (scoringMethod == ScoringMethod.NUM_FUNCTIONS) {
+			score = getNumberOfFunctions();
+		} else if (scoringMethod == ScoringMethod.NUM_VARIABLES) {
+			score = getNumberOfVariables();
+		} else if (scoringMethod == ScoringMethod.DAGSIZE) {
+			score = getDAGSize();
+		} else if (scoringMethod == ScoringMethod.BIGGEST_EQUIVALENCE_CLASS) {
+			score = getBiggestEquivalenceClass();
+		} else if (scoringMethod == ScoringMethod.AVERAGE_EQUIVALENCE_CLASS) {
+			score = (int) getVariableEquivalenceClassSizes().stream().mapToInt(val -> val).average().orElse(0);
+		} else if (scoringMethod == ScoringMethod.NUMBER_OF_EQUIVALENCE_CLASSES) {
+			score = getVariableEquivalenceClassSizes().size();
+		}else {
+			throw new UnsupportedOperationException("Unsupported ScoringMethod " + scoringMethod.toString());
+		}
+		return 1 / score;
 	}
 
 	private boolean isApplicationTermWithArityZero(final Term term) {
