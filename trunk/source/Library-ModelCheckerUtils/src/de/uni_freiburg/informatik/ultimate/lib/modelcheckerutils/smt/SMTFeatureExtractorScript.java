@@ -55,7 +55,7 @@ public class SMTFeatureExtractorScript extends WrapperScript {
 	public SMTFeatureExtractorScript(final Script script, final ILogger logger, final String dumpPath) {
 		super(script);
 		mLogger = logger;
-		mFeatureExtractor = new SMTFeatureExtractor(logger, dumpPath);
+		mFeatureExtractor = new SMTFeatureExtractor(logger, dumpPath, true);
 		mCurrentAssertionStack = new ArrayDeque<>();
 	}
 

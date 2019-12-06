@@ -114,4 +114,37 @@ public class SMTFeature {
 		return sb.toString();
 	}
 
+	public static SMTFeature chooseLooser(final SMTFeature feature1, final SMTFeature feature2){
+		int score1 = 0;
+		int score2 = 0;
+		final String[] fieldnames = {"numberOfFunctions","numberOfArrays", "dagsize", "numberOfVariables", "dependencyScore", "biggestEquivalenceClass"};
+		for (final String fieldname : fieldnames) {
+			int fieldvalue1=0;
+			try {
+				fieldvalue1 = (int) feature1.getClass().getField(fieldname).get(feature1);
+			} catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			int fieldvalue2=0;
+			try {
+				fieldvalue2 = (int) feature2.getClass().getField(fieldname).get(feature2);
+			} catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if(fieldvalue1 < fieldvalue2) {
+				score1 += 1;
+			}else if (fieldvalue2 < fieldvalue1) {
+				score2 += 1;
+			}
+		}
+
+		if (score1 > score2) {
+			return feature2;
+		}else {
+			return feature1;
+		}
+	}
+
 }

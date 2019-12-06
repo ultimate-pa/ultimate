@@ -47,15 +47,40 @@ public class SMTFeatureExtractor {
 	private final List<SMTFeature> mFeatures;
 	private final Path mDumpPath;
 	private final Path mFilename;
+	private final boolean mDumpFeatures;
 
-	public SMTFeatureExtractor(final ILogger logger, final String dump_path) {
+	public SMTFeatureExtractor(final ILogger logger, final String dump_path, final boolean dump_features) {
 		mLogger = logger;
 		mFeatures = new ArrayList<>();
-		mDumpPath = new File(dump_path).toPath();
+		mDumpFeatures = dump_features;
+		if (dump_features) {
+			mDumpPath = new File(dump_path).toPath();
+			final String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("uuuu-MM-dd"));
+			mFilename = mDumpPath.resolve(timestamp + "-smtfeatures.csv");
+			createDumpFile();
+		}else {
+			mDumpPath = null;
+			mFilename = null;
+		}
+	}
 
-		final String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("uuuu-MM-dd"));
-		mFilename = mDumpPath.resolve(timestamp + "-smtfeatures.csv");
-		createDumpFile();
+	public SMTFeature extractFeatureRaw(final Term term){
+		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
+		tc.checkTerm(term);
+		final SMTFeature feature = new SMTFeature();
+		feature.containsArrays = tc.hasArrays();
+		feature.occuringFunctions = tc.getOccuringFunctionNames();
+		feature.occuringQuantifiers = tc.getOccuringQuantifiers();
+		feature.occuringSorts = tc.getOccuringSortNames();
+		feature.numberOfFunctions = tc.getNumberOfFunctions();
+		feature.numberOfQuantifiers = tc.getNumberOfQuantifiers();
+		feature.numberOfVariables = tc.getNumberOfVariables();
+		feature.numberOfArrays = tc.getNumberOfArrays();
+		feature.dagsize = tc.getDAGSize();
+		feature.dependencyScore = tc.getDependencyScore();
+		feature.variableEquivalenceClassSizes = tc.getVariableEquivalenceClassSizes();
+		feature.biggestEquivalenceClass = tc.getBiggestEquivalenceClass();
+		return feature;
 	}
 
 	public void extractFeature(final List<Term> assertions, final double time, final String result, final String solvername)
@@ -84,8 +109,9 @@ public class SMTFeatureExtractor {
 		feature.solvertime = time;
 		feature.solvername = solvername;
 		mFeatures.add(feature);
-		dumpFeature(feature);
-
+		if(mDumpFeatures) {
+			dumpFeature(feature);
+		}
 	}
 
 	public void dumpFeature(final SMTFeature feature) throws IllegalAccessException, IOException {

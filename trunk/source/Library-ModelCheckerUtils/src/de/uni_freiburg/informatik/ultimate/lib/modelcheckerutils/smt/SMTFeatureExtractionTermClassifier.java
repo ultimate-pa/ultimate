@@ -103,7 +103,14 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 	}
 
 	public enum ScoringMethod {
-		NUM_FUNCTIONS, NUM_VARIABLES, DAGSIZE, DEPENDENCY, BIGGEST_EQUIVALENCE_CLASS, AVERAGE_EQUIVALENCE_CLASS, NUMBER_OF_EQUIVALENCE_CLASSES
+		NUM_FUNCTIONS,
+		NUM_VARIABLES,
+		DAGSIZE,
+		DEPENDENCY,
+		BIGGEST_EQUIVALENCE_CLASS,
+		AVERAGE_EQUIVALENCE_CLASS,
+		NUMBER_OF_EQUIVALENCE_CLASSES,
+		COMPARE_FEATURES,
 	}
 
 	public int getDAGSize() {
@@ -139,7 +146,11 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 	}
 
 	public ArrayList<Integer> getVariableEquivalenceClassSizes() {
-		return mVariableEquivalenceClassSizes;
+		final ArrayList<Integer> sizes = new ArrayList<>();
+		mVariableEquivalenceClasses.getAllEquivalenceClasses().forEach(e -> {
+			sizes.add(e.size());
+		});
+		return sizes;
 	}
 
 	public int getBiggestEquivalenceClass() {
@@ -185,7 +196,11 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		}else {
 			throw new UnsupportedOperationException("Unsupported ScoringMethod " + scoringMethod.toString());
 		}
-		return 1 / score;
+		mLogger.warn("stack " + mAssertionStack.toString());
+		mLogger.warn("eqclass " + mVariableEquivalenceClasses.getAllEquivalenceClasses().toString());
+		mLogger.warn("eqclass_sizes " + getVariableEquivalenceClassSizes());
+		mLogger.warn("score " + (score));
+		return score;
 	}
 
 	private boolean isApplicationTermWithArityZero(final Term term) {
@@ -206,7 +221,6 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 			if (classSize > mBiggestEquivalenceClass) {
 				mBiggestEquivalenceClass = classSize;
 			}
-			mVariableEquivalenceClassSizes.add(classSize);
 			score += Math.pow(classSize, 2);
 		}
 		return score;

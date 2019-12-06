@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -26,7 +29,15 @@ public interface IHeuristic<STATE, LETTER> {
 			public final int getConcreteCost(final LETTER e) {
 				return 1;
 			}
+
+			@Override
+			public Map<IsEmptyHeuristic<LETTER, STATE>.Item, Integer> compareSuccessors(final List<IsEmptyHeuristic<LETTER, STATE>.Item> successors) {
+				throw new UnsupportedOperationException("Not implemented for this heuristic");
+			}
 		};
 	}
+
+	Map<IsEmptyHeuristic<LETTER, STATE>.Item, Integer> compareSuccessors(List<IsEmptyHeuristic<LETTER, STATE>.Item> successors);
+
 
 }

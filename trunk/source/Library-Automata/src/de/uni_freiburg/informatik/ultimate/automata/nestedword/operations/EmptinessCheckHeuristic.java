@@ -28,11 +28,16 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeature;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier.ScoringMethod;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractor;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
@@ -40,18 +45,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE, LETTER> {
 
 	private final ILogger mLogger;
-	private final SMTFeatureExtractionTermClassifier mTermClassifier;
 	private final HashMap<LETTER, Double> mCheckedTransitions;
 	private final ScoringMethod mScoringMethod;
+	private final SMTFeatureExtractor mFeatureExtractor;
 
 	public EmptinessCheckHeuristic(final ILogger logger, final ScoringMethod scoringMethod) {
 		mLogger = logger;
-		mTermClassifier = new SMTFeatureExtractionTermClassifier(logger);
 		mCheckedTransitions = new HashMap<>();
 		mScoringMethod = scoringMethod;
+		mFeatureExtractor = new SMTFeatureExtractor(logger, null, false);
 	}
 
 	public void checkTransition(final LETTER trans) {
+		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
 		UnmodifiableTransFormula transformula = null;
 		if (trans instanceof StatementSequence) {
 			transformula = ((StatementSequence) trans).getTransformula();
@@ -64,9 +70,13 @@ public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE,
 		}
 
 		final Term formula = transformula.getFormula();
-		mTermClassifier.checkTerm(formula);
-		final double score = mTermClassifier.get_score(mScoringMethod);
+		tc.checkTerm(formula);
+		final double score = tc.get_score(mScoringMethod);
 		mCheckedTransitions.put(trans, score);
+	}
+
+	public ScoringMethod getScoringMethod() {
+		return mScoringMethod;
 	}
 
 	@Override
@@ -81,5 +91,44 @@ public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE,
 	public int getConcreteCost(final LETTER trans) {
 		// TODO Auto-generated method stub
 		return 1;
+	}
+
+	@Override
+	public Map<IsEmptyHeuristic<LETTER, STATE>.Item, Integer> compareSuccessors(final List<IsEmptyHeuristic<LETTER, STATE>.Item> successors) {
+		final Map<IsEmptyHeuristic<LETTER, STATE>.Item, Integer> successorToLosses = new HashMap<>();
+		final Map<SMTFeature,IsEmptyHeuristic<LETTER, STATE>.Item> featureToSuccessor = new HashMap<>();
+		if(successors.size() == 1) {
+			successorToLosses.put(successors.get(0), 1);
+			return successorToLosses;
+		}
+		successors.forEach(e -> {
+			final LETTER trans = e.getTransition();
+			UnmodifiableTransFormula transformula = null;
+			if (trans instanceof StatementSequence) {
+				transformula = ((StatementSequence) trans).getTransformula();
+			} else if (trans instanceof SequentialComposition) {
+				transformula = ((SequentialComposition) trans).getTransformula();
+			} else {
+				throw new UnsupportedOperationException(
+						"Currently this function only supports transitions of type 'StatementSequence' or 'SequentialComposition'. The passed transition has type: "
+								+ trans.getClass().getCanonicalName());
+			}
+			featureToSuccessor.put(mFeatureExtractor.extractFeatureRaw(transformula.getFormula()),e);
+		});
+		for (final Entry<SMTFeature, IsEmptyHeuristic<LETTER, STATE>.Item> entry1 : featureToSuccessor.entrySet()) {
+			final SMTFeature feature1 = entry1.getKey();
+			for (final Entry<SMTFeature, IsEmptyHeuristic<LETTER, STATE>.Item> entry2 : featureToSuccessor.entrySet()) {
+				final SMTFeature feature2 = entry2.getKey();
+				if(feature1 == feature2) {
+					// do nothing
+				}else{
+					final SMTFeature looser = SMTFeature.chooseLooser(feature1,feature2);
+					final IsEmptyHeuristic<LETTER, STATE>.Item successor  = featureToSuccessor.get(looser);
+					final int curr_score = successorToLosses.getOrDefault(looser, 0) + 1;
+					successorToLosses.put(successor, curr_score);
+				}
+			}
+		}
+		return successorToLosses;
 	}
 }
