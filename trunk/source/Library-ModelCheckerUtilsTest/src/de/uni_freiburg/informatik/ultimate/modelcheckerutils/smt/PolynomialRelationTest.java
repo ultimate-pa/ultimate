@@ -234,7 +234,16 @@ public class PolynomialRelationTest {
 	
 	@Test
 	public void relationBvPolyEQ02() throws NotAffineException{
-		final String inputSTR = "(= (bvmul (_ bv252 8) xb) (bvmul (_ bv64 8) yb yb yb))";
+		final String inputSTR = "(= (bvmul (_ bv1 8) xb) (bvmul (_ bv64 8) yb yb yb))";
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("xb", new Sort[0], bv8);
+		mScript.declareFun("yb", new Sort[0], bv8);
+		testSolveForSubject(inputSTR, "xb");
+	}
+	
+	@Test
+	public void relationBvPolyEQ03() throws NotAffineException{
+		final String inputSTR = "(= (bvmul (_ bv255 8) xb yb) (bvmul (_ bv64 8) yb yb yb))";
 		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
 		mScript.declareFun("xb", new Sort[0], bv8);
 		mScript.declareFun("yb", new Sort[0], bv8);
@@ -242,8 +251,8 @@ public class PolynomialRelationTest {
 	}
 	
 	@Test
-	public void relationBvPolyEQ03() throws NotAffineException{
-		final String inputSTR = "(= (bvmul (_ bv255 8) xb yb) (bvmul (_ bv64 8) yb yb yb))";
+	public void relationBvPolyEQ04() throws NotAffineException{
+		final String inputSTR = "(= (bvmul (_ bv252 8) xb) (bvmul (_ bv64 8) yb yb yb))";
 		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
 		mScript.declareFun("xb", new Sort[0], bv8);
 		mScript.declareFun("yb", new Sort[0], bv8);
