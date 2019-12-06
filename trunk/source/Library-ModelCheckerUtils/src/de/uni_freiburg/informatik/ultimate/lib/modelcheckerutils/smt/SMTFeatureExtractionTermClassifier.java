@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -223,6 +224,13 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 			walker.enqueueWalker(new MyWalker(term.getSubterm()));
 		}
 
+		private void createAndAddToTermset(final int eq_class_id,final Term... terms) {
+			final Set<Term> termset = new HashSet<>();
+			termset.addAll(Arrays.asList(terms));
+			termset.addAll(mTermsets.getOrDefault(eq_class_id, Collections.emptySet()));
+			mTermsets.put(eq_class_id, termset);
+		}
+
 		private void collectVariables(final ApplicationTerm term, final String functionname, final int eq_class_id){
 			mLogger.warn("TERM:      " + term.toStringDirect());
 			mLogger.warn("FUNC:      " + functionname);
@@ -234,86 +242,51 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 				final Term term2 = termParameters[i + 1];
 				if ((isApplicationTermWithArityZero(term1) || (term1 instanceof TermVariable))
 						&& (isApplicationTermWithArityZero(term2) || (term2 instanceof TermVariable))) {
+					// Base case
 					// Both terms are Terms of Arity 0 or Termvariables.
 					if(functionname.equals("and")) {
 						// If the function is and, both go into the same termset.
-						final Set<Term> termset = new HashSet<>();
-						termset.add(term1);
-						termset.add(term2);
-
-						termset.addAll(mTermsets.getOrDefault(eq_class_id, Collections.EMPTY_SET));
-						mTermsets.put(eq_class_id, termset);
+						createAndAddToTermset(eq_class_id, term1, term2);
 
 					} else if (functionname.equals("or")) {
 						// if the function is or, both are in separate sets.
-						final Set<Term> termset1 = new HashSet<>();
-						termset1.add(term1);
-
-						final Set<Term> termset2 = new HashSet<>();
-						termset2.add(term2);
-
-						termset1.addAll(mTermsets.getOrDefault(eq_class_id, Collections.EMPTY_SET));
-						mTermsets.put(eq_class_id, termset1);
-
+						createAndAddToTermset(eq_class_id, term1);
 						// create new eq_class
-						mTermsets.put(mTermsets.size() +1 , termset2);
+						createAndAddToTermset(mTermsets.size() +1, term2);
 					}
 
 				} else if (isApplicationTermWithArityZero(term1) && (term2 instanceof ConstantTerm)){
-					// Constant terms go into the current termset
-					final Set<Term> termset = new HashSet<>();
-					termset.add(term1);
-					termset.addAll(mTermsets.getOrDefault(eq_class_id, Collections.EMPTY_SET));
-					mTermsets.put(eq_class_id, termset);
+					// Constant terms go into the current equivalence class
+					createAndAddToTermset(eq_class_id, term1);
 
 				}else if (isApplicationTermWithArityZero(term2) && (term1 instanceof ConstantTerm)){
 					// Constant terms go into the current termset
-					final Set<Term> termset = new HashSet<>();
-					termset.add(term2);
-					termset.addAll(mTermsets.getOrDefault(eq_class_id, Collections.EMPTY_SET));
-					mTermsets.put(eq_class_id, termset);
+					createAndAddToTermset(eq_class_id, term2);
 
 				} else if (isApplicationTermWithArityZero(term1) || (term1 instanceof TermVariable)){
 					// If we are here, term1 is a Termvariable or an Applicationterm with arity 0
 					// In this case we can add this term to the current termset.
-					final Set<Term> termset = new HashSet<>();
-					termset.add(term1);
-					termset.addAll(mTermsets.getOrDefault(eq_class_id, Collections.EMPTY_SET));
-					mTermsets.put(eq_class_id, termset);
-
+					createAndAddToTermset(eq_class_id, term1);
 
 					// Term 2 has to be explored further. If the function is "or", we create a new termset.
-					int new_class_id = eq_class_id;
-					if(functionname.equals("or")) {
-						new_class_id += mTermsets.size() +1;
-					}
+					final int new_class_id = functionname.equals("or") ? mTermsets.size() +1 : eq_class_id;
 					if (term2 instanceof ApplicationTerm) {
 						collectVariables((ApplicationTerm)term2, ((ApplicationTerm) term2).getFunction().getName(),new_class_id);
 					}
 
 				} else if (isApplicationTermWithArityZero(term2) || (term2 instanceof TermVariable)){
-					final Set<Term> termset = new HashSet<>();
-					termset.add(term2);
-					termset.addAll(mTermsets.getOrDefault(eq_class_id, Collections.EMPTY_SET));
-					mTermsets.put(eq_class_id, termset);
+					createAndAddToTermset(eq_class_id, term2);
 
-					int new_eq_class_id = eq_class_id;
-					if(functionname.equals("or")) {
-						new_eq_class_id = mTermsets.size() +1;
-					}
+					final int new_class_id = functionname.equals("or") ? mTermsets.size() +1 : eq_class_id;
 					if (term1 instanceof ApplicationTerm) {
-						collectVariables((ApplicationTerm)term1, ((ApplicationTerm) term1).getFunction().getName(),new_eq_class_id);
+						collectVariables((ApplicationTerm)term1, ((ApplicationTerm) term1).getFunction().getName(),new_class_id);
 					}
 				}else {
 					if ((term1 instanceof ApplicationTerm) && (term2 instanceof ApplicationTerm)) {
 						collectVariables((ApplicationTerm)term1, ((ApplicationTerm) term1).getFunction().getName(),eq_class_id);
-
-						int new_eq_class_id = eq_class_id;
-						if(functionname.equals("or")) {
-							new_eq_class_id = mTermsets.size() +1;
-						}
 						// Term 2 is a new EQ class
-						collectVariables((ApplicationTerm)term2, ((ApplicationTerm) term2).getFunction().getName(),new_eq_class_id);
+						final int new_class_id = functionname.equals("or") ? mTermsets.size() +1 : eq_class_id;
+						collectVariables((ApplicationTerm)term2, ((ApplicationTerm) term2).getFunction().getName(),new_class_id);
 					}
 				}
 			}
