@@ -11,15 +11,15 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
  */
 public interface IHeuristic<STATE, LETTER> {
 
-	int getHeuristicValue(STATE state, STATE stateK, LETTER trans);
+	double getHeuristicValue(STATE state, STATE stateK, LETTER trans);
 
 	int getConcreteCost(LETTER trans);
 
 	static <STATE, LETTER> IHeuristic<STATE, LETTER> getZeroHeuristic() {
 		return new IHeuristic<STATE, LETTER>() {
 			@Override
-			public final int getHeuristicValue(final STATE state, final STATE stateK, final LETTER trans) {
-				return 0;
+			public final double getHeuristicValue(final STATE state, final STATE stateK, final LETTER trans) {
+				return 0.0;
 			}
 
 			@Override

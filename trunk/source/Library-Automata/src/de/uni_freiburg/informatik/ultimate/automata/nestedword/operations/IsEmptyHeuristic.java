@@ -140,7 +140,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
 
 		final HashedPriorityQueue<Item> worklist =
-				new HashedPriorityQueue<>((a, b) -> Integer.compare(a.mExpectedCostToTarget, b.mExpectedCostToTarget));
+				new HashedPriorityQueue<>((a, b) -> Double.compare(a.mExpectedCostToTarget, b.mExpectedCostToTarget));
 		final Set<Item> closed = new HashSet<>();
 
 		for (final STATE state : startStates) {
@@ -163,7 +163,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current);
 
 			for (final Item succ : unvaluatedSuccessors) {
-				final int costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
+				final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
 				if (worklist.contains(succ)) {
 					final Item oldSucc = worklist.find(succ);
 					if (costSoFar >= oldSucc.mCostSoFar) {
@@ -173,7 +173,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					}
 				}
 
-				final int expectedCost = costSoFar + heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
+				final double expectedCost = costSoFar + heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
 				final boolean rem = worklist.remove(succ);
 				if (!rem && !closed.add(succ)) {
 					// if
@@ -299,11 +299,11 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		private final ItemType mItemType;
 
 		// g-value, how much have we already ph payed?
-		private int mCostSoFar;
+		private double mCostSoFar;
 		// h-value
-		private int mLowestExpectedCost;
+		private double mLowestExpectedCost;
 		// f-value, i.e. how expensive from start to target if we use this node, i.e. g+h
-		private int mExpectedCostToTarget;
+		private double mExpectedCostToTarget;
 
 		/**
 		 * Create initial worklist item.
@@ -346,14 +346,14 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			mLowestExpectedCost = Integer.MAX_VALUE;
 		}
 
-		void setExpectedCostToTarget(final int value) {
+		void setExpectedCostToTarget(final double value) {
 			mExpectedCostToTarget = value;
 			if (value < mLowestExpectedCost) {
 				mLowestExpectedCost = value;
 			}
 		}
 
-		void setCostSoFar(final int costSoFar) {
+		void setCostSoFar(final double costSoFar) {
 			mCostSoFar = costSoFar;
 		}
 
@@ -363,7 +363,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		@Override
 		public int compareTo(final Item o) {
-			return Integer.compare(mExpectedCostToTarget, o.mExpectedCostToTarget);
+			return Double.compare(mExpectedCostToTarget, o.mExpectedCostToTarget);
 		}
 
 		public STATE getHierPreState() {
@@ -480,7 +480,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		@Override
 		public String toString() {
-			return String.format("{?} {%s} %s (%s) {%s} (g=%d, h=%d, f=%d, s=%d)", mHierPreStates.peek().hashCode(),
+			return String.format("{?} {%s} %s (%s) {%s} (g=%f, h=%f, f=%f, s=%d)", mHierPreStates.peek().hashCode(),
 					mTransition == null ? 0 : mTransition.hashCode(), mItemType, mTargetState.hashCode(), mCostSoFar,
 							mLowestExpectedCost, mExpectedCostToTarget, mHierPreStates.size());
 		}
