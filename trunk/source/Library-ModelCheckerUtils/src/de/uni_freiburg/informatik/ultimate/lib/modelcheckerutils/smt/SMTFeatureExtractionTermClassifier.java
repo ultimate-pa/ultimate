@@ -100,10 +100,6 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		mTreeSize += new DAGSize().treesize(term);
 		run(new MyWalker(term));
 		mTermsInWhichWeAlreadyDescended = null;
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("FULL TERM: " + term.toStringDirect());
-			mLogger.debug("UNION FIND: " + mVariableEquivalenceClasses.toString());
-		}
 	}
 
 	public int getDAGSize() {
@@ -160,6 +156,10 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 
 	public int getDependencyScore() {
 		return calcDependencyScore();
+	}
+
+	public UnionFind<Term> getEquivalenceClasses() {
+		return mVariableEquivalenceClasses;
 	}
 
 	private boolean isApplicationTermWithArityZero(final Term term) {
@@ -232,11 +232,8 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		}
 
 		private void collectVariables(final ApplicationTerm term, final String functionname, final int eq_class_id){
-			mLogger.warn("TERM:      " + term.toStringDirect());
-			mLogger.warn("FUNC:      " + functionname);
-			mLogger.warn("EQCLASS_ID " + eq_class_id);
-			mLogger.warn("Current termsets: " + mTermsets.toString());
 			final Term[] termParameters = term.getParameters();
+
 			for (int i = 0; i < (termParameters.length - 1); i++) {
 				final Term term1 = termParameters[i];
 				final Term term2 = termParameters[i + 1];
@@ -294,8 +291,9 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 
 		@Override
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
-			final int numberOfParameters = term.getParameters().length;
-			if (numberOfParameters > 0) {
+			// Functions are ApplicationTerms that have >0 parameters
+			// Variables are ApplicationTerms that have 0 Parameters.
+			if (term.getParameters().length > 0) {
 				final String functionName = term.getFunction().getName();
 				// Count occurrences of functions.
 				if (mOccuringFunctionNames.containsKey(functionName)) {
@@ -303,11 +301,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 				} else {
 					mOccuringFunctionNames.put(functionName, 1);
 				}
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("######################## TERM CLASSIFIER #######################");
-					mLogger.debug("FUNCTION: " + functionName);
-					mLogger.debug("TERM: " + term.toStringDirect());
-				}
+				// Collect Terms which occur together, then create EQ classes.
 				mTermsets = new HashMap<>();
 				final int eq_class_id  = 0;
 				collectVariables(term, functionName, eq_class_id);
@@ -364,10 +358,6 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		public void walk(final NonRecursive walker, final TermVariable term) {
 			// cannot descend
 		}
-	}
-
-	public UnionFind<Term> getEquivalenceClasses() {
-		return mVariableEquivalenceClasses;
 	}
 
 }
