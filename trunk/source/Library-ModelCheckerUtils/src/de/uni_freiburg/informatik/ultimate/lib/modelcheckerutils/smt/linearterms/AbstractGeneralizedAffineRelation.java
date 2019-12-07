@@ -376,7 +376,14 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			if (abstractVarOfSubject == entry.getKey()) {
 				// do nothing
 			} else {
-				final Rational newCoeff = entry.getValue().div(coeffOfAbstractVar);
+				final Rational newCoeff;
+				if (SmtSortUtils.isBitvecSort(mAffineTerm.getSort())) {
+					//This only works because we know that in our cases coeffOfAbstractVar is always
+					//its own multiplicative inverse.
+					newCoeff = entry.getValue().mul(coeffOfAbstractVar);
+				}else {
+					newCoeff = entry.getValue().div(coeffOfAbstractVar);
+				}
 				if (newCoeff.isIntegral() || SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
 					if (entry.getKey() instanceof Monomial) {
 						rhsSummands.add(product(script, newCoeff.negate(), ((Monomial) entry.getKey()).toTerm(script)));
@@ -394,7 +401,14 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			}
 		}
 		if (!mAffineTerm.getConstant().equals(Rational.ZERO)) {
-			final Rational newConstant = mAffineTerm.getConstant().div(coeffOfAbstractVar);
+			final Rational newConstant;
+			if (SmtSortUtils.isBitvecSort(mAffineTerm.getSort())) {
+				//This only works because we know that in our cases coeffOfAbstractVar is always
+				//its own multiplicative inverse.
+				newConstant = mAffineTerm.getConstant().mul(coeffOfAbstractVar);
+			}else {
+				newConstant = mAffineTerm.getConstant().div(coeffOfAbstractVar);
+			}
 			if (newConstant.isIntegral() || SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
 				rhsSummands.add(SmtUtils.rational2Term(script, newConstant.negate(), mAffineTerm.getSort()));
 			} else {
@@ -435,7 +449,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		if (coeffOfSubject.equals(Rational.ZERO)) {
 			throw new AssertionError("no abstract variable must have coefficient zero");
 		}
-		if (SmtSortUtils.isBitvecSort(mAffineTerm.getSort()) && !coeffOfSubject.abs().equals(Rational.ONE)) {
+		if (isBvAndCantBeSolved(coeffOfSubject, abstractVarOfSubject)) {
 			// for bitvectors we may only divide by 1 or -1
 			// reason: consider bitvectors of length 8 (i.e., 256=0)
 			// then e.g., 2*x = 0 is not equivalent to x = 0 because
@@ -468,14 +482,14 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		}
 
 		final RelationSymbol resultRelationSymbol;
-		if (coeffOfSubject.isNegative()) {
+		if (isNegative(coeffOfSubject)) {
 			// if coefficient is negative we have to use the "swapped" RelationSymbol
 			resultRelationSymbol = BinaryRelation.swapParameters(mRelationSymbol);
 		} else {
 			resultRelationSymbol = mRelationSymbol;
 		}
 
-		if (abstractVarOfSubject instanceof Monomial && !SmtSortUtils.isBitvecSort(mAffineTerm.getSort())) {
+		if (divisionByVariablesNecessary(abstractVarOfSubject)) {
 			// TODO 13.11.2019: When we divide by variables we could actually sometimes simplify the resulting division,
 			// in the case that this variable is not zero (and therefore we can simplify f.ex. x/x to 1).
 			// At the moment this seems like much work relative to little effect, so I was asked to leave this comment
@@ -568,7 +582,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		if (coeffOfSubject.equals(Rational.ZERO)) {
 			throw new AssertionError("no abstract variable must have coefficient zero");
 		}
-		if (SmtSortUtils.isBitvecSort(mAffineTerm.getSort()) && !coeffOfSubject.abs().equals(Rational.ONE)) {
+		if (isBvAndCantBeSolved(coeffOfSubject, abstractVarOfSubject)) {
 			// for bitvectors we may only divide by 1 or -1
 			// reason: consider bitvectors of length 8 (i.e., 256=0)
 			// then e.g., 2*x = 0 is not equivalent to x = 0 because
@@ -582,7 +596,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		}
 
 		final RelationSymbol resultRelationSymbol;
-		if (coeffOfSubject.isNegative()) {
+		if (isNegative(coeffOfSubject)) {
 			// if coefficient is negative we have to use the "swapped" RelationSymbol
 			resultRelationSymbol = BinaryRelation.swapParameters(mRelationSymbol);
 		} else {
@@ -753,6 +767,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			// conjoinWithDnf(Collection<Case>) (or add it).
 			mcsb.conjoinWithDnf(dnf);
 		}
+		
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
 		if (!subjectInAllowedSubterm) {
 			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
@@ -760,16 +775,37 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		}
 		return result;
 		// TODO: Integer sort
-		// TODO: Don't divide by Variables if the Term has Bitvector sort. Also write a test for this.
 		// TODO: Ask Matthias, whether the "null"-Tests in PolynomialRelation are obsolete, since some
 		// functionality has been added now.
-		// TODO: Ask Matthias, whether the relationsymbol has to be swapped if we divide by Bitvector "-1"
 		// TODO: Ask Matthias whether the subjectInAllowedSubterm-case is disjunct to the abstractVarOfSubject being a
 		// Monomial.
 	}
 
 	private boolean divisionByVariablesNecessary(final Term abstractVarOfSubject) {
-		return abstractVarOfSubject instanceof Monomial && !SmtSortUtils.isBitvecSort(mAffineTerm.getSort());
+		if(abstractVarOfSubject instanceof Monomial) {
+			return !((Monomial) abstractVarOfSubject).isLinear();
+		}
+		return false;
+	}
+	
+	private boolean isBvAndCantBeSolved(final Rational coeffOfSubject, final Term abstractVarOfSubject) {
+		return  SmtSortUtils.isBitvecSort(mAffineTerm.getSort())
+				&& (divisionByVariablesNecessary(abstractVarOfSubject)
+						|| !(coeffOfSubject.equals(Rational.ONE) 
+								|| isBvMinusOne(coeffOfSubject, mAffineTerm.getSort()))); 
+	}
+	
+	private boolean isBvMinusOne(final Rational number, final Sort bvSort) {
+		final int vecSize = Integer.valueOf(bvSort.getIndices()[0]).intValue();
+		final BigInteger minusOne = new BigInteger("2").pow(vecSize).subtract(BigInteger.ONE);
+		final Rational rationalMinusOne = Rational.valueOf(minusOne, BigInteger.ONE);
+		return number.equals(rationalMinusOne);
+	}
+	
+	private boolean isNegative(final Rational coeffOfSubject) {
+		return coeffOfSubject.isNegative() 
+				|| (SmtSortUtils.isBitvecSort(mAffineTerm.getSort()) 
+						&& isBvMinusOne(coeffOfSubject, mAffineTerm.getSort()));
 	}
 	
 	private Case constructDivByVarEqualZeroCase(final Script script, final IntermediateCase previousCase,
