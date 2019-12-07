@@ -27,9 +27,9 @@ modifies g;
 	// fork statement.
 	// Both threads run concurrently but they might run at completely different
 	// speeds. E.g., the system might execute statements of both threads 
-	// strictly interleaved, or first all statement of one thread and only 
+	// in strict alternation, or first all statement of one thread and only 
 	// then all statements of the other thread.
-	// Each thread that is create by a fork statement has an ID that we
+	// Each thread that is created by a fork statement has an ID which we
 	// will discuss later
 
 	// Here, we fork a new thread that executes the procedure foo.
@@ -38,7 +38,7 @@ modifies g;
     fork x foo(7);
 	
 	// Now, we fork another thread
-	fork 77 foo(3);
+	fork 13 foo(3);
 	
 	// The join statement "joins" the execution of the current thread with
 	// the execution of some other thread. The other thread is determined
@@ -55,9 +55,9 @@ modifies g;
 	assert z == 42;
 	
 	// For the value of g there are three possible cases
-	// 1. The thread with ID 77 modified g before the thread with ID 23 has modified g.
-	// 2. The thread with ID 77 modified g after the thread with ID 23 has modified g.
-	// 2. The thread with ID 77 has not yet modified g.
+	// 1. The thread with ID 13 modified g before the thread with ID 23 has modified g.
+	// 2. The thread with ID 13 modified g after the thread with ID 23 has modified g.
+	// 2. The thread with ID 13 has not yet modified g.
 	assert (g == 5 || g == 6 || g == 3);
 	
 	// We try to join some thread that has id 23 (and this time we do not assign any 

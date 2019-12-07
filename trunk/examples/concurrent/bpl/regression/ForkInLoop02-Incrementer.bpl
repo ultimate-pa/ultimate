@@ -1,6 +1,6 @@
 // #Unsafe
 /*
- * We need three thread instance to find a counterexample.
+ * We need two thread instances to find a counterexample.
  * Author: Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Date: 2019-11-20
  * 
@@ -29,5 +29,4 @@ modifies n;
 {
     n := n + 1;
     assert n <= 2;
-    n := n - 1;
 }

@@ -61,7 +61,7 @@ public class PetriAutomizerTest extends AbstractTraceAbstractionTestSuite {
 
 
 	private static final String[] mUltimateRepository = {
-		"examples/concurrent/concurrentBoogie",
+		"examples/concurrent/bpl",
 		"examples/concurrent/pthreads",
 	};
 
