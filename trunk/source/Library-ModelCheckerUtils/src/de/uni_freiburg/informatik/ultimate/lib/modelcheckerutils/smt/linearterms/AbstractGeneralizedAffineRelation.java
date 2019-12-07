@@ -748,6 +748,8 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 								|| (mRelationSymbol.equals(RelationSymbol.DISTINCT))) {
 							nextCases.add(constructDivByVarDistinctZeroCase(script, previousCase, var2exp));
 						} else {
+							//We have to distinguish the case now into two cases, 
+							//since the RelationSymbol has to be swapped, when we divide by a negative variable.
 							nextCases.add(constructDivByVarLessZeroCase(script, previousCase, var2exp));
 							nextCases.add(constructDivByVarGreaterZeroCase(script, previousCase, var2exp));
 						}
@@ -774,7 +776,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 					result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		}
 		return result;
-		// TODO: Integer sort
+		// TODO: Integer sort tests
 		// TODO: Ask Matthias, whether the "null"-Tests in PolynomialRelation are obsolete, since some
 		// functionality has been added now.
 		// TODO: Ask Matthias whether the subjectInAllowedSubterm-case is disjunct to the abstractVarOfSubject being a
@@ -844,6 +846,10 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		return new Case(null, suppTerms, MultiCaseSolvedBinaryRelation.Xnf.DNF);
 	}
 
+	/**
+	 * Use this instead of constructDivByVarGreaterZeroCase and constructDivByVarLessZeroCase,
+	 * when dividing by a variable and the RelationSymbol is EQ or DISTINCT.
+	 */
 	private IntermediateCase constructDivByVarDistinctZeroCase(final Script script, final IntermediateCase previousCase,
 			final Entry<Term, Rational> var2exp) {
 		final RelationSymbol relSym = previousCase.getIntermediateRelationSymbol();
@@ -858,9 +864,23 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		final Term varDistinctZero = SmtUtils.distinct(script, zeroTerm, var2exp.getKey());
 		suppTerms.add(
 				new SupportingTerm(varDistinctZero, IntricateOperation.DIV_BY_NONCONSTANT, Collections.emptySet()));
+		
+		if (SmtSortUtils.isIntSort(mAffineTerm.getSort())) {
+			final Term rhsModVar = SmtUtils.mod(script, rhs, var2exp.getKey());
+			final Term rhsDivisibleByVar = SmtUtils.binaryEquality(script, zeroTerm, rhsModVar);
+			suppTerms.add(new SupportingTerm(rhsDivisibleByVar, IntricateOperation.DIV_BY_NONCONSTANT, 
+					Collections.emptySet()));
+		}
+		
 		return new IntermediateCase(suppTerms, MultiCaseSolvedBinaryRelation.Xnf.DNF, rhsDividedByVar, relSym);
 	}
 
+	/**
+	 * Use this instead of constructDivByVarDistinctZeroCase,
+	 * when dividing by a variable and the RelationSymbol is not EQ or DISTINCT.
+	 * Notice, that since we assume the RelationSymbol is not EQ or DISTINCT, this doesn't need
+	 * to handle IntSort any differently.
+	 */
 	private IntermediateCase constructDivByVarGreaterZeroCase(final Script script, final IntermediateCase previousCase,
 			final Entry<Term, Rational> var2exp) {
 		final RelationSymbol relSym = previousCase.getIntermediateRelationSymbol();
@@ -878,6 +898,12 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		return new IntermediateCase(suppTerms, MultiCaseSolvedBinaryRelation.Xnf.DNF, rhsDividedByVar, relSym);
 	}
 
+	/**
+	 * Use this instead of constructDivByVarDistinctZeroCase,
+	 * when dividing by a variable and the RelationSymbol is not EQ or DISTINCT.
+	 * Notice, that since we assume the RelationSymbol is not EQ or DISTINCT, this doesn't need
+	 * to handle IntSort any differently.
+	 */
 	private IntermediateCase constructDivByVarLessZeroCase(final Script script, final IntermediateCase previousCase,
 			final Entry<Term, Rational> var2exp) {
 		final RelationSymbol relSym = previousCase.getIntermediateRelationSymbol();
