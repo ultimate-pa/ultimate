@@ -19,7 +19,7 @@ implementation ULTIMATE.start()
     var x : int;
     x := 1;
 
-    while (x < 1) {
+    while (x < 2) {
         fork x foo(x);
         x := x + 1;
     }
