@@ -258,6 +258,17 @@ public class PolynomialRelationTest {
 		mScript.declareFun("yb", new Sort[0], bv8);
 		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "xb"));
 	}
+	
+	@Test
+	public void relationBvEQ05() throws NotAffineException{
+		final String inputSTR = "(= (bvmul (_ bv255 8) xb) (bvmul (_ bv8 8) yb))";
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("xb", new Sort[0], bv8);
+		mScript.declareFun("yb", new Sort[0], bv8);
+		testSolveForSubject(inputSTR, "xb");
+	}
+	
+	
 
 	private MultiCaseSolvedBinaryRelation polyRelOnLeftHandSide(final String termAsString, final String varString)
 			throws NotAffineException {
