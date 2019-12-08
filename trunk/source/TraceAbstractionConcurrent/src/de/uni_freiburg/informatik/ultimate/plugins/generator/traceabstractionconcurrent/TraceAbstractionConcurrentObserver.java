@@ -127,7 +127,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		final AllErrorsAtOnceDebugIdentifier name = TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier.INSTANCE;
 		if (taPrefs.getConcurrency() == Concurrency.PETRI_NET) {
 			abstractCegarLoop = new CegarLoopForPetriNet<>(name, petrifiedIcfg, csToolkit, predicateFactory,
-					timingStatistics, taPrefs, errNodesOfAllProc, mServices);
+					taPrefs, errNodesOfAllProc, mServices);
 		} else if (taPrefs.getConcurrency() == Concurrency.FINITE_AUTOMATA) {
 			abstractCegarLoop = new CegarLoopConcurrentAutomata<>(name, petrifiedIcfg, csToolkit, predicateFactory,
 					timingStatistics, taPrefs, errNodesOfAllProc, mServices);

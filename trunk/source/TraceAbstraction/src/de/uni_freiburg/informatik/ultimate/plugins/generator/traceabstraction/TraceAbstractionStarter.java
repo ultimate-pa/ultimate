@@ -331,7 +331,8 @@ public class TraceAbstractionStarter {
 		final CegarLoopResult<IIcfgTransition<?>> clres;
 		if (root.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
 			clres = CegarLoopResult.iterate(mServices, name, root, taPrefs, root.getCfgSmtToolkit(), predicateFactory,
-					taBenchmark, errorLocs, witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation);
+					taBenchmark, errorLocs, witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation,
+					taPrefs.getConcurrency());
 		} else {
 			CegarLoopResult<IIcfgTransition<?>> concurClres = null;
 			int numberOfThreadInstances = 1;
@@ -350,7 +351,8 @@ public class TraceAbstractionStarter {
 				}
 				concurClres = CegarLoopResult.iterate(mServices, name, petrifiedIcfg, taPrefs,
 						petrifiedIcfg.getCfgSmtToolkit(), predicateFactory1, taBenchmark, errNodesOfAllProc,
-						witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation);
+						witnessAutomaton, rawFloydHoareAutomataFromFile, computeHoareAnnotation,
+						taPrefs.getConcurrency());
 				final boolean insufficientThreadInstances = hasInsufficientThreadInstances(concurClres);
 				if (insufficientThreadInstances) {
 					if (false) {
@@ -360,7 +362,7 @@ public class TraceAbstractionStarter {
 						return Result.UNKNOWN;
 					} else {
 						mLogger.warn(numberOfThreadInstances
-								+ " thread instances were not sufficient, I will increast this number and restart the analysis");
+								+ " thread instances were not sufficient, I will increase this number and restart the analysis");
 						numberOfThreadInstances++;
 						continue;
 					}

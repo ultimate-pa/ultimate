@@ -154,8 +154,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"With backedges to repeated locations (Canonical)";
 	public static final String VALUE_INTERPOLANT_AUTOMATON_TOTAL_INTERPOLATION = "Total interpolation (Jan)";
 
-	public static final String VALUE_FINITE_AUTOMATON = "Finite Automata";
-	public static final String VALUE_PETRI_NET = "Petri Net";
 	public static final String VALUE_KMM = "Ken McMillan";
 	public static final String VALUE_EVR = "Esparza Römer Vogler";
 	public static final String VALUE_EVR_MARK = "ERV with equal markings";
@@ -182,7 +180,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String DEF_DUMPPATH = ".";
 	public static final boolean DEF_DIFFERENCE_SENWA = false;
 	public static final boolean DEF_MINIMIZE = true;
-	public static final String DEF_CONCURRENCY = VALUE_FINITE_AUTOMATON;
+	public static final Concurrency DEF_CONCURRENCY = Concurrency.FINITE_AUTOMATA;
 	public static final boolean DEF_ALL_ERRORS_AT_ONCE = true;
 	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
 			CounterexampleSearchStrategy.BFS;
@@ -358,7 +356,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			new UltimatePreferenceItem<>(LABEL_DIFFERENCE_SENWA, DEF_DIFFERENCE_SENWA, PreferenceType.Boolean),
 			new UltimatePreferenceItem<>(LABEL_MINIMIZE, Minimization.MINIMIZE_SEVPA, PreferenceType.Combo,
 					Minimization.values()),
-			new UltimatePreferenceItem<>(LABEL_CONCURRENCY, Concurrency.PETRI_NET, PreferenceType.Combo,
+			new UltimatePreferenceItem<>(LABEL_CONCURRENCY, DEF_CONCURRENCY, PreferenceType.Combo,
 					Concurrency.values()),
 			new UltimatePreferenceItem<>(LABEL_ORDER, DEF_ORDER, PreferenceType.Combo,
 					new String[] { VALUE_KMM, VALUE_EVR, VALUE_EVR_MARK }),
