@@ -284,23 +284,59 @@ public class PolynomialRelationTest {
 	}
 	
 	@Test
-	public void relationIntPolyEQ3() throws NotAffineException {
+	public void relationIntPolyHarderEQ3() throws NotAffineException {
 		final String inputSTR = "(= (* 6 (* yi xi)) (+ 3 (* zi zi)))";
 		testSolveForSubject(inputSTR, "xi");
 	}
-	
+
 	@Test
-	public void relationIntPolyEQ4() throws NotAffineException {
+	public void relationIntPolyHardEQ4() throws NotAffineException {
 		final String inputSTR = "(= (* zi (+ 6 (* (* yi yi) xi))) (+ 3 (* zi zi)))";
 		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
 	}
 	
 	@Test
-	public void relationIntPolyEQ5() throws NotAffineException {
+	public void relationIntPolyHardEQ5() throws NotAffineException {
 		final String inputSTR = "(= (* 3 xi (div yi zi) zi 5) (* yi zi)))";
 		testSolveForSubject(inputSTR, "xi");
 	}
-
+	
+	@Test
+	public void relationIntPolyEasyEQ6() throws NotAffineException {
+		final String inputSTR = "(= (* 3 yi xi) (* 9 yi))";
+		testSolveForSubject(inputSTR, "xi");
+	}
+	
+	@Test
+	public void relationIntPolyHardEQ7() throws NotAffineException {
+		final String inputSTR = "(= (* 3 yi xi) (* 333 yi))";
+		testSolveForSubject(inputSTR, "xi");
+	}
+	
+	@Test
+	public void relationIntPolyHarderEQ8() throws NotAffineException {
+		final String inputSTR = "(= (* 3 yi xi) (* 21 zi))";
+		testSolveForSubject(inputSTR, "xi");
+	}
+	
+	@Test
+	public void relationIntPolyHarderEQ9() throws NotAffineException {
+		final String inputSTR = "(= (* 3 yi xi) (* 21 zi yi))";
+		testSolveForSubject(inputSTR, "xi");
+	}
+	
+	@Test
+	public void relationIntPolyHardEQ10() throws NotAffineException {
+		final String inputSTR = "(= (* 3 yi xi) (* 11 yi))";
+		testSolveForSubject(inputSTR, "xi");
+	}
+	
+	@Test
+	public void relationIntPolyHardEQ11() throws NotAffineException {
+		final String inputSTR = "(= (* 3 yi xi) (* 333 yi yi yi))";
+		testSolveForSubject(inputSTR, "xi");
+	}
+	
 	private MultiCaseSolvedBinaryRelation polyRelOnLeftHandSide(final String termAsString, final String varString)
 			throws NotAffineException {
 		final Term var = TermParseUtils.parseTerm(mScript, varString);
