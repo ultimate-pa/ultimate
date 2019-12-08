@@ -73,6 +73,9 @@ public class PolynomialRelationTest {
 		declareVar("x", mRealSort); // Subject
 		declareVar("y", mRealSort);
 		declareVar("z", mRealSort);
+		declareVar("xi", mIntSort); // Subject
+		declareVar("yi", mIntSort);
+		declareVar("zi", mIntSort);
 	}
 
 	private Term declareVar(final String name, final Sort sort) {
@@ -268,7 +271,35 @@ public class PolynomialRelationTest {
 		testSolveForSubject(inputSTR, "xb");
 	}
 	
+	@Test
+	public void relationIntEQ1() throws NotAffineException {
+		final String inputSTR = "(= (* 3 xi) (+ (* 7 yi) (* 5 zi)) )";
+		testSolveForSubject(inputSTR, "xi");
+	}
+
+	@Test
+	public void relationIntEQ2() throws NotAffineException {
+		final String inputSTR = "(= (* 6 (+ yi xi)) (* 7 zi) )";
+		testSolveForSubject(inputSTR, "xi");
+	}
 	
+	@Test
+	public void relationIntPolyEQ3() throws NotAffineException {
+		final String inputSTR = "(= (* 6 (* yi xi)) (+ 3 (* zi zi)))";
+		testSolveForSubject(inputSTR, "xi");
+	}
+	
+	@Test
+	public void relationIntPolyEQ4() throws NotAffineException {
+		final String inputSTR = "(= (* zi (+ 6 (* (* yi yi) xi))) (+ 3 (* zi zi)))";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
+	}
+	
+	@Test
+	public void relationIntPolyEQ5() throws NotAffineException {
+		final String inputSTR = "(= (* 3 xi (div yi zi) zi 5) (* yi zi)))";
+		testSolveForSubject(inputSTR, "xi");
+	}
 
 	private MultiCaseSolvedBinaryRelation polyRelOnLeftHandSide(final String termAsString, final String varString)
 			throws NotAffineException {
