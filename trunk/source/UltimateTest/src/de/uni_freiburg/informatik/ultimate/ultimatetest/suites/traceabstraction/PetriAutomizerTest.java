@@ -74,9 +74,12 @@ public class PetriAutomizerTest extends AbstractTraceAbstractionTestSuite {
 	 *
 	 */
 	private static final String[] mSettings = {
-			"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf",
-			"automizer/svcomp-Reach-32bit-Automizer_Default-PetriNetLbeSemanticBasedCheck.epf",
-			"automizer/svcomp-Reach-32bit-Automizer_Default-PetriNetLbeVariableBasedCheck.epf",
+			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf",
+			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe.epf",
+			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-VariableLbe.epf",
+			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf",
+			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe.epf",
+			"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf",
 	};
 
 	/**
@@ -88,12 +91,10 @@ public class PetriAutomizerTest extends AbstractTraceAbstractionTestSuite {
 	}
 
 	private static final String[] mBoogieToolchains = {
-		"PetriAutomizerBplInline.xml",
 		"AutomizerBplInline.xml",
 	};
 
 	private static final String[] mCToolchains = {
-		"PetriAutomizerCInline.xml",
 		"AutomizerCInline.xml",
 	};
 

@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
 public class Svcomp20FoldersAutomizerConcurrent extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	 private static final int FILES_PER_DIR_LIMIT = 1;
+	 private static final int FILES_PER_DIR_LIMIT = 5;
 	private static final int FILE_OFFSET = 0;
 
 	private static final String STANDARD_DOT_C_PATTERN = ".*\\.c";
@@ -89,7 +89,7 @@ public class Svcomp20FoldersAutomizerConcurrent extends AbstractTraceAbstraction
 	 */
 	@Override
 	public long getTimeout() {
-		return 10 * 1000;
+		return 120 * 1000;
 	}
 
 	/**
@@ -98,8 +98,12 @@ public class Svcomp20FoldersAutomizerConcurrent extends AbstractTraceAbstraction
 	 */
 	private static final String[] SETTINGS_32BIT = {
 		"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf",
-//		"automizer/svcomp-Reach-32bit-Automizer_Default-PetriNetLbeSemanticBasedCheck.epf",
-//		"automizer/svcomp-Reach-32bit-Automizer_Default-PetriNetLbeVariableBasedCheck.epf",
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf",
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe.epf",
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-VariableLbe.epf",
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf",
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe.epf",
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf",
 	};
 
 	private static final String[] SETTINGS_64BIT = {
@@ -112,7 +116,6 @@ public class Svcomp20FoldersAutomizerConcurrent extends AbstractTraceAbstraction
 //		"AutomizerC.xml",
 		"AutomizerCInline.xml",
 //		"AutomizerCInlineTransformed.xml",
-		"PetriAutomizerCInline.xml",
 	};
 	// @formatter:on
 

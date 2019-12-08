@@ -91,13 +91,16 @@ public class Svcomp20AutomizerConcurrentBenchmarks extends AbstractTraceAbstract
 	 */
 	private static final String[] SETTINGS_32BIT = {
 		"default/automizer/svcomp-Reach-32bit-Automizer_Default.epf",
-		"automizer/svcomp-Reach-32bit-Automizer_Default-PetriNetLbeSemanticBasedCheck.epf",
-		"automizer/svcomp-Reach-32bit-Automizer_Default-PetriNetLbeVariableBasedCheck.epf",
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf",
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe.epf",
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-VariableLbe.epf",
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf",
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe.epf",
+		"automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf",
 	};
 
 	private static final String[] TOOLCHAINS = {
 		"AutomizerCInline.xml",
-		"PetriAutomizerCInline.xml",
 	};
 	// @formatter:on
 
