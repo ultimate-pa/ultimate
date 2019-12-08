@@ -40,10 +40,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.APList;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -59,11 +61,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -92,6 +96,8 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.Iter
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.TraceInterpolationException;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -100,6 +106,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -152,6 +159,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final PdrBenchmark mPdrBenchmark;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final IPredicate mAxioms;
+	private final Map<String, UnmodifiableTransFormula> mLocalAssignmentRet;
+	private final Map<String, UnmodifiableTransFormula> mLocalAssignmentCall;
 	/*
 	 * Pair of proof-obligations that lead to PDR returning SAT an iteration before. First is that obligation, second is
 	 * the one with correct pre.
@@ -172,6 +181,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		// from params
 		mLogger = logger;
 		mTrace = counterexample;
+		mLocalAssignmentCall = new HashMap<String, UnmodifiableTransFormula>();
+		mLocalAssignmentRet = new HashMap<String, UnmodifiableTransFormula>();
 
 		if (!SmtUtils.isTrueLiteral(precondition.getFormula())) {
 			throw new UnsupportedOperationException("Currently, only precondition true is supported");
@@ -437,6 +448,27 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 								predecessorTransition, toBeBlocked));
 					}
 
+					final String procName = predecessor.getProcedure();
+					if (mLocalAssignmentCall.get(procName).getFormula() != mTruePred.getFormula()) {
+						final UnmodifiableTransFormula assOfCall = mLocalAssignmentCall.get(procName);
+						final UnmodifiableTransFormula assOfRet = mLocalAssignmentRet.get(procName);
+						final Term tfTerm = predTF.getFormula();
+
+						Term normalizedAssOfCall = normalizeTerm(assOfCall);
+						Term normalizedAssOfRet = normalizeTerm(assOfRet);
+						Term normalizedtfTerm = normalizeTerm(predTF);
+						Map<Term, Term> subMap = convertEqualToMap(normalizedAssOfCall, true);
+						final Substitution subCall = new Substitution(mScript, subMap);
+						normalizedtfTerm = subCall.transform(normalizedtfTerm);
+						subMap.clear();
+						subMap = convertEqualToMap(normalizedAssOfRet, false);
+						final Substitution subRet = new Substitution(mScript, subMap);
+						normalizedtfTerm = subRet.transform(normalizedtfTerm);
+						final Term conjunction = SmtUtils.and(mScript.getScript(), predecessorFrame.getFormula(), not(toBeBlocked).getFormula(), normalizedtfTerm);
+						final LBool bool = SmtUtils.checkSatTerm(mScript.getScript(), conjunction);
+						mLogger.debug("Converted TF with local assignment");
+					}
+
 					final LBool res = PredicateUtils.isInductiveHelper(mScript.getScript(), predecessorFrame,
 							not(toBeBlocked), predTF, modifiableGlobals, modifiableGlobals);
 
@@ -508,12 +540,13 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					}
 					final IIcfgReturnTransition<?, ?> returnTrans = (IIcfgReturnTransition<?, ?>) predecessorTransition;
 
-					final UnmodifiableTransFormula assOfRet =
-							((IIcfgReturnTransition) predecessorTransition).getAssignmentOfReturn();
-					final UnmodifiableTransFormula assOfCallRet =
-							((IIcfgReturnTransition) predecessorTransition).getLocalVarsAssignmentOfCall();
+					final UnmodifiableTransFormula assOfRet = returnTrans.getAssignmentOfReturn();
+
 					final UnmodifiableTransFormula assOfCall =
 							returnTrans.getCorrespondingCall().getLocalVarsAssignment();
+
+					mLocalAssignmentCall.putIfAbsent(predecessorTransition.getPrecedingProcedure(), assOfCall);
+					mLocalAssignmentRet.putIfAbsent(predecessorTransition.getPrecedingProcedure(), assOfRet);
 
 					final String procBeforeReturn = predecessorTransition.getPrecedingProcedure();
 					final String procAfterReturn = predecessorTransition.getSucceedingProcedure();
@@ -538,8 +571,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 						// TODO: predtransformer preReturn on ...
 						// TODO: Use the global frame from preCall as callPred
 						final IPredicate callPred = mTruePred;
-						Term pre = mPredTrans.preReturn(toBeBlocked, callPred, assOfRet, assOfCallRet, oldVarAssign,
-								modVars);
+						Term pre =
+								mPredTrans.preReturn(toBeBlocked, callPred, assOfRet, assOfCall, oldVarAssign, modVars);
 						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
 								SimplificationTechnique.SIMPLIFY_DDA,
 								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
@@ -592,7 +625,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 						final IPredicate callPred = mTruePred;
 						Term pre = mPredTrans.preReturn(newProofObligation.getToBeBlocked(), callPred, assOfRet,
-								assOfCallRet, oldVarAssign, modVars);
+								assOfCall, oldVarAssign, modVars);
 						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
 								SimplificationTechnique.SIMPLIFY_DDA,
 								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
@@ -1018,9 +1051,47 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	}
 
 	/**
+	 * replace variables in term with its default termvariables
+	 * 
+	 * @param t
+	 * @return
+	 */
+	private final Term normalizeTerm(final UnmodifiableTransFormula t) {
+		final HashMap<Term, Term> subMap = new HashMap<Term, Term>();
+		final Term tTerm = t.getFormula();
+		for (final Entry<IProgramVar, TermVariable> outVar : t.getOutVars().entrySet()) {
+			subMap.put(outVar.getValue(), outVar.getKey().getTermVariable());
+		}
+		for (final Entry<IProgramVar, TermVariable> inVar : t.getInVars().entrySet()) {
+			subMap.put(inVar.getValue(), inVar.getKey().getTermVariable());
+		}
+		final Substitution sub = new Substitution(mScript, subMap);
+		return sub.transform(tTerm);
+	}
+	
+	/**
+	 * Converts an equals term to map, used for substitution. 
+	 * @param t
+	 * @return
+	 */
+	private final Map<Term, Term> convertEqualToMap(final Term t, final Boolean reverse) {
+		final HashMap<Term, Term> resultMap = new HashMap<Term, Term>();
+		final ApplicationTerm appTerm = (ApplicationTerm)t;
+		if (appTerm.getFunction().getName().equals("=")) {
+			if (reverse) {
+				resultMap.put(appTerm.getParameters()[0], appTerm.getParameters()[1]);
+			} else {
+				resultMap.put(appTerm.getParameters()[1], appTerm.getParameters()[0]);
+			}
+		}
+		// TODO: deal with multiple terms.
+		return resultMap;
+	}
+
+	/**
 	 * Propagation-Phase, for finding invariants
 	 */
-	private boolean propagationPhase(final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames) {
+	private final boolean propagationPhase(final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames) {
 		mLogger.debug("Begin Propagation Phase: \n");
 		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> locationTrace : localFrames.entrySet()) {
 			final List<Pair<ChangedFrame, IPredicate>> frames = locationTrace.getValue();
@@ -1049,7 +1120,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	 * @param i
 	 * @return
 	 */
-	private boolean checkFrames(final int i,
+	private final boolean checkFrames(final int i,
 			final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> localFrames) {
 		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> locationTrace : localFrames.entrySet()) {
 			if (mPpIcfg.getInitialNodes().contains(locationTrace.getKey())) {
@@ -1067,7 +1138,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		return true;
 	}
 
-	private IPredicate not(final IPredicate pred) {
+	private final IPredicate not(final IPredicate pred) {
 		return mLocalPredicateUnifier.getOrConstructPredicate(SmtUtils.not(mScript.getScript(), pred.getFormula()));
 	}
 
@@ -1076,7 +1147,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	 *
 	 * @return
 	 */
-	private IPredicate[] computeInterpolants() {
+	private final IPredicate[] computeInterpolants() {
 		mLogger.debug("Computing interpolants.");
 
 		final Map<IcfgLocation, IPredicate> traceFrames = new HashMap<>();
