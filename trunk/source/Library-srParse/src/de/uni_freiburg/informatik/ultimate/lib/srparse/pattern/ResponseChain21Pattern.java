@@ -9,9 +9,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 
 /**
- * TODO: fix description
- *
- * {scope}, it is always the case that if "" holds and is succeeded by "P", then "S" eventually holds after "T"
+ * {scope}, it is always the case that if "R" holds and is succeeded by "S", then "T" eventually holds after "U"
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
