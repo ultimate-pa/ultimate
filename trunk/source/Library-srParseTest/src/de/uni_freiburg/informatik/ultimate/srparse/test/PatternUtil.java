@@ -1,10 +1,35 @@
+/*
+ * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Library-srParse plug-in.
+ *
+ * The ULTIMATE Library-srParse plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Library-srParse plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Library-srParse plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Library-srParse plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Library-srParse plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.srparse.test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,8 +56,8 @@ public final class PatternUtil {
 	}
 
 	/**
-	 * Create for all subclasses of {@link PatternType} and {@link SrParseScope} an
-	 * instantiated requirements pattern that can be used to create a PEA.
+	 * Create for all subclasses of {@link PatternType} and {@link SrParseScope} an instantiated requirements pattern
+	 * that can be used to create a PEA.
 	 */
 	public static Pair<List<PatternType>, Map<String, Integer>> createAllPatterns() {
 		// first, create some observables and durartions
@@ -57,11 +82,11 @@ public final class PatternUtil {
 		Collections.sort(scopes, new ClassNameComparator());
 
 		// instantiate patterns
-		final List<Class<? extends PatternType>> patternTypeClazzes = ReflectionUtil
-				.getClassesFromFolder(PatternType.class, RcpUtils.getBundleProtocolResolver()).stream()
-				.filter(c -> !ReflectionUtil.isAbstractClass(c))
-				.filter(c -> ReflectionUtil.isSubclassOfClass(c, PatternType.class))
-				.filter(c -> !c.equals(InitializationPattern.class)).collect(Collectors.toList());
+		final List<Class<? extends PatternType>> patternTypeClazzes =
+				ReflectionUtil.getClassesFromFolder(PatternType.class, RcpUtils.getBundleProtocolResolver()).stream()
+						.filter(c -> !ReflectionUtil.isAbstractClass(c))
+						.filter(c -> ReflectionUtil.isSubclassOfClass(c, PatternType.class))
+						.filter(c -> !c.equals(InitializationPattern.class)).collect(Collectors.toList());
 		Collections.sort(patternTypeClazzes, new ClassNameComparator());
 
 		final List<PatternType> patterns = new ArrayList<>();
@@ -80,10 +105,10 @@ public final class PatternUtil {
 			final int durationCount = dummyInstance.getExpectedDurationSize();
 
 			for (final SrParseScope scope : scopes) {
-				final List<CDD> currentCdds = Arrays.stream(patternObs).skip(scope.getSize()).limit(cddCount)
-						.collect(Collectors.toList());
-				final List<String> currentDurations = Arrays.stream(durations).limit(durationCount)
-						.collect(Collectors.toList());
+				final List<CDD> currentCdds =
+						Arrays.stream(patternObs).skip(scope.getSize()).limit(cddCount).collect(Collectors.toList());
+				final List<String> currentDurations =
+						Arrays.stream(durations).limit(durationCount).collect(Collectors.toList());
 				patterns.add(ReflectionUtil.instantiateClass(patternTypeClazz, scope, "ID_" + String.valueOf(id),
 						currentCdds, currentDurations));
 				id++;
