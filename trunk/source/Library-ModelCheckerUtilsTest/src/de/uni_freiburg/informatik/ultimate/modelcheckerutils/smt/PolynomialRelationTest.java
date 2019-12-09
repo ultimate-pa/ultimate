@@ -25,6 +25,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.io.FileNotFoundException;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation.Xnf;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -53,6 +57,11 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  */
 public class PolynomialRelationTest {
 
+	/**
+	 * Warning: each test will overwrite the SMT script of the preceding test.
+	 */
+	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
+	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
 	private ManagedScript mMgdScript;
@@ -60,9 +69,14 @@ public class PolynomialRelationTest {
 	private Sort mIntSort;
 
 	@Before
-	public void setUp() {
+	public void setUp() throws FileNotFoundException {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
-		mScript = UltimateMocks.createZ3ScriptWithTimeout(LogLevel.INFO);
+		final Script tmp = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LogLevel.INFO));
+		if (WRITE_SMT_SCRIPTS_TO_FILE) {
+			mScript = new LoggingScript(tmp, "PolynomialRelationTest.smt2", true);
+		} else {
+			mScript = tmp;
+		}
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 		mRealSort = SmtSortUtils.getRealSort(mMgdScript);
