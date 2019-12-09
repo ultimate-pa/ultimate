@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 
 /**
- * {scope}, it is always the case that if "R" holds and is succeeded by "S", then "T" eventually holds after "U"
+ * {scope}, it is always the case that if "U" holds and is succeeded by "T", then "S" eventually holds after "R"
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -25,10 +25,10 @@ public class ResponseChain21Pattern extends PatternType {
 	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
 		final SrParseScope scope = getScope();
 		// note: P and Q are reserved for scope, cdds are parsed in reverse order
-		final CDD U = cdds[3];
-		final CDD T = cdds[2];
-		final CDD S = cdds[1];
-		final CDD R = cdds[0];
+		final CDD U = cdds[0];
+		final CDD T = cdds[1];
+		final CDD S = cdds[2];
+		final CDD R = cdds[3];
 
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeBefore) {
@@ -60,13 +60,13 @@ public class ResponseChain21Pattern extends PatternType {
 			sb.append(getScope());
 		}
 		sb.append("it is always the case that if \"");
-		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\" holds and is succeeded by \"");
-		sb.append(getCdds().get(1).toBoogieString());
-		sb.append("\", then \"");
-		sb.append(getCdds().get(2).toBoogieString());
-		sb.append("\" eventually holds after \"");
 		sb.append(getCdds().get(3).toBoogieString());
+		sb.append("\" holds and is succeeded by \"");
+		sb.append(getCdds().get(2).toBoogieString());
+		sb.append("\", then \"");
+		sb.append(getCdds().get(1).toBoogieString());
+		sb.append("\" eventually holds after \"");
+		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\"");
 		return sb.toString();
 	}
