@@ -73,11 +73,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
+	// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
+	private static final Boolean createNewFiles = false;
 
 	private static final File ROOT_DIR = new File("/mnt/Daten/projects/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
 	private static final File IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
-	private static final int TOC_DEPTH = 3;
 
 	private static final String LINE_SEP = System.lineSeparator();
 
@@ -109,20 +110,19 @@ public class PeaToDotTestSuite {
 		final PhaseEventAutomata pea;
 		final CounterTrace counterTrace;
 
-		// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
-		final Boolean runTest = false;
-
-		if (runTest) {
-			try {
-				pea = mPattern.transformToPea(mLogger, mDurationToBounds);
-				counterTrace = mPattern.constructCounterTrace(mDurationToBounds);
-			} catch (final PatternScopeNotImplemented e) {
-				return; // Oops, somebody forgot to implement that sh.. ;-)
-			}
-
-			writeSvgFile(DotWriterNew.createDotString(pea));
-			writeMarkdownFile(counterTrace.toString());
+		if (!createNewFiles) {
+			return;
 		}
+
+		try {
+			pea = mPattern.transformToPea(mLogger, mDurationToBounds);
+			counterTrace = mPattern.constructCounterTrace(mDurationToBounds);
+		} catch (final PatternScopeNotImplemented e) {
+			return; // Oops, somebody forgot to implement that sh.. ;-)
+		}
+
+		writeSvgFile(DotWriterNew.createDotString(pea));
+		writeMarkdownFile(counterTrace.toString());
 	}
 
 	private void writeSvgFile(final String dot) throws IOException, InterruptedException {
@@ -131,6 +131,11 @@ public class PeaToDotTestSuite {
 		final String[] command = new String[] { "dot", "-Tsvg", "-o", file.toString() };
 		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServiceProvider);
 		final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+
+		if (!createNewFiles) {
+			return;
+		}
+
 		writer.write(dot.toString());
 		writer.close();
 
@@ -138,6 +143,10 @@ public class PeaToDotTestSuite {
 	}
 
 	private void writeMarkdownFile(final String counterTrace) throws IOException {
+		if (!createNewFiles) {
+			return;
+		}
+
 		final File file = new File(MARKDOWN_DIR + "/" + mPatternName + ".md");
 		final StringBuilder stringBuilder = new StringBuilder();
 		final Formatter fmt = new Formatter(stringBuilder);
@@ -161,6 +170,10 @@ public class PeaToDotTestSuite {
 
 	@BeforeClass
 	public static void beforeClass() {
+		if (!createNewFiles) {
+			return;
+		}
+
 		// Check if root directory exists.
 		assert (Files.isDirectory(ROOT_DIR.toPath())) : "Directory not found: " + ROOT_DIR;
 
@@ -179,6 +192,10 @@ public class PeaToDotTestSuite {
 
 	@AfterClass
 	public static void afterClass() throws IOException {
+		if (!createNewFiles) {
+			return;
+		}
+
 		final StringBuilder stringBuilder = new StringBuilder();
 		final Formatter fmt = new Formatter(stringBuilder);
 		// fmt.format("toc_depth: %d%s%s", TOC_DEPTH, LINE_SEP, LINE_SEP);
