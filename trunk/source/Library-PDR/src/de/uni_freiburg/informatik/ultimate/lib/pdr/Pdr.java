@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pdr;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -61,8 +62,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -448,26 +451,40 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 								predecessorTransition, toBeBlocked));
 					}
 
+					UnmodifiableTransFormula normalizedTf = predTF;
 					final String procName = predecessor.getProcedure();
-					if (mLocalAssignmentCall.get(procName).getFormula() != mTruePred.getFormula()) {
+					/*
+					 * Dealing with procedures containing local assignments.
+					 */
+					if (mLocalAssignmentCall.containsKey(procName)
+							&& mLocalAssignmentCall.get(procName).getFormula() != mTruePred.getFormula()) {
 						final UnmodifiableTransFormula assOfCall = mLocalAssignmentCall.get(procName);
 						final UnmodifiableTransFormula assOfRet = mLocalAssignmentRet.get(procName);
-						final Term tfTerm = predTF.getFormula();
+						final UnmodifiableTransFormula normalizedAssOfCall = normalizeTerm(assOfCall);
+						final UnmodifiableTransFormula normalizedAssOfRet = normalizeTerm(assOfRet);
+						normalizedTf = normalizeTerm(predTF);
+						Map<Term, Term> subMap = convertEqualToMap(normalizedAssOfCall.getFormula(), true);
 
-						Term normalizedAssOfCall = normalizeTerm(assOfCall);
-						Term normalizedAssOfRet = normalizeTerm(assOfRet);
-						Term normalizedtfTerm = normalizeTerm(predTF);
-						Map<Term, Term> subMap = convertEqualToMap(normalizedAssOfCall, true);
 						final Substitution subCall = new Substitution(mScript, subMap);
-						normalizedtfTerm = subCall.transform(normalizedtfTerm);
-						subMap.clear();
-						subMap = convertEqualToMap(normalizedAssOfRet, false);
+						Term normalizedtfTerm = subCall.transform(normalizedTf.getFormula());
+
+						subMap.putAll(convertEqualToMap(normalizedAssOfRet.getFormula(), false));
 						final Substitution subRet = new Substitution(mScript, subMap);
+						final TransFormulaBuilder builder = new TransFormulaBuilder(normalizedAssOfCall.getInVars(),
+								normalizedAssOfRet.getOutVars(), true, Collections.emptySet(), true,
+								Collections.emptyList(), true);
 						normalizedtfTerm = subRet.transform(normalizedtfTerm);
-						final Term conjunction = SmtUtils.and(mScript.getScript(), predecessorFrame.getFormula(), not(toBeBlocked).getFormula(), normalizedtfTerm);
-						final LBool bool = SmtUtils.checkSatTerm(mScript.getScript(), conjunction);
+						builder.setFormula(normalizedtfTerm);
+						builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
+						normalizedTf = builder.finishConstruction(mScript);
 						mLogger.debug("Converted TF with local assignment");
 					}
+
+					/*
+					 * Assignment of local is disabled -> interpolation does not work yet.
+					 */
+					// final LBool res = PredicateUtils.isInductiveHelper(mScript.getScript(), predecessorFrame,
+					// not(toBeBlocked), normalizedTf, modifiableGlobals, modifiableGlobals);
 
 					final LBool res = PredicateUtils.isInductiveHelper(mScript.getScript(), predecessorFrame,
 							not(toBeBlocked), predTF, modifiableGlobals, modifiableGlobals);
@@ -516,7 +533,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					}
 
 					/*
-					 * Dealing with procedure calls TODO:
+					 * Dealing with procedure calls:
 					 */
 				} else if (predecessorTransition instanceof IIcfgCallTransition) {
 					if (mDealWithProcedures.equals(DealWithProcedures.THROW_EXCEPTION)) {
@@ -528,7 +545,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					}
 
 					/*
-					 * Dealing with procedure returns TODO:
+					 * Dealing with procedure returns:
 					 */
 				} else if (predecessorTransition instanceof IIcfgReturnTransition) {
 					if (mDealWithProcedures.equals(DealWithProcedures.THROW_EXCEPTION)) {
@@ -1056,27 +1073,39 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	 * @param t
 	 * @return
 	 */
-	private final Term normalizeTerm(final UnmodifiableTransFormula t) {
+	private final UnmodifiableTransFormula normalizeTerm(final UnmodifiableTransFormula t) {
 		final HashMap<Term, Term> subMap = new HashMap<Term, Term>();
 		final Term tTerm = t.getFormula();
+
+		final Map<IProgramVar, TermVariable> inVars = new HashMap<IProgramVar, TermVariable>();
+		final Map<IProgramVar, TermVariable> outVars = new HashMap<IProgramVar, TermVariable>();
+
 		for (final Entry<IProgramVar, TermVariable> outVar : t.getOutVars().entrySet()) {
 			subMap.put(outVar.getValue(), outVar.getKey().getTermVariable());
+			outVars.put(outVar.getKey(), outVar.getKey().getTermVariable());
 		}
 		for (final Entry<IProgramVar, TermVariable> inVar : t.getInVars().entrySet()) {
 			subMap.put(inVar.getValue(), inVar.getKey().getTermVariable());
+			inVars.put(inVar.getKey(), inVar.getKey().getTermVariable());
 		}
 		final Substitution sub = new Substitution(mScript, subMap);
-		return sub.transform(tTerm);
+		final Term newTerm = sub.transform(tTerm);
+		final TransFormulaBuilder builder = new TransFormulaBuilder(inVars, outVars, true, Collections.emptySet(), true,
+				Collections.emptySet(), true);
+		builder.setFormula(newTerm);
+		builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return builder.finishConstruction(mScript);
 	}
-	
+
 	/**
-	 * Converts an equals term to map, used for substitution. 
+	 * Converts an equals term to map, used for substitution.
+	 * 
 	 * @param t
 	 * @return
 	 */
 	private final Map<Term, Term> convertEqualToMap(final Term t, final Boolean reverse) {
 		final HashMap<Term, Term> resultMap = new HashMap<Term, Term>();
-		final ApplicationTerm appTerm = (ApplicationTerm)t;
+		final ApplicationTerm appTerm = (ApplicationTerm) t;
 		if (appTerm.getFunction().getName().equals("=")) {
 			if (reverse) {
 				resultMap.put(appTerm.getParameters()[0], appTerm.getParameters()[1]);
