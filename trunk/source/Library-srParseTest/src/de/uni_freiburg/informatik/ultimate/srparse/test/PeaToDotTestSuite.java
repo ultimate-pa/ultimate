@@ -43,6 +43,7 @@ import java.util.stream.Stream;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -103,20 +104,25 @@ public class PeaToDotTestSuite {
 		mScopeName = scopeName.replace(scopePrefix, "");
 	}
 
-	// @Test
+	@Test
 	public void testDot() throws IOException, InterruptedException {
 		final PhaseEventAutomata pea;
 		final CounterTrace counterTrace;
 
-		try {
-			pea = mPattern.transformToPea(mLogger, mDurationToBounds);
-			counterTrace = mPattern.constructCounterTrace(mDurationToBounds);
-		} catch (final PatternScopeNotImplemented e) {
-			return; // Oops, somebody forgot to implement that sh.. ;-)
-		}
+		// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
+		final Boolean runTest = false;
 
-		writeSvgFile(DotWriterNew.createDotString(pea));
-		writeMarkdownFile(counterTrace.toString());
+		if (runTest) {
+			try {
+				pea = mPattern.transformToPea(mLogger, mDurationToBounds);
+				counterTrace = mPattern.constructCounterTrace(mDurationToBounds);
+			} catch (final PatternScopeNotImplemented e) {
+				return; // Oops, somebody forgot to implement that sh.. ;-)
+			}
+
+			writeSvgFile(DotWriterNew.createDotString(pea));
+			writeMarkdownFile(counterTrace.toString());
+		}
 	}
 
 	private void writeSvgFile(final String dot) throws IOException, InterruptedException {
