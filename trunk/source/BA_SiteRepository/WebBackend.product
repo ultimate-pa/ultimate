@@ -1,33 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Ultimate-CommandLine" uid="CLI-E4" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.2.3" useFeatures="true" includeLaunchers="true">
-
-   <aboutInfo>
-      <text>
-         Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files.
-      </text>
-   </aboutInfo>
+<product name="WebBackend" uid="WebBackend" id="de.uni_freiburg.informatik.ultimate.web.backend.WebBackendProduct" application="de.uni_freiburg.informatik.ultimate.web.backend.WebBackend" version="0.2.2" useFeatures="true" includeLaunchers="true">
 
    <configIni use="default">
    </configIni>
 
    <launcherArgs>
-      <programArgs>--launcher.suppressErrors -nosplash
+      <programArgs>-nosplash -consoleLog
       </programArgs>
-      <programArgsLin>-data @user.home/.ultimate
-      </programArgsLin>
-      <programArgsWin>-data @user.home\ultimate-data
-      </programArgsWin>
-      <vmArgs>-Xmx8g -Xms4M
+      <vmArgs>-Dosgi.noShutdown=true
+-Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.StdErrLog
+-DWebBackend.SETTINGS_FILE=\path\to\web.config.properties.dist
       </vmArgs>
+      <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts
+      </vmArgsMac>
    </launcherArgs>
 
    <windowImages/>
 
-   <splash
-      location="UltimateCore" />
-   <launcher name="Ultimate">
+   <launcher name="WebBackend">
       <win useIco="false">
          <bmp/>
       </win>
@@ -43,9 +35,9 @@
    </plugins>
 
    <features>
-      <feature id="BA_FeatureUltimateCommandLine"/>
-      <feature id="BA_FeatureUltimateCommon"/>
       <feature id="BA_FeatureDependenciesCommon"/>
+      <feature id="BA_FeatureUltimateCommon"/>
+      <feature id="BA_FeatureWebBackend"/>
    </features>
 
    <configurations>
@@ -53,7 +45,7 @@
       <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="2" />
-      <plugin id="org.eclipse.osgi" autoStart="true" startLevel="1" />
+      <plugin id="org.eclipse.osgi" autoStart="false" startLevel="1" />
    </configurations>
 
    <preferencesInfo>
