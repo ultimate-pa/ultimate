@@ -426,7 +426,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 
 	@Override
 	protected void computeCFGHoareAnnotation() {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Petri net based analysis cannot compute Hoare annotation.");
 	}
 
 	private boolean acceptsPetriViaFA(final IUltimateServiceProvider services,
