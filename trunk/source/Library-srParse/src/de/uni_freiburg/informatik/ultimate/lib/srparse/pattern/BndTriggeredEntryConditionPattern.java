@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
  * This file is part of the ULTIMATE Library-srParse plug-in.
