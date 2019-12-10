@@ -59,6 +59,7 @@ public class ResponseChain21Pattern extends PatternType {
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeBefore) {
 			final CDD P = getScope().getCdd1();
+			// TODO: fix countertrace
 			ct = counterTrace(phase(P.negate()), phase(R.and(P.negate()).and(S.negate())),
 					phase(P.negate().and(S).and(R.negate())), phase(P.negate()), phase(P.negate().and(U)),
 					phase(P.negate().and(T.negate())), phase(P), phaseT());
@@ -67,9 +68,10 @@ public class ResponseChain21Pattern extends PatternType {
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = getScope().getCdd1();
 			final CDD Q = getScope().getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R.negate())),
-					phase(Q), phaseT());
-
+			// TODO: fix countertrace
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R)),
+					phase(Q.negate().and(S)), phase(Q.negate()), phase(Q.negate().and(U)),
+					phase(Q.negate().and(T.negate())), phase(Q), phaseT());
 			return ct;
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
