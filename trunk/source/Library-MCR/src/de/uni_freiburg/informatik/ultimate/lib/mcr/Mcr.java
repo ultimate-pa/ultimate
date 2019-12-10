@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
@@ -133,7 +134,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				final INestedWordAutomaton<LETTER, ?> mcrAutomaton = getMcrAutomaton(trace, interpolants);
 				automatonBuilder.update(mcrAutomaton, trace, interpolants);
 			}
-			queue.addAll(generateSeedInterleavings(trace, interpolants));
+			// queue.addAll(generateSeedInterleavings(trace, interpolants));
 		}
 		// All traces are infeasible
 		return new McrTraceCheckResult<>(initialTrace, LBool.UNSAT, automatonBuilder.getResult(), initialInterpolants);
@@ -377,8 +378,8 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				final String postWrite = "q1";
 				final String postRead = "q2";
 				nwa.addState(true, false, initial);
+				nwa.addState(false, true, postRead);
 				if (write == null) {
-					nwa.addState(false, true, postRead);
 					nwa.addInternalTransition(initial, read, postRead);
 					for (final LETTER action : trace) {
 						if (!writesOnVar.contains(action)) {
@@ -388,18 +389,16 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 					}
 				} else {
 					nwa.addState(false, false, postWrite);
-					nwa.addState(false, true, postRead);
-					final Set<LETTER> correctWrites = new HashSet<>();
-					for (final LETTER otherWrite : writesOnVar) {
-						if (mWriteRelation.areRelated(otherWrite, write, var, trace, interpolants)) {
-							correctWrites.add(otherWrite);
-						}
-					}
-					// Add the self-loops for all the actions, that still can happen
+					// Add q0 -w-> q1 for all related writes w
+					writesOnVar.stream().filter(x -> mWriteRelation.areRelated(x, write, var, trace, interpolants))
+							.forEach(x -> nwa.addInternalTransition(initial, x, postWrite));
+					// Add q1 -r-> q2
+					nwa.addInternalTransition(postWrite, read, postRead);
+					// Add the self-loops
 					for (final LETTER action : trace) {
 						nwa.addInternalTransition(initial, action, initial);
 						nwa.addInternalTransition(postRead, action, postRead);
-						if (!writesOnVar.contains(action) || correctWrites.contains(action)) {
+						if (!writesOnVar.contains(action)) {
 							nwa.addInternalTransition(postWrite, action, postWrite);
 						}
 					}
@@ -413,6 +412,9 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private <STATE> INestedWordAutomaton<LETTER, STATE> intersect(
 			final Collection<INestedWordAutomaton<LETTER, STATE>> automata,
 			final IIntersectionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		if (automata.isEmpty()) {
+			return new NestedWordAutomaton<>(mAutomataServices, mAlphabet, stateFactory);
+		}
 		INestedWordAutomaton<LETTER, STATE> result = null;
 		for (final INestedWordAutomaton<LETTER, STATE> a : automata) {
 			if (result == null) {
@@ -422,7 +424,10 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				result = intersect.getResult();
 			}
 		}
-		return result;
+		final INestedWordAutomaton<LETTER, STATE> simplified =
+				new RemoveDeadEnds<>(mAutomataServices, result).getResult();
+		mLogger.info(simplified);
+		return simplified;
 	}
 
 	public NestedWordAutomaton<LETTER, IPredicate> getAutomaton() {
