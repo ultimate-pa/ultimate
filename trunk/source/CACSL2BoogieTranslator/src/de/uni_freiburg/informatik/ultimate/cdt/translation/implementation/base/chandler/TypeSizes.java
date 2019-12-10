@@ -126,6 +126,7 @@ public class TypeSizes {
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONG, mSizeOfLongType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGLONG, mSizeOfLongLongType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.ULONGLONG, mSizeOfLongLongType);
+
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE, mSizeOfDoubleType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT, mSizeOfFloatType);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE, mSizeOfLongDoubleType);
@@ -133,6 +134,15 @@ public class TypeSizes {
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE, mSizeOfDoubleType * 2);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_FLOAT, mSizeOfFloatType * 2);
 		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_LONGDOUBLE, mSizeOfLongDoubleType * 2);
+
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.DOUBLE_SMT, mSizeOfDoubleType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.FLOAT_SMT, mSizeOfFloatType);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.LONGDOUBLE_SMT, mSizeOfLongDoubleType);
+
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_DOUBLE_SMT, mSizeOfDoubleType * 2);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_FLOAT_SMT, mSizeOfFloatType * 2);
+		mCPrimitiveToTypeSizeConstant.put(CPrimitives.COMPLEX_LONGDOUBLE_SMT, mSizeOfLongDoubleType * 2);
+
 	}
 
 	public TypeSizes(final TypeSizes prerunTypeSizes, final FlatSymbolTable symbolTable) {
@@ -258,42 +268,33 @@ public class TypeSizes {
 	 * @return FloatingPointSize of a float, double, or long double.
 	 */
 	public FloatingPointSize getFloatingPointSize(final CPrimitives cPrimitive) {
-		final FloatingPointSize result;
+		final int sizeof = getSize(cPrimitive);
 		switch (cPrimitive) {
-		case FLOAT: {
-			final int sizeof = getSize(cPrimitive);
+		case FLOAT:
+		case FLOAT_SMT:
 			if (sizeof == 4) {
-				result = new FloatingPointSize(sizeof, 24, 8);
-			} else {
-				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
+				return new FloatingPointSize(sizeof, 24, 8);
 			}
-		}
-			break;
-		case DOUBLE: {
-			final int sizeof = getSize(cPrimitive);
+			throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
+		case DOUBLE:
+		case DOUBLE_SMT:
 			if (sizeof == 8) {
-				result = new FloatingPointSize(sizeof, 53, 11);
-			} else {
-				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
+				return new FloatingPointSize(sizeof, 53, 11);
 			}
-		}
-			break;
-		case LONGDOUBLE: {
-			final int sizeof = getSize(cPrimitive);
+			throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
+		case LONGDOUBLE:
+		case LONGDOUBLE_SMT:
 			// 12 because of 80bit long doubles on linux x86
 			if (sizeof == 12) {
-				result = new FloatingPointSize(sizeof, 65, 15);
+				return new FloatingPointSize(sizeof, 65, 15);
 			} else if (sizeof == 16) {
-				result = new FloatingPointSize(sizeof, 113, 15);
+				return new FloatingPointSize(sizeof, 113, 15);
 			} else {
 				throw new UnsupportedOperationException("unsupported sizeof " + cPrimitive + "==" + sizeof);
 			}
-		}
-			break;
 		default:
 			throw new IllegalArgumentException("not real floating type " + cPrimitive);
 		}
-		return result;
 	}
 
 	public CPrimitive getCorrespondingUnsignedType(final CPrimitive type) {

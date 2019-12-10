@@ -44,7 +44,6 @@ public class CPrimitive extends CType {
 	 */
 	public static enum CPrimitives {
 
-		/* Integer Types */
 		/* char */
 		CHAR(CPrimitiveCategory.INTTYPE),
 		/* signed char */
@@ -75,31 +74,88 @@ public class CPrimitive extends CType {
 		ULONGLONG(CPrimitiveCategory.INTTYPE),
 		/* _Bool */
 		BOOL(CPrimitiveCategory.INTTYPE),
-		/* Floating Types */
-		/* float */
+
+		/**
+		 * float
+		 *
+		 * represented as SMT bitvector, e.g.,
+		 *
+		 * <code>
+		 * type { :bitsize 32 } C_FLOAT = bv32;
+		 * </code>
+		 */
 		FLOAT(CPrimitiveCategory.FLOATTYPE),
-		/* _Complex float */
+
+		/**
+		 * _Complex float
+		 */
 		COMPLEX_FLOAT(CPrimitiveCategory.FLOATTYPE),
-		/* double */
+
+		/**
+		 * double
+		 */
 		DOUBLE(CPrimitiveCategory.FLOATTYPE),
-		/* _Complex double */
+
+		/**
+		 * _Complex double
+		 */
 		COMPLEX_DOUBLE(CPrimitiveCategory.FLOATTYPE),
-		/* long double */
+
+		/**
+		 * long double
+		 */
 		LONGDOUBLE(CPrimitiveCategory.FLOATTYPE),
-		/* _Complex long double */
+
+		/**
+		 * _Complex long double
+		 */
 		COMPLEX_LONGDOUBLE(CPrimitiveCategory.FLOATTYPE),
+
+		/**
+		 * <code>float</code> represented as SMT floating point, e.g.,
+		 *
+		 * <code>
+		 * type { :builtin "FloatingPoint" } { :indices 8,24 } C_FLOAT;
+		 * </code>
+		 *
+		 * We use this to type the various <code> :builtin </code> functions and procedures.
+		 *
+		 */
+		FLOAT_SMT(CPrimitiveCategory.FLOATTYPE, true),
+
+		/** _Complex float represented as SMT float */
+		COMPLEX_FLOAT_SMT(CPrimitiveCategory.FLOATTYPE, true),
+
+		/** double represented as SMT float */
+		DOUBLE_SMT(CPrimitiveCategory.FLOATTYPE, true),
+
+		/** _Complex double represented as SMT float */
+		COMPLEX_DOUBLE_SMT(CPrimitiveCategory.FLOATTYPE, true),
+
+		/** long double represented as SMT float */
+		LONGDOUBLE_SMT(CPrimitiveCategory.FLOATTYPE, true),
+
+		/** _Complex long double represented as SMT float */
+		COMPLEX_LONGDOUBLE_SMT(CPrimitiveCategory.FLOATTYPE, true),
+
 		// TODO: something with "_imaginary"??
-		/* other type(s) */
+
 		/**
 		 * C type : void.
 		 */
 		VOID(CPrimitiveCategory.VOID);
 
-		CPrimitives(final CPrimitiveCategory generalprimitive) {
-			mPrimitiveCategory = generalprimitive;
+		private final CPrimitiveCategory mPrimitiveCategory;
+		private final boolean mIsSmtFloat;
+
+		private CPrimitives(final CPrimitiveCategory generalprimitive) {
+			this(generalprimitive, false);
 		}
 
-		private final CPrimitiveCategory mPrimitiveCategory;
+		private CPrimitives(final CPrimitiveCategory generalprimitive, final boolean isSmtFloat) {
+			mPrimitiveCategory = generalprimitive;
+			mIsSmtFloat = isSmtFloat;
+		}
 
 		public boolean isIntegertype() {
 			return mPrimitiveCategory == CPrimitiveCategory.INTTYPE;
@@ -111,6 +167,19 @@ public class CPrimitive extends CType {
 
 		public CPrimitiveCategory getPrimitiveCategory() {
 			return mPrimitiveCategory;
+		}
+
+		public boolean isSmtFloat() {
+			return mIsSmtFloat;
+		}
+
+		/**
+		 * Returns true iff this type is a complex type according to the definition 6.2.5.11 of the C11 standard.
+		 */
+		public boolean isComplexFloat() {
+			return this == CPrimitives.COMPLEX_FLOAT || this == CPrimitives.COMPLEX_DOUBLE
+					|| this == CPrimitives.COMPLEX_LONGDOUBLE || this == COMPLEX_DOUBLE_SMT || this == COMPLEX_FLOAT_SMT
+					|| this == COMPLEX_LONGDOUBLE_SMT;
 		}
 
 	}
@@ -174,12 +243,6 @@ public class CPrimitive extends CType {
 					mType = CPrimitives.CHAR;
 				}
 				break;
-			// case IASTSimpleDeclSpecifier.t_char16_t:
-			// this.type = PRIMITIVE.CHAR16;
-			// break;
-			// case IASTSimpleDeclSpecifier.t_char32_t:
-			// this.type = PRIMITIVE.CHAR32;
-			// break;
 			case IASTSimpleDeclSpecifier.t_double:
 				if (sds.isComplex()) {
 					if (sds.isLong()) {
@@ -260,7 +323,6 @@ public class CPrimitive extends CType {
 	}
 
 	private static CPrimitiveCategory getGeneralType(final CPrimitives type) throws AssertionError {
-		final CPrimitiveCategory generalType;
 		switch (type) {
 		case COMPLEX_FLOAT:
 		case COMPLEX_DOUBLE:
@@ -268,10 +330,13 @@ public class CPrimitive extends CType {
 		case FLOAT:
 		case DOUBLE:
 		case LONGDOUBLE:
-			generalType = CPrimitiveCategory.FLOATTYPE;
-			// throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support
-			// floats");
-			break;
+		case COMPLEX_DOUBLE_SMT:
+		case COMPLEX_FLOAT_SMT:
+		case COMPLEX_LONGDOUBLE_SMT:
+		case DOUBLE_SMT:
+		case FLOAT_SMT:
+		case LONGDOUBLE_SMT:
+			return CPrimitiveCategory.FLOATTYPE;
 		case BOOL:
 		case UCHAR:
 		case UINT:
@@ -279,23 +344,17 @@ public class CPrimitive extends CType {
 		case ULONGLONG:
 		case USHORT:
 		case CHAR:
-			// case CHAR16:
-			// case CHAR32:
 		case INT:
 		case LONG:
 		case LONGLONG:
 		case SCHAR:
 		case SHORT:
-			// case WCHAR:
-			generalType = CPrimitiveCategory.INTTYPE;
-			break;
+			return CPrimitiveCategory.INTTYPE;
 		case VOID:
-			generalType = CPrimitiveCategory.VOID;
-			break;
+			return CPrimitiveCategory.VOID;
 		default:
-			throw new AssertionError("case missing");
+			throw new UnsupportedOperationException("Unknown case " + type);
 		}
-		return generalType;
 	}
 
 	public CPrimitives getType() {

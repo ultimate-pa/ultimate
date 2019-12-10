@@ -149,12 +149,10 @@ public abstract class CType {
 	/**
 	 * Returns true iff this type is a complex type according to the definition 6.2.5.11 of the C11 standard.
 	 */
-	public boolean isComplexType() {
+	public boolean isComplexFloatType() {
 		if (this instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) this;
-			return cPrimitive.getType() == CPrimitives.COMPLEX_FLOAT
-					|| cPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE
-					|| cPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE;
+			return cPrimitive.getType().isComplexFloat();
 		}
 		return false;
 	}

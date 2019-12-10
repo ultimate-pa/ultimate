@@ -30,10 +30,12 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -281,54 +283,87 @@ public class PostProcessor {
 	 * Generate FloatingPoint types
 	 *
 	 */
-	public ArrayList<Declaration> declareFloatDataTypes(final ILocation loc) {
-		final ArrayList<Declaration> decls = new ArrayList<>();
+	public List<Declaration> declareFloatDataTypes(final ILocation loc) {
+		final List<Declaration> decls = new ArrayList<>();
 
-		for (final CPrimitive.CPrimitives cPrimitive : CPrimitive.CPrimitives.values()) {
+		// handle non-complex float types
+		final Iterator<CPrimitives> iter = Arrays.stream(CPrimitive.CPrimitives.values())
+				.filter(a -> a.getPrimitiveCategory() == CPrimitiveCategory.FLOATTYPE && !a.isComplexFloat())
+				.iterator();
 
-			final CPrimitive cPrimitive0 = new CPrimitive(cPrimitive);
-			if (cPrimitive0.getGeneralType() != CPrimitiveCategory.FLOATTYPE || cPrimitive0.isComplexType()) {
-				continue;
-			}
+		while (iter.hasNext()) {
+			final CPrimitive.CPrimitives cPrimitive = iter.next();
 
-			final int count = mTypeSize.getSize(cPrimitive);
-
-			final Attribute[] attributes;
-			if (!mSettings.overapproximateFloatingPointOperations()) {
+			// declare FP float constants
+			if (!mSettings.overapproximateFloatingPointOperations() && cPrimitive.isSmtFloat()) {
 				// declare floating point constructors here because we might
 				// always need them for our backtranslation
-				mExpressionTranslation.declareFloatingPointConstructors(loc, new CPrimitive(cPrimitive));
-				mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_MINUS_INF,
-						new CPrimitive(cPrimitive));
-				mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_PLUS_INF,
-						new CPrimitive(cPrimitive));
-				mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_NAN,
-						new CPrimitive(cPrimitive));
-				mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_MINUS_ZERO,
-						new CPrimitive(cPrimitive));
-				mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_PLUS_ZERO,
-						new CPrimitive(cPrimitive));
-
-				attributes = new Attribute[1];
-				attributes[0] = new NamedAttribute(loc, "bitsize",
-						new Expression[] { ExpressionFactory.createIntegerLiteral(loc, String.valueOf(8 * count)) });
-				// attributes[0] = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
-				// new Expression[] { ExpressionFactory.createStringLiteral(loc, "FloatingPoint") });
-				// final int[] indices = mTypeSize.getFloatingPointSize(cPrimitive).getIndices();
-				// attributes[1] = new NamedAttribute(loc, FunctionDeclarations.INDEX_IDENTIFIER,
-				// new Expression[] { ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[0])),
-				// ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[1])) });
-			} else {
-				attributes = new Attribute[0];
+				declareFloatConstant(loc, cPrimitive);
 			}
 
-			final String identifier = "C_" + cPrimitive.name();
-			final String[] typeParams = new String[0];
-
-			final ASTType astType = mTypeHandler.byteSize2AstType(loc, CPrimitiveCategory.FLOATTYPE, count);
-			decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams, astType));
+			final TypeDeclaration typeDecl;
+			if (cPrimitive.isSmtFloat()) {
+				typeDecl = createFloatTypeDeclFP(loc, cPrimitive);
+			} else {
+				typeDecl = createFloatTypeDeclBV(loc, cPrimitive);
+			}
+			decls.add(typeDecl);
 		}
+
 		return decls;
+	}
+
+	private TypeDeclaration createFloatTypeDeclBV(final ILocation loc, final CPrimitive.CPrimitives cPrimitive) {
+		// declare float types for FP and BV
+		final int count = mTypeSize.getSize(cPrimitive);
+		final Attribute[] bvAttrs;
+		if (!mSettings.overapproximateFloatingPointOperations()) {
+			// float as bitvector
+			bvAttrs = new Attribute[] { new NamedAttribute(loc, "bitsize",
+					new Expression[] { ExpressionFactory.createIntegerLiteral(loc, String.valueOf(8 * count)) }) };
+		} else {
+			bvAttrs = new Attribute[0];
+		}
+
+		final String identifier = "C_" + cPrimitive.name();
+		final String[] typeParams = new String[0];
+
+		// float as bv
+		final ASTType astType = mTypeHandler.byteSize2AstType(loc, CPrimitiveCategory.FLOATTYPE, count);
+		return new TypeDeclaration(loc, bvAttrs, false, identifier, typeParams, astType);
+	}
+
+	private TypeDeclaration createFloatTypeDeclFP(final ILocation loc, final CPrimitive.CPrimitives cPrimitive) {
+		// float as FP
+		final Attribute[] fpAttrs;
+		if (!mSettings.overapproximateFloatingPointOperations()) {
+			final int[] indices = mTypeSize.getFloatingPointSize(cPrimitive).getIndices();
+			fpAttrs = new Attribute[] {
+					new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
+							new Expression[] { ExpressionFactory.createStringLiteral(loc, "FloatingPoint") }),
+					new NamedAttribute(loc, FunctionDeclarations.INDEX_IDENTIFIER,
+							new Expression[] { ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[0])),
+									ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[1])) }) };
+		} else {
+			fpAttrs = new Attribute[0];
+		}
+
+		final String identifier = "C_" + cPrimitive.name();
+		final String[] typeParams = new String[0];
+		return new TypeDeclaration(loc, fpAttrs, false, identifier, typeParams);
+	}
+
+	private void declareFloatConstant(final ILocation loc, final CPrimitive.CPrimitives cPrimitive) {
+		mExpressionTranslation.declareFloatingPointConstructors(loc, new CPrimitive(cPrimitive));
+		mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_MINUS_INF,
+				new CPrimitive(cPrimitive));
+		mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_PLUS_INF,
+				new CPrimitive(cPrimitive));
+		mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_NAN, new CPrimitive(cPrimitive));
+		mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_MINUS_ZERO,
+				new CPrimitive(cPrimitive));
+		mExpressionTranslation.declareFloatConstant(loc, BitvectorTranslation.SMT_LIB_PLUS_ZERO,
+				new CPrimitive(cPrimitive));
 	}
 
 	public ArrayList<Declaration> declareRoundingModeDataTypes(final ILocation loc) {
