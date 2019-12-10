@@ -450,17 +450,17 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		automaton.addInternalTransition("final", x0, "final");
 
 		if (c <= 0) {
+			// automaton.addState(false, false, "s0");
+			// automaton.addInternalTransition("init", x0, "s0");
+			// automaton.addInternalTransition("s0", x0, "init");
+
 			automaton.addState(false, false, "s0");
 			automaton.addInternalTransition("init", x0, "s0");
-			automaton.addInternalTransition("s0", x0, "init");
 
 			automaton.addState(false, false, "s1");
-			automaton.addInternalTransition("init", x0, "s1");
+			automaton.addInternalTransition("s0", x0, "s1");
 
-			automaton.addState(false, false, "s2");
-			automaton.addInternalTransition("s1", x0, "s2");
-
-			String pred = "s2";
+			String pred = "s1";
 			for (int i = 0; i < 2 * Math.abs(c); i++) {
 				final String state = "c" + i;
 				automaton.addState(false, false, state);
@@ -468,6 +468,9 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 				pred = state;
 			}
 
+			automaton.addState(false, false, "s2");
+			automaton.addInternalTransition(pred, x0, "s2");
+			automaton.addInternalTransition("s2", x0, pred);
 			automaton.addInternalTransition(pred, x1, "final");
 		}
 
