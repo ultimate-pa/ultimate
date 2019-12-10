@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -61,7 +62,9 @@ public class PolynomialRelationTest {
 	 * Warning: each test will overwrite the SMT script of the preceding test.
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
-	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
+	private static final String SOLVER_COMMAND_Z3 = "z3 SMTLIB2_COMPLIANT=true -t:3000 -memory:2024 -smt2 -in";
+	private static final String SOLVER_COMMAND_CVC4 = "cvc4 --incremental --print-success --lang smt --rewrite-divk --tlimit-per=3000";
+	private static final String SOLVER_COMMAND_MATHSAT = "mathsat";
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
 	private ManagedScript mMgdScript;
@@ -71,7 +74,7 @@ public class PolynomialRelationTest {
 	@Before
 	public void setUp() throws FileNotFoundException {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
-		final Script tmp = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LogLevel.INFO));
+		final Script tmp = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND_Z3, LogLevel.INFO));
 		if (WRITE_SMT_SCRIPTS_TO_FILE) {
 			mScript = new LoggingScript(tmp, "PolynomialRelationTest.smt2", true);
 		} else {
@@ -377,6 +380,7 @@ public class PolynomialRelationTest {
 
 	private void testSingleCaseSolveForSubject(final Term inputAsTerm, final Term x) throws NotAffineException {
 		final SolvedBinaryRelation sbr = PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x);
+		mScript.echo(new QuotedObject("Checking if input and output of solveForSubject are equivalent"));
 		Assert.assertTrue(assumptionsImpliesEquality(inputAsTerm, sbr));
 	}
 
@@ -385,6 +389,7 @@ public class PolynomialRelationTest {
 		final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.convert(mScript, inputAsTerm)
 				.solveForSubject(mScript, x, xnf);
 		final Term solvedAsTerm = mcsbr.asTerm(mScript);
+		mScript.echo(new QuotedObject("Checking if input and output of multiCaseSolveForSubject are equivalent"));
 		Assert.assertTrue(SmtUtils.areFormulasEquivalent(inputAsTerm, solvedAsTerm, mScript));
 	}
 
