@@ -238,38 +238,36 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		automaton.addState(false, false, "s4");
 
 		automaton.addInternalTransition("init", xy00, "s0");
-		automaton.addInternalTransition("s0", xy00, "init");
-		automaton.addInternalTransition("init", xy00, "s1");
-		automaton.addInternalTransition("s1", xy01, "s2");
+		automaton.addInternalTransition("s0", xy00, "s1");
+		automaton.addInternalTransition("s1", xy00, "s0");
+		automaton.addInternalTransition("s0", xy01, "s2");
 		automaton.addInternalTransition("s2", xy00, "s3");
-		automaton.addInternalTransition("s3", xy00, "s2");
-		automaton.addInternalTransition("s2", xy00, "s4");
 
 		if (c <= 0) {
-			String pred = "s4";
+			String pred = "s3";
 			for (int i = 0; i < 2 * Math.abs(c); i++) {
 				final String state = "c" + i;
 				automaton.addState(false, false, state);
 				automaton.addInternalTransition(pred, xy00, state);
 				pred = state;
 			}
+			automaton.addInternalTransition(pred, xy00, "s4");
+			automaton.addInternalTransition("s4", xy00, pred);
 			automaton.addInternalTransition(pred, xy10, "final");
 		}
 
 		if (c > 0) {
-			automaton.addState(false, false, "c");
-			automaton.addInternalTransition("s1", xy11, "final");
-			automaton.addInternalTransition("s4", xy10, "final");
-			automaton.addInternalTransition("c", xy01, "final");
+			automaton.addInternalTransition("s0", xy11, "final");
+			automaton.addInternalTransition("s3", xy10, "final");
 
-			String pred = "s1";
-			for (int i = 0; i < 2 * (Math.abs(c) - 1) - 1; i++) {
+			String pred = "s0";
+			for (int i = 0; i < 2 * (Math.abs(c) - 1); i++) {
 				final String state = "c_" + i + "_0";
 				automaton.addState(false, false, state);
 				automaton.addInternalTransition(pred, i == 0 ? xy10 : xy00, state);
 
-				if (i % 2 == 0) {
-					automaton.addInternalTransition(state, xy00, "c");
+				if (i % 2 == 1) {
+					automaton.addInternalTransition(state, xy01, "final");
 				}
 				pred = state;
 			}
