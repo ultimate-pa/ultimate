@@ -14,3 +14,5 @@ Ultimate is a program analysis framework. Ultimate consists of several plugins t
 The [official website](https://ultimate.informatik.uni-freiburg.de/) includes a web interface which allows you to use several toolchains online, a list of all developers, and a list of awards Ultimate received over the years.
 
 The available documentation can be found in [our wiki](https://github.com/ultimate-pa/ultimate/wiki).
+
+You can download the [latest release from GitHub's release page](https://github.com/ultimate-pa/ultimate/releases/latest) or try our [nightly builds](https://monteverdi.informatik.uni-freiburg.de/ultimate-nightly/). 
