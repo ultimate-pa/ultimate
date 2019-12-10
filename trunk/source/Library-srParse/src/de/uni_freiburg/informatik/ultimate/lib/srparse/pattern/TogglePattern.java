@@ -33,6 +33,8 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
+// TODO: name and pattern does not match yet.
+
 /**
  * "{scope}, if S holds then P toggles T."
  *

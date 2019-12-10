@@ -60,6 +60,7 @@ public class BndDelayedResponsePatternUT extends PatternType {
 		final int c2 = durations[1];
 
 		if (scope instanceof SrParseScopeGlobally) {
+			// TODO: needs 2 ct formulas
 			return counterTrace(phaseT(), phase(R), phase(CDD.TRUE, BoundTypes.LESSEQUAL, c1),
 					phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT());
 		}

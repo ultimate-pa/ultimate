@@ -63,6 +63,7 @@ public class PrecedenceChain21Pattern extends PatternType {
 
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
+			// TODO: needs 2 ct formulas
 			ct = counterTrace(phase(S.negate()), phase(S.and(T.negate())), phase(T.negate()), phase(P), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			ct = counterTrace(phaseT());

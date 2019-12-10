@@ -58,6 +58,7 @@ public class PrecedenceChain12Pattern extends PatternType {
 		final CDD S = cdds[1];
 		final CDD T = cdds[0];
 
+		// TODO: ct must still be checked
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
 			ct = counterTrace(phase(P.negate()), phase(S), phaseT(), phase(T), phaseT());
