@@ -678,8 +678,9 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 		automaton.addInternalTransition("s0", xy00, "s1");
 		automaton.addInternalTransition("s0", xy01, "s1");
-		automaton.addInternalTransition("s0", xy00, "s1");
-		automaton.addInternalTransition("s0", xy01, "s1");
+		//
+		automaton.addInternalTransition("s1", xy00, "s0");
+		automaton.addInternalTransition("s1", xy01, "s0");
 
 		if (c == 0) {
 			automaton.addInternalTransition("s0", xy11, "final");
@@ -701,15 +702,15 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 		}
 
 		if (c > 0) {
-			automaton.addInternalTransition("s1", xy01, "s2");
+			automaton.addInternalTransition("s0", xy01, "s2");
 			automaton.addInternalTransition(pred, xy10, "final");
 			automaton.addInternalTransition(pred, xy11, "final");
 		}
 
 		// TODO: make this part deterministic.
 		if (c < 0) {
-			automaton.addInternalTransition("s1", xy10, "s2");
-			automaton.addInternalTransition("s1", xy11, "s2");
+			automaton.addInternalTransition("s0", xy10, "s2");
+			automaton.addInternalTransition("s0", xy11, "s2");
 			automaton.addInternalTransition(pred, xy01, "final");
 		}
 
