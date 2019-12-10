@@ -89,7 +89,7 @@ public class MemoryModel_Unbounded extends BaseMemoryModel {
 	public HeapDataArray getDataHeapArray(final CPrimitives primitive) {
 		if (primitive.isIntegertype()) {
 			return mIntegerArray;
-		} else if (primitive.isFloatingtype()) {
+		} else if (primitive.isFloatingType()) {
 			return mFloatingArray;
 		} else {
 			throw new AssertionError();

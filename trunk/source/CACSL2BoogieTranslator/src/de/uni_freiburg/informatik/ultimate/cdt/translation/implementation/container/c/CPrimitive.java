@@ -161,7 +161,7 @@ public class CPrimitive extends CType {
 			return mPrimitiveCategory == CPrimitiveCategory.INTTYPE;
 		}
 
-		public boolean isFloatingtype() {
+		public boolean isFloatingType() {
 			return mPrimitiveCategory == CPrimitiveCategory.FLOATTYPE;
 		}
 
@@ -180,6 +180,55 @@ public class CPrimitive extends CType {
 			return this == CPrimitives.COMPLEX_FLOAT || this == CPrimitives.COMPLEX_DOUBLE
 					|| this == CPrimitives.COMPLEX_LONGDOUBLE || this == COMPLEX_DOUBLE_SMT || this == COMPLEX_FLOAT_SMT
 					|| this == COMPLEX_LONGDOUBLE_SMT;
+		}
+
+		/**
+		 * @return the dual of a float type, e.g., the dual of {@link CPrimitives#FLOAT} is
+		 *         {@link CPrimitives#FLOAT_SMT}
+		 */
+		public CPrimitives getFloatCounterpart() {
+			switch (this) {
+			case COMPLEX_DOUBLE:
+				return COMPLEX_DOUBLE_SMT;
+			case COMPLEX_DOUBLE_SMT:
+				return COMPLEX_DOUBLE;
+			case COMPLEX_FLOAT:
+				return COMPLEX_FLOAT_SMT;
+			case COMPLEX_FLOAT_SMT:
+				return COMPLEX_FLOAT;
+			case COMPLEX_LONGDOUBLE:
+				return COMPLEX_LONGDOUBLE_SMT;
+			case COMPLEX_LONGDOUBLE_SMT:
+				return COMPLEX_LONGDOUBLE;
+			case DOUBLE:
+				return DOUBLE_SMT;
+			case DOUBLE_SMT:
+				return DOUBLE;
+			case LONGDOUBLE:
+				return LONGDOUBLE_SMT;
+			case LONGDOUBLE_SMT:
+				return LONGDOUBLE;
+			case FLOAT:
+				return FLOAT_SMT;
+			case FLOAT_SMT:
+				return FLOAT;
+			case BOOL:
+			case CHAR:
+			case INT:
+			case LONG:
+			case LONGLONG:
+			case SCHAR:
+			case SHORT:
+			case UCHAR:
+			case UINT:
+			case ULONG:
+			case ULONGLONG:
+			case USHORT:
+			case VOID:
+				throw new AssertionError("Cannot convert " + this + " to float counterpart");
+			default:
+				throw new UnsupportedOperationException("Unhandled case: " + this);
+			}
 		}
 
 	}

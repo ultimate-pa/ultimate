@@ -876,7 +876,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				attributes = generateAttributes(loc, mSettings.overapproximateFloatingPointOperations(),
 						conversionFunction, new int[] { bitsize });
 			} else {
-				throw new AssertionError("unhandled case");
+				throw new UnsupportedOperationException("unhandled case: " + newType);
 			}
 			final ASTType[] params = new ASTType[] { roundingMode, paramASTType };
 			final ASTType resultASTType = mTypeHandler.cType2AstType(loc, newType);
@@ -1198,7 +1198,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	private static void checkIsFloatPrimitive(final RValue argument) {
 		if (!(argument.getCType().getUnderlyingType() instanceof CPrimitive)
-				|| !((CPrimitive) argument.getCType().getUnderlyingType()).getType().isFloatingtype()) {
+				|| !((CPrimitive) argument.getCType().getUnderlyingType()).getType().isFloatingType()) {
 			throw new IllegalArgumentException(
 					"can apply float operation only to floating type, but saw " + argument.getCType());
 		}
@@ -1345,7 +1345,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector,
 			final CPrimitives floatType) {
-		final CPrimitive conversionType = new CPrimitive(floatType).setIsSmtFloat(true);
+		assert !floatType.isSmtFloat() && floatType.isFloatingType();
+		final CPrimitive conversionType = new CPrimitive(floatType.getFloatCounterpart()).setIsSmtFloat(true);
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(floatType);
 		final Expression significantBits = extractBits(loc, bitvector, fps.getSignificant() - 1, 0);
 		final Expression exponentBits = extractBits(loc, bitvector, fps.getDataSize() - 1, fps.getSignificant() - 1);
