@@ -367,19 +367,17 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addState(false, false, "s2");
 			automaton.addState(false, false, "s3");
 			automaton.addState(false, false, "s4");
-			automaton.addState(false, false, "s5");
 
-			automaton.addInternalTransition("init", xy00, "s0");
-			automaton.addInternalTransition("s0", xy00, "init");
-			automaton.addInternalTransition("init", xy01, "s1");
-			automaton.addInternalTransition("init", xy00, "s3");
-			automaton.addInternalTransition("s1", xy10, "final");
-			automaton.addInternalTransition("s1", xy00, "s2");
-			automaton.addInternalTransition("s2", xy00, "s1");
-			automaton.addInternalTransition("s3", xy10, "s4");
-			automaton.addInternalTransition("s4", xy00, "s5");
-			automaton.addInternalTransition("s5", xy00, "s4");
-			automaton.addInternalTransition("s4", xy01, "final");
+			automaton.addInternalTransition("init", xy01, "s0");
+			automaton.addInternalTransition("init", xy00, "s2");
+			automaton.addInternalTransition("s2", xy00, "init");
+			automaton.addInternalTransition("s0", xy10, "final");
+			automaton.addInternalTransition("s0", xy00, "s1");
+			automaton.addInternalTransition("s1", xy00, "s0");
+			automaton.addInternalTransition("s2", xy10, "s3");
+			automaton.addInternalTransition("s3", xy00, "s4");
+			automaton.addInternalTransition("s4", xy00, "s3");
+			automaton.addInternalTransition("s3", xy01, "final");
 
 			return automaton;
 		}
