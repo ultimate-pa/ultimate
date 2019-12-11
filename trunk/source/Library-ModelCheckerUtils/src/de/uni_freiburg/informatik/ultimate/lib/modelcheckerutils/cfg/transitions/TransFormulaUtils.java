@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Xn
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubtermPropertyChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -228,8 +229,20 @@ public final class TransFormulaUtils {
 		}
 
 		if (tryAuxVarElimination) {
-			final Term eliminated = PartialQuantifierElimination.elim(mgdScript, QuantifiedFormula.EXISTS, auxVars,
-					formula, services, logger, simplificationTechnique, xnfConversionTechnique);
+			final Term eliminated;
+//			eliminated = PartialQuantifierElimination.elim(mgdScript, QuantifiedFormula.EXISTS, auxVars,
+//					formula, services, logger, simplificationTechnique, xnfConversionTechnique);
+			final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, formula);
+			auxVars.clear();
+			final Term partiallyEliminated = PartialQuantifierElimination.tryToEliminate(services, logger, mgdScript, quantified, simplificationTechnique, xnfConversionTechnique);
+			final Term pnf = new PrenexNormalForm(mgdScript).transform(partiallyEliminated);
+			if (pnf instanceof QuantifiedFormula && ((QuantifiedFormula) pnf).getQuantifier() == QuantifiedFormula.EXISTS) {
+				final QuantifiedFormula qf = (QuantifiedFormula) pnf;
+				auxVars.addAll(Arrays.asList(qf.getVariables()));
+				eliminated = qf.getSubformula();
+			} else {
+				eliminated = pnf;
+			}
 			logger.debug(new DebugMessage("DAG size before PQE {0}, DAG size after PQE {1}",
 					new DagSizePrinter(formula), new DagSizePrinter(eliminated)));
 			formula = eliminated;
