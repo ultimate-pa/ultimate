@@ -20,7 +20,7 @@
 
 		<!-- maven plugin versions -->
 		<tycho-version>1.4.0</tycho-version>
-		<sonar-version>3.4.0.905</sonar-version>
+		<sonar-version>3.7.0.1746</sonar-version>
 		<jacoco-version>0.8.1</jacoco-version>
 		<m2e-version>1.0.0</m2e-version>
 		<coveralls-version>4.2.0</coveralls-version>
