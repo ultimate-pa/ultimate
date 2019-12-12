@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,6 +10,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -17,7 +20,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
@@ -51,12 +53,12 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 	private final VpAlphabet<LETTER> mAlphabet;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
 
-	private final HashRelation<LETTER, IProgramVar> mReads2Variables;
-	private final HashRelation<LETTER, IProgramVar> mWrites2Variables;
-	private final HashRelation<IProgramVar, LETTER> mVariables2Writes;
-	private final Map<LETTER, Map<IProgramVar, LETTER>> mPreviousWrite;
-	private final Map<String, List<LETTER>> mThreads2SortedActions;
-	private final HashRelation<LETTER, String> mActions2Threads;
+	private final List<Set<IProgramVar>> mReads2Variables;
+	private final List<Set<IProgramVar>> mWrites2Variables;
+	private final HashRelation<IProgramVar, Integer> mVariables2Writes;
+	private final List<Map<IProgramVar, Integer>> mPreviousWrite;
+	private final Map<String, List<Integer>> mThreads2SortedActions;
+	private final List<Set<String>> mActions2Threads;
 
 	private IpAbStrategyModuleResult<LETTER> mResult;
 
@@ -73,99 +75,100 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 		mAlphabet = new VpAlphabet<>(alphabet);
 		mPredicateTransformer =
 				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(services, mManagedScript));
-		mReads2Variables = new HashRelation<>();
-		mWrites2Variables = new HashRelation<>();
+		mReads2Variables = new ArrayList<>(trace.size());
+		mWrites2Variables = new ArrayList<>(trace.size());
 		mVariables2Writes = new HashRelation<>();
-		mPreviousWrite = new HashMap<>();
+		mPreviousWrite = new ArrayList<>(trace.size());
 		mThreads2SortedActions = new HashMap<>();
-		mActions2Threads = new HashRelation<>();
+		mActions2Threads = new ArrayList<>(trace.size());
 		preprocess();
 	}
 
-	// TODO: Use indices of actions in trace as unique keys
 	private void preprocess() {
-		final Map<IProgramVar, LETTER> lastWrittenBy = new HashMap<>();
-		for (final LETTER action : mTrace) {
+		final Map<IProgramVar, Integer> lastWrittenBy = new HashMap<>();
+		for (int i = 0; i < mTrace.size(); i++) {
+			final LETTER action = mTrace.get(i);
 			final TransFormula transformula = action.getTransformula();
-			mReads2Variables.addAllPairs(action, transformula.getInVars().keySet());
-			for (final IProgramVar var : transformula.getAssignedVars()) {
-				mVariables2Writes.addPair(var, action);
-				mWrites2Variables.addPair(action, var);
+			final Set<IProgramVar> readVars = transformula.getInVars().keySet();
+			final Set<IProgramVar> writtenVars = transformula.getAssignedVars();
+			mReads2Variables.add(readVars);
+			mWrites2Variables.add(writtenVars);
+			for (final IProgramVar var : writtenVars) {
+				mVariables2Writes.addPair(var, i);
 			}
 			final String currentThread = action.getPrecedingProcedure();
-			mActions2Threads.addPair(action, currentThread);
-			List<LETTER> threadActions = mThreads2SortedActions.get(currentThread);
+			List<Integer> threadActions = mThreads2SortedActions.get(currentThread);
 			if (threadActions == null) {
 				threadActions = new ArrayList<>();
 				mThreads2SortedActions.put(currentThread, threadActions);
 			}
-			threadActions.add(action);
+			threadActions.add(i);
 			final String nextThread = action.getSucceedingProcedure();
 			if (currentThread != nextThread) {
-				mActions2Threads.addPair(action, nextThread);
 				threadActions = mThreads2SortedActions.get(nextThread);
 				if (threadActions == null) {
 					threadActions = new ArrayList<>();
 					mThreads2SortedActions.put(nextThread, threadActions);
 				}
-				threadActions.add(action);
+				threadActions.add(i);
 			}
-			final Set<IProgramVar> reads = mReads2Variables.getImage(action);
-			if (!reads.isEmpty()) {
-				final Map<IProgramVar, LETTER> previousWrites = new HashMap<>();
-				for (final IProgramVar read : reads) {
-					previousWrites.put(read, lastWrittenBy.get(read));
-				}
-				mPreviousWrite.put(action, previousWrites);
+			mActions2Threads.add(new HashSet<>(Arrays.asList(currentThread, nextThread)));
+			final Map<IProgramVar, Integer> previousWrites = new HashMap<>();
+			for (final IProgramVar read : readVars) {
+				previousWrites.put(read, lastWrittenBy.get(read));
 			}
-			for (final IProgramVar written : mWrites2Variables.getImage(action)) {
-				lastWrittenBy.put(written, action);
+			mPreviousWrite.add(previousWrites);
+			for (final IProgramVar written : writtenVars) {
+				lastWrittenBy.put(written, i);
 			}
 		}
 	}
 
-	private INestedWordAutomaton<LETTER, String> constructMcrAutomaton(final List<IPredicate> interpolants)
+	private INestedWordAutomaton<Integer, String> constructMcrAutomaton(final List<IPredicate> interpolants)
 			throws AutomataLibraryException {
 		mLogger.info("Constructing automaton for MCR equivalence class.");
-		final List<INestedWordAutomaton<LETTER, String>> automata = new ArrayList<>();
+		final Set<Integer> range = IntStream.range(0, mTrace.size()).boxed().collect(Collectors.toSet());
+		final VpAlphabet<Integer> alphabet = new VpAlphabet<>(range);
+		final List<INestedWordAutomaton<Integer, String>> automata = new ArrayList<>();
 		final StringFactory factory = new StringFactory();
 		// Construct automata for the MHB relation
-		for (final List<LETTER> threadActions : mThreads2SortedActions.values()) {
-			final Set<LETTER> otherActions = new HashSet<>(mTrace);
-			final NestedWordAutomaton<LETTER, String> nwa = new NestedWordAutomaton<>(mServices, mAlphabet, factory);
+		for (final List<Integer> threadActions : mThreads2SortedActions.values()) {
+			final Set<Integer> otherActions = new HashSet<>(range);
+			final NestedWordAutomaton<Integer, String> nwa = new NestedWordAutomaton<>(mServices, alphabet, factory);
 			otherActions.removeAll(threadActions);
 			nwa.addState(true, false, getState(0));
-			for (final LETTER otherAction : otherActions) {
+			for (final Integer otherAction : otherActions) {
 				nwa.addInternalTransition(getState(0), otherAction, getState(0));
 			}
 			for (int i = 0; i < threadActions.size(); i++) {
 				nwa.addState(false, i + 1 == threadActions.size(), getState(i + 1));
 				nwa.addInternalTransition(getState(i), threadActions.get(i), getState(i + 1));
-				for (final LETTER otherAction : otherActions) {
+				for (final Integer otherAction : otherActions) {
 					nwa.addInternalTransition(getState(i + 1), otherAction, getState(i + 1));
 				}
 			}
 			automata.add(nwa);
 		}
 		// Construct automata for each read to be preceded by the specific (or a "similar") write
-		for (final LETTER read : mTrace) {
-			final Map<IProgramVar, LETTER> previousWrites = mPreviousWrite.get(read);
+		for (int read = 0; read < mTrace.size(); read++) {
+			final Map<IProgramVar, Integer> previousWrites = mPreviousWrite.get(read);
 			if (previousWrites == null) {
 				continue;
 			}
-			for (final Entry<IProgramVar, LETTER> entry : previousWrites.entrySet()) {
-				final LETTER write = entry.getValue();
+			for (final Entry<IProgramVar, Integer> entry : previousWrites.entrySet()) {
+				final Integer write = entry.getValue();
 				final IProgramVar var = entry.getKey();
-				final NestedWordAutomaton<LETTER, String> nwa =
-						new NestedWordAutomaton<>(mServices, mAlphabet, factory);
-				final Set<LETTER> writesOnVar = mVariables2Writes.getImage(var);
+				final NestedWordAutomaton<Integer, String> nwa =
+						new NestedWordAutomaton<>(mServices, alphabet, factory);
+				final Set<Integer> writesOnVar = mVariables2Writes.getImage(var);
 				nwa.addState(true, false, getState(0));
 				nwa.addState(false, true, getState(2));
-				// TODO: If we guarantee unique actions (via indices), we can remove read and write from the self-loops
-				// (s.t. we get a deterministic automaton, with smaller intersection)
 				if (write == null) {
 					nwa.addInternalTransition(getState(0), read, getState(2));
-					for (final LETTER action : mTrace) {
+					for (int action = 0; action < mTrace.size(); action++) {
+						if (action == read || action == write) {
+							continue;
+						}
 						if (!writesOnVar.contains(action)) {
 							nwa.addInternalTransition(getState(0), action, getState(0));
 						}
@@ -178,7 +181,10 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 					// Add q1 -r-> q2
 					nwa.addInternalTransition(getState(1), read, getState(2));
 					// Add the self-loops
-					for (final LETTER action : mTrace) {
+					for (int action = 0; action < mTrace.size(); action++) {
+						if (action == read || action == write) {
+							continue;
+						}
 						nwa.addInternalTransition(getState(0), action, getState(0));
 						nwa.addInternalTransition(getState(2), action, getState(2));
 						if (!writesOnVar.contains(action)) {
@@ -189,25 +195,21 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 				automata.add(nwa);
 			}
 		}
-		final INestedWordAutomaton<LETTER, String> result = intersect(automata, factory);
+		final INestedWordAutomaton<Integer, String> result = intersect(automata, factory, mServices);
 		mLogger.info("Construction finished.");
 		return result;
 	}
 
-	private <STATE> INestedWordAutomaton<LETTER, STATE> intersect(
+	private static <LETTER, STATE> INestedWordAutomaton<LETTER, STATE> intersect(
 			final Collection<INestedWordAutomaton<LETTER, STATE>> automata,
-			final IIntersectionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		if (automata.isEmpty()) {
-			return new NestedWordAutomaton<>(mServices, mAlphabet, stateFactory);
-		}
+			final IIntersectionStateFactory<STATE> stateFactory, final AutomataLibraryServices services)
+			throws AutomataLibraryException {
 		INestedWordAutomaton<LETTER, STATE> result = null;
 		for (final INestedWordAutomaton<LETTER, STATE> a : automata) {
 			if (result == null) {
 				result = a;
 			} else {
-				final Intersect<LETTER, STATE> intersect = new Intersect<>(mServices, stateFactory, result, a);
-				// TODO: We do not need to remove dead ends, if we have a deterministic automaton
-				result = new RemoveDeadEnds<>(mServices, intersect.getResult()).getResult();
+				result = new Intersect<>(services, stateFactory, result, a).getResult();
 			}
 		}
 		return result;
@@ -219,7 +221,7 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 
 	private NestedWordAutomaton<LETTER, IPredicate> constructInterpolantAutomaton(final List<IPredicate> interpolants)
 			throws AutomataLibraryException {
-		final INestedWordAutomaton<LETTER, String> mcrAutomaton = constructMcrAutomaton(interpolants);
+		final INestedWordAutomaton<Integer, String> mcrAutomaton = constructMcrAutomaton(interpolants);
 		mLogger.info("Constructing interpolant automaton by labelling MCR automaton.");
 		final Map<String, IPredicate> stateMap = new HashMap<>();
 		// Fill stateMap with the given interpolants
@@ -228,8 +230,7 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 		stateMap.put(currentState, mPredicateUnifier.getTruePredicate());
 		queue.add(currentState);
 		for (int i = 0; i < interpolants.size(); i++) {
-			final LETTER action = mTrace.get(i);
-			currentState = getSuccessor(currentState, action, mcrAutomaton);
+			currentState = getSuccessor(currentState, i, mcrAutomaton);
 			stateMap.put(currentState, mPredicateUnifier.getOrConstructPredicate(interpolants.get(i)));
 			queue.add(currentState);
 		}
@@ -243,13 +244,14 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 			if (predicate == null || !visited.add(state)) {
 				continue;
 			}
-			for (final IncomingInternalTransition<LETTER, String> edge : mcrAutomaton.internalPredecessors(state)) {
+			for (final IncomingInternalTransition<Integer, String> edge : mcrAutomaton.internalPredecessors(state)) {
 				final String predecessor = edge.getPred();
 				queue.add(predecessor);
 				if (stateMap.containsKey(predecessor)) {
 					continue;
 				}
-				final Term pre = mPredicateTransformer.pre(predicate, edge.getLetter().getTransformula());
+				final LETTER action = mTrace.get(edge.getLetter());
+				final Term pre = mPredicateTransformer.pre(predicate, action.getTransformula());
 				// TODO: Try to cover more states as before?
 				stateMap.put(predecessor, mPredicateUnifier.getOrConstructPredicate(pre));
 				count++;
@@ -261,7 +263,7 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 	}
 
 	private NestedWordAutomaton<LETTER, IPredicate> createAutomatonFromMap(
-			final INestedWordAutomaton<LETTER, String> mcrAutomaton, final Map<String, IPredicate> stateMap) {
+			final INestedWordAutomaton<Integer, String> mcrAutomaton, final Map<String, IPredicate> stateMap) {
 		final NestedWordAutomaton<LETTER, IPredicate> result =
 				new NestedWordAutomaton<>(mServices, mAlphabet, mEmptyStackFactory);
 		// Add all the new predicates as states
@@ -274,15 +276,16 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 		}
 		for (final Entry<String, IPredicate> entry : stateMap.entrySet()) {
 			final String oldState = entry.getKey();
-			for (final OutgoingInternalTransition<LETTER, String> edge : mcrAutomaton.internalSuccessors(oldState)) {
+			for (final OutgoingInternalTransition<Integer, String> edge : mcrAutomaton.internalSuccessors(oldState)) {
 				final String succ = edge.getSucc();
-				result.addInternalTransition(entry.getValue(), edge.getLetter(), stateMap.get(succ));
+				final LETTER action = mTrace.get(edge.getLetter());
+				result.addInternalTransition(entry.getValue(), action, stateMap.get(succ));
 			}
 		}
 		return result;
 	}
 
-	private <STATE> STATE getSuccessor(final STATE currentState, final LETTER action,
+	private static <STATE, LETTER> STATE getSuccessor(final STATE currentState, final LETTER action,
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		for (final OutgoingInternalTransition<LETTER, STATE> outgoing : automaton.internalSuccessors(currentState,
 				action)) {
