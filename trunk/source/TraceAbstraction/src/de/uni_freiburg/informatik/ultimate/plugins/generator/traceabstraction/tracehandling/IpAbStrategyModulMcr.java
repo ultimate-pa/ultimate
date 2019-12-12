@@ -166,7 +166,7 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 				if (write == null) {
 					nwa.addInternalTransition(getState(0), read, getState(2));
 					for (int action = 0; action < mTrace.size(); action++) {
-						if (action == read || action == write) {
+						if (action == read) {
 							continue;
 						}
 						if (!writesOnVar.contains(action)) {
