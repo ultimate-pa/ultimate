@@ -156,16 +156,6 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 				mCounterexample, mPredicateUnifier, mPrefs));
 	}
 
-	public StrategyModuleMcr<LETTER> createStrategyModuleMcr(final StrategyFactory<LETTER> strategyFactory) {
-		isOnlyDefaultPrePostConditions();
-		final boolean useInterpolantConsolidation = mPrefs.getUseInterpolantConsolidation();
-		if (useInterpolantConsolidation) {
-			throw new UnsupportedOperationException("Interpolant consolidation and MCR cannot be combined");
-		}
-		return new StrategyModuleMcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, strategyFactory,
-				mCounterexample, mAbstraction, mTaskIdentifier);
-	}
-
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModulePreferences() {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModulePreferences<>(mTaskIdentifier, mServices, mPrefs,
 				mCounterexample, mPrecondition, mPostcondition,

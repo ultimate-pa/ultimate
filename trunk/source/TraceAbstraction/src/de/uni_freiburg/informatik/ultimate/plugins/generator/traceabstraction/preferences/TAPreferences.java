@@ -141,15 +141,17 @@ public final class TAPreferences {
 					"Show negated interpolant" + "automaton not possible when using difference.");
 		}
 
-		if ((mWatchIteration == 0)
-				&& ((artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) || (artifact() == Artifact.INTERPOLANT_AUTOMATON))) {
+		if (mWatchIteration == 0
+				&& (artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON || artifact() == Artifact.INTERPOLANT_AUTOMATON)) {
 			throw new IllegalArgumentException("There is no interpolant" + "automaton in iteration 0.");
 		}
 
 		mHeuristicEmptinessCheck =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK);
 
-		mHeuristicEmptinessCheckScoringMethod = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD, ScoringMethod.class);
+		mHeuristicEmptinessCheckScoringMethod =
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
+						ScoringMethod.class);
 
 		mSMTFeatureExtraction = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION);
 		mSMTFeatureExtractionDumpPath =
@@ -335,11 +337,6 @@ public final class TAPreferences {
 				RefinementStrategy.class);
 	}
 
-	public RefinementStrategy getMcrRefinementStrategy() {
-		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MCR_REFINEMENT_STRATEGY,
-				RefinementStrategy.class);
-	}
-
 	public RefinementStrategyExceptionBlacklist getRefinementStrategyExceptionSpecification() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 				RefinementStrategyExceptionBlacklist.class);
@@ -380,6 +377,7 @@ public final class TAPreferences {
 	public boolean useHeuristicEmptinessCheck() {
 		return mHeuristicEmptinessCheck;
 	}
+
 	public ScoringMethod HeuristicEmptinessCheckScoringMethod() {
 		return mHeuristicEmptinessCheckScoringMethod;
 	}

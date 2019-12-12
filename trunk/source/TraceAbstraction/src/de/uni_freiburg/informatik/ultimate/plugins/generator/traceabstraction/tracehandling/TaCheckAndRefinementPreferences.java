@@ -63,7 +63,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 
 	// fields that can be read from the TAPreferences
 	private final RefinementStrategy mRefinementStrategy;
-	private final RefinementStrategy mMcrRefinementStrategy;
 	private final boolean mUseSeparateSolverForTracechecks;
 	private final SolverMode mSolverMode;
 	private final boolean mFakeNonIncrementalSolver;
@@ -124,7 +123,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		mIcfgContainer = icfgContainer;
 
 		mRefinementStrategy = taPrefs.getRefinementStrategy();
-		mMcrRefinementStrategy = taPrefs.getMcrRefinementStrategy();
 		mUseSeparateSolverForTracechecks = taPrefs.useSeparateSolverForTracechecks();
 		mSolverMode = taPrefs.solverMode();
 		mFakeNonIncrementalSolver = taPrefs.fakeNonIncrementalSolver();
@@ -169,10 +167,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 
 	public RefinementStrategy getRefinementStrategy() {
 		return mRefinementStrategy;
-	}
-
-	public RefinementStrategy getMcrRefinementStrategy() {
-		return mMcrRefinementStrategy;
 	}
 
 	@Override
