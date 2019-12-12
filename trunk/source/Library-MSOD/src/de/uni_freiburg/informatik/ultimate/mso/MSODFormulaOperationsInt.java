@@ -32,8 +32,10 @@ import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -590,8 +592,9 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * Returns a {@link NestedWordAutomaton} that represents a part of the
 	 * {@link #elementAutomaton(AutomataLibraryServices, Term, Rational, Term)}. Part: x+c >= 0 and x >= 0.
 	 */
-	private static NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartOne(
+	private static INestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartOne(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
+		INestedWordAutomaton<MSODAlphabetSymbol, String> result;
 
 		final int c = SmtUtils.toInt(constant).intValueExact();
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
@@ -644,6 +647,18 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addInternalTransition(pred, xy01, "final");
 		}
 
+		if (!automaton.isDeterministic()) {
+			Determinize<MSODAlphabetSymbol, String> determinized;
+			try {
+				determinized = new Determinize<>(services, new MSODStringFactory(), automaton);
+				result = determinized.getResult();
+				return result;
+			} catch (final AutomataOperationCanceledException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 		return automaton;
 	}
 
@@ -651,9 +666,9 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * Returns a {@link NestedWordAutomaton} that represents a part of the
 	 * {@link #elementAutomaton(AutomataLibraryServices, Term, Rational, Term)}. Part: x+c < 0 and x < 0.
 	 */
-	private static NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartTwo(
+	private static INestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartTwo(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
-
+		INestedWordAutomaton<MSODAlphabetSymbol, String> result;
 		final int c = SmtUtils.toInt(constant).intValueExact();
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
 		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
@@ -675,7 +690,6 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 
 		automaton.addInternalTransition("s0", xy00, "s1");
 		automaton.addInternalTransition("s0", xy01, "s1");
-		//
 		automaton.addInternalTransition("s1", xy00, "s0");
 		automaton.addInternalTransition("s1", xy01, "s0");
 
@@ -704,11 +718,22 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			automaton.addInternalTransition(pred, xy11, "final");
 		}
 
-		// TODO: make this part deterministic.
 		if (c < 0) {
 			automaton.addInternalTransition("s0", xy10, "s2");
 			automaton.addInternalTransition("s0", xy11, "s2");
 			automaton.addInternalTransition(pred, xy01, "final");
+		}
+
+		if (!automaton.isDeterministic()) {
+			Determinize<MSODAlphabetSymbol, String> determinized;
+			try {
+				determinized = new Determinize<>(services, new MSODStringFactory(), automaton);
+				result = determinized.getResult();
+				return result;
+			} catch (final AutomataOperationCanceledException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 		return automaton;
@@ -718,9 +743,10 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * Returns a {@link NestedWordAutomaton} that represents a part of the
 	 * {@link #elementAutomaton(AutomataLibraryServices, Term, Rational, Term)}. Part: x+c >= 0 and x < 0.
 	 */
-	private static NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartThree(
+	private static INestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartThree(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
 
+		INestedWordAutomaton<MSODAlphabetSymbol, String> result;
 		final int c = SmtUtils.toInt(constant).intValueExact();
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
 		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
@@ -787,6 +813,18 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 			pred = state0;
 		}
 
+		if (!automaton.isDeterministic()) {
+			Determinize<MSODAlphabetSymbol, String> determinized;
+			try {
+				determinized = new Determinize<>(services, new MSODStringFactory(), automaton);
+				result = determinized.getResult();
+				return result;
+			} catch (final AutomataOperationCanceledException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 		return automaton;
 	}
 
@@ -794,9 +832,9 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 	 * Returns a {@link NestedWordAutomaton} that represents a part of the
 	 * {@link #elementAutomaton(AutomataLibraryServices, Term, Rational, Term)}. Part: x+c < 0 and x >= 0.
 	 */
-	private static NestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartFour(
+	private static INestedWordAutomaton<MSODAlphabetSymbol, String> elementAutomatonPartFour(
 			final AutomataLibraryServices services, final Term x, final Rational constant, final Term y) {
-
+		INestedWordAutomaton<MSODAlphabetSymbol, String> result;
 		final int c = SmtUtils.toInt(constant).intValueExact();
 		final MSODAlphabetSymbol xy00 = new MSODAlphabetSymbol(x, y, false, false);
 		final MSODAlphabetSymbol xy01 = new MSODAlphabetSymbol(x, y, false, true);
@@ -860,6 +898,17 @@ public final class MSODFormulaOperationsInt extends MSODFormulaOperations {
 				automaton.addInternalTransition(predInner, xy11, "final");
 			}
 			pred = state0;
+		}
+		if (!automaton.isDeterministic()) {
+			Determinize<MSODAlphabetSymbol, String> determinized;
+			try {
+				determinized = new Determinize<>(services, new MSODStringFactory(), automaton);
+				result = determinized.getResult();
+				return result;
+			} catch (final AutomataOperationCanceledException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 		return automaton;
