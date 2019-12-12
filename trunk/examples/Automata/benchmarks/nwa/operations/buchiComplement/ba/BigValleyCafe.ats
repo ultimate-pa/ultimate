@@ -1,0 +1,74 @@
+// TODO
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2019-12-12
+
+print(numberOfStates(bigValleyCafe));
+NestedWordAutomaton determinized = determinize(bigValleyCafe);
+print(numberOfStates(determinized));
+NestedWordAutomaton complementFKVDeterminized = buchiComplementFKV(determinized);
+print(numberOfStates(complementFKVDeterminized));
+// NestedWordAutomaton complementFKV = buchiComplementFKV(bigValleyCafe);
+// print(numberOfStates(complementFKV));
+
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(bigValleyCafe);
+print(numberOfStates(complementNCSB));
+// assert(numberOfStates(complementNCSB) == 12);
+print(numberOfTransitions(complementNCSB));
+// assert(numberOfTransitions(complementNCSB) == 26);
+
+NestedWordAutomaton complementHeiMat2 = buchiComplementFKV(bigValleyCafe, "HEIMAT2", 77);
+print(numberOfStates(complementHeiMat2));
+// assert(numberOfStates(complementHeiMat2) == 23);
+print(numberOfTransitions(complementHeiMat2));
+// assert(numberOfTransitions(complementHeiMat2) == 56);
+
+NestedWordAutomaton complementElastic = buchiComplementFKV(bigValleyCafe, "ELASTIC", 77);
+print(numberOfStates(complementElastic));
+// assert(numberOfStates(complementElastic) == 23);
+print(numberOfTransitions(complementElastic));
+// assert(numberOfTransitions(complementElastic) == 51);
+
+NestedWordAutomaton onlyLive = removeNonLiveStates(complementElastic);
+print(numberOfStates(onlyLive));
+// assert(numberOfStates(onlyLive) == 23);
+print(numberOfTransitions(onlyLive));
+// assert(numberOfTransitions(onlyLive) == 51);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(onlyLive));
+int shrinkNwaSize = numberOfStates(shrinkNwa(onlyLive));
+// int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(onlyLive));
+// int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(onlyLive));
+// int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(onlyLive));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(onlyLive));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(onlyLive));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(onlyLive));
+int buchiReduceSize = numberOfStates(buchiReduce(onlyLive));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(onlyLive));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(onlyLive));
+
+
+
+
+NestedWordAutomaton bigValleyCafe = (
+  callAlphabet = {},
+  internalAlphabet = {a b},
+  returnAlphabet = {},
+  states = {q0 q1 q2 q3 q4 q5 q6 q7 q8 q9 qacc },
+  initialStates = {q0},
+  finalStates = {qacc},
+  callTransitions = {},
+  internalTransitions = {
+	(q0 a q0) (q0 b q0) (q0 a q1)
+	(q1 a q2) (q1 b q2)
+	(q2 a q3) (q2 b q3)
+	(q3 a q4) (q3 b q4)
+	(q4 a q5) (q4 b q5)
+	(q5 a q6) (q5 b q6)
+	(q6 a q7) (q6 b q7)
+	(q7 a q8) (q7 b q8)
+	(q8 a q9) (q8 b q9)
+	(q9 b qacc)
+    (qacc a qacc) (qacc b qacc)
+  }, 
+  returnTransitions = {}
+);
