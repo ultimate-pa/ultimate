@@ -126,6 +126,7 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 
 	private INestedWordAutomaton<LETTER, String> constructMcrAutomaton(final List<IPredicate> interpolants)
 			throws AutomataLibraryException {
+		mLogger.info("Constructing automaton for MCR equivalence class.");
 		final List<INestedWordAutomaton<LETTER, String>> automata = new ArrayList<>();
 		final StringFactory factory = new StringFactory();
 		// Construct automata for the MHB relation
@@ -133,18 +134,15 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 			final Set<LETTER> otherActions = new HashSet<>(mTrace);
 			final NestedWordAutomaton<LETTER, String> nwa = new NestedWordAutomaton<>(mServices, mAlphabet, factory);
 			otherActions.removeAll(threadActions);
-			final String initial = getState(0);
-			nwa.addState(true, false, initial);
+			nwa.addState(true, false, getState(0));
 			for (final LETTER otherAction : otherActions) {
-				nwa.addInternalTransition(initial, otherAction, initial);
+				nwa.addInternalTransition(getState(0), otherAction, getState(0));
 			}
 			for (int i = 0; i < threadActions.size(); i++) {
-				final String currentState = getState(i);
-				final String nextState = getState(i + 1);
-				nwa.addState(false, i + 1 == threadActions.size(), nextState);
-				nwa.addInternalTransition(currentState, threadActions.get(i), nextState);
+				nwa.addState(false, i + 1 == threadActions.size(), getState(i + 1));
+				nwa.addInternalTransition(getState(i), threadActions.get(i), getState(i + 1));
 				for (final LETTER otherAction : otherActions) {
-					nwa.addInternalTransition(nextState, otherAction, nextState);
+					nwa.addInternalTransition(getState(i + 1), otherAction, getState(i + 1));
 				}
 			}
 			automata.add(nwa);
@@ -163,6 +161,8 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 				final Set<LETTER> writesOnVar = mVariables2Writes.getImage(var);
 				nwa.addState(true, false, getState(0));
 				nwa.addState(false, true, getState(2));
+				// TODO: If we guarantee unique actions (via indices), we can remove read and write from the self-loops
+				// (s.t. we get a deterministic automaton, with smaller intersection)
 				if (write == null) {
 					nwa.addInternalTransition(getState(0), read, getState(2));
 					for (final LETTER action : mTrace) {
@@ -189,7 +189,9 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 				automata.add(nwa);
 			}
 		}
-		return intersect(automata, factory);
+		final INestedWordAutomaton<LETTER, String> result = intersect(automata, factory);
+		mLogger.info("Construction finished.");
+		return result;
 	}
 
 	private <STATE> INestedWordAutomaton<LETTER, STATE> intersect(
@@ -204,12 +206,11 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 				result = a;
 			} else {
 				final Intersect<LETTER, STATE> intersect = new Intersect<>(mServices, stateFactory, result, a);
-				result = intersect.getResult();
+				// TODO: We do not need to remove dead ends, if we have a deterministic automaton
+				result = new RemoveDeadEnds<>(mServices, intersect.getResult()).getResult();
 			}
 		}
-		final INestedWordAutomaton<LETTER, STATE> simplified = new RemoveDeadEnds<>(mServices, result).getResult();
-		mLogger.info(simplified);
-		return simplified;
+		return result;
 	}
 
 	private static String getState(final int i) {
@@ -219,6 +220,7 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 	private NestedWordAutomaton<LETTER, IPredicate> constructInterpolantAutomaton(final List<IPredicate> interpolants)
 			throws AutomataLibraryException {
 		final INestedWordAutomaton<LETTER, String> mcrAutomaton = constructMcrAutomaton(interpolants);
+		mLogger.info("Constructing interpolant automaton by labelling MCR automaton.");
 		final Map<String, IPredicate> stateMap = new HashMap<>();
 		// Fill stateMap with the given interpolants
 		final LinkedList<String> queue = new LinkedList<>();
@@ -231,6 +233,7 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 			stateMap.put(currentState, mPredicateUnifier.getOrConstructPredicate(interpolants.get(i)));
 			queue.add(currentState);
 		}
+		int count = 0;
 		final String finalState = mcrAutomaton.getFinalStates().iterator().next();
 		stateMap.put(finalState, mPredicateUnifier.getFalsePredicate());
 		final Set<String> visited = new HashSet<>();
@@ -249,9 +252,12 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 				final Term pre = mPredicateTransformer.pre(predicate, edge.getLetter().getTransformula());
 				// TODO: Try to cover more states as before?
 				stateMap.put(predecessor, mPredicateUnifier.getOrConstructPredicate(pre));
+				count++;
 			}
 		}
-		return createAutomatonFromMap(mcrAutomaton, stateMap);
+		final NestedWordAutomaton<LETTER, IPredicate> result = createAutomatonFromMap(mcrAutomaton, stateMap);
+		mLogger.info("Construction finished. Needed to calculate pre " + count + " times.");
+		return result;
 	}
 
 	private NestedWordAutomaton<LETTER, IPredicate> createAutomatonFromMap(
@@ -273,7 +279,6 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 				result.addInternalTransition(entry.getValue(), edge.getLetter(), stateMap.get(succ));
 			}
 		}
-		mLogger.info(result);
 		return result;
 	}
 
