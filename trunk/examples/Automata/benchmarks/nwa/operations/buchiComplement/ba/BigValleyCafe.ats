@@ -1,50 +1,138 @@
-// TODO
+// In this file we consider the smallest nondeterministic Büchi automaton
+// for the language of all infinite words that have a substring
+// of length seven that starts with a and ends with b.
+//
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 2019-12-12
 
 print(numberOfStates(bigValleyCafe));
-NestedWordAutomaton determinized = determinize(bigValleyCafe);
-print(numberOfStates(determinized));
-NestedWordAutomaton complementFKVDeterminized = buchiComplementFKV(determinized);
-print(numberOfStates(complementFKVDeterminized));
-// NestedWordAutomaton complementFKV = buchiComplementFKV(bigValleyCafe);
-// print(numberOfStates(complementFKV));
 
-NestedWordAutomaton complementNCSB = buchiComplementNCSB(bigValleyCafe);
-print(numberOfStates(complementNCSB));
-// assert(numberOfStates(complementNCSB) == 12);
-print(numberOfTransitions(complementNCSB));
-// assert(numberOfTransitions(complementNCSB) == 26);
+
+// Goal: get small Büchi automaton that recognizes the complement of the language
+
+
+// Approach 1: use generic Büchi complemenation operations and size reduction operations.
 
 NestedWordAutomaton complementHeiMat2 = buchiComplementFKV(bigValleyCafe, "HEIMAT2", 77);
-print(numberOfStates(complementHeiMat2));
-// assert(numberOfStates(complementHeiMat2) == 23);
-print(numberOfTransitions(complementHeiMat2));
-// assert(numberOfTransitions(complementHeiMat2) == 56);
+assert(numberOfStates(complementHeiMat2) == 640);
+assert(numberOfTransitions(complementHeiMat2) == 1536);
+// print(numberOfStates(complementHeiMat2));
+// print(numberOfTransitions(complementHeiMat2));
 
 NestedWordAutomaton complementElastic = buchiComplementFKV(bigValleyCafe, "ELASTIC", 77);
-print(numberOfStates(complementElastic));
-// assert(numberOfStates(complementElastic) == 23);
-print(numberOfTransitions(complementElastic));
-// assert(numberOfTransitions(complementElastic) == 51);
+assert(numberOfStates(complementElastic) == 640);
+assert(numberOfTransitions(complementElastic) == 1472);
+// print(numberOfStates(complementElastic));
+// print(numberOfTransitions(complementElastic));
 
+NestedWordAutomaton complementSchewe = buchiComplementFKV(bigValleyCafe, "SCHEWE", 77);
+assert(numberOfStates(complementSchewe) == 45880);
+assert(numberOfTransitions(complementSchewe) == 108494);
+// print(numberOfStates(complementSchewe));
+// print(numberOfTransitions(complementSchewe));
+
+// Remove all states that do not occur on an accepting run.
 NestedWordAutomaton onlyLive = removeNonLiveStates(complementElastic);
-print(numberOfStates(onlyLive));
-// assert(numberOfStates(onlyLive) == 23);
-print(numberOfTransitions(onlyLive));
-// assert(numberOfTransitions(onlyLive) == 51);
+assert(numberOfStates(onlyLive) == 320);
+assert(numberOfTransitions(onlyLive) == 560);
+// print(numberOfStates(onlyLive));
+// print(numberOfTransitions(onlyLive));
 
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(onlyLive));
-int shrinkNwaSize = numberOfStates(shrinkNwa(onlyLive));
-// int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(onlyLive));
-// int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(onlyLive));
-// int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(onlyLive));
-int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(onlyLive));
-int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(onlyLive));
-int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(onlyLive));
-int buchiReduceSize = numberOfStates(buchiReduce(onlyLive));
-int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(onlyLive));
-int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(onlyLive));
+NestedWordAutomaton directSimulationResult = minimizeSevpa(onlyLive);
+assert(numberOfStates(directSimulationResult) == 128);
+assert(numberOfTransitions(directSimulationResult) == 288);
+// print(numberOfStates(directSimulationResult));
+// print(numberOfTransitions(directSimulationResult));
+
+NestedWordAutomaton delayedSimulationResult = buchiReduce(onlyLive);
+assert(numberOfStates(delayedSimulationResult) == 64);
+assert(numberOfTransitions(delayedSimulationResult) == 96);
+// print(numberOfStates(delayedSimulationResult));
+// print(numberOfTransitions(delayedSimulationResult));
+
+NestedWordAutomaton directFullMultipebbleSimulationResult = reduceNwaDirectFullMultipebbleSimulation(onlyLive);
+assert(numberOfStates(directFullMultipebbleSimulationResult) == 128);
+assert(numberOfTransitions(directFullMultipebbleSimulationResult) == 288);
+// print(numberOfStates(directFullMultipebbleSimulationResult));
+// print(numberOfTransitions(directFullMultipebbleSimulationResult));
+
+NestedWordAutomaton delayedFullMultipebbleSimulationResult = reduceNwaDelayedFullMultipebbleSimulation(onlyLive);
+assert(numberOfStates(delayedFullMultipebbleSimulationResult) == 96);
+assert(numberOfTransitions(delayedFullMultipebbleSimulationResult) == 208);
+// print(numberOfStates(delayedFullMultipebbleSimulationResult));
+// print(numberOfTransitions(delayedFullMultipebbleSimulationResult));
+
+// Fair simulation is very expensive and refines direct simulation,
+// hence we use the  direct simulation's result as the input.
+NestedWordAutomaton fairSimulationResult = reduceBuchiFairSimulation(directSimulationResult);
+assert(numberOfStates(fairSimulationResult) == 64);
+assert(numberOfTransitions(fairSimulationResult) == 96);
+// print(numberOfStates(fairSimulationResult));
+// print(numberOfTransitions(fairSimulationResult));
+
+
+
+
+// Approach 2: check if semi-deterministic and use NCSB algorithm.
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(bigValleyCafe);
+assert(numberOfStates(complementNCSB) == 128);
+assert(numberOfTransitions(complementNCSB) == 256);
+print(numberOfStates(complementNCSB));
+print(numberOfTransitions(complementNCSB));
+
+
+NestedWordAutomaton delayedSimulationResultNCSB = buchiReduce(complementNCSB);
+assert(numberOfStates(delayedSimulationResultNCSB) == 65);
+assert(numberOfTransitions(delayedSimulationResultNCSB) == 130);
+print(numberOfStates(delayedSimulationResultNCSB));
+print(numberOfTransitions(delayedSimulationResultNCSB));
+
+
+NestedWordAutomaton determinized = determinize(bigValleyCafe);
+// print(numberOfStates(determinized));
+assert(numberOfStates(determinized) == 128);
+assert(numberOfTransitions(determinized) == 256);
+
+NestedWordAutomaton complementFKVDeterminized = buchiComplementFKV(determinized);
+assert(numberOfStates(complementFKVDeterminized) == 192);
+assert(numberOfTransitions(complementFKVDeterminized) == 448);
+// print(numberOfStates(complementFKVDeterminized));
+// print(numberOfTransitions(complementFKVDeterminized));
+
+NestedWordAutomaton complementKurshan = buchiComplementDeterministic(determinized);
+assert(numberOfStates(complementKurshan) == 192);
+assert(numberOfTransitions(complementKurshan) == 448);
+print(numberOfStates(complementKurshan));
+print(numberOfTransitions(complementKurshan));
+
+
+
+
+
+
+
+
+// NestedWordAutomaton onlyLiveDeterminized = removeNonLiveStates(complementFKVDeterminized);
+// assert(numberOfStates(onlyLiveDeterminized) == 128);
+// assert(numberOfTransitions(onlyLiveDeterminized) == 288);
+// assert(!isDeterministic(onlyLiveDeterminized));
+// print(numberOfStates(onlyLiveDeterminized));
+// print(numberOfTransitions(onlyLiveDeterminized));
+// 
+// 
+// NestedWordAutomaton directSimulationResultDeterminized = minimizeSevpa(onlyLiveDeterminized);
+// assert(numberOfStates(directSimulationResultDeterminized) == 128);
+// assert(numberOfTransitions(directSimulationResultDeterminized) == 288);
+// assert(!isDeterministic(directSimulationResultDeterminized));
+// print(numberOfStates(directSimulationResultDeterminized));
+// print(numberOfTransitions(directSimulationResultDeterminized));
+// 
+// NestedWordAutomaton delayedSimulationResultDeterminized = buchiReduce(onlyLiveDeterminized);
+// assert(numberOfStates(delayedSimulationResultDeterminized) == 64);
+// assert(numberOfTransitions(delayedSimulationResultDeterminized) == 96);
+// assert(isDeterministic(delayedSimulationResultDeterminized));
+// print(numberOfStates(delayedSimulationResultDeterminized));
+// print(numberOfTransitions(delayedSimulationResultDeterminized));
 
 
 
@@ -64,10 +152,10 @@ NestedWordAutomaton bigValleyCafe = (
 	(q3 a q4) (q3 b q4)
 	(q4 a q5) (q4 b q5)
 	(q5 a q6) (q5 b q6)
-	(q6 a q7) (q6 b q7)
-	(q7 a q8) (q7 b q8)
-	(q8 a q9) (q8 b q9)
-	(q9 b qacc)
+// 	(q6 a q7) (q6 b q7)
+// 	(q7 a q8) (q7 b q8)
+// 	(q8 a q9) (q8 b q9)
+	(q6 b qacc)
     (qacc a qacc) (qacc b qacc)
   }, 
   returnTransitions = {}
