@@ -306,13 +306,11 @@ public class PolynomialRelationTest {
 		testSolveForSubject(inputSTR, "xi");
 	}
 
-	@Test
 	public void relationIntPolyUnknownEQ4() throws NotAffineException {
 		final String inputSTR = "(= (* zi (+ 6 (* (* yi yi) xi))) (+ 3 (* zi zi)))";
 		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
 	}
 
-	@Test
 	public void relationIntPolyUnknownEQ5() throws NotAffineException {
 		final String inputSTR = "(= (* 3 xi (div yi zi) zi 5) (* yi zi)))";
 		testSolveForSubject(inputSTR, "xi");
@@ -353,6 +351,38 @@ public class PolynomialRelationTest {
 		final String inputSTR = "(= (* 3 yi xi) (* 333 yi yi yi))";
 		testSolveForSubject(inputSTR, "xi");
 	}
+	
+	public void relationIntPolyUnknownEQ12() throws NotAffineException {
+		final String inputSTR = "(= (* yi (+ 6 (* yi xi))) (+ 3 yi))";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
+	}
+
+	@Test
+	public void relationIntPolyZ3EQ13() throws NotAffineException {
+		final String inputSTR = "(= (* 3 (div xi 6) (div yi zi)) (* yi zi))";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
+	}
+
+	public void relationIntPolyUnknownEQ14() throws NotAffineException {
+		final String inputSTR = "(= (* 3 (div xi 6) (+ 5 (div yi zi))) (* yi zi))";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
+	}
+	
+	@Test
+	public void relationIntPolyZ3CVC4MATHSATEQ15() throws NotAffineException {
+		final String inputSTR = "(= (* yi (+ 6 xi)) (+ 3 yi))";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
+	}
+	
+//	/**
+//	 * Currently fails because some coefficient is null, this probably will be handled when the
+//  * "Todo if no constantTErm throw error or handle it" is finished
+//	 */
+//	@Test
+//	public void relationIntPolyUnknownEQ16() throws NotAffineException {
+//		final String inputSTR = "(= (div (div xi 5 2) (div yi zi)) yi))";
+//		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
+//	}
 
 	private MultiCaseSolvedBinaryRelation polyRelOnLeftHandSide(final String termAsString, final String varString)
 			throws NotAffineException {
