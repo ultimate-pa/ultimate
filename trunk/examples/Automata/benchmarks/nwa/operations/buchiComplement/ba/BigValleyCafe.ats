@@ -64,7 +64,7 @@ assert(numberOfTransitions(delayedFullMultipebbleSimulationResult) == 208);
 
 // Fair simulation is very expensive and refines direct simulation,
 // hence we use the  direct simulation's result as the input.
-NestedWordAutomaton fairSimulationResult = reduceBuchiFairSimulation(directSimulationResult);
+NestedWordAutomaton fairSimulationResult = reduceBuchiFairSimulation(directSimulationResult, true);
 assert(numberOfStates(fairSimulationResult) == 64);
 assert(numberOfTransitions(fairSimulationResult) == 96);
 // print(numberOfStates(fairSimulationResult));
@@ -77,64 +77,78 @@ assert(numberOfTransitions(fairSimulationResult) == 96);
 NestedWordAutomaton complementNCSB = buchiComplementNCSB(bigValleyCafe);
 assert(numberOfStates(complementNCSB) == 128);
 assert(numberOfTransitions(complementNCSB) == 256);
-print(numberOfStates(complementNCSB));
-print(numberOfTransitions(complementNCSB));
+// print(numberOfStates(complementNCSB));
+// print(numberOfTransitions(complementNCSB));
+
+NestedWordAutomaton onlyLiveNCSB = removeNonLiveStates(complementNCSB);
+assert(numberOfStates(onlyLiveNCSB) == 64);
+assert(numberOfTransitions(onlyLiveNCSB) == 96);
+// print(numberOfStates(onlyLiveNCSB));
+// print(numberOfTransitions(onlyLiveNCSB));
+
+// delayed simulation cannot reduce the result futher more
+NestedWordAutomaton delayedSimulationResultNCSB = buchiReduce(onlyLiveNCSB);
+assert(numberOfStates(delayedSimulationResultNCSB) == 64);
+assert(numberOfTransitions(delayedSimulationResultNCSB) == 96);
+// print(numberOfStates(delayedSimulationResultNCSB));
+// print(numberOfTransitions(delayedSimulationResultNCSB));
+
+// We obtained the same result as in the first approach but the costs
+// for the computation of the result were significantly lower.
 
 
-NestedWordAutomaton delayedSimulationResultNCSB = buchiReduce(complementNCSB);
-assert(numberOfStates(delayedSimulationResultNCSB) == 65);
-assert(numberOfTransitions(delayedSimulationResultNCSB) == 130);
-print(numberOfStates(delayedSimulationResultNCSB));
-print(numberOfTransitions(delayedSimulationResultNCSB));
+
+// Approach 3: realize that for all automata where an accepting state is a 
+// trap, the powerset construction construction is language-preserving
+// and apply 
 
 
 NestedWordAutomaton determinized = determinize(bigValleyCafe);
-// print(numberOfStates(determinized));
 assert(numberOfStates(determinized) == 128);
 assert(numberOfTransitions(determinized) == 256);
 
+// use a complemetation of Büchi automata that is specialized to 
+// deterministic Büchi automata
+// surprisingly, the result is larger than the result of the NCSB algorithm
+NestedWordAutomaton complementKurshan = buchiComplementDeterministic(determinized);
+assert(numberOfStates(complementKurshan) == 192);
+assert(numberOfTransitions(complementKurshan) == 448);
+// print(numberOfStates(complementKurshan));
+// print(numberOfTransitions(complementKurshan));
+
+
+// However, our complemenation for general Büchi automata is implicitly
+// optimized for deterministic Büchi automata and we obtained the same result
 NestedWordAutomaton complementFKVDeterminized = buchiComplementFKV(determinized);
 assert(numberOfStates(complementFKVDeterminized) == 192);
 assert(numberOfTransitions(complementFKVDeterminized) == 448);
 // print(numberOfStates(complementFKVDeterminized));
 // print(numberOfTransitions(complementFKVDeterminized));
 
-NestedWordAutomaton complementKurshan = buchiComplementDeterministic(determinized);
-assert(numberOfStates(complementKurshan) == 192);
-assert(numberOfTransitions(complementKurshan) == 448);
-print(numberOfStates(complementKurshan));
-print(numberOfTransitions(complementKurshan));
 
-
-
-
-
-
-
-
-// NestedWordAutomaton onlyLiveDeterminized = removeNonLiveStates(complementFKVDeterminized);
-// assert(numberOfStates(onlyLiveDeterminized) == 128);
-// assert(numberOfTransitions(onlyLiveDeterminized) == 288);
-// assert(!isDeterministic(onlyLiveDeterminized));
+NestedWordAutomaton onlyLiveDeterminized = removeNonLiveStates(complementFKVDeterminized);
+assert(numberOfStates(onlyLiveDeterminized) == 128);
+assert(numberOfTransitions(onlyLiveDeterminized) == 288);
+assert(!isDeterministic(onlyLiveDeterminized));
 // print(numberOfStates(onlyLiveDeterminized));
 // print(numberOfTransitions(onlyLiveDeterminized));
-// 
-// 
-// NestedWordAutomaton directSimulationResultDeterminized = minimizeSevpa(onlyLiveDeterminized);
-// assert(numberOfStates(directSimulationResultDeterminized) == 128);
-// assert(numberOfTransitions(directSimulationResultDeterminized) == 288);
-// assert(!isDeterministic(directSimulationResultDeterminized));
+
+NestedWordAutomaton directSimulationResultDeterminized = minimizeSevpa(onlyLiveDeterminized);
+assert(numberOfStates(directSimulationResultDeterminized) == 128);
+assert(numberOfTransitions(directSimulationResultDeterminized) == 288);
+assert(!isDeterministic(directSimulationResultDeterminized));
 // print(numberOfStates(directSimulationResultDeterminized));
 // print(numberOfTransitions(directSimulationResultDeterminized));
-// 
-// NestedWordAutomaton delayedSimulationResultDeterminized = buchiReduce(onlyLiveDeterminized);
-// assert(numberOfStates(delayedSimulationResultDeterminized) == 64);
-// assert(numberOfTransitions(delayedSimulationResultDeterminized) == 96);
-// assert(isDeterministic(delayedSimulationResultDeterminized));
+
+NestedWordAutomaton delayedSimulationResultDeterminized = buchiReduce(onlyLiveDeterminized);
+assert(numberOfStates(delayedSimulationResultDeterminized) == 64);
+assert(numberOfTransitions(delayedSimulationResultDeterminized) == 96);
+assert(isDeterministic(delayedSimulationResultDeterminized));
 // print(numberOfStates(delayedSimulationResultDeterminized));
 // print(numberOfTransitions(delayedSimulationResultDeterminized));
 
-
+// We obtained (agin) the same result as in the first approach but the costs
+// for the computation of the result were (again) significantly lower.
 
 
 NestedWordAutomaton bigValleyCafe = (
