@@ -105,188 +105,188 @@ public class PolynomialRelationTest {
 		mScript.exit();
 	}
 
-//	@Test
-//	public void relationRealDefault() throws NotAffineException {
-//		final String inputSTR = "(= (+ 7.0 x) y )";
-//		testSolveForSubject(inputSTR, "x");
-//
-//	}
-//
-//	@Test
-//	public void relationRealEQ() throws NotAffineException {
-//		final String inputSTR = "(= (* 7.0 x) y )";
-//		testSolveForSubject(inputSTR, "x");
-//
-//	}
-//
-//	@Test
-//	public void relationRealEQ2() throws NotAffineException {
-//		final String inputSTR = "(= (* 3.0 x) (* 7.0 y) )";
-//		testSolveForSubject(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealEQ3() throws NotAffineException {
-//		final String inputSTR = "(= (* 3.0 x) (+ (* 7.0 y) (* 5.0 z)) )";
-//		testSolveForSubject(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealEQ4() throws NotAffineException {
-//		final String inputSTR = "(= (* 6.0 (+ y x)) (* 7.0 z) )";
-//		testSolveForSubject(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealPolyEQ5() throws NotAffineException {
-//		final String inputSTR = "(= (* 6.0 (* y x)) (+ 3.0 (* z z)))";
-//		testSolveForSubject(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealPolyEQ6() throws NotAffineException {
-//		final String inputSTR = "(= (* z (+ 6.0 (* (* y y) x))) (+ 3.0 (* z z)))";
-//		testSolveForSubject(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealPolyEQ7() throws NotAffineException {
-//		final String inputSTR = "(= (* 3.0 x (/ y z) z 5.0) (* y z)))";
-//		testSolveForSubject(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealPolyMultipleSubjectsEQ7() throws NotAffineException {
-//		final String inputSTR = "(= (* z (+ 6.0 (* (* x y) x))) (+ 3.0 (* z z)))";
-//		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "x"));
-//	}
-//
-//	/**
-//	 * The background why this shouldn't work, is because divisions by variables are treated as an individual variable,
-//	 * but now the subject occurs in this variable.
-//	 */
-//	@Test
-//	public void relationRealPolyNestedSubjectEQ8() throws NotAffineException {
-//		final String inputSTR = "(= 1.0 (/ y x))";
-//		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "x"));
-//	}
-//
-//	@Test
-//	public void relationRealPolyWithDivisionsEQ9() throws NotAffineException {
-//		final String inputSTR = "(= (/ (+ 6.0 (* (/ z y) x)) 2.0) (+ 3.0 (/ y z)))";
-//		testSolveForSubject(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealPolyDetectNestedSecondVariableEQ10() throws NotAffineException {
-//		final String inputSTR = "(= (/ (+ 6.0 (* (/ z y) x)) 2.0) (+ 3.0 (/ y x)))";
-//		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "x"));
-//	}
-//
-//	@Test
-//	public void relationRealGEQ01() throws NotAffineException {
-//		final String inputSTR = "(>= (* 3.0 x) lo )";
-//		testSolveForSubject(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealPolyGEQ02() throws NotAffineException {
-//		final String inputSTR = "(>= (* 3.0 x (/ y z) z 5.0) (* y lo))";
-//		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealLEQ01() throws NotAffineException {
-//		final String inputSTR = "(<= (* 3.0 x) hi )";
-//		testSolveForSubject(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealPolyLEQ02() throws NotAffineException {
-//		final String inputSTR = "(<= (* 3.0 x (/ y z) z 5.0) (* y hi))";
-//		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealDISTINCT01() throws NotAffineException {
-//		final String inputSTR = "(not(= (* 3.0 x) y ))";
-//		testSolveForSubject(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealPolyDISTINCT02() throws NotAffineException {
-//		final String inputSTR = "(not(= (* 3.0 x (/ y z) z 5.0) (* y z)))";
-//		testSolveForSubject(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealGREATER01() throws NotAffineException {
-//		final String inputSTR = "(> (* 3.0 x) lo )";
-//		testSolveForSubject(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealPolyGREATER02() throws NotAffineException {
-//		final String inputSTR = "(> (* 3.0 x (/ y z) z 5.0) (* y lo))";
-//		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealLESS01() throws NotAffineException {
-//		final String inputSTR = "(< (* 4.0 x) hi )";
-//		testSolveForSubject(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationRealPolyLESS02() throws NotAffineException {
-//		final String inputSTR = "(< (* 3.0 x (/ y z) z 5.0) (* y hi))";
-//		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
-//	}
-//
-//	@Test
-//	public void relationBvPolyEQ01() throws NotAffineException{
-//		final String inputSTR = "(= (bvmul (_ bv255 8) xb) (bvmul (_ bv64 8) yb yb yb))";
-//		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
-//		mScript.declareFun("xb", new Sort[0], bv8);
-//		mScript.declareFun("yb", new Sort[0], bv8);
-//		testSolveForSubject(inputSTR, "xb");
-//	}
-//
-//	@Test
-//	public void relationBvPolyEQ02() throws NotAffineException{
-//		final String inputSTR = "(= (bvmul (_ bv1 8) xb) (bvmul (_ bv64 8) yb yb yb))";
-//		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
-//		mScript.declareFun("xb", new Sort[0], bv8);
-//		mScript.declareFun("yb", new Sort[0], bv8);
-//		testSolveForSubject(inputSTR, "xb");
-//	}
-//
-//	@Test
-//	public void relationBvPolyEQ03() throws NotAffineException{
-//		final String inputSTR = "(= (bvmul (_ bv255 8) xb yb) (bvmul (_ bv64 8) yb yb yb))";
-//		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
-//		mScript.declareFun("xb", new Sort[0], bv8);
-//		mScript.declareFun("yb", new Sort[0], bv8);
-//		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "xb"));
-//	}
-//
-//	@Test
-//	public void relationBvPolyEQ04() throws NotAffineException{
-//		final String inputSTR = "(= (bvmul (_ bv252 8) xb) (bvmul (_ bv64 8) yb yb yb))";
-//		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
-//		mScript.declareFun("xb", new Sort[0], bv8);
-//		mScript.declareFun("yb", new Sort[0], bv8);
-//		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "xb"));
-//	}
-//
-//	@Test
-//	public void relationBvEQ05() throws NotAffineException{
-//		final String inputSTR = "(= (bvmul (_ bv255 8) xb) (bvmul (_ bv8 8) yb))";
-//		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
-//		mScript.declareFun("xb", new Sort[0], bv8);
-//		mScript.declareFun("yb", new Sort[0], bv8);
-//		testSolveForSubject(inputSTR, "xb");
-//	}
+	@Test
+	public void relationRealDefault() throws NotAffineException {
+		final String inputSTR = "(= (+ 7.0 x) y )";
+		testSolveForSubject(inputSTR, "x");
+
+	}
+
+	@Test
+	public void relationRealEQ() throws NotAffineException {
+		final String inputSTR = "(= (* 7.0 x) y )";
+		testSolveForSubject(inputSTR, "x");
+
+	}
+
+	@Test
+	public void relationRealEQ2() throws NotAffineException {
+		final String inputSTR = "(= (* 3.0 x) (* 7.0 y) )";
+		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealEQ3() throws NotAffineException {
+		final String inputSTR = "(= (* 3.0 x) (+ (* 7.0 y) (* 5.0 z)) )";
+		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealEQ4() throws NotAffineException {
+		final String inputSTR = "(= (* 6.0 (+ y x)) (* 7.0 z) )";
+		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealPolyEQ5() throws NotAffineException {
+		final String inputSTR = "(= (* 6.0 (* y x)) (+ 3.0 (* z z)))";
+		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealPolyEQ6() throws NotAffineException {
+		final String inputSTR = "(= (* z (+ 6.0 (* (* y y) x))) (+ 3.0 (* z z)))";
+		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealPolyEQ7() throws NotAffineException {
+		final String inputSTR = "(= (* 3.0 x (/ y z) z 5.0) (* y z)))";
+		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealPolyMultipleSubjectsEQ7() throws NotAffineException {
+		final String inputSTR = "(= (* z (+ 6.0 (* (* x y) x))) (+ 3.0 (* z z)))";
+		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "x"));
+	}
+
+	/**
+	 * The background why this shouldn't work, is because divisions by variables are treated as an individual variable,
+	 * but now the subject occurs in this variable.
+	 */
+	@Test
+	public void relationRealPolyNestedSubjectEQ8() throws NotAffineException {
+		final String inputSTR = "(= 1.0 (/ y x))";
+		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "x"));
+	}
+
+	@Test
+	public void relationRealPolyWithDivisionsEQ9() throws NotAffineException {
+		final String inputSTR = "(= (/ (+ 6.0 (* (/ z y) x)) 2.0) (+ 3.0 (/ y z)))";
+		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealPolyDetectNestedSecondVariableEQ10() throws NotAffineException {
+		final String inputSTR = "(= (/ (+ 6.0 (* (/ z y) x)) 2.0) (+ 3.0 (/ y x)))";
+		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "x"));
+	}
+
+	@Test
+	public void relationRealGEQ01() throws NotAffineException {
+		final String inputSTR = "(>= (* 3.0 x) lo )";
+		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealPolyGEQ02() throws NotAffineException {
+		final String inputSTR = "(>= (* 3.0 x (/ y z) z 5.0) (* y lo))";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealLEQ01() throws NotAffineException {
+		final String inputSTR = "(<= (* 3.0 x) hi )";
+		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealPolyLEQ02() throws NotAffineException {
+		final String inputSTR = "(<= (* 3.0 x (/ y z) z 5.0) (* y hi))";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealDISTINCT01() throws NotAffineException {
+		final String inputSTR = "(not(= (* 3.0 x) y ))";
+		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealPolyDISTINCT02() throws NotAffineException {
+		final String inputSTR = "(not(= (* 3.0 x (/ y z) z 5.0) (* y z)))";
+		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealGREATER01() throws NotAffineException {
+		final String inputSTR = "(> (* 3.0 x) lo )";
+		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealPolyGREATER02() throws NotAffineException {
+		final String inputSTR = "(> (* 3.0 x (/ y z) z 5.0) (* y lo))";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealLESS01() throws NotAffineException {
+		final String inputSTR = "(< (* 4.0 x) hi )";
+		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealPolyLESS02() throws NotAffineException {
+		final String inputSTR = "(< (* 3.0 x (/ y z) z 5.0) (* y hi))";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
+	}
+
+	@Test
+	public void relationBvPolyEQ01() throws NotAffineException{
+		final String inputSTR = "(= (bvmul (_ bv255 8) xb) (bvmul (_ bv64 8) yb yb yb))";
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("xb", new Sort[0], bv8);
+		mScript.declareFun("yb", new Sort[0], bv8);
+		testSolveForSubject(inputSTR, "xb");
+	}
+
+	@Test
+	public void relationBvPolyEQ02() throws NotAffineException{
+		final String inputSTR = "(= (bvmul (_ bv1 8) xb) (bvmul (_ bv64 8) yb yb yb))";
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("xb", new Sort[0], bv8);
+		mScript.declareFun("yb", new Sort[0], bv8);
+		testSolveForSubject(inputSTR, "xb");
+	}
+
+	@Test
+	public void relationBvPolyEQ03() throws NotAffineException{
+		final String inputSTR = "(= (bvmul (_ bv255 8) xb yb) (bvmul (_ bv64 8) yb yb yb))";
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("xb", new Sort[0], bv8);
+		mScript.declareFun("yb", new Sort[0], bv8);
+		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "xb"));
+	}
+
+	@Test
+	public void relationBvPolyEQ04() throws NotAffineException{
+		final String inputSTR = "(= (bvmul (_ bv252 8) xb) (bvmul (_ bv64 8) yb yb yb))";
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("xb", new Sort[0], bv8);
+		mScript.declareFun("yb", new Sort[0], bv8);
+		Assert.assertNull(polyRelOnLeftHandSide(inputSTR, "xb"));
+	}
+
+	@Test
+	public void relationBvEQ05() throws NotAffineException{
+		final String inputSTR = "(= (bvmul (_ bv255 8) xb) (bvmul (_ bv8 8) yb))";
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		mScript.declareFun("xb", new Sort[0], bv8);
+		mScript.declareFun("yb", new Sort[0], bv8);
+		testSolveForSubject(inputSTR, "xb");
+	}
 
 	@Test
 	public void relationIntEQ1() throws NotAffineException {
