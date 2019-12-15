@@ -249,15 +249,11 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 		int preCalls = 0;
 		final String finalState = mcrAutomaton.getFinalStates().iterator().next();
 		stateMap.put(finalState, mPredicateUnifier.getFalsePredicate());
-		final Set<String> visited = new HashSet<>();
 		while (!queue.isEmpty()) {
 			final String state = queue.remove();
 			final IPredicate predicate = stateMap.get(state);
 			if (predicate == null) {
 				throw new IllegalStateException("Trying to visit an uncovered state.");
-			}
-			if (!visited.add(state)) {
-				continue;
 			}
 			for (final IncomingInternalTransition<Integer, String> edge : mcrAutomaton.internalPredecessors(state)) {
 				final String predecessor = edge.getPred();
