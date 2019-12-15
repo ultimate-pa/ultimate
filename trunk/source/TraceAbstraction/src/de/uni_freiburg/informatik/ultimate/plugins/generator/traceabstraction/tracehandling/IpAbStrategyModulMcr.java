@@ -235,20 +235,24 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 		String currentState = mcrAutomaton.getInitialStates().iterator().next();
 		stateMap.put(currentState, currentPredicate);
 		queue.add(currentState);
-		for (int i = 0; i < interpolants.size(); i++) {
-			currentState = getSuccessor(currentState, i, mcrAutomaton);
-			final IPredicate nextPredicate = mPredicateUnifier.getOrConstructPredicate(interpolants.get(i));
+		for (int i = 0; i < mTrace.size(); i++) {
+			final Iterator<OutgoingInternalTransition<Integer, String>> succStates =
+					mcrAutomaton.internalSuccessors(currentState, i).iterator();
+			if (!succStates.hasNext()) {
+				throw new IllegalStateException("Trace is not present in the MCR automaton");
+			}
+			currentState = succStates.next().getSucc();
+			final IPredicate nextPredicate = i == interpolants.size() ? mPredicateUnifier.getFalsePredicate()
+					: mPredicateUnifier.getOrConstructPredicate(interpolants.get(i));
 			if (!result.contains(nextPredicate)) {
 				result.addState(false, false, nextPredicate);
 			}
 			result.addInternalTransition(currentPredicate, mTrace.get(i), nextPredicate);
-			stateMap.put(currentState, nextPredicate);
 			queue.add(currentState);
 			currentPredicate = nextPredicate;
+			stateMap.put(currentState, currentPredicate);
 		}
 		int preCalls = 0;
-		final String finalState = mcrAutomaton.getFinalStates().iterator().next();
-		stateMap.put(finalState, mPredicateUnifier.getFalsePredicate());
 		while (!queue.isEmpty()) {
 			final String state = queue.remove();
 			final IPredicate predicate = stateMap.get(state);
@@ -283,19 +287,8 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 			}
 		}
 		mLogger.info("Construction finished. Needed to calculate pre " + preCalls + " times.");
+		mLogger.info(result);
 		return result;
-	}
-
-	private static <STATE, LETTER> STATE getSuccessor(final STATE currentState, final LETTER action,
-			final INestedWordAutomaton<LETTER, STATE> automaton) {
-		for (final OutgoingInternalTransition<LETTER, STATE> outgoing : automaton.internalSuccessors(currentState,
-				action)) {
-			final STATE nextState = outgoing.getSucc();
-			if (currentState != nextState) {
-				return nextState;
-			}
-		}
-		throw new IllegalStateException("No acyclic successor of + " + currentState + " under " + action);
 	}
 
 	@Override
