@@ -369,16 +369,22 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 				events = new HashSet<>();
 				mark2Events.put(marking, events);
 			}
-			if (!events.isEmpty()) {
-				mLogger.info("inserting again Event for Transition " + transition + " and Marking " + marking);
-				mLogger.info("new Event has " + event.getAncestors() + " ancestors and is "
+			if (events.size() > 2) {
+				// 2019-12-15 Matthias: Adding an event twice for a transition-marking pair is
+				// very natural.
+				// We write log messages only if an event was added three or more times. This
+				// should only happen if we use an order that is not total.
+				mLogger.info("inserting event number " + (events.size() + 1) + " for the transition-marking pair ("
+						+ transition + ", " + marking + ")");
+				mLogger.info("this new event has " + event.getAncestors() + " ancestors and is "
 						+ (event.isCutoffEvent() ? "" : "not ") + "cut-off event");
 				for (final Event<LETTER, PLACE> event2 : events) {
 					mLogger.info("  existing Event has " + event2.getAncestors() + " ancestors and is "
 							+ (event.isCutoffEvent() ? "" : "not ") + "cut-off event");
-					assert event2.getAncestors() == event.getAncestors() || event.isCutoffEvent() ||event2.isCutoffEvent() : "if there is "
-							+ "already an event that has the same marking and a different size of "
-							+ "local configuration then the new event must be cut-off event";
+					assert event2.getAncestors() == event.getAncestors() || event.isCutoffEvent()
+							|| event2.isCutoffEvent() : "if there is "
+									+ "already an event that has the same marking and a different size of "
+									+ "local configuration then the new event must be cut-off event";
 				}
 			}
 			events.add(event);
