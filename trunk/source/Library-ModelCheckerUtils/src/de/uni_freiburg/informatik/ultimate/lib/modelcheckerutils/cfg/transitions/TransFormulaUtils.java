@@ -223,7 +223,7 @@ public final class TransFormulaUtils {
 			} catch (final ToolchainCanceledException tce) {
 				final String taskDescription =
 						"doing sequential composition of " + transFormula.size() + " TransFormulas";
-				tce.addRunningTaskInfo(new RunningTaskInfo(PartialQuantifierElimination.class, taskDescription));
+				tce.addRunningTaskInfo(new RunningTaskInfo(TransFormulaUtils.class, taskDescription));
 				throw tce;
 			}
 		}
