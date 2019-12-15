@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 
 /**
@@ -44,16 +43,13 @@ public class ThreadInstance {
 	private final IProgramNonOldVar[] mIdVars;
 	private final IProgramNonOldVar mInUseVar;
 
-	private IcfgLocation mErrorLocation;
-
-	public ThreadInstance(final String threadInstanceName, final String threadTemplateName, final IProgramNonOldVar[] idVars,
-			final IProgramNonOldVar inUseVar, final IcfgLocation errorLocation) {
+	public ThreadInstance(final String threadInstanceName, final String threadTemplateName,
+			final IProgramNonOldVar[] idVars, final IProgramNonOldVar inUseVar) {
 		super();
 		mThreadInstanceName = threadInstanceName;
 		mThreadTemplateName = threadTemplateName;
 		mIdVars = idVars;
 		mInUseVar = inUseVar;
-		mErrorLocation = errorLocation;
 	}
 
 	public String getThreadInstanceName() {
@@ -71,18 +67,4 @@ public class ThreadInstance {
 	public IProgramNonOldVar getInUseVar() {
 		return mInUseVar;
 	}
-
-	public IcfgLocation getErrorLocation() {
-		return mErrorLocation;
-	}
-
-	public void setErrorLocation(final IcfgLocation errorLocation) {
-		mErrorLocation = errorLocation;
-	}
-
-
-
-
-
-
 }

@@ -120,7 +120,7 @@ public class ThreadInstanceAdder {
 //				integrateEdge(fct, backtranslator, callerNode, errorNode, errorTransition);
 			}
 			for (final ThreadInstance ti : threadInstanceMap.get(fct)) {
-				addForkOtherThreadTransition(fct, ti.getErrorLocation(), ti.getIdVars(), ti.getInUseVar(), icfg,
+				addForkOtherThreadTransition(fct, ti.getIdVars(), ti.getInUseVar(), icfg,
 						ti.getThreadInstanceName(), backtranslator, addThreadInUseViolationEdges);
 			}
 		}
@@ -201,7 +201,7 @@ public class ThreadInstanceAdder {
 	 *            that points to the next step in the current thread.
 	 */
 	private void addForkOtherThreadTransition(final IIcfgForkTransitionThreadCurrent<IcfgLocation> fct,
-			final IcfgLocation errorNode, final IProgramNonOldVar[] threadIdVars,
+			final IProgramNonOldVar[] threadIdVars,
 			final IProgramNonOldVar threadInUseVar, final IIcfg<? extends IcfgLocation> icfg,
 			final String threadInstanceName, final BlockEncodingBacktranslator backtranslator,
 			final boolean addThreadInUseViolationEdges) {
@@ -429,14 +429,8 @@ public class ThreadInstanceAdder {
 			for (int j = 1; j <= numberOfThreadInstances; j++) {
 				final String procedureName = fork.getNameOfForkedProcedure();
 				final String threadInstanceId = generateThreadInstanceId(i, procedureName, j, numberOfThreadInstances);
-				final IcfgLocation errorLocation;
-				if (addThreadInUseViolationVariablesAndErrorLocation) {
-					errorLocation = constructErrorLocation(i, fork);
-				} else {
-					errorLocation = null;
-				}
 				final ThreadInstance ti = constructThreadInstance(addThreadInUseViolationVariablesAndErrorLocation,
-						mgdScript, fork, procedureName, threadInstanceId, errorLocation);
+						mgdScript, fork, procedureName, threadInstanceId);
 				threadInstances.add(ti);
 			}
 			result.put(fork, threadInstances);
@@ -460,7 +454,7 @@ public class ThreadInstanceAdder {
 	private static ThreadInstance constructThreadInstance(
 			final boolean addThreadInUseViolationVariablesAndErrorLocation, final ManagedScript mgdScript,
 			final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork, final String procedureName,
-			final String threadInstanceId, final IcfgLocation errorLocation) {
+			final String threadInstanceId) {
 		final BoogieNonOldVar threadInUseVar;
 		if (addThreadInUseViolationVariablesAndErrorLocation) {
 			threadInUseVar = constructThreadInUseVariable(threadInstanceId, mgdScript);
@@ -470,8 +464,7 @@ public class ThreadInstanceAdder {
 		final BoogieNonOldVar[] threadIdVars = constructThreadIdVariable(threadInstanceId, mgdScript,
 				fork.getForkSmtArguments().getThreadIdArguments().getTerms());
 
-		final ThreadInstance ti =
-				new ThreadInstance(threadInstanceId, procedureName, threadIdVars, threadInUseVar, errorLocation);
+		final ThreadInstance ti = new ThreadInstance(threadInstanceId, procedureName, threadIdVars, threadInUseVar);
 		return ti;
 	}
 
@@ -545,12 +538,5 @@ public class ThreadInstanceAdder {
 		}
 	}
 
-	static void addInUseErrorLocations(final BasicIcfg<IcfgLocation> result,
-			final Collection<ThreadInstance> threadInstances) {
-		for (final ThreadInstance ti : threadInstances) {
-			result.addLocation(ti.getErrorLocation(), false, true, false, false, false);
-		}
-
-	}
 
 }
