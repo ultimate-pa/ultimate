@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -224,64 +225,68 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 		final INestedWordAutomaton<Integer, String> mcrAutomaton = constructMcrAutomaton(interpolants);
 		mLogger.info("Constructing interpolant automaton by labelling MCR automaton.");
 		final Map<String, IPredicate> stateMap = new HashMap<>();
-		// Fill stateMap with the given interpolants
+		final NestedWordAutomaton<LETTER, IPredicate> result =
+				new NestedWordAutomaton<>(mServices, mAlphabet, mEmptyStackFactory);
+		IPredicate currentPredicate = mPredicateUnifier.getTruePredicate();
+		result.addState(true, false, currentPredicate);
+		result.addState(false, true, mPredicateUnifier.getFalsePredicate());
+		// Fill stateMap and automaton with the given interpolants
 		final LinkedList<String> queue = new LinkedList<>();
 		String currentState = mcrAutomaton.getInitialStates().iterator().next();
-		stateMap.put(currentState, mPredicateUnifier.getTruePredicate());
+		stateMap.put(currentState, currentPredicate);
 		queue.add(currentState);
 		for (int i = 0; i < interpolants.size(); i++) {
 			currentState = getSuccessor(currentState, i, mcrAutomaton);
-			stateMap.put(currentState, mPredicateUnifier.getOrConstructPredicate(interpolants.get(i)));
+			final IPredicate nextPredicate = mPredicateUnifier.getOrConstructPredicate(interpolants.get(i));
+			if (!result.contains(nextPredicate)) {
+				result.addState(false, false, nextPredicate);
+			}
+			result.addInternalTransition(currentPredicate, mTrace.get(i), nextPredicate);
+			stateMap.put(currentState, nextPredicate);
 			queue.add(currentState);
+			currentPredicate = nextPredicate;
 		}
-		int count = 0;
+		int preCalls = 0;
 		final String finalState = mcrAutomaton.getFinalStates().iterator().next();
 		stateMap.put(finalState, mPredicateUnifier.getFalsePredicate());
 		final Set<String> visited = new HashSet<>();
 		while (!queue.isEmpty()) {
 			final String state = queue.remove();
 			final IPredicate predicate = stateMap.get(state);
-			if (predicate == null || !visited.add(state)) {
+			if (predicate == null) {
+				throw new IllegalStateException("Trying to visit an uncovered state.");
+			}
+			if (!visited.add(state)) {
 				continue;
 			}
 			for (final IncomingInternalTransition<Integer, String> edge : mcrAutomaton.internalPredecessors(state)) {
 				final String predecessor = edge.getPred();
-				queue.add(predecessor);
-				if (stateMap.containsKey(predecessor)) {
-					continue;
+				IPredicate predPredicate = stateMap.get(predecessor);
+				final LETTER action = mTrace.get(edge.getLetter());
+				// If the predecessor is already labeled, we can continue
+				if (predPredicate == null) {
+					queue.add(predecessor);
+					final Iterator<IncomingInternalTransition<LETTER, IPredicate>> predicateEdges =
+							result.internalPredecessors(predicate, action).iterator();
+					// If there is a predecessor present in the result automaton, we can just use it
+					if (predicateEdges.hasNext()) {
+						predPredicate = predicateEdges.next().getPred();
+					} else {
+						// Otherwise calculate pre and add it as a state if necessary
+						preCalls++;
+						final Term pre = mPredicateTransformer.pre(predicate, action.getTransformula());
+						predPredicate = mPredicateUnifier.getOrConstructPredicate(pre);
+						if (!result.contains(predPredicate)) {
+							result.addState(false, false, predPredicate);
+						}
+					}
+					stateMap.put(predecessor, predPredicate);
 				}
-				final LETTER action = mTrace.get(edge.getLetter());
-				final Term pre = mPredicateTransformer.pre(predicate, action.getTransformula());
-				// TODO: Try to cover more states as before?
-				stateMap.put(predecessor, mPredicateUnifier.getOrConstructPredicate(pre));
-				count++;
+				// Add the corresponding transition
+				result.addInternalTransition(predPredicate, action, predicate);
 			}
 		}
-		final NestedWordAutomaton<LETTER, IPredicate> result = createAutomatonFromMap(mcrAutomaton, stateMap);
-		mLogger.info("Construction finished. Needed to calculate pre " + count + " times.");
-		return result;
-	}
-
-	private NestedWordAutomaton<LETTER, IPredicate> createAutomatonFromMap(
-			final INestedWordAutomaton<Integer, String> mcrAutomaton, final Map<String, IPredicate> stateMap) {
-		final NestedWordAutomaton<LETTER, IPredicate> result =
-				new NestedWordAutomaton<>(mServices, mAlphabet, mEmptyStackFactory);
-		// Add all the new predicates as states
-		result.addState(true, false, mPredicateUnifier.getTruePredicate());
-		result.addState(false, true, mPredicateUnifier.getFalsePredicate());
-		for (final IPredicate predicate : stateMap.values()) {
-			if (!result.contains(predicate)) {
-				result.addState(false, false, predicate);
-			}
-		}
-		for (final Entry<String, IPredicate> entry : stateMap.entrySet()) {
-			final String oldState = entry.getKey();
-			for (final OutgoingInternalTransition<Integer, String> edge : mcrAutomaton.internalSuccessors(oldState)) {
-				final String succ = edge.getSucc();
-				final LETTER action = mTrace.get(edge.getLetter());
-				result.addInternalTransition(entry.getValue(), action, stateMap.get(succ));
-			}
-		}
+		mLogger.info("Construction finished. Needed to calculate pre " + preCalls + " times.");
 		return result;
 	}
 
