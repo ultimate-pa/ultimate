@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UniqueQueue;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -70,12 +71,16 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		extends GeneralOperation<LETTER, PLACE, IPetriNetAndAutomataInclusionStateFactory<PLACE>> {
 	private final BranchingProcess<LETTER, PLACE> mInput;
 	private final BoundedPetriNet<LETTER, PLACE> mNet;
+	private final UniqueQueue <Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>>> mMergingCandidates;
 	private final UnionFind<Condition<LETTER, PLACE>> mConditionRepresentatives;
 	private final UnionFind<Event<LETTER, PLACE>> mEventRepresentatives;
 	private final IFinitePrefix2PetriNetStateFactory<PLACE> mStateFactory;
 	private final boolean mUsePetrification = false;
 	private final boolean mUseBackfoldingIds = false;
-
+	private int mNumberOfCallsOfMergeCondidates = 0;
+	private int mNumberOfMergingCondidates = 0;
+	private int mNumberOfMergedEventPairs = 0;
+	private int mNumberOfAddOperationsToTheCandQueue = 0;
 	/**
 	 * Constructor.
 	 *
@@ -104,9 +109,11 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		final BoundedPetriNet<LETTER, PLACE> oldNet = (BoundedPetriNet<LETTER, PLACE>) mInput.getNet();
 		if (mUsePetrification) {
 			mNet = buildPetrification(bp);
+			mMergingCandidates = null;
 			mConditionRepresentatives = null;
-			mEventRepresentatives =null;
+			mEventRepresentatives = null;
 		} else {
+			mMergingCandidates = new UniqueQueue<>();
 			mNet = new BoundedPetriNet<>(mServices, oldNet.getAlphabet(), false);
 			mConditionRepresentatives = new UnionFind<>();
 			mEventRepresentatives = new UnionFind<>();
@@ -176,6 +183,19 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				final ConditionMarking<LETTER, PLACE> companionCondMark = companion.getConditionMark();
 				final ConditionMarking<LETTER, PLACE> eCondMark = e.getConditionMark();
 				mergeConditions(companionCondMark, eCondMark);
+				
+				while (!mMergingCandidates.isEmpty()) {
+					mNumberOfMergingCondidates++;
+					final Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>> candidate = mMergingCandidates.poll();
+					final Event<LETTER, PLACE> e1 = candidate.getFirst();
+					final Event<LETTER, PLACE> e2 = candidate.getSecond();
+					if (mConditionRepresentatives.find(e1.getPredecessorConditions())
+							.equals(mConditionRepresentatives.find(e2.getPredecessorConditions()))&& !mEventRepresentatives.find(e1).equals(mEventRepresentatives.find(e2))) {
+						mEventRepresentatives.union(e1, e2);
+						mNumberOfMergedEventPairs++;
+						mergeConditions(e1.getSuccessorConditions(), e2.getSuccessorConditions());
+					}
+				}
 			}
 		}
 		//final Set<Event<LETTER, PLACE>> releventEvents=new HashSet<>(mEventRepresentatives.getAllRepresentatives());
@@ -384,8 +404,8 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	*/
 
 	private void mergeConditions(final Iterable<Condition<LETTER, PLACE>> set1, final Iterable<Condition<LETTER, PLACE>> set2) {
+		mNumberOfCallsOfMergeCondidates++;
 		final Map<PLACE, Condition<LETTER, PLACE>> origPlace2Condition = new HashMap<>();
-		final Set<Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>>> potentialEventsToMerge = new HashSet<>();
 		for (final Condition<LETTER, PLACE> c1 : set1) {
 			origPlace2Condition.put(c1.getPlace(), c1);
 		}
@@ -405,29 +425,14 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 						for (Event<LETTER, PLACE> e1: c3.getSuccessorEvents()) {
 							for(Event<LETTER, PLACE> e2: c4.getSuccessorEvents()) {
 								if (e1.getTransition().equals(e2.getTransition())){
-									potentialEventsToMerge.add(new Pair<>(mEventRepresentatives.find(e1),mEventRepresentatives.find(e2)));
+									mMergingCandidates.add(new Pair<>(mEventRepresentatives.find(e1),mEventRepresentatives.find(e2)));
+									mNumberOfAddOperationsToTheCandQueue++;
 								}
 							}
 						}
-						
 					}
 				}
 				mConditionRepresentatives.union(c1representative, c2representative);
-			}
-		}
-		for (Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>> eventPair: potentialEventsToMerge) {
-			final Event<LETTER, PLACE> e1 = eventPair.getFirst();
-			final Event<LETTER, PLACE> e2 = eventPair.getSecond();	
-			if (e1.equals(e2)) {
-				continue;
-			}
-			if (mConditionRepresentatives.find(e1.getPredecessorConditions()).equals(
-					mConditionRepresentatives.find(e2.getPredecessorConditions()))) {
-				mEventRepresentatives.union(e1, e2);
-				if (!mConditionRepresentatives.find(e1.getSuccessorConditions())
-						.equals(mConditionRepresentatives.find(e2.getSuccessorConditions()))) {
-					mergeConditions(e1.getSuccessorConditions(), e2.getSuccessorConditions());
-				}
 			}
 		}
 	}
