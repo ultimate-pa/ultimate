@@ -126,7 +126,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 
 	@Override
 	public String startMessage() {
-		return "Start " + getOperationName() + "First Operand " + mMinuend.sizeInformation() + "Second Operand "
+		return "Start " + getOperationName() + ". First operand " + mMinuend.sizeInformation() + ". Second operand "
 				+ mSubtrahend.sizeInformation();
 	}
 
