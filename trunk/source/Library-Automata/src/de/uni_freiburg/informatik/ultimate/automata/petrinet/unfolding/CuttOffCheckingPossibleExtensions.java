@@ -70,7 +70,7 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 	private final PriorityQueue<Event<LETTER, PLACE>> mPePq;
 	private final TreeSet<Event<LETTER, PLACE>> mPeTreeSet;
 	private int mMaximalSize = 0;
-	private static final boolean USE_PQ = true;
+	private static final boolean USE_PQ = false;
 	/**
 	 * If {@link Event} is known to be cut-off event we can move it immediately
 	 * to front because it will not create descendants. This optimization keeps
@@ -145,7 +145,7 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 			if (USE_PQ) {
 				eventWithSameMarkingWasInTheMainQueu = mPePq.remove(eventWithSameMarking);
 			} else {
-				eventWithSameMarkingWasInTheMainQueu = mPePq.remove(eventWithSameMarking);
+				eventWithSameMarkingWasInTheMainQueu = mPeTreeSet.remove(eventWithSameMarking);
 			}
 			assert(eventWithSameMarkingWasInTheMainQueu);
 			mFastpathCutoffEventList.add(eventWithSameMarking);
@@ -170,10 +170,12 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 					final boolean somethingWasAdded;
 					if (USE_PQ) {
 						somethingWasAdded = mPePq.add(newEvent);
+						mMaximalSize = Integer.max(mMaximalSize, mPePq.size());
 					} else {
 						somethingWasAdded = mPeTreeSet.add(newEvent);
+						mMaximalSize = Integer.max(mMaximalSize, mPeTreeSet.size());
 					}
-					mMaximalSize = Integer.max(mMaximalSize, mPePq.size());
+					
 					if (!somethingWasAdded) {
 						throw new AssertionError("Event was already in queue.");
 					}
@@ -263,12 +265,20 @@ public class CuttOffCheckingPossibleExtensions<LETTER, PLACE> implements IPossib
 
 	@Override
 	public boolean isEmpy() {
-		return mPePq.isEmpty() && mFastpathCutoffEventList.isEmpty();
+		if (USE_PQ) {
+			return mPePq.isEmpty() && mFastpathCutoffEventList.isEmpty();
+		} else {
+			return mPeTreeSet.isEmpty() && mFastpathCutoffEventList.isEmpty();
+		}
 	}
 
 	@Override
 	public int size() {
+		if (USE_PQ) {
 		return mPePq.size() + mFastpathCutoffEventList.size();
+		} else {
+			return mPeTreeSet.size() + mFastpathCutoffEventList.size();
+		}
 	}
 
 	public int getUsefulExtensionCandidates() {
