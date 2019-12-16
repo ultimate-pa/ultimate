@@ -63,8 +63,4 @@ public class ThreadInstance {
 	public IProgramNonOldVar[] getIdVars() {
 		return mIdVars;
 	}
-
-	public IProgramNonOldVar getInUseVar() {
-		return mInUseVar;
-	}
 }

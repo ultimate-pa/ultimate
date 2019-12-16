@@ -157,9 +157,6 @@ public class IcfgPetrifier {
 			final boolean addThreadInUseViolationEdges) {
 		final Set<Term> result = new HashSet<>();
 		for (final ThreadInstance ti : values) {
-			if (addThreadInUseViolationEdges) {
-				result.add(ti.getInUseVar().getTerm());
-			}
 			for (final IProgramNonOldVar idVar : ti.getIdVars()) {
 				result.add(idVar.getTerm());
 			}

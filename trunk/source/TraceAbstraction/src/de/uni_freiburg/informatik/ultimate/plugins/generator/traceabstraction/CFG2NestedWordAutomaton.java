@@ -286,13 +286,13 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 				for (final ThreadInstance ti : threadInstances) {
 					IPredicate threadNotInUsePredicate;
 					{
-						final Term negated = icfg.getCfgSmtToolkit().getManagedScript().getScript().term("not",
-								ti.getInUseVar().getTermVariable());
-						threadNotInUsePredicate = predicateFactory.newPredicate(negated);
+						final String threadNotInUseString = ti.getThreadInstanceName() + "NotInUse";
+						threadNotInUsePredicate = predicateFactory.newDebugPredicate(threadNotInUseString);
 					}
 					IPredicate threadInUsePredicate;
 					{
-						threadInUsePredicate = predicateFactory.newPredicate(ti.getInUseVar().getTermVariable());
+						final String threadInUseString = ti.getThreadInstanceName() + "InUse";
+						threadInUsePredicate = predicateFactory.newDebugPredicate(threadInUseString);
 					}
 					threadInstance2notinUseState.put(ti.getThreadInstanceName(), threadNotInUsePredicate);
 					threadInstance2inUseState.put(ti.getThreadInstanceName(), threadInUsePredicate);

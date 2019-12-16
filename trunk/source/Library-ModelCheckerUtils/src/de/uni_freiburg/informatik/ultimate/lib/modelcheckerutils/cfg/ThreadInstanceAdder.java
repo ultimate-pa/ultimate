@@ -120,7 +120,7 @@ public class ThreadInstanceAdder {
 //				integrateEdge(fct, backtranslator, callerNode, errorNode, errorTransition);
 			}
 			for (final ThreadInstance ti : threadInstanceMap.get(fct)) {
-				addForkOtherThreadTransition(fct, ti.getIdVars(), ti.getInUseVar(), icfg,
+				addForkOtherThreadTransition(fct, ti.getIdVars(), icfg,
 						ti.getThreadInstanceName(), backtranslator, addThreadInUseViolationEdges);
 			}
 		}
@@ -137,7 +137,7 @@ public class ThreadInstanceAdder {
 						isReturnValueCompatible(jot.getJoinSmtArguments().getAssignmentLhs(),
 								icfg.getCfgSmtToolkit().getOutParams().get(ti.getThreadInstanceName()));
 				if (threadIdCompatible && returnValueCompatible) {
-					addJoinOtherThreadTransition(jot, ti.getThreadInstanceName(), ti.getIdVars(), ti.getInUseVar(),
+					addJoinOtherThreadTransition(jot, ti.getThreadInstanceName(), ti.getIdVars(),
 							icfg, backtranslator, addThreadInUseViolationEdges);
 				}
 			}
@@ -202,7 +202,7 @@ public class ThreadInstanceAdder {
 	 */
 	private void addForkOtherThreadTransition(final IIcfgForkTransitionThreadCurrent<IcfgLocation> fct,
 			final IProgramNonOldVar[] threadIdVars,
-			final IProgramNonOldVar threadInUseVar, final IIcfg<? extends IcfgLocation> icfg,
+			final IIcfg<? extends IcfgLocation> icfg,
 			final String threadInstanceName, final BlockEncodingBacktranslator backtranslator,
 			final boolean addThreadInUseViolationEdges) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
@@ -221,7 +221,6 @@ public class ThreadInstanceAdder {
 
 		final UnmodifiableTransFormula forkTransformula;
 		{
-			final List<UnmodifiableTransFormula> conjuncts;
 			final UnmodifiableTransFormula parameterAssignment = fsa.constructInVarsAssignment(
 					icfg.getCfgSmtToolkit().getSymbolTable(), icfg.getCfgSmtToolkit().getManagedScript(),
 					icfg.getCfgSmtToolkit().getInParams().get(threadInstanceName));
@@ -234,13 +233,8 @@ public class ThreadInstanceAdder {
 					.collect(Collectors.toSet());
 			final UnmodifiableTransFormula havocOfLocalVars = TransFormulaUtils.constructHavoc(localVarsWithoutInParams,
 					icfg.getCfgSmtToolkit().getManagedScript());
-			if (addThreadInUseViolationEdges) {
-				final UnmodifiableTransFormula threadInUseAssignment = constructForkInUseAssignment(threadInUseVar,
-						icfg.getCfgSmtToolkit().getManagedScript());
-				conjuncts = Arrays.asList(parameterAssignment, threadIdAssignment, threadInUseAssignment, havocOfLocalVars);
-			} else {
-				conjuncts = Arrays.asList(parameterAssignment, threadIdAssignment, havocOfLocalVars);
-			}
+			final List<UnmodifiableTransFormula> conjuncts = Arrays.asList(parameterAssignment, threadIdAssignment,
+					havocOfLocalVars);
 			forkTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
 					icfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
 					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
@@ -250,15 +244,6 @@ public class ThreadInstanceAdder {
 		final IcfgForkThreadOtherTransition forkThreadOther =
 				ef.createForkThreadOtherTransition(callerNode, calleeEntryLoc, null, forkTransformula, fct);
 		integrateEdge(fct, backtranslator, callerNode, calleeEntryLoc, forkThreadOther);
-//		if (addThreadInUseViolationEdges) {
-//			// Add the assume statement for the error location and construct the
-//			final UnmodifiableTransFormula forkErrorTransFormula =
-//					constructThreadInUseViolationAssumption(threadInUseVar, icfg.getCfgSmtToolkit().getManagedScript());
-//			final IcfgInternalTransition errorTransition =
-//					ef.createInternalTransition(callerNode, errorNode, null, forkErrorTransFormula);
-//			callerNode.addOutgoing(errorTransition);
-//			errorNode.addIncoming(errorTransition);
-//		}
 
 		// TODO Matthias 2018-09-15: Set overapproximations for both edges
 		final Map<String, ILocation> overapproximations = new HashMap<>();
@@ -296,9 +281,8 @@ public class ThreadInstanceAdder {
 	 */
 	private void addJoinOtherThreadTransition(final IIcfgJoinTransitionThreadCurrent<IcfgLocation> jot,
 			final String threadInstanceName, final IProgramNonOldVar[] threadIdVars,
-			final IProgramNonOldVar threadInUseVar, final IIcfg<? extends IcfgLocation> icfg,
-			final BlockEncodingBacktranslator backtranslator,
-			final boolean addThreadInUseViolationEdges) {
+			final IIcfg<? extends IcfgLocation> icfg,
+			final BlockEncodingBacktranslator backtranslator, final boolean addThreadInUseViolationEdges) {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
 		final IcfgLocation exitNode = icfg.getProcedureExitNodes().get(threadInstanceName);
@@ -310,36 +294,27 @@ public class ThreadInstanceAdder {
 
 		final UnmodifiableTransFormula joinTransformula;
 		{
-
-			final UnmodifiableTransFormula threadIdAssumption =
-					jsa.constructThreadIdAssumption(icfg.getCfgSmtToolkit().getSymbolTable(),
-							icfg.getCfgSmtToolkit().getManagedScript(), Arrays.asList(threadIdVars));
-
+			final UnmodifiableTransFormula threadIdAssumption = jsa.constructThreadIdAssumption(
+					icfg.getCfgSmtToolkit().getSymbolTable(), icfg.getCfgSmtToolkit().getManagedScript(),
+					Arrays.asList(threadIdVars));
 			final UnmodifiableTransFormula resultAssignment;
 			if (jsa.getAssignmentLhs().isEmpty()) {
 				// no result assignment
-				resultAssignment =
-						TransFormulaBuilder.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
+				resultAssignment = TransFormulaBuilder
+						.getTrivialTransFormula(icfg.getCfgSmtToolkit().getManagedScript());
 			} else {
 				resultAssignment = jsa.constructResultAssignment(icfg.getCfgSmtToolkit().getManagedScript(),
 						icfg.getCfgSmtToolkit().getOutParams().get(threadInstanceName));
 			}
-			final List<UnmodifiableTransFormula> conjuncts;
-			if (addThreadInUseViolationEdges) {
-				final UnmodifiableTransFormula threadInUseAssignment =
-						constructThreadNotInUseAssingment(threadInUseVar, icfg.getCfgSmtToolkit().getManagedScript());
-				conjuncts = Arrays.asList(resultAssignment, threadIdAssumption, threadInUseAssignment);
-			} else {
-				conjuncts = Arrays.asList(resultAssignment, threadIdAssumption);
-			}
+			final List<UnmodifiableTransFormula> conjuncts = Arrays.asList(resultAssignment, threadIdAssumption);
 			joinTransformula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
 					icfg.getCfgSmtToolkit().getManagedScript(), false, false, false,
 					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
 					conjuncts);
 		}
 
-		final IcfgJoinThreadOtherTransition joinThreadOther =
-				ef.createJoinThreadOtherTransition(exitNode, callerNode, null, joinTransformula, jot);
+		final IcfgJoinThreadOtherTransition joinThreadOther = ef.createJoinThreadOtherTransition(exitNode, callerNode,
+				null, joinTransformula, jot);
 		exitNode.addOutgoing(joinThreadOther);
 		callerNode.addIncoming(joinThreadOther);
 
@@ -514,9 +489,6 @@ public class ThreadInstanceAdder {
 		final HashRelation<String, IProgramNonOldVar> proc2Globals = new HashRelation<>(
 				cfgSmtToolkit.getModifiableGlobalsTable().getProcToGlobals());
 		for (final ThreadInstance ti : IcfgPetrifier.getAllInstances(threadInstanceMap)) {
-			if (addThreadInUseViolationVariables) {
-				addVar(ti.getInUseVar(), newSymbolTable, proc2Globals, cfgSmtToolkit.getProcedures());
-			}
 			for (final IProgramNonOldVar idVar : ti.getIdVars()) {
 				addVar(idVar, newSymbolTable, proc2Globals, cfgSmtToolkit.getProcedures());
 			}
