@@ -121,22 +121,22 @@ public class CPrimitive extends CType {
 		 * We use this to type the various <code> :builtin </code> functions and procedures.
 		 *
 		 */
-		FLOAT_SMT(CPrimitiveCategory.FLOATTYPE, true),
+		FLOAT_SMT(CPrimitiveCategory.FLOATTYPE),
 
 		/** _Complex float represented as SMT float */
-		COMPLEX_FLOAT_SMT(CPrimitiveCategory.FLOATTYPE, true),
+		COMPLEX_FLOAT_SMT(CPrimitiveCategory.FLOATTYPE),
 
 		/** double represented as SMT float */
-		DOUBLE_SMT(CPrimitiveCategory.FLOATTYPE, true),
+		DOUBLE_SMT(CPrimitiveCategory.FLOATTYPE),
 
 		/** _Complex double represented as SMT float */
-		COMPLEX_DOUBLE_SMT(CPrimitiveCategory.FLOATTYPE, true),
+		COMPLEX_DOUBLE_SMT(CPrimitiveCategory.FLOATTYPE),
 
 		/** long double represented as SMT float */
-		LONGDOUBLE_SMT(CPrimitiveCategory.FLOATTYPE, true),
+		LONGDOUBLE_SMT(CPrimitiveCategory.FLOATTYPE),
 
 		/** _Complex long double represented as SMT float */
-		COMPLEX_LONGDOUBLE_SMT(CPrimitiveCategory.FLOATTYPE, true),
+		COMPLEX_LONGDOUBLE_SMT(CPrimitiveCategory.FLOATTYPE),
 
 		// TODO: something with "_imaginary"??
 
@@ -146,15 +146,10 @@ public class CPrimitive extends CType {
 		VOID(CPrimitiveCategory.VOID);
 
 		private final CPrimitiveCategory mPrimitiveCategory;
-		private final boolean mIsSmtFloat;
+
 
 		private CPrimitives(final CPrimitiveCategory generalprimitive) {
-			this(generalprimitive, false);
-		}
-
-		private CPrimitives(final CPrimitiveCategory generalprimitive, final boolean isSmtFloat) {
 			mPrimitiveCategory = generalprimitive;
-			mIsSmtFloat = isSmtFloat;
 		}
 
 		public boolean isIntegertype() {
@@ -170,7 +165,9 @@ public class CPrimitive extends CType {
 		}
 
 		public boolean isSmtFloat() {
-			return mIsSmtFloat;
+			return this == CPrimitives.FLOAT_SMT || this == CPrimitives.DOUBLE_SMT 
+					|| this == CPrimitives.LONGDOUBLE_SMT || this == CPrimitives.COMPLEX_FLOAT_SMT
+					|| this == CPrimitives.COMPLEX_DOUBLE_SMT || this == CPrimitives.COMPLEX_LONGDOUBLE_SMT;
 		}
 
 		/**
@@ -266,6 +263,10 @@ public class CPrimitive extends CType {
 	 */
 	public CPrimitive setIsSmtFloat(final boolean isSmtFloat) {
 		return new CPrimitive(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), isSmtFloat, getType());
+	}
+	
+	public CPrimitive getFloatCounterpart() {
+		return new CPrimitive(this.mType.getFloatCounterpart());
 	}
 
 	/**
