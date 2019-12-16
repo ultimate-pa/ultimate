@@ -151,7 +151,7 @@ public class CPrimitive extends CType {
 		private CPrimitives(final CPrimitiveCategory generalprimitive) {
 			mPrimitiveCategory = generalprimitive;
 		}
-
+		
 		public boolean isIntegertype() {
 			return mPrimitiveCategory == CPrimitiveCategory.INTTYPE;
 		}
@@ -228,6 +228,86 @@ public class CPrimitive extends CType {
 			}
 		}
 
+		public CPrimitives getBVVariant() {
+			// TODO Auto-generated method stub
+			switch (this) {
+			case COMPLEX_DOUBLE:
+			case COMPLEX_DOUBLE_SMT:
+				return COMPLEX_DOUBLE;
+			case COMPLEX_FLOAT:
+			case COMPLEX_FLOAT_SMT:
+				return COMPLEX_FLOAT;
+			case COMPLEX_LONGDOUBLE:
+			case COMPLEX_LONGDOUBLE_SMT:
+				return COMPLEX_LONGDOUBLE;
+			case DOUBLE:
+			case DOUBLE_SMT:
+				return DOUBLE;
+			case LONGDOUBLE:
+			case LONGDOUBLE_SMT:
+				return LONGDOUBLE;
+			case FLOAT:
+			case FLOAT_SMT:
+				return FLOAT;
+			case BOOL:
+			case CHAR:
+			case INT:
+			case LONG:
+			case LONGLONG:
+			case SCHAR:
+			case SHORT:
+			case UCHAR:
+			case UINT:
+			case ULONG:
+			case ULONGLONG:
+			case USHORT:
+			case VOID:
+				throw new AssertionError("Cannot convert " + this + " to float counterpart");
+			default:
+				throw new UnsupportedOperationException("Unhandled case: " + this);
+			}
+		}
+		
+		public CPrimitives getSMTVariant() {
+			// TODO Auto-generated method stub
+			switch (this) {
+			case COMPLEX_DOUBLE:
+			case COMPLEX_DOUBLE_SMT:
+				return COMPLEX_DOUBLE_SMT;
+			case COMPLEX_FLOAT:
+			case COMPLEX_FLOAT_SMT:
+				return COMPLEX_FLOAT_SMT;
+			case COMPLEX_LONGDOUBLE:
+			case COMPLEX_LONGDOUBLE_SMT:
+				return COMPLEX_LONGDOUBLE_SMT;
+			case DOUBLE:
+			case DOUBLE_SMT:
+				return DOUBLE_SMT;
+			case LONGDOUBLE:
+			case LONGDOUBLE_SMT:
+				return LONGDOUBLE_SMT;
+			case FLOAT:
+			case FLOAT_SMT:
+				return FLOAT_SMT;
+			case BOOL:
+			case CHAR:
+			case INT:
+			case LONG:
+			case LONGLONG:
+			case SCHAR:
+			case SHORT:
+			case UCHAR:
+			case UINT:
+			case ULONG:
+			case ULONGLONG:
+			case USHORT:
+			case VOID:
+				throw new AssertionError("Cannot convert " + this + " to float counterpart");
+			default:
+				throw new UnsupportedOperationException("Unhandled case: " + this);
+			}
+		}
+
 	}
 
 	public enum CPrimitiveCategory {
@@ -246,7 +326,7 @@ public class CPrimitive extends CType {
 
 	public CPrimitive(final CPrimitives type) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false, false);
+		super(false, false, false, false, false, type.isSmtFloat());
 		mType = type;
 		mGeneralType = getGeneralType(type);
 	}
@@ -371,6 +451,15 @@ public class CPrimitive extends CType {
 		}
 		mGeneralType = getGeneralType(mType);
 	}
+	
+	public CPrimitive getSMTVariant() {
+		return new CPrimitive(this.mType.getSMTVariant());
+	}
+	
+	public CPrimitive getBvVaraint() {
+		return new CPrimitive(this.mType.getBVVariant());
+	}
+
 
 	private static CPrimitiveCategory getGeneralType(final CPrimitives type) throws AssertionError {
 		switch (type) {

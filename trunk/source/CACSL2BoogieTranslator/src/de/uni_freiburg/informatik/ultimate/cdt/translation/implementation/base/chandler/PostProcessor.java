@@ -566,10 +566,12 @@ public class PostProcessor {
 			break;
 		}
 		final CPrimitive cType = new CPrimitive(floatCPrimitives);
+		final CPrimitive smtCType = new CPrimitive(floatCPrimitives.getFloatCounterpart());
+		final ASTType smtFloatAstType = mTypeHandler.cType2AstType(loc, smtCType);
 		final ASTType floatAstType = mTypeHandler.cType2AstType(loc, cType);
 		final BoogieType floatBoogieType = (BoogieType) floatAstType.getBoogieType();
 
-		final VarList[] inVarList = new VarList[] { new VarList(loc, new String[] { inVar }, floatAstType) };
+		final VarList[] inVarList = new VarList[] { new VarList(loc, new String[] { inVar }, smtFloatAstType) };
 		final VarList[] outVarList = new VarList[] { new VarList(loc, new String[] { outVar }, floatAstType) };
 
 		final Procedure procedure = new Procedure(loc, new Attribute[0], functionName, new String[0], inVarList,

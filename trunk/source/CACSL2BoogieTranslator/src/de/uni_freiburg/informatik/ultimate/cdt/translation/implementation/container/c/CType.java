@@ -141,7 +141,8 @@ public abstract class CType {
 		if (this instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) this;
 			return cPrimitive.getType() == CPrimitives.FLOAT || cPrimitive.getType() == CPrimitives.DOUBLE
-					|| cPrimitive.getType() == CPrimitives.LONGDOUBLE;
+					|| cPrimitive.getType() == CPrimitives.LONGDOUBLE || cPrimitive.getType() == CPrimitives.FLOAT_SMT
+					|| cPrimitive.getType() == CPrimitives.DOUBLE_SMT || cPrimitive.getType() == CPrimitives.LONGDOUBLE_SMT;
 		}
 		return false;
 	}

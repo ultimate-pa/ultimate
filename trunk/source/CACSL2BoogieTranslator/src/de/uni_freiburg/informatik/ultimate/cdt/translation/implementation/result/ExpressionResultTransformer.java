@@ -1087,7 +1087,8 @@ public class ExpressionResultTransformer {
 		// TODO: remove hardcoded comparison.
 		if ("signbit".equals(functionName) || "copysign".equals(functionName) || "fmod".equals(functionName)
 				|| !rvalue.getCType().isFloatingType()) {
-			return new ExpressionResultBuilder().addAllExceptLrValue(args).setLrValue(rvalue).build();
+			return new ExpressionResultBuilder().addAllExceptLrValue(args)
+					.setLrValue(new RValue(rvalue.getValue(), ((CPrimitive) rvalue.getCType()).getFloatCounterpart())).build();
 		}
 		return constructBitvecResult(rvalue, loc);
 	}
@@ -1106,7 +1107,7 @@ public class ExpressionResultTransformer {
 				new VariableLHS[] { auxvarinfo.getLhs() },
 				"float_to_bitvec" + Integer.toString(mTypeSizes.getFloatingPointSize(cType).getBitSize()), arguments);
 		resultBuilder.addStatement(call);
-		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), cType.setIsSmtFloat(false)));
+		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), cType.getBvVaraint()));
 		return resultBuilder.build();
 	}
 
