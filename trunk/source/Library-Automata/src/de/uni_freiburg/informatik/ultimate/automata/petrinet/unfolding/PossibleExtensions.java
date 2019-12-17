@@ -32,18 +32,23 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.TreePriorityQueue;
 
 /**
  * Implementation of a possible extension.
@@ -62,8 +67,11 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 * issue. https://github.com/ultimate-pa/ultimate/issues/448
 	 */
 	private static final boolean BUMBLEBEE_B07_OPTIMIZAION = true;
-	private final PriorityQueue<Event<LETTER, PLACE>> mPe;
+	private final Queue<Event<LETTER, PLACE>> mPe;
+	private final Map<Marking<LETTER, PLACE>, Event<LETTER, PLACE>> mMarkingEventMap = new HashMap<>();
 	private int mMaximalSize = 0;
+	private static final boolean USE_PQ = true;
+	private final boolean mUseFirstbornCutoffCheck;
 	/**
 	 * If {@link Event} is known to be cut-off event we can move it immediately
 	 * to front because it will not create descendants. This optimization keeps
@@ -72,6 +80,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 * later. We could to an additional cut-off check earlier but we have doubts
 	 * that this will pay off.
 	 */
+	private final Comparator<Event<LETTER, PLACE>> mOrder;
 	private final ArrayDeque<Event<LETTER, PLACE>> mFastpathCutoffEventList;
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
 	private final boolean mLazySuccessorComputation = true;
@@ -82,10 +91,18 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private int mUsefulExtensionCandidates = 0;
 	private int mUselessExtensionCandidates = 0;
 
-	public PossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess, final Comparator<Event<LETTER, PLACE>> order) {
+	public PossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess, final Comparator<Event<LETTER, PLACE>> order,
+			boolean useFirstbornCutoffCheck) {
+		mUseFirstbornCutoffCheck = useFirstbornCutoffCheck;
 		mBranchingProcess = branchingProcess;
-		mPe = new PriorityQueue<>(order);
+		if (USE_PQ) {
+			mPe = new PriorityQueue<>(order);
+		} else {
+			mPe = new TreePriorityQueue<>(order);
+		}
 		mFastpathCutoffEventList = new ArrayDeque<>();
+		mOrder = order;
+		mMarkingEventMap.put(mBranchingProcess.getDummyRoot().getMark(), mBranchingProcess.getDummyRoot());
 	}
 
 	@Override
@@ -114,6 +131,24 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		}
 	}
 
+	private boolean firstbornCutoffCheck(Event<LETTER, PLACE> newEvent) {
+		Event<LETTER, PLACE> eventWithSameMarking = mMarkingEventMap.get(newEvent.getMark());
+		if (eventWithSameMarking == null) {
+			return false;
+		}
+
+		if (mOrder.compare(newEvent, eventWithSameMarking) > 0) {
+			newEvent.setCompanion(eventWithSameMarking);
+			return true;
+		} else {
+			boolean eventWithSameMarkingWasInTheMainQueu;
+			eventWithSameMarkingWasInTheMainQueu = mPe.remove(eventWithSameMarking);
+			assert(eventWithSameMarkingWasInTheMainQueu);
+			mFastpathCutoffEventList.add(eventWithSameMarking);
+			eventWithSameMarking.setCompanion(newEvent);
+			return false;
+		}
+	}
 	/**
 	 * Evolves a {@code Candidate} for a new possible Event in all possible ways and, as a side-effect, adds valid
 	 * extensions (ones whose predecessors are a co-set) to he possible extension set.
@@ -123,8 +158,17 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		if (cand.isFullyInstantiated()) {
 			for (final ITransition<LETTER, PLACE> trans : cand.getTransition().getTransitions()) {
 				final Event<LETTER, PLACE> newEvent = new Event<>(cand.getInstantiated(), trans, mBranchingProcess);
-				if (newEvent.isCutoffEvent()) {
-					mFastpathCutoffEventList.add(newEvent);
+				if (mUseFirstbornCutoffCheck) {
+					if (firstbornCutoffCheck(newEvent)) {
+						mFastpathCutoffEventList.add(newEvent);
+					} else {
+						mMarkingEventMap.put(newEvent.getMark(), newEvent);
+						final boolean somethingWasAdded = mPe.add(newEvent);
+						mMaximalSize = Integer.max(mMaximalSize, mPe.size());
+						if (!somethingWasAdded) {
+							throw new AssertionError("Event was already in queue.");
+						}
+					}
 				} else {
 					final boolean somethingWasAdded = mPe.add(newEvent);
 					mMaximalSize = Integer.max(mMaximalSize, mPe.size());

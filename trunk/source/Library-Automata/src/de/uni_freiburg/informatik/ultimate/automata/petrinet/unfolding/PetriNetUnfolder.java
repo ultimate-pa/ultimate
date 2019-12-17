@@ -78,7 +78,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 
 	private final PetriNetUnfolder<LETTER, PLACE>.Statistics mStatistics = new Statistics();
 
-	private final boolean mUseCutoffChekingPossibleExtention = false;
+	private static final boolean USE_FIRSTBORN_CUTOFF_CHECK = true;
 
 
 	/**
@@ -119,12 +119,8 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			default:
 				throw new IllegalArgumentException();
 		}
-		mUnfolding = new BranchingProcess<>(mServices, operand, mOrder, mUseCutoffChekingPossibleExtention);
-		if (mUseCutoffChekingPossibleExtention) {
-			mPossibleExtensions = new CuttOffCheckingPossibleExtensions<>(mUnfolding, mOrder);
-		} else {
-			mPossibleExtensions = new PossibleExtensions<>(mUnfolding, mOrder);
-		}
+		mUnfolding = new BranchingProcess<>(mServices, operand, mOrder, USE_FIRSTBORN_CUTOFF_CHECK);
+		mPossibleExtensions = new PossibleExtensions<>(mUnfolding, mOrder, USE_FIRSTBORN_CUTOFF_CHECK);
 
 		computeUnfolding();
 		mLogger.info(mStatistics.prettyprintCutOffInformation());
@@ -178,7 +174,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	private boolean computeUnfoldingHelper(final Event<LETTER, PLACE> event) throws PetriNetNot1SafeException {
 		assert !parentIsCutoffEvent(event) : "We must not construct successors of cut-off events.";
 		boolean isCutOffEvent;
-		if (!mUseCutoffChekingPossibleExtention) {
+		if (!USE_FIRSTBORN_CUTOFF_CHECK) {
 			isCutOffEvent = mUnfolding.isCutoffEvent(event, mOrder, mSameTransitionCutOff);
 		}
 		else {

@@ -119,7 +119,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * a "finite comprehensive prefix".
 	 */
 	private final boolean mNewFiniteComprehensivePrefixMode = false;
-	private final boolean mUseCutoffChekingPossibleExtention;
+	private final boolean mUseFirstbornCutoffCheck;
 
 	public BranchingProcess(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> net,
 			final EventOrder<LETTER, PLACE> order, final boolean useCutoffChekingPossibleExtention) throws PetriNetNot1SafeException {
@@ -131,7 +131,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		mConditions = new HashSet<>();
 		mEvents = new HashSet<>();
 		mCoRelation = new ConditionEventsCoRelation<>(this);
-		mUseCutoffChekingPossibleExtention = useCutoffChekingPossibleExtention;
+		mUseFirstbornCutoffCheck = useCutoffChekingPossibleExtention;
 
 		// add a dummy event as root. its successors are the initial conditions.
 		mDummyRoot = new Event<>(this);
@@ -168,7 +168,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 			}
 		}
 		mEvents.add(event);
-		if (!mUseCutoffChekingPossibleExtention && !event.isCutoffEvent()) {
+		if (!mUseFirstbornCutoffCheck && !event.isCutoffEvent()) {
 			mMarkingNonCutoffEventRelation.addPair(event.getMark().hashCode(), event);
 		}
 		for (final Condition<LETTER, PLACE> c : event.getPredecessorConditions()) {
