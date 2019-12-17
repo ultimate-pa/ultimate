@@ -216,7 +216,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	}
 
 	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleMcr() {
-		return new IpAbStrategyModulMcr<>(mCounterexample.getWord().asList(), mPredicateUnifier, mEmptyStackFactory,
+		return new IpAbStrategyModuleMcr<>(mCounterexample.getWord().asList(), mPredicateUnifier, mEmptyStackFactory,
 				mLogger, mPrefs, mAbstraction.getAlphabet());
 	}
 

@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
-public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements IIpAbStrategyModule<LETTER> {
+public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements IIpAbStrategyModule<LETTER> {
 	private final List<LETTER> mTrace;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
@@ -62,7 +62,7 @@ public class IpAbStrategyModulMcr<LETTER extends IIcfgTransition<?>> implements 
 
 	private IpAbStrategyModuleResult<LETTER> mResult;
 
-	public IpAbStrategyModulMcr(final List<LETTER> trace, final IPredicateUnifier predicateUnifier,
+	public IpAbStrategyModuleMcr(final List<LETTER> trace, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final ILogger logger,
 			final ITraceCheckPreferences prefs, final Set<LETTER> alphabet) {
 		mTrace = trace;
