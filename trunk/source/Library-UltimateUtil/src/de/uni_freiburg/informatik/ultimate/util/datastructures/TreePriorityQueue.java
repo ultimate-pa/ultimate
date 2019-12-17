@@ -27,9 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Queue;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
@@ -40,7 +42,20 @@ import java.util.TreeSet;
  *
  */
 public class TreePriorityQueue<E> implements Queue<E> {
-	private final TreeSet<E> mQueue = new TreeSet<>();
+	private final TreeSet<E> mQueue;
+	
+	public TreePriorityQueue() {
+		mQueue = new TreeSet<>();
+	}
+	public TreePriorityQueue(Comparator<E> comp) {
+		mQueue = new TreeSet<>(comp);
+	}
+	public TreePriorityQueue(Collection<E> col) {
+		mQueue = new TreeSet<>(col);
+	}
+	public TreePriorityQueue(SortedSet<E> s) {
+		mQueue = new TreeSet<>(s);
+	}
 
 	@Override
 	public boolean addAll(final Collection<? extends E> c) {
