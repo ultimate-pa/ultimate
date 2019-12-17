@@ -32,7 +32,7 @@
 	</tasks>
     
 	<tasks name="Ultimate Repo">
-		<includesfile>../../../trunk/examples/concurrent/pthreads/*</includesfile>
+		<includesfile>../../../trunk/examples/bench-pthreads.set</includesfile>
 	</tasks>
 
 </benchmark>
