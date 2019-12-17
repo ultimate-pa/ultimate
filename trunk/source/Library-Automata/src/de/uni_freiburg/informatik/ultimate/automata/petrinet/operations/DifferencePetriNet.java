@@ -184,6 +184,11 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 					final List<ITransition<LETTER, PLACE>> transitions = new ArrayList<>();
 					for (final ITransition<LETTER, PLACE> trans : split.getSuccTransProviderLetterInSet().getTransitions()) {
 						final Set<PLACE> transitionPredecessors = mMinued.getPredecessors(trans);
+						if (!mMinuendPlaces.containsAll(transitionPredecessors)) {
+							// not all predecessors places of transition are
+							// yet constructed, maybe this transition is dead
+							continue;
+						}
 						if (DataStructureUtils.haveNonEmptyIntersection(transitionPredecessors, new HashSet<PLACE>(places))) {
 							transitions.add(getOrConstructTransitionCopy(trans));
 						} else {
@@ -192,7 +197,6 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 							// transition will be considered if one of the
 							// predecessor places is considered
 						}
-
 					}
 					if (!transitions.isEmpty()) {
 						result.add(new SimpleSuccessorTransitionProvider<>(transitions, mMinued));
@@ -313,6 +317,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	private ITransition<LETTER, PLACE> getOrConstructTransitionCopy(final ITransition<LETTER, PLACE> inputTransition) {
 		ITransition<LETTER, PLACE> result = mInputTransition2State2OutputTransition.get(inputTransition, null);
 		if (result == null) {
+//			assert (mMinuendPlaces.containsAll(mMinued.getPredecessors(inputTransition))) : "missing predecessor";
 			final Set<PLACE> successors = new LinkedHashSet<>();
 			for (final PLACE petriNetSuccessor : mMinued.getSuccessors(inputTransition)) {
 				// possibly first time that we saw this place, add
