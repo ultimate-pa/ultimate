@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
+    
+    <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+
+    <rundefinition name="Automizer SVCOMP 2020">
+        <option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+    </rundefinition>
+
+    <rundefinition name="Automizer FA-SemanticLbe">
+        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe.epf</option>
+	</rundefinition>
+
+    <rundefinition name="Automizer FA-VariableLbe">
+        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-VariableLbe.epf</option>
+	</rundefinition>
+
+    <rundefinition name="Automizer FA-NoLbe">
+        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
+	</rundefinition>
+
+
+<!-- As soon as we have settings for that  
+	<rundefinition name="Automizer MCR">
+        <option name="-s">../../../trunk/examples/settings/ai/array-bench/reach_32bit_compound_exp_cong.epf</option>
+	</rundefinition>
+--> 
+
+    
+	<tasks name="SVCOMP ConcurrencySafety-Main">
+		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
+	</tasks>
+    
+	<tasks name="Ultimate Repo">
+		<includesfile>../../../trunk/examples/concurrent/pthreads/*</includesfile>
+	</tasks>
+
+</benchmark>
