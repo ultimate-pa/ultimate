@@ -31,6 +31,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -48,11 +51,13 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 	private final List<LETTER> mTrace;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
-	private final AutomataLibraryServices mServices;
+	private final IUltimateServiceProvider mServices;
+	private final AutomataLibraryServices mAutomataServices;
 	private final ManagedScript mManagedScript;
+	private final SimplificationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private final VpAlphabet<LETTER> mAlphabet;
-	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
 
 	private final List<Set<IProgramVar>> mWrites2Variables;
 	private final HashRelation<IProgramVar, Integer> mVariables2Writes;
@@ -68,13 +73,13 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 		mTrace = trace;
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
-		final IUltimateServiceProvider services = prefs.getUltimateServices();
-		mServices = new AutomataLibraryServices(services);
+		mServices = prefs.getUltimateServices();
+		mAutomataServices = new AutomataLibraryServices(mServices);
 		mManagedScript = prefs.getCfgSmtToolkit().getManagedScript();
+		mSimplificationTechnique = prefs.getSimplificationTechnique();
+		mXnfConversionTechnique = prefs.getXnfConversionTechnique();
 		mEmptyStackFactory = emptyStackFactory;
 		mAlphabet = new VpAlphabet<>(alphabet);
-		mPredicateTransformer =
-				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(services, mManagedScript));
 		mWrites2Variables = new ArrayList<>(trace.size());
 		mVariables2Writes = new HashRelation<>();
 		mPreviousWrite = new ArrayList<>(trace.size());
@@ -130,7 +135,8 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 		// Construct automata for the MHB relation
 		for (final List<Integer> threadActions : mThreads2SortedActions.values()) {
 			final Set<Integer> otherActions = new HashSet<>(range);
-			final NestedWordAutomaton<Integer, String> nwa = new NestedWordAutomaton<>(mServices, alphabet, factory);
+			final NestedWordAutomaton<Integer, String> nwa =
+					new NestedWordAutomaton<>(mAutomataServices, alphabet, factory);
 			otherActions.removeAll(threadActions);
 			nwa.addState(true, false, getState(0));
 			for (final Integer otherAction : otherActions) {
@@ -155,7 +161,7 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 				final Integer write = entry.getValue();
 				final IProgramVar var = entry.getKey();
 				final NestedWordAutomaton<Integer, String> nwa =
-						new NestedWordAutomaton<>(mServices, alphabet, factory);
+						new NestedWordAutomaton<>(mAutomataServices, alphabet, factory);
 				final Set<Integer> writesOnVar = mVariables2Writes.getImage(var);
 				nwa.addState(write == null, false, getState(1));
 				nwa.addState(false, true, getState(2));
@@ -179,7 +185,7 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 				automata.add(nwa);
 			}
 		}
-		final INestedWordAutomaton<Integer, String> result = intersect(automata, factory, mServices);
+		final INestedWordAutomaton<Integer, String> result = intersect(automata, factory, mAutomataServices);
 		mLogger.info("Construction finished.");
 		return result;
 	}
@@ -209,7 +215,7 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 		mLogger.info("Constructing interpolant automaton by labelling MCR automaton.");
 		final Map<STATE, IPredicate> stateMap = new HashMap<>();
 		final NestedWordAutomaton<LETTER, IPredicate> result =
-				new NestedWordAutomaton<>(mServices, mAlphabet, mEmptyStackFactory);
+				new NestedWordAutomaton<>(mAutomataServices, mAlphabet, mEmptyStackFactory);
 		IPredicate currentPredicate = mPredicateUnifier.getTruePredicate();
 		result.addState(true, false, currentPredicate);
 		result.addState(false, true, mPredicateUnifier.getFalsePredicate());
@@ -235,7 +241,9 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 			currentPredicate = nextPredicate;
 			stateMap.put(currentState, currentPredicate);
 		}
-		int preCalls = 0;
+		final PredicateTransformer<Term, IPredicate, TransFormula> predicateTransformer =
+				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
+		int wpCalls = 0;
 		while (!queue.isEmpty()) {
 			final STATE state = queue.remove();
 			final IPredicate predicate = stateMap.get(state);
@@ -255,10 +263,12 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 					if (predicateEdges.hasNext()) {
 						predPredicate = predicateEdges.next().getPred();
 					} else {
-						// Otherwise calculate pre and add it as a state if necessary
-						preCalls++;
-						final Term pre = mPredicateTransformer.pre(predicate, action.getTransformula());
-						predPredicate = mPredicateUnifier.getOrConstructPredicate(pre);
+						// Otherwise calculate wp and add it as a state if necessary
+						wpCalls++;
+						final Term wp = predicateTransformer.weakestPrecondition(predicate, action.getTransformula());
+						final Term wpEliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
+								mManagedScript, wp, mSimplificationTechnique, mXnfConversionTechnique);
+						predPredicate = mPredicateUnifier.getOrConstructPredicate(wpEliminated);
 						if (!result.contains(predPredicate)) {
 							result.addState(false, false, predPredicate);
 						}
@@ -269,7 +279,7 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 				result.addInternalTransition(predPredicate, action, predicate);
 			}
 		}
-		mLogger.info("Construction finished. Needed to calculate pre " + preCalls + " times.");
+		mLogger.info("Construction finished. Needed to calculate wp " + wpCalls + " times.");
 		return result;
 	}
 
