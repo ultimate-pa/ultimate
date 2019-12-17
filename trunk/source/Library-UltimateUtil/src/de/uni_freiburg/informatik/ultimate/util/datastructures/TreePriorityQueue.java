@@ -28,126 +28,114 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Queue;
+import java.util.TreeSet;
 
 /**
- * A TreeSet-based implementation of a priority queue.
- * TODO:
+ * A TreeSet-based implementation of a priority queue. This queue can only be used if the Queue order is total.
+ * The main advantage of this queue is that the time complexity of remove(o) is logarithmic
  *
  * @author Mehdi Naouar
  *
  */
 public class TreePriorityQueue<E> implements Queue<E> {
+	private final TreeSet<E> mQueue = new TreeSet<>();
 
 	@Override
 	public boolean addAll(final Collection<? extends E> c) {
-		// TODO Auto-generated method stub
-		return false;
+		return mQueue.addAll(c);
 	}
 
 	@Override
 	public void clear() {
-		// TODO Auto-generated method stub
-		
+		mQueue.clear();
 	}
 
 	@Override
 	public boolean contains(final Object o) {
-		// TODO Auto-generated method stub
-		return false;
+		return mQueue.contains(o);
 	}
 
 	@Override
 	public boolean containsAll(final Collection<?> c) {
-		// TODO Auto-generated method stub
-		return false;
+		return mQueue.containsAll(c);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		// TODO Auto-generated method stub
-		return false;
+		return mQueue.isEmpty();
 	}
 
 	@Override
 	public Iterator<E> iterator() {
-		// TODO Auto-generated method stub
-		return null;
+		return mQueue.iterator();
 	}
 
 	@Override
 	public boolean remove(final Object o) {
-		// TODO Auto-generated method stub
-		return false;
+		return mQueue.remove(o);
 	}
 
 	@Override
 	public boolean removeAll(final Collection<?> c) {
-		// TODO Auto-generated method stub
-		return false;
+		return mQueue.removeAll(c);
 	}
 
 	@Override
 	public boolean retainAll(final Collection<?> c) {
-		// TODO Auto-generated method stub
-		return false;
+		return mQueue.retainAll(c);
 	}
 
 	@Override
 	public int size() {
-		// TODO Auto-generated method stub
-		return 0;
+		return mQueue.size();
 	}
 
 	@Override
 	public Object[] toArray() {
-		// TODO Auto-generated method stub
-		return null;
+		return mQueue.toArray();
 	}
 
 	@Override
 	public <T> T[] toArray(final T[] a) {
-		// TODO Auto-generated method stub
-		return null;
+		return mQueue.toArray(a);
 	}
 
 	@Override
 	public boolean add(final E arg0) {
-		// TODO Auto-generated method stub
-		return false;
+		return mQueue.add(arg0);
 	}
 
 	@Override
 	public E element() {
-		// TODO Auto-generated method stub
-		return null;
+		return mQueue.first();
 	}
 
 	@Override
 	public boolean offer(final E e) {
-		// TODO Auto-generated method stub
-		return false;
+		return mQueue.add(e);
 	}
 
 	@Override
 	public E peek() {
-		// TODO Auto-generated method stub
-		return null;
+		if (mQueue.isEmpty()) {
+			return null;
+		} else {
+			return mQueue.first();
+		}
 	}
 
 	@Override
 	public E poll() {
-		// TODO Auto-generated method stub
-		return null;
+		return mQueue.pollFirst();
 	}
 
 	@Override
 	public E remove() {
-		// TODO Auto-generated method stub
-		return null;
+		if (mQueue.isEmpty()) {
+			throw new NoSuchElementException("The Queue is Empty");
+		}
+		return mQueue.pollFirst();
 	}
-
-	
-
-
 }
