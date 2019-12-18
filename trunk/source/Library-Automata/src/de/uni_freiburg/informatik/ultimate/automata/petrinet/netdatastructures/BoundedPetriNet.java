@@ -227,9 +227,9 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	 * @return the newly added transition
 	 */
 	public Transition<LETTER, PLACE> addTransition(final LETTER letter, final Set<PLACE> preds,
-			final Set<PLACE> succs) {
+			final Set<PLACE> succs, final int transitionId){
 		assert mAlphabet.contains(letter) : "Letter not in alphabet: " + letter;
-		final Transition<LETTER, PLACE> transition = new Transition<>(letter, preds, succs, mTransitions.size());
+		final Transition<LETTER, PLACE> transition = new Transition<>(letter, preds, succs, transitionId);
 		for (final PLACE predPlace : preds) {
 			assert mPlaces.contains(predPlace) : "Place not in net: " + predPlace;
 			mSuccessors.addPair(predPlace, transition);
@@ -240,6 +240,11 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		}
 		mTransitions.add(transition);
 		return transition;
+		
+	}
+	public Transition<LETTER, PLACE> addTransition(final LETTER letter, final Set<PLACE> preds,
+			final Set<PLACE> succs) {
+		return addTransition(letter, preds, succs, mTransitions.size());
 	}
 
 	/**

@@ -270,6 +270,22 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				mNet.addTransition(e.getTransition().getSymbol(), preds, succs);
 			}
 		} else {
+			for (Event<LETTER, PLACE> e : releventEvents) {
+				final Set<PLACE> preds = new HashSet<>();
+				final Set<PLACE> succs = new HashSet<>();
+
+				for (final Condition<LETTER, PLACE> c : e.getPredecessorConditions()) {
+					final Condition<LETTER, PLACE> representative = mConditionRepresentatives.find(c);
+					preds.add(placeMap.get(representative));
+				}
+				for (final Condition<LETTER, PLACE> c : e.getSuccessorConditions()) {
+					final Condition<LETTER, PLACE> representative = mConditionRepresentatives.find(c);
+					succs.add(placeMap.get(representative));
+				}
+				mNet.addTransition(e.getTransition().getSymbol(), preds, succs, e.getTotalOrderId());
+			}
+		}
+		/*{
 			final TransitionSet transitionSet = new TransitionSet();
 			for (final Event<LETTER, PLACE> e : releventEvents) {
 				// equality intended here
@@ -292,7 +308,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				// mNet.addTransition(e.getTransition().getSymbol(), preds, succs);
 			}
 			transitionSet.addAllTransitionsToNet(mNet);
-		}
+		}*/
 
 		/*
 		for (final Condition<LETTER, PLACE> c : bp.getConditions()) {

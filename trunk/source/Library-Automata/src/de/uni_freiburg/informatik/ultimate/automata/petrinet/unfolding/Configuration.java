@@ -263,7 +263,6 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 				return result;
 			}
 		}
-		assert phi1.equals(phi2);
 		return 0;
 	}
 
