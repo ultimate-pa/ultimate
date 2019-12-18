@@ -24,14 +24,14 @@ public class ErvEqualMarkingOrder<LETTER, PLACE> extends EventOrder<LETTER, PLAC
 		if (!o1.getMark().equals(o2.getMark())) {
 			return 0;
 		}
-		final Configuration<LETTER, PLACE> c1 = o1.getLocalConfiguration();
-		final Configuration<LETTER, PLACE> c2 = o2.getLocalConfiguration();
+		final IConfiguration<LETTER, PLACE> c1 = o1.getLocalConfiguration();
+		final IConfiguration<LETTER, PLACE> c2 = o2.getLocalConfiguration();
 		result = compare(c1, c2);
 		return result;
 	}
 
 	@Override
-	public int compare(final Configuration<LETTER, PLACE> c1, final Configuration<LETTER, PLACE> c2) {
+	public int compare(final IConfiguration<LETTER, PLACE> c1, final IConfiguration<LETTER, PLACE> c2) {
 		return mErvOrder.compare(c1, c2);
 	}
 }

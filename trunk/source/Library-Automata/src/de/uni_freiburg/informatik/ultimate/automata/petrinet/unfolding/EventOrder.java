@@ -51,8 +51,8 @@ public abstract class EventOrder<LETTER, PLACE> implements Comparator<Event<LETT
 		if (o1 == o2) {
 			return 0;
 		}
-		final Configuration<LETTER, PLACE> c1 = o1.getLocalConfiguration();
-		final Configuration<LETTER, PLACE> c2 = o2.getLocalConfiguration();
+		final IConfiguration<LETTER, PLACE> c1 = o1.getLocalConfiguration();
+		final IConfiguration<LETTER, PLACE> c2 = o2.getLocalConfiguration();
 		return compare(c1, c2);
 	}
 
@@ -65,7 +65,7 @@ public abstract class EventOrder<LETTER, PLACE> implements Comparator<Event<LETT
 	 *            second configuration
 	 * @return the value according to {@link Comparator}
 	 */
-	protected abstract int compare(Configuration<LETTER, PLACE> o1, Configuration<LETTER, PLACE> o2);
+	protected abstract int compare(IConfiguration<LETTER, PLACE> o1, IConfiguration<LETTER, PLACE> o2);
 	
 	public int getNumberOfComparisons() {
 		return mComparisonCounter;

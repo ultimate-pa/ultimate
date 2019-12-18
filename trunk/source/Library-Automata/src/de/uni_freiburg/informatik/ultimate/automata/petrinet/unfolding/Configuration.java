@@ -54,7 +54,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
  * @param <PLACE>
  *            place content type
  */
-public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLACE>> implements Comparable<Configuration<LETTER, PLACE>> {
+public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLACE>>
+		implements Comparable<IConfiguration<LETTER, PLACE>>, IConfiguration<LETTER, PLACE> {
 	private final Set<Event<LETTER, PLACE>> mEvents;
 	private Set<Event<LETTER, PLACE>> mMin;
 	private ArrayList<Transition<LETTER, PLACE>> mPhi;
@@ -249,7 +250,7 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 	 * of events with respect to the the total order on their transitions.
 	 */
 	@Override
-	public int compareTo(final Configuration<LETTER, PLACE> other) {
+	public int compareTo(final IConfiguration<LETTER, PLACE> other) {
 		if (size() != other.size()) {
 			return size() - other.size();
 		}
