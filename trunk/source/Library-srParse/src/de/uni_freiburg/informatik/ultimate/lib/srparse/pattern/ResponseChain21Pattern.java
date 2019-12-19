@@ -34,8 +34,10 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 
+// TODO: This pattern needs to be represented via two DC-formulas.
+
 /**
- * {scope}, it is always the case that if "U" holds and is succeeded by "T", then "S" eventually holds after "R"
+ * {scope}, it is always the case that if "R" holds and is succeeded by "S", then "T" eventually holds after "U"
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -59,18 +61,20 @@ public class ResponseChain21Pattern extends PatternType {
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeBefore) {
 			final CDD P = getScope().getCdd1();
-			// TODO: fix countertrace
-			ct = counterTrace(phase(P.negate()), phase(R.and(P.negate()).and(S.negate())),
-					phase(P.negate().and(S).and(R.negate())), phase(P.negate()), phase(P.negate().and(U)),
-					phase(P.negate().and(T.negate())), phase(P), phaseT());
+			// TODO: a second ct formula is needed to express that after the premise is satisfied, U never holds before
+			// P, i.e. [!P], [!P && R], [!P], [!P && S], [!P && !U], [P], true
+			ct = counterTrace(phase(P.negate()), phase(R.and(P.negate())), phase(P.negate()), phase(P.negate().and(S)),
+					phase(P.negate()), phase(P.negate().and(U)), phase(P.negate().and(T.negate())), phase(P.negate()),
+					phase(P), phaseT());
 
 			return ct;
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = getScope().getCdd1();
 			final CDD Q = getScope().getCdd2();
-			// TODO: fix countertrace
+			// TODO: a second ct formula is needed to express that after the premise is satisfied, U never holds before
+			// P, i.e. true, [P && !Q], [!Q], [!Q && R], [!Q], [!Q && S], [!Q && !U], [Q], true
 			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R)),
-					phase(Q.negate().and(S)), phase(Q.negate()), phase(Q.negate().and(U)),
+					phase(Q.negate()), phase(Q.negate().and(S)), phase(Q.negate()), phase(Q.negate().and(U)),
 					phase(Q.negate().and(T.negate())), phase(Q), phaseT());
 			return ct;
 		}
