@@ -128,6 +128,11 @@ public class Req2BoogieTranslator {
 	private final boolean mSeparateInvariantHandling;
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
+			final List<PatternType> patterns) {
+		this(services, logger, patterns, Collections.emptyList());
+	}
+
+	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
 			final List<PatternType> patterns, final List<IReq2PeaTransformer> req2peaTransformers) {
 		mLogger = logger;
 		mServices = services;
