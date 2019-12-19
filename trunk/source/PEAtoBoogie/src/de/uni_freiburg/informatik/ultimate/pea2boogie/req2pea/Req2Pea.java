@@ -1,6 +1,7 @@
 /*
+ * Copyright (C) 2017-2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2015-2019 University of Freiburg
  *
  * This file is part of the ULTIMATE PEAtoBoogie plug-in.
  *
@@ -38,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConverter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
@@ -47,7 +47,12 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableB
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder.ErrorInfo;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder.ErrorType;
 
-public class ReqToPEA {
+/**
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public class Req2Pea implements IReq2Pea {
 	private static final boolean ENABLE_DEBUG_LOGS = false;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -56,7 +61,7 @@ public class ReqToPEA {
 	private final IReqSymbolTable mSymbolTable;
 	private final boolean mHasErrors;
 
-	public ReqToPEA(final IUltimateServiceProvider services, final ILogger logger,
+	public Req2Pea(final IUltimateServiceProvider services, final ILogger logger,
 			final List<InitializationPattern> init, final List<PatternType> requirements) {
 		mLogger = logger;
 		mServices = services;
@@ -90,10 +95,12 @@ public class ReqToPEA {
 		mHasErrors = !errors.isEmpty();
 	}
 
+	@Override
 	public Map<PatternType, PhaseEventAutomata> getPattern2Peas() {
 		return Collections.unmodifiableMap(mPattern2Peas);
 	}
 
+	@Override
 	public IReqSymbolTable getSymboltable() {
 		return mSymbolTable;
 	}
@@ -139,28 +146,7 @@ public class ReqToPEA {
 		return req2automata;
 	}
 
-	public void genPEAforUPPAAL(final PatternType[] patterns, final String xmlFilePath,
-			final Map<String, Integer> id2bounds) {
-
-		PhaseEventAutomata pea = null;
-
-		for (final PatternType pat : patterns) {
-			if (pea == null) {
-				pea = pat.transformToPea(mLogger, id2bounds);
-
-			} else {
-				final PhaseEventAutomata pea2 = pat.transformToPea(mLogger, id2bounds);
-				if (pea2 == null) {
-					continue;
-				}
-				pea = pea.parallel(pea2);
-
-			}
-		}
-		final J2UPPAALConverter uppaalConverter = new J2UPPAALConverter();
-		uppaalConverter.writePEA2UppaalFile(xmlFilePath, pea);
-	}
-
+	@Override
 	public boolean hasErrors() {
 		return mHasErrors;
 	}

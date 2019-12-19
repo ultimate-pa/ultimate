@@ -90,7 +90,9 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2Pea;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaTransformer;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.Req2Pea;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
@@ -126,7 +128,7 @@ public class Req2BoogieTranslator {
 	private final boolean mSeparateInvariantHandling;
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
-			final List<PatternType> patterns) {
+			final List<PatternType> patterns, final List<IReq2PeaTransformer> req2peaTransformers) {
 		mLogger = logger;
 		mServices = services;
 
@@ -160,8 +162,7 @@ public class Req2BoogieTranslator {
 		final List<PatternType> requirements =
 				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
 
-		final ReqToPEA req2pea = new ReqToPEA(mServices, mLogger, init, requirements);
-
+		final IReq2Pea req2pea = createReq2Pea(req2peaTransformers, init, requirements);
 		if (req2pea.hasErrors()) {
 			mUnitLocation = null;
 			mRtInconcistencyConditionGenerator = null;
@@ -174,7 +175,9 @@ public class Req2BoogieTranslator {
 		mReq2Automata = req2pea.getPattern2Peas();
 		mSymboltable = req2pea.getSymboltable();
 
-		mUnitLocation = generateUnitLocation(patterns);
+		// TODO: Add locations to pattern type to generate meaningful boogie locations
+		mUnitLocation = new BoogieLocation("", -1, -1, -1, -1);
+
 		final List<Declaration> decls = new ArrayList<>();
 		decls.addAll(mSymboltable.getDeclarations());
 
@@ -200,16 +203,23 @@ public class Req2BoogieTranslator {
 
 	}
 
+	private IReq2Pea createReq2Pea(final List<IReq2PeaTransformer> req2peaTransformers,
+			final List<InitializationPattern> init, final List<PatternType> requirements) {
+		IReq2Pea req2pea = new Req2Pea(mServices, mLogger, init, requirements);
+		for (final IReq2PeaTransformer transformer : req2peaTransformers) {
+			if (req2pea.hasErrors()) {
+				break;
+			}
+			req2pea = transformer.transform(req2pea, init, requirements);
+		}
+		return req2pea;
+	}
+
 	private void annotateContainedPatternSet(final Unit unit, final Map<PatternType, PhaseEventAutomata> req2Automata,
 			final List<InitializationPattern> init) {
 		final List<PatternType> patternList = new ArrayList<>(init);
 		req2Automata.entrySet().stream().map(e -> e.getKey()).forEachOrdered(patternList::add);
 		new PatternContainer(patternList).annotate(mUnit);
-	}
-
-	private static BoogieLocation generateUnitLocation(final List<PatternType> patterns) {
-		// TODO: Add locations to pattern type to generate meaningful boogie locations
-		return new BoogieLocation("", -1, -1, -1, -1);
 	}
 
 	public Unit getUnit() {
