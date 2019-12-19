@@ -62,7 +62,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 * Omit order check in cut-off check.
 	 */
 	private static final boolean BUMBLEBEE_B17_OPTIMIZAION = true;
-	private static final boolean BUMBLEBEE_B23_OPTIMIZAION = false;
+	private static final boolean BUMBLEBEE_B23_OPTIMIZAION = true;
 	private final int mHashCode;
 
 	private final Set<Condition<LETTER, PLACE>> mPredecessors;
@@ -101,7 +101,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		} else {
 			mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>());
 		}
-		
+
 		mTransition = transition;
 		mSuccessors = new HashSet<>();
 		for (final PLACE p : bp.getNet().getSuccessors(transition)) {
@@ -117,7 +117,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 			if (predecessorEvents.contains(e)) {
 				continue;
 			}
-			
+
 			predecessorEvents.add(e);
 			// Collections.addAll(localConfiguration, e.mLocalConfiguration);
 			mLocalConfiguration.addAll(e.mLocalConfiguration);
@@ -390,7 +390,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public ITransition<LETTER, PLACE> getTransition() {
 		return mTransition;
 	}
-	
+
 	public int getTotalOrderId() {
 		if (mTransition instanceof Transition) {
 			return ((Transition) mTransition).getTotalOrderId();
