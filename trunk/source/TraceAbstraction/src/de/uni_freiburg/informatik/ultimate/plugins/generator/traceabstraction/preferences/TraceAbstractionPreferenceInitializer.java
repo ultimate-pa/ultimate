@@ -258,6 +258,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH = ".";
 	public static final String DESC_SMT_FEATURE_EXTRACTION_DUMP_PATH =
 			"We Extract SMT features during analysis and dump them to the given path";
+	public static final boolean DEF_OVERRIDE_INTERPOLANT_AUTOMATON = false;
+	public static final String LABEL_OVERRIDE_INTERPOLANT_AUTOMATON =
+			"Override the interpolant automaton setting of the refinement strategy";
 
 	/**
 	 * Constructor.
@@ -337,6 +340,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_LIVE_VARIABLES, Boolean.TRUE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, PreferenceType.Combo, AssertCodeBlockOrder.values()),
+				new UltimatePreferenceItem<>(LABEL_OVERRIDE_INTERPOLANT_AUTOMATON, DEF_OVERRIDE_INTERPOLANT_AUTOMATON,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_AUTOMATON, InterpolantAutomaton.STRAIGHT_LINE,
 						PreferenceType.Combo, InterpolantAutomaton.values()),
 				new UltimatePreferenceItem<>(LABEL_DUMPAUTOMATA, DEF_DUMPAUTOMATA, PreferenceType.Boolean),

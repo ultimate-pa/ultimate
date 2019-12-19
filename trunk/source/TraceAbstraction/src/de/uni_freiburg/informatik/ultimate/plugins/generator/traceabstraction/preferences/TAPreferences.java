@@ -75,6 +75,7 @@ public final class TAPreferences {
 	private final ScoringMethod mHeuristicEmptinessCheckScoringMethod;
 	private final boolean mSMTFeatureExtraction;
 	private final String mSMTFeatureExtractionDumpPath;
+	private final boolean mOverrideInterpolantAutomaton;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -156,6 +157,8 @@ public final class TAPreferences {
 		mSMTFeatureExtraction = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION);
 		mSMTFeatureExtractionDumpPath =
 				mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH);
+		mOverrideInterpolantAutomaton =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OVERRIDE_INTERPOLANT_AUTOMATON);
 
 	}
 
@@ -388,5 +391,9 @@ public final class TAPreferences {
 
 	public String getSMTFeatureExtractionDumpPath() {
 		return mSMTFeatureExtractionDumpPath;
+	}
+
+	public boolean overrideInterpolantAutomaton() {
+		return mOverrideInterpolantAutomaton;
 	}
 }
