@@ -107,6 +107,13 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 		return streamCoRelatedConditions(c, mCoRelation.projectToSnd(c));
 	}
 
+	/**
+	 * @return Stream of all conditions that are in co-relation to the
+	 *         {@link Condition} c and whose predecessor is an event whose
+	 *         transition is in the given set. FIXME: Other successors (and
+	 *         local configuration) of same event not filtered correctly wrt.
+	 *         transitions.
+	 */
 	private Stream<Condition<LETTER, PLACE>> streamCoRelatedConditions(final Condition<LETTER, PLACE> c,
 			final Set<ITransition<LETTER, PLACE>> transitions) {
 		return Stream.concat(c.getPredecessorEvent().getConditionMark().stream(),
