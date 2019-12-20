@@ -78,7 +78,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 
 	private final PetriNetUnfolder<LETTER, PLACE>.Statistics mStatistics = new Statistics();
 
-	private static final boolean USE_FIRSTBORN_CUTOFF_CHECK = true;
+	private static final boolean USE_FIRSTBORN_CUTOFF_CHECK = !true;
 
 
 	/**

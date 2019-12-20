@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.I
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.TreePriorityQueue;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Implementation of a possible extension.
@@ -92,7 +93,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private int mUselessExtensionCandidates = 0;
 
 	public PossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess, final Comparator<Event<LETTER, PLACE>> order,
-			boolean useFirstbornCutoffCheck) {
+			final boolean useFirstbornCutoffCheck) {
 		mUseFirstbornCutoffCheck = useFirstbornCutoffCheck;
 		mBranchingProcess = branchingProcess;
 		if (USE_PQ) {
@@ -131,8 +132,8 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		}
 	}
 
-	private boolean firstbornCutoffCheck(Event<LETTER, PLACE> newEvent) {
-		Event<LETTER, PLACE> eventWithSameMarking = mMarkingEventMap.get(newEvent.getMark());
+	private boolean firstbornCutoffCheck(final Event<LETTER, PLACE> newEvent) {
+		final Event<LETTER, PLACE> eventWithSameMarking = mMarkingEventMap.get(newEvent.getMark());
 		if (eventWithSameMarking == null) {
 			return false;
 		}
@@ -231,9 +232,15 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private Collection<Candidate<LETTER, PLACE>> computeCandidates(final Event<LETTER, PLACE> event) {
 		if (mLazySuccessorComputation) {
 			final Set<Condition<LETTER, PLACE>> conditions = event.getSuccessorConditions();
-			final Set<PLACE> correspondingPlaces = conditions.stream().map(Condition::getPlace).collect(Collectors.toSet());
+			final HashRelation<PLACE, PLACE> place2allowedSiblings = new HashRelation<>();
+			for (final Condition<LETTER, PLACE> condition : conditions) {
+				for (final Condition<LETTER, PLACE> coRelated : mBranchingProcess.getCoRelation().computeCoRelatatedConditions(condition)) {
+					place2allowedSiblings.addPair(condition.getPlace(), coRelated.getPlace());
+				}
+			}
+//			final Set<PLACE> correspondingPlaces = conditions.stream().map(Condition::getPlace).collect(Collectors.toSet());
 			final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> successorTransitionProviders = mBranchingProcess
-					.getNet().getSuccessorTransitionProviders(correspondingPlaces);
+					.getNet().getSuccessorTransitionProviders(place2allowedSiblings);
 			final List<Candidate<LETTER, PLACE>> candidates = successorTransitionProviders.stream()
 					.map(x -> new Candidate<LETTER, PLACE>(x, conditions)).collect(Collectors.toList());
 			return candidates;
@@ -269,14 +276,17 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		return mPe.size() + mFastpathCutoffEventList.size();
 	}
 
+	@Override
 	public int getUsefulExtensionCandidates() {
 		return mUsefulExtensionCandidates;
 	}
 
+	@Override
 	public int getUselessExtensionCandidates() {
 		return mUselessExtensionCandidates;
 	}
 
+	@Override
 	public int getMaximalSize() {
 		return mMaximalSize;
 	}

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -75,11 +76,17 @@ public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE>, IPe
 	}
 
 	@Override
-	default Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(final Collection<PLACE> places) {
+	default Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
+			final HashRelation<PLACE, PLACE> place2allowedSiblings) {
 		final HashRelation<Set<PLACE>, ITransition<LETTER, PLACE>> predecessorPlaces2Transition = new HashRelation<>();
-		for (final PLACE p : places) {
+		for (final PLACE p : place2allowedSiblings.getDomain()) {
+			final HashSet<PLACE> allowedPredecessors = new HashSet<>(place2allowedSiblings.getImage(p));
+			allowedPredecessors.add(p);
 			for (final ITransition<LETTER, PLACE> t : getSuccessors(p)) {
-				predecessorPlaces2Transition.addPair(getPredecessors(t), t);
+				if (allowedPredecessors.containsAll(getPredecessors(t))) {
+					predecessorPlaces2Transition.addPair(getPredecessors(t), t);
+				}
+
 			}
 		}
 		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();

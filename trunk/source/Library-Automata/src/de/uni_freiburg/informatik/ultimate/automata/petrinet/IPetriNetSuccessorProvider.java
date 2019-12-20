@@ -5,6 +5,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public interface IPetriNetSuccessorProvider<LETTER, PLACE> extends IAutomaton<LETTER, PLACE> {
 
@@ -17,7 +18,8 @@ public interface IPetriNetSuccessorProvider<LETTER, PLACE> extends IAutomaton<LE
 	/** @return Incoming places of given transition. */
 	Set<PLACE> getPredecessors(final ITransition<LETTER, PLACE> transition);
 
-	Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(Collection<PLACE> places);
+	Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
+			final HashRelation<PLACE, PLACE> place2allowedSiblings);
 
 	/**
 	 * @param marking

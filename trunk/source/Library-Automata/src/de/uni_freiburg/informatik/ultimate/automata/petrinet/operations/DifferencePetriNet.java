@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Petri net for on-demand construction of difference.
@@ -141,41 +142,78 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	 */
 	@Override
 	public Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
-			final Collection<PLACE> places) {
-		if (places.isEmpty()) {
+			final HashRelation<PLACE, PLACE> place2allowedSiblings) {
+		if (place2allowedSiblings.isEmpty()) {
 			return Collections.emptySet();
 		}
-		PLACE automatonPredecessor = null;
-		final List<PLACE> petriNetPredecessors = new ArrayList<>();
-		for (final PLACE place : places) {
+//		assert (exactlyOneStateFromAutomaton(place2allowedSiblings)) : "not exactly one state from automaton";
+		final HashRelation<Set<PLACE>, PLACE> mNetPredecessors2AutomatonPredecessors = new HashRelation<>();
+		final Map<Set<PLACE>, ISuccessorTransitionProvider<LETTER, PLACE>> mNetPredecessors2TransitionProvider = new HashMap<>();
+		for (final PLACE place : place2allowedSiblings.getDomain()) {
 			if (mMinuendPlaces.contains(place)) {
-				petriNetPredecessors.add(place);
-			} else if (mSubtrahendStates.contains(place)) {
-				if (automatonPredecessor == null) {
-					automatonPredecessor = place;
-				} else {
-					throw new IllegalArgumentException(AT_MOST_ONE_STATE_OF_SUBTRAHEND);
+				final HashRelation<PLACE, PLACE> tmp = new HashRelation<>();
+				final Pair<Set<PLACE>, Set<PLACE>> split = split(place2allowedSiblings.getImage(place));
+//				assert split.getSecond().size() <= 1 : "there can be at most one automaton successor";
+				tmp.addAllPairs(place, split.getFirst());
+				final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds = mMinued.getSuccessorTransitionProviders(tmp);
+				for (final ISuccessorTransitionProvider<LETTER, PLACE> stp : preds) {
+					mNetPredecessors2AutomatonPredecessors.addAllPairs(stp.getPredecessorPlaces(), split.getSecond());
+					mNetPredecessors2TransitionProvider.put(stp.getPredecessorPlaces(), stp);
 				}
+			} else if (mSubtrahendStates.contains(place)) {
+				final Pair<Set<PLACE>, Set<PLACE>> split = split(place2allowedSiblings.getImage(place));
+				assert split.getSecond().equals(Collections.singleton(place)) : "automata states cannot be siblings "
+						+ place + " " + split.getSecond();
+				final HashRelation<PLACE, PLACE> tmp = new HashRelation<>();
+				for (final PLACE minuendAllowedSibling : split.getFirst()) {
+					tmp.addAllPairs(minuendAllowedSibling, split.getFirst());
+				}
+				final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds = mMinued.getSuccessorTransitionProviders(tmp);
+				for (final ISuccessorTransitionProvider<LETTER, PLACE> stp : preds) {
+					mNetPredecessors2AutomatonPredecessors.addPair(stp.getPredecessorPlaces(), place);
+					mNetPredecessors2TransitionProvider.put(stp.getPredecessorPlaces(), stp);
+				}
+			} else {
+				throw new IllegalArgumentException("state does not exist");
 			}
 		}
-
+//		PLACE automatonPredecessor = null;
+//		Set<PLACE> automatonPredecessorSiblings = null;
+//		final HashRelation<PLACE, PLACE> petriNetPredecessors = new HashRelation<>();
+//		for (final Entry<PLACE, PLACE> entry : place2allowedSiblings.entrySet()) {
+//			if (mMinuendPlaces.contains(entry.getKey())) {
+//
+//				petriNetPredecessors.addPair(entry.getKey(), entry.getValue());
+//			} else if (mSubtrahendStates.contains(entry.getKey())) {
+//				if (automatonPredecessor == null) {
+//					automatonPredecessor = entry.getKey();
+//					automatonPredecessorSiblings = entry.getValue();
+//				} else {
+//					throw new IllegalArgumentException(AT_MOST_ONE_STATE_OF_SUBTRAHEND);
+//				}
+//			}
+//		}
+//
 		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
-		final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds;
-		if (automatonPredecessor == null) {
-			preds = mMinued.getSuccessorTransitionProviders(petriNetPredecessors);
-		} else {
-			// do use transitions of *all* yet known places because the subtrahend
-			// predecessor could potentially have a transition with all of them.
-			// TODO 2018-10-21 Matthias: Optimization: Overapproximate candidates
-			// in Unfolding. Do not take all minuend places but only these where at
-			// least one corresponding place is in co-relation with automaton
-			// successor
-			preds = mMinued.getSuccessorTransitionProviders(mMinuendPlaces);
-		}
+//		final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds;
+//		if (automatonPredecessor == null) {
+//			preds = mMinued.getSuccessorTransitionProviders(petriNetPredecessors);
+//		} else {
+//			// do use transitions of *all* yet known places because the subtrahend
+//			// predecessor could potentially have a transition with all of them.
+//			// TODO 2018-10-21 Matthias: Optimization: Overapproximate candidates
+//			// in Unfolding. Do not take all minuend places but only these where at
+//			// least one corresponding place is in co-relation with automaton
+//			// successor
+//			preds = mMinued.getSuccessorTransitionProviders(mMinuendPlaces);
+//		}
 
 		final boolean useUniversalLoopersOptimization = (mUniversalLoopers != null);
 
-		for (final ISuccessorTransitionProvider<LETTER, PLACE> pred : preds) {
+
+		for (final Set<PLACE> predecessors : mNetPredecessors2AutomatonPredecessors.getDomain()) {
+			final Set<PLACE> automatonPredecessors = mNetPredecessors2AutomatonPredecessors.getImage(predecessors);
+			final ISuccessorTransitionProvider<LETTER, PLACE> pred = mNetPredecessors2TransitionProvider.get(predecessors);
 			if (useUniversalLoopersOptimization) {
 				final SuccessorTransitionProviderSplit<LETTER, PLACE> split = new SuccessorTransitionProviderSplit<>(
 						pred, mUniversalLoopers, mMinued);
@@ -184,12 +222,12 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 					final List<ITransition<LETTER, PLACE>> transitions = new ArrayList<>();
 					for (final ITransition<LETTER, PLACE> trans : split.getSuccTransProviderLetterInSet().getTransitions()) {
 						final Set<PLACE> transitionPredecessors = mMinued.getPredecessors(trans);
-						if (!mMinuendPlaces.containsAll(transitionPredecessors)) {
-							// not all predecessors places of transition are
-							// yet constructed, maybe this transition is dead
-							continue;
-						}
-						if (DataStructureUtils.haveNonEmptyIntersection(transitionPredecessors, new HashSet<PLACE>(places))) {
+//						if (!mMinuendPlaces.containsAll(transitionPredecessors)) {
+//							// not all predecessors places of transition are
+//							// yet constructed, maybe this transition is dead
+//							continue;
+//						}
+						if (DataStructureUtils.haveNonEmptyIntersection(transitionPredecessors, place2allowedSiblings.getDomain())) {
 							transitions.add(getOrConstructTransitionCopy(trans));
 						} else {
 							// do nothing
@@ -204,19 +242,39 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 
 				}
 				if (split.getSuccTransProviderLetterNotInSet() != null) {
-					if (automatonPredecessor != null) {
-						result.add(new DifferenceSuccessorTransitionProvider(split.getSuccTransProviderLetterNotInSet(), automatonPredecessor));
-					} else {
-						for (final PLACE yetConstructedState : mSubtrahendStates) {
+//					for (final PLACE automatonPredecessor : automatonPredecessors)
+//					if (automatonPredecessor != null) {
+//						result.add(new DifferenceSuccessorTransitionProvider(split.getSuccTransProviderLetterNotInSet(), automatonPredecessor));
+//					} else {
+						for (final PLACE yetConstructedState : automatonPredecessors) {
 							result.add(new DifferenceSuccessorTransitionProvider(split.getSuccTransProviderLetterNotInSet(), yetConstructedState));
 						}
-					}
+//					}
 				}
 			} else {
-				if (automatonPredecessor == null) {
-					throw new IllegalArgumentException(EXACTLY_ONE_STATE_OF_SUBTRAHEND);
+//				if (automatonPredecessor == null) {
+//					throw new IllegalArgumentException(EXACTLY_ONE_STATE_OF_SUBTRAHEND);
+//				}
+				for (final PLACE yetConstructedState : automatonPredecessors) {
+					result.add(new DifferenceSuccessorTransitionProvider(pred, yetConstructedState));
 				}
-				result.add(new DifferenceSuccessorTransitionProvider(pred, automatonPredecessor));
+			}
+		}
+		return result;
+	}
+
+	private boolean exactlyOneStateFromAutomaton(final HashRelation<PLACE, PLACE> place2allowedSiblings) {
+		final Pair<Set<PLACE>, Set<PLACE>> split = split(place2allowedSiblings.getDomain());
+		return split.getSecond().size() == 1;
+	}
+
+	private Pair<Set<PLACE>, Set<PLACE>> split(final Set<PLACE> places) {
+		final Pair<Set<PLACE>, Set<PLACE>> result = new Pair<>(new HashSet<>(), new HashSet<>());
+		for (final PLACE place : places) {
+			if (mMinuendPlaces.contains(place)) {
+				result.getFirst().add(place);
+			} else if (mSubtrahendStates.contains(place)) {
+				result.getSecond().add(place);
 			}
 		}
 		return result;
