@@ -30,6 +30,7 @@ import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -58,7 +59,9 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 	private final Set<Event<LETTER, PLACE>> mEvents;
 	private Set<Event<LETTER, PLACE>> mMin;
 	private ArrayList<Transition<LETTER, PLACE>> mPhi;
+	private List<Event<LETTER, PLACE>> mSortedConfiguration;
 	private final int mRemovedMin;
+	private int mDepth;
 	/**
 	 * Constructs a Configuration (Not a Suffix). The set given as parameter has to be causally closed and
 	 * conflict-free.
@@ -106,6 +109,28 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 			mMin = computeMin();
 		}
 		return new Configuration<>(mMin);
+	}
+	public Configuration<LETTER, PLACE> getMin(int depth){
+		final Set<Event<LETTER, PLACE>> result = mEvents.stream()
+				.filter(event -> event.getDepth() == depth)
+				.collect(Collectors.toCollection(HashSet::new));
+		if (result.isEmpty()) {
+			throw new AssertionError("minimum must not be empty");
+		}
+		return new Configuration<>(result);
+	}
+	public void setDepth(int depth) {
+		mDepth = depth;
+	}
+	public int getDepth() {
+		return mDepth;
+	}
+	
+	public List<Event<LETTER, PLACE>> getSortedConfiguration(Comparator<Event<LETTER, PLACE>> comparator) {
+		if (mSortedConfiguration == null) {
+			mSortedConfiguration = mEvents.stream().sorted(comparator).collect(Collectors.toList());
+		}
+		return mSortedConfiguration; 
 	}
 
 	private Set<Event<LETTER, PLACE>> computeMin() {

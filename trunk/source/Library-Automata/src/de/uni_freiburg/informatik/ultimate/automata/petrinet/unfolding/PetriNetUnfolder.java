@@ -116,6 +116,12 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			case ERV:
 				mOrder = new EsparzaRoemerVoglerOrder<>();
 				break;
+			case ERV2:
+				mOrder = new EsparzaRoemerVoglerOrderWithoutCut<>();
+				break;
+			case DBO:
+				mOrder = new DepthBasedOrder<>();
+				break;
 			default:
 				throw new IllegalArgumentException();
 		}
@@ -282,6 +288,8 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	 * Order type.
 	 */
 	public enum UnfoldingOrder {
+		DBO("Depth-based Order"),
+		ERV2("Esparza Römer Vogler without computation of cuts"),
 		ERV("Esparza Römer Vogler"),
 		KMM("Ken McMillan"),
 		ERV_MARK("ERV with equal markings");

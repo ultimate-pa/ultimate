@@ -121,7 +121,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 			mDepth = Math.max(mDepth, e.getDepth());
 		}
 		mDepth++;
-
+		mLocalConfiguration.setDepth(mDepth);
 		mLocalConfiguration.add(this);
 
 		for (final Event<LETTER, PLACE> a : mLocalConfiguration) {
