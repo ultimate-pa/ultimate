@@ -14,7 +14,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 public class McMillanOrder<LETTER, PLACE> extends EventOrder<LETTER, PLACE> {
 
 	@Override
-	public int compare(final IConfiguration<LETTER, PLACE> o1, final IConfiguration<LETTER, PLACE> o2) {
+	public int compare(final Configuration<LETTER, PLACE> o1, final Configuration<LETTER, PLACE> o2) {
 		return o1.size() - o2.size();
 	}
 	

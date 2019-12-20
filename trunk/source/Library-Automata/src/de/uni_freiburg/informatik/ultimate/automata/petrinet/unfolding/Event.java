@@ -62,12 +62,11 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 * Omit order check in cut-off check.
 	 */
 	private static final boolean BUMBLEBEE_B17_OPTIMIZAION = true;
-	private static final boolean BUMBLEBEE_B23_OPTIMIZAION = true;
 	private final int mHashCode;
 
 	private final Set<Condition<LETTER, PLACE>> mPredecessors;
 	private final Set<Condition<LETTER, PLACE>> mSuccessors;
-	private final IConfiguration<LETTER, PLACE> mLocalConfiguration;
+	private final Configuration<LETTER, PLACE> mLocalConfiguration;
 	// private final Event<LETTER, PLACE>[] mLocalConfiguration;
 	// private final ArrayList<Event<LETTER, PLACE>> mLocalConfiguration;
 	private final Marking<LETTER, PLACE> mMark;
@@ -96,11 +95,8 @@ public final class Event<LETTER, PLACE> implements Serializable {
 						+ "\n  " + "transitions predecessors:" + bp.getNet().getPredecessors(transition);
 		mPredecessors = new HashSet<>(predecessors);
 		// HashSet<Event<LETTER, PLACE>> localConfiguration = new HashSet<Event<LETTER, PLACE>>();
-		if (BUMBLEBEE_B23_OPTIMIZAION) {
-			mLocalConfiguration = new ConfigurationB23<>(new HashSet<Event<LETTER, PLACE>>());
-		} else {
-			mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>());
-		}
+
+		mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>());
 
 		mTransition = transition;
 		mSuccessors = new HashSet<>();
@@ -379,7 +375,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		return mLocalConfiguration.size();
 	}
 
-	public IConfiguration<LETTER, PLACE> getLocalConfiguration() {
+	public Configuration<LETTER, PLACE> getLocalConfiguration() {
 		return mLocalConfiguration;
 	}
 

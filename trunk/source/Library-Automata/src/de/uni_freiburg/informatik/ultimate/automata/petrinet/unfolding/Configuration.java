@@ -37,7 +37,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
 
 // TODO: rewrite this class, possibly split it up to resolve this horrible ambiguity
 /**
@@ -55,11 +54,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
  *            place content type
  */
 public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLACE>>
-		implements Comparable<IConfiguration<LETTER, PLACE>>, IConfiguration<LETTER, PLACE> {
+		implements Comparable<Configuration<LETTER, PLACE>> {
 	private final Set<Event<LETTER, PLACE>> mEvents;
 	private Set<Event<LETTER, PLACE>> mMin;
 	private ArrayList<Transition<LETTER, PLACE>> mPhi;
-
+	private final int mRemovedMin;
 	/**
 	 * Constructs a Configuration (Not a Suffix). The set given as parameter has to be causally closed and
 	 * conflict-free.
@@ -68,7 +67,7 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 	 *            set of events
 	 */
 	public Configuration(final Set<Event<LETTER, PLACE>> events) {
-		this(events, null);
+		this(events, 0);
 	}
 
 	/**
@@ -79,12 +78,9 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 	 * @param min
 	 *            minimum set of events
 	 */
-	private Configuration(final Set<Event<LETTER, PLACE>> events, final Set<Event<LETTER, PLACE>> min) {
-		if (min != null && min.isEmpty()) {
-			throw new AssertionError("minium must not be empty");
-		}
+	private Configuration(final Set<Event<LETTER, PLACE>> events, final int removedMin) {
 		mEvents = events;
-		mMin = min;
+		mRemovedMin = removedMin;
 	}
 
 	public List<Transition<LETTER, PLACE>> getPhi() {
@@ -107,17 +103,14 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 	 */
 	public Configuration<LETTER, PLACE> getMin() {
 		if (mMin == null) {
-			//We assume that we only compute minimums of local configurations.
-			//The removeMin Method computes the new minimum after a cut.
-			mMin = computeMinOfLocalConfiguration();
-			//mMin = computeMin();
+			mMin = computeMin();
 		}
 		return new Configuration<>(mMin);
 	}
 
 	private Set<Event<LETTER, PLACE>> computeMin() {
 		final Set<Event<LETTER, PLACE>> result = mEvents.stream()
-				.filter(event -> SetOperations.disjoint(event.getPredecessorEvents(), mEvents))
+				.filter(event -> event.getDepth() == mRemovedMin + 1)
 				.collect(Collectors.toCollection(HashSet::new));
 		if (result.isEmpty()) {
 			throw new AssertionError("minimum must not be empty");
@@ -125,16 +118,6 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 		return result;
 	}
 	
-	private Set<Event<LETTER, PLACE>> computeMinOfLocalConfiguration() {
-		final Set<Event<LETTER, PLACE>> result = mEvents.stream()
-				.filter(event -> event.getAncestors() == 1)
-				.collect(Collectors.toCollection(HashSet::new));
-		if (result.isEmpty()) {
-			throw new AssertionError("minimum must not be empty");
-		}
-		return result;
-	}
-
 	@Override
 	public Iterator<Event<LETTER, PLACE>> iterator() {
 		return mEvents.iterator();
@@ -206,23 +189,7 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 		assert !mMin.isEmpty() : "The minimum of a configuration must not be empty.";
 		final HashSet<Event<LETTER, PLACE>> events = new HashSet<>(mEvents);
 		events.removeAll(mMin);
-		final Set<Event<LETTER, PLACE>> min = Event.getSuccessorEvents(mMin);
-		min.retainAll(events);
-		final HashSet<Event<LETTER, PLACE>> newmin = new HashSet<>();
-		for (final Event<LETTER, PLACE> e : min) {
-			final Set<Event<LETTER, PLACE>> predEventsOfE = e.getPredecessorEvents();
-			boolean eIsInMin = true;
-			for (final Event<LETTER, PLACE> predEvent : predEventsOfE) {
-				if (events.contains(predEvent)) {
-					eIsInMin = false;
-					break;
-				}
-			}
-			if (eIsInMin) {
-				newmin.add(e);
-			}
-		}
-		return new Configuration<>(events, newmin);
+		return new Configuration<>(events, mRemovedMin +1);
 	}
 
 	@Override
@@ -250,7 +217,7 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 	 * of events with respect to the the total order on their transitions.
 	 */
 	@Override
-	public int compareTo(final IConfiguration<LETTER, PLACE> other) {
+	public int compareTo(final Configuration<LETTER, PLACE> other) {
 		if (size() != other.size()) {
 			return size() - other.size();
 		}
