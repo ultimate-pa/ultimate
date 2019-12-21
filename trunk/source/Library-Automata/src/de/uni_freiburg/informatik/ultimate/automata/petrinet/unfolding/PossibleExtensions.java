@@ -232,12 +232,9 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private Collection<Candidate<LETTER, PLACE>> computeCandidates(final Event<LETTER, PLACE> event) {
 		if (mLazySuccessorComputation) {
 			final Set<Condition<LETTER, PLACE>> conditions = event.getSuccessorConditions();
-			final HashRelation<PLACE, PLACE> place2allowedSiblings = new HashRelation<>();
-			for (final Condition<LETTER, PLACE> condition : conditions) {
-				for (final Condition<LETTER, PLACE> coRelated : mBranchingProcess.getCoRelation().computeCoRelatatedConditions(condition)) {
-					place2allowedSiblings.addPair(condition.getPlace(), coRelated.getPlace());
-				}
-			}
+			final ICoRelation<LETTER, PLACE> coRelation = mBranchingProcess.getCoRelation();
+			final HashRelation<PLACE, PLACE> place2allowedSiblings = computeCoRelatedPlacesRelation(conditions,
+					coRelation);
 //			final Set<PLACE> correspondingPlaces = conditions.stream().map(Condition::getPlace).collect(Collectors.toSet());
 			final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> successorTransitionProviders = mBranchingProcess
 					.getNet().getSuccessorTransitionProviders(place2allowedSiblings);
@@ -263,6 +260,17 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			}
 			return candidates;
 		}
+	}
+
+	private HashRelation<PLACE, PLACE> computeCoRelatedPlacesRelation(final Set<Condition<LETTER, PLACE>> conditions,
+			final ICoRelation<LETTER, PLACE> coRelation) {
+		final HashRelation<PLACE, PLACE> result = new HashRelation<>();
+		for (final Condition<LETTER, PLACE> condition : conditions) {
+			for (final Condition<LETTER, PLACE> coRelated : coRelation.computeCoRelatatedConditions(condition)) {
+				result.addPair(condition.getPlace(), coRelated.getPlace());
+			}
+		}
+		return result;
 	}
 
 
