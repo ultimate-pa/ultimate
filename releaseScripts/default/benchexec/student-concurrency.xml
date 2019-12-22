@@ -19,13 +19,18 @@
     <rundefinition name="Automizer FA-NoLbe">
         <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe.epf</option>
 	</rundefinition>
-
-
-<!-- As soon as we have settings for that  
-	<rundefinition name="Automizer MCR">
-        <option name="-s">../../../trunk/examples/settings/ai/array-bench/reach_32bit_compound_exp_cong.epf</option>
+    
+    <rundefinition name="Automizer FA-SemanticLbe-MCR">
+        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe-MCR.epf</option>
 	</rundefinition>
---> 
+
+    <rundefinition name="Automizer FA-VariableLbe-MCR">
+        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-VariableLbe-MCR.epf</option>
+	</rundefinition>
+
+    <rundefinition name="Automizer FA-NoLbe-MCR">
+        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-MCR.epf</option>
+	</rundefinition>
 
     
 	<tasks name="SVCOMP ConcurrencySafety-Main">
