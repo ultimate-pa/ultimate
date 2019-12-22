@@ -62,7 +62,7 @@ public class PolynomialRelationTest {
 	 * Warning: each test will overwrite the SMT script of the preceding test.
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
-	private static final String SOLVER_COMMAND_Z3 = "z3 SMTLIB2_COMPLIANT=true -t:3000 -memory:2024 -smt2 -in";
+	private static final String SOLVER_COMMAND_Z3 = "z3 SMTLIB2_COMPLIANT=true -t:3500 -memory:2024 -smt2 -in";
 	private static final String SOLVER_COMMAND_CVC4 = "cvc4 --incremental --print-success --lang smt --rewrite-divk --tlimit-per=3000";
 	private static final String SOLVER_COMMAND_MATHSAT = "mathsat";
 	private IUltimateServiceProvider mServices;
@@ -300,7 +300,6 @@ public class PolynomialRelationTest {
 		testSolveForSubject(inputSTR, "xi");
 	}
 
-	@Test
 	public void relationIntPolyMATHSATEQ3() throws NotAffineException {
 		final String inputSTR = "(= (* 6 (* yi xi)) (+ 3 (* zi zi)))";
 		testSolveForSubject(inputSTR, "xi");
@@ -328,13 +327,11 @@ public class PolynomialRelationTest {
 		testSolveForSubject(inputSTR, "xi");
 	}
 
-	@Test
 	public void relationIntPolyMATHSATEQ8() throws NotAffineException {
 		final String inputSTR = "(= (* 3 yi xi) (* 21 zi))";
 		testSolveForSubject(inputSTR, "xi");
 	}
 
-	@Test
 	public void relationIntPolyCVC4MATHSATEQ9() throws NotAffineException {
 		final String inputSTR = "(= (* 3 yi xi) (* 21 zi yi))";
 		testSolveForSubject(inputSTR, "xi");
@@ -346,7 +343,6 @@ public class PolynomialRelationTest {
 		testSolveForSubject(inputSTR, "xi");
 	}
 
-	@Test
 	public void relationIntPolyCVC4MATHSATEQ11() throws NotAffineException {
 		final String inputSTR = "(= (* 3 yi xi) (* 333 yi yi yi))";
 		testSolveForSubject(inputSTR, "xi");

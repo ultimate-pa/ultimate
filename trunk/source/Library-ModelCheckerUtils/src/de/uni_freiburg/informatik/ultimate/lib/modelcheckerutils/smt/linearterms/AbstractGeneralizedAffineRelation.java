@@ -775,8 +775,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 					result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		}
 		return result;
-		// TODO: Ask Matthias whether the subjectInAllowedSubterm-case is disjunct to the abstractVarOfSubject being a
-		// Monomial.
+		// TODO: Debug singleCase-SolveForSubject, especially IntSort and the Inequalities
 	}
 
 	private boolean divisionByVariablesNecessary(final Term abstractVarOfSubject) {
