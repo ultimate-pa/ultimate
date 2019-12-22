@@ -25,21 +25,25 @@ assert(!accepts(difference, [c a b]));
 // c should be synced only once (using inverted method)
 assert(numberOfTransitions(difference) == 2);
 
-// 4 places from petri net + 2 white places + 1 black place
-assert(numberOfPlaces(difference) == 7);
+// 5 places from petri net + 2 white places + 1 black place
+assert(numberOfPlaces(difference) == 8);
+
+PetriNet differencePairwiseOnDemand = differencePairwiseOnDemand(net, nwa);
+assert(numberOfTransitions(differencePairwiseOnDemand) == 2);
+assert(numberOfPlaces(differencePairwiseOnDemand) == 6);
 
 // print(difference);
 
 PetriNet net = (
 	alphabet = {a b c},
-	places = {p1 p2 p3 p4},
+	places = {p1 p2 p3 p4 p5},
 	transitions = {
 		({p1} a {p2})
 		({p2} b {p3})
-		({p4} c {p3})
+		({p4} c {p5})
 	},
 	initialMarking = {p1 p4},
-	acceptingPlaces = {p3}
+	acceptingPlaces = {p3 p5}
 );
 
 NestedWordAutomaton nwa = (
