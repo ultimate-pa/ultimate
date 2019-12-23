@@ -18,6 +18,13 @@ public interface IPetriNetSuccessorProvider<LETTER, PLACE> extends IAutomaton<LE
 	/** @return Incoming places of given transition. */
 	Set<PLACE> getPredecessors(final ITransition<LETTER, PLACE> transition);
 
+	/**
+	 *
+	 * @param place2allowedSiblings
+	 * @return all {@link ISuccessorTransitionProvider}s such that for its predecessors {p1,...,pn}
+	 * there exists some i such that pi is in the domain of the place2allowedSiblings and all
+	 * elements of {p1,...,p_{i-1},p_{i+1},pn} are in relation with pi.
+	 */
 	Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
 			final HashRelation<PLACE, PLACE> place2allowedSiblings);
 

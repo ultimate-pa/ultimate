@@ -231,7 +231,8 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 
 
 	/**
-	 * @return All {@code Candidate}s for possible extensions that are successors of the {@code Event}.
+	 * @return All {@code Candidate}s for possible extensions that are successors of
+	 *         the {@code Event}.
 	 */
 	private Collection<Candidate<LETTER, PLACE>> computeCandidates(final Event<LETTER, PLACE> event) {
 		if (mLazySuccessorComputation) {
@@ -239,7 +240,6 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			final ICoRelation<LETTER, PLACE> coRelation = mBranchingProcess.getCoRelation();
 			final HashRelation<PLACE, PLACE> place2allowedSiblings = computeCoRelatedPlacesRelation(conditions,
 					coRelation);
-//			final Set<PLACE> correspondingPlaces = conditions.stream().map(Condition::getPlace).collect(Collectors.toSet());
 			final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> successorTransitionProviders = mBranchingProcess
 					.getNet().getSuccessorTransitionProviders(place2allowedSiblings);
 			final List<Candidate<LETTER, PLACE>> candidates = successorTransitionProviders.stream()
@@ -258,16 +258,17 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			}
 			final List<Candidate<LETTER, PLACE>> candidates = new ArrayList<>();
 			for (final ITransition<LETTER, PLACE> transition : transitions) {
-				final Candidate<LETTER, PLACE> candidate = new Candidate<>(new SimpleSuccessorTransitionProvider<>(
-						Collections.singleton(transition), fullPetriNet), event.getSuccessorConditions());
+				final Candidate<LETTER, PLACE> candidate = new Candidate<>(
+						new SimpleSuccessorTransitionProvider<>(Collections.singleton(transition), fullPetriNet),
+						event.getSuccessorConditions());
 				candidates.add(candidate);
 			}
 			return candidates;
 		}
 	}
 
-	private HashRelation<PLACE, PLACE> computeCoRelatedPlacesRelation(final Set<Condition<LETTER, PLACE>> conditions,
-			final ICoRelation<LETTER, PLACE> coRelation) {
+	private static <LETTER, PLACE> HashRelation<PLACE, PLACE> computeCoRelatedPlacesRelation(
+			final Set<Condition<LETTER, PLACE>> conditions, final ICoRelation<LETTER, PLACE> coRelation) {
 		final HashRelation<PLACE, PLACE> result = new HashRelation<>();
 		for (final Condition<LETTER, PLACE> condition : conditions) {
 			for (final Condition<LETTER, PLACE> coRelated : coRelation.computeCoRelatatedConditions(condition)) {

@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *            place content type
  */
 public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER, PLACE> {
-	private static final boolean EXTENDED_ASSERTION_CHECKING = false;
+	private static final boolean EXTENDED_ASSERTION_CHECKING = !false;
 	private long mQueryCounterYes;
 	private long mQueryCounterNo;
 
@@ -108,11 +108,12 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	}
 
 	/**
-	 * @return Stream of all conditions that are in co-relation to the
-	 *         {@link Condition} c and whose predecessor is an event whose
-	 *         transition is in the given set. FIXME: Other successors (and
-	 *         local configuration) of same event not filtered correctly wrt.
-	 *         transitions.
+	 * @return Stream of all conditions that are
+	 *         <ul>
+	 *         <li>in the condition marking of c's predecessor event or
+	 *         <li>in co-relation to the {@link Condition} c and whose predecessor
+	 *         is an event whose transition is in the given set.
+	 *         </ul>
 	 */
 	private Stream<Condition<LETTER, PLACE>> streamCoRelatedConditions(final Condition<LETTER, PLACE> c,
 			final Set<ITransition<LETTER, PLACE>> transitions) {
@@ -147,7 +148,6 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 			if (!e.getSuccessorConditions().contains(c))
 				mCoRelation.addTriple(c, e.getTransition(), e);
 		}
-
 	}
 
 

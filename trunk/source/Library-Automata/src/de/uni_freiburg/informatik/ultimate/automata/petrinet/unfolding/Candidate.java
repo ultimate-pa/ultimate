@@ -38,9 +38,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.I
  * Represents an incomplete Event. A <i>Candidate</i> consists of
  * <ul>
  * <li>the transition which belongs to the event</li>
- * <li>a subset of conditions of the set of predecessors of the event.</li>
- * <li>the set of predecessor-places of the transition minus the places that
- * correspond with the conditions in the given condition-set.</li>
+ * <li>a list of {@link Condition}s that represents predecessor places of the
+ * transition that have already been instantiated by (these) condition</li>
+ * <li>a list of {@link Place}s that represent predecessor places of the
+ * transition that have not yet been instantiated.</li>
  * </ul>
  *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
@@ -55,12 +56,12 @@ public class Candidate<LETTER, PLACE> {
 
 
 	public Candidate(final ISuccessorTransitionProvider<LETTER, PLACE> succTransProvider,
-			final Collection<Condition<LETTER, PLACE>> supersetOfPredecessorConditions) {
+			final Collection<Condition<LETTER, PLACE>> conditionsForImmediateInstantiation) {
 		mSuccTransProvider = succTransProvider;
 		mInstantiated = new LinkedList<>();
 		mNotInstantiated = new LinkedList<>(mSuccTransProvider.getPredecessorPlaces());
 		// instantiate the places with the given conditions
-		for (final Condition<LETTER, PLACE> condition : supersetOfPredecessorConditions) {
+		for (final Condition<LETTER, PLACE> condition : conditionsForImmediateInstantiation) {
 			final boolean wasContained = mNotInstantiated.remove(condition.getPlace());
 			if (wasContained) {
 				mInstantiated.add(condition);
