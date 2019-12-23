@@ -163,22 +163,12 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		final BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
-		final String orderString = mPref.order();
 		final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
-		UnfoldingOrder ord;
-		if (orderString.equals(UnfoldingOrder.KMM.getDescription())) {
-			ord = UnfoldingOrder.KMM;
-		} else if (orderString.equals(UnfoldingOrder.ERV.getDescription())) {
-			ord = UnfoldingOrder.ERV;
-		} else if (orderString.equals(UnfoldingOrder.ERV_MARK.getDescription())) {
-			ord = UnfoldingOrder.ERV_MARK;
-		} else {
-			throw new IllegalArgumentException("Unknown order " + orderString);
-		}
+		final UnfoldingOrder eventOrder = mPref.eventOrder();
 
 		PetriNetUnfolder<LETTER, IPredicate> unf;
 		try {
-			unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices), abstraction, ord, cutOffSameTrans,
+			unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices), abstraction, eventOrder, cutOffSameTrans,
 					!mPref.unfoldingToNet());
 		} catch (final PetriNetNot1SafeException e) {
 			throw new UnsupportedOperationException(e.getMessage());
