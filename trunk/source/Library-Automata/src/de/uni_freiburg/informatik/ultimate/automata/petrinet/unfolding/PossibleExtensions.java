@@ -92,13 +92,17 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private int mUsefulExtensionCandidates = 0;
 	private int mUselessExtensionCandidates = 0;
 
-	public PossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess, final Comparator<Event<LETTER, PLACE>> order,
-			final boolean useFirstbornCutoffCheck) {
+	public PossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess,
+			final EventOrder<LETTER, PLACE> order, final boolean useFirstbornCutoffCheck) {
 		mUseFirstbornCutoffCheck = useFirstbornCutoffCheck;
 		mBranchingProcess = branchingProcess;
 		if (USE_PQ) {
 			mPe = new PriorityQueue<>(order);
 		} else {
+			if (!order.isTotal()) {
+				throw new UnsupportedOperationException(TreePriorityQueue.class.getSimpleName()
+						+ " can only be used in combination with total orders.");
+			}
 			mPe = new TreePriorityQueue<>(order);
 		}
 		mFastpathCutoffEventList = new ArrayDeque<>();
