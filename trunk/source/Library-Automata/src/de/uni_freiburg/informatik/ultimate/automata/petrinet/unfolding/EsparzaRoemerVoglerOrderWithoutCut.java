@@ -18,7 +18,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 public class EsparzaRoemerVoglerOrderWithoutCut<LETTER, PLACE> extends EventOrder<LETTER, PLACE> {
 
 	@Override
-	public int compare(Configuration<LETTER, PLACE> c1, Configuration<LETTER, PLACE> c2) {
+	public int compare(final Configuration<LETTER, PLACE> c1, final Configuration<LETTER, PLACE> c2) {
 		// we compare first the sizes of C1 and C2; if they are equal, we compare ϕ(C1)
 		// and ϕ(C2);
 		int result = c1.compareTo(c2);
@@ -43,5 +43,10 @@ public class EsparzaRoemerVoglerOrderWithoutCut<LETTER, PLACE> extends EventOrde
 			}
 			minimumDepth ++;
 		}
+	}
+
+	@Override
+	public boolean isTotal() {
+		return true;
 	}
 }

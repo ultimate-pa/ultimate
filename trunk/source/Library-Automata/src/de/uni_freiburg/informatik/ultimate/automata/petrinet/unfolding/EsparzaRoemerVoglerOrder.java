@@ -44,4 +44,9 @@ public class EsparzaRoemerVoglerOrder<LETTER, PLACE> extends EventOrder<LETTER, 
 			c2 = c2.removeMin();
 		}
 	}
+
+	@Override
+	public boolean isTotal() {
+		return true;
+	}
 }

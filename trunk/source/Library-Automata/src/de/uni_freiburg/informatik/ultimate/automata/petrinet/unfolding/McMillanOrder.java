@@ -2,10 +2,10 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 /**
  * Naive order used by McMillan.
- * 
+ *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * 
+ *
  * @param <LETTER>
  *            Type of letters from the alphabet used to label transitions
  * @param <PLACE>
@@ -17,5 +17,10 @@ public class McMillanOrder<LETTER, PLACE> extends EventOrder<LETTER, PLACE> {
 	public int compare(final Configuration<LETTER, PLACE> o1, final Configuration<LETTER, PLACE> o2) {
 		return o1.size() - o2.size();
 	}
-	
+
+	@Override
+	public boolean isTotal() {
+		return false;
+	}
+
 }

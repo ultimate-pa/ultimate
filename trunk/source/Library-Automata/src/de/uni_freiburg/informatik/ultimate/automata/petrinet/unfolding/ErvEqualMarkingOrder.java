@@ -3,17 +3,17 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 /**
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * 
+ *
  * @param <LETTER>
  *            Type of letters from the alphabet used to label transitions
  * @param <PLACE>
  *            place content type
  */
 public class ErvEqualMarkingOrder<LETTER, PLACE> extends EventOrder<LETTER, PLACE> {
-	
+
 	private final EventOrder<LETTER, PLACE> mMcMillanOrder = new McMillanOrder<>();
 	private final EventOrder<LETTER, PLACE> mErvOrder = new EsparzaRoemerVoglerOrder<>();
-	
+
 	@Override
 	public int compare(final Event<LETTER, PLACE> o1, final Event<LETTER, PLACE> o2) {
 		int result = mMcMillanOrder.compare(o1, o2);
@@ -33,5 +33,10 @@ public class ErvEqualMarkingOrder<LETTER, PLACE> extends EventOrder<LETTER, PLAC
 	@Override
 	public int compare(final Configuration<LETTER, PLACE> c1, final Configuration<LETTER, PLACE> c2) {
 		return mErvOrder.compare(c1, c2);
+	}
+
+	@Override
+	public boolean isTotal() {
+		throw new UnsupportedOperationException("I don't know if it sis total");
 	}
 }
