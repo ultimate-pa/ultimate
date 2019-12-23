@@ -18,9 +18,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IntersectNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
@@ -185,23 +187,25 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 				automata.add(nwa);
 			}
 		}
-		final INestedWordAutomaton<Integer, String> result = intersect(automata, factory, mAutomataServices);
-		mLogger.info("Construction finished.");
-		return result;
+		return intersect(automata, factory, mAutomataServices, mLogger);
 	}
 
 	private static <LETTER, STATE> INestedWordAutomaton<LETTER, STATE> intersect(
 			final Collection<INestedWordAutomaton<LETTER, STATE>> automata,
-			final IIntersectionStateFactory<STATE> stateFactory, final AutomataLibraryServices services)
-			throws AutomataLibraryException {
-		INestedWordAutomaton<LETTER, STATE> result = null;
+			final IIntersectionStateFactory<STATE> stateFactory, final AutomataLibraryServices services,
+			final ILogger logger) throws AutomataLibraryException {
+		logger.info("Started intersection.");
+		INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> intersection = null;
 		for (final INestedWordAutomaton<LETTER, STATE> a : automata) {
-			if (result == null) {
-				result = a;
+			if (intersection == null) {
+				intersection = a;
 			} else {
-				result = new Intersect<>(services, stateFactory, result, a).getResult();
+				intersection = new IntersectNwa<>(intersection, a, stateFactory, false);
 			}
 		}
+		final INestedWordAutomaton<LETTER, STATE> result =
+				new NestedWordAutomatonReachableStates<>(services, intersection);
+		logger.info("Finished intersection with " + result.sizeInformation());
 		return result;
 	}
 
@@ -231,6 +235,8 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 				throw new IllegalStateException("Trace is not present in the MCR automaton");
 			}
 			currentState = succStates.next().getSucc();
+			// TODO: Check interpolants.get(i) for "useless" (not future-live) variables and quantifiy them away (using
+			// exists) and show a warning
 			final IPredicate nextPredicate = i == interpolants.size() ? mPredicateUnifier.getFalsePredicate()
 					: mPredicateUnifier.getOrConstructPredicate(interpolants.get(i));
 			if (!result.contains(nextPredicate)) {
