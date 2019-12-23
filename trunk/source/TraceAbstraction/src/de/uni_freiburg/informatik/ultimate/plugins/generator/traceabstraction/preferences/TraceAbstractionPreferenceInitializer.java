@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.UnfoldingOrder;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
@@ -114,9 +115,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_DIFFERENCE_SENWA = "DifferenceSenwa operation instead classical Difference";
 	public static final String LABEL_MINIMIZE = "Minimization of abstraction";
 	public static final String LABEL_CONCURRENCY = "Automaton type used in concurrency analysis";
-	public static final String LABEL_ORDER = "Order in Petri net unfolding";
+	public static final String LABEL_ORDER = "Event order for Petri net unfolding";
 	public static final String LABEL_CUTOFF = "cut-off requires same transition";
-	public static final String LABEL_UNFOLDING2NET = "use unfolding as abstraction";
+	public static final String LABEL_BACKFOLDING = "Use backfolding";
 	public static final String LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY = "Assert CodeBlocks";
 	public static final String LABEL_UNSAT_CORES = "Use unsat cores";
 	public static final String LABEL_LIVE_VARIABLES = "Use live variables";
@@ -153,9 +154,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"With backedges to repeated locations (Canonical)";
 	public static final String VALUE_INTERPOLANT_AUTOMATON_TOTAL_INTERPOLATION = "Total interpolation (Jan)";
 
-	public static final String VALUE_KMM = "Ken McMillan";
-	public static final String VALUE_EVR = "Esparza Römer Vogler";
-	public static final String VALUE_EVR_MARK = "ERV with equal markings";
 
 	/*
 	 * default values for the different preferences
@@ -189,8 +187,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	// public static final boolean DEF_ALL_ERRORS_AT_ONCE = false;
 
 	public static final boolean DEF_CUTOFF = false;
-	public static final boolean DEF_UNFOLDING2NET = false;
-	public static final String DEF_ORDER = VALUE_EVR;
+	public static final boolean DEF_BACKFOLDING = false;
+	public static final UnfoldingOrder DEF_ORDER = UnfoldingOrder.ERV;
 	public static final boolean DEF_SIMPLIFY_CODE_BLOCKS = false;
 	public static final boolean DEF_PRESERVE_GOTO_EDGES = false;
 	public static final AbstractInterpretationMode DEF_ABSINT_MODE = AbstractInterpretationMode.NONE;
@@ -363,9 +361,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_CONCURRENCY, DEF_CONCURRENCY, PreferenceType.Combo,
 						Concurrency.values()),
 				new UltimatePreferenceItem<>(LABEL_ORDER, DEF_ORDER, PreferenceType.Combo,
-						new String[] { VALUE_KMM, VALUE_EVR, VALUE_EVR_MARK }),
+						UnfoldingOrder.values()),
 				new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_UNFOLDING2NET, DEF_UNFOLDING2NET, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_BACKFOLDING, DEF_BACKFOLDING, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_LBE_CONCURRENCY, DEF_LBE_CONCURRENCY, PreferenceType.Combo,
 						PetriNetLbe.values()),
 				new UltimatePreferenceItem<>(LABEL_ABSINT_MODE, DEF_ABSINT_MODE, PreferenceType.Combo,

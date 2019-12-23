@@ -310,7 +310,7 @@ public final class TAPreferences {
 	}
 
 	public boolean unfoldingToNet() {
-		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_UNFOLDING2NET);
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_BACKFOLDING);
 	}
 
 	public String order() {
