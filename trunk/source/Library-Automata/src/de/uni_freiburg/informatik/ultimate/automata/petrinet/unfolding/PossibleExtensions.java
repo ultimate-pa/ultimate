@@ -67,7 +67,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 * Use the optimization that is outlined in observation B07 in the following
 	 * issue. https://github.com/ultimate-pa/ultimate/issues/448
 	 */
-	private static final boolean BUMBLEBEE_B07_OPTIMIZAION = true;
+	private static final boolean BUMBLEBEE_B07_OPTIMIZATION = true;
 	private final Queue<Event<LETTER, PLACE>> mPe;
 	private final Map<Marking<LETTER, PLACE>, Event<LETTER, PLACE>> mMarkingEventMap = new HashMap<>();
 	private int mMaximalSize = 0;
@@ -185,7 +185,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			return;
 		}
 		final PLACE nextUninstantiated = cand.getNextUninstantiatedPlace();
-		if (BUMBLEBEE_B07_OPTIMIZAION) {
+		if (BUMBLEBEE_B07_OPTIMIZATION) {
 			final List<Condition<LETTER, PLACE>> yetInstantiated = cand.getInstantiated();
 			// list that contains one set for each instantiated condition c
 			// the set contains all conditions that are in co-relation to c and
@@ -235,15 +235,25 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 *         the {@code Event}.
 	 */
 	private Collection<Candidate<LETTER, PLACE>> computeCandidates(final Event<LETTER, PLACE> event) {
+		if (event.getSuccessorConditions().isEmpty()) {
+			return Collections.emptySet();
+		}
 		if (mLazySuccessorComputation) {
-			final Set<Condition<LETTER, PLACE>> conditions = event.getSuccessorConditions();
+			final Set<Condition<LETTER, PLACE>> newConditions = event.getSuccessorConditions();
 			final ICoRelation<LETTER, PLACE> coRelation = mBranchingProcess.getCoRelation();
-			final HashRelation<PLACE, PLACE> place2allowedSiblings = computeCoRelatedPlacesRelation(conditions,
-					coRelation);
+			final Set<Condition<LETTER, PLACE>> coRelatedConditions = coRelation.computeCoRelatatedConditions(newConditions.iterator().next());
+			final HashRelation<PLACE, Condition<LETTER, PLACE>> place2coRelatedConditions = new HashRelation<>();
+			for (final Condition<LETTER, PLACE> c : coRelatedConditions) {
+				place2coRelatedConditions.addPair(c.getPlace(), c);
+			}
+			final HashRelation<PLACE, PLACE> place2allowedSiblings = new HashRelation<>();
+			for (final Condition<LETTER, PLACE> c : newConditions) {
+				place2allowedSiblings.addAllPairs(c.getPlace(), place2coRelatedConditions.getDomain());
+			}
 			final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> successorTransitionProviders = mBranchingProcess
 					.getNet().getSuccessorTransitionProviders(place2allowedSiblings);
 			final List<Candidate<LETTER, PLACE>> candidates = successorTransitionProviders.stream()
-					.map(x -> new Candidate<LETTER, PLACE>(x, conditions)).collect(Collectors.toList());
+					.map(x -> new Candidate<LETTER, PLACE>(x, newConditions, place2coRelatedConditions)).collect(Collectors.toList());
 			return candidates;
 		} else {
 			if (!(mBranchingProcess.getNet() instanceof IPetriNet)) {
@@ -260,7 +270,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			for (final ITransition<LETTER, PLACE> transition : transitions) {
 				final Candidate<LETTER, PLACE> candidate = new Candidate<>(
 						new SimpleSuccessorTransitionProvider<>(Collections.singleton(transition), fullPetriNet),
-						event.getSuccessorConditions());
+						event.getSuccessorConditions(), null);
 				candidates.add(candidate);
 			}
 			return candidates;

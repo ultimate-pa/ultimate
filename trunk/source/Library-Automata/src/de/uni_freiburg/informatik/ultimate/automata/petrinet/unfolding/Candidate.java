@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Represents an incomplete Event. A <i>Candidate</i> consists of
@@ -56,7 +57,8 @@ public class Candidate<LETTER, PLACE> {
 
 
 	public Candidate(final ISuccessorTransitionProvider<LETTER, PLACE> succTransProvider,
-			final Collection<Condition<LETTER, PLACE>> conditionsForImmediateInstantiation) {
+			final Collection<Condition<LETTER, PLACE>> conditionsForImmediateInstantiation,
+			final HashRelation<PLACE, Condition<LETTER, PLACE>> place2coRelatedConditions) {
 		mSuccTransProvider = succTransProvider;
 		mInstantiated = new LinkedList<>();
 		mNotInstantiated = new LinkedList<>(mSuccTransProvider.getPredecessorPlaces());
