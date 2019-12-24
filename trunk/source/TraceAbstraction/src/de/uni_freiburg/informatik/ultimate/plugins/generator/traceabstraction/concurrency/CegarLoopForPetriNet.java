@@ -102,6 +102,12 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	 */
 	private static final int DEBUG_DUMP_REMOVEUNREACHABLERESULT_THRESHOLD = 24 * 60 * 60;
 
+	/**
+	 * Write result of RemoveUnreachable to file if runtime of this operation in
+	 * seconds is greater than this number.
+	 */
+	private static final int DEBUG_DUMP_DRYRUNRESULT_THRESHOLD = 24 * 60 * 60;
+
 	private BranchingProcess<LETTER, IPredicate> mUnfolding;
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
@@ -313,6 +319,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 						ia.addInternalTransition(state, letter, state);
 					}
 				}
+				final long start = System.nanoTime();
 				try {
 					final DifferencePairwiseOnDemand<LETTER, IPredicate> dpod = new DifferencePairwiseOnDemand<>(
 							new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
@@ -325,6 +332,12 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 					throw tce;
 				} finally {
 					raw.switchToReadonlyMode();
+				}
+				final long end = System.nanoTime();
+				if ((end-start) > DEBUG_DUMP_DRYRUNRESULT_THRESHOLD * 1_000_000_000L) {
+					final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
+							+ "_EnhancementDryRun";
+					super.writeAutomatonToFile(mAbstraction, filename);
 				}
 				final AutomatonWithImplicitSelfloops<LETTER, IPredicate> awis = new AutomatonWithImplicitSelfloops<LETTER, IPredicate>(
 						new AutomataLibraryServices(mServices), raw, universalSubtrahendLoopers);
