@@ -1,3 +1,4 @@
+//#Safe
 /**
  * Author: Lars Nitzke (lars.nitzke@outlook.com)
  * Date: 2018-09-28

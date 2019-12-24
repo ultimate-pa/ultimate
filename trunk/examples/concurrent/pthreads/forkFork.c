@@ -1,6 +1,8 @@
+//#Safe
 /*
  * Author: Lars Nitzke, 
- *         Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *         Matthias Heizmann (heizmann@informatik.uni-freiburg.de),
+ *         Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Date: Spring 2019
  */
 #include <pthread.h>
@@ -11,7 +13,11 @@ typedef unsigned long int pthread_t;
 
 void *bar(void *b) {
     int *c = (int *)b;
-    printf("c* = %d\n", *c);
+
+    // Parameter is correctly passed
+    int val = *c;
+    //@ assert val == 5;
+
     *c += 5;
     return (void *)c;
 }
@@ -34,7 +40,12 @@ int main() {
     pthread_join(thread_id, &ret_val);
     int *x = (int *)ret_val;
 
-    printf("Returned value: %d\n", *x);
+    // Result is correctly passed
+    int ret = *x;
+    //@ assert ret == 10;
+
+    // Side-effect is captured
+    // assert par == 10; // commented out, as (surprisingly) this takes a lot longer
 
     return 0;
 }

@@ -26,7 +26,7 @@ int main() {
     pthread_join(thread_id, &ret_val);
     int *x = (int *)ret_val;
 
-	int a = *x;
+    int a = *x;
     //@ assert a == 10;
     return 0;
 }

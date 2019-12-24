@@ -16,7 +16,7 @@ typedef unsigned long int pthread_t;
 
 void *worker_thread(void *arg) {
     int x = 0;
-    while (x < 100) {
+    while (x < 4) {
         x++;
     }
     //@ assert 1 == 2;

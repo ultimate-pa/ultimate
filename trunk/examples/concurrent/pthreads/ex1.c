@@ -1,3 +1,4 @@
+//#Safe
 /*
  * Author: Lars Nitzke, 
  *         Matthias Heizmann (heizmann@informatik.uni-freiburg.de)

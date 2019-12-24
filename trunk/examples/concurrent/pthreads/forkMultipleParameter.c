@@ -1,6 +1,8 @@
+//#Safe
 /*
  * Author: Lars Nitzke, 
- *         Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *         Matthias Heizmann (heizmann@informatik.uni-freiburg.de),
+ *         Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Date: Spring 2019
  */
 #include <pthread.h>
@@ -19,13 +21,14 @@ int main() {
     int numbers[2] = {1, 2};
 
     pthread_t thread_id;
-
-    void *ret;
-
     pthread_create(&thread_id, NULL, add, (void*)numbers);
-    pthread_join(thread_id, NULL);
 
-    //@ assert (int)ret == 3;
+    void *ret_val;
+    pthread_join(thread_id, &ret_val);
+
+    // Correct result is computed and returned
+    int x = (int)ret_val;
+    //@ assert x == 3;
 
     return 0;
 }

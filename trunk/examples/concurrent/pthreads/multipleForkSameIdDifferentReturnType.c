@@ -1,6 +1,8 @@
+//#Unsafe
 /*
  * Author: Lars Nitzke, 
- *         Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *         Matthias Heizmann (heizmann@informatik.uni-freiburg.de),
+ *         Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Date: Spring 2019
  */
 #include <pthread.h>
@@ -12,7 +14,7 @@ typedef unsigned long int pthread_t;
 void *bar(void *b) {
     printf("Created thread bar\n");
     int x = 0;
-    while (x < 900000) {
+    while (x < 2) {
         x++;
     }
     printf("Finished thread bar\n");
@@ -27,7 +29,7 @@ void *foo(void *a) {
 void *sam(void *c) {
     printf("Created thread sam\n");
     int x = 0;
-    while (x < 90) {
+    while (x < 3) {
         x++;
     }
     return (void *)"sam";
@@ -40,9 +42,13 @@ int main() {
     pthread_create(&thread_id, NULL, foo, NULL);
     pthread_create(&thread_id, NULL, sam, NULL);
 
-    void *joined_name = "";
+    char *joined_name = "";
     pthread_join(thread_id, &joined_name);
     printf("Finished Program and joined %s.\n", joined_name);
+
+    // Join writes correct value ('f' == 102, 'b' == 98)
+    char val = *joined_name;
+    //@ assert val == 102 || val == 98;
     
     return 0;
 }

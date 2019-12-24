@@ -1,3 +1,4 @@
+//#Safe
 /*
  * TODO 2019-12-02: I do not understand the purpose of this
  * example. Does it check for a violation of memory safety
@@ -5,7 +6,9 @@
  * different and we should have two different copies of this
  * example.
  * 
- * Author: Lars Nitzke, Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Author: Lars Nitzke,
+           Matthias Heizmann (heizmann@informatik.uni-freiburg.de),
+ *         Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Date: Spring 2019
  * 
  */
@@ -25,9 +28,7 @@ int main()
    void *status;
    pthread_create(&tid, NULL, myThread, NULL);
    pthread_join(tid, &status);
-
-   printf("%p\n",status);
-   printf("%d\n",*(int *)status);
+   //@ assert status == 42;
 
    return 0;
 }

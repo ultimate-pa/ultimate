@@ -1,6 +1,8 @@
+//#Safe
 /*
  * Author: Lars Nitzke, 
- *         Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *         Matthias Heizmann (heizmann@informatik.uni-freiburg.de),
+ *         Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Date: Spring 2019
  */
 #include <pthread.h>
@@ -26,6 +28,7 @@ int main() {
     pthread_create(&thread_id, NULL, foo, NULL);
 
 //     pthread_join(thread_id, NULL);
+    //@assert par == 5;
 
 
     return 0;
