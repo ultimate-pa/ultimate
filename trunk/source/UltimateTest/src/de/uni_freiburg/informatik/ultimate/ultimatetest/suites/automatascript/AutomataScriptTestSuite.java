@@ -74,6 +74,7 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 			 "examples/Automata/regression/pn",
 //			 "examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/subTwoHourMarathon/",
 //			 "examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/esken/",
+//			"examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/christmas/",
 	};
 	private static final String[] mFileEndings = { ".ats" };
 

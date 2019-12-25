@@ -75,6 +75,8 @@ public class PetriNetUnfoldingTestSuite extends UltimateTestSuite {
 			"examples/Automata/regression/pn",
 			"examples/Automata/benchmarks/pn",
 //			"examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/subTwoHourMarathon"
+//			"examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/esken"
+//			"examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/christmas/",
 	};
 
 	private static final String[] FILE_ENDINGS = { ".ats" };
