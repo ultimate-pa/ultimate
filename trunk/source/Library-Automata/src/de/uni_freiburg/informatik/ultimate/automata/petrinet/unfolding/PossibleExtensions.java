@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -67,7 +68,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 * Use the optimization that is outlined in observation B07 in the following
 	 * issue. https://github.com/ultimate-pa/ultimate/issues/448
 	 */
-	private static final boolean BUMBLEBEE_B07_OPTIMIZATION = true;
+	private static final boolean USE_FORWARD_CHECKING = false;
 	private final Queue<Event<LETTER, PLACE>> mPe;
 	private final Map<Marking<LETTER, PLACE>, Event<LETTER, PLACE>> mMarkingEventMap = new HashMap<>();
 	private int mMaximalSize = 0;
@@ -84,7 +85,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private final Comparator<Event<LETTER, PLACE>> mOrder;
 	private final ArrayDeque<Event<LETTER, PLACE>> mFastpathCutoffEventList;
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
-	private final boolean mLazySuccessorComputation = true;
+	private final static boolean LAZY_SUCCESSOR_COMPUTATION = true;
 
 	/**
 	 * A candidate is useful if it lead to at least one new possible extension.
@@ -127,7 +128,11 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 				throw new AssertionError("at least one place has to be instantiated");
 			}
 			final int possibleExtensionsBefore = size();
-			evolveCandidate(candidate);
+			if (USE_FORWARD_CHECKING) {
+				evolveCandidateWithForwardChecking(candidate);
+			} else {
+				evolveCandidate(candidate);
+			}
 			if (size() > possibleExtensionsBefore) {
 				mUsefulExtensionCandidates++;
 			} else {
@@ -158,76 +163,87 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 * Evolves a {@code Candidate} for a new possible Event in all possible ways and, as a side-effect, adds valid
 	 * extensions (ones whose predecessors are a co-set) to he possible extension set.
 	 */
-	@SuppressWarnings("squid:S1698")
-	private void evolveCandidate(final Candidate<LETTER, PLACE> cand) throws PetriNetNot1SafeException {
-		if (cand.isFullyInstantiated()) {
-			for (final ITransition<LETTER, PLACE> trans : cand.getTransition().getTransitions()) {
-				final Event<LETTER, PLACE> newEvent = new Event<>(cand.getInstantiated(), trans, mBranchingProcess);
-				if (mUseFirstbornCutoffCheck) {
-					if (firstbornCutoffCheck(newEvent)) {
-						mFastpathCutoffEventList.add(newEvent);
-					} else {
-						mMarkingEventMap.put(newEvent.getMark(), newEvent);
-						final boolean somethingWasAdded = mPe.add(newEvent);
-						mMaximalSize = Integer.max(mMaximalSize, mPe.size());
-						if (!somethingWasAdded) {
-							throw new AssertionError("Event was already in queue.");
-						}
-					}
+	
+	private void addFullyInstantiatedCandidate(final Candidate<LETTER, PLACE> cand) throws PetriNetNot1SafeException {
+		for (final ITransition<LETTER, PLACE> trans : cand.getTransition().getTransitions()) {
+			final Event<LETTER, PLACE> newEvent = new Event<>(cand.getInstantiated(), trans, mBranchingProcess);
+			if (mUseFirstbornCutoffCheck) {
+				if (firstbornCutoffCheck(newEvent)) {
+					mFastpathCutoffEventList.add(newEvent);
 				} else {
+					mMarkingEventMap.put(newEvent.getMark(), newEvent);
 					final boolean somethingWasAdded = mPe.add(newEvent);
 					mMaximalSize = Integer.max(mMaximalSize, mPe.size());
 					if (!somethingWasAdded) {
 						throw new AssertionError("Event was already in queue.");
 					}
 				}
-			}
-			return;
-		}
-		final PLACE nextUninstantiated = cand.getNextUninstantiatedPlace();
-		if (BUMBLEBEE_B07_OPTIMIZATION) {
-			final List<Condition<LETTER, PLACE>> yetInstantiated = cand.getInstantiated();
-			// list that contains one set for each instantiated condition c
-			// the set contains all conditions that are in co-relation to c and
-			// whose place is 'nextUninstantiated'
-			final List<Set<Condition<LETTER, PLACE>>> coRelatedWithInstantiated = new ArrayList<>();
-			for (final Condition<LETTER, PLACE> instantiated : yetInstantiated) {
-				final Set<Condition<LETTER, PLACE>> coRelatedToInstantiated = mBranchingProcess.getCoRelation()
-						.computeCoRelatatedConditions(instantiated, nextUninstantiated);
-				// 2019-10-18 Matthias Optimization: Use construction cache
-				// because while backtracking same set is computed several times
-				coRelatedWithInstantiated.add(coRelatedToInstantiated);
-			}
-			final Set<Condition<LETTER, PLACE>> inCoRelationWithAllInstantiated = DataStructureUtils
-					.intersection(coRelatedWithInstantiated);
-			for (final Condition<LETTER, PLACE> c : inCoRelationWithAllInstantiated) {
-				assert cand.getTransition().getPredecessorPlaces().contains(c.getPlace());
-				// equality intended here
-				assert c.getPlace().equals(nextUninstantiated);
-				assert !cand.getInstantiated().contains(c);
-				if (!c.getPredecessorEvent().isCutoffEvent()) {
-					cand.instantiateNext(c);
-					evolveCandidate(cand);
-					cand.undoOneInstantiation();
-				}
-			}
-		} else {
-			for (final Condition<LETTER, PLACE> c : mBranchingProcess.place2cond(nextUninstantiated)) {
-				assert cand.getTransition().getPredecessorPlaces().contains(c.getPlace());
-				// equality intended here
-				assert c.getPlace().equals(nextUninstantiated);
-				assert !cand.getInstantiated().contains(c);
-				if (!c.getPredecessorEvent().isCutoffEvent()) {
-					if (mBranchingProcess.getCoRelation().isCoset(cand.getInstantiated(), c)) {
-						cand.instantiateNext(c);
-						evolveCandidate(cand);
-						cand.undoOneInstantiation();
-					}
+			} else {
+				final boolean somethingWasAdded = mPe.add(newEvent);
+				mMaximalSize = Integer.max(mMaximalSize, mPe.size());
+				if (!somethingWasAdded) {
+					throw new AssertionError("Event was already in queue.");
 				}
 			}
 		}
 	}
-
+	@SuppressWarnings("squid:S1698")
+	private void evolveCandidate(final Candidate<LETTER, PLACE> cand) throws PetriNetNot1SafeException {
+		if (cand.isFullyInstantiated()) {
+			addFullyInstantiatedCandidate(cand);
+			return;
+		}
+		final PLACE nextUninstantiated = cand.getNextUninstantiatedPlace();
+		final ICoRelation<LETTER, PLACE> coRelation = mBranchingProcess.getCoRelation();
+		final List<Condition<LETTER, PLACE>> yetInstantiated = cand.getInstantiatedButNotInitially();
+		final Set<Condition<LETTER, PLACE>> inCoRelationWithAllInstantiated =
+				cand.getPossibleInstantiations(nextUninstantiated).stream()
+				.filter(x -> coRelation.isCoset(yetInstantiated, x)).collect(Collectors.toSet());
+		for (final Condition<LETTER, PLACE> c : inCoRelationWithAllInstantiated) {
+			assert cand.getTransition().getPredecessorPlaces().contains(c.getPlace());
+			// equality intended here
+			assert c.getPlace().equals(nextUninstantiated);
+			assert !cand.getInstantiated().contains(c);
+			cand.instantiateNext(c);
+			evolveCandidate(cand);
+			cand.undoOneInstantiation();
+		}
+	}
+	
+	private void evolveCandidateWithForwardChecking(final Candidate<LETTER, PLACE> cand) throws PetriNetNot1SafeException  {
+		if (cand.isFullyInstantiated()) {
+			addFullyInstantiatedCandidate(cand);
+			return;
+		}
+		final PLACE nextUninstantiated = cand.getNextUninstantiatedPlace();
+		final ICoRelation<LETTER, PLACE> coRelation = mBranchingProcess.getCoRelation();
+		final Map<PLACE, Set<Condition<LETTER, PLACE>>> possibleInstantiationsMap = cand.getPossibleInstantiationsMap();
+		final Set<Condition<LETTER, PLACE>> possibleInstantiations = cand.getPossibleInstantiations(nextUninstantiated);
+		possibleInstantiationsMap.remove(nextUninstantiated);
+		for (final Condition<LETTER, PLACE> condition : possibleInstantiations) {
+			final Map<PLACE, Set<Condition<LETTER, PLACE>>> newPossibleInstantiations = new HashMap<>();
+			boolean uselessCandidate = false;
+			for (final PLACE p : possibleInstantiationsMap.keySet()) {
+				final Set<Condition<LETTER, PLACE>> possibleInstantiationsforP = 
+						possibleInstantiationsMap.get(p).stream()
+						.filter(x -> coRelation.isInCoRelation(condition, x)).collect(Collectors.toSet());
+				if (possibleInstantiationsforP.isEmpty()) {
+					uselessCandidate = true;
+					break;
+				}
+				newPossibleInstantiations.put(p, possibleInstantiationsforP);
+			}
+			if (!uselessCandidate) {
+				final LinkedList<Condition<LETTER, PLACE>> newInstantiated = new LinkedList<>(
+						cand.getInstantiated());
+				newInstantiated.add(condition);
+				final LinkedList<PLACE> newNotInstantiated = new LinkedList<>(cand.getNotInstantiated());
+				newNotInstantiated.remove(newNotInstantiated.size() - 1);
+				evolveCandidateWithForwardChecking(new Candidate<LETTER, PLACE>(cand.getTransition(), newNotInstantiated,
+						newInstantiated, newPossibleInstantiations));
+			}
+		}
+	}
 
 
 	/**
@@ -238,13 +254,15 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		if (event.getSuccessorConditions().isEmpty()) {
 			return Collections.emptySet();
 		}
-		if (mLazySuccessorComputation) {
+		if (LAZY_SUCCESSOR_COMPUTATION) {
 			final Set<Condition<LETTER, PLACE>> newConditions = event.getSuccessorConditions();
 			final ICoRelation<LETTER, PLACE> coRelation = mBranchingProcess.getCoRelation();
 			final Set<Condition<LETTER, PLACE>> coRelatedConditions = coRelation.computeCoRelatatedConditions(newConditions.iterator().next());
 			final HashRelation<PLACE, Condition<LETTER, PLACE>> place2coRelatedConditions = new HashRelation<>();
 			for (final Condition<LETTER, PLACE> c : coRelatedConditions) {
-				place2coRelatedConditions.addPair(c.getPlace(), c);
+				if (!c.getPredecessorEvent().isCutoffEvent()) {
+					place2coRelatedConditions.addPair(c.getPlace(), c);
+				}
 			}
 			final HashRelation<PLACE, PLACE> place2allowedSiblings = new HashRelation<>();
 			for (final Condition<LETTER, PLACE> c : newConditions) {
@@ -276,18 +294,6 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			return candidates;
 		}
 	}
-
-	private static <LETTER, PLACE> HashRelation<PLACE, PLACE> computeCoRelatedPlacesRelation(
-			final Set<Condition<LETTER, PLACE>> conditions, final ICoRelation<LETTER, PLACE> coRelation) {
-		final HashRelation<PLACE, PLACE> result = new HashRelation<>();
-		for (final Condition<LETTER, PLACE> condition : conditions) {
-			for (final Condition<LETTER, PLACE> coRelated : coRelation.computeCoRelatatedConditions(condition)) {
-				result.addPair(condition.getPlace(), coRelated.getPlace());
-			}
-		}
-		return result;
-	}
-
 
 	@Override
 	public boolean isEmpy() {

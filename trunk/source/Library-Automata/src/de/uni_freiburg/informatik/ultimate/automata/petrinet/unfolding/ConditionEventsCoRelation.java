@@ -145,7 +145,7 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 			}
 		}
 		for (final Condition<LETTER, PLACE> c : e.getConditionMark()) {
-			if (!e.getSuccessorConditions().contains(c))
+			if (!c.getPredecessorEvent().equals(e))
 				mCoRelation.addTriple(c, e.getTransition(), e);
 		}
 	}
@@ -155,8 +155,7 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 	public boolean isInCoRelation(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
 		final boolean result = mCoRelation.containsTriple(c1, c2.getPredecessorEvent().getTransition(),
 				c2.getPredecessorEvent())
-				|| mCoRelation.containsTriple(c2, c1.getPredecessorEvent().getTransition(), c1.getPredecessorEvent())
-				|| (c1.getPredecessorEvent() == c2.getPredecessorEvent());
+				|| (c1.getPredecessorEvent().conditionMarkContains(c2));
 		assert result == isInCoRelationNaive(c1, c2) :
 				String.format("contradictory co-Relation for %s,%s: normal=%b != %b=naive", c1, c2, result, !result);
 		if (result) {

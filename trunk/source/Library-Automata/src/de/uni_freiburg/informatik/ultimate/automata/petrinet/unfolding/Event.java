@@ -378,6 +378,9 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public Configuration<LETTER, PLACE> getLocalConfiguration() {
 		return mLocalConfiguration;
 	}
+	public boolean conditionMarkContains(Condition<LETTER, PLACE> c) {
+		return mConditionMark.contains(c);
+	}
 
 	public Event<LETTER, PLACE> getCompanion() {
 		return mCompanion;
