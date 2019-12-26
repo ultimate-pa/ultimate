@@ -337,7 +337,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 				if ((end-start) > DEBUG_DUMP_DRYRUNRESULT_THRESHOLD * 1_000_000_000L) {
 					final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
 							+ "_EnhancementDryRun";
-					super.writeAutomatonToFile(mAbstraction, filename);
+					super.writeAutomatonToFile(onDemandConstructedNet, filename);
 				}
 				final AutomatonWithImplicitSelfloops<LETTER, IPredicate> awis = new AutomatonWithImplicitSelfloops<LETTER, IPredicate>(
 						new AutomataLibraryServices(mServices), raw, universalSubtrahendLoopers);
