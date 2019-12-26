@@ -390,6 +390,11 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 									+ "already an event that has the same marking and a different size of "
 									+ "local configuration then the new event must be cut-off event";
 				}
+				if (mOrder.isTotal()) {
+					// 2019-12-26 Matthias: Is this AssertionError ok or is it only ok for the
+					// firstborn cut-off check
+					throw new AssertionError("For total orders we consider transition-marking pairs at most twice.");
+				}
 			}
 			events.add(event);
 			if (event.isCutoffEvent()) {
