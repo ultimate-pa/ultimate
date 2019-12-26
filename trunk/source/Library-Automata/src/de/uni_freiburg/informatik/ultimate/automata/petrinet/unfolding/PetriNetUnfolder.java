@@ -377,7 +377,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 				// 2019-12-15 Matthias: Adding an event twice for a transition-marking pair is
 				// very natural.
 				// We write log messages only if an event was added three or more times. This
-				// should only happen if we use an order that is not total.
+				// can even happen for total orders
 				mLogger.info("inserting event number " + (events.size() + 1) + " for the transition-marking pair ("
 						+ transition + ", " + marking + ")");
 				mLogger.info("this new event has " + event.getAncestors() + " ancestors and is "
@@ -389,11 +389,6 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 							|| event2.isCutoffEvent() : "if there is "
 									+ "already an event that has the same marking and a different size of "
 									+ "local configuration then the new event must be cut-off event";
-				}
-				if (mOrder.isTotal()) {
-					// 2019-12-26 Matthias: Is this AssertionError ok or is it only ok for the
-					// firstborn cut-off check
-					throw new AssertionError("For total orders we consider transition-marking pairs at most twice.");
 				}
 			}
 			events.add(event);
