@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
  * @param <MAP>
  *            Type of Map that is used to store the relation.
  */
-public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> implements Iterable<Entry<D, R>> {
+public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map<D, SET>> implements Iterable<Entry<D, R>> {
 	private static final String NOT_YET_IMPLEMENTED = "not yet implemented";
 
 	protected final MAP mMap;
@@ -65,14 +65,14 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 		mMap = newMap();
 	}
 
-	public AbstractRelation(final AbstractRelation<D, R, ?> rel) {
+	public AbstractRelation(final AbstractRelation<D, R, ?, ?> rel) {
 		this();
 		this.addAll(rel);
 	}
 
 	protected abstract MAP newMap();
 
-	protected abstract Set<R> newSet();
+	protected abstract SET newSet();
 
 	/**
 	 * Add a pair (domainElem, rangeElem) to the relation.
@@ -80,7 +80,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	 * @return if this relation did not already contain the specified pair.
 	 */
 	public boolean addPair(final D domainElem, final R rangeElem) {
-		Set<R> rangeElems = mMap.get(domainElem);
+		SET rangeElems = mMap.get(domainElem);
 		if (rangeElems == null) {
 			rangeElems = newSet();
 			mMap.put(domainElem, rangeElems);
@@ -94,7 +94,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	 * @return if the relation has changed through this operation.
 	 */
 	public boolean addAllPairs(final D domainElem, final Collection<R> rangeElems) {
-		Set<R> oldRangeElems = mMap.get(domainElem);
+		SET oldRangeElems = mMap.get(domainElem);
 		if (oldRangeElems == null) {
 			oldRangeElems = newSet();
 			mMap.put(domainElem, oldRangeElems);
@@ -127,7 +127,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	 *
 	 * @param rel relation to subtract from this one
 	 */
-	public void removeAllPairs(final AbstractRelation<D, R, ?> rel) {
+	public void removeAllPairs(final AbstractRelation<D, R, ?, ?> rel) {
 		for (final Entry<D, R> en : rel.entrySet()) {
 			removePair(en.getKey(), en.getValue());
 		}
@@ -152,7 +152,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	public void removeRangeElement(final R elem) {
 		final MAP mapCopy = newMap();
 		mapCopy.putAll(mMap);
-		for (final Entry<D, Set<R>> en : mapCopy.entrySet()) {
+		for (final Entry<D, SET> en : mapCopy.entrySet()) {
 			en.getValue().remove(elem);
 			if (en.getValue().isEmpty()) {
 				mMap.remove(en.getKey());
@@ -191,7 +191,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	 * @param replacement
 	 */
 	public void replaceRangeElement(final R element, final R replacement) {
-		for (final Entry<D, Set<R>> en : mMap.entrySet()) {
+		for (final Entry<D, SET> en : mMap.entrySet()) {
 			if (en.getValue().contains(element)) {
 				en.getValue().remove(element);
 				en.getValue().add(replacement);
@@ -202,7 +202,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 
 	public void transformElements(final Function<D, D> dTransformer, final Function<R, R> rTransformer) {
 		// TODO: would be nicer if we did not use HashRelation but something more generic for the copy
-		for (final Entry<D, R> pair : new HashRelation<>(this)) {
+		for (final Entry<D, R> pair : new HashRelation<D, R>(this)) {
 			removePair(pair.getKey(), pair.getValue());
 			addPair(dTransformer.apply(pair.getKey()), rTransformer.apply(pair.getValue()));
 		}
@@ -212,9 +212,9 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	 * Add all elements contained in relation rel to this relation. Does not reuse sets of the relation rel but
 	 * constructs new sets if necessary.
 	 */
-	public void addAll(final AbstractRelation<D, R, ?> rel) {
-		for (final Entry<D, Set<R>> entry : rel.mMap.entrySet()) {
-			Set<R> rangeElems = mMap.get(entry.getKey());
+	public void addAll(final AbstractRelation<D, R, ?, ?> rel) {
+		for (final Entry<D, ? extends Set<R>> entry : rel.mMap.entrySet()) {
+			SET rangeElems = mMap.get(entry.getKey());
 			if (rangeElems == null) {
 				rangeElems = newSet();
 				mMap.put(entry.getKey(), rangeElems);
@@ -259,7 +259,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	 */
 	public int size() {
 		int result = 0;
-		for (final Entry<D, Set<R>> entry : mMap.entrySet()) {
+		for (final Entry<D, SET> entry : mMap.entrySet()) {
 			result += entry.getValue().size();
 		}
 		return result;
@@ -336,7 +336,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final AbstractRelation<?, ?, ?> other = (AbstractRelation<?, ?, ?>) obj;
+		final AbstractRelation<?, ?, ?, ?> other = (AbstractRelation<?, ?, ?, ?>) obj;
 		if (mMap == null) {
 			if (other.mMap != null) {
 				return false;
@@ -348,7 +348,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	}
 
 	private boolean sanityCheck() {
-		for (final Entry<D, Set<R>> en : this.mMap.entrySet()) {
+		for (final Entry<D, SET> en : this.mMap.entrySet()) {
 			if (en.getKey() == null) {
 				return false;
 			}
@@ -411,9 +411,9 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 			public Iterator<Entry<D, R>> iterator() {
 				return new Iterator<Map.Entry<D, R>>() {
 					private Entry<D, R> mNextEntry;
-					private Iterator<Entry<D, Set<R>>> mOuterIterator;
+					private Iterator<Entry<D, SET>> mOuterIterator;
 					private Iterator<R> mInnerIterator;
-					private Entry<D, Set<R>> mNextOuter;
+					private Entry<D, SET> mNextOuter;
 
 					{
 						mOuterIterator = mMap.entrySet().iterator();

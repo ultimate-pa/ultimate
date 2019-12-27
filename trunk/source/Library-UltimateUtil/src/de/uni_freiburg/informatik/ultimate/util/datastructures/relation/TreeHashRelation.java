@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2019 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2019 University of Freiburg
+ * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2009-2015 University of Freiburg
  *
  * This file is part of the ULTIMATE Util Library.
  *
@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 import java.util.HashSet;
 import java.util.NavigableSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * Implementation of an {@link AbstractRelation} that uses a {@link TreeMap}
@@ -37,16 +36,16 @@ import java.util.TreeSet;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class TreeRelation<D,R> extends AbstractRelation<D, R, TreeSet<R>, TreeMap<D,TreeSet<R>>> {
+public class TreeHashRelation<D, R> extends AbstractRelation<D, R, HashSet<R>, TreeMap<D, HashSet<R>>> {
 
 	@Override
-	public TreeMap<D, TreeSet<R>> newMap() {
-		return new TreeMap<D, TreeSet<R>>();
+	public TreeMap<D, HashSet<R>> newMap() {
+		return new TreeMap<D, HashSet<R>>();
 	}
 
 	@Override
-	public TreeSet<R> newSet() {
-		return new TreeSet<R>();
+	public HashSet<R> newSet() {
+		return new HashSet<R>();
 	}
 
 	public NavigableSet<D> descendingDomain() {

@@ -34,13 +34,17 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
+ * Implementation of an {@link AbstractRelation} that uses a {@link HashMap} for
+ * the mapping and a {@link TreeSet} for the elements of the image.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author musab@informatik.uni-freiburg.de
  *
  */
-public class RelationWithTreeSet<D, R> extends AbstractRelation<D, R, HashMap<D, Set<R>>> {
+public class HashTreeRelation<D, R> extends AbstractRelation<D, R, TreeSet<R>, HashMap<D, TreeSet<R>>> {
 
 	@Override
-	public HashMap<D, Set<R>> newMap() {
+	public HashMap<D, TreeSet<R>> newMap() {
 		return new HashMap<>();
 	}
 

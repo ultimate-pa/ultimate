@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.RelationWithTreeSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 
 /**
  * This class implements the possibility to partially (and in different order) annotate and assert the statements of a
@@ -131,7 +131,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * recursively.
 	 */
 	private <LOC> void dfsPartitionStatementsAccordingToDepth(final Integer lowerIndex, final Integer upperIndex,
-			final int depth, final RelationWithTreeSet<LOC, Integer> rwt,
+			final int depth, final HashTreeRelation<LOC, Integer> rwt,
 			final Map<Integer, Set<Integer>> depth2Statements, final List<LOC> pps) {
 		int i = lowerIndex;
 		while (i < upperIndex) {
@@ -172,7 +172,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * Partition the statements of the given trace according to their depth.
 	 */
 	private <LOC> Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(
-			final NestedWord<? extends IAction> trace, final RelationWithTreeSet<LOC, Integer> rwt,
+			final NestedWord<? extends IAction> trace, final HashTreeRelation<LOC, Integer> rwt,
 			final List<LOC> pps) {
 		final Map<Integer, Set<Integer>> depth2Statements = new HashMap<>();
 
@@ -185,7 +185,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	public void buildAnnotatedSsaAndAssertTerms() {
 		assert mCheckSat == 0 : "You should not call this method twice";
 		final List<IcfgLocation> pps = TraceCheckUtils.getSequenceOfProgramPoints(mTrace);
-		final RelationWithTreeSet<IcfgLocation, Integer> rwt =
+		final HashTreeRelation<IcfgLocation, Integer> rwt =
 				computeRelationWithTreeSetForTrace(0, mTrace.length(), pps);
 
 		final Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, mTrace.length());
@@ -411,9 +411,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	/**
 	 * TODO(Betim): DOcumentation!
 	 */
-	private static <LOC> RelationWithTreeSet<LOC, Integer> computeRelationWithTreeSetForTrace(final int lowerIndex,
+	private static <LOC> HashTreeRelation<LOC, Integer> computeRelationWithTreeSetForTrace(final int lowerIndex,
 			final int upperIndex, final List<LOC> pps) {
-		final RelationWithTreeSet<LOC, Integer> rwt = new RelationWithTreeSet<>();
+		final HashTreeRelation<LOC, Integer> rwt = new HashTreeRelation<>();
 		for (int i = lowerIndex; i <= upperIndex; i++) {
 			rwt.addPair(pps.get(i), i);
 		}

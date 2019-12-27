@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
  * TODO 2017-10-17 Matthias: The following documentation is outdated.
@@ -157,7 +157,7 @@ public class ElimStorePlain {
 			int numberOfRounds = 0;
 			while (!taskStack.isEmpty()) {
 				final EliminationTask currentETask = taskStack.pop();
-				final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(currentETask.getEliminatees());
+				final TreeHashRelation<Integer, TermVariable> tr = classifyEliminatees(currentETask.getEliminatees());
 
 				final LinkedHashSet<TermVariable> arrayEliminatees = getArrayTvSmallDimensionsFirst(tr);
 
@@ -220,7 +220,7 @@ public class ElimStorePlain {
 	 * @throws ElimStorePlainException
 	 */
 	public EliminationTask startRecursiveElimination(final EliminationTask eTask) {
-		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
+		final TreeHashRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
 		if (tr.isEmpty() || (tr.getDomain().size() == 1 && tr.getDomain().contains(0))) {
 			// return immediately if we do not have quantified arrays.
 			return eTask;
@@ -414,7 +414,7 @@ public class ElimStorePlain {
 		mRecursiveCallCounter++;
 		final int thisRecursiveCallNumber = mRecursiveCallCounter;
 
-		final TreeRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
+		final TreeHashRelation<Integer, TermVariable> tr = classifyEliminatees(eTask.getEliminatees());
 		Term currentTerm = eTask.getTerm();
 
 
@@ -672,7 +672,7 @@ public class ElimStorePlain {
 		return new Pair<Term[], Term>(correspodingJuncts, dualJunctionWithoutElimantee);
 	}
 
-	private String printVarInfo(final TreeRelation<Integer, TermVariable> tr) {
+	private String printVarInfo(final TreeHashRelation<Integer, TermVariable> tr) {
 		final StringBuilder sb = new StringBuilder();
 		for (final Integer dim : tr.getDomain()) {
 			sb.append(tr.getImage(dim).size() + " dim-" + dim + " vars, ");
@@ -720,7 +720,7 @@ public class ElimStorePlain {
 		return new EliminationTaskWithContext(eTask.getQuantifier(), eliminatees1, matrix, eTask.getContext());
 	}
 
-	private LinkedHashSet<TermVariable> getArrayTvSmallDimensionsFirst(final TreeRelation<Integer, TermVariable> tr) {
+	private LinkedHashSet<TermVariable> getArrayTvSmallDimensionsFirst(final TreeHashRelation<Integer, TermVariable> tr) {
 		final LinkedHashSet<TermVariable> result = new LinkedHashSet<>();
 		for (final Integer dim : tr.getDomain()) {
 			if (dim != 0) {
@@ -735,8 +735,8 @@ public class ElimStorePlain {
 	 * dimension" of variable a_i. Returns a tree relation that contains (dim(a_i),
 	 * a_i) for all i\in{1,...,n}.
 	 */
-	private static TreeRelation<Integer, TermVariable> classifyEliminatees(final Collection<TermVariable> eliminatees) {
-		final TreeRelation<Integer, TermVariable> tr = new TreeRelation<>();
+	private static TreeHashRelation<Integer, TermVariable> classifyEliminatees(final Collection<TermVariable> eliminatees) {
+		final TreeHashRelation<Integer, TermVariable> tr = new TreeHashRelation<>();
 		for (final TermVariable eliminatee : eliminatees) {
 			final MultiDimensionalSort mds = new MultiDimensionalSort(eliminatee.getSort());
 			tr.addPair(mds.getDimension(), eliminatee);
@@ -745,7 +745,7 @@ public class ElimStorePlain {
 	}
 
 
-	private static boolean maxSizeIncrease(final TreeRelation<Integer, TermVariable> tr1, final TreeRelation<Integer, TermVariable> tr2) {
+	private static boolean maxSizeIncrease(final TreeHashRelation<Integer, TermVariable> tr1, final TreeHashRelation<Integer, TermVariable> tr2) {
 		if (tr2.isEmpty()) {
 			return false;
 		}

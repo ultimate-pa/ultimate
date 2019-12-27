@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.MultiElementCounter;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
  * Compute rough estimation of the expected costs of a quantifier elimination.
@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRela
 public class ArrayIndexBasedCostEstimation {
 	private final MultiElementCounter<Doubleton<ArrayIndex>> mIndexDoubleton2Occurrence = new MultiElementCounter<Doubleton<ArrayIndex>>();
 	private final MultiElementCounter<TermVariable> mEliminatee2Cost = new MultiElementCounter<TermVariable>();
-	private final TreeRelation<Integer, TermVariable> mCost2Eliminatee;
-	private final TreeRelation<Integer, Doubleton<ArrayIndex>> mOccurrence2Doubletons;
+	private final TreeHashRelation<Integer, TermVariable> mCost2Eliminatee;
+	private final TreeHashRelation<Integer, Doubleton<ArrayIndex>> mOccurrence2Doubletons;
 	private final int mOccurrenceMaximum;
 	private final Doubleton<Term> mProposedCaseSplitDoubleton;
 
@@ -77,7 +77,7 @@ public class ArrayIndexBasedCostEstimation {
 
 	private Doubleton<Term> computeProposedCaseSplitDoubleton(final ArrayIndexEqualityManager aiem,
 			final Set<TermVariable> forbiddenVariables,
-			final TreeRelation<Integer, Doubleton<ArrayIndex>> occurrence2Doubletons, final int occurrenceMaximum) {
+			final TreeHashRelation<Integer, Doubleton<ArrayIndex>> occurrence2Doubletons, final int occurrenceMaximum) {
 		for (final Doubleton<ArrayIndex> indexDoubleton : occurrence2Doubletons.getImage(occurrenceMaximum)) {
 			for (int i = 0; i < indexDoubleton.getOneElement().size(); i++) {
 				final Term entry1 = indexDoubleton.getOneElement().get(i);
@@ -96,7 +96,7 @@ public class ArrayIndexBasedCostEstimation {
 		throw new AssertionError("all values known");
 	}
 
-	public TreeRelation<Integer, TermVariable> getCost2Eliminatee() {
+	public TreeHashRelation<Integer, TermVariable> getCost2Eliminatee() {
 		return mCost2Eliminatee;
 	}
 
@@ -108,18 +108,18 @@ public class ArrayIndexBasedCostEstimation {
 		return mProposedCaseSplitDoubleton;
 	}
 
-	private static TreeRelation<Integer, TermVariable> computeCost2Eliminatee(final Set<TermVariable> eliminatees,
+	private static TreeHashRelation<Integer, TermVariable> computeCost2Eliminatee(final Set<TermVariable> eliminatees,
 			final MultiElementCounter<TermVariable> eliminatee2Cost) {
-		final TreeRelation<Integer, TermVariable> result = new TreeRelation<>();
+		final TreeHashRelation<Integer, TermVariable> result = new TreeHashRelation<>();
 		for (final TermVariable eliminatee : eliminatees) {
 			result.addPair(eliminatee2Cost.getNumber(eliminatee), eliminatee);
 		}
 		return result;
 	}
 
-	private static TreeRelation<Integer, Doubleton<ArrayIndex>> computeOccurrence2Doubletons(
+	private static TreeHashRelation<Integer, Doubleton<ArrayIndex>> computeOccurrence2Doubletons(
 			final MultiElementCounter<Doubleton<ArrayIndex>> indexDoubleton2Occurrence) {
-		final TreeRelation<Integer, Doubleton<ArrayIndex>> result = new TreeRelation<>();
+		final TreeHashRelation<Integer, Doubleton<ArrayIndex>> result = new TreeHashRelation<>();
 		for (final Doubleton<ArrayIndex> elem : indexDoubleton2Occurrence.getElements()) {
 			result.addPair(indexDoubleton2Occurrence.getNumber(elem), elem);
 		}

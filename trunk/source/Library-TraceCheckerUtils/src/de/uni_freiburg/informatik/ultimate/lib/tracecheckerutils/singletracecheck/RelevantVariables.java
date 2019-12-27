@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.RelationWithTreeSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
 
 /**
  * TODO: documentation, support for pending contexts
@@ -102,8 +102,8 @@ public class RelevantVariables {
 	 * Precondition gets index -1. Postcondition gets index trace.length()
 	 */
 	private class VariableOccurrence {
-		RelationWithTreeSet<IProgramVar, Integer> inRelation = new RelationWithTreeSet<>();
-		RelationWithTreeSet<IProgramVar, Integer> outRelation = new RelationWithTreeSet<>();
+		HashTreeRelation<IProgramVar, Integer> inRelation = new HashTreeRelation<>();
+		HashTreeRelation<IProgramVar, Integer> outRelation = new HashTreeRelation<>();
 
 		public VariableOccurrence() {
 			computeOccurrenceRelations();
@@ -210,7 +210,7 @@ public class RelevantVariables {
 
 		}
 
-		private void addVars(final RelationWithTreeSet<IProgramVar, Integer> relation, final int i,
+		private void addVars(final HashTreeRelation<IProgramVar, Integer> relation, final int i,
 				final IPredicate precondition) {
 			for (final IProgramVar bv : precondition.getVars()) {
 				relation.addPair(bv, i);
@@ -218,7 +218,7 @@ public class RelevantVariables {
 
 		}
 
-		private void addVars(final RelationWithTreeSet<IProgramVar, Integer> relation, final int i,
+		private void addVars(final HashTreeRelation<IProgramVar, Integer> relation, final int i,
 				final Set<IProgramVar> set) {
 			for (final IProgramVar bv : set) {
 				relation.addPair(bv, i);
