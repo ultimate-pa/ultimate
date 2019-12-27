@@ -83,7 +83,7 @@ public class Configuration<LETTER, PLACE> implements Comparable<Configuration<LE
 		mRemovedMin = removedMin;
 	}
 
-	public List<Transition<LETTER, PLACE>> getPhi() {
+	private List<Transition<LETTER, PLACE>> getPhi() {
 		if (mPhi == null) {
 			mPhi = new ArrayList<>(mEvents.size());
 			for (final Event<LETTER, PLACE> e : mEvents) {
