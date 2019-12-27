@@ -200,6 +200,12 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 		assert sanityCheck();
 	}
 
+	/**
+	 * @deprecated 2019-12-27 Matthias: I think this method should be replaced by a
+	 * constructor. Modifies the original object but there is no performance gain
+	 * because a temporary copy is constructed.
+	 */
+	@Deprecated
 	public void transformElements(final Function<D, D> dTransformer, final Function<R, R> rTransformer) {
 		// TODO: would be nicer if we did not use HashRelation but something more generic for the copy
 		for (final Entry<D, R> pair : new HashRelation<D, R>(this)) {
