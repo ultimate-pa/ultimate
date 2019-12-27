@@ -115,8 +115,10 @@ public final class Event<LETTER, PLACE> implements Serializable {
 			}
 
 			predecessorEvents.add(e);
-			// Collections.addAll(localConfiguration, e.mLocalConfiguration);
-			mLocalConfiguration.addAll(e.mLocalConfiguration);
+			// 2019-12-27 Matthias: minor optimization add all Events at once
+			for (final Event<LETTER, PLACE> eOther : e.mLocalConfiguration) {
+				mLocalConfiguration.add(eOther);
+			}
 			e.mConditionMark.addTo(conditionMarkSet);
 			mDepth = Math.max(mDepth, e.getDepth());
 		}
@@ -378,7 +380,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public Configuration<LETTER, PLACE> getLocalConfiguration() {
 		return mLocalConfiguration;
 	}
-	public boolean conditionMarkContains(Condition<LETTER, PLACE> c) {
+	public boolean conditionMarkContains(final Condition<LETTER, PLACE> c) {
 		return mConditionMark.contains(c);
 	}
 

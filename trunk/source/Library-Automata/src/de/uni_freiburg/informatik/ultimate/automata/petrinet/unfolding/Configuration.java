@@ -26,9 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
-import java.util.AbstractSet;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -54,8 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
  * @param <PLACE>
  *            place content type
  */
-public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLACE>>
-		implements Comparable<Configuration<LETTER, PLACE>> {
+public class Configuration<LETTER, PLACE> implements Comparable<Configuration<LETTER, PLACE>>, Iterable<Event<LETTER, PLACE>> {
 	private final Set<Event<LETTER, PLACE>> mEvents;
 	private Set<Event<LETTER, PLACE>> mMin;
 	private ArrayList<Transition<LETTER, PLACE>> mPhi;
@@ -110,7 +107,7 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 		}
 		return new Configuration<>(mMin);
 	}
-	public Configuration<LETTER, PLACE> getMin(int depth){
+	public Configuration<LETTER, PLACE> getMin(final int depth){
 		final Set<Event<LETTER, PLACE>> result = mEvents.stream()
 				.filter(event -> event.getDepth() == depth)
 				.collect(Collectors.toCollection(HashSet::new));
@@ -119,14 +116,14 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 		}
 		return new Configuration<>(result);
 	}
-	public void setDepth(int depth) {
+	public void setDepth(final int depth) {
 		mDepth = depth;
 	}
 	public int getDepth() {
 		return mDepth;
 	}
 	
-	public List<Event<LETTER, PLACE>> getSortedConfiguration(Comparator<Event<LETTER, PLACE>> comparator) {
+	public List<Event<LETTER, PLACE>> getSortedConfiguration(final Comparator<Event<LETTER, PLACE>> comparator) {
 		if (mSortedConfiguration == null) {
 			mSortedConfiguration = mEvents.stream().sorted(comparator).collect(Collectors.toList());
 		}
@@ -148,58 +145,12 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 		return mEvents.iterator();
 	}
 
-	@Override
 	public int size() {
 		return mEvents.size();
 	}
 
-	@Override
 	public boolean add(final Event<LETTER, PLACE> arg0) {
 		return mEvents.add(arg0);
-	}
-
-	@Override
-	public boolean addAll(final Collection<? extends Event<LETTER, PLACE>> arg0) {
-		return mEvents.addAll(arg0);
-	}
-
-	@Override
-	public void clear() {
-		mEvents.clear();
-	}
-
-	@Override
-	public boolean contains(final Object arg0) {
-		return mEvents.contains(arg0);
-	}
-
-	@Override
-	public boolean containsAll(final Collection<?> arg0) {
-		return mEvents.containsAll(arg0);
-	}
-
-	/**
-	 * @param events
-	 *            Some events.
-	 * @return {@code true} iff the configuration contains any of the specified events
-	 */
-	public boolean containsAny(final Collection<Event<LETTER, PLACE>> events) {
-		for (final Event<LETTER, PLACE> place : events) {
-			if (mEvents.contains(place)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	@Override
-	public boolean isEmpty() {
-		return mEvents.isEmpty();
-	}
-
-	@Override
-	public boolean remove(final Object arg0) {
-		return mEvents.remove(arg0);
 	}
 
 	/**
@@ -215,26 +166,6 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 		final HashSet<Event<LETTER, PLACE>> events = new HashSet<>(mEvents);
 		events.removeAll(mMin);
 		return new Configuration<>(events, mRemovedMin +1);
-	}
-
-	@Override
-	public boolean removeAll(final Collection<?> arg0) {
-		return mEvents.removeAll(arg0);
-	}
-
-	@Override
-	public boolean retainAll(final Collection<?> arg0) {
-		return mEvents.retainAll(arg0);
-	}
-
-	@Override
-	public Object[] toArray() {
-		return mEvents.toArray();
-	}
-
-	@Override
-	public <T> T[] toArray(final T[] arg0) {
-		return mEvents.toArray(arg0);
 	}
 
 	/**
@@ -258,44 +189,4 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 		}
 		return 0;
 	}
-
-	/**
-	 * TODO Christian 2016-08-16: This does not override the Object.equals() method. It may be confusing when using in
-	 * Collections.
-	 *
-	 * @param other
-	 *            another configuration
-	 * @return {@code true} iff two given configurations have the same events.
-	 */
-	public boolean equals(final Configuration<LETTER, PLACE> other) {
-		return containsAll(other) && other.containsAll(this);
-	}
-
-	/*
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result
-				+ ((mEvents == null) ? 0 : mEvents.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (!super.equals(obj))
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Configuration<LETTER, PLACE> other = (Configuration) obj;
-		if (mEvents == null) {
-			if (other.mEvents != null)
-				return false;
-		} else if (!mEvents.equals(other.mEvents))
-			return false;
-		return true;
-	}
-	*/
 }
