@@ -131,6 +131,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		case DeadEndRemovalTime:
 		case HoareAnnotationTime:
 		case BasicInterpolantAutomatonTime:
+		case InitialAbstractionConstructionTime:
 		case DUMP_TIME:
 			try {
 				return getElapsedTime(key);
@@ -182,6 +183,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.DeadEndRemovalTime.toString(),
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
 				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString(),
-				CegarLoopStatisticsDefinitions.DUMP_TIME.toString() };
+				CegarLoopStatisticsDefinitions.DUMP_TIME.toString(),
+				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString(), };
 	}
 }

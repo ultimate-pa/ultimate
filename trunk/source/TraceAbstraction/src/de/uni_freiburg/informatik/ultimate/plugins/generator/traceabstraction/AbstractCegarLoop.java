@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaBasis;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -387,7 +388,22 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 		}
 		try {
-			getInitialAbstraction();
+			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString());
+			try {
+				getInitialAbstraction();
+			} catch (final AutomataOperationCanceledException aoce) {
+				final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(this.getClass(),
+						"constructing initial abstraction");
+				aoce.addRunningTaskInfo(runningTaskInfo);
+				throw aoce;
+			} catch (final ToolchainCanceledException tce) {
+				final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(this.getClass(),
+						"constructing initial abstraction");
+				tce.addRunningTaskInfo(runningTaskInfo);
+				throw tce;
+			} finally {
+				mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString());
+			}
 
 			if (mIteration <= mPref.watchIteration()
 					&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
