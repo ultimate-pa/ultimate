@@ -75,4 +75,8 @@ public abstract class EventOrder<LETTER, PLACE> implements Comparator<Event<LETT
 	 * @return true iff this order on events is a total order
 	 */
 	public abstract boolean isTotal();
+	
+//	2019-12-19 Factory method for constructing configuration
+//	public abstract <E extends Configuration<LETTER, PLACE>> E constructNewConfiguration(
+//			final Set<Event<LETTER, PLACE>> events, Integer theIntegerForErv);
 }

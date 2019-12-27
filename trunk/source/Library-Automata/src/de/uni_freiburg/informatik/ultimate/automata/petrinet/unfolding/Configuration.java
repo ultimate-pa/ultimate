@@ -59,6 +59,7 @@ public class Configuration<LETTER, PLACE> implements Comparable<Configuration<LE
 	private List<Event<LETTER, PLACE>> mSortedConfiguration;
 	private final int mRemovedMin;
 	private int mDepth;
+//	private SortedMap<Integer, T<Event<LETTER, PLACE>>> mSortedEvents;
 	/**
 	 * Constructs a Configuration (Not a Suffix). The set given as parameter has to be causally closed and
 	 * conflict-free.
