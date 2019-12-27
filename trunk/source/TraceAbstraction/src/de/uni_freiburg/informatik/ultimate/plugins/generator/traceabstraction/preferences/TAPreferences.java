@@ -28,7 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.UnfoldingOrder;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier.ScoringMethod;
@@ -314,8 +314,8 @@ public final class TAPreferences {
 		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_BACKFOLDING);
 	}
 
-	public UnfoldingOrder eventOrder() {
-		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ORDER, UnfoldingOrder.class);
+	public EventOrderEnum eventOrder() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ORDER, EventOrderEnum.class);
 	}
 
 	public PetriNetLbe useLbeInConcurrentAnalysis() {

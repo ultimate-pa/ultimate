@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix2PetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.UnfoldingOrder;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
@@ -170,7 +170,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		final BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
 		final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
-		final UnfoldingOrder eventOrder = mPref.eventOrder();
+		final EventOrderEnum eventOrder = mPref.eventOrder();
 
 		PetriNetUnfolder<LETTER, IPredicate> unf;
 		try {
