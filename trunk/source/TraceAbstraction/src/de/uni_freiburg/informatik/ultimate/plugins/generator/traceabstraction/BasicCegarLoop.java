@@ -420,8 +420,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			throw new TaskCanceledException(UserDefinedLimit.TRACE_HISTOGRAM, getClass(), taskDescription);
 		}
 
-		// Don't send the histogram: the complete run is sent already.
-		// mInteractive.send(traceHistogram);
 		return false;
 	}
 
