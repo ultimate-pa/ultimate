@@ -110,9 +110,6 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			case KMM:
 				mOrder = new McMillanOrder<>();
 				break;
-			case ERV_MARK:
-				mOrder = new ErvEqualMarkingOrder<>();
-				break;
 			case ERV:
 				mOrder = new EsparzaRoemerVoglerOrder<>();
 				break;
@@ -292,7 +289,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		ERV2("Esparza Römer Vogler without computation of cuts"),
 		ERV("Esparza Römer Vogler"),
 		KMM("Ken McMillan"),
-		ERV_MARK("ERV with equal markings");
+		;
 
 		private String mDescription;
 
