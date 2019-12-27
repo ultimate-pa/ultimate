@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.UnfoldingOrder;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -68,7 +68,7 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 			mLogger.info(startMessage());
 		}
 		final PetriNetUnfolder<LETTER, STATE> unf = new PetriNetUnfolder<>(mServices,
-				operand, UnfoldingOrder.ERV, sameTransitionCutOff, false);
+				operand, EventOrderEnum.ERV, sameTransitionCutOff, false);
 		mUnfoldingStatistics = unf.getUnfoldingStatistics();
 		mResult = unf.getFinitePrefix();
 

@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Accepts;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.UnfoldingOrder;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 
 /**
@@ -58,7 +58,7 @@ public final class GetAcceptedWord<LETTER, PLACE>
 		mOperand = operand;
 		mLogger.info(startMessage());
 		final PetriNetUnfolder<LETTER, PLACE> unf =
-				new PetriNetUnfolder<>(mServices, operand, UnfoldingOrder.ERV, false, true);
+				new PetriNetUnfolder<>(mServices, operand, EventOrderEnum.ERV, false, true);
 		final PetriNetRun<LETTER, PLACE> run = unf.getAcceptingRun();
 		if (run == null) {
 			throw new IllegalArgumentException("unable to get word from empty language");

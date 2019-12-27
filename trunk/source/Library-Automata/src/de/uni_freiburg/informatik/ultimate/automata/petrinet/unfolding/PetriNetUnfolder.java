@@ -96,7 +96,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	 * @throws PetriNetNot1SafeException
 	 */
 	public PetriNetUnfolder(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> operand,
-			final UnfoldingOrder order, final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
+			final EventOrderEnum order, final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -281,10 +281,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		return mUnfolding;
 	}
 
-	/**
-	 * Order type.
-	 */
-	public enum UnfoldingOrder {
+	public enum EventOrderEnum {
 		DBO("Depth-based Order"),
 		ERV2("Esparza Römer Vogler without computation of cuts"),
 		ERV("Esparza Römer Vogler"),
@@ -293,7 +290,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 
 		private String mDescription;
 
-		UnfoldingOrder(final String name) {
+		EventOrderEnum(final String name) {
 			mDescription = name;
 		}
 
