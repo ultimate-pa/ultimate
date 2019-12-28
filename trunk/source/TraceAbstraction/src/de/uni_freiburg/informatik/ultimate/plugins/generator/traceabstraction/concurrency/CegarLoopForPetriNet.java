@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ba
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimizationStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.petrinetlbe.PetriNetLargeBlockEncoding;
@@ -226,7 +227,14 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
-		final IHoareTripleChecker htc = new IncrementalHoareTripleChecker(super.mCsToolkit, false);
+		final IHoareTripleChecker htc;
+		if (mRefinementEngine.getHoareTripleChecker() != null) {
+			htc = mRefinementEngine.getHoareTripleChecker();
+		} else {
+			htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+					mPref.getHoareTripleChecks(), mCsToolkit, mRefinementEngine.getPredicateUnifier());
+		}
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		try {
 			if (mPref.unfoldingToNet()) {
 				final FinitePrefix2PetriNet<LETTER, IPredicate> fp2pn = new FinitePrefix2PetriNet<>(
