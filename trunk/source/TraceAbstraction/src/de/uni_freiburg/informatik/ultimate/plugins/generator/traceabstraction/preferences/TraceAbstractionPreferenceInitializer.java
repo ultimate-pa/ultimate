@@ -115,7 +115,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_DIFFERENCE_SENWA = "DifferenceSenwa operation instead classical Difference";
 	public static final String LABEL_MINIMIZE = "Minimization of abstraction";
 	public static final String LABEL_CONCURRENCY = "Automaton type used in concurrency analysis";
-	public static final String LABEL_ORDER = "Event order for Petri net unfolding";
+	public static final String LABEL_CONFIGURATION_ORDER = "Order on configurations for Petri net unfoldings";
 	public static final String LABEL_CUTOFF = "cut-off requires same transition";
 	public static final String LABEL_BACKFOLDING = "Use backfolding";
 	public static final String LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY = "Assert CodeBlocks";
@@ -188,7 +188,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final boolean DEF_CUTOFF = false;
 	public static final boolean DEF_BACKFOLDING = false;
-	public static final EventOrderEnum DEF_ORDER = EventOrderEnum.ERV;
+	public static final EventOrderEnum DEF_CONFIGURATION_ORDER = EventOrderEnum.ERV;
 	public static final boolean DEF_SIMPLIFY_CODE_BLOCKS = false;
 	public static final boolean DEF_PRESERVE_GOTO_EDGES = false;
 	public static final AbstractInterpretationMode DEF_ABSINT_MODE = AbstractInterpretationMode.NONE;
@@ -360,7 +360,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						Minimization.values()),
 				new UltimatePreferenceItem<>(LABEL_CONCURRENCY, DEF_CONCURRENCY, PreferenceType.Combo,
 						Concurrency.values()),
-				new UltimatePreferenceItem<>(LABEL_ORDER, DEF_ORDER, PreferenceType.Combo,
+				new UltimatePreferenceItem<>(LABEL_CONFIGURATION_ORDER, DEF_CONFIGURATION_ORDER, PreferenceType.Combo,
 						EventOrderEnum.values()),
 				new UltimatePreferenceItem<>(LABEL_CUTOFF, DEF_CUTOFF, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BACKFOLDING, DEF_BACKFOLDING, PreferenceType.Boolean),

@@ -50,7 +50,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=PETRI_NET
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Large\ block\ encoding\ in\ concurrent\ analysis=OFF
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Event\ order\ for\ Petri\ net\ unfolding=DBO
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Order\ on\ configurations\ for\ Petri\ net\ unfoldings=DBO
 
 
 #Thu Oct 29 23:01:13 CET 2015

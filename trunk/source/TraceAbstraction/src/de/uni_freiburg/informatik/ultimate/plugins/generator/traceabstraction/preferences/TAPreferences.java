@@ -315,7 +315,7 @@ public final class TAPreferences {
 	}
 
 	public EventOrderEnum eventOrder() {
-		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ORDER, EventOrderEnum.class);
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CONFIGURATION_ORDER, EventOrderEnum.class);
 	}
 
 	public PetriNetLbe useLbeInConcurrentAnalysis() {
