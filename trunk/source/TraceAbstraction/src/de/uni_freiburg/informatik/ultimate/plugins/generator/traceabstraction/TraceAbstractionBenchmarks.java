@@ -71,7 +71,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 		sb.append(" locations, ");
 		sb.append(mErrorLocations);
 		sb.append(" error locations. ");
-		sb.append("Run ");
+		sb.append("Started ");
 		sb.append(mCegarLoopsRun);
 		sb.append(" CEGAR loops. ");
 		sb.append(mCegarLoopBenchmarkData.toString());

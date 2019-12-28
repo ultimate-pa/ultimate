@@ -123,8 +123,8 @@ public class CegarLoopResult<LETTER extends IIcfgTransition<?>> {
 
 	public static <LETTER extends IIcfgTransition<?>> CegarLoopResult<LETTER> iterate(
 			final IUltimateServiceProvider services, final DebugIdentifier name, final IIcfg<IcfgLocation> root,
-			final TAPreferences taPrefs, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
+			final TAPreferences taPrefs, final PredicateFactory predicateFactory,
+			final Collection<IcfgLocation> errorLocs,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final boolean computeHoareAnnotation, final Concurrency automataType) {
