@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -42,6 +43,12 @@ public class HashRelation3<K1, K2, K3> implements Iterable<Triple<K1, K2, K3>> {
 	public boolean addTriple(final K1 fst, final K2 snd, final K3 trd) {
 		final IsContained isContained = mBackingMap.put(fst, snd, trd, IsContained.IsContained);
 		return isContained == IsContained.IsContained;
+	}
+	
+	public void addAllTriples(final K1 fst, final K2 snd, final Collection<K3> trds) {
+		for(final K3 trd: trds) {
+			addTriple(fst, snd, trd);
+		}
 	}
 
 	public boolean containsTriple(final K1 fst, final K2 snd, final K3 trd) {

@@ -120,7 +120,17 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 		return Stream.concat(c.getPredecessorEvent().getConditionMark().stream(),
 				streamCoRelatedEvents(c, transitions).flatMap(x -> x.getSuccessorConditions().stream()));
 	}
+	
+	private Stream<Condition<LETTER, PLACE>> streamNonCutoffCoRelatedConditions(final Condition<LETTER, PLACE> c) {
+		return streamNonCutoffCoRelatedConditions(c, mCoRelation.projectToSnd(c));
+	}
 
+	private Stream<Condition<LETTER, PLACE>> streamNonCutoffCoRelatedConditions(final Condition<LETTER, PLACE> c,
+			final Set<ITransition<LETTER, PLACE>> transitions) {
+		return Stream.concat(c.getPredecessorEvent().getConditionMark().stream(),
+				(streamCoRelatedEvents(c, transitions).filter(x -> !x.isCutoffEvent())).flatMap(x -> x.getSuccessorConditions().stream()));
+	}
+	
 
 	@Override
 	public void update(final Event<LETTER, PLACE> e) {
@@ -249,6 +259,7 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 		return mCoRelation.toStringAsTable();
 	}
 
+	
 	@Override
 	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond) {
 		final Set<Condition<LETTER, PLACE>> result = streamCoRelatedConditions(cond).collect(Collectors.toSet());
@@ -258,7 +269,12 @@ public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LET
 		}
 		return result;
 	}
-
+	
+	@Override
+	public Set<Condition<LETTER, PLACE>> computeNonCutoffCoRelatatedConditions(final Condition<LETTER, PLACE> cond) {
+		final Set<Condition<LETTER, PLACE>> result = streamNonCutoffCoRelatedConditions(cond).collect(Collectors.toSet());
+		return result;
+	}
 	private Set<Condition<LETTER, PLACE>> computeCoRelatatedConditionsInefficient(final Condition<LETTER, PLACE> cond) {
 		final Set<Condition<LETTER, PLACE>> result = new HashSet<>();
 		for (final Condition<LETTER, PLACE> c2 : mBranchingProcess.getConditions()) {

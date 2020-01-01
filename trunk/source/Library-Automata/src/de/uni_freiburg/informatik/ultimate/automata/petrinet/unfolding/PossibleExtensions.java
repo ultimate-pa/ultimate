@@ -74,6 +74,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private int mMaximalSize = 0;
 	private static final boolean USE_PQ = true;
 	private final boolean mUseFirstbornCutoffCheck;
+	private final boolean mUseB32Optimization;
 	/**
 	 * If {@link Event} is known to be cut-off event we can move it immediately
 	 * to front because it will not create descendants. This optimization keeps
@@ -94,7 +95,8 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private int mUselessExtensionCandidates = 0;
 
 	public PossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess,
-			final EventOrder<LETTER, PLACE> order, final boolean useFirstbornCutoffCheck) {
+			final EventOrder<LETTER, PLACE> order, final boolean useFirstbornCutoffCheck,
+			final boolean useB32Optimization) {
 		mUseFirstbornCutoffCheck = useFirstbornCutoffCheck;
 		mBranchingProcess = branchingProcess;
 		if (USE_PQ) {
@@ -109,6 +111,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		mFastpathCutoffEventList = new ArrayDeque<>();
 		mOrder = order;
 		mMarkingEventMap.put(mBranchingProcess.getDummyRoot().getMark(), mBranchingProcess.getDummyRoot());
+		mUseB32Optimization = useB32Optimization;
 	}
 
 	@Override
@@ -257,11 +260,19 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 		if (LAZY_SUCCESSOR_COMPUTATION) {
 			final Set<Condition<LETTER, PLACE>> newConditions = event.getSuccessorConditions();
 			final ICoRelation<LETTER, PLACE> coRelation = mBranchingProcess.getCoRelation();
-			final Set<Condition<LETTER, PLACE>> coRelatedConditions = coRelation.computeCoRelatatedConditions(newConditions.iterator().next());
+			final Set<Condition<LETTER, PLACE>> coRelatedConditions;
 			final HashRelation<PLACE, Condition<LETTER, PLACE>> place2coRelatedConditions = new HashRelation<>();
-			for (final Condition<LETTER, PLACE> c : coRelatedConditions) {
-				if (!c.getPredecessorEvent().isCutoffEvent()) {
+			if (mUseB32Optimization) {
+				coRelatedConditions = coRelation.computeNonCutoffCoRelatatedConditions(newConditions.iterator().next());
+				for (final Condition<LETTER, PLACE> c : coRelatedConditions) {
 					place2coRelatedConditions.addPair(c.getPlace(), c);
+				}
+			} else {
+				coRelatedConditions = coRelation.computeCoRelatatedConditions(newConditions.iterator().next());
+				for (final Condition<LETTER, PLACE> c : coRelatedConditions) {
+					if (!c.getPredecessorEvent().isCutoffEvent()) {
+						place2coRelatedConditions.addPair(c.getPlace(), c);
+					}
 				}
 			}
 			final HashRelation<PLACE, PLACE> place2allowedSiblings = new HashRelation<>();

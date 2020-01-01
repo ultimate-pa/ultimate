@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public final class PetriNetUnfolder<LETTER, PLACE> {
 	private static final boolean EXTENDED_ASSERTION_CHECKING = false;
-	private static final boolean B20_OPTIMIZATION = false;
+	private static final boolean B32_OPTIMIZATION = false;
 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
@@ -122,8 +122,8 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			default:
 				throw new IllegalArgumentException();
 		}
-		mUnfolding = new BranchingProcess<>(mServices, operand, mOrder, USE_FIRSTBORN_CUTOFF_CHECK);
-		mPossibleExtensions = new PossibleExtensions<>(mUnfolding, mOrder, USE_FIRSTBORN_CUTOFF_CHECK);
+		mUnfolding = new BranchingProcess<>(mServices, operand, mOrder, USE_FIRSTBORN_CUTOFF_CHECK, B32_OPTIMIZATION);
+		mPossibleExtensions = new PossibleExtensions<>(mUnfolding, mOrder, USE_FIRSTBORN_CUTOFF_CHECK, B32_OPTIMIZATION);
 
 		computeUnfolding();
 		mLogger.info(mStatistics.prettyprintCutOffInformation());

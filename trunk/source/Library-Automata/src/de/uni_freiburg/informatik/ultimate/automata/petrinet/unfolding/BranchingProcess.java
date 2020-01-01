@@ -122,7 +122,8 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	private final boolean mUseFirstbornCutoffCheck;
 
 	public BranchingProcess(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> net,
-			final EventOrder<LETTER, PLACE> order, final boolean useCutoffChekingPossibleExtention) throws PetriNetNot1SafeException {
+			final EventOrder<LETTER, PLACE> order, final boolean useCutoffChekingPossibleExtention,
+			final boolean useB32Optimization) throws PetriNetNot1SafeException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNet = net;
@@ -130,11 +131,18 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		mPlace2Conds = new HashRelation<>();
 		mConditions = new HashSet<>();
 		mEvents = new HashSet<>();
-		mCoRelation = new ConditionEventsCoRelation<>(this);
+		if (useB32Optimization) {
+			mCoRelation = new ConditionEventsCoRelationB32<>(this);
+			// mCoRelation = new ConditionEventsCoRelationB32AsHashMap<>(this);
+		} else {
+			mCoRelation = new ConditionEventsCoRelation<>(this);
+		}
+		
 		mUseFirstbornCutoffCheck = useCutoffChekingPossibleExtention;
 
 		// add a dummy event as root. its successors are the initial conditions.
 		mDummyRoot = new Event<>(this);
+		mCoRelation.initialize(mDummyRoot.getSuccessorConditions());
 		addEvent(mDummyRoot);
 	}
 
