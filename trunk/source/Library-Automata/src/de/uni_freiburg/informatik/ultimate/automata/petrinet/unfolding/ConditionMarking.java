@@ -52,6 +52,9 @@ public class ConditionMarking<LETTER, PLACE> implements Iterable<Condition<LETTE
 
 	private final Set<Condition<LETTER, PLACE>> mConditions;
 
+	public Set<Condition<LETTER, PLACE>> getConditions(){
+		return mConditions;
+	}
 	/**
 	 * Constructor.
 	 *

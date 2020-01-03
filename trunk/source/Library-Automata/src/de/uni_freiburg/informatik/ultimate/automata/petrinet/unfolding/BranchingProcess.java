@@ -133,7 +133,6 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		mEvents = new HashSet<>();
 		if (useB32Optimization) {
 			mCoRelation = new ConditionEventsCoRelationB32<>(this);
-			// mCoRelation = new ConditionEventsCoRelationB32AsHashMap<>(this);
 		} else {
 			mCoRelation = new ConditionEventsCoRelation<>(this);
 		}
@@ -142,7 +141,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 
 		// add a dummy event as root. its successors are the initial conditions.
 		mDummyRoot = new Event<>(this);
-		mCoRelation.initialize(mDummyRoot.getSuccessorConditions());
+		//mCoRelation.initialize(mDummyRoot.getSuccessorConditions());
 		addEvent(mDummyRoot);
 	}
 
