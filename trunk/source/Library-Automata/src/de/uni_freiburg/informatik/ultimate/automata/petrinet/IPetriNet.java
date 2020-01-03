@@ -106,5 +106,30 @@ public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE>, IPe
 		}
 		return result;
 	}
+	
+	@Override
+	default Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
+			final Set<PLACE> placesOfNewConditions, final Set<PLACE> correlatedPlaces) {
+		final HashRelation<Set<PLACE>, ITransition<LETTER, PLACE>> predecessorPlaces2Transition = new HashRelation<>();
+		final Set<ITransition<LETTER, PLACE>> successorTransitions = new HashSet<>();
+		for (final PLACE p : placesOfNewConditions) {
+			for (final ITransition<LETTER, PLACE> t : getSuccessors(p)) {
+				successorTransitions.add(t);
+			}
+		}
+		for (final ITransition<LETTER, PLACE> t : successorTransitions) {
+			final Set<PLACE> predeccesorOfT = getPredecessors(t);
+			if (correlatedPlaces.containsAll(predeccesorOfT)) {
+				predecessorPlaces2Transition.addPair(getPredecessors(t), t);
+			}
+		}
+
+		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
+		for (final Set<PLACE> predecessors : predecessorPlaces2Transition.getDomain()) {
+			final Set<ITransition<LETTER, PLACE>> transitions = predecessorPlaces2Transition.getImage(predecessors);
+			result.add(new SimpleSuccessorTransitionProvider<>(transitions, this));
+		}
+		return result;
+	}
 
 }

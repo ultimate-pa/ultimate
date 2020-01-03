@@ -75,6 +75,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private static final boolean USE_PQ = true;
 	private final boolean mUseFirstbornCutoffCheck;
 	private final boolean mUseB32Optimization;
+	private final boolean mFinishedPetrinet;
 	/**
 	 * If {@link Event} is known to be cut-off event we can move it immediately
 	 * to front because it will not create descendants. This optimization keeps
@@ -99,6 +100,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			final boolean useB32Optimization) {
 		mUseFirstbornCutoffCheck = useFirstbornCutoffCheck;
 		mBranchingProcess = branchingProcess;
+		mFinishedPetrinet = mBranchingProcess.getNet() instanceof IPetriNet<?, ?> ;
 		if (USE_PQ) {
 			mPe = new PriorityQueue<>(order);
 		} else {
@@ -275,12 +277,24 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 					}
 				}
 			}
-			final HashRelation<PLACE, PLACE> place2allowedSiblings = new HashRelation<>();
-			for (final Condition<LETTER, PLACE> c : newConditions) {
-				place2allowedSiblings.addAllPairs(c.getPlace(), place2coRelatedConditions.getDomain());
-			}
-			final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> successorTransitionProviders = mBranchingProcess
-					.getNet().getSuccessorTransitionProviders(place2allowedSiblings);
+			final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> successorTransitionProviders;
+			
+            if (mFinishedPetrinet) {
+            	final Set<PLACE> placesOfNewConditions = new HashSet<>();
+    			for (final Condition<LETTER, PLACE> c : newConditions) {
+    				placesOfNewConditions.add(c.getPlace());
+    			}
+    			successorTransitionProviders = mBranchingProcess
+    					.getNet().getSuccessorTransitionProviders(placesOfNewConditions, place2coRelatedConditions.getDomain());
+            } else {
+            	final HashRelation<PLACE, PLACE> place2allowedSiblings = new HashRelation<>();
+    			for (final Condition<LETTER, PLACE> c : newConditions) {
+    				place2allowedSiblings.addAllPairs(c.getPlace(), place2coRelatedConditions.getDomain());
+    			}
+    			successorTransitionProviders = mBranchingProcess
+    					.getNet().getSuccessorTransitionProviders(place2allowedSiblings);
+            }
+			
 			final List<Candidate<LETTER, PLACE>> candidates = successorTransitionProviders.stream()
 					.map(x -> new Candidate<LETTER, PLACE>(x, newConditions, place2coRelatedConditions)).collect(Collectors.toList());
 			return candidates;

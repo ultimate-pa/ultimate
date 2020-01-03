@@ -27,7 +27,9 @@ public interface IPetriNetSuccessorProvider<LETTER, PLACE> extends IAutomaton<LE
 	 */
 	Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
 			final HashRelation<PLACE, PLACE> place2allowedSiblings);
-
+	Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
+			final Set<PLACE> placesOfNewConditions,
+			final Set<PLACE> correlatedPlaces);
 	/**
 	 * @param marking
 	 *            A marking.

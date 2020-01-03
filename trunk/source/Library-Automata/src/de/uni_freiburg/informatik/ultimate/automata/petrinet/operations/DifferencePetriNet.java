@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import petruchio.sim.petrinettool.IPetriNet;
 
 /**
  * Petri net for on-demand construction of difference.
@@ -438,6 +439,12 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		} else {
 			return mMinued.isAccepting(place);
 		}
+	}
+
+	@Override
+	public Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
+			Set<PLACE> placesOfNewConditions, Set<PLACE> correlatedPlaces) {
+		throw new IllegalArgumentException("getSuccessorTransitionProviders with the given arguments works only for " + IPetriNet.class.getName());
 	}
 
 }

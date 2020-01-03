@@ -27,10 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
-import java.util.Arrays;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -156,9 +157,9 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 	private void updateSingleMap(final HashRelation<Condition<LETTER, PLACE>, Event<LETTER, PLACE>> mapToUpdate,
 	final HashRelation<Condition<LETTER, PLACE>, Event<LETTER, PLACE>> mapContainingE,
 	final Event<LETTER,PLACE> e) {
-		final Set<Event<LETTER, PLACE>>[] coRelatedEventsToE = e.getPredecessorConditions().stream()
-				.map(x -> mapToUpdate.getImage(x)).toArray(Set[]::new);
-		final Set<Event<LETTER, PLACE>> intersection = DataStructureUtils.intersection(Arrays.asList(coRelatedEventsToE));
+		final List<Set<Event<LETTER, PLACE>>> coRelatedEventsToE = e.getPredecessorConditions().stream()
+				.map(x -> mapToUpdate.getImage(x)).collect(Collectors.toList());
+		final Set<Event<LETTER, PLACE>> intersection = DataStructureUtils.intersection(coRelatedEventsToE);
 		for (final Event<LETTER, PLACE> coRelatedEvent : intersection) {
 			for (final Condition<LETTER, PLACE> c : coRelatedEvent.getSuccessorConditions()) {
 				mapContainingE.addPair(c, e);
