@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.TreePriorityQueue;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -88,6 +87,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private final ArrayDeque<Event<LETTER, PLACE>> mFastpathCutoffEventList;
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
 	private final static boolean LAZY_SUCCESSOR_COMPUTATION = true;
+	private final static boolean USE_SuccessorTransitionProvider_Optimization = false;
 
 	/**
 	 * A candidate is useful if it lead to at least one new possible extension.
@@ -100,7 +100,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			final boolean useB32Optimization) {
 		mUseFirstbornCutoffCheck = useFirstbornCutoffCheck;
 		mBranchingProcess = branchingProcess;
-		mFinishedPetrinet = mBranchingProcess.getNet() instanceof IPetriNet<?, ?> ;
+		mFinishedPetrinet = USE_SuccessorTransitionProvider_Optimization && mBranchingProcess.getNet() instanceof IPetriNet<?, ?> ;
 		if (USE_PQ) {
 			mPe = new PriorityQueue<>(order);
 		} else {
