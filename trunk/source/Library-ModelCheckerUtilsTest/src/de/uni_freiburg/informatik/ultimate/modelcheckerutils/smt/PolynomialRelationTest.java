@@ -140,19 +140,19 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationRealPolyEQ5() throws NotAffineException {
 		final String inputSTR = "(= (* 6.0 (* y x)) (+ 3.0 (* z z)))";
-		testSolveForSubject(inputSTR, "x");
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
 	}
 
 	@Test
 	public void relationRealPolyEQ6() throws NotAffineException {
 		final String inputSTR = "(= (* z (+ 6.0 (* (* y y) x))) (+ 3.0 (* z z)))";
-		testSolveForSubject(inputSTR, "x");
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
 	}
 
 	@Test
 	public void relationRealPolyEQ7() throws NotAffineException {
 		final String inputSTR = "(= (* 3.0 x (/ y z) z 5.0) (* y z)))";
-		testSolveForSubject(inputSTR, "x");
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
 	}
 
 	@Test
@@ -174,7 +174,7 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationRealPolyWithDivisionsEQ9() throws NotAffineException {
 		final String inputSTR = "(= (/ (+ 6.0 (* (/ z y) x)) 2.0) (+ 3.0 (/ y z)))";
-		testSolveForSubject(inputSTR, "x");
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
 	}
 
 	@Test
@@ -216,7 +216,7 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationRealPolyDISTINCT02() throws NotAffineException {
 		final String inputSTR = "(not(= (* 3.0 x (/ y z) z 5.0) (* y z)))";
-		testSolveForSubject(inputSTR, "x");
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
 	}
 
 	@Test
@@ -318,13 +318,13 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationIntPolyZ3CVC4EQ6() throws NotAffineException {
 		final String inputSTR = "(= (* 3 yi xi) (* 9 yi))";
-		testSolveForSubject(inputSTR, "xi");
+		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
 	}
 
 	@Test
 	public void relationIntPolyZ3CVC4MATHSATEQ7() throws NotAffineException {
 		final String inputSTR = "(= (* 3 yi xi) (* 333 yi))";
-		testSolveForSubject(inputSTR, "xi");
+		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
 	}
 
 	public void relationIntPolyMATHSATEQ8() throws NotAffineException {
@@ -340,7 +340,7 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationIntPolyZ3MATHSATEQ10() throws NotAffineException {
 		final String inputSTR = "(= (* 3 yi xi) (* 11 yi))";
-		testSolveForSubject(inputSTR, "xi");
+		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
 	}
 
 	public void relationIntPolyCVC4MATHSATEQ11() throws NotAffineException {
