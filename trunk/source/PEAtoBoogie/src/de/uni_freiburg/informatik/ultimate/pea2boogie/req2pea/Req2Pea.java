@@ -151,4 +151,9 @@ public class Req2Pea implements IReq2Pea {
 		return mHasErrors;
 	}
 
+	@Override
+	public void transform(IReq2Pea previous) {
+		//do nothing, as this IReq2Pea should generate new Peas from reqs and do not do any transformation.
+	}
+
 }

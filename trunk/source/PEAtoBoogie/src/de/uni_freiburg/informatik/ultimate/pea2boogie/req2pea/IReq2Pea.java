@@ -42,6 +42,8 @@ public interface IReq2Pea {
 	Map<PatternType, PhaseEventAutomata> getPattern2Peas();
 
 	IReqSymbolTable getSymboltable();
+	
+	void transform(IReq2Pea req2pea);
 
 	boolean hasErrors();
 

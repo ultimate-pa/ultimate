@@ -96,6 +96,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.Req2Pea;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
+import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.Req2CauseTrackingPeaTransformer;
 
 /**
  * This class translates a phase event automaton to an equivalent Boogie code.
@@ -129,7 +130,9 @@ public class Req2BoogieTranslator {
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
 			final List<PatternType> patterns) {
-		this(services, logger, patterns, Collections.emptyList());
+		//TODO: put this into a setting!
+		//this(services, logger, patterns, Arrays.asList(new Req2CauseTrackingPeaTransformer(logger)));
+		this(services, logger, patterns, new ArrayList<IReq2PeaTransformer>());
 	}
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
