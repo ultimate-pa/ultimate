@@ -729,7 +729,6 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 					result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		}
 		return result;
-		// TODO: Debug singleCase-SolveForSubject, especially IntSort and the Inequalities
 	}
 
 	private boolean divisionByVariablesNecessary(final Term abstractVarOfSubject) {
