@@ -192,21 +192,6 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		return TrivialityStatus.EQUIVALENT_TO_FALSE;
 	}
 
-	protected static LBool isEquivalent(final Script script, final Term term1, final Term term2) {
-		Term comp = script.term("=", term1, term2);
-		comp = script.term("not", comp);
-		final LBool sat = Util.checkSat(script, comp);
-		return sat;
-	}
-
-	protected static LBool assumptionImpliesEquivalence(final Script script, final Term originalTerm,
-			final Term relationToTerm, final Map<AssumptionForSolvability, Term> additionalAssumptions) {
-		final Term konJ = SmtUtils.and(script, additionalAssumptions.values());
-		final Term impli1 = SmtUtils.implies(script, konJ, relationToTerm);
-		final Term impli2 = SmtUtils.implies(script, konJ, originalTerm);
-		return isEquivalent(script, impli1, impli2);
-	}
-
 	public RelationSymbol getRelationSymbol() {
 		return mRelationSymbol;
 	}
@@ -494,6 +479,21 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 					relationToTerm) != LBool.SAT : "transformation to AffineRelation unsound";
 		}
 		return result;
+	}
+
+	protected static LBool isEquivalent(final Script script, final Term term1, final Term term2) {
+		Term comp = script.term("=", term1, term2);
+		comp = script.term("not", comp);
+		final LBool sat = Util.checkSat(script, comp);
+		return sat;
+	}
+
+	protected static LBool assumptionImpliesEquivalence(final Script script, final Term originalTerm,
+			final Term relationToTerm, final Map<AssumptionForSolvability, Term> additionalAssumptions) {
+		final Term konJ = SmtUtils.and(script, additionalAssumptions.values());
+		final Term impli1 = SmtUtils.implies(script, konJ, relationToTerm);
+		final Term impli2 = SmtUtils.implies(script, konJ, originalTerm);
+		return isEquivalent(script, impli1, impli2);
 	}
 
 	/**
