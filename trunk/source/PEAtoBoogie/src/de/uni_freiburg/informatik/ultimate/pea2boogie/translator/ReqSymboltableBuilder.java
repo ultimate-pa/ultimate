@@ -87,6 +87,8 @@ public class ReqSymboltableBuilder {
 	private final Map<String, Expression> mConst2Value;
 	private final Map<String, Integer> mId2Bounds;
 	private final Map<PatternType, BoogieLocation> mReq2Loc;
+	private final Set<String> mInputVars;
+	private final Set<String> mOutputVars;
 
 	public ReqSymboltableBuilder(final ILogger logger) {
 		mLogger = logger;
@@ -105,6 +107,9 @@ public class ReqSymboltableBuilder {
 		mReq2Loc = new LinkedHashMap<>();
 		mConst2Value = new LinkedHashMap<>();
 		mId2Bounds = new LinkedHashMap<>();
+		
+		mInputVars = new LinkedHashSet<>();
+		mOutputVars = new LinkedHashSet<>();
 
 	}
 
@@ -116,14 +121,26 @@ public class ReqSymboltableBuilder {
 			return;
 		}
 
-		if (initPattern.getCategory() != VariableCategory.CONST) {
-			addVar(name, type, initPattern, mStateVars);
-		} else {
+		
+		switch (initPattern.getCategory()) {
+		case CONST:
 			addVar(name, type, initPattern, mConstVars);
 			mConst2Value.put(name, initPattern.getExpression());
 			if (type == BoogieType.TYPE_INT || type == BoogieType.TYPE_REAL) {
 				addId2Bounds(initPattern);
 			}
+			break;
+		case IN: 
+			mInputVars.add(name);
+			addVar(name, type, initPattern, mStateVars);
+			break;
+		case OUT:
+			mOutputVars.add(name);
+			addVar(name, type, initPattern, mStateVars);
+			break;
+		case HIDDEN:
+			addVar(name, type, initPattern, mStateVars);
+			break;
 		}
 	}
 
@@ -159,7 +176,7 @@ public class ReqSymboltableBuilder {
 	public IReqSymbolTable constructSymbolTable() {
 		final String deltaVar = declareDeltaVar();
 		return new ReqSymbolTable(deltaVar, mId2Type, mId2IdExpr, mId2VarLHS, mStateVars, mPrimedVars, mConstVars,
-				mEventVars, mPcVars, mClockVars, mReq2Loc, mConst2Value);
+				mEventVars, mPcVars, mClockVars, mReq2Loc, mConst2Value, mInputVars, mOutputVars);
 	}
 
 	public Set<String> getConstIds() {
@@ -309,12 +326,15 @@ public class ReqSymboltableBuilder {
 		private final Set<String> mPcVars;
 		private final Set<String> mClockVars;
 		private final String mDeltaVar;
+		private final Set<String> mInputVars;
+		private final Set<String> mOutputVars;
 
 		private ReqSymbolTable(final String deltaVar, final Map<String, BoogieType> id2Type,
 				final Map<String, IdentifierExpression> id2idExp, final Map<String, VariableLHS> id2VarLhs,
 				final Set<String> stateVars, final Set<String> primedVars, final Set<String> constVars,
 				final Set<String> eventVars, final Set<String> pcVars, final Set<String> clockVars,
-				final Map<PatternType, BoogieLocation> req2loc, final Map<String, Expression> const2Value) {
+				final Map<PatternType, BoogieLocation> req2loc, final Map<String, Expression> const2Value,
+				final Set<String> inputVars, final Set<String> outputVars) {
 			mId2Type = Collections.unmodifiableMap(id2Type);
 			mId2IdExpr = Collections.unmodifiableMap(id2idExp);
 			mId2VarLHS = Collections.unmodifiableMap(id2VarLhs);
@@ -327,6 +347,8 @@ public class ReqSymboltableBuilder {
 			mClockVars = Collections.unmodifiableSet(clockVars);
 			mReq2Loc = Collections.unmodifiableMap(req2loc);
 			mConst2Value = Collections.unmodifiableMap(const2Value);
+			mInputVars = Collections.unmodifiableSet(inputVars);
+			mOutputVars = Collections.unmodifiableSet(outputVars);
 			mDeltaVar = deltaVar;
 		}
 
@@ -383,6 +405,16 @@ public class ReqSymboltableBuilder {
 		@Override
 		public Set<String> getConstVars() {
 			return mConstVars;
+		}
+		
+		@Override
+		public Set<String> getInputVars() {
+			return mInputVars;
+		}
+
+		@Override
+		public Set<String> getOutputVars() {
+			return mOutputVars;
 		}
 
 		@Override

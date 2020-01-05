@@ -23,6 +23,10 @@ public interface IReqSymbolTable {
 	public Set<String> getPrimedVars();
 
 	public Set<String> getEventVars();
+	
+	public Set<String> getInputVars();
+
+	public Set<String> getOutputVars();
 
 	public String getDeltaVarName();
 
