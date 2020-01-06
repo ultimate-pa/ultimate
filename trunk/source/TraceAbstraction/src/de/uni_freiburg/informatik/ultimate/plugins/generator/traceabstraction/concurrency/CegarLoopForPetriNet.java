@@ -105,7 +105,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	 * Write result of RemoveUnreachable to file if runtime of this operation in
 	 * seconds is greater than this number.
 	 */
-	private static final int DEBUG_DUMP_REMOVEUNREACHABLERESULT_THRESHOLD = 24 * 60 * 60;
+	private static final int DEBUG_DUMP_REMOVEUNREACHABLEINPUT_THRESHOLD = 24 * 60 * 60;
 
 	/**
 	 * Write result of RemoveUnreachable to file if runtime of this operation in
@@ -291,9 +291,10 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			final long start = System.nanoTime();
 			long statesRemovedByMinimization = 0;
 			boolean nontrivialMinimizaton = false;
+			final BoundedPetriNet<LETTER, IPredicate> removeUnreachableResult;
 			try {
 				final int placesBefore = (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces()).size();
-				mAbstraction = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable<>(
+				removeUnreachableResult = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable<>(
 						new AutomataLibraryServices(mServices), (BoundedPetriNet<LETTER, IPredicate>) mAbstraction)
 								.getResult();
 				final int placesAfterwards = (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces()).size();
@@ -306,12 +307,14 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 				mCegarLoopBenchmark.addAutomataMinimizationData(amsg);
 			}
 			if (mPref.dumpAutomata()
-					|| automataMinimizationTime > DEBUG_DUMP_REMOVEUNREACHABLERESULT_THRESHOLD * 1_000_000_000L) {
+					|| automataMinimizationTime > DEBUG_DUMP_REMOVEUNREACHABLEINPUT_THRESHOLD * 1_000_000_000L) {
 				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-						+ "_AbstractionAfterRemoveUnreachable";
+						+ "_AbstractionBeforeRemoveUnreachable";
 				super.writeAutomatonToFile(mAbstraction, filename);
 			}
+			mAbstraction = removeUnreachableResult;
 		}
+
 
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 		// if (mBiggestAbstractionSize < mAbstraction.size()){
