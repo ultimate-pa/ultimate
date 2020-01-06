@@ -36,10 +36,10 @@ public class PEAtoBoogieObserver extends BaseObserver {
 			return false;
 		}
 
-		mReporter = new PeaResultUtil(mLogger, mServices);
+		//mReporter = new PeaResultUtil(mLogger, mServices);
 		// register CEX transformer that removes program executions from CEX.
-		final Function<IResult, IResult> resultTransformer = mReporter::convertTraceAbstractionResult;
-		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
+		//final Function<IResult, IResult> resultTransformer = mReporter::convertTraceAbstractionResult;
+		//mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
 
 		mBoogieAST = generateBoogie(rawPatterns);
 

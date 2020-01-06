@@ -91,8 +91,10 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyC
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2Pea;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaAnnotator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.Req2Pea;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqCheckAnnotator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
@@ -106,33 +108,23 @@ import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.Req2CauseTrackingP
  */
 public class Req2BoogieTranslator {
 
-	private static final boolean DEBUG_ONLY_FIRST_NON_TRIVIAL_RT_INCONSISTENCY = false;
-
 	private final Unit mUnit;
 	private final Map<PatternType, PhaseEventAutomata> mReq2Automata;
 	private final BoogieLocation mUnitLocation;
-
-	private final boolean mCheckVacuity;
-	private final int mCombinationNum;
-	private final boolean mCheckConsistency;
-	private final boolean mReportTrivialConsistency;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 
-	private final PeaResultUtil mPeaResultUtil;
-
 	private final IReqSymbolTable mSymboltable;
-	private final RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
-	private final boolean mSeparateInvariantHandling;
+	private IReq2PeaAnnotator mReqCheckAnnotator;
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
 			final List<PatternType> patterns) {
 		//TODO: put this into a setting!
-		//this(services, logger, patterns, Arrays.asList(new Req2CauseTrackingPeaTransformer(logger)));
-		this(services, logger, patterns, new ArrayList<IReq2PeaTransformer>());
+		this(services, logger, patterns, Arrays.asList(new Req2CauseTrackingPeaTransformer(services, logger)));
+		//this(services, logger, patterns, new ArrayList<IReq2PeaTransformer>());
 	}
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
@@ -140,29 +132,6 @@ public class Req2BoogieTranslator {
 		mLogger = logger;
 		mServices = services;
 
-		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-
-		// set preferences
-		mCheckVacuity = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_VACUITY);
-
-		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY)) {
-			final int length = patterns.size();
-			mCombinationNum = Math.min(length, prefs.getInt(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE));
-		} else {
-			mCombinationNum = -1;
-		}
-		mCheckConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
-		mReportTrivialConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY);
-		mSeparateInvariantHandling = prefs.getBoolean(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS);
-
-		// log preferences
-		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,
-				mCheckVacuity, Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE, mCombinationNum,
-				Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY, mCheckConsistency,
-				Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, mReportTrivialConsistency,
-				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling));
-
-		mPeaResultUtil = new PeaResultUtil(mLogger, mServices);
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
 		final List<InitializationPattern> init = patterns.stream().filter(a -> a instanceof InitializationPattern)
@@ -173,15 +142,16 @@ public class Req2BoogieTranslator {
 		final IReq2Pea req2pea = createReq2Pea(req2peaTransformers, init, requirements);
 		if (req2pea.hasErrors()) {
 			mUnitLocation = null;
-			mRtInconcistencyConditionGenerator = null;
 			mUnit = null;
 			mReq2Automata = null;
 			mSymboltable = null;
 			return;
 		}
 
+		
 		mReq2Automata = req2pea.getPattern2Peas();
 		mSymboltable = req2pea.getSymboltable();
+		mReqCheckAnnotator = req2pea.getAnnotator();
 
 		// TODO: Add locations to pattern type to generate meaningful boogie locations
 		mUnitLocation = new BoogieLocation("", -1, -1, -1, -1);
@@ -189,22 +159,6 @@ public class Req2BoogieTranslator {
 		final List<Declaration> decls = new ArrayList<>();
 		decls.addAll(mSymboltable.getDeclarations());
 
-		RtInconcistencyConditionGenerator rticGenerator;
-		try {
-			if (mCombinationNum > 1) {
-				final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, logger);
-				rticGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, mPeaResultUtil, mSymboltable,
-						mReq2Automata, boogieDeclarations, mSeparateInvariantHandling);
-			} else {
-				rticGenerator = null;
-			}
-		} catch (final InvariantInfeasibleException e) {
-			mPeaResultUtil.infeasibleInvariant(e);
-			mRtInconcistencyConditionGenerator = null;
-			mUnit = null;
-			return;
-		}
-		mRtInconcistencyConditionGenerator = rticGenerator;
 		decls.add(generateProcedures(init));
 		mUnit = new Unit(mUnitLocation, decls.toArray(new Declaration[decls.size()]));
 		annotateContainedPatternSet(mUnit, mReq2Automata, init);
@@ -220,6 +174,7 @@ public class Req2BoogieTranslator {
 			}
 			req2pea = transformer.transform(req2pea, init, requirements);
 		}
+		
 		return req2pea;
 	}
 
@@ -232,27 +187,6 @@ public class Req2BoogieTranslator {
 
 	public Unit getUnit() {
 		return mUnit;
-	}
-
-	/**
-	 * Generate the disjunction of a list of expressions.
-	 *
-	 * @param exprs
-	 *            list of expressions.
-	 * @param bl
-	 *            Boogie location.
-	 * @return the CNF of a list of expressions.
-	 */
-	private Expression genDisjunction(final List<Expression> exprs, final BoogieLocation bl) {
-		final Iterator<Expression> it = exprs.iterator();
-		if (!it.hasNext()) {
-			return ExpressionFactory.createBooleanLiteral(bl, false);
-		}
-		Expression cnf = it.next();
-		while (it.hasNext()) {
-			cnf = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, cnf, it.next());
-		}
-		return mNormalFormTransformer.toNnf(cnf);
 	}
 
 	/**
@@ -535,121 +469,12 @@ public class Req2BoogieTranslator {
 		return genAssignmentStmt(rhs.getLocation(), lhsVar, rhs);
 	}
 
-	@SafeVarargs
-	private static ReqCheck createReqCheck(final Check.Spec reqSpec,
-			final Entry<PatternType, PhaseEventAutomata>... subset) {
-		final PatternType[] reqs = new PatternType[subset.length];
-		for (int i = 0; i < subset.length; ++i) {
-			reqs[i] = subset[i].getKey();
-		}
-		return createReqCheck(reqSpec, reqs);
-	}
-
-	private static ReqCheck createReqCheck(final Check.Spec reqSpec, final PatternType... req) {
-		if (req == null || req.length == 0) {
-			throw new IllegalArgumentException("req cannot be null or empty");
-		}
-		return new ReqCheck(reqSpec, req);
-	}
-
-	private List<Statement> genCheckConsistency(final BoogieLocation bl) {
-		if (!mCheckConsistency) {
-			return Collections.emptyList();
-		}
-		final ReqCheck check = new ReqCheck(Spec.CONSISTENCY);
-		final Expression expr = ExpressionFactory.createBooleanLiteral(bl, false);
-		return Collections.singletonList(createAssert(expr, check, "CONSISTENCY"));
-	}
-
-	private Statement genAssertRTInconsistency(final Entry<PatternType, PhaseEventAutomata>[] subset) {
-		final Set<PhaseEventAutomata> automataSet =
-				Arrays.stream(subset).map(a -> a.getValue()).collect(Collectors.toSet());
-		assert automataSet.size() == subset.length;
-		final PhaseEventAutomata[] automata = automataSet.toArray(new PhaseEventAutomata[subset.length]);
-
-		final Expression expr = mRtInconcistencyConditionGenerator.nonDLCGenerator(automata);
-		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT, subset);
-
-		if (expr == null) {
-			if (mReportTrivialConsistency) {
-				final ILocation loc =
-						mSymboltable.getIdentifierExpression(mSymboltable.getPcName(subset[0].getValue())).getLoc();
-				final AssertStatement fakeElem = createAssert(ExpressionFactory.createBooleanLiteral(loc, true), check,
-						"RTINCONSISTENT_" + getAssertLabel(subset));
-				mPeaResultUtil.intrinsicRtConsistencySuccess(fakeElem);
-			}
-			return null;
-		}
-
-		return createAssert(expr, check, "RTINCONSISTENT_" + getAssertLabel(subset));
-	}
-
-	private static String getAssertLabel(final Entry<PatternType, PhaseEventAutomata>[] subset) {
+	public static String getAssertLabel(final Entry<PatternType, PhaseEventAutomata>[] subset) {
 		final StringBuilder sb = new StringBuilder();
 		for (final Entry<PatternType, PhaseEventAutomata> entry : subset) {
 			sb.append(entry.getValue().getName() + "_");
 		}
 		return sb.toString();
-	}
-
-	/**
-	 * Generate the assertion that is violated if the requirement represented by the given automaton is non-vacuous. The
-	 * assertion expresses that the automaton always stays in the early phases and never reaches the last phase. It may
-	 * be false if all phases of the automaton are part of the last phase, in which case this function returns null.
-	 *
-	 * @param req
-	 *            The requirement for which vacuity is checked.
-	 * @param aut
-	 *            The automaton for which vacuity is checked.
-	 * @param bl
-	 *            A boogie location used for all statements.
-	 * @return The assertion for non-vacousness or null if the assertion would be false.
-	 */
-	private Statement genAssertNonVacuous(final PatternType req, final PhaseEventAutomata aut,
-			final BoogieLocation bl) {
-		final Phase[] phases = aut.getPhases();
-
-		// compute the maximal phase number occurring in the automaton.
-		int maxBits = 0;
-		for (final Phase phase : phases) {
-			final PhaseBits bits = phase.getPhaseBits();
-			// ignore start node when computing max phase
-			if (bits != null) {
-				final int act = bits.getActive();
-				if (act > maxBits) {
-					maxBits = act;
-				}
-			}
-		}
-		int pnr = 0;
-		while (1 << pnr <= maxBits) {
-			pnr++;
-		}
-
-		// check that one of those phases is eventually reached.
-		final List<Expression> checkReached = new ArrayList<>();
-		for (int i = 0; i < phases.length; i++) {
-			final PhaseBits bits = phases[i].getPhaseBits();
-			if (bits == null || (bits.getActive() & 1 << pnr - 1) == 0) {
-				checkReached.add(genComparePhaseCounter(i, mSymboltable.getPcName(aut), bl));
-			}
-		}
-		if (checkReached.isEmpty()) {
-			return null;
-		}
-		final Expression disjunction = genDisjunction(checkReached, bl);
-		final ReqCheck check = createReqCheck(Spec.VACUOUS, req);
-		final String label = "VACUOUS_" + aut.getName();
-		return createAssert(disjunction, check, label);
-	}
-
-	private static AssertStatement createAssert(final Expression expr, final ReqCheck check, final String label) {
-		final CheckedReqLocation loc = new CheckedReqLocation(check);
-		final NamedAttribute[] attr =
-				new NamedAttribute[] { new NamedAttribute(loc, "check_" + label, new Expression[] {}) };
-		final AssertStatement rtr = new AssertStatement(loc, attr, expr);
-		check.annotate(rtr);
-		return rtr;
 	}
 
 	/**
@@ -675,9 +500,7 @@ public class Req2BoogieTranslator {
 					genInvariantGuards(entry.getKey(), entry.getValue(), mSymboltable.getPcName(entry.getValue()), bl));
 		}
 
-		stmtList.addAll(genChecksRTInconsistency(bl));
-		stmtList.addAll(genChecksNonVacuity(bl));
-		stmtList.addAll(genCheckConsistency(bl));
+		stmtList.addAll(mReqCheckAnnotator.getStateChecks());
 
 		for (final Entry<PatternType, PhaseEventAutomata> entry : mReq2Automata.entrySet()) {
 			stmtList.add(genOuterIfTransition(entry.getValue(), mSymboltable.getPcName(entry.getValue()), bl));
@@ -686,86 +509,6 @@ public class Req2BoogieTranslator {
 		stmtList.addAll(genStateVarsAssign());
 
 		return stmtList.toArray(new Statement[stmtList.size()]);
-	}
-
-	private List<Statement> genChecksNonVacuity(final BoogieLocation bl) {
-		if (!mCheckVacuity) {
-			return Collections.emptyList();
-		}
-
-		final List<Statement> stmtList = new ArrayList<>();
-		for (final Entry<PatternType, PhaseEventAutomata> entry : mReq2Automata.entrySet()) {
-			final Statement assertStmt = genAssertNonVacuous(entry.getKey(), entry.getValue(), bl);
-			if (assertStmt != null) {
-				stmtList.add(assertStmt);
-			}
-
-		}
-		return stmtList;
-	}
-
-	private List<Statement> genChecksRTInconsistency(final BoogieLocation bl) {
-		if (mRtInconcistencyConditionGenerator == null) {
-			return Collections.emptyList();
-		}
-
-		// get all automata for which conditions should be generated
-
-		final List<Entry<PatternType, PhaseEventAutomata>> consideredAutomata =
-				mRtInconcistencyConditionGenerator.getRelevantRequirements(mReq2Automata);
-
-		final int count = consideredAutomata.size();
-
-		if (mSeparateInvariantHandling) {
-			final int total = mReq2Automata.size();
-			final int invariant = total - count;
-			mLogger.info(String.format("%s of %s requirements are invariant", invariant, total));
-		}
-
-		final int actualCombinationNum = mCombinationNum <= count ? mCombinationNum : count;
-		if (actualCombinationNum < 2) {
-			mLogger.info("No rt-inconsistencies possible");
-			return Collections.emptyList();
-		}
-
-		if (mPeaResultUtil.isAlreadyAborted()) {
-			throw new ToolchainCanceledException(new RunningTaskInfo(getClass(), "Already encountered errors"));
-		}
-
-		final List<Statement> stmtList = new ArrayList<>();
-		@SuppressWarnings("unchecked")
-		final List<Entry<PatternType, PhaseEventAutomata>[]> subsets = CrossProducts.subArrays(
-				consideredAutomata.toArray(new Entry[count]), actualCombinationNum, new Entry[actualCombinationNum]);
-		int subsetsSize = subsets.size();
-		if (subsetsSize > 10000) {
-			mLogger.warn("Computing rt-inconsistency assertions for " + subsetsSize
-					+ " subsets, this might take a while...");
-		} else {
-			mLogger.info("Computing rt-inconsistency assertions for " + subsetsSize + " subsets");
-		}
-
-		for (final Entry<PatternType, PhaseEventAutomata>[] subset : subsets) {
-			if (subsetsSize % 100 == 0 && !mServices.getProgressMonitorService().continueProcessing()) {
-				throw new ToolchainCanceledException(getClass(),
-						"Computing rt-inconsistency assertions, still " + subsetsSize + " left");
-			}
-			if (subsetsSize % 1000 == 0) {
-				mLogger.info(subsetsSize + " subsets remaining");
-				mRtInconcistencyConditionGenerator.logStats();
-			}
-			final Statement assertStmt = genAssertRTInconsistency(subset);
-			if (assertStmt != null) {
-				stmtList.add(assertStmt);
-				if (DEBUG_ONLY_FIRST_NON_TRIVIAL_RT_INCONSISTENCY) {
-					mLogger.warn(
-							"Considering only the first non-trivial rt-inconsistency assertion and skipping all others");
-					break;
-				}
-			}
-			subsetsSize--;
-		}
-		mRtInconcistencyConditionGenerator.logStats();
-		return stmtList;
 	}
 
 	/**

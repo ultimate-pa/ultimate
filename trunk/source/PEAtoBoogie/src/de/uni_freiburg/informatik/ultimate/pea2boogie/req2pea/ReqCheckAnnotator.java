@@ -1,0 +1,355 @@
+package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CheckedReqLocation;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
+import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
+
+public class ReqCheckAnnotator implements IReq2PeaAnnotator {
+	
+	private static final boolean DEBUG_ONLY_FIRST_NON_TRIVIAL_RT_INCONSISTENCY = false;
+	
+	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
+	private final PeaResultUtil mPeaResultUtil;
+	private final BoogieLocation mUnitLocation;
+	
+	private boolean mCheckVacuity;
+	private int mCombinationNum;
+	private boolean mCheckConsistency;
+	private boolean mReportTrivialConsistency;
+	
+	private boolean mSeparateInvariantHandling;
+	private RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
+	private final NormalFormTransformer<Expression> mNormalFormTransformer;
+	private final IReqSymbolTable mSymbolTable;
+	private Map<PatternType, PhaseEventAutomata> mReq2Automata;
+	
+	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger,
+			final Map<PatternType, PhaseEventAutomata> req2Automata, IReqSymbolTable symbolTable) {
+		mLogger = logger;
+		mServices = services;	
+		mSymbolTable = symbolTable;
+		mReq2Automata = req2Automata;
+		mPeaResultUtil = new PeaResultUtil(mLogger, mServices);
+		// TODO: Add locations to pattern type to generate meaningful boogie locations
+		mUnitLocation = new BoogieLocation("", -1, -1, -1, -1);
+		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
+	}
+
+	public List<Statement> getStateChecks() {
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+
+		// set preferences
+		mCheckVacuity = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_VACUITY);
+
+		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY)) {
+			final int length = mReq2Automata.size();
+			mCombinationNum = Math.min(length, prefs.getInt(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE));
+		} else {
+			mCombinationNum = -1;
+		}
+		mCheckConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
+		mReportTrivialConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY);
+		mSeparateInvariantHandling = prefs.getBoolean(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS);
+
+		// log preferences
+		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,
+				mCheckVacuity, Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE, mCombinationNum,
+				Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY, mCheckConsistency,
+				Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, mReportTrivialConsistency,
+				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling));
+		
+		final List<Declaration> decls = new ArrayList<>();
+		decls.addAll(mSymbolTable.getDeclarations());
+		
+		RtInconcistencyConditionGenerator rticGenerator;
+		try {
+			if (mCombinationNum > 1) {
+				final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, mLogger);
+				rticGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, mPeaResultUtil, mSymbolTable,
+						mReq2Automata, boogieDeclarations, mSeparateInvariantHandling);
+			} else {
+				rticGenerator = null;
+			}
+		} catch (final InvariantInfeasibleException e) {
+			mPeaResultUtil.infeasibleInvariant(e);
+			mRtInconcistencyConditionGenerator = null;
+			return new ArrayList<Statement>();
+		}
+		mRtInconcistencyConditionGenerator = rticGenerator;		
+		return generateAnnotations();		
+	}
+	
+	
+	private List<Statement> generateAnnotations() {
+		List<Statement> annotations = new ArrayList<>();
+		if (mCheckConsistency) {
+			annotations.addAll(genCheckConsistency(mUnitLocation));
+		}
+		if (mCheckVacuity) {
+			annotations.addAll(genChecksNonVacuity(mUnitLocation));
+		}
+		annotations.addAll(genChecksRTInconsistency(mUnitLocation));
+		return annotations;
+	}
+	
+	private List<Statement> genCheckConsistency(final BoogieLocation bl) {
+		final ReqCheck check = new ReqCheck(Spec.CONSISTENCY);
+		final Expression expr = ExpressionFactory.createBooleanLiteral(bl, false);
+		return Collections.singletonList(createAssert(expr, check, "CONSISTENCY"));
+	}	
+	
+	private List<Statement> genChecksRTInconsistency(final BoogieLocation bl) {
+		if (mRtInconcistencyConditionGenerator == null) {
+			return Collections.emptyList();
+		}
+
+		// get all automata for which conditions should be generated
+
+		final List<Entry<PatternType, PhaseEventAutomata>> consideredAutomata =
+				mRtInconcistencyConditionGenerator.getRelevantRequirements(mReq2Automata);
+
+		final int count = consideredAutomata.size();
+
+		if (mSeparateInvariantHandling) {
+			final int total = mReq2Automata.size();
+			final int invariant = total - count;
+			mLogger.info(String.format("%s of %s requirements are invariant", invariant, total));
+		}
+
+		final int actualCombinationNum = mCombinationNum <= count ? mCombinationNum : count;
+		if (actualCombinationNum < 2) {
+			mLogger.info("No rt-inconsistencies possible");
+			return Collections.emptyList();
+		}
+
+		if (mPeaResultUtil.isAlreadyAborted()) {
+			throw new ToolchainCanceledException(new RunningTaskInfo(getClass(), "Already encountered errors"));
+		}
+
+		final List<Statement> stmtList = new ArrayList<>();
+		@SuppressWarnings("unchecked")
+		final List<Entry<PatternType, PhaseEventAutomata>[]> subsets = CrossProducts.subArrays(
+				consideredAutomata.toArray(new Entry[count]), actualCombinationNum, new Entry[actualCombinationNum]);
+		int subsetsSize = subsets.size();
+		if (subsetsSize > 10000) {
+			mLogger.warn("Computing rt-inconsistency assertions for " + subsetsSize
+					+ " subsets, this might take a while...");
+		} else {
+			mLogger.info("Computing rt-inconsistency assertions for " + subsetsSize + " subsets");
+		}
+
+		for (final Entry<PatternType, PhaseEventAutomata>[] subset : subsets) {
+			if (subsetsSize % 100 == 0 && !mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(getClass(),
+						"Computing rt-inconsistency assertions, still " + subsetsSize + " left");
+			}
+			if (subsetsSize % 1000 == 0) {
+				mLogger.info(subsetsSize + " subsets remaining");
+				mRtInconcistencyConditionGenerator.logStats();
+			}
+			final Statement assertStmt = genAssertRTInconsistency(subset);
+			if (assertStmt != null) {
+				stmtList.add(assertStmt);
+				if (DEBUG_ONLY_FIRST_NON_TRIVIAL_RT_INCONSISTENCY) {
+					mLogger.warn(
+							"Considering only the first non-trivial rt-inconsistency assertion and skipping all others");
+					break;
+				}
+			}
+			subsetsSize--;
+		}
+		mRtInconcistencyConditionGenerator.logStats();
+		return stmtList;
+	}
+
+	
+	private Statement genAssertRTInconsistency(final Entry<PatternType, PhaseEventAutomata>[] subset) {
+		final Set<PhaseEventAutomata> automataSet =
+				Arrays.stream(subset).map(a -> a.getValue()).collect(Collectors.toSet());
+		assert automataSet.size() == subset.length;
+		final PhaseEventAutomata[] automata = automataSet.toArray(new PhaseEventAutomata[subset.length]);
+
+		final Expression expr = mRtInconcistencyConditionGenerator.nonDLCGenerator(automata);
+		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT, subset);
+
+		if (expr == null) {
+			if (mReportTrivialConsistency) {
+				final ILocation loc =
+						mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(subset[0].getValue())).getLoc();
+				final AssertStatement fakeElem = createAssert(ExpressionFactory.createBooleanLiteral(loc, true), check,
+						"RTINCONSISTENT_" + Req2BoogieTranslator.getAssertLabel(subset));
+				mPeaResultUtil.intrinsicRtConsistencySuccess(fakeElem);
+			}
+			return null;
+		}
+
+		return createAssert(expr, check, "RTINCONSISTENT_" + Req2BoogieTranslator.getAssertLabel(subset));
+	}
+	
+	/**
+	 * Generate the assertion that is violated if the requirement represented by the given automaton is non-vacuous. The
+	 * assertion expresses that the automaton always stays in the early phases and never reaches the last phase. It may
+	 * be false if all phases of the automaton are part of the last phase, in which case this function returns null.
+	 *
+	 * @param req
+	 *            The requirement for which vacuity is checked.
+	 * @param aut
+	 *            The automaton for which vacuity is checked.
+	 * @param bl
+	 *            A boogie location used for all statements.
+	 * @return The assertion for non-vacousness or null if the assertion would be false.
+	 */
+	private static AssertStatement createAssert(final Expression expr, final ReqCheck check, final String label) {
+		final CheckedReqLocation loc = new CheckedReqLocation(check);
+		final NamedAttribute[] attr =
+				new NamedAttribute[] { new NamedAttribute(loc, "check_" + label, new Expression[] {}) };
+		final AssertStatement rtr = new AssertStatement(loc, attr, expr);
+		check.annotate(rtr);
+		return rtr;
+	}
+	
+	public PeaResultUtil getPeaResultUtil() {
+		return mPeaResultUtil;
+	}
+	
+	private List<Statement> genChecksNonVacuity(final BoogieLocation bl) {
+		if (!mCheckVacuity) {
+			return Collections.emptyList();
+		}
+
+		final List<Statement> stmtList = new ArrayList<>();
+		for (final Entry<PatternType, PhaseEventAutomata> entry : mReq2Automata.entrySet()) {
+			final Statement assertStmt = genAssertNonVacuous(entry.getKey(), entry.getValue(), bl);
+			if (assertStmt != null) {
+				stmtList.add(assertStmt);
+			}
+
+		}
+		return stmtList;
+	}
+	
+	private Statement genAssertNonVacuous(final PatternType req, final PhaseEventAutomata aut,
+			final BoogieLocation bl) {
+		final Phase[] phases = aut.getPhases();
+
+		// compute the maximal phase number occurring in the automaton.
+		int maxBits = 0;
+		for (final Phase phase : phases) {
+			final PhaseBits bits = phase.getPhaseBits();
+			// ignore start node when computing max phase
+			if (bits != null) {
+				final int act = bits.getActive();
+				if (act > maxBits) {
+					maxBits = act;
+				}
+			}
+		}
+		int pnr = 0;
+		while (1 << pnr <= maxBits) {
+			pnr++;
+		}
+
+		// check that one of those phases is eventually reached.
+		final List<Expression> checkReached = new ArrayList<>();
+		for (int i = 0; i < phases.length; i++) {
+			final PhaseBits bits = phases[i].getPhaseBits();
+			if (bits == null || (bits.getActive() & 1 << pnr - 1) == 0) {
+				checkReached.add(genComparePhaseCounter(i, mSymbolTable.getPcName(aut), bl));
+			}
+		}
+		if (checkReached.isEmpty()) {
+			return null;
+		}
+		final Expression disjunction = genDisjunction(checkReached, bl);
+		final ReqCheck check = createReqCheck(Spec.VACUOUS, req);
+		final String label = "VACUOUS_" + aut.getName();
+		return createAssert(disjunction, check, label);
+	}
+	
+	@SafeVarargs
+	private static ReqCheck createReqCheck(final Check.Spec reqSpec,
+			final Entry<PatternType, PhaseEventAutomata>... subset) {
+		final PatternType[] reqs = new PatternType[subset.length];
+		for (int i = 0; i < subset.length; ++i) {
+			reqs[i] = subset[i].getKey();
+		}
+		return createReqCheck(reqSpec, reqs);
+	}
+	
+	private static ReqCheck createReqCheck(final Check.Spec reqSpec, final PatternType... req) {
+		if (req == null || req.length == 0) {
+			throw new IllegalArgumentException("req cannot be null or empty");
+		}
+		return new ReqCheck(reqSpec, req);
+	}
+	
+	/**
+	 * Generate the disjunction of a list of expressions.
+	 *
+	 * @param exprs
+	 *            list of expressions.
+	 * @param bl
+	 *            Boogie location.
+	 * @return the CNF of a list of expressions.
+	 */
+	private Expression genDisjunction(final List<Expression> exprs, final BoogieLocation bl) {
+		final Iterator<Expression> it = exprs.iterator();
+		if (!it.hasNext()) {
+			return ExpressionFactory.createBooleanLiteral(bl, false);
+		}
+		Expression cnf = it.next();
+		while (it.hasNext()) {
+			cnf = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, cnf, it.next());
+		}
+		return mNormalFormTransformer.toNnf(cnf);
+	}
+	
+	private Expression genComparePhaseCounter(final int phaseIndex, final String pcName, final BoogieLocation bl) {
+		final IdentifierExpression identifier = mSymbolTable.getIdentifierExpression(pcName);
+		final IntegerLiteral intLiteral = ExpressionFactory.createIntegerLiteral(bl, Integer.toString(phaseIndex));
+		return ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.COMPEQ, identifier, intLiteral);
+	}
+}

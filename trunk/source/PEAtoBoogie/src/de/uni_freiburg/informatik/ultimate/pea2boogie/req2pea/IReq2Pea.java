@@ -46,5 +46,6 @@ public interface IReq2Pea {
 	void transform(IReq2Pea req2pea);
 
 	boolean hasErrors();
-
+	
+	IReq2PeaAnnotator getAnnotator();
 }

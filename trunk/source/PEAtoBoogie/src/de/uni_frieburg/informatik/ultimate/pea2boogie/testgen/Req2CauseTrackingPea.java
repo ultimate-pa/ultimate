@@ -2,6 +2,8 @@ package de.uni_frieburg.informatik.ultimate.pea2boogie.testgen;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
@@ -17,22 +20,31 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2Pea;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaAnnotator;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqCheckAnnotator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
 
 public class Req2CauseTrackingPea implements IReq2Pea {
 	
 	private final ILogger mLogger;
 	private final List<InitializationPattern> mInitPattern;
-	private final List<PatternType> mPatternType;
 	private final Map<PatternType, PhaseEventAutomata> mPattern2Peas;
 	private IReqSymbolTable mSymbolTable;
 	private boolean mHasErrors;
+	private final IUltimateServiceProvider mServices;
+	private Map<PhaseEventAutomata, Integer> mPea2EffectPhase;
+	private Map<PhaseEventAutomata, Integer> mOutputEffectPhase;
+	private Map<PhaseEventAutomata, Set<String>> mPea2EffectVars;
 	
-	public Req2CauseTrackingPea(final ILogger logger, List<InitializationPattern> init, List<PatternType> requirements) {
+	public Req2CauseTrackingPea(final IUltimateServiceProvider services, final ILogger logger,
+			List<InitializationPattern> init) {
+		mServices = services;
 		mLogger = logger;
 		mInitPattern = init;
-		mPatternType = requirements;
 		mPattern2Peas = new LinkedHashMap<>();
+		mPea2EffectPhase = new HashMap<>();
+		mOutputEffectPhase = new HashMap<>();
+		mPea2EffectVars = new HashMap<>();
 	}
 
 	@Override
@@ -52,20 +64,31 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		mSymbolTable = builder.constructSymbolTable();
 	}
 	
-	private PhaseEventAutomata transformPea(PatternType pattern, PhaseEventAutomata pea, IReqSymbolTable reqSymbolTable) {
+	private PhaseEventAutomata transformPea(PatternType pattern, PhaseEventAutomata oldPea, IReqSymbolTable reqSymbolTable) {
+		
 		final Req2CauseTrackingCDD cddTransformer = new Req2CauseTrackingCDD(mLogger);
-		final String name = pea.getName();
-		setFlags(pea.getInit());
-		final Phase[] phases = transformPhases(pattern, pea.getPhases(), cddTransformer, reqSymbolTable);
+		final String name = oldPea.getName();
+		setFlags(oldPea.getInit());
+		final Phase[] phases = transformPhases(pattern, oldPea, cddTransformer, reqSymbolTable);
 		final Phase[] init = getInitialPhases(phases);
 		connectCopies(phases);
-		final List<String> clocks = pea.getClocks();
-		final Map<String,String> variables = pea.getVariables();
+		final List<String> clocks = oldPea.getClocks();
+		final Map<String,String> variables = oldPea.getVariables();
 		variables.putAll(cddTransformer.getTrackingVars());
-		final List<String> declarations = pea.getDeclarations();
+		final List<String> declarations = oldPea.getDeclarations();
 		
 		// _tt for "test tracking"
 		PhaseEventAutomata ctPea = new PhaseEventAutomata(name + "_tt", phases, init, clocks, variables, declarations);
+		
+		// remember effect phases and output effect phases
+		Set<String> effectVars = cddTransformer.getEffectVariables(pattern);
+		mPea2EffectVars.put(ctPea, effectVars);
+		int effectPhase = getEffectPhase(oldPea.getPhases(), effectVars , cddTransformer);	
+		int newEffectPhase = oldPea.getPhases().length + effectPhase;
+		mPea2EffectPhase.put(ctPea, newEffectPhase);
+		if (!Collections.disjoint(effectVars, reqSymbolTable.getOutputVars())) {
+			mOutputEffectPhase.put(ctPea, newEffectPhase);
+		}
 		return ctPea;
 	}
 	
@@ -75,9 +98,10 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		}
 	}
 	
-	private Phase[] transformPhases(PatternType pattern, Phase[] oldPhases, Req2CauseTrackingCDD cddTransformer, IReqSymbolTable reqSymbolTable){
+	private Phase[] transformPhases(PatternType pattern, PhaseEventAutomata pea, Req2CauseTrackingCDD cddTransformer, IReqSymbolTable reqSymbolTable){
 		final Set<String> effectVars = cddTransformer.getEffectVariables(pattern);
-		int effectPhase = getEffectPhase(oldPhases, effectVars , cddTransformer);		
+		Phase[] oldPhases = pea.getPhases();
+		int effectPhase = getEffectPhase(oldPhases, effectVars , cddTransformer);	
 		Phase[] phases = new Phase[2 * oldPhases.length];
 		for (int i = 0; i < oldPhases.length; i++) {
 			Phase op = oldPhases[i];
@@ -122,6 +146,17 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		}
 	}
 	
+	public Map<PhaseEventAutomata, Integer> getEffectPhase(){
+		return mPea2EffectPhase;
+	}
+	
+	public Map<PhaseEventAutomata, Integer> getOutputEffectPhase(){
+		return mOutputEffectPhase;
+	}
+	
+	public Map<PhaseEventAutomata, Set<String>> getPea2EffectVars(){
+		return mPea2EffectVars;
+	}
 	
 	@Override
 	public Map<PatternType, PhaseEventAutomata> getPattern2Peas() {
@@ -137,6 +172,11 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	@Override
 	public boolean hasErrors() {
 		return mHasErrors;
+	}
+
+	@Override
+	public IReq2PeaAnnotator getAnnotator() {
+		return new ReqTestAnnotator(mServices, mLogger, this);
 	}
 
 }

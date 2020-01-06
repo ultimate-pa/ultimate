@@ -29,9 +29,9 @@ public class Req2CauseTrackingCDD {
 	public CDD transform(CDD cdd, Set<String> effectVars, Set<String> inputVars,  boolean isEffectPhase) {
 		Set<String> vars = getCddVariables(cdd);
 		vars.removeAll(inputVars);
-		if (isEffectPhase) {
+		//if (isEffectPhase) {
 			vars.removeAll(effectVars);
-		}
+		//}
 		return addTrackingGuards(cdd, vars);
 	}
 	
