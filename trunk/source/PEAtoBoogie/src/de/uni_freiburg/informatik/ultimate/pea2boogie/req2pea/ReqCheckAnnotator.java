@@ -116,7 +116,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		} catch (final InvariantInfeasibleException e) {
 			mPeaResultUtil.infeasibleInvariant(e);
 			mRtInconcistencyConditionGenerator = null;
-			return new ArrayList<Statement>();
+			return Collections.emptyList();
 		}
 		mRtInconcistencyConditionGenerator = rticGenerator;		
 		return generateAnnotations();		

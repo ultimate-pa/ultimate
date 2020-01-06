@@ -87,7 +87,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 			}
 			
 		}	
-		//TODO: generate asserts assert(!(pc_xx == i)) for every i \in effect(A_r)
+		//generate asserts assert(!(pc_xx == i)) for every i \in effect(A_r)
 		Map<PhaseEventAutomata, Integer> pea2OutputEffectPhase = mReq2Pea.getOutputEffectPhase();
 		for(Map.Entry<PhaseEventAutomata, Integer> entry: pea2OutputEffectPhase.entrySet()) {
 			PhaseEventAutomata pea = entry.getKey();
@@ -104,6 +104,8 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 		}
 		return statements;
 	}
+	
+	
 	
 	private Expression genDisjunction(final List<Expression> exprs, final BoogieLocation bl) {
 		final Iterator<Expression> it = exprs.iterator();

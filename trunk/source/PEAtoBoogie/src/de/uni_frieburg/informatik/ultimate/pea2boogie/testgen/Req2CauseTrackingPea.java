@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
@@ -72,10 +73,10 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		final Phase[] phases = transformPhases(pattern, oldPea, cddTransformer, reqSymbolTable);
 		final Phase[] init = getInitialPhases(phases);
 		connectCopies(phases);
-		final List<String> clocks = oldPea.getClocks();
-		final Map<String,String> variables = oldPea.getVariables();
+		final List<String> clocks = new ArrayList<>(oldPea.getClocks());
+		final Map<String,String> variables = new HashMap<>(oldPea.getVariables());
 		variables.putAll(cddTransformer.getTrackingVars());
-		final List<String> declarations = oldPea.getDeclarations();
+		final List<String> declarations = new ArrayList<String>(oldPea.getDeclarations());
 		
 		// _tt for "test tracking"
 		PhaseEventAutomata ctPea = new PhaseEventAutomata(name + "_tt", phases, init, clocks, variables, declarations);
@@ -106,13 +107,13 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		for (int i = 0; i < oldPhases.length; i++) {
 			Phase op = oldPhases[i];
 			//TODO: fit clock invariants to test tracking stuff
-			phases[i] = op;
+			phases[i] = new Phase(op.getName() + "_tt", op.getClockInvariant(), op.getClockInvariant());
 			CDD stateInvariant = cddTransformer.transform(op.getStateInvariant(), effectVars, reqSymbolTable.getInputVars(), i == effectPhase);
 			Phase trackingPhase = new Phase(op.getName() + "_tt", stateInvariant, op.getClockInvariant());
 			phases[oldPhases.length + i] = trackingPhase;
-			if (op.isInit) trackingPhase.isInit = true;
-			//add stuttering edge
-			trackingPhase.addTransition(trackingPhase, CDD.TRUE, new String[0]);
+			if (op.isInit) {
+				trackingPhase.isInit = true;
+			}
 		}
 		return phases;
 	}
@@ -123,7 +124,9 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		//TODO: hand over the phase relevant for the effect from the automaton generation
 		for(int i = phases.length-1; i >= 0; i--) {
 			CDD invar = phases[i].getStateInvariant();
-			if (cddTransformer.getCddVariables(invar).containsAll(effects)) return i;
+			if (cddTransformer.getCddVariables(invar).containsAll(effects)) {
+				return i;
+			}
 		}
 		return 0;
 	}
@@ -138,6 +141,15 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 
 	private void connectCopies(Phase[] phases) {
 		int seem = phases.length/2;
+		List<Phase> indexList = Arrays.asList(phases);
+		//copy edges in first to second automaton
+		for(int i = 0; i < seem ; i++) {
+			for(Transition trans : phases[i].getTransitions()) {
+				int index = seem +  indexList.indexOf(trans.getDest());
+				phases[seem + i].addTransition(phases[index], trans.getGuard(), trans.getResets());
+			}
+		}
+		//conect the copies
 		for(int i = 0; i < seem ; i++) {
 			phases[seem+i].addTransition(phases[i], CDD.TRUE, new String[0]);
 			if (phases[i].isInit) {

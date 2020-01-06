@@ -123,8 +123,8 @@ public class Req2BoogieTranslator {
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
 			final List<PatternType> patterns) {
 		//TODO: put this into a setting!
-		this(services, logger, patterns, Arrays.asList(new Req2CauseTrackingPeaTransformer(services, logger)));
-		//this(services, logger, patterns, new ArrayList<IReq2PeaTransformer>());
+		//this(services, logger, patterns, Arrays.asList(new Req2CauseTrackingPeaTransformer(services, logger)));
+		this(services, logger, patterns, new ArrayList<IReq2PeaTransformer>());
 	}
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
