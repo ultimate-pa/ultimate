@@ -94,6 +94,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
 
@@ -343,12 +344,13 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		return true;
 	}
 
-	protected Pair<INestedWordAutomaton<LETTER, IPredicate>, IPetriNet<LETTER, IPredicate>> enhanceAnddeterminizeInterpolantAutomaton(
+	protected Triple<INestedWordAutomaton<LETTER, IPredicate>, IPetriNet<LETTER, IPredicate>, Set<LETTER>> enhanceAnddeterminizeInterpolantAutomaton(
 			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final IHoareTripleChecker htc)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger.debug("Start determinization");
 		final INestedWordAutomaton<LETTER, IPredicate> dia;
 		final IPetriNet<LETTER, IPredicate> onDemandConstructedNet;
+		final Set<LETTER> changerLetters;
 		switch (mPref.interpolantAutomatonEnhancement()) {
 		case NONE:
 			final PowersetDeterminizer<LETTER, IPredicate> psd =
@@ -357,6 +359,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 					mPredicateFactoryInterpolantAutomata, interpolAutomaton, psd);
 			dia = dabps.getResult();
 			onDemandConstructedNet = null;
+			changerLetters = null;
 			break;
 		case PREDICATE_ABSTRACTION:
 			final DeterministicInterpolantAutomaton<LETTER> raw = new DeterministicInterpolantAutomaton<>(mServices,
@@ -378,6 +381,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 					final DifferencePairwiseOnDemand<LETTER, IPredicate> dpod = new DifferencePairwiseOnDemand<>(
 							new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
 							(IPetriNet<LETTER, IPredicate>) mAbstraction, raw, universalSubtrahendLoopers);
+					changerLetters = dpod.getChangerLetters();
 					onDemandConstructedNet = dpod.getResult();
 				} catch (final AutomataOperationCanceledException tce) {
 					final String taskDescription = generateOnDemandEnhancementCanceledMessage(interpolAutomaton,
@@ -398,6 +402,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 				dia = new RemoveUnreachable<>(new AutomataLibraryServices(mServices), awis).getResult();
 			} else {
 				onDemandConstructedNet = null;
+				changerLetters = null;
 				try {
 					dia = new RemoveUnreachable<>(new AutomataLibraryServices(mServices), raw).getResult();
 				} catch (final AutomataOperationCanceledException aoce) {
@@ -432,7 +437,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		// true) : "Counterexample not accepted by determinized interpolant automaton: "
 		// + mCounterexample.getWord();
 		mLogger.debug("Sucessfully determinized");
-		return new Pair<>(dia, onDemandConstructedNet);
+		return new Triple<>(dia, onDemandConstructedNet, changerLetters);
 	}
 
 	private String generateOnDemandEnhancementCanceledMessage(

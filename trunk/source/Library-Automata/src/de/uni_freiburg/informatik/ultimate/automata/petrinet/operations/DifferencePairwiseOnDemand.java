@@ -74,6 +74,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 	private final IBlackWhiteStateFactory<PLACE> mContentFactory;
 
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
+	private final Set<LETTER> mChangerLetters;
 
 	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
 			final AutomataLibraryServices services, final SF factory, final IPetriNet<LETTER, PLACE> minuendNet,
@@ -114,6 +115,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 		final DifferencePetriNet<LETTER, PLACE> difference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend,
 				universalSubtrahendLoopers);
 		new FinitePrefix<LETTER, PLACE>(mServices, difference);
+		mChangerLetters = difference.getChangerLetters();
 		mResult = difference.getYetConstructedPetriNet();
 	}
 
@@ -159,6 +161,10 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 	@Override
 	public BoundedPetriNet<LETTER, PLACE> getResult() {
 		return mResult;
+	}
+	
+	public Set<LETTER> getChangerLetters() {
+		return mChangerLetters;
 	}
 
 	@Override

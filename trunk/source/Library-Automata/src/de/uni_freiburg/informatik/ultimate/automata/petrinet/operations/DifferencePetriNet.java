@@ -91,7 +91,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	/**
 	 * Letters for which the subtrahend DFA actually has a transition that
 	 * changes the state. In on-demand constructions, this information can be
-	 * more precise than mUniversalLoopers becaue the user cannot forsee the
+	 * more precise than mUniversalLoopers because the user cannot foresee the
 	 * construction process.
 	 */
 	private final Set<LETTER> mChangerLetters = new HashSet<>();
