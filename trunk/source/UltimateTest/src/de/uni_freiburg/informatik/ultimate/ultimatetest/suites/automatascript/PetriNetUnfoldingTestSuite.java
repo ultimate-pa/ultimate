@@ -77,6 +77,7 @@ public class PetriNetUnfoldingTestSuite extends UltimateTestSuite {
 //			"examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/subTwoHourMarathon"
 //			"examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/esken"
 //			"examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/christmas/",
+//			"examples/Automata/benchmarks/pn/finitePrefix-and-isEmpty/epiphany/",
 	};
 
 	private static final String[] FILE_ENDINGS = { ".ats" };
@@ -85,6 +86,7 @@ public class PetriNetUnfoldingTestSuite extends UltimateTestSuite {
 			"AutomataScript/finitePrefix.epf",
 //			"AutomataScript/finitePrefix2PetriNet.epf",
 //			"AutomataScript/finitePrefix2PetriNetB.epf"
+//			"AutomataScript/removeUnreachable.epf",
 			};
 
 	private static final String[] INTERESTING_COLUMNS = {
@@ -104,13 +106,21 @@ public class PetriNetUnfoldingTestSuite extends UltimateTestSuite {
 			StatisticsType.CONDITION_PER_PLACE_MAX.toString(),
 			StatisticsType.EXTENSION_CANDIDATES_TOTAL.toString(),
 			StatisticsType.EXTENSION_CANDIDATES_USELESS.toString(),
+			StatisticsType.PETRI_REMOVED_PLACES.toString(),
+			StatisticsType.PETRI_REMOVED_TRANSITIONS.toString(),
+			StatisticsType.PETRI_REMOVED_FLOW.toString(),
+			StatisticsType.PETRI_ALPHABET.toString(),
+			StatisticsType.PETRI_PLACES.toString(),
+			StatisticsType.PETRI_TRANSITIONS.toString(),
+			StatisticsType.PETRI_FLOW.toString(),
 	};
 
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));
 
 	private static final Object[] INTERESTING_OPERATIONS = {
 			"finitePrefix",
-			"finitePrefix2PetriNet"
+			"finitePrefix2PetriNet",
+			"removeUnreachable",
 	};
 
 	private static final Set<Object> INTERESTING_OPERATIONS_AS_SET =
