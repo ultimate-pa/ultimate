@@ -80,9 +80,21 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	// horrible hack to do a cast and store known transitions
 	private final Map<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>> mTransitions = new HashMap<>();
 	/**
-	 * Letters for which the subtrahend DFA has a selfloop in every state.
+	 * Letters for which the subtrahend DFA has a selfloop in every state. This
+	 * set is provided by the user of {@link DifferencePetriNet} it can be an
+	 * underapproximation of the letters that have a selfloop, we do not check
+	 * if this set does really contain only universal loopers (i.e., we do
+	 * not check if what the user provided was correct).
 	 */
 	private final Set<LETTER> mUniversalLoopers;
+	
+	/**
+	 * Letters for which the subtrahend DFA actually has a transition that
+	 * changes the state. In on-demand constructions, this information can be
+	 * more precise than mUniversalLoopers becaue the user cannot forsee the
+	 * construction process.
+	 */
+	private final Set<LETTER> mChangerLetters = new HashSet<>();
 
 	public DifferencePetriNet(final AutomataLibraryServices services,
 			final IPetriNetSuccessorProvider<LETTER, PLACE> minued,
@@ -349,6 +361,9 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 						throw new IllegalArgumentException("Subtrahend not deterministic.");
 					}
 				}
+				if (automatonPredecessor != subtrahendSucc.getSucc()) {
+					mChangerLetters.add(inputTransition.getSymbol());
+				}
 				if (mSubtrahend.isFinal(subtrahendSucc.getSucc())) {
 					return null;
 				} else {
@@ -443,8 +458,12 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 
 	@Override
 	public Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
-			Set<PLACE> placesOfNewConditions, Set<PLACE> correlatedPlaces) {
+			final Set<PLACE> placesOfNewConditions, final Set<PLACE> correlatedPlaces) {
 		throw new IllegalArgumentException("getSuccessorTransitionProviders with the given arguments works only for " + IPetriNet.class.getName());
 	}
 
+	public Set<LETTER> getChangerLetters() {
+		return mChangerLetters;
+	}
+	
 }
