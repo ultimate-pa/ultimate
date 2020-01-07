@@ -40,6 +40,10 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
  *
  */
 public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
+	
+	public static final String LABEL_TRANSFOMER_MODE = "PEA Transformation Mode";
+	public static final PEATransformerMode TRANSFOMER_MODE = PEATransformerMode.REQ_CHECK;
+	private static final String DESC_TRANSFOMER_MODE = "Switches between checking requirements and generating tests for requirements.";
 
 	public static final String LABEL_CHECK_VACUITY = "Check vacuity";
 	private static final boolean DEF_CHECK_VACUITY = true;
@@ -71,6 +75,10 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			"This setting controls whether invariant requirements are included in every rt-inconsistency check or if they"
 					+ " are treated as separate requirements. If enabled, each rt-inconsistency check is of the form "
 					+ "Invariants ∧ (check over all remaining requirements). If disabled, invariants are not treated separately.";
+	
+	public enum PEATransformerMode{
+		REQ_CHECK, REQ_TEST
+	}
 
 	public Pea2BoogiePreferences() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -80,6 +88,8 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 
+				new UltimatePreferenceItem<>(LABEL_TRANSFOMER_MODE, TRANSFOMER_MODE, DESC_TRANSFOMER_MODE,
+						PreferenceType.Combo, PEATransformerMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_VACUITY, DEF_CHECK_VACUITY, DESC_CHECK_VACUITY,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_CONSISTENCY, DEF_CHECK_CONSISTENCY, DESC_CHECK_CONSISTENCY,
