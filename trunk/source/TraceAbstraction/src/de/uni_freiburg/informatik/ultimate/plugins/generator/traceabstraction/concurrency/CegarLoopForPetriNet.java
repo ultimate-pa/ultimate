@@ -93,7 +93,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
@@ -247,7 +246,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 
 			// Determinize the interpolant automaton
 			final INestedWordAutomaton<LETTER, IPredicate> dia;
-			final Pair<INestedWordAutomaton<LETTER, IPredicate>, IPetriNet<LETTER, IPredicate>> enhancementResult = enhanceAnddeterminizeInterpolantAutomaton(
+			final Triple<INestedWordAutomaton<LETTER, IPredicate>, IPetriNet<LETTER, IPredicate>, Set<LETTER>> enhancementResult = enhanceAnddeterminizeInterpolantAutomaton(
 					mInterpolAutomaton, htc);
 			dia = enhancementResult.getFirst();
 
