@@ -215,7 +215,7 @@ public final class Difference
 			final Set<PLACE> changerStates = new HashSet<>();
 			for (final PLACE state : mSubtrahend.getStates()) {
 				if (mSubtrahend.isFinal(state)) {
-					// final states and their in-going transitions are not copied to the result
+					// final states and their outgoing transitions are not copied to the result
 					// because we compute L(N)-(L(A)◦∑^*). Once a final state in the subtrahend A is reached,
 					// the difference cannot accept anymore.
 					continue;
