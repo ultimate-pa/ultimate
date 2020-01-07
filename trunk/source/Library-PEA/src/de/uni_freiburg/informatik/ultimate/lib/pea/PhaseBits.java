@@ -102,6 +102,16 @@ public class PhaseBits implements Comparable {
     public int getExactBound() {
     	return exactbound;
     }
+    
+    public boolean isActive(int phaseNumber) {
+    	return ((1 << phaseNumber) & this.active) > 0;
+    }
+    public boolean isWaiting(int phaseNumber) {
+    	return ((1 << phaseNumber) & this.waiting) > 0;
+    }
+    public boolean isExact(int phaseNumber) {
+    	return ((1 << phaseNumber) & this.exactbound) > 0;
+    }
 
     /** transform this PhaseBits object into a PhaseSet for easier access */
     public PhaseSet getPhaseSet(DCPhase phases[]) {

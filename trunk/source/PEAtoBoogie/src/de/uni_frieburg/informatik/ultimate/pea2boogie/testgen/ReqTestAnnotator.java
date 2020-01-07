@@ -55,7 +55,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 	@Override
 	public List<Statement> getStateChecks() {
 		List<Statement> statements = new ArrayList<Statement>();
-		Map<PhaseEventAutomata, Integer> pea2EffectPhase = mReq2Pea.getEffectPhase();
+		Map<PhaseEventAutomata, Set<Integer>> pea2EffectPhase = mReq2Pea.getEffectPhase();
 		//check that each u_v -> pc_xx == effect(A_r) for every v \in E
 		for(String var: mSymbolTable.getStateVars()) {
 			if(mSymbolTable.getInputVars().contains(var)) {
@@ -68,13 +68,16 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 			for(Map.Entry<PhaseEventAutomata, Set<String>> entry: mReq2Pea.getPea2EffectVars().entrySet()) {
 				List<Expression> disjuncts = new ArrayList<>();
 				if(entry.getValue().contains(var)) {
-					int effectPhase = pea2EffectPhase.get(entry.getKey());
+					for(Integer phase: pea2EffectPhase.get(entry.getKey())) {
 					Expression expr = new BinaryExpression(
 							mLocation,
 							BinaryExpression.Operator.COMPEQ,
 							mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(entry.getKey())),
-							new IntegerLiteral(mLocation, Integer.toString(effectPhase)));
+							new IntegerLiteral(mLocation, phase.toString()));
 					disjuncts.add(expr);
+					//TODO: remove but then the genDisjunction explodes O.o
+					//break;
+					}
 				}
 				if(disjuncts.size() > 0) {
 					Expression expr = new BinaryExpression(
@@ -84,23 +87,24 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 							genDisjunction(disjuncts, mLocation));
 					statements.add(new AssumeStatement(mLocation, expr));
 				}
-			}
-			
+			}	
 		}	
 		//generate asserts assert(!(pc_xx == i)) for every i \in effect(A_r)
-		Map<PhaseEventAutomata, Integer> pea2OutputEffectPhase = mReq2Pea.getOutputEffectPhase();
-		for(Map.Entry<PhaseEventAutomata, Integer> entry: pea2OutputEffectPhase.entrySet()) {
+		Map<PhaseEventAutomata, Set<Integer>> pea2OutputEffectPhase = mReq2Pea.getOutputEffectPhase();
+		for(Map.Entry<PhaseEventAutomata, Set<Integer>> entry: pea2OutputEffectPhase.entrySet()) {
 			PhaseEventAutomata pea = entry.getKey();
-			Expression expr = new BinaryExpression(
-					mLocation,
-					BinaryExpression.Operator.COMPEQ,
-					mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea)),
-					new IntegerLiteral(mLocation, entry.getValue().toString()));
-			final NamedAttribute[] attr =
-					new NamedAttribute[] { new NamedAttribute(mLocation, "TEST_" + pea.getName(), new Expression[] {}) };
-			final AssertStatement assrt = 
-					new AssertStatement(mLocation, attr, new UnaryExpression(mLocation, Operator.LOGICNEG, expr));
-			statements.add(assrt);
+			for (Integer phaseNr: entry.getValue()) {
+				Expression expr = new BinaryExpression(
+						mLocation,
+						BinaryExpression.Operator.COMPEQ,
+						mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea)),
+						new IntegerLiteral(mLocation, phaseNr.toString()));
+				final NamedAttribute[] attr =
+						new NamedAttribute[] { new NamedAttribute(mLocation, "TEST_" + pea.getName(), new Expression[] {}) };
+				final AssertStatement assrt = 
+						new AssertStatement(mLocation, attr, new UnaryExpression(mLocation, Operator.LOGICNEG, expr));
+				statements.add(assrt);
+			}
 		}
 		return statements;
 	}
@@ -114,7 +118,8 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 		}
 		Expression cnf = it.next();
 		while (it.hasNext()) {
-			cnf = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, cnf, it.next());
+			cnf = new BinaryExpression(bl, BinaryExpression.Operator.LOGICOR, cnf, it.next());
+			//cnf = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, cnf, it.next());
 		}
 		return mNormalFormTransformer.toNnf(cnf);
 	}
