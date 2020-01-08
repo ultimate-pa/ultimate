@@ -51,14 +51,22 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 	@Override
 	public List<Statement> getStateChecks() {
 		final List<Statement> statements = new ArrayList<Statement>();
-		//check that each u_v -> pc_xx == effect(A_r) for every v \in E
-		statements.addAll(genEffectInvariants());
 		//generate asserts assert(!(pc_xx == i)) for every i \in effect(A_r)
 		statements.addAll(genTestAssertions());
+		//check that each u_v' -> pc_xx == effect(A_r) for every v' \in E'
+		statements.addAll(genEffectInvariants("'"));
 		return statements;
 	}
 
-	private List<Statement> genEffectInvariants(){
+	@Override
+	public List<Statement> getPreChecks(){
+		final List<Statement> statements = new ArrayList<Statement>();
+		//check that each u_v -> pc_xx == effect(A_r) for every v \in E
+		statements.addAll(genEffectInvariants(""));
+		return statements;
+	}
+
+	private List<Statement> genEffectInvariants(String primed){
 		final List<Statement> statements = new ArrayList<Statement>();
 		for(final String effect_var: mSymbolTable.getStateVars()) {
 			final List<Expression> disjuncts = new ArrayList<>();
@@ -70,13 +78,13 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 				continue;
 			}
 			for(final Map.Entry<PhaseEventAutomata, Set<String>> entry: mReq2Pea.getPea2EffectVars().entrySet()) {
-				disjuncts.addAll(genEffectPhaseDisjuncts(entry.getKey(), entry.getValue(), effect_var));
+				disjuncts.addAll(genEffectPhaseDisjuncts(entry.getKey(), entry.getValue(), effect_var, primed));
 			}
 			if(disjuncts.size() > 0) {
 				final Expression expr = new BinaryExpression(
 						mLocation,
 						BinaryExpression.Operator.LOGICIMPLIES,
-						mSymbolTable.getIdentifierExpression("u_"+effect_var),
+						mSymbolTable.getIdentifierExpression("u_"+effect_var+primed),
 						genDisjunction(disjuncts, mLocation));
 				statements.add(new AssumeStatement(mLocation, expr));
 			} else {
@@ -86,16 +94,19 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 		return statements;
 	}
 
-	private List<Expression> genEffectPhaseDisjuncts(final PhaseEventAutomata pea, final Set<String> vars, final String var) {
+	private List<Expression> genEffectPhaseDisjuncts(final PhaseEventAutomata pea, final Set<String> vars, final String var, String primed) {
 		final List<Expression> disjuncts = new ArrayList<>();
 		final Map<PhaseEventAutomata, Set<Integer>> pea2EffectPhase = mReq2Pea.getEffectPhase();
 		if(vars.contains(var)) {
-			for(final Integer phase: pea2EffectPhase.get(pea)) {
+			for(final Integer phaseNum: pea2EffectPhase.get(pea)) {
+				//TODO: determine if the effect is part of the phase, or if the effect is on each outgoing edge
+				// then either generate the following OR generate a u_v' -> (pc == n && pc' == NONEFFSTATE) || ...
+				// i.e. we were in the effect state waiting to leave, and now we have left over an edge that has an effect
 				final Expression expr = new BinaryExpression(
 						mLocation,
 						BinaryExpression.Operator.COMPEQ,
-						mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea)),
-						new IntegerLiteral(mLocation, phase.toString()));
+						mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea)+primed),
+						new IntegerLiteral(mLocation, phaseNum.toString()));
 				disjuncts.add(expr);
 			}
 		}

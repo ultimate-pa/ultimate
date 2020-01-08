@@ -6,8 +6,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
@@ -47,29 +47,29 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
 
 public class ReqCheckAnnotator implements IReq2PeaAnnotator {
-	
+
 	private static final boolean DEBUG_ONLY_FIRST_NON_TRIVIAL_RT_INCONSISTENCY = false;
-	
+
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final PeaResultUtil mPeaResultUtil;
 	private final BoogieLocation mUnitLocation;
-	
+
 	private boolean mCheckVacuity;
 	private int mCombinationNum;
 	private boolean mCheckConsistency;
 	private boolean mReportTrivialConsistency;
-	
+
 	private boolean mSeparateInvariantHandling;
 	private RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 	private final IReqSymbolTable mSymbolTable;
-	private Map<PatternType, PhaseEventAutomata> mReq2Automata;
-	
+	private final Map<PatternType, PhaseEventAutomata> mReq2Automata;
+
 	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger,
 			final Map<PatternType, PhaseEventAutomata> req2Automata, IReqSymbolTable symbolTable) {
 		mLogger = logger;
-		mServices = services;	
+		mServices = services;
 		mSymbolTable = symbolTable;
 		mReq2Automata = req2Automata;
 		mPeaResultUtil = new PeaResultUtil(mLogger, mServices);
@@ -78,6 +78,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 	}
 
+	@Override
 	public List<Statement> getStateChecks() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
@@ -100,10 +101,10 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 				Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY, mCheckConsistency,
 				Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, mReportTrivialConsistency,
 				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling));
-		
+
 		final List<Declaration> decls = new ArrayList<>();
 		decls.addAll(mSymbolTable.getDeclarations());
-		
+
 		RtInconcistencyConditionGenerator rticGenerator;
 		try {
 			if (mCombinationNum > 1) {
@@ -118,13 +119,13 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			mRtInconcistencyConditionGenerator = null;
 			return Collections.emptyList();
 		}
-		mRtInconcistencyConditionGenerator = rticGenerator;		
-		return generateAnnotations();		
+		mRtInconcistencyConditionGenerator = rticGenerator;
+		return generateAnnotations();
 	}
-	
-	
+
+
 	private List<Statement> generateAnnotations() {
-		List<Statement> annotations = new ArrayList<>();
+		final List<Statement> annotations = new ArrayList<>();
 		if (mCheckConsistency) {
 			annotations.addAll(genCheckConsistency(mUnitLocation));
 		}
@@ -134,13 +135,13 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		annotations.addAll(genChecksRTInconsistency(mUnitLocation));
 		return annotations;
 	}
-	
+
 	private List<Statement> genCheckConsistency(final BoogieLocation bl) {
 		final ReqCheck check = new ReqCheck(Spec.CONSISTENCY);
 		final Expression expr = ExpressionFactory.createBooleanLiteral(bl, false);
 		return Collections.singletonList(createAssert(expr, check, "CONSISTENCY"));
-	}	
-	
+	}
+
 	private List<Statement> genChecksRTInconsistency(final BoogieLocation bl) {
 		if (mRtInconcistencyConditionGenerator == null) {
 			return Collections.emptyList();
@@ -205,7 +206,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return stmtList;
 	}
 
-	
+
 	private Statement genAssertRTInconsistency(final Entry<PatternType, PhaseEventAutomata>[] subset) {
 		final Set<PhaseEventAutomata> automataSet =
 				Arrays.stream(subset).map(a -> a.getValue()).collect(Collectors.toSet());
@@ -228,7 +229,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		return createAssert(expr, check, "RTINCONSISTENT_" + Req2BoogieTranslator.getAssertLabel(subset));
 	}
-	
+
 	/**
 	 * Generate the assertion that is violated if the requirement represented by the given automaton is non-vacuous. The
 	 * assertion expresses that the automaton always stays in the early phases and never reaches the last phase. It may
@@ -250,11 +251,12 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		check.annotate(rtr);
 		return rtr;
 	}
-	
+
+	@Override
 	public PeaResultUtil getPeaResultUtil() {
 		return mPeaResultUtil;
 	}
-	
+
 	private List<Statement> genChecksNonVacuity(final BoogieLocation bl) {
 		if (!mCheckVacuity) {
 			return Collections.emptyList();
@@ -270,7 +272,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 		return stmtList;
 	}
-	
+
 	private Statement genAssertNonVacuous(final PatternType req, final PhaseEventAutomata aut,
 			final BoogieLocation bl) {
 		final Phase[] phases = aut.getPhases();
@@ -308,7 +310,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		final String label = "VACUOUS_" + aut.getName();
 		return createAssert(disjunction, check, label);
 	}
-	
+
 	@SafeVarargs
 	private static ReqCheck createReqCheck(final Check.Spec reqSpec,
 			final Entry<PatternType, PhaseEventAutomata>... subset) {
@@ -318,14 +320,14 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 		return createReqCheck(reqSpec, reqs);
 	}
-	
+
 	private static ReqCheck createReqCheck(final Check.Spec reqSpec, final PatternType... req) {
 		if (req == null || req.length == 0) {
 			throw new IllegalArgumentException("req cannot be null or empty");
 		}
 		return new ReqCheck(reqSpec, req);
 	}
-	
+
 	/**
 	 * Generate the disjunction of a list of expressions.
 	 *
@@ -346,10 +348,15 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 		return mNormalFormTransformer.toNnf(cnf);
 	}
-	
+
 	private Expression genComparePhaseCounter(final int phaseIndex, final String pcName, final BoogieLocation bl) {
 		final IdentifierExpression identifier = mSymbolTable.getIdentifierExpression(pcName);
 		final IntegerLiteral intLiteral = ExpressionFactory.createIntegerLiteral(bl, Integer.toString(phaseIndex));
 		return ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.COMPEQ, identifier, intLiteral);
+	}
+
+	@Override
+	public List<Statement> getPreChecks() {
+		return Collections.EMPTY_LIST;
 	}
 }

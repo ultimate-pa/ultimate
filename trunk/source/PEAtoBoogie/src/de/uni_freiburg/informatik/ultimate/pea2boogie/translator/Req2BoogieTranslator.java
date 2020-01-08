@@ -31,17 +31,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -57,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -67,39 +63,22 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.PEATransformerMode;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2Pea;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaAnnotator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.Req2Pea;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqCheckAnnotator;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
-import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.Req2CauseTrackingPeaTransformer;
 
 /**
  * This class translates a phase event automaton to an equivalent Boogie code.
@@ -123,7 +102,7 @@ public class Req2BoogieTranslator {
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
 			final List<PatternType> patterns) {
-			this(services, logger, patterns, new ArrayList<IReq2PeaTransformer>());			
+		this(services, logger, patterns, new ArrayList<IReq2PeaTransformer>());
 	}
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
@@ -147,7 +126,7 @@ public class Req2BoogieTranslator {
 			return;
 		}
 
-		
+
 		mReq2Automata = req2pea.getPattern2Peas();
 		mSymboltable = req2pea.getSymboltable();
 		mReqCheckAnnotator = req2pea.getAnnotator();
@@ -173,7 +152,7 @@ public class Req2BoogieTranslator {
 			}
 			req2pea = transformer.transform(req2pea, init, requirements);
 		}
-		
+
 		return req2pea;
 	}
 
@@ -596,6 +575,7 @@ public class Req2BoogieTranslator {
 		final List<Statement> statements = new ArrayList<>();
 		statements.addAll(genInitialPhasesStmts(bl));
 		statements.addAll(genClockInitStmts());
+		statements.addAll(mReqCheckAnnotator.getPreChecks());
 		statements.add(genWhileStmt(bl));
 		return statements.toArray(new Statement[statements.size()]);
 	}
