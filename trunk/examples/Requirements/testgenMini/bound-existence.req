@@ -1,0 +1,6 @@
+Input I is bool
+Output O is bool
+
+
+req1: Globally, transitions to states in which "I || O" holds occur at most twice
+req2: Globally, it is always the case that if "I" holds, then "O" holds as well
