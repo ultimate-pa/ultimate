@@ -114,7 +114,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			final Phase oldPhase = oldPhases[i];
 			//TODO: fit clock invariants to test tracking stuff
 			newPhases[i] = new Phase(oldPhase.getName() + "_tt", oldPhase.getStateInvariant(), oldPhase.getClockInvariant());
-			final CDD stateInvariant = mCddTransformer.transform(oldPhase.getStateInvariant(), effectVars,
+			final CDD stateInvariant = mCddTransformer.transformInvariant(oldPhase.getStateInvariant(), effectVars,
 					reqSymbolTable.getInputVars(), oldPhase.getPhaseBits().isActive(effectPhase));
 			final Phase trackingPhase = new Phase(oldPhase.getName() + "_tt", stateInvariant, oldPhase.getClockInvariant());
 			newPhases[oldPhases.length + i] = trackingPhase;
@@ -167,8 +167,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				final int dest = indexList.indexOf(trans.getDest());
 				final Phase sourcePhase = newPhases[seem + i];
 				//apply same transformations to CDDs must be done as in the invariants
-				final CDD guard = mCddTransformer.transform(trans.getGuard(), effectVars, reqSymbolTable.getInputVars(), false);
-				mLogger.warn(trans.getGuard().toString() + "   ->>   " +   guard.toString());
+				final CDD guard = mCddTransformer.transformGurad(trans.getGuard(), effectVars, reqSymbolTable.getInputVars(), false);
 				sourcePhase.addTransition(newPhases[seem + dest], guard, trans.getResets());
 			}
 		}

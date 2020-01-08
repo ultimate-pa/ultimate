@@ -79,6 +79,8 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 						mSymbolTable.getIdentifierExpression("u_"+effect_var),
 						genDisjunction(disjuncts, mLocation));
 				statements.add(new AssumeStatement(mLocation, expr));
+			} else {
+
 			}
 		}
 		return statements;

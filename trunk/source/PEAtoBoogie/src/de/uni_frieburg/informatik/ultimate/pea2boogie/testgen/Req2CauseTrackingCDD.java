@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
@@ -27,16 +28,29 @@ public class Req2CauseTrackingCDD {
 		mTrackingVars = new HashMap<>();
 	}
 
-	public CDD transform(CDD cdd, Set<String> effectVars, Set<String> inputVars,  boolean isEffectPhase) {
+	public CDD transformInvariant(CDD cdd, Set<String> effectVars, Set<String> inputVars,  boolean isEffectPhase) {
 		final Set<String> vars = getCddVariables(cdd);
 		vars.removeAll(inputVars);
-		if (isEffectPhase) {
-			vars.removeAll(effectVars);
-		}
-		return addTrackingGuards(cdd, vars);
+		//if (isEffectPhase) {
+		vars.removeAll(effectVars);
+		//}
+		final CDD newGuard = addTrackingGuards(cdd, vars);
+		mLogger.warn(newGuard.toString());
+		return newGuard;
 	}
 
-	private CDD addTrackingGuards(CDD cdd, Set<String> trackVars) {
+	public CDD transformGurad(CDD cdd, Set<String> effectVars, Set<String> inputVars,  boolean isEffectPhase) {
+		final Set<String> vars = getCddVariables(cdd);
+		vars.removeAll(inputVars);
+		vars.removeAll(effectVars);
+		//TODO remove primed effect variables in a nicer way
+		vars.removeAll(effectVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
+		final CDD newGuard = addTrackingGuards(cdd, vars);
+		mLogger.warn(newGuard.toString());
+		return newGuard;
+	}
+
+	private CDD addTrackingGuards(CDD cdd, Set<String> trackedVars) {
 		if (cdd == CDD.TRUE) {
 			return cdd;
 		}
@@ -47,13 +61,13 @@ public class Req2CauseTrackingCDD {
 		final List<CDD> newChildren = new ArrayList<>();
 		if (cdd.getChilds() != null) {
 			for (final CDD child : cdd.getChilds()) {
-				newChildren.add(addTrackingGuards(child, trackVars));
+				newChildren.add(addTrackingGuards(child, trackedVars));
 			}
 		}
 
 		cdd = CDD.create(cdd.getDecision(), newChildren.toArray(new CDD[newChildren.size()]));
 		for(final String v: getVarsFromDecision(cdd.getDecision())) {
-			if(trackVars.contains(v)) {
+			if(trackedVars.contains(v)) {
 				final String varName = "u_" + v;
 				//TODO more elegant way to check if its a primed var
 				if(!v.endsWith("'")) {
