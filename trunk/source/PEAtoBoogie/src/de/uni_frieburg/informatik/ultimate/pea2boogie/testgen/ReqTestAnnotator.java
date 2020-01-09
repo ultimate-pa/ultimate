@@ -94,8 +94,6 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 						mSymbolTable.getIdentifierExpression("u_"+trackedVar+primed),
 						genDisjunction(disjuncts, mLocation));
 				statements.add(new AssumeStatement(mLocation, expr));
-			} else {
-
 			}
 		}
 		return statements;
@@ -192,6 +190,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 
 	private List<Statement> genTestAssertion(final PhaseEventAutomata pea, final Set<Integer> effectPhases){
 		//TODO see trackingFlags on edges, same here for the regarding automta
+		// for effects on edges use pc== /\ u_v so we know we walked over the edge and are in the state the effect maifests in
 		final List<Statement> statements = new ArrayList<Statement>();
 		for (final Integer phaseNr: effectPhases) {
 			final Expression expr = new BinaryExpression(

@@ -68,26 +68,32 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 
 	private PhaseEventAutomata transformPea(final PatternType pattern, final PhaseEventAutomata oldPea, final IReqSymbolTable reqSymbolTable) {
 		final Set<String> effectVars = mCddTransformer.getEffectVariables(pattern);
+		// _tt for "test tracking"
 		final String newName = oldPea.getName() + "_tt";
 		setFlags(oldPea.getInit());
 		final Phase[] newPhases = transformPhases(pattern, oldPea, reqSymbolTable, effectVars);
 		final Phase[] newInit = getInitialPhases(newPhases);
-		copyTransitions(oldPea.getPhases(), newPhases, effectVars);
-		connectCopies(newPhases, effectVars, reqSymbolTable);
+		copyOldTransitions(oldPea.getPhases(), newPhases, effectVars);
+		connectTrackingAutomaton(newPhases, effectVars, reqSymbolTable);
 		final List<String> newClocks = new ArrayList<>(oldPea.getClocks());
 		final Map<String,String> newVariables = new HashMap<>(oldPea.getVariables());
 		newVariables.putAll(mCddTransformer.getTrackingVars());
 		//final List<String> declarations = new ArrayList<String>(oldPea.getDeclarations());
 
-		// _tt for "test tracking"
 		final PhaseEventAutomata newPea = new PhaseEventAutomata(newName, newPhases, newInit, newClocks, newVariables, null);
-
 		// remember effect phases and output effect phases
 		mPea2EffectVars.put(newPea, effectVars);
+		getEffectPhases(oldPea, newPea, effectVars, reqSymbolTable);
+
+		return newPea;
+	}
+
+	private void getEffectPhases(final PhaseEventAutomata oldPea, final PhaseEventAutomata newPea,
+			final Set<String> effectVars, final IReqSymbolTable reqSymbolTable) {
 		final Phase[] oldPhases = oldPea.getPhases();
 		mPea2EffectPhase.put(newPea, new HashSet<Integer>());
 		mOutputEffectPhase.put(newPea, new HashSet<Integer>());
-		final int effectPhase = getEffectPhase(oldPhases);
+		final int effectPhase = getEffectPhaseFromPhaseFlags(oldPhases);
 		for (int i = 0; i < oldPhases.length; i++) {
 			if (oldPhases[i].getPhaseBits().isActive(effectPhase)) {
 				final int newEffectPhase = oldPea.getPhases().length + i;
@@ -96,8 +102,8 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 					mOutputEffectPhase.get(newPea).add(newEffectPhase);
 				}
 			}
+			//TODO do same thing but for outgoing edges
 		}
-		return newPea;
 	}
 
 	private void setFlags(Phase[] initialPhases) {
@@ -108,7 +114,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 
 	private Phase[] transformPhases(PatternType pattern, PhaseEventAutomata oldPea, IReqSymbolTable reqSymbolTable, final Set<String> effectVars){
 		final Phase[] oldPhases = oldPea.getPhases();
-		final int effectPhase = getEffectPhase(oldPhases);
+		final int effectPhase = getEffectPhaseFromPhaseFlags(oldPhases);
 		final Phase[] newPhases = new Phase[2 * oldPhases.length];
 		for (int i = 0; i < oldPhases.length; i++) {
 			final Phase oldPhase = oldPhases[i];
@@ -125,7 +131,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		return newPhases;
 	}
 
-	private int getEffectPhase(Phase[] oldPhases) {
+	private int getEffectPhaseFromPhaseFlags(Phase[] oldPhases) {
 		//Find the last phase that is 1) active and 2) not waiting (to get active)
 		int lastDcPhase = 0;
 		for(int i = 0; i < oldPhases.length; i++) {
@@ -148,7 +154,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		return initialPhases.toArray(new Phase[initialPhases.size()]);
 	}
 
-	private void copyTransitions(Phase[] oldPhases, Phase[] newPhases, Set<String> effectVars) {
+	private void copyOldTransitions(Phase[] oldPhases, Phase[] newPhases, Set<String> effectVars) {
 		final List<Phase> indexList = Arrays.asList(oldPhases);
 		for(int i = 0; i < oldPhases.length ; i++) {
 			for(final Transition trans : oldPhases[i].getTransitions()) {
@@ -158,7 +164,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		}
 	}
 
-	private void connectCopies(Phase[] newPhases, final Set<String> effectVars, final IReqSymbolTable reqSymbolTable) {
+	private void connectTrackingAutomaton(Phase[] newPhases, final Set<String> effectVars, final IReqSymbolTable reqSymbolTable) {
 		final int seem = newPhases.length/2;
 		final List<Phase> indexList = Arrays.asList(newPhases);
 		//copy edges in first to second automaton
