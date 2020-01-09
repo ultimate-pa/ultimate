@@ -88,13 +88,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	 */
 	private final Set<LETTER> mUniversalLoopers;
 	
-	/**
-	 * Letters for which the subtrahend DFA actually has a transition that
-	 * changes the state. In on-demand constructions, this information can be
-	 * more precise than mUniversalLoopers because the user cannot foresee the
-	 * construction process.
-	 */
-	private final Set<LETTER> mChangerLetters = new HashSet<>();
+	private final SynchronizationInformation mSynchronizationInformation = new SynchronizationInformation();
 
 	public DifferencePetriNet(final AutomataLibraryServices services,
 			final IPetriNetSuccessorProvider<LETTER, PLACE> minued,
@@ -362,7 +356,10 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 					}
 				}
 				if (automatonPredecessor != subtrahendSucc.getSucc()) {
-					mChangerLetters.add(inputTransition.getSymbol());
+					mSynchronizationInformation.getChangerLetters().add(inputTransition.getSymbol());
+					mSynchronizationInformation.getStateChangers().addPair(inputTransition, automatonPredecessor);
+				} else {
+					mSynchronizationInformation.getSelfloops().addPair(inputTransition, automatonPredecessor);
 				}
 				if (mSubtrahend.isFinal(subtrahendSucc.getSucc())) {
 					return null;
@@ -462,8 +459,31 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		throw new IllegalArgumentException("getSuccessorTransitionProviders with the given arguments works only for " + IPetriNet.class.getName());
 	}
 
-	public Set<LETTER> getChangerLetters() {
-		return mChangerLetters;
+	public SynchronizationInformation getSynchronizationInformation() {
+		return mSynchronizationInformation;
+	}
+	
+	public class SynchronizationInformation {
+		/**
+		 * Letters for which the subtrahend DFA actually has a transition that
+		 * changes the state. In on-demand constructions, this information can be
+		 * more precise than mUniversalLoopers because the user cannot foresee the
+		 * construction process.
+		 */
+		private final Set<LETTER> mChangerLetters = new HashSet<>();
+		
+		private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mSelfloops = new HashRelation<>();
+		private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mStateChangers = new HashRelation<>();
+		
+		public Set<LETTER> getChangerLetters() {
+			return mChangerLetters;
+		}
+		public HashRelation<ITransition<LETTER, PLACE>, PLACE> getSelfloops() {
+			return mSelfloops;
+		}
+		public HashRelation<ITransition<LETTER, PLACE>, PLACE> getStateChangers() {
+			return mStateChangers;
+		}
 	}
 	
 }

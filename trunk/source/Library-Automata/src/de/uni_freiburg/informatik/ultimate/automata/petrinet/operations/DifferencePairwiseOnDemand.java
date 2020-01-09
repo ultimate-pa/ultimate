@@ -74,7 +74,8 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 	private final IBlackWhiteStateFactory<PLACE> mContentFactory;
 
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
-	private final Set<LETTER> mChangerLetters;
+	
+	private final DifferencePetriNet<LETTER, PLACE>.SynchronizationInformation mSynchronizationInformation;
 
 	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
 			final AutomataLibraryServices services, final SF factory, final IPetriNet<LETTER, PLACE> minuendNet,
@@ -115,8 +116,15 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 		final DifferencePetriNet<LETTER, PLACE> difference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend,
 				universalSubtrahendLoopers);
 		new FinitePrefix<LETTER, PLACE>(mServices, difference);
-		mChangerLetters = difference.getChangerLetters();
+		mSynchronizationInformation = difference.getSynchronizationInformation();
 		mResult = difference.getYetConstructedPetriNet();
+		{
+			final int looperLetters = mMinuend.getAlphabet().size() - mSynchronizationInformation.getChangerLetters().size();
+			mLogger.info(looperLetters + "/" + mMinuend.getAlphabet().size() + " looper letters, "
+					+ mSynchronizationInformation.getSelfloops().size() + " selfloop transitions, "
+					+ mSynchronizationInformation.getStateChangers().size() + " changer transitions ");
+		}
+		
 	}
 
 	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
@@ -163,8 +171,8 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 		return mResult;
 	}
 	
-	public Set<LETTER> getChangerLetters() {
-		return mChangerLetters;
+	public DifferencePetriNet<LETTER, PLACE>.SynchronizationInformation getSynchronizationInformation() {
+		return mSynchronizationInformation;
 	}
 
 	@Override
