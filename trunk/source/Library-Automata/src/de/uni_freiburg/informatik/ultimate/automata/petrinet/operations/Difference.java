@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Computes the difference L(N)-(L(A)◦Σ^*) between a {@link BoundedPetriNet} N and an {@link INestedWordAutomaton} A.
@@ -73,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  * If the subtrahend automaton A is closed under concatenation with Σ^*
  * then L(A)◦Σ^* = L(A) and therefore L(N)-(L(A)◦Σ^*) = L(N)-L(A);
  * in other words: The result of this operation is the normal difference.
- * 
+ *
  * TODO 2019-10-15 Matthias: Allow user to specify set of universal loopers.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -126,8 +127,8 @@ public final class Difference
 
 	private final Map<PLACE, PLACE> mOldPlace2NewPlace = new HashMap<>();
 
-	private final Map<LETTER, Set<PLACE>> mSelfloop = new HashMap<>();
-	private final Map<LETTER, Set<PLACE>> mStateChanger = new HashMap<>();
+	private final HashRelation<LETTER, PLACE> mSelfloop = new HashRelation<>();
+	private final HashRelation<LETTER, PLACE> mStateChanger = new HashRelation<>();
 
 	private final Map<PLACE, PLACE> mWhitePlace = new HashMap<>();
 	private final Map<PLACE, PLACE> mBlackPlace = new HashMap<>();
@@ -179,11 +180,11 @@ public final class Difference
 	private boolean resultTriviallyEmpty() {
 		// subtrahend L(A)◦Σ^* accepts everything ==> difference is empty
 		return mSubtrahend.isFinal(onlyElement(mSubtrahend.getInitialStates()))
-				// minuend L(N) is empty ==> difference is empty 
+				// minuend L(N) is empty ==> difference is empty
 				|| mMinuend.getInitialPlaces().isEmpty()
 				|| mMinuend.getAcceptingPlaces().isEmpty();
 	}
-	
+
 	private boolean checkSubtrahendProperties() {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(mSubtrahend)) {
 			throw new IllegalArgumentException("subtrahend must be a finite automaton");
@@ -230,13 +231,16 @@ public final class Difference
 					changerStates.add(state);
 				}
 			}
-			mSelfloop.put(symbol, selfloopStates);
-			mStateChanger.put(symbol, changerStates);
+			mSelfloop.addAllPairs(symbol, selfloopStates);
+			mStateChanger.addAllPairs(symbol, changerStates);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(symbol + " has " + selfloopStates.size() + " selfloop and "
 						+ changerStates.size() + " changer(s)");
 			}
 		}
+		final int changers = (int) mStateChanger.getDomain().stream().filter(x -> !mStateChanger.getImage(x).isEmpty())
+				.count();
+		mLogger.info((mMinuend.getAlphabet().size() - changers) + " loopers, " + changers + " changers");
 	}
 
 	private void copyNetPlaces() {
@@ -262,14 +266,14 @@ public final class Difference
 	 */
 	private boolean invertSyncWithSelfloops(final LETTER symbol) {
 		return mLoopSyncMethod == LoopSyncMethod.INVERTED || (mLoopSyncMethod == LoopSyncMethod.HEURISTIC
-				&& mSelfloop.get(symbol).size() >= mStateChanger.get(symbol).size());
+				&& mSelfloop.getImage(symbol).size() >= mStateChanger.getImage(symbol).size());
 	}
 
 	private Set<PLACE> requiredBlackPlaces() {
 		final Set<PLACE> requiredBlack = new HashSet<>();
 		for (final LETTER symbol : mMinuend.getAlphabet()) {
 			if (invertSyncWithSelfloops(symbol)) {
-				requiredBlack.addAll(mStateChanger.get(symbol));
+				requiredBlack.addAll(mStateChanger.getImage(symbol));
 			}
 		}
 		return requiredBlack;
@@ -296,7 +300,7 @@ public final class Difference
 	private void addTransitions() {
 		for (final ITransition<LETTER, PLACE> oldTrans : mMinuend.getTransitions()) {
 			final LETTER symbol = oldTrans.getSymbol();
-			for (final PLACE predState : mStateChanger.get(symbol)) {
+			for (final PLACE predState : mStateChanger.getImage(symbol)) {
 				syncWithChanger(oldTrans, predState);
 			}
 			syncWithSelfloops(oldTrans);
@@ -358,7 +362,7 @@ public final class Difference
 	private void syncWithEachSelfloop(final ITransition<LETTER, PLACE> oldTrans) {
 		// Relies on the special properties of the subtrahend L(A)◦Σ^*.
 		final LETTER symbol = oldTrans.getSymbol();
-		for (final PLACE state : mSelfloop.get(symbol)) {
+		for (final PLACE state : mSelfloop.getImage(symbol)) {
 			final Set<PLACE> predecessors = new HashSet<>();
 			final Set<PLACE> successors = new HashSet<>();
 			predecessors.add(mWhitePlace.get(state));
@@ -392,14 +396,14 @@ public final class Difference
 	 */
 	private void syncWithAnySelfloop(final ITransition<LETTER, PLACE> oldTrans) {
 		final LETTER symbol = oldTrans.getSymbol();
-		if (mSelfloop.get(symbol).isEmpty()) {
+		if (mSelfloop.getImage(symbol).isEmpty()) {
 			// This optimization relies on the special properties of the subtrahend L(A)◦Σ^*.
 			return;
 		}
 		final Set<PLACE> predecessors = new HashSet<>();
 		final Set<PLACE> successors = new HashSet<>();
 		copyMinuendFlow(oldTrans, predecessors, successors);
-		for (final PLACE state : mStateChanger.get(symbol)) {
+		for (final PLACE state : mStateChanger.getImage(symbol)) {
 			predecessors.add(mBlackPlace.get(state));
 			successors.add(mBlackPlace.get(state));
 		}
@@ -469,8 +473,8 @@ public final class Difference
 		int looperOnlyLetters = 0;
 		int moreChangersThanLoopers = 0;
 		for (final LETTER letter : mSubtrahend.getAlphabet()) {
-			final Set<PLACE> loopers = mSelfloop.get(letter);
-			final Set<PLACE> changers = mStateChanger.get(letter);
+			final Set<PLACE> loopers = mSelfloop.getImage(letter);
+			final Set<PLACE> changers = mStateChanger.getImage(letter);
 			if (changers == null || changers.isEmpty()) {
 				++looperOnlyLetters;
 			}
