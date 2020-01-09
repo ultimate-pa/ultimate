@@ -71,7 +71,7 @@ public class DirectFullMultipebbleStateFactory<STATE>
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final HashRelation<STATE, STATE> duplicatorSuccStates = new HashRelation<>();
-		for (final Entry<STATE, STATE> doubleDecker : gs.getDuplicatorDoubleDeckers().entrySet()) {
+		for (final Entry<STATE, STATE> doubleDecker : gs.getDuplicatorDoubleDeckers().getSetOfPairs()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa.internalSuccessors(doubleDecker.getValue(),
 					letter)) {
 				final DoubleDecker<STATE> duplicatorSucc = new DoubleDecker<>(doubleDecker.getKey(), trans.getSucc());
@@ -97,7 +97,7 @@ public class DirectFullMultipebbleStateFactory<STATE>
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final HashRelation<STATE, STATE> duplicatorSuccStates = new HashRelation<>();
-		for (final Entry<STATE, STATE> doubleDecker : gs.getDuplicatorDoubleDeckers().entrySet()) {
+		for (final Entry<STATE, STATE> doubleDecker : gs.getDuplicatorDoubleDeckers().getSetOfPairs()) {
 			for (final OutgoingCallTransition<LETTER, STATE> trans : nwa.callSuccessors(doubleDecker.getValue(),
 					letter)) {
 				final DoubleDecker<STATE> duplicatorSucc = new DoubleDecker<>(doubleDecker.getValue(), trans.getSucc());
@@ -124,7 +124,7 @@ public class DirectFullMultipebbleStateFactory<STATE>
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final HashRelation<STATE, STATE> duplicatorSuccStates = new HashRelation<>();
-		for (final Entry<STATE, STATE> hierDoubleDecker : hier.getDuplicatorDoubleDeckers().entrySet()) {
+		for (final Entry<STATE, STATE> hierDoubleDecker : hier.getDuplicatorDoubleDeckers().getSetOfPairs()) {
 			for (final STATE up : gs.getDuplicatorDoubleDeckers().getImage(hierDoubleDecker.getValue())) {
 				for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessors(up,
 						hierDoubleDecker.getValue(), letter)) {

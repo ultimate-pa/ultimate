@@ -439,7 +439,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	protected boolean checkClausesConsistent() {
 		boolean consistent = true;
 		final Set<Clause<V>> allClauses = new HashSet<>();
-		for (final Entry<V, Clause<V>> entry : mOccursPositive.entrySet()) {
+		for (final Entry<V, Clause<V>> entry : mOccursPositive.getSetOfPairs()) {
 			final Clause<V> clause = entry.getValue();
 			allClauses.add(clause);
 			final IClauseCondition condition = clause.computeClauseCondition(this);
@@ -448,7 +448,7 @@ public abstract class AbstractMaxSatSolver<V> {
 				assert consistent;
 			}
 		}
-		for (final Entry<V, Clause<V>> entry : mOccursNegative.entrySet()) {
+		for (final Entry<V, Clause<V>> entry : mOccursNegative.getSetOfPairs()) {
 			final Clause<V> clause = entry.getValue();
 			allClauses.add(clause);
 			final IClauseCondition condition = clause.computeClauseCondition(this);

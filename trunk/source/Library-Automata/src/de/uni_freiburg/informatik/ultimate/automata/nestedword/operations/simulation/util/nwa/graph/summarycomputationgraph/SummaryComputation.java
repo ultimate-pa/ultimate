@@ -120,7 +120,7 @@ public class SummaryComputation<LETTER, STATE> {
 
 		mGameSummaries = new LinkedHashSet<>();
 		for (final Entry<Set<IGameState>, NestedMap2<IGameState, IGameState, Integer>> entry : mTrigger2Summaries
-				.entrySet()) {
+				.getSetOfPairs()) {
 			final NestedMap2<IGameState, IGameState, Integer> target2source2prio = entry.getValue();
 			final NestedMap2<IGameState, IGameState, Integer> source2target2prio = new NestedMap2<>();
 			for (final Triple<IGameState, IGameState, Integer> triple : target2source2prio.entrySet()) {

@@ -443,7 +443,7 @@ public class Elim1Store {
 		final List<Term> elementEqualities = tver.getSupportingEqualities().entrySet().stream()
 				.map(en -> aiem.constructDerRelation(script, quantifier, en.getKey(), en.getValue()))
 				.collect(Collectors.toList());
-		final List<Term> elementDisequalities = tver.getDisequalities().entrySet().stream()
+		final List<Term> elementDisequalities = tver.getDisequalities().getSetOfPairs().stream()
 				.map(pair -> aiem.constructAntiDerRelation(script, quantifier, pair.getKey(), pair.getValue()))
 				.collect(Collectors.toList());
 

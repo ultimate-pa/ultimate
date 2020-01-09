@@ -329,7 +329,7 @@ public class EquivalenceRelationIterator<E> implements Iterable<Set<Doubleton<E>
 	}
 	
 	public static <E> boolean isClosedUnderTransitivity(final HashRelation<E, E> relation) {
-		for (final Entry<E, E> entry : relation.entrySet()) {
+		for (final Entry<E, E> entry : relation.getSetOfPairs()) {
 			for (final E image : relation.getImage(entry.getValue())) {
 				if (!relation.containsPair(entry.getKey(), image)) {
 					return false;

@@ -274,7 +274,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 						@Override
 						public Set<IPredicate> constructValue(final HashRelation<LETTER, IPredicate> constrainers) {
 							final Set<Term> programStatesWithSucc_Term = new HashSet<>();
-							for (final Entry<LETTER, IPredicate> entry : constrainers.entrySet()) {
+							for (final Entry<LETTER, IPredicate> entry : constrainers.getSetOfPairs()) {
 								final Term pre =
 										mPreInternalCc.getOrConstruct(new Pair<>(entry.getValue(), entry.getKey()));
 								programStatesWithSucc_Term.add(pre);

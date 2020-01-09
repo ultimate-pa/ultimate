@@ -429,9 +429,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			 * roweq-1 propagations
 			 */
 			final Set<Entry<NODE, NODE>> array1RepCcChildren =
-					mCongruenceClosure.getAuxData().getCcChildren(array1Rep).entrySet();
+					mCongruenceClosure.getAuxData().getCcChildren(array1Rep).getSetOfPairs();
 			final Set<Entry<NODE, NODE>> array2RepCcChildren =
-					mCongruenceClosure.getAuxData().getCcChildren(array2Rep).entrySet();
+					mCongruenceClosure.getAuxData().getCcChildren(array2Rep).getSetOfPairs();
 
 			for (final Entry<NODE, NODE> ccc1 : array1RepCcChildren) {
 				if (ccc1.getKey().dependsOnUntrackedArray()) {

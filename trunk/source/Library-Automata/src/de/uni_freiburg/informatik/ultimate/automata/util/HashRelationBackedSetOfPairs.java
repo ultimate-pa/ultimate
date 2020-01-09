@@ -85,7 +85,7 @@ public class HashRelationBackedSetOfPairs<E> implements ISetOfPairs<E, HashRelat
 		private final Iterator<Entry<E, E>> mIt;
 
 		public IteratorFromHashRelation(final HashRelation<E, E> hashRelation) {
-			mIt = hashRelation.entrySet().iterator();
+			mIt = hashRelation.getSetOfPairs().iterator();
 		}
 
 		@Override

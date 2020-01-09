@@ -134,7 +134,7 @@ public final class NwaSimulationUtil {
 		}
 
 		// Validate the supposed simulations
-		for (final Entry<STATE, STATE> supposedSimulation : supposedSimulations.entrySet()) {
+		for (final Entry<STATE, STATE> supposedSimulation : supposedSimulations.getSetOfPairs()) {
 			final STATE leftState = supposedSimulation.getKey();
 			final STATE rightState = supposedSimulation.getValue();
 			if (!isInitialPairPredicate.test(leftState, rightState)) {

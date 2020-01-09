@@ -593,7 +593,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 
 		if (remInfo == null) {
-			for (final Entry<ELEM, ELEM> eq : equalitiesToPropagate.entrySet()) {
+			for (final Entry<ELEM, ELEM> eq : equalitiesToPropagate.getSetOfPairs()) {
 				newEqualityTarget.reportEqualityRec(eq.getKey(), eq.getValue());
 				// this seems nicer but does not work with the current CcManager
 //				mManager.reportEquality(eq.getKey(),  eq.getValue(), newEqualityTarget, true);
@@ -1305,7 +1305,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 
 			final Set<ELEM> elemsAppearingInADisequality = new HashSet<>();
-			for (final Entry<ELEM, ELEM> deq : mElementTVER.getDisequalities().entrySet()) {
+			for (final Entry<ELEM, ELEM> deq : mElementTVER.getDisequalities().getSetOfPairs()) {
 				elemsAppearingInADisequality.add(deq.getKey());
 				elemsAppearingInADisequality.add(deq.getValue());
 			}
@@ -2040,7 +2040,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			mDirectAfPars.transformElements(elemTransformer, elemTransformer);
 			mDirectArgPars.transformElements(elemTransformer, elemTransformer);
 
-			for (final Entry<ELEM, ELEM> en : new HashRelation<>(mNodeToDependents).entrySet()) {
+			for (final Entry<ELEM, ELEM> en : new HashRelation<>(mNodeToDependents).getSetOfPairs()) {
 				mNodeToDependents.removePair(en.getKey(), en.getValue());
 				mNodeToDependents.addPair(elemTransformer.apply(en.getKey()),
 						elemTransformer.apply(en.getValue()));
@@ -2048,7 +2048,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 
 		public Set<Entry<ELEM, ELEM>> getNodeToDependentPairs() {
-			return mNodeToDependents.entrySet();
+			return mNodeToDependents.getSetOfPairs();
 		}
 
 		public Set<ELEM> getDependentsOf(final ELEM elem) {

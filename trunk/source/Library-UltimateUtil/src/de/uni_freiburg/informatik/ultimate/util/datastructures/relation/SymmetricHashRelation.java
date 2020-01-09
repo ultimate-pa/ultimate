@@ -81,7 +81,7 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 
 	public Set<Doubleton<E>> buildSetOfDoubletons() {
 		final Set<Doubleton<E>> result = new HashSet<>();
-		for (final Entry<E, E> entry : entrySet()) {
+		for (final Entry<E, E> entry : getSetOfPairs()) {
 			result.add(new Doubleton<>(entry.getKey(), entry.getValue()));
 		}
 		return result;
@@ -89,7 +89,7 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 
 	public Set<Doubleton<E>> buildSetOfNonSymmetricDoubletons() {
 		final Set<Doubleton<E>> result = new HashSet<>();
-		for (final Entry<E, E> entry : entrySet()) {
+		for (final Entry<E, E> entry : getSetOfPairs()) {
 			if (!entry.getKey().equals(entry.getValue())) {
 				result.add(new Doubleton<>(entry.getKey(), entry.getValue()));
 			}

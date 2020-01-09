@@ -33,7 +33,7 @@ public class CongruenceClosureSmtUtils {
 		final List<Term> elementEqualities = pa.getSupportingElementEqualities().entrySet().stream()
 				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
 				.collect(Collectors.toList());
-		final List<Term> elementDisequalities = pa.getElementDisequalities().entrySet().stream()
+		final List<Term> elementDisequalities = pa.getElementDisequalities().getSetOfPairs().stream()
 				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
 				.collect(Collectors.toList());
 

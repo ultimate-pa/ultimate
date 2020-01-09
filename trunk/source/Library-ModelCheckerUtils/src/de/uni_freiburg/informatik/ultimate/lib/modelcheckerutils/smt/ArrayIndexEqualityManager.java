@@ -214,12 +214,12 @@ public class ArrayIndexEqualityManager {
 			assert t2rep == mTver.getRepresentative(index1);
 		}
 		final HashRelation<Term, Term> outdatedEntries = new HashRelation<>();
-		for (final Entry<Term, Term> entry : mAlreadyCheckedBySolver.entrySet()) {
+		for (final Entry<Term, Term> entry : mAlreadyCheckedBySolver.getSetOfPairs()) {
 			if (entry.getKey() == outdatedRepresentative || entry.getValue() == outdatedRepresentative) {
 				outdatedEntries.addPair(entry.getKey(), entry.getValue());
 			}
 		}
-		for (final Entry<Term, Term> entry : outdatedEntries.entrySet()) {
+		for (final Entry<Term, Term> entry : outdatedEntries.getSetOfPairs()) {
 			if (entry.getKey() == outdatedRepresentative) {
 				final boolean removed = mAlreadyCheckedBySolver.removePair(outdatedRepresentative, entry.getValue());
 				if (!removed) {

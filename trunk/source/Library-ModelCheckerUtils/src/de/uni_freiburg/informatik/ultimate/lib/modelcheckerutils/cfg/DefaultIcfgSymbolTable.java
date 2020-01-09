@@ -177,7 +177,7 @@ public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 	public Set<ApplicationTerm> computeAllDefaultConstants() {
 		final Set<ApplicationTerm> rtr = new LinkedHashSet<>();
 		mGlobals.stream().map(a -> a.getDefaultConstant()).forEachOrdered(rtr::add);
-		mLocals.entrySet().stream().map(a -> a.getValue().getDefaultConstant()).forEachOrdered(rtr::add);
+		mLocals.getSetOfPairs().stream().map(a -> a.getValue().getDefaultConstant()).forEachOrdered(rtr::add);
 		return rtr;
 	}
 

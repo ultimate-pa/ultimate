@@ -91,7 +91,7 @@ public class DangerInvariantUtils {
 				new PredicateTransformer<>(mgdScript,
 						new TermDomainOperationProvider(services, mgdScript));
 		final Collection<IPredicate> predecessors = new ArrayList<>();
-		for (final Entry<IAction, IPredicate> entry : succs.entrySet()) {
+		for (final Entry<IAction, IPredicate> entry : succs.getSetOfPairs()) {
 			final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
 					entry.getKey().getTransformula(), entry.getValue(), services);
 			predecessors.add(predicateFactory.newPredicate(pre));

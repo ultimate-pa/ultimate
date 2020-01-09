@@ -373,8 +373,8 @@ public class CcAuxData<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final HashRelation<ELEM, ELEM> ccc2 = getCcChildren(e2Rep);
 
 
-		for (final Entry<ELEM, ELEM> pair1 : ccc1.entrySet()) {
-			for (final Entry<ELEM, ELEM> pair2 : ccc2.entrySet()) {
+		for (final Entry<ELEM, ELEM> pair1 : ccc1.getSetOfPairs()) {
+			for (final Entry<ELEM, ELEM> pair2 : ccc2.getSetOfPairs()) {
 				addPropIfOneIsEqualOneIsUnconstrained(pair1.getKey(), pair1.getValue(), pair2.getKey(),
 						pair2.getValue(), result);
 			}

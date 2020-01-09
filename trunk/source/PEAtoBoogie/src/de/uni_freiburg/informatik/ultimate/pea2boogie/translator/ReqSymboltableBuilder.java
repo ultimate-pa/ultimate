@@ -188,7 +188,7 @@ public class ReqSymboltableBuilder {
 	}
 
 	public Set<Entry<String, ErrorInfo>> getErrors() {
-		return Collections.unmodifiableSet(mId2Errors.entrySet());
+		return Collections.unmodifiableSet(mId2Errors.getSetOfPairs());
 	}
 
 	private void addErrorError(final String name, final ErrorInfo typeErrorInfo) {

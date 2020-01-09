@@ -310,7 +310,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 
 		// mDisequalities may not contain null entries
-		for (final Entry<E, E> en : mDisequalities.entrySet()) {
+		for (final Entry<E, E> en : mDisequalities.getSetOfPairs()) {
 			if (en.getKey() == null) {
 				return false;
 			}
@@ -319,7 +319,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 			}
 		}
 		// disequalites only contain representatives
-		for (final Entry<E, E> en : mDisequalities.entrySet()) {
+		for (final Entry<E, E> en : mDisequalities.getSetOfPairs()) {
 			if (!isRepresentative(en.getKey())) {
 				return false;
 			}
@@ -456,7 +456,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 
 	public HashRelation<E, E> getDisequalities() {
-		assert !mDisequalities.entrySet().stream().anyMatch(pr -> pr.getValue() == null);
+		assert !mDisequalities.getSetOfPairs().stream().anyMatch(pr -> pr.getValue() == null);
 		// TODO: make a copy before returning or not? (safer but slower)
 		return new HashRelation<>(mDisequalities);
 	}
@@ -515,7 +515,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 //			newUf.addEquivalenceClass(elemEqc);
 		}
 		final HashRelation<E, E> newDisequalities = new HashRelation<>();
-		for (final Entry<E, E> deq : mDisequalities.entrySet()) {
+		for (final Entry<E, E> deq : mDisequalities.getSetOfPairs()) {
 //			if (elems.contains(deq.getKey()) || elems.contains(deq.getValue())) {
 			if (DataStructureUtils.getSomeCommonElement(getEquivalenceClass(deq.getKey()), elems).isPresent()
 				|| DataStructureUtils.getSomeCommonElement(getEquivalenceClass(deq.getValue()), elems).isPresent()) {
@@ -549,7 +549,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 			newUf.addEquivalenceClass(DataStructureUtils.intersection(elemEqc, elems));
 		}
 		final HashRelation<E, E> newDisequalities = new HashRelation<>();
-		for (final Entry<E, E> deq : mDisequalities.entrySet()) {
+		for (final Entry<E, E> deq : mDisequalities.getSetOfPairs()) {
 			final Optional<E> lhsRep = DataStructureUtils.getSomeCommonElement(elems, getEquivalenceClass(deq.getKey()));
 			if (lhsRep.isPresent()) {
 				final Optional<E> rhsRep = DataStructureUtils.getSomeCommonElement(elems, getEquivalenceClass(deq.getValue()));
@@ -584,7 +584,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 		if (mDisequalities.getImage(elem).size() > 0) {
 			return true;
 		}
-		for (final Entry<E, E> en : mDisequalities.entrySet()) {
+		for (final Entry<E, E> en : mDisequalities.getSetOfPairs()) {
 			if (en.getValue().equals(elem)) {
 				return true;
 			}

@@ -103,7 +103,7 @@ public class TypeSortTranslator {
 		// final IBoogieType boolType = BoogieType.TYPE_BOOL;
 		// cacheSort(boolType, boolSort);
 		// }
-		for (final Entry<Sort, IBoogieType> en : sortToType.entrySet()) {
+		for (final Entry<Sort, IBoogieType> en : sortToType.getSetOfPairs()) {
 			cacheSort(en.getValue(), en.getKey());
 		}
 	}
