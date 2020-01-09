@@ -128,7 +128,7 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	 * @param rel relation to subtract from this one
 	 */
 	public void removeAllPairs(final AbstractRelation<D, R, ?, ?> rel) {
-		for (final Entry<D, R> en : rel.entrySet()) {
+		for (final Entry<D, R> en : rel.getSetOfPairs()) {
 			removePair(en.getKey(), en.getValue());
 		}
 	}
@@ -369,13 +369,13 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	}
 
 	/**
-	 * Returns a Set view of the pairs contained in this relation. The set is backed by the relation, so changes to the
-	 * map are reflected in the set, and vice-versa. TODO 2016-05-26 Matthias: This method was implemented accidentally
-	 * and is not yet used and was not testet. Remove this warning once this method was tested.
+	 * Returns a Set view of the pairs contained in this relation. The set is
+	 * backed by the relation, so changes to the map are reflected in the set,
+	 * and vice-versa.
 	 *
 	 * @return a set view of the pairs contained in this relation
 	 */
-	public Set<Map.Entry<D, R>> entrySet() {
+	public Set<Map.Entry<D, R>> getSetOfPairs() {
 		return new Set<Map.Entry<D, R>>() {
 
 			@Override
