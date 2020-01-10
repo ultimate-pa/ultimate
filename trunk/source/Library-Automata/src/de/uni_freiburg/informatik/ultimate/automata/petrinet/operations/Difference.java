@@ -127,8 +127,8 @@ public final class Difference
 
 	private final Map<PLACE, PLACE> mOldPlace2NewPlace = new HashMap<>();
 
-	private final HashRelation<LETTER, PLACE> mSelfloop = new HashRelation<>();
-	private final HashRelation<LETTER, PLACE> mStateChanger = new HashRelation<>();
+	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mSelfloop = new HashRelation<>();
+	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mStateChanger = new HashRelation<>();
 
 	private final Map<PLACE, PLACE> mWhitePlace = new HashMap<>();
 	private final Map<PLACE, PLACE> mBlackPlace = new HashMap<>();
@@ -211,7 +211,7 @@ public final class Difference
 	}
 
 	private void partitionStates() {
-		for (final LETTER symbol : mSubtrahend.getVpAlphabet().getInternalAlphabet()) {
+		for (final ITransition<LETTER, PLACE> transition : mMinuend.getTransitions()) {
 			final Set<PLACE> selfloopStates = new HashSet<>();
 			final Set<PLACE> changerStates = new HashSet<>();
 			for (final PLACE state : mSubtrahend.getStates()) {
@@ -222,7 +222,7 @@ public final class Difference
 					continue;
 				}
 				final OutgoingInternalTransition<LETTER, PLACE> successors =
-						atMostOneElement(mSubtrahend.internalSuccessors(state, symbol));
+						atMostOneElement(mSubtrahend.internalSuccessors(state, transition.getSymbol()));
 				if (successors == null) {
 					continue;
 				} else if (successors.getSucc().equals(state)) {
@@ -231,10 +231,10 @@ public final class Difference
 					changerStates.add(state);
 				}
 			}
-			mSelfloop.addAllPairs(symbol, selfloopStates);
-			mStateChanger.addAllPairs(symbol, changerStates);
+			mSelfloop.addAllPairs(transition, selfloopStates);
+			mStateChanger.addAllPairs(transition, changerStates);
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(symbol + " has " + selfloopStates.size() + " selfloop and "
+				mLogger.debug(transition + " has " + selfloopStates.size() + " selfloop and "
 						+ changerStates.size() + " changer(s)");
 			}
 		}
@@ -261,19 +261,19 @@ public final class Difference
 
 	/**
 	 * Heuristic for choosing a synchronization method for all transitions with a given letter.
-	 * @param symbol Label of transitions to be synchronized.
+	 * @param oldTrans Label of transitions to be synchronized.
 	 * @return Use {@link #syncWithAnySelfloop(ITransition)}, else use {@link #syncWithEachSelfloop(ITransition)}
 	 */
-	private boolean invertSyncWithSelfloops(final LETTER symbol) {
+	private boolean invertSyncWithSelfloops(final ITransition<LETTER, PLACE> oldTrans) {
 		return mLoopSyncMethod == LoopSyncMethod.INVERTED || (mLoopSyncMethod == LoopSyncMethod.HEURISTIC
-				&& mSelfloop.getImage(symbol).size() >= mStateChanger.getImage(symbol).size());
+				&& mSelfloop.getImage(oldTrans).size() >= mStateChanger.getImage(oldTrans).size());
 	}
 
 	private Set<PLACE> requiredBlackPlaces() {
 		final Set<PLACE> requiredBlack = new HashSet<>();
-		for (final LETTER symbol : mMinuend.getAlphabet()) {
-			if (invertSyncWithSelfloops(symbol)) {
-				requiredBlack.addAll(mStateChanger.getImage(symbol));
+		for (final ITransition<LETTER, PLACE> oldTrans : mMinuend.getTransitions()) {
+			if (invertSyncWithSelfloops(oldTrans)) {
+				requiredBlack.addAll(mStateChanger.getImage(oldTrans));
 			}
 		}
 		return requiredBlack;
@@ -299,8 +299,7 @@ public final class Difference
 
 	private void addTransitions() {
 		for (final ITransition<LETTER, PLACE> oldTrans : mMinuend.getTransitions()) {
-			final LETTER symbol = oldTrans.getSymbol();
-			for (final PLACE predState : mStateChanger.getImage(symbol)) {
+			for (final PLACE predState : mStateChanger.getImage(oldTrans)) {
 				syncWithChanger(oldTrans, predState);
 			}
 			syncWithSelfloops(oldTrans);
@@ -331,7 +330,7 @@ public final class Difference
 	}
 
 	private void syncWithSelfloops(final ITransition<LETTER, PLACE> oldTrans) {
-		if (invertSyncWithSelfloops(oldTrans.getSymbol())) {
+		if (invertSyncWithSelfloops(oldTrans)) {
 			syncWithAnySelfloop(oldTrans);
 		} else {
 			syncWithEachSelfloop(oldTrans);
@@ -361,8 +360,7 @@ public final class Difference
 	 */
 	private void syncWithEachSelfloop(final ITransition<LETTER, PLACE> oldTrans) {
 		// Relies on the special properties of the subtrahend L(A)◦Σ^*.
-		final LETTER symbol = oldTrans.getSymbol();
-		for (final PLACE state : mSelfloop.getImage(symbol)) {
+		for (final PLACE state : mSelfloop.getImage(oldTrans)) {
 			final Set<PLACE> predecessors = new HashSet<>();
 			final Set<PLACE> successors = new HashSet<>();
 			predecessors.add(mWhitePlace.get(state));
@@ -395,19 +393,18 @@ public final class Difference
 	 * @see #invertSyncWithSelfloops(LETTER)
 	 */
 	private void syncWithAnySelfloop(final ITransition<LETTER, PLACE> oldTrans) {
-		final LETTER symbol = oldTrans.getSymbol();
-		if (mSelfloop.getImage(symbol).isEmpty()) {
+		if (mSelfloop.getImage(oldTrans).isEmpty()) {
 			// This optimization relies on the special properties of the subtrahend L(A)◦Σ^*.
 			return;
 		}
 		final Set<PLACE> predecessors = new HashSet<>();
 		final Set<PLACE> successors = new HashSet<>();
 		copyMinuendFlow(oldTrans, predecessors, successors);
-		for (final PLACE state : mStateChanger.getImage(symbol)) {
+		for (final PLACE state : mStateChanger.getImage(oldTrans)) {
 			predecessors.add(mBlackPlace.get(state));
 			successors.add(mBlackPlace.get(state));
 		}
-		mResult.addTransition(symbol, predecessors, successors);
+		mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
 	}
 
 	private void copyMinuendFlow(final ITransition<LETTER, PLACE> trans,
@@ -472,9 +469,9 @@ public final class Difference
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		int looperOnlyLetters = 0;
 		int moreChangersThanLoopers = 0;
-		for (final LETTER letter : mSubtrahend.getAlphabet()) {
-			final Set<PLACE> loopers = mSelfloop.getImage(letter);
-			final Set<PLACE> changers = mStateChanger.getImage(letter);
+		for (final ITransition<LETTER, PLACE> oldTrans : mMinuend.getTransitions()) {
+			final Set<PLACE> loopers = mSelfloop.getImage(oldTrans);
+			final Set<PLACE> changers = mStateChanger.getImage(oldTrans);
 			if (changers == null || changers.isEmpty()) {
 				++looperOnlyLetters;
 			}
