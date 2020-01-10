@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *            place content type
  */
 public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER, PLACE> {
-	private static final boolean EXTENDED_ASSERTION_CHECKING = !false;
+	private static final boolean EXTENDED_ASSERTION_CHECKING = false;
 	private long mQueryCounterYes;
 	private long mQueryCounterNo;
 
