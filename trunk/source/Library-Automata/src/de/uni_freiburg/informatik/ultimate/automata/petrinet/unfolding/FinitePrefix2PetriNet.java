@@ -53,7 +53,9 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UniquePriorityQueue;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UniqueQueue;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -72,6 +74,8 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	private final BranchingProcess<LETTER, PLACE> mInput;
 	private final BoundedPetriNet<LETTER, PLACE> mNet;
 	private final UniqueQueue <Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>>> mMergingCandidates;
+	private final HashRelation<Event<LETTER, PLACE>, Condition<LETTER, PLACE>> mConditionPredecessors = new HashRelation<>();
+	private final HashRelation<Condition<LETTER, PLACE>, Event<LETTER, PLACE>> mEventSuccessors = new HashRelation<>();
 	private final UnionFind<Condition<LETTER, PLACE>> mConditionRepresentatives;
 	private final UnionFind<Event<LETTER, PLACE>> mEventRepresentatives;
 	private final IFinitePrefix2PetriNetStateFactory<PLACE> mStateFactory;
@@ -173,6 +177,10 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				assert mConditionRepresentatives.find(c) == null;
 				mConditionRepresentatives.makeEquivalenceClass(c);
 			}
+			for (final Condition<LETTER, PLACE> c : e.getPredecessorConditions()) {
+				mEventSuccessors.addPair(c, e);
+			}
+			mConditionPredecessors.addAllPairs(e, e.getPredecessorConditions());
 		}
 		
 
@@ -183,20 +191,33 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				final ConditionMarking<LETTER, PLACE> companionCondMark = companion.getConditionMark();
 				final ConditionMarking<LETTER, PLACE> eCondMark = e.getConditionMark();
 				mergeConditions(eCondMark.getConditions(), companionCondMark.getConditions());
-				
 				while (!mMergingCandidates.isEmpty()) {
 					mNumberOfMergingCondidates++;
 					final Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>> candidate = mMergingCandidates.poll();
-					final Event<LETTER, PLACE> e1 = candidate.getFirst();
-					final Event<LETTER, PLACE> e2 = candidate.getSecond();
-					if (!mEventRepresentatives.find(e1).equals(mEventRepresentatives.find(e2)) && mConditionRepresentatives.find(e1.getPredecessorConditions())
-							.equals(mConditionRepresentatives.find(e2.getPredecessorConditions()))) {
+					final Event<LETTER, PLACE> e1 = mEventRepresentatives.find(candidate.getFirst());
+					final Event<LETTER, PLACE> e2 = mEventRepresentatives.find(candidate.getSecond());
+					if (!e1.equals(e2) &&
+							mConditionPredecessors.getImage(e1).equals(mConditionPredecessors.getImage(e2))) {
 						mEventRepresentatives.union(e1, e2);
+						final Event<LETTER, PLACE> rep = mEventRepresentatives.find(e1);
+						final Event<LETTER, PLACE> nonRep;  
+						if (rep.equals(e1)) {
+							nonRep = e2;
+						} else {
+							nonRep = e1;
+						}
+						for (final Condition<LETTER, PLACE> c: mConditionPredecessors.getImage(nonRep)) {
+							mEventSuccessors.removePair(c, nonRep);
+							mEventSuccessors.addPair(c, rep);
+						}
+						mConditionPredecessors.addAllPairs(rep, mConditionPredecessors.getImage(nonRep));
+						mConditionPredecessors.removeDomainElement(nonRep);
 						mNumberOfMergedEventPairs++;
 						mergeConditions(e1.getSuccessorConditions(), e2.getSuccessorConditions());
 					}
-				}
 			}
+		}
+
 		}
 		//final Set<Event<LETTER, PLACE>> releventEvents=new HashSet<>(mEventRepresentatives.getAllRepresentatives());
 		final Set<Event<LETTER, PLACE>> releventEvents=new HashSet<>(mEventRepresentatives.getAllRepresentatives());
@@ -225,13 +246,13 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				i++;
 			}
 		}
-		/*
+		
 		for (Event<LETTER, PLACE>e1: releventEvents) {
 			for (Event<LETTER, PLACE>e2: releventEvents) {
 				assert e1.equals(e2) || !(e1.getTransition().equals(e2.getTransition())&&(mConditionRepresentatives.find(e1.getPredecessorConditions())
 								.equals(mConditionRepresentatives.find(e2.getPredecessorConditions())))): "There exists no 2 events with same predecessors conditions and transition";
 			}
-		}*/
+		}
 		
 		final Map<Condition<LETTER, PLACE>, PLACE> placeMap = new HashMap<>();
 		for (final Condition<LETTER, PLACE> c : bp.getConditions()) {
@@ -433,21 +454,31 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			assert p2 != null : "no place for condition " + c2;
 			final Condition<LETTER, PLACE> c1 = origPlace2Condition.get(p2);
 			assert c1 != null : "no condition for place " + p2;
-			for (Condition<LETTER, PLACE> c3 : mConditionRepresentatives.getEquivalenceClassMembers(c1)) {
-				for (Condition<LETTER, PLACE> c4 : mConditionRepresentatives.getEquivalenceClassMembers(c2)) {
-					for (Event<LETTER, PLACE> e1 : c3.getSuccessorEvents()) {
-						for (Event<LETTER, PLACE> e2 : c4.getSuccessorEvents()) {
-							if (e1.getTransition().equals(e2.getTransition())) {
-								mMergingCandidates.add(
-										new Pair<>(mEventRepresentatives.find(e1), mEventRepresentatives.find(e2)));
-								mNumberOfAddOperationsToTheCandQueue++;
-							}
-						}
+			for (Event<LETTER, PLACE> e1 : mEventSuccessors.getImage(c1)) {
+				for (Event<LETTER, PLACE> e2 :  mEventSuccessors.getImage(c2)) {
+					if (e1.getTransition().equals(e2.getTransition())) {
+						mMergingCandidates
+								.add(new Pair<>(mEventRepresentatives.find(e1), mEventRepresentatives.find(e2)));
+						mNumberOfAddOperationsToTheCandQueue++;
 					}
 				}
+
 			}
 			mConditionRepresentatives.union(c1, c2);
+			final Condition<LETTER, PLACE> rep = mConditionRepresentatives.find(c1);
+			final Condition<LETTER, PLACE> nonRep;
+			if (rep.equals(c1)) {
+				nonRep = c2;
+			} else {
+				nonRep = c1;
+			}
 
+			for (final Event<LETTER, PLACE> e : mEventSuccessors.getImage(nonRep)) {
+				mConditionPredecessors.removePair(e, nonRep);
+				mConditionPredecessors.addPair(e, rep);
+			}
+			mEventSuccessors.addAllPairs(rep, mEventSuccessors.getImage(nonRep));
+			mEventSuccessors.removeDomainElement(nonRep);
 		}
 	}
 
@@ -636,12 +667,13 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		}
 	}
 	
-	class ConfigurationSizeBasedOrder implements Comparator<Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>>> {
+	class DepthBasedOrder implements Comparator<Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>>> {
 
 		@Override
 		public int compare(Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>> p1,
 				Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>> p2) {
-			return p1.getFirst().getLocalConfiguration().size() - p2.getFirst().getLocalConfiguration().size();
+			return Math.min(p1.getFirst().getDepth(), p1.getSecond().getDepth()) - 
+					Math.min(p2.getFirst().getDepth(), p2.getSecond().getDepth());
 		}
 		
 	}
