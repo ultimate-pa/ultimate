@@ -117,6 +117,14 @@ public final class Difference
 		HEURISTIC,
 	}
 
+	/**
+	 * If we have have full information about self-loop (which is the case if
+	 * information about loopers and changers is not provided by the user) and there
+	 * is no self-loop (in the DFA) for transition then we can omit the inverted
+	 * synchronization for this transition
+	 */
+	private static final boolean FULL_SELFLOOP_INFORMATION_OPTIMIZATION = false;
+
 	private final LoopSyncMethod mLoopSyncMethod;
 
 	private final BoundedPetriNet<LETTER, PLACE> mMinuend;
@@ -127,8 +135,8 @@ public final class Difference
 
 	private final Map<PLACE, PLACE> mOldPlace2NewPlace = new HashMap<>();
 
-	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mSelfloop = new HashRelation<>();
-	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mStateChanger = new HashRelation<>();
+	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mSelfloop;
+	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mStateChanger;
 
 	private final Map<PLACE, PLACE> mWhitePlace = new HashMap<>();
 	private final Map<PLACE, PLACE> mBlackPlace = new HashMap<>();
@@ -137,7 +145,7 @@ public final class Difference
 			final AutomataLibraryServices services, final SF factory,
 			final BoundedPetriNet<LETTER, PLACE> minuendNet,
 			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa) {
-		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.HEURISTIC);
+		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.HEURISTIC, null, null);
 	}
 
 	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(
@@ -145,14 +153,15 @@ public final class Difference
 			final BoundedPetriNet<LETTER, PLACE> minuendNet,
 			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa,
 			final String loopSyncMethod) {
-		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.valueOf(loopSyncMethod));
+		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.valueOf(loopSyncMethod), null, null);
 	}
 
 	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(
 			final AutomataLibraryServices services, final SF factory,
 			final BoundedPetriNet<LETTER, PLACE> minuendNet,
 			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa,
-			final LoopSyncMethod loopSyncMethod) {
+			final LoopSyncMethod loopSyncMethod, final HashRelation<ITransition<LETTER, PLACE>, PLACE> selfloop,
+			final HashRelation<ITransition<LETTER, PLACE>, PLACE> stateChanger) {
 		super(services);
 		mMinuend = minuendNet;
 		mSubtrahend = subtrahendDfa;
@@ -165,9 +174,18 @@ public final class Difference
 		assert checkSubtrahendProperties();
 		if (resultTriviallyEmpty()) {
 			mLogger.debug("Difference trivially empty");
+			mSelfloop = new HashRelation<>();
+			mStateChanger = new HashRelation<>();
 			mResult = new BoundedPetriNet<>(mServices, mMinuend.getAlphabet(), true);
 		} else {
-			partitionStates();
+			if (selfloop != null) {
+				mSelfloop = selfloop;
+				mStateChanger = stateChanger;
+			} else {
+				mSelfloop = new HashRelation<>();
+				mStateChanger = new HashRelation<>();
+				partitionStates();
+			}
 			copyNetPlaces();
 			addBlackAndWhitePlaces();
 			addTransitions();
@@ -393,7 +411,7 @@ public final class Difference
 	 * @see #invertSyncWithSelfloops(LETTER)
 	 */
 	private void syncWithAnySelfloop(final ITransition<LETTER, PLACE> oldTrans) {
-		if (mSelfloop.getImage(oldTrans).isEmpty()) {
+		if (FULL_SELFLOOP_INFORMATION_OPTIMIZATION && mSelfloop.getImage(oldTrans).isEmpty()) {
 			// This optimization relies on the special properties of the subtrahend L(A)◦Σ^*.
 			return;
 		}
