@@ -298,7 +298,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 				removeUnreachableResult = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable<>(
 						new AutomataLibraryServices(mServices), (BoundedPetriNet<LETTER, IPredicate>) mAbstraction)
 								.getResult();
-				final int placesAfterwards = (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces()).size();
+				final int placesAfterwards = (removeUnreachableResult.getPlaces()).size();
 				statesRemovedByMinimization = placesBefore - placesAfterwards;
 				nontrivialMinimizaton = true;
 			} finally {
