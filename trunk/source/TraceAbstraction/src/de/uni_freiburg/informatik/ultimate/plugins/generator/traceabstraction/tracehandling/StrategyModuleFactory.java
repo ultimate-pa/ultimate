@@ -184,7 +184,9 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	@SuppressWarnings("unchecked")
 	private IIpAbStrategyModule<LETTER> createInterpolantAutomatonBuilderStrategyModulePreferences(
 			final InterpolantAutomaton setting, final IIpTcStrategyModule<?, LETTER> preferenceIpTc) {
-		switch (setting) {
+		final InterpolantAutomaton realSetting =
+				mTaPrefs.overrideInterpolantAutomaton() ? mTaPrefs.interpolantAutomaton() : setting;
+		switch (realSetting) {
 		case STRAIGHT_LINE:
 			return new IpAbStrategyModuleStraightlineAll<>(mServices, mAbstraction, mCounterexample,
 					mEmptyStackFactory);
@@ -195,8 +197,10 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 			return new IpAbStrategyModuleTotalInterpolation<>(mServices, mAbstraction, mCounterexample,
 					mPredicateUnifier, mPrefs, mCsToolkit, mPredFacInterpolAut);
 		case ABSTRACT_INTERPRETATION:
+			final IIpTcStrategyModule<?, LETTER> strategy =
+					preferenceIpTc == null ? createIpTcStrategyModulePreferences() : preferenceIpTc;
 			return new IpAbStrategyModuleAbstractInterpretation<>(mAbstraction, mCounterexample, mPredicateUnifier,
-					(IpTcStrategyModuleAbstractInterpretation<LETTER>) preferenceIpTc, mEmptyStackFactory);
+					(IpTcStrategyModuleAbstractInterpretation<LETTER>) strategy, mEmptyStackFactory);
 		case MCR:
 			return new IpAbStrategyModuleMcr<>(mCounterexample.getWord().asList(), mPredicateUnifier,
 					mEmptyStackFactory, mLogger, mPrefs, mAbstraction.getAlphabet());
@@ -207,34 +211,26 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	}
 
 	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleStraightlineAll() {
-		return createInterpolantAutomatonBuilderStrategyModulePreferences(mTaPrefs.overrideInterpolantAutomaton()
-				? mTaPrefs.interpolantAutomaton() : InterpolantAutomaton.STRAIGHT_LINE,
-				createIpTcStrategyModulePreferences());
+		return createInterpolantAutomatonBuilderStrategyModulePreferences(InterpolantAutomaton.STRAIGHT_LINE, null);
 	}
 
 	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleAbstractInterpretation(
 			final IpTcStrategyModuleAbstractInterpretation<LETTER> ipTcStrategyModuleAbsInt) {
-		return createInterpolantAutomatonBuilderStrategyModulePreferences(mTaPrefs.overrideInterpolantAutomaton()
-				? mTaPrefs.interpolantAutomaton() : InterpolantAutomaton.ABSTRACT_INTERPRETATION,
-				createIpTcStrategyModulePreferences());
+		return createInterpolantAutomatonBuilderStrategyModulePreferences(InterpolantAutomaton.ABSTRACT_INTERPRETATION,
+				null);
 	}
 
 	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleTotalInterpolation() {
-		return createInterpolantAutomatonBuilderStrategyModulePreferences(mTaPrefs.overrideInterpolantAutomaton()
-				? mTaPrefs.interpolantAutomaton() : InterpolantAutomaton.TOTALINTERPOLATION,
-				createIpTcStrategyModulePreferences());
+		return createInterpolantAutomatonBuilderStrategyModulePreferences(InterpolantAutomaton.TOTALINTERPOLATION,
+				null);
 	}
 
 	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleCanonical() {
-		return createInterpolantAutomatonBuilderStrategyModulePreferences(mTaPrefs.overrideInterpolantAutomaton()
-				? mTaPrefs.interpolantAutomaton() : InterpolantAutomaton.CANONICAL,
-				createIpTcStrategyModulePreferences());
+		return createInterpolantAutomatonBuilderStrategyModulePreferences(InterpolantAutomaton.CANONICAL, null);
 	}
 
 	public IIpAbStrategyModule<LETTER> createIpAbStrategyModuleMcr() {
-		return createInterpolantAutomatonBuilderStrategyModulePreferences(
-				mTaPrefs.overrideInterpolantAutomaton() ? mTaPrefs.interpolantAutomaton() : InterpolantAutomaton.MCR,
-				createIpTcStrategyModulePreferences());
+		return createInterpolantAutomatonBuilderStrategyModulePreferences(InterpolantAutomaton.MCR, null);
 	}
 
 	public TermClassifier getTermClassifierForTrace() {
