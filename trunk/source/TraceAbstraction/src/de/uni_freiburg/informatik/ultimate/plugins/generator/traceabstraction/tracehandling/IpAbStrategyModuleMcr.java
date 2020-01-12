@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -60,11 +59,9 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private final VpAlphabet<LETTER> mAlphabet;
 
-	private final List<Set<IProgramVar>> mWrites2Variables;
 	private final HashRelation<IProgramVar, Integer> mVariables2Writes;
 	private final List<Map<IProgramVar, Integer>> mPreviousWrite;
 	private final Map<String, List<Integer>> mThreads2SortedActions;
-	private final List<Set<String>> mActions2Threads;
 
 	private IpAbStrategyModuleResult<LETTER> mResult;
 
@@ -81,11 +78,9 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 		mXnfConversionTechnique = prefs.getXnfConversionTechnique();
 		mEmptyStackFactory = emptyStackFactory;
 		mAlphabet = new VpAlphabet<>(alphabet);
-		mWrites2Variables = new ArrayList<>(trace.size());
 		mVariables2Writes = new HashRelation<>();
 		mPreviousWrite = new ArrayList<>(trace.size());
 		mThreads2SortedActions = new HashMap<>();
-		mActions2Threads = new ArrayList<>(trace.size());
 		preprocess();
 	}
 
@@ -95,7 +90,6 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 			final LETTER action = mTrace.get(i);
 			final TransFormula transformula = action.getTransformula();
 			final Set<IProgramVar> writtenVars = transformula.getAssignedVars();
-			mWrites2Variables.add(writtenVars);
 			for (final IProgramVar var : writtenVars) {
 				mVariables2Writes.addPair(var, i);
 			}
@@ -115,7 +109,6 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 				}
 				threadActions.add(i);
 			}
-			mActions2Threads.add(new HashSet<>(Arrays.asList(currentThread, nextThread)));
 			final Map<IProgramVar, Integer> previousWrites = new HashMap<>();
 			for (final IProgramVar read : transformula.getInVars().keySet()) {
 				previousWrites.put(read, lastWrittenBy.get(read));
