@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -214,75 +213,79 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 	}
 
 	private <STATE> NestedWordAutomaton<LETTER, IPredicate> constructInterpolantAutomaton(
-			final List<IPredicate> interpolants, final INestedWordAutomaton<Integer, STATE> mcrAutomaton)
-			throws AutomataLibraryException {
+			final List<QualifiedTracePredicates> tracePredicates,
+			final INestedWordAutomaton<Integer, STATE> mcrAutomaton) throws AutomataLibraryException {
 		mLogger.info("Constructing interpolant automaton by labelling MCR automaton.");
-		final Map<STATE, IPredicate> stateMap = new HashMap<>();
 		final NestedWordAutomaton<LETTER, IPredicate> result =
 				new NestedWordAutomaton<>(mAutomataServices, mAlphabet, mEmptyStackFactory);
-		IPredicate currentPredicate = mPredicateUnifier.getTruePredicate();
-		result.addState(true, false, currentPredicate);
-		result.addState(false, true, mPredicateUnifier.getFalsePredicate());
-		// Fill stateMap and automaton with the given interpolants
-		final LinkedList<STATE> queue = new LinkedList<>();
-		STATE currentState = mcrAutomaton.getInitialStates().iterator().next();
-		stateMap.put(currentState, currentPredicate);
-		queue.add(currentState);
-		for (int i = 0; i < mTrace.size(); i++) {
-			final Iterator<OutgoingInternalTransition<Integer, STATE>> succStates =
-					mcrAutomaton.internalSuccessors(currentState, i).iterator();
-			if (!succStates.hasNext()) {
-				throw new IllegalStateException("Trace is not present in the MCR automaton");
-			}
-			currentState = succStates.next().getSucc();
-			// TODO: Check interpolants.get(i) for "useless" (not future-live) variables and quantifiy them away (using
-			// exists) and show a warning
-			final IPredicate nextPredicate = i == interpolants.size() ? mPredicateUnifier.getFalsePredicate()
-					: mPredicateUnifier.getOrConstructPredicate(interpolants.get(i));
-			if (!result.contains(nextPredicate)) {
-				result.addState(false, false, nextPredicate);
-			}
-			result.addInternalTransition(currentPredicate, mTrace.get(i), nextPredicate);
-			queue.add(currentState);
-			currentPredicate = nextPredicate;
-			stateMap.put(currentState, currentPredicate);
-		}
 		final PredicateTransformer<Term, IPredicate, TransFormula> predicateTransformer =
 				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
 		int wpCalls = 0;
-		while (!queue.isEmpty()) {
-			final STATE state = queue.remove();
-			final IPredicate predicate = stateMap.get(state);
-			if (predicate == null) {
-				throw new IllegalStateException("Trying to visit an uncovered state.");
-			}
-			for (final IncomingInternalTransition<Integer, STATE> edge : mcrAutomaton.internalPredecessors(state)) {
-				final STATE predecessor = edge.getPred();
-				IPredicate predPredicate = stateMap.get(predecessor);
-				final LETTER action = mTrace.get(edge.getLetter());
-				// If the predecessor is already labeled, we can continue
-				if (predPredicate == null) {
-					queue.add(predecessor);
-					final Iterator<IncomingInternalTransition<LETTER, IPredicate>> predicateEdges =
-							result.internalPredecessors(predicate, action).iterator();
-					// If there is a predecessor present in the result automaton, we can just use it
-					if (predicateEdges.hasNext()) {
-						predPredicate = predicateEdges.next().getPred();
-					} else {
-						// Otherwise calculate wp and add it as a state if necessary
-						wpCalls++;
-						final Term wp = predicateTransformer.weakestPrecondition(predicate, action.getTransformula());
-						final Term wpEliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
-								mManagedScript, wp, mSimplificationTechnique, mXnfConversionTechnique);
-						predPredicate = mPredicateUnifier.getOrConstructPredicate(wpEliminated);
-						if (!result.contains(predPredicate)) {
-							result.addState(false, false, predPredicate);
-						}
-					}
-					stateMap.put(predecessor, predPredicate);
+		result.addState(true, false, mPredicateUnifier.getTruePredicate());
+		result.addState(false, true, mPredicateUnifier.getFalsePredicate());
+		for (final QualifiedTracePredicates qtp : tracePredicates) {
+			final List<IPredicate> interpolants = qtp.getPredicates();
+			final Map<STATE, IPredicate> stateMap = new HashMap<>();
+			// Fill stateMap and automaton with the given interpolants
+			final LinkedList<STATE> queue = new LinkedList<>();
+			STATE currentState = mcrAutomaton.getInitialStates().iterator().next();
+			IPredicate currentPredicate = mPredicateUnifier.getTruePredicate();
+			stateMap.put(currentState, currentPredicate);
+			queue.add(currentState);
+			for (int i = 0; i < mTrace.size(); i++) {
+				final Iterator<OutgoingInternalTransition<Integer, STATE>> succStates =
+						mcrAutomaton.internalSuccessors(currentState, i).iterator();
+				if (!succStates.hasNext()) {
+					throw new IllegalStateException("Trace is not present in the MCR automaton");
 				}
-				// Add the corresponding transition
-				result.addInternalTransition(predPredicate, action, predicate);
+				currentState = succStates.next().getSucc();
+				// TODO: Check interpolants.get(i) for "useless" (not future-live) variables and quantifiy them away
+				// (using exists) and show a warning
+				final IPredicate nextPredicate = i == interpolants.size() ? mPredicateUnifier.getFalsePredicate()
+						: mPredicateUnifier.getOrConstructPredicate(interpolants.get(i));
+				if (!result.contains(nextPredicate)) {
+					result.addState(false, false, nextPredicate);
+				}
+				result.addInternalTransition(currentPredicate, mTrace.get(i), nextPredicate);
+				queue.add(currentState);
+				currentPredicate = nextPredicate;
+				stateMap.put(currentState, currentPredicate);
+			}
+			while (!queue.isEmpty()) {
+				final STATE state = queue.remove();
+				final IPredicate predicate = stateMap.get(state);
+				if (predicate == null) {
+					throw new IllegalStateException("Trying to visit an uncovered state.");
+				}
+				for (final IncomingInternalTransition<Integer, STATE> edge : mcrAutomaton.internalPredecessors(state)) {
+					final STATE predecessor = edge.getPred();
+					IPredicate predPredicate = stateMap.get(predecessor);
+					final LETTER action = mTrace.get(edge.getLetter());
+					// If the predecessor is already labeled, we can continue
+					if (predPredicate == null) {
+						queue.add(predecessor);
+						final Iterator<IncomingInternalTransition<LETTER, IPredicate>> predicateEdges =
+								result.internalPredecessors(predicate, action).iterator();
+						// If there is a predecessor present in the result automaton, we can just use it
+						if (predicateEdges.hasNext()) {
+							predPredicate = predicateEdges.next().getPred();
+						} else {
+							// Otherwise calculate wp and add it as a state if necessary
+							wpCalls++;
+							final Term wp =
+									predicateTransformer.weakestPrecondition(predicate, action.getTransformula());
+							final Term wpEliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
+									mManagedScript, wp, mSimplificationTechnique, mXnfConversionTechnique);
+							predPredicate = mPredicateUnifier.getOrConstructPredicate(wpEliminated);
+							if (!result.contains(predPredicate)) {
+								result.addState(false, false, predPredicate);
+							}
+						}
+						stateMap.put(predecessor, predPredicate);
+					}
+					// Add the corresponding transition
+					result.addInternalTransition(predPredicate, action, predicate);
+				}
 			}
 		}
 		mLogger.info("Construction finished. Needed to calculate wp " + wpCalls + " times.");
@@ -295,9 +298,8 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 		if (mResult == null) {
 			try {
 				final INestedWordAutomaton<Integer, ?> mcrAutomaton = constructMcrAutomaton();
-				final QualifiedTracePredicates qtp = perfectIpps.isEmpty() ? imperfectIpps.get(0) : perfectIpps.get(0);
-				return new IpAbStrategyModuleResult<>(constructInterpolantAutomaton(qtp.getPredicates(), mcrAutomaton),
-						Collections.singletonList(qtp));
+				final List<QualifiedTracePredicates> qtp = perfectIpps.isEmpty() ? imperfectIpps : perfectIpps;
+				return new IpAbStrategyModuleResult<>(constructInterpolantAutomaton(qtp, mcrAutomaton), qtp);
 			} catch (final AutomataLibraryException e) {
 				throw new RuntimeException(e);
 			}
