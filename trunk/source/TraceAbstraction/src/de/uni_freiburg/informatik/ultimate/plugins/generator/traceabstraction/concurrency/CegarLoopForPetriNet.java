@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference.LoopSyncMethod;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
@@ -270,7 +271,10 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 				mAbstraction = enhancementResult.getSecond();
 			} else {
 				final Difference<LETTER, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(mServices),
-						mPredicateFactoryInterpolantAutomata, abstraction, dia);
+						mPredicateFactoryInterpolantAutomata, abstraction, dia, LoopSyncMethod.HEURISTIC,
+//						null, null);
+						enhancementResult.getThird().getContributingTransitions(),
+						enhancementResult.getThird().getSelfloops(), enhancementResult.getThird().getStateChangers());
 				mLogger.info(diff.getAutomataOperationStatistics());
 				mAbstraction = diff.getResult();
 			}
@@ -291,15 +295,22 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			final long automataMinimizationTime;
 			final long start = System.nanoTime();
 			long statesRemovedByMinimization = 0;
+			long transitionsRemovedByMinimization = 0;
 			boolean nontrivialMinimizaton = false;
 			final BoundedPetriNet<LETTER, IPredicate> removeUnreachableResult;
 			try {
 				final int placesBefore = (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces()).size();
+				final int transitionsBefore = (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getTransitions()).size();
 				removeUnreachableResult = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable<>(
 						new AutomataLibraryServices(mServices), (BoundedPetriNet<LETTER, IPredicate>) mAbstraction)
 								.getResult();
 				final int placesAfterwards = (removeUnreachableResult.getPlaces()).size();
+				final int transitionsAfterwards = (removeUnreachableResult.getTransitions().size());
 				statesRemovedByMinimization = placesBefore - placesAfterwards;
+				transitionsRemovedByMinimization = transitionsBefore - transitionsAfterwards;
+				if (transitionsAfterwards != transitionsBefore) {
+					throw new AssertionError("removed transitions: " + transitionsRemovedByMinimization);
+				}
 				nontrivialMinimizaton = true;
 			} finally {
 				automataMinimizationTime = System.nanoTime() - start;

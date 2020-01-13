@@ -87,7 +87,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	 * not check if what the user provided was correct).
 	 */
 	private final Set<LETTER> mUniversalLoopers;
-	
+
 	private final SynchronizationInformation mSynchronizationInformation = new SynchronizationInformation();
 
 	public DifferencePetriNet(final AutomataLibraryServices services,
@@ -175,7 +175,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 				for (final PLACE minuendAllowedSibling : split.getFirst()) {
 					tmp.addAllPairs(minuendAllowedSibling, split.getFirst());
 				}
-				final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds = mMinued.getSuccessorTransitionProviders(tmp);
+				final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds = mMinued.getSuccessorTransitionProviders(split.getFirst(), split.getFirst());
 				for (final ISuccessorTransitionProvider<LETTER, PLACE> stp : preds) {
 					mNetPredecessors2AutomatonPredecessors.addPair(stp.getPredecessorPlaces(), place);
 					mNetPredecessors2TransitionProvider.put(stp.getPredecessorPlaces(), stp);
@@ -361,6 +361,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 				} else {
 					mSynchronizationInformation.getSelfloops().addPair(inputTransition, automatonPredecessor);
 				}
+				mSynchronizationInformation.getContributingTransitions().add(inputTransition);
 				if (mSubtrahend.isFinal(subtrahendSucc.getSucc())) {
 					return null;
 				} else {
@@ -401,6 +402,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 					totalOrderId);
 			mInputTransition2State2OutputTransition.put(inputTransition, null, result);
 			mTransitions.put(result, (Transition<LETTER, PLACE>) result);
+			mSynchronizationInformation.getContributingTransitions().add(inputTransition);
 		}
 
 		return result;
@@ -462,7 +464,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	public SynchronizationInformation getSynchronizationInformation() {
 		return mSynchronizationInformation;
 	}
-	
+
 	public class SynchronizationInformation {
 		/**
 		 * Letters for which the subtrahend DFA actually has a transition that
@@ -471,10 +473,12 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		 * construction process.
 		 */
 		private final Set<LETTER> mChangerLetters = new HashSet<>();
-		
+
 		private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mSelfloops = new HashRelation<>();
 		private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mStateChangers = new HashRelation<>();
-		
+
+		private final Set<ITransition<LETTER, PLACE>> mContributingTransitions = new HashSet<>();
+
 		public Set<LETTER> getChangerLetters() {
 			return mChangerLetters;
 		}
@@ -484,6 +488,9 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		public HashRelation<ITransition<LETTER, PLACE>, PLACE> getStateChangers() {
 			return mStateChangers;
 		}
+		public Set<ITransition<LETTER, PLACE>> getContributingTransitions() {
+			return mContributingTransitions;
+		}
 	}
-	
+
 }

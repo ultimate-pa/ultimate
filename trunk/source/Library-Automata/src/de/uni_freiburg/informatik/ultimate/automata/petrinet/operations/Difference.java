@@ -137,6 +137,7 @@ public final class Difference
 
 	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mSelfloop;
 	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mStateChanger;
+	private final Collection<ITransition<LETTER, PLACE>> mContributingTransitions;
 
 	private final Map<PLACE, PLACE> mWhitePlace = new HashMap<>();
 	private final Map<PLACE, PLACE> mBlackPlace = new HashMap<>();
@@ -145,7 +146,7 @@ public final class Difference
 			final AutomataLibraryServices services, final SF factory,
 			final BoundedPetriNet<LETTER, PLACE> minuendNet,
 			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa) {
-		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.HEURISTIC, null, null);
+		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.HEURISTIC, null, null, null);
 	}
 
 	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(
@@ -153,14 +154,15 @@ public final class Difference
 			final BoundedPetriNet<LETTER, PLACE> minuendNet,
 			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa,
 			final String loopSyncMethod) {
-		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.valueOf(loopSyncMethod), null, null);
+		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.valueOf(loopSyncMethod),null , null, null);
 	}
 
 	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(
 			final AutomataLibraryServices services, final SF factory,
 			final BoundedPetriNet<LETTER, PLACE> minuendNet,
 			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa,
-			final LoopSyncMethod loopSyncMethod, final HashRelation<ITransition<LETTER, PLACE>, PLACE> selfloop,
+			final LoopSyncMethod loopSyncMethod, final Collection<ITransition<LETTER, PLACE>> contributingTransitions,
+			final HashRelation<ITransition<LETTER, PLACE>, PLACE> selfloop,
 			final HashRelation<ITransition<LETTER, PLACE>, PLACE> stateChanger) {
 		super(services);
 		mMinuend = minuendNet;
@@ -176,14 +178,17 @@ public final class Difference
 			mLogger.debug("Difference trivially empty");
 			mSelfloop = new HashRelation<>();
 			mStateChanger = new HashRelation<>();
+			mContributingTransitions = mMinuend.getTransitions();
 			mResult = new BoundedPetriNet<>(mServices, mMinuend.getAlphabet(), true);
 		} else {
 			if (selfloop != null) {
 				mSelfloop = selfloop;
 				mStateChanger = stateChanger;
+				mContributingTransitions = contributingTransitions;
 			} else {
 				mSelfloop = new HashRelation<>();
 				mStateChanger = new HashRelation<>();
+				mContributingTransitions = mMinuend.getTransitions();
 				partitionStates();
 			}
 			copyNetPlaces();
@@ -289,7 +294,7 @@ public final class Difference
 
 	private Set<PLACE> requiredBlackPlaces() {
 		final Set<PLACE> requiredBlack = new HashSet<>();
-		for (final ITransition<LETTER, PLACE> oldTrans : mMinuend.getTransitions()) {
+		for (final ITransition<LETTER, PLACE> oldTrans : mContributingTransitions) {
 			if (invertSyncWithSelfloops(oldTrans)) {
 				requiredBlack.addAll(mStateChanger.getImage(oldTrans));
 			}
@@ -316,7 +321,7 @@ public final class Difference
 	}
 
 	private void addTransitions() {
-		for (final ITransition<LETTER, PLACE> oldTrans : mMinuend.getTransitions()) {
+		for (final ITransition<LETTER, PLACE> oldTrans : mContributingTransitions) {
 			for (final PLACE predState : mStateChanger.getImage(oldTrans)) {
 				syncWithChanger(oldTrans, predState);
 			}

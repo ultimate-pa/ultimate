@@ -85,6 +85,8 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 
 	private final Set<ITransition<LETTER, PLACE>> mReachableTransitions;
 
+	private Set<ITransition<LETTER, PLACE>> mRemovedTransitions;
+
 	public RemoveUnreachable(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, operand, null);
@@ -114,6 +116,10 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 		}
 
 		mReachableTransitions = (reachableTransitions == null ? computeReachableTransitions() : reachableTransitions);
+		mRemovedTransitions = operand.getTransitions().stream().filter(x -> !mReachableTransitions.contains(x)).collect(Collectors.toSet());
+		if (!mRemovedTransitions.isEmpty()) {
+			mRemovedTransitions.toString();
+		}
 		mResult = CopySubnet.copy(services, mOperand, mReachableTransitions);
 
 		if (mLogger.isInfoEnabled()) {
