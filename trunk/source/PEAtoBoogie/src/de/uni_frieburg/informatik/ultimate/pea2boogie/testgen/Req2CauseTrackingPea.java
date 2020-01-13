@@ -71,7 +71,9 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		// _tt for "test tracking"
 		final String newName = oldPea.getName() + "_tt";
 		setFlags(oldPea.getInit());
-		final Phase[] newPhases = transformPhases(pattern, oldPea, reqSymbolTable, effectVars);
+		final Phase[] oldPhases = oldPea.getPhases();
+		final int dcEffectPhase = getDCEffectPhaseIndex(oldPhases);
+		final Phase[] newPhases = transformPhases(pattern, oldPea, reqSymbolTable, effectVars, dcEffectPhase);
 		final Phase[] newInit = getInitialPhases(newPhases);
 		copyOldTransitions(oldPea.getPhases(), newPhases, effectVars);
 		connectTrackingAutomaton(newPhases, effectVars, reqSymbolTable);
@@ -83,19 +85,18 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		final PhaseEventAutomata newPea = new PhaseEventAutomata(newName, newPhases, newInit, newClocks, newVariables, null);
 		// remember effect phases and output effect phases
 		mPea2EffectVars.put(newPea, effectVars);
-		getEffectPhases(oldPea, newPea, effectVars, reqSymbolTable);
+		getOutputEffectPhases(oldPea, newPea, effectVars, reqSymbolTable, dcEffectPhase);
 
 		return newPea;
 	}
 
-	private void getEffectPhases(final PhaseEventAutomata oldPea, final PhaseEventAutomata newPea,
-			final Set<String> effectVars, final IReqSymbolTable reqSymbolTable) {
-		final Phase[] oldPhases = oldPea.getPhases();
+	private void getOutputEffectPhases(final PhaseEventAutomata oldPea, final PhaseEventAutomata newPea,
+			final Set<String> effectVars, final IReqSymbolTable reqSymbolTable, final int effectPhase) {
 		mPea2EffectPhase.put(newPea, new HashSet<Integer>());
 		mOutputEffectPhase.put(newPea, new HashSet<Integer>());
-		final int effectPhase = getEffectPhaseFromPhaseFlags(oldPhases);
+		final Phase[] oldPhases = oldPea.getPhases();
 		for (int i = 0; i < oldPhases.length; i++) {
-			if (oldPhases[i].getPhaseBits().isActive(effectPhase)) {
+			if (oldPhases[i].getPhaseBits().isActive(effectPhase) && !oldPhases[i].getPhaseBits().isWaiting(effectPhase)) {
 				final int newEffectPhase = oldPea.getPhases().length + i;
 				mPea2EffectPhase.get(newPea).add(newEffectPhase);
 				if (!Collections.disjoint(effectVars, reqSymbolTable.getOutputVars())) {
@@ -112,16 +113,15 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		}
 	}
 
-	private Phase[] transformPhases(PatternType pattern, PhaseEventAutomata oldPea, IReqSymbolTable reqSymbolTable, final Set<String> effectVars){
+	private Phase[] transformPhases(PatternType pattern, PhaseEventAutomata oldPea, IReqSymbolTable reqSymbolTable, final Set<String> effectVars, final int effectPhase){
 		final Phase[] oldPhases = oldPea.getPhases();
-		final int effectPhase = getEffectPhaseFromPhaseFlags(oldPhases);
 		final Phase[] newPhases = new Phase[2 * oldPhases.length];
 		for (int i = 0; i < oldPhases.length; i++) {
 			final Phase oldPhase = oldPhases[i];
 			//TODO: fit clock invariants to test tracking stuff
 			newPhases[i] = new Phase(oldPhase.getName() + "_tt", oldPhase.getStateInvariant(), oldPhase.getClockInvariant());
 			final CDD stateInvariant = mCddTransformer.transformInvariant(oldPhase.getStateInvariant(), effectVars,
-					reqSymbolTable.getInputVars(), oldPhase.getPhaseBits().isActive(effectPhase));
+					reqSymbolTable.getInputVars(), oldPhase.getPhaseBits().isActive(effectPhase) && !oldPhase.getPhaseBits().isActive(effectPhase));
 			final Phase trackingPhase = new Phase(oldPhase.getName() + "_tt", stateInvariant, oldPhase.getClockInvariant());
 			newPhases[oldPhases.length + i] = trackingPhase;
 			if (oldPhase.isInit) {
@@ -131,7 +131,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		return newPhases;
 	}
 
-	private int getEffectPhaseFromPhaseFlags(Phase[] oldPhases) {
+	private int getDCEffectPhaseIndex(Phase[] oldPhases) {
 		//Find the last phase that is 1) active and 2) not waiting (to get active)
 		int lastDcPhase = 0;
 		for(int i = 0; i < oldPhases.length; i++) {

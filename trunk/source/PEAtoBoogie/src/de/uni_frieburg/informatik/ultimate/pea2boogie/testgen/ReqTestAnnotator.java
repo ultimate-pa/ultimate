@@ -41,6 +41,8 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 	final Req2CauseTrackingCDD mCddTransformer;
 
+	public static final String TEST_ASSERTION_PREFIX = "TEST_";
+
 	public ReqTestAnnotator(final IUltimateServiceProvider services, final ILogger logger, final Req2CauseTrackingPea req2Pea) {
 		mLogger = logger;
 		mServices = services;
@@ -199,7 +201,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 					mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea)),
 					new IntegerLiteral(mLocation, phaseNr.toString()));
 			final NamedAttribute[] attr =
-					new NamedAttribute[] { new NamedAttribute(mLocation, "TEST_" + pea.getName(), new Expression[] {}) };
+					new NamedAttribute[] { new NamedAttribute(mLocation, TEST_ASSERTION_PREFIX + pea.getName(), new Expression[] {}) };
 			final AssertStatement assrt =
 					new AssertStatement(mLocation, attr, new UnaryExpression(mLocation, Operator.LOGICNEG, expr));
 			statements.add(assrt);

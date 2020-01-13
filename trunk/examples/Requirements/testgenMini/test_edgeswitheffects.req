@@ -1,0 +1,11 @@
+Input I IS bool
+Output O IS bool
+Internal A IS bool
+Internal B IS bool
+Internal C IS bool
+
+req1: Globally, it is always the case that if "I" holds, then "A" holds after at most "5" time units
+req2:Globally, it is always the case that if "A" holds, then "B" holds after at most "5" time units
+req3:Globally, it is always the case that if "B" holds, then "C" holds after at most "5" time units
+req4:Globally, it is always the case that if "C" holds, then "O" holds after at most "5" time units
+

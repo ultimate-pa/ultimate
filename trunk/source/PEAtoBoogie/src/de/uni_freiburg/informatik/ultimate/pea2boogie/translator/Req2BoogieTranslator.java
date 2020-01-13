@@ -593,6 +593,10 @@ public class Req2BoogieTranslator {
 		return new AssignmentStatement(bl, new LeftHandSide[] { lhs }, new Expression[] { val });
 	}
 
+	public IReqSymbolTable getReqSymbolTable() {
+		return mSymboltable;
+	}
+
 	/**
 	 * The procedure statement is initialized. It is deployed to the unit. The unit is sent to the print process. The
 	 * result is a Boogie text file.
