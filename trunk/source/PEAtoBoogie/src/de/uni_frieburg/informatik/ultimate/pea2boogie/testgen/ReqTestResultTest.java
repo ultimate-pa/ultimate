@@ -33,5 +33,4 @@ public final class ReqTestResultTest implements IResult {
 		}
 		return resultString.toString();
 	}
-
 }

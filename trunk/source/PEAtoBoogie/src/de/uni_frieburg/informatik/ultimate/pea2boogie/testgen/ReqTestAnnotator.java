@@ -108,8 +108,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 			//determine if the effect is part of the phase, or if the effect is on each outgoing edge
 			// then either generate the following OR generate a u_v' -> (pc == n && pc' == NONEFFSTATE) || ...
 			// i.e. we were in the effect state waiting to leave, and now we have left over an edge that has an effect
-			disjuncts.addAll(genEdgeEffectTracking(pea, currentVar, phaseNum, primed));
-			//TODO this may only be right, if we are not waiting in the final phase (how to determine that (without phase flags?)?
+			//disjuncts.addAll(genEdgeEffectTracking(pea, currentVar, phaseNum, primed));
 			disjuncts.addAll(genPhaseEffectTracking(pea, currentVar, phaseNum, primed));
 		}
 		return disjuncts;
