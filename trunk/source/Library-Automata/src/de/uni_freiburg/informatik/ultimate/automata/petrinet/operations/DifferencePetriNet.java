@@ -235,7 +235,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 //							continue;
 //						}
 						if (DataStructureUtils.haveNonEmptyIntersection(transitionPredecessors, place2allowedSiblings.getDomain())) {
-							transitions.add(getOrConstructTransitionCopy(trans));
+							transitions.add(trans);
 						} else {
 							// do nothing
 							// must not add, no corresponding place
@@ -244,7 +244,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 						}
 					}
 					if (!transitions.isEmpty()) {
-						result.add(new SimpleSuccessorTransitionProvider<>(transitions, mMinued));
+						result.add(new SimpleSuccessorTransitionProviderWithUsageInformation(transitions, mMinued));
 					}
 
 				}
@@ -386,27 +386,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	}
 
 
-	private ITransition<LETTER, PLACE> getOrConstructTransitionCopy(final ITransition<LETTER, PLACE> inputTransition) {
-		ITransition<LETTER, PLACE> result = mInputTransition2State2OutputTransition.get(inputTransition, null);
-		if (result == null) {
-//			assert (mMinuendPlaces.containsAll(mMinued.getPredecessors(inputTransition))) : "missing predecessor";
-			final Set<PLACE> successors = new LinkedHashSet<>();
-			for (final PLACE petriNetSuccessor : mMinued.getSuccessors(inputTransition)) {
-				// possibly first time that we saw this place, add
-				mMinuendPlaces.add(petriNetSuccessor);
-				successors.add(petriNetSuccessor);
-			}
-			final int totalOrderId = mNumberOfConstructedTransitions;
-			mNumberOfConstructedTransitions++;
-			result = new Transition<>(inputTransition.getSymbol(), mMinued.getPredecessors(inputTransition), successors,
-					totalOrderId);
-			mInputTransition2State2OutputTransition.put(inputTransition, null, result);
-			mTransitions.put(result, (Transition<LETTER, PLACE>) result);
-			mSynchronizationInformation.getContributingTransitions().add(inputTransition);
-		}
 
-		return result;
-	}
 
 	BoundedPetriNet<LETTER, PLACE> getYetConstructedPetriNet() {
 		final BoundedPetriNet<LETTER, PLACE> result = new BoundedPetriNet<>(mServices, mMinued.getAlphabet(), false);
@@ -491,6 +471,48 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		public Set<ITransition<LETTER, PLACE>> getContributingTransitions() {
 			return mContributingTransitions;
 		}
+	}
+
+	private class SimpleSuccessorTransitionProviderWithUsageInformation
+			extends SimpleSuccessorTransitionProvider<LETTER, PLACE> {
+
+		public SimpleSuccessorTransitionProviderWithUsageInformation(
+				final Collection<ITransition<LETTER, PLACE>> transitions,
+				final IPetriNetSuccessorProvider<LETTER, PLACE> net) {
+			super(transitions, net);
+		}
+
+		@Override
+		public Collection<ITransition<LETTER, PLACE>> getTransitions() {
+			final Collection<ITransition<LETTER, PLACE>> transitions = new ArrayList<>();
+			for (final ITransition<LETTER, PLACE> inputTransition : super.getTransitions()) {
+				final ITransition<LETTER, PLACE> resultTransition = getOrConstructTransitionCopy(inputTransition);
+				transitions.add(resultTransition);
+			}
+			return transitions;
+		}
+
+		private ITransition<LETTER, PLACE> getOrConstructTransitionCopy(final ITransition<LETTER, PLACE> inputTransition) {
+			ITransition<LETTER, PLACE> result = mInputTransition2State2OutputTransition.get(inputTransition, null);
+			if (result == null) {
+//				assert (mMinuendPlaces.containsAll(mMinued.getPredecessors(inputTransition))) : "missing predecessor";
+				final Set<PLACE> successors = new LinkedHashSet<>();
+				for (final PLACE petriNetSuccessor : mMinued.getSuccessors(inputTransition)) {
+					// possibly first time that we saw this place, add
+					mMinuendPlaces.add(petriNetSuccessor);
+					successors.add(petriNetSuccessor);
+				}
+				final int totalOrderId = mNumberOfConstructedTransitions;
+				mNumberOfConstructedTransitions++;
+				result = new Transition<>(inputTransition.getSymbol(), mMinued.getPredecessors(inputTransition), successors,
+						totalOrderId);
+				mInputTransition2State2OutputTransition.put(inputTransition, null, result);
+				mTransitions.put(result, (Transition<LETTER, PLACE>) result);
+				mSynchronizationInformation.getContributingTransitions().add(inputTransition);
+			}
+			return result;
+		}
+
 	}
 
 }
