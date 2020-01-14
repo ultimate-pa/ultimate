@@ -251,6 +251,12 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			final Triple<INestedWordAutomaton<LETTER, IPredicate>, IPetriNet<LETTER, IPredicate>, DifferencePetriNet<LETTER, IPredicate>.SynchronizationInformation> enhancementResult = enhanceAnddeterminizeInterpolantAutomaton(
 					mInterpolAutomaton, htc);
 			dia = enhancementResult.getFirst();
+			
+			if (mPref.dumpAutomata()) {
+				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
+						+ "_AbstractionAfterDifferencePairwiseOnDemand";
+				super.writeAutomatonToFile(enhancementResult.getSecond(), filename);
+			}
 
 			// Complement the interpolant automaton
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> nia = new ComplementDD<>(
