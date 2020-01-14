@@ -7,9 +7,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 public final class ReqTestResultTest implements IResult{
 
 	final List<TestStep> mTestSteps;
+	final String mName;
 
-	public ReqTestResultTest(List<TestStep> testSteps) {
+	public ReqTestResultTest(List<TestStep> testSteps, final String name) {
 		mTestSteps = testSteps;
+		mName = name;
 	}
 
 	@Override
@@ -20,7 +22,7 @@ public final class ReqTestResultTest implements IResult{
 
 	@Override
 	public String getShortDescription() {
-		return "Found Test for TODO";
+		return "Found Test for " + mName;
 	}
 
 	@Override

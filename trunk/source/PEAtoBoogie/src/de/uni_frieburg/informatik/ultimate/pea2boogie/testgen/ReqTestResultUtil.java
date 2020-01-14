@@ -50,16 +50,19 @@ public class ReqTestResultUtil {
 		final List<TestStep> testSteps = new ArrayList<>();
 		@SuppressWarnings("unchecked")
 		final IProgramExecution<?, Expression> translatedPe = (IProgramExecution<?, Expression>) mServices
-				.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
-
-		// TODO get final element from result
-		// final IElement checkedAnnotation = result.getElement();
-		final AtomicTraceElement<?> finalElement = translatedPe.getTraceElement(translatedPe.getLength() - 1);
-		for (int i = 0; i < translatedPe.getLength(); i++) {
-			final AtomicTraceElement<?> ate = translatedPe.getTraceElement(i);
+		.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
+		final AtomicTraceElement<IElement> finalElement = ((AtomicTraceElement<IElement>) translatedPe.getTraceElement(translatedPe.getLength()-1));
+		ProgramState<Expression> peek = null;
+		for(int i = 0; i < translatedPe.getLength(); i++) {
+			final AtomicTraceElement<IElement> ate = ((AtomicTraceElement<IElement>) translatedPe.getTraceElement(i));
+			if (translatedPe.getProgramState(i) == null) {
+				//TODO: this is a hack to get the program state from the nearest assert peceeding place where a state is calculated
+				// as it can not be guaranteed that the assert itself has a state attatched
+				peek = translatedPe.getProgramState(i);
+			}
 			if (ate.getStep() == finalElement.getStep()) {
-				if (translatedPe.getProgramState(i) == null) {
-					mLogger.warn(ate.getStep().toString());
+				if (peek != null) {
+					mLogger.error("Assertion did not contain state (but would have been neccessary for test generation):" + ate.getStep().toString());
 					continue;
 				}
 				// TODO: filter for one state per loop
@@ -67,7 +70,7 @@ public class ReqTestResultUtil {
 				testSteps.add(getTestStep(pgst));
 			}
 		}
-		return new ReqTestResultTest(testSteps);
+		return new ReqTestResultTest(testSteps, getTestAssertionName(finalElement.getStep()));
 	}
 
 	private TestStep getTestStep(final ProgramState<Expression> programState) {
