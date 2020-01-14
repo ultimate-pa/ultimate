@@ -74,7 +74,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		final Phase[] oldPhases = oldPea.getPhases();
 		final int dcEffectPhase = getDCEffectPhaseIndex(oldPhases);
 		final Phase[] newPhases = transformPhases(pattern, oldPea, reqSymbolTable, effectVars, dcEffectPhase);
-		final Phase[] newInit = getInitialPhases(newPhases);
+		final Phase[] newInit = getInitialPhases(oldPhases);
 		copyOldTransitions(oldPea.getPhases(), newPhases, effectVars);
 		connectTrackingAutomaton(newPhases, oldPhases, effectVars, reqSymbolTable, new ArrayList<String>(oldPea.getClocks()));
 		final List<String> newClocks = new ArrayList<>(oldPea.getClocks());

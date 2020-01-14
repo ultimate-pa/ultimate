@@ -61,7 +61,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 		//generate asserts assert(!(pc_xx == i)) for every i \in effect(A_r)
 		statements.addAll(genTestAssertions());
 		//check that each u_v' -> pc_xx == effect(A_r) for every v' \in E'
-		statements.addAll(genTrackingAssumptions("'"));
+		statements.addAll(genTrackingAssumptions(""));
 		return statements;
 	}
 
