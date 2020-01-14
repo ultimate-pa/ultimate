@@ -76,7 +76,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		final Phase[] newPhases = transformPhases(pattern, oldPea, reqSymbolTable, effectVars, dcEffectPhase);
 		final Phase[] newInit = getInitialPhases(newPhases);
 		copyOldTransitions(oldPea.getPhases(), newPhases, effectVars);
-		connectTrackingAutomaton(newPhases, effectVars, reqSymbolTable, new ArrayList<String>(oldPea.getClocks()));
+		connectTrackingAutomaton(newPhases, oldPhases, effectVars, reqSymbolTable, new ArrayList<String>(oldPea.getClocks()));
 		final List<String> newClocks = new ArrayList<>(oldPea.getClocks());
 		final Map<String,String> newVariables = new HashMap<>(oldPea.getVariables());
 		newVariables.putAll(mCddTransformer.getTrackingVars());
@@ -119,7 +119,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		for (int i = 0; i < oldPhases.length; i++) {
 			final Phase oldPhase = oldPhases[i];
 			//TODO: fit clock invariants to test tracking stuff
-			newPhases[i] = new Phase(oldPhase.getName() + "_tt", oldPhase.getStateInvariant(), oldPhase.getClockInvariant());
+			newPhases[i] = new Phase(oldPhase.getName(), oldPhase.getStateInvariant(), oldPhase.getClockInvariant());
 			final CDD stateInvariant = mCddTransformer.transformInvariant(oldPhase.getStateInvariant(), effectVars,
 					reqSymbolTable.getInputVars(), oldPhase.getPhaseBits().isActive(effectPhase) && !oldPhase.getPhaseBits().isActive(effectPhase));
 			final Phase trackingPhase = new Phase(oldPhase.getName() + "_tt", stateInvariant, oldPhase.getClockInvariant());
@@ -160,11 +160,12 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			for(final Transition trans : oldPhases[i].getTransitions()) {
 				final int dest = indexList.indexOf(trans.getDest());
 				newPhases[i].addTransition(newPhases[dest], trans.getGuard(), trans.getResets());
+
 			}
 		}
 	}
 
-	private void connectTrackingAutomaton(Phase[] newPhases, final Set<String> effectVars, final IReqSymbolTable reqSymbolTable, List<String> clocks) {
+	private void connectTrackingAutomaton(Phase[] newPhases, Phase[] oldPhases, final Set<String> effectVars, final IReqSymbolTable reqSymbolTable, List<String> clocks) {
 		final int seem = newPhases.length/2;
 		final List<Phase> indexList = Arrays.asList(newPhases);
 		//copy edges in first to second automaton
@@ -180,7 +181,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		//conect the copies
 		for(int i = 0; i < seem ; i++) {
 			newPhases[seem + i].addTransition(newPhases[i], CDD.TRUE, new String[0]);
-			if (newPhases[i].isInit) {
+			if (oldPhases[i].isInit) {
 				newPhases[i].addTransition(newPhases[seem + i], CDD.TRUE, clocks.toArray(new String[clocks.size()]));
 			}
 		}
