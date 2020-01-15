@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -105,6 +106,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
@@ -236,6 +238,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private boolean mUseHeuristicEmptinessCheck = false;
 	private ScoringMethod mScoringMethod = ScoringMethod.NUM_FUNCTIONS;
 
+	private PetriNetLargeBlockEncoding mLBE;
+
 	public BasicCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
@@ -321,7 +325,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
-		if (super.mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {
+		if (isSequential()) {
 			mAbstraction = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(mServices, super.mIcfg,
 					mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
 		} else {
@@ -331,15 +335,15 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 							mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory, addThreadUsageMonitors);
 			final BoundedPetriNet<LETTER, IPredicate> net;
 			if (mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
-				final PetriNetLargeBlockEncoding pnlbe = new PetriNetLargeBlockEncoding(mServices,
+				mLBE = new PetriNetLargeBlockEncoding(mServices,
 						mIcfg.getCfgSmtToolkit(), (BoundedPetriNet<IIcfgTransition<?>, IPredicate>) petrifiedCfg,
 						mPref.useLbeInConcurrentAnalysis());
 				final BoundedPetriNet<LETTER, IPredicate> lbecfg =
-						(BoundedPetriNet<LETTER, IPredicate>) pnlbe.getResult();
+						(BoundedPetriNet<LETTER, IPredicate>) mLBE.getResult();
 				net = lbecfg;
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 						new StatisticsResult<>(Activator.PLUGIN_NAME, "PetriNetLargeBlockEncoding benchmarks",
-								pnlbe.getPetriNetLargeBlockEncodingStatistics()));
+								mLBE.getPetriNetLargeBlockEncodingStatistics()));
 			} else {
 				net = petrifiedCfg;
 			}
@@ -1105,5 +1109,17 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	public IPostconditionProvider getPostconditionProvider() {
 		return IPostconditionProvider.constructDefaultPostconditionProvider();
+	}
+
+	private final boolean isSequential() {
+		return super.mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().isEmpty();
+	}
+
+	@Override
+	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
+		if (!isSequential() && mPref.useLbeInConcurrentAnalysis() != PetriNetLbe.OFF) {
+			return mLBE.translateExecution(mRcfgProgramExecution);
+		}
+		return super.getRcfgProgramExecution();
 	}
 }
