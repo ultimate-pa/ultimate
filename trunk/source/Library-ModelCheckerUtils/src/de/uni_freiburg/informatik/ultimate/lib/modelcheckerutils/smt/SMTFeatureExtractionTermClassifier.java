@@ -110,6 +110,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		BIGGEST_EQUIVALENCE_CLASS,
 		AVERAGE_EQUIVALENCE_CLASS,
 		NUMBER_OF_EQUIVALENCE_CLASSES,
+		NUMBER_OF_SELECT,
 		COMPARE_FEATURES,
 	}
 
@@ -196,11 +197,15 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		}else {
 			throw new UnsupportedOperationException("Unsupported ScoringMethod " + scoringMethod.toString());
 		}
-		mLogger.warn("stack " + mAssertionStack.toString());
-		mLogger.warn("eqclass " + mVariableEquivalenceClasses.getAllEquivalenceClasses().toString());
-		mLogger.warn("eqclass_sizes " + getVariableEquivalenceClassSizes());
-		mLogger.warn("score " + (score));
-		return score;
+		final double normalized = 1.0 - ( 1.0 / (score != 0 ? (double)score : 1.0));
+		if(mLogger.isDebugEnabled()) {
+			mLogger.debug("stack " + mAssertionStack.toString());
+			mLogger.debug("eqclass " + mVariableEquivalenceClasses.getAllEquivalenceClasses().toString());
+			mLogger.debug("eqclass_sizes " + getVariableEquivalenceClassSizes());
+			mLogger.debug("score " + (score));
+			mLogger.debug("normalized_score " + (normalized));
+		}
+		return normalized;
 	}
 
 	private boolean isApplicationTermWithArityZero(final Term term) {
