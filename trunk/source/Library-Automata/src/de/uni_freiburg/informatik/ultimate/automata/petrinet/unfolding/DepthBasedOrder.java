@@ -27,10 +27,10 @@ public class DepthBasedOrder<LETTER, PLACE> extends EventOrder<LETTER, PLACE> {
 
 		//the following comparison is optional: I am trying to find out if we can use a heuristic based on the depth
 		//to reduce the overall number of events of the computed complete finite prefix
-		result = c2.getDepth() - c1.getDepth();
-		if (result != 0) {
-			return result;
-		}
+		//result = c2.getDepth() - c1.getDepth();
+		//if (result != 0) {
+		//	return result;
+		//}
 
 		// We sort the local configuration using the DepthIdComparator: see the compare method of the comparator bellow
 		final List<Event<LETTER, PLACE>> c1Sorted = c1.getSortedConfiguration(mDepthIdComparator);

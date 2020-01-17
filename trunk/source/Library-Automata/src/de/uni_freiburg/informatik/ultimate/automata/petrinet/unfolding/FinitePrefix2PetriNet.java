@@ -246,12 +246,12 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			}
 		}
 		
-		for (Event<LETTER, PLACE>e1: releventEvents) {
+		/*for (Event<LETTER, PLACE>e1: releventEvents) {
 			for (Event<LETTER, PLACE>e2: releventEvents) {
 				assert e1.equals(e2) || !(e1.getTransition().equals(e2.getTransition())&&(mConditionRepresentatives.find(e1.getPredecessorConditions())
 								.equals(mConditionRepresentatives.find(e2.getPredecessorConditions())))): "There exists no 2 events with same predecessors conditions and transition";
 			}
-		}
+		}*/
 		
 		final Map<Condition<LETTER, PLACE>, PLACE> placeMap = new HashMap<>();
 		for (final Condition<LETTER, PLACE> c : bp.getConditions()) {

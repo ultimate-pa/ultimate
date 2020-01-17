@@ -120,7 +120,7 @@ public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE>, IPe
 		for (final ITransition<LETTER, PLACE> t : successorTransitions) {
 			final Set<PLACE> predeccesorOfT = getPredecessors(t);
 			if (correlatedPlaces.containsAll(predeccesorOfT)) {
-				predecessorPlaces2Transition.addPair(getPredecessors(t), t);
+				predecessorPlaces2Transition.addPair(predeccesorOfT, t);
 			}
 		}
 
