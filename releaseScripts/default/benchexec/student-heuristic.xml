@@ -60,6 +60,7 @@
 		<option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
     <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+	</rundefinition>
 
 
 <tasks name="Pdr">
