@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
 
-  <rundefinition name="AutomizerBplInline with isEmptyHeuristic and Scoring Method: NUM_FUNCTIONS">
+  <rundefinition name="AutomizerBplInline Default">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
     <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
 	</rundefinition>
