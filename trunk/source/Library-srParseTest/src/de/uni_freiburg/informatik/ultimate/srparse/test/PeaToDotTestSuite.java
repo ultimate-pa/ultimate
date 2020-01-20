@@ -32,12 +32,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,9 +55,11 @@ import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
@@ -74,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 	// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
-	private static final Boolean createNewFiles = false;
+	private static final Boolean CREATE_NEW_FILES = false;
 
 	private static final File ROOT_DIR = new File("/mnt/Daten/projects/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
@@ -110,9 +115,9 @@ public class PeaToDotTestSuite {
 		final PhaseEventAutomata pea;
 		final CounterTrace counterTrace;
 
-		if (!createNewFiles) {
-			return;
-		}
+		// if (!CREATE_NEW_FILES) {
+		// return;
+		// }
 
 		try {
 			pea = mPattern.transformToPea(mLogger, mDurationToBounds);
@@ -121,8 +126,127 @@ public class PeaToDotTestSuite {
 			return; // Oops, somebody forgot to implement that sh.. ;-)
 		}
 
-		writeSvgFile(DotWriterNew.createDotString(pea));
-		writeMarkdownFile(counterTrace.toString());
+		// writeSvgFile(DotWriterNew.createDotString(pea));
+		// writeMarkdownFile(counterTrace.toString());
+
+		if (mPatternName.equals("BndEntryConditionPattern") && mScopeName.equals("Globally")) {
+			mLogger.info("%s %s", mPatternName, mScopeName);
+
+			Phase start = null;
+			for (final Phase phase : pea.getInit()) {
+				if (phase.getName().equals("st0")) {
+					start = phase;
+				}
+			}
+
+			Phase goal = null;
+			for (final Phase phase : pea.getPhases()) {
+				if (phase.getName().equals("st01")) {
+					goal = phase;
+				}
+			}
+
+			final List<Phase> path = dijkstra(pea, start, goal);
+			mLogger.info("Path: " + path);
+
+			// Variables (eg. Q, R).
+			final Set<String> variables = pea.getVariables().keySet();
+			final Map<String, List<Pair<Integer, Integer>>> result = new HashMap<>();
+			variables.forEach(e -> result.put(e, new ArrayList<Pair<Integer, Integer>>()));
+
+			mLogger.info(result);
+
+			final CDD invariant = path.get(0).getStateInvariant();
+			mLogger.info("depth: " + invariant.getDepth());
+			mLogger.info("decision: " + invariant.getDecision().getVar());
+			mLogger.info("child: " + invariant.getChilds()[1]);
+
+			final Map<String, Boolean> test = dfs(invariant, CDD.TRUE);
+			mLogger.info("Map: " + test);
+
+			final Transition transition = path.get(1).getOutgoingTransition(path.get(0));
+			mLogger.info("Guard: " + transition.getGuard());
+			mLogger.info("Resets: " + transition.getResets());
+			mLogger.info("Guard: " + transition.getGuard().getDecision());
+
+			mLogger.info("Guard: " + dfs(transition.getGuard(), CDD.TRUE));
+		}
+	}
+
+	private Map<String, Boolean> dfs(final CDD cdd, final CDD goal) {
+		mLogger.info("cdd: " + cdd);
+
+		if (cdd.equals(goal)) {
+			mLogger.info("found goal");
+			return new HashMap<>();
+		}
+
+		if (cdd.getChilds() != null) {
+			mLogger.info("Proceed left child.");
+			final Map<String, Boolean> r1 = dfs(cdd.getChilds()[0], goal);
+			if (r1 != null) {
+				r1.put(cdd.getDecision().getVar(), true);
+				return r1;
+			}
+
+			mLogger.info("Proceed right child.");
+			final Map<String, Boolean> r2 = dfs(cdd.getChilds()[1], goal);
+			if (r2 != null) {
+				r2.put(cdd.getDecision().getVar(), false);
+				return r2;
+			}
+		}
+
+		return null;
+	}
+
+	private List<Phase> dijkstra(final PhaseEventAutomata pea, final Phase start, final Phase goal) {
+		final List<Phase> result = new ArrayList<>();
+
+		// Initialize.
+		final List<Phase> queue = new ArrayList<>(Arrays.asList(pea.getPhases()));
+		final Map<Phase, Integer> dists = new HashMap<>();
+		final Map<Phase, Phase> preds = new HashMap<>();
+
+		Arrays.stream(pea.getPhases()).forEach(e -> {
+			dists.put(e, e.equals(start) ? 0 : Integer.MAX_VALUE);
+			preds.put(e, null);
+		});
+
+		while (!queue.isEmpty()) {
+			// Proceed phase with lowest distance.
+			Phase curr = queue.get(0);
+			for (final Phase phase : queue) {
+				if (dists.get(phase) < dists.get(curr)) {
+					curr = phase;
+				}
+			}
+			queue.remove(curr);
+
+			// Find all neighbours and update distances.
+			final List<Phase> nexts = new ArrayList<>();
+			curr.getTransitions().forEach(e -> nexts.add(e.getDest()));
+
+			for (final Phase next : nexts) {
+				if (queue.contains(next) && dists.get(curr) + 1 < dists.get(next)) {
+					dists.put(next, dists.get(curr) + 1);
+					preds.put(next, curr);
+				}
+			}
+		}
+
+		// Create shortest path.
+		Phase curr = goal;
+		while (preds.get(curr) != null) {
+			curr = preds.get(curr);
+			result.add(0, curr);
+		}
+
+		if (!result.isEmpty()) {
+			result.add(goal);
+		}
+
+		return result;
 	}
 
 	private void writeSvgFile(final String dot) throws IOException, InterruptedException {
@@ -132,10 +256,6 @@ public class PeaToDotTestSuite {
 		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServiceProvider);
 		final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
 
-		if (!createNewFiles) {
-			return;
-		}
-
 		writer.write(dot.toString());
 		writer.close();
 
@@ -143,10 +263,6 @@ public class PeaToDotTestSuite {
 	}
 
 	private void writeMarkdownFile(final String counterTrace) throws IOException {
-		if (!createNewFiles) {
-			return;
-		}
-
 		final File file = new File(MARKDOWN_DIR + "/" + mPatternName + ".md");
 		final StringBuilder stringBuilder = new StringBuilder();
 		final Formatter fmt = new Formatter(stringBuilder);
@@ -170,7 +286,7 @@ public class PeaToDotTestSuite {
 
 	@BeforeClass
 	public static void beforeClass() {
-		if (!createNewFiles) {
+		if (!CREATE_NEW_FILES) {
 			return;
 		}
 
@@ -192,7 +308,7 @@ public class PeaToDotTestSuite {
 
 	@AfterClass
 	public static void afterClass() throws IOException {
-		if (!createNewFiles) {
+		if (!CREATE_NEW_FILES) {
 			return;
 		}
 

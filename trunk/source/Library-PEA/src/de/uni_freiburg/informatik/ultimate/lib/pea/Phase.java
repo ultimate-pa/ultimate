@@ -31,209 +31,222 @@ import java.util.Vector;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimpleSet;
 
-
 public class Phase implements Comparable<Phase> {
-    int nr;
+	int nr;
 
-    // SR 2010-07-09
-    private boolean isKernel;
-    public boolean isInit;
-    private boolean isEntry;
-    private boolean isExit;
-    private final Vector<Transition> incomming;
-    String name;
-    CDD stateInv;
-    CDD clockInv;
-    Set<String> stoppedClocks;
-    List<Transition> transitions;
-    public int ID;
+	// SR 2010-07-09
+	private final boolean isKernel;
+	public boolean isInit;
+	private final boolean isEntry;
+	private final boolean isExit;
+	private final Vector<Transition> incomming;
+	String name;
+	CDD stateInv;
+	CDD clockInv;
+	Set<String> stoppedClocks;
+	List<Transition> transitions;
+	public int ID;
 
-    /** The phase bits used by the powerset construction.
-     * This is only set for automata built from CounterExample traces.
-     */
-    PhaseBits phaseBits;
+	/**
+	 * The phase bits used by the powerset construction. This is only set for automata built from CounterExample traces.
+	 */
+	PhaseBits phaseBits;
 
-    public Phase(final String name, final CDD stateInv, final CDD clockInv,
-        final Set<String> stoppedClocks) {
-        this.name = name;
-        this.stateInv = stateInv;
-        this.clockInv = clockInv;
-        transitions = new ArrayList<>();
-        this.stoppedClocks = stoppedClocks;
+	public Phase(final String name, final CDD stateInv, final CDD clockInv, final Set<String> stoppedClocks) {
+		this.name = name;
+		this.stateInv = stateInv;
+		this.clockInv = clockInv;
+		transitions = new ArrayList<>();
+		this.stoppedClocks = stoppedClocks;
 
-        isKernel = false;
-        isInit = false;
-        isEntry = false;
-        isExit = false;
-        incomming = new Vector<>();
-    }
+		isKernel = false;
+		isInit = false;
+		isEntry = false;
+		isExit = false;
+		incomming = new Vector<>();
+	}
 
-    public Phase(final String name, final CDD stateInv, final CDD clockInv) {
-        this(name, stateInv, clockInv, new SimpleSet<String>(0));
-    }
+	public Phase(final String name, final CDD stateInv, final CDD clockInv) {
+		this(name, stateInv, clockInv, new SimpleSet<String>(0));
+	}
 
-    public Phase(final String name, final CDD stateInv) {
-        this(name, stateInv, CDD.TRUE);
-    }
+	public Phase(final String name, final CDD stateInv) {
+		this(name, stateInv, CDD.TRUE);
+	}
 
-    public Phase(final String name) {
-        this(name, CDD.TRUE, CDD.TRUE);
-    }
+	public Phase(final String name) {
+		this(name, CDD.TRUE, CDD.TRUE);
+	}
 
-    public boolean isInit() {
-        return isInit;
-    }
+	public boolean isInit() {
+		return isInit;
+	}
 
-    public void setInit(final boolean isInit) {
-        this.isInit = isInit;
-    }
+	public void setInit(final boolean isInit) {
+		this.isInit = isInit;
+	}
 
-    public PhaseBits getPhaseBits() {
-    	return phaseBits;
-    }
+	public PhaseBits getPhaseBits() {
+		return phaseBits;
+	}
 
-    public CDD getStateInvariant() {
-        return stateInv;
-    }
+	public CDD getStateInvariant() {
+		return stateInv;
+	}
 
-    public void setStateInvariant(final CDD inv) {
-        stateInv = inv;
-    }
+	public void setStateInvariant(final CDD inv) {
+		stateInv = inv;
+	}
 
-    public CDD getClockInvariant() {
-        return clockInv;
-    }
+	public CDD getClockInvariant() {
+		return clockInv;
+	}
 
-    public Set<String> getStoppedClocks() {
-        return stoppedClocks;
-    }
+	public Set<String> getStoppedClocks() {
+		return stoppedClocks;
+	}
 
-    public boolean isStopped(final String clock) {
-        return stoppedClocks.contains(clock);
-    }
+	public boolean isStopped(final String clock) {
+		return stoppedClocks.contains(clock);
+	}
 
-    public List<Transition> getTransitions() {
-        return transitions;
-    }
+	public List<Transition> getTransitions() {
+		return transitions;
+	}
 
-    /** @return the transition added or modified */
-    public Transition addTransition(final Phase dest, final CDD guard, final String[] resets) {
-        final Iterator<Transition> it = transitions.iterator();
+	public Transition getOutgoingTransition(final Phase dest) {
+		Transition result = null;
 
-        while (it.hasNext()) {
-            final Transition t = it.next();
+		for (final Transition transition : transitions) {
+			if (transition.dest.equals(dest)) {
+				result = transition;
+				break;
+			}
+		}
 
-            if ((t.getDest() == dest) && t.resets.equals(resets)) {
-                t.guard = t.guard.or(guard);
+		return result;
+	}
 
-                return t;
-            }
-        }
+	/** @return the transition added or modified */
+	public Transition addTransition(final Phase dest, final CDD guard, final String[] resets) {
+		final Iterator<Transition> it = transitions.iterator();
 
-        final Transition t = new Transition(this, guard, resets, dest);
-        transitions.add(t);
+		while (it.hasNext()) {
+			final Transition t = it.next();
 
-        return t;
-    }
+			if ((t.getDest() == dest) && t.resets.equals(resets)) {
+				t.guard = t.guard.or(guard);
 
-    @Override
+				return t;
+			}
+		}
+
+		final Transition t = new Transition(this, guard, resets, dest);
+		transitions.add(t);
+
+		return t;
+	}
+
+	@Override
 	public String toString() {
-        return name;
-    }
+		return name;
+	}
 
-    /**
-     * @return Returns the name.
-     */
-    public String getName() {
-        return name;
-    }
+	/**
+	 * @return Returns the name.
+	 */
+	public String getName() {
+		return name;
+	}
 
-    public void dump() {
-        System.err.println("  state " + this + " { ");
+	public void dump() {
+		System.err.println("  state " + this + " { ");
 
-        if (stateInv != CDD.TRUE) {
-            System.err.println("    predicate      " + stateInv);
-        }
+		if (stateInv != CDD.TRUE) {
+			System.err.println("    predicate      " + stateInv);
+		}
 
-        if (clockInv != CDD.TRUE) {
-            System.err.println("    clockinvariant " + clockInv);
-        }
+		if (clockInv != CDD.TRUE) {
+			System.err.println("    clockinvariant " + clockInv);
+		}
 
-        for (final String clock : stoppedClocks) {
-            System.err.println("    stopped " + clock);
-        }
+		for (final String clock : stoppedClocks) {
+			System.err.println("    stopped " + clock);
+		}
 
-        System.err.println("    transitions {");
+		System.err.println("    transitions {");
 
-        final Iterator<Transition> it = transitions.iterator();
+		final Iterator<Transition> it = transitions.iterator();
 
-        while (it.hasNext()) {
+		while (it.hasNext()) {
 			System.err.println("       " + it.next());
 		}
 
-        System.err.println("    }");
-        System.err.println("  }");
-    }
+		System.err.println("    }");
+		System.err.println("  }");
+	}
 
-    public void dumpDot() {
-        System.out.println("  " + name + " [ label = \"" + stateInv +
-            "\\n" + clockInv + "\" shape=ellipse ]");
+	public void dumpDot() {
+		System.out.println("  " + name + " [ label = \"" + stateInv + "\\n" + clockInv + "\" shape=ellipse ]");
 
-        final Iterator<Transition> it = transitions.iterator();
+		final Iterator<Transition> it = transitions.iterator();
 
-        while (it.hasNext()) {
-            final Transition t = it.next();
-            System.out.println("  " + t.getSrc().name + " -> " +
-                t.getDest().name + " [ label = \"" + t.guard + "\" ]");
-        }
-    }
+		while (it.hasNext()) {
+			final Transition t = it.next();
+			System.out.println("  " + t.getSrc().name + " -> " + t.getDest().name + " [ label = \"" + t.guard + "\" ]");
+		}
+	}
 
-    public String getFlags() {
-        String flags = "";
+	public String getFlags() {
+		String flags = "";
 
-        if (isInit) {
-            flags += " Init ";
-        }
+		if (isInit) {
+			flags += " Init ";
+		}
 
-        if (isKernel) {
-            flags += " Kernel ";
-        }
+		if (isKernel) {
+			flags += " Kernel ";
+		}
 
-        if (isEntry) {
-            flags += " Entry ";
-        }
+		if (isEntry) {
+			flags += " Entry ";
+		}
 
-        if (isExit) {
-            flags += " Exit ";
-        }
+		if (isExit) {
+			flags += " Exit ";
+		}
 
-        return flags;
-    }
+		return flags;
+	}
 
-    // jf
-    public void setName(final String name) {
-        this.name = name;
-    }
+	// jf
+	public void setName(final String name) {
+		this.name = name;
+	}
 
-    /* (non-Javadoc)
-     * @see java.lang.Comparable#compareTo(java.lang.Object)
-     */
-    @Override
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	@Override
 	public int compareTo(final Phase p) {
-        return name.compareTo(p.name);
-    }
+		return name.compareTo(p.name);
+	}
 
-    public void addIncomming(final Transition trans) {
-        incomming.add(trans);
-    }
+	public void addIncomming(final Transition trans) {
+		incomming.add(trans);
+	}
 
-    public void removeIncomming(final Transition trans) {
-        incomming.remove(trans);
-    }
-    public void setID(final int ID) {
-    	this.ID = ID;
-    }
-    public int getID() {
-    	return ID;
-    }
+	public void removeIncomming(final Transition trans) {
+		incomming.remove(trans);
+	}
+
+	public void setID(final int ID) {
+		this.ID = ID;
+	}
+
+	public int getID() {
+		return ID;
+	}
 }
