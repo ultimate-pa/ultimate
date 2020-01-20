@@ -94,6 +94,9 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	 * @return if the relation has changed through this operation.
 	 */
 	public boolean addAllPairs(final D domainElem, final Collection<R> rangeElems) {
+		if (rangeElems.isEmpty()) {
+			return false;
+		}
 		SET oldRangeElems = mMap.get(domainElem);
 		if (oldRangeElems == null) {
 			oldRangeElems = newSet();
