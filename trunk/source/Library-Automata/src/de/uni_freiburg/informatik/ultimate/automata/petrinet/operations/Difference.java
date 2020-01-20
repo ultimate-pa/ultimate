@@ -386,8 +386,12 @@ public final class Difference
 		for (final PLACE state : mSelfloop.getImage(oldTrans)) {
 			final Set<PLACE> predecessors = new HashSet<>();
 			final Set<PLACE> successors = new HashSet<>();
-			predecessors.add(mWhitePlace.get(state));
-			successors.add(mWhitePlace.get(state));
+			final PLACE wPlace = mWhitePlace.get(state);
+			if (wPlace == null) {
+				throw new AssertionError("No black place for " + state);
+			}
+			predecessors.add(wPlace);
+			successors.add(wPlace);
 			copyMinuendFlow(oldTrans, predecessors, successors);
 			mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
 		}
@@ -424,8 +428,12 @@ public final class Difference
 		final Set<PLACE> successors = new HashSet<>();
 		copyMinuendFlow(oldTrans, predecessors, successors);
 		for (final PLACE state : mStateChanger.getImage(oldTrans)) {
-			predecessors.add(mBlackPlace.get(state));
-			successors.add(mBlackPlace.get(state));
+			final PLACE bPlace = mBlackPlace.get(state);
+			if (bPlace == null) {
+				throw new AssertionError("No black place for " + state);
+			}
+			predecessors.add(bPlace);
+			successors.add(bPlace);
 		}
 		mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
 	}
@@ -433,10 +441,18 @@ public final class Difference
 	private void copyMinuendFlow(final ITransition<LETTER, PLACE> trans,
 			final Collection<PLACE> preds, final Collection<PLACE> succs) {
 		for (final PLACE oldPlace : mMinuend.getPredecessors(trans)) {
-			preds.add(mOldPlace2NewPlace.get(oldPlace));
+			final PLACE newPlace = mOldPlace2NewPlace.get(oldPlace);
+			if (newPlace == null) {
+				throw new IllegalArgumentException("no copy for minuend place: " + oldPlace + " size: " + mMinuend.size() + " " + mOldPlace2NewPlace.size());
+			}
+			preds.add(newPlace);
 		}
 		for (final PLACE oldPlace : mMinuend.getSuccessors(trans)) {
-			succs.add(mOldPlace2NewPlace.get(oldPlace));
+			final PLACE newPlace = mOldPlace2NewPlace.get(oldPlace);
+			if (newPlace == null) {
+				throw new IllegalArgumentException("no copy for minuend place: " + oldPlace);
+			}
+			succs.add(newPlace);
 		}
 	}
 
