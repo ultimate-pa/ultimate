@@ -322,6 +322,7 @@ public final class Difference
 
 	private void addTransitions() {
 		for (final ITransition<LETTER, PLACE> oldTrans : mContributingTransitions) {
+			assert mMinuend.getTransitions().contains(oldTrans) : "unknown transition " + oldTrans;
 			for (final PLACE predState : mStateChanger.getImage(oldTrans)) {
 				syncWithChanger(oldTrans, predState);
 			}
