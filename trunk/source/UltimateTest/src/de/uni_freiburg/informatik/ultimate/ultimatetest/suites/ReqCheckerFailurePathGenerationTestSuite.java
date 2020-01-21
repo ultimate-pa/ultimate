@@ -37,8 +37,12 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.PatternUtil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.NoErrorTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
@@ -55,15 +59,21 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 
 	private static final String[] REQ = new String[] { ".req" };
 
-	private static final String TOOLCHAIN = "examples/Requirements/regression/failure-paths/ReqCheck.xml";
-	private static final String SETTINGS = "examples/Requirements/regression/failure-paths/ReqCheck.epf";
+	private static final String TOOLCHAIN = "ReqCheckFailurePathGeneration.xml";
+	private static final String SETTINGS = "ReqCheckFailurePathGeneration.epf";
 	private static final String REQ_DIR = "examples/Requirements/regression/failure-paths";
+
+	@Override
+	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
+		return new NoErrorTestResultDecider(ultimateRunDefinition);
+	}
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		createReqFiles(PatternUtil.createAllPatterns().getFirst());
 		final DirectoryFileEndingsPair[] pairs =
 				new DirectoryFileEndingsPair[] { new DirectoryFileEndingsPair(REQ_DIR, REQ) };
+
 		addTestCase(TOOLCHAIN, SETTINGS, pairs);
 		return super.createTestCases();
 	}
@@ -79,13 +89,14 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 			final Formatter fmt = new Formatter(sb);
 			fmt.format("// %s %s%s", patternName, scopeName, CoreUtil.getPlatformLineSeparator());
 			for (int i = 0; i < 10; ++i) {
-				fmt.format("INPUT var %s is bool%s", BooleanDecision.create(CoreUtil.alphabeticalSequence(i + 16)),
+				fmt.format("INPUT %s is bool%s", BooleanDecision.create(CoreUtil.alphabeticalSequence(i + 16)),
 						CoreUtil.getPlatformLineSeparator());
 			}
 			fmt.format("req1: %s%s", patternString, CoreUtil.getPlatformLineSeparator());
 			fmt.close();
 
-			final File file = new File(REQ_DIR + "/" + patternName + "_" + scopeName + ".req");
+			final File file =
+					new File(TestUtil.getPathFromTrunk(REQ_DIR) + "/" + patternName + "_" + scopeName + ".req");
 			try {
 				final BufferedWriter writer = new BufferedWriter(new FileWriter(file, false));
 				writer.write(sb.toString());
