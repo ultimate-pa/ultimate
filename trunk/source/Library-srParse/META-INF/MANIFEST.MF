@@ -12,3 +12,6 @@ Require-Bundle: com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.astbuilder
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Import-Package: de.uni_freiburg.informatik.ultimate.core.util,
+ de.uni_freiburg.informatik.ultimate.util,
+ de.uni_freiburg.informatik.ultimate.util.datastructures.relation

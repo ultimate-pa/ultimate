@@ -40,7 +40,6 @@ import java.util.Formatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,11 +54,12 @@ import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.PatternUtil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternScopeNotImplemented;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -79,11 +80,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 	// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
-	private static final Boolean CREATE_NEW_FILES = false;
+	private static final boolean CREATE_NEW_FILES = false;
+	private static final boolean ENABLE_FAILUREPATH_IMG_GEN = true;
 
 	private static final File ROOT_DIR = new File("/mnt/Daten/projects/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
 	private static final File IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
+
+	private static final String FAILUREPATH_IMG_GEN_INPUT_DIR =
+			"/media/Daten/projects/ultimate/trunk/examples/Requirements/regression/failure-paths";
 
 	private static final String LINE_SEP = System.lineSeparator();
 
@@ -104,10 +109,31 @@ public class PeaToDotTestSuite {
 		mPattern = pattern;
 		mPatternName = pattern.getClass().getSimpleName();
 		mPatternString = pattern.toString().replace(pattern.getId() + ": ", "");
+		mScopeName = pattern.getScope().getClass().getSimpleName()
+				.replace(pattern.getScope().getClass().getSuperclass().getSimpleName(), "");
+	}
 
-		final String scopeName = pattern.getScope().getClass().getSimpleName();
-		final String scopePrefix = pattern.getScope().getClass().getSuperclass().getSimpleName();
-		mScopeName = scopeName.replace(scopePrefix, "");
+	@Test
+	public void generateTestFiles() throws IOException {
+		if (!ENABLE_FAILUREPATH_IMG_GEN) {
+			return;
+		}
+
+		final String filename = mPatternName + "_" + mScopeName + ".req";
+		final File file = new File(FAILUREPATH_IMG_GEN_INPUT_DIR + "/" + filename);
+		final StringBuilder sb = new StringBuilder();
+
+		sb.append("//" + mPatternName + " " + mScopeName).append(CoreUtil.getPlatformLineSeparator());
+		for (int i = 0; i < 10; ++i) {
+			sb.append("INPUT var " + BooleanDecision.create(CoreUtil.alphabeticalSequence(i + 16)) + " is bool")
+					.append(CoreUtil.getPlatformLineSeparator());
+		}
+		sb.append("req1: " + mPatternString).append(CoreUtil.getPlatformLineSeparator());
+
+		final BufferedWriter writer = new BufferedWriter(new FileWriter(file, false));
+		writer.write(sb.toString());
+		writer.close();
+
 	}
 
 	@Test
@@ -132,44 +158,45 @@ public class PeaToDotTestSuite {
 		if (mPatternName.equals("BndEntryConditionPattern") && mScopeName.equals("Globally")) {
 			mLogger.info("%s %s", mPatternName, mScopeName);
 
-			Phase start = null;
-			for (final Phase phase : pea.getInit()) {
-				if (phase.getName().equals("st0")) {
-					start = phase;
-				}
-			}
+			// Phase start = null;
+			// for (final Phase phase : pea.getInit()) {
+			// if (phase.getName().equals("st0")) {
+			// start = phase;
+			// }
+			// }
+			//
+			// Phase goal = null;
+			// for (final Phase phase : pea.getPhases()) {
+			// if (phase.getName().equals("st01")) {
+			// goal = phase;
+			// }
+			// }
+			//
+			// final List<Phase> path = dijkstra(pea, start, goal);
+			// mLogger.info("Path: " + path);
+			//
+			// // Variables (eg. Q, R).
+			// final Set<String> variables = pea.getVariables().keySet();
+			// final Map<String, List<Pair<Integer, Integer>>> result = new HashMap<>();
+			// variables.forEach(e -> result.put(e, new ArrayList<Pair<Integer, Integer>>()));
+			//
+			// mLogger.info(result);
+			//
+			// final CDD invariant = path.get(0).getStateInvariant();
+			// mLogger.info("depth: " + invariant.getDepth());
+			// mLogger.info("decision: " + invariant.getDecision().getVar());
+			// mLogger.info("child: " + invariant.getChilds()[1]);
+			//
+			// final Map<String, Boolean> test = dfs(invariant, CDD.TRUE);
+			// mLogger.info("Map: " + test);
+			//
+			// final Transition transition = path.get(1).getOutgoingTransition(path.get(0));
+			// mLogger.info("Guard: " + transition.getGuard());
+			// mLogger.info("Resets: " + transition.getResets());
+			// mLogger.info("Guard: " + transition.getGuard().getDecision());
+			//
+			// mLogger.info("Guard: " + dfs(transition.getGuard(), CDD.TRUE));
 
-			Phase goal = null;
-			for (final Phase phase : pea.getPhases()) {
-				if (phase.getName().equals("st01")) {
-					goal = phase;
-				}
-			}
-
-			final List<Phase> path = dijkstra(pea, start, goal);
-			mLogger.info("Path: " + path);
-
-			// Variables (eg. Q, R).
-			final Set<String> variables = pea.getVariables().keySet();
-			final Map<String, List<Pair<Integer, Integer>>> result = new HashMap<>();
-			variables.forEach(e -> result.put(e, new ArrayList<Pair<Integer, Integer>>()));
-
-			mLogger.info(result);
-
-			final CDD invariant = path.get(0).getStateInvariant();
-			mLogger.info("depth: " + invariant.getDepth());
-			mLogger.info("decision: " + invariant.getDecision().getVar());
-			mLogger.info("child: " + invariant.getChilds()[1]);
-
-			final Map<String, Boolean> test = dfs(invariant, CDD.TRUE);
-			mLogger.info("Map: " + test);
-
-			final Transition transition = path.get(1).getOutgoingTransition(path.get(0));
-			mLogger.info("Guard: " + transition.getGuard());
-			mLogger.info("Resets: " + transition.getResets());
-			mLogger.info("Guard: " + transition.getGuard().getDecision());
-
-			mLogger.info("Guard: " + dfs(transition.getGuard(), CDD.TRUE));
 		}
 	}
 

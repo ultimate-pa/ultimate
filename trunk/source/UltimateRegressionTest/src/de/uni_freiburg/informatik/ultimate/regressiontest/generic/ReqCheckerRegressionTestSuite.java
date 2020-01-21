@@ -74,8 +74,8 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 		mTimeout = TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/Requirements");
 		mFiletypesToConsider = new String[] { ".req" };
-		
-		
+		mExcludeFilterRegexToolchain = "failure-paths/*";
+
 	}
 
 	@Override

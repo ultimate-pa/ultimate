@@ -14,3 +14,4 @@ Require-Bundle: org.junit,
 Import-Package: org.junit,
  org.junit.runner,
  org.junit.runners
+Export-Package: de.uni_freiburg.informatik.ultimate.srparse.test
