@@ -546,6 +546,7 @@
         <module>../Library-UltimateUtil</module>
         <module>../Library-xerces</module>
         <module>../LTL2aut</module>
+        <module>../PeaExampleGenerator</module>
         <module>../PEAtoBoogie</module>
         <module>../RCFGBuilder</module>
         <module>../ReachingDefinitions</module>
