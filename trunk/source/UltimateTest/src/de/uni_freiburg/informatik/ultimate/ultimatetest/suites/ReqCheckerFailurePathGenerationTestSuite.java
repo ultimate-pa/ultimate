@@ -61,7 +61,7 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 
 	private static final String TOOLCHAIN = "ReqCheckFailurePathGeneration.xml";
 	private static final String SETTINGS = "ReqCheckFailurePathGeneration.epf";
-	private static final String REQ_DIR = "examples/Requirements/regression/failure-paths";
+	private static final String REQ_DIR = "examples/Requirements/failure-paths";
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
