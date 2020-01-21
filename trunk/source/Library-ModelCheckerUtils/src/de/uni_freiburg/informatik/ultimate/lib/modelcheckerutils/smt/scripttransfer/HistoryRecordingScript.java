@@ -119,7 +119,7 @@ public final class HistoryRecordingScript extends WrapperScript {
 	private void insert(final ISmtDeclarable declarable) {
 		mHistory.push(declarable);
 		final ISmtDeclarable old = mSymbolTable.put(declarable.getName(), declarable);
-		assert old == null;
+		assert old == null : "overwriting already existing symbol " + old;
 	}
 
 	/**
