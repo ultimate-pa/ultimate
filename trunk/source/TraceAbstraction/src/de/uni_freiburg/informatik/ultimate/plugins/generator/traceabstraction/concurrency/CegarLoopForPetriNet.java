@@ -115,7 +115,6 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	 */
 	private static final int DEBUG_DUMP_DRYRUNRESULT_THRESHOLD = 24 * 60 * 60;
 
-	private BranchingProcess<LETTER, IPredicate> mUnfolding;
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
 	/**
@@ -186,9 +185,9 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		} catch (final PetriNetNot1SafeException e) {
 			throw new UnsupportedOperationException(e.getMessage());
 		}
-		mUnfolding = unf.getFinitePrefix();
-		mCoRelationQueries += (mUnfolding.getCoRelation().getQueryCounterYes()
-				+ mUnfolding.getCoRelation().getQueryCounterNo());
+		final BranchingProcess<LETTER, IPredicate> finPrefix = unf.getFinitePrefix();
+		mCoRelationQueries += (finPrefix.getCoRelation().getQueryCounterYes()
+				+ finPrefix.getCoRelation().getQueryCounterNo());
 
 		mCounterexample = unf.getAcceptingRun();
 		if (mCounterexample == null) {
@@ -228,7 +227,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
+		final BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
 		final IHoareTripleChecker htc;
 		if (mRefinementEngine.getHoareTripleChecker() != null) {
 			htc = mRefinementEngine.getHoareTripleChecker();
@@ -238,14 +237,6 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		}
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		try {
-			if (mPref.unfoldingToNet()) {
-				final FinitePrefix2PetriNet<LETTER, IPredicate> fp2pn = new FinitePrefix2PetriNet<>(
-						new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mUnfolding);
-				assert fp2pn.checkResult(mPredicateFactoryResultChecking) : fp2pn.getClass().getSimpleName()
-						+ " failed";
-				abstraction = fp2pn.getResult();
-			}
-
 			// Determinize the interpolant automaton
 			final INestedWordAutomaton<LETTER, IPredicate> dia;
 			final Triple<INestedWordAutomaton<LETTER, IPredicate>, IPetriNet<LETTER, IPredicate>, DifferencePetriNet<LETTER, IPredicate>.SynchronizationInformation> enhancementResult = enhanceAnddeterminizeInterpolantAutomaton(
@@ -278,7 +269,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			} else {
 				final Difference<LETTER, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(mServices),
 						mPredicateFactoryInterpolantAutomata, abstraction, dia, LoopSyncMethod.HEURISTIC,
-//						null, null);
+//						null, null, null);
 						enhancementResult.getThird().getContributingTransitions(),
 						enhancementResult.getThird().getSelfloops(), enhancementResult.getThird().getStateChangers());
 				mLogger.info(diff.getAutomataOperationStatistics());
@@ -331,6 +322,23 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 				super.writeAutomatonToFile(mAbstraction, filename);
 			}
 			mAbstraction = removeUnreachableResult;
+		}
+		
+		if (mPref.unfoldingToNet()) {
+			PetriNetUnfolder<LETTER, IPredicate> unf;
+			try {
+				final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
+				final EventOrderEnum eventOrder = mPref.eventOrder();
+				unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices),
+						((BoundedPetriNet<LETTER, IPredicate>) mAbstraction), eventOrder, cutOffSameTrans, false);
+			} catch (final PetriNetNot1SafeException e) {
+				throw new UnsupportedOperationException(e.getMessage());
+			}
+			final FinitePrefix2PetriNet<LETTER, IPredicate> fp2pn = new FinitePrefix2PetriNet<>(
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, unf.getFinitePrefix());
+			assert fp2pn.checkResult(mPredicateFactoryResultChecking) : fp2pn.getClass().getSimpleName()
+					+ " failed";
+			mAbstraction = fp2pn.getResult();
 		}
 
 
