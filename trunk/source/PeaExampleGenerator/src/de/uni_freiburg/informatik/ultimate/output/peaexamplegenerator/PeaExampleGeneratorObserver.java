@@ -26,14 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultTest;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -59,5 +62,9 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 		// call python script (or perhaps translate it to java)
 		final Map<String, List<IResult>> results = mServices.getResultService().getResults();
 
+		final Collection<ReqTestResultTest> testGenResults = ResultUtil.filterResults(results, ReqTestResultTest.class);
+		if (testGenResults.isEmpty()) {
+			throw new UnsupportedOperationException("There are no ReqTestResultTest results");
+		}
 	}
 }
