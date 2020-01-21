@@ -55,9 +55,8 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 
 	private static final String[] REQ = new String[] { ".req" };
 
-	private static final String TOOLCHAIN = "LassoRankerCBEv2.xml";
-	private static final String SETTINGS = "LassoRankerCBEv2.xml";
-
+	private static final String TOOLCHAIN = "examples/Requirements/regression/failure-paths/ReqCheck.xml";
+	private static final String SETTINGS = "examples/Requirements/regression/failure-paths/ReqCheck.epf";
 	private static final String REQ_DIR = "examples/Requirements/regression/failure-paths";
 
 	@Override
