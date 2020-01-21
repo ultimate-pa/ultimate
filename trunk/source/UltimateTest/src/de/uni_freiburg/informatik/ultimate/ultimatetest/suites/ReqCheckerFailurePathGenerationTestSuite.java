@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2018 Nico Hauff (hauffn@informatik.uni-freiburg.de)
- * Copyright (C) 2018 University of Freiburg
+ * Copyright (C) 2020 Nico Hauff (hauffn@informatik.uni-freiburg.de)
+ * Copyright (C) 2020 University of Freiburg
  *
  * This file is part of the ULTIMATE Regression Test Library.
  *
@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Regression Test Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.regressiontest.generic;
+package de.uni_freiburg.informatik.ultimate.ultimatetest.suites;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -37,12 +37,8 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.PatternUtil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
-import de.uni_freiburg.informatik.ultimate.regressiontest.AbstractRegressionTestSuite;
-import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.NoErrorTestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
@@ -50,33 +46,30 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  *
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-public class ReqCheckerFailurePathGenerationTestSuite extends AbstractRegressionTestSuite {
-
-	private static final int TIMEOUT = 10_000;
-	private static final String REQ_DIR =
-			"/media/Daten/projects/ultimate/trunk/examples/Requirements/regression/failure-paths";
-
-	public ReqCheckerFailurePathGenerationTestSuite() {
-		super();
-		mTimeout = TIMEOUT;
-		mRootFolder = TestUtil.getPathFromTrunk("examples/Requirements");
-		mFiletypesToConsider = new String[] { ".req" };
-		mIncludeFilterRegexToolchain = "failure-path/*";
-
-	}
+public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSuite {
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
-		return new NoErrorTestResultDecider(urd);
+	protected long getTimeout() {
+		return 10_000;
 	}
+
+	private static final String[] REQ = new String[] { ".req" };
+
+	private static final String TOOLCHAIN = "LassoRankerCBEv2.xml";
+	private static final String SETTINGS = "LassoRankerCBEv2.xml";
+
+	private static final String REQ_DIR = "examples/Requirements/regression/failure-paths";
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		createReqFiles(PatternUtil.createAllPatterns().getFirst());
+		final DirectoryFileEndingsPair[] pairs =
+				new DirectoryFileEndingsPair[] { new DirectoryFileEndingsPair(REQ_DIR, REQ) };
+		addTestCase(TOOLCHAIN, SETTINGS, pairs);
 		return super.createTestCases();
 	}
 
-	private void createReqFiles(final List<PatternType> patterns) {
+	private static void createReqFiles(final List<PatternType> patterns) {
 		for (final PatternType pattern : patterns) {
 			final String scopeName = pattern.getScope().getClass().getSimpleName()
 					.replace(pattern.getScope().getClass().getSuperclass().getSimpleName(), "");
