@@ -57,11 +57,10 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 		return 10_000;
 	}
 
-	private static final String[] REQ = new String[] { ".req" };
-
 	private static final String TOOLCHAIN = "ReqCheckFailurePathGeneration.xml";
 	private static final String SETTINGS = "ReqCheckFailurePathGeneration.epf";
 	private static final String REQ_DIR = "examples/Requirements/failure-paths";
+	private static final String[] REQ = new String[] { ".req" };
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
@@ -93,17 +92,17 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 						CoreUtil.getPlatformLineSeparator());
 			}
 			fmt.format("req1: %s%s", patternString, CoreUtil.getPlatformLineSeparator());
-			fmt.close();
 
 			final File file =
 					new File(TestUtil.getPathFromTrunk(REQ_DIR) + "/" + patternName + "_" + scopeName + ".req");
 			try {
 				final BufferedWriter writer = new BufferedWriter(new FileWriter(file, false));
-				writer.write(sb.toString());
+				writer.write(fmt.toString());
 				writer.close();
 			} catch (final IOException e) {
 				throw new RuntimeException("Unable to write file '" + file + "'.");
 			}
+			fmt.close();
 		}
 	}
 
