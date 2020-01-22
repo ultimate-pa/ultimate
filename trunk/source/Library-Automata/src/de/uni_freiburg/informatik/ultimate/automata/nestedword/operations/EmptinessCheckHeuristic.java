@@ -39,6 +39,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureE
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractor;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
@@ -63,9 +66,15 @@ public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE,
 			transformula = ((StatementSequence) trans).getTransformula();
 		} else if (trans instanceof SequentialComposition) {
 			transformula = ((SequentialComposition) trans).getTransformula();
+		} else if (trans instanceof Call) {
+			transformula = ((Call) trans).getTransformula();
+		} else if (trans instanceof GotoEdge) {
+			transformula = ((GotoEdge) trans).getTransformula();
+		} else if (trans instanceof ParallelComposition) {
+			transformula = ((ParallelComposition) trans).getTransformula();
 		} else {
 			throw new UnsupportedOperationException(
-					"Currently this function only supports transitions of type 'StatementSequence' or 'SequentialComposition'. The passed transition has type: "
+					"Currently this function only supports transitions of type 'StatementSequence', 'SequentialComposition', 'Call', 'GotoEdge' and 'ParallelComposition'. The passed transition has type: "
 							+ trans.getClass().getCanonicalName());
 		}
 
