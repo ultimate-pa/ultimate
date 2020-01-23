@@ -65,16 +65,14 @@ public class UndoableWrapperScript extends WrapperScript {
 
 	@Override
 	public void resetAssertions() {
-		super.resetAssertions();
-		mDirtyStackLevels = 0;
-		push(1);
+		throw new UnsupportedOperationException(UndoableWrapperScript.class
+				+ " cannot restore anymore because it does not know what was on the stack before its creation");
 	}
 
 	@Override
 	public void reset() {
-		super.reset();
-		mDirtyStackLevels = 0;
-		push(1);
+		throw new UnsupportedOperationException(UndoableWrapperScript.class
+				+ " cannot restore anymore because it does not know what was on the stack before its creation");
 	}
 
 	/**

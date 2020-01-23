@@ -55,11 +55,13 @@ public final class HistoryRecordingScript extends WrapperScript {
 
 	private final Deque<ISmtDeclarable> mHistory;
 	private final Map<String, ISmtDeclarable> mSymbolTable;
+	private int mCurrentStackLevel;
 
 	public HistoryRecordingScript(final Script script) {
 		super(script);
 		mHistory = new ArrayDeque<>();
 		mSymbolTable = new Hashtable<>();
+		mCurrentStackLevel = 0;
 	}
 
 	@Override
@@ -67,6 +69,19 @@ public final class HistoryRecordingScript extends WrapperScript {
 			throws SMTLIBException {
 		super.defineFun(fun, params, resultSort, definition);
 		insert(DeclarableFunctionSymbol.createFromScriptDefineFun(fun, params, resultSort, definition));
+	}
+
+	@Override
+	public void resetAssertions() {
+		super.resetAssertions();
+		removeStackLevelsFromHistory(mCurrentStackLevel);
+	}
+
+	@Override
+	public void reset() {
+		super.reset();
+		mHistory.clear();
+		mSymbolTable.clear();
 	}
 
 	@Override
@@ -90,14 +105,21 @@ public final class HistoryRecordingScript extends WrapperScript {
 	@Override
 	public void push(final int levels) {
 		super.push(levels);
+		assert levels > 0;
 		for (int i = 0; i < levels; ++i) {
 			mHistory.push(StackMarker.INSTANCE);
 		}
+		mCurrentStackLevel += levels;
 	}
 
 	@Override
 	public void pop(final int levels) {
 		super.pop(levels);
+		removeStackLevelsFromHistory(levels);
+	}
+
+	private void removeStackLevelsFromHistory(final int levels) {
+		assert levels > 0;
 		final Iterator<ISmtDeclarable> iter = mHistory.iterator();
 		int markerCount = 0;
 		for (int i = 0; i < levels; ++i) {
@@ -114,12 +136,16 @@ public final class HistoryRecordingScript extends WrapperScript {
 			}
 		}
 		assert markerCount == levels;
+		mCurrentStackLevel -= levels;
+		if (mCurrentStackLevel < 0) {
+			mCurrentStackLevel = 0;
+		}
 	}
 
 	private void insert(final ISmtDeclarable declarable) {
 		mHistory.push(declarable);
 		final ISmtDeclarable old = mSymbolTable.put(declarable.getName(), declarable);
-		assert old == null : "overwriting already existing symbol " + old;
+		assert old == null : "overwriting already existing symbol in history: " + old;
 	}
 
 	/**
