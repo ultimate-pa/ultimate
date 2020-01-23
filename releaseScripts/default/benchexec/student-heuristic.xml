@@ -62,6 +62,20 @@
     <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
 	</rundefinition>
 
+  <rundefinition name="AutomizerBplInline with isEmptyHeuristic and Scoring Method: ZERO">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+	</rundefinition>
+
+  <rundefinition name="AutomizerBplInline with isEmptyHeuristic and Scoring Method: NUMBER_OF_SELECT_FUNCTIONS">
+		<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+		<option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
+    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+	</rundefinition>
+
 
 <tasks name="Pdr">
   <includesfile>../../../trunk/examples/bench-pdr-boogie.set</includesfile>
