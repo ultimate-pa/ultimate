@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingConstraint.VoluntaryRankDecrease;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
  * Builder used by buchiComplementFKV to obtain TightLevelRankingStateGenerators.
@@ -370,7 +370,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 	 */
 	private class HeiMatTightLevelRankingStateGenerator extends TightLevelRankingStateGenerator {
 		private static final int THOUSAND = 1000;
-		private final TreeRelation<Integer, DoubleDecker<StateWithRankInfo<STATE>>> mUnrestrictedMaxRank2DoubleDeckerWithRankInfo;
+		private final TreeHashRelation<Integer, DoubleDecker<StateWithRankInfo<STATE>>> mUnrestrictedMaxRank2DoubleDeckerWithRankInfo;
 		private final boolean mSuccessorsOfFinalsWantToLeaveO;
 		//		private final int numberOfDoubleDeckerWithRankInfos;
 
@@ -378,7 +378,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 				final boolean successorsOfFinalsWantToLeaveO) {
 			super(constraint);
 			mSuccessorsOfFinalsWantToLeaveO = successorsOfFinalsWantToLeaveO;
-			mUnrestrictedMaxRank2DoubleDeckerWithRankInfo = new TreeRelation<>();
+			mUnrestrictedMaxRank2DoubleDeckerWithRankInfo = new TreeHashRelation<>();
 			// numberOfDoubleDeckerWithRankInfos =
 			//		super.mUnrestrictedDoubleDeckerWithRankInfo.size();
 			for (final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker : super.mUnrestrictedDoubleDeckerWithRankInfo) {
