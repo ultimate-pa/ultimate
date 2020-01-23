@@ -33,13 +33,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeature;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractor;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
@@ -60,18 +60,15 @@ public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE,
 	public void checkTransition(final LETTER trans) {
 		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
 		UnmodifiableTransFormula transformula = null;
-		if (trans instanceof CodeBlock) {
-			transformula = ((CodeBlock) trans).getTransformula();
+		if (trans instanceof IInternalAction) {
+			transformula = ((IInternalAction) trans).getTransformula();
+			final Term formula = transformula.getFormula();
+			tc.checkTerm(formula);
+			final double score = tc.get_score(mScoringMethod);
+			mCheckedTransitions.put(trans, score);
 		} else {
-			throw new UnsupportedOperationException(
-					"Currently this function only supports transitions of type 'CodeBlock. The passed transition has type: "
-							+ trans.getClass().getCanonicalName());
+			mCheckedTransitions.put(trans, 0.0);
 		}
-
-		final Term formula = transformula.getFormula();
-		tc.checkTerm(formula);
-		final double score = tc.get_score(mScoringMethod);
-		mCheckedTransitions.put(trans, score);
 	}
 
 	public ScoringMethod getScoringMethod() {
