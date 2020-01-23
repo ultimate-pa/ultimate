@@ -100,12 +100,12 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 
 		final IsEquivalent<StringRankedLetter, String> isEquivalent = new IsEquivalent<>(services, factory, firstTree,
 				fourthTree);
-		
+
 
 		final GetRandomDftaBU getRandomTree3 = new GetRandomDftaBU(services, numberOfStates, rankToNumberOfLetters,
 				rankToNumberOfTransitionsPerLetter, acceptanceDensity, 71);
 		final ITreeAutomatonBU<StringRankedLetter, String> thirdTree = getRandomTree3.getResult();
-		
+
 		assert (new IsEquivalent<>(services, factory,
 				new LazyDifference<>(services, factory, firstTree, secondTree).getResult(),
 				new Difference<>(services, factory, firstTree, secondTree).getResult()).getResult());
@@ -206,7 +206,12 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 	 */
 	@Override
 	public String exitMessage() {
-		return this.mExitMessage;
+		final String exitMessage = this.mExitMessage;
+		if (exitMessage == null) {
+			throw new AssertionError("Unknown problem with exit message.");
+		} else {
+			return exitMessage;
+		}
 	}
 
 	/**
