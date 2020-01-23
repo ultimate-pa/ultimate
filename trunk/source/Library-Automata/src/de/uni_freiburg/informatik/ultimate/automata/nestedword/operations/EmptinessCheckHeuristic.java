@@ -40,8 +40,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureE
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractor;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
 public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE, LETTER> {
 
@@ -100,16 +98,11 @@ public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE,
 		successors.forEach(e -> {
 			final LETTER trans = e.getTransition();
 			UnmodifiableTransFormula transformula = null;
-			if (trans instanceof StatementSequence) {
-				transformula = ((StatementSequence) trans).getTransformula();
-			} else if (trans instanceof SequentialComposition) {
-				transformula = ((SequentialComposition) trans).getTransformula();
-			} else {
-				throw new UnsupportedOperationException(
-						"Currently this function only supports transitions of type 'StatementSequence' or 'SequentialComposition'. The passed transition has type: "
-								+ trans.getClass().getCanonicalName());
+			// We only want to compare IInternalAction's
+			if (trans instanceof IInternalAction) {
+				transformula = ((IInternalAction) trans).getTransformula();
+				featureToSuccessor.put(mFeatureExtractor.extractFeatureRaw(transformula.getFormula()),e);
 			}
-			featureToSuccessor.put(mFeatureExtractor.extractFeatureRaw(transformula.getFormula()),e);
 		});
 		for (final Entry<SMTFeature, IsEmptyHeuristic<LETTER, STATE>.Item> entry1 : featureToSuccessor.entrySet()) {
 			final SMTFeature feature1 = entry1.getKey();
