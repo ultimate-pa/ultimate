@@ -103,6 +103,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 	}
 
 	public enum ScoringMethod {
+		ZERO,
 		NUM_FUNCTIONS,
 		NUM_VARIABLES,
 		DAGSIZE,
@@ -110,7 +111,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		BIGGEST_EQUIVALENCE_CLASS,
 		AVERAGE_EQUIVALENCE_CLASS,
 		NUMBER_OF_EQUIVALENCE_CLASSES,
-		NUMBER_OF_SELECT,
+		NUMBER_OF_SELECT_FUNCTIONS,
 		COMPARE_FEATURES,
 	}
 
@@ -194,7 +195,12 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 			score = (int) getVariableEquivalenceClassSizes().stream().mapToInt(val -> val).average().orElse(0);
 		} else if (scoringMethod == ScoringMethod.NUMBER_OF_EQUIVALENCE_CLASSES) {
 			score = getVariableEquivalenceClassSizes().size();
-		}else {
+		} else if (scoringMethod == ScoringMethod.NUMBER_OF_SELECT_FUNCTIONS) {
+			score = getOccuringFunctionNames().getOrDefault("select", 0);
+		} else if (scoringMethod == ScoringMethod.ZERO) {
+			score = 0;
+		}
+		else {
 			throw new UnsupportedOperationException("Unsupported ScoringMethod " + scoringMethod.toString());
 		}
 		final double normalized = 1.0 - ( 1.0 / (score != 0 ? (double)score : 1.0));
