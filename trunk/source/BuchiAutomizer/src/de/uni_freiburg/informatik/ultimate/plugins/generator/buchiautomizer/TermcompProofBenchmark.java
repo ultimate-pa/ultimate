@@ -33,7 +33,6 @@ import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -57,15 +56,17 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
 		mServices = services;
 	}
 
-	void reportFiniteModule(final Integer iteration, final INwaOutgoingLetterAndTransitionProvider<?, IPredicate> automaton) {
-		final String stringRepresentation = (new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices),
-				"finiteAutomatonIteration" + iteration, Format.ATS, automaton)).getDefinitionAsString();
+	void reportFiniteModule(final Integer iteration,
+			final INwaOutgoingLetterAndTransitionProvider<?, IPredicate> automaton) {
+		final String stringRepresentation = (AutomatonDefinitionPrinter.toString(new AutomataLibraryServices(mServices),
+				"finiteAutomatonIteration" + iteration, automaton));
 		mModuleFinite.put(iteration, stringRepresentation);
 	}
 
-	void reportBuchiModule(final Integer iteration, final INwaOutgoingLetterAndTransitionProvider<?, IPredicate> automaton) {
-		final String stringRepresentation = (new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices),
-				"buchiAutomatonIteration" + iteration, Format.ATS, automaton)).getDefinitionAsString();
+	void reportBuchiModule(final Integer iteration,
+			final INwaOutgoingLetterAndTransitionProvider<?, IPredicate> automaton) {
+		final String stringRepresentation = (AutomatonDefinitionPrinter.toString(new AutomataLibraryServices(mServices),
+				"buchiAutomatonIteration" + iteration, automaton));
 		mModuleBuchi.put(iteration, stringRepresentation);
 	}
 
