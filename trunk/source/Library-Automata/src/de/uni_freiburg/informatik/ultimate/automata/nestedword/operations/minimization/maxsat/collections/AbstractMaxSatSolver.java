@@ -2,22 +2,22 @@
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Abstract MAX-SAT solver for propositional logic clauses.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <V>
@@ -98,7 +98,7 @@ public abstract class AbstractMaxSatSolver<V> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 */
@@ -126,7 +126,7 @@ public abstract class AbstractMaxSatSolver<V> {
 
 	/**
 	 * Add a new variable. Variables have to be added before they can be used in clauses.
-	 * 
+	 *
 	 * @param var
 	 *            variable
 	 */
@@ -141,7 +141,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	/**
 	 * Add a new Horn clause. We call the variables on the left-hand side negativeAtoms and the variable on the
 	 * right-hand side the positive atom.
-	 * 
+	 *
 	 * @param negativeAtoms
 	 *            array of non-null variables
 	 * @param positiveAtom
@@ -157,7 +157,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	/**
 	 * Add a new clause. We call the variables on the left-hand side negativeAtoms and the variables on the right-hand
 	 * side the positive atoms.
-	 * 
+	 *
 	 * @param negativeAtoms
 	 *            array of non-null variables considered negative
 	 * @param positiveAtoms
@@ -168,7 +168,7 @@ public abstract class AbstractMaxSatSolver<V> {
 
 	/**
 	 * Solve the given MAX-SAT problem for the given set of Horn clauses.
-	 * 
+	 *
 	 * @return true iff the given set of Horn clauses is satisfiable.
 	 */
 	public boolean solve() throws AutomataOperationCanceledException {
@@ -239,7 +239,7 @@ public abstract class AbstractMaxSatSolver<V> {
 
 	/**
 	 * Assignment to the variable which is guaranteed to not be backtracked.
-	 * 
+	 *
 	 * @param var
 	 *            variable
 	 * @return <code>true</code>/<code>false</code> if assigned, <code>null</code> otherwise
@@ -248,7 +248,7 @@ public abstract class AbstractMaxSatSolver<V> {
 
 	/**
 	 * Assignment to the variable which is not guaranteed to not be backtracked.
-	 * 
+	 *
 	 * @param var
 	 *            variable
 	 * @return assignment status
@@ -256,7 +256,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	protected abstract VariableStatus getTemporaryAssignment(V var);
 
 	protected VariableStatus getCurrentVariableStatus(final V var) {
-		assert mVariables.contains(var);
+		assert mVariables.contains(var) : "missing variable: " + var;
 		final Boolean irr = getPersistentAssignment(var);
 		if (irr != null) {
 			if (irr) {
@@ -270,7 +270,7 @@ public abstract class AbstractMaxSatSolver<V> {
 
 	/**
 	 * Backtracking mechanism.
-	 * 
+	 *
 	 * @param var
 	 *            last set variable which lead to inconsistency
 	 */
@@ -309,7 +309,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	 * <p>
 	 * Another possibility could be to prefer variables which also occur in a non-Horn clause to remove the number of
 	 * such clauses.
-	 * 
+	 *
 	 * @return pair of unset variable and assignment value
 	 */
 	private Entry<V, Boolean> getPropagatee() {
@@ -321,7 +321,7 @@ public abstract class AbstractMaxSatSolver<V> {
 
 	/**
 	 * Sets a status to a variable.
-	 * 
+	 *
 	 * @param var
 	 *            variable
 	 * @param newStatus
@@ -333,7 +333,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	 * Reevaluate all clauses whose variables have been incorrectly set.
 	 * <p>
 	 * NOTE: must be called from backtracking, as we modify the set
-	 * 
+	 *
 	 * @param variablesIncorrectlySet
 	 *            variables to be unset (modified here)
 	 * @param varToBeSetFalse
@@ -409,7 +409,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	 * current policy: just return the next variable from the set.
 	 * <p>
 	 * TODO other policies, e.g., prefer non-Horn clauses
-	 * 
+	 *
 	 * @return unset variable
 	 */
 	protected V getUnsetVariable() {
