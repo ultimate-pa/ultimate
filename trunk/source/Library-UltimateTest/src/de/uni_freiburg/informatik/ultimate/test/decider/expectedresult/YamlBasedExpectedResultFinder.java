@@ -94,7 +94,7 @@ public class YamlBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractExpec
 		} else {
 			super.mExpectedResult = null;
 			super.mEvaluationStatus = ExpectedResultFinderStatus.ERROR;
-			super.mExpectedResultEvaluation = "Error: annotation given by keywords is inconsitent";
+			super.mExpectedResultEvaluation = "Error: annotation given by keywords is inconsistent";
 		}
 	}
 
