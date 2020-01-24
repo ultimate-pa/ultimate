@@ -242,7 +242,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					cb = replaceGotoEdge(cb, null);
 				} else if (edge instanceof ShortcutErrEdge) {
 					if (cb instanceof ShortcutCodeBlock) {
-						cb = mCbf.constructSequentialComposition(null, null, false, false,
+						cb = mCbf.constructSequentialCompositionAndDisconnectEdges(null, null, false, false,
 								Arrays.asList(((ShortcutCodeBlock) cb).getCodeBlocks()), mXnfConversionTechnique,
 								mSimplificationTechnique);
 					} else {
@@ -441,7 +441,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 						return new ShortcutCodeBlock(null, null,
 								new CodeBlock[] { replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1)) }, mLogger);
 					}
-					return mCbf.constructSequentialComposition(null, null, simplify, extPqe,
+					return mCbf.constructSequentialCompositionAndDisconnectEdges(null, null, simplify, extPqe,
 							Collections.singletonList(replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1))),
 							mXnfConversionTechnique, mSimplificationTechnique);
 				}
@@ -449,7 +449,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					return new ShortcutCodeBlock(null, null, composeEdges.toArray(new CodeBlock[composeEdges.size()]),
 							mLogger);
 				}
-				return mCbf.constructSequentialComposition(null, null, simplify, extPqe,
+				return mCbf.constructSequentialCompositionAndDisconnectEdges(null, null, simplify, extPqe,
 						Collections.unmodifiableList(composeEdges), mXnfConversionTechnique, mSimplificationTechnique);
 			}
 			if (edge instanceof DisjunctionEdge) {

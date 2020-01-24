@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -120,6 +121,20 @@ public class CodeBlockFactory implements IStorable {
 			final SimplificationTechnique simplificationTechnique) {
 		return new SequentialComposition(makeFreshSerial(), source, target, mMgvManager, simplify, extPqe, mServices,
 				codeBlocks, xnfConversionTechnique, simplificationTechnique);
+	}
+
+	public SequentialComposition constructSequentialCompositionAndDisconnectEdges(final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final boolean simplify, final boolean extPqe,
+			final List<CodeBlock> codeBlocks, final XnfConversionTechnique xnfConversionTechnique,
+			final SimplificationTechnique simplificationTechnique) {
+		final SequentialComposition edge = constructSequentialComposition(source, target, simplify, extPqe, codeBlocks,
+				xnfConversionTechnique, simplificationTechnique);
+		for (final CodeBlock currentCodeblock : codeBlocks) {
+			currentCodeblock.disconnectSource();
+			currentCodeblock.disconnectTarget();
+			ModelUtils.copyAnnotations(currentCodeblock, edge);
+		}
+		return edge;
 	}
 
 	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,

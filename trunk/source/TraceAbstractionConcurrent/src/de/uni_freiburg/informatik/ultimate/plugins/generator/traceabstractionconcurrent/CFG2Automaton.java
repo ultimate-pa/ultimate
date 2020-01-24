@@ -146,8 +146,8 @@ public abstract class CFG2Automaton<LETTER extends IIcfgTransition<?>, RESULT> {
 		}
 
 		// TODO: This cast to letter will probably not fail if nothing in this method failed before
-		return (LETTER) boogieIcfg.getCodeBlockFactory().constructSequentialComposition(entry, exit, true, false,
-				codeBlocks, mXnfConversionTechnique, mSimplificationTechnique);
+		return (LETTER) boogieIcfg.getCodeBlockFactory().constructSequentialCompositionAndDisconnectEdges(entry, exit,
+				true, false, codeBlocks, mXnfConversionTechnique, mSimplificationTechnique);
 	}
 
 	/**
