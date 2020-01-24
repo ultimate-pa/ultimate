@@ -113,7 +113,7 @@ public class PeaToDotTestSuite {
 				.replace(pattern.getScope().getClass().getSuperclass().getSimpleName(), "");
 	}
 
-	@Test
+	// @Test
 	public void generateTestFiles() throws IOException {
 		if (!ENABLE_FAILUREPATH_IMG_GEN) {
 			return;
