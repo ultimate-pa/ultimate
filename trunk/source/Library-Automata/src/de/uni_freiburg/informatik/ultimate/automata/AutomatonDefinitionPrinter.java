@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.Nwa
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessWriter;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessWriterToString;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterToString;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterToStringWithUniqueNumber;
@@ -189,17 +188,20 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 *            Ultimate services
 	 * @param automatonName
 	 *            automaton name
-	 * @param format
-	 *            output format
 	 * @param automaton
 	 *            automaton to print
 	 */
-	public AutomatonDefinitionPrinter(final AutomataLibraryServices services, final String automatonName,
-			final Format format, final IAutomaton<?, ?> automaton) {
+	private AutomatonDefinitionPrinter(final AutomataLibraryServices services, final String automatonName,
+			final IAutomaton<?, ?> automaton) {
 		this(services);
 		mStringWriter = new StringWriter();
 		mPrintWriter = new PrintWriter(mStringWriter);
-		printAutomaton(automatonName, automaton, format);
+		printAutomaton(automatonName, automaton, Format.ATS);
+	}
+
+	public static String toString(final AutomataLibraryServices services,
+			final String automatonName, final IAutomaton<?, ?> automaton) {
+		return new AutomatonDefinitionPrinter<>(services, automatonName, automaton).getDefinitionAsString();
 	}
 
 	/**
@@ -231,11 +233,11 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 
 	/**
 	 * This method is only available if the
-	 * {@link #AutomatonDefinitionPrinter(AutomataLibraryServices, String, Format, IAutomaton)} constructor was used.
+	 * {@link #AutomatonDefinitionPrinter(AutomataLibraryServices, String, IAutomaton)} constructor was used.
 	 *
 	 * @return The definition as string.
 	 */
-	public String getDefinitionAsString() {
+	private String getDefinitionAsString() {
 		if (mStringWriter == null) {
 			throw new AssertionError("only available with different constructor");
 		}
@@ -445,7 +447,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 				throw new AssertionError(UNSUPPORTED_LABELING);
 		}
 	}
-	
+
 	@SuppressWarnings("unused")
 	private void printBranchingProcess(final String name, final BranchingProcess<LETTER, STATE> branchingProcess, final Format format)
 			throws AssertionError {

@@ -31,7 +31,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
@@ -299,8 +298,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER>
 	@Override
 	public final String toString() {
 		if (mMode == Mode.READ_ONLY) {
-			return new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "nwa",
-					Format.ATS, this).getDefinitionAsString();
+			return AutomatonDefinitionPrinter.toString(new AutomataLibraryServices(mServices), "nwa", this);
 		}
 		return "automaton under construction";
 	}

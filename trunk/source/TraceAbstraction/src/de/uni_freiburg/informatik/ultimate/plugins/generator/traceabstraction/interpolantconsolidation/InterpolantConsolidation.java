@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -171,23 +170,14 @@ public class InterpolantConsolidation<TC extends IInterpolantGenerator<LETTER>, 
 					interpolantAutomatonDeterminized, psd2, false /* explointSigmaStarConcatOfIA */ );
 			if (PRINT_DIFFERENCE_AUTOMATA) {
 				// Needed for debug
-				final AutomatonDefinitionPrinter<LETTER, IPredicate> pathAutomatonPrinter =
-						new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "PathAutomaton",
-								Format.ATS, pathprogramautomaton);
-				final AutomatonDefinitionPrinter<LETTER, IPredicate> interpolantAutomatonPrinter =
-						new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices),
-								"InterpolantAutomatonNonDet", Format.ATS, interpolantAutomaton);
-				final AutomatonDefinitionPrinter<LETTER, IPredicate> interpolantAutomatonPrinterDet =
-						new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices),
-								"InterpolantAutomatonDet", Format.ATS, interpolantAutomatonDeterminized);
+				final AutomataLibraryServices services = new AutomataLibraryServices(mServices);
 				final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> diffAutomaton = diff.getResult();
-				final AutomatonDefinitionPrinter<LETTER, IPredicate> diffAutomatonPrinter =
-						new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "DifferenceAutomaton",
-								Format.ATS, diffAutomaton);
-				mLogger.debug(pathAutomatonPrinter.getDefinitionAsString());
-				mLogger.debug(interpolantAutomatonPrinter.getDefinitionAsString());
-				mLogger.debug(interpolantAutomatonPrinterDet.getDefinitionAsString());
-				mLogger.debug(diffAutomatonPrinter.getDefinitionAsString());
+				mLogger.debug(AutomatonDefinitionPrinter.toString(services, "PathAutomaton", pathprogramautomaton));
+				mLogger.debug(AutomatonDefinitionPrinter.toString(services, "InterpolantAutomatonNonDet",
+						interpolantAutomaton));
+				mLogger.debug(AutomatonDefinitionPrinter.toString(services, "InterpolantAutomatonDet",
+						interpolantAutomatonDeterminized));
+				mLogger.debug(AutomatonDefinitionPrinter.toString(services, "DifferenceAutomaton", diffAutomaton));
 			}
 			cachingHtc.releaseLock();
 			// 5. Check if difference is empty

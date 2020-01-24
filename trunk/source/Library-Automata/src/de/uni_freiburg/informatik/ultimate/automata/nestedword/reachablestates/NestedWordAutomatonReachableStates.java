@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DownStateConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
@@ -701,8 +700,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 
 	@Override
 	public String toString() {
-		return new AutomatonDefinitionPrinter<String, String>(mServices, "nwa", Format.ATS, this)
-				.getDefinitionAsString();
+		return AutomatonDefinitionPrinter.toString(mServices, "nwa", this);
 	}
 
 	@Override

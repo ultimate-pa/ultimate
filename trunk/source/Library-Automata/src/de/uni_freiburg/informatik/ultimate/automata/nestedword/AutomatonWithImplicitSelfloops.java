@@ -35,7 +35,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -193,8 +192,7 @@ public class AutomatonWithImplicitSelfloops<LETTER, STATE>
 
 	@Override
 	public String toString() {
-		return (new AutomatonDefinitionPrinter<String, String>(mServices, "nwa", Format.ATS, this))
-				.getDefinitionAsString();
+		return (AutomatonDefinitionPrinter.toString(mServices, "nwa", this));
 	}
 
 }

@@ -36,7 +36,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -240,7 +239,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		}
 		mTransitions.add(transition);
 		return transition;
-		
+
 	}
 	public Transition<LETTER, PLACE> addTransition(final LETTER letter, final Set<PLACE> preds,
 			final Set<PLACE> succs) {
@@ -373,8 +372,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 
 	@Override
 	public String toString() {
-		return (new AutomatonDefinitionPrinter<String, String>(mServices, "net", Format.ATS, this))
-				.getDefinitionAsString();
+		return AutomatonDefinitionPrinter.toString(mServices, "net", this);
 	}
 
 }

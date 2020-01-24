@@ -738,8 +738,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 						"if first argument of print command is an " + "automaton only two arguments are allowed");
 			}
 			mLastPrintedAutomaton = (IAutomaton<String, String>) arguments.get(0);
-			text = new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "automaton",
-					format, mLastPrintedAutomaton).getDefinitionAsString();
+			text = AutomatonDefinitionPrinter.toString(new AutomataLibraryServices(mServices), "automaton",
+					mLastPrintedAutomaton);
 		} else {
 			if (arguments.size() > 1) {
 				throw new InterpreterException(oe.getLocation(),

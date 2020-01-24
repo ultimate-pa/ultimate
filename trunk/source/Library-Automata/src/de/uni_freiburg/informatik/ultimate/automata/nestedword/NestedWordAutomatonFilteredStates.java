@@ -33,7 +33,6 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates.DoubleDeckerReachability;
@@ -425,8 +424,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 
 	@Override
 	public String toString() {
-		return (new AutomatonDefinitionPrinter<String, String>(mServices, "nwa", Format.ATS, this))
-				.getDefinitionAsString();
+		return (AutomatonDefinitionPrinter.toString(mServices, "nwa", this));
 	}
 
 	private boolean isDoubleDeckerThatCanReachPrecious(final STATE upState, final STATE downState) {

@@ -35,7 +35,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
@@ -136,7 +135,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		} else {
 			mCoRelation = new ConditionEventsCoRelation<>(this);
 		}
-		
+
 		mUseFirstbornCutoffCheck = useCutoffChekingPossibleExtention;
 
 		// add a dummy event as root. its successors are the initial conditions.
@@ -513,7 +512,6 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 
 	@Override
 	public String toString() {
-		return (new AutomatonDefinitionPrinter<String, String>(mServices, "branchingProcess", Format.ATS, this))
-				.getDefinitionAsString();
+		return (AutomatonDefinitionPrinter.toString(mServices, "branchingProcess", this));
 	}
 }

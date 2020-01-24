@@ -111,7 +111,7 @@ public final class MSODSolver {
 	 * Returns a string representation of the given automaton. (only for debugging)
 	 */
 	public String automatonToString(final IAutomaton<?, ?> automaton, final Format format) {
-		return new AutomatonDefinitionPrinter<>(mAutomataLibrarayServices, "", Format.ATS, automaton)
+		return new AutomatonDefinitionPrinter<>(mAutomataLibrarayServices, "", automaton)
 				.getDefinitionAsString();
 	}
 
