@@ -63,7 +63,8 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutom
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Writes the automaton definition for given automata. Writing can either be to a string or to a file.
+ * Writes the automaton definition for given automata. Writing can either be to
+ * a string or to a file.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -88,18 +89,21 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	public enum Format {
 		/**
 		 * Automata script.<br>
-		 * The {@link #toString()} representation of {@link LETTER} and {@link STATE} is used.
+		 * The {@link #toString()} representation of {@link LETTER} and {@link STATE} is
+		 * used.
 		 */
 		ATS(ATS_EXTENSION),
 		/**
 		 * Automata script.<br>
-		 * The {@link #toString()} representations of {@link LETTER} and {@link STATE} are ignored. The
-		 * {@link TestFileWriter} introduces new names, e.g. the letters of the alphabet are <tt>a0, ..., an</tt>.
+		 * The {@link #toString()} representations of {@link LETTER} and {@link STATE}
+		 * are ignored. The {@link TestFileWriter} introduces new names, e.g. the
+		 * letters of the alphabet are <tt>a0, ..., an</tt>.
 		 */
 		ATS_NUMERATE(ATS_EXTENSION),
 		/**
 		 * Automata script.<br>
-		 * The {@link #toString()} representation of {@link LETTER} and {@link STATE} plus a number is used.
+		 * The {@link #toString()} representation of {@link LETTER} and {@link STATE}
+		 * plus a number is used.
 		 */
 		ATS_QUOTED(ATS_EXTENSION),
 		/**
@@ -128,8 +132,6 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-	private PrintWriter mPrintWriter;
-	private StringWriter mStringWriter;
 
 	/**
 	 * Base constructor.
@@ -140,8 +142,6 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	private AutomatonDefinitionPrinter(final AutomataLibraryServices services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mPrintWriter = null;
-		mStringWriter = null;
 	}
 
 	/**
@@ -160,7 +160,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 * @param automata
 	 *            sequence of automata to print
 	 * @param append
-	 * 			  whether the automata should be added at the end of the file (true) or replace the content of the file (false)
+	 *            whether the automata should be added at the end of the file (true)
+	 *            or replace the content of the file (false)
 	 */
 	public AutomatonDefinitionPrinter(final AutomataLibraryServices services, final String automatonName,
 			final String fileName, final Format format, final String message, final boolean append,
@@ -171,8 +172,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			if (mLogger.isWarnEnabled()) {
 				mLogger.warn("Dumping automata.");
 			}
-			mPrintWriter = new PrintWriter(fileWriter);
-			printAutomataToFileWriter(automatonName, format, message, automata);
+			final PrintWriter printWriter = new PrintWriter(fileWriter);
+			printAutomataToFileWriter(mServices, printWriter, automatonName, format, message, automata);
 		}
 	}
 
@@ -181,34 +182,20 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		this(services, automatonName, fileName, format, message, false, automata);
 	}
 
-	/**
-	 * Constructor for printing a single {@link IAutomaton} to a {@link StringWriter}.
-	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param automatonName
-	 *            automaton name
-	 * @param automaton
-	 *            automaton to print
-	 */
-	private AutomatonDefinitionPrinter(final AutomataLibraryServices services, final String automatonName,
+	public static String toString(final AutomataLibraryServices services, final String automatonName,
 			final IAutomaton<?, ?> automaton) {
-		this(services);
-		mStringWriter = new StringWriter();
-		mPrintWriter = new PrintWriter(mStringWriter);
-		printAutomaton(automatonName, automaton, Format.ATS);
-	}
-
-	public static String toString(final AutomataLibraryServices services,
-			final String automatonName, final IAutomaton<?, ?> automaton) {
-		return new AutomatonDefinitionPrinter<>(services, automatonName, automaton).getDefinitionAsString();
+		final StringWriter stringWriter = new StringWriter();
+		final PrintWriter printWriter = new PrintWriter(stringWriter);
+		printAutomaton(services, automatonName, automaton, Format.ATS, printWriter);
+		return stringWriter.toString();
 	}
 
 	/**
-	 * Writes the passed {@link IAutomaton} objects to files if the option is enabled. Does nothing otherwise.
+	 * Writes the passed {@link IAutomaton} objects to files if the option is
+	 * enabled. Does nothing otherwise.
 	 * <p>
-	 * This method is intended to be used for dumping automata when an error occurs e.g., when the
-	 * {@link IOperation#checkResult()} method fails.
+	 * This method is intended to be used for dumping automata when an error occurs
+	 * e.g., when the {@link IOperation#checkResult()} method fails.
 	 *
 	 * @param services
 	 *            Ultimate services
@@ -220,7 +207,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 *            sequence of automata to be printed
 	 */
 	@SafeVarargs
-	@SuppressWarnings({ "unused", "findbugs:UC_USELESS_VOID_METHOD" })
+	@SuppressWarnings({ "findbugs:UC_USELESS_VOID_METHOD" })
 	public static void writeToFileIfPreferred(final AutomataLibraryServices services, final String fileNamePrefix,
 			final String message, final IAutomaton<?, ?>... automata) {
 		if (!DUMP_AUTOMATON) {
@@ -232,26 +219,14 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	}
 
 	/**
-	 * This method is only available if the
-	 * {@link #AutomatonDefinitionPrinter(AutomataLibraryServices, String, IAutomaton)} constructor was used.
-	 *
-	 * @return The definition as string.
-	 */
-	private String getDefinitionAsString() {
-		if (mStringWriter == null) {
-			throw new AssertionError("only available with different constructor");
-		}
-		return mStringWriter.toString();
-	}
-
-	/**
-	 *  @param append
+	 * @param append
 	 *
 	 */
-	private FileWriter getFileWriterWithOptionalAppend(final String fileName, final Format format, final boolean append) {
+	private FileWriter getFileWriterWithOptionalAppend(final String fileName, final Format format,
+			final boolean append) {
 		final File testfile = new File(fileName + '.' + format.getFileEnding());
 		try {
-			return new FileWriter(testfile,append);
+			return new FileWriter(testfile, append);
 		} catch (final IOException e) {
 			if (mLogger.isErrorEnabled()) {
 				mLogger.error("Creating FileWriter did not work.", e);
@@ -284,33 +259,36 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		return dateFormat.format(date);
 	}
 
-	private void printAutomataToFileWriter(final String automatonName, final Format format, final String message,
-			final IAutomaton<?, ?>... automata) {
+	private void printAutomataToFileWriter(final AutomataLibraryServices services, final PrintWriter printWriter,
+			final String automatonName, final Format format, final String message, final IAutomaton<?, ?>... automata) {
 		switch (format) {
-			case ATS:
-			case ATS_NUMERATE:
-			case ATS_QUOTED:
-				mPrintWriter.println("// Testfile dumped by Ultimate at " + getDateTimeNice() + System.lineSeparator()
-						+ "//" + System.lineSeparator() + "// " + message + System.lineSeparator());
-				break;
-			case BA:
-			case HOA:
-			case GFF:
-				// add nothing
-				break;
-			default:
-				throw new IllegalArgumentException(UNSUPPORTED_LABELING);
+		case ATS:
+		case ATS_NUMERATE:
+		case ATS_QUOTED:
+			printWriter.println("// Testfile dumped by Ultimate at " + getDateTimeNice() + System.lineSeparator() + "//"
+					+ System.lineSeparator() + "// " + message + System.lineSeparator());
+			break;
+		case BA:
+		case HOA:
+		case GFF:
+			// add nothing
+			break;
+		default:
+			throw new IllegalArgumentException(UNSUPPORTED_LABELING);
 		}
 		if (automata.length == ONE) {
-			printAutomaton(automatonName, automata[0], format);
+			printAutomaton(services, automatonName, automata[0], format, printWriter);
 		}
 		for (int i = 0; i < automata.length; i++) {
-			printAutomaton(automatonName + i, automata[i], format);
+			printAutomaton(services, automatonName + i, automata[i], format, printWriter);
 		}
+		printWriter.close();
 	}
 
 	/**
 	 * Determines the input automaton type and calls the respective print method.
+	 *
+	 * @param services
 	 *
 	 * @param name
 	 *            name of the automaton in the output
@@ -318,50 +296,52 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 *            automaton object
 	 * @param format
 	 *            output format
+	 * @param printWriter
 	 */
 	@SuppressWarnings("unchecked")
-	private void printAutomaton(final String name, final IAutomaton<?, ?> automaton, final Format format) {
+	private static <LETTER, STATE> void printAutomaton(final AutomataLibraryServices services, final String name,
+			final IAutomaton<?, ?> automaton, final Format format, final PrintWriter printWriter) {
 		if (automaton instanceof INwaOutgoingLetterAndTransitionProvider) {
-			printNestedWordAutomaton(name, (INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>) automaton, format);
+			printNestedWordAutomaton(services, name, (INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>) automaton,
+					format, printWriter);
 		} else if (automaton instanceof IPetriNet) {
-			printPetriNet(name, (IPetriNet<LETTER, STATE>) automaton, format);
+			printPetriNet(name, (IPetriNet<LETTER, STATE>) automaton, format, printWriter);
 		} else if (automaton instanceof AlternatingAutomaton) {
-			printAlternatingAutomaton(name, (AlternatingAutomaton<LETTER, STATE>) automaton, format);
+			printAlternatingAutomaton(name, (AlternatingAutomaton<LETTER, STATE>) automaton, format, printWriter);
 		} else if (automaton instanceof TreeAutomatonBU<?, ?>) {
-			printTreeAutomaton(name, (TreeAutomatonBU<?, STATE>) automaton, format);
+			printTreeAutomaton(name, (TreeAutomatonBU<?, STATE>) automaton, format, printWriter);
 		} else if (automaton instanceof BranchingProcess<?, ?>)
-			printBranchingProcess(name, (BranchingProcess<LETTER, STATE>) automaton, format);
-		mPrintWriter.close();
+			printBranchingProcess(name, (BranchingProcess<LETTER, STATE>) automaton, format, printWriter);
 	}
 
-	private void printTreeAutomaton(final String name, final TreeAutomatonBU<? extends IRankedLetter, STATE> automaton,
-			final Format format) {
+	private static <LETTER, STATE> void printTreeAutomaton(final String name,
+			final TreeAutomatonBU<? extends IRankedLetter, STATE> automaton, final Format format,
+			final PrintWriter printWriter) {
 		switch (format) {
-			case ATS:
-				new TreeAutomatonWriter<>(mPrintWriter, name, automaton);
-				break;
-			case ATS_NUMERATE:
-				new TreeAutomatonWriterUniqueId<>(mPrintWriter, name, automaton);
-				break;
-			case ATS_QUOTED:
-			case BA:
-			case GFF:
-			case HOA:
-			default:
-				throw new AssertionError(UNSUPPORTED_LABELING);
+		case ATS:
+			new TreeAutomatonWriter<>(printWriter, name, automaton);
+			break;
+		case ATS_NUMERATE:
+			new TreeAutomatonWriterUniqueId<>(printWriter, name, automaton);
+			break;
+		case ATS_QUOTED:
+		case BA:
+		case GFF:
+		case HOA:
+		default:
+			throw new AssertionError(UNSUPPORTED_LABELING);
 		}
 	}
 
-	@SuppressWarnings("unused")
-	private void printNestedWordAutomaton(final String name,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton, final Format format)
-			throws AssertionError {
+	private static <LETTER, STATE> void printNestedWordAutomaton(final AutomataLibraryServices services,
+			final String name, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton,
+			final Format format, final PrintWriter printWriter) throws AssertionError {
 		INestedWordAutomaton<LETTER, STATE> nwa;
 		if (automaton instanceof INestedWordAutomaton) {
 			nwa = (INestedWordAutomaton<LETTER, STATE>) automaton;
 		} else {
 			try {
-				nwa = new NestedWordAutomatonReachableStates<>(mServices, automaton);
+				nwa = new NestedWordAutomatonReachableStates<>(services, automaton);
 			} catch (final AutomataOperationCanceledException e) {
 				throw new AssertionError("Timeout while preparing automaton for printing.");
 			}
@@ -369,106 +349,104 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 
 		switch (format) {
 		case ATS:
-			new NwaWriterToString<>(mPrintWriter, name, nwa);
+			new NwaWriterToString<>(printWriter, name, nwa);
 			break;
 		case ATS_QUOTED:
-			new NwaWriterToStringWithHash<>(mPrintWriter, name, nwa);
+			new NwaWriterToStringWithHash<>(printWriter, name, nwa);
 			break;
 		case ATS_NUMERATE:
-			new NwaWriterUniqueId<>(mPrintWriter, name, nwa);
+			new NwaWriterUniqueId<>(printWriter, name, nwa);
 			break;
 		case BA:
 			if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
 				throw new UnsupportedOperationException(
 						format + " format does not support call transitions or return transitions");
 			}
-			new BaFormatWriter<>(mPrintWriter, nwa);
+			new BaFormatWriter<>(printWriter, nwa);
 			break;
 		case HOA:
 			if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
 				throw new UnsupportedOperationException(
 						format + " format does not support call transitions or return transitions");
 			}
-			new HanoiFormatWriter<>(mPrintWriter, nwa);
+			new HanoiFormatWriter<>(printWriter, nwa);
 			break;
 		case GFF:
 			if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
 				throw new UnsupportedOperationException(
 						format + " format does not support call transitions or return transitions");
 			}
-			new GoalFormatWriter<>(mPrintWriter, nwa);
+			new GoalFormatWriter<>(printWriter, nwa);
 			break;
 		default:
 			throw new AssertionError(UNSUPPORTED_LABELING);
 		}
 	}
 
-	@SuppressWarnings("unused")
-	private void printPetriNet(final String name, final IPetriNet<LETTER, STATE> net, final Format format)
-			throws AssertionError {
+	private static <LETTER, STATE> void printPetriNet(final String name, final IPetriNet<LETTER, STATE> net,
+			final Format format, final PrintWriter printWriter) throws AssertionError {
 		if (!(net instanceof BoundedPetriNet)) {
-			final String msg = "Unknown Petri net type. Only supported type is " + BoundedPetriNet.class.getSimpleName();
+			final String msg = "Unknown Petri net type. Only supported type is "
+					+ BoundedPetriNet.class.getSimpleName();
 			throw new IllegalArgumentException(msg);
 		}
 
 		final BoundedPetriNet<LETTER, STATE> castNet = (BoundedPetriNet<LETTER, STATE>) net;
 
 		switch (format) {
-			case ATS:
-				new NetWriterToString<>(mPrintWriter, name, castNet);
-				break;
-			case ATS_QUOTED:
-				new NetWriterToStringWithUniqueNumber<>(mPrintWriter, name, castNet);
-				break;
-			case ATS_NUMERATE:
-				new NetWriterUniqueId<>(mPrintWriter, name, castNet);
-				break;
-			case BA:
-			case GFF:
-			case HOA:
-			default:
-				throw new AssertionError(UNSUPPORTED_LABELING);
+		case ATS:
+			new NetWriterToString<>(printWriter, name, castNet);
+			break;
+		case ATS_QUOTED:
+			new NetWriterToStringWithUniqueNumber<>(printWriter, name, castNet);
+			break;
+		case ATS_NUMERATE:
+			new NetWriterUniqueId<>(printWriter, name, castNet);
+			break;
+		case BA:
+		case GFF:
+		case HOA:
+		default:
+			throw new AssertionError(UNSUPPORTED_LABELING);
 		}
 	}
 
-	@SuppressWarnings("unused")
-	private void printAlternatingAutomaton(final String name, final AlternatingAutomaton<LETTER, STATE> alternating,
-			final Format format) {
+	private static <LETTER, STATE> void printAlternatingAutomaton(final String name,
+			final AlternatingAutomaton<LETTER, STATE> alternating, final Format format, final PrintWriter printWriter) {
 		switch (format) {
-			case ATS:
-				new AlternatingAutomatonWriter<>(mPrintWriter, name, alternating);
-				break;
-			case ATS_QUOTED:
-			case ATS_NUMERATE:
-			case BA:
-			case GFF:
-			case HOA:
-			default:
-				throw new AssertionError(UNSUPPORTED_LABELING);
+		case ATS:
+			new AlternatingAutomatonWriter<>(printWriter, name, alternating);
+			break;
+		case ATS_QUOTED:
+		case ATS_NUMERATE:
+		case BA:
+		case GFF:
+		case HOA:
+		default:
+			throw new AssertionError(UNSUPPORTED_LABELING);
 		}
 	}
 
-	@SuppressWarnings("unused")
-	private void printBranchingProcess(final String name, final BranchingProcess<LETTER, STATE> branchingProcess, final Format format)
+	private static <LETTER, STATE> void printBranchingProcess(final String name,
+			final BranchingProcess<LETTER, STATE> branchingProcess, final Format format, final PrintWriter printWriter)
 			throws AssertionError {
 		if (!(branchingProcess instanceof BranchingProcess)) {
-			final String msg = "Unknown Petri branching process. Only supported type is " + BranchingProcess.class.getSimpleName();
+			final String msg = "Unknown Petri branching process. Only supported type is "
+					+ BranchingProcess.class.getSimpleName();
 			throw new IllegalArgumentException(msg);
 		}
 
-
-
 		switch (format) {
-			case ATS:
-				new BranchingProcessWriterToString(mPrintWriter, name, branchingProcess);
-				break;
-			case ATS_QUOTED:
-			case ATS_NUMERATE:
-			case BA:
-			case GFF:
-			case HOA:
-			default:
-				throw new AssertionError(UNSUPPORTED_LABELING);
+		case ATS:
+			new BranchingProcessWriterToString<>(printWriter, name, branchingProcess);
+			break;
+		case ATS_QUOTED:
+		case ATS_NUMERATE:
+		case BA:
+		case GFF:
+		case HOA:
+		default:
+			throw new AssertionError(UNSUPPORTED_LABELING);
 		}
 	}
 }
