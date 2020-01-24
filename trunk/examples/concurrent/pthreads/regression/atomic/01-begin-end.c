@@ -5,7 +5,7 @@
  *
  * Author: Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Date: 2018-11-10
- * 
+ *
  */
 
 #include <pthread.h>
@@ -16,19 +16,20 @@ typedef unsigned long int pthread_t;
 int g = 0;
 
 void *foo(void *arg) {
-		g = g * 2;
-        return (void*)NULL;
+  g = g * 2;
+  return (void*)NULL;
 }
 
 int main() {
-        pthread_t threadId;
-        pthread_create(&threadId, NULL, & foo, NULL);
-		__VERIFIER_atomic_begin();
-		g = g + 1;
-		g = g - 1;
-		__VERIFIER_atomic_end();
-		if (g > 0) {
-			//@ assert \false;
-		}
-		
+  pthread_t threadId;
+  pthread_create(&threadId, NULL, & foo, NULL);
+
+  __VERIFIER_atomic_begin();
+  g = g + 1;
+  g = g - 1;
+  __VERIFIER_atomic_end();
+
+  if (g > 0) {
+    //@ assert \false;
+  }
 }
