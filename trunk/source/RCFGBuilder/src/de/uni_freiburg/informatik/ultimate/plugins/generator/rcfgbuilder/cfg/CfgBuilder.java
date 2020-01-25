@@ -500,29 +500,34 @@ public class CfgBuilder {
 		private final Set<String> mAllGotoTargets;
 
 		public ForkAndGotoInformation(final BoogieDeclarations boogieDeclarations) {
+			mAllGotoTargets = new HashSet<>();
 			boolean hasSomeForkStatement = false;
-			final Set<String> allGotoTargets = new HashSet<>();
 			for (final Entry<String, Procedure> entry : boogieDeclarations.getProcImplementation().entrySet()) {
 				final Procedure proc = entry.getValue();
 				final Body body = proc.getBody();
-				for (final Statement st : body.getBlock()) {
-					if (st instanceof ForkStatement) {
-						hasSomeForkStatement = true;
-					} else if (st instanceof GotoStatement) {
-						allGotoTargets.addAll(Arrays.asList(((GotoStatement) st).getLabels()));
-					} else if (st instanceof AssignmentStatement || st instanceof AssumeStatement
-							|| st instanceof HavocStatement || st instanceof Label || st instanceof JoinStatement
-							|| st instanceof CallStatement || st instanceof ReturnStatement
-							|| st instanceof AssertStatement || st instanceof AtomicStatement) {
-						// do nothing
-					} else {
-						throw new UnsupportedOperationException(
-								"Did not expect statement of type " + st.getClass().getSimpleName());
-					}
-				}
+				hasSomeForkStatement = hasSomeForkStatement || processStatements(body.getBlock());
 			}
 			mHasSomeForkStatement = hasSomeForkStatement;
-			mAllGotoTargets = allGotoTargets;
+		}
+
+		private boolean processStatements(final Statement[] statements) {
+			boolean hasSomeForkStatement = false;
+			for (final Statement st : statements) {
+				if (st instanceof ForkStatement) {
+					hasSomeForkStatement = true;
+				} else if (st instanceof GotoStatement) {
+					mAllGotoTargets.addAll(Arrays.asList(((GotoStatement) st).getLabels()));
+				} else if (st instanceof AssignmentStatement || st instanceof AssumeStatement
+						|| st instanceof HavocStatement || st instanceof Label || st instanceof JoinStatement
+						|| st instanceof CallStatement || st instanceof ReturnStatement
+						|| st instanceof AssertStatement || st instanceof AtomicStatement) {
+					// do nothing
+				} else {
+					throw new UnsupportedOperationException(
+							"Did not expect statement of type " + st.getClass().getSimpleName());
+				}
+			}
+			return hasSomeForkStatement;
 		}
 
 		public boolean hasSomeForkEdge() {
