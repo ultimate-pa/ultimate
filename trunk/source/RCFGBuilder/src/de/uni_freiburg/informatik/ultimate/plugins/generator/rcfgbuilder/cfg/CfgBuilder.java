@@ -297,7 +297,7 @@ public class CfgBuilder {
 		mLogger.info("Removed " + mRemovedAssumeTrueStatements + " assume(true) statements.");
 
 		if (!isAtomicCompositionComplete()) {
-			throw new AssertionError("Large block encoding incomplete: Is there illegal control flow (e.g. loops) within an atomic block?");
+			throw new UnsupportedOperationException("Large block encoding incomplete: Is there illegal control flow (e.g. loops) within an atomic block?");
 		}
 
 		return icfg;
