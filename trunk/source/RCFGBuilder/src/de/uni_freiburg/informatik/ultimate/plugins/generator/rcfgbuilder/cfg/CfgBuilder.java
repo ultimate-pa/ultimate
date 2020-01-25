@@ -1684,15 +1684,11 @@ public class CfgBuilder {
 		}
 
 		private boolean isIntermediateNodeOfSequentialCompositionCandidate(final BoogieIcfgLocation pp) {
-			if (pp.getIncomingEdges().size() == 0) {
-				return false;
-			}
-			if (pp.getOutgoingEdges().size() == 0) {
+			if (pp.getIncomingEdges().isEmpty() || pp.getOutgoingEdges().isEmpty()) {
 				return false;
 			}
 			if (DataStructureUtils.haveNonEmptyIntersection(new HashSet<>(pp.getIncomingEdges()), new HashSet<>(pp.getOutgoingEdges()))) {
-				// do not allow loops
-				return false;
+				return false; // do not allow loops
 			}
 
 			boolean predecessorsAtomic = true;
