@@ -1718,7 +1718,7 @@ public class CfgBuilder {
 				// TODO #FaultLocalization
 				throw new UnsupportedOperationException();
 			case ONLY_ATOMIC_BLOCK:
-				return !isStartOfAtomicBlock(pp) && !isEndOfAtomicBlock(pp) && predecessorsAtomic;
+				return !isEndOfAtomicBlock(pp) && predecessorsAtomic;
 			default:
 				throw new AssertionError("unknown value " + mInternalLbeMode);
 			}
