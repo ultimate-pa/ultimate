@@ -304,6 +304,7 @@ public class PartialQuantifierElimination {
 			final EliminationTask inputEliminationTask = new EliminationTask(quantifier, eliminatees, result);
 			final EliminationTask esp = new ElimStorePlain(mgdScript, services, simplificationTechnique)
 					.startRecursiveElimination(new EliminationTask(quantifier, eliminatees, result));
+			assert !mgdScript.isLocked() : "Solver still locked";
 			final long duration = System.currentTimeMillis() - startTime;
 			if (duration > 10_000) {
 //				throw new AssertionError("long elimination: " + duration + "ms");
