@@ -594,12 +594,6 @@ public class CfgBuilder {
 		Map<Integer, Integer> mNameCache;
 
 		/**
-		 * If this is switched to true all statements have to be added to one single {@link StatementSequence} until the
-		 * value is again switched to false.
-		 */
-		public boolean mAtomicMode = false;
-
-		/**
 		 * Builds the control flow graph of a single procedure according to a given implementation.
 		 *
 		 * @param Identifier
@@ -1148,7 +1142,7 @@ public class CfgBuilder {
 				startNewStatementSequenceAndAddStatement(st, origin);
 			} else if (mCurrent instanceof CodeBlock) {
 				if (mCodeBlockSize == CodeBlockSize.SequenceOfStatements
-						|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock || mAtomicMode) {
+						|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
 					addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
 				} else {
 					endCurrentStatementSequence(st);
@@ -1300,17 +1294,9 @@ public class CfgBuilder {
 			// non-free requires because in this case the control-flow has to
 			// branch to an error location.)
 			final boolean procedureHasImplementation = mBoogieDeclarations.getProcImplementation().containsKey(callee);
-			if (mAtomicMode && procedureHasImplementation) {
-				throw new UnsupportedOperationException(
-						"In an atomic block calls to procedures that have an implementation are not allowed.");
-			}
 			final boolean nonFreeRequiresIsEmpty = requiresNonFree == null || requiresNonFree.isEmpty();
-			if (mAtomicMode && !nonFreeRequiresIsEmpty) {
-				throw new UnsupportedOperationException(
-						"In an atomic block calls to procedures that have a non-empty set of non-free requires clauses are not (yet) allowed.");
-			}
-			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock
-					|| mAtomicMode) && !procedureHasImplementation && nonFreeRequiresIsEmpty) {
+
+			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock) && !procedureHasImplementation && nonFreeRequiresIsEmpty) {
 				if (mCurrent instanceof BoogieIcfgLocation) {
 					startNewStatementSequenceAndAddStatement(st, Origin.IMPLEMENTATION);
 				} else if (mCurrent instanceof CodeBlock) {
