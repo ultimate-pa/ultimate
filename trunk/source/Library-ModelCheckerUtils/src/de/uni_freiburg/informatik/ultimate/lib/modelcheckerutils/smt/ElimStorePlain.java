@@ -325,8 +325,13 @@ public class ElimStorePlain {
 				final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
 				final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver, polarizedContext,
 						eTask.getQuantifier(), mLogger, mMgdScript);
-				de = new DerPreprocessor(mServices, mMgdScript, eTask.getQuantifier(), eliminatee, eTask.getTerm(),
-						aoa.getDerRelations(eTask.getQuantifier()), aiem);
+				try {
+					de = new DerPreprocessor(mServices, mMgdScript, eTask.getQuantifier(), eliminatee, eTask.getTerm(),
+							aoa.getDerRelations(eTask.getQuantifier()), aiem);
+				} catch (final ElimStorePlainException espe) {
+					aiem.unlockSolver();
+					throw espe;
+				}
 				aiem.unlockSolver();
 			}
 			newAuxVars.addAll(de.getNewAuxVars());
