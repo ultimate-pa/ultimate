@@ -32,6 +32,10 @@ int main() {
   x = x - y;
   __VERIFIER_atomic_end();
 
+  // problem: in both cases, control goes through this location (this is the location of "LABEL")
+  //          because of the "else" case, this point is marked as atomic end
+  //          therefore the atomic block ends here, in both cases!
+
   LABEL:
   x = 0;
 }
