@@ -371,6 +371,12 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 		return true;
 	}
 
+
+
+	public Set<Entry<D, SET>> entrySet() {
+		return mMap.entrySet();
+	}
+
 	/**
 	 * Returns a Set view of the pairs contained in this relation. The set is
 	 * backed by the relation, so changes to the map are reflected in the set,
