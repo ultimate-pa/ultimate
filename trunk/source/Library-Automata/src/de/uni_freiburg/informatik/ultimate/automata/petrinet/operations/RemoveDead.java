@@ -53,16 +53,24 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Removes dead transitions in a Petri Net preserving its language.
- * A transition t is dead iff there is no firing sequence containing t and ending in an accepting marking.
- * In other words: Dead transitions do not contribute to the accepted language.
- * Unreachable transitions are a subset of the dead transitions.
+ * Removes dead transitions in a Petri Net preserving its language. A transition
+ * t is dead iff there is no firing sequence containing t and ending in an
+ * accepting marking. In other words: Dead transitions do not contribute to the
+ * accepted language. Unreachable transitions are a subset of the dead
+ * transitions.
  * <p>
  * This operation assumes that unreachable transitions were already removed.
- * Call {@link RemoveUnreachable} before {@link RemoveDead}
- * or some dead (but not necessarily unreachable) transitions might not be removed.
+ * Call {@link RemoveUnreachable} before {@link RemoveDead} or some dead (but
+ * not necessarily unreachable) transitions might not be removed.
  * <p>
- * This operation also removes some places that do not contribute to the accepted language.
+ * This operation also removes some places that do not contribute to the
+ * accepted language.
+ * <p>
+ * TODO 20200126 Matthias: Does not detect dead transitions that have some vital
+ * successor places like the transition ({pb pc} sync {p3}) in the
+ * DivergeAndSync.ats example. Solution: Enable
+ * COMPUTE_VITAL_TRANSITIONS_IN_UNFOLDING which (bug or feature?) removes also
+ * unreachable transitions.
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
@@ -71,12 +79,14 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <PLACE>
  *            Type of places in Petri net
  * @param <CRSF>
- *            Type of factory needed to check the result of this operation in {@link #checkResult(CRSF)}
+ *            Type of factory needed to check the result of this operation in
+ *            {@link #checkResult(CRSF)}
  */
 public class RemoveDead<LETTER, PLACE, CRSF extends
 		IStateFactory<PLACE> & IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
+	private static final boolean COMPUTE_VITAL_TRANSITIONS_IN_UNFOLDING = false;
 	private final BoundedPetriNet<LETTER, PLACE> mOperand;
 	private BranchingProcess<LETTER, PLACE> mFinPre;
 	private Collection<Condition<LETTER, PLACE>> mAcceptingConditions;
@@ -94,7 +104,11 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		super(services);
 		mOperand = operand;
 		mFinPre = finPre;
-		mVitalTransitions = vitalTransitions();
+		if (COMPUTE_VITAL_TRANSITIONS_IN_UNFOLDING) {
+			mVitalTransitions = mFinPre.computeVitalTransitions();
+		} else {
+			mVitalTransitions = vitalTransitions();
+		}
 		mResult = CopySubnet.copy(services, mOperand, mVitalTransitions);
 	}
 
