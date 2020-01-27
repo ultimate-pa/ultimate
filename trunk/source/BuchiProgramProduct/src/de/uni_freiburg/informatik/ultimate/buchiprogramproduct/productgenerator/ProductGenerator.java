@@ -718,8 +718,8 @@ public final class ProductGenerator {
 			sumAndSs.add(createNewSummaryEdge(productSourceLoc, summary, targetpp));
 			sumAndSs.add(seq);
 
-			mCodeblockFactory.constructSequentialComposition(productSourceLoc, targetpp, true, true, sumAndSs,
-					mXnfConversionTechnique, mSimplificationTechnique);
+			mCodeblockFactory.constructSequentialCompositionAndDisconnectEdges(productSourceLoc, targetpp, true, true,
+					sumAndSs, mXnfConversionTechnique, mSimplificationTechnique);
 		}
 	}
 

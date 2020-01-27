@@ -115,7 +115,7 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractEx
 		} else {
 			super.mExpectedResult = null;
 			super.mEvaluationStatus = ExpectedResultFinderStatus.ERROR;
-			super.mExpectedResultEvaluation = "Error: annotation given by keywords is inconsitent";
+			super.mExpectedResultEvaluation = "Error: annotation given by keywords is inconsistent";
 		}
 	}
 

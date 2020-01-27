@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -78,12 +77,6 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 		mCodeBlocks = codeBlocks;
 		mCallsWithoutReturns = getCheckedOpenCalls(codeBlocks).size();
 		mPrettyPrinted = null;
-
-		for (final CodeBlock currentCodeblock : codeBlocks) {
-			currentCodeblock.disconnectSource();
-			currentCodeblock.disconnectTarget();
-			ModelUtils.copyAnnotations(currentCodeblock, this);
-		}
 
 		// workaround: set annotation with this pluginId again, because it was
 		// overwritten by the mergeAnnotations method
