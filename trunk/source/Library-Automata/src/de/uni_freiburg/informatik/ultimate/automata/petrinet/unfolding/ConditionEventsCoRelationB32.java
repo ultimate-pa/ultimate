@@ -66,7 +66,7 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 
 	private final HashRelation <Condition<LETTER, PLACE>, Event< LETTER, PLACE>> coRelatedCutoffEvents = new HashRelation<>();
 	private final HashRelation <Condition<LETTER, PLACE>, Event< LETTER, PLACE>> coRelatedNonCutoffEvents = new HashRelation<>();
-	
+
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
 
 
@@ -100,7 +100,7 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 		return Stream.concat(coRelatedCutoffEvents.getImage(c).stream(),
 				coRelatedNonCutoffEvents.getImage(c).stream());
 	}
-	
+
 	private Stream<Event<LETTER, PLACE>> streamNonCutoffCoRelatedEvents(final Condition<LETTER, PLACE> c) {
 		return coRelatedNonCutoffEvents.getImage(c).stream();
 	}
@@ -125,7 +125,7 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 		return Stream.concat(c.getPredecessorEvent().getConditionMark().stream(),
 				streamNonCutoffCoRelatedEvents(c).flatMap(x -> x.getSuccessorConditions().stream()));
 	}
-	
+
 
 	@Override
 	public void update(final Event<LETTER, PLACE> e) {
@@ -138,7 +138,7 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 		// of c is in co-relation with all predecessor events of e.
 		// Successor conditions of e are in co-relation with all events e' that are
 		// in co-relation with all predecessor conditions of e.
-		
+
 		final HashRelation<Condition<LETTER, PLACE>, Event<LETTER, PLACE>> mapContainingE;
 		if (e.isCutoffEvent()) {
 			mapContainingE = coRelatedCutoffEvents;
@@ -153,7 +153,7 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 		updateSingleMap(coRelatedCutoffEvents, mapContainingE, e);
 		updateSingleMap(coRelatedNonCutoffEvents, mapContainingE, e);
 	}
-	
+
 	private void updateSingleMap(final HashRelation<Condition<LETTER, PLACE>, Event<LETTER, PLACE>> mapToUpdate,
 	final HashRelation<Condition<LETTER, PLACE>, Event<LETTER, PLACE>> mapContainingE,
 	final Event<LETTER,PLACE> e) {
@@ -178,8 +178,8 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 				|| (c1.getPredecessorEvent().conditionMarkContains(c2));
 		assert result == isInCoRelationNaive(c1, c2):
 			String.format("contradictory co-Relation for %s,%s: normal=%b != %b=naive", c1, c2, result, !result);
-		
-				
+
+
 		if (result) {
 			mQueryCounterYes++;
 		} else {
@@ -271,7 +271,7 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 		return coRelatedCutoffEvents.toString() + coRelatedNonCutoffEvents.toString();
 	}
 
-	
+
 	@Override
 	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond) {
 		final Set<Condition<LETTER, PLACE>> result = streamCoRelatedConditions(cond).collect(Collectors.toSet());
@@ -281,7 +281,7 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 		}
 		return result;
 	}
-	
+
 	@Override
 	public Set<Condition<LETTER, PLACE>> computeNonCutoffCoRelatatedConditions(final Condition<LETTER, PLACE> cond) {
 		final Set<Condition<LETTER, PLACE>> result = streamNonCutoffCoRelatedConditions(cond).collect(Collectors.toSet());
@@ -330,6 +330,11 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 			result.retainAll(coRelated);
 		}
 		return result;
+	}
+
+	@Override
+	public Set<Event<LETTER, PLACE>> computeCoRelatatedEvents(final Condition<LETTER, PLACE> c) {
+		return streamCoRelatedEvents(c).collect(Collectors.toSet());
 	}
 
 
