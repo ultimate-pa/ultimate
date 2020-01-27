@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -45,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
@@ -74,7 +77,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 	private final IBlackWhiteStateFactory<PLACE> mContentFactory;
 
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
-	
+
 	private final DifferencePetriNet<LETTER, PLACE>.SynchronizationInformation mSynchronizationInformation;
 
 	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
@@ -115,16 +118,25 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 		}
 		final DifferencePetriNet<LETTER, PLACE> difference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend,
 				universalSubtrahendLoopers);
-		new FinitePrefix<LETTER, PLACE>(mServices, difference);
-		mSynchronizationInformation = difference.getSynchronizationInformation();
+		final FinitePrefix<LETTER, PLACE> fp = new FinitePrefix<LETTER, PLACE>(mServices, difference);
 		mResult = difference.getYetConstructedPetriNet();
+		final Set<ITransition<LETTER, PLACE>> vitalTransitionsOfDifference = fp.getResult().computeVitalTransitions();
+		final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> transitionBacktranslation = difference
+				.getTransitionBacktranslation();
+		final Set<ITransition<LETTER, PLACE>> transitionsContributingToVital = vitalTransitionsOfDifference.stream()
+				.map(x -> transitionBacktranslation.get(x)).collect(Collectors.toSet());
+		mSynchronizationInformation = difference.getSynchronizationInformation().filter(transitionsContributingToVital);
+		final int allTransitions = difference.getYetConstructedPetriNet().getTransitions().size();
+		final int deadTransitions = allTransitions - vitalTransitionsOfDifference.size();
 		{
-			final int looperLetters = mMinuend.getAlphabet().size() - mSynchronizationInformation.getChangerLetters().size();
+			final int looperLetters = mMinuend.getAlphabet().size()
+					- mSynchronizationInformation.getChangerLetters().size();
 			mLogger.info(looperLetters + "/" + mMinuend.getAlphabet().size() + " looper letters, "
 					+ mSynchronizationInformation.getSelfloops().size() + " selfloop transitions, "
-					+ mSynchronizationInformation.getStateChangers().size() + " changer transitions ");
+					+ mSynchronizationInformation.getStateChangers().size() + " changer transitions "
+					+ deadTransitions + "/" + allTransitions + " dead transitions.");
 		}
-		
+
 	}
 
 	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
@@ -170,7 +182,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 	public BoundedPetriNet<LETTER, PLACE> getResult() {
 		return mResult;
 	}
-	
+
 	public DifferencePetriNet<LETTER, PLACE>.SynchronizationInformation getSynchronizationInformation() {
 		return mSynchronizationInformation;
 	}

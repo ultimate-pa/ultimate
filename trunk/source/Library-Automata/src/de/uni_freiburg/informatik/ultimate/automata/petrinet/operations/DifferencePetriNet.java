@@ -78,6 +78,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	private final NestedMap2<ITransition<LETTER, PLACE>, PLACE, ITransition<LETTER, PLACE>> mInputTransition2State2OutputTransition = new NestedMap2<>();
 	private int mNumberOfConstructedTransitions = 0;
 	// horrible hack to do a cast and store known transitions
+	// 20200126 Matthias: We can get rid of this Map by using
+	// information form mOld2New
 	private final Map<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>> mTransitions = new HashMap<>();
 	/**
 	 * Letters for which the subtrahend DFA has a selfloop in every state. This
@@ -379,6 +381,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 					result = new Transition<>(inputTransition.getSymbol(), mAllPredecessors, successors, totalOrderId);
 					mInputTransition2State2OutputTransition.put(inputTransition, automatonPredecessor, result);
 					mTransitions.put(result, (Transition<LETTER, PLACE>) result);
+					final ITransition<LETTER, PLACE> valueBefore = mNew2Old.put(result, inputTransition);
+					assert valueBefore == null : "Cannot add transition twice.";
 				}
 			}
 			return result;
@@ -401,7 +405,14 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 					entry.getValue().getSuccessors());
 		}
 		return result;
+	}
 
+	/**
+	 * @return Mapping from new transitions (i.e., transitions of the resulting
+	 *         difference) to old transitions (i.e., transitions of the minuend).
+	 */
+	Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> getTransitionBacktranslation() {
+		return mNew2Old;
 	}
 
 	@Override
@@ -471,6 +482,19 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		public Set<ITransition<LETTER, PLACE>> getContributingTransitions() {
 			return mContributingTransitions;
 		}
+
+		public SynchronizationInformation filter(final Set<ITransition<LETTER, PLACE>> transitions) {
+			final SynchronizationInformation result = new SynchronizationInformation();
+			result.getChangerLetters().addAll(mChangerLetters);
+			for (final Entry<ITransition<LETTER, PLACE>, HashSet<PLACE>> entry : mSelfloops.entrySet()) {
+				result.getSelfloops().addAllPairs(entry.getKey(), entry.getValue());
+			}
+			for (final Entry<ITransition<LETTER, PLACE>, HashSet<PLACE>> entry : mStateChangers.entrySet()) {
+				result.getStateChangers().addAllPairs(entry.getKey(), entry.getValue());
+			}
+			result.getContributingTransitions().addAll(transitions);
+			return result;
+		}
 	}
 
 	private class SimpleSuccessorTransitionProviderWithUsageInformation
@@ -508,6 +532,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 						totalOrderId);
 				mInputTransition2State2OutputTransition.put(inputTransition, null, result);
 				mTransitions.put(result, (Transition<LETTER, PLACE>) result);
+				final ITransition<LETTER, PLACE> valueBefore = mNew2Old.put(result, inputTransition);
+				assert valueBefore == null : "Cannot add transition twice.";
 				mSynchronizationInformation.getContributingTransitions().add(inputTransition);
 			}
 			return result;
