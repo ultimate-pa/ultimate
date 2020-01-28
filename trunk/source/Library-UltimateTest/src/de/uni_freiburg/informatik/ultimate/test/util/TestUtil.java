@@ -148,14 +148,25 @@ public final class TestUtil {
 	/**
 	 * Prefix the parameter "path" with the path to the trunk folder of the Ultimate repository on the current machine.
 	 *
-	 * @param path
-	 * @return
+	 * Throws {@link IllegalArgumentException} if this path does not exist.
 	 */
 	public static String getPathFromTrunk(final String path) {
-		final File trunk = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
+		final File trunk = new File(CoreUtil.WORKING_DIRECTORY).getParentFile().getParentFile();
 		final File relative = new File(trunk.getAbsolutePath() + File.separator + path);
 		if (!relative.exists()) {
 			throw new IllegalArgumentException("Path " + relative.getAbsolutePath() + " does not exist.");
+		}
+		return relative.getAbsolutePath();
+	}
+
+	/**
+	 * Same as {@link #getPathFromTrunk(String)}, but creates non-existant paths instead of failing.
+	 */
+	public static String createPathFromTrunk(final String path) {
+		final File trunk = new File(CoreUtil.WORKING_DIRECTORY).getParentFile().getParentFile();
+		final File relative = new File(trunk.getAbsolutePath() + File.separator + path);
+		if (!relative.exists()) {
+			relative.mkdirs();
 		}
 		return relative.getAbsolutePath();
 	}
@@ -493,8 +504,7 @@ public final class TestUtil {
 		map.putAll(constructFilenameKeywordMap_SvcompOverflow());
 		return map;
 	}
-	
-	
+
 	public static final String SVCOMP_PROP_NOOVERFLOW = "no-overflow.prp";
 	public static final String SVCOMP_PROP_TERMINATION = "termination.prp";
 	public static final String SVCOMP_PROP_UNREACHCALL = "unreach-call.prp";
@@ -504,8 +514,8 @@ public final class TestUtil {
 	public static final String SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDDEREF = "valid-dref";
 	public static final String SVCOMP_VALIDMEMSAFETY_SUBPROP_VALIDMEMTRACK = "valid-memtrack";
 
-	public static NestedMap2<String, String, SafetyCheckerOverallResult> constructPropertyMapSvcompSafety(
-			final String... propertyFiles) {
+	public static NestedMap2<String, String, SafetyCheckerOverallResult>
+			constructPropertyMapSvcompSafety(final String... propertyFiles) {
 		final NestedMap2<String, String, SafetyCheckerOverallResult> map = new NestedMap2<>();
 		for (final String propertyFile : propertyFiles) {
 			switch (propertyFile) {
@@ -529,13 +539,13 @@ public final class TestUtil {
 			default:
 				throw new AssertionError("unknown property file " + propertyFile);
 			}
-			
+
 		}
 		return map;
 	}
-	
-	public static NestedMap2<String, String, TerminationAnalysisOverallResult> constructPropertyMapSvcompTermination(
-			final String... propertyFiles) {
+
+	public static NestedMap2<String, String, TerminationAnalysisOverallResult>
+			constructPropertyMapSvcompTermination(final String... propertyFiles) {
 		final NestedMap2<String, String, TerminationAnalysisOverallResult> map = new NestedMap2<>();
 		for (final String propertyFile : propertyFiles) {
 			switch (propertyFile) {
@@ -546,11 +556,11 @@ public final class TestUtil {
 			default:
 				throw new AssertionError("unknown property file " + propertyFile);
 			}
-			
+
 		}
 		return map;
 	}
-	
+
 	/**
 	 * Returns a map from SV-COMP filename keywords to verification results for the error function reachability
 	 * specification.
@@ -563,7 +573,7 @@ public final class TestUtil {
 		map.put(".*_false-unreach-call.*", SafetyCheckerOverallResult.UNSAFE);
 		return map;
 	}
-	
+
 	/**
 	 * Returns a map from SV-COMP filename keywords to verification results for memsafety specification.
 	 */
@@ -671,7 +681,6 @@ public final class TestUtil {
 		map.put("#termcomp16-someonesaidno", TerminationAnalysisOverallResult.NONTERMINATING);
 		return map;
 	}
-	
 
 	/**
 	 * Returns the first line of File file as String.

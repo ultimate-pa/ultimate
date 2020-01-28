@@ -27,9 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -37,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -45,10 +49,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess.MonitoredProcessState;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultTest;
 import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.TestStep;
@@ -61,9 +67,7 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
-	private static String PYTHON_SCRIPT =
-			"/media/Daten/projects/ultimate/releaseScripts/default/adds/timing_diagram.py";
-	// private static String PYTHON_SCRIPT = "releaseScripts/default/adds/timing_diagram.py";
+	// TODO: Make settings
 	private static String OUTPUT_DIR = "examples/Requirements/failure-paths/";
 	private static String FILE_EXT = ".svg";
 
@@ -99,8 +103,16 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 				clock.getAndAdd(Integer.parseInt(waitTime.getValue()));
 			}
 
+			// TODO: Make setting
+			final File absScript = Paths.get(CoreUtil.WORKING_DIRECTORY, "timing_diagram.py").toFile();
+			// mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean("LABEL")
+
+			if (!absScript.exists()) {
+				throw new RuntimeException(String.format("Cannot find script file %s", absScript.getAbsolutePath()));
+			}
+
 			try {
-				final String[] command = new String[] { "python3", PYTHON_SCRIPT, "-o",
+				final String[] command = new String[] { "python", absScript.getAbsolutePath(), "-o",
 						"/" + patternName + "_" + i + FILE_EXT, "-a", "1" };
 				// final String[] command = new String[] { "python3", TestUtil.getPathFromTrunk(PYTHON_SCRIPT), "-o",
 				// TestUtil.getPathFromTrunk(OUTPUT_DIR + "/" + patternName + "_" + i + FILE_EXT), "-a", "1" };
@@ -110,7 +122,13 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 				writer.write(jsonString(patternName, observables));
 				writer.close();
 
-				process.waitfor();
+				final MonitoredProcessState state = process.waitfor();
+				if (state.getReturnCode() != 0) {
+					throw new RuntimeException(String.format("%s did return %s. Stdout: %s Stderr: %s",
+							Arrays.stream(command).collect(Collectors.joining(" ")), state.getReturnCode(),
+							CoreUtil.convertStreamToString(process.getInputStream()),
+							CoreUtil.convertStreamToString(process.getErrorStream())));
+				}
 			} catch (final IOException | InterruptedException e) {
 				throw new RuntimeException(e.getMessage());
 			}

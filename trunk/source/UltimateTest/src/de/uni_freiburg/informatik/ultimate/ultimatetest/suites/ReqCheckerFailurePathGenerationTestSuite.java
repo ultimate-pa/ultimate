@@ -30,6 +30,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
@@ -76,9 +77,10 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 	}
 
 	private static void createReqFiles(final List<PatternType> patterns) {
+		final String absoluteReqDir = TestUtil.createPathFromTrunk(REQ_DIR);
 		for (final PatternType pattern : patterns) {
-			final File file = new File(TestUtil.getPathFromTrunk(REQ_DIR) + "/" + pattern.getName() + "_"
-					+ pattern.getScope().getName() + ".req");
+			final File file =
+					Paths.get(absoluteReqDir, pattern.getName() + "_" + pattern.getScope().getName() + ".req").toFile();
 
 			if (file.exists()) {
 				continue;

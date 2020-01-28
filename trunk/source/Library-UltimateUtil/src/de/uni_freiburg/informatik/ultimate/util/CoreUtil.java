@@ -71,6 +71,7 @@ public class CoreUtil {
 	private static final String PLATFORM_LINE_SEPARATOR = System.getProperty("line.separator");
 	public static final String OS = System.getProperty("os.name");
 	public static final boolean OS_IS_WINDOWS = OS.toLowerCase().indexOf("win") >= 0;
+	public static final String WORKING_DIRECTORY = System.getProperty("user.dir");
 	private static final String PATHEXT = System.getenv("PATHEXT");
 
 	public static String getPlatformLineSeparator() {
