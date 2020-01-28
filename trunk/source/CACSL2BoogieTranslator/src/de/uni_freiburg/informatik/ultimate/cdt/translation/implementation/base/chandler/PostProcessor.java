@@ -236,7 +236,7 @@ public class PostProcessor {
 			decl.addAll(declarePrimitiveDataTypeSynonyms(loc));
 
 			if (mTypeHandler.areFloatingTypesNeeded()) {
-				decl.addAll(createFloatToBitvectorProcedure(loc));
+				createFloatToBitvectorProcedure(loc);
 				decl.addAll(declareRoundingModeDataTypes(loc));
 				decl.addAll(declareFloatDataTypes(loc));
 				if (mSettings.isFesetroundEnabled()) {
@@ -537,20 +537,18 @@ public class PostProcessor {
 		return declarations;
 	}
 
-	private List<Declaration> createFloatToBitvectorProcedure(final ILocation loc) {
-		final List<Declaration> declarations = createFloatToBitvectorProcedure(loc, 4);
-		declarations.addAll(createFloatToBitvectorProcedure(loc, 8));
-		declarations.addAll(createFloatToBitvectorProcedure(loc, 16));
-		return declarations;
+	private void createFloatToBitvectorProcedure(final ILocation loc) {
+		createFloatToBitvectorProcedure(loc, 4);
+		createFloatToBitvectorProcedure(loc, 8);
+		createFloatToBitvectorProcedure(loc, 16);
 	}
 
-	private List<Declaration> createFloatToBitvectorProcedure(final ILocation loc, final int bytes) {
+	private void createFloatToBitvectorProcedure(final ILocation loc, final int bytes) {
 		// TODO: DOUBLE AND LONGDOUBLE
 		final String functionName = "float_to_bitvec" + Integer.toString(bytes * 8);
 		final String inVar = "f_in";
 		final String outVar = "bv_out";
 
-		final List<Declaration> declarations = new ArrayList<>();
 		final List<Statement> statements = new ArrayList<>();
 
 		CPrimitives floatCPrimitives = null;
@@ -614,10 +612,6 @@ public class PostProcessor {
 				inVarList, outVarList, null, procedureBody);
 
 		mProcedureManager.endCustomProcedure(mCHandler, functionName);
-
-		declarations.add(procedureImplementation);
-
-		return declarations;
 	}
 
 	private ArrayList<Declaration> declareConversionFunctions() {
