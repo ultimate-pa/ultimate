@@ -80,17 +80,17 @@ public class Req2CauseTrackingCDD {
 		return cdd;
 	}
 
-	public Set<String> getEffectVariables(PatternType pattern){
-		final Set<String> variables = new HashSet<>();
+	public CDD getEffectCDD(PatternType pattern){
 		final List<CDD> cdds = pattern.getCdds();
-		if (cdds.size() > 0) {
-			//lets just assume that the effect of the requirement is always mentioned at the end of the pattern (i.e. last CDD)
-			//  e.g. it is always the case that if _condition_ then _effect_ holds for at least 5 (scope does not matter)
-			//TODO: do not rely on this ordering and mark the effect in some way during parsing
-			final CDD effect = cdds.get(0);
-			extractVars(effect, variables);
-		}
-		mLogger.info(new StringBuilder("Effect Variables of ").append(pattern.toString()).append(": ").append(variables.toString()).toString());
+		//lets just assume that the effect of the requirement is always mentioned at the end of the pattern (i.e. last CDD)
+		//  e.g. it is always the case that if _condition_ then _effect_ holds for at least 5 (scope does not matter)
+		//TODO: do not rely on this ordering and mark the effect in some way during parsing
+		return cdds.get(0);
+	}
+
+	public Set<String> getEffectVariables(CDD effect){
+		final Set<String> variables = new HashSet<>();
+		extractVars(effect, variables);
 		return variables;
 	}
 
