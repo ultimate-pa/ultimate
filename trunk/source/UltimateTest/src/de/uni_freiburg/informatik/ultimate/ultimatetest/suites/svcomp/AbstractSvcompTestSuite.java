@@ -135,10 +135,9 @@ public abstract class AbstractSvcompTestSuite extends UltimateTestSuite {
 			try {
 				// note: do not change the name without also checking
 				// SVCOMP15TestSummary
-				final String name = createTestCaseName(svcompRootDir, input, def);
 				final UltimateRunDefinition urd =
 						new UltimateRunDefinition(input, def.getSettings(), def.getToolchain(), def.getTimeout());
-				testcases.add(buildTestCase(urd, getTestResultDecider(urd), name));
+				testcases.add(buildTestCase(urd, getTestResultDecider(urd)));
 				++i;
 			} catch (final Throwable ex) {
 				getLogger().fatal("Exception while creating test case, skipping this one: " + input.getAbsolutePath(),
@@ -166,22 +165,6 @@ public abstract class AbstractSvcompTestSuite extends UltimateTestSuite {
 			}
 		}
 		return rtr;
-	}
-
-	private static String createTestCaseName(final File svcompRootDir, final File input,
-			final SvcompTestDefinition def) {
-		// note: do not change the name without also checking
-		// SVCOMP15TestSummary
-		final StringBuilder sb = new StringBuilder();
-		sb.append(def.getSetName());
-		sb.append(" ");
-		sb.append(def.getToolchain().getName());
-		sb.append(" ");
-		sb.append(def.getSettings().getName());
-		sb.append(": ");
-		sb.append(input.getAbsolutePath().substring(svcompRootDir.getAbsolutePath().length(),
-				input.getAbsolutePath().length()));
-		return sb.toString();
 	}
 
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {

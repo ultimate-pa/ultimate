@@ -87,7 +87,7 @@ public class TreeAutomizerTest extends AbstractModelCheckerTestSuiteWithIncremen
 			final UltimateRunDefinition urd =
 					new UltimateRunDefinition(inputFile, settingsFile, toolchainFile, TIMEOUT);
 			final ITestResultDecider decider = constructITestResultDecider(urd);
-			rtr.add(buildTestCase(urd, decider, inputFile.getName()));
+			rtr.add(buildTestCase(urd, decider));
 		}
 
 		return rtr;

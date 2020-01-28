@@ -82,7 +82,7 @@ public class SmtUnusedSymbolFilter extends UltimateTestSuite {
 		for (final File inputFile : inputFiles) {
 			final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile,DEADLINE);
 			final ITestResultDecider decider = new NoErrorTestResultDecider(urd);
-			rtr.add(buildTestCase(urd,  decider, inputFile.getName()));
+			rtr.add(buildTestCase(urd,  decider));
 		}
 
 		return rtr;

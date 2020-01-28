@@ -114,7 +114,7 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 			if (decider.getExpectedResult() == ExpectedResult.IGNORE) {
 				continue;
 			}
-			rtr.add(buildTestCase(urd, decider, inputFile.getName()));
+			rtr.add(buildTestCase(urd, decider));
 		}
 
 		return rtr;
