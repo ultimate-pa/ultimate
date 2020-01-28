@@ -34,8 +34,6 @@ import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.PatternUtil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
@@ -61,6 +59,7 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 	private static final String SETTINGS = "ReqCheckFailurePathGeneration.epf";
 	private static final String REQ_DIR = "examples/Requirements/failure-paths";
 	private static final String[] REQ = new String[] { ".req" };
+	private static final String LINE_SEP = CoreUtil.getPlatformLineSeparator();
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
@@ -69,40 +68,36 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		createReqFiles(PatternUtil.createAllPatterns().getFirst());
-		final DirectoryFileEndingsPair[] pairs =
-				new DirectoryFileEndingsPair[] { new DirectoryFileEndingsPair(REQ_DIR, REQ) };
-
-		addTestCase(TOOLCHAIN, SETTINGS, pairs);
+		// createReqFiles(PatternUtil.createAllPatterns().getFirst());
+		addTestCase(TOOLCHAIN, SETTINGS, new DirectoryFileEndingsPair[] { new DirectoryFileEndingsPair(REQ_DIR, REQ) });
 		return super.createTestCases();
 	}
 
 	private static void createReqFiles(final List<PatternType> patterns) {
 		for (final PatternType pattern : patterns) {
-			final String scopeName = pattern.getScope().getClass().getSimpleName()
-					.replace(pattern.getScope().getClass().getSuperclass().getSimpleName(), "");
-			final String patternName = pattern.getClass().getSimpleName();
-			final String patternString = pattern.toString().replace(pattern.getId() + ": ", "");
+			final File file = new File(TestUtil.getPathFromTrunk(REQ_DIR) + "/" + pattern.getName() + "_"
+					+ pattern.getScope().getName() + ".req");
 
-			final StringBuilder sb = new StringBuilder();
-			final Formatter fmt = new Formatter(sb);
-			fmt.format("// %s %s%s", patternName, scopeName, CoreUtil.getPlatformLineSeparator());
-			for (int i = 0; i < 10; ++i) {
-				fmt.format("INPUT %s is bool%s", BooleanDecision.create(CoreUtil.alphabeticalSequence(i + 16)),
-						CoreUtil.getPlatformLineSeparator());
+			if (file.exists()) {
+				continue;
 			}
-			fmt.format("req1: %s%s", patternString, CoreUtil.getPlatformLineSeparator());
 
-			final File file =
-					new File(TestUtil.getPathFromTrunk(REQ_DIR) + "/" + patternName + "_" + scopeName + ".req");
+			final Formatter fmt = new Formatter();
+			fmt.format("// %s %s%s", pattern.getName(), pattern.getScope().getName(), LINE_SEP);
+			for (int i = 16; i < 26; ++i) {
+				fmt.format("INPUT %s is bool%s", (char) ('A' + i), LINE_SEP);
+			}
+			fmt.format("req1: %s%s", pattern.toString().replace(pattern.getId() + ": ", ""), LINE_SEP);
+
 			try {
 				final BufferedWriter writer = new BufferedWriter(new FileWriter(file, false));
 				writer.write(fmt.toString());
 				writer.close();
 			} catch (final IOException e) {
-				throw new RuntimeException("Unable to write file '" + file + "'.");
+				throw new RuntimeException(e.getMessage());
+			} finally {
+				fmt.close();
 			}
-			fmt.close();
 		}
 	}
 

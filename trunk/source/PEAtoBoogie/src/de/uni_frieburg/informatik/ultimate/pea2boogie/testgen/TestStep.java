@@ -1,6 +1,7 @@
 package de.uni_frieburg.informatik.ultimate.pea2boogie.testgen;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -16,11 +17,24 @@ public class TestStep {
 	final Map<IdentifierExpression, Collection<Expression>> mOutputAssignment;
 	final Collection<Expression> mWaitTime;
 
-	public TestStep(Map<IdentifierExpression, Collection<Expression>> inputAssignment,  Map<IdentifierExpression, Collection<Expression>> outputAssignment,
-			Collection<Expression> delta) {
+	public TestStep(final Map<IdentifierExpression, Collection<Expression>> inputAssignment,
+			final Map<IdentifierExpression, Collection<Expression>> outputAssignment,
+			final Collection<Expression> delta) {
 		mInputAssignment = inputAssignment;
 		mOutputAssignment = outputAssignment;
 		mWaitTime = delta;
+	}
+
+	public Map<IdentifierExpression, Collection<Expression>> getInputAssignment() {
+		return Collections.unmodifiableMap(mInputAssignment);
+	}
+
+	public Map<IdentifierExpression, Collection<Expression>> getOutputAssignment() {
+		return Collections.unmodifiableMap(mOutputAssignment);
+	}
+
+	public Collection<Expression> getWaitTime() {
+		return Collections.unmodifiableCollection(mWaitTime);
 	}
 
 	@Override
@@ -28,7 +42,7 @@ public class TestStep {
 		final StringBuilder result = new StringBuilder();
 
 		result.append("\nSet Inputs:\n \t");
-		for(final Entry<IdentifierExpression, Collection<Expression>> entry: mInputAssignment.entrySet()) {
+		for (final Entry<IdentifierExpression, Collection<Expression>> entry : mInputAssignment.entrySet()) {
 			result.append(entry.getKey().getIdentifier());
 			result.append(" := ");
 			result.append(formatIdentToValue(entry.getValue()));
@@ -37,7 +51,7 @@ public class TestStep {
 		result.append("Wait at most ");
 		result.append(formatIdentToValue(mWaitTime));
 		result.append("for: \n\t");
-		for(final Entry<IdentifierExpression, Collection<Expression>> entry: mOutputAssignment.entrySet()) {
+		for (final Entry<IdentifierExpression, Collection<Expression>> entry : mOutputAssignment.entrySet()) {
 			result.append(entry.getKey().getIdentifier());
 			result.append(" == ");
 			result.append(formatIdentToValue(entry.getValue()));
@@ -46,16 +60,16 @@ public class TestStep {
 		return result.toString();
 	}
 
-	private String formatIdentToValue(Collection<Expression> valueExpessions) {
+	private String formatIdentToValue(final Collection<Expression> valueExpessions) {
 		final StringBuilder result = new StringBuilder();
-		for(final Expression expr: valueExpessions) {
+		for (final Expression expr : valueExpessions) {
 			result.append(formatLiteral(expr));
 		}
 		result.append("  ");
 		return result.toString();
 	}
 
-	private String formatLiteral(Expression expr) {
+	private String formatLiteral(final Expression expr) {
 		if (expr instanceof BooleanLiteral) {
 			return Boolean.toString(((BooleanLiteral) expr).getValue());
 		} else if (expr instanceof IntegerLiteral) {

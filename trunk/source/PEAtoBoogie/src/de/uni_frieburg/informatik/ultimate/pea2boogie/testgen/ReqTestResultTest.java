@@ -1,5 +1,6 @@
 package de.uni_frieburg.informatik.ultimate.pea2boogie.testgen;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -13,6 +14,10 @@ public final class ReqTestResultTest implements IResult {
 	public ReqTestResultTest(final List<TestStep> testSteps, final String name) {
 		mTestSteps = testSteps;
 		mName = name;
+	}
+
+	public List<TestStep> getTestSteps() {
+		return Collections.unmodifiableList(mTestSteps);
 	}
 
 	@Override

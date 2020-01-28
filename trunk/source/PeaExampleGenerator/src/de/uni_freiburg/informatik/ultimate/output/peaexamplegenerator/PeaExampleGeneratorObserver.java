@@ -26,45 +26,124 @@
  */
 package de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultTest;
+import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.TestStep;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class PeaExampleGeneratorObserver extends BaseObserver {
-
-	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
+
+	private static String PYTHON_SCRIPT =
+			"/media/Daten/projects/ultimate/releaseScripts/default/adds/timing_diagram.py";
+	// private static String PYTHON_SCRIPT = "releaseScripts/default/adds/timing_diagram.py";
+	private static String OUTPUT_DIR = "examples/Requirements/failure-paths/";
+	private static String FILE_EXT = ".svg";
 
 	public PeaExampleGeneratorObserver(final IUltimateServiceProvider services) {
-		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mServices = services;
 	}
 
 	@Override
 	public boolean process(final IElement root) {
-		// we only operate on IResults, so we do not need a model
+		// We only operate on {@link IResult}s, so we do not need a model.
 		return false;
 	}
 
 	@Override
 	public void finish() {
-		// call python script (or perhaps translate it to java)
 		final Map<String, List<IResult>> results = mServices.getResultService().getResults();
+		final Collection<ReqTestResultTest> reqTestResults = ResultUtil.filterResults(results, ReqTestResultTest.class);
+		final String patternName = "BndDelayedResponsePatternUT_Globally";
 
-		final Collection<ReqTestResultTest> testGenResults = ResultUtil.filterResults(results, ReqTestResultTest.class);
-		if (testGenResults.isEmpty()) {
-			throw new UnsupportedOperationException("There are no ReqTestResultTest results");
+		int i = 0;
+		for (final Iterator<ReqTestResultTest> it = reqTestResults.iterator(); it.hasNext(); i++) {
+			final Map<String, Pair<List<Integer>, List<Integer>>> observables = new HashMap<>();
+			final AtomicInteger clock = new AtomicInteger();
+			final List<TestStep> steps = it.next().getTestSteps();
+
+			for (final TestStep step : steps) {
+				step.getInputAssignment().forEach((k, v) -> parseAssignment(k, v, observables, clock.get()));
+				step.getOutputAssignment().forEach((k, v) -> parseAssignment(k, v, observables, clock.get()));
+
+				assert (step.getWaitTime().size() == 1);
+				final RealLiteral waitTime = ((RealLiteral) step.getWaitTime().iterator().next());
+				clock.getAndAdd(Integer.parseInt(waitTime.getValue()));
+			}
+
+			try {
+				final String[] command = new String[] { "python3", PYTHON_SCRIPT, "-o",
+						TestUtil.getPathFromTrunk(OUTPUT_DIR) + "/" + patternName + "_" + i + FILE_EXT, "-a", "1" };
+				// final String[] command = new String[] { "python3", TestUtil.getPathFromTrunk(PYTHON_SCRIPT), "-o",
+				// TestUtil.getPathFromTrunk(OUTPUT_DIR + "/" + patternName + "_" + i + FILE_EXT), "-a", "1" };
+				final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);
+
+				final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+				writer.write(jsonString(patternName, observables));
+				writer.close();
+
+				process.waitfor();
+			} catch (final IOException | InterruptedException e) {
+				throw new RuntimeException(e.getMessage());
+			}
 		}
+	}
+
+	private static void parseAssignment(final IdentifierExpression identifier, final Collection<Expression> expressions,
+			final Map<String, Pair<List<Integer>, List<Integer>>> observables, final int clock) {
+
+		assert (expressions.size() == 1);
+		final int value = ((BooleanLiteral) expressions.iterator().next()).getValue() ? 1 : 0;
+		final Pair<List<Integer>, List<Integer>> values = observables.computeIfAbsent(identifier.getIdentifier(),
+				e -> new Pair<>(new ArrayList<>(), new ArrayList<>()));
+
+		values.getFirst().add(clock);
+		values.getSecond().add(value);
+	}
+
+	private static String jsonString(final String id, final Map<String, Pair<List<Integer>, List<Integer>>> signals) {
+		final StringBuilder result = new StringBuilder();
+
+		for (final Entry<String, Pair<List<Integer>, List<Integer>>> signal : signals.entrySet()) {
+			result.append("{");
+			result.append("\"id\": \"" + signal.getKey() + "\", ");
+			result.append("\"x\": " + signal.getValue().getFirst() + ", ");
+			result.append("\"y\": " + signal.getValue().getSecond());
+			result.append("}, ");
+		}
+		result.setLength(result.length() - 2);
+
+		result.insert(0, "{\"id\": \"" + id + "\", \"signals\": [");
+		result.append("]}");
+
+		return result.toString();
 	}
 }

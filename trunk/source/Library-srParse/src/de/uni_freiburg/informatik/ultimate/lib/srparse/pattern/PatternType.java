@@ -109,9 +109,9 @@ public abstract class PatternType {
 	public CounterTrace constructCounterTrace(final Map<String, Integer> id2bounds) {
 		final CDD[] cdds = getCddsAsArray();
 		final int[] durations = getDurationsAsIntArray(id2bounds);
-		assert cdds.length == getExpectedCddSize() : "Wrong number of observables for pattern " + getPatternName();
+		assert cdds.length == getExpectedCddSize() : "Wrong number of observables for pattern " + getName();
 		assert durations.length == getExpectedDurationSize() : "Wrong number of durations for pattern "
-				+ getPatternName();
+				+ getName();
 		return transform(cdds, durations);
 	}
 
@@ -121,7 +121,7 @@ public abstract class PatternType {
 
 	public abstract int getExpectedDurationSize();
 
-	protected String getPatternName() {
+	public String getName() {
 		return getClass().getSimpleName();
 	}
 

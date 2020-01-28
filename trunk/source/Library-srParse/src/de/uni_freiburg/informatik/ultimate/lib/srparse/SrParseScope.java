@@ -35,6 +35,10 @@ public abstract class SrParseScope {
 		return i;
 	}
 
+	public String getName() {
+		return getClass().getSimpleName().replace(getClass().getSuperclass().getSimpleName(), "");
+	}
+
 	@Override
 	public abstract String toString();
 

@@ -6,5 +6,8 @@ Bundle-Version: 0.1.25
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
+ de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.pea2boogie
+Import-Package: de.uni_freiburg.informatik.ultimate.test.util
