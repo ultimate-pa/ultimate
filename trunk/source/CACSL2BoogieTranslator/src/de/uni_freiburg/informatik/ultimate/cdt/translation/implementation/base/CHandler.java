@@ -4010,14 +4010,14 @@ public class CHandler {
 			left = newOps.getFirst();
 			right = newOps.getSecond();
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
-			
+
 			typeOfResult = ((CPrimitive) left.getLrValue().getCType()).getSMTVariant();
 			// TODO: Do we need this?
 			// assert typeOfResult.equals(right.getLrValue().getCType());
 
 			addIntegerBoundsCheck(loc, builder, (CPrimitive) typeOfResult, op, hook, left.getLrValue().getValue(),
 					right.getLrValue().getValue());
-			
+
 			// TODO: Don't use type of result here wtf
 			expr = mExpressionTranslation.constructArithmeticExpression(loc, op, left.getLrValue().getValue(),
 					(CPrimitive) lType, right.getLrValue().getValue(), (CPrimitive) rType);
@@ -4088,7 +4088,8 @@ public class CHandler {
 			builder.addAuxVar(auxvarinfo);
 			final CallStatement call =
 					StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { auxvarinfo.getLhs() },
-							"float_to_bitvec" + Integer.toString(mTypeSizes.getFloatingPointSize(cType).getBitSize()),
+							("float_to_bitvec" + Integer.toString(mTypeSizes.getFloatingPointSize(cType).getBitSize()))
+									.intern(),
 							arguments);
 			builder.addStatement(call);
 			builder.setLrValue(new RValue(auxvarinfo.getExp(), cType));
