@@ -1,1624 +1,753 @@
 <?xml version="1.0"?>
-<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
-<benchmark tool="ultimateautomizer" timelimit="300s" memlimit="8GB" cpuCores="2">
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.9//EN" "https://www.sosy-lab.org/benchexec/benchmark-1.9.dtd">
+<benchmark tool="ultimateautomizer" timelimit="300s" memlimit="15 GB" cpuCores="8">
 
-<option name="--full-output"/>
+<require cpuModel="Intel Xeon E3-1230 v5 @ 3.40 GHz" cpuCores="8"/>
 
-<rundefinition name="sv-comp19_prop-reachsafety Default">
-  <tasks name="ReachSafety-Arrays">
-    <includesfile>/svcomp/c/ReachSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
+  <resultfiles>**.graphml</resultfiles>
+
+  <option name="--full-output"/>
+
+<rundefinition name="sv-comp20_prop-reachsafety DEFAULT">
+  <tasks name="ReachSafety-Arrays DEFAULT">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
   </tasks>
-  <tasks name="ReachSafety-BitVectors Default">
-    <includesfile>/svcomp/c/ReachSafety-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
+  <tasks name="ReachSafety-BitVectors DEFAULT">
+    <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
   </tasks>
-  <tasks name="ReachSafety-ControlFlow Default">
-    <includesfile>/svcomp/c/ReachSafety-ControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
+  <tasks name="ReachSafety-ControlFlow DEFAULT">
+    <includesfile>../sv-benchmarks/c/ReachSafety-ControlFlow.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
   </tasks>
-  <tasks name="ReachSafety-ECA Default">
-    <includesfile>/svcomp/c/ReachSafety-ECA.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
+  <tasks name="ReachSafety-ECA DEFAULT">
+    <includesfile>../sv-benchmarks/c/ReachSafety-ECA.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
   </tasks>
-  <tasks name="ReachSafety-Floats Default">
-    <includesfile>/svcomp/c/ReachSafety-Floats.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
+  <tasks name="ReachSafety-Floats DEFAULT">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Floats.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
   </tasks>
-  <tasks name="ReachSafety-Heap Default">
-    <includesfile>/svcomp/c/ReachSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
+  <tasks name="ReachSafety-Heap DEFAULT">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Heap.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
   </tasks>
-  <tasks name="ReachSafety-Loops Default">
-    <includesfile>/svcomp/c/ReachSafety-Loops.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
+  <tasks name="ReachSafety-Loops DEFAULT">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Loops.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
   </tasks>
-  <tasks name="ReachSafety-ProductLines Default">
-    <includesfile>/svcomp/c/ReachSafety-ProductLines.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
+  <tasks name="ReachSafety-ProductLines DEFAULT">
+    <includesfile>../sv-benchmarks/c/ReachSafety-ProductLines.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
   </tasks>
-  <tasks name="ReachSafety-Recursive Default">
-    <includesfile>/svcomp/c/ReachSafety-Recursive.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
+  <tasks name="ReachSafety-Recursive DEFAULT">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Recursive.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
   </tasks>
-  <tasks name="ReachSafety-Sequentialized Default">
-    <includesfile>/svcomp/c/ReachSafety-Sequentialized.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
+  <tasks name="ReachSafety-Sequentialized DEFAULT">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Sequentialized.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
   </tasks>
 
-  <tasks name="ConcurrencySafety-Main Default">
-    <includesfile>/svcomp/c/ConcurrencySafety-Main.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
+  <tasks name="ConcurrencySafety-Main DEFAULT">
+    <includesfile>../sv-benchmarks/c/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
   </tasks>
 
-  <tasks name="Systems_DeviceDriversLinux64_ReachSafety Default">
-    <includesfile>/svcomp/c/Systems_DeviceDriversLinux64_ReachSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
+  <tasks name="SoftwareSystems-AWS-C-Common-ReachSafety DEFAULT">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-AWS-C-Common-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+  </tasks>
+  <tasks name="SoftwareSystems-DeviceDriversLinux64-ReachSafety DEFAULT">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-DeviceDriversLinux64-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--architecture">64bit</option>
   </tasks>
 </rundefinition>
 
-<rundefinition name="sv-comp19_prop-memsafety Default">
-  <tasks name="MemSafety-Arrays Default">
-    <includesfile>/svcomp/c/MemSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Heap Default">
-    <includesfile>/svcomp/c/MemSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-LinkedLists Default">
-    <includesfile>/svcomp/c/MemSafety-LinkedLists.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Other Default">
-    <includesfile>/svcomp/c/MemSafety-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-MemCleanup Default">
-    <includesfile>/svcomp/c/MemSafety-MemCleanup.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memcleanup.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_MemSafety Default">
-    <includesfile>/svcomp/c/Systems_BusyBox_MemSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-nooverflow Default">
-  <tasks name="NoOverflows-BitVectors Default">
-    <includesfile>/svcomp/c/NoOverflows-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="NoOverflows-Other Default">
-    <includesfile>/svcomp/c/NoOverflows-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_NoOverflows Default">
-    <includesfile>/svcomp/c/Systems_BusyBox_NoOverflows.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-termination Default">
-  <tasks name="Termination-MainControlFlow Default">
-    <includesfile>/svcomp/c/Termination-MainControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-MainHeap Default">
-    <includesfile>/svcomp/c/Termination-MainHeap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-Other Default">
-    <includesfile>/svcomp/c/Termination-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-reachsafety ZERO">
+<rundefinition name="sv-comp20_prop-reachsafety ZERO">
   <tasks name="ReachSafety-Arrays ZERO">
-    <includesfile>/svcomp/c/ReachSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-BitVectors ZERO">
-    <includesfile>/svcomp/c/ReachSafety-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ControlFlow ZERO">
-    <includesfile>/svcomp/c/ReachSafety-ControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ControlFlow.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ECA ZERO">
-    <includesfile>/svcomp/c/ReachSafety-ECA.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ECA.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Floats ZERO">
-    <includesfile>/svcomp/c/ReachSafety-Floats.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Floats.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Heap ZERO">
-    <includesfile>/svcomp/c/ReachSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Heap.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Loops ZERO">
-    <includesfile>/svcomp/c/ReachSafety-Loops.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Loops.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ProductLines ZERO">
-    <includesfile>/svcomp/c/ReachSafety-ProductLines.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ProductLines.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Recursive ZERO">
-    <includesfile>/svcomp/c/ReachSafety-Recursive.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Recursive.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Sequentialized ZERO">
-    <includesfile>/svcomp/c/ReachSafety-Sequentialized.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Sequentialized.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
 
   <tasks name="ConcurrencySafety-Main ZERO">
-    <includesfile>/svcomp/c/ConcurrencySafety-Main.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
 
-  <tasks name="Systems_DeviceDriversLinux64_ReachSafety ZERO">
-    <includesfile>/svcomp/c/Systems_DeviceDriversLinux64_ReachSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">64bit</option>
+  <tasks name="SoftwareSystems-AWS-C-Common-ReachSafety ZERO">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-AWS-C-Common-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="SoftwareSystems-DeviceDriversLinux64-ReachSafety ZERO">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-DeviceDriversLinux64-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
+    <option name="--architecture">64bit</option>
   </tasks>
 </rundefinition>
 
-<rundefinition name="sv-comp19_prop-memsafety ZERO">
-  <tasks name="MemSafety-Arrays ZERO">
-    <includesfile>/svcomp/c/MemSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Heap ZERO">
-    <includesfile>/svcomp/c/MemSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-LinkedLists ZERO">
-    <includesfile>/svcomp/c/MemSafety-LinkedLists.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Other ZERO">
-    <includesfile>/svcomp/c/MemSafety-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-MemCleanup ZERO">
-    <includesfile>/svcomp/c/MemSafety-MemCleanup.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memcleanup.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_MemSafety ZERO">
-    <includesfile>/svcomp/c/Systems_BusyBox_MemSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-nooverflow ZERO">
-  <tasks name="NoOverflows-BitVectors ZERO">
-    <includesfile>/svcomp/c/NoOverflows-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="NoOverflows-Other ZERO">
-    <includesfile>/svcomp/c/NoOverflows-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_NoOverflows ZERO">
-    <includesfile>/svcomp/c/Systems_BusyBox_NoOverflows.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-termination ZERO">
-  <tasks name="Termination-MainControlFlow ZERO">
-    <includesfile>/svcomp/c/Termination-MainControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-MainHeap ZERO">
-    <includesfile>/svcomp/c/Termination-MainHeap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-Other ZERO">
-    <includesfile>/svcomp/c/Termination-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">ZERO</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-reachsafety NUM_FUNCTIONS">
+<rundefinition name="sv-comp20_prop-reachsafety NUM_FUNCTIONS">
   <tasks name="ReachSafety-Arrays NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-BitVectors NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ControlFlow NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-ControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ControlFlow.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ECA NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-ECA.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ECA.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Floats NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-Floats.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Floats.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Heap NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Heap.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Loops NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-Loops.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Loops.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ProductLines NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-ProductLines.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ProductLines.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Recursive NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-Recursive.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Recursive.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Sequentialized NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-Sequentialized.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Sequentialized.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
 
   <tasks name="ConcurrencySafety-Main NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/ConcurrencySafety-Main.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
 
-  <tasks name="Systems_DeviceDriversLinux64_ReachSafety NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/Systems_DeviceDriversLinux64_ReachSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">64bit</option>
+  <tasks name="SoftwareSystems-AWS-C-Common-ReachSafety NUM_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-AWS-C-Common-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="SoftwareSystems-DeviceDriversLinux64-ReachSafety NUM_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-DeviceDriversLinux64-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
+    <option name="--architecture">64bit</option>
   </tasks>
 </rundefinition>
 
-<rundefinition name="sv-comp19_prop-memsafety NUM_FUNCTIONS">
-  <tasks name="MemSafety-Arrays NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/MemSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Heap NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/MemSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-LinkedLists NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/MemSafety-LinkedLists.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Other NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/MemSafety-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-MemCleanup NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/MemSafety-MemCleanup.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memcleanup.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_MemSafety NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/Systems_BusyBox_MemSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-nooverflow NUM_FUNCTIONS">
-  <tasks name="NoOverflows-BitVectors NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/NoOverflows-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="NoOverflows-Other NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/NoOverflows-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_NoOverflows NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/Systems_BusyBox_NoOverflows.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-termination NUM_FUNCTIONS">
-  <tasks name="Termination-MainControlFlow NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/Termination-MainControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-MainHeap NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/Termination-MainHeap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-Other NUM_FUNCTIONS">
-    <includesfile>/svcomp/c/Termination-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-reachsafety DAGSIZE">
+<rundefinition name="sv-comp20_prop-reachsafety DAGSIZE">
   <tasks name="ReachSafety-Arrays DAGSIZE">
-    <includesfile>/svcomp/c/ReachSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-BitVectors DAGSIZE">
-    <includesfile>/svcomp/c/ReachSafety-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ControlFlow DAGSIZE">
-    <includesfile>/svcomp/c/ReachSafety-ControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ControlFlow.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ECA DAGSIZE">
-    <includesfile>/svcomp/c/ReachSafety-ECA.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ECA.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Floats DAGSIZE">
-    <includesfile>/svcomp/c/ReachSafety-Floats.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Floats.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Heap DAGSIZE">
-    <includesfile>/svcomp/c/ReachSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Heap.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Loops DAGSIZE">
-    <includesfile>/svcomp/c/ReachSafety-Loops.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Loops.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ProductLines DAGSIZE">
-    <includesfile>/svcomp/c/ReachSafety-ProductLines.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ProductLines.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Recursive DAGSIZE">
-    <includesfile>/svcomp/c/ReachSafety-Recursive.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Recursive.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Sequentialized DAGSIZE">
-    <includesfile>/svcomp/c/ReachSafety-Sequentialized.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Sequentialized.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
 
   <tasks name="ConcurrencySafety-Main DAGSIZE">
-    <includesfile>/svcomp/c/ConcurrencySafety-Main.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
 
-  <tasks name="Systems_DeviceDriversLinux64_ReachSafety DAGSIZE">
-    <includesfile>/svcomp/c/Systems_DeviceDriversLinux64_ReachSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">64bit</option>
+  <tasks name="SoftwareSystems-AWS-C-Common-ReachSafety DAGSIZE">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-AWS-C-Common-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="SoftwareSystems-DeviceDriversLinux64-ReachSafety DAGSIZE">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-DeviceDriversLinux64-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
+    <option name="--architecture">64bit</option>
   </tasks>
 </rundefinition>
 
-<rundefinition name="sv-comp19_prop-memsafety DAGSIZE">
-  <tasks name="MemSafety-Arrays DAGSIZE">
-    <includesfile>/svcomp/c/MemSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Heap DAGSIZE">
-    <includesfile>/svcomp/c/MemSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-LinkedLists DAGSIZE">
-    <includesfile>/svcomp/c/MemSafety-LinkedLists.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Other DAGSIZE">
-    <includesfile>/svcomp/c/MemSafety-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-MemCleanup DAGSIZE">
-    <includesfile>/svcomp/c/MemSafety-MemCleanup.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memcleanup.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_MemSafety DAGSIZE">
-    <includesfile>/svcomp/c/Systems_BusyBox_MemSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-nooverflow DAGSIZE">
-  <tasks name="NoOverflows-BitVectors DAGSIZE">
-    <includesfile>/svcomp/c/NoOverflows-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="NoOverflows-Other DAGSIZE">
-    <includesfile>/svcomp/c/NoOverflows-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_NoOverflows DAGSIZE">
-    <includesfile>/svcomp/c/Systems_BusyBox_NoOverflows.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-termination DAGSIZE">
-  <tasks name="Termination-MainControlFlow DAGSIZE">
-    <includesfile>/svcomp/c/Termination-MainControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-MainHeap DAGSIZE">
-    <includesfile>/svcomp/c/Termination-MainHeap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-Other DAGSIZE">
-    <includesfile>/svcomp/c/Termination-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-reachsafety DEPENDENCY">
+<rundefinition name="sv-comp20_prop-reachsafety DEPENDENCY">
   <tasks name="ReachSafety-Arrays DEPENDENCY">
-    <includesfile>/svcomp/c/ReachSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-BitVectors DEPENDENCY">
-    <includesfile>/svcomp/c/ReachSafety-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ControlFlow DEPENDENCY">
-    <includesfile>/svcomp/c/ReachSafety-ControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ControlFlow.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ECA DEPENDENCY">
-    <includesfile>/svcomp/c/ReachSafety-ECA.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ECA.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Floats DEPENDENCY">
-    <includesfile>/svcomp/c/ReachSafety-Floats.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Floats.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Heap DEPENDENCY">
-    <includesfile>/svcomp/c/ReachSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Heap.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Loops DEPENDENCY">
-    <includesfile>/svcomp/c/ReachSafety-Loops.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Loops.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ProductLines DEPENDENCY">
-    <includesfile>/svcomp/c/ReachSafety-ProductLines.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ProductLines.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Recursive DEPENDENCY">
-    <includesfile>/svcomp/c/ReachSafety-Recursive.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Recursive.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Sequentialized DEPENDENCY">
-    <includesfile>/svcomp/c/ReachSafety-Sequentialized.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Sequentialized.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
 
   <tasks name="ConcurrencySafety-Main DEPENDENCY">
-    <includesfile>/svcomp/c/ConcurrencySafety-Main.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
 
-  <tasks name="Systems_DeviceDriversLinux64_ReachSafety DEPENDENCY">
-    <includesfile>/svcomp/c/Systems_DeviceDriversLinux64_ReachSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">64bit</option>
+  <tasks name="SoftwareSystems-AWS-C-Common-ReachSafety DEPENDENCY">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-AWS-C-Common-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="SoftwareSystems-DeviceDriversLinux64-ReachSafety DEPENDENCY">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-DeviceDriversLinux64-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
+    <option name="--architecture">64bit</option>
   </tasks>
 </rundefinition>
 
-<rundefinition name="sv-comp19_prop-memsafety DEPENDENCY">
-  <tasks name="MemSafety-Arrays DEPENDENCY">
-    <includesfile>/svcomp/c/MemSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Heap DEPENDENCY">
-    <includesfile>/svcomp/c/MemSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-LinkedLists DEPENDENCY">
-    <includesfile>/svcomp/c/MemSafety-LinkedLists.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Other DEPENDENCY">
-    <includesfile>/svcomp/c/MemSafety-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-MemCleanup DEPENDENCY">
-    <includesfile>/svcomp/c/MemSafety-MemCleanup.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memcleanup.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_MemSafety DEPENDENCY">
-    <includesfile>/svcomp/c/Systems_BusyBox_MemSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-nooverflow DEPENDENCY">
-  <tasks name="NoOverflows-BitVectors DEPENDENCY">
-    <includesfile>/svcomp/c/NoOverflows-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="NoOverflows-Other DEPENDENCY">
-    <includesfile>/svcomp/c/NoOverflows-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_NoOverflows DEPENDENCY">
-    <includesfile>/svcomp/c/Systems_BusyBox_NoOverflows.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-termination DEPENDENCY">
-  <tasks name="Termination-MainControlFlow DEPENDENCY">
-    <includesfile>/svcomp/c/Termination-MainControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-MainHeap DEPENDENCY">
-    <includesfile>/svcomp/c/Termination-MainHeap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-Other DEPENDENCY">
-    <includesfile>/svcomp/c/Termination-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DEPENDENCY</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-reachsafety BIGGEST_EQUIVALENCE_CLASS">
+<rundefinition name="sv-comp20_prop-reachsafety BIGGEST_EQUIVALENCE_CLASS">
   <tasks name="ReachSafety-Arrays BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/ReachSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-BitVectors BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/ReachSafety-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ControlFlow BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/ReachSafety-ControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ControlFlow.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ECA BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/ReachSafety-ECA.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ECA.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Floats BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/ReachSafety-Floats.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Floats.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Heap BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/ReachSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Heap.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Loops BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/ReachSafety-Loops.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Loops.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ProductLines BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/ReachSafety-ProductLines.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ProductLines.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Recursive BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/ReachSafety-Recursive.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Recursive.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Sequentialized BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/ReachSafety-Sequentialized.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Sequentialized.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
 
   <tasks name="ConcurrencySafety-Main BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/ConcurrencySafety-Main.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
 
-  <tasks name="Systems_DeviceDriversLinux64_ReachSafety BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/Systems_DeviceDriversLinux64_ReachSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">64bit</option>
+  <tasks name="SoftwareSystems-AWS-C-Common-ReachSafety BIGGEST_EQUIVALENCE_CLASS">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-AWS-C-Common-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="SoftwareSystems-DeviceDriversLinux64-ReachSafety BIGGEST_EQUIVALENCE_CLASS">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-DeviceDriversLinux64-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
+    <option name="--architecture">64bit</option>
   </tasks>
 </rundefinition>
 
-<rundefinition name="sv-comp19_prop-memsafety BIGGEST_EQUIVALENCE_CLASS">
-  <tasks name="MemSafety-Arrays BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/MemSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Heap BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/MemSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-LinkedLists BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/MemSafety-LinkedLists.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Other BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/MemSafety-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-MemCleanup BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/MemSafety-MemCleanup.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memcleanup.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_MemSafety BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/Systems_BusyBox_MemSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-nooverflow BIGGEST_EQUIVALENCE_CLASS">
-  <tasks name="NoOverflows-BitVectors BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/NoOverflows-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="NoOverflows-Other BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/NoOverflows-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_NoOverflows BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/Systems_BusyBox_NoOverflows.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-termination BIGGEST_EQUIVALENCE_CLASS">
-  <tasks name="Termination-MainControlFlow BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/Termination-MainControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-MainHeap BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/Termination-MainHeap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-Other BIGGEST_EQUIVALENCE_CLASS">
-    <includesfile>/svcomp/c/Termination-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-reachsafety NUMBER_OF_SELECT_FUNCTIONS">
+<rundefinition name="sv-comp20_prop-reachsafety NUMBER_OF_SELECT_FUNCTIONS">
   <tasks name="ReachSafety-Arrays NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-BitVectors NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ControlFlow NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-ControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ControlFlow.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ECA NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-ECA.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ECA.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Floats NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-Floats.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Floats.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Heap NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Heap.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Loops NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-Loops.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Loops.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ProductLines NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-ProductLines.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ProductLines.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Recursive NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-Recursive.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Recursive.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Sequentialized NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/ReachSafety-Sequentialized.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Sequentialized.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
 
   <tasks name="ConcurrencySafety-Main NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/ConcurrencySafety-Main.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
 
-  <tasks name="Systems_DeviceDriversLinux64_ReachSafety NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/Systems_DeviceDriversLinux64_ReachSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">64bit</option>
+  <tasks name="SoftwareSystems-AWS-C-Common-ReachSafety NUMBER_OF_SELECT_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-AWS-C-Common-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="SoftwareSystems-DeviceDriversLinux64-ReachSafety NUMBER_OF_SELECT_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-DeviceDriversLinux64-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
+    <option name="--architecture">64bit</option>
   </tasks>
 </rundefinition>
 
-<rundefinition name="sv-comp19_prop-memsafety NUMBER_OF_SELECT_FUNCTIONS">
-  <tasks name="MemSafety-Arrays NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/MemSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Heap NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/MemSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-LinkedLists NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/MemSafety-LinkedLists.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Other NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/MemSafety-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-MemCleanup NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/MemSafety-MemCleanup.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memcleanup.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_MemSafety NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/Systems_BusyBox_MemSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-nooverflow NUMBER_OF_SELECT_FUNCTIONS">
-  <tasks name="NoOverflows-BitVectors NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/NoOverflows-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="NoOverflows-Other NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/NoOverflows-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_NoOverflows NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/Systems_BusyBox_NoOverflows.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-termination NUMBER_OF_SELECT_FUNCTIONS">
-  <tasks name="Termination-MainControlFlow NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/Termination-MainControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-MainHeap NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/Termination-MainHeap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-Other NUMBER_OF_SELECT_FUNCTIONS">
-    <includesfile>/svcomp/c/Termination-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-reachsafety COMPARE_FEATURES">
+<rundefinition name="sv-comp20_prop-reachsafety COMPARE_FEATURES">
   <tasks name="ReachSafety-Arrays COMPARE_FEATURES">
-    <includesfile>/svcomp/c/ReachSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-BitVectors COMPARE_FEATURES">
-    <includesfile>/svcomp/c/ReachSafety-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ControlFlow COMPARE_FEATURES">
-    <includesfile>/svcomp/c/ReachSafety-ControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ControlFlow.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ECA COMPARE_FEATURES">
-    <includesfile>/svcomp/c/ReachSafety-ECA.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ECA.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Floats COMPARE_FEATURES">
-    <includesfile>/svcomp/c/ReachSafety-Floats.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Floats.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Heap COMPARE_FEATURES">
-    <includesfile>/svcomp/c/ReachSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Heap.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Loops COMPARE_FEATURES">
-    <includesfile>/svcomp/c/ReachSafety-Loops.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Loops.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-ProductLines COMPARE_FEATURES">
-    <includesfile>/svcomp/c/ReachSafety-ProductLines.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-ProductLines.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Recursive COMPARE_FEATURES">
-    <includesfile>/svcomp/c/ReachSafety-Recursive.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Recursive.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
   <tasks name="ReachSafety-Sequentialized COMPARE_FEATURES">
-    <includesfile>/svcomp/c/ReachSafety-Sequentialized.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ReachSafety-Sequentialized.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
 
   <tasks name="ConcurrencySafety-Main COMPARE_FEATURES">
-    <includesfile>/svcomp/c/ConcurrencySafety-Main.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">32bit</option>
+    <includesfile>../sv-benchmarks/c/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">32bit</option>
   </tasks>
 
-  <tasks name="Systems_DeviceDriversLinux64_ReachSafety COMPARE_FEATURES">
-    <includesfile>/svcomp/c/Systems_DeviceDriversLinux64_ReachSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/unreach-call.prp</propertyfile>
-    <option name="--architecture">64bit</option>
+  <tasks name="SoftwareSystems-AWS-C-Common-ReachSafety COMPARE_FEATURES">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-AWS-C-Common-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="SoftwareSystems-DeviceDriversLinux64-ReachSafety COMPARE_FEATURES">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-DeviceDriversLinux64-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
+    <option name="--architecture">64bit</option>
   </tasks>
 </rundefinition>
-
-<rundefinition name="sv-comp19_prop-memsafety COMPARE_FEATURES">
-  <tasks name="MemSafety-Arrays COMPARE_FEATURES">
-    <includesfile>/svcomp/c/MemSafety-Arrays.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Heap COMPARE_FEATURES">
-    <includesfile>/svcomp/c/MemSafety-Heap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-LinkedLists COMPARE_FEATURES">
-    <includesfile>/svcomp/c/MemSafety-LinkedLists.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-Other COMPARE_FEATURES">
-    <includesfile>/svcomp/c/MemSafety-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="MemSafety-MemCleanup COMPARE_FEATURES">
-    <includesfile>/svcomp/c/MemSafety-MemCleanup.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memcleanup.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_MemSafety COMPARE_FEATURES">
-    <includesfile>/svcomp/c/Systems_BusyBox_MemSafety.set</includesfile>
-    <propertyfile>/svcomp/c/properties/valid-memsafety.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-nooverflow COMPARE_FEATURES">
-  <tasks name="NoOverflows-BitVectors COMPARE_FEATURES">
-    <includesfile>/svcomp/c/NoOverflows-BitVectors.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="NoOverflows-Other COMPARE_FEATURES">
-    <includesfile>/svcomp/c/NoOverflows-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-
-  <tasks name="Systems_BusyBox_NoOverflows COMPARE_FEATURES">
-    <includesfile>/svcomp/c/Systems_BusyBox_NoOverflows.set</includesfile>
-    <propertyfile>/svcomp/c/properties/no-overflow.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
-<rundefinition name="sv-comp19_prop-termination COMPARE_FEATURES">
-  <tasks name="Termination-MainControlFlow COMPARE_FEATURES">
-    <includesfile>/svcomp/c/Termination-MainControlFlow.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-MainHeap COMPARE_FEATURES">
-    <includesfile>/svcomp/c/Termination-MainHeap.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">64bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-  <tasks name="Termination-Other COMPARE_FEATURES">
-    <includesfile>/svcomp/c/Termination-Other.set</includesfile>
-    <propertyfile>/svcomp/c/properties/termination.prp</propertyfile>
-    <option name="--architecture">32bit</option>
-    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
-    <option name="--traceabstraction.trace.refinement.strategy">CAMEL</option>
-  </tasks>
-</rundefinition>
-
 
 </benchmark>
