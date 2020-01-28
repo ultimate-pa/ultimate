@@ -63,6 +63,8 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 
 	private String mInputFilenames;
 
+	private final String mStringRepr;
+
 	public UltimateRunDefinition(final File input, final File settings, final File toolchain, final long timeout) {
 		this(new File[] { input }, settings, toolchain, timeout);
 	}
@@ -89,6 +91,7 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 		mToolchain = toolchain;
 		mTimeout = timeout;
 		mFunAfterTest = funAfterTest;
+		mStringRepr = generateShortStringRepresentation();
 	}
 
 	public File[] getInput() {
@@ -188,14 +191,14 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 
 	@Override
 	public String toString() {
-		return generateShortStringRepresentation();
+		return mStringRepr;
 	}
 
 	public String generateLongStringRepresentation() {
 		return "Input: " + mInput + ", Settings: " + mSettings + ", Toolchain: " + mToolchain;
 	}
 
-	public String generateShortStringRepresentation() {
+	private String generateShortStringRepresentation() {
 		final StringBuilder sb = new StringBuilder();
 		final File settings = getSettings();
 		final File toolchain = getToolchain();

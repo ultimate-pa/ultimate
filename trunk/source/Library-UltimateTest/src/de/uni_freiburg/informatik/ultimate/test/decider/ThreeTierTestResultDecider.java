@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE UnitTest Library.
- * 
+ *
  * The ULTIMATE UnitTest Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE UnitTest Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE UnitTest Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 
@@ -40,23 +40,19 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 /**
  * Abstract class for deciding a test result in three steps:
  * <ul>
- * <li>1. Use IExpectedResultFinder to decide expected result for an
- * UltimateRunDefinition
- * <li>2. Use IResults from Ultimate to decide the overall result provided by
- * Ultimate
- * <li>3. Compare expected result with the overall result computed by ultimate
- * to decide the test result.
+ * <li>1. Use IExpectedResultFinder to decide expected result for an UltimateRunDefinition
+ * <li>2. Use IResults from Ultimate to decide the overall result provided by Ultimate
+ * <li>3. Compare expected result with the overall result computed by ultimate to decide the test result.
  * </ul>
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
- * 
+ *
  * @param <OVERALL_RESULT>
  */
 public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITestResultDecider {
 
 	/**
-	 * if true the TestResult UNKNOWN is a success for JUnit, if false, the
-	 * TestResult UNKNOWN is a failure for JUnit.
+	 * if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure for JUnit.
 	 */
 	private final boolean mUnknownIsJUnitSuccess;
 	private final UltimateRunDefinition mUltimateRunDefinition;
@@ -65,14 +61,15 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 	private ITestResultEvaluation<OVERALL_RESULT> mTestResultEvaluation;
 
 	/**
-	 * 
+	 *
 	 * @param ultimateRunDefinition
-	 * 
+	 *
 	 * @param unknownIsJUnitSuccess
-	 *            if true the TestResult UNKNOWN is a success for JUnit, if
-	 *            false, the TestResult UNKNOWN is a failure for JUnit.
+	 *            if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure
+	 *            for JUnit.
 	 */
-	public ThreeTierTestResultDecider(UltimateRunDefinition ultimateRunDefinition, boolean unknownIsJUnitSuccess) {
+	public ThreeTierTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+			final boolean unknownIsJUnitSuccess) {
 		mUnknownIsJUnitSuccess = unknownIsJUnitSuccess;
 		mUltimateRunDefinition = ultimateRunDefinition;
 		mExpectedResultEvaluation = constructExpectedResultFinder();
@@ -80,7 +77,7 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 	}
 
 	@Override
-	public final TestResult getTestResult(IUltimateServiceProvider services) {
+	public final TestResult getTestResult(final IUltimateServiceProvider services) {
 		mUltimateResultEvaluation = constructUltimateResultEvaluation();
 		mUltimateResultEvaluation.evaluateOverallResult(services.getResultService());
 		mTestResultEvaluation = constructTestResultEvaluation();
@@ -90,20 +87,20 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 	}
 
 	@Override
-	public final TestResult getTestResult(IUltimateServiceProvider services, Throwable e) {
+	public final TestResult getTestResult(final IUltimateServiceProvider services, final Throwable e) {
 		mTestResultEvaluation = constructTestResultEvaluation();
 		mTestResultEvaluation.evaluateTestResult(mExpectedResultEvaluation, e);
 		writeResultLogMessages(services);
 		return mTestResultEvaluation.getTestResult();
 	}
 
-	private final void writeResultLogMessages(IUltimateServiceProvider services) {
+	private final void writeResultLogMessages(final IUltimateServiceProvider services) {
 		final List<String> messages = new ArrayList<>();
 		messages.add("Expected: " + mExpectedResultEvaluation.getExpectedResultFinderMessage());
 		messages.add("Actual: " + mUltimateResultEvaluation.generateOverallResultMessage());
 		messages.add("Test result: " + mTestResultEvaluation.getTestResult().toString());
 
-		TestUtil.logResults(getClass(), mUltimateRunDefinition.generateShortStringRepresentation(),
+		TestUtil.logResults(getClass(), mUltimateRunDefinition.toString(),
 				!getJUnitSuccess(mTestResultEvaluation.getTestResult()), messages, services);
 	}
 
@@ -118,7 +115,7 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 	}
 
 	@Override
-	public boolean getJUnitSuccess(TestResult testResult) {
+	public boolean getJUnitSuccess(final TestResult testResult) {
 		switch (testResult) {
 		case SUCCESS:
 			return true;

@@ -65,8 +65,8 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 	private ITestResultDecider mDecider;
 	private AfterTest mFunAfterTest;
 
-	public UltimateTestCase(final ITestResultDecider decider, final UltimateStarter starter, final UltimateRunDefinition urd,
-			final List<ITestLogfile> logs) {
+	public UltimateTestCase(final ITestResultDecider decider, final UltimateStarter starter,
+			final UltimateRunDefinition urd, final List<ITestLogfile> logs) {
 		if (urd == null) {
 			throw new IllegalArgumentException("ultimateRunDefinition");
 		}
@@ -75,7 +75,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 		mDecider = decider;
 		mLogs = logs;
 
-		mName = urd.generateShortStringRepresentation();
+		mName = urd.toString();
 		mUltimateRunDefinition = urd;
 		mTestLogger = new ConsoleLogger();
 		mHasStarted = false;
