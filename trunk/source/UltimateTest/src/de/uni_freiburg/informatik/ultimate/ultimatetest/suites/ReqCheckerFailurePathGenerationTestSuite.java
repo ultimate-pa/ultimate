@@ -34,6 +34,8 @@ import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.PatternUtil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
@@ -68,7 +70,7 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		// createReqFiles(PatternUtil.createAllPatterns().getFirst());
+		createReqFiles(PatternUtil.createAllPatterns().getFirst());
 		addTestCase(TOOLCHAIN, SETTINGS, new DirectoryFileEndingsPair[] { new DirectoryFileEndingsPair(REQ_DIR, REQ) });
 		return super.createTestCases();
 	}
@@ -82,10 +84,18 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 				continue;
 			}
 
+			final CDD[] cdds = pattern.getCddsAsArray();
+			final CDD[] scopeCdds = new CDD[] { pattern.getScope().getCdd1(), pattern.getScope().getCdd2() };
+
 			final Formatter fmt = new Formatter();
 			fmt.format("// %s %s%s", pattern.getName(), pattern.getScope().getName(), LINE_SEP);
-			for (int i = 16; i < 26; ++i) {
-				fmt.format("INPUT %s is bool%s", (char) ('A' + i), LINE_SEP);
+			for (final CDD cdd : scopeCdds) {
+				if (cdd != null) {
+					fmt.format("INPUT %s is bool%s", cdd, LINE_SEP);
+				}
+			}
+			for (int i = 0; i < cdds.length; i++) {
+				fmt.format("%s %s is bool%s", i == 0 ? "OUTPUT" : "INPUT", cdds[i], LINE_SEP);
 			}
 			fmt.format("req1: %s%s", pattern.toString().replace(pattern.getId() + ": ", ""), LINE_SEP);
 
