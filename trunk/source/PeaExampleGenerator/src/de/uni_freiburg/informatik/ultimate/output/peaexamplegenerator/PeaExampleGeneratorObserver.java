@@ -56,6 +56,7 @@ import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.TestStep;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
 public class PeaExampleGeneratorObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
