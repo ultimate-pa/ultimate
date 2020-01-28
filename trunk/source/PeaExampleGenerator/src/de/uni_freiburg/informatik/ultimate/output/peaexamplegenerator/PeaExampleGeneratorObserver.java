@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultTest;
 import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.TestStep;
@@ -102,7 +101,7 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 
 			try {
 				final String[] command = new String[] { "python3", PYTHON_SCRIPT, "-o",
-						TestUtil.getPathFromTrunk(OUTPUT_DIR) + "/" + patternName + "_" + i + FILE_EXT, "-a", "1" };
+						"/" + patternName + "_" + i + FILE_EXT, "-a", "1" };
 				// final String[] command = new String[] { "python3", TestUtil.getPathFromTrunk(PYTHON_SCRIPT), "-o",
 				// TestUtil.getPathFromTrunk(OUTPUT_DIR + "/" + patternName + "_" + i + FILE_EXT), "-a", "1" };
 				final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);

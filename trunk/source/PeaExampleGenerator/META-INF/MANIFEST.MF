@@ -10,4 +10,3 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.pea2boogie
-Import-Package: de.uni_freiburg.informatik.ultimate.test.util
