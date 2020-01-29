@@ -128,7 +128,7 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 							CoreUtil.convertStreamToString(process.getErrorStream())));
 				}
 			} catch (final IOException | InterruptedException e) {
-				throw new RuntimeException(e.getMessage());
+				throw new RuntimeException(e);
 			}
 		}
 	}
