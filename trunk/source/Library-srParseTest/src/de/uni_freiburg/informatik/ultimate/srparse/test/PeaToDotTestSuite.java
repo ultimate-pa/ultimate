@@ -155,19 +155,22 @@ public class PeaToDotTestSuite {
 
 		if (!markdownFile.exists()) {
 			fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
-			fmt.format("## %s%s%s", mPatternName, LINE_SEP, LINE_SEP);
+			fmt.format("## %s%s", mPatternName, LINE_SEP);
 		}
 
+		fmt.format(LINE_SEP);
 		fmt.format("### %s %s%s", mPatternName, mScopeName, LINE_SEP);
 		fmt.format("```%s%s%s```%s", LINE_SEP, mPatternString, LINE_SEP, LINE_SEP);
 		fmt.format("```%sCounterexample: %s%s```%s", LINE_SEP, counterTrace, LINE_SEP, LINE_SEP);
 
 		if (failurePathImage.exists()) {
+			fmt.format(LINE_SEP);
 			fmt.format("![](%s/%s/%s_%s_0.svg)%s", "..", ROOT_DIR.toPath().relativize(FAILURE_PATH_IMAGE_DIR.toPath()),
 					mPatternName, mScopeName, LINE_SEP);
 		}
 
 		if (peaImage.exists()) {
+			fmt.format(LINE_SEP);
 			fmt.format("![](%s/%s/%s_%s.svg)%s", "..", ROOT_DIR.toPath().relativize(PEA_IMAGE_DIR.toPath()),
 					mPatternName, mScopeName, LINE_SEP);
 		}

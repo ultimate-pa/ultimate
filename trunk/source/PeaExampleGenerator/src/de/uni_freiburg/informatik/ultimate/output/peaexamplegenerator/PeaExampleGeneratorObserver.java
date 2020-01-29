@@ -124,12 +124,16 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 	@Override
 	public void finish() {
 		final Map<String, List<IResult>> results = mServices.getResultService().getResults();
-		final ReqTestResultTest[] reqTestResultTests =
-				ResultUtil.filterResults(results, ReqTestResultTest.class).toArray(new ReqTestResultTest[0]);
+		final List<ReqTestResultTest> reqTestResultTests =
+				(List<ReqTestResultTest>) ResultUtil.filterResults(results, ReqTestResultTest.class);
 
-		for (int i = 0; i < reqTestResultTests.length; i++) {
+		if (reqTestResultTests.isEmpty()) {
+			throw new RuntimeException("No test results found.");
+		}
+
+		for (int i = 0; i < reqTestResultTests.size(); i++) {
 			final Map<String, Pair<List<Integer>, List<Integer>>> observables = new HashMap<>();
-			final List<TestStep> steps = reqTestResultTests[i].getTestSteps();
+			final List<TestStep> steps = reqTestResultTests.get(i).getTestSteps();
 			final AtomicInteger clock = new AtomicInteger(); // Var used in lambda must be final. NagNagNag
 
 			for (final TestStep step : steps) {
