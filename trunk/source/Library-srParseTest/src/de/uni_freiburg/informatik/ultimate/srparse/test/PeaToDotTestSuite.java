@@ -186,13 +186,9 @@ public class PeaToDotTestSuite {
 		// Check if root directory exists.
 		assert (Files.isDirectory(ROOT_DIR.toPath())) : "Directory not found: " + ROOT_DIR;
 
-		// Check if parent directories exist.
-		assert (PEA_IMAGE_DIR.getParentFile().isDirectory()) : "Directory not found: " + PEA_IMAGE_DIR.getParentFile();
-		assert (MARKDOWN_DIR.getParentFile().isDirectory()) : "Directory not found: " + MARKDOWN_DIR.getParentFile();
-
 		// Check if markdown, pea image directory exist, otherwise create them.
-		assert (PEA_IMAGE_DIR.isDirectory() || PEA_IMAGE_DIR.mkdir()) : "Failed to create directory: " + PEA_IMAGE_DIR;
-		assert (MARKDOWN_DIR.isDirectory() || MARKDOWN_DIR.mkdir()) : "Failed to create directory: " + MARKDOWN_DIR;
+		assert (PEA_IMAGE_DIR.isDirectory() || PEA_IMAGE_DIR.mkdirs()) : "Failed to create directory: " + PEA_IMAGE_DIR;
+		assert (MARKDOWN_DIR.isDirectory() || MARKDOWN_DIR.mkdirs()) : "Failed to create directory: " + MARKDOWN_DIR;
 
 		// Delete auto generated files.
 		Stream.of(PEA_IMAGE_DIR.listFiles()).filter(a -> a.getName().endsWith(".svg")).forEach(a -> a.delete());
