@@ -77,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 	// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
-	private static final boolean CREATE_NEW_FILES = false;
+	private static final boolean CREATE_NEW_FILES = true;
 
 	private static final File ROOT_DIR = new File("/media/Daten/projects/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
@@ -148,7 +148,8 @@ public class PeaToDotTestSuite {
 	private void writeMarkdownFile(final String counterTrace) throws IOException {
 		final File markdownFile = new File(MARKDOWN_DIR + "/" + mPatternName + ".md");
 		final File peaImage = new File(PEA_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + ".svg");
-		final File failurePathImage = new File(FAILURE_PATH_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + ".svg");
+		final File failurePathImage =
+				new File(FAILURE_PATH_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + "_0.svg");
 
 		final Formatter fmt = new Formatter();
 
@@ -162,7 +163,7 @@ public class PeaToDotTestSuite {
 		fmt.format("```%sCounterexample: %s%s```%s", LINE_SEP, counterTrace, LINE_SEP, LINE_SEP);
 
 		if (failurePathImage.exists()) {
-			fmt.format("![](%s/%s/%s_%s.svg)%s", "..", ROOT_DIR.toPath().relativize(FAILURE_PATH_IMAGE_DIR.toPath()),
+			fmt.format("![](%s/%s/%s_%s_0.svg)%s", "..", ROOT_DIR.toPath().relativize(FAILURE_PATH_IMAGE_DIR.toPath()),
 					mPatternName, mScopeName, LINE_SEP);
 		}
 
