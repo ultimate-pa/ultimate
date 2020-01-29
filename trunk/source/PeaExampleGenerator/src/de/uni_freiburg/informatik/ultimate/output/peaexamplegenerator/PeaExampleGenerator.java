@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator.preferences.PeaExampleGeneratorPreferenceInitializer;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -96,7 +96,7 @@ public class PeaExampleGenerator implements IOutput {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		return new PreferenceInitializer();
+		return new PeaExampleGeneratorPreferenceInitializer();
 	}
 
 	@Override

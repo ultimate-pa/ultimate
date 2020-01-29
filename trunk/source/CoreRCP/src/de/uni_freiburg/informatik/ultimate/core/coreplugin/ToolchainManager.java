@@ -296,7 +296,7 @@ public class ToolchainManager {
 			mLogger.info("####################### " + getLogPrefix() + " #######################");
 			final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 			final boolean useBenchmark = ups.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
-			final IUltimateServiceProvider currentToolchainServices = mToolchainData.getServices();
+			IUltimateServiceProvider currentToolchainServices = mToolchainData.getServices();
 			Benchmark bench = null;
 			if (useBenchmark) {
 				bench = new Benchmark();
@@ -310,9 +310,10 @@ public class ToolchainManager {
 				}
 
 				final Collection<ISource> parsers = mFiles2Parser.values();
+				mToolchainData = mCurrentController.prerun(mToolchainData);
 				final CompleteToolchainData data = new CompleteToolchainData(mToolchainData,
 						parsers.toArray(new ISource[parsers.size()]), mCurrentController);
-				data.getController().prerun(mToolchainData);
+				currentToolchainServices = data.getToolchain().getServices();
 				return mToolchainWalker.walk(data, currentToolchainServices.getProgressMonitorService(), monitor);
 
 			} finally {

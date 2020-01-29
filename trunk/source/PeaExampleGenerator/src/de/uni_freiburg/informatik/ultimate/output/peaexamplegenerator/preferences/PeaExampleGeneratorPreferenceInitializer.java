@@ -34,20 +34,25 @@ import de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator.Activator;
 /**
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
-public class PreferenceInitializer extends UltimatePreferenceInitializer {
+public class PeaExampleGeneratorPreferenceInitializer extends UltimatePreferenceInitializer {
+
+	public static final String LABEL_PYTHON_SCRIPT = "Python script";
+	public static final String LABEL_OUTPUT_FILE_EXTENSION = "Output file extension";
+	public static final String LABEL_OUTPUT_DIRECTORY = "Output directory";
 
 	private final static String[] OUTPUT_FILE_EXTENSIONS = { ".ps", ".eps", ".pdf", ".pgf", ".png", ".raw", ".rgba",
 			".svg", ".svgz", ".jpg", ".jpeg", ".tif", ".tiff" };
 
-	public PreferenceInitializer() {
+	public PeaExampleGeneratorPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] { new UltimatePreferenceItem<>("Python script", "", PreferenceType.File),
-				new UltimatePreferenceItem<>("Output directory", "", PreferenceType.Directory),
-				new UltimatePreferenceItem<>("Output file extension", ".svg", PreferenceType.Combo,
+		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<>(LABEL_PYTHON_SCRIPT, "", PreferenceType.File),
+				new UltimatePreferenceItem<>(LABEL_OUTPUT_DIRECTORY, "", PreferenceType.Directory),
+				new UltimatePreferenceItem<>(LABEL_OUTPUT_FILE_EXTENSION, ".svg", PreferenceType.Combo,
 						OUTPUT_FILE_EXTENSIONS) };
 	}
 }

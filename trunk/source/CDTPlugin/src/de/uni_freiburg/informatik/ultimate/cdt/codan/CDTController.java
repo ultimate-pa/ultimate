@@ -138,7 +138,7 @@ public class CDTController implements IController<RunDefinition> {
 
 	@Override
 	public List<String> selectModel(final List<String> modelNames) {
-		final ArrayList<String> returnList = new ArrayList<String>();
+		final ArrayList<String> returnList = new ArrayList<>();
 		for (final String model : modelNames) {
 			if (model.contains(
 					de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator.PLUGIN_ID)) {
@@ -250,7 +250,7 @@ public class CDTController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public void prerun(final IToolchainData<RunDefinition> tcData) {
-
+	public IToolchainData<RunDefinition> prerun(final IToolchainData<RunDefinition> tcData) {
+		return tcData;
 	}
 }

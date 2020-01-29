@@ -35,9 +35,12 @@ import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.PatternUtil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator.preferences.PeaExampleGeneratorPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
@@ -61,6 +64,7 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 	private static final String TOOLCHAIN = "ReqCheckFailurePathGeneration.xml";
 	private static final String SETTINGS = "ReqCheckFailurePathGeneration.epf";
 	private static final String REQ_DIR = "examples/Requirements/failure-paths";
+
 	private static final String[] REQ = new String[] { ".req" };
 	private static final String LINE_SEP = CoreUtil.getPlatformLineSeparator();
 
@@ -72,8 +76,26 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		createReqFiles(PatternUtil.createAllPatterns().getFirst());
-		addTestCase(TOOLCHAIN, SETTINGS, new DirectoryFileEndingsPair[] { new DirectoryFileEndingsPair(REQ_DIR, REQ) });
+		addTestCase(TOOLCHAIN, SETTINGS, new DirectoryFileEndingsPair[] { new DirectoryFileEndingsPair(REQ_DIR, REQ) },
+				this::overwriteSettings);
 		return super.createTestCases();
+	}
+
+	private IUltimateServiceProvider overwriteSettings(final IUltimateServiceProvider services) {
+
+		final String peaExGeneratorId =
+				de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator.Activator.PLUGIN_ID;
+
+		final String absPathReqDir = TestUtil.getPathFromTrunk(REQ_DIR);
+		final String absPathPythonScript =
+				TestUtil.getPathFromTrunk("../releaseScripts/default/adds/timing_diagram.py");
+
+		final IUltimateServiceProvider overlay = services.registerPreferenceLayer(getClass(), peaExGeneratorId);
+		final IPreferenceProvider prefProvider = overlay.getPreferenceProvider(peaExGeneratorId);
+		prefProvider.put(PeaExampleGeneratorPreferenceInitializer.LABEL_OUTPUT_DIRECTORY, absPathReqDir);
+		prefProvider.put(PeaExampleGeneratorPreferenceInitializer.LABEL_PYTHON_SCRIPT, absPathPythonScript);
+
+		return overlay;
 	}
 
 	private static void createReqFiles(final List<PatternType> patterns) {

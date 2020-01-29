@@ -232,7 +232,7 @@ public class GuiController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public void prerun(final IToolchainData<RunDefinition> tcData) {
-		// not needed
+	public IToolchainData<RunDefinition> prerun(final IToolchainData<RunDefinition> tcData) {
+		return tcData;
 	}
 }

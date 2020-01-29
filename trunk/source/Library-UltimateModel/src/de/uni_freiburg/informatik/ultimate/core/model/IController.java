@@ -87,11 +87,12 @@ public interface IController<T> extends IUltimatePlugin {
 	/**
 	 * {@link IController#prerun(IToolchainData)} is called just before the selected toolchain is executed by the core.
 	 * This allows the controller to modify {@link IToolchainStorage} or to abort toolchain execution with an exception.
-	 * 
+	 *
 	 * @param tcData
 	 *            The toolchain that is about to be executed.
+	 * @return A possibly modified toolchain
 	 */
-	void prerun(IToolchainData<T> tcData);
+	IToolchainData<T> prerun(IToolchainData<T> tcData);
 
 	/**
 	 * After a toolchain is executed, {@link ICore} calls this method so that the controller may display the results of

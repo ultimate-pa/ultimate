@@ -124,7 +124,7 @@ public class UltimateWebController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public void prerun(final IToolchainData<RunDefinition> tcData) {
-
+	public IToolchainData<RunDefinition> prerun(final IToolchainData<RunDefinition> tcData) {
+		return tcData;
 	}
 }

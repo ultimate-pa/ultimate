@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator.preferences.PeaExampleGeneratorPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -76,9 +77,12 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
-		mScriptFile = new File(mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString("Python script"));
-		mOutputDir = new File(mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString("Output directory"));
-		mOutputFileExtension = mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString("Output file extension");
+		mScriptFile = new File(mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getString(PeaExampleGeneratorPreferenceInitializer.LABEL_PYTHON_SCRIPT));
+		mOutputDir = new File(mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getString(PeaExampleGeneratorPreferenceInitializer.LABEL_OUTPUT_DIRECTORY));
+		mOutputFileExtension = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getString(PeaExampleGeneratorPreferenceInitializer.LABEL_OUTPUT_FILE_EXTENSION);
 
 		if (!mScriptFile.exists()) {
 			throw new RuntimeException("Unable to find file: '" + mScriptFile.getPath() + "'.");
@@ -103,6 +107,9 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
 		if (noInitPatterns.size() > 1) {
 			throw new UnsupportedOperationException("Cannot handle more than one pattern, ask Nico to implement it");
+		}
+		if (noInitPatterns.isEmpty()) {
+			throw new UnsupportedOperationException("No non-init pattern in " + PatternContainer.class);
 		}
 		final PatternType thePattern = noInitPatterns.iterator().next();
 		mScopeName = thePattern.getScope().getName();

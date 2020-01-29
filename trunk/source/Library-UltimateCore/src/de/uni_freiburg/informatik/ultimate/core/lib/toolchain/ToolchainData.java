@@ -129,7 +129,8 @@ public class ToolchainData implements IToolchainData<RunDefinition> {
 	 *            the Toolchain object to be appended to this Toolchain object
 	 */
 	public void addToolchain(final ToolchainData tc) {
-		mToolchain.getToolchain().getPluginOrSubchain().addAll(tc.getRootElement().getToolchain().getPluginOrSubchain());
+		mToolchain.getToolchain().getPluginOrSubchain()
+				.addAll(tc.getRootElement().getToolchain().getPluginOrSubchain());
 	}
 
 	@Override
@@ -145,5 +146,10 @@ public class ToolchainData implements IToolchainData<RunDefinition> {
 	@Override
 	public IUltimateServiceProvider getServices() {
 		return mServices;
+	}
+
+	@Override
+	public IToolchainData<RunDefinition> replaceServices(final IUltimateServiceProvider newServices) {
+		return new ToolchainData(mToolchain, newServices, mStorage);
 	}
 }

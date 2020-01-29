@@ -27,12 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.test;
 
 import java.util.List;
+import java.util.function.Function;
 
 import org.eclipse.core.runtime.IStatus;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.LifecycleException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestMethod;
@@ -61,17 +63,19 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 
 	private boolean mHasStarted;
 	private List<ITestLogfile> mLogs;
-	private UltimateStarter mStarter;
 	private ITestResultDecider mDecider;
 	private AfterTest mFunAfterTest;
 
-	public UltimateTestCase(final ITestResultDecider decider, final UltimateStarter starter,
-			final UltimateRunDefinition urd, final List<ITestLogfile> logs) {
+	private final Function<IUltimateServiceProvider, IUltimateServiceProvider> mServicesCallback;
+
+	public UltimateTestCase(final ITestResultDecider decider, final UltimateRunDefinition urd,
+			final List<ITestLogfile> logs,
+			final Function<IUltimateServiceProvider, IUltimateServiceProvider> servicesCallback) {
 		if (urd == null) {
 			throw new IllegalArgumentException("ultimateRunDefinition");
 		}
+		mServicesCallback = servicesCallback;
 
-		mStarter = starter;
 		mDecider = decider;
 		mLogs = logs;
 
@@ -110,15 +114,16 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 		Throwable th = null;
 		TestResult result = TestResult.FAIL;
 		boolean livecycleFailure = false;
+		final UltimateStarter starter = new UltimateStarter(mUltimateRunDefinition, mServicesCallback);
 
 		try {
 			updateLogsPre();
 			final String deciderName = mDecider.getClass().getSimpleName();
-			final IStatus returnCode = mStarter.runUltimate();
+			final IStatus returnCode = starter.runUltimate();
 			// logging service is only available after runUltimate() has been called
-			final ILogger logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
+			final ILogger logger = getLoggerFromStarter(starter);
 			logger.info("Deciding this test: " + deciderName);
-			result = mDecider.getTestResult(mStarter.getServices());
+			result = mDecider.getTestResult(starter.getServices());
 			if (!returnCode.isOK() && result != TestResult.FAIL) {
 				logger.fatal("#################### Overwriting decision of " + deciderName
 						+ " and setting test status to FAIL ####################");
@@ -141,8 +146,8 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 			livecycleFailure = true;
 		} catch (final Throwable e) {
 			th = e;
-			result = mDecider.getTestResult(mStarter.getServices(), e);
-			logWithFreshLogger(e, "There was an exception during the execution of Ultimate");
+			result = mDecider.getTestResult(starter.getServices(), e);
+			logWithFreshLogger(starter, e, "There was an exception during the execution of Ultimate");
 		} finally {
 			boolean success = false;
 
@@ -154,15 +159,15 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 			final String resultCategory = mDecider.getResultCategory();
 
 			try {
-				updateLogsPost(result, resultCategory, resultMessage);
+				updateLogsPost(starter.getServices(), result, resultCategory, resultMessage);
 			} catch (final Throwable ex) {
-				logWithFreshLogger(ex, "There was an exception during the writing of summary or log information");
+				logWithFreshLogger(starter, ex,
+						"There was an exception during the writing of summary or log information");
 			}
 
-			mStarter.complete();
+			starter.complete();
 
 			mDecider = null;
-			mStarter = null;
 			mLogs = null;
 
 			if (!success) {
@@ -186,20 +191,21 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 			try {
 				mFunAfterTest.afterTest();
 			} catch (final Throwable ex) {
-				logWithFreshLogger(ex, "There was an exception during execution of after-test method");
+				logWithFreshLogger(starter, ex, "There was an exception during execution of after-test method");
 			}
 			mFunAfterTest = null;
 		}
 	}
 
-	private void logWithFreshLogger(final Throwable ex, final String message) {
-		final ILogger logger;
-		if (mStarter.getServices() == null) {
-			logger = new ConsoleLogger();
-		} else {
-			logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
+	private static ILogger getLoggerFromStarter(final UltimateStarter starter) {
+		if (starter.getServices() == null) {
+			return new ConsoleLogger();
 		}
-		logger.fatal(String.format(message + ": %s%n%s", ex, CoreUtil.getStackTrace(ex)));
+		return starter.getServices().getLoggingService().getLogger(UltimateStarter.class);
+	}
+
+	private static void logWithFreshLogger(final UltimateStarter starter, final Throwable ex, final String message) {
+		getLoggerFromStarter(starter).fatal(String.format(message + ": %s%n%s", ex, CoreUtil.getStackTrace(ex)));
 	}
 
 	private void updateLogsPre() {
@@ -210,21 +216,22 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 				.forEach(a -> a.addEntryPreStart(mUltimateRunDefinition, mTestLogger));
 	}
 
-	private void updateLogsPost(final TestResult result, final String resultCategory, final String resultMessage) {
+	private void updateLogsPost(final IUltimateServiceProvider services, final TestResult result,
+			final String resultCategory, final String resultMessage) {
 		if (mLogs == null) {
 			return;
 		}
 
 		IResultService rservice = null;
-		if (mStarter.getServices() != null) {
-			rservice = mStarter.getServices().getResultService();
+		if (services != null) {
+			rservice = services.getResultService();
 			assert rservice != null : "Could not retrieve ResultService";
 		}
 
 		for (final ITestLogfile log : mLogs) {
 			if (log instanceof IIncrementalLog) {
 				((IIncrementalLog) log).addEntryPostCompletion(mUltimateRunDefinition, result, resultCategory,
-						resultMessage, mStarter.getServices(), mTestLogger);
+						resultMessage, services, mTestLogger);
 			}
 			if (log instanceof ITestSummary) {
 				((ITestSummary) log).addResult(mUltimateRunDefinition, result, resultCategory, resultMessage, mName,

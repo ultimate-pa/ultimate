@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import javax.xml.bind.JAXBException;
 
@@ -51,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 
 /**
  *
- * This class wraps the Ultimate application and allows to start it without setting an IController
- * <ToolchainListType> object.
+ * This class wraps the Ultimate application and allows to start it without setting an IController <ToolchainListType>
+ * object.
  *
  * Call runUltimate() to execute it and complete after processing the results (to release resources).
  *
@@ -72,10 +73,14 @@ public class UltimateStarter implements IController<RunDefinition> {
 
 	private ICore<RunDefinition> mCurrentCore;
 
-	public UltimateStarter(final UltimateRunDefinition ultimateRunDefinition) {
+	private final Function<IUltimateServiceProvider, IUltimateServiceProvider> mServicesCallback;
+
+	public UltimateStarter(final UltimateRunDefinition ultimateRunDefinition,
+			final Function<IUltimateServiceProvider, IUltimateServiceProvider> servicesCallback) {
 		mUltimateRunDefinition = ultimateRunDefinition;
 		mExternalUltimateCore = new ExternalUltimateCore(this);
 		mDeadline = ultimateRunDefinition.getTimeout();
+		mServicesCallback = servicesCallback;
 	}
 
 	public IStatus runUltimate() throws Throwable {
@@ -162,7 +167,12 @@ public class UltimateStarter implements IController<RunDefinition> {
 	}
 
 	@Override
-	public void prerun(final IToolchainData<RunDefinition> tcData) {
-
+	public IToolchainData<RunDefinition> prerun(final IToolchainData<RunDefinition> tcData) {
+		if (mServicesCallback != null) {
+			final IUltimateServiceProvider newServices = mServicesCallback.apply(tcData.getServices());
+			return tcData.replaceServices(newServices);
+		}
+		return tcData;
 	}
+
 }

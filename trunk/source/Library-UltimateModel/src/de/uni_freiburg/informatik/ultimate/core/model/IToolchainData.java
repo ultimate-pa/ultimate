@@ -43,4 +43,6 @@ public interface IToolchainData<T> {
 	IUltimateServiceProvider getServices();
 
 	void addPlugin(String pluginID);
+
+	IToolchainData<T> replaceServices(IUltimateServiceProvider newServices);
 }
