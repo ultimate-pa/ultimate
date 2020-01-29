@@ -792,28 +792,47 @@ public final class TestUtil {
 	}
 
 	/**
-	 * The JUnit view in Eclipse seems to limit the length of the test case name to a certain length. You cannot rerun
-	 * tests in the GUI if two test cases have the same prefix. This methods tries to reduce the length of the string
-	 * representing a test case name such that this limit is not reached.
+	 * The JUnit view in Eclipse limits the length of the test case name to a certain length. You cannot rerun tests in
+	 * the GUI if two test cases have the same prefix, and you cannot rerun tests if their name exceeds this length.
+	 * This methods tries to reduce the length of the string representing a test case name such that this limit is not
+	 * reached.
 	 *
 	 * @param testCaseName
 	 *            The original test case name.
+	 * @param class1
 	 * @return The minimized test case name.
 	 */
-	public static String minimizeTestCaseName(final String testCaseName) {
+	public static String minimizeTestCaseName(final String testCaseName, final int testsuiteFQDNlength) {
 		if (null == testCaseName) {
 			return null;
 		}
+		/*
+		 * It seems like Eclipse wants to write to
+		 * "<pathtotrunk>/source/.metadata/.plugins/org.eclipse.debug.core/.launches/Rerun
+		 * <testsuiteFQDN>.<testcasename>.launch", and Windows limits path segments to 255 chars.
+		 *
+		 * For Linux, Eclipse's limit of 255 chars is the hard cap.
+		 */
+		final int maxLength;
+		if (CoreUtil.OS_IS_WINDOWS) {
+			maxLength = 255 - testsuiteFQDNlength - "Rerun ..launch".length();
+		} else {
+			maxLength = 255;
+		}
+
+		final String replacement = "_";
+
 		String rtr = testCaseName;
 		rtr = rtr.replaceAll("Input:", "I:");
 		rtr = rtr.replaceAll("Settings:", "S:");
 		rtr = rtr.replaceAll("Toolchain:", "T:");
-		rtr = rtr.replaceAll("Toolchain:", "T:");
+		rtr = rtr.replaceAll(":", replacement);
+		rtr = rtr.replaceAll("/", replacement);
 
-		if (rtr.length() > 255) {
+		if (rtr.length() > maxLength) {
 			final String currentSuffix = String.valueOf(rtr.hashCode());
-			rtr = rtr.substring(0, 254 - currentSuffix.length());
-			rtr = rtr + "-" + currentSuffix;
+			rtr = rtr.substring(0, maxLength - 1 - currentSuffix.length());
+			rtr = rtr + replacement + currentSuffix;
 		}
 
 		return rtr;

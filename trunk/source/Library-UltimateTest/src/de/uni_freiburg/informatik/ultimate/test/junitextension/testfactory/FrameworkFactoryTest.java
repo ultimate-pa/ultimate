@@ -55,11 +55,12 @@ public class FrameworkFactoryTest extends FrameworkMethod {
 	 * @param name
 	 *            The name that will be displayed in JUnit reports for this test
 	 */
-	public FrameworkFactoryTest(final Method method, final Object target, final String name) {
+	public FrameworkFactoryTest(final Method method, final Object target, final String name,
+			final int testsuiteFQDNlength) {
 		super(method);
 		assert name != null;
 		mTarget = target;
-		mName = TestUtil.minimizeTestCaseName(name);
+		mName = TestUtil.minimizeTestCaseName(name, testsuiteFQDNlength);
 	}
 
 	@Override
