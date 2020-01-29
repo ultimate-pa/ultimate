@@ -112,6 +112,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		AVERAGE_EQUIVALENCE_CLASS,
 		NUMBER_OF_EQUIVALENCE_CLASSES,
 		NUMBER_OF_SELECT_FUNCTIONS,
+		NUMBER_OF_STORE_FUNCTIONS,
 		COMPARE_FEATURES,
 	}
 
@@ -197,6 +198,8 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 			score = getVariableEquivalenceClassSizes().size();
 		} else if (scoringMethod == ScoringMethod.NUMBER_OF_SELECT_FUNCTIONS) {
 			score = getOccuringFunctionNames().getOrDefault("select", 0);
+		} else if (scoringMethod == ScoringMethod.NUMBER_OF_STORE_FUNCTIONS) {
+			score = getOccuringFunctionNames().getOrDefault("store", 0);
 		} else if (scoringMethod == ScoringMethod.ZERO) {
 			score = 0;
 		}
