@@ -273,9 +273,7 @@ public class CfgBuilder {
 		case LoopFreeBlock:
 			new LargeBlockEncoding(InternalLbeMode.ALL);
 			break;
-		case SequenceOfStatements:
-			new LargeBlockEncoding(InternalLbeMode.ONLY_ATOMIC_BLOCK);
-			break;
+		case SequenceOfStatements: // handled in ProcedureCfgBuilder
 		case SingleStatement:
 			new LargeBlockEncoding(InternalLbeMode.ONLY_ATOMIC_BLOCK);
 			break;
@@ -1684,10 +1682,7 @@ public class CfgBuilder {
 
 			boolean predecessorsAtomic = true;
 			for (final IcfgEdge incoming : pp.getIncomingEdges()) {
-				if (incoming instanceof RootEdge) {
-					return false;
-				}
-				if (incoming instanceof Call) {
+				if (incoming instanceof RootEdge || incoming instanceof Call || incoming instanceof Return) {
 					return false;
 				}
 				if (incoming instanceof IIcfgForkTransitionThreadCurrent
@@ -1698,8 +1693,26 @@ public class CfgBuilder {
 				}
 				assert incoming instanceof StatementSequence || incoming instanceof SequentialComposition
 						|| incoming instanceof ParallelComposition || incoming instanceof Summary
-						|| incoming instanceof GotoEdge : "unexpected type of incoming edge: " + incoming.getClass().getSimpleName();
+						|| incoming instanceof GotoEdge : "unexpected type of incoming edge: "
+								+ incoming.getClass().getSimpleName();
 				predecessorsAtomic = predecessorsAtomic && isStartOfAtomicBlock(incoming.getSource());
+			}
+
+			for (final IcfgEdge outgoing : pp.getOutgoingEdges()) {
+				if (outgoing instanceof Call || outgoing instanceof Return) {
+					return false;
+				}
+				if (outgoing instanceof IIcfgForkTransitionThreadCurrent
+						|| outgoing instanceof IIcfgForkTransitionThreadOther
+						|| outgoing instanceof IIcfgJoinTransitionThreadCurrent
+						|| outgoing instanceof IIcfgJoinTransitionThreadOther) {
+					throw new IllegalStateException(
+							"fork and join should never be part of a composition. Are you accidentally using a block encoding that is not suitable for concurrent programs?");
+				}
+				assert outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition
+						|| outgoing instanceof ParallelComposition || outgoing instanceof Summary
+						|| outgoing instanceof GotoEdge : "unexpected type of outgoing edge: "
+								+ outgoing.getClass().getSimpleName();
 			}
 
 			switch (mInternalLbeMode) {
