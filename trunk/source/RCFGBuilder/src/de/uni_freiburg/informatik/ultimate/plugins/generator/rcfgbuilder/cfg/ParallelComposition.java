@@ -102,14 +102,14 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 		// overwritten by the mergeAnnotations method
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
 
-		final boolean s_TransformToCNF =
+		final boolean transformToCNF =
 				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
 		mTransitionFormula = TransFormulaUtils.parallelComposition(mLogger, mServices, getSerialNumber(), mgdScript,
-				null, s_TransformToCNF, xnfConversionTechnique, transFormulas);
+				null, transformToCNF, xnfConversionTechnique, transFormulas);
 		mTransitionFormulaWithBranchEncoders =
 				TransFormulaUtils.parallelComposition(mLogger, mServices, getSerialNumber(), mgdScript, branchIndicator,
-						s_TransformToCNF, xnfConversionTechnique, transFormulasWithBranchEncoders);
+						transformToCNF, xnfConversionTechnique, transFormulasWithBranchEncoders);
 	}
 
 	@Override

@@ -281,3 +281,4 @@ hs_err_pid*
 releaseScripts/default/UReqCheck-linux/
 
 releaseScripts/default/UReqCheck-win32/
+/trunk/examples/Requirements/regression/failure-paths/*

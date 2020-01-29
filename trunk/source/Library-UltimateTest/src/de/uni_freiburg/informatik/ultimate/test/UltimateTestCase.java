@@ -104,7 +104,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 		// Thread.sleep(500);
 		// } catch (final InterruptedException e1) {
 		// }
-		// HeapDumper.dumpHeap("F:\\tmp\\ultimate benchmarks\\heapdump", false);
+		// HeapDumper.dumpHeap("C:\\Installed\\mat\\dumps\\", false);
 		// end debug code
 
 		Throwable th = null;
