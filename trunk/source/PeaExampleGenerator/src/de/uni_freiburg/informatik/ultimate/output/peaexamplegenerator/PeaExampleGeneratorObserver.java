@@ -95,25 +95,28 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 
 	@Override
 	public boolean process(final IElement root) {
-		final PatternContainer pc = PatternContainer.getAnnotation(root);
-		if (pc == null) {
-			throw new UnsupportedOperationException("Cannot extract pattern from model");
+		final PatternContainer patternContainer = PatternContainer.getAnnotation(root);
+		if (patternContainer == null) {
+			throw new UnsupportedOperationException("Unable to extract pattern from model.");
 		}
-		final List<PatternType> patterns = pc.getPatterns();
+
+		final List<PatternType> patterns = patternContainer.getPatterns();
 		if (patterns == null || patterns.isEmpty()) {
-			throw new UnsupportedOperationException("No pattern in " + PatternContainer.class);
+			throw new UnsupportedOperationException("No pattern in: " + PatternContainer.class);
 		}
-		final List<PatternType> noInitPatterns =
-				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
-		if (noInitPatterns.size() > 1) {
-			throw new UnsupportedOperationException("Cannot handle more than one pattern, ask Nico to implement it");
+
+		final List<PatternType> nonInitPatterns =
+				patterns.stream().filter(e -> !(e instanceof InitializationPattern)).collect(Collectors.toList());
+		if (nonInitPatterns.size() > 1) {
+			throw new UnsupportedOperationException("Cannot handle more than one pattern, ask Nico to implement it.");
 		}
-		if (noInitPatterns.isEmpty()) {
-			throw new UnsupportedOperationException("No non-init pattern in " + PatternContainer.class);
+		if (nonInitPatterns.isEmpty()) {
+			throw new UnsupportedOperationException("No non-init pattern in: " + PatternContainer.class);
 		}
-		final PatternType thePattern = noInitPatterns.iterator().next();
-		mScopeName = thePattern.getScope().getName();
-		mPatternName = thePattern.getName();
+
+		final PatternType pattern = nonInitPatterns.iterator().next();
+		mScopeName = pattern.getScope().getName();
+		mPatternName = pattern.getName();
 
 		return false;
 	}
@@ -121,14 +124,8 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 	@Override
 	public void finish() {
 		final Map<String, List<IResult>> results = mServices.getResultService().getResults();
-
-		final Collection<ReqTestResultTest> tmp = ResultUtil.filterResults(results, ReqTestResultTest.class);
-		if (tmp.isEmpty()) {
-			return;
-		}
-		final ReqTestResultTest[] reqTestResultTests = tmp.toArray(new ReqTestResultTest[0]);
-
-		final String patternName = String.format("%s_%s", mPatternName, mScopeName);
+		final ReqTestResultTest[] reqTestResultTests =
+				ResultUtil.filterResults(results, ReqTestResultTest.class).toArray(new ReqTestResultTest[0]);
 
 		for (int i = 0; i < reqTestResultTests.length; i++) {
 			final Map<String, Pair<List<Integer>, List<Integer>>> observables = new HashMap<>();
@@ -146,11 +143,12 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 
 			try {
 				final String[] command = new String[] { "python", mScriptFile.getPath(), "-o",
-						mOutputDir.getPath() + "/" + patternName + "_" + i + mOutputFileExtension, "-a", "1" };
+						mOutputDir.getPath() + "/" + mPatternName + "_" + mScopeName + "_" + i + mOutputFileExtension,
+						"-a", "1" };
 
 				final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);
 				final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
-				writer.write(jsonString(patternName, observables));
+				writer.write(jsonString(mPatternName + "_" + mScopeName, observables));
 				writer.close();
 
 				final int returnCode = process.waitfor().getReturnCode();
