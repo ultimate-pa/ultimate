@@ -33,6 +33,6 @@ public class Activator {
 
 	public static final String PLUGIN_ID = PeaExampleGenerator.class.getPackage().getName();
 
-	public static final String PLUGIN_NAME = PLUGIN_ID;
+	public static final String PLUGIN_NAME = PeaExampleGenerator.class.getSimpleName();
 
 }
