@@ -4,9 +4,9 @@
 
 <require cpuModel="Intel Xeon E3-1230 v5 @ 3.40 GHz" cpuCores="8"/>
 
-  <resultfiles>**.graphml</resultfiles>
+<resultfiles>**.graphml</resultfiles>
 
-  <option name="--full-output"/>
+<option name="--full-output"/>
 
 <rundefinition name="sv-comp20_prop-reachsafety DEFAULT">
   <tasks name="ReachSafety-Arrays DEFAULT">
@@ -650,6 +650,103 @@
     <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
 		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
+    <option name="--architecture">64bit</option>
+  </tasks>
+</rundefinition>
+
+
+<rundefinition name="sv-comp20_prop-reachsafety NUMBER_OF_STORE_FUNCTIONS">
+  <tasks name="ReachSafety-Arrays NUMBER_OF_STORE_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-BitVectors NUMBER_OF_STORE_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-ControlFlow NUMBER_OF_STORE_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/ReachSafety-ControlFlow.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-ECA NUMBER_OF_STORE_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/ReachSafety-ECA.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-Floats NUMBER_OF_STORE_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Floats.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-Heap NUMBER_OF_STORE_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Heap.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-Loops NUMBER_OF_STORE_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Loops.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-ProductLines NUMBER_OF_STORE_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/ReachSafety-ProductLines.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-Recursive NUMBER_OF_STORE_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Recursive.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-Sequentialized NUMBER_OF_STORE_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Sequentialized.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
+    <option name="--architecture">32bit</option>
+  </tasks>
+
+  <tasks name="ConcurrencySafety-Main NUMBER_OF_STORE_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
+    <option name="--architecture">32bit</option>
+  </tasks>
+
+  <tasks name="SoftwareSystems-AWS-C-Common-ReachSafety NUMBER_OF_STORE_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-AWS-C-Common-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="SoftwareSystems-DeviceDriversLinux64-ReachSafety NUMBER_OF_STORE_FUNCTIONS">
+    <includesfile>../sv-benchmarks/c/SoftwareSystems-DeviceDriversLinux64-ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/properties/unreach-call.prp</propertyfile>
+    <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
+		<option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
     <option name="--architecture">64bit</option>
   </tasks>
 </rundefinition>
