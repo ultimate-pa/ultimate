@@ -1715,14 +1715,20 @@ public class CfgBuilder {
 								+ outgoing.getClass().getSimpleName();
 			}
 
+			final boolean isStraightline = pp.getIncomingEdges().size() == 1 && pp.getOutgoingEdges().size() == 1;
+			final boolean isInAtomicBlock = !isEndOfAtomicBlock(pp) && predecessorsAtomic;
+			final boolean isBetweenSequencePoints = false; // TODO #FaultLocalization
+
 			switch (mInternalLbeMode) {
 			case ALL:
-				return true;
+				// Y-V currently unsupported outside atomic blocks (implementation cannot handle loops properly)
+				return isStraightline || isInAtomicBlock || isBetweenSequencePoints;
 			case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
 				// TODO #FaultLocalization
 				throw new UnsupportedOperationException();
+				// return isInAtomicBlock || isBetweenSequencePoints;
 			case ONLY_ATOMIC_BLOCK:
-				return !isEndOfAtomicBlock(pp) && predecessorsAtomic;
+				return isInAtomicBlock;
 			default:
 				throw new AssertionError("unknown value " + mInternalLbeMode);
 			}
