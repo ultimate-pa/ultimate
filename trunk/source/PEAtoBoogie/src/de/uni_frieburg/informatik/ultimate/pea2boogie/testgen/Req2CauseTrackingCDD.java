@@ -46,7 +46,6 @@ public class Req2CauseTrackingCDD {
 		//TODO remove primed effect variables in a nicer way
 		vars.removeAll(effectVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
 		final CDD newGuard = addTrackingGuards(cdd, vars);
-		mLogger.warn(newGuard.toString());
 		return newGuard;
 	}
 

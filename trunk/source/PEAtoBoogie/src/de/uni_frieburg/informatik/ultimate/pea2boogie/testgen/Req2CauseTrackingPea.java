@@ -107,6 +107,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			for (final Transition t: oldPhases[i].getTransitions()) {
 				if (this.isEffectTransition(t.getSrc(), t, dcEffectPhase, effectCdd)) {
 					final Integer targetPhaseIndex = phaseList.indexOf(t.getDest());
+					mLogger.error("Effect Edge: "+ t.toString());
 					reqEffectStore.addEffectEdgeIndex(offset + newEffectPhaseIndex, offset + targetPhaseIndex);
 					if (!Collections.disjoint(effectVars, reqSymbolTable.getOutputVars())) {
 						reqEffectStore.addOutputEffectEdgeIndex(offset + newEffectPhaseIndex, offset + targetPhaseIndex);
@@ -117,14 +118,13 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	}
 
 	private boolean phaseIsEffectPhase(final Phase phase, int effectDCPhase, CDD effectCdd) {
-		mLogger.error(phase.getStateInvariant().and(effectCdd.negate()).toString());
-		return  phase.getPhaseBits().isActive(effectDCPhase) && !phase.getPhaseBits().isWaiting(effectDCPhase)
+		return  phase.getPhaseBits() != null && phase.getPhaseBits().isActive(effectDCPhase) && !phase.getPhaseBits().isWaiting(effectDCPhase)
 				&& phase.getStateInvariant().and(effectCdd.negate()) == CDD.FALSE;
 	}
 
 	private boolean isEffectTransition(final Phase source, final Transition transition, int effectDCPhase, CDD effectCdd) {
-		return  source.getPhaseBits().isActive(effectDCPhase) &&
-				transition.getGuard().and(effectCdd.negate()) == CDD.FALSE;
+		return  source.getPhaseBits() != null && source.getPhaseBits().isActive(effectDCPhase) &&
+				transition.getGuard().and(effectCdd.negate().prime(Collections.EMPTY_SET)) == CDD.FALSE;
 	}
 
 	private void setFlags(Phase[] initialPhases) {
