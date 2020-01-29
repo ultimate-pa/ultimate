@@ -67,8 +67,8 @@ import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.TestStep;
 public class PeaExampleGeneratorObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private File mScriptFile;
-	private File mOutputDir;
+	private final File mScriptFile;
+	private final File mOutputDir;
 	private final String mOutputFileExtension;
 	private String mScopeName;
 	private String mPatternName;
@@ -83,9 +83,6 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 				.getString(PeaExampleGeneratorPreferenceInitializer.LABEL_OUTPUT_DIRECTORY));
 		mOutputFileExtension = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(PeaExampleGeneratorPreferenceInitializer.LABEL_OUTPUT_FILE_EXTENSION);
-
-		mOutputDir = new File("/media/Daten/projects/ultimate/trunk/examples/Requirements/failure-paths");
-		mScriptFile = new File("/media/Daten/projects/ultimate/releaseScripts/default/adds/timing_diagram.py");
 
 		if (!mScriptFile.exists()) {
 			throw new RuntimeException("Unable to find file: '" + mScriptFile.getPath() + "'.");
