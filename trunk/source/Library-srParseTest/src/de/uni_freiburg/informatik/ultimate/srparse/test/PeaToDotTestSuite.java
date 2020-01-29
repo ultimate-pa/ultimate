@@ -32,6 +32,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Formatter;
@@ -76,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 	// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
-	private static final boolean CREATE_NEW_FILES = true;
+	private static final boolean CREATE_NEW_FILES = false;
 
 	private static final File ROOT_DIR = new File("/media/Daten/projects/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
@@ -135,7 +136,13 @@ public class PeaToDotTestSuite {
 		writer.write(dot.toString());
 		writer.close();
 
-		process.waitfor();
+		final int returnCode = process.waitfor().getReturnCode();
+		if (returnCode != 0) {
+			throw new RuntimeException(String.format("%s did return %s. Stdout: %s Stderr: %s",
+					Arrays.stream(command).collect(Collectors.joining(" ")), returnCode,
+					CoreUtil.convertStreamToString(process.getInputStream()),
+					CoreUtil.convertStreamToString(process.getErrorStream())));
+		}
 	}
 
 	private void writeMarkdownFile(final String counterTrace) throws IOException {

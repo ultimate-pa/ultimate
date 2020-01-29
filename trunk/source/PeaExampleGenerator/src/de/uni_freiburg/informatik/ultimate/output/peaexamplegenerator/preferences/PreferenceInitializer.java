@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2020 Nico Hauff (hauffn@informatik.uni-freiburg.de)
  * Copyright (C) 2020 University of Freiburg
  *
  * This file is part of the ULTIMATE PeaExampleGenerator plug-in.
@@ -27,13 +27,17 @@
 package de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator.Activator;
 
 /**
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  */
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
+
+	private final static String[] OUTPUT_FILE_EXTENSIONS = { ".ps", ".eps", ".pdf", ".pgf", ".png", ".raw", ".rgba",
+			".svg", ".svgz", ".jpg", ".jpeg", ".tif", ".tiff" };
 
 	public PreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -41,6 +45,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] {};
+		return new UltimatePreferenceItem<?>[] { new UltimatePreferenceItem<>("Python script", "", PreferenceType.File),
+				new UltimatePreferenceItem<>("Output directory", "", PreferenceType.Directory),
+				new UltimatePreferenceItem<>("Output file extension", ".svg", PreferenceType.Combo,
+						OUTPUT_FILE_EXTENSIONS) };
 	}
 }

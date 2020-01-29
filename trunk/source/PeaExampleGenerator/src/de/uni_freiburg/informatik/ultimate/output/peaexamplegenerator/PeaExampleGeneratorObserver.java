@@ -30,12 +30,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -49,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
-import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess.MonitoredProcessState;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -66,14 +63,25 @@ import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.TestStep;
 public class PeaExampleGeneratorObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-
-	// TODO: Make settings
-	private static String OUTPUT_DIR = "examples/Requirements/failure-paths/";
-	private static String FILE_EXT = ".svg";
+	private final File mScriptFile;
+	private final File mOutputDir;
+	private final String mOutputFileExtension;
 
 	public PeaExampleGeneratorObserver(final IUltimateServiceProvider services) {
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+
+		mScriptFile = new File(mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString("Python script"));
+		mOutputDir = new File(mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString("Output directory"));
+		mOutputFileExtension = mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString("Output file extension");
+
+		if (!mScriptFile.exists()) {
+			throw new RuntimeException("Unable to find file: '" + mScriptFile.getPath() + "'.");
+		}
+
+		if (!mOutputDir.exists()) {
+			throw new RuntimeException("Unable to find directory: '" + mOutputDir.getPath() + "'.");
+		}
 	}
 
 	@Override
@@ -85,14 +93,14 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 	@Override
 	public void finish() {
 		final Map<String, List<IResult>> results = mServices.getResultService().getResults();
-		final Collection<ReqTestResultTest> reqTestResults = ResultUtil.filterResults(results, ReqTestResultTest.class);
+		final ReqTestResultTest[] reqTestResultTests =
+				ResultUtil.filterResults(results, ReqTestResultTest.class).toArray(new ReqTestResultTest[0]);
 		final String patternName = "BndDelayedResponsePatternUT_Globally";
 
-		int i = 0;
-		for (final Iterator<ReqTestResultTest> it = reqTestResults.iterator(); it.hasNext(); i++) {
+		for (int i = 0; i < reqTestResultTests.length; i++) {
 			final Map<String, Pair<List<Integer>, List<Integer>>> observables = new HashMap<>();
-			final AtomicInteger clock = new AtomicInteger();
-			final List<TestStep> steps = it.next().getTestSteps();
+			final List<TestStep> steps = reqTestResultTests[i].getTestSteps();
+			final AtomicInteger clock = new AtomicInteger(); // Var used in lambda must be final. NagNagNag
 
 			for (final TestStep step : steps) {
 				step.getInputAssignment().forEach((k, v) -> parseAssignment(k, v, observables, clock.get()));
@@ -103,29 +111,19 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 				clock.getAndAdd(Integer.parseInt(waitTime.getValue()));
 			}
 
-			// TODO: Make setting
-			final File absScript = Paths.get(CoreUtil.WORKING_DIRECTORY, "timing_diagram.py").toFile();
-			// mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean("LABEL")
-
-			if (!absScript.exists()) {
-				throw new RuntimeException(String.format("Cannot find script file %s", absScript.getAbsolutePath()));
-			}
-
 			try {
-				final String[] command = new String[] { "python", absScript.getAbsolutePath(), "-o",
-						"/" + patternName + "_" + i + FILE_EXT, "-a", "1" };
-				// final String[] command = new String[] { "python3", TestUtil.getPathFromTrunk(PYTHON_SCRIPT), "-o",
-				// TestUtil.getPathFromTrunk(OUTPUT_DIR + "/" + patternName + "_" + i + FILE_EXT), "-a", "1" };
-				final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);
+				final String[] command = new String[] { "python", mScriptFile.getPath(), "-o",
+						mOutputDir.getPath() + "/" + patternName + "_" + i + mOutputFileExtension, "-a", "1" };
 
+				final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);
 				final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
 				writer.write(jsonString(patternName, observables));
 				writer.close();
 
-				final MonitoredProcessState state = process.waitfor();
-				if (state.getReturnCode() != 0) {
+				final int returnCode = process.waitfor().getReturnCode();
+				if (returnCode != 0) {
 					throw new RuntimeException(String.format("%s did return %s. Stdout: %s Stderr: %s",
-							Arrays.stream(command).collect(Collectors.joining(" ")), state.getReturnCode(),
+							Arrays.stream(command).collect(Collectors.joining(" ")), returnCode,
 							CoreUtil.convertStreamToString(process.getInputStream()),
 							CoreUtil.convertStreamToString(process.getErrorStream())));
 				}

@@ -83,3 +83,9 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Use\ automatic\ naming?=false
 @de.uni_freiburg.informatik.ultimate.boogie.printer=0.1.25
 file_export_version=3.0
+
+#Tue Jan 14 10:14:05 CET 2020
+\!/instance/de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator=
+/instance/de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator/Output\ file\ extension:=.svg
+@de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator=0.1.25
+file_export_version=3.0
