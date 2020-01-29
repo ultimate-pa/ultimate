@@ -51,6 +51,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultTest;
@@ -66,6 +69,8 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 	private final File mScriptFile;
 	private final File mOutputDir;
 	private final String mOutputFileExtension;
+	private String mScopeName;
+	private String mPatternName;
 
 	public PeaExampleGeneratorObserver(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -86,7 +91,23 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 
 	@Override
 	public boolean process(final IElement root) {
-		// We only operate on {@link IResult}s, so we do not need a model.
+		final PatternContainer pc = PatternContainer.getAnnotation(root);
+		if (pc == null) {
+			throw new UnsupportedOperationException("Cannot extract pattern from model");
+		}
+		final List<PatternType> patterns = pc.getPatterns();
+		if (patterns == null || patterns.isEmpty()) {
+			throw new UnsupportedOperationException("No pattern in " + PatternContainer.class);
+		}
+		final List<PatternType> noInitPatterns =
+				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
+		if (noInitPatterns.size() > 1) {
+			throw new UnsupportedOperationException("Cannot handle more than one pattern, ask Nico to implement it");
+		}
+		final PatternType thePattern = noInitPatterns.iterator().next();
+		mScopeName = thePattern.getScope().getName();
+		mPatternName = thePattern.getName();
+
 		return false;
 	}
 
@@ -95,7 +116,7 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 		final Map<String, List<IResult>> results = mServices.getResultService().getResults();
 		final ReqTestResultTest[] reqTestResultTests =
 				ResultUtil.filterResults(results, ReqTestResultTest.class).toArray(new ReqTestResultTest[0]);
-		final String patternName = "BndDelayedResponsePatternUT_Globally";
+		final String patternName = String.format("%s_%s", mPatternName, mScopeName);
 
 		for (int i = 0; i < reqTestResultTests.length; i++) {
 			final Map<String, Pair<List<Integer>, List<Integer>>> observables = new HashMap<>();
