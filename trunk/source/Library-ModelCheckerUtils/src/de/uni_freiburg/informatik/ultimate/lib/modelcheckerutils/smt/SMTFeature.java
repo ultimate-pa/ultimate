@@ -44,6 +44,8 @@ public class SMTFeature {
 	public int numberOfQuantifiers = 0;
 	public int numberOfVariables = 0;
 	public int numberOfArrays = 0;
+	public int numberOfSelectFunctions = 0;
+	public int numberOfStoreFunctions = 0;
 	public int dagsize = 0;
 	public long treesize = 0;
 	public int dependencyScore = 0;
@@ -117,7 +119,7 @@ public class SMTFeature {
 	public static SMTFeature chooseLooser(final SMTFeature feature1, final SMTFeature feature2){
 		int score1 = 0;
 		int score2 = 0;
-		final String[] fieldnames = {"numberOfFunctions","numberOfArrays", "dagsize", "numberOfVariables", "dependencyScore", "biggestEquivalenceClass"};
+		final String[] fieldnames = {"numberOfFunctions","numberOfArrays", "dagsize", "numberOfVariables", "dependencyScore", "biggestEquivalenceClass", "numberOfSelectFunctions", "numberOfStoreFunctions"};
 		for (final String fieldname : fieldnames) {
 			int fieldvalue1=0;
 			try {

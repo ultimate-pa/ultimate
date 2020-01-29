@@ -76,6 +76,8 @@ public class SMTFeatureExtractor {
 		feature.numberOfQuantifiers = tc.getNumberOfQuantifiers();
 		feature.numberOfVariables = tc.getNumberOfVariables();
 		feature.numberOfArrays = tc.getNumberOfArrays();
+		feature.numberOfSelectFunctions = tc.getOccuringFunctionNames().getOrDefault("select", 0);
+		feature.numberOfStoreFunctions = tc.getOccuringFunctionNames().getOrDefault("store", 0);
 		feature.dagsize = tc.getDAGSize();
 		feature.dependencyScore = tc.getDependencyScore();
 		feature.variableEquivalenceClassSizes = tc.getVariableEquivalenceClassSizes();
