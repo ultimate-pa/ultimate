@@ -106,11 +106,11 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			//decide which pea transitions have an effect
 			for (final Transition t: oldPhases[i].getTransitions()) {
 				if (this.isEffectTransition(t.getSrc(), t, dcEffectPhase, effectCdd)) {
-					final Integer targetPhaseIndex = phaseList.indexOf(t.getDest());
+					final Integer newTargetPhaseIndex = offset +  phaseList.indexOf(t.getDest());
 					mLogger.error("Effect Edge: "+ t.toString());
-					reqEffectStore.addEffectEdgeIndex(offset + newEffectPhaseIndex, offset + targetPhaseIndex);
+					reqEffectStore.addEffectEdgeIndex(newEffectPhaseIndex, newTargetPhaseIndex);
 					if (!Collections.disjoint(effectVars, reqSymbolTable.getOutputVars())) {
-						reqEffectStore.addOutputEffectEdgeIndex(offset + newEffectPhaseIndex, offset + targetPhaseIndex);
+						reqEffectStore.addOutputEffectEdgeIndex(newEffectPhaseIndex, newTargetPhaseIndex);
 					}
 				}
 			}

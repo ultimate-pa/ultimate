@@ -32,35 +32,31 @@ import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer
 public class ReqTestAnnotator implements IReq2PeaAnnotator {
 
 	private final ILogger mLogger;
-	private final IUltimateServiceProvider mServices;
 	private final BoogieLocation mLocation;
 	private final IReqSymbolTable mSymbolTable;
 	private final Req2CauseTrackingPea mReq2Pea;
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
-	private final Req2CauseTrackingCDD mCddTransformer;
 	private final Map<PhaseEventAutomata, ReqEffectStore> mPea2EffectStore;
 
 	public static final String TEST_ASSERTION_PREFIX = "TEST_";
 
 	public ReqTestAnnotator(final IUltimateServiceProvider services, final ILogger logger, final Req2CauseTrackingPea req2Pea) {
 		mLogger = logger;
-		mServices = services;
 		mSymbolTable = req2Pea.getSymboltable();
 		mReq2Pea = req2Pea;
 		// TODO: Add locations to pattern type to generate meaningful boogie locations
 		mLocation = new BoogieLocation("", -1, -1, -1, -1);
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
-		mCddTransformer = new Req2CauseTrackingCDD(mLogger);
 		mPea2EffectStore = mReq2Pea.getReqEffectStore();
 	}
 
 	@Override
 	public List<Statement> getStateChecks() {
 		final List<Statement> statements = new ArrayList<Statement>();
+		//check that each u_v -> pc_xx == effect(A_r) for every v \in E
+		statements.addAll(genTrackingAssumptions());
 		//generate asserts assert(!(pc_xx == i)) for every i \in effect(A_r)
 		statements.addAll(genTestAssertions());
-		//check that each u_v' -> pc_xx == effect(A_r) for every v' \in E'
-		statements.addAll(genTrackingAssumptions(""));
 		return statements;
 	}
 
@@ -68,14 +64,15 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 	public List<Statement> getPreChecks(){
 		final List<Statement> statements = new ArrayList<Statement>();
 		//check that each u_v -> pc_xx == effect(A_r) for every v \in E
-		statements.addAll(genTrackingAssumptions(""));
+		statements.addAll(genTrackingAssumptions());
 		return statements;
 	}
 
-	private List<Statement> genTrackingAssumptions(String primed){
+	private List<Statement> genTrackingAssumptions(){
 		final List<Statement> statements = new ArrayList<Statement>();
 		for(final String trackedVar: mSymbolTable.getStateVars()) {
 			final List<Expression> disjuncts = new ArrayList<>();
+			final List<Expression> primedDisjuncts = new ArrayList<>();
 			if(mSymbolTable.getInputVars().contains(trackedVar)) {
 				continue;
 			}
@@ -85,73 +82,89 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 			}
 			for(final Map.Entry<PhaseEventAutomata, ReqEffectStore> entry: mPea2EffectStore.entrySet()) {
 				if (entry.getValue().getEffectVars().contains(trackedVar)) {
-					disjuncts.addAll(genTrackingDisjuncts(entry.getKey(), trackedVar, primed));
+					disjuncts.addAll(genTrackingDisjuncts(entry.getKey(), trackedVar));
+					primedDisjuncts.addAll(genTransitionTrackingDisjuncts(entry.getKey(), trackedVar));
 				}
 			}
 			if(disjuncts.size() > 0) {
 				final Expression expr = new BinaryExpression(
 						mLocation,
 						BinaryExpression.Operator.LOGICIMPLIES,
-						mSymbolTable.getIdentifierExpression("u_"+trackedVar+primed),
+						mSymbolTable.getIdentifierExpression("u_"+trackedVar),
 						genDisjunction(disjuncts, mLocation));
+				statements.add(new AssumeStatement(mLocation, expr));
+			}
+			if(primedDisjuncts.size() > 0) {
+				final Expression expr = new BinaryExpression(
+						mLocation,
+						BinaryExpression.Operator.LOGICIMPLIES,
+						mSymbolTable.getIdentifierExpression("u_"+trackedVar+"'"),
+						genDisjunction(primedDisjuncts, mLocation));
 				statements.add(new AssumeStatement(mLocation, expr));
 			}
 		}
 		return statements;
 	}
 
-	private List<Expression> genTrackingDisjuncts(final PhaseEventAutomata pea, final String currentVar, String primed) {
+	private List<Expression> genTrackingDisjuncts(final PhaseEventAutomata pea, final String currentVar) {
 		final List<Expression> disjuncts = new ArrayList<>();
 		for(final Integer phaseNum: mPea2EffectStore.get(pea).getEffectPhaseIndexes()) {
-			//determine if the effect is part of the phase, or if the effect is on each outgoing edge
-			// then either generate the following OR generate a u_v' -> (pc == n && pc' == NONEFFSTATE) || ...
-			// i.e. we were in the effect state waiting to leave, and now we have left over an edge that has an effect
-			//disjuncts.addAll(genEdgeEffectTracking(pea, currentVar, phaseNum, primed));
-			disjuncts.addAll(genPhaseEffectTracking(pea, currentVar, phaseNum, primed));
-			disjuncts.addAll(genEdgeEffectTracking(pea,currentVar, phaseNum, primed));
+			disjuncts.addAll(genPhaseEffectTracking(pea, currentVar, phaseNum));
+
+		}
+		return disjuncts;
+	}
+
+	private List<Expression> genTransitionTrackingDisjuncts(final PhaseEventAutomata pea, final String currentVar) {
+		final List<Expression> disjuncts = new ArrayList<>();
+		for(final Integer phaseNum: mPea2EffectStore.get(pea).getEffectEdgeSourceIndexes()) {
+			disjuncts.addAll(genTransitionEffectTracking(pea, currentVar, phaseNum));
 		}
 		return disjuncts;
 	}
 
 	private List<Expression> genPhaseEffectTracking(final PhaseEventAutomata pea, final String currentVar,
-			final Integer phaseNum, final String primed){
+			final Integer phaseNum){
 		final List<Expression> disjuncts = new ArrayList<>();
 		if(mPea2EffectStore.get(pea).isEffectPhaseIndex(phaseNum)) {
 			final Expression expr = new BinaryExpression(
 					mLocation,
 					BinaryExpression.Operator.COMPEQ,
-					mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea)+primed),
+					mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea)),
 					new IntegerLiteral(mLocation, phaseNum.toString()));
 			disjuncts.add(expr);
 		}
 		return disjuncts;
 	}
 
-	private List<Expression> genEdgeEffectTracking(final PhaseEventAutomata pea, final String currentVar,
-			final Integer phaseNum, final String primed){
+	private List<Expression> genTransitionEffectTracking(final PhaseEventAutomata pea, final String currentVar,
+			final Integer sourceIndex){
 		final List<Expression> disjuncts = new ArrayList<>();
 		final List<Phase> phaseList =  Arrays.asList(pea.getPhases());
-		for(final Transition transition: phaseList.get(phaseNum).getTransitions()) {
-			if(mPea2EffectStore.get(pea).isEffectEdge(phaseNum, phaseList.indexOf(transition.getDest()))) {
-				disjuncts.add(genTransitionSucceedingTracking(pea, transition, phaseNum, phaseList, primed));
+		for(final Transition transition: phaseList.get(sourceIndex).getTransitions()) {
+			final Integer destIndex = phaseList.indexOf(transition.getDest());
+			if(mPea2EffectStore.get(pea).isEffectEdge(sourceIndex, destIndex)) {
+				disjuncts.add(genTransitionSucceedingTracking(pea, sourceIndex, destIndex, phaseList));
 			}
 		}
 		return disjuncts;
 	}
 
-	private Expression genTransitionSucceedingTracking(final PhaseEventAutomata pea, final Transition transition,
-			final Integer phaseNum, final List<Phase> phaseList, final String primed) {
+	private Expression genTransitionSucceedingTracking(final PhaseEventAutomata pea, final Integer sourceIndex,
+			final Integer destIndex, final List<Phase> phaseList) {
 		final Expression thisExpr = new BinaryExpression(
 				mLocation,
 				BinaryExpression.Operator.COMPEQ,
 				mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea)),
-				new IntegerLiteral(mLocation, phaseNum.toString()));
+				new IntegerLiteral(mLocation, sourceIndex.toString()));
 		final Expression nextExpr = new BinaryExpression(
 				mLocation,
 				BinaryExpression.Operator.COMPEQ,
-				mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea)+primed),
-				new IntegerLiteral(mLocation, Integer.toString(phaseList.indexOf(transition.getDest())) ));
-		return new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND, thisExpr, nextExpr);
+				mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea) + "'"),
+				new IntegerLiteral(mLocation, Integer.toString(destIndex)));
+		final Expression expr = new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND, thisExpr, nextExpr);
+		mLogger.error(expr.toString());
+		return expr;
 	}
 
 	private Expression genDisjunction(final List<Expression> exprs, final BoogieLocation bl) {

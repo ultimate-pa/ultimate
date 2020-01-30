@@ -53,6 +53,10 @@ public class ReqEffectStore {
 		return mEffectPhase;
 	}
 
+	public  Set<Integer> getEffectEdgeSourceIndexes() {
+		return mEffectEdges.keySet();
+	}
+
 	public boolean isOutputEffectPhaseIndex(Integer phaseIndex) {
 		return mOutputEffectPhase.contains(phaseIndex);
 	}
