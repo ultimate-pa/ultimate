@@ -77,12 +77,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 	// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
-	private static final boolean CREATE_NEW_FILES = false;
+	private static final boolean CREATE_NEW_FILES = true;
 
 	private static final File ROOT_DIR = new File("/media/Daten/projects/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
 	private static final File PEA_IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
 	private static final File FAILURE_PATH_IMAGE_DIR = new File(ROOT_DIR + "/img/failure_paths");
+
 	private static final String LINE_SEP = CoreUtil.getPlatformLineSeparator();
 
 	private final IUltimateServiceProvider mServiceProvider;
@@ -163,17 +164,18 @@ public class PeaToDotTestSuite {
 		fmt.format("```%s%s%s```%s", LINE_SEP, mPatternString, LINE_SEP, LINE_SEP);
 		fmt.format("```%sCounterexample: %s%s```%s", LINE_SEP, counterTrace, LINE_SEP, LINE_SEP);
 
-		if (failurePathImage.exists()) {
-			fmt.format(LINE_SEP);
-			fmt.format("![](%s/%s/%s_%s_0.svg)%s", "..", ROOT_DIR.toPath().relativize(FAILURE_PATH_IMAGE_DIR.toPath()),
-					mPatternName, mScopeName, LINE_SEP);
-		}
-
 		if (peaImage.exists()) {
 			fmt.format(LINE_SEP);
 			fmt.format("![](%s/%s/%s_%s.svg)%s", "..", ROOT_DIR.toPath().relativize(PEA_IMAGE_DIR.toPath()),
 					mPatternName, mScopeName, LINE_SEP);
 		}
+
+		if (failurePathImage.exists()) {
+			fmt.format(LINE_SEP);
+			fmt.format("![](%s/%s/%s_%s_0.svg)%s", "..", ROOT_DIR.toPath().relativize(FAILURE_PATH_IMAGE_DIR.toPath()),
+					mPatternName, mScopeName, LINE_SEP);
+		}
+		fmt.format(LINE_SEP);
 
 		final BufferedWriter writer = new BufferedWriter(new FileWriter(markdownFile, true));
 		writer.write(fmt.toString());
@@ -206,14 +208,11 @@ public class PeaToDotTestSuite {
 		}
 
 		final Formatter fmt = new Formatter();
-		// fmt.format("toc_depth: %d%s%s", TOC_DEPTH, LINE_SEP, LINE_SEP);
 		fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
-		// fmt.format("# Patterns%s", LINE_SEP);
 
-		final File[] files = MARKDOWN_DIR.listFiles((dir, name) -> name.toLowerCase().endsWith(".md"));
-		for (final File file : files) {
-			fmt.format("{!%s/%s!}%s", ROOT_DIR.toPath().relativize(MARKDOWN_DIR.toPath()), file.getName(), LINE_SEP);
-		}
+		final String markdownDir = ROOT_DIR.toPath().relativize(MARKDOWN_DIR.toPath()).toString();
+		Arrays.stream(MARKDOWN_DIR.list()).filter(e -> e.endsWith(".md"))
+				.forEach(e -> fmt.format("{!%s/%s!}%s", markdownDir, e, LINE_SEP));
 
 		final File file = new File(MARKDOWN_DIR + "/includeAllPatterns.md");
 		final BufferedWriter writer = new BufferedWriter(new FileWriter(file));

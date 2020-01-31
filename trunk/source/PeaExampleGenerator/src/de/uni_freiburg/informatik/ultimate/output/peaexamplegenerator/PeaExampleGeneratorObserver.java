@@ -132,10 +132,6 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 			throw new RuntimeException("No test results found.");
 		}
 
-		if (true) {
-			throw new RuntimeException(reqTestResultTests.get(0).getShortDescription());
-		}
-
 		for (int i = 0; i < reqTestResultTests.size(); i++) {
 			final Map<String, Pair<List<Integer>, List<Integer>>> observables = new HashMap<>();
 			final List<TestStep> steps = reqTestResultTests.get(i).getTestSteps();
