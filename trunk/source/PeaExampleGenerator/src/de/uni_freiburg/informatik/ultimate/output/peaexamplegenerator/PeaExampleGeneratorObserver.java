@@ -107,11 +107,12 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 
 		final List<PatternType> nonInitPatterns =
 				patterns.stream().filter(e -> !(e instanceof InitializationPattern)).collect(Collectors.toList());
-		if (nonInitPatterns.size() > 1) {
-			throw new UnsupportedOperationException("Cannot handle more than one pattern, ask Nico to implement it.");
-		}
+
 		if (nonInitPatterns.isEmpty()) {
 			throw new UnsupportedOperationException("No non-init pattern in: " + PatternContainer.class);
+		}
+		if (nonInitPatterns.size() > 1) {
+			throw new UnsupportedOperationException("Cannot handle more than one pattern, ask Nico to implement it.");
 		}
 
 		final PatternType pattern = nonInitPatterns.iterator().next();
@@ -129,6 +130,10 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 
 		if (reqTestResultTests.isEmpty()) {
 			throw new RuntimeException("No test results found.");
+		}
+
+		if (true) {
+			throw new RuntimeException(reqTestResultTests.get(0).getShortDescription());
 		}
 
 		for (int i = 0; i < reqTestResultTests.size(); i++) {
