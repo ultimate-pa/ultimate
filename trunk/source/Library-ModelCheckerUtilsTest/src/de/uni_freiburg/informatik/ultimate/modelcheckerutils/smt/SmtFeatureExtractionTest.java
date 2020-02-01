@@ -386,6 +386,41 @@ public class SmtFeatureExtractionTest {
 
 
 	@Test
+	public void CheckNot() {
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+		final Sort realSort = SmtSortUtils.getRealSort(mScript);
+		final Sort boolSort = SmtSortUtils.getBoolSort(mScript);
+
+		String names = "AB";
+		for (int i = 0; i < names.length(); ++i) {
+			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
+		}
+		names = "CD";
+		for (int i = 0; i < names.length(); ++i) {
+			final Term term = declareVar(String.valueOf(names.charAt(i)), realSort);
+		}
+		names = "EF";
+		for (int i = 0; i < names.length(); ++i) {
+			final Term term = declareVar(String.valueOf(names.charAt(i)), boolSort);
+		}
+
+		final Term input = TermParseUtils.parseTerm(mScript, "(and (not E) F)");
+		final LBool isSat = SmtUtils.checkSatTerm(mScript, input);
+		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
+		tc.checkTerm(input);
+
+		mLogger.info("Original:               " + input.toStringDirect());
+		mLogger.info("Original isSat:         " + isSat);
+		mLogger.info("Original equiv classes: " + tc.getEquivalenceClasses());
+		mLogger.info("Original #Vars:         " + tc.getNumberOfVariables());
+		mLogger.info("Original Functions:         " + tc.getOccuringFunctionNames());
+		mLogger.info("Original Sorts:         " + tc.getOccuringSortNames());
+		mLogger.info("Original number_of_Quantifiers:         " + tc.getOccuringQuantifiers());
+		mLogger.info("Original Quantifiers:         " + tc.getNumberOfQuantifiers());
+		Assert.assertEquals(tc.getEquivalenceClasses().toString(),"{[E, F]=F}");
+		Assert.assertEquals(tc.getNumberOfVariables(), 2);
+	}
+	@Test
 	public void CheckCountQuantifiers() {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 		final Sort realSort = SmtSortUtils.getRealSort(mScript);

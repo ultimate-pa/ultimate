@@ -69,6 +69,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 	private final ArrayList<Integer> mVariableEquivalenceClassSizes;
 	private int mBiggestEquivalenceClass;
 	private final ArrayList<String> mAssertionStack;
+	private final Map<Term,Integer> mVariableToCount;
 
 	public SMTFeatureExtractionTermClassifier(final ILogger logger) {
 		super();
@@ -88,6 +89,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		mTermsets = new HashMap<>();
 		mVariableEquivalenceClassSizes = new ArrayList<>();
 		mBiggestEquivalenceClass = 0;
+		mVariableToCount = new HashMap<>();
 	}
 
 	/**
@@ -288,6 +290,10 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		private void collectVariables(final ApplicationTerm term, final String functionname, final int eq_class_id){
 			final Term[] termParameters = term.getParameters();
 
+			if(termParameters.length == 1) {
+				createAndAddToTermset(eq_class_id, termParameters[0]);
+			}
+
 			for (int i = 0; i < (termParameters.length - 1); i++) {
 				final Term term1 = termParameters[i];
 				final Term term2 = termParameters[i + 1];
@@ -295,15 +301,21 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 						&& (isApplicationTermWithArityZero(term2) || (term2 instanceof TermVariable))) {
 					// Base case
 					// Both terms are Terms of Arity 0 or Termvariables.
-					if(functionname.equals("and")) {
-						// If the function is and, both go into the same termset.
-						createAndAddToTermset(eq_class_id, term1, term2);
-
-					} else if (functionname.equals("or")) {
+					if (functionname.equals("or")) {
 						// if the function is or, both are in separate sets.
 						createAndAddToTermset(eq_class_id, term1);
 						// create new eq_class
 						createAndAddToTermset(mTermsets.size() +1, term2);
+					}
+					//else if(functionname.equals("and")) {
+					// If the function is and, both go into the same termset.
+					//	createAndAddToTermset(eq_class_id, term1, term2);
+					//}
+
+					else {
+						// else both go into the same termset.
+						createAndAddToTermset(eq_class_id, term1, term2);
+
 					}
 
 				} else if (isApplicationTermWithArityZero(term1) && (term2 instanceof ConstantTerm)){
@@ -410,6 +422,12 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 
 		@Override
 		public void walk(final NonRecursive walker, final TermVariable term) {
+			if (mVariableToCount.containsKey(term)) {
+				mVariableToCount.put(term, mVariableToCount.get(term) + 1);
+			} else {
+				mVariableToCount.put(term, 1);
+				mNumberOfVariables += 1;
+			}
 			// cannot descend
 		}
 	}
