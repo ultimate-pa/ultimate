@@ -474,11 +474,11 @@ public class CfgBuilder {
 		final Overapprox oa = Overapprox.getAnnotation(st);
 		return oa != null;
 	}
-	
+
 	private static boolean isStartOfAtomicBlock(final IcfgLocation node) {
 		return AtomicBlockInfo.isStartOfAtomicBlock(node);
 	}
-	
+
 	private static boolean isEndOfAtomicBlock(final IcfgLocation node) {
 		return AtomicBlockInfo.isEndOfAtomicBlock(node);
 	}
@@ -1559,9 +1559,9 @@ public class CfgBuilder {
 	 * Defines which statements will be composed.
 	 */
 	enum InternalLbeMode { ONLY_ATOMIC_BLOCK, ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS, ALL }
-	
+
 	private class LargeBlockEncoding {
-		
+
 		private final InternalLbeMode mInternalLbeMode;
 
 		Set<BoogieIcfgLocation> mSequentialQueue = new HashSet<>();
@@ -1706,8 +1706,7 @@ public class CfgBuilder {
 						|| outgoing instanceof IIcfgForkTransitionThreadOther
 						|| outgoing instanceof IIcfgJoinTransitionThreadCurrent
 						|| outgoing instanceof IIcfgJoinTransitionThreadOther) {
-					throw new IllegalStateException(
-							"fork and join should never be part of a composition. Are you accidentally using a block encoding that is not suitable for concurrent programs?");
+					return false;
 				}
 				assert outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition
 						|| outgoing instanceof ParallelComposition || outgoing instanceof Summary
@@ -1782,7 +1781,7 @@ public class CfgBuilder {
 				throw new AssertionError("unknown value " + mInternalLbeMode);
 			}
 		}
-		
+
 		private boolean canBeSuccessorOfParallelComposition(final BoogieIcfgLocation pp) {
 			switch (mInternalLbeMode) {
 			case ALL:
