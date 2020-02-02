@@ -474,4 +474,23 @@ public final class NestedWordAutomataUtils {
 		return new VpAlphabet<>(automaton.getAlphabet());
 	}
 
+	/**
+	 * Special method for (partially) deterministic and (partially) total automata.
+	 * Returns for a given state-letter pair the unique successor state.
+	 */
+	public static <LETTER, STATE> STATE getSuccessorState(
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final STATE state, final LETTER letter) {
+		final Iterator<OutgoingInternalTransition<LETTER, STATE>> succIt = nwa.internalSuccessors(state, letter)
+				.iterator();
+		if (!succIt.hasNext()) {
+			throw new IllegalArgumentException("No successor for state " + state + " and letter " + letter);
+		}
+		final STATE succ = succIt.next().getSucc();
+		if (succIt.hasNext()) {
+			throw new IllegalArgumentException("Multiple successors for state " + state + " and letter " + letter);
+		}
+		return succ;
+
+	}
+
 }
