@@ -27,20 +27,27 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.AutomatonWithImplicitSelfloops;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Provides static methods for Petri nets.
@@ -117,6 +124,37 @@ public final class PetriNetUtils {
 			transitionCounter++;
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * Uses finite automata to check if the result of our Petri net difference operations is correct.
+	 */
+	public static <LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>> boolean doDifferenceLanguageCheck(
+			final AutomataLibraryServices services, final CRSF stateFactory, final BoundedPetriNet<LETTER, PLACE> minuend,
+			final INestedWordAutomaton<LETTER, PLACE> subtrahend, final BoundedPetriNet<LETTER, PLACE> result)
+			throws PetriNetNot1SafeException, AutomataOperationCanceledException, AutomataLibraryException {
+		final AutomatonWithImplicitSelfloops<LETTER, PLACE> subtrahendWithSelfloopsInAcceptingStates = new AutomatonWithImplicitSelfloops<>(
+				services, subtrahend, subtrahend.getAlphabet(), new HashSet<>(subtrahend.getFinalStates()));
+		final INestedWordAutomaton<LETTER, PLACE> op1AsNwa = (new PetriNet2FiniteAutomaton<>(services, stateFactory,
+				minuend)).getResult();
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> rcResult = (new DifferenceDD<>(services,
+				stateFactory, op1AsNwa, subtrahendWithSelfloopsInAcceptingStates)).getResult();
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> resultAsNwa = (new PetriNet2FiniteAutomaton<>(
+				services, stateFactory, result)).getResult();
+
+		final IsIncluded<LETTER, PLACE> isSubset = new IsIncluded<>(services, stateFactory, resultAsNwa, rcResult);
+		if (!isSubset.getResult()) {
+			final NestedWord<LETTER> ctx = isSubset.getCounterexample().getWord();
+			final ILogger logger = services.getLoggingService().getLogger(PetriNetUtils.class);
+			logger.error("Accepted by resulting net but not in difference of languages : " + ctx);
+		}
+		final IsIncluded<LETTER, PLACE> isSuperset = new IsIncluded<>(services, stateFactory, rcResult, resultAsNwa);
+		if (!isSuperset.getResult()) {
+			final NestedWord<LETTER> ctx = isSuperset.getCounterexample().getWord();
+			final ILogger logger = services.getLoggingService().getLogger(PetriNetUtils.class);
+			logger.error("In difference of languages but not accepted by resulting net : " + ctx);
+		}
+		return isSubset.getResult() && isSuperset.getResult();
 	}
 
 }
