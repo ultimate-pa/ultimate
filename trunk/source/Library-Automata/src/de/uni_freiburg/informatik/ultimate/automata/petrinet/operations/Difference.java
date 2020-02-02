@@ -332,6 +332,7 @@ public final class Difference
 
 	private void syncWithChanger(final ITransition<LETTER, PLACE> oldTrans,  final PLACE predState) {
 		final PLACE succState = onlyElement(mSubtrahend.internalSuccessors(predState, oldTrans.getSymbol())).getSucc();
+		assert !predState.equals(succState) : "changer requires that pred and succ are different";
 		if (mSubtrahend.isFinal(succState)) {
 			// optimization for special structure of subtrahend automata L(A)◦Σ^*:
 			// omit this transition because subtrahend will accept everything afterwards
