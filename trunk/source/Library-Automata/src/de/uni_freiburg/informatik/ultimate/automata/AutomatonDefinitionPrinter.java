@@ -186,8 +186,37 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			final IAutomaton<?, ?> automaton) {
 		final StringWriter stringWriter = new StringWriter();
 		final PrintWriter printWriter = new PrintWriter(stringWriter);
-		printAutomaton(services, automatonName, automaton, Format.ATS, printWriter);
+		printAutomaton(services, new NamedAutomaton<>(automatonName, automaton), Format.ATS, printWriter);
 		return stringWriter.toString();
+	}
+
+	public static void writeAutomatonToFile(final AutomataLibraryServices services, final String fileName,
+			final Format format, final String atsHeaderMessage, final String atsCommands,
+			final NamedAutomaton<?, ?>... nas) {
+		final File file = new File(fileName + '.' + format.getFileEnding());
+		final FileWriter fileWriter;
+		try {
+			fileWriter = new FileWriter(file);
+		} catch (final IOException e) {
+			throw new AssertionError("Unable to create file writer for " + fileName);
+		}
+		final PrintWriter printWriter = new PrintWriter(fileWriter);
+		try {
+			printWriter.append(generateDefaultAtsHeader(atsHeaderMessage));
+			printWriter.append(System.lineSeparator());
+			printWriter.append(atsCommands);
+			printWriter.append(System.lineSeparator());
+			for (final NamedAutomaton<?, ?> na : nas) {
+				printAutomaton(services, na, format, printWriter);
+			}
+		} finally {
+			printWriter.close();
+			try {
+				fileWriter.close();
+			} catch (final IOException e) {
+				throw new AssertionError("failed to close file writer");
+			}
+		}
 	}
 
 	/**
@@ -260,13 +289,13 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	}
 
 	private void printAutomataToFileWriter(final AutomataLibraryServices services, final PrintWriter printWriter,
-			final String automatonName, final Format format, final String message, final IAutomaton<?, ?>... automata) {
+			final String automatonName, final Format format, final String atsHeaderMessage,
+			final IAutomaton<?, ?>... automata) {
 		switch (format) {
 		case ATS:
 		case ATS_NUMERATE:
 		case ATS_QUOTED:
-			printWriter.println("// Testfile dumped by Ultimate at " + getDateTimeNice() + System.lineSeparator() + "//"
-					+ System.lineSeparator() + "// " + message + System.lineSeparator());
+			printWriter.println(generateDefaultAtsHeader(atsHeaderMessage));
 			break;
 		case BA:
 		case HOA:
@@ -277,12 +306,17 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			throw new IllegalArgumentException(UNSUPPORTED_LABELING);
 		}
 		if (automata.length == ONE) {
-			printAutomaton(services, automatonName, automata[0], format, printWriter);
+			printAutomaton(services, new NamedAutomaton<>(automatonName, automata[0]), format, printWriter);
 		}
 		for (int i = 0; i < automata.length; i++) {
-			printAutomaton(services, automatonName + i, automata[i], format, printWriter);
+			printAutomaton(services, new NamedAutomaton<>(automatonName + i, automata[i]), format, printWriter);
 		}
 		printWriter.close();
+	}
+
+	private static String generateDefaultAtsHeader(final String atsHeaderMessage) {
+		return "// Testfile dumped by Ultimate at " + getDateTimeNice() + System.lineSeparator() + "//"
+				+ System.lineSeparator() + "// " + atsHeaderMessage + System.lineSeparator();
 	}
 
 	/**
@@ -299,19 +333,21 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 * @param printWriter
 	 */
 	@SuppressWarnings("unchecked")
-	private static <LETTER, STATE> void printAutomaton(final AutomataLibraryServices services, final String name,
-			final IAutomaton<?, ?> automaton, final Format format, final PrintWriter printWriter) {
-		if (automaton instanceof INwaOutgoingLetterAndTransitionProvider) {
-			printNestedWordAutomaton(services, name, (INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>) automaton,
-					format, printWriter);
-		} else if (automaton instanceof IPetriNet) {
-			printPetriNet(name, (IPetriNet<LETTER, STATE>) automaton, format, printWriter);
-		} else if (automaton instanceof AlternatingAutomaton) {
-			printAlternatingAutomaton(name, (AlternatingAutomaton<LETTER, STATE>) automaton, format, printWriter);
-		} else if (automaton instanceof TreeAutomatonBU<?, ?>) {
-			printTreeAutomaton(name, (TreeAutomatonBU<?, STATE>) automaton, format, printWriter);
-		} else if (automaton instanceof BranchingProcess<?, ?>)
-			printBranchingProcess(name, (BranchingProcess<LETTER, STATE>) automaton, format, printWriter);
+	private static <LETTER, STATE> void printAutomaton(final AutomataLibraryServices services,
+			final NamedAutomaton<LETTER, STATE> na, final Format format, final PrintWriter printWriter) {
+		if (na.getAutomaton() instanceof INwaOutgoingLetterAndTransitionProvider) {
+			printNestedWordAutomaton(services, na.getName(),
+					(INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>) na.getAutomaton(), format, printWriter);
+		} else if (na.getAutomaton() instanceof IPetriNet) {
+			printPetriNet(na.getName(), (IPetriNet<LETTER, STATE>) na.getAutomaton(), format, printWriter);
+		} else if (na.getAutomaton() instanceof AlternatingAutomaton) {
+			printAlternatingAutomaton(na.getName(), (AlternatingAutomaton<LETTER, STATE>) na.getAutomaton(), format,
+					printWriter);
+		} else if (na.getAutomaton() instanceof TreeAutomatonBU<?, ?>) {
+			printTreeAutomaton(na.getName(), (TreeAutomatonBU<?, STATE>) na.getAutomaton(), format, printWriter);
+		} else if (na.getAutomaton() instanceof BranchingProcess<?, ?>)
+			printBranchingProcess(na.getName(), (BranchingProcess<LETTER, STATE>) na.getAutomaton(), format,
+					printWriter);
 	}
 
 	private static <LETTER, STATE> void printTreeAutomaton(final String name,
@@ -346,7 +382,6 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 				throw new AssertionError("Timeout while preparing automaton for printing.");
 			}
 		}
-
 		switch (format) {
 		case ATS:
 			new NwaWriterToString<>(printWriter, name, nwa);
@@ -448,5 +483,23 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		default:
 			throw new AssertionError(UNSUPPORTED_LABELING);
 		}
+	}
+
+	public static class NamedAutomaton<LETTER, STATE> {
+		private final String mName;
+		private final IAutomaton<LETTER, STATE> mAutomaton;
+		public NamedAutomaton(final String name, final IAutomaton<LETTER, STATE> automaton) {
+			super();
+			mName = name;
+			mAutomaton = automaton;
+		}
+		public String getName() {
+			return mName;
+		}
+		public IAutomaton<LETTER, STATE> getAutomaton() {
+			return mAutomaton;
+		}
+
+
 	}
 }
