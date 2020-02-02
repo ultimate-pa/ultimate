@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.NamedAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -563,6 +564,16 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				"", automaton);
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
 	}
+
+	protected void writeAutomataToFile(final String filename, final String atsHeaderMessage, final String atsCommands,
+			final NamedAutomaton<LETTER, IPredicate>... automata) {
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
+		AutomatonDefinitionPrinter.writeAutomatonToFile(new AutomataLibraryServices(mServices),
+				mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, atsHeaderMessage, atsCommands,
+				automata);
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
+	}
+
 
 	private String determineAutomatonName(final IAutomaton<LETTER, IPredicate> automaton) {
 		String result;
