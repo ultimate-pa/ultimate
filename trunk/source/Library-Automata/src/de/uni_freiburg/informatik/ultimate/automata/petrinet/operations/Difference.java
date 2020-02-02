@@ -356,6 +356,8 @@ public final class Difference
 
 	private void syncWithSelfloops(final ITransition<LETTER, PLACE> oldTrans) {
 		if (invertSyncWithSelfloops(oldTrans)) {
+			// TODO 2019-01-30 Matthias: We may have 0 selfloops and 0 changers but add a
+			// useless transition because the transitions occurs as blocking transition
 			syncWithAnySelfloop(oldTrans);
 		} else {
 			syncWithEachSelfloop(oldTrans);
