@@ -38,22 +38,22 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  *
@@ -69,12 +69,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *            Type of factory needed to check the result of this operation in
  *            {@link #checkResult(CRSF)}
  */
-public final class DifferencePairwiseOnDemand<LETTER, PLACE>
-		extends GeneralOperation<LETTER, PLACE, IPetriNetAndAutomataInclusionStateFactory<PLACE>> {
+public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
+		extends GeneralOperation<LETTER, PLACE, CRSF> {
 
 	private final IPetriNet<LETTER, PLACE> mMinuend;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mSubtrahend;
-	private final IBlackWhiteStateFactory<PLACE> mContentFactory;
 
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
@@ -88,7 +87,6 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 		super(services);
 		mMinuend = minuendNet;
 		mSubtrahend = subtrahendDfa;
-		mContentFactory = factory;
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
@@ -188,44 +186,31 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE>
 	}
 
 	@Override
-	public boolean checkResult(final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactory)
+	public boolean checkResult(final CRSF stateFactory)
 			throws AutomataLibraryException {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Testing correctness of " + getOperationName());
+		}
 		INestedWordAutomaton<LETTER, PLACE> subtrahend;
 		if (mSubtrahend instanceof INestedWordAutomaton) {
 			subtrahend = (INestedWordAutomaton<LETTER, PLACE>) mSubtrahend;
 		} else {
 			subtrahend = new RemoveDeadEnds(mServices, mSubtrahend).getResult();
 		}
-		return doResultCheck(mServices, mLogger, stateFactory, mMinuend, subtrahend, mResult);
+
+		if (!(mMinuend instanceof BoundedPetriNet)) {
+			throw new UnsupportedOperationException("Convert minuend to fully constructed net");
+		}
+		final BoundedPetriNet<LETTER, PLACE> minuend = (BoundedPetriNet<LETTER, PLACE>) mMinuend;
+		final boolean correct = PetriNetUtils.doDifferenceLanguageCheck(mServices, stateFactory, minuend, subtrahend, mResult);
+
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of " + getOperationName());
+		}
+		return correct;
 
 	}
 
-	static <LETTER, PLACE> boolean doResultCheck(final AutomataLibraryServices services, final ILogger logger,
-			final IPetriNetAndAutomataInclusionStateFactory<PLACE> stateFactory, final IPetriNet<LETTER, PLACE> minuend,
-			final INestedWordAutomaton<LETTER, PLACE> subtrahend, final BoundedPetriNet<LETTER, PLACE> result)
-			throws AutomataLibraryException {
-		final INestedWordAutomaton<LETTER, PLACE> minuendAsAutoaton = new PetriNet2FiniteAutomaton<>(services,
-				stateFactory, minuend).getResult();
-		final INestedWordAutomaton<LETTER, PLACE> differenceAutomata = new DifferenceDD<>(services, stateFactory,
-				minuendAsAutoaton, subtrahend).getResult();
-		final boolean isCorrect;
-
-		final IsIncluded<LETTER, PLACE> subsetCheck = new IsIncluded<LETTER, PLACE>(services, stateFactory, result,
-				differenceAutomata);
-		if (!subsetCheck.getResult()) {
-			final Word<LETTER> ctx = subsetCheck.getCounterexample();
-			logger.error("Should not be accepted: " + ctx);
-		}
-
-		final IsIncluded<LETTER, PLACE> supersetCheck = new IsIncluded<LETTER, PLACE>(services, stateFactory,
-				differenceAutomata, result);
-		if (!supersetCheck.getResult()) {
-			final Word<LETTER> ctx = supersetCheck.getCounterexample();
-			logger.error("Should be accepted: " + ctx);
-		}
-
-		return subsetCheck.getResult() && supersetCheck.getResult();
-	}
 
 	public static <LETTER, STATE> Set<LETTER> determineUniversalLoopers(final INestedWordAutomaton<LETTER, STATE> nwa) {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
