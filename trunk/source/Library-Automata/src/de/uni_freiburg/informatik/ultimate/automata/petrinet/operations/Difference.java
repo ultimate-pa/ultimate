@@ -342,13 +342,13 @@ public final class Difference
 		final Set<PLACE> successors = new HashSet<>();
 		predecessors.add(mWhitePlace.get(predState));
 		successors.add(mWhitePlace.get(succState));
-		final PLACE blackSucc = mBlackPlace.get(succState);
-		final PLACE blackPred = mBlackPlace.get(predState);
-		if (blackSucc != null) {
-			predecessors.add(blackSucc);
-		}
+		final PLACE blackPred = mBlackPlace.get(succState);
+		final PLACE blackSucc = mBlackPlace.get(predState);
 		if (blackPred != null) {
-			successors.add(blackPred);
+			predecessors.add(blackPred);
+		}
+		if (blackSucc != null) {
+			successors.add(blackSucc);
 		}
 		copyMinuendFlow(oldTrans, predecessors, successors);
 		mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
