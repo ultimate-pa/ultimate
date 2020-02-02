@@ -41,7 +41,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -71,8 +71,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mMinued;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mSubtrahend;
 	private final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mNew2Old = new HashMap<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>>();
-	private final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mOld2New = new HashRelation<>();
 	private final Map<ITransition<LETTER, PLACE>, PLACE> mNewTransition2AutomatonPredecessorState = new HashMap<>();
+	private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mBlockingConfigurations = new HashRelation<>();
 	private final Set<PLACE> mMinuendPlaces = new HashSet<>();
 	private final Set<PLACE> mSubtrahendStates = new HashSet<>();
 	private final NestedMap2<ITransition<LETTER, PLACE>, PLACE, ITransition<LETTER, PLACE>> mInputTransition2State2OutputTransition = new NestedMap2<>();
@@ -90,7 +90,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	 */
 	private final Set<LETTER> mUniversalLoopers;
 
-	private final SynchronizationInformation mSynchronizationInformation = new SynchronizationInformation();
+	@Deprecated
+	private final DifferenceSynchronizationInformation mDsi_Old = new DifferenceSynchronizationInformation();
 
 	public DifferencePetriNet(final AutomataLibraryServices services,
 			final IPetriNetSuccessorProvider<LETTER, PLACE> minued,
@@ -344,42 +345,34 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			ITransition<LETTER, PLACE> result = mInputTransition2State2OutputTransition.get(inputTransition,
 					automatonPredecessor);
 			if (result == null) {
-				OutgoingInternalTransition<LETTER, PLACE> subtrahendSucc;
-				{
-					final Iterable<OutgoingInternalTransition<LETTER, PLACE>> subtrahendSuccs = mSubtrahend
-							.internalSuccessors(automatonPredecessor, inputTransition.getSymbol());
-					final Iterator<OutgoingInternalTransition<LETTER, PLACE>> it = subtrahendSuccs.iterator();
-					if (!it.hasNext()) {
-						throw new IllegalArgumentException("Subtrahend not total.");
-					}
-					subtrahendSucc = it.next();
-					if (it.hasNext()) {
-						throw new IllegalArgumentException("Subtrahend not deterministic.");
-					}
-				}
-				if (automatonPredecessor != subtrahendSucc.getSucc()) {
-					mSynchronizationInformation.getChangerLetters().add(inputTransition.getSymbol());
-					mSynchronizationInformation.getStateChangers().addPair(inputTransition, automatonPredecessor);
+				final PLACE automatonSuccessor = NestedWordAutomataUtils.getSuccessorState(mSubtrahend,
+						automatonPredecessor, inputTransition.getSymbol());
+				final boolean isSelfloop = (automatonPredecessor.equals(automatonSuccessor));
+				if (!isSelfloop) {
+					mDsi_Old.getChangerLetters().add(inputTransition.getSymbol());
+					mDsi_Old.getStateChangers().addPair(inputTransition, automatonPredecessor);
 				} else {
-					mSynchronizationInformation.getSelfloops().addPair(inputTransition, automatonPredecessor);
+					mDsi_Old.getSelfloops().addPair(inputTransition, automatonPredecessor);
 				}
-				mSynchronizationInformation.getContributingTransitions().add(inputTransition);
-				if (mSubtrahend.isFinal(subtrahendSucc.getSucc())) {
+				if (mSubtrahend.isFinal(automatonSuccessor)) {
+					mBlockingConfigurations.addPair(inputTransition, automatonPredecessor);
 					return null;
 				} else {
+					mDsi_Old.getContributingTransitions().add(inputTransition);
 					final Set<PLACE> successors = new LinkedHashSet<>();
 					for (final PLACE petriNetSuccessor : mMinued.getSuccessors(inputTransition)) {
 						// possibly first time that we saw this place, add
 						mMinuendPlaces.add(petriNetSuccessor);
 						successors.add(petriNetSuccessor);
 					}
-					mSubtrahendStates.add(subtrahendSucc.getSucc());
-					successors.add(subtrahendSucc.getSucc());
+					mSubtrahendStates.add(automatonSuccessor);
+					successors.add(automatonSuccessor);
 
 					final int totalOrderId = mNumberOfConstructedTransitions;
 					mNumberOfConstructedTransitions++;
 					result = new Transition<>(inputTransition.getSymbol(), mAllPredecessors, successors, totalOrderId);
 					mInputTransition2State2OutputTransition.put(inputTransition, automatonPredecessor, result);
+					mNewTransition2AutomatonPredecessorState.put(result, automatonPredecessor);
 					mTransitions.put(result, (Transition<LETTER, PLACE>) result);
 					final ITransition<LETTER, PLACE> valueBefore = mNew2Old.put(result, inputTransition);
 					assert valueBefore == null : "Cannot add transition twice.";
@@ -452,50 +445,76 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		throw new IllegalArgumentException("getSuccessorTransitionProviders with the given arguments works only for " + IPetriNet.class.getName());
 	}
 
-	public SynchronizationInformation getSynchronizationInformation() {
-		return mSynchronizationInformation;
+	public DifferenceSynchronizationInformation getDifferenceSynchronizationInformation_Old() {
+		return mDsi_Old;
 	}
 
-	public class SynchronizationInformation {
-		/**
-		 * Letters for which the subtrahend DFA actually has a transition that
-		 * changes the state. In on-demand constructions, this information can be
-		 * more precise than mUniversalLoopers because the user cannot foresee the
-		 * construction process.
-		 */
-		private final Set<LETTER> mChangerLetters = new HashSet<>();
 
-		private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mSelfloops = new HashRelation<>();
-		private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mStateChangers = new HashRelation<>();
-
-		private final Set<ITransition<LETTER, PLACE>> mContributingTransitions = new HashSet<>();
-
-		public Set<LETTER> getChangerLetters() {
-			return mChangerLetters;
-		}
-		public HashRelation<ITransition<LETTER, PLACE>, PLACE> getSelfloops() {
-			return mSelfloops;
-		}
-		public HashRelation<ITransition<LETTER, PLACE>, PLACE> getStateChangers() {
-			return mStateChangers;
-		}
-		public Set<ITransition<LETTER, PLACE>> getContributingTransitions() {
-			return mContributingTransitions;
-		}
-
-		public SynchronizationInformation filter(final Set<ITransition<LETTER, PLACE>> transitions) {
-			final SynchronizationInformation result = new SynchronizationInformation();
-			result.getChangerLetters().addAll(mChangerLetters);
-			for (final Entry<ITransition<LETTER, PLACE>, HashSet<PLACE>> entry : mSelfloops.entrySet()) {
-				result.getSelfloops().addAllPairs(entry.getKey(), entry.getValue());
-			}
-			for (final Entry<ITransition<LETTER, PLACE>, HashSet<PLACE>> entry : mStateChangers.entrySet()) {
-				result.getStateChangers().addAllPairs(entry.getKey(), entry.getValue());
-			}
-			result.getContributingTransitions().addAll(transitions);
-			return result;
-		}
+	/**
+	 * DifferenceSynchronizationInformation for all reachable transitions.
+	 */
+	public DifferenceSynchronizationInformation<LETTER, PLACE> computeDifferenceSynchronizationInformation() {
+		return computeDifferenceSynchronizationInformation(mNew2Old.keySet());
 	}
+
+	/**
+	 * DifferenceSynchronizationInformation for a restricted set of transitions.
+	 * This is useful if you want to restrict the result of an {@link Difference}
+	 * operation to the set of vital transitions. TODO 2020-02-01 Matthias: Warning
+	 * this information is not yet optimal. Assume we have a transition-state pair
+	 * that is blocking but its preset is never reachable in the result of the
+	 * Difference operation, then the entry in "blockingTransitions" is useless and
+	 * might prevent an efficient synchronization of selfloops. However, I expect
+	 * that the costs for a corresponding optimization are probably high and the
+	 * gain is low.
+	 */
+	public DifferenceSynchronizationInformation<LETTER, PLACE> computeDifferenceSynchronizationInformation(
+			final Set<ITransition<LETTER, PLACE>> transitionSubset) {
+		final Set<LETTER> changerLetters = new HashSet<>();
+		final HashRelation<ITransition<LETTER, PLACE>, PLACE> selfloops = new HashRelation<>();
+		final HashRelation<ITransition<LETTER, PLACE>, PLACE> stateChangers = new HashRelation<>();
+		final HashRelation<ITransition<LETTER, PLACE>, PLACE> blockingTransitions = new HashRelation<>();
+		final Set<ITransition<LETTER, PLACE>> contributingTransitions = new HashSet<>();
+		for (final ITransition<LETTER, PLACE> transition : mNew2Old.keySet()) {
+			final ITransition<LETTER, PLACE> minuendTransition = mNew2Old.get(transition);
+			assert minuendTransition != null : "Unknown transition: " + transition;
+			final PLACE automatonPredecessor = mNewTransition2AutomatonPredecessorState.get(transition);
+			if (automatonPredecessor == null) {
+				// this transition is not synchronized with the automaton
+				if (transitionSubset.contains(transition)) {
+					contributingTransitions.add(minuendTransition);
+				}
+				continue;
+			}
+			final PLACE automatonSuccessor = NestedWordAutomataUtils.getSuccessorState(mSubtrahend,
+					automatonPredecessor, transition.getSymbol());
+			final boolean isSelfloop = (automatonPredecessor.equals(automatonSuccessor));
+			if (!transitionSubset.contains(transition)) {
+				if (!isSelfloop) {
+					blockingTransitions.addPair(minuendTransition, automatonPredecessor);
+					changerLetters.add(minuendTransition.getSymbol());
+				} else {
+					// do nothing
+				}
+			} else {
+				contributingTransitions.add(minuendTransition);
+				if (isSelfloop) {
+					selfloops.addPair(minuendTransition, automatonPredecessor);
+				} else {
+					stateChangers.addPair(minuendTransition, automatonPredecessor);
+					changerLetters.add(minuendTransition.getSymbol());
+				}
+			}
+		}
+		blockingTransitions.addAll(mBlockingConfigurations);
+		for (final ITransition<LETTER, PLACE> trans : mBlockingConfigurations.getDomain()) {
+			changerLetters.add(trans.getSymbol());
+		}
+		return new DifferenceSynchronizationInformation<>(changerLetters, selfloops, stateChangers,
+				contributingTransitions, blockingTransitions);
+	}
+
+
 
 	private class SimpleSuccessorTransitionProviderWithUsageInformation
 			extends SimpleSuccessorTransitionProvider<LETTER, PLACE> {
@@ -534,7 +553,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 				mTransitions.put(result, (Transition<LETTER, PLACE>) result);
 				final ITransition<LETTER, PLACE> valueBefore = mNew2Old.put(result, inputTransition);
 				assert valueBefore == null : "Cannot add transition twice.";
-				mSynchronizationInformation.getContributingTransitions().add(inputTransition);
+				mDsi_Old.getContributingTransitions().add(inputTransition);
 			}
 			return result;
 		}

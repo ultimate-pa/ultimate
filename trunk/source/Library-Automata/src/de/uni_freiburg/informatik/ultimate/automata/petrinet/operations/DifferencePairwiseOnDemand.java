@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
@@ -77,7 +76,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
-	private final DifferencePetriNet<LETTER, PLACE>.SynchronizationInformation mSynchronizationInformation;
+	private final DifferenceSynchronizationInformation<LETTER, PLACE> mDifferenceSynchronizationInformation;
 
 	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
 			final AutomataLibraryServices services, final SF factory, final IPetriNet<LETTER, PLACE> minuendNet,
@@ -103,7 +102,8 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 			}
 		} else {
 			if (mSubtrahend instanceof INestedWordAutomaton) {
-				universalSubtrahendLoopers = determineUniversalLoopers((INestedWordAutomaton<LETTER, PLACE>) mSubtrahend);
+				universalSubtrahendLoopers = determineUniversalLoopers(
+						(INestedWordAutomaton<LETTER, PLACE>) mSubtrahend);
 				if (mLogger.isInfoEnabled()) {
 					final int numberLoopers = universalSubtrahendLoopers.size();
 					final int allLetters = mSubtrahend.getAlphabet().size();
@@ -111,27 +111,38 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 				}
 			} else {
 				universalSubtrahendLoopers = null;
-				mLogger.info("Subtrahend is not yet constructed. Will not use universal subtrahend loopers optimization.");
+				mLogger.info(
+						"Subtrahend is not yet constructed. Will not use universal subtrahend loopers optimization.");
 			}
 		}
 		final DifferencePetriNet<LETTER, PLACE> difference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend,
 				universalSubtrahendLoopers);
 		final FinitePrefix<LETTER, PLACE> fp = new FinitePrefix<LETTER, PLACE>(mServices, difference);
 		mResult = difference.getYetConstructedPetriNet();
+
 		final Set<ITransition<LETTER, PLACE>> vitalTransitionsOfDifference = fp.getResult().computeVitalTransitions();
-		final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> transitionBacktranslation = difference
-				.getTransitionBacktranslation();
-		final Set<ITransition<LETTER, PLACE>> transitionsContributingToVital = vitalTransitionsOfDifference.stream()
-				.map(x -> transitionBacktranslation.get(x)).collect(Collectors.toSet());
-		mSynchronizationInformation = difference.getSynchronizationInformation().filter(transitionsContributingToVital);
+		mDifferenceSynchronizationInformation = difference
+				.computeDifferenceSynchronizationInformation(vitalTransitionsOfDifference);
+
+		{
+			// old imprecise DSI
+			final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> transitionBacktranslation = difference
+					.getTransitionBacktranslation();
+			final Set<ITransition<LETTER, PLACE>> transitionsContributingToVital = vitalTransitionsOfDifference.stream()
+					.map(x -> transitionBacktranslation.get(x)).collect(Collectors.toSet());
+			final DifferenceSynchronizationInformation oldDSI = difference.getDifferenceSynchronizationInformation_Old()
+					.filter(transitionsContributingToVital);
+			// if (!oldDSI.equals(mSynchronizationInformation)) {
+			// throw new AssertionError("Inconsistent DSI");
+		}
 		final int allTransitions = difference.getYetConstructedPetriNet().getTransitions().size();
 		final int deadTransitions = allTransitions - vitalTransitionsOfDifference.size();
 		{
 			final int looperLetters = mMinuend.getAlphabet().size()
-					- mSynchronizationInformation.getChangerLetters().size();
+					- mDifferenceSynchronizationInformation.getChangerLetters().size();
 			mLogger.info(looperLetters + "/" + mMinuend.getAlphabet().size() + " looper letters, "
-					+ mSynchronizationInformation.getSelfloops().size() + " selfloop transitions, "
-					+ mSynchronizationInformation.getStateChangers().size() + " changer transitions "
+					+ mDifferenceSynchronizationInformation.getSelfloops().size() + " selfloop transitions, "
+					+ mDifferenceSynchronizationInformation.getStateChangers().size() + " changer transitions "
 					+ deadTransitions + "/" + allTransitions + " dead transitions.");
 		}
 
@@ -181,13 +192,12 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 		return mResult;
 	}
 
-	public DifferencePetriNet<LETTER, PLACE>.SynchronizationInformation getSynchronizationInformation() {
-		return mSynchronizationInformation;
+	public DifferenceSynchronizationInformation<LETTER, PLACE> getDifferenceSynchronizationInformation() {
+		return mDifferenceSynchronizationInformation;
 	}
 
 	@Override
-	public boolean checkResult(final CRSF stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of " + getOperationName());
 		}
@@ -195,14 +205,15 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 		if (mSubtrahend instanceof INestedWordAutomaton) {
 			subtrahend = (INestedWordAutomaton<LETTER, PLACE>) mSubtrahend;
 		} else {
-			subtrahend = new RemoveDeadEnds(mServices, mSubtrahend).getResult();
+			subtrahend = new RemoveDeadEnds<LETTER, PLACE>(mServices, mSubtrahend).getResult();
 		}
 
 		if (!(mMinuend instanceof BoundedPetriNet)) {
 			throw new UnsupportedOperationException("Convert minuend to fully constructed net");
 		}
 		final BoundedPetriNet<LETTER, PLACE> minuend = (BoundedPetriNet<LETTER, PLACE>) mMinuend;
-		final boolean correct = PetriNetUtils.doDifferenceLanguageCheck(mServices, stateFactory, minuend, subtrahend, mResult);
+		final boolean correct = PetriNetUtils.doDifferenceLanguageCheck(mServices, stateFactory, minuend, subtrahend,
+				mResult);
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + getOperationName());
@@ -210,7 +221,6 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 		return correct;
 
 	}
-
 
 	public static <LETTER, STATE> Set<LETTER> determineUniversalLoopers(final INestedWordAutomaton<LETTER, STATE> nwa) {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
