@@ -34,6 +34,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.NamedAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.AutomatonWithImplicitSelfloops;
@@ -416,15 +417,19 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 				} finally {
 					raw.switchToReadonlyMode();
 				}
-				final long end = System.nanoTime();
-				if ((end-start) > DEBUG_DUMP_DRYRUNRESULT_THRESHOLD * 1_000_000_000L) {
-					final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-							+ "_EnhancementDryRun";
-					super.writeAutomatonToFile(onDemandConstructedNet, filename);
-				}
 				final AutomatonWithImplicitSelfloops<LETTER, IPredicate> awis = new AutomatonWithImplicitSelfloops<LETTER, IPredicate>(
 						new AutomataLibraryServices(mServices), raw, universalSubtrahendLoopers);
 				dia = new RemoveUnreachable<>(new AutomataLibraryServices(mServices), awis).getResult();
+				final long end = System.nanoTime();
+				if ((end - start) > DEBUG_DUMP_DRYRUNRESULT_THRESHOLD * 1_000_000_000L) {
+					final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
+							+ "_DifferencePairwiseOnDemandInput";
+					final String atsHeaderMessage = "inputs of difference operation in iteration " + mIteration;
+					final String atsCode = "PetriNet diff = differencePairwiseOnDemand(net, nwa);";
+					super.writeAutomataToFile(filename, atsHeaderMessage, atsCode,
+							new NamedAutomaton<LETTER, IPredicate>("net", mAbstraction),
+							new NamedAutomaton<LETTER, IPredicate>("nwa", dia));
+				}
 			} else {
 				onDemandConstructedNet = null;
 				synchronizationInformation = null;
