@@ -115,7 +115,6 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	 * seconds is greater than this number.
 	 */
 	private static final int DEBUG_DUMP_DRYRUNRESULT_THRESHOLD = 24 * 60 * 60;
-			//24 * 60 * 60;
 
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
