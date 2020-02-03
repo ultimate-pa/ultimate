@@ -503,7 +503,7 @@ public class CfgBuilder {
 			for (final Entry<String, Procedure> entry : boogieDeclarations.getProcImplementation().entrySet()) {
 				final Procedure proc = entry.getValue();
 				final Body body = proc.getBody();
-				hasSomeForkStatement = hasSomeForkStatement || processStatements(body.getBlock());
+				hasSomeForkStatement = hasSomeForkStatement | processStatements(body.getBlock());
 			}
 			mHasSomeForkStatement = hasSomeForkStatement;
 		}
