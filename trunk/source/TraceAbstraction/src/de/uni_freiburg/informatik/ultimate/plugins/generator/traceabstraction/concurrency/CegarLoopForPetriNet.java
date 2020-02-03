@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.P
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference.LoopSyncMethod;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferenceSynchronizationInformation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix2PetriNet;
@@ -115,6 +115,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	 * seconds is greater than this number.
 	 */
 	private static final int DEBUG_DUMP_DRYRUNRESULT_THRESHOLD = 24 * 60 * 60;
+			//24 * 60 * 60;
 
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
@@ -240,10 +241,10 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		try {
 			// Determinize the interpolant automaton
 			final INestedWordAutomaton<LETTER, IPredicate> dia;
-			final Triple<INestedWordAutomaton<LETTER, IPredicate>, IPetriNet<LETTER, IPredicate>, DifferencePetriNet<LETTER, IPredicate>.SynchronizationInformation> enhancementResult = enhanceAnddeterminizeInterpolantAutomaton(
+			final Triple<INestedWordAutomaton<LETTER, IPredicate>, IPetriNet<LETTER, IPredicate>, DifferenceSynchronizationInformation<LETTER, IPredicate>> enhancementResult = enhanceAnddeterminizeInterpolantAutomaton(
 					mInterpolAutomaton, htc);
 			dia = enhancementResult.getFirst();
-			
+
 			if (mPref.dumpAutomata()) {
 				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
 						+ "_AbstractionAfterDifferencePairwiseOnDemand";
@@ -271,8 +272,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 				final Difference<LETTER, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(mServices),
 						mPredicateFactoryInterpolantAutomata, abstraction, dia, LoopSyncMethod.HEURISTIC,
 //						null, null, null);
-						enhancementResult.getThird().getContributingTransitions(),
-						enhancementResult.getThird().getSelfloops(), enhancementResult.getThird().getStateChangers());
+						enhancementResult.getThird());
 				mLogger.info(diff.getAutomataOperationStatistics());
 				mAbstraction = diff.getResult();
 			}
@@ -324,7 +324,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			}
 			mAbstraction = removeUnreachableResult;
 		}
-		
+
 		if (mPref.unfoldingToNet()) {
 			PetriNetUnfolder<LETTER, IPredicate> unf;
 			try {
@@ -370,13 +370,13 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		return true;
 	}
 
-	protected Triple<INestedWordAutomaton<LETTER, IPredicate>, IPetriNet<LETTER, IPredicate>, DifferencePetriNet<LETTER, IPredicate>.SynchronizationInformation> enhanceAnddeterminizeInterpolantAutomaton(
+	protected Triple<INestedWordAutomaton<LETTER, IPredicate>, IPetriNet<LETTER, IPredicate>, DifferenceSynchronizationInformation<LETTER, IPredicate>> enhanceAnddeterminizeInterpolantAutomaton(
 			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final IHoareTripleChecker htc)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		mLogger.debug("Start determinization");
 		final INestedWordAutomaton<LETTER, IPredicate> dia;
 		final IPetriNet<LETTER, IPredicate> onDemandConstructedNet;
-		final DifferencePetriNet<LETTER, IPredicate>.SynchronizationInformation synchronizationInformation;
+		final DifferenceSynchronizationInformation<LETTER, IPredicate> synchronizationInformation;
 		switch (mPref.interpolantAutomatonEnhancement()) {
 		case NONE:
 			final PowersetDeterminizer<LETTER, IPredicate> psd =
@@ -404,10 +404,10 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 				}
 				final long start = System.nanoTime();
 				try {
-					final DifferencePairwiseOnDemand<LETTER, IPredicate> dpod = new DifferencePairwiseOnDemand<>(
+					final DifferencePairwiseOnDemand<LETTER, IPredicate, ?> dpod = new DifferencePairwiseOnDemand<>(
 							new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
 							(IPetriNet<LETTER, IPredicate>) mAbstraction, raw, universalSubtrahendLoopers);
-					synchronizationInformation = dpod.getSynchronizationInformation();
+					synchronizationInformation = dpod.getDifferenceSynchronizationInformation();
 					onDemandConstructedNet = dpod.getResult();
 				} catch (final AutomataOperationCanceledException tce) {
 					final String taskDescription = generateOnDemandEnhancementCanceledMessage(interpolAutomaton,

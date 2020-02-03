@@ -32,22 +32,24 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -125,6 +127,8 @@ public final class Difference
 	 */
 	private static final boolean FULL_SELFLOOP_INFORMATION_OPTIMIZATION = false;
 
+	private static final boolean COMPUTE_DIFFERENCE_SYNCHRONIZATION_INFORMATION_VIA_UNFOLDING = true;
+
 	private final LoopSyncMethod mLoopSyncMethod;
 
 	private final BoundedPetriNet<LETTER, PLACE> mMinuend;
@@ -135,35 +139,35 @@ public final class Difference
 
 	private final Map<PLACE, PLACE> mOldPlace2NewPlace = new HashMap<>();
 
-	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mSelfloop;
-	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mStateChanger;
-	private final Collection<ITransition<LETTER, PLACE>> mContributingTransitions;
+	private final DifferenceSynchronizationInformation<LETTER, PLACE> mDsi;
+
+//	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mDsi.getSelfloops();
+//	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mDsi.getStateChangers();
+//	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mDsi.getBlockingTransitions();
+//	private final Collection<ITransition<LETTER, PLACE>> mContributingTransitions;
 
 	private final Map<PLACE, PLACE> mWhitePlace = new HashMap<>();
 	private final Map<PLACE, PLACE> mBlackPlace = new HashMap<>();
 
-	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(
-			final AutomataLibraryServices services, final SF factory,
-			final BoundedPetriNet<LETTER, PLACE> minuendNet,
-			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa) {
-		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.HEURISTIC, null, null, null);
+	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(final AutomataLibraryServices services,
+			final SF factory, final BoundedPetriNet<LETTER, PLACE> minuendNet,
+			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.HEURISTIC, null);
 	}
 
-	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(
-			final AutomataLibraryServices services, final SF factory,
-			final BoundedPetriNet<LETTER, PLACE> minuendNet,
-			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa,
-			final String loopSyncMethod) {
-		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.valueOf(loopSyncMethod),null , null, null);
+	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(final AutomataLibraryServices services,
+			final SF factory, final BoundedPetriNet<LETTER, PLACE> minuendNet,
+			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa, final String loopSyncMethod)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.valueOf(loopSyncMethod), null);
 	}
 
-	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(
-			final AutomataLibraryServices services, final SF factory,
-			final BoundedPetriNet<LETTER, PLACE> minuendNet,
-			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa,
-			final LoopSyncMethod loopSyncMethod, final Collection<ITransition<LETTER, PLACE>> contributingTransitions,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> selfloop,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> stateChanger) {
+	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(final AutomataLibraryServices services,
+			final SF factory, final BoundedPetriNet<LETTER, PLACE> minuendNet,
+			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa, final LoopSyncMethod loopSyncMethod,
+			final DifferenceSynchronizationInformation<LETTER, PLACE> synchronizationInformation)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mMinuend = minuendNet;
 		mSubtrahend = subtrahendDfa;
@@ -176,20 +180,23 @@ public final class Difference
 		assert checkSubtrahendProperties();
 		if (resultTriviallyEmpty()) {
 			mLogger.debug("Difference trivially empty");
-			mSelfloop = new HashRelation<>();
-			mStateChanger = new HashRelation<>();
-			mContributingTransitions = mMinuend.getTransitions();
+			mDsi = new DifferenceSynchronizationInformation<>(new HashSet<>(), new HashRelation<>(),
+					new HashRelation<>(), new HashSet<>(mMinuend.getTransitions()), new HashRelation<>(), false, false);
 			mResult = new BoundedPetriNet<>(mServices, mMinuend.getAlphabet(), true);
 		} else {
-			if (selfloop != null) {
-				mSelfloop = selfloop;
-				mStateChanger = stateChanger;
-				mContributingTransitions = contributingTransitions;
+			if (synchronizationInformation != null) {
+				mDsi = synchronizationInformation;
 			} else {
-				mSelfloop = new HashRelation<>();
-				mStateChanger = new HashRelation<>();
-				mContributingTransitions = mMinuend.getTransitions();
-				partitionStates();
+				if (COMPUTE_DIFFERENCE_SYNCHRONIZATION_INFORMATION_VIA_UNFOLDING) {
+					final DifferencePairwiseOnDemand<LETTER, PLACE, CRSF> diff = new DifferencePairwiseOnDemand<>(
+							mServices, null, minuendNet, subtrahendDfa);
+					mDsi = diff.getDifferenceSynchronizationInformation();
+				} else {
+					mDsi = new DifferenceSynchronizationInformation<>(new HashSet<>(), new HashRelation<>(),
+							new HashRelation<>(), new HashSet<>(mMinuend.getTransitions()), new HashRelation<>(), false,
+							false);
+					partitionStates();
+				}
 			}
 			copyNetPlaces();
 			addBlackAndWhitePlaces();
@@ -254,14 +261,14 @@ public final class Difference
 					changerStates.add(state);
 				}
 			}
-			mSelfloop.addAllPairs(transition, selfloopStates);
-			mStateChanger.addAllPairs(transition, changerStates);
+			mDsi.getSelfloops().addAllPairs(transition, selfloopStates);
+			mDsi.getStateChangers().addAllPairs(transition, changerStates);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(transition + " has " + selfloopStates.size() + " selfloop and "
 						+ changerStates.size() + " changer(s)");
 			}
 		}
-		final int changers = (int) mStateChanger.getDomain().stream().filter(x -> !mStateChanger.getImage(x).isEmpty())
+		final int changers = (int) mDsi.getStateChangers().getDomain().stream().filter(x -> !mDsi.getStateChangers().getImage(x).isEmpty())
 				.count();
 		mLogger.info((mMinuend.getAlphabet().size() - changers) + " loopers, " + changers + " changers");
 	}
@@ -289,14 +296,15 @@ public final class Difference
 	 */
 	private boolean invertSyncWithSelfloops(final ITransition<LETTER, PLACE> oldTrans) {
 		return mLoopSyncMethod == LoopSyncMethod.INVERTED || (mLoopSyncMethod == LoopSyncMethod.HEURISTIC
-				&& mSelfloop.getImage(oldTrans).size() >= mStateChanger.getImage(oldTrans).size());
+				&& mDsi.getSelfloops().getImage(oldTrans).size() >= mDsi.getStateChangers().getImage(oldTrans).size());
 	}
 
 	private Set<PLACE> requiredBlackPlaces() {
 		final Set<PLACE> requiredBlack = new HashSet<>();
-		for (final ITransition<LETTER, PLACE> oldTrans : mContributingTransitions) {
+		for (final ITransition<LETTER, PLACE> oldTrans : mDsi.getContributingTransitions()) {
 			if (invertSyncWithSelfloops(oldTrans)) {
-				requiredBlack.addAll(mStateChanger.getImage(oldTrans));
+				requiredBlack.addAll(mDsi.getStateChangers().getImage(oldTrans));
+				requiredBlack.addAll(mDsi.getBlockingTransitions().getImage(oldTrans));
 			}
 		}
 		return requiredBlack;
@@ -321,9 +329,9 @@ public final class Difference
 	}
 
 	private void addTransitions() {
-		for (final ITransition<LETTER, PLACE> oldTrans : mContributingTransitions) {
+		for (final ITransition<LETTER, PLACE> oldTrans : mDsi.getContributingTransitions()) {
 			assert mMinuend.getTransitions().contains(oldTrans) : "unknown transition " + oldTrans;
-			for (final PLACE predState : mStateChanger.getImage(oldTrans)) {
+			for (final PLACE predState : mDsi.getStateChangers().getImage(oldTrans)) {
 				syncWithChanger(oldTrans, predState);
 			}
 			syncWithSelfloops(oldTrans);
@@ -387,7 +395,7 @@ public final class Difference
 	 */
 	private void syncWithEachSelfloop(final ITransition<LETTER, PLACE> oldTrans) {
 		// Relies on the special properties of the subtrahend L(A)◦Σ^*.
-		for (final PLACE state : mSelfloop.getImage(oldTrans)) {
+		for (final PLACE state : mDsi.getSelfloops().getImage(oldTrans)) {
 			final Set<PLACE> predecessors = new HashSet<>();
 			final Set<PLACE> successors = new HashSet<>();
 			final PLACE wPlace = mWhitePlace.get(state);
@@ -424,14 +432,16 @@ public final class Difference
 	 * @see #invertSyncWithSelfloops(LETTER)
 	 */
 	private void syncWithAnySelfloop(final ITransition<LETTER, PLACE> oldTrans) {
-		if (FULL_SELFLOOP_INFORMATION_OPTIMIZATION && mSelfloop.getImage(oldTrans).isEmpty()) {
+		if (FULL_SELFLOOP_INFORMATION_OPTIMIZATION && mDsi.getSelfloops().getImage(oldTrans).isEmpty()) {
 			// This optimization relies on the special properties of the subtrahend L(A)◦Σ^*.
 			return;
 		}
 		final Set<PLACE> predecessors = new HashSet<>();
 		final Set<PLACE> successors = new HashSet<>();
 		copyMinuendFlow(oldTrans, predecessors, successors);
-		for (final PLACE state : mStateChanger.getImage(oldTrans)) {
+		for (final PLACE state : Stream
+				.concat(mDsi.getStateChangers().getImage(oldTrans).stream(), mDsi.getBlockingTransitions().getImage(oldTrans).stream())
+				.collect(Collectors.toList())) {
 			final PLACE bPlace = mBlackPlace.get(state);
 			if (bPlace == null) {
 				throw new AssertionError("No black place for " + state);
@@ -442,12 +452,13 @@ public final class Difference
 		mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
 	}
 
-	private void copyMinuendFlow(final ITransition<LETTER, PLACE> trans,
-			final Collection<PLACE> preds, final Collection<PLACE> succs) {
+	private void copyMinuendFlow(final ITransition<LETTER, PLACE> trans, final Collection<PLACE> preds,
+			final Collection<PLACE> succs) {
 		for (final PLACE oldPlace : mMinuend.getPredecessors(trans)) {
 			final PLACE newPlace = mOldPlace2NewPlace.get(oldPlace);
 			if (newPlace == null) {
-				throw new IllegalArgumentException("no copy for minuend place: " + oldPlace + " size: " + mMinuend.size() + " " + mOldPlace2NewPlace.size());
+				throw new IllegalArgumentException("no copy for minuend place: " + oldPlace + " size: "
+						+ mMinuend.size() + " " + mOldPlace2NewPlace.size());
 			}
 			preds.add(newPlace);
 		}
@@ -471,21 +482,47 @@ public final class Difference
 			mLogger.info("Testing correctness of " + getOperationName());
 		}
 
-		final INestedWordAutomaton<LETTER, PLACE> op1AsNwa =
-				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mMinuend)).getResult();
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> rcResult =
-				(new DifferenceDD<>(mServices, stateFactory, op1AsNwa, mSubtrahend)).getResult();
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> resultAsNwa =
-				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mResult)).getResult();
+		boolean correct = PetriNetUtils.doDifferenceLanguageCheck(mServices, stateFactory, mMinuend, mSubtrahend,
+				mResult);
 
-		boolean correct = true;
-		correct &= new IsEquivalent<>(mServices, stateFactory, resultAsNwa, rcResult).getResult();
+		if (mDsi.isReachabilityGuaranteed()) {
+			final int placesBefore = (mResult.getPlaces()).size();
+			final int transitionsBefore = (mResult.getTransitions()).size();
+			final BoundedPetriNet<LETTER, PLACE> removeUnreachableResult = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable<>(
+					mServices, mResult).getResult();
+			final int placesAfterwards = (removeUnreachableResult.getPlaces()).size();
+			final int transitionsAfterwards = (removeUnreachableResult.getTransitions().size());
+			final int statesRemovedByMinimization = placesBefore - placesAfterwards;
+			final int transitionsRemovedByMinimization = transitionsBefore - transitionsAfterwards;
+			if (transitionsAfterwards != transitionsBefore) {
+				correct = false;
+				throw new AssertionError("removed transitions: " + transitionsRemovedByMinimization + "result has "
+						+ mResult.getTransitions().size());
+			}
+		}
+
+		if (mDsi.isVitalityGuaranteed()) {
+			final int placesBefore = (mResult.getPlaces()).size();
+			final int transitionsBefore = (mResult.getTransitions()).size();
+			final BoundedPetriNet<LETTER, PLACE> removeDead = new RemoveDead<>(mServices, mResult).getResult();
+			final int placesAfterwards = (removeDead.getPlaces()).size();
+			final int transitionsAfterwards = (removeDead.getTransitions().size());
+			final int statesRemovedByMinimization = placesBefore - placesAfterwards;
+			final int transitionsRemovedByMinimization = transitionsBefore - transitionsAfterwards;
+			if (transitionsAfterwards != transitionsBefore) {
+				correct = false;
+				throw new AssertionError("removed transitions: " + transitionsRemovedByMinimization + "result has "
+						+ mResult.getTransitions().size());
+			}
+		}
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		return correct;
 	}
+
+
 
 	private static <E> E onlyElement(final Iterable<E> iterable) {
 		final Iterator<E> iter = iterable.iterator();
@@ -513,8 +550,8 @@ public final class Difference
 		int looperOnlyLetters = 0;
 		int moreChangersThanLoopers = 0;
 		for (final ITransition<LETTER, PLACE> oldTrans : mMinuend.getTransitions()) {
-			final Set<PLACE> loopers = mSelfloop.getImage(oldTrans);
-			final Set<PLACE> changers = mStateChanger.getImage(oldTrans);
+			final Set<PLACE> loopers = mDsi.getSelfloops().getImage(oldTrans);
+			final Set<PLACE> changers = mDsi.getStateChangers().getImage(oldTrans);
 			if (changers == null || changers.isEmpty()) {
 				++looperOnlyLetters;
 			}
