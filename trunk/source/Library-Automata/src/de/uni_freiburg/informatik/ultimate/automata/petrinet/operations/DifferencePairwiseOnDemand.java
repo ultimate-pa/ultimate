@@ -122,7 +122,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 
 		final Set<ITransition<LETTER, PLACE>> vitalTransitionsOfDifference = fp.getResult().computeVitalTransitions();
 		mDifferenceSynchronizationInformation = difference
-				.computeDifferenceSynchronizationInformation(vitalTransitionsOfDifference);
+				.computeDifferenceSynchronizationInformation(vitalTransitionsOfDifference, true);
 
 		{
 			// old imprecise DSI

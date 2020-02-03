@@ -54,6 +54,16 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 	private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mStateChangers;
 	private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mBlockingTransitions;
 	private final Set<ITransition<LETTER, PLACE>> mContributingTransitions;
+	/**
+	 * If true, then every transition of a difference build according to these
+	 * instructions will be a reachable transition.
+	 */
+	private final boolean mReachabilityGuaranteed;
+	/**
+	 * If true, then every transition of a difference build according to these
+	 * instructions will be a vital transition.
+	 */
+	private final boolean mVitalityGuaranteed;
 
 	@Deprecated
 	public DifferenceSynchronizationInformation() {
@@ -62,19 +72,24 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 		mStateChangers = new HashRelation<>();
 		mBlockingTransitions = new HashRelation<>();
 		mContributingTransitions = new HashSet<>();
+		mReachabilityGuaranteed = false;
+		mVitalityGuaranteed = false;
 	}
 
 	public DifferenceSynchronizationInformation(final Set<LETTER> changerLetters,
 			final HashRelation<ITransition<LETTER, PLACE>, PLACE> selfloops,
 			final HashRelation<ITransition<LETTER, PLACE>, PLACE> stateChangers,
 			final Set<ITransition<LETTER, PLACE>> contributingTransitions,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> blockingTransitions) {
+			final HashRelation<ITransition<LETTER, PLACE>, PLACE> blockingTransitions, final boolean reachabilityGuaranteed,
+			final boolean vitalityGuaranteed) {
 		super();
 		mChangerLetters = changerLetters;
 		mSelfloops = selfloops;
 		mStateChangers = stateChangers;
 		mContributingTransitions = contributingTransitions;
 		mBlockingTransitions = blockingTransitions;
+		mReachabilityGuaranteed = reachabilityGuaranteed;
+		mVitalityGuaranteed = vitalityGuaranteed;
 	}
 
 	public Set<LETTER> getChangerLetters() {
@@ -95,6 +110,14 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 
 	public Set<ITransition<LETTER, PLACE>> getContributingTransitions() {
 		return mContributingTransitions;
+	}
+
+	public boolean isReachabilityGuaranteed() {
+		return mReachabilityGuaranteed;
+	}
+
+	public boolean isVitalityGuaranteed() {
+		return mVitalityGuaranteed;
 	}
 
 	@Deprecated

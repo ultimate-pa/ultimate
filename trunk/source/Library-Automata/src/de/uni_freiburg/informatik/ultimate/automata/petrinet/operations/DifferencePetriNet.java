@@ -454,7 +454,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	 * DifferenceSynchronizationInformation for all reachable transitions.
 	 */
 	public DifferenceSynchronizationInformation<LETTER, PLACE> computeDifferenceSynchronizationInformation() {
-		return computeDifferenceSynchronizationInformation(mNew2Old.keySet());
+		return computeDifferenceSynchronizationInformation(mNew2Old.keySet(), false);
 	}
 
 	/**
@@ -469,7 +469,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	 * gain is low.
 	 */
 	public DifferenceSynchronizationInformation<LETTER, PLACE> computeDifferenceSynchronizationInformation(
-			final Set<ITransition<LETTER, PLACE>> transitionSubset) {
+			final Set<ITransition<LETTER, PLACE>> transitionSubset, final boolean vitalityGuaranteed) {
 		final Set<LETTER> changerLetters = new HashSet<>();
 		final HashRelation<ITransition<LETTER, PLACE>, PLACE> selfloops = new HashRelation<>();
 		final HashRelation<ITransition<LETTER, PLACE>, PLACE> stateChangers = new HashRelation<>();
@@ -511,7 +511,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			changerLetters.add(trans.getSymbol());
 		}
 		return new DifferenceSynchronizationInformation<>(changerLetters, selfloops, stateChangers,
-				contributingTransitions, blockingTransitions);
+				contributingTransitions, blockingTransitions, true, vitalityGuaranteed);
 	}
 
 
