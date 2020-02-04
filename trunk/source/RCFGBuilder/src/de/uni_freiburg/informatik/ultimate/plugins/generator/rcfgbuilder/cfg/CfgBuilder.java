@@ -512,10 +512,12 @@ public class CfgBuilder {
 					mHasSomeForkStatement = true;
 				} else if (st instanceof GotoStatement) {
 					mAllGotoTargets.addAll(Arrays.asList(((GotoStatement) st).getLabels()));
+				} else if (st instanceof AtomicStatement) {
+					processStatements(((AtomicStatement)st).getBody());
 				} else if (st instanceof AssignmentStatement || st instanceof AssumeStatement
 						|| st instanceof HavocStatement || st instanceof Label || st instanceof JoinStatement
 						|| st instanceof CallStatement || st instanceof ReturnStatement
-						|| st instanceof AssertStatement || st instanceof AtomicStatement) {
+						|| st instanceof AssertStatement) {
 					// do nothing
 				} else {
 					throw new UnsupportedOperationException(
