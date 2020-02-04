@@ -494,25 +494,22 @@ public class CfgBuilder {
 	 */
 	private static class ForkAndGotoInformation {
 
-		private final boolean mHasSomeForkStatement;
+		private boolean mHasSomeForkStatement;
 		private final Set<String> mAllGotoTargets;
 
 		public ForkAndGotoInformation(final BoogieDeclarations boogieDeclarations) {
 			mAllGotoTargets = new HashSet<>();
-			boolean hasSomeForkStatement = false;
 			for (final Entry<String, Procedure> entry : boogieDeclarations.getProcImplementation().entrySet()) {
 				final Procedure proc = entry.getValue();
 				final Body body = proc.getBody();
-				hasSomeForkStatement = hasSomeForkStatement | processStatements(body.getBlock());
+				processStatements(body.getBlock());
 			}
-			mHasSomeForkStatement = hasSomeForkStatement;
 		}
 
-		private boolean processStatements(final Statement[] statements) {
-			boolean hasSomeForkStatement = false;
+		private void processStatements(final Statement[] statements) {
 			for (final Statement st : statements) {
 				if (st instanceof ForkStatement) {
-					hasSomeForkStatement = true;
+					mHasSomeForkStatement = true;
 				} else if (st instanceof GotoStatement) {
 					mAllGotoTargets.addAll(Arrays.asList(((GotoStatement) st).getLabels()));
 				} else if (st instanceof AssignmentStatement || st instanceof AssumeStatement
@@ -525,7 +522,6 @@ public class CfgBuilder {
 							"Did not expect statement of type " + st.getClass().getSimpleName());
 				}
 			}
-			return hasSomeForkStatement;
 		}
 
 		public boolean hasSomeForkEdge() {
