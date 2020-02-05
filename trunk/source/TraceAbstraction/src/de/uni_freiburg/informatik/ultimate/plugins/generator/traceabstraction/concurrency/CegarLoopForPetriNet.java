@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Differen
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferenceSynchronizationInformation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix2PetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder;
@@ -144,10 +145,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			throw new UnsupportedOperationException("Program must have " + TraceAbstractionStarter.ULTIMATE_START
 					+ " procedure (this is the procedure where all executions start)");
 		}
-		final boolean addThreadUsageMonitors = true;
-		final BoundedPetriNet<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(
-				mServices, mIcfg, mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory,
-				addThreadUsageMonitors);
+		final BoundedPetriNet<LETTER, IPredicate> cfg = constructPetriNetWithoutDeadTransitions();
 		if (DEBUG_WRITE_NET_HASH_CODES) {
 			mLogger.debug(PetriNetUtils.printHashCodesOfInternalDataStructures(cfg));
 		}
@@ -170,6 +168,25 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		if (mIteration <= mPref.watchIteration()
 				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
 			mArtifactAutomaton = mAbstraction;
+		}
+	}
+
+	private BoundedPetriNet<LETTER, IPredicate> constructPetriNetWithoutDeadTransitions()
+			throws AutomataOperationCanceledException {
+		final boolean addThreadUsageMonitors = true;
+		final BoundedPetriNet<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton.constructPetriNetWithSPredicates(
+				mServices, mIcfg, mStateFactoryForRefinement, mErrorLocs, false, mPredicateFactory,
+				addThreadUsageMonitors);
+		try {
+			final BoundedPetriNet<LETTER, IPredicate> vitalCfg = new RemoveDead<>(
+					new AutomataLibraryServices(mServices), cfg).getResult();
+			return vitalCfg;
+		} catch (final AutomataOperationCanceledException aoce) {
+			final String taskDescription = "removing dead transitions from Petri net that has " + cfg.sizeInformation();
+			aoce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+			throw aoce;
+		} catch (final PetriNetNot1SafeException e) {
+			throw new AssertionError(e);
 		}
 	}
 
@@ -298,7 +315,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			try {
 				final int placesBefore = (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces()).size();
 				final int transitionsBefore = (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getTransitions()).size();
-				removeUnreachableResult = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable<>(
+				removeUnreachableResult = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead<>(
 						new AutomataLibraryServices(mServices), (BoundedPetriNet<LETTER, IPredicate>) mAbstraction)
 								.getResult();
 				final int placesAfterwards = (removeUnreachableResult.getPlaces()).size();
