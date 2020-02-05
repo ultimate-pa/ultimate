@@ -18,4 +18,4 @@ Require-Bundle: com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.smtinterpol
 Export-Package: de.uni_freiburg.informatik.ultimate.pea2boogie,
  de.uni_freiburg.informatik.ultimate.pea2boogie.results,
- de.uni_frieburg.informatik.ultimate.pea2boogie.testgen
+ de.uni_freiburg.informatik.ultimate.pea2boogie.testgen

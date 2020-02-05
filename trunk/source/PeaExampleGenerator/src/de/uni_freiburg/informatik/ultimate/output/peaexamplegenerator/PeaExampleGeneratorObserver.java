@@ -55,10 +55,10 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator.preferences.PeaExampleGeneratorPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultTest;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.TestStep;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultTest;
-import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.TestStep;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)

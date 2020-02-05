@@ -1,4 +1,4 @@
-package de.uni_frieburg.informatik.ultimate.pea2boogie.testgen;
+package de.uni_freiburg.informatik.ultimate.pea2boogie.testgen;
 
 import java.util.ArrayList;
 import java.util.Collection;

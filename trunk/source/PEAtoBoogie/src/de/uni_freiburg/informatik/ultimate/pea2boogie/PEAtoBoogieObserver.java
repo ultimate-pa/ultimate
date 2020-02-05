@@ -16,9 +16,9 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences.PEATransformerMode;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaTransformer;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.Req2CauseTrackingPeaTransformer;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
-import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.Req2CauseTrackingPeaTransformer;
-import de.uni_frieburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultUtil;
 
 public class PEAtoBoogieObserver extends BaseObserver {
 
