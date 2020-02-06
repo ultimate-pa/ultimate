@@ -236,7 +236,7 @@ public class AutomatonWithImplicitSelfloops<LETTER, STATE>
 
 		@Override
 		public boolean contains(final Object arg0) {
-			return false;
+			return true;
 		}
 
 		@Override
