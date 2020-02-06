@@ -340,7 +340,8 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 
 	@Override
 	public int size() {
-		return mPlaces.size();
+//		return mPlaces.size();
+		return mTransitions.size();
 	}
 
 	@Override
@@ -358,6 +359,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	}
 
 	/** @return Number of edges in this net. */
+	@Override
 	public int flowSize() {
 		return mPredecessors.size() + mSuccessors.size();
 	}

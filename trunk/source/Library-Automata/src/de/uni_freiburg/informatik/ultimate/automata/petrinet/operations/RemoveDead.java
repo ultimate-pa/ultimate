@@ -94,18 +94,18 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 	 * he or she should remove the old algorithm.
 	 */
 	private static final boolean COMPUTE_VITAL_TRANSITIONS_IN_UNFOLDING = true;
-	private final BoundedPetriNet<LETTER, PLACE> mOperand;
+	private final IPetriNet<LETTER, PLACE> mOperand;
 	private BranchingProcess<LETTER, PLACE> mFinPre;
 	private Collection<Condition<LETTER, PLACE>> mAcceptingConditions;
 	private final Set<ITransition<LETTER, PLACE>> mVitalTransitions;
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
-	public RemoveDead(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand)
+	public RemoveDead(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, operand, null);
 	}
 
-	public RemoveDead(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand,
+	public RemoveDead(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand,
 			final BranchingProcess<LETTER, PLACE> finPre)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);

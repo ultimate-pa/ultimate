@@ -78,7 +78,7 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 		IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
-	private final BoundedPetriNet<LETTER, PLACE> mOperand;
+	private final IPetriNet<LETTER, PLACE> mOperand;
 
 	/** {@link #mOperand} with only reachable transitions and required places. */
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
@@ -87,7 +87,7 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 
 	private Set<ITransition<LETTER, PLACE>> mRemovedTransitions;
 
-	public RemoveUnreachable(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand)
+	public RemoveUnreachable(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, operand, null);
 	}
@@ -105,7 +105,7 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 	 * @throws AutomataOperationCanceledException The operation was canceled
 	 * @throws PetriNetNot1SafeException
 	 */
-	public RemoveUnreachable(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand,
+	public RemoveUnreachable(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand,
 			final Set<ITransition<LETTER, PLACE>> reachableTransitions)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);

@@ -106,7 +106,7 @@ public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE>, IPe
 		}
 		return result;
 	}
-	
+
 	@Override
 	default Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
 			final Set<PLACE> placesOfNewConditions, final Set<PLACE> correlatedPlaces) {
@@ -131,5 +131,7 @@ public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE>, IPe
 		}
 		return result;
 	}
+
+	int flowSize();
 
 }
