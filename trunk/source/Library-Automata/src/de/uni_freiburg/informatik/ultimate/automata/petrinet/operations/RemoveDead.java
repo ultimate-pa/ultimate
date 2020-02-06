@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * unreachable transitions.
  *
  * @author schaetzc@tf.uni-freiburg.de
+ * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <LETTER>
  *            Type of letters in alphabet of Petri net
@@ -86,7 +87,13 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		IStateFactory<PLACE> & IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
-	private static final boolean COMPUTE_VITAL_TRANSITIONS_IN_UNFOLDING = false;
+	/**
+	 * If set to false we use an outdated algorithm that does not always remove all
+	 * dead transitions.
+	 * TODO Matthias 20200204: If someone does further modification in this class
+	 * he or she should remove the old algorithm.
+	 */
+	private static final boolean COMPUTE_VITAL_TRANSITIONS_IN_UNFOLDING = true;
 	private final BoundedPetriNet<LETTER, PLACE> mOperand;
 	private BranchingProcess<LETTER, PLACE> mFinPre;
 	private Collection<Condition<LETTER, PLACE>> mAcceptingConditions;
@@ -103,13 +110,19 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
-		mFinPre = finPre;
+		if (finPre != null) {
+			mFinPre = finPre;
+		} else {
+			mFinPre = new FinitePrefix<LETTER, PLACE>(services, operand).getResult();
+		}
+		printStartMessage();
 		if (COMPUTE_VITAL_TRANSITIONS_IN_UNFOLDING) {
 			mVitalTransitions = mFinPre.computeVitalTransitions();
 		} else {
 			mVitalTransitions = vitalTransitions();
 		}
 		mResult = CopySubnet.copy(services, mOperand, mVitalTransitions);
+		printExitMessage();
 	}
 
 	private Set<ITransition<LETTER, PLACE>> vitalTransitions()
@@ -193,6 +206,12 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		return correct;
+	}
+
+
+	@Override
+	public String exitMessage() {
+		return "Finished " + this.getClass().getSimpleName() + ", result has " + mResult.sizeInformation();
 	}
 
 	@Override
