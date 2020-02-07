@@ -485,34 +485,28 @@ public final class Difference
 		boolean correct = PetriNetUtils.doDifferenceLanguageCheck(mServices, stateFactory, mMinuend, mSubtrahend,
 				mResult);
 
-		if (mDsi.isReachabilityGuaranteed()) {
-			final int placesBefore = (mResult.getPlaces()).size();
-			final int transitionsBefore = (mResult.getTransitions()).size();
-			final BoundedPetriNet<LETTER, PLACE> removeUnreachableResult = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable<>(
-					mServices, mResult).getResult();
-			final int placesAfterwards = (removeUnreachableResult.getPlaces()).size();
-			final int transitionsAfterwards = (removeUnreachableResult.getTransitions().size());
-			final int statesRemovedByMinimization = placesBefore - placesAfterwards;
-			final int transitionsRemovedByMinimization = transitionsBefore - transitionsAfterwards;
-			if (transitionsAfterwards != transitionsBefore) {
-				correct = false;
-				throw new AssertionError("removed transitions: " + transitionsRemovedByMinimization + "result has "
-						+ mResult.getTransitions().size());
+		if (correct) {
+			if (mDsi.isReachabilityPreserved()) {
+				final int unreachableTransitionsMinuend = computeNumberOfUnreachableTransitions(mMinuend, mServices);
+				if (unreachableTransitionsMinuend == 0) {
+					final int unreachableTransitionsResult = computeNumberOfUnreachableTransitions(mResult, mServices);
+					if (unreachableTransitionsResult != 0) {
+						correct = false;
+						throw new AssertionError("removed transitions: " + unreachableTransitionsResult + "result has "
+								+ mResult.getTransitions().size());
+					}
+				}
 			}
-		}
-
-		if (mDsi.isVitalityGuaranteed()) {
-			final int placesBefore = (mResult.getPlaces()).size();
-			final int transitionsBefore = (mResult.getTransitions()).size();
-			final BoundedPetriNet<LETTER, PLACE> removeDead = new RemoveDead<>(mServices, mResult).getResult();
-			final int placesAfterwards = (removeDead.getPlaces()).size();
-			final int transitionsAfterwards = (removeDead.getTransitions().size());
-			final int statesRemovedByMinimization = placesBefore - placesAfterwards;
-			final int transitionsRemovedByMinimization = transitionsBefore - transitionsAfterwards;
-			if (transitionsAfterwards != transitionsBefore) {
-				correct = false;
-				throw new AssertionError("removed transitions: " + transitionsRemovedByMinimization + "result has "
-						+ mResult.getTransitions().size());
+			if (mDsi.isVitalityPreserved()) {
+				final int deadTransitionsMinuend = computeNumberOfDeadTransitions(mMinuend, mServices);
+				if (deadTransitionsMinuend == 0) {
+					final int deadTransitionsResult = computeNumberOfDeadTransitions(mResult, mServices);
+					if (deadTransitionsResult != 0) {
+						correct = false;
+						throw new AssertionError("removed transitions: " + deadTransitionsResult + "result has "
+								+ mResult.getTransitions().size());
+					}
+				}
 			}
 		}
 
@@ -520,6 +514,33 @@ public final class Difference
 			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		return correct;
+	}
+
+	private static <LETTER, PLACE> int computeNumberOfDeadTransitions(final BoundedPetriNet<LETTER, PLACE> result,
+			final AutomataLibraryServices services)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		final int placesBefore = (result.getPlaces()).size();
+		final int transitionsBefore = (result.getTransitions()).size();
+		final BoundedPetriNet<LETTER, PLACE> removeDead = new RemoveDead<>(services, result).getResult();
+		final int placesAfterwards = (removeDead.getPlaces()).size();
+		final int transitionsAfterwards = (removeDead.getTransitions().size());
+		final int statesRemovedByMinimization = placesBefore - placesAfterwards;
+		final int transitionsRemovedByMinimization = transitionsBefore - transitionsAfterwards;
+		return transitionsRemovedByMinimization;
+	}
+
+	private static <LETTER, PLACE> int computeNumberOfUnreachableTransitions(final BoundedPetriNet<LETTER, PLACE> result,
+			final AutomataLibraryServices services)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		final int placesBefore = (result.getPlaces()).size();
+		final int transitionsBefore = (result.getTransitions()).size();
+		final BoundedPetriNet<LETTER, PLACE> removeUnreachableResult = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUnreachable<>(
+				services, result).getResult();
+		final int placesAfterwards = (removeUnreachableResult.getPlaces()).size();
+		final int transitionsAfterwards = (removeUnreachableResult.getTransitions().size());
+		final int statesRemovedByMinimization = placesBefore - placesAfterwards;
+		final int transitionsRemovedByMinimization = transitionsBefore - transitionsAfterwards;
+		return transitionsRemovedByMinimization;
 	}
 
 

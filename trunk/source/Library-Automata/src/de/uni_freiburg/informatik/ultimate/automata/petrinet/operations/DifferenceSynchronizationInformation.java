@@ -58,12 +58,12 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 	 * If true, then every transition of a difference build according to these
 	 * instructions will be a reachable transition.
 	 */
-	private final boolean mReachabilityGuaranteed;
+	private final boolean mReachabilityPreserved;
 	/**
 	 * If true, then every transition of a difference build according to these
 	 * instructions will be a vital transition.
 	 */
-	private final boolean mVitalityGuaranteed;
+	private final boolean mVitalityPreserved;
 
 	@Deprecated
 	public DifferenceSynchronizationInformation() {
@@ -72,24 +72,24 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 		mStateChangers = new HashRelation<>();
 		mBlockingTransitions = new HashRelation<>();
 		mContributingTransitions = new HashSet<>();
-		mReachabilityGuaranteed = false;
-		mVitalityGuaranteed = false;
+		mReachabilityPreserved = false;
+		mVitalityPreserved = false;
 	}
 
 	public DifferenceSynchronizationInformation(final Set<LETTER> changerLetters,
 			final HashRelation<ITransition<LETTER, PLACE>, PLACE> selfloops,
 			final HashRelation<ITransition<LETTER, PLACE>, PLACE> stateChangers,
 			final Set<ITransition<LETTER, PLACE>> contributingTransitions,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> blockingTransitions, final boolean reachabilityGuaranteed,
-			final boolean vitalityGuaranteed) {
+			final HashRelation<ITransition<LETTER, PLACE>, PLACE> blockingTransitions, final boolean reachabilityPreserved,
+			final boolean vitalityPreserved) {
 		super();
 		mChangerLetters = changerLetters;
 		mSelfloops = selfloops;
 		mStateChangers = stateChangers;
 		mContributingTransitions = contributingTransitions;
 		mBlockingTransitions = blockingTransitions;
-		mReachabilityGuaranteed = reachabilityGuaranteed;
-		mVitalityGuaranteed = vitalityGuaranteed;
+		mReachabilityPreserved = reachabilityPreserved;
+		mVitalityPreserved = vitalityPreserved;
 	}
 
 	public Set<LETTER> getChangerLetters() {
@@ -112,12 +112,12 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 		return mContributingTransitions;
 	}
 
-	public boolean isReachabilityGuaranteed() {
-		return mReachabilityGuaranteed;
+	public boolean isReachabilityPreserved() {
+		return mReachabilityPreserved;
 	}
 
-	public boolean isVitalityGuaranteed() {
-		return mVitalityGuaranteed;
+	public boolean isVitalityPreserved() {
+		return mVitalityPreserved;
 	}
 
 	@Deprecated
