@@ -364,9 +364,15 @@ public final class Difference
 
 	private void syncWithSelfloops(final ITransition<LETTER, PLACE> oldTrans) {
 		if (invertSyncWithSelfloops(oldTrans)) {
-			// TODO 2019-01-30 Matthias: We may have 0 selfloops and 0 changers but add a
-			// useless transition because the transitions occurs as blocking transition
-			syncWithAnySelfloop(oldTrans);
+			// If we have to process this transition (e.g., because it occurs as blocking
+			// transition) we may enter this if-branch even if there are 0 self-loops (e.g.,
+			// because we have 0 selfloops and 0 changers). However, we must not add a "0
+			// self-loop" transition because it would be unreachable.
+			if (mDsi.getSelfloops().getImage(oldTrans).isEmpty()) {
+				// do nothing
+			} else {
+				syncWithAnySelfloop(oldTrans);
+			}
 		} else {
 			syncWithEachSelfloop(oldTrans);
 		}
