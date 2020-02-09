@@ -90,8 +90,11 @@ public abstract class Icfg2PetriNet {
 				final boolean isInitial = init.contains(key);
 				final String proc = key.getProcedure();
 				final boolean isFinal = procErrorNodes.get(proc).contains(key);
-				final IPredicate place = net.addPlace(pred, isInitial, isFinal);
-				return place;
+				final boolean newlyAdded = net.addPlace(pred, isInitial, isFinal);
+				if (!newlyAdded) {
+					throw new AssertionError("Must not add place twice: " + pred);
+				}
+				return pred;
 			}
 
 		};

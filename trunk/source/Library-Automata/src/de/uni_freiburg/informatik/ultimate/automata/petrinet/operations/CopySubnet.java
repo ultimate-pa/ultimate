@@ -167,7 +167,10 @@ public class CopySubnet<LETTER, PLACE> {
 	private void rebuildPlace(final PLACE place) {
 		final boolean isInitial = mSuperNet.getInitialPlaces().contains(place);
 		final boolean isAccepting = mSuperNet.getAcceptingPlaces().contains(place);
-		mResult.addPlace(place, isInitial, isAccepting);
+		final boolean newlyAdded = mResult.addPlace(place, isInitial, isAccepting);
+		if (!newlyAdded) {
+			throw new AssertionError("Must not add place twice: " + place);
+		}
 	}
 
 	private void rebuildTransition(final ITransition<LETTER, PLACE> trans) {

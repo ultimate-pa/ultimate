@@ -508,9 +508,13 @@ public class AutomataDefinitionInterpreter {
 
 		// add the places
 		for (final String p : pna.getPlaces()) {
-			final String place = net.addPlace(p, pna.getInitialMarkings().containsPlace(p),
+			final boolean newlyAdded = net.addPlace(p, pna.getInitialMarkings().containsPlace(p),
 					pna.getAcceptingPlaces().contains(p));
-			name2places.put(p, place);
+			if (!newlyAdded) {
+				throw new AssertionError(
+						"Petri net must not contain place twice: " + p);
+			}
+			name2places.put(p, p);
 		}
 
 		// add the transitions

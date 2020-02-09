@@ -284,8 +284,11 @@ public final class Difference
 			final PLACE content = oldPlace;
 			final boolean isInitial = mMinuend.getInitialPlaces().contains(oldPlace);
 			final boolean isAccepting = mMinuend.getAcceptingPlaces().contains(oldPlace);
-			final PLACE newPlace = mResult.addPlace(content, isInitial, isAccepting);
-			mOldPlace2NewPlace.put(oldPlace, newPlace);
+			final boolean newlyAdded = mResult.addPlace(oldPlace, isInitial, isAccepting);
+			if (!newlyAdded) {
+				throw new AssertionError("Must not add place twice: " + oldPlace);
+			}
+			mOldPlace2NewPlace.put(oldPlace, oldPlace);
 		}
 	}
 
@@ -316,14 +319,22 @@ public final class Difference
 				continue;
 			}
 			final boolean isInitial = mSubtrahend.getInitialStates().contains(state);
-			final PLACE whiteContent = mContentFactory.getWhiteContent(state);
-			final PLACE whitePlace = mResult.addPlace(whiteContent, isInitial, false);
+			final PLACE whitePlace = mContentFactory.getWhiteContent(state);
+			final boolean newlyAdded = mResult.addPlace(whitePlace, isInitial, false);
+			if (!newlyAdded) {
+				throw new UnsupportedOperationException(
+						"Cannot add place " + whitePlace + " maybe you have to rename your input.");
+			}
 			mWhitePlace.put(state, whitePlace);
 		}
 		for (final PLACE state : requiredBlackPlaces()) {
 			final boolean isInitial = mSubtrahend.getInitialStates().contains(state);
-			final PLACE blackContent = mContentFactory.getBlackContent(state);
-			final PLACE blackPlace = mResult.addPlace(blackContent, !isInitial, false);
+			final PLACE blackPlace = mContentFactory.getBlackContent(state);
+			final boolean newlyAdded = mResult.addPlace(blackPlace, !isInitial, false);
+			if (!newlyAdded) {
+				throw new UnsupportedOperationException(
+						"Cannot add place " + blackPlace + " maybe you have to rename your input.");
+			}
 			mBlackPlace.put(state, blackPlace);
 		}
 	}

@@ -388,10 +388,17 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	BoundedPetriNet<LETTER, PLACE> getYetConstructedPetriNet() {
 		final BoundedPetriNet<LETTER, PLACE> result = new BoundedPetriNet<>(mServices, mMinued.getAlphabet(), false);
 		for (final PLACE place : mMinuendPlaces) {
-			result.addPlace(place, mMinued.getInitialPlaces().contains(place), mMinued.isAccepting(place));
+			final boolean newlyAdded = result.addPlace(place, mMinued.getInitialPlaces().contains(place),
+					mMinued.isAccepting(place));
+			if (!newlyAdded) {
+				throw new AssertionError("Must not add place twice: " + place);
+			}
 		}
 		for (final PLACE place : mSubtrahendStates) {
-			result.addPlace(place, mSubtrahend.isInitial(place), false);
+			final boolean newlyAdded = result.addPlace(place, mSubtrahend.isInitial(place), false);
+			if (!newlyAdded) {
+				throw new AssertionError("Must not add place twice: " + place);
+			}
 		}
 		for (final Entry<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>> entry : mTransitions.entrySet()) {
 			result.addTransition(entry.getValue().getSymbol(), entry.getValue().getPredecessors(),

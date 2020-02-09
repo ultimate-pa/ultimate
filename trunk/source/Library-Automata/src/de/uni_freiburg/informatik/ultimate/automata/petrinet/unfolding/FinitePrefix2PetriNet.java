@@ -35,8 +35,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Map.Entry;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -168,9 +168,9 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			assert e == bp.getDummyRoot() || visited.contains(e);
 		}
 		*/
-		
 
-		for (Event<LETTER, PLACE> e: bp.getEvents()) {
+
+		for (final Event<LETTER, PLACE> e: bp.getEvents()) {
 			mEventRepresentatives.makeEquivalenceClass(e);
 			for (final Condition<LETTER, PLACE> c : e.getSuccessorConditions()) {
 				assert mConditionRepresentatives.find(c) == null;
@@ -181,10 +181,10 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			}
 			mConditionPredecessors.addAllPairs(e, e.getPredecessorConditions());
 		}
-		
+
 
 		// equality intended here
-		for (Event<LETTER, PLACE> e: bp.getEvents()) {
+		for (final Event<LETTER, PLACE> e: bp.getEvents()) {
 			if (e.isCutoffEvent()) {
 				final Event<LETTER, PLACE> companion = e.getCompanion();
 				final ConditionMarking<LETTER, PLACE> companionCondMark = companion.getConditionMark();
@@ -199,7 +199,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 							mConditionPredecessors.getImage(e1).equals(mConditionPredecessors.getImage(e2))) {
 						mEventRepresentatives.union(e1, e2);
 						final Event<LETTER, PLACE> rep = mEventRepresentatives.find(e1);
-						final Event<LETTER, PLACE> nonRep;  
+						final Event<LETTER, PLACE> nonRep;
 						if (rep.equals(e1)) {
 							nonRep = e2;
 						} else {
@@ -221,10 +221,10 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		//final Set<Event<LETTER, PLACE>> releventEvents=new HashSet<>(mEventRepresentatives.getAllRepresentatives());
 		final Set<Event<LETTER, PLACE>> releventEvents=new HashSet<>(mEventRepresentatives.getAllRepresentatives());
 		releventEvents.remove(bp.getDummyRoot());
-		Map<Event<LETTER, PLACE>, Integer> backfoldingId = new HashMap<>();
-		
+		final Map<Event<LETTER, PLACE>, Integer> backfoldingId = new HashMap<>();
+
 		if (mUseBackfoldingIds) {
-			ArrayList<Event<LETTER, PLACE>> eventList = new ArrayList<>(bp.getEvents());
+			final ArrayList<Event<LETTER, PLACE>> eventList = new ArrayList<>(bp.getEvents());
 			eventList.sort(bp.getOrder());
 			int i = 0;
 			int numberOfEventsWithLessAnsc = 0;
@@ -239,20 +239,20 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 						indexOfNextElemWithMoreAnsc++;
 					}
 				}
-				int respectiveBackfoldingId = eventList.size() - indexOfNextElemWithMoreAnsc + i
+				final int respectiveBackfoldingId = eventList.size() - indexOfNextElemWithMoreAnsc + i
 						- numberOfEventsWithLessAnsc;
 				backfoldingId.put(eventList.get(i), respectiveBackfoldingId);
 				i++;
 			}
 		}
-		
+
 		/*for (Event<LETTER, PLACE>e1: releventEvents) {
 			for (Event<LETTER, PLACE>e2: releventEvents) {
 				assert e1.equals(e2) || !(e1.getTransition().equals(e2.getTransition())&&(mConditionRepresentatives.find(e1.getPredecessorConditions())
 								.equals(mConditionRepresentatives.find(e2.getPredecessorConditions())))): "There exists no 2 events with same predecessors conditions and transition";
 			}
 		}*/
-		
+
 		final Map<Condition<LETTER, PLACE>, PLACE> placeMap = new HashMap<>();
 		for (final Condition<LETTER, PLACE> c : bp.getConditions()) {
 			assert mConditionRepresentatives.find(c) != null;
@@ -262,17 +262,21 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 						bp.initialConditions());
 				final boolean isAccepting = containsAccepting(mConditionRepresentatives.getEquivalenceClassMembers(c),
 						bp.getNet());
-				final PLACE place = mNet.addPlace(mStateFactory.finitePrefix2net(c), isInitial, isAccepting);
+				final PLACE place = mStateFactory.finitePrefix2net(c);
+				final boolean newlyAdded = mNet.addPlace(place, isInitial, isAccepting);
+				if (!newlyAdded) {
+					throw new AssertionError("Must not add place twice: " + place);
+				}
 				placeMap.put(c, place);
 			}
 		}
 
 		if (mUseBackfoldingIds) {
-			Comparator<Event<LETTER, PLACE>> idBasedComparator = new IdBasedEventSorting(backfoldingId);
+			final Comparator<Event<LETTER, PLACE>> idBasedComparator = new IdBasedEventSorting(backfoldingId);
 			final PriorityQueue<Event<LETTER, PLACE>> eventQueue = new PriorityQueue<>(idBasedComparator);
 			eventQueue.addAll(releventEvents);
 			while (!eventQueue.isEmpty()) {
-				Event<LETTER, PLACE> e = eventQueue.poll();
+				final Event<LETTER, PLACE> e = eventQueue.poll();
 				if (e == bp.getDummyRoot()) {
 					continue;
 				}
@@ -290,7 +294,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				mNet.addTransition(e.getTransition().getSymbol(), preds, succs);
 			}
 		} else {
-			for (Event<LETTER, PLACE> e : releventEvents) {
+			for (final Event<LETTER, PLACE> e : releventEvents) {
 				final Set<PLACE> preds = new HashSet<>();
 				final Set<PLACE> succs = new HashSet<>();
 
@@ -453,8 +457,8 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			assert p2 != null : "no place for condition " + c2;
 			final Condition<LETTER, PLACE> c1 = origPlace2Condition.get(p2);
 			assert c1 != null : "no condition for place " + p2;
-			for (Event<LETTER, PLACE> e1 : mEventSuccessors.getImage(c1)) {
-				for (Event<LETTER, PLACE> e2 :  mEventSuccessors.getImage(c2)) {
+			for (final Event<LETTER, PLACE> e1 : mEventSuccessors.getImage(c1)) {
+				for (final Event<LETTER, PLACE> e2 :  mEventSuccessors.getImage(c2)) {
 					if (e1.getTransition().equals(e2.getTransition())) {
 						mMergingCandidates
 								.add(new Pair<>(mEventRepresentatives.find(e1), mEventRepresentatives.find(e2)));
@@ -587,7 +591,10 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			if (!result.getPlaces().contains(entry.getValue())) {
 				final boolean isInitial = (entry.getKey().getPredecessorEvent() == bp.getDummyRoot());
 				final boolean isAccepting = bp.getNet().isAccepting(entry.getKey().getPlace());
-				result.addPlace(entry.getValue(), isInitial, isAccepting);
+				final boolean newlyAdded = result.addPlace(entry.getValue(), isInitial, isAccepting);
+				if (!newlyAdded) {
+					throw new AssertionError("Must not add place twice: " + entry.getValue());
+				}
 			}
 		}
 		for (final Triple<LETTER, Set<PLACE>, Set<PLACE>> triple : letterPredecessorsSuccessors) {
@@ -654,27 +661,27 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 
 
 	class IdBasedEventSorting implements Comparator<Event<LETTER, PLACE>> {
-		private Map<Event<LETTER, PLACE>, Integer> mEventIdMap;
-		
-		public IdBasedEventSorting (Map<Event<LETTER, PLACE>, Integer>eventIdMap){
+		private final Map<Event<LETTER, PLACE>, Integer> mEventIdMap;
+
+		public IdBasedEventSorting (final Map<Event<LETTER, PLACE>, Integer>eventIdMap){
 			super();
 			mEventIdMap =  eventIdMap;
 		}
 		@Override
-		public int compare(Event<LETTER, PLACE> e1, Event<LETTER, PLACE> e2) {
+		public int compare(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
 			return mEventIdMap.get(e1) -  mEventIdMap.get(e2);
 		}
 	}
-	
+
 	class DepthBasedOrder implements Comparator<Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>>> {
 
 		@Override
-		public int compare(Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>> p1,
-				Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>> p2) {
-			return Math.min(p1.getFirst().getDepth(), p1.getSecond().getDepth()) - 
+		public int compare(final Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>> p1,
+				final Pair<Event<LETTER, PLACE>, Event<LETTER, PLACE>> p2) {
+			return Math.min(p1.getFirst().getDepth(), p1.getSecond().getDepth()) -
 					Math.min(p2.getFirst().getDepth(), p2.getSecond().getDepth());
 		}
-		
+
 	}
 
 }

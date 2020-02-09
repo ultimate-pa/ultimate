@@ -244,20 +244,26 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 	private void addPlacesAndStates(final BoundedPetriNet<LETTER, PLACE> result) {
 		//add places of old net
 		for (final PLACE oldPlace : mOperand.getPlaces()) {
-			final PLACE content = oldPlace;
 			final boolean isInitial = mOperand.getInitialPlaces().contains(oldPlace);
 			final boolean isAccepting = mOperand.getAcceptingPlaces().contains(oldPlace);
-			final PLACE newPlace = result.addPlace(content, isInitial, isAccepting);
-			mOldPlace2newPlace.put(oldPlace, newPlace);
+			final boolean newlyAdded = result.addPlace(oldPlace, isInitial, isAccepting);
+			if (!newlyAdded) {
+				throw new AssertionError("Input must not contain place twice.");
+			}
+			mOldPlace2newPlace.put(oldPlace, oldPlace);
 		}
 
 		//add states of automaton
 		for (final PLACE state : mNwa.getStates()) {
-			final PLACE content = state;
 			final boolean isInitial = mNwa.getInitialStates().contains(state);
 			final boolean isAccepting = mNwa.isFinal(state);
-			final PLACE newPlace = result.addPlace(content, isInitial, isAccepting);
-			mState2newPlace.put(state, newPlace);
+			final boolean newlyAdded = result.addPlace(state, isInitial, isAccepting);
+			if (!newlyAdded) {
+				throw new UnsupportedOperationException(
+						"Currently, we require that states of the automaton are disjoint from places of Petri net. Please rename: "
+								+ state);
+			}
+			mState2newPlace.put(state, state);
 		}
 	}
 

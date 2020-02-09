@@ -267,7 +267,10 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 				final boolean isInitial = initialNodes.contains(locNode);
 				final boolean isAccepting = acceptingLocations.contains(locNode);
 				final IPredicate place = predicateProvider.apply(locNode);
-				net.addPlace(place, isInitial, isAccepting);
+				final boolean newlyAdded = net.addPlace(place, isInitial, isAccepting);
+				if (!newlyAdded) {
+					throw new AssertionError("Must not add place twice: " + place);
+				}
 				nodes2States.put(locNode, place);
 			}
 		}

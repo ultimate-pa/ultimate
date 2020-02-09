@@ -121,8 +121,12 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		for (final PLACE nwaState : nwa.getStates()) {
 			final boolean isInitial = nwa.isInitial(nwaState);
 			final boolean isAccepting = nwa.isFinal(nwaState);
-			final PLACE place = addPlace(nwaState, isInitial, isAccepting);
-			state2place.put(nwaState, place);
+			final boolean newlyAdded = addPlace(nwaState, isInitial, isAccepting);
+			if (!newlyAdded) {
+				throw new AssertionError(
+						"Automaton must not contain state twice: " + nwaState);
+			}
+			state2place.put(nwaState, nwaState);
 		}
 		Set<PLACE> succPlace;
 		Set<PLACE> predPlace;
@@ -192,26 +196,29 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	 *            {@code true} iff the place is initial
 	 * @param isAccepting
 	 *            {@code true} iff the place is final
-	 * @return the newly added place
+	 * @return true iff the place was not already contained
 	 */
 	@SuppressWarnings("squid:S2301")
-	public PLACE addPlace(final PLACE place, final boolean isInitial, final boolean isAccepting) {
-		checkContentUniqueness(place);
-		mPlaces.add(place);
-		if (isInitial) {
-			mInitialPlaces.add(place);
+	public boolean addPlace(final PLACE place, final boolean isInitial, final boolean isAccepting) {
+		final boolean addedForFirstTime = mPlaces.add(place);
+		if (addedForFirstTime) {
+			if (isInitial) {
+				mInitialPlaces.add(place);
+			}
+			if (isAccepting) {
+				mAcceptingPlaces.add(place);
+			}
+		} else {
+			if (mInitialPlaces.contains(place) != isInitial) {
+				throw new IllegalArgumentException(
+						"Place " + place + " was already added with different isInitial status");
+			}
+			if (mAcceptingPlaces.contains(place) != isAccepting) {
+				throw new IllegalArgumentException(
+						"Place " + place + " was already added with different isAccepting status");
+			}
 		}
-		if (isAccepting) {
-			mAcceptingPlaces.add(place);
-		}
-		return place;
-	}
-
-	private void checkContentUniqueness(final PLACE content) {
-		final boolean alreadyContained = mPlaces.contains(content);
-		if (alreadyContained) {
-			throw new IllegalArgumentException("Must not add the same place twice: " + content);
-		}
+		return addedForFirstTime;
 	}
 
 	/**
