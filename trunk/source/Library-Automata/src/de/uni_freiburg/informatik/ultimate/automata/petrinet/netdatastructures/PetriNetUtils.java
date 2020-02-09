@@ -157,4 +157,10 @@ public final class PetriNetUtils {
 		return isSubset.getResult() && isSuperset.getResult();
 	}
 
+
+	public static <PLACE> String generateStatesAndPlacesDisjointErrorMessage(final PLACE state) {
+		return "Currently, we require that states of the automaton are disjoint from places of Petri net. Please rename: "
+				+ state;
+	}
+
 }

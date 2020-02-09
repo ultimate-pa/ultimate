@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 
@@ -260,12 +261,12 @@ public final class PrefixProduct<LETTER, PLACE, CRSF extends IPetriNet2FiniteAut
 			final boolean newlyAdded = result.addPlace(state, isInitial, isAccepting);
 			if (!newlyAdded) {
 				throw new UnsupportedOperationException(
-						"Currently, we require that states of the automaton are disjoint from places of Petri net. Please rename: "
-								+ state);
+						PetriNetUtils.generateStatesAndPlacesDisjointErrorMessage(state));
 			}
 			mState2newPlace.put(state, state);
 		}
 	}
+
 
 	@Override
 	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
