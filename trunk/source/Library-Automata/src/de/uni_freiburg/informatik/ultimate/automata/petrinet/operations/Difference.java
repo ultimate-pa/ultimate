@@ -368,7 +368,8 @@ public final class Difference
 			// transition) we may enter this if-branch even if there are 0 self-loops (e.g.,
 			// because we have 0 selfloops and 0 changers). However, we must not add a "0
 			// self-loop" transition because it would be unreachable.
-			if (mDsi.getSelfloops().getImage(oldTrans).isEmpty()) {
+			if (mDsi.getSelfloops().getImage(oldTrans).isEmpty()
+					&& mDsi.getChangerLetters().contains(oldTrans.getSymbol())) {
 				// do nothing
 			} else {
 				syncWithAnySelfloop(oldTrans);
