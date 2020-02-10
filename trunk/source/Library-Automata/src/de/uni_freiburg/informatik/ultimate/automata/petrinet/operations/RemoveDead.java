@@ -102,11 +102,11 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 
 	public RemoveDead(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		this(services, operand, null);
+		this(services, operand, null, false);
 	}
 
 	public RemoveDead(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand,
-			final BranchingProcess<LETTER, PLACE> finPre)
+			final BranchingProcess<LETTER, PLACE> finPre, final boolean keepUselessSuccessorPlaces)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
@@ -121,7 +121,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		} else {
 			mVitalTransitions = vitalTransitions();
 		}
-		mResult = CopySubnet.copy(services, mOperand, mVitalTransitions);
+		mResult = CopySubnet.copy(services, mOperand, mVitalTransitions, mOperand.getAlphabet(), keepUselessSuccessorPlaces);
 		printExitMessage();
 	}
 
