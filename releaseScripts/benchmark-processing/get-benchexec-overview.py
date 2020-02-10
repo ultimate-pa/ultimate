@@ -2,11 +2,14 @@
 
 import argparse
 import collections
+import multiprocessing
 import os
 import re
 import signal
 import sys
 from functools import reduce
+
+from tqdm import tqdm
 
 """
 (k,v) where
@@ -15,9 +18,9 @@ from functools import reduce
   !v iff the following log line is the one we want to show
 """
 known_exceptions = {
-    "UnsupportedOperationException: Unsupported type":True,
-    "AssertionError: at least one of both input predicates is unknown":True,
-	"command is only available in interactive mode": True,
+    "UnsupportedOperationException: Unsupported type": True,
+    "AssertionError: at least one of both input predicates is unknown": True,
+    "command is only available in interactive mode": True,
     "Argument of \"settings\" has invalid value": True,
     "encountered a call to a var args function, var args are not supported at the moment": True,
     "we do not support pthread": True,
@@ -44,17 +47,17 @@ known_exceptions = {
     "Wrong parameter type at index": True,
     "Undeclared identifier ": True,
     "Modifies not transitive": True,
-    "encountered a call to a var args function and varargs usage is unknown":True,
-    "UnsupportedOperationException: floating point operation not supported in non-bitprecise translation":True,
-    "ClassCastException: de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer cannot be cast to de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive":True,
-    "StackOverflowError: null":True,
+    "encountered a call to a var args function and varargs usage is unknown": True,
+    "UnsupportedOperationException: floating point operation not supported in non-bitprecise translation": True,
+    "ClassCastException: de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer cannot be cast to de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive": True,
+    "StackOverflowError: null": True,
     "No suitable toolchain file found": True,
     "No suitable file found in config dir": True,
     "AssertionError: var is still there": True,
     "IllegalStateException: Petrification does not provide enough thread instances": True,
     "ExceptionOrErrorResult": False,
     "was unable to instantiate class": True,
-    "de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.ParserInitializationException: Parser initialization failed":True,
+    "de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.ParserInitializationException: Parser initialization failed": True,
     "RESULT: Ultimate could not prove your program: Toolchain returned no result.": True,
 }
 
@@ -87,7 +90,7 @@ known_wrapper_errors = {
     "Ultimate.py: error: argument --validate: File": True,
     "Checking for LTL property": True,
     "WARNING: YOUR LOGFILE WAS TOO LONG, SOME LINES IN THE MIDDLE WERE REMOVED.": True,
-    "Skipped default analysis because property is memsafety" : True,
+    "Skipped default analysis because property is memsafety": True,
 }
 
 version_matcher = re.compile('^.*(\d+\.\d+\.\d+-\w+).*$')
@@ -352,34 +355,62 @@ def set_unknowns(results, file):
         map(lambda x: Result(("Unknown", file), x.call, x.version) if x.result is None else x, results))
 
 
+def __list_paths_in_dir(input):
+    for dirpath, dirnames, files in os.walk(input):
+        for file in files:
+            if not file.endswith('.log'):
+                continue
+            yield os.path.join(dirpath, file)
+
+
+def consume_task(queue, results):
+    while True:
+        path = queue.get()
+        if path is None:
+            break
+        tmp_result = set_unknowns(process_log_file(path), path)
+        results += tmp_result
+
+
 def main():
     args = parse_args()
     input = args.input[0]
 
-    results = []
-    i = 0
+    results = multiprocessing.Manager().list()
     if os.path.isfile(input):
         results += set_unknowns(process_log_file(input), input)
-        i = 1
+        total = 1
     else:
-        for dirpath, dirnames, files in os.walk(input):
-            for file in files:
-                if not file.endswith('.log'):
-                    continue
-                i = i + 1
-                path = os.path.join(dirpath, file)
-                debug('Processing {}'.format(path))
-                results += set_unknowns(process_log_file(path), path)
-    if i > len(results):
-        print('We processed {} .log files but collected only {} results, something is wrong!'.format(i, len(results)))
+        local_cores = max(multiprocessing.cpu_count() - 4, 1)
+        print("Using {} cores".format(local_cores))
+        queue = multiprocessing.Queue(maxsize=local_cores)
+        pool = multiprocessing.Pool(local_cores, initializer=consume_task, initargs=(queue, results))
+
+        progress_bar = tqdm([i for i in __list_paths_in_dir(input)])
+        total = len(progress_bar)
+
+        for path in progress_bar:
+            progress_bar.set_description('Processing ...{:100.100}'.format(path[len(input):]))
+            queue.put(path)
+
+        # tell workers we're done
+        for _ in range(local_cores):
+            queue.put(None)
+        pool.close()
+        pool.join()
+
+    if total > len(results):
+        print(
+            'We processed {} .log files but collected only {} results, something is wrong!'.format(total, len(results)))
     else:
-        print('Overview of {} results from {} .log files'.format(len(results), i))
+        print('Overview of {} results from {} .log files'.format(len(results), total))
     print_results(results)
 
 
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    # just ignore pipe exceptions
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    if sys.platform == "linux" or sys.platform == "linux2":
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+        # just ignore pipe exceptions
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)
     main()
