@@ -324,14 +324,14 @@ public class PetriNetLargeBlockEncoding {
 				copyPetriNetWithModification(services, petriNet, pendingCompositions, composedTransitions);
 
 		// update information for composed transition
-		for (Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> composition : pendingCompositions) {
+		for (final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> composition : pendingCompositions) {
 			mCoEnabledRelation.copyRelationships(composition.getSecond().getSymbol(), composition.getFirst());
 			transferMoverProperties(composition.getFirst(), composition.getSecond().getSymbol(),
 					composition.getThird().getSymbol());
 		}
 
 		// delete obsolete information
-		for (ITransition<IIcfgTransition<?>, IPredicate> t : composedTransitions) {
+		for (final ITransition<IIcfgTransition<?>, IPredicate> t : composedTransitions) {
 			mCoEnabledRelation.deleteElement(t.getSymbol());
 			removeMoverProperties(t.getSymbol());
 		}
@@ -351,18 +351,18 @@ public class PetriNetLargeBlockEncoding {
 	private void checkInvariant(final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet) {
 		// map all branch encoders to true – we don't care which branch is taken
 		final HashMap<TermVariable, Boolean> encoders = new HashMap<>(mChoiceCompositions.size() * 2);
-		for (Set<Pair<IIcfgTransition<?>, TermVariable>> x : mChoiceCompositions.values()) {
-			for (Pair<IIcfgTransition<?>, TermVariable> y : x) {
+		for (final Set<Pair<IIcfgTransition<?>, TermVariable>> x : mChoiceCompositions.values()) {
+			for (final Pair<IIcfgTransition<?>, TermVariable> y : x) {
 				encoders.put(y.getSecond(), true);
 			}
 		}
 
 		final HashSet<IIcfgTransition<?>> errors = new HashSet<>();
-		for (ITransition<IIcfgTransition<?>, IPredicate> t : petriNet.getTransitions()) {
-			Set<IIcfgTransition<?>> coen = mCoEnabledRelation.getImage(t.getSymbol());
-			IIcfgTransition<?> first = translateBack(t.getSymbol(), encoders).iterator().next();
-			Set<IIcfgTransition<?>> originalCoen = mOriginalCoEnabledRelation.getImage(first);
-			Set<IIcfgTransition<?>> translatedCoen = coen.stream().flatMap(x -> translateBack(x, encoders).stream()).collect(Collectors.toSet());
+		for (final ITransition<IIcfgTransition<?>, IPredicate> t : petriNet.getTransitions()) {
+			final Set<IIcfgTransition<?>> coen = mCoEnabledRelation.getImage(t.getSymbol());
+			final IIcfgTransition<?> first = translateBack(t.getSymbol(), encoders).iterator().next();
+			final Set<IIcfgTransition<?>> originalCoen = mOriginalCoEnabledRelation.getImage(first);
+			final Set<IIcfgTransition<?>> translatedCoen = coen.stream().flatMap(x -> translateBack(x, encoders).stream()).collect(Collectors.toSet());
 			if (!originalCoen.equals(translatedCoen)) {
 				errors.add(t.getSymbol());
 			}
@@ -416,7 +416,7 @@ public class PetriNetLargeBlockEncoding {
 				boolean completeComposition = true;
 				boolean composed = false;
 
-				for (ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet.getPredecessors(prePlace)) {
+				for (final ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet.getPredecessors(prePlace)) {
 					final boolean canCompose = !composedTransitions.contains(t2)
 							&& sequenceRuleCheck(t2, t1, prePlace, petriNet);
 					completeComposition = completeComposition && canCompose;
@@ -451,7 +451,7 @@ public class PetriNetLargeBlockEncoding {
 				boolean completeComposition = true;
 				boolean composed = false;
 
-				for (ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet.getSuccessors(postPlace)) {
+				for (final ITransition<IIcfgTransition<?>, IPredicate> t2 : petriNet.getSuccessors(postPlace)) {
 					final boolean canCompose = !composedTransitions.contains(t2)
 							&& sequenceRuleCheck(t1, t2, postPlace, petriNet);
 					completeComposition = completeComposition && canCompose;
@@ -487,7 +487,7 @@ public class PetriNetLargeBlockEncoding {
 				pendingCompositions, obsoleteTransitions);
 
 		// update information for composed transition
-		for (Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> composition : pendingCompositions) {
+		for (final Triple<IcfgEdge, ITransition<IIcfgTransition<?>, IPredicate>, ITransition<IIcfgTransition<?>, IPredicate>> composition : pendingCompositions) {
 			mCoEnabledRelation.copyRelationships(composition.getSecond().getSymbol(), composition.getFirst());
 			updateSequentialCompositions(composition.getFirst(), composition.getSecond().getSymbol(),
 					composition.getThird().getSymbol());
@@ -496,7 +496,7 @@ public class PetriNetLargeBlockEncoding {
 		}
 
 		// delete obsolete information
-		for (ITransition<IIcfgTransition<?>, IPredicate> t : obsoleteTransitions) {
+		for (final ITransition<IIcfgTransition<?>, IPredicate> t : obsoleteTransitions) {
 			mCoEnabledRelation.deleteElement(t.getSymbol());
 			removeMoverProperties(t.getSymbol());
 			mSequentialCompositions.remove(t.getSymbol());
@@ -707,7 +707,8 @@ public class PetriNetLargeBlockEncoding {
 		transitionsToKeep.removeAll(obsoleteTransitions);
 
 		// Create new net
-		return CopySubnet.copy(new AutomataLibraryServices(services), petriNet, transitionsToKeep);
+		return CopySubnet.copy(new AutomataLibraryServices(services), petriNet, transitionsToKeep,
+				petriNet.getAlphabet(), true);
 	}
 
 	public BoundedPetriNet<IIcfgTransition<?>, IPredicate> getResult() {
