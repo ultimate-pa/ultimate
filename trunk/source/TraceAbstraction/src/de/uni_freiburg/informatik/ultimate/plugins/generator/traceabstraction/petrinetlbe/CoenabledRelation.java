@@ -63,7 +63,7 @@ public class CoenabledRelation<LETTER> {
 	 * Creates a new instance by computing the relation from the given Petri net.
 	 */
 	public static <PLACE, LETTER> CoenabledRelation<LETTER> fromPetriNet(final AutomataLibraryServices services,
-			IPetriNet<LETTER, PLACE> petriNet) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+			final IPetriNet<LETTER, PLACE> petriNet) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		final BranchingProcess<LETTER, PLACE> bp = new FinitePrefix<>(services, petriNet).getResult();
 		return new CoenabledRelation<LETTER>(computeFromBranchingProcess(bp));
 	}
@@ -74,9 +74,12 @@ public class CoenabledRelation<LETTER> {
 		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
 		final Collection<Event<LETTER, PLACE>> events = bp.getEvents();
 		for (final Event<LETTER, PLACE> event1 : events) {
-			final Set<Event<LETTER, PLACE>> coRelatedEvents = coRelation.computeCoRelatatedEvents(event1);
-			for (final Event<LETTER, PLACE> coRelatedEvent : coRelatedEvents) {
-				hashRelation.addPair(event1.getTransition().getSymbol(), coRelatedEvent.getTransition().getSymbol());
+			if (bp.getDummyRoot() != event1) {
+				final Set<Event<LETTER, PLACE>> coRelatedEvents = coRelation.computeCoRelatatedEvents(event1);
+				for (final Event<LETTER, PLACE> coRelatedEvent : coRelatedEvents) {
+					hashRelation.addPair(event1.getTransition().getSymbol(),
+							coRelatedEvent.getTransition().getSymbol());
+				}
 			}
 		}
 		return hashRelation;
@@ -86,7 +89,7 @@ public class CoenabledRelation<LETTER> {
 		return mRelation.size();
 	}
 
-	public Set<LETTER> getImage(LETTER element) {
+	public Set<LETTER> getImage(final LETTER element) {
 		return mRelation.getImage(element);
 	}
 
@@ -95,11 +98,11 @@ public class CoenabledRelation<LETTER> {
 	 * corresponding pair involving the other letter. The original pairs are not
 	 * removed, they remain in the relation.
 	 */
-	public void copyRelationships(LETTER from, LETTER to) {
-		for (LETTER t3 : mRelation.getImage(from)) {
+	public void copyRelationships(final LETTER from, final LETTER to) {
+		for (final LETTER t3 : mRelation.getImage(from)) {
 			mRelation.addPair(to, t3);
 		}
-		for (LETTER t3 : mRelation.getDomain()) {
+		for (final LETTER t3 : mRelation.getDomain()) {
 			if (mRelation.containsPair(t3, from)) {
 				mRelation.addPair(t3, to);
 			}
@@ -109,7 +112,7 @@ public class CoenabledRelation<LETTER> {
 	/**
 	 * Removes all pairs involving the given letter from the relation.
 	 */
-	public void deleteElement(LETTER letter) {
+	public void deleteElement(final LETTER letter) {
 		mRelation.removeDomainElement(letter);
 		mRelation.removeRangeElement(letter);
 	}
