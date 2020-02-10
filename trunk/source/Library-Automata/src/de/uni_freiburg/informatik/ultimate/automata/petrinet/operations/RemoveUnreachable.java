@@ -78,14 +78,14 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 		IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
+	private static final boolean DEBUG_COMPUTE_REMOVED_TRANSITIONS = false;
+
 	private final IPetriNet<LETTER, PLACE> mOperand;
 
 	/** {@link #mOperand} with only reachable transitions and required places. */
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
 	private final Set<ITransition<LETTER, PLACE>> mReachableTransitions;
-
-	private Set<ITransition<LETTER, PLACE>> mRemovedTransitions;
 
 	public RemoveUnreachable(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
@@ -114,11 +114,14 @@ public class RemoveUnreachable<LETTER, PLACE, CRSF extends
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-
+		
 		mReachableTransitions = (reachableTransitions == null ? computeReachableTransitions() : reachableTransitions);
-		mRemovedTransitions = operand.getTransitions().stream().filter(x -> !mReachableTransitions.contains(x)).collect(Collectors.toSet());
-		if (!mRemovedTransitions.isEmpty()) {
-			mRemovedTransitions.toString();
+		if (DEBUG_COMPUTE_REMOVED_TRANSITIONS) {
+			final Set<ITransition<LETTER, PLACE>> removedTransitions = operand.getTransitions().stream()
+					.filter(x -> !mReachableTransitions.contains(x)).collect(Collectors.toSet());
+			if (!removedTransitions.isEmpty()) {
+				mLogger.info("Removed transitions: " + removedTransitions);
+			}
 		}
 		mResult = CopySubnet.copy(services, mOperand, mReachableTransitions);
 

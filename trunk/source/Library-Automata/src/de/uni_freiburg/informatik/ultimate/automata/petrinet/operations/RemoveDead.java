@@ -94,6 +94,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 	 * he or she should remove the old algorithm.
 	 */
 	private static final boolean COMPUTE_VITAL_TRANSITIONS_IN_UNFOLDING = true;
+	private static final boolean DEBUG_COMPUTE_REMOVED_TRANSITIONS = false;
 	private final IPetriNet<LETTER, PLACE> mOperand;
 	private BranchingProcess<LETTER, PLACE> mFinPre;
 	private Collection<Condition<LETTER, PLACE>> mAcceptingConditions;
@@ -120,6 +121,13 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 			mVitalTransitions = mFinPre.computeVitalTransitions();
 		} else {
 			mVitalTransitions = vitalTransitions();
+		}
+		if (DEBUG_COMPUTE_REMOVED_TRANSITIONS) {
+			final Set<ITransition<LETTER, PLACE>> removedTransitions = operand.getTransitions().stream()
+					.filter(x -> !mVitalTransitions.contains(x)).collect(Collectors.toSet());
+			if (!removedTransitions.isEmpty()) {
+				mLogger.info("Removed transitions: " + removedTransitions);
+			}
 		}
 		mResult = CopySubnet.copy(services, mOperand, mVitalTransitions, mOperand.getAlphabet(), keepUselessSuccessorPlaces);
 		printExitMessage();
