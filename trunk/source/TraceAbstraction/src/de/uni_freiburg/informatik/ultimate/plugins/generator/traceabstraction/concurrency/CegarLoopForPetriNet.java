@@ -179,7 +179,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 				addThreadUsageMonitors);
 		try {
 			final BoundedPetriNet<LETTER, IPredicate> vitalCfg = new RemoveDead<>(
-					new AutomataLibraryServices(mServices), cfg).getResult();
+					new AutomataLibraryServices(mServices), cfg, null, true).getResult();
 			return vitalCfg;
 		} catch (final AutomataOperationCanceledException aoce) {
 			final String taskDescription = "removing dead transitions from Petri net that has " + cfg.sizeInformation();
@@ -314,10 +314,11 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			final BoundedPetriNet<LETTER, IPredicate> removeUnreachableResult;
 			try {
 				final int placesBefore = (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces()).size();
-				final int transitionsBefore = (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getTransitions()).size();
+				final int transitionsBefore = (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getTransitions())
+						.size();
 				removeUnreachableResult = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead<>(
-						new AutomataLibraryServices(mServices), (BoundedPetriNet<LETTER, IPredicate>) mAbstraction)
-								.getResult();
+						new AutomataLibraryServices(mServices), (BoundedPetriNet<LETTER, IPredicate>) mAbstraction,
+						null, true).getResult();
 				final int placesAfterwards = (removeUnreachableResult.getPlaces()).size();
 				final int transitionsAfterwards = (removeUnreachableResult.getTransitions().size());
 				statesRemovedByMinimization = placesBefore - placesAfterwards;
