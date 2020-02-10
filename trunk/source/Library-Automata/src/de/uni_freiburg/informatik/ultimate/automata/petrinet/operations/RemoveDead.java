@@ -87,14 +87,13 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 		IStateFactory<PLACE> & IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
-	/**
-	 * If set to false we use an outdated algorithm that does not always remove all
-	 * dead transitions.
-	 * TODO Matthias 20200204: If someone does further modification in this class
-	 * he or she should remove the old algorithm.
-	 */
-	private static final boolean COMPUTE_VITAL_TRANSITIONS_IN_UNFOLDING = true;
 	private static final boolean DEBUG_COMPUTE_REMOVED_TRANSITIONS = false;
+	/**
+	 * If set to false we use an outdated algorithm that does not always remove
+	 * all dead transitions. TODO Matthias 20200204: If someone does further
+	 * modification in this class he or she should remove the old algorithm.
+	 */
+	private static final boolean COMPUTE_VITAL_TRANSITIONS_VIA_UNFOLDING = true;
 	private final IPetriNet<LETTER, PLACE> mOperand;
 	private BranchingProcess<LETTER, PLACE> mFinPre;
 	private Collection<Condition<LETTER, PLACE>> mAcceptingConditions;
@@ -117,7 +116,7 @@ public class RemoveDead<LETTER, PLACE, CRSF extends
 			mFinPre = new FinitePrefix<LETTER, PLACE>(services, operand).getResult();
 		}
 		printStartMessage();
-		if (COMPUTE_VITAL_TRANSITIONS_IN_UNFOLDING) {
+		if (COMPUTE_VITAL_TRANSITIONS_VIA_UNFOLDING) {
 			mVitalTransitions = mFinPre.computeVitalTransitions();
 		} else {
 			mVitalTransitions = vitalTransitions();
