@@ -382,7 +382,6 @@ def main():
         total = 1
     else:
         local_cores = max(multiprocessing.cpu_count() - 4, 1)
-        print("Using {} cores".format(local_cores))
         queue = multiprocessing.Queue(maxsize=local_cores)
         pool = multiprocessing.Pool(local_cores, initializer=consume_task, initargs=(queue, results))
 
@@ -390,7 +389,7 @@ def main():
         total = len(progress_bar)
 
         for path in progress_bar:
-            progress_bar.set_description('Processing ...{:100.100}'.format(path[len(input):]))
+            progress_bar.set_description('Processing ...{:100.100} [{:>3}C]'.format(path[len(input):],local_cores))
             queue.put(path)
 
         # tell workers we're done
