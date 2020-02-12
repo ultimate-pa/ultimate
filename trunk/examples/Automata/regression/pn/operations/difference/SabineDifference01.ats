@@ -1,0 +1,139 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date:  2020-02-10
+//
+// It looked like this example would reveal a bug in the difference operation.
+// The bug was however in the removeDead operation.
+// See also SabineVitalityAnalsyis01.ats in the folder of the removeDead operation.
+
+
+PetriNet differenceH = difference(net, nwa, "HEURISTIC");
+assert(numberOfTransitions(differenceH) == 43);
+assert(numberOfPlaces(differenceH) == 55);
+
+PetriNet differenceP = difference(net, nwa, "PAIRWISE");
+assert(numberOfTransitions(differenceP) == 66);
+assert(numberOfPlaces(differenceP) == 43);
+
+PetriNet differenceI = difference(net, nwa, "INVERTED");
+assert(numberOfTransitions(differenceI) == 40);
+assert(numberOfPlaces(differenceI) == 60);
+
+PetriNet differencePOD = differencePairwiseOnDemand(net, nwa);
+assert(numberOfTransitions(differencePOD) == 80);
+assert(numberOfPlaces(differencePOD) == 35);
+
+PetriNet net = (
+	alphabet = {"a1" "a2" "aym4" "a4" "a5" "aym0" "ayo1" "ayo2" "ayo3" "ayo4" "ayo5" "ayo6" "a13" "aym2" "ayt2" "ayt3" "ayt4" "ayt5" "aym3" "a20" "a21" "aym1" "a23" "a24" "a25" "a26" },
+	places = {"o2" "t3" "t1" "m5" "t6" "o3" "o6" "11#IncrementProcess2EXITtrue" "o7" "t7" "t2" "m3" "m4" "t4" "o4" "t5" "mAssert" "mInit" "o1" "o5" "m2" "m1" "IncrementProcess2Thread1of1ForFork1NotInUse" "IncrementProcess2Thread1of1ForFork1InUse" "IncrementProcess1Thread1of1ForFork0NotInUse" "IncrementProcess1Thread1of1ForFork0InUse" },
+	transitions = {
+		({"o2" } "ayo2" {"o3" })
+		({"t3" } "ayt3" {"t4" })
+		({"m4" "o7" } "aym4" {"mAssert" })
+		({"o3" } "ayo3" {"o4" })
+		({"o6" } "ayo6" {"o7" })
+		({"m3" "t6" } "aym3" {"m4" })
+		({"t2" } "ayt2" {"t3" })
+		({"t4" } "ayt4" {"t5" })
+		({"o4" } "ayo4" {"o5" })
+		({"t5" } "ayt5" {"t6" })
+		({"mInit" } "aym0" {"m1" })
+		({"o1" } "ayo1" {"o2" })
+		({"o5" } "ayo5" {"o6" })
+		({"m2" } "aym2" {"m3" "t2" })
+		({"m1" } "aym1" {"o1" "m2" })
+	},
+	initialMarking = {"mInit" },
+	acceptingPlaces = {"mAssert" }
+);
+FiniteAutomaton nwa = (
+	alphabet = {"a1" "a2" "aym4" "a4" "a5" "aym0" "ayo1" "ayo2" "ayo3" "ayo4" "ayo5" "ayo6" "a13" "aym2" "ayt2" "ayt3" "ayt4" "ayt5" "aym3" "a20" "a21" "aym1" "a23" "a24" "a25" "a26" },
+	states = {"64#(and (<= 4 x) (<= 3 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "34#true" "66#(and (<= 4 x) (<= 4 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "35#false" "36#(<= 0 x)" "68#(and (<= 5 x) (<= 4 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)" "70#(and (<= 5 IncrementProcess2Thread1of1ForFork1_localx) (<= 5 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)" "72#(and (<= 5 IncrementProcess2Thread1of1ForFork1_localx) (<= 6 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)" "50#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 0 x))" "52#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "54#(and (<= 1 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "56#(and (<= 2 x) (<= 1 IncrementProcess1Thread1of1ForFork0_localx))" "58#(and (<= 2 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "60#(and (<= 3 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "62#(and (<= 3 x) (<= 3 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" },
+	initialStates = {"34#true" },
+	finalStates = {"35#false" },
+	transitions = {
+		("64#(and (<= 4 x) (<= 3 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayt3" "66#(and (<= 4 x) (<= 4 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("64#(and (<= 4 x) (<= 3 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "aym4" "35#false")
+		("64#(and (<= 4 x) (<= 3 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayt5" "66#(and (<= 4 x) (<= 4 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("34#true" "aym0" "36#(<= 0 x)")
+		("34#true" "ayo1" "34#true")
+		("34#true" "ayo2" "34#true")
+		("34#true" "ayo3" "34#true")
+		("34#true" "ayo4" "34#true")
+		("34#true" "ayo5" "34#true")
+		("34#true" "ayo6" "34#true")
+		("34#true" "ayt3" "34#true")
+		("34#true" "ayt4" "34#true")
+		("34#true" "aym4" "34#true")
+		("34#true" "ayt5" "34#true")
+		("34#true" "aym3" "34#true")
+		("66#(and (<= 4 x) (<= 4 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayt4" "68#(and (<= 5 x) (<= 4 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("66#(and (<= 4 x) (<= 4 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "aym3" "68#(and (<= 5 x) (<= 4 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("36#(<= 0 x)" "ayo1" "50#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 0 x))")
+		("36#(<= 0 x)" "aym2" "36#(<= 0 x)")
+		("36#(<= 0 x)" "ayt2" "34#true")
+		("36#(<= 0 x)" "aym1" "36#(<= 0 x)")
+		("68#(and (<= 5 x) (<= 4 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "aym4" "35#false")
+		("68#(and (<= 5 x) (<= 4 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayt5" "70#(and (<= 5 IncrementProcess2Thread1of1ForFork1_localx) (<= 5 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)" "ayo2" "52#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))")
+		("37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)" "ayo3" "34#true")
+		("37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)" "ayt3" "37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)")
+		("37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)" "ayt4" "37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)")
+		("37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)" "ayt5" "37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)")
+		("37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)" "aym3" "37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)")
+		("70#(and (<= 5 IncrementProcess2Thread1of1ForFork1_localx) (<= 5 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "aym3" "72#(and (<= 5 IncrementProcess2Thread1of1ForFork1_localx) (<= 6 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)" "ayo4" "56#(and (<= 2 x) (<= 1 IncrementProcess1Thread1of1ForFork0_localx))")
+		("39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)" "ayo5" "34#true")
+		("39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)" "ayt3" "39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)")
+		("39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)" "ayt4" "39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)")
+		("39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)" "ayt5" "39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)")
+		("39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)" "aym3" "39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)")
+		("72#(and (<= 5 IncrementProcess2Thread1of1ForFork1_localx) (<= 6 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "aym4" "35#false")
+		("41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)" "ayo6" "60#(and (<= 3 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)" "ayt3" "41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)")
+		("41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)" "ayt4" "41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)")
+		("41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)" "aym4" "41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)")
+		("41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)" "ayt5" "41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)")
+		("41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)" "aym3" "41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)")
+		("50#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 0 x))" "ayo2" "52#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))")
+		("50#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 0 x))" "aym2" "50#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 0 x))")
+		("50#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 0 x))" "ayt2" "37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)")
+		("52#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "ayo3" "54#(and (<= 1 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))")
+		("52#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "aym2" "52#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))")
+		("52#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "ayt2" "37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)")
+		("52#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "ayt3" "52#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))")
+		("52#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "ayt4" "37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)")
+		("52#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "ayt5" "52#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))")
+		("52#(and (<= 0 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "aym3" "37#(<= 0 IncrementProcess1Thread1of1ForFork0_localx)")
+		("54#(and (<= 1 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "ayo4" "56#(and (<= 2 x) (<= 1 IncrementProcess1Thread1of1ForFork0_localx))")
+		("54#(and (<= 1 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "aym2" "54#(and (<= 1 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))")
+		("54#(and (<= 1 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "ayt2" "39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)")
+		("54#(and (<= 1 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "ayt3" "54#(and (<= 1 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))")
+		("54#(and (<= 1 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "ayt4" "39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)")
+		("54#(and (<= 1 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "ayt5" "54#(and (<= 1 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))")
+		("54#(and (<= 1 IncrementProcess1Thread1of1ForFork0_localx) (<= 1 x))" "aym3" "39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)")
+		("56#(and (<= 2 x) (<= 1 IncrementProcess1Thread1of1ForFork0_localx))" "ayo5" "58#(and (<= 2 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("56#(and (<= 2 x) (<= 1 IncrementProcess1Thread1of1ForFork0_localx))" "aym2" "56#(and (<= 2 x) (<= 1 IncrementProcess1Thread1of1ForFork0_localx))")
+		("56#(and (<= 2 x) (<= 1 IncrementProcess1Thread1of1ForFork0_localx))" "ayt2" "39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)")
+		("56#(and (<= 2 x) (<= 1 IncrementProcess1Thread1of1ForFork0_localx))" "ayt3" "56#(and (<= 2 x) (<= 1 IncrementProcess1Thread1of1ForFork0_localx))")
+		("56#(and (<= 2 x) (<= 1 IncrementProcess1Thread1of1ForFork0_localx))" "ayt4" "39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)")
+		("56#(and (<= 2 x) (<= 1 IncrementProcess1Thread1of1ForFork0_localx))" "ayt5" "56#(and (<= 2 x) (<= 1 IncrementProcess1Thread1of1ForFork0_localx))")
+		("56#(and (<= 2 x) (<= 1 IncrementProcess1Thread1of1ForFork0_localx))" "aym3" "39#(<= 1 IncrementProcess1Thread1of1ForFork0_localx)")
+		("58#(and (<= 2 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayo6" "60#(and (<= 3 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("58#(and (<= 2 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "aym2" "58#(and (<= 2 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("58#(and (<= 2 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayt2" "41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)")
+		("58#(and (<= 2 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayt3" "58#(and (<= 2 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("58#(and (<= 2 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayt4" "41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)")
+		("58#(and (<= 2 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayt5" "58#(and (<= 2 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("58#(and (<= 2 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "aym3" "41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)")
+		("60#(and (<= 3 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "aym2" "62#(and (<= 3 x) (<= 3 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("60#(and (<= 3 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayt2" "41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)")
+		("60#(and (<= 3 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayt3" "62#(and (<= 3 x) (<= 3 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("60#(and (<= 3 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayt4" "41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)")
+		("60#(and (<= 3 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "aym4" "35#false")
+		("60#(and (<= 3 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayt5" "62#(and (<= 3 x) (<= 3 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("60#(and (<= 3 x) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "aym3" "41#(<= 2 IncrementProcess1Thread1of1ForFork0_localx)")
+		("62#(and (<= 3 x) (<= 3 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayt2" "64#(and (<= 4 x) (<= 3 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("62#(and (<= 3 x) (<= 3 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "ayt4" "64#(and (<= 4 x) (<= 3 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+		("62#(and (<= 3 x) (<= 3 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))" "aym3" "64#(and (<= 4 x) (<= 3 IncrementProcess2Thread1of1ForFork1_localx) (<= 2 IncrementProcess1Thread1of1ForFork0_localx))")
+	}
+);
