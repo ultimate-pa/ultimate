@@ -493,36 +493,45 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 				acceptingConditions.add(c);
 			}
 		}
-		final Set<Event<LETTER, PLACE>> ancestorsWithCutoffLinks = new HashSet<>();
+		final Set<Event<LETTER, PLACE>> vitalEvents = new HashSet<>();
 		final ArrayDeque<Event<LETTER, PLACE>> worklist = new ArrayDeque<>();
 		for (final Condition<LETTER, PLACE> c : acceptingConditions) {
-			ancestorsWithCutoffLinks.add(c.getPredecessorEvent());
-			worklist.add(c.getPredecessorEvent());
+			{
+				final Event<LETTER, PLACE> pred = c.getPredecessorEvent();
+				if (!vitalEvents.contains(pred)) {
+					vitalEvents.add(pred);
+					worklist.add(pred);
+				}
+			}
+			for (final Event<LETTER, PLACE> coRelated : mCoRelation.computeCoRelatatedEvents(c)) {
+				if (!vitalEvents.contains(coRelated)) {
+					vitalEvents.add(coRelated);
+					worklist.add(coRelated);
+				}
+			}
 		}
 		while (!worklist.isEmpty()) {
 			final Event<LETTER, PLACE> e = worklist.remove();
 			for (final Condition<LETTER, PLACE> c : e.getPredecessorConditions()) {
 				final Event<LETTER, PLACE> pred = c.getPredecessorEvent();
-				if (!ancestorsWithCutoffLinks.contains(pred)) {
-					ancestorsWithCutoffLinks.add(pred);
+				if (!vitalEvents.contains(pred)) {
+					vitalEvents.add(pred);
 					worklist.add(pred);
 				}
 			}
 			for (final Event<LETTER, PLACE> eco : companion2cutoff.getImage(e)) {
-				if (!ancestorsWithCutoffLinks.contains(eco)) {
-					ancestorsWithCutoffLinks.add(eco);
+				if (!vitalEvents.contains(eco)) {
+					vitalEvents.add(eco);
 					worklist.add(eco);
 				}
 			}
+			for (final Event<LETTER, PLACE> coRelated : mCoRelation.computeCoRelatatedEvents(e)) {
+				if (!vitalEvents.contains(coRelated)) {
+					vitalEvents.add(coRelated);
+					worklist.add(coRelated);
+				}
+			}
 		}
-		final Set<Event<LETTER, PLACE>> vitalEvents = new HashSet<>();
-		for (final Event<LETTER, PLACE> anc : ancestorsWithCutoffLinks) {
-			vitalEvents.addAll(mCoRelation.computeCoRelatatedEvents(anc));
-		}
-		for (final Condition<LETTER, PLACE> c : acceptingConditions) {
-			vitalEvents.addAll(mCoRelation.computeCoRelatatedEvents(c));
-		}
-		vitalEvents.addAll(ancestorsWithCutoffLinks);
 		final Set<ITransition<LETTER, PLACE>> vitalTransitions = vitalEvents.stream().filter(x -> x != mDummyRoot)
 				.map(Event::getTransition).collect(Collectors.toSet());
 		return vitalTransitions;
