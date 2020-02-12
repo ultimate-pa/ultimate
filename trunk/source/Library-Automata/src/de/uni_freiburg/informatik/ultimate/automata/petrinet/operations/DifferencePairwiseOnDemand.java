@@ -147,7 +147,9 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 					+ mDifferenceSynchronizationInformation.getStateChangers().size() + " changer transitions "
 					+ deadTransitions + "/" + allTransitions + " dead transitions.");
 		}
-
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 
 	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
