@@ -503,6 +503,9 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 					worklist.add(pred);
 				}
 			}
+		}
+		computeAncestors(companion2cutoff, vitalEvents, worklist);
+		for (final Condition<LETTER, PLACE> c : acceptingConditions) {
 			for (final Event<LETTER, PLACE> coRelated : mCoRelation.computeCoRelatatedEvents(c)) {
 				if (!vitalEvents.contains(coRelated)) {
 					vitalEvents.add(coRelated);
@@ -510,6 +513,14 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 				}
 			}
 		}
+		computeAncestors(companion2cutoff, vitalEvents, worklist);
+		final Set<ITransition<LETTER, PLACE>> vitalTransitions = vitalEvents.stream().filter(x -> x != mDummyRoot)
+				.map(Event::getTransition).collect(Collectors.toSet());
+		return vitalTransitions;
+	}
+
+	private void computeAncestors(final HashRelation<Event<LETTER, PLACE>, Event<LETTER, PLACE>> companion2cutoff,
+			final Set<Event<LETTER, PLACE>> vitalEvents, final ArrayDeque<Event<LETTER, PLACE>> worklist) {
 		while (!worklist.isEmpty()) {
 			final Event<LETTER, PLACE> e = worklist.remove();
 			for (final Condition<LETTER, PLACE> c : e.getPredecessorConditions()) {
@@ -525,16 +536,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 					worklist.add(eco);
 				}
 			}
-			for (final Event<LETTER, PLACE> coRelated : mCoRelation.computeCoRelatatedEvents(e)) {
-				if (!vitalEvents.contains(coRelated)) {
-					vitalEvents.add(coRelated);
-					worklist.add(coRelated);
-				}
-			}
 		}
-		final Set<ITransition<LETTER, PLACE>> vitalTransitions = vitalEvents.stream().filter(x -> x != mDummyRoot)
-				.map(Event::getTransition).collect(Collectors.toSet());
-		return vitalTransitions;
 	}
 
 	@Override
