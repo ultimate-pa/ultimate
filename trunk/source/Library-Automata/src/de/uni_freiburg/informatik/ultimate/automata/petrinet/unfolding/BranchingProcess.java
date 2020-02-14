@@ -175,6 +175,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 				mYetKnownPredecessorTransitions.addPair(c.getPlace(), event.getTransition());
 			}
 		}
+		event.setSerialNumber(mEvents.size());
 		mEvents.add(event);
 		if (!mUseFirstbornCutoffCheck && !event.isCutoffEvent()) {
 			mMarkingNonCutoffEventRelation.addPair(event.getMark().hashCode(), event);

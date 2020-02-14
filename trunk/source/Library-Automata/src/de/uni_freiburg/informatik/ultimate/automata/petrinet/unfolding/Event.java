@@ -62,6 +62,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 * Omit order check in cut-off check.
 	 */
 	private static final boolean BUMBLEBEE_B17_OPTIMIZAION = true;
+	private int mSerialNumber = -1;
 	private final int mHashCode;
 
 	private final Set<Condition<LETTER, PLACE>> mPredecessors;
@@ -76,6 +77,8 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	private final ITransition<LETTER, PLACE> mTransition;
 	private final Map<PLACE, Set<PLACE>> mPlaceCorelationMap;
 	private int mDepth;
+
+
 
 	/**
 	 * Creates an Event from its predecessor conditions and the transition from the net system it is mapped to by the
@@ -136,6 +139,11 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		if (bp.getNewFiniteComprehensivePrefixMode()) {
 			computePlaceCorelationMap(bp);
 		}
+	}
+	
+	@Deprecated
+	public void setSerialNumber(final int serialNumber) {
+		mSerialNumber = serialNumber;
 	}
 
 	public int getDepth() {
@@ -391,6 +399,10 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public ITransition<LETTER, PLACE> getTransition() {
 		return mTransition;
 	}
+	
+	public int getSerialNumber() {
+		return mSerialNumber;
+	}
 
 	public int getTotalOrderId() {
 		if (mTransition instanceof Transition) {
@@ -403,7 +415,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 
 	@Override
 	public String toString() {
-		return mHashCode + ":" + getTransition() + "," + mLocalConfiguration.size() + "A";
+		return mSerialNumber + ":" + + mLocalConfiguration.size() + "A:" + getTransition().toString();
 	}
 
 	private int computeHashCode() {
@@ -420,4 +432,6 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public int hashCode() {
 		return mHashCode;
 	}
+
+
 }

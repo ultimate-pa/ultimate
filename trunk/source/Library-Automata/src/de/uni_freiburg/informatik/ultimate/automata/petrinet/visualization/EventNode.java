@@ -55,14 +55,15 @@ public final class EventNode<LETTER, PLACE> extends PetriNetVisualizationNode {
 	// false-positive warning (resp. impossible to solve due to "super constructor comes first" rule in Java)
 	@SuppressWarnings("fb-contrib:PRMC_POSSIBLY_REDUNDANT_METHOD_CALLS")
 	public EventNode(final Event<LETTER, PLACE> event) {
-		super(event.getTransition().getSymbol().toString());
-
+		super(generateNodeLabel(event));
 		final ITransition<LETTER, PLACE> transition = event.getTransition();
 		final DefaultAnnotations annot = new DefaultAnnotations();
+		annot.put("SerialNumber", event.getSerialNumber());
+		annot.put("Ancestors", event.getAncestors());
 		annot.put("Transition", transition);
 		annot.put("Companion", event.getCompanion());
-		annot.put("Ancestors", event.getAncestors());
 		annot.put("ByLocalConfigurationRepresentedMarking", event.getMark());
+		annot.put("HashCode", event.hashCode());
 
 		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, annot);
@@ -71,5 +72,11 @@ public final class EventNode<LETTER, PLACE> extends PetriNetVisualizationNode {
 		if (symbol instanceof IAnnotations) {
 			annot.put("Symbol", symbol);
 		}
+	}
+
+	private static <LETTER, PLACE> String generateNodeLabel(final Event<LETTER, PLACE> event) {
+		// 20200214 Matthias: In the past we returned here 
+		// event.getTransition().getSymbol().toString()
+		return "e" + event.getSerialNumber() + ":" + event.getTransition().getSymbol().toString();
 	}
 }
