@@ -2,6 +2,7 @@
 
 // print(getAcceptedWord(net));
 
+// print(finitePrefix(net));
 print(removeDead(net));
 
 PetriNet net = (
@@ -15,7 +16,7 @@ PetriNet net = (
 		( {pl2 px1 } aDouble2 {pl3 px2 } )
 		( {pl4 } aNo2 {pl2 } )
 		( {pr2 px2 } aHalf2 {pr2 px1 } )
-		( {pl2   } a2Acc {pAcc } )
+		( {pl2 px2  } a2Acc {pAcc } )
 		( {pl2 } aNo1 {pl3 } )
 	},
 	initialMarking = {pl1 pr1 px1 },
