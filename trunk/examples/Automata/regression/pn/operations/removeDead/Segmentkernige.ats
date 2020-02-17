@@ -3,7 +3,7 @@
 //
 // Reveals bug in removeDead.
 // Do not consider co-related of all ancestors of accepting,
-// but only co-related of accepting places
+// but only co-related of accepting places.
 
 PetriNet vital = removeDead(net);
 assert(numberOfTransitions(vital) == 2);
