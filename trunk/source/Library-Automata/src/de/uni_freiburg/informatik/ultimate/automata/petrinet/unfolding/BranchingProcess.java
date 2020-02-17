@@ -480,6 +480,10 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	/**
 	 * We call a transition "vital" if there is an accepting firing sequence in
 	 * which this transition occurs.
+	 * <p>
+	 * 20200216 Matthias: Warning! Currently, this method computes only a superset
+	 * of the vital transitions.
+	 * </p>
 	 */
 	public Set<ITransition<LETTER, PLACE>> computeVitalTransitions() {
 		final HashRelation<Event<LETTER, PLACE>, Event<LETTER, PLACE>> companion2cutoff = new HashRelation<>();
@@ -531,10 +535,25 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 					worklist.add(pred);
 				}
 			}
-			for (final Event<LETTER, PLACE> eco : companion2cutoff.getImage(e)) {
-				if (!vitalEvents.contains(eco)) {
-					vitalEvents.add(eco);
-					worklist.add(eco);
+			for (final Event<LETTER, PLACE> eCutoff : companion2cutoff.getImage(e)) {
+				if (!vitalEvents.contains(eCutoff)) {
+					vitalEvents.add(eCutoff);
+					worklist.add(eCutoff);
+				}
+				// 20200216 Matthias: Workaround proposed by Mehdi that makes
+				// sure that we compute an overapproximation of the vital
+				// events. Idea: While jumping from a companion e' back to a
+				// cut-off event e, we loose the information which
+				// backward-reachable condition set that contains e' successors
+				// corresponds to which condition set that contains e
+				// successors. We add all co-related events of e to make sure
+				// that we do not miss a vital event and accept that we add
+				// non-vital events to the output.
+				for (final Event<LETTER, PLACE> eCorel : mCoRelation.computeCoRelatatedEvents(eCutoff)) {
+					if (!vitalEvents.contains(eCorel)) {
+						vitalEvents.add(eCorel);
+						worklist.add(eCorel);
+					}
 				}
 			}
 		}
