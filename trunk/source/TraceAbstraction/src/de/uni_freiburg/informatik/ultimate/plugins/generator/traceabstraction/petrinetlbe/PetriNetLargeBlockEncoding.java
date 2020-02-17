@@ -243,8 +243,12 @@ public class PetriNetLargeBlockEncoding {
 	}
 
 	private String generateTimeoutMessage(final BoundedPetriNet<IIcfgTransition<?>, IPredicate> petriNet) {
-		return "applying PetriNetLargeBlockEncoding to Petri net that " + petriNet.sizeInformation() + " and "
-				+ mCoEnabledRelation.size() + " co-enabled transitions pairs.";
+		if (mCoEnabledRelation == null) {
+			return "applying PetriNetLargeBlockEncoding to Petri net that " + petriNet.sizeInformation();
+		} else {
+			return "applying PetriNetLargeBlockEncoding to Petri net that " + petriNet.sizeInformation() + " and "
+					+ mCoEnabledRelation.size() + " co-enabled transitions pairs.";
+		}
 	}
 
 	private void transferMoverProperties(final IIcfgTransition<?> composition, final IIcfgTransition<?> t1,
