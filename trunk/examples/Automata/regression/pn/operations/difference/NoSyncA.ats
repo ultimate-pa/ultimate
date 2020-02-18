@@ -12,24 +12,35 @@ assert(!accepts(nwa, [a b c]));
 assert(accepts(nwa, [a c b]));
 assert(accepts(nwa, [c a b]));
 
-PetriNet difference = difference(net, nwa);
-assert(accepts(difference, [c]));
-assert(accepts(difference, [a b]));
-assert(accepts(difference, [a b c]));
-assert(!accepts(difference, [a c b]));
-assert(!accepts(difference, [c a b]));
+PetriNet differenceH = difference(net, nwa, "HEURISTIC");
+assert(accepts(differenceH, [c]));
+assert(accepts(differenceH, [a b]));
+assert(accepts(differenceH, [a b c]));
+assert(!accepts(differenceH, [a c b]));
+assert(!accepts(differenceH, [c a b]));
 
 // a can only be synced once
 // b should be omitted
 // c should be synced only once (using inverted method)
-assert(numberOfTransitions(difference) == 4);
+// assert(numberOfTransitions(differenceH) == 4);
+assert(numberOfTransitions(differenceH) == 3);
 
 // 5 places from petri net + 2 white places + 1 black place
-assert(numberOfPlaces(difference) == 9);
+// assert(numberOfPlaces(differenceH) == 9);
+assert(numberOfPlaces(differenceH) == 8);
 
 PetriNet differencePairwiseOnDemand = differencePairwiseOnDemand(net, nwa);
 assert(numberOfTransitions(differencePairwiseOnDemand) == 3);
 assert(numberOfPlaces(differencePairwiseOnDemand) == 7);
+
+PetriNet differenceP = difference(net, nwa, "PAIRWISE");
+assert(numberOfTransitions(differenceP) == 3);
+assert(numberOfPlaces(differenceP) == 7);
+
+PetriNet differenceI = difference(net, nwa, "INVERTED");
+assert(numberOfTransitions(differenceI) == 3);
+assert(numberOfPlaces(differenceI) == 9);
+
 
 PetriNet net = (
 	alphabet = {a b c},
