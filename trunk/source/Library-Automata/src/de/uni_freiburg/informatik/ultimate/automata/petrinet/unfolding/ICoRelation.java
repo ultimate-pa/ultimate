@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 import java.util.Collection;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
+
 /**
  * Represents the co-Relation in Occurrence nets.
  * <p>
@@ -150,4 +152,13 @@ public interface ICoRelation<LETTER, PLACE> {
 	Set<Condition<LETTER, PLACE>> computeNonCutoffCoRelatatedConditions(Condition<LETTER, PLACE> cond);
 
 	Set<Event<LETTER, PLACE>> computeCoRelatatedEvents(Condition<LETTER, PLACE> c);
+
+	default TreeHashRelation<Integer, Condition<LETTER, PLACE>> computeHistogramOfDegree(
+			final Iterable<Condition<LETTER, PLACE>> conditions) {
+		final TreeHashRelation<Integer, Condition<LETTER, PLACE>> result = new TreeHashRelation<>();
+		for (final Condition<LETTER, PLACE> c : conditions) {
+			result.addPair(computeCoRelatatedConditions(c).size(), c);
+		}
+		return result;
+	}
 }

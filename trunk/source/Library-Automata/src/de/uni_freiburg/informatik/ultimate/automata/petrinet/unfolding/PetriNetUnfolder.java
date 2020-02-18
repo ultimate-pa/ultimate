@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveUn
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
  * Petri net unfolder.
@@ -79,6 +81,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	private final PetriNetUnfolder<LETTER, PLACE>.Statistics mStatistics = new Statistics();
 
 	private static final boolean USE_FIRSTBORN_CUTOFF_CHECK = true;
+	private static final boolean DEBUG_LOG_CO_RELATION_DEGREE_HISTOGRAM = false;
 
 
 	/**
@@ -128,6 +131,17 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		computeUnfolding();
 		mLogger.info(mStatistics.prettyprintCutOffInformation());
 		mLogger.info(mStatistics.prettyprintCoRelationInformation());
+		if (DEBUG_LOG_CO_RELATION_DEGREE_HISTOGRAM) {
+			final TreeHashRelation<Integer, Condition<LETTER, PLACE>> histogram = mUnfolding.getCoRelation()
+					.computeHistogramOfDegree(mUnfolding.getConditions());
+			final StringBuilder sb = new StringBuilder();
+			sb.append("Histogram of co-relation degrees:" + System.lineSeparator());
+			for (final Entry<Integer, Condition<LETTER, PLACE>> pair : histogram.getSetOfPairs()) {
+				sb.append("Degree " + pair.getKey() + ": " + pair.getValue());
+				sb.append(System.lineSeparator());
+			}
+			mLogger.info(sb.toString());
+		}
 	}
 
 	public PetriNetUnfolder<LETTER, PLACE>.Statistics getUnfoldingStatistics() {
