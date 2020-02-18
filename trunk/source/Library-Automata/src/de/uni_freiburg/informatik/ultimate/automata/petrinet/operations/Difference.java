@@ -299,7 +299,9 @@ public final class Difference
 	 */
 	private boolean invertSyncWithSelfloops(final ITransition<LETTER, PLACE> oldTrans) {
 		return mLoopSyncMethod == LoopSyncMethod.INVERTED || (mLoopSyncMethod == LoopSyncMethod.HEURISTIC
-				&& mDsi.getSelfloops().getImage(oldTrans).size() >= mDsi.getStateChangers().getImage(oldTrans).size());
+				&& mDsi.getSelfloops().getImage(oldTrans).size() >= mDsi.getStateChangers().getImage(oldTrans).size())
+				|| (mLoopSyncMethod == LoopSyncMethod.PAIRWISE
+						&& !mDsi.getChangerLetters().contains(oldTrans.getSymbol()));
 	}
 
 	private Set<PLACE> requiredBlackPlaces() {
