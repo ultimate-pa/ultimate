@@ -55,11 +55,13 @@ public class Svcomp20AutomizerConcurrentSpeedBenchmarks extends AbstractTraceAbs
 		"examples/svcomp/ldv-races/race-4_2-thread_local_vars.i",
 		"examples/svcomp/pthread-wmm/mix041_pso.oepc.i",
 		"examples/svcomp/pthread-wmm/rfi005_pso.oepc.i",
-		"examples/svcomp/pthread/stack-2.i",
 		"examples/svcomp/pthread-atomic/read_write_lock-2.i",
 		"examples/svcomp/pthread-wmm/rfi004_rmo.oepc.i",
 		"examples/svcomp/pthread/triangular-longest-2.i",
 		"examples/svcomp/pthread/triangular-2.i",
+		
+		"examples/svcomp/pthread/singleton.i",
+		"examples/svcomp/pthread/stack-2.i",
 	};
 
 	private static final String[] BENCHMARKS_SAFE_32BIT = {
