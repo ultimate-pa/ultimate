@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -80,6 +81,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	private final IFinitePrefix2PetriNetStateFactory<PLACE> mStateFactory;
 	private final boolean mUsePetrification = false;
 	private final boolean mUseBackfoldingIds = false;
+	private static final boolean Remove_Dead = false;
 	private int mNumberOfCallsOfMergeCondidates = 0;
 	private int mNumberOfMergingCondidates = 0;
 	private int mNumberOfMergedEventPairs = 0;
@@ -220,8 +222,48 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		}
 		//final Set<Event<LETTER, PLACE>> releventEvents=new HashSet<>(mEventRepresentatives.getAllRepresentatives());
 		final Set<Event<LETTER, PLACE>> releventEvents=new HashSet<>(mEventRepresentatives.getAllRepresentatives());
-		releventEvents.remove(bp.getDummyRoot());
-		final Map<Event<LETTER, PLACE>, Integer> backfoldingId = new HashMap<>();
+		
+		
+		if (Remove_Dead) {
+			final HashRelation<Event<LETTER, PLACE>, Event<LETTER, PLACE>> companion2cutoff = new HashRelation<>();
+			for (final Event<LETTER, PLACE> e : bp.getEvents()) {
+				if (e.isCutoffEvent()) {
+					companion2cutoff.addPair(e.getCompanion(), e);
+				}
+			}
+			final Set<Event<LETTER,PLACE>> vitalEvents = new HashSet<>();
+			final ArrayDeque<Event<LETTER, PLACE>> worklist = new ArrayDeque<>();
+			for (final Condition<LETTER, PLACE> c: bp.getAcceptingConditions()) {// TODO: Try if the condition representatives are sufficient
+				final Event<LETTER, PLACE> predRepresentative = mEventRepresentatives.find(c.getPredecessorEvent());
+				if (vitalEvents.add(predRepresentative)) {
+					worklist.add(predRepresentative);
+				}
+				for (final Event<LETTER, PLACE> e : bp.getCoRelation().computeCoRelatatedEvents(c)) {
+					if (vitalEvents.add(mEventRepresentatives.find(e))) {
+						worklist.add(mEventRepresentatives.find(e));
+					}
+				}
+			}
+			while(!worklist.isEmpty()) {
+			final Event<LETTER, PLACE> representative = worklist.removeFirst();
+				for (Event<LETTER, PLACE> e : mEventRepresentatives.getEquivalenceClassMembers(representative)) {
+					for (final Event<LETTER, PLACE> predEvent: e.getPredecessorEvents()) {
+						final Event<LETTER, PLACE> predEventRep = mEventRepresentatives.find(predEvent);
+						if (vitalEvents.add(predEventRep)) {
+							worklist.add(predEventRep);
+						}
+					}
+					for (final Event<LETTER, PLACE> cutoffEvent: companion2cutoff.getImage(e)) {
+						final Event<LETTER, PLACE> cutoffEventRep = mEventRepresentatives.find(cutoffEvent);
+						if (vitalEvents.add(cutoffEventRep)) {
+							worklist.add(cutoffEventRep);
+						}
+					}
+				}
+			}
+			releventEvents.retainAll(vitalEvents);
+		}
+		/*final Map<Event<LETTER, PLACE>, Integer> backfoldingId = new HashMap<>();
 
 		if (mUseBackfoldingIds) {
 			final ArrayList<Event<LETTER, PLACE>> eventList = new ArrayList<>(bp.getEvents());
@@ -245,7 +287,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				i++;
 			}
 		}
-
+		*/
 		/*for (Event<LETTER, PLACE>e1: releventEvents) {
 			for (Event<LETTER, PLACE>e2: releventEvents) {
 				assert e1.equals(e2) || !(e1.getTransition().equals(e2.getTransition())&&(mConditionRepresentatives.find(e1.getPredecessorConditions())
@@ -260,8 +302,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			if (c == mConditionRepresentatives.find(c)) {
 				final boolean isInitial = containsInitial(mConditionRepresentatives.getEquivalenceClassMembers(c),
 						bp.initialConditions());
-				final boolean isAccepting = containsAccepting(mConditionRepresentatives.getEquivalenceClassMembers(c),
-						bp.getNet());
+				final boolean isAccepting =	bp.getNet().isAccepting(c.getPlace());
 				final PLACE place = mStateFactory.finitePrefix2net(c);
 				final boolean newlyAdded = mNet.addPlace(place, isInitial, isAccepting);
 				if (!newlyAdded) {
@@ -271,7 +312,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			}
 		}
 
-		if (mUseBackfoldingIds) {
+		/*if (mUseBackfoldingIds) {
 			final Comparator<Event<LETTER, PLACE>> idBasedComparator = new IdBasedEventSorting(backfoldingId);
 			final PriorityQueue<Event<LETTER, PLACE>> eventQueue = new PriorityQueue<>(idBasedComparator);
 			eventQueue.addAll(releventEvents);
@@ -294,21 +335,23 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				mNet.addTransition(e.getTransition().getSymbol(), preds, succs);
 			}
 		} else {
-			for (final Event<LETTER, PLACE> e : releventEvents) {
-				final Set<PLACE> preds = new HashSet<>();
-				final Set<PLACE> succs = new HashSet<>();
+		*/
+		releventEvents.remove(bp.getDummyRoot());
+		for (final Event<LETTER, PLACE> e : releventEvents) {
+			final Set<PLACE> preds = new HashSet<>();
+			final Set<PLACE> succs = new HashSet<>();
 
-				for (final Condition<LETTER, PLACE> c : e.getPredecessorConditions()) {
-					final Condition<LETTER, PLACE> representative = mConditionRepresentatives.find(c);
-					preds.add(placeMap.get(representative));
-				}
-				for (final Condition<LETTER, PLACE> c : e.getSuccessorConditions()) {
-					final Condition<LETTER, PLACE> representative = mConditionRepresentatives.find(c);
-					succs.add(placeMap.get(representative));
-				}
-				mNet.addTransition(e.getTransition().getSymbol(), preds, succs, e.getTotalOrderId());
+			for (final Condition<LETTER, PLACE> c : e.getPredecessorConditions()) {
+				final Condition<LETTER, PLACE> representative = mConditionRepresentatives.find(c);
+				preds.add(placeMap.get(representative));
 			}
+			for (final Condition<LETTER, PLACE> c : e.getSuccessorConditions()) {
+				final Condition<LETTER, PLACE> representative = mConditionRepresentatives.find(c);
+				succs.add(placeMap.get(representative));
+			}
+			mNet.addTransition(e.getTransition().getSymbol(), preds, succs, e.getTotalOrderId());
 		}
+		//}
 		/*{
 			final TransitionSet transitionSet = new TransitionSet();
 			for (final Event<LETTER, PLACE> e : releventEvents) {

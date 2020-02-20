@@ -599,4 +599,8 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	public String toString() {
 		return (AutomatonDefinitionPrinter.toString(mServices, "branchingProcess", this));
 	}
+
+	public Collection<Condition<LETTER,PLACE>> getAcceptingConditions() {
+		return mConditions.stream().filter(c-> mNet.isAccepting(c.getPlace())).collect(Collectors.toSet());
+	}
 }
