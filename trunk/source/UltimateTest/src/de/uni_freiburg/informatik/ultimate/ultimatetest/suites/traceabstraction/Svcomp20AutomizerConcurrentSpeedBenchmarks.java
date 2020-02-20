@@ -51,23 +51,47 @@ public class Svcomp20AutomizerConcurrentSpeedBenchmarks extends AbstractTraceAbs
 
 	// @formatter:off
 	private static final String[] BENCHMARKS_UNSAFE_32BIT = {
-		"examples/svcomp/ldv-races/race-2_3-container_of.i",
 		"examples/svcomp/ldv-races/race-4_2-thread_local_vars.i",
-		"examples/svcomp/pthread-wmm/mix041_pso.oepc.i",
-		"examples/svcomp/pthread-wmm/rfi005_pso.oepc.i",
+//		"examples/svcomp/pthread-wmm/mix041_pso.oepc.i",
+//		"examples/svcomp/pthread-wmm/rfi005_pso.oepc.i",
 		"examples/svcomp/pthread-atomic/read_write_lock-2.i",
-		"examples/svcomp/pthread-wmm/rfi004_rmo.oepc.i",
-		"examples/svcomp/pthread/triangular-longest-2.i",
+//		"examples/svcomp/pthread-wmm/rfi004_rmo.oepc.i",
+
+//		"examples/svcomp/pthread/triangular-longest-2.i",
 		"examples/svcomp/pthread/triangular-2.i",
-		
+
+		"examples/svcomp/ldv-races/race-2_3-container_of.i", //only LBE neestime
 		"examples/svcomp/pthread/singleton.i",
 		"examples/svcomp/pthread/stack-2.i",
+		"examples/svcomp/ldv-races/race-2_2-container_of.i",
+		"examples/svcomp/ldv-races/race-3_2-container_of-global.i",
+//		"examples/svcomp/",
+//
+//		"examples/svcomp/",
+//		"examples/svcomp/",
+//
+//		"examples/svcomp/",
+//		"examples/svcomp/",
+
+
+
+		"examples/svcomp/pthread-atomic/read_write_lock-2.i",
 	};
 
 	private static final String[] BENCHMARKS_SAFE_32BIT = {
+		"examples/svcomp/ldv-races/race-2_1-container_of.i",
+		"examples/svcomp/ldv-races/race-4_2-thread_local_vars.i",
+//		"examples/svcomp/",
+//		"examples/svcomp/",
+//		"examples/svcomp/",
+
+//		"examples/svcomp/triangular-longer-1.i",
+
+		"examples/svcomp/pthread-atomic/qrcu-1.i",
+		"examples/svcomp/pthread/triangular-1.i",
 		"examples/svcomp/ldv-races/race-4_1-thread_local_vars.i",
+
 		"examples/svcomp/pthread-atomic/read_write_lock-1.i",
-		"examples/svcomp/pthread/triangular-1.i"
 	};
 
 	@Override
