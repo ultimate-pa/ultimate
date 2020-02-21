@@ -3253,7 +3253,9 @@ public class CHandler {
 						mReporter.unsupportedSyntax(loc, msg);
 					}
 				}
-			} // TODO: deal with other global ACSL stuff
+			}
+			// TODO: deal with other global ACSL stuff
+
 		} else if (mAcsl.getSuccessorCNode() == null) {
 			if (parent != null && compoundStatement && next == null) {
 				// ACSL at the end of a function or at the end of the last statement in a switch
@@ -3263,30 +3265,39 @@ public class CHandler {
 				// example: int s = 1; switch (s) { case 0: s++; //@ assert \false; } will yield
 				// a unsafe boogie program
 				for (final ACSLNode acslNode : mAcsl.getAcsl()) {
-					if (parent.getFileLocation().getEndingLineNumber() <= acslNode.getStartingLineNumber()) {
+					final int parentLineEnd = parent.getFileLocation().getEndingLineNumber();
+					final int aclsLineStart = acslNode.getStartingLineNumber();
+					if (parentLineEnd <= aclsLineStart) {
 						// handle later ...
 						return;
-					} else if (parent.getFileLocation().getEndingLineNumber() >= acslNode.getEndingLineNumber()
-							&& parent.getFileLocation().getStartingLineNumber() <= acslNode.getStartingLineNumber()) {
-						final Result acslResult = main.dispatch(acslNode, parent);
-						if (acslResult instanceof ExpressionResult) {
-							resultBuilder.addDeclarations(((ExpressionResult) acslResult).getDeclarations());
-							resultBuilder.addStatements(((ExpressionResult) acslResult).getStatements());
-							resultBuilder.addStatements(CTranslationUtil
-									.createHavocsForAuxVars(((ExpressionResult) acslResult).getAuxVars()));
-							try {
-								mAcsl = main.nextACSLStatement();
-							} catch (final ParseException e1) {
-								final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-								final ILocation loc = mLocationFactory.createCLocation(parent);
-								mReporter.unsupportedSyntax(loc, msg);
-							}
-						} else {
-							final String msg = "Unexpected ACSL comment: " + acslResult.getNode().getClass();
-							final ILocation loc = mLocationFactory.createCLocation(parent);
-							throw new IncorrectSyntaxException(loc, msg);
-						}
 					}
+					final int parentLineStart = parent.getFileLocation().getStartingLineNumber();
+					final int acslLineEnd = acslNode.getEndingLineNumber();
+					if (parentLineEnd < acslLineEnd || parentLineStart > aclsLineStart) {
+						// TODO: DD: It seems strange that we may skip a single acslNode in this case
+						continue;
+					}
+
+					final Result acslResult = main.dispatch(acslNode, parent);
+					if (acslResult instanceof ExpressionResult) {
+						resultBuilder.addDeclarations(((ExpressionResult) acslResult).getDeclarations());
+						resultBuilder.addStatements(((ExpressionResult) acslResult).getStatements());
+						resultBuilder.addStatements(
+								CTranslationUtil.createHavocsForAuxVars(((ExpressionResult) acslResult).getAuxVars()));
+
+					} else {
+						final String msg = "Unexpected ACSL comment: " + acslResult.getNode().getClass();
+						final ILocation loc = mLocationFactory.createCLocation(parent);
+						throw new IncorrectSyntaxException(loc, msg);
+					}
+				}
+
+				try {
+					mAcsl = main.nextACSLStatement();
+				} catch (final ParseException e1) {
+					final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
+					final ILocation loc = mLocationFactory.createCLocation(parent);
+					mReporter.unsupportedSyntax(loc, msg);
 				}
 			}
 
