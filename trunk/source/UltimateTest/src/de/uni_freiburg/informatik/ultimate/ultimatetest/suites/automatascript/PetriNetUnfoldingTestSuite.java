@@ -88,6 +88,7 @@ public class PetriNetUnfoldingTestSuite extends UltimateTestSuite {
 //			"AutomataScript/finitePrefix2PetriNetB.epf"
 //			"AutomataScript/removeUnreachable.epf",
 //			"AutomataScript/removeDead.epf",
+//			"AutomataScript/removeRedundantFlow.epf",
 			};
 
 	private static final String[] INTERESTING_COLUMNS = {
@@ -123,6 +124,7 @@ public class PetriNetUnfoldingTestSuite extends UltimateTestSuite {
 			"finitePrefix2PetriNet",
 			"removeUnreachable",
 			"removeDead",
+			"removeRedundantFlow",
 	};
 
 	private static final Set<Object> INTERESTING_OPERATIONS_AS_SET =
