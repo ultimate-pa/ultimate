@@ -144,14 +144,14 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 		for(final Transition transition: phaseList.get(sourceIndex).getTransitions()) {
 			final Integer destIndex = phaseList.indexOf(transition.getDest());
 			if(mPea2EffectStore.get(pea).isEffectEdge(sourceIndex, destIndex)) {
-				disjuncts.add(genTransitionSucceedingTracking(pea, sourceIndex, destIndex, phaseList));
+				disjuncts.add(genTransitionSucceedingTracking(pea, sourceIndex, destIndex));
 			}
 		}
 		return disjuncts;
 	}
 
 	private Expression genTransitionSucceedingTracking(final PhaseEventAutomata pea, final Integer sourceIndex,
-			final Integer destIndex, final List<Phase> phaseList) {
+			final Integer destIndex) {
 		final Expression thisExpr = new BinaryExpression(
 				mLocation,
 				BinaryExpression.Operator.COMPEQ,
@@ -163,7 +163,6 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 				mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea) + "'"),
 				new IntegerLiteral(mLocation, Integer.toString(destIndex)));
 		final Expression expr = new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND, thisExpr, nextExpr);
-		mLogger.error(expr.toString());
 		return expr;
 	}
 
@@ -185,14 +184,13 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 
 		//for(final Map.Entry<PhaseEventAutomata, Set<Integer>> entry: pea2OutputEffectPhase.entrySet()) {
 		for(final Map.Entry<PhaseEventAutomata, ReqEffectStore> entry: mPea2EffectStore.entrySet()) {
-			statements.addAll(genTestAssertion(entry.getKey(), entry.getValue().getOutputEffectPhaseIndex()));
+			statements.addAll(genTestPhaseEffectAssertion(entry.getKey(), entry.getValue().getOutputEffectPhaseIndex()));
+			statements.addAll(genTestEdgeEffectAssertion(entry.getKey(), entry.getValue().getEffectEdges()));
 		}
 		return statements;
 	}
 
-	private List<Statement> genTestAssertion(final PhaseEventAutomata pea, final Set<Integer> effectPhases){
-		//TODO see trackingFlags on edges, same here for the regarding automta
-		// for effects on edges use pc== /\ u_v so we know we walked over the edge and are in the state the effect maifests in
+	private List<Statement> genTestPhaseEffectAssertion(final PhaseEventAutomata pea, final Set<Integer> effectPhases){
 		final List<Statement> statements = new ArrayList<Statement>();
 		for (final Integer phaseNr: effectPhases) {
 			final Expression expr = new BinaryExpression(
@@ -206,6 +204,36 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 					new AssertStatement(mLocation, attr, new UnaryExpression(mLocation, Operator.LOGICNEG, expr));
 			statements.add(assrt);
 		}
+		return statements;
+	}
+
+	private List<Statement> genTestEdgeEffectAssertion(final PhaseEventAutomata pea, final Map<Integer, Integer> effectEdges){
+		// for effects on edges use pc== /\ u_v so we know we walked over the edge and are in the state the effect maifests in
+		final List<Statement> statements = new ArrayList<Statement>();
+		for (final Map.Entry<Integer, Integer> edgeIndexes: effectEdges.entrySet()) {
+			final String testName = "prefail_"+pea.getName()+Integer.toString(edgeIndexes.getValue())+"_"+ Integer.toString(edgeIndexes.getKey())+"'";
+			final Expression thisExpr = new BinaryExpression(
+					mLocation,
+					BinaryExpression.Operator.COMPEQ,
+					mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea)),
+					new IntegerLiteral(mLocation, Integer.toString(edgeIndexes.getKey())));
+			final Expression nextExpr = new BinaryExpression(
+					mLocation,
+					BinaryExpression.Operator.COMPEQ,
+					mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea) + "'"),
+					new IntegerLiteral(mLocation, Integer.toString(edgeIndexes.getValue())));
+			final Expression expr = new BinaryExpression(
+					mLocation,
+					BinaryExpression.Operator.LOGICIMPLIES,
+					mSymbolTable.getIdentifierExpression(testName),
+					new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND, thisExpr, nextExpr));
+			statements.add(new AssumeStatement(mLocation, expr));
+			final NamedAttribute[] attr =
+					new NamedAttribute[] { new NamedAttribute(mLocation, TEST_ASSERTION_PREFIX + pea.getName(), new Expression[] {}) };
+			final Statement assrt = new AssertStatement(mLocation, attr, new UnaryExpression(mLocation, Operator.LOGICNEG, mSymbolTable.getIdentifierExpression(testName)));
+			statements.add(assrt);
+		}
+
 		return statements;
 	}
 
