@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Set;
+import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -66,83 +67,68 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 
 	private final IPetriNet<LETTER, PLACE> mOperand;
 	private BranchingProcess<LETTER, PLACE> mFinPre;
+	final HashRelation<ITransition<LETTER, PLACE>, PLACE> mRedundantSelfloopFlow = new HashRelation<>();
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
 	public RemoveRedundantFlow(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		this(services, operand, null, false);
+		this(services, operand, null);
 	}
 
 	public RemoveRedundantFlow(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand,
-			final BranchingProcess<LETTER, PLACE> finPre, final boolean keepUselessSuccessorPlaces)
+			final BranchingProcess<LETTER, PLACE> finPre)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
+		printStartMessage();
 		if (finPre != null) {
 			mFinPre = finPre;
 		} else {
 			mFinPre = new FinitePrefix<LETTER, PLACE>(services, operand).getResult();
 		}
-		printStartMessage();
-		final HashRelation<ITransition<LETTER, PLACE>, Event<LETTER, PLACE>> transition2event = computeTransitionEventRelation(
-				mFinPre.getEvents());
 		final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow = new HashRelation<>();
 		for (final ITransition<LETTER, PLACE> t : operand.getTransitions()) {
-			final Set<Event<LETTER, PLACE>> events = transition2event.getImage(t);
 			for (final PLACE p : operand.getPredecessors(t)) {
-				if (operand.getInitialPlaces().contains(p)) {
-					// do nothing
-					// flow from initial should not be redundant (yet)
-				} else {
-					final boolean isFlowRedundant = isFlowRedundant(t, p, events, redundantFlow);
-					if (isFlowRedundant) {
-						redundantFlow.addPair(t, p);
+				final boolean isFlowRedundant = isFlowRedundant(t, p, redundantFlow);
+				if (isFlowRedundant) {
+					redundantFlow.addPair(t, p);
+					if (operand.getSuccessors(t).contains(p)) {
+						mRedundantSelfloopFlow.addPair(t, p);
 					}
 				}
 			}
-
 		}
-		mResult = copy(mOperand, redundantFlow);
+		mResult = copy(mOperand, mRedundantSelfloopFlow);
 		printExitMessage();
 	}
 
 	private BoundedPetriNet<LETTER, PLACE> copy(final IPetriNet<LETTER, PLACE> operand,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow) {
+			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantSelfloopFlow) {
 		final BoundedPetriNet<LETTER, PLACE> result = new BoundedPetriNet<>(mServices, operand.getAlphabet(), false);
 		for (final PLACE p : operand.getPlaces()) {
 			result.addPlace(p, operand.getInitialPlaces().contains(p), operand.isAccepting(p));
 		}
 		for (final ITransition<LETTER, PLACE> t : operand.getTransitions()) {
 			final HashSet<PLACE> preds = new HashSet<>(operand.getPredecessors(t));
-			preds.removeAll(redundantFlow.getImage(t));
-			result.addTransition(t.getSymbol(), preds, operand.getSuccessors(t));
+			preds.removeAll(redundantSelfloopFlow.getImage(t));
+			final HashSet<PLACE> succs = new HashSet<>(operand.getSuccessors(t));
+			succs.removeAll(redundantSelfloopFlow.getImage(t));
+			result.addTransition(t.getSymbol(), preds, succs);
 		}
 		return result;
 	}
 
-	private boolean isFlowRedundant(final ITransition<LETTER, PLACE> t, final PLACE p,
-			final Set<Event<LETTER, PLACE>> events,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow) {
-		for (final Event<LETTER, PLACE> e : events) {
-			final Condition<LETTER, PLACE> pCondition = selectCondition(e.getPredecessorConditions(), p);
-			final boolean isFlowRedundant = isFlowRedundant(e, pCondition, redundantFlow);
-			if (!isFlowRedundant) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private boolean isFlowRedundant(final Event<LETTER, PLACE> e, final Condition<LETTER, PLACE> pCondition,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow) {
-		for (final Condition<LETTER, PLACE> c : e.getPredecessorConditions()) {
-			if (!c.equals(pCondition)) {
-				if (redundantFlow.containsPair(e.getTransition(), c.getPlace())) {
+	private boolean isFlowRedundant(final ITransition<LETTER, PLACE> t, final PLACE redundancyCandidate,
+			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow)
+			throws AutomataOperationCanceledException {
+		for (final PLACE p : mOperand.getPredecessors(t)) {
+			if (!p.equals(redundancyCandidate)) {
+				if (redundantFlow.containsPair(t, p)) {
 					// do nothing
 					// must not use flow that is already marked for removal
 				} else {
-					final boolean isFlowRestrictor = isFlowRestrictor(e, c, pCondition);
-					if (isFlowRestrictor) {
+					final boolean isRestrictorPlace = isRestrictorPlace(redundancyCandidate, p);
+					if (isRestrictorPlace) {
 						return true;
 					}
 				}
@@ -151,17 +137,33 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		return false;
 	}
 
-	private boolean isFlowRestrictor(final Event<LETTER, PLACE> e, final Condition<LETTER, PLACE> c,
-			final Condition<LETTER, PLACE> pCondition) {
-		if (!c.getPredecessorEvent().getConditionMark().contains(pCondition)) {
-			return false;
+	private boolean isRestrictorPlace(final PLACE redundancyCandidate, final PLACE restrictorCandidate)
+			throws AutomataOperationCanceledException {
+		for (final Condition<LETTER, PLACE> restrictorCondition : mFinPre.place2cond(restrictorCandidate)) {
+			final boolean isRestrictorCondition = isRestrictorCondition(restrictorCondition, redundancyCandidate,
+					mFinPre.getCoRelation());
+			if (!isRestrictorCondition) {
+				return false;
+			}
 		}
-		return pCondition.getSuccessorEvents().size() == 1;
+		return true;
 	}
 
-	private Condition<LETTER, PLACE> selectCondition(final Set<Condition<LETTER, PLACE>> predecessorConditions,
-			final PLACE p) {
-		return predecessorConditions.stream().filter(c -> c.getPlace().equals(p)).findFirst().get();
+	private boolean isRestrictorCondition(final Condition<LETTER, PLACE> restrictorCandidateCondition,
+			final PLACE redundancyCandidate, final ICoRelation<LETTER, PLACE> coRelation)
+			throws AutomataOperationCanceledException {
+		if (timeout()) {
+			throw new AutomataOperationCanceledException(getClass());
+		}
+		final Optional<Condition<LETTER, PLACE>> redundancyCandidateCondition = restrictorCandidateCondition
+				.getPredecessorEvent().getConditionMark().stream().filter(x -> x.getPlace().equals(redundancyCandidate))
+				.findAny();
+		if (!redundancyCandidateCondition.isPresent()) {
+			return false;
+		}
+		final boolean isRestrictorCondition = redundancyCandidateCondition.get().getSuccessorEvents().stream()
+				.allMatch(x -> !coRelation.isInCoRelation(restrictorCandidateCondition, x));
+		return isRestrictorCondition;
 	}
 
 	private HashRelation<ITransition<LETTER, PLACE>, Event<LETTER, PLACE>> computeTransitionEventRelation(
@@ -201,7 +203,8 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + this.getClass().getSimpleName() + ", result has " + mResult.sizeInformation();
+		return "Finished " + this.getClass().getSimpleName() + ", result has " + mResult.sizeInformation()
+				+ ", removed " + mRedundantSelfloopFlow.size() + " flow.";
 	}
 
 	@Override
