@@ -362,9 +362,10 @@ def __set_unknowns(results, file, timeout_ymls, oom_ymls):
     real_results = []
     for r in results:
         if r.result is None:
-            if any(f in file for f in timeout_ymls):
+            basename = ntpath.basename(file)
+            if any(f == basename for f in timeout_ymls):
                 real_results += [Result((str_benchexec_timeout, '...'), r.call, r.version)]
-            elif any(f in file for f in oom_ymls):
+            elif any(f == basename for f in oom_ymls):
                 real_results += [Result((str_benchexec_oom, '...'), r.call, r.version)]
             else:
                 real_results += [Result((str_no_result_unknown, file), r.call, r.version)]
@@ -423,6 +424,32 @@ def process_input_dir(input_dir, timeout_ymls, oom_ymls):
     return log_file_count, results
 
 
+def __get_out_of_ressources_ymls(input_dir):
+    xml_files = [f for f in __list_xml_filepaths(input_dir)]
+    if len(xml_files) == 0:
+        print('There are no benchexec .xml files in {}, cannot exclude timeouts properly'.format(input_dir))
+        return []
+
+    timeout_ymls = []
+    oom_ymls = []
+    for xml in __list_xml_filepaths(input_dir):
+        root = ET.parse(xml).getroot()
+        result = root.find(".")
+        name = result.attrib["name"].split('.')
+        toolname = name[0]
+        for elem in root.findall(".//run"):
+            # files = elem.attrib["files"]
+            yml = elem.attrib["name"]
+            base_yml = ntpath.basename(yml)
+            status = elem.find("./column[@title='status']").attrib["value"]
+            logfile_name = "{}.{}.log".format(toolname, base_yml)
+            if status == "TIMEOUT":
+                timeout_ymls += [logfile_name]
+            elif status == "OUT OF MEMORY":
+                oom_ymls += [logfile_name]
+    return timeout_ymls, oom_ymls
+
+
 def main():
     args = parse_args()
     input_dir = args.input[0]
@@ -441,28 +468,6 @@ def main():
                                                                               str_benchexec_timeout, len(oom_ymls),
                                                                               str_benchexec_oom))
     print_results(results)
-
-
-def __get_out_of_ressources_ymls(input_dir):
-    xml_files = [f for f in __list_xml_filepaths(input_dir)]
-    if len(xml_files) == 0:
-        print('There are no benchexec .xml files in {}, cannot exclude timeouts properly'.format(input_dir))
-        return []
-
-    timeout_ymls = []
-    oom_ymls = []
-    for xml in __list_xml_filepaths(input_dir):
-        root = ET.parse(xml).getroot()
-        for elem in root.findall(".//run"):
-            # files = elem.attrib["files"]
-            yml = elem.attrib["name"]
-            base_yml = ntpath.basename(yml)
-            status = elem.find("./column[@title='status']").attrib["value"]
-            if status == "TIMEOUT":
-                timeout_ymls += [base_yml]
-            elif status == "OUT OF MEMORY":
-                oom_ymls += [base_yml]
-    return timeout_ymls, oom_ymls
 
 
 if __name__ == "__main__":
