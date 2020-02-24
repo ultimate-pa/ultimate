@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Differen
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferenceSynchronizationInformation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveRedundantFlow;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix2PetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder;
@@ -127,7 +128,8 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	/**
 	 * Remove unreachable nodes of mAbstraction in each iteration.
 	 */
-	private final boolean mRemoveUnreachable = true;
+	private final boolean mRemoveUnreachable = false;
+	private final boolean mRemoveRedundantFlow = false;
 
 	private PetriNetLargeBlockEncoding mLBE;
 
@@ -324,7 +326,8 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 				statesRemovedByMinimization = placesBefore - placesAfterwards;
 				transitionsRemovedByMinimization = transitionsBefore - transitionsAfterwards;
 				if (transitionsAfterwards != transitionsBefore) {
-					throw new AssertionError("removed transitions: " + transitionsRemovedByMinimization);
+					throw new AssertionError("removed transitions: " + transitionsRemovedByMinimization + " Iteration "
+							+ mIteration + " Abstraction has " + mAbstraction.sizeInformation());
 				}
 				nontrivialMinimizaton = true;
 			} finally {
@@ -340,6 +343,9 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 				super.writeAutomatonToFile(mAbstraction, filename);
 			}
 			mAbstraction = removeUnreachableResult;
+		}
+		if (mRemoveRedundantFlow) {
+			mAbstraction = new RemoveRedundantFlow(new AutomataLibraryServices(mServices), (IPetriNet) mAbstraction).getResult();
 		}
 
 		if (mPref.unfoldingToNet()) {
