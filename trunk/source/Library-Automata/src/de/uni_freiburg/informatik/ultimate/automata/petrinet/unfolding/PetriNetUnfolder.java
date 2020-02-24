@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHash
  */
 public final class PetriNetUnfolder<LETTER, PLACE> {
 	private static final boolean EXTENDED_ASSERTION_CHECKING = false;
-	private static final boolean B32_OPTIMIZATION = false;
+	private static final boolean B32_OPTIMIZATION = true;
 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
