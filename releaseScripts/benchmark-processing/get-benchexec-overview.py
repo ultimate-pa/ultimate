@@ -97,9 +97,11 @@ known_wrapper_errors = {
 
 str_no_result_unknown = "Unknown"
 str_benchexec_timeout = "Timeout by benchexec"
+str_benchexec_oom = "OOM by benchexec"
 
 version_matcher = re.compile('^.*(\d+\.\d+\.\d+-\w+).*$')
-order = [known_exceptions, known_timeouts, {str_benchexec_timeout: True}, known_unsafe, known_unknown, known_safe,
+order = [known_exceptions, known_timeouts, {str_benchexec_timeout: True, str_benchexec_oom: True}, known_unsafe,
+         known_unknown, known_safe,
          known_wrapper_errors]
 interesting_strings = reduce(lambda x, y: dict(x, **y), order)
 
@@ -356,12 +358,14 @@ def print_results(results):
         print(msg)
 
 
-def __set_unknowns(results, file, timeout_ymls):
+def __set_unknowns(results, file, timeout_ymls, oom_ymls):
     real_results = []
     for r in results:
         if r.result is None:
             if any(f in file for f in timeout_ymls):
                 real_results += [Result((str_benchexec_timeout, '...'), r.call, r.version)]
+            elif any(f in file for f in oom_ymls):
+                real_results += [Result((str_benchexec_oom, '...'), r.call, r.version)]
             else:
                 real_results += [Result((str_no_result_unknown, file), r.call, r.version)]
         else:
@@ -384,24 +388,25 @@ def __list_xml_filepaths(input_dir):
             yield file
 
 
-def consume_task(queue, results, timeout_ymls):
+def consume_task(queue, results, timeout_ymls, oom_ymls):
     while True:
         path = queue.get()
         if path is None:
             break
-        tmp_result = __set_unknowns(process_log_file(path), path, timeout_ymls)
+        tmp_result = __set_unknowns(process_log_file(path), path, timeout_ymls, oom_ymls)
         results += tmp_result
 
 
-def process_input_dir(input_dir, timeout_ymls):
+def process_input_dir(input_dir, timeout_ymls, oom_ymls):
     results = multiprocessing.Manager().list()
     if os.path.isfile(input_dir):
-        results += __set_unknowns(process_log_file(input_dir), input_dir, timeout_ymls)
+        results += __set_unknowns(process_log_file(input_dir), input_dir, timeout_ymls, oom_ymls)
         log_file_count = 1
     else:
         local_cores = max(multiprocessing.cpu_count() - 4, 1)
         queue = multiprocessing.Queue(maxsize=local_cores)
-        pool = multiprocessing.Pool(local_cores, initializer=consume_task, initargs=(queue, results, timeout_ymls))
+        pool = multiprocessing.Pool(local_cores, initializer=consume_task,
+                                    initargs=(queue, results, timeout_ymls, oom_ymls))
 
         progress_bar = tqdm([i for i in __list_logfile_paths_in_dir(input_dir)])
         log_file_count = len(progress_bar)
@@ -422,8 +427,8 @@ def main():
     args = parse_args()
     input_dir = args.input[0]
 
-    timeout_ymls = get_timeout_ymls(input_dir)
-    log_file_count, results = process_input_dir(input_dir, timeout_ymls)
+    timeout_ymls, oom_ymls = __get_out_of_ressources_ymls(input_dir)
+    log_file_count, results = process_input_dir(input_dir, timeout_ymls, oom_ymls)
 
     if log_file_count > len(results):
         print(
@@ -431,18 +436,21 @@ def main():
                                                                                                    len(results)))
     else:
         print(
-            'Overview of {} results from {} .log files ({} {})'.format(len(results), log_file_count, len(timeout_ymls),
-                                                                       str_benchexec_timeout))
+            'Overview of {} results from {} .log files ({} {}, {} {})'.format(len(results), log_file_count,
+                                                                              len(timeout_ymls),
+                                                                              str_benchexec_timeout, len(oom_ymls),
+                                                                              str_benchexec_oom))
     print_results(results)
 
 
-def get_timeout_ymls(input_dir):
+def __get_out_of_ressources_ymls(input_dir):
     xml_files = [f for f in __list_xml_filepaths(input_dir)]
     if len(xml_files) == 0:
         print('There are no benchexec .xml files in {}, cannot exclude timeouts properly'.format(input_dir))
         return []
 
     timeout_ymls = []
+    oom_ymls = []
     for xml in __list_xml_filepaths(input_dir):
         root = ET.parse(xml).getroot()
         for elem in root.findall(".//run"):
@@ -452,7 +460,9 @@ def get_timeout_ymls(input_dir):
             status = elem.find("./column[@title='status']").attrib["value"]
             if status == "TIMEOUT":
                 timeout_ymls += [base_yml]
-    return timeout_ymls
+            elif status == "OUT OF MEMORY":
+                oom_ymls += [base_yml]
+    return timeout_ymls, oom_ymls
 
 
 if __name__ == "__main__":
