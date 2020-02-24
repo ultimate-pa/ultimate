@@ -3,10 +3,12 @@
 import argparse
 import collections
 import multiprocessing
+import ntpath
 import os
 import re
 import signal
 import sys
+import xml.etree.ElementTree as ET
 from functools import reduce
 
 from tqdm import tqdm
@@ -93,8 +95,12 @@ known_wrapper_errors = {
     "Skipped default analysis because property is memsafety": True,
 }
 
+str_no_result_unknown = "Unknown"
+str_benchexec_timeout = "Timeout by benchexec"
+
 version_matcher = re.compile('^.*(\d+\.\d+\.\d+-\w+).*$')
-order = [known_exceptions, known_timeouts, known_unsafe, known_unknown, known_safe, known_wrapper_errors]
+order = [known_exceptions, known_timeouts, {str_benchexec_timeout: True}, known_unsafe, known_unknown, known_safe,
+         known_wrapper_errors]
 interesting_strings = reduce(lambda x, y: dict(x, **y), order)
 
 enable_debug = False
@@ -330,7 +336,7 @@ def print_results(results):
     inner_counter = collections.Counter()
     processed = {}
     for r in results:
-        if r.result[0] == 'Unknown' or not interesting_strings[r.result[0]]:
+        if r.result[0] == str_no_result_unknown or not interesting_strings[r.result[0]]:
             key = r.result[1]
         else:
             key = r.result[0]
@@ -350,46 +356,58 @@ def print_results(results):
         print(msg)
 
 
-def set_unknowns(results, file):
-    return list(
-        map(lambda x: Result(("Unknown", file), x.call, x.version) if x.result is None else x, results))
+def __set_unknowns(results, file, timeout_ymls):
+    real_results = []
+    for r in results:
+        if r.result is None:
+            if any(f in file for f in timeout_ymls):
+                real_results += [Result((str_benchexec_timeout, '...'), r.call, r.version)]
+            else:
+                real_results += [Result((str_no_result_unknown, file), r.call, r.version)]
+        else:
+            real_results += [r]
+    return real_results
 
 
-def __list_paths_in_dir(input):
-    for dirpath, dirnames, files in os.walk(input):
+def __list_logfile_paths_in_dir(input_dir):
+    for dirpath, dirnames, files in os.walk(input_dir):
         for file in files:
             if not file.endswith('.log'):
                 continue
             yield os.path.join(dirpath, file)
 
 
-def consume_task(queue, results):
+def __list_xml_filepaths(input_dir):
+    for xml in os.listdir(input_dir):
+        file = os.path.join(input_dir, xml)
+        if os.path.isfile(file) and file.endswith('.xml'):
+            yield file
+
+
+def consume_task(queue, results, timeout_ymls):
     while True:
         path = queue.get()
         if path is None:
             break
-        tmp_result = set_unknowns(process_log_file(path), path)
+        tmp_result = __set_unknowns(process_log_file(path), path, timeout_ymls)
         results += tmp_result
 
 
-def main():
-    args = parse_args()
-    input = args.input[0]
-
+def process_input_dir(input_dir, timeout_ymls):
     results = multiprocessing.Manager().list()
-    if os.path.isfile(input):
-        results += set_unknowns(process_log_file(input), input)
-        total = 1
+    if os.path.isfile(input_dir):
+        results += __set_unknowns(process_log_file(input_dir), input_dir, timeout_ymls)
+        log_file_count = 1
     else:
         local_cores = max(multiprocessing.cpu_count() - 4, 1)
         queue = multiprocessing.Queue(maxsize=local_cores)
-        pool = multiprocessing.Pool(local_cores, initializer=consume_task, initargs=(queue, results))
+        pool = multiprocessing.Pool(local_cores, initializer=consume_task, initargs=(queue, results, timeout_ymls))
 
-        progress_bar = tqdm([i for i in __list_paths_in_dir(input)])
-        total = len(progress_bar)
+        progress_bar = tqdm([i for i in __list_logfile_paths_in_dir(input_dir)])
+        log_file_count = len(progress_bar)
 
         for path in progress_bar:
-            progress_bar.set_description('Processing ...{:100.100} [{:>3}C]'.format(path[len(input):],local_cores))
+            progress_bar.set_description('Processing ...{:100.100} [{:>3}C]'.format(path[len(input_dir):], local_cores))
             queue.put(path)
 
         # tell workers we're done
@@ -397,13 +415,44 @@ def main():
             queue.put(None)
         pool.close()
         pool.join()
+    return log_file_count, results
 
-    if total > len(results):
+
+def main():
+    args = parse_args()
+    input_dir = args.input[0]
+
+    timeout_ymls = get_timeout_ymls(input_dir)
+    log_file_count, results = process_input_dir(input_dir, timeout_ymls)
+
+    if log_file_count > len(results):
         print(
-            'We processed {} .log files but collected only {} results, something is wrong!'.format(total, len(results)))
+            'We processed {} .log files but collected only {} results, something is wrong!'.format(log_file_count,
+                                                                                                   len(results)))
     else:
-        print('Overview of {} results from {} .log files'.format(len(results), total))
+        print(
+            'Overview of {} results from {} .log files ({} {})'.format(len(results), log_file_count, len(timeout_ymls),
+                                                                       str_benchexec_timeout))
     print_results(results)
+
+
+def get_timeout_ymls(input_dir):
+    xml_files = [f for f in __list_xml_filepaths(input_dir)]
+    if len(xml_files) == 0:
+        print('There are no benchexec .xml files in {}, cannot exclude timeouts properly'.format(input_dir))
+        return []
+
+    timeout_ymls = []
+    for xml in __list_xml_filepaths(input_dir):
+        root = ET.parse(xml).getroot()
+        for elem in root.findall(".//run"):
+            # files = elem.attrib["files"]
+            yml = elem.attrib["name"]
+            base_yml = ntpath.basename(yml)
+            status = elem.find("./column[@title='status']").attrib["value"]
+            if status == "TIMEOUT":
+                timeout_ymls += [base_yml]
+    return timeout_ymls
 
 
 if __name__ == "__main__":
