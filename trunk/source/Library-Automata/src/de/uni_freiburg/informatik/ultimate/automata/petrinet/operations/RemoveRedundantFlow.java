@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -69,6 +71,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	private BranchingProcess<LETTER, PLACE> mFinPre;
 	final HashRelation<ITransition<LETTER, PLACE>, PLACE> mRedundantSelfloopFlow = new HashRelation<>();
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
+	private Set<PLACE> mRedundantPlaces;
 
 	public RemoveRedundantFlow(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
@@ -98,21 +101,41 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 				}
 			}
 		}
-		mResult = copy(mOperand, mRedundantSelfloopFlow);
+		mRedundantPlaces = operand.getPlaces().stream()
+				.filter(x -> isRedundantPlace(x, operand, redundantFlow)).collect(Collectors.toSet());
+		mResult = copy(mOperand, mRedundantSelfloopFlow, mRedundantPlaces);
 		printExitMessage();
 	}
 
+	private boolean isRedundantPlace(final PLACE p, final IPetriNet<LETTER, PLACE> operand,
+			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow) {
+		if (operand.isAccepting(p)) {
+			return false;
+		}
+		final Set<ITransition<LETTER, PLACE>> succTrans = operand.getSuccessors(p);
+		for (final ITransition<LETTER, PLACE> t : succTrans) {
+			if (!redundantFlow.containsPair(t, p)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private BoundedPetriNet<LETTER, PLACE> copy(final IPetriNet<LETTER, PLACE> operand,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantSelfloopFlow) {
+			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantSelfloopFlow, final Set<PLACE> redundantPlaces) {
 		final BoundedPetriNet<LETTER, PLACE> result = new BoundedPetriNet<>(mServices, operand.getAlphabet(), false);
 		for (final PLACE p : operand.getPlaces()) {
-			result.addPlace(p, operand.getInitialPlaces().contains(p), operand.isAccepting(p));
+			if (!redundantPlaces.contains(p)) {
+				result.addPlace(p, operand.getInitialPlaces().contains(p), operand.isAccepting(p));
+			}
 		}
 		for (final ITransition<LETTER, PLACE> t : operand.getTransitions()) {
 			final HashSet<PLACE> preds = new HashSet<>(operand.getPredecessors(t));
 			preds.removeAll(redundantSelfloopFlow.getImage(t));
+			preds.removeAll(redundantPlaces);
 			final HashSet<PLACE> succs = new HashSet<>(operand.getSuccessors(t));
 			succs.removeAll(redundantSelfloopFlow.getImage(t));
+			succs.removeAll(redundantPlaces);
 			result.addTransition(t.getSymbol(), preds, succs);
 		}
 		return result;
@@ -204,7 +227,8 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	@Override
 	public String exitMessage() {
 		return "Finished " + this.getClass().getSimpleName() + ", result has " + mResult.sizeInformation()
-				+ ", removed " + mRedundantSelfloopFlow.size() + " flow.";
+				+ ", removed " + mRedundantSelfloopFlow.size() + " selfloop flow, removed " + mRedundantPlaces.size()
+				+ " redundant places.";
 	}
 
 	@Override
