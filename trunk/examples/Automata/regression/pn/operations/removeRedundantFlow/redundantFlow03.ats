@@ -1,7 +1,9 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date:  2020-02-20
 //
-
+// The places red0 and red1 are universally redundant
+// and can hence be removed.
+//
 PetriNet res = removeRedundantFlow(net);
 print(res);
 
@@ -10,7 +12,7 @@ PetriNet net = (
 	places = { p0 p1 p2 red0 red1 },
 	transitions = {
 		({p0 red0 } a {p1 red1 })
-		({p1 red1 } b {p2 red1 })
+		({p1 red1 } b {p2 red0 })
 	},
 	initialMarking = {p0 red0 },
 	acceptingPlaces = {p2 }

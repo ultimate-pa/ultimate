@@ -1,0 +1,25 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date:  2020-02-22
+//
+// An improved algorithm could detect that red0 in the a-transition
+// is not needed.
+// Idea: Do not check for individual place p if place is restrictor but
+// check something for conditions: If non-redundantee conditions are in co-
+// relation then there has to be a token in the redundantee
+
+PetriNet res = removeRedundantFlow(net);
+print(res);
+
+PetriNet net = (
+	alphabet = { a b c d e },
+	places = { s0 s1 t0 t1 red0 red1 },
+	transitions = {
+		({s0 t0 red0 } a {s1 t1 red0 })
+		({s1 red0 } b {s0 red1 })
+		({t1 red1 } c {t0 red0 })
+		({t1 red0 } d {t0 red1 })
+		({s1 red1 } e {s0 red0 })
+	},
+	initialMarking = {s0 t0 red0 },
+	acceptingPlaces = {s0 }
+);
