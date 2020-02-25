@@ -60,7 +60,8 @@ public interface IAutomaton<LETTER, STATE> {
 
 
 	/**
-	 * @return Size of the automaton. E.g., the number of states.
+	 * @return Size of the automaton. E.g., the number of states (NWA) or the size
+	 *         of the flow relation (Petri net).
 	 */
 	int size();
 

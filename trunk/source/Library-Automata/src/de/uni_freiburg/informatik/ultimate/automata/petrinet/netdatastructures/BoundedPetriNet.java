@@ -87,6 +87,8 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	 */
 	private final boolean mConstantTokenAmount;
 
+	private int mSizeOfFlowRelation = 0;
+
 	/**
 	 * Standard constructor.
 	 *
@@ -245,6 +247,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 			mPredecessors.addPair(succPlace, transition);
 		}
 		mTransitions.add(transition);
+		mSizeOfFlowRelation += (preds.size() + succs.size());
 		return transition;
 
 	}
@@ -347,8 +350,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 
 	@Override
 	public int size() {
-//		return mPlaces.size();
-		return mTransitions.size();
+		return mSizeOfFlowRelation;
 	}
 
 	@Override
