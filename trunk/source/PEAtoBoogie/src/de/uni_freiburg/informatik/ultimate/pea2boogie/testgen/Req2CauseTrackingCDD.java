@@ -21,14 +21,15 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 public class Req2CauseTrackingCDD {
 
 	private final ILogger mLogger;
-	private final Map<String,String> mTrackingVars;
+	private final Map<String, String> mTrackingVars;
 
 	public Req2CauseTrackingCDD(final ILogger logger) {
 		mLogger = logger;
 		mTrackingVars = new HashMap<>();
 	}
 
-	public CDD transformInvariant(CDD cdd, Set<String> effectVars, Set<String> inputVars,  boolean isEffectPhase) {
+	public CDD transformInvariant(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars,
+			final boolean isEffectPhase) {
 		final Set<String> vars = getCddVariables(cdd);
 		vars.removeAll(inputVars);
 		if (isEffectPhase) {
@@ -39,19 +40,20 @@ public class Req2CauseTrackingCDD {
 		return newGuard;
 	}
 
-	public CDD transformGurad(CDD cdd, Set<String> effectVars, Set<String> inputVars,  boolean isEffectPhase) {
+	public CDD transformGurad(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars,
+			final boolean isEffectPhase) {
 		final Set<String> vars = getCddVariables(cdd);
 		vars.removeAll(inputVars);
 		//TODO: check if is effect edge
 		vars.removeAll(effectVars);
-		//TODO remove primed effect variables in a nicer way
+		// TODO remove primed effect variables in a nicer way
 		vars.removeAll(effectVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
 		vars.removeAll(inputVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
 		final CDD newGuard = addTrackingGuards(cdd, vars);
 		return newGuard;
 	}
 
-	private CDD addTrackingGuards(CDD cdd, Set<String> trackedVars) {
+	private CDD addTrackingGuards(CDD cdd, final Set<String> trackedVars) {
 		if (cdd == CDD.TRUE) {
 			return cdd;
 		}
@@ -67,11 +69,11 @@ public class Req2CauseTrackingCDD {
 		}
 
 		cdd = CDD.create(cdd.getDecision(), newChildren.toArray(new CDD[newChildren.size()]));
-		for(final String v: getVarsFromDecision(cdd.getDecision())) {
-			if(trackedVars.contains(v)) {
+		for (final String v : getVarsFromDecision(cdd.getDecision())) {
+			if (trackedVars.contains(v)) {
 				final String varName = "u_" + v;
-				//TODO more elegant way to check if its a primed var
-				if(!v.endsWith("'")) {
+				// TODO more elegant way to check if its a primed var
+				if (!v.endsWith("'")) {
 					mTrackingVars.put(varName, "bool");
 				}
 				final CDD trackGurad = CDD.create(new BooleanDecision(varName), CDD.TRUE_CHILDS);
@@ -81,27 +83,28 @@ public class Req2CauseTrackingCDD {
 		return cdd;
 	}
 
-	public CDD getEffectCDD(PatternType pattern){
+	public CDD getEffectCDD(final PatternType pattern) {
 		final List<CDD> cdds = pattern.getCdds();
-		//lets just assume that the effect of the requirement is always mentioned at the end of the pattern (i.e. last CDD)
-		//  e.g. it is always the case that if _condition_ then _effect_ holds for at least 5 (scope does not matter)
-		//TODO: do not rely on this ordering and mark the effect in some way during parsing
+		// lets just assume that the effect of the requirement is always mentioned at the end of the pattern (i.e. last
+		// CDD)
+		// e.g. it is always the case that if _condition_ then _effect_ holds for at least 5 (scope does not matter)
+		// TODO: do not rely on this ordering and mark the effect in some way during parsing
 		return cdds.get(0);
 	}
 
-	public Set<String> getEffectVariables(CDD effect){
+	public Set<String> getEffectVariables(final CDD effect) {
 		final Set<String> variables = new HashSet<>();
 		extractVars(effect, variables);
 		return variables;
 	}
 
-	public Set<String> getCddVariables(CDD cdd){
+	public Set<String> getCddVariables(final CDD cdd) {
 		final Set<String> variables = new HashSet<>();
 		extractVars(cdd, variables);
 		return variables;
 	}
 
-	private void extractVars(CDD cdd, Set<String> variables){
+	private void extractVars(final CDD cdd, final Set<String> variables) {
 		if (cdd == CDD.TRUE) {
 			return;
 		}
@@ -118,7 +121,7 @@ public class Req2CauseTrackingCDD {
 		}
 	}
 
-	private Set<String> getVarsFromDecision(Decision<?> dec){
+	private static Set<String> getVarsFromDecision(final Decision<?> dec) {
 		final Set<String> variables = new HashSet<>();
 		if (dec == null) {
 			// may happen for true/false phases
@@ -139,7 +142,7 @@ public class Req2CauseTrackingCDD {
 		return variables;
 	}
 
-	public Map<String,String> getTrackingVars(){
+	public Map<String, String> getTrackingVars() {
 		return mTrackingVars;
 	}
 

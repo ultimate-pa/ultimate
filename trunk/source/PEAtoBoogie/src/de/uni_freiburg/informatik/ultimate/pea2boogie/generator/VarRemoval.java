@@ -145,7 +145,7 @@ public class VarRemoval {
 		final CDD[] childs = cdd.getChilds();
 		final Decision<?> decision = cdd.getDecision();
 		CDD decisionCDD = CDD.TRUE;
-		if (decision instanceof BooleanDecision & stateVars.contains(decision.getVar())) {
+		if (decision instanceof BooleanDecision && stateVars.contains(decision.getVar())) {
 			final CDD[] newChilds = new CDD[childs.length];
 			for (int i = 0; i < childs.length; i++) {
 				newChilds[i] = getUnPrimedVars(childs[i], stateVars);
