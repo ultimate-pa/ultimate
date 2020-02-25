@@ -61,11 +61,12 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		mSymbolTable = builder.constructSymbolTable();
 	}
 
+
 	private PhaseEventAutomata transformPea(final PatternType pattern, final PhaseEventAutomata oldPea, final IReqSymbolTable reqSymbolTable) {
 		final ReqEffectStore reqEffectStore = new ReqEffectStore();
 
 		final CDD effectCdd = mCddTransformer.getEffectCDD(pattern);
-		final Set<String> effectVars = mCddTransformer.getEffectVariables(effectCdd);
+		final Set<String> effectVars = mCddTransformer.getCddVariables(effectCdd);
 		mLogger.info(new StringBuilder("Effect Variables of ").append(pattern.toString()).append(": ").append(effectVars.toString()).toString());
 		// _tt for "test tracking"
 		final String newName = oldPea.getName() + "_tt";
@@ -107,7 +108,6 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			for (final Transition t: oldPhases[i].getTransitions()) {
 				if (this.isEffectTransition(t.getSrc(), t, dcEffectPhase, effectCdd)) {
 					final Integer newTargetPhaseIndex = offset +  phaseList.indexOf(t.getDest());
-					mLogger.error("Effect Edge: "+ t.toString());
 					reqEffectStore.addEffectEdgeIndex(newEffectPhaseIndex, newTargetPhaseIndex);
 					if (!Collections.disjoint(effectVars, reqSymbolTable.getOutputVars())) {
 						reqEffectStore.addOutputEffectEdgeIndex(newEffectPhaseIndex, newTargetPhaseIndex);

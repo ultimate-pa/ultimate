@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
@@ -36,7 +37,6 @@ public class Req2CauseTrackingCDD {
 			vars.removeAll(effectVars);
 		}
 		final CDD newGuard = addTrackingGuards(cdd, vars);
-		mLogger.warn(newGuard.toString());
 		return newGuard;
 	}
 
@@ -83,6 +83,16 @@ public class Req2CauseTrackingCDD {
 		return cdd;
 	}
 
+	public static Set<String> getAllVariables(PatternType pattern,  Map<String, Integer> id2bounds){
+		final DCPhase[] tc = pattern.constructCounterTrace(id2bounds).getPhases();
+		//find max phase and second max phase, compare
+		final Set<String> variables = new HashSet<String>();
+		for (final DCPhase p: tc) {
+			variables.addAll(getCddVariables(p.getInvariant()));
+		}
+		return variables;
+	}
+
 	public CDD getEffectCDD(final PatternType pattern) {
 		final List<CDD> cdds = pattern.getCdds();
 		// lets just assume that the effect of the requirement is always mentioned at the end of the pattern (i.e. last
@@ -92,19 +102,70 @@ public class Req2CauseTrackingCDD {
 		return cdds.get(0);
 	}
 
-	public Set<String> getEffectVariables(final CDD effect) {
-		final Set<String> variables = new HashSet<>();
-		extractVars(effect, variables);
-		return variables;
+	public static Set<String> getEffectVariables(PatternType pattern,  Map<String, Integer> id2bounds){
+		final DCPhase[] tc = pattern.constructCounterTrace(id2bounds).getPhases();
+		//find max phase and second max phase, compare
+		final CDD finalStateInvar = tc[tc.length-2].getInvariant();
+		if(tc.length >= 2) {
+			final CDD beforeStateInvar = tc[tc.length-3].getInvariant();
+			return getDifferences(beforeStateInvar, finalStateInvar);
+		} else {
+			return getCddVariables(finalStateInvar);
+		}
 	}
 
-	public Set<String> getCddVariables(final CDD cdd) {
+	private static Set<String> getDifferences(CDD beforeStateInvar, CDD finalStateInvar) {
+		final Set<String> differences = getCddVariables(finalStateInvar);
+		//collect the atomics from both cdds
+		final Set<CDD> beforeAtomics = getCDDAtoms(beforeStateInvar);
+		for(final CDD cdd: finalStateInvar.toDNF()) {
+			final Set<String> localDifferences = new HashSet<String>();
+			final Set<CDD> afterAtomics = getCDDAtoms(finalStateInvar);
+			for(final CDD a: afterAtomics) {
+				for(final CDD b: beforeAtomics) {
+					if(a.isEqual(b)) {
+						break;
+					}
+				}
+				localDifferences.addAll(getVarsFromDecision(a.getDecision()));
+			}
+			differences.retainAll(localDifferences);
+		}
+		return differences;
+	}
+
+	public static Set<CDD> getCDDAtoms(CDD cdd){
+		final Set<CDD> atomics = new HashSet<>();
+		extractAtomics(cdd, atomics);
+		return atomics;
+	}
+
+	private static void extractAtomics(final CDD cdd, final Set<CDD> atomics) {
+		if (cdd == CDD.TRUE) {
+			return;
+		}
+		if (cdd == CDD.FALSE) {
+			return;
+		}
+		if (cdd.isAtomic()) {
+			atomics.add(cdd);
+			return;
+		}
+
+		if (cdd.getChilds() != null) {
+			for (final CDD child : cdd.getChilds()) {
+				extractAtomics(child, atomics);
+			}
+		}
+	}
+
+	public static Set<String> getCddVariables(final CDD cdd) {
 		final Set<String> variables = new HashSet<>();
 		extractVars(cdd, variables);
 		return variables;
 	}
 
-	private void extractVars(final CDD cdd, final Set<String> variables) {
+	private static void extractVars(final CDD cdd, final Set<String> variables) {
 		if (cdd == CDD.TRUE) {
 			return;
 		}
@@ -113,7 +174,6 @@ public class Req2CauseTrackingCDD {
 		}
 
 		variables.addAll(getVarsFromDecision(cdd.getDecision()));
-
 		if (cdd.getChilds() != null) {
 			for (final CDD child : cdd.getChilds()) {
 				extractVars(child, variables);

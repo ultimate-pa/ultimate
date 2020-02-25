@@ -78,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2Pea;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaAnnotator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.Req2Pea;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.ReqInOutGuesser;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
 
 /**
@@ -112,10 +113,13 @@ public class Req2BoogieTranslator {
 
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
-		final List<InitializationPattern> init = patterns.stream().filter(a -> a instanceof InitializationPattern)
-				.map(a -> (InitializationPattern) a).collect(Collectors.toList());
+
 		final List<PatternType> requirements =
 				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
+		final ReqInOutGuesser riog = new ReqInOutGuesser(logger, patterns.stream().filter(a -> a instanceof InitializationPattern)
+				.map(a -> (InitializationPattern) a).collect(Collectors.toList()), requirements);
+		final List<InitializationPattern> init = riog.getInitializationPatterns();
+
 
 		final IReq2Pea req2pea = createReq2Pea(req2peaTransformers, init, requirements);
 		if (req2pea.hasErrors()) {
