@@ -31,7 +31,7 @@ for platform in {linux,win32}; do
     
     if [ "$platform" = "linux" ]; then
       # ReqCheck
-      exitOnFail bash createReqCheckZip.sh ReqCheck $platform ReqCheck.xml ReqToTest.xml
+      exitOnFail bash createReqCheckZip.sh ReqCheck $platform ReqCheck.xml ReqCheck.xml
     fi
 
 done
