@@ -226,7 +226,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + this.getClass().getSimpleName() + ", result has " + mResult.sizeInformation()
+		return "Finished " + getOperationName() + ", result has " + mResult.sizeInformation()
 				+ ", removed " + mRedundantSelfloopFlow.size() + " selfloop flow, removed " + mRedundantPlaces.size()
 				+ " redundant places.";
 	}
