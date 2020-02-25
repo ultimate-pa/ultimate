@@ -102,6 +102,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
 
+	public enum SizeReduction { REMOVE_DEAD, REMOVE_REDUNDANT_FLOW };
+
 	private static final boolean USE_ON_DEMAND_RESULT = false;
 
 	private static final boolean DEBUG_WRITE_NET_HASH_CODES = false;
@@ -128,7 +130,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	/**
 	 * Remove unreachable nodes of mAbstraction in each iteration.
 	 */
-	private final boolean mRemoveUnreachable = false;
+	private final boolean mRemoveDead = false;
 	private final boolean mRemoveRedundantFlow = false;
 
 	private PetriNetLargeBlockEncoding mLBE;
@@ -307,45 +309,29 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
 
-		if (mRemoveUnreachable) {
-			final long automataMinimizationTime;
-			final long start = System.nanoTime();
-			long statesRemovedByMinimization = 0;
-			long transitionsRemovedByMinimization = 0;
-			boolean nontrivialMinimizaton = false;
-			final BoundedPetriNet<LETTER, IPredicate> removeUnreachableResult;
-			try {
-				final int placesBefore = (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces()).size();
-				final int transitionsBefore = (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getTransitions())
-						.size();
-				removeUnreachableResult = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead<>(
-						new AutomataLibraryServices(mServices), (BoundedPetriNet<LETTER, IPredicate>) mAbstraction,
-						null, true).getResult();
-				final int placesAfterwards = (removeUnreachableResult.getPlaces()).size();
-				final int transitionsAfterwards = (removeUnreachableResult.getTransitions().size());
-				statesRemovedByMinimization = placesBefore - placesAfterwards;
-				transitionsRemovedByMinimization = transitionsBefore - transitionsAfterwards;
-				if (transitionsAfterwards != transitionsBefore) {
-					throw new AssertionError("removed transitions: " + transitionsRemovedByMinimization + " Iteration "
-							+ mIteration + " Abstraction has " + mAbstraction.sizeInformation());
-				}
-				nontrivialMinimizaton = true;
-			} finally {
-				automataMinimizationTime = System.nanoTime() - start;
-				final AutomataMinimizationStatisticsGenerator amsg = new AutomataMinimizationStatisticsGenerator(
-						automataMinimizationTime, true, nontrivialMinimizaton, statesRemovedByMinimization);
-				mCegarLoopBenchmark.addAutomataMinimizationData(amsg);
-			}
+		if (mRemoveDead) {
+			final Triple<BoundedPetriNet<LETTER, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult = doSizeReduction(
+					(BoundedPetriNet<LETTER, IPredicate>) mAbstraction, SizeReduction.REMOVE_DEAD);
+			mCegarLoopBenchmark.addAutomataMinimizationData(minimizationResult.getSecond());
 			if (mPref.dumpAutomata()
-					|| automataMinimizationTime > DEBUG_DUMP_REMOVEUNREACHABLEINPUT_THRESHOLD * 1_000_000_000L) {
+					|| minimizationResult.getThird() > DEBUG_DUMP_REMOVEUNREACHABLEINPUT_THRESHOLD * 1_000_000_000L) {
 				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-						+ "_AbstractionBeforeRemoveUnreachable";
+						+ "_AbstractionBeforeRemoveDead";
 				super.writeAutomatonToFile(mAbstraction, filename);
 			}
-			mAbstraction = removeUnreachableResult;
+			mAbstraction = minimizationResult.getFirst();
 		}
 		if (mRemoveRedundantFlow) {
-			mAbstraction = new RemoveRedundantFlow(new AutomataLibraryServices(mServices), (IPetriNet) mAbstraction).getResult();
+			final Triple<BoundedPetriNet<LETTER, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult = doSizeReduction(
+					(BoundedPetriNet<LETTER, IPredicate>) mAbstraction, SizeReduction.REMOVE_DEAD);
+			mCegarLoopBenchmark.addAutomataMinimizationData(minimizationResult.getSecond());
+			if (mPref.dumpAutomata()
+					|| minimizationResult.getThird() > DEBUG_DUMP_REMOVEUNREACHABLEINPUT_THRESHOLD * 1_000_000_000L) {
+				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
+						+ "_AbstractionBeforeRemoveRedundantFlow";
+				super.writeAutomatonToFile(mAbstraction, filename);
+			}
+			mAbstraction = minimizationResult.getFirst();
 		}
 
 		if (mPref.unfoldingToNet()) {
@@ -391,6 +377,56 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			writeAutomatonToFile(mAbstraction, filename);
 		}
 		return true;
+	}
+
+
+	private Triple<BoundedPetriNet<LETTER, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> doSizeReduction(
+			final BoundedPetriNet<LETTER, IPredicate> input, final SizeReduction method)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException, AssertionError {
+		final long automataMinimizationTime;
+		final long start = System.nanoTime();
+		long statesRemovedByMinimization = 0;
+		long transitionsRemovedByMinimization = 0;
+		long flowRemovedByMinimization = 0;
+		boolean nontrivialMinimizaton = false;
+		final AutomataMinimizationStatisticsGenerator amsg;
+		final BoundedPetriNet<LETTER, IPredicate> reducedNet;
+		try {
+			final int placesBefore = input.getPlaces().size();
+			final int transitionsBefore = input.getTransitions().size();
+			final int flowBefore = input.size();
+			switch (method) {
+			case REMOVE_DEAD:
+				reducedNet = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead<>(
+						new AutomataLibraryServices(mServices), input, null, true).getResult();
+				break;
+			case REMOVE_REDUNDANT_FLOW:
+				reducedNet = new RemoveRedundantFlow<>(new AutomataLibraryServices(mServices), input)
+						.getResult();
+				break;
+			default:
+				throw new AssertionError("unknown value " + method);
+			}
+			final int placesAfterwards = (reducedNet.getPlaces()).size();
+			final int transitionsAfterwards = (reducedNet.getTransitions().size());
+			final int flowAfterwards = reducedNet.size();
+			statesRemovedByMinimization = placesBefore - placesAfterwards;
+			transitionsRemovedByMinimization = transitionsBefore - transitionsAfterwards;
+			flowRemovedByMinimization = flowBefore - flowAfterwards;
+			// if (transitionsAfterwards != transitionsBefore) {
+			// throw new AssertionError("removed transitions: " +
+			// transitionsRemovedByMinimization + " Iteration "
+			// + mIteration + " Abstraction has " + mAbstraction.sizeInformation());
+			// }
+			nontrivialMinimizaton = true;
+		} finally {
+			automataMinimizationTime = System.nanoTime() - start;
+			amsg = new AutomataMinimizationStatisticsGenerator(automataMinimizationTime, true, nontrivialMinimizaton,
+					flowRemovedByMinimization);
+		}
+		final Triple<BoundedPetriNet<LETTER, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult = new Triple<BoundedPetriNet<LETTER, IPredicate>, AutomataMinimizationStatisticsGenerator, Long>(
+				reducedNet, amsg, automataMinimizationTime);
+		return minimizationResult;
 	}
 
 	protected Triple<INestedWordAutomaton<LETTER, IPredicate>, IPetriNet<LETTER, IPredicate>, DifferenceSynchronizationInformation<LETTER, IPredicate>> enhanceAnddeterminizeInterpolantAutomaton(
