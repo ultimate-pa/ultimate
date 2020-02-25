@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
@@ -400,44 +401,28 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 *         not considered as an ancestor.
 	 */
 	private Set<Object> ancestorNodes(final Condition<LETTER, PLACE> condition) {
-		final Set<Object> ancestorConditionAndEvents = new HashSet<>();
-		addAllAncestors(condition, ancestorConditionAndEvents);
-		return ancestorConditionAndEvents;
+		final Event<LETTER, PLACE> pred = condition.getPredecessorEvent();
+		if (pred.equals(mDummyRoot)) {
+			return Collections.emptySet();
+		} else {
+			return ancestorNodes(pred);
+		}
 	}
 
 	/**
-	 * @return Set containing all Conditions and Events which are ancestors of an Event. The dummyRoot is not considered
-	 *         as an ancestor.
+	 * @return Set containing all Conditions and Events which are ancestors of an
+	 *         Event. The dummyRoot is not considered as an ancestor.
 	 */
 	private Set<Object> ancestorNodes(final Event<LETTER, PLACE> event) {
 		final Set<Object> ancestorConditionAndEvents = new HashSet<>();
-		addAllAncestors(event, ancestorConditionAndEvents);
+		for (final Event<LETTER, PLACE> e : event.getLocalConfiguration()) {
+			ancestorConditionAndEvents.add(e);
+			ancestorConditionAndEvents.addAll(e.getPredecessorConditions());
+		}
 		return ancestorConditionAndEvents;
 	}
 
-	/**
-	 * Add to a set that contains only Conditions and Events the Condition and all (strict) ancestors. The dummyRoot is
-	 * not considered as an ancestor.
-	 */
-	private void addAllAncestors(final Condition<LETTER, PLACE> condition, final Set<Object> setOfConditionsAndEvents) {
-		final Event<LETTER, PLACE> pred = condition.getPredecessorEvent();
-		setOfConditionsAndEvents.add(pred);
-		addAllAncestors(pred, setOfConditionsAndEvents);
-	}
 
-	/**
-	 * Add to a set that contains only Conditions and Events the Event and all (strict) ancestors. The dummyRoot is not
-	 * considered as an ancestor.
-	 */
-	private void addAllAncestors(final Event<LETTER, PLACE> event, final Set<Object> setOfConditionsAndEvents) {
-		if (event == mDummyRoot) {
-			return;
-		}
-		for (final Condition<LETTER, PLACE> pred : event.getPredecessorConditions()) {
-			setOfConditionsAndEvents.add(pred);
-			addAllAncestors(pred, setOfConditionsAndEvents);
-		}
-	}
 
 	/**
 	 * @param conditions
