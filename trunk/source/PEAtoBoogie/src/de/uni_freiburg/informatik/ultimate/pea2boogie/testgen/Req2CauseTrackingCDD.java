@@ -42,9 +42,11 @@ public class Req2CauseTrackingCDD {
 	public CDD transformGurad(CDD cdd, Set<String> effectVars, Set<String> inputVars,  boolean isEffectPhase) {
 		final Set<String> vars = getCddVariables(cdd);
 		vars.removeAll(inputVars);
+		//TODO: check if is effect edge
 		vars.removeAll(effectVars);
 		//TODO remove primed effect variables in a nicer way
 		vars.removeAll(effectVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
+		vars.removeAll(inputVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
 		final CDD newGuard = addTrackingGuards(cdd, vars);
 		return newGuard;
 	}
