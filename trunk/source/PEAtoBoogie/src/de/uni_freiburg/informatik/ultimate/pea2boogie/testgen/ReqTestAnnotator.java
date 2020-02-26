@@ -171,12 +171,9 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 
 	private List<Statement> genTestAssertions() {
 		final List<Statement> statements = new ArrayList<>();
-
-		// for(final Map.Entry<PhaseEventAutomata, Set<Integer>> entry: pea2OutputEffectPhase.entrySet()) {
 		for (final Map.Entry<PhaseEventAutomata, ReqEffectStore> entry : mPea2EffectStore.entrySet()) {
-			statements
-					.addAll(genTestPhaseEffectAssertion(entry.getKey(), entry.getValue().getOutputEffectPhaseIndex()));
-			// statements.addAll(genTestEdgeEffectAssertion(entry.getKey(), entry.getValue().getEffectEdges()));
+			statements.addAll(genTestPhaseEffectAssertion(entry.getKey(), entry.getValue().getOutputEffectPhaseIndex()));
+			//statements.addAll(genTestEdgeEffectAssertion(entry.getKey(), entry.getValue().getEffectEdges()));
 		}
 		return statements;
 	}

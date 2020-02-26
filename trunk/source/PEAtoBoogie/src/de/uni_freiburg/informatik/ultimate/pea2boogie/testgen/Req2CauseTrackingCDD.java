@@ -85,7 +85,32 @@ public class Req2CauseTrackingCDD {
 		return cdd;
 	}
 
-	public static Set<String> getAllVariables(final PatternType pattern, final Map<String, Integer> id2bounds) {
+
+	public CDD transformClockInvariant(CDD cdd, boolean effectState) {
+		if (cdd == CDD.TRUE) {
+			return cdd;
+		}
+		if (cdd == CDD.FALSE) {
+			return cdd;
+		}
+
+		final List<CDD> newChildren = new ArrayList<>();
+		if (cdd.getChilds() != null) {
+			for (final CDD child : cdd.getChilds()) {
+				newChildren.add(transformClockInvariant(child, effectState));
+			}
+		}
+		final CDD[] children = newChildren.toArray(new CDD[newChildren.size()]);
+		final Decision<?> decision = cdd.getDecision();
+		if (decision instanceof RangeDecision) {
+			final RangeDecision d = (RangeDecision) decision;
+			//TODO final int op =  d.getOp(cdd.getChilds());
+			//if (effectState && )
+		}
+		return cdd = CDD.create(cdd.getDecision(), children);
+	}
+
+	public static Set<String> getAllVariables(PatternType pattern,  Map<String, Integer> id2bounds){
 		final DCPhase[] tc = pattern.constructCounterTrace(id2bounds).getPhases();
 		// find max phase and second max phase, compare
 		final Set<String> variables = new HashSet<>();
@@ -206,5 +231,6 @@ public class Req2CauseTrackingCDD {
 	public Map<String, String> getTrackingVars() {
 		return mTrackingVars;
 	}
+
 
 }
