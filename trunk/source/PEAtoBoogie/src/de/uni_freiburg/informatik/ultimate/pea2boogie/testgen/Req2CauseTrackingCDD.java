@@ -119,7 +119,7 @@ public class Req2CauseTrackingCDD {
 		final Set<CDD> beforeAtomics = getCDDAtoms(beforeStateInvar);
 		for (final CDD cdd : finalStateInvar.toDNF()) {
 			final Set<String> localDifferences = new HashSet<>();
-			final Set<CDD> afterAtomics = getCDDAtoms(finalStateInvar);
+			final Set<CDD> afterAtomics = getCDDAtoms(cdd);
 			for (final CDD a : afterAtomics) {
 				for (final CDD b : beforeAtomics) {
 					if (a.isEqual(b)) {
