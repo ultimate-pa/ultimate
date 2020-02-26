@@ -53,7 +53,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			builder.addInitPattern((InitializationPattern) p);
 		}
 		for (final Map.Entry<PatternType, PhaseEventAutomata> entry : simplePeas.entrySet()) {
-			mPattern2Peas.put(entry.getKey(), transformPea(entry.getKey(), entry.getValue(), symbolTable));
+			mPattern2Peas.put(entry.getKey(), transformPea(entry.getKey(), entry.getValue(), symbolTable, builder.getId2Bounds()));
 		}
 		for (final Entry<PatternType, PhaseEventAutomata> entry : mPattern2Peas.entrySet()) {
 			builder.addPea(entry.getKey(), entry.getValue());
@@ -62,11 +62,11 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	}
 
 	private PhaseEventAutomata transformPea(final PatternType pattern, final PhaseEventAutomata oldPea,
-			final IReqSymbolTable reqSymbolTable) {
-		final ReqEffectStore reqEffectStore = new ReqEffectStore();
+			final IReqSymbolTable reqSymbolTable) {		final ReqEffectStore reqEffectStore = new ReqEffectStore();
 
 		final CDD effectCdd = Req2CauseTrackingCDD.getEffectCDD(pattern);
 		final Set<String> effectVars = Req2CauseTrackingCDD.getCddVariables(effectCdd);
+		//TODO: final Set<String> effectVars = mCddTransformer.getEffectVariables(pattern, id2bounds);
 		mLogger.info(new StringBuilder("Effect Variables of ").append(pattern.toString()).append(": ")
 				.append(effectVars.toString()).toString());
 		// _tt for "test tracking"
@@ -203,9 +203,9 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			for (final Transition trans : newPhases[i].getTransitions()) {
 				final int dest = indexList.indexOf(trans.getDest());
 				final Phase sourcePhase = newPhases[seem + i];
-				// apply same transformations to CDDs must be done as in the invariants
-				final CDD guard = mCddTransformer.transformGurad(trans.getGuard(), effectVars,
-						reqSymbolTable.getInputVars(), false);
+				//apply same transformations to CDDs must be done as in the invariants
+				final CDD guard = mCddTransformer.transformGurad(trans.getGuard(), effectVars, reqSymbolTable.getInputVars(),
+						isEffectTransition(sourcePhase, trans, effectDCPhaseId, effectCDD));
 				sourcePhase.addTransition(newPhases[seem + dest], guard, trans.getResets());
 			}
 		}

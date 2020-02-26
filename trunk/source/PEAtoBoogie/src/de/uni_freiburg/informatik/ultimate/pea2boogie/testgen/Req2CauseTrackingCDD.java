@@ -41,11 +41,13 @@ public class Req2CauseTrackingCDD {
 	}
 
 	public CDD transformGurad(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars,
-			final boolean isEffectPhase) {
+			final boolean isEffectEdge) {
 		final Set<String> vars = getCddVariables(cdd);
 		vars.removeAll(inputVars);
 		// TODO: check if is effect edge
-		vars.removeAll(effectVars);
+		if (isEffectEdge) {
+			vars.removeAll(effectVars);
+		}
 		// TODO remove primed effect variables in a nicer way
 		vars.removeAll(effectVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
 		vars.removeAll(inputVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
@@ -104,9 +106,9 @@ public class Req2CauseTrackingCDD {
 
 	public static Set<String> getEffectVariables(final PatternType pattern, final Map<String, Integer> id2bounds) {
 		final DCPhase[] tc = pattern.constructCounterTrace(id2bounds).getPhases();
-		// find max phase and second max phase, compare
+		//find max phase and second max phase, compare
 		final CDD finalStateInvar = tc[tc.length - 2].getInvariant();
-		if (tc.length >= 2) {
+		if(tc.length >= 3) {
 			final CDD beforeStateInvar = tc[tc.length - 3].getInvariant();
 			return getDifferences(beforeStateInvar, finalStateInvar);
 		}
