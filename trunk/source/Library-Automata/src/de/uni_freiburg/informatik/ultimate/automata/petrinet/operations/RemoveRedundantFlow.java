@@ -113,6 +113,12 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 			return false;
 		}
 		final Set<ITransition<LETTER, PLACE>> succTrans = operand.getSuccessors(p);
+		if (succTrans.isEmpty()) {
+			// TODO 20200225 Matthias: At the moment places without successor transitions
+			// are not considered redundant. Otherwise we would produce transitions without
+			// successor which are not yet supported by the unfolding.
+			return false;
+		}
 		for (final ITransition<LETTER, PLACE> t : succTrans) {
 			if (!redundantFlow.containsPair(t, p)) {
 				return false;
