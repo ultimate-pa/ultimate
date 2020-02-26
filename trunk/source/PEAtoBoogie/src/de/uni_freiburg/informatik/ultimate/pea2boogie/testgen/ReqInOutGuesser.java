@@ -2,29 +2,40 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.testgen;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 
 public class ReqInOutGuesser {
 
 	private final ILogger mLogger;
 	private final Map<String, InitializationPattern> mVar2InitPattern;
-	private final List<InitializationPattern> newInitPatterns;
+	private final List<InitializationPattern> mNewInitPatterns;
 	private final Map<String, Integer> mId2Bounds;
+	private final List<PatternType> mNewRequirements;
+	private final Set<PatternType> mRequirementsWithTransformationErrors;
+	private final PeaResultUtil mResultUtil;
 
-	public ReqInOutGuesser(final ILogger logger, final List<InitializationPattern> oldInitPatterns,
-			final List<PatternType> reqPatterns) {
+	public ReqInOutGuesser(final ILogger logger, final IUltimateServiceProvider services,
+			final List<InitializationPattern> oldInitPatterns, final List<PatternType> reqPatterns) {
 		mLogger = logger;
 		mVar2InitPattern = new HashMap<>();
 		mId2Bounds = new HashMap<>();
+		mResultUtil = new PeaResultUtil(logger, services);
+
+		mRequirementsWithTransformationErrors = new HashSet<>();
+
 		final Set<InitializationPattern> constInitPatterns = new HashSet<>();
 		for (final InitializationPattern p : oldInitPatterns) {
 			if (p.getCategory() == VariableCategory.CONST) {
@@ -36,11 +47,23 @@ public class ReqInOutGuesser {
 			}
 		}
 		if (isInputOnlyPattern(oldInitPatterns)) {
+			// TODO: What about overwrite existing assignment?
 			mLogger.warn("No input/output assignment was chosen! We will make a very conservative guess.");
-			newInitPatterns = generateNewInitializationPattern(mVar2InitPattern.values(), reqPatterns);
-			newInitPatterns.addAll(constInitPatterns);
+			mNewInitPatterns = generateNewInitializationPattern(mVar2InitPattern.values(), reqPatterns);
+			mNewInitPatterns.addAll(constInitPatterns);
 		} else {
-			newInitPatterns = oldInitPatterns;
+			mNewInitPatterns = oldInitPatterns;
+		}
+		if (mRequirementsWithTransformationErrors.isEmpty()) {
+			mNewRequirements = reqPatterns;
+		} else {
+			mNewRequirements = new ArrayList<>(reqPatterns.size());
+			for (final PatternType pattern : reqPatterns) {
+				if (mRequirementsWithTransformationErrors.contains(pattern)) {
+					continue;
+				}
+				mNewRequirements.add(pattern);
+			}
 		}
 	}
 
@@ -81,7 +104,8 @@ public class ReqInOutGuesser {
 	private Set<String> getEffectVariables(final List<PatternType> oldPatterns) {
 		final Set<String> effectVars = new HashSet<>();
 		for (final PatternType pattern : oldPatterns) {
-			effectVars.addAll(Req2CauseTrackingCDD.getEffectVariables(pattern, mId2Bounds));
+			effectVars.addAll(
+					reportTransformationErrorWrapper(Req2CauseTrackingCDD::getEffectVariables, pattern, mId2Bounds));
 		}
 		return effectVars;
 	}
@@ -89,11 +113,30 @@ public class ReqInOutGuesser {
 	private Set<String> getPreconditionVars(final List<PatternType> oldPatterns) {
 		final Set<String> precondVars = new HashSet<>();
 		for (final PatternType pattern : oldPatterns) {
-			final Set<String> vars = Req2CauseTrackingCDD.getAllVariables(pattern, mId2Bounds);
-			vars.removeAll(Req2CauseTrackingCDD.getEffectVariables(pattern, mId2Bounds));
+			final Set<String> vars =
+					reportTransformationErrorWrapper(Req2CauseTrackingCDD::getAllVariables, pattern, mId2Bounds);
+			vars.removeAll(
+					reportTransformationErrorWrapper(Req2CauseTrackingCDD::getEffectVariables, pattern, mId2Bounds));
 			precondVars.addAll(vars);
 		}
 		return precondVars;
+	}
+
+	private Set<String> reportTransformationErrorWrapper(
+			final BiFunction<PatternType, Map<String, Integer>, Set<String>> fun, final PatternType pattern,
+			final Map<String, Integer> id2Bounds) {
+		if (mRequirementsWithTransformationErrors.contains(pattern)) {
+			// already broken
+			return Collections.emptySet();
+		}
+		try {
+			return fun.apply(pattern, id2Bounds);
+		} catch (final Exception ex) {
+			final String reason = ex.getMessage() == null ? ex.getClass().toString() : ex.getMessage();
+			mResultUtil.transformationError(pattern, reason);
+			mRequirementsWithTransformationErrors.add(pattern);
+			return Collections.emptySet();
+		}
 	}
 
 	private static Set<String> getAllVariables(final Collection<InitializationPattern> oldPatterns) {
@@ -114,7 +157,14 @@ public class ReqInOutGuesser {
 	}
 
 	public List<InitializationPattern> getInitializationPatterns() {
-		return newInitPatterns;
+		return mNewInitPatterns;
+	}
+
+	/**
+	 * @return valid non-initialization patterns (aka "real" requirements)
+	 */
+	public List<PatternType> getRequirements() {
+		return mNewRequirements;
 	}
 
 }

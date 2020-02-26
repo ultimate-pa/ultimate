@@ -117,14 +117,16 @@ public class Req2BoogieTranslator {
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		final List<PatternType> requirements =
+		List<PatternType> requirements =
 				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
 
 		List<InitializationPattern> init = patterns.stream().filter(a -> a instanceof InitializationPattern)
 				.map(a -> (InitializationPattern) a).collect(Collectors.toList());
+
 		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_GUESS_IN_OUT)) {
-			final ReqInOutGuesser riog = new ReqInOutGuesser(logger, init, requirements);
+			final ReqInOutGuesser riog = new ReqInOutGuesser(logger, mServices, init, requirements);
 			init = riog.getInitializationPatterns();
+			requirements = riog.getRequirements();
 		}
 
 		final IReq2Pea req2pea = createReq2Pea(req2peaTransformers, init, requirements);
