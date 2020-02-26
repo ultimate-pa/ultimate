@@ -44,7 +44,7 @@ public class Req2CauseTrackingCDD {
 			final boolean isEffectPhase) {
 		final Set<String> vars = getCddVariables(cdd);
 		vars.removeAll(inputVars);
-		//TODO: check if is effect edge
+		// TODO: check if is effect edge
 		vars.removeAll(effectVars);
 		// TODO remove primed effect variables in a nicer way
 		vars.removeAll(effectVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
@@ -83,17 +83,17 @@ public class Req2CauseTrackingCDD {
 		return cdd;
 	}
 
-	public static Set<String> getAllVariables(PatternType pattern,  Map<String, Integer> id2bounds){
+	public static Set<String> getAllVariables(final PatternType pattern, final Map<String, Integer> id2bounds) {
 		final DCPhase[] tc = pattern.constructCounterTrace(id2bounds).getPhases();
-		//find max phase and second max phase, compare
-		final Set<String> variables = new HashSet<String>();
-		for (final DCPhase p: tc) {
+		// find max phase and second max phase, compare
+		final Set<String> variables = new HashSet<>();
+		for (final DCPhase p : tc) {
 			variables.addAll(getCddVariables(p.getInvariant()));
 		}
 		return variables;
 	}
 
-	public CDD getEffectCDD(final PatternType pattern) {
+	public static CDD getEffectCDD(final PatternType pattern) {
 		final List<CDD> cdds = pattern.getCdds();
 		// lets just assume that the effect of the requirement is always mentioned at the end of the pattern (i.e. last
 		// CDD)
@@ -102,28 +102,27 @@ public class Req2CauseTrackingCDD {
 		return cdds.get(0);
 	}
 
-	public static Set<String> getEffectVariables(PatternType pattern,  Map<String, Integer> id2bounds){
+	public static Set<String> getEffectVariables(final PatternType pattern, final Map<String, Integer> id2bounds) {
 		final DCPhase[] tc = pattern.constructCounterTrace(id2bounds).getPhases();
-		//find max phase and second max phase, compare
-		final CDD finalStateInvar = tc[tc.length-2].getInvariant();
-		if(tc.length >= 2) {
-			final CDD beforeStateInvar = tc[tc.length-3].getInvariant();
+		// find max phase and second max phase, compare
+		final CDD finalStateInvar = tc[tc.length - 2].getInvariant();
+		if (tc.length >= 2) {
+			final CDD beforeStateInvar = tc[tc.length - 3].getInvariant();
 			return getDifferences(beforeStateInvar, finalStateInvar);
-		} else {
-			return getCddVariables(finalStateInvar);
 		}
+		return getCddVariables(finalStateInvar);
 	}
 
-	private static Set<String> getDifferences(CDD beforeStateInvar, CDD finalStateInvar) {
+	private static Set<String> getDifferences(final CDD beforeStateInvar, final CDD finalStateInvar) {
 		final Set<String> differences = getCddVariables(finalStateInvar);
-		//collect the atomics from both cdds
+		// collect the atomics from both cdds
 		final Set<CDD> beforeAtomics = getCDDAtoms(beforeStateInvar);
-		for(final CDD cdd: finalStateInvar.toDNF()) {
-			final Set<String> localDifferences = new HashSet<String>();
+		for (final CDD cdd : finalStateInvar.toDNF()) {
+			final Set<String> localDifferences = new HashSet<>();
 			final Set<CDD> afterAtomics = getCDDAtoms(finalStateInvar);
-			for(final CDD a: afterAtomics) {
-				for(final CDD b: beforeAtomics) {
-					if(a.isEqual(b)) {
+			for (final CDD a : afterAtomics) {
+				for (final CDD b : beforeAtomics) {
+					if (a.isEqual(b)) {
 						break;
 					}
 				}
@@ -134,7 +133,7 @@ public class Req2CauseTrackingCDD {
 		return differences;
 	}
 
-	public static Set<CDD> getCDDAtoms(CDD cdd){
+	public static Set<CDD> getCDDAtoms(final CDD cdd) {
 		final Set<CDD> atomics = new HashSet<>();
 		extractAtomics(cdd, atomics);
 		return atomics;

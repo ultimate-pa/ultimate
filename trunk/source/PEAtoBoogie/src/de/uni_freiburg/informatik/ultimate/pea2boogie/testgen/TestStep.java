@@ -60,7 +60,7 @@ public class TestStep {
 		return result.toString();
 	}
 
-	private String formatIdentToValue(final Collection<Expression> valueExpessions) {
+	private static String formatIdentToValue(final Collection<Expression> valueExpessions) {
 		final StringBuilder result = new StringBuilder();
 		for (final Expression expr : valueExpessions) {
 			result.append(formatLiteral(expr));
@@ -69,7 +69,7 @@ public class TestStep {
 		return result.toString();
 	}
 
-	private String formatLiteral(final Expression expr) {
+	private static String formatLiteral(final Expression expr) {
 		if (expr instanceof BooleanLiteral) {
 			return Boolean.toString(((BooleanLiteral) expr).getValue());
 		} else if (expr instanceof IntegerLiteral) {

@@ -14,30 +14,30 @@ public class ReqEffectStore {
 	private final Map<Integer, Integer> mOutputEffectEdges;
 
 	public ReqEffectStore() {
-		mEffectPhase = new HashSet<Integer>();
-		mOutputEffectPhase = new HashSet<Integer>();
-		mEffectVars = new HashSet<String>();
-		mEffectEdges = new HashMap<Integer, Integer>();
-		mOutputEffectEdges = new HashMap<Integer, Integer>();
+		mEffectPhase = new HashSet<>();
+		mOutputEffectPhase = new HashSet<>();
+		mEffectVars = new HashSet<>();
+		mEffectEdges = new HashMap<>();
+		mOutputEffectEdges = new HashMap<>();
 	}
 
-	public void addEffectVars(Set<String> effectVars) {
+	public void addEffectVars(final Set<String> effectVars) {
 		mEffectVars.addAll(effectVars);
 	}
 
-	public void addEffectPhaseIndex(Integer phaseIndex) {
+	public void addEffectPhaseIndex(final Integer phaseIndex) {
 		mEffectPhase.add(phaseIndex);
 	}
 
-	public void addOutputEffectPhaseIndex(Integer phaseIndex) {
+	public void addOutputEffectPhaseIndex(final Integer phaseIndex) {
 		mOutputEffectPhase.add(phaseIndex);
 	}
 
-	public void addEffectEdgeIndex(Integer sourcePhaseIndex, Integer targetPhaseIndex) {
+	public void addEffectEdgeIndex(final Integer sourcePhaseIndex, final Integer targetPhaseIndex) {
 		mEffectEdges.put(sourcePhaseIndex, targetPhaseIndex);
 	}
 
-	public void addOutputEffectEdgeIndex(Integer sourcePhaseIndex, Integer targetPhaseIndex) {
+	public void addOutputEffectEdgeIndex(final Integer sourcePhaseIndex, final Integer targetPhaseIndex) {
 		mOutputEffectEdges.put(sourcePhaseIndex, targetPhaseIndex);
 	}
 
@@ -45,38 +45,37 @@ public class ReqEffectStore {
 		return mEffectVars;
 	}
 
-	public boolean isEffectPhaseIndex(Integer phaseIndex) {
+	public boolean isEffectPhaseIndex(final Integer phaseIndex) {
 		return mEffectPhase.contains(phaseIndex);
 	}
 
-	public  Set<Integer> getEffectPhaseIndexes() {
+	public Set<Integer> getEffectPhaseIndexes() {
 		return mEffectPhase;
 	}
 
-	public  Set<Integer> getEffectEdgeSourceIndexes() {
+	public Set<Integer> getEffectEdgeSourceIndexes() {
 		return mEffectEdges.keySet();
 	}
 
-	public  Map<Integer, Integer> getEffectEdges() {
+	public Map<Integer, Integer> getEffectEdges() {
 		return mEffectEdges;
 	}
 
-	public boolean isOutputEffectPhaseIndex(Integer phaseIndex) {
+	public boolean isOutputEffectPhaseIndex(final Integer phaseIndex) {
 		return mOutputEffectPhase.contains(phaseIndex);
 	}
 
-	public Set<Integer> getOutputEffectPhaseIndex(){
+	public Set<Integer> getOutputEffectPhaseIndex() {
 		return mOutputEffectPhase;
 	}
 
-	public boolean isEffectEdge(Integer sourcePhaseIndex, Integer targetPhaseIndex) {
-		return mEffectEdges.containsKey(sourcePhaseIndex) &&
-				mEffectEdges.get(sourcePhaseIndex) == targetPhaseIndex;
+	public boolean isEffectEdge(final Integer sourcePhaseIndex, final Integer targetPhaseIndex) {
+		return mEffectEdges.containsKey(sourcePhaseIndex) && mEffectEdges.get(sourcePhaseIndex) == targetPhaseIndex;
 	}
 
-	public boolean isOutputEffectEdge(Integer sourcePhaseIndex, Integer targetPhaseIndex) {
-		return mOutputEffectEdges.containsKey(sourcePhaseIndex) &&
-				mOutputEffectEdges.get(sourcePhaseIndex) == targetPhaseIndex;
+	public boolean isOutputEffectEdge(final Integer sourcePhaseIndex, final Integer targetPhaseIndex) {
+		return mOutputEffectEdges.containsKey(sourcePhaseIndex)
+				&& mOutputEffectEdges.get(sourcePhaseIndex) == targetPhaseIndex;
 	}
 
 }

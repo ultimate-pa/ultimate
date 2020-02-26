@@ -123,10 +123,9 @@ public class Req2BoogieTranslator {
 		List<InitializationPattern> init = patterns.stream().filter(a -> a instanceof InitializationPattern)
 				.map(a -> (InitializationPattern) a).collect(Collectors.toList());
 		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_GUESS_IN_OUT)) {
-			final ReqInOutGuesser riog = new ReqInOutGuesser(logger,init, requirements);
+			final ReqInOutGuesser riog = new ReqInOutGuesser(logger, init, requirements);
 			init = riog.getInitializationPatterns();
 		}
-
 
 		final IReq2Pea req2pea = createReq2Pea(req2peaTransformers, init, requirements);
 		if (req2pea.hasErrors()) {
@@ -136,7 +135,6 @@ public class Req2BoogieTranslator {
 			mSymboltable = null;
 			return;
 		}
-
 
 		mReq2Automata = req2pea.getPattern2Peas();
 		mSymboltable = req2pea.getSymboltable();

@@ -50,17 +50,20 @@ public class ReqTestResultUtil {
 		final List<TestStep> testSteps = new ArrayList<>();
 		@SuppressWarnings("unchecked")
 		final IProgramExecution<?, Expression> translatedPe = (IProgramExecution<?, Expression>) mServices
-		.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
-		final AtomicTraceElement<IElement> finalElement = ((AtomicTraceElement<IElement>) translatedPe.getTraceElement(translatedPe.getLength()-1));
+				.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
+		final AtomicTraceElement<IElement> finalElement =
+				((AtomicTraceElement<IElement>) translatedPe.getTraceElement(translatedPe.getLength() - 1));
 		ProgramState<Expression> peek = null;
-		for(int i = 0; i < translatedPe.getLength(); i++) {
+		for (int i = 0; i < translatedPe.getLength(); i++) {
 			final AtomicTraceElement<IElement> ate = ((AtomicTraceElement<IElement>) translatedPe.getTraceElement(i));
 			if (translatedPe.getProgramState(i) != null) {
 				peek = translatedPe.getProgramState(i);
 			}
 			if (ate.getStep() == finalElement.getStep()) {
 				if (peek == null) {
-					mLogger.error("Assertion did not contain state (but would have been neccessary for test generation):" + ate.getStep().toString());
+					mLogger.error(
+							"Assertion did not contain state (but would have been neccessary for test generation):"
+									+ ate.getStep().toString());
 					continue;
 				}
 				final ProgramState<Expression> pgst = translatedPe.getProgramState(i);
@@ -91,7 +94,7 @@ public class ReqTestResultUtil {
 		return new TestStep(inputAssignment, outputAssignment, waitForTime);
 	}
 
-	private String getTestAssertionName(final IElement e) {
+	private static String getTestAssertionName(final IElement e) {
 		if (e instanceof AssertStatement) {
 			final NamedAttribute[] attrs = ((AssertStatement) e).getAttributes();
 			if (attrs != null && attrs.length > 0) {
