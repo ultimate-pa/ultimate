@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -72,8 +73,10 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2Pea;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaAnnotator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaTransformer;
@@ -112,13 +115,17 @@ public class Req2BoogieTranslator {
 		mServices = services;
 
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
-
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
 		final List<PatternType> requirements =
 				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
-		final ReqInOutGuesser riog = new ReqInOutGuesser(logger, patterns.stream().filter(a -> a instanceof InitializationPattern)
-				.map(a -> (InitializationPattern) a).collect(Collectors.toList()), requirements);
-		final List<InitializationPattern> init = riog.getInitializationPatterns();
+
+		List<InitializationPattern> init = patterns.stream().filter(a -> a instanceof InitializationPattern)
+				.map(a -> (InitializationPattern) a).collect(Collectors.toList());
+		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_GUESS_IN_OUT)) {
+			final ReqInOutGuesser riog = new ReqInOutGuesser(logger,init, requirements);
+			init = riog.getInitializationPatterns();
+		}
 
 
 		final IReq2Pea req2pea = createReq2Pea(req2peaTransformers, init, requirements);

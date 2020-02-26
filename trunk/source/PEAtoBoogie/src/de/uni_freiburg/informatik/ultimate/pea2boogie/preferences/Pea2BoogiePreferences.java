@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
  *
  */
 public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
-	
+
 	public static final String LABEL_TRANSFOMER_MODE = "PEA Transformation Mode";
 	public static final PEATransformerMode TRANSFOMER_MODE = PEATransformerMode.REQ_CHECK;
 	private static final String DESC_TRANSFOMER_MODE = "Switches between checking requirements and generating tests for requirements.";
@@ -75,7 +75,16 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			"This setting controls whether invariant requirements are included in every rt-inconsistency check or if they"
 					+ " are treated as separate requirements. If enabled, each rt-inconsistency check is of the form "
 					+ "Invariants ∧ (check over all remaining requirements). If disabled, invariants are not treated separately.";
-	
+
+	public static final String LABEL_GUESS_IN_OUT = "Use heuristic to find input/output definitions (if none are given)";
+	private static final boolean DEF_GUESS_IN_OUT = true;
+	private static final String DESC_GUESS_IN_OUT= "If there is no explicit definition of inputs, outputs and internal"
+			+ "variables in the Requirements file (i.e. only inputs), use the follwing heuristics:"
+			+ "Every variable that is never influenced by a requirement is an input"
+			+ "Every variable that is never used in the precondition of a requirement is an output"
+			+ "The rest is internal. Note: this is the most conservative assignment suited for demos, but "
+			+ " usually not helpful in the wild";
+
 	public enum PEATransformerMode{
 		REQ_CHECK, REQ_TEST
 	}
@@ -88,21 +97,23 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 
-				new UltimatePreferenceItem<>(LABEL_TRANSFOMER_MODE, TRANSFOMER_MODE, DESC_TRANSFOMER_MODE,
-						PreferenceType.Combo, PEATransformerMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_VACUITY, DEF_CHECK_VACUITY, DESC_CHECK_VACUITY,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CHECK_CONSISTENCY, DEF_CHECK_CONSISTENCY, DESC_CHECK_CONSISTENCY,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY, DEF_CHECK_RT_INCONSISTENCY,
-						DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, DEF_REPORT_TRIVIAL_RT_CONSISTENCY,
-						DESC_REPORT_TRIVIAL_RT_CONSISTENCY, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_RANGE, DEF_RT_INCONSISTENCY_RANGE,
-						DESC_RT_INCONSISTENCY_RANGE, PreferenceType.Integer, IUltimatePreferenceItemValidator.GEQ_TWO),
-				new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
-						DEF_RT_INCONSISTENCY_USE_ALL_INVARIANTS, DESC_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
-						PreferenceType.Boolean), };
+			new UltimatePreferenceItem<>(LABEL_TRANSFOMER_MODE, TRANSFOMER_MODE, DESC_TRANSFOMER_MODE,
+					PreferenceType.Combo, PEATransformerMode.values()),
+			new UltimatePreferenceItem<>(LABEL_CHECK_VACUITY, DEF_CHECK_VACUITY, DESC_CHECK_VACUITY,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_CHECK_CONSISTENCY, DEF_CHECK_CONSISTENCY, DESC_CHECK_CONSISTENCY,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY, DEF_CHECK_RT_INCONSISTENCY,
+					DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, DEF_REPORT_TRIVIAL_RT_CONSISTENCY,
+					DESC_REPORT_TRIVIAL_RT_CONSISTENCY, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_RANGE, DEF_RT_INCONSISTENCY_RANGE,
+					DESC_RT_INCONSISTENCY_RANGE, PreferenceType.Integer, IUltimatePreferenceItemValidator.GEQ_TWO),
+			new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
+					DEF_RT_INCONSISTENCY_USE_ALL_INVARIANTS, DESC_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_GUESS_IN_OUT,
+					DEF_GUESS_IN_OUT, DESC_GUESS_IN_OUT, PreferenceType.Boolean)};
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {
