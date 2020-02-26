@@ -296,20 +296,16 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		}*/
 
 		final Map<Condition<LETTER, PLACE>, PLACE> placeMap = new HashMap<>();
-		for (final Condition<LETTER, PLACE> c : bp.getConditions()) {
-			assert mConditionRepresentatives.find(c) != null;
-			// equality intended here
-			if (c == mConditionRepresentatives.find(c)) {
-				final boolean isInitial = containsInitial(mConditionRepresentatives.getEquivalenceClassMembers(c),
-						bp.initialConditions());
-				final boolean isAccepting =	bp.getNet().isAccepting(c.getPlace());
-				final PLACE place = mStateFactory.finitePrefix2net(c);
-				final boolean newlyAdded = mNet.addPlace(place, isInitial, isAccepting);
-				if (!newlyAdded) {
-					throw new AssertionError("Must not add place twice: " + place);
-				}
-				placeMap.put(c, place);
+		for (final Condition<LETTER, PLACE> c : mConditionRepresentatives.getAllRepresentatives()) {
+			final boolean isInitial = containsInitial(mConditionRepresentatives.getEquivalenceClassMembers(c),
+					bp.initialConditions());
+			final boolean isAccepting = bp.getNet().isAccepting(c.getPlace());
+			final PLACE place = mStateFactory.finitePrefix2net(c);
+			final boolean newlyAdded = mNet.addPlace(place, isInitial, isAccepting);
+			if (!newlyAdded) {
+				throw new AssertionError("Must not add place twice: " + place);
 			}
+			placeMap.put(c, place);
 		}
 
 		/*if (mUseBackfoldingIds) {
@@ -420,7 +416,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 
 	private boolean containsInitial(final Set<Condition<LETTER, PLACE>> equivalenceClassMembers,
 			final Collection<Condition<LETTER, PLACE>> initialConditions) {
-		return equivalenceClassMembers.stream().anyMatch(x -> initialConditions.contains(x));
+		return initialConditions.stream().anyMatch(x -> equivalenceClassMembers.contains(x));
 	}
 
 	private boolean containsAccepting(final Set<Condition<LETTER, PLACE>> equivalenceClassMembers,
