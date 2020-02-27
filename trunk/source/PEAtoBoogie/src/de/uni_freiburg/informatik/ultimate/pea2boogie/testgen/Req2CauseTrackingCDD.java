@@ -23,6 +23,7 @@ public class Req2CauseTrackingCDD {
 
 	private final ILogger mLogger;
 	private final Map<String, String> mTrackingVars;
+	private final int CONST_MIN_DELAY = 1;
 
 	public Req2CauseTrackingCDD(final ILogger logger) {
 		mLogger = logger;
@@ -44,7 +45,6 @@ public class Req2CauseTrackingCDD {
 			final boolean isEffectEdge) {
 		final Set<String> vars = getCddVariables(cdd);
 		vars.removeAll(inputVars);
-		// TODO: check if is effect edge
 		if (isEffectEdge) {
 			vars.removeAll(effectVars);
 		}
@@ -52,8 +52,8 @@ public class Req2CauseTrackingCDD {
 		vars.removeAll(effectVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
 		vars.removeAll(inputVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
 		final CDD newGuard = addTrackingGuards(cdd, vars);
-		//final CDD wClocks = transformGuardClock(newGuard, isEffectEdge);
-		return newGuard;
+		final CDD wClocks = transformGuardClock(newGuard, isEffectEdge);
+		return wClocks;
 	}
 
 	private CDD addTrackingGuards(CDD cdd, final Set<String> trackedVars) {
@@ -126,13 +126,10 @@ public class Req2CauseTrackingCDD {
 
 	private CDD transformPrefixClockDecisionInvariant(RangeDecision d, int trueChild) {
 		switch (d.getOp(trueChild)) {
-		case RangeDecision.OP_LTEQ:
-			return RangeDecision.create(d.getVar(), RangeDecision.OP_LTEQ, 1);
 		case RangeDecision.OP_GTEQ:
-			return RangeDecision.create(d.getVar(), RangeDecision.OP_GTEQ, d.getVal(trueChild));
+			return RangeDecision.create(d.getVar(), RangeDecision.OP_EQ, d.getVal(trueChild));
 		default:
-			//all else may not occur in our requirements thus far;
-			return CDD.FALSE;
+			return RangeDecision.create(d.getVar(), d.getOp(trueChild) , d.getVal(trueChild));
 		}
 	}
 
@@ -176,7 +173,7 @@ public class Req2CauseTrackingCDD {
 	private CDD transformPrefixClockDecisionGuard(RangeDecision d, int trueChild) {
 		switch (d.getOp(trueChild)) {
 		case RangeDecision.OP_LTEQ:
-			return RangeDecision.create(d.getVar(), RangeDecision.OP_LTEQ, 1);
+			return RangeDecision.create(d.getVar(), RangeDecision.OP_LTEQ, CONST_MIN_DELAY);
 		case RangeDecision.OP_GTEQ:
 			return RangeDecision.create(d.getVar(), RangeDecision.OP_EQ, d.getVal(trueChild));
 		default:
