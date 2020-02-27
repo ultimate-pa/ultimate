@@ -13,4 +13,6 @@ public interface IReq2PeaAnnotator {
 
 	public List<Statement> getPreChecks();
 
+	public List<Statement> getPostTransitionChecks();
+
 }

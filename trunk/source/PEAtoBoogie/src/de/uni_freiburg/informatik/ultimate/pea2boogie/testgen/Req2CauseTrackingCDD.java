@@ -52,7 +52,7 @@ public class Req2CauseTrackingCDD {
 		vars.removeAll(effectVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
 		vars.removeAll(inputVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
 		final CDD newGuard = addTrackingGuards(cdd, vars);
-		final CDD wClocks = transformGuardClock(newGuard, isEffectEdge);
+		//final CDD wClocks = transformGuardClock(newGuard, isEffectEdge);
 		return newGuard;
 	}
 
@@ -136,7 +136,7 @@ public class Req2CauseTrackingCDD {
 		}
 	}
 
-	public CDD transformGuardClock(CDD cdd, boolean effectEdge) {
+	public CDD transformGuardClock(final CDD cdd, boolean effectEdge) {
 		if (cdd == CDD.TRUE) {
 			return cdd;
 		}
@@ -162,7 +162,7 @@ public class Req2CauseTrackingCDD {
 		return CDD.create(cdd.getDecision(), children);
 	}
 
-	private CDD transformClockDecisionGuard(RangeDecision d, CDD[] children) {
+	private CDD transformClockDecisionGuard(final RangeDecision d, final CDD[] children) {
 		CDD returnDecision = CDD.TRUE;
 		for (int i = 0; i < children.length; i++) {
 			if (children[i] == CDD.FALSE) {

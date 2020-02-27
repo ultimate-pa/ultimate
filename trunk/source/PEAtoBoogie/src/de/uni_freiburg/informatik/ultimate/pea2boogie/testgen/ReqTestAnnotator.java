@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -56,6 +57,12 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 		final List<Statement> statements = new ArrayList<>();
 		// check that each u_v -> pc_xx == effect(A_r) for every v \in E
 		statements.addAll(genTrackingAssumptions());
+		return statements;
+	}
+
+	@Override
+	public List<Statement> getPostTransitionChecks() {
+		final List<Statement> statements = new ArrayList<>();
 		// generate asserts assert(!(pc_xx == i)) for every i \in effect(A_r)
 		statements.addAll(genTestAssertions());
 		return statements;
@@ -178,9 +185,10 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 		return statements;
 	}
 
-	private List<Statement> genTestPhaseEffectAssertion(final PhaseEventAutomata pea, final Set<Integer> effectPhases) {
+	/*private List<Statement> genTestPhaseEffectAssertion(final PhaseEventAutomata pea, final Set<Integer> effectPhases) {
 		final List<Statement> statements = new ArrayList<>();
 		for (final Integer phaseNr : effectPhases) {
+			//TODO: add clock!
 			final Expression expr = new BinaryExpression(mLocation, BinaryExpression.Operator.COMPEQ,
 					mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea)),
 					new IntegerLiteral(mLocation, phaseNr.toString()));
@@ -191,7 +199,41 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 			statements.add(assrt);
 		}
 		return statements;
+	}*/
+
+	private List<Statement> genTestPhaseEffectAssertion(final PhaseEventAutomata pea, final Set<Integer> effectPhases) {
+		final List<Statement> statements = new ArrayList<>();
+		for(final int effectPhaseIndex: effectPhases) {
+			final Expression thisExpr = new BinaryExpression(mLocation, BinaryExpression.Operator.COMPEQ,
+					mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea)),
+					new IntegerLiteral(mLocation, Integer.toString(effectPhaseIndex)));
+			final Expression nextExpr = variableNotInList(mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea) + "'"), effectPhases);
+			final Expression stateDescr = new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND, thisExpr, nextExpr);
+			final NamedAttribute[] attr = new NamedAttribute[] {
+					new NamedAttribute(mLocation, TEST_ASSERTION_PREFIX + pea.getName() + Integer.toString(effectPhaseIndex), new Expression[] {}) };
+			final Statement assrt = new AssertStatement(mLocation, attr,
+					new UnaryExpression(mLocation, UnaryExpression.Operator.LOGICNEG, stateDescr));
+			statements.add(assrt);
+		}
+
+		return statements;
 	}
+
+	private Expression variableNotInList(IdentifierExpression ident, Set<Integer> values) {
+		Expression expr = null;
+		for(final int value: values) {
+			if(expr == null) {
+				expr = new BinaryExpression(mLocation, BinaryExpression.Operator.COMPNEQ,
+						ident, new IntegerLiteral(mLocation, Integer.toString(value)));
+			} else {
+				expr = new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND,
+						expr, new BinaryExpression(mLocation, BinaryExpression.Operator.COMPNEQ,
+								ident, new IntegerLiteral(mLocation, Integer.toString(value))));
+			}
+		}
+		return expr;
+	}
+
 
 	private List<Statement> genTestEdgeEffectAssertion(final PhaseEventAutomata pea,
 			final Map<Integer, Integer> effectEdges) {

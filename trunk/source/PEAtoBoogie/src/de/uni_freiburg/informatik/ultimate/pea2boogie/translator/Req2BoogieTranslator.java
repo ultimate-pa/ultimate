@@ -495,6 +495,7 @@ public class Req2BoogieTranslator {
 			stmtList.add(genOuterIfTransition(entry.getValue(), mSymboltable.getPcName(entry.getValue()), bl));
 		}
 
+		stmtList.addAll(mReqCheckAnnotator.getPostTransitionChecks());
 		stmtList.addAll(genStateVarsAssign());
 
 		return stmtList.toArray(new Statement[stmtList.size()]);

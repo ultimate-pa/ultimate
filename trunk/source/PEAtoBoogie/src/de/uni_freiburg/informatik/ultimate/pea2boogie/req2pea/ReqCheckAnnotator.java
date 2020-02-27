@@ -359,4 +359,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	public List<Statement> getPreChecks() {
 		return Collections.EMPTY_LIST;
 	}
+
+	@Override
+	public List<Statement> getPostTransitionChecks() {
+		return Collections.EMPTY_LIST;
+	}
 }

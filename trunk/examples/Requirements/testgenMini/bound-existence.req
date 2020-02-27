@@ -1,9 +1,0 @@
-Input I is bool
-Output O is bool
-
-
-req1: Globally, transitions to states in which "O" holds occur at most twice
-req2: Globally, it is always the case that if "I" holds, then "O" holds as well
-req3: Globally, it is always the case that if "!I" holds, then "!O" holds as well
-req4: Globally, it is always the case that if "!G && !O" holds, then "O2" holds as well
-req5: Globally, it is never the case that "!G && !I" holds
