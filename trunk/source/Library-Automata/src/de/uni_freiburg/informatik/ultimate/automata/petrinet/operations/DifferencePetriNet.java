@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import petruchio.sim.petrinettool.IPetriNet;
 
 /**
  * Petri net for on-demand construction of difference.
@@ -144,6 +143,81 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		} else {
 			return casted.getPredecessors();
 		}
+	}
+
+
+
+	@Override
+	public Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
+			final Set<PLACE> mustPlaces, final Set<PLACE> mayPlaces) {
+		if (mustPlaces.isEmpty()) {
+			return Collections.emptySet();
+		}
+		assert (mayPlaces.containsAll(mustPlaces)) : "some must place is not may place";
+		final Set<PLACE> minuendMustPlaces;
+		final Set<PLACE> subtrahendMustStates;
+		final Set<PLACE> minuendMayPlaces;
+		final Set<PLACE> subtrahendMayStates;
+		{
+			final Pair<Set<PLACE>, Set<PLACE>> split = split(mustPlaces);
+			minuendMustPlaces = split.getFirst();
+			subtrahendMustStates = split.getSecond();
+		}
+		{
+			final Pair<Set<PLACE>, Set<PLACE>> split = split(mayPlaces);
+			minuendMayPlaces = split.getFirst();
+			subtrahendMayStates = split.getSecond();
+		}
+		final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> minuendStps;
+		if (subtrahendMustStates.isEmpty()) {
+			minuendStps = mMinued.getSuccessorTransitionProviders(minuendMustPlaces, minuendMayPlaces);
+		} else {
+			minuendStps = mMinued.getSuccessorTransitionProviders(minuendMayPlaces, minuendMayPlaces);
+		}
+
+		final boolean useUniversalLoopersOptimization = (mUniversalLoopers != null);
+		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
+		for (final ISuccessorTransitionProvider<LETTER, PLACE> minuendStp : minuendStps) {
+			// TODO: Compute on-demand
+			final boolean emtpyIntersectionWithMinuendMustPlaces = DataStructureUtils.haveEmptyIntersection(minuendStp.getPredecessorPlaces(), minuendMustPlaces);
+			if (useUniversalLoopersOptimization) {
+				final SuccessorTransitionProviderSplit<LETTER, PLACE> split = new SuccessorTransitionProviderSplit<>(
+						minuendStp, mUniversalLoopers, mMinued);
+				if (split.getSuccTransProviderLetterInSet() != null) {
+					// copy from minuend, no need to synchronize
+					if (emtpyIntersectionWithMinuendMustPlaces) {
+						// do nothing
+						// must not add, no corresponding place
+						// transition will be considered if one of the
+						// predecessor places is considered
+					} else {
+						result.add(new SimpleSuccessorTransitionProviderWithUsageInformation(split.getSuccTransProviderLetterInSet().getTransitions(), mMinued));
+					}
+				}
+				if (split.getSuccTransProviderLetterNotInSet() != null) {
+					Set<PLACE> automatonPredecessorsToConsider;
+					if (emtpyIntersectionWithMinuendMustPlaces) {
+						automatonPredecessorsToConsider = subtrahendMustStates;
+					} else {
+						automatonPredecessorsToConsider = subtrahendMayStates;
+					}
+					for (final PLACE automatonPredecessor : automatonPredecessorsToConsider) {
+						result.add(new DifferenceSuccessorTransitionProvider(split.getSuccTransProviderLetterNotInSet(), automatonPredecessor));
+					}
+				}
+			} else {
+				Set<PLACE> automatonPredecessorsToConsider;
+				if (emtpyIntersectionWithMinuendMustPlaces) {
+					automatonPredecessorsToConsider = subtrahendMustStates;
+				} else {
+					automatonPredecessorsToConsider = subtrahendMayStates;
+				}
+				for (final PLACE automatonPredecessor : automatonPredecessorsToConsider) {
+					result.add(new DifferenceSuccessorTransitionProvider(minuendStp, automatonPredecessor));
+				}
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -448,11 +522,6 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		}
 	}
 
-	@Override
-	public Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(
-			final Set<PLACE> placesOfNewConditions, final Set<PLACE> correlatedPlaces) {
-		throw new IllegalArgumentException("getSuccessorTransitionProviders with the given arguments works only for " + IPetriNet.class.getName());
-	}
 
 	public DifferenceSynchronizationInformation getDifferenceSynchronizationInformation_Old() {
 		return mDsi_Old;
