@@ -168,6 +168,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			minuendMayPlaces = split.getFirst();
 			subtrahendMayStates = split.getSecond();
 		}
+//		System.out.println("ComputeDifferenceSuccs " + minuendMustPlaces.size() + "+" + subtrahendMustStates.size()
+//				+ " " + minuendMayPlaces.size() + "+" + subtrahendMayStates.size());
 		final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> minuendStps;
 		if (subtrahendMustStates.isEmpty()) {
 			minuendStps = mMinued.getSuccessorTransitionProviders(minuendMustPlaces, minuendMayPlaces);
@@ -179,7 +181,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
 		for (final ISuccessorTransitionProvider<LETTER, PLACE> minuendStp : minuendStps) {
 			// TODO: Compute on-demand
-			final boolean emtpyIntersectionWithMinuendMustPlaces = DataStructureUtils.haveEmptyIntersection(minuendStp.getPredecessorPlaces(), minuendMustPlaces);
+			final boolean emtpyIntersectionWithMinuendMustPlaces = DataStructureUtils
+					.haveEmptyIntersection(minuendStp.getPredecessorPlaces(), minuendMustPlaces);
 			if (useUniversalLoopersOptimization) {
 				final SuccessorTransitionProviderSplit<LETTER, PLACE> split = new SuccessorTransitionProviderSplit<>(
 						minuendStp, mUniversalLoopers, mMinued);
@@ -191,7 +194,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 						// transition will be considered if one of the
 						// predecessor places is considered
 					} else {
-						result.add(new SimpleSuccessorTransitionProviderWithUsageInformation(split.getSuccTransProviderLetterInSet().getTransitions(), mMinued));
+						result.add(new SimpleSuccessorTransitionProviderWithUsageInformation(
+								split.getSuccTransProviderLetterInSet().getTransitions(), mMinued));
 					}
 				}
 				if (split.getSuccTransProviderLetterNotInSet() != null) {
@@ -202,7 +206,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 						automatonPredecessorsToConsider = subtrahendMayStates;
 					}
 					for (final PLACE automatonPredecessor : automatonPredecessorsToConsider) {
-						result.add(new DifferenceSuccessorTransitionProvider(split.getSuccTransProviderLetterNotInSet(), automatonPredecessor));
+						result.add(new DifferenceSuccessorTransitionProvider(split.getSuccTransProviderLetterNotInSet(),
+								automatonPredecessor));
 					}
 				}
 			} else {
@@ -231,6 +236,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		if (place2allowedSiblings.isEmpty()) {
 			return Collections.emptySet();
 		}
+//		System.out.println("ComputeDifferenceSuccsOld " + place2allowedSiblings.size());
 //		assert (exactlyOneStateFromAutomaton(place2allowedSiblings)) : "not exactly one state from automaton";
 		final HashRelation<Set<PLACE>, PLACE> mNetPredecessors2AutomatonPredecessors = new HashRelation<>();
 		final Map<Set<PLACE>, ISuccessorTransitionProvider<LETTER, PLACE>> mNetPredecessors2TransitionProvider = new HashMap<>();
@@ -239,6 +245,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 				final HashRelation<PLACE, PLACE> tmp = new HashRelation<>();
 				final Pair<Set<PLACE>, Set<PLACE>> split = split(place2allowedSiblings.getImage(place));
 //				assert split.getSecond().size() <= 1 : "there can be at most one automaton successor";
+//				System.out.println(" Minuend place " + split.getFirst().size()+"+"+split.getSecond().size());
 				tmp.addAllPairs(place, split.getFirst());
 				final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds = mMinued.getSuccessorTransitionProviders(tmp);
 				for (final ISuccessorTransitionProvider<LETTER, PLACE> stp : preds) {
@@ -247,12 +254,10 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 				}
 			} else if (mSubtrahendStates.contains(place)) {
 				final Pair<Set<PLACE>, Set<PLACE>> split = split(place2allowedSiblings.getImage(place));
+//				System.out.println(" subtrahend state " + split.getFirst().size()+"+"+split.getSecond().size());
 				assert split.getSecond().equals(Collections.singleton(place)) : "automata states cannot be siblings "
 						+ place + " " + split.getSecond();
-				final HashRelation<PLACE, PLACE> tmp = new HashRelation<>();
-				for (final PLACE minuendAllowedSibling : split.getFirst()) {
-					tmp.addAllPairs(minuendAllowedSibling, split.getFirst());
-				}
+
 				final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> preds = mMinued.getSuccessorTransitionProviders(split.getFirst(), split.getFirst());
 				for (final ISuccessorTransitionProvider<LETTER, PLACE> stp : preds) {
 					mNetPredecessors2AutomatonPredecessors.addPair(stp.getPredecessorPlaces(), place);
@@ -312,6 +317,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 //							// yet constructed, maybe this transition is dead
 //							continue;
 //						}
+						// TODO 20200228 Matthias: Why checked for each transition?
+						// Shouls be the same for all transitions of an STP
 						if (DataStructureUtils.haveNonEmptyIntersection(transitionPredecessors, place2allowedSiblings.getDomain())) {
 							transitions.add(trans);
 						} else {
