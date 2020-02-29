@@ -74,7 +74,6 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private static final boolean USE_PQ = true;
 	private final boolean mUseFirstbornCutoffCheck;
 	private final boolean mUseB32Optimization;
-	private final boolean mFinishedPetrinet;
 	/**
 	 * If {@link Event} is known to be cut-off event we can move it immediately
 	 * to front because it will not create descendants. This optimization keeps
@@ -87,7 +86,6 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private final ArrayDeque<Event<LETTER, PLACE>> mFastpathCutoffEventList;
 	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
 	private final static boolean LAZY_SUCCESSOR_COMPUTATION = true;
-	private final static boolean USE_SuccessorTransitionProvider_Optimization = false;
 
 	/**
 	 * A candidate is useful if it lead to at least one new possible extension.
@@ -100,7 +98,6 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			final boolean useB32Optimization) {
 		mUseFirstbornCutoffCheck = useFirstbornCutoffCheck;
 		mBranchingProcess = branchingProcess;
-		mFinishedPetrinet = USE_SuccessorTransitionProvider_Optimization && mBranchingProcess.getNet() instanceof IPetriNet<?, ?> ;
 		if (USE_PQ) {
 			mPe = new PriorityQueue<>(order);
 		} else {
@@ -168,7 +165,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 * Evolves a {@code Candidate} for a new possible Event in all possible ways and, as a side-effect, adds valid
 	 * extensions (ones whose predecessors are a co-set) to he possible extension set.
 	 */
-	
+
 	private void addFullyInstantiatedCandidate(final Candidate<LETTER, PLACE> cand) throws PetriNetNot1SafeException {
 		for (final ITransition<LETTER, PLACE> trans : cand.getTransition().getTransitions()) {
 			final Event<LETTER, PLACE> newEvent = new Event<>(cand.getInstantiated(), trans, mBranchingProcess);
@@ -214,7 +211,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			cand.undoOneInstantiation();
 		}
 	}
-	
+
 	private void evolveCandidateWithForwardChecking(final Candidate<LETTER, PLACE> cand) throws PetriNetNot1SafeException  {
 		if (cand.isFullyInstantiated()) {
 			addFullyInstantiatedCandidate(cand);
@@ -229,7 +226,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			final Map<PLACE, Set<Condition<LETTER, PLACE>>> newPossibleInstantiations = new HashMap<>();
 			boolean uselessCandidate = false;
 			for (final PLACE p : possibleInstantiationsMap.keySet()) {
-				final Set<Condition<LETTER, PLACE>> possibleInstantiationsforP = 
+				final Set<Condition<LETTER, PLACE>> possibleInstantiationsforP =
 						possibleInstantiationsMap.get(p).stream()
 						.filter(x -> coRelation.isInCoRelation(condition, x)).collect(Collectors.toSet());
 				if (possibleInstantiationsforP.isEmpty()) {
@@ -278,29 +275,21 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 				}
 			}
 			final Collection<ISuccessorTransitionProvider<LETTER, PLACE>> successorTransitionProviders;
-			
-            if (mFinishedPetrinet) {
-            	final Set<PLACE> placesOfNewConditions = new HashSet<>();
-    			for (final Condition<LETTER, PLACE> c : newConditions) {
-    				placesOfNewConditions.add(c.getPlace());
-    			}
-    			successorTransitionProviders = mBranchingProcess
-    					.getNet().getSuccessorTransitionProviders(placesOfNewConditions, place2coRelatedConditions.getDomain());
-            } else {
-            	final HashRelation<PLACE, PLACE> place2allowedSiblings = new HashRelation<>();
-    			for (final Condition<LETTER, PLACE> c : newConditions) {
-    				place2allowedSiblings.addAllPairs(c.getPlace(), place2coRelatedConditions.getDomain());
-    			}
-    			successorTransitionProviders = mBranchingProcess
-    					.getNet().getSuccessorTransitionProviders(place2allowedSiblings);
-            }
-			
+
+			final Set<PLACE> placesOfNewConditions = new HashSet<>();
+			for (final Condition<LETTER, PLACE> c : newConditions) {
+				placesOfNewConditions.add(c.getPlace());
+			}
+			successorTransitionProviders = mBranchingProcess.getNet()
+					.getSuccessorTransitionProviders(placesOfNewConditions, place2coRelatedConditions.getDomain());
+
 			final List<Candidate<LETTER, PLACE>> candidates = successorTransitionProviders.stream()
-					.map(x -> new Candidate<LETTER, PLACE>(x, newConditions, place2coRelatedConditions)).collect(Collectors.toList());
+					.map(x -> new Candidate<LETTER, PLACE>(x, newConditions, place2coRelatedConditions))
+					.collect(Collectors.toList());
 			return candidates;
 		} else {
 			if (!(mBranchingProcess.getNet() instanceof IPetriNet)) {
-				throw new IllegalArgumentException("non-lazy computation only available for fully constructed nets");
+				throw new AssertionError("non-lazy computation only available for fully constructed nets");
 			}
 			final IPetriNet<LETTER, PLACE> fullPetriNet = (IPetriNet<LETTER, PLACE>) mBranchingProcess.getNet();
 			final Set<ITransition<LETTER, PLACE>> transitions = new HashSet<>();
