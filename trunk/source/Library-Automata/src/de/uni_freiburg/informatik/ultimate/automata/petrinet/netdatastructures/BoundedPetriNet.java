@@ -68,7 +68,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 
 	private final Set<LETTER> mAlphabet;
 
-	private final Collection<PLACE> mPlaces = new HashSet<>();
+	private final Set<PLACE> mPlaces = new HashSet<>();
 	private final Set<PLACE> mInitialPlaces = new HashSet<>();
 	private final Collection<PLACE> mAcceptingPlaces = new HashSet<>();
 	private final Collection<ITransition<LETTER, PLACE>> mTransitions = new HashSet<>();
@@ -294,7 +294,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	}
 
 	@Override
-	public Collection<PLACE> getPlaces() {
+	public Set<PLACE> getPlaces() {
 		return mPlaces;
 	}
 
