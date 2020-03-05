@@ -558,20 +558,20 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	}
 
 	protected void writeAutomatonToFile(final IAutomaton<LETTER, IPredicate> automaton, final String filename) {
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
 		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices),
 				determineAutomatonName(automaton), mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling,
 				"", automaton);
-		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
 	}
 
 	protected void writeAutomataToFile(final String filename, final String atsHeaderMessage, final String atsCommands,
 			final NamedAutomaton<LETTER, IPredicate>... automata) {
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
 		AutomatonDefinitionPrinter.writeAutomatonToFile(new AutomataLibraryServices(mServices),
 				mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, atsHeaderMessage, atsCommands,
 				automata);
-		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
 	}
 
 

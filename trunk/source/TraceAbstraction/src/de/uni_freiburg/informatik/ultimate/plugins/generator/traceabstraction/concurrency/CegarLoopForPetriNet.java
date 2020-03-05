@@ -216,9 +216,9 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			return true;
 		}
 		if (mPref.dumpAutomata()) {
-			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
+			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
 			mDumper.dumpNestedRun(mCounterexample);
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
 		}
 		mLogger.info("Found error trace");
 

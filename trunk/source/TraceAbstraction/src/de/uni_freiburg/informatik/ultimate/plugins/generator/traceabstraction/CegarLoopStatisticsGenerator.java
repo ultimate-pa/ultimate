@@ -132,7 +132,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		case HoareAnnotationTime:
 		case BasicInterpolantAutomatonTime:
 		case InitialAbstractionConstructionTime:
-		case DUMP_TIME:
+		case DumpTime:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
@@ -140,7 +140,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			}
 		case HoareTripleCheckerStatistics:
 			return mEcData;
-		case REUSE_STATISTICS:
+		case ReuseStatistics:
 			return mReuseStats;
 		case PredicateUnifierStatistics:
 			return mPredicateUnifierData;
@@ -183,7 +183,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.DeadEndRemovalTime.toString(),
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
 				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString(),
-				CegarLoopStatisticsDefinitions.DUMP_TIME.toString(),
+				CegarLoopStatisticsDefinitions.DumpTime.toString(),
 				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString(), };
 	}
 }

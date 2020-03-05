@@ -400,9 +400,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 
 		if (mPref.dumpAutomata()) {
-			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
+			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
 			mDumper.dumpNestedRun(mCounterexample);
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
 		}
 		mLogger.info("Found error trace");
 
@@ -793,7 +793,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			final IPredicateUnifier predicateUnifier) {
 		if (mPref.dumpOnlyReuseAutomata()) {
 
-			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
+			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
 			mLogger.info("Dumping reuse automata for " + mTaskIdentifier.toString() + " " + automaton.getClass());
 			final String filename = mTaskIdentifier + "-reuse";
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> printedAutomaton;
@@ -807,7 +807,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					backingNestedWordAutomaton = new RemoveDeadEnds<>(services, automaton).getResult();
 					if (backingNestedWordAutomaton.getStates().isEmpty()) {
 						mLogger.warn("Automaton with emtpy language -- ommited dump");
-						mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
+						mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
 						return;
 					}
 				} catch (final AutomataOperationCanceledException e) {
@@ -823,7 +823,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					printedAutomaton);
 			mFirstReuseDump = false;
 			mLogger.info("Finished dumping");
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
 		}
 	}
 
