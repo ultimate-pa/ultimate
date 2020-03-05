@@ -81,7 +81,7 @@ public class PetriCegarLoopStatisticsGenerator extends StatisticsGeneratorWithSt
 
 	@Override
 	public IStatisticsType getBenchmarkType() {
-		return CegarStatisticsType.getInstance();
+		return PetriCegarStatisticsType.getInstance();
 	}
 
 	@Override
