@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -73,7 +74,7 @@ public class CegarLoopResult<LETTER extends IIcfgTransition<?>> {
 	private final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mProgramExecution;
 	private final List<UnprovabilityReason> mUnprovabilityReasons;
 	private final IRunningTaskStackProvider mRunningTaskStackProvider;
-	private final CegarLoopStatisticsGenerator mCegarLoopStatisticsGenerator;
+	private final IStatisticsDataProvider mCegarLoopStatisticsGenerator;
 	private final IElement mArtifact;
 	private final List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> mFloydHoareAutomata;
 
@@ -81,7 +82,7 @@ public class CegarLoopResult<LETTER extends IIcfgTransition<?>> {
 			final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> programExecution,
 			final List<UnprovabilityReason> unprovabilityReasons,
 			final IRunningTaskStackProvider runningTaskStackProvider,
-			final CegarLoopStatisticsGenerator cegarLoopStatisticsGenerator, final IElement artifact,
+			final IStatisticsDataProvider cegarLoopStatisticsGenerator, final IElement artifact,
 			final List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> floydHoareAutomata) {
 		super();
 		mOverallResult = overallResult;
@@ -109,7 +110,7 @@ public class CegarLoopResult<LETTER extends IIcfgTransition<?>> {
 		return mRunningTaskStackProvider;
 	}
 
-	public CegarLoopStatisticsGenerator getCegarLoopStatisticsGenerator() {
+	public IStatisticsDataProvider getCegarLoopStatisticsGenerator() {
 		return mCegarLoopStatisticsGenerator;
 	}
 
@@ -166,7 +167,7 @@ public class CegarLoopResult<LETTER extends IIcfgTransition<?>> {
 			runningTaskStackProvider = null;
 		}
 
-		final CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator = basicCegarLoop.getCegarLoopBenchmark();
+		final IStatisticsDataProvider cegarLoopBenchmarkGenerator = basicCegarLoop.getCegarLoopBenchmark();
 
 		final List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> floydHoareAutomata;
 		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {

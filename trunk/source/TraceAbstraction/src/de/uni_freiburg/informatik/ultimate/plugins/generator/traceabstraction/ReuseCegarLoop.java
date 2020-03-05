@@ -284,7 +284,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	}
 
 	@Override
-	public CegarLoopStatisticsGenerator getCegarLoopBenchmark() {
+	public IStatisticsDataProvider getCegarLoopBenchmark() {
 		// hacky: I know that this is only called during iterate, so we aggregate our benchmark in the cegar loop
 		// benchmark right before that.
 		assert !mStatsAlreadyAggregated;
