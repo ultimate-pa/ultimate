@@ -345,7 +345,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				final Condition<LETTER, PLACE> representative = mConditionRepresentatives.find(c);
 				succs.add(placeMap.get(representative));
 			}
-			mNet.addTransition(e.getTransition().getSymbol(), preds, succs, e.getTotalOrderId());
+			mNet.addTransition(e.getTransition().getSymbol(), preds, succs);
 		}
 		//}
 		/*{
