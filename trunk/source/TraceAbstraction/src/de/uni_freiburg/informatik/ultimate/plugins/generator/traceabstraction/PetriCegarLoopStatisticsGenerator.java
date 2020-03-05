@@ -86,12 +86,10 @@ public class PetriCegarLoopStatisticsGenerator extends StatisticsGeneratorWithSt
 
 	@Override
 	public String[] getStopwatches() {
-		return new String[] { CegarLoopStatisticsDefinitions.OverallTime.toString(),
-				CegarLoopStatisticsDefinitions.AutomataDifference.toString(),
-				CegarLoopStatisticsDefinitions.DeadEndRemovalTime.toString(),
-				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
-				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString(),
-				CegarLoopStatisticsDefinitions.DumpTime.toString(),
-				CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString(), };
+		return new String[] { PetriCegarLoopStatisticsDefinitions.BackfoldingTime.toString(),
+				PetriCegarLoopStatisticsDefinitions.BackfoldingUnfoldingTime.toString(),
+				PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString(),
+				PetriCegarLoopStatisticsDefinitions.RemoveRedundantFlowTime.toString(),
+				PetriCegarLoopStatisticsDefinitions.RemoveRedundantFlowUnfoldingTime.toString(), };
 	}
 }
