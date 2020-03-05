@@ -45,12 +45,11 @@ public enum PetriCegarLoopStatisticsDefinitions implements IStatisticsElement {
 	BackfoldingTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 	BackfoldingUnfoldingTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
+	
+	FlowIncreaseByBackfolding(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
 	BasicCegarLoop(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
 			StatisticsType.KEY_BEFORE_DATA),
-
-	FlowIncreaseByBackfolding(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
-
 	;
 
 
