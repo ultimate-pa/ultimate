@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> {
@@ -50,8 +51,8 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 		mCegarLoopBenchmarkData = new StatisticsData();
 	}
 
-	public void aggregateBenchmarkData(final CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator) {
-		mCegarLoopBenchmarkData.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
+	public void aggregateBenchmarkData(final IStatisticsDataProvider dataOfOneCegarLoop) {
+		mCegarLoopBenchmarkData.aggregateBenchmarkData(dataOfOneCegarLoop);
 		mCegarLoopsRun++;
 	}
 
