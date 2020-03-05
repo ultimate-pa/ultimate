@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter.AllErrorsAtOnceDebugIdentifier;
@@ -69,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.co
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -134,7 +134,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(petrifiedIcfg);
 		final Result result = abstractCegarLoop.iterate();
 		abstractCegarLoop.finish();
-		final CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator = abstractCegarLoop.getCegarLoopBenchmark();
+		final IStatisticsDataProvider cegarLoopBenchmarkGenerator = abstractCegarLoop.getCegarLoopBenchmark();
 		traceAbstractionBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 		reportBenchmark(traceAbstractionBenchmark);
 
