@@ -35,7 +35,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 // TODO: rewrite this class, possibly split it up to resolve this horrible ambiguity
 /**
@@ -52,94 +53,24 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
  * @param <PLACE>
  *            place content type
  */
-public class Configuration<LETTER, PLACE> implements Comparable<Configuration<LETTER, PLACE>>, Iterable<Event<LETTER, PLACE>> {
-	private final Set<Event<LETTER, PLACE>> mEvents;
-	private Set<Event<LETTER, PLACE>> mMin;
-	private ArrayList<Transition<LETTER, PLACE>> mPhi;
-	private List<Event<LETTER, PLACE>> mSortedConfiguration;
-	private final int mRemovedMin;
-	private int mDepth;
-//	private SortedMap<Integer, T<Event<LETTER, PLACE>>> mSortedEvents;
-	/**
-	 * Constructs a Configuration (Not a Suffix). The set given as parameter has to be causally closed and
-	 * conflict-free.
-	 *
-	 * @param events
-	 *            set of events
-	 */
-	public Configuration(final Set<Event<LETTER, PLACE>> events) {
-		this(events, 0);
-	}
+public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLACE>> {
+	private final ArrayList<Event<LETTER, PLACE>> mEvents;
+	private final ArrayList<Set<Event<LETTER, PLACE>>> mFoataNormalForm ;
+	private boolean mSorted = false;
+	private boolean mFoataComputed = false;
 
-	/**
-	 * Constructor with a minimum set of events.
-	 *
-	 * @param events
-	 *            set of events
-	 * @param min
-	 *            minimum set of events
-	 */
-	private Configuration(final Set<Event<LETTER, PLACE>> events, final int removedMin) {
-		mEvents = events;
-		mRemovedMin = removedMin;
-	}
-
-	private List<Transition<LETTER, PLACE>> getPhi() {
-		if (mPhi == null) {
-			mPhi = new ArrayList<>(mEvents.size());
-			for (final Event<LETTER, PLACE> e : mEvents) {
-				mPhi.add((Transition<LETTER, PLACE>) e.getTransition());
-			}
-			Collections.sort(mPhi);
+	public Configuration(final Set<Event<LETTER, PLACE>> events, final int configurationDepth) {
+		mEvents = new ArrayList<>(events);
+		mFoataNormalForm = new ArrayList<>(configurationDepth+1);
+		for (int i = 0; i < configurationDepth+1; i++) {
+			mFoataNormalForm.add(new HashSet<>());
 		}
-		return mPhi;
-	}
-
-	/**
-	 * Returns the causally minimal Events in this Configuration.
-	 * An Event e is causally minimal in a Configuration,
-	 * iff all Events preceding e are not in the configuration.
-	 *
-	 * @return causally minimal Events in this Configuration
-	 */
-	public Configuration<LETTER, PLACE> getMin() {
-		if (mMin == null) {
-			mMin = computeMin();
-		}
-		return new Configuration<>(mMin);
-	}
-	public Configuration<LETTER, PLACE> getMin(final int depth){
-		final Set<Event<LETTER, PLACE>> result = mEvents.stream()
-				.filter(event -> event.getDepth() == depth)
-				.collect(Collectors.toCollection(HashSet::new));
-		if (result.isEmpty()) {
-			throw new AssertionError("minimum must not be empty");
-		}
-		return new Configuration<>(result);
-	}
-	public void setDepth(final int depth) {
-		mDepth = depth;
-	}
-	public int getDepth() {
-		return mDepth;
 	}
 	
-	public List<Event<LETTER, PLACE>> getSortedConfiguration(final Comparator<Event<LETTER, PLACE>> comparator) {
-		if (mSortedConfiguration == null) {
-			mSortedConfiguration = mEvents.stream().sorted(comparator).collect(Collectors.toList());
-		}
-		return mSortedConfiguration; 
+	private List<Event<LETTER, PLACE>> getMinPhi(final int depth, Comparator<Event<LETTER, PLACE>> comparator){
+		return mFoataNormalForm.get(depth).stream().sorted(comparator).collect(Collectors.toList());
 	}
 
-	private Set<Event<LETTER, PLACE>> computeMin() {
-		final Set<Event<LETTER, PLACE>> result = mEvents.stream()
-				.filter(event -> event.getDepth() == mRemovedMin + 1)
-				.collect(Collectors.toCollection(HashSet::new));
-		if (result.isEmpty()) {
-			throw new AssertionError("minimum must not be empty");
-		}
-		return result;
-	}
 	
 	@Override
 	public Iterator<Event<LETTER, PLACE>> iterator() {
@@ -150,44 +81,61 @@ public class Configuration<LETTER, PLACE> implements Comparable<Configuration<LE
 		return mEvents.size();
 	}
 
-	public boolean add(final Event<LETTER, PLACE> arg0) {
-		return mEvents.add(arg0);
-	}
-
-	/**
-	 * improved implementation of removeMin.
-	 * @return A new Configuration that contains the set difference between the original configuration and its minimum
-	 *         regarding the casual relation.
-	 *         <p>
-	 *         requires, that getMin() has been called.
-	 */
-	public Configuration<LETTER, PLACE> removeMin() {
-		assert mMin != null : "getMin() must have been called before removeMin()";
-		assert !mMin.isEmpty() : "The minimum of a configuration must not be empty.";
-		final HashSet<Event<LETTER, PLACE>> events = new HashSet<>(mEvents);
-		events.removeAll(mMin);
-		return new Configuration<>(events, mRemovedMin +1);
-	}
+	
 
 	/**
 	 * Compares configurations initially based on size. In case of equal size, lexically compares the ordered sequences
 	 * of events with respect to the the total order on their transitions.
 	 */
-	@Override
-	public int compareTo(final Configuration<LETTER, PLACE> other) {
+
+	public int compareTo(final Configuration<LETTER, PLACE> other, Comparator<Event<LETTER, PLACE>> comparator) {
 		if (size() != other.size()) {
 			return size() - other.size();
 		}
-		final List<Transition<LETTER, PLACE>> phi1 = getPhi();
-		final List<Transition<LETTER, PLACE>> phi2 = other.getPhi();
+		if (!mSorted) {
+			computePhi(comparator);
+		}
+		if (!other.mSorted) {
+			other.computePhi(comparator);
+		}
+		return comparePhi(mEvents, other.mEvents, comparator);
+	}
+	
+	public int compareMin(final Configuration<LETTER, PLACE> other, final int depth, Comparator<Event<LETTER, PLACE>> comparator) {
+		if (!mFoataComputed) {
+			computeFoataNormalForm();
+		}
+		if (!other.mFoataComputed) {
+			other.computeFoataNormalForm();
+		}
+		
+		int result = mFoataNormalForm.get(depth).size() - other.mFoataNormalForm.get(depth).size();
+		if (result != 0) {
+			return result;
+		}
+		final List<Event<LETTER, PLACE>> phi1 = getMinPhi(depth, comparator);
+		final List<Event<LETTER, PLACE>> phi2 = other. getMinPhi(depth, comparator);
+		return comparePhi(phi1, phi2, comparator);
+	}
+	
+	public int comparePhi(final List<Event<LETTER, PLACE>> phi1, final List<Event<LETTER, PLACE>> phi2, Comparator<Event<LETTER, PLACE>> comparator) {
 		for (int i = 0; i < phi1.size(); i++) {
-			final Transition<LETTER, PLACE> t1 = phi1.get(i);
-			final Transition<LETTER, PLACE> t2 = phi2.get(i);
-			final int result = t1.getTotalOrderId() - t2.getTotalOrderId();
+			final int result = comparator.compare(phi1.get(i), phi2.get(i));
 			if (result != 0) {
 				return result;
 			}
 		}
 		return 0;
+	}
+
+	public void computePhi(Comparator<Event<LETTER, PLACE>> comparator) {
+		Collections.sort(mEvents, comparator);
+		mSorted =true;
+	}
+	public void computeFoataNormalForm() {
+		for(final Event<LETTER, PLACE> e: mEvents) {
+			mFoataNormalForm.get(e.getDepth()).add(e);
+		}
+		mFoataComputed = true;
 	}
 }
