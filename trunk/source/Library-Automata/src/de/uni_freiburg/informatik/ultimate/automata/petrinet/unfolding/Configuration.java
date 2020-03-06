@@ -58,13 +58,12 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 	private boolean mSorted = false;
 	private boolean mFoataComputed = false;
 	private int lastSortedMinimum = 0;
+	private final int mConfigurationDepth;
 
 	public Configuration(final Set<Event<LETTER, PLACE>> events, final int configurationDepth) {
 		mEvents = new ArrayList<>(events);
 		mFoataNormalForm = new ArrayList<>(configurationDepth + 1);
-		for (int i = 0; i < configurationDepth + 1; i++) {
-			mFoataNormalForm.add(new ArrayList<>());
-		}
+		mConfigurationDepth= configurationDepth;
 	}
 
 	private List<Event<LETTER, PLACE>> getMinPhi(final int depth, Comparator<Event<LETTER, PLACE>> comparator) {
@@ -130,6 +129,9 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 
 	public void computeFoataNormalForm() {
 		if (!mFoataComputed) {
+			for (int i = 0; i < mConfigurationDepth + 1; i++) {
+				mFoataNormalForm.add(new ArrayList<>());
+			}
 			for (final Event<LETTER, PLACE> e : mEvents) {
 				mFoataNormalForm.get(e.getDepth()).add(e);
 			}
