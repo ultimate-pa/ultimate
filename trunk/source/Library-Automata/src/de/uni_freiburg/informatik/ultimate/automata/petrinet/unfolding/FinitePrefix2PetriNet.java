@@ -78,6 +78,8 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	private final UnionFind<Condition<LETTER, PLACE>> mConditionRepresentatives;
 	private final UnionFind<Event<LETTER, PLACE>> mEventRepresentatives;
 	private final IFinitePrefix2PetriNetStateFactory<PLACE> mStateFactory;
+	private final HashRelation<PLACE, PLACE> mOldToNewPlaces = new HashRelation<>();
+	private final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mOldToNewTransitions = new HashRelation<>();
 	private final boolean mUsePetrification = false;
 	private final boolean mUseBackfoldingIds = false;
 	private final boolean mRemoveDeadTransitions;
@@ -295,6 +297,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 					bp.initialConditions());
 			final boolean isAccepting = bp.getNet().isAccepting(c.getPlace());
 			final PLACE place = mStateFactory.finitePrefix2net(c);
+			mOldToNewPlaces.addPair(c.getPlace(), place);
 			final boolean newlyAdded = mNet.addPlace(place, isInitial, isAccepting);
 			if (!newlyAdded) {
 				throw new AssertionError("Must not add place twice: " + place);
@@ -339,7 +342,8 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				final Condition<LETTER, PLACE> representative = mConditionRepresentatives.find(c);
 				succs.add(placeMap.get(representative));
 			}
-			mNet.addTransition(e.getTransition().getSymbol(), preds, succs);
+			final ITransition<LETTER, PLACE> newTransition = mNet.addTransition(e.getTransition().getSymbol(), preds, succs);
+			mOldToNewTransitions.addPair(newTransition, e.getTransition());
 		}
 		//}
 		/*{
@@ -519,7 +523,12 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	}
 
 
-
+	public HashRelation<PLACE, PLACE> getOldToNewPlaces(){
+		return mOldToNewPlaces;
+	}
+	public HashRelation<ITransition<LETTER,PLACE>, ITransition<LETTER,PLACE>> getOldToNewTransitions(){
+		return mOldToNewTransitions;
+	}
 	/**
 	 * A transition set.
 	 *
