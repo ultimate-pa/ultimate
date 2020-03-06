@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
-import java.util.HashSet;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
@@ -65,23 +63,12 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 	 */
 	private final boolean mVitalityPreserved;
 
-	@Deprecated
-	public DifferenceSynchronizationInformation() {
-		mChangerLetters = new HashSet<>();
-		mSelfloops = new HashRelation<>();
-		mStateChangers = new HashRelation<>();
-		mBlockingTransitions = new HashRelation<>();
-		mContributingTransitions = new HashSet<>();
-		mReachabilityPreserved = false;
-		mVitalityPreserved = false;
-	}
-
 	public DifferenceSynchronizationInformation(final Set<LETTER> changerLetters,
 			final HashRelation<ITransition<LETTER, PLACE>, PLACE> selfloops,
 			final HashRelation<ITransition<LETTER, PLACE>, PLACE> stateChangers,
 			final Set<ITransition<LETTER, PLACE>> contributingTransitions,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> blockingTransitions, final boolean reachabilityPreserved,
-			final boolean vitalityPreserved) {
+			final HashRelation<ITransition<LETTER, PLACE>, PLACE> blockingTransitions,
+			final boolean reachabilityPreserved, final boolean vitalityPreserved) {
 		super();
 		mChangerLetters = changerLetters;
 		mSelfloops = selfloops;
@@ -119,20 +106,4 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 	public boolean isVitalityPreserved() {
 		return mVitalityPreserved;
 	}
-
-	@Deprecated
-	public DifferenceSynchronizationInformation<LETTER, PLACE> filter(
-			final Set<ITransition<LETTER, PLACE>> transitions) {
-		final DifferenceSynchronizationInformation<LETTER, PLACE> result = new DifferenceSynchronizationInformation<>();
-		result.getChangerLetters().addAll(mChangerLetters);
-		for (final Entry<ITransition<LETTER, PLACE>, HashSet<PLACE>> entry : mSelfloops.entrySet()) {
-			result.getSelfloops().addAllPairs(entry.getKey(), entry.getValue());
-		}
-		for (final Entry<ITransition<LETTER, PLACE>, HashSet<PLACE>> entry : mStateChangers.entrySet()) {
-			result.getStateChangers().addAllPairs(entry.getKey(), entry.getValue());
-		}
-		result.getContributingTransitions().addAll(transitions);
-		return result;
-	}
-
 }

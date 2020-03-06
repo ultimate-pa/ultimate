@@ -90,9 +90,6 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	 */
 	private final Set<LETTER> mUniversalLoopers;
 
-	@Deprecated
-	private final DifferenceSynchronizationInformation mDsi_Old = new DifferenceSynchronizationInformation();
-
 	public DifferencePetriNet(final AutomataLibraryServices services,
 			final IPetriNetSuccessorProvider<LETTER, PLACE> minued,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahend, final Set<LETTER> universalLoopers) {
@@ -430,17 +427,10 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 				final PLACE automatonSuccessor = NestedWordAutomataUtils.getSuccessorState(mSubtrahend,
 						automatonPredecessor, inputTransition.getSymbol());
 				final boolean isSelfloop = (automatonPredecessor.equals(automatonSuccessor));
-				if (!isSelfloop) {
-					mDsi_Old.getChangerLetters().add(inputTransition.getSymbol());
-					mDsi_Old.getStateChangers().addPair(inputTransition, automatonPredecessor);
-				} else {
-					mDsi_Old.getSelfloops().addPair(inputTransition, automatonPredecessor);
-				}
 				if (mSubtrahend.isFinal(automatonSuccessor)) {
 					mBlockingConfigurations.addPair(inputTransition, automatonPredecessor);
 					return null;
 				} else {
-					mDsi_Old.getContributingTransitions().add(inputTransition);
 					final Set<PLACE> successors = new LinkedHashSet<>();
 					for (final PLACE petriNetSuccessor : mMinued.getSuccessors(inputTransition)) {
 						// possibly first time that we saw this place, add
@@ -527,11 +517,6 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 		} else {
 			return mMinued.isAccepting(place);
 		}
-	}
-
-
-	public DifferenceSynchronizationInformation getDifferenceSynchronizationInformation_Old() {
-		return mDsi_Old;
 	}
 
 
@@ -638,7 +623,6 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 				mTransitions.put(result, (Transition<LETTER, PLACE>) result);
 				final ITransition<LETTER, PLACE> valueBefore = mNew2Old.put(result, inputTransition);
 				assert valueBefore == null : "Cannot add transition twice.";
-				mDsi_Old.getContributingTransitions().add(inputTransition);
 			}
 			return result;
 		}
