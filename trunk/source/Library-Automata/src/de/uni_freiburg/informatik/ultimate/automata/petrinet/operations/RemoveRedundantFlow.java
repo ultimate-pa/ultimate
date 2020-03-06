@@ -69,20 +69,23 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 
 	private final IPetriNet<LETTER, PLACE> mOperand;
 	private BranchingProcess<LETTER, PLACE> mFinPre;
-	final HashRelation<ITransition<LETTER, PLACE>, PLACE> mRedundantSelfloopFlow = new HashRelation<>();
+	private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mRedundantSelfloopFlow = new HashRelation<>();
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 	private Set<PLACE> mRedundantPlaces;
+	private final Set<PLACE> mEligibleRestrictorCandidates;
+	private int mRestrictorConditionChecks = 0;
 
 	public RemoveRedundantFlow(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		this(services, operand, null);
+		this(services, operand, null, null);
 	}
 
 	public RemoveRedundantFlow(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand,
-			final BranchingProcess<LETTER, PLACE> finPre)
+			final BranchingProcess<LETTER, PLACE> finPre, final Set<PLACE> eligibleRestrictorCandidates)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
+		mEligibleRestrictorCandidates = eligibleRestrictorCandidates;
 		printStartMessage();
 		if (finPre != null) {
 			mFinPre = finPre;
@@ -92,11 +95,13 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow = new HashRelation<>();
 		for (final ITransition<LETTER, PLACE> t : operand.getTransitions()) {
 			for (final PLACE p : operand.getPredecessors(t)) {
-				final boolean isFlowRedundant = isFlowRedundant(t, p, redundantFlow);
-				if (isFlowRedundant) {
-					redundantFlow.addPair(t, p);
-					if (operand.getSuccessors(t).contains(p)) {
-						mRedundantSelfloopFlow.addPair(t, p);
+				if (isEligibleRedundancyCandidate(p)) {
+					final boolean isFlowRedundant = isFlowRedundant(t, p, redundantFlow);
+					if (isFlowRedundant) {
+						redundantFlow.addPair(t, p);
+						if (operand.getSuccessors(t).contains(p)) {
+							mRedundantSelfloopFlow.addPair(t, p);
+						}
 					}
 				}
 			}
@@ -105,6 +110,14 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 				.filter(x -> isRedundantPlace(x, operand, redundantFlow)).collect(Collectors.toSet());
 		mResult = copy(mOperand, mRedundantSelfloopFlow, mRedundantPlaces);
 		printExitMessage();
+	}
+
+	private boolean isEligibleRedundancyCandidate(final PLACE p) {
+		return mEligibleRestrictorCandidates == null || !mEligibleRestrictorCandidates.contains(p);
+	}
+
+	private boolean isEligibleRestrictorCandidate(final PLACE p) {
+		return mEligibleRestrictorCandidates == null || mEligibleRestrictorCandidates.contains(p);
 	}
 
 	private boolean isRedundantPlace(final PLACE p, final IPetriNet<LETTER, PLACE> operand,
@@ -151,7 +164,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow)
 			throws AutomataOperationCanceledException {
 		for (final PLACE p : mOperand.getPredecessors(t)) {
-			if (!p.equals(redundancyCandidate)) {
+			if (isEligibleRestrictorCandidate(p) && !p.equals(redundancyCandidate)) {
 				if (redundantFlow.containsPair(t, p)) {
 					// do nothing
 					// must not use flow that is already marked for removal
@@ -165,6 +178,8 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		}
 		return false;
 	}
+
+
 
 	private boolean isRestrictorPlace(final PLACE redundancyCandidate, final PLACE restrictorCandidate)
 			throws AutomataOperationCanceledException {
@@ -181,6 +196,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	private boolean isRestrictorCondition(final Condition<LETTER, PLACE> restrictorCandidateCondition,
 			final PLACE redundancyCandidate, final ICoRelation<LETTER, PLACE> coRelation)
 			throws AutomataOperationCanceledException {
+		mRestrictorConditionChecks++;
 		if (timeout()) {
 			throw new AutomataOperationCanceledException(getClass());
 		}

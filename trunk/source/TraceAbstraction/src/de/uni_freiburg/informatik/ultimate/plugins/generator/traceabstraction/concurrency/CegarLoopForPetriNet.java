@@ -421,7 +421,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 						new AutomataLibraryServices(mServices), input, null, true).getResult();
 				break;
 			case REMOVE_REDUNDANT_FLOW:
-				reducedNet = new RemoveRedundantFlow<>(new AutomataLibraryServices(mServices), input)
+				reducedNet = new RemoveRedundantFlow<>(new AutomataLibraryServices(mServices), input, null, null)
 						.getResult();
 				break;
 			default:
