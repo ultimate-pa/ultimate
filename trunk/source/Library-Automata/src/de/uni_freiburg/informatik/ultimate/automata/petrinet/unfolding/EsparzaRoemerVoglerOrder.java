@@ -34,6 +34,8 @@ public class EsparzaRoemerVoglerOrder<LETTER, PLACE> extends EventOrder<LETTER, 
 		// FC2 =C21...C2n2 with respect to the order <<
 		// See Section 6 of the following publication.
 		// 2002FMSD - Esparza,Römer,Vogler - An Improvement of McMillan's Unfolding Algorithm
+		c1.computeFoataNormalForm();
+		c2.computeFoataNormalForm();
 		int depth = 1;
 		while(true) {
 			result = c1.compareMin(c2, depth, mIdComparator);
