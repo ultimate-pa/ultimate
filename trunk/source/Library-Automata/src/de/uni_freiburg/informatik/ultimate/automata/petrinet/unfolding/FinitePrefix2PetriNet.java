@@ -37,7 +37,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -81,31 +80,27 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	private final IFinitePrefix2PetriNetStateFactory<PLACE> mStateFactory;
 	private final boolean mUsePetrification = false;
 	private final boolean mUseBackfoldingIds = false;
-	private static final boolean Remove_Dead = false;
+	private final boolean mRemoveDeadTransitions;
 	private int mNumberOfCallsOfMergeCondidates = 0;
 	private int mNumberOfMergingCondidates = 0;
 	private int mNumberOfMergedEventPairs = 0;
 	private int mNumberOfAddOperationsToTheCandQueue = 0;
-	/**
-	 * Constructor.
-	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 * @param bp
-	 *            branching process
-	 * @param net2autoStateFactory
-	 * @param nwaInclusionStateFactory
-	 * @throws AutomataLibraryException
-	 *             if two nets do not have the same alphabet.
-	 */
+	
 	public FinitePrefix2PetriNet(final AutomataLibraryServices services,
 			final IFinitePrefix2PetriNetStateFactory<PLACE> stateFactory, final BranchingProcess<LETTER, PLACE> bp)
+			throws AutomataLibraryException {
+		this(services, stateFactory, bp, false);
+	}
+
+	public FinitePrefix2PetriNet(final AutomataLibraryServices services,
+			final IFinitePrefix2PetriNetStateFactory<PLACE> stateFactory, final BranchingProcess<LETTER, PLACE> bp,
+			final boolean removeDeadTransitions)
 			throws AutomataLibraryException {
 		super(services);
 		mStateFactory = stateFactory;
 		// TODO implement merging for markings?
 		mInput = bp;
+		mRemoveDeadTransitions = removeDeadTransitions;
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
@@ -124,7 +119,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			mEventRepresentatives = new UnionFind<>();
 			constructNet(bp, oldNet);
 		}
-
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
@@ -224,7 +218,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		final Set<Event<LETTER, PLACE>> releventEvents=new HashSet<>(mEventRepresentatives.getAllRepresentatives());
 		
 		
-		if (Remove_Dead) {
+		if (mRemoveDeadTransitions) {
 			final HashRelation<Event<LETTER, PLACE>, Event<LETTER, PLACE>> companion2cutoff = new HashRelation<>();
 			for (final Event<LETTER, PLACE> e : bp.getEvents()) {
 				if (e.isCutoffEvent()) {
@@ -246,7 +240,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			}
 			while(!worklist.isEmpty()) {
 			final Event<LETTER, PLACE> representative = worklist.removeFirst();
-				for (Event<LETTER, PLACE> e : mEventRepresentatives.getEquivalenceClassMembers(representative)) {
+				for (final Event<LETTER, PLACE> e : mEventRepresentatives.getEquivalenceClassMembers(representative)) {
 					for (final Event<LETTER, PLACE> predEvent: e.getPredecessorEvents()) {
 						final Event<LETTER, PLACE> predEventRep = mEventRepresentatives.find(predEvent);
 						if (vitalEvents.add(predEventRep)) {

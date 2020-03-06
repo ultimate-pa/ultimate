@@ -357,13 +357,13 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			} catch (final AutomataOperationCanceledException aoce) {
 				throw aoce;
 			} finally {
-				mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.BackfoldingUnfoldingTime.toString());
+				mPetriClStatisticsGenerator
+						.stop(PetriCegarLoopStatisticsDefinitions.BackfoldingUnfoldingTime.toString());
 			}
 			mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.BackfoldingTime.toString());
 			final FinitePrefix2PetriNet<LETTER, IPredicate> fp2pn = new FinitePrefix2PetriNet<>(
-					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, unf.getFinitePrefix());
-			assert fp2pn.checkResult(mPredicateFactoryResultChecking) : fp2pn.getClass().getSimpleName()
-					+ " failed";
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, unf.getFinitePrefix(), true);
+			assert fp2pn.checkResult(mPredicateFactoryResultChecking) : fp2pn.getClass().getSimpleName() + " failed";
 			mAbstraction = fp2pn.getResult();
 			final int flowAfterwards = mAbstraction.size();
 			mPetriClStatisticsGenerator.reportFlowIncreaseByBackfolding(flowAfterwards - flowBefore);
