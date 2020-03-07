@@ -72,6 +72,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	private final Set<PLACE> mInitialPlaces = new HashSet<>();
 	private final Collection<PLACE> mAcceptingPlaces = new HashSet<>();
 	private final Collection<ITransition<LETTER, PLACE>> mTransitions = new HashSet<>();
+	private final Set<Integer> mTransitionIds = new HashSet<>();
 	/**
 	 * Map each place to its incoming transitions. Redundant to {@link #mTransitions} for better performance.
 	 */
@@ -237,6 +238,9 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	public Transition<LETTER, PLACE> addTransition(final LETTER letter, final Set<PLACE> preds,
 			final Set<PLACE> succs, final int transitionId){
 		assert mAlphabet.contains(letter) : "Letter not in alphabet: " + letter;
+		if (mTransitionIds.contains(transitionId)) {
+			throw new IllegalArgumentException("Transition with id " + transitionId + " was already added.");
+		}
 		final Transition<LETTER, PLACE> transition = new Transition<>(letter, preds, succs, transitionId);
 		for (final PLACE predPlace : preds) {
 			assert mPlaces.contains(predPlace) : "Place not in net: " + predPlace;
@@ -247,6 +251,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 			mPredecessors.addPair(succPlace, transition);
 		}
 		mTransitions.add(transition);
+		mTransitionIds.add(transition.getTotalOrderId());
 		mSizeOfFlowRelation += (preds.size() + succs.size());
 		return transition;
 
