@@ -399,7 +399,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 
 	public int getTotalOrderId() {
 		if (mTransition instanceof Transition) {
-			return ((Transition) mTransition).getTotalOrderId();
+			return ((Transition<LETTER, PLACE>) mTransition).getTotalOrderId();
 		} else {
 			throw new UnsupportedOperationException("transition does not provide ID");
 		}

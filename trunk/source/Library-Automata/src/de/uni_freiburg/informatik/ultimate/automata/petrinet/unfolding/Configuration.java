@@ -109,7 +109,7 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 		return comparePhi(phi1, phi2, comparator);
 	}
 
-	public int comparePhi(final List<Event<LETTER, PLACE>> phi1, final List<Event<LETTER, PLACE>> phi2,
+	private int comparePhi(final List<Event<LETTER, PLACE>> phi1, final List<Event<LETTER, PLACE>> phi2,
 			Comparator<Event<LETTER, PLACE>> comparator) {
 		for (int i = 0; i < phi1.size(); i++) {
 			final int result = comparator.compare(phi1.get(i), phi2.get(i));
@@ -120,14 +120,14 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 		return 0;
 	}
 
-	public void computePhi(Comparator<Event<LETTER, PLACE>> comparator) {
+	private void computePhi(Comparator<Event<LETTER, PLACE>> comparator) {
 		if (!mSorted) {
 			Collections.sort(mEvents, comparator);
 			mSorted = true;
 		}
 	}
 
-	public void computeFoataNormalForm() {
+	public void computeFoataNormalFormUsingDepth() {
 		if (!mFoataComputed) {
 			for (int i = 0; i < mConfigurationDepth + 1; i++) {
 				mFoataNormalForm.add(new ArrayList<>());
@@ -137,5 +137,17 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 			}
 			mFoataComputed = true;
 		}
+	}
+	public void computeFoataNormalFormIntuitively() {
+		final Set<Event<LETTER,PLACE>> remainingEvents = new HashSet<>(mEvents);
+		Set<Event<LETTER, PLACE>> minimum = mEvents.stream().filter(event -> event.getAncestors() == 1).collect(Collectors.toCollection(HashSet::new));
+		mFoataNormalForm.add(new ArrayList<>(minimum));
+		while(!minimum.isEmpty()) {
+			remainingEvents.removeAll(minimum);
+			minimum = Event.getSuccessorEvents(minimum).stream().filter(e -> remainingEvents.contains(e) &&
+					!(e.getPredecessorEvents().stream().anyMatch(e2 -> remainingEvents.contains(e2)))).collect(Collectors.toCollection(HashSet::new));
+			mFoataNormalForm.add(new ArrayList<>(minimum));
+		}
+		mFoataNormalForm.add(new ArrayList<>(remainingEvents));
 	}
 }
