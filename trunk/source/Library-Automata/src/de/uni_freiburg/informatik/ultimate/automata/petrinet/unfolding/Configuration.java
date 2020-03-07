@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Represents a Suffix of a Configuration. A Configuration is a Set of Events
@@ -59,6 +58,7 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 	private boolean mFoataComputed = false;
 	private int lastSortedMinimum = 0;
 	private final int mConfigurationDepth;
+	private final static boolean USE_DEPTH_TO_COMPUTE_FNF = true;
 
 	public Configuration(final Set<Event<LETTER, PLACE>> events, final int configurationDepth) {
 		mEvents = new ArrayList<>(events);
@@ -128,15 +128,13 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 	}
 
 	public void computeFoataNormalFormUsingDepth() {
-		if (!mFoataComputed) {
 			for (int i = 0; i < mConfigurationDepth + 1; i++) {
 				mFoataNormalForm.add(new ArrayList<>());
 			}
 			for (final Event<LETTER, PLACE> e : mEvents) {
 				mFoataNormalForm.get(e.getDepth()).add(e);
 			}
-			mFoataComputed = true;
-		}
+		
 	}
 	public void computeFoataNormalFormIntuitively() {
 		final Set<Event<LETTER,PLACE>> remainingEvents = new HashSet<>(mEvents);
@@ -149,5 +147,17 @@ public class Configuration<LETTER, PLACE> implements Iterable<Event<LETTER, PLAC
 			mFoataNormalForm.add(new ArrayList<>(minimum));
 		}
 		mFoataNormalForm.add(new ArrayList<>(remainingEvents));
+	}
+
+	public void computeFoataNormalForm() {
+		if (!mFoataComputed) {
+			if(USE_DEPTH_TO_COMPUTE_FNF) {
+				computeFoataNormalFormUsingDepth();
+			} else {
+				computeFoataNormalFormIntuitively();
+			}
+			mFoataComputed = true;
+		}
+		
 	}
 }
