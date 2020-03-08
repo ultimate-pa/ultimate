@@ -72,7 +72,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mRedundantSelfloopFlow = new HashRelation<>();
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 	private Set<PLACE> mRedundantPlaces;
-	private final Set<PLACE> mEligibleRestrictorCandidates;
+	private final Set<PLACE> mEligibleRedundancyCandidates;
 	private int mRestrictorConditionChecks = 0;
 
 	public RemoveRedundantFlow(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
@@ -81,11 +81,11 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	}
 
 	public RemoveRedundantFlow(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand,
-			final BranchingProcess<LETTER, PLACE> finPre, final Set<PLACE> eligibleRestrictorCandidates)
+			final BranchingProcess<LETTER, PLACE> finPre, final Set<PLACE> eligibleRedundancyCandidates)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
-		mEligibleRestrictorCandidates = eligibleRestrictorCandidates;
+		mEligibleRedundancyCandidates = eligibleRedundancyCandidates;
 		printStartMessage();
 		if (finPre != null) {
 			mFinPre = finPre;
@@ -113,11 +113,12 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	}
 
 	private boolean isEligibleRedundancyCandidate(final PLACE p) {
-		return mEligibleRestrictorCandidates == null || !mEligibleRestrictorCandidates.contains(p);
+		return mEligibleRedundancyCandidates == null || mEligibleRedundancyCandidates.contains(p);
 	}
 
 	private boolean isEligibleRestrictorCandidate(final PLACE p) {
-		return mEligibleRestrictorCandidates == null || mEligibleRestrictorCandidates.contains(p);
+		return true;
+//		return mEligibleRedundancyCandidates == null || mEligibleRedundancyCandidates.contains(p);
 	}
 
 	private boolean isRedundantPlace(final PLACE p, final IPetriNet<LETTER, PLACE> operand,
