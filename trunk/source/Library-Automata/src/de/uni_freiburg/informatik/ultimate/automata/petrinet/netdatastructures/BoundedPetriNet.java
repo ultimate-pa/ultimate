@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNetAndAutomataInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.TransitionUnifier;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -73,6 +74,7 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 	private final Collection<PLACE> mAcceptingPlaces = new HashSet<>();
 	private final Collection<ITransition<LETTER, PLACE>> mTransitions = new HashSet<>();
 	private final Set<Integer> mTransitionIds = new HashSet<>();
+	private final TransitionUnifier<LETTER, PLACE> mTransitionUnifier = new TransitionUnifier<>();
 	/**
 	 * Map each place to its incoming transitions. Redundant to {@link #mTransitions} for better performance.
 	 */
@@ -252,6 +254,9 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		}
 		mTransitions.add(transition);
 		mTransitionIds.add(transition.getTotalOrderId());
+		if (mTransitionUnifier.add(transition) != null) {
+			throw new AssertionError("two similar transitions in net");
+		}
 		mSizeOfFlowRelation += (preds.size() + succs.size());
 		return transition;
 
