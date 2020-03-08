@@ -56,9 +56,11 @@ public class TransitionUnifier<LETTER, PLACE> {
 		final Set<Transition<LETTER, PLACE>> transitionsWithSameHash = mHash2Transitions.getImage(hash);
 		for (final Transition<LETTER, PLACE> tOld : transitionsWithSameHash) {
 			if (areSimilar(tNew, tOld)) {
+				mHash2Transitions.addPair(hash, tNew);
 				return tNew;
 			}
 		}
+		mHash2Transitions.addPair(hash, tNew);
 		return null;
 	}
 
@@ -70,7 +72,12 @@ public class TransitionUnifier<LETTER, PLACE> {
 
 
 	private int computeHash(final Transition<LETTER, PLACE> t) {
-		return 2 * t.getSymbol().hashCode() + 3 * t.getPredecessors().hashCode() + 5 * t.getSuccessors().hashCode();
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + t.getSymbol().hashCode();
+		result = prime * result + t.getPredecessors().hashCode();
+		result = prime * result + t.getSuccessors().hashCode();
+		return result;
 	}
 
 }
