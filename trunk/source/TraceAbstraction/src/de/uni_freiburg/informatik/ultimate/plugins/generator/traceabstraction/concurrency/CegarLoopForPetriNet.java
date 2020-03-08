@@ -213,8 +213,8 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString());
 		PetriNetUnfolder<LETTER, IPredicate> unf;
 		try {
-			unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices), abstraction, eventOrder, cutOffSameTrans,
-					!mPref.unfoldingToNet());
+			unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices), abstraction, eventOrder,
+					cutOffSameTrans, true);
 		} catch (final PetriNetNot1SafeException e) {
 			throw new UnsupportedOperationException(e.getMessage());
 		} finally {
