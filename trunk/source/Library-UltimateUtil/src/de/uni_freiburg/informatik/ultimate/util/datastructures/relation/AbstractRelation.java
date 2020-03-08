@@ -530,4 +530,8 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	public Set<R> projectToRange() {
 		return getSetOfPairs().stream().map(x -> x.getValue()).collect(Collectors.toSet());
 	}
+
+	public Set<R> projectToRange(final Set<D> input) {
+		return input.stream().flatMap(x -> getImage(x).stream()).collect(Collectors.toSet());
+	}
 }
