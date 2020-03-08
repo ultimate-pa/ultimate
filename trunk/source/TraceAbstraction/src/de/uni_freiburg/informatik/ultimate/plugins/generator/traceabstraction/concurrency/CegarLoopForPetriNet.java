@@ -321,7 +321,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
 
-		mLogger.info(mProgramPointPlaces.size() + "ProgramPoint places, "
+		mLogger.info(mProgramPointPlaces.size() + " programPoint places, "
 				+ (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
 				+ " predicate places.");
 
@@ -352,6 +352,9 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 
 		if (mPref.unfoldingToNet()) {
 			final int flowBefore = mAbstraction.size();
+			mLogger.info(mProgramPointPlaces.size() + " programPoint places, "
+					+ (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
+					+ " predicate places.");
 			mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.BackfoldingUnfoldingTime.toString());
 			PetriNetUnfolder<LETTER, IPredicate> unf;
 			try {
@@ -376,7 +379,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			final int flowAfterwards = mAbstraction.size();
 			mPetriClStatisticsGenerator.reportFlowIncreaseByBackfolding(flowAfterwards - flowBefore);
 			mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.BackfoldingTime.toString());
-			mLogger.info(mProgramPointPlaces.size() + "ProgramPoint places, "
+			mLogger.info(mProgramPointPlaces.size() + " programPoint places, "
 					+ (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
 					+ " predicate places.");
 		}
