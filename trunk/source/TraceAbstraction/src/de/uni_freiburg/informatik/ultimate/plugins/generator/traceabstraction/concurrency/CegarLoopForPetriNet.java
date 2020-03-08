@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.c
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -137,8 +138,10 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	private final boolean mRemoveRedundantFlow = false;
 
 	private PetriNetLargeBlockEncoding mLBE;
-	
+
 	private final PetriCegarLoopStatisticsGenerator mPetriClStatisticsGenerator;
+
+	private Set<IPredicate> mProgramPointPlaces;
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -174,6 +177,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		} else {
 			mAbstraction = cfg;
 		}
+		mProgramPointPlaces = ((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces();
 
 		if (mIteration <= mPref.watchIteration()
 				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
@@ -205,7 +209,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 		final BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
 		final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
 		final EventOrderEnum eventOrder = mPref.eventOrder();
-		
+
 		mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString());
 		PetriNetUnfolder<LETTER, IPredicate> unf;
 		try {
@@ -300,7 +304,6 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			} else {
 				final Difference<LETTER, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(mServices),
 						mPredicateFactoryInterpolantAutomata, abstraction, dia, LoopSyncMethod.HEURISTIC,
-//						null, null, null);
 						enhancementResult.getThird());
 				mLogger.info(diff.getAutomataOperationStatistics());
 				mAbstraction = diff.getResult();
@@ -317,6 +320,10 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "_AbstractionAfterDifference";
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
+
+		mLogger.info(mProgramPointPlaces.size() + "ProgramPoint places, "
+				+ (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
+				+ " predicate places.");
 
 		if (mRemoveDead) {
 			final Triple<BoundedPetriNet<LETTER, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult = doSizeReduction(
@@ -365,9 +372,13 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, unf.getFinitePrefix(), true);
 			assert fp2pn.checkResult(mPredicateFactoryResultChecking) : fp2pn.getClass().getSimpleName() + " failed";
 			mAbstraction = fp2pn.getResult();
+			mProgramPointPlaces = fp2pn.getOldToNewPlaces().projectToRange(mProgramPointPlaces);
 			final int flowAfterwards = mAbstraction.size();
 			mPetriClStatisticsGenerator.reportFlowIncreaseByBackfolding(flowAfterwards - flowBefore);
 			mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.BackfoldingTime.toString());
+			mLogger.info(mProgramPointPlaces.size() + "ProgramPoint places, "
+					+ (((BoundedPetriNet<LETTER, IPredicate>) mAbstraction).getPlaces().size() - mProgramPointPlaces.size())
+					+ " predicate places.");
 		}
 
 
@@ -421,8 +432,10 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 						new AutomataLibraryServices(mServices), input, null, true).getResult();
 				break;
 			case REMOVE_REDUNDANT_FLOW:
-				reducedNet = new RemoveRedundantFlow<>(new AutomataLibraryServices(mServices), input, null, null)
-						.getResult();
+				final Set<IPredicate> redundancyCandidates = input.getPlaces().stream()
+						.filter(x -> !mProgramPointPlaces.contains(x)).collect(Collectors.toSet());
+				reducedNet = new RemoveRedundantFlow<>(new AutomataLibraryServices(mServices), input, null,
+						null).getResult();
 				break;
 			default:
 				throw new AssertionError("unknown value " + method);
@@ -608,7 +621,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	public IStatisticsDataProvider getCegarLoopBenchmark() {
 		return mPetriClStatisticsGenerator;
 	}
-	
-	
+
+
 
 }
