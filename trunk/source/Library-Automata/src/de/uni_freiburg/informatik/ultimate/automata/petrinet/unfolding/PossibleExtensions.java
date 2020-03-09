@@ -94,7 +94,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	private int mUselessExtensionCandidates = 0;
 
 	public PossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess,
-			final EventOrder<LETTER, PLACE> order, final boolean useFirstbornCutoffCheck,
+			final ConfigurationOrder<LETTER, PLACE> order, final boolean useFirstbornCutoffCheck,
 			final boolean useB32Optimization) {
 		mUseFirstbornCutoffCheck = useFirstbornCutoffCheck;
 		mBranchingProcess = branchingProcess;

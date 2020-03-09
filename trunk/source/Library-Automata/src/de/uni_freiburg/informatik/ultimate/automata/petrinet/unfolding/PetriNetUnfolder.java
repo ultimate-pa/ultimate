@@ -73,7 +73,7 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 	private final IPetriNetSuccessorProvider<LETTER, PLACE> mOperand;
 	private final boolean mStopIfAcceptingRunFound;
 	private final boolean mSameTransitionCutOff;
-	private final EventOrder<LETTER, PLACE>  mOrder;
+	private final ConfigurationOrder<LETTER, PLACE>  mOrder;
 	private final IPossibleExtensions<LETTER, PLACE> mPossibleExtensions;
 	private final BranchingProcess<LETTER, PLACE> mUnfolding;
 	private PetriNetRun<LETTER, PLACE> mRun;

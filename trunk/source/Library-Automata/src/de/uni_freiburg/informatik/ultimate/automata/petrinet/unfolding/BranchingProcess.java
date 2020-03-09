@@ -95,7 +95,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 */
 	private final HashRelation<PLACE, ITransition<LETTER, PLACE>> mYetKnownPredecessorTransitions = new HashRelation<>();
 
-	private final EventOrder<LETTER, PLACE> mOrder;
+	private final ConfigurationOrder<LETTER, PLACE> mOrder;
 
 	private int mConditionSerialnumberCounter = 0;
 
@@ -106,7 +106,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	 * <p>
 	 * 2019-11-16 Matthias: I have some doubts that this optimization (hashcode
 	 * instead of {@link Marking}) brings a measureable speedup but it makes the
-	 * code more complicated. I case we have total {@link EventOrder} the image of
+	 * code more complicated. I case we have total {@link ConfigurationOrder} the image of
 	 * the relation has size one and hence we could use a map instead of a relation.
 	 * I guess that using a map instead of a relation will not bring a significant
 	 * speedup and will only reduce the memory consumption by 64 byes (initial size
@@ -124,7 +124,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 	private final boolean mUseFirstbornCutoffCheck;
 
 	public BranchingProcess(final AutomataLibraryServices services, final IPetriNetSuccessorProvider<LETTER, PLACE> net,
-			final EventOrder<LETTER, PLACE> order, final boolean useCutoffChekingPossibleExtention,
+			final ConfigurationOrder<LETTER, PLACE> order, final boolean useCutoffChekingPossibleExtention,
 			final boolean useB32Optimization) throws PetriNetNot1SafeException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -556,7 +556,7 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		return "has " + mConditions.size() + " conditions, " + (mEvents.size() - 1) + " events";
 	}
 
-	public EventOrder<LETTER, PLACE> getOrder() {
+	public ConfigurationOrder<LETTER, PLACE> getOrder() {
 		return mOrder;
 	}
 

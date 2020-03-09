@@ -18,7 +18,7 @@ import java.util.Comparator;
  * @param <PLACE>
  *            place content type
  */
-public class EsparzaRoemerVoglerOrder<LETTER, PLACE> extends EventOrder<LETTER, PLACE> {
+public class EsparzaRoemerVoglerOrder<LETTER, PLACE> extends ConfigurationOrder<LETTER, PLACE> {
 	final Comparator<Event<LETTER, PLACE>> mIdComparator = new IdComparator();
 	@Override
 	public int compare(Configuration<LETTER, PLACE> c1, Configuration<LETTER, PLACE> c2) {
