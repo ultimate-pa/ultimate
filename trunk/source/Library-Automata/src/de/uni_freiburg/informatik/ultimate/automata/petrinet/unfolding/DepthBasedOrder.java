@@ -13,7 +13,7 @@ import java.util.List;
  * @param <PLACE>
  *            place content type
  */
-public class DepthBasedOrder<LETTER, PLACE> extends EventOrder<LETTER, PLACE> {
+public class DepthBasedOrder<LETTER, PLACE> extends ConfigurationOrder<LETTER, PLACE> {
 
 	final Comparator<Event<LETTER, PLACE>> mDepthIdComparator = new DepthIdComparator();
 	@Override

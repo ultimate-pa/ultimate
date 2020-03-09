@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 import java.util.Comparator;
 
 /**
- * Order of Events and Configurations.
+ * Order on configurations.
  *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -40,7 +40,7 @@ import java.util.Comparator;
  * @param <PLACE>
  *            place content type
  */
-public abstract class EventOrder<LETTER, PLACE> implements Comparator<Event<LETTER, PLACE>> {
+public abstract class ConfigurationOrder<LETTER, PLACE> implements Comparator<Event<LETTER, PLACE>> {
 
 	private int mComparisonCounter = 0;
 
