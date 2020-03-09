@@ -536,6 +536,7 @@
         <module>../Library-ojAlgo</module>
         <module>../Library-PathExpressions</module>
         <module>../Library-PDR</module>
+        <module>../Library-AcceleratedInterpolation</module>
         <module>../Library-PEA</module>
         <module>../Library-SMTLIB</module>
         <module>../Library-srParse</module>
