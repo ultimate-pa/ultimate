@@ -42,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 /**
  * {@link IStatisticsDataProvider} that accumulates statistics from the various trace checks, interpolant generators,
  * etc. used during a run of a refinement engine.
- * 
+ *
  * It avoids aggregating the same object twice by hashing all statistics during a refinement engine run and aggregating
  * only at the end.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -82,7 +82,7 @@ public class RefinementEngineStatisticsGenerator implements IStatisticsDataProvi
 
 	/**
 	 * Add a new {@link IStatisticsDataProvider} of the <code>defs</code> type to this aggregator.
-	 * 
+	 *
 	 * @param defs
 	 *            The type of statistics to aggregate
 	 * @param stats
@@ -120,6 +120,9 @@ public class RefinementEngineStatisticsGenerator implements IStatisticsDataProvi
 				StatisticsType.KEY_BEFORE_DATA),
 
 		PDR(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
+
+		ACCELERATED_INTERPOLATION(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+				StatisticsType.KEY_BEFORE_DATA),
 
 		SIFA(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA);
 

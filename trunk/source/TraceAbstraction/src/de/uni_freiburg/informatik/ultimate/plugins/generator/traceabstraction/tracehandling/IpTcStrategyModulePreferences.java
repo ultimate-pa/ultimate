@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolationMain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -138,6 +139,10 @@ public final class IpTcStrategyModulePreferences<LETTER extends IIcfgTransition<
 		case PDR:
 			return new Pdr<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs, mPredicateUnifier,
 					mPrecondition, mPostcondition, mCounterexample.getWord().asList());
+
+		case AcceleratedInterpolation:
+			return new AcceleratedInterpolationMain<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID),
+					mPrefs, mPredicateUnifier, mCounterexample.getWord().asList());
 		default:
 			throw new UnsupportedOperationException("Unsupported interpolation technique: " + mInterpolationTechnique);
 		}

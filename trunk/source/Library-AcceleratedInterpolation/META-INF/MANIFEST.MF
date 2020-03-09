@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-AcceleratedInterpolants
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation
+Bundle-Version: 0.1.25
+Automatic-Module-Name: Library-AcceleratedInterpolants
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
+ de.uni_freiburg.informatik.ultimate.lib.automata
+Export-Package: de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation
