@@ -114,6 +114,13 @@ def class_idx(result):
     return [i for i, e in enumerate(order) if result[0] in e][0]
 
 
+class UnsupportedLogFile(ValueError):
+    """
+    Raised when the log file is not an Ultimate log file
+    """
+    pass
+
+
 class Result:
     def __init__(self, result, call, version):
         self.version = version
@@ -321,7 +328,7 @@ def process_log_file(file):
             elif 'This is Ultimate' in line:
                 debug("No wrapper script detected")
                 return process_direct_call_log(file)
-    raise ValueError('Encountered unrecognized file (not an Ultimate log file): {}'.format(file))
+    raise UnsupportedLogFile('Encountered unrecognized file (not an Ultimate log file): {}'.format(file))
 
 
 def print_results(results):
@@ -394,7 +401,10 @@ def consume_task(queue, results, timeout_ymls, oom_ymls):
         path = queue.get()
         if path is None:
             break
-        tmp_result = __set_unknowns(process_log_file(path), path, timeout_ymls, oom_ymls)
+        try:
+            tmp_result = __set_unknowns(process_log_file(path), path, timeout_ymls, oom_ymls)
+        except UnsupportedLogFile:
+            continue
         results += tmp_result
 
 

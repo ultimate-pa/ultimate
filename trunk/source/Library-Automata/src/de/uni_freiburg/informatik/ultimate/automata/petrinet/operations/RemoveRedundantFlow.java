@@ -67,22 +67,32 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE> & IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends UnaryNetOperation<LETTER, PLACE, CRSF> {
 
+	private static final boolean DEBUG_LOG_RESTRICTOR_INFORMATION = false;
+	/**
+	 * Idea: If true we only check if (p,p') is a restrictor-redundancy pair if the
+	 * restrictor candidate p does not have more conditions than the redundancy
+	 * candidate p'
+	 */
+	private static final boolean MOUNTAIN_COCK_HEURISTIC = false;
 	private final IPetriNet<LETTER, PLACE> mOperand;
 	private BranchingProcess<LETTER, PLACE> mFinPre;
-	final HashRelation<ITransition<LETTER, PLACE>, PLACE> mRedundantSelfloopFlow = new HashRelation<>();
+	private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mRedundantSelfloopFlow = new HashRelation<>();
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 	private Set<PLACE> mRedundantPlaces;
+	private final Set<PLACE> mEligibleRedundancyCandidates;
+	private int mRestrictorConditionChecks = 0;
 
 	public RemoveRedundantFlow(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		this(services, operand, null);
+		this(services, operand, null, null);
 	}
 
 	public RemoveRedundantFlow(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand,
-			final BranchingProcess<LETTER, PLACE> finPre)
+			final BranchingProcess<LETTER, PLACE> finPre, final Set<PLACE> eligibleRedundancyCandidates)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
+		mEligibleRedundancyCandidates = eligibleRedundancyCandidates;
 		printStartMessage();
 		if (finPre != null) {
 			mFinPre = finPre;
@@ -92,19 +102,31 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow = new HashRelation<>();
 		for (final ITransition<LETTER, PLACE> t : operand.getTransitions()) {
 			for (final PLACE p : operand.getPredecessors(t)) {
-				final boolean isFlowRedundant = isFlowRedundant(t, p, redundantFlow);
-				if (isFlowRedundant) {
-					redundantFlow.addPair(t, p);
-					if (operand.getSuccessors(t).contains(p)) {
-						mRedundantSelfloopFlow.addPair(t, p);
+				if (isEligibleRedundancyCandidate(p)) {
+					final boolean isFlowRedundant = isFlowRedundant(t, p, redundantFlow);
+					if (isFlowRedundant) {
+						redundantFlow.addPair(t, p);
+						if (operand.getSuccessors(t).contains(p)) {
+							mRedundantSelfloopFlow.addPair(t, p);
+						}
 					}
 				}
 			}
 		}
-		mRedundantPlaces = operand.getPlaces().stream()
-				.filter(x -> isRedundantPlace(x, operand, redundantFlow)).collect(Collectors.toSet());
+		mRedundantPlaces = operand.getPlaces().stream().filter(x -> isRedundantPlace(x, operand, redundantFlow))
+				.collect(Collectors.toSet());
 		mResult = copy(mOperand, mRedundantSelfloopFlow, mRedundantPlaces);
 		printExitMessage();
+	}
+
+	private boolean isEligibleRedundancyCandidate(final PLACE p) {
+		return mEligibleRedundancyCandidates == null || mEligibleRedundancyCandidates.contains(p);
+	}
+
+	private boolean isEligibleRestrictorCandidate(final PLACE p) {
+		return true;
+		// return mEligibleRedundancyCandidates == null ||
+		// mEligibleRedundancyCandidates.contains(p);
 	}
 
 	private boolean isRedundantPlace(final PLACE p, final IPetriNet<LETTER, PLACE> operand,
@@ -128,7 +150,8 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	}
 
 	private BoundedPetriNet<LETTER, PLACE> copy(final IPetriNet<LETTER, PLACE> operand,
-			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantSelfloopFlow, final Set<PLACE> redundantPlaces) {
+			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantSelfloopFlow,
+			final Set<PLACE> redundantPlaces) {
 		final BoundedPetriNet<LETTER, PLACE> result = new BoundedPetriNet<>(mServices, operand.getAlphabet(), false);
 		for (final PLACE p : operand.getPlaces()) {
 			if (!redundantPlaces.contains(p)) {
@@ -151,13 +174,20 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow)
 			throws AutomataOperationCanceledException {
 		for (final PLACE p : mOperand.getPredecessors(t)) {
-			if (!p.equals(redundancyCandidate)) {
+			if (isEligibleRestrictorCandidate(p) && !p.equals(redundancyCandidate) && (!MOUNTAIN_COCK_HEURISTIC
+					|| mFinPre.getConditions(p).size() <= mFinPre.getConditions(redundancyCandidate).size())) {
 				if (redundantFlow.containsPair(t, p)) {
 					// do nothing
 					// must not use flow that is already marked for removal
 				} else {
 					final boolean isRestrictorPlace = isRestrictorPlace(redundancyCandidate, p);
 					if (isRestrictorPlace) {
+						if (DEBUG_LOG_RESTRICTOR_INFORMATION) {
+							final int restrictorConditions = mFinPre.getConditions(p).size();
+							final int redundancyConditions = mFinPre.getConditions(redundancyCandidate).size();
+							mLogger.info("RestrictorPredecessor:" + restrictorConditions + " RendundantPredecessor:"
+									+ redundancyConditions + "  " + p + " " + redundancyCandidate);
+						}
 						return true;
 					}
 				}
@@ -181,6 +211,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	private boolean isRestrictorCondition(final Condition<LETTER, PLACE> restrictorCandidateCondition,
 			final PLACE redundancyCandidate, final ICoRelation<LETTER, PLACE> coRelation)
 			throws AutomataOperationCanceledException {
+		mRestrictorConditionChecks++;
 		if (timeout()) {
 			throw new AutomataOperationCanceledException(getClass());
 		}
@@ -232,8 +263,8 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + getOperationName() + ", result has " + mResult.sizeInformation()
-				+ ", removed " + mRedundantSelfloopFlow.size() + " selfloop flow, removed " + mRedundantPlaces.size()
+		return "Finished " + getOperationName() + ", result has " + mResult.sizeInformation() + ", removed "
+				+ mRedundantSelfloopFlow.size() + " selfloop flow, removed " + mRedundantPlaces.size()
 				+ " redundant places.";
 	}
 

@@ -267,6 +267,12 @@ public final class BranchingProcess<LETTER, PLACE> implements IAutomaton<LETTER,
 		return mEvents;
 	}
 
+
+
+	public Set<Condition<LETTER, PLACE>> getConditions(final PLACE p) {
+		return Collections.unmodifiableSet(mPlace2Conds.getImage(p));
+	}
+
 	/**
 	 * @return The initial conditions.
 	 */

@@ -18,30 +18,9 @@ public class DepthBasedOrder<LETTER, PLACE> extends EventOrder<LETTER, PLACE> {
 	final Comparator<Event<LETTER, PLACE>> mDepthIdComparator = new DepthIdComparator();
 	@Override
 	public int compare(final Configuration<LETTER, PLACE> c1, final Configuration<LETTER, PLACE> c2) {
-
-		// we compare first the sizes of C1 and C2;
-		int result = c1.size() - c2.size();
-		if (result != 0) {
-			return result;
-		}
-
-		//the following comparison is optional: I am trying to find out if we can use a heuristic based on the depth
-		//to reduce the overall number of events of the computed complete finite prefix
-		//result = c2.getDepth() - c1.getDepth();
-		//if (result != 0) {
-		//	return result;
-		//}
-
-		// We sort the local configuration using the DepthIdComparator: see the compare method of the comparator bellow
-		final List<Event<LETTER, PLACE>> c1Sorted = c1.getSortedConfiguration(mDepthIdComparator);
-		final List<Event<LETTER, PLACE>> c2Sorted = c2.getSortedConfiguration(mDepthIdComparator);
-		for (int i = 0; i< c1.size(); i++) {
-			result = mDepthIdComparator.compare(c1Sorted.get(i), c2Sorted.get(i));
-			if (result != 0) {
-				return result;
-			}
-		}
-		return 0;
+		int result = c1.compareTo(c2, mDepthIdComparator) ;
+		assert result != 0;
+		return result;
 	}
 
 	class DepthIdComparator implements Comparator<Event<LETTER, PLACE>> {

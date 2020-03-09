@@ -28,9 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -125,18 +123,6 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 				.computeVitalTransitions();
 		mDifferenceSynchronizationInformation = difference
 				.computeDifferenceSynchronizationInformation(vitalTransitionsOfDifference, true);
-
-		{
-			// old imprecise DSI
-			final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> transitionBacktranslation = difference
-					.getTransitionBacktranslation();
-			final Set<ITransition<LETTER, PLACE>> transitionsContributingToVital = vitalTransitionsOfDifference.stream()
-					.map(x -> transitionBacktranslation.get(x)).collect(Collectors.toSet());
-			final DifferenceSynchronizationInformation oldDSI = difference.getDifferenceSynchronizationInformation_Old()
-					.filter(transitionsContributingToVital);
-			// if (!oldDSI.equals(mSynchronizationInformation)) {
-			// throw new AssertionError("Inconsistent DSI");
-		}
 		final int allTransitions = difference.getYetConstructedPetriNet().getTransitions().size();
 		final int deadTransitions = allTransitions - vitalTransitionsOfDifference.size();
 		{

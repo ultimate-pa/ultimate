@@ -27,8 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -48,6 +52,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Provides static methods for Petri nets.
@@ -162,5 +168,64 @@ public final class PetriNetUtils {
 		return "Currently, we require that states of the automaton are disjoint from places of Petri net. Please rename: "
 				+ state;
 	}
+
+	public static <PLACE> Map<PLACE, PLACE> mergePlaces(final Set<PLACE> places, final UnionFind<PLACE> uf) {
+		final Map<PLACE, PLACE> result = new HashMap<>();
+		for (final PLACE p : places) {
+			final PLACE pRep = uf.find(p);
+			if (pRep == null) {
+				result.put(p, p);
+			} else {
+				result.put(p, pRep);
+			}
+		}
+		return result;
+	}
+
+	public static <LETTER, PLACE> Map<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>> mergePlaces(
+			final IPetriNet<LETTER, PLACE> net, final Map<PLACE, PLACE> map) {
+		final Map<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>> result = new HashMap<>();
+		for (final ITransition<LETTER, PLACE> oldT : net.getTransitions()) {
+			final Set<PLACE> predecessors = net.getPredecessors(oldT).stream().map(map::get)
+					.collect(Collectors.toSet());
+			final Set<PLACE> successors = net.getSuccessors(oldT).stream().map(map::get).collect(Collectors.toSet());
+			final Transition<LETTER, PLACE> newT = new Transition<>(oldT.getSymbol(), predecessors, successors, 0);
+			result.put(oldT, newT);
+		}
+		return result;
+	}
+
+	public static <LETTER, PLACE> IPetriNet<LETTER, PLACE> mergePlaces(final AutomataLibraryServices services,
+			final IPetriNet<LETTER, PLACE> net, final Map<PLACE, PLACE> map) {
+		final Map<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>> transitionMap = mergePlaces(net, map);
+		final BoundedPetriNet<LETTER, PLACE> result = new BoundedPetriNet<>(services, net.getAlphabet(), false);
+		final Map<PLACE, Pair<Boolean, Boolean>> newPlaces = new HashMap<>();
+		for (final PLACE p : net.getPlaces()) {
+			final boolean isInitial = net.getInitialPlaces().contains(p);
+			final boolean isAccepting = net.isAccepting(p);
+			final PLACE newPlace = map.get(p);
+			final Pair<Boolean, Boolean> iniAcc = newPlaces.get(newPlace);
+			final boolean oldIsInitial;
+			final boolean oldIsAccepting;
+			if (iniAcc == null) {
+				oldIsInitial = false;
+				oldIsAccepting = false;
+			} else {
+				oldIsInitial = iniAcc.getFirst();
+				oldIsAccepting = iniAcc.getSecond();
+			}
+			newPlaces.put(newPlace,
+					new Pair<Boolean, Boolean>(oldIsInitial || isInitial, oldIsAccepting || isAccepting));
+		}
+		for (final Entry<PLACE, Pair<Boolean, Boolean>> entry : newPlaces.entrySet()) {
+			result.addPlace(entry.getKey(), entry.getValue().getFirst(), entry.getValue().getSecond());
+		}
+		for (final Entry<ITransition<LETTER, PLACE>, Transition<LETTER, PLACE>> entry : transitionMap.entrySet()) {
+			result.addTransition(entry.getValue().getSymbol(), entry.getValue().getPredecessors(),
+					entry.getValue().getSuccessors());
+		}
+		return result;
+	}
+
 
 }

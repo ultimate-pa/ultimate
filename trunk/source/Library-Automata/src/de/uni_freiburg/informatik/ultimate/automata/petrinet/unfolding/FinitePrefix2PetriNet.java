@@ -37,7 +37,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -79,33 +78,31 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	private final UnionFind<Condition<LETTER, PLACE>> mConditionRepresentatives;
 	private final UnionFind<Event<LETTER, PLACE>> mEventRepresentatives;
 	private final IFinitePrefix2PetriNetStateFactory<PLACE> mStateFactory;
+	private final HashRelation<PLACE, PLACE> mOldToNewPlaces = new HashRelation<>();
+	private final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mOldToNewTransitions = new HashRelation<>();
 	private final boolean mUsePetrification = false;
 	private final boolean mUseBackfoldingIds = false;
-	private static final boolean Remove_Dead = false;
+	private final boolean mRemoveDeadTransitions;
 	private int mNumberOfCallsOfMergeCondidates = 0;
 	private int mNumberOfMergingCondidates = 0;
 	private int mNumberOfMergedEventPairs = 0;
 	private int mNumberOfAddOperationsToTheCandQueue = 0;
-	/**
-	 * Constructor.
-	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 * @param bp
-	 *            branching process
-	 * @param net2autoStateFactory
-	 * @param nwaInclusionStateFactory
-	 * @throws AutomataLibraryException
-	 *             if two nets do not have the same alphabet.
-	 */
+	
 	public FinitePrefix2PetriNet(final AutomataLibraryServices services,
 			final IFinitePrefix2PetriNetStateFactory<PLACE> stateFactory, final BranchingProcess<LETTER, PLACE> bp)
+			throws AutomataLibraryException {
+		this(services, stateFactory, bp, false);
+	}
+
+	public FinitePrefix2PetriNet(final AutomataLibraryServices services,
+			final IFinitePrefix2PetriNetStateFactory<PLACE> stateFactory, final BranchingProcess<LETTER, PLACE> bp,
+			final boolean removeDeadTransitions)
 			throws AutomataLibraryException {
 		super(services);
 		mStateFactory = stateFactory;
 		// TODO implement merging for markings?
 		mInput = bp;
+		mRemoveDeadTransitions = removeDeadTransitions;
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
@@ -124,7 +121,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			mEventRepresentatives = new UnionFind<>();
 			constructNet(bp, oldNet);
 		}
-
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
@@ -224,7 +220,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		final Set<Event<LETTER, PLACE>> releventEvents=new HashSet<>(mEventRepresentatives.getAllRepresentatives());
 		
 		
-		if (Remove_Dead) {
+		if (mRemoveDeadTransitions) {
 			final HashRelation<Event<LETTER, PLACE>, Event<LETTER, PLACE>> companion2cutoff = new HashRelation<>();
 			for (final Event<LETTER, PLACE> e : bp.getEvents()) {
 				if (e.isCutoffEvent()) {
@@ -246,7 +242,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			}
 			while(!worklist.isEmpty()) {
 			final Event<LETTER, PLACE> representative = worklist.removeFirst();
-				for (Event<LETTER, PLACE> e : mEventRepresentatives.getEquivalenceClassMembers(representative)) {
+				for (final Event<LETTER, PLACE> e : mEventRepresentatives.getEquivalenceClassMembers(representative)) {
 					for (final Event<LETTER, PLACE> predEvent: e.getPredecessorEvents()) {
 						final Event<LETTER, PLACE> predEventRep = mEventRepresentatives.find(predEvent);
 						if (vitalEvents.add(predEventRep)) {
@@ -301,6 +297,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 					bp.initialConditions());
 			final boolean isAccepting = bp.getNet().isAccepting(c.getPlace());
 			final PLACE place = mStateFactory.finitePrefix2net(c);
+			mOldToNewPlaces.addPair(c.getPlace(), place);
 			final boolean newlyAdded = mNet.addPlace(place, isInitial, isAccepting);
 			if (!newlyAdded) {
 				throw new AssertionError("Must not add place twice: " + place);
@@ -345,7 +342,8 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				final Condition<LETTER, PLACE> representative = mConditionRepresentatives.find(c);
 				succs.add(placeMap.get(representative));
 			}
-			mNet.addTransition(e.getTransition().getSymbol(), preds, succs, e.getTotalOrderId());
+			final ITransition<LETTER, PLACE> newTransition = mNet.addTransition(e.getTransition().getSymbol(), preds, succs);
+			mOldToNewTransitions.addPair(newTransition, e.getTransition());
 		}
 		//}
 		/*{
@@ -525,7 +523,12 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	}
 
 
-
+	public HashRelation<PLACE, PLACE> getOldToNewPlaces(){
+		return mOldToNewPlaces;
+	}
+	public HashRelation<ITransition<LETTER,PLACE>, ITransition<LETTER,PLACE>> getOldToNewTransitions(){
+		return mOldToNewTransitions;
+	}
 	/**
 	 * A transition set.
 	 *

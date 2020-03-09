@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
@@ -99,7 +100,6 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		mPredecessors = new HashSet<>(predecessors);
 		// HashSet<Event<LETTER, PLACE>> localConfiguration = new HashSet<Event<LETTER, PLACE>>();
 
-		mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>());
 
 		mTransition = transition;
 		mSuccessors = new HashSet<>();
@@ -110,25 +110,18 @@ public final class Event<LETTER, PLACE> implements Serializable {
 
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
 		mDepth = 0;
-		final Set<Event<LETTER, PLACE>> predecessorEvents = new HashSet<>();
-		for (final Condition<LETTER, PLACE> c : predecessors) {
-			final Event<LETTER, PLACE> e = c.getPredecessorEvent();
-			if (predecessorEvents.contains(e)) {
-				continue;
+		final Set<Event<LETTER, PLACE>> predecessorEvents = predecessors.stream().map(c -> c.getPredecessorEvent()).collect(Collectors.toSet());
+		final Set<Event<LETTER, PLACE>> localConfigurationsEvents = new HashSet<>();
+		for (final Event<LETTER, PLACE> predEvent:  predecessorEvents) {
+			for (final Event<LETTER, PLACE> e : predEvent.mLocalConfiguration) {
+				localConfigurationsEvents.add(e);
 			}
-
-			predecessorEvents.add(e);
-			// 2019-12-27 Matthias: minor optimization add all Events at once
-			for (final Event<LETTER, PLACE> eOther : e.mLocalConfiguration) {
-				mLocalConfiguration.add(eOther);
-			}
-			e.mConditionMark.addTo(conditionMarkSet);
-			mDepth = Math.max(mDepth, e.getDepth());
+			predEvent.mConditionMark.addTo(conditionMarkSet);
+			mDepth = Math.max(mDepth, predEvent.getDepth());
 		}
 		mDepth++;
-		mLocalConfiguration.setDepth(mDepth);
-		mLocalConfiguration.add(this);
-
+		localConfigurationsEvents.add(this);
+		mLocalConfiguration = new Configuration<>(localConfigurationsEvents, mDepth);
 		for (final Event<LETTER, PLACE> a : mLocalConfiguration) {
 			conditionMarkSet.removeAll(a.getPredecessorConditions());
 		}
@@ -158,7 +151,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 */
 	public Event(final BranchingProcess<LETTER, PLACE> bp) {
 		mTransition = null;
-		mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>());
+		mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>(),0);
 		mMark = new Marking<LETTER, PLACE>(bp.getNet().getInitialPlaces());
 		final Set<Condition<LETTER, PLACE>> conditionMarkSet = new HashSet<>();
 		mConditionMark = new ConditionMarking<>(conditionMarkSet);
@@ -406,7 +399,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 
 	public int getTotalOrderId() {
 		if (mTransition instanceof Transition) {
-			return ((Transition) mTransition).getTotalOrderId();
+			return ((Transition<LETTER, PLACE>) mTransition).getTotalOrderId();
 		} else {
 			throw new UnsupportedOperationException("transition does not provide ID");
 		}
@@ -432,6 +425,4 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	public int hashCode() {
 		return mHashCode;
 	}
-
-
 }
