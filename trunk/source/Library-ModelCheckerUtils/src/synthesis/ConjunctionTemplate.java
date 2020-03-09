@@ -6,6 +6,11 @@
 
 package synthesis;
 
-public class ConjunctionTemplate extends Template {
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+
+public class ConjunctionTemplate extends Template {
+	public ConjunctionTemplate(int conjuncts , int[] relation,
+			Set<TermVariable> vars, String name) {}
 }

@@ -5,6 +5,10 @@
  */
 package synthesis;
 
-public class Template {
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 
+public abstract class Template {
+	private TransFormula mFormula;
+	public TransFormula getFormula() {return mFormula;}
+	//public abstract getTerm();
 }

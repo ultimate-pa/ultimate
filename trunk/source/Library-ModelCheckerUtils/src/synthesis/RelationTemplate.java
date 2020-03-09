@@ -6,6 +6,11 @@
 
 package synthesis;
 
-public class RelationTemplate extends Template {
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+
+public class RelationTemplate extends Template {
+	public RelationTemplate(int relation,
+			Set<TermVariable> vars, String name) {}
 }
