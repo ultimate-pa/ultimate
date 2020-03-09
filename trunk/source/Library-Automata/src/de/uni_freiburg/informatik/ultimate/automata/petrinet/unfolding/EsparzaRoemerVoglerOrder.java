@@ -20,8 +20,9 @@ import java.util.Comparator;
  */
 public class EsparzaRoemerVoglerOrder<LETTER, PLACE> extends ConfigurationOrder<LETTER, PLACE> {
 	final Comparator<Event<LETTER, PLACE>> mIdComparator = new IdComparator();
+	int mFotateNormalFormComparisons = 0;
 	@Override
-	public int compare(Configuration<LETTER, PLACE> c1, Configuration<LETTER, PLACE> c2) {
+	public int compare(final Configuration<LETTER, PLACE> c1, final Configuration<LETTER, PLACE> c2) {
 		// we compare first the sizes of C1 and C2; if they are equal, we compare ϕ(C1)
 		// and ϕ(C2);
 		int result = c1.compareTo(c2, mIdComparator);
@@ -36,6 +37,7 @@ public class EsparzaRoemerVoglerOrder<LETTER, PLACE> extends ConfigurationOrder<
 		// 2002FMSD - Esparza,Römer,Vogler - An Improvement of McMillan's Unfolding Algorithm
 		c1.computeFoataNormalForm();
 		c2.computeFoataNormalForm();
+		mFotateNormalFormComparisons++;
 		int depth = 1;
 		while(true) {
 			result = c1.compareMin(c2, depth, mIdComparator);
@@ -50,6 +52,11 @@ public class EsparzaRoemerVoglerOrder<LETTER, PLACE> extends ConfigurationOrder<
 	public boolean isTotal() {
 		return true;
 	}
+	
+	public int getFotateNormalFormComparisons() {
+		return mFotateNormalFormComparisons;
+	}
+
 	class IdComparator implements Comparator<Event<LETTER, PLACE>> {
 		@Override
 		public int compare(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {

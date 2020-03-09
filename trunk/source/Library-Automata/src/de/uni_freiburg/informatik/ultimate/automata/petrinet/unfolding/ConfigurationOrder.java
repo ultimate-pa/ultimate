@@ -76,6 +76,10 @@ public abstract class ConfigurationOrder<LETTER, PLACE> implements Comparator<Ev
 	 */
 	public abstract boolean isTotal();
 	
+	public int getFotateNormalFormComparisons() {
+		return 0;
+	}
+	
 //	2019-12-19 Factory method for constructing configuration
 //	public abstract <E extends Configuration<LETTER, PLACE>> E constructNewConfiguration(
 //			final Set<Event<LETTER, PLACE>> events, Integer theIntegerForErv);
