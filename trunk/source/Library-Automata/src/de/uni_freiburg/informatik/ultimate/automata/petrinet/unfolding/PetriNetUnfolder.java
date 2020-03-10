@@ -430,9 +430,9 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 		}
 
 		public String prettyprintNumberOfEventComparisons() {
-			return "Compared " + getNumberOfEventComparisons() + " event pairs.";
+			return "Compared " + getNumberOfConfigurationComparisons() + " event pairs, "
+					+ getNumberOfFoataBasedConfigurationComparisons() + " based on Foata normal form.";
 		}
-
 
 
 		public long getCoRelationQueriesYes() {
@@ -451,8 +451,12 @@ public final class PetriNetUnfolder<LETTER, PLACE> {
 			return mNonCutOffEvents;
 		}
 
-		public int getNumberOfEventComparisons() {
+		public int getNumberOfConfigurationComparisons() {
 			return mOrder.getNumberOfComparisons();
+		}
+
+		public int getNumberOfFoataBasedConfigurationComparisons() {
+			return mOrder.getFotateNormalFormComparisons();
 		}
 
 		/**

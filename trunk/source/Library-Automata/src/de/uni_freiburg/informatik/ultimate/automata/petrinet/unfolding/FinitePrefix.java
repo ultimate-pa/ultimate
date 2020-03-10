@@ -124,7 +124,9 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 		statistics.addKeyValuePair(StatisticsType.NUMBER_CUT_OFF_EVENTS, mUnfoldingStatistics.getCutOffEvents());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_NON_CUT_OFF_EVENTS, mUnfoldingStatistics.getNonCutOffEvents());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_EVENT_COMPARISONS,
-				mUnfoldingStatistics.getNumberOfEventComparisons());
+				mUnfoldingStatistics.getNumberOfConfigurationComparisons());
+		statistics.addKeyValuePair(StatisticsType.FOATA_NORMAL_FORM_COMPARISONS,
+				mUnfoldingStatistics.getNumberOfFoataBasedConfigurationComparisons());
 		if (mOperand instanceof IPetriNet) {
 			statistics.addKeyValuePair(StatisticsType.NUMBER_UNREACHABLE_TRANSITIONS,
 					mUnfoldingStatistics.unreachableTransitionsInOperand());

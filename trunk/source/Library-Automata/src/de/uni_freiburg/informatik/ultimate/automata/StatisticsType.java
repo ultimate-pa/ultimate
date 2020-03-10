@@ -185,6 +185,11 @@ public enum StatisticsType {
 	 */
 	FAILED_TRANSREMOVE_ATTEMPTS,
 	/**
+	 * Number of comparisons between configurations where sizes and transition IDs
+	 * are not sufficient and we have to do a check based on the Foata normal form.
+	 */
+	FOATA_NORMAL_FORM_COMPARISONS,
+	/**
 	 * Amount of edges the game graph has (used in simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	GAMEGRAPH_EDGES,
