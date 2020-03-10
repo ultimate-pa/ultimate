@@ -346,6 +346,11 @@ public enum StatisticsType {
 	 */
 	REMOVED_TRANSITIONS,
 	/**
+	 * Number of conditions that we used to check if the condition is a restrictor
+	 * for a given element of the flow relation.
+	 */
+	RESTRICTOR_CONDITION_CHECKS,
+	/**
 	 * Size of the alphabet the automaton has after simulation (used in simulation, for compatibility with
 	 * {@link ECountingMeasure}).
 	 */

@@ -75,7 +75,8 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	 */
 	private static final boolean MOUNTAIN_COCK_HEURISTIC = false;
 	private final IPetriNet<LETTER, PLACE> mOperand;
-	private BranchingProcess<LETTER, PLACE> mFinPre;
+	private final FinitePrefix<LETTER, PLACE> mFinitePrefixOperation;
+	private final BranchingProcess<LETTER, PLACE> mFinPre;
 	private final HashRelation<ITransition<LETTER, PLACE>, PLACE> mRedundantSelfloopFlow = new HashRelation<>();
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 	private Set<PLACE> mRedundantPlaces;
@@ -95,9 +96,11 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		mEligibleRedundancyCandidates = eligibleRedundancyCandidates;
 		printStartMessage();
 		if (finPre != null) {
+			mFinitePrefixOperation = null;
 			mFinPre = finPre;
 		} else {
-			mFinPre = new FinitePrefix<LETTER, PLACE>(services, operand).getResult();
+			mFinitePrefixOperation = new FinitePrefix<LETTER, PLACE>(services, operand);
+			mFinPre = mFinitePrefixOperation.getResult();
 		}
 		final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow = new HashRelation<>();
 		for (final ITransition<LETTER, PLACE> t : operand.getTransitions()) {
@@ -272,11 +275,15 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
 
+		if (mFinitePrefixOperation != null) {
+			statistics.addAllStatistics(mFinitePrefixOperation.getAutomataOperationStatistics());
+		}
 		statistics.addKeyValuePair(StatisticsType.PETRI_REMOVED_PLACES,
 				mOperand.getPlaces().size() - mResult.getPlaces().size());
 		statistics.addKeyValuePair(StatisticsType.PETRI_REMOVED_TRANSITIONS,
 				mOperand.getTransitions().size() - mResult.getTransitions().size());
 		statistics.addKeyValuePair(StatisticsType.PETRI_REMOVED_FLOW, mOperand.flowSize() - mResult.flowSize());
+		statistics.addKeyValuePair(StatisticsType.RESTRICTOR_CONDITION_CHECKS, mRestrictorConditionChecks);
 
 		statistics.addKeyValuePair(StatisticsType.PETRI_ALPHABET, mResult.getAlphabet().size());
 		statistics.addKeyValuePair(StatisticsType.PETRI_PLACES, mResult.getPlaces().size());
