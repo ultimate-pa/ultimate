@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelati
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -82,6 +83,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	private Set<PLACE> mRedundantPlaces;
 	private final Set<PLACE> mEligibleRedundancyCandidates;
 	private int mRestrictorConditionChecks = 0;
+	private final NestedMap2<PLACE, PLACE, Boolean> mRestrictorPlaceCache = new NestedMap2<>();
 
 	public RemoveRedundantFlow(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
@@ -198,8 +200,18 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		}
 		return false;
 	}
-
+	
 	private boolean isRestrictorPlace(final PLACE redundancyCandidate, final PLACE restrictorCandidate)
+			throws AutomataOperationCanceledException {
+		Boolean isRestrictor = mRestrictorPlaceCache.get(redundancyCandidate, restrictorCandidate);
+		if (isRestrictor == null) {
+			isRestrictor = checkRestrictorPlace(redundancyCandidate, restrictorCandidate);
+			mRestrictorPlaceCache.put(redundancyCandidate, restrictorCandidate, isRestrictor);
+		}
+		return isRestrictor;
+	}
+
+	private boolean checkRestrictorPlace(final PLACE redundancyCandidate, final PLACE restrictorCandidate)
 			throws AutomataOperationCanceledException {
 		for (final Condition<LETTER, PLACE> restrictorCandidateCondition : mFinPre.place2cond(restrictorCandidate)) {
 			if (restrictorCandidateCondition.getPredecessorEvent().isCutoffEvent()) {
