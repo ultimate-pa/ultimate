@@ -202,10 +202,17 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	private boolean isRestrictorPlace(final PLACE redundancyCandidate, final PLACE restrictorCandidate)
 			throws AutomataOperationCanceledException {
 		for (final Condition<LETTER, PLACE> restrictorCandidateCondition : mFinPre.place2cond(restrictorCandidate)) {
-			final boolean isRestrictorCondition = isRestrictorCondition(restrictorCandidateCondition, redundancyCandidate,
-					mFinPre.getCoRelation());
-			if (!isRestrictorCondition) {
-				return false;
+			if (restrictorCandidateCondition.getPredecessorEvent().isCutoffEvent()) {
+				// we may omit the check because if the the candidate is not a
+				// restrictor condition there is also another condition
+				// of the same place that is not a restrictor condition and not
+				// successor of a cut-off event.
+			} else {
+				final boolean isRestrictorCondition = isRestrictorCondition(restrictorCandidateCondition,
+						redundancyCandidate, mFinPre.getCoRelation());
+				if (!isRestrictorCondition) {
+					return false;
+				}
 			}
 		}
 		return true;
