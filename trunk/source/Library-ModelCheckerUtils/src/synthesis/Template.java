@@ -7,8 +7,11 @@ package synthesis;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 
-public abstract class Template {
+public abstract class Template {	
 	private TransFormula mFormula;
-	public TransFormula getFormula() {return mFormula;}
+	public TransFormula getFormula() {
+		return mFormula;
+	}
 	//public abstract getTerm();
+	
 }
