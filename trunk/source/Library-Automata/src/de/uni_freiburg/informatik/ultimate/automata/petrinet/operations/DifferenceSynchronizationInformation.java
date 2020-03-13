@@ -26,7 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -106,4 +110,53 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 	public boolean isVitalityPreserved() {
 		return mVitalityPreserved;
 	}
+
+
+	public DifferenceSynchronizationInformation<LETTER, PLACE> transformThroughRemoveRedundantFlow(
+			final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> minuendTransition2differenceTransitions,
+			final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> differenceTransitions2projectedTransitions,
+			final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantSelfloopFlow,
+			final Set<PLACE> redundantPlaces) {
+		final HashRelation<ITransition<LETTER, PLACE>, PLACE> selfloops = new HashRelation<>();
+		for (final Entry<ITransition<LETTER, PLACE>, HashSet<PLACE>> entry : mSelfloops.entrySet()) {
+			for (final PLACE automatonState : entry.getValue()) {
+				final Set<ITransition<LETTER, PLACE>> differenceTransitions = minuendTransition2differenceTransitions
+						.getImage(entry.getKey());
+				assert !differenceTransitions.isEmpty() : "no corresponding transitions in difference";
+				if (!isRedundantForAll(redundantSelfloopFlow, differenceTransitions, automatonState)) {
+					final ITransition<LETTER, PLACE> projectedTransition = differenceTransitions2projectedTransitions
+							.get(differenceTransitions.iterator().next());
+					selfloops.addPair(projectedTransition, automatonState);
+				}
+			}
+		}
+		final HashRelation<ITransition<LETTER, PLACE>, PLACE> stateChangers = new HashRelation<>();
+		for (final Entry<ITransition<LETTER, PLACE>, HashSet<PLACE>> entry : mStateChangers.entrySet()) {
+			for (final PLACE automatonState : entry.getValue()) {
+				if (!redundantPlaces.contains(automatonState)) {
+					stateChangers.addPair(entry.getKey(), automatonState);
+				}
+			}
+		}
+		final HashRelation<ITransition<LETTER, PLACE>, PLACE> blockingTransitions = new HashRelation<>();
+		for (final Entry<ITransition<LETTER, PLACE>, HashSet<PLACE>> entry : mBlockingTransitions.entrySet()) {
+			for (final PLACE automatonState : entry.getValue()) {
+				if (!redundantPlaces.contains(automatonState)) {
+					blockingTransitions.addPair(entry.getKey(), automatonState);
+				}
+			}
+		}
+		final Set<ITransition<LETTER, PLACE>> contributingTransitions = mContributingTransitions.stream()
+				.map(x -> differenceTransitions2projectedTransitions
+						.get(minuendTransition2differenceTransitions.getImage(x).iterator().next()))
+				.collect(Collectors.toSet());
+		return new DifferenceSynchronizationInformation<>(mChangerLetters, selfloops, stateChangers,
+				contributingTransitions, blockingTransitions, true, false);
+	}
+
+	private boolean isRedundantForAll(final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantSelfloopFlow,
+			final Set<ITransition<LETTER, PLACE>> differenceTransitions, final PLACE automatonState) {
+		return differenceTransitions.stream().allMatch(x -> redundantSelfloopFlow.containsPair(x, automatonState));
+	}
+
 }
