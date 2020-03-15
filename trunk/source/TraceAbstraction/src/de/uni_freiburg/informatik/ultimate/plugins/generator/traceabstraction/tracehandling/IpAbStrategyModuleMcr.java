@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -28,6 +29,7 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 		mAutomatonBuilder = new McrAutomatonBuilder<>(trace, predicateUnifier, emptyStackFactory, logger, alphabet,
 				prefs.getUltimateServices(), prefs.getCfgSmtToolkit().getManagedScript(),
 				prefs.getXnfConversionTechnique(), prefs.getSimplificationTechnique());
+		mAutomatonBuilder.preprocess(trace);
 
 	}
 
@@ -39,7 +41,7 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 				final INestedWordAutomaton<Integer, ?> mcrAutomaton = mAutomatonBuilder.buildMcrAutomaton();
 				final List<QualifiedTracePredicates> qtp = perfectIpps.isEmpty() ? imperfectIpps : perfectIpps;
 				final NestedWordAutomaton<LETTER, IPredicate> automaton =
-						mAutomatonBuilder.buildInterpolantAutomaton(mcrAutomaton, qtp);
+						mAutomatonBuilder.buildInterpolantAutomaton(Collections.nCopies(qtp.size(), mcrAutomaton), qtp);
 				return new IpAbStrategyModuleResult<>(automaton, qtp);
 			} catch (final AutomataLibraryException e) {
 				throw new RuntimeException(e);

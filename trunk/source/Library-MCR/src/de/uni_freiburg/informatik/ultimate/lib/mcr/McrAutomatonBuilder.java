@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.lib.mcr;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
-	private final List<LETTER> mTrace;
+	private final List<LETTER> mOriginalTrace;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -57,17 +56,17 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final VpAlphabet<LETTER> mAlphabet;
 
 	private final HashRelation<IProgramVar, Integer> mVariables2Writes;
-	private final List<Map<IProgramVar, Integer>> mPreviousWrite;
+	private final Map<LETTER, List<Integer>> mActions2Indices;
 	private final Map<String, List<Integer>> mThreads2SortedActions;
 
-	private Collection<INestedWordAutomaton<Integer, String>> mThreadAutomata;
+	private final List<Map<IProgramVar, Integer>> mPreviousWrite;
 
 	public McrAutomatonBuilder(final List<LETTER> trace, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final ILogger logger,
 			final Set<LETTER> alphabet, final IUltimateServiceProvider services, final ManagedScript managedScript,
 			final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
-		mTrace = trace;
+		mOriginalTrace = trace;
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
 		mServices = services;
@@ -80,16 +79,20 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		mVariables2Writes = new HashRelation<>();
 		mPreviousWrite = new ArrayList<>(trace.size());
 		mThreads2SortedActions = new HashMap<>();
-		preprocess();
+		mActions2Indices = new HashMap<>();
+		preprocessEqClass();
 	}
 
-	private void preprocess() {
-		final Map<IProgramVar, Integer> lastWrittenBy = new HashMap<>();
-		for (int i = 0; i < mTrace.size(); i++) {
-			final LETTER action = mTrace.get(i);
-			final TransFormula transformula = action.getTransformula();
-			final Set<IProgramVar> writtenVars = transformula.getAssignedVars();
-			for (final IProgramVar var : writtenVars) {
+	private void preprocessEqClass() {
+		for (int i = 0; i < mOriginalTrace.size(); i++) {
+			final LETTER action = mOriginalTrace.get(i);
+			List<Integer> currentIndices = mActions2Indices.get(action);
+			if (currentIndices == null) {
+				currentIndices = new ArrayList<>();
+				mActions2Indices.put(action, currentIndices);
+			}
+			currentIndices.add(i);
+			for (final IProgramVar var : action.getTransformula().getAssignedVars()) {
 				mVariables2Writes.addPair(var, i);
 			}
 			final String currentThread = action.getPrecedingProcedure();
@@ -108,14 +111,26 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				}
 				threadActions.add(i);
 			}
+		}
+	}
+
+	public void preprocess(final List<LETTER> trace) {
+		mPreviousWrite.clear();
+		final Map<LETTER, Integer> counts = new HashMap<>();
+		final Map<IProgramVar, Integer> lastWrittenBy = new HashMap<>();
+		for (final LETTER action : trace) {
 			final Map<IProgramVar, Integer> previousWrites = new HashMap<>();
+			final TransFormula transformula = action.getTransformula();
 			for (final IProgramVar read : transformula.getInVars().keySet()) {
 				previousWrites.put(read, lastWrittenBy.get(read));
 			}
 			mPreviousWrite.add(previousWrites);
-			for (final IProgramVar written : writtenVars) {
-				lastWrittenBy.put(written, i);
+			final int count = counts.getOrDefault(action, 0);
+			final int index = mActions2Indices.get(action).get(count);
+			for (final IProgramVar written : transformula.getAssignedVars()) {
+				lastWrittenBy.put(written, index);
 			}
+			counts.put(action, count + 1);
 		}
 	}
 
@@ -124,32 +139,30 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private Collection<INestedWordAutomaton<Integer, String>> getThreadAutomata() {
-		if (mThreadAutomata == null) {
-			mThreadAutomata = new ArrayList<>();
-			final Set<Integer> range = IntStream.range(0, mTrace.size()).boxed().collect(Collectors.toSet());
-			final VpAlphabet<Integer> alphabet = new VpAlphabet<>(range);
-			final StringFactory factory = new StringFactory();
-			// Construct automata for the MHB relation
-			for (final List<Integer> threadActions : mThreads2SortedActions.values()) {
-				final Set<Integer> otherActions = new HashSet<>(range);
-				final NestedWordAutomaton<Integer, String> nwa =
-						new NestedWordAutomaton<>(mAutomataServices, alphabet, factory);
-				otherActions.removeAll(threadActions);
-				nwa.addState(true, false, getState(0));
-				for (final Integer otherAction : otherActions) {
-					nwa.addInternalTransition(getState(0), otherAction, getState(0));
-				}
-				for (int i = 0; i < threadActions.size(); i++) {
-					nwa.addState(false, i + 1 == threadActions.size(), getState(i + 1));
-					nwa.addInternalTransition(getState(i), threadActions.get(i), getState(i + 1));
-					for (final Integer otherAction : otherActions) {
-						nwa.addInternalTransition(getState(i + 1), otherAction, getState(i + 1));
-					}
-				}
-				mThreadAutomata.add(nwa);
+		final List<INestedWordAutomaton<Integer, String>> result = new ArrayList<>();
+		final Set<Integer> range = IntStream.range(0, mOriginalTrace.size()).boxed().collect(Collectors.toSet());
+		final VpAlphabet<Integer> alphabet = new VpAlphabet<>(range);
+		final StringFactory factory = new StringFactory();
+		// Construct automata for the MHB relation
+		for (final List<Integer> threadActions : mThreads2SortedActions.values()) {
+			final Set<Integer> otherActions = new HashSet<>(range);
+			final NestedWordAutomaton<Integer, String> nwa =
+					new NestedWordAutomaton<>(mAutomataServices, alphabet, factory);
+			otherActions.removeAll(threadActions);
+			nwa.addState(true, false, getState(0));
+			for (final Integer otherAction : otherActions) {
+				nwa.addInternalTransition(getState(0), otherAction, getState(0));
 			}
+			for (int i = 0; i < threadActions.size(); i++) {
+				nwa.addState(false, i + 1 == threadActions.size(), getState(i + 1));
+				nwa.addInternalTransition(getState(i), threadActions.get(i), getState(i + 1));
+				for (final Integer otherAction : otherActions) {
+					nwa.addInternalTransition(getState(i + 1), otherAction, getState(i + 1));
+				}
+			}
+			result.add(nwa);
 		}
-		return mThreadAutomata;
+		return result;
 	}
 
 	public INestedWordAutomaton<Integer, String> buildMhbAutomaton() throws AutomataLibraryException {
@@ -159,12 +172,12 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	public INestedWordAutomaton<Integer, String> buildMcrAutomaton() throws AutomataLibraryException {
 		mLogger.info("Constructing automaton for MCR equivalence class.");
 		final VpAlphabet<Integer> alphabet =
-				new VpAlphabet<>(IntStream.range(0, mTrace.size()).boxed().collect(Collectors.toSet()));
+				new VpAlphabet<>(IntStream.range(0, mOriginalTrace.size()).boxed().collect(Collectors.toSet()));
 		final List<INestedWordAutomaton<Integer, String>> automata = new ArrayList<>();
 		automata.addAll(getThreadAutomata());
 		final StringFactory factory = new StringFactory();
 		// Construct automata for each read to be preceded by the same write
-		for (int read = 0; read < mTrace.size(); read++) {
+		for (int read = 0; read < mOriginalTrace.size(); read++) {
 			final Map<IProgramVar, Integer> previousWrites = mPreviousWrite.get(read);
 			if (previousWrites == null) {
 				continue;
@@ -182,7 +195,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 					nwa.addState(true, false, getState(0));
 					nwa.addInternalTransition(getState(0), write, getState(1));
 				}
-				for (int i = 0; i < mTrace.size(); i++) {
+				for (int i = 0; i < mOriginalTrace.size(); i++) {
 					if (i == read || write != null && i == write) {
 						continue;
 					}
@@ -241,7 +254,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			IPredicate currentPredicate = mPredicateUnifier.getTruePredicate();
 			stateMap.put(currentState, currentPredicate);
 			queue.add(currentState);
-			for (int i = 0; i < mTrace.size(); i++) {
+			for (int i = 0; i < mOriginalTrace.size(); i++) {
 				final Iterator<OutgoingInternalTransition<Integer, STATE>> succStates =
 						automaton.internalSuccessors(currentState, i).iterator();
 				if (!succStates.hasNext()) {
@@ -255,7 +268,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				if (!result.contains(nextPredicate)) {
 					result.addState(false, false, nextPredicate);
 				}
-				result.addInternalTransition(currentPredicate, mTrace.get(i), nextPredicate);
+				result.addInternalTransition(currentPredicate, mOriginalTrace.get(i), nextPredicate);
 				queue.add(currentState);
 				currentPredicate = nextPredicate;
 				stateMap.put(currentState, currentPredicate);
@@ -269,7 +282,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				for (final IncomingInternalTransition<Integer, STATE> edge : automaton.internalPredecessors(state)) {
 					final STATE predecessor = edge.getPred();
 					IPredicate predPredicate = stateMap.get(predecessor);
-					final LETTER action = mTrace.get(edge.getLetter());
+					final LETTER action = mOriginalTrace.get(edge.getLetter());
 					// If the predecessor is already labeled, we can continue
 					if (predPredicate == null) {
 						queue.add(predecessor);
@@ -299,11 +312,5 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		}
 		mLogger.info("Construction finished. Needed to calculate wp " + wpCalls + " times.");
 		return result;
-	}
-
-	public <STATE> NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(
-			final INestedWordAutomaton<Integer, STATE> automaton,
-			final List<QualifiedTracePredicates> tracePredicates) {
-		return buildInterpolantAutomaton(Collections.nCopies(tracePredicates.size(), automaton), tracePredicates);
 	}
 }
