@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.mcr;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -151,39 +152,11 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		return mThreadAutomata;
 	}
 
-	public INestedWordAutomaton<LETTER, ?> buildMhbAutomaton() throws AutomataLibraryException {
-		final StringFactory factory = new StringFactory();
-		final INestedWordAutomaton<Integer, String> intAutomaton =
-				intersect(getThreadAutomata(), factory, mAutomataServices, mLogger);
-		final NestedWordAutomaton<LETTER, String> result =
-				new NestedWordAutomaton<>(mAutomataServices, mAlphabet, factory);
-		final Set<String> initialStates = intAutomaton.getInitialStates();
-		final Set<String> finalStates = new HashSet<>(intAutomaton.getFinalStates());
-		final LinkedList<String> queue = new LinkedList<>(finalStates);
-		for (final String state : finalStates) {
-			result.addState(initialStates.contains(state), true, state);
-		}
-		final Set<String> visited = new HashSet<>();
-		while (!queue.isEmpty()) {
-			final String state = queue.remove();
-			if (!visited.add(state)) {
-				continue;
-			}
-			for (final IncomingInternalTransition<Integer, String> edge : intAutomaton.internalPredecessors(state)) {
-				final LETTER letter = mTrace.get(edge.getLetter());
-				final String pred = edge.getPred();
-				if (!result.contains(pred)) {
-					result.addState(initialStates.contains(pred), finalStates.contains(pred), pred);
-				}
-				result.addInternalTransition(pred, letter, state);
-				queue.add(pred);
-			}
-		}
-		return result;
-
+	public INestedWordAutomaton<Integer, String> buildMhbAutomaton() throws AutomataLibraryException {
+		return intersect(getThreadAutomata(), new StringFactory(), mAutomataServices, mLogger);
 	}
 
-	private INestedWordAutomaton<Integer, String> constructMcrAutomaton() throws AutomataLibraryException {
+	public INestedWordAutomaton<Integer, String> buildMcrAutomaton() throws AutomataLibraryException {
 		mLogger.info("Constructing automaton for MCR equivalence class.");
 		final VpAlphabet<Integer> alphabet =
 				new VpAlphabet<>(IntStream.range(0, mTrace.size()).boxed().collect(Collectors.toSet()));
@@ -246,9 +219,10 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		return result;
 	}
 
-	public NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(
-			final List<QualifiedTracePredicates> tracePredicates) throws AutomataLibraryException {
-		final INestedWordAutomaton<Integer, String> mcrAutomaton = constructMcrAutomaton();
+	public <STATE> NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(
+			final List<INestedWordAutomaton<Integer, STATE>> automata,
+			final List<QualifiedTracePredicates> tracePredicates) {
+		assert automata.size() == tracePredicates.size();
 		mLogger.info("Constructing interpolant automaton by labelling MCR automaton.");
 		final NestedWordAutomaton<LETTER, IPredicate> result =
 				new NestedWordAutomaton<>(mAutomataServices, mAlphabet, mEmptyStackFactory);
@@ -257,18 +231,19 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		int wpCalls = 0;
 		result.addState(true, false, mPredicateUnifier.getTruePredicate());
 		result.addState(false, true, mPredicateUnifier.getFalsePredicate());
-		for (final QualifiedTracePredicates qtp : tracePredicates) {
-			final List<IPredicate> interpolants = qtp.getPredicates();
-			final Map<String, IPredicate> stateMap = new HashMap<>();
+		for (int j = 0; j < automata.size(); j++) {
+			final INestedWordAutomaton<Integer, STATE> automaton = automata.get(j);
+			final List<IPredicate> interpolants = tracePredicates.get(j).getPredicates();
+			final Map<STATE, IPredicate> stateMap = new HashMap<>();
 			// Fill stateMap and automaton with the given interpolants
-			final LinkedList<String> queue = new LinkedList<>();
-			String currentState = mcrAutomaton.getInitialStates().iterator().next();
+			final LinkedList<STATE> queue = new LinkedList<>();
+			STATE currentState = automaton.getInitialStates().iterator().next();
 			IPredicate currentPredicate = mPredicateUnifier.getTruePredicate();
 			stateMap.put(currentState, currentPredicate);
 			queue.add(currentState);
 			for (int i = 0; i < mTrace.size(); i++) {
-				final Iterator<OutgoingInternalTransition<Integer, String>> succStates =
-						mcrAutomaton.internalSuccessors(currentState, i).iterator();
+				final Iterator<OutgoingInternalTransition<Integer, STATE>> succStates =
+						automaton.internalSuccessors(currentState, i).iterator();
 				if (!succStates.hasNext()) {
 					throw new IllegalStateException("Trace is not present in the MCR automaton");
 				}
@@ -286,14 +261,13 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				stateMap.put(currentState, currentPredicate);
 			}
 			while (!queue.isEmpty()) {
-				final String state = queue.remove();
+				final STATE state = queue.remove();
 				final IPredicate predicate = stateMap.get(state);
 				if (predicate == null) {
 					throw new IllegalStateException("Trying to visit an uncovered state.");
 				}
-				for (final IncomingInternalTransition<Integer, String> edge : mcrAutomaton
-						.internalPredecessors(state)) {
-					final String predecessor = edge.getPred();
+				for (final IncomingInternalTransition<Integer, STATE> edge : automaton.internalPredecessors(state)) {
+					final STATE predecessor = edge.getPred();
 					IPredicate predPredicate = stateMap.get(predecessor);
 					final LETTER action = mTrace.get(edge.getLetter());
 					// If the predecessor is already labeled, we can continue
@@ -325,5 +299,11 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		}
 		mLogger.info("Construction finished. Needed to calculate wp " + wpCalls + " times.");
 		return result;
+	}
+
+	public <STATE> NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(
+			final INestedWordAutomaton<Integer, STATE> automaton,
+			final List<QualifiedTracePredicates> tracePredicates) {
+		return buildInterpolantAutomaton(Collections.nCopies(tracePredicates.size(), automaton), tracePredicates);
 	}
 }

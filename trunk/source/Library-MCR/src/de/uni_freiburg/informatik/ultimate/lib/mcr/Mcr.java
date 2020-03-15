@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.mcr;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -8,9 +9,12 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -49,7 +53,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final McrTraceCheckResult<LETTER> mResult;
 
 	public Mcr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
-			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final IRun<LETTER, ?> counterexample,
+			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final List<LETTER> trace,
 			final Set<LETTER> alphabet, final IProofProvider<LETTER> proofProvider) throws AutomataLibraryException {
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
@@ -62,51 +66,49 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		mEmptyStackStateFactory = emptyStackStateFactory;
 		mProofProvider = proofProvider;
 		// Explore all the interleavings of trace
-		mResult = exploreInterleavings(counterexample);
+		mResult = exploreInterleavings(trace);
 	}
 
-	private McrTraceCheckResult<LETTER> exploreInterleavings(final IRun<LETTER, ?> counterexample)
+	private McrTraceCheckResult<LETTER> exploreInterleavings(final List<LETTER> initialTrace)
 			throws AutomataLibraryException {
-		final McrAutomatonBuilder<LETTER> automatonBuilder = constructAutomatonBuilder(counterexample);
-		final INestedWordAutomaton<LETTER, ?> mhbAutomaton = automatonBuilder.buildMhbAutomaton();
-		McrTraceCheckResult<LETTER> result;
-		IsEmpty<LETTER, ?> isEmpty;
-		IRun<LETTER, ?> currentCounterexample = counterexample;
-		// TODO: Fix do-while
-		do {
-			result = checkCounterexample(currentCounterexample);
-			if (result.isCorrect() != LBool.UNSAT) {
-				return result;
+		final StringFactory factory = new StringFactory();
+		final List<INestedWordAutomaton<Integer, String>> automata = new ArrayList<>();
+		final List<QualifiedTracePredicates> tracePredicates = new ArrayList<>();
+		final McrAutomatonBuilder<LETTER> initialAutomatonBuilder = constructAutomatonBuilder(initialTrace);
+		INestedWordAutomaton<Integer, String> mhbAutomaton = initialAutomatonBuilder.buildMhbAutomaton();
+		IsEmpty<Integer, String> isEmpty = new IsEmpty<>(mAutomataServices, mhbAutomaton);
+		List<LETTER> currentTrace = null;
+		while (isEmpty.checkResult(factory)) {
+			final NestedRun<Integer, String> intCounterexample = isEmpty.getNestedRun();
+			// TODO: Construct counterexample from intCounterexample
+			final IRun<LETTER, ?> counterexample = null;
+			final Pair<LBool, QualifiedTracePredicates> proof =
+					mProofProvider.getProof(counterexample, getPrecondition(), getPostcondition());
+			currentTrace = counterexample.getWord().asList();
+			final LBool feasibility = proof.getFirst();
+			if (feasibility != LBool.UNSAT) {
+				// We found a feasible error trace
+				return new McrTraceCheckResult<>(currentTrace, feasibility, null, null);
 			}
-			// TODO: Subtract result.getAutomaton() from mhbAutomaton
+			final INestedWordAutomaton<Integer, String> mcrAutomaton =
+					constructAutomatonBuilder(currentTrace).buildMcrAutomaton();
+			automata.add(mcrAutomaton);
+			tracePredicates.add(proof.getSecond());
+			mhbAutomaton = new Difference<>(mAutomataServices, factory, mhbAutomaton, mcrAutomaton).getResult();
 			isEmpty = new IsEmpty<>(mAutomataServices, mhbAutomaton);
-			currentCounterexample = isEmpty.getNestedRun();
-		} while (isEmpty.checkResult(null));
-		// All interleavings are infeasible
-		return result;
-	}
-
-	private McrTraceCheckResult<LETTER> checkCounterexample(final IRun<LETTER, ?> counterexample)
-			throws AutomataLibraryException {
-		final Pair<LBool, QualifiedTracePredicates> proof =
-				mProofProvider.getProof(counterexample, getPrecondition(), getPostcondition());
-		final List<LETTER> trace = counterexample.getWord().asList();
-		final LBool feasibility = proof.getFirst();
-		if (feasibility != LBool.UNSAT) {
-			// We found a feasible error trace
-			return new McrTraceCheckResult<>(trace, feasibility, null, null);
 		}
-		final McrAutomatonBuilder<LETTER> automatonBuilder = constructAutomatonBuilder(counterexample);
+		// All interleavings are infeasible
+		final List<IPredicate> lastPredicates =
+				tracePredicates.get(tracePredicates.size() - 1).getTracePredicates().getPredicates();
+		final IPredicate[] interpolants = lastPredicates.toArray(new IPredicate[lastPredicates.size()]);
 		final NestedWordAutomaton<LETTER, IPredicate> interpolantAutomaton =
-				automatonBuilder.buildInterpolantAutomaton(Collections.singletonList(proof.getSecond()));
-		final List<IPredicate> predicates = proof.getSecond().getPredicates();
-		final IPredicate[] interpolants = predicates.toArray(new IPredicate[predicates.size()]);
-		return new McrTraceCheckResult<>(trace, LBool.UNSAT, interpolantAutomaton, interpolants);
+				initialAutomatonBuilder.buildInterpolantAutomaton(automata, tracePredicates);
+		return new McrTraceCheckResult<>(currentTrace, LBool.UNSAT, interpolantAutomaton, interpolants);
 	}
 
-	private McrAutomatonBuilder<LETTER> constructAutomatonBuilder(final IRun<LETTER, ?> counterexample) {
-		return new McrAutomatonBuilder<>(counterexample.getWord().asList(), mPredicateUnifier, mEmptyStackStateFactory,
-				mLogger, mAlphabet, mServices, mManagedScript, mXnfConversionTechnique, mSimplificationTechnique);
+	private McrAutomatonBuilder<LETTER> constructAutomatonBuilder(final List<LETTER> trace) {
+		return new McrAutomatonBuilder<>(trace, mPredicateUnifier, mEmptyStackStateFactory, mLogger, mAlphabet,
+				mServices, mManagedScript, mXnfConversionTechnique, mSimplificationTechnique);
 	}
 
 	@Override
