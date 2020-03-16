@@ -85,9 +85,9 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		INestedWordAutomaton<Integer, String> mhbAutomaton = automatonBuilder.buildMhbAutomaton();
 		NestedRun<Integer, ?> run = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
 		List<LETTER> currentTrace = null;
-		int iterations = 0;
+		int iteration = 0;
 		while (run != null) {
-			iterations++;
+			mLogger.info("---- MCR iteration " + iteration++ + " ----");
 			final NestedRun<LETTER, ?> counterexample = convertRun(run);
 			final Pair<LBool, QualifiedTracePredicates> proof =
 					mProofProvider.getProof(counterexample, getPrecondition(), getPostcondition());
@@ -95,12 +95,10 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			final LBool feasibility = proof.getFirst();
 			if (feasibility != LBool.UNSAT) {
 				// We found a feasible error trace
-				mLogger.info("Needed " + iterations + " MCR iterations to find a counterexample.");
 				return new McrTraceCheckResult<>(currentTrace, feasibility, null, null);
 			}
-			automatonBuilder.preprocess(currentTrace);
 			// TODO: Use interpolant automata (from settings) here?
-			final INestedWordAutomaton<Integer, String> mcrAutomaton = automatonBuilder.buildMcrAutomaton();
+			final INestedWordAutomaton<Integer, String> mcrAutomaton = automatonBuilder.buildMcrAutomaton(currentTrace);
 			automata.add(mcrAutomaton);
 			tracePredicates.add(proof.getSecond());
 			intTraces.add(run.getWord().asList());
@@ -113,7 +111,6 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		final IPredicate[] interpolants = lastPredicates.toArray(new IPredicate[lastPredicates.size()]);
 		final NestedWordAutomaton<LETTER, IPredicate> interpolantAutomaton =
 				automatonBuilder.buildInterpolantAutomaton(automata, intTraces, tracePredicates);
-		mLogger.info("Needed " + iterations + " MCR iterations to prove all interleavings to be correct.");
 		return new McrTraceCheckResult<>(currentTrace, LBool.UNSAT, interpolantAutomaton, interpolants);
 	}
 
