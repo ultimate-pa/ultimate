@@ -75,21 +75,26 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	private McrTraceCheckResult<LETTER> exploreInterleavings(final List<LETTER> initialTrace)
 			throws AutomataLibraryException {
+		final McrAutomatonBuilder<LETTER> automatonBuilder =
+				new McrAutomatonBuilder<>(initialTrace, mPredicateUnifier, mEmptyStackStateFactory, mLogger, mAlphabet,
+						mServices, mManagedScript, mXnfConversionTechnique, mSimplificationTechnique);
 		final StringFactory factory = new StringFactory();
 		final List<INestedWordAutomaton<Integer, String>> automata = new ArrayList<>();
 		final List<QualifiedTracePredicates> tracePredicates = new ArrayList<>();
-		final McrAutomatonBuilder<LETTER> automatonBuilder = constructAutomatonBuilder(initialTrace);
 		INestedWordAutomaton<Integer, String> mhbAutomaton = automatonBuilder.buildMhbAutomaton();
-		IsEmpty<Integer, String> isEmpty = new IsEmpty<>(mAutomataServices, mhbAutomaton);
+		NestedRun<Integer, ?> run = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
 		List<LETTER> currentTrace = null;
-		while (isEmpty.checkResult(factory)) {
-			final NestedRun<LETTER, ?> counterexample = convertRun(isEmpty.getNestedRun());
+		int iterations = 0;
+		while (run != null) {
+			iterations++;
+			final NestedRun<LETTER, ?> counterexample = convertRun(run);
 			final Pair<LBool, QualifiedTracePredicates> proof =
 					mProofProvider.getProof(counterexample, getPrecondition(), getPostcondition());
 			currentTrace = counterexample.getWord().asList();
 			final LBool feasibility = proof.getFirst();
 			if (feasibility != LBool.UNSAT) {
 				// We found a feasible error trace
+				mLogger.info("Needed " + iterations + " MCR iterations to find a counterxample.");
 				return new McrTraceCheckResult<>(currentTrace, feasibility, null, null);
 			}
 			automatonBuilder.preprocess(currentTrace);
@@ -97,7 +102,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			automata.add(mcrAutomaton);
 			tracePredicates.add(proof.getSecond());
 			mhbAutomaton = new Difference<>(mAutomataServices, factory, mhbAutomaton, mcrAutomaton).getResult();
-			isEmpty = new IsEmpty<>(mAutomataServices, mhbAutomaton);
+			run = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
 		}
 		// All interleavings are infeasible
 		final List<IPredicate> lastPredicates =
@@ -105,21 +110,19 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		final IPredicate[] interpolants = lastPredicates.toArray(new IPredicate[lastPredicates.size()]);
 		final NestedWordAutomaton<LETTER, IPredicate> interpolantAutomaton =
 				automatonBuilder.buildInterpolantAutomaton(automata, tracePredicates);
+		mLogger.info("Needed " + iterations + " MCR iterations to prove all interleavings to be correct.");
 		return new McrTraceCheckResult<>(currentTrace, LBool.UNSAT, interpolantAutomaton, interpolants);
-	}
-
-	private McrAutomatonBuilder<LETTER> constructAutomatonBuilder(final List<LETTER> trace) {
-		return new McrAutomatonBuilder<>(trace, mPredicateUnifier, mEmptyStackStateFactory, mLogger, mAlphabet,
-				mServices, mManagedScript, mXnfConversionTechnique, mSimplificationTechnique);
 	}
 
 	@SuppressWarnings("unchecked")
 	private <STATE> NestedRun<LETTER, STATE> convertRun(final NestedRun<Integer, STATE> intRun) {
-		final LETTER[] word = (LETTER[]) new Object[intRun.getLength()];
-		for (int i = 0; i < intRun.getLength(); i++) {
-			word[i] = mInitialTrace.get(intRun.getSymbol(i));
-		}
-		return new NestedRun<>(NestedWord.nestedWord(new Word<>(word)), intRun.getStateSequence());
+		final LETTER[] symbols = (LETTER[]) intRun.getWord().asList().stream().map(mInitialTrace::get)
+				.toArray(IIcfgTransition<?>[]::new);
+		return new NestedRun<>(NestedWord.nestedWord(new Word<>(symbols)), intRun.getStateSequence());
+	}
+
+	public NestedWordAutomaton<LETTER, IPredicate> getAutomaton() {
+		return mResult.getAutomaton();
 	}
 
 	@Override

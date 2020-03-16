@@ -140,6 +140,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_XNF_CONVERSION_TECHNIQUE = "Xnf conversion technique";
 	public static final String LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY = "Counterexample search strategy";
 	public static final String LABEL_REFINEMENT_STRATEGY = "Trace refinement strategy";
+	public static final String LABEL_MCR_REFINEMENT_STRATEGY = "Trace refinement strategy used in MCR";
 	public static final String LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST = "Trace refinement exception blacklist";
 
 	public static final String VALUE_ABSTRACTION = "Abstraction";
@@ -153,7 +154,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String VALUE_INTERPOLANT_AUTOMATON_CANONICAL =
 			"With backedges to repeated locations (Canonical)";
 	public static final String VALUE_INTERPOLANT_AUTOMATON_TOTAL_INTERPOLATION = "Total interpolation (Jan)";
-
 
 	/*
 	 * default values for the different preferences
@@ -182,6 +182,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
 			CounterexampleSearchStrategy.BFS;
 	public static final RefinementStrategy DEF_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
+	public static final RefinementStrategy DEF_MCR_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
 	public static final RefinementStrategyExceptionBlacklist DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST =
 			RefinementStrategyExceptionBlacklist.DEPENDING;
 	// public static final boolean DEF_ALL_ERRORS_AT_ONCE = false;
@@ -384,6 +385,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Combo, CounterexampleSearchStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY, DEF_REFINEMENT_STRATEGY, PreferenceType.Combo,
 						RefinementStrategy.values()),
+				new UltimatePreferenceItem<>(LABEL_MCR_REFINEMENT_STRATEGY, DEF_MCR_REFINEMENT_STRATEGY,
+						PreferenceType.Combo, RefinementStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 						DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST, DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 						PreferenceType.Combo, RefinementStrategyExceptionBlacklist.values()),
@@ -555,7 +558,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		/**
 		 * Strategy that is exactly like {@link #TOOTHLESS_TAIPAN}, but uses Sifa instead of abstract interpretation.
 		 */
-		TOOTHLESS_SIFA_TAIPAN
+		TOOTHLESS_SIFA_TAIPAN,
+		/**
+		 * Maximal Causality reduction strategy
+		 */
+		MCR
 	}
 
 	/**

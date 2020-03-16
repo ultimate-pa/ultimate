@@ -55,6 +55,8 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private final VpAlphabet<LETTER> mAlphabet;
 
+	private List<INestedWordAutomaton<Integer, String>> mThreadAutomata;
+
 	private final HashRelation<IProgramVar, Integer> mVariables2Writes;
 	private final Map<LETTER, List<Integer>> mActions2Indices;
 	private final Map<String, List<Integer>> mThreads2SortedActions;
@@ -138,31 +140,33 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		return "q" + i;
 	}
 
-	private Collection<INestedWordAutomaton<Integer, String>> getThreadAutomata() {
-		final List<INestedWordAutomaton<Integer, String>> result = new ArrayList<>();
-		final Set<Integer> range = IntStream.range(0, mOriginalTrace.size()).boxed().collect(Collectors.toSet());
-		final VpAlphabet<Integer> alphabet = new VpAlphabet<>(range);
-		final StringFactory factory = new StringFactory();
-		// Construct automata for the MHB relation
-		for (final List<Integer> threadActions : mThreads2SortedActions.values()) {
-			final Set<Integer> otherActions = new HashSet<>(range);
-			final NestedWordAutomaton<Integer, String> nwa =
-					new NestedWordAutomaton<>(mAutomataServices, alphabet, factory);
-			otherActions.removeAll(threadActions);
-			nwa.addState(true, false, getState(0));
-			for (final Integer otherAction : otherActions) {
-				nwa.addInternalTransition(getState(0), otherAction, getState(0));
-			}
-			for (int i = 0; i < threadActions.size(); i++) {
-				nwa.addState(false, i + 1 == threadActions.size(), getState(i + 1));
-				nwa.addInternalTransition(getState(i), threadActions.get(i), getState(i + 1));
+	private List<INestedWordAutomaton<Integer, String>> getThreadAutomata() {
+		if (mThreadAutomata == null) {
+			mThreadAutomata = new ArrayList<>();
+			final Set<Integer> range = IntStream.range(0, mOriginalTrace.size()).boxed().collect(Collectors.toSet());
+			final VpAlphabet<Integer> alphabet = new VpAlphabet<>(range);
+			final StringFactory factory = new StringFactory();
+			// Construct automata for the MHB relation
+			for (final List<Integer> threadActions : mThreads2SortedActions.values()) {
+				final Set<Integer> otherActions = new HashSet<>(range);
+				final NestedWordAutomaton<Integer, String> nwa =
+						new NestedWordAutomaton<>(mAutomataServices, alphabet, factory);
+				otherActions.removeAll(threadActions);
+				nwa.addState(true, false, getState(0));
 				for (final Integer otherAction : otherActions) {
-					nwa.addInternalTransition(getState(i + 1), otherAction, getState(i + 1));
+					nwa.addInternalTransition(getState(0), otherAction, getState(0));
 				}
+				for (int i = 0; i < threadActions.size(); i++) {
+					nwa.addState(false, i + 1 == threadActions.size(), getState(i + 1));
+					nwa.addInternalTransition(getState(i), threadActions.get(i), getState(i + 1));
+					for (final Integer otherAction : otherActions) {
+						nwa.addInternalTransition(getState(i + 1), otherAction, getState(i + 1));
+					}
+				}
+				mThreadAutomata.add(nwa);
 			}
-			result.add(nwa);
 		}
-		return result;
+		return mThreadAutomata;
 	}
 
 	public INestedWordAutomaton<Integer, String> buildMhbAutomaton() throws AutomataLibraryException {
