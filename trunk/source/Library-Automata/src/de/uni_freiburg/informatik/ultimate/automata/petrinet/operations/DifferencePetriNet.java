@@ -484,8 +484,8 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 	 * @return Mapping from new transitions (i.e., transitions of the resulting
 	 *         difference) to old transitions (i.e., transitions of the minuend).
 	 */
-	Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> getTransitionBacktranslation() {
-		return mNew2Old;
+	public Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> getTransitionBacktranslation() {
+		return Collections.unmodifiableMap(mNew2Old);
 	}
 
 	@Override
