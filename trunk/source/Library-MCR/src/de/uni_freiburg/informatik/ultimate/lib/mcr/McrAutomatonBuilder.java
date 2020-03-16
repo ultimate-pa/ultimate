@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.mcr;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -237,9 +238,9 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	}
 
 	public <STATE> NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(
-			final List<INestedWordAutomaton<Integer, STATE>> automata,
+			final List<INestedWordAutomaton<Integer, STATE>> automata, final List<List<Integer>> intTraces,
 			final List<QualifiedTracePredicates> tracePredicates) {
-		assert automata.size() == tracePredicates.size();
+		assert automata.size() == intTraces.size() && intTraces.size() == tracePredicates.size();
 		mLogger.info("Constructing interpolant automaton by labelling MCR automaton.");
 		final NestedWordAutomaton<LETTER, IPredicate> result =
 				new NestedWordAutomaton<>(mAutomataServices, mAlphabet, mEmptyStackFactory);
@@ -258,7 +259,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			IPredicate currentPredicate = mPredicateUnifier.getTruePredicate();
 			stateMap.put(currentState, currentPredicate);
 			queue.add(currentState);
-			for (int i = 0; i < mOriginalTrace.size(); i++) {
+			for (final int i : intTraces.get(j)) {
 				final Iterator<OutgoingInternalTransition<Integer, STATE>> succStates =
 						automaton.internalSuccessors(currentState, i).iterator();
 				if (!succStates.hasNext()) {
@@ -316,5 +317,13 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		}
 		mLogger.info("Construction finished. Needed to calculate wp " + wpCalls + " times.");
 		return result;
+	}
+
+	public <STATE> NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(
+			final List<INestedWordAutomaton<Integer, STATE>> automata,
+			final List<QualifiedTracePredicates> tracePredicates) {
+		final List<Integer> range = IntStream.range(0, mOriginalTrace.size()).boxed().collect(Collectors.toList());
+		final List<List<Integer>> intTraces = Collections.nCopies(automata.size(), range);
+		return buildInterpolantAutomaton(automata, intTraces, tracePredicates);
 	}
 }

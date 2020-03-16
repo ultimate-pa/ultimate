@@ -81,6 +81,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		final StringFactory factory = new StringFactory();
 		final List<INestedWordAutomaton<Integer, String>> automata = new ArrayList<>();
 		final List<QualifiedTracePredicates> tracePredicates = new ArrayList<>();
+		final List<List<Integer>> intTraces = new ArrayList<>();
 		INestedWordAutomaton<Integer, String> mhbAutomaton = automatonBuilder.buildMhbAutomaton();
 		NestedRun<Integer, ?> run = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
 		List<LETTER> currentTrace = null;
@@ -94,13 +95,15 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 			final LBool feasibility = proof.getFirst();
 			if (feasibility != LBool.UNSAT) {
 				// We found a feasible error trace
-				mLogger.info("Needed " + iterations + " MCR iterations to find a counterxample.");
+				mLogger.info("Needed " + iterations + " MCR iterations to find a counterexample.");
 				return new McrTraceCheckResult<>(currentTrace, feasibility, null, null);
 			}
 			automatonBuilder.preprocess(currentTrace);
+			// TODO: Use interpolant automata (from settings) here?
 			final INestedWordAutomaton<Integer, String> mcrAutomaton = automatonBuilder.buildMcrAutomaton();
 			automata.add(mcrAutomaton);
 			tracePredicates.add(proof.getSecond());
+			intTraces.add(run.getWord().asList());
 			mhbAutomaton = new Difference<>(mAutomataServices, factory, mhbAutomaton, mcrAutomaton).getResult();
 			run = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
 		}
@@ -109,8 +112,9 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				tracePredicates.get(tracePredicates.size() - 1).getTracePredicates().getPredicates();
 		final IPredicate[] interpolants = lastPredicates.toArray(new IPredicate[lastPredicates.size()]);
 		final NestedWordAutomaton<LETTER, IPredicate> interpolantAutomaton =
-				automatonBuilder.buildInterpolantAutomaton(automata, tracePredicates);
+				automatonBuilder.buildInterpolantAutomaton(automata, intTraces, tracePredicates);
 		mLogger.info("Needed " + iterations + " MCR iterations to prove all interleavings to be correct.");
+		mLogger.info(interpolantAutomaton);
 		return new McrTraceCheckResult<>(currentTrace, LBool.UNSAT, interpolantAutomaton, interpolants);
 	}
 
