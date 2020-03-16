@@ -114,7 +114,6 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		final NestedWordAutomaton<LETTER, IPredicate> interpolantAutomaton =
 				automatonBuilder.buildInterpolantAutomaton(automata, intTraces, tracePredicates);
 		mLogger.info("Needed " + iterations + " MCR iterations to prove all interleavings to be correct.");
-		mLogger.info(interpolantAutomaton);
 		return new McrTraceCheckResult<>(currentTrace, LBool.UNSAT, interpolantAutomaton, interpolants);
 	}
 
