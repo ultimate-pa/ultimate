@@ -107,7 +107,7 @@ public class ReqSymboltableBuilder {
 		mReq2Loc = new LinkedHashMap<>();
 		mConst2Value = new LinkedHashMap<>();
 		mId2Bounds = new LinkedHashMap<>();
-		
+
 		mInputVars = new LinkedHashSet<>();
 		mOutputVars = new LinkedHashSet<>();
 
@@ -121,7 +121,7 @@ public class ReqSymboltableBuilder {
 			return;
 		}
 
-		
+
 		switch (initPattern.getCategory()) {
 		case CONST:
 			addVar(name, type, initPattern, mConstVars);
@@ -130,7 +130,7 @@ public class ReqSymboltableBuilder {
 				addId2Bounds(initPattern);
 			}
 			break;
-		case IN: 
+		case IN:
 			mInputVars.add(name);
 			addVar(name, type, initPattern, mStateVars);
 			break;
@@ -171,6 +171,33 @@ public class ReqSymboltableBuilder {
 				break;
 			}
 		}
+	}
+
+	public void addAuxvar(BoogieLocation loc, final String name, final String typeString) {
+		final BoogiePrimitiveType type = toPrimitiveType(typeString);
+		mStateVars.add(name);
+		final BoogieType old = mId2Type.put(name, type);
+		if (old != null && old != type) {
+			mId2Type.put(name, BoogieType.TYPE_ERROR);
+			return;
+		}
+		final IdentifierExpression idExpr = ExpressionFactory.constructIdentifierExpression(loc, type, name,
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		mId2IdExpr.put(name, idExpr);
+		mId2VarLHS.put(name, new VariableLHS(loc, name));
+
+		final String primedName = getPrimedVarId(name);
+		mPrimedVars.add(primedName);
+		final BoogieType oldp = mId2Type.put(primedName, type);
+		if (oldp != null && oldp != type) {
+			mId2Type.put(primedName, BoogieType.TYPE_ERROR);
+			return;
+		}
+		final IdentifierExpression idExprp = ExpressionFactory.constructIdentifierExpression(loc, type, primedName,
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		mId2IdExpr.put(primedName, idExprp);
+		mId2VarLHS.put(primedName, new VariableLHS(loc, primedName));
+
 	}
 
 	public IReqSymbolTable constructSymbolTable() {
@@ -406,7 +433,7 @@ public class ReqSymboltableBuilder {
 		public Set<String> getConstVars() {
 			return mConstVars;
 		}
-		
+
 		@Override
 		public Set<String> getInputVars() {
 			return mInputVars;
@@ -457,7 +484,7 @@ public class ReqSymboltableBuilder {
 			final List<Declaration> rtr = new ArrayList<>();
 			// add constant declarations
 			varlists.stream().map(a -> new ConstDeclaration(a.getLocation(), EMPTY_ATTRIBUTES, false, a, null, false))
-					.forEachOrdered(rtr::add);
+			.forEachOrdered(rtr::add);
 			// add axiom for each constant
 			for (final VarList varlist : varlists) {
 				for (final String id : varlist.getIdentifiers()) {

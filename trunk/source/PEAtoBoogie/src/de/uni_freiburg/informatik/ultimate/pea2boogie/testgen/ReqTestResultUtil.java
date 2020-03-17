@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
@@ -50,24 +51,22 @@ public class ReqTestResultUtil {
 		final List<TestStep> testSteps = new ArrayList<>();
 		@SuppressWarnings("unchecked")
 		final IProgramExecution<?, Expression> translatedPe = (IProgramExecution<?, Expression>) mServices
-				.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
+		.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
 		final AtomicTraceElement<IElement> finalElement =
 				((AtomicTraceElement<IElement>) translatedPe.getTraceElement(translatedPe.getLength() - 1));
 		ProgramState<Expression> peek = null;
 		for (int i = 0; i < translatedPe.getLength(); i++) {
-			final AtomicTraceElement<IElement> ate = ((AtomicTraceElement<IElement>) translatedPe.getTraceElement(i));
 			if (translatedPe.getProgramState(i) != null) {
 				peek = translatedPe.getProgramState(i);
 			}
+			final AtomicTraceElement<IElement> ate = ((AtomicTraceElement<IElement>) translatedPe.getTraceElement(i));
 			if (ate.getStep() == finalElement.getStep()) {
 				if (peek == null) {
-					mLogger.error(
-							"Assertion did not contain state (but would have been neccessary for test generation):"
-									+ ate.getStep().toString());
+					mLogger.error("Assertion did not contain state (but would have been neccessary for test generation):"
+							+ ate.getStep().toString());
 					continue;
 				}
-				final ProgramState<Expression> pgst = translatedPe.getProgramState(i);
-				testSteps.add(getTestStep(pgst));
+				testSteps.add(getTestStep(peek));
 				peek = null;
 			}
 		}
@@ -79,19 +78,34 @@ public class ReqTestResultUtil {
 		final Map<IdentifierExpression, Collection<Expression>> outputAssignment = new HashMap<>();
 		Collection<Expression> waitForTime = new ArrayList<>();
 		for (final Expression exp : programState.getVariables()) {
-			if (exp instanceof IdentifierExpression
-					&& mReqSymbolTable.getInputVars().contains(((IdentifierExpression) exp).getIdentifier())) {
+			final String ident = ((IdentifierExpression) exp).getIdentifier();
+			if (exp instanceof IdentifierExpression && mReqSymbolTable.getInputVars().contains(ident)) {
 				inputAssignment.put((IdentifierExpression) exp, programState.getValues(exp));
-			} else if (exp instanceof IdentifierExpression
-					&& mReqSymbolTable.getDeltaVarName().equals(((IdentifierExpression) exp).getIdentifier())) {
+			} else if (exp instanceof IdentifierExpression && mReqSymbolTable.getDeltaVarName().equals(ident)) {
 				waitForTime = programState.getValues(exp);
-			} else if (exp instanceof IdentifierExpression
-					&& mReqSymbolTable.getOutputVars().contains(((IdentifierExpression) exp).getIdentifier())) {
+			} else if (exp instanceof IdentifierExpression && mReqSymbolTable.getOutputVars().contains(ident) &&
+					isSetByEffect(ident, programState)){
 				outputAssignment.put((IdentifierExpression) exp, programState.getValues(exp));
 			}
 
 		}
 		return new TestStep(inputAssignment, outputAssignment, waitForTime);
+	}
+
+	private boolean isSetByEffect(String ident, final ProgramState<Expression> programState) {
+		final String trackingVar = ReqTestAnnotator.getTrackingVar(ident);
+		for (final Expression identExpr : programState.getVariables()) {
+			if (((IdentifierExpression)identExpr).getIdentifier().equals(trackingVar)) {
+				for (final Expression expr: programState.getValues(identExpr)) {
+					if (expr instanceof BooleanLiteral) {
+						return ((BooleanLiteral)expr).getValue();
+					} else {
+						mLogger.error("Unsuspected Value for tracking Variable for var: " + ident);
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	private static String getTestAssertionName(final IElement e) {

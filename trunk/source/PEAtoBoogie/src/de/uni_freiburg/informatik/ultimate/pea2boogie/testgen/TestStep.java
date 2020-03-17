@@ -47,14 +47,20 @@ public class TestStep {
 			result.append(" := ");
 			result.append(formatIdentToValue(entry.getValue()));
 		}
+
 		result.append("\n ");
-		result.append("Wait at most ");
-		result.append(formatIdentToValue(mWaitTime));
-		result.append("for: \n\t");
-		for (final Entry<IdentifierExpression, Collection<Expression>> entry : mOutputAssignment.entrySet()) {
-			result.append(entry.getKey().getIdentifier());
-			result.append(" == ");
-			result.append(formatIdentToValue(entry.getValue()));
+		if (mOutputAssignment.size() > 0) {
+			result.append("Wait at most ");
+			result.append(formatIdentToValue(mWaitTime));
+			result.append("for: \n\t");
+			for (final Entry<IdentifierExpression, Collection<Expression>> entry : mOutputAssignment.entrySet()) {
+				result.append(entry.getKey().getIdentifier());
+				result.append(" == ");
+				result.append(formatIdentToValue(entry.getValue()));
+			}
+		} else {
+			result.append("Wait ");
+			result.append(formatIdentToValue(mWaitTime));
 		}
 		result.append("\n ");
 		return result.toString();

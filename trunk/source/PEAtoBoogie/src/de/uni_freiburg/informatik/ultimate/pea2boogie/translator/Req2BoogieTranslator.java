@@ -103,6 +103,7 @@ public class Req2BoogieTranslator {
 
 	private final IReqSymbolTable mSymboltable;
 	private IReq2PeaAnnotator mReqCheckAnnotator;
+	private final boolean mUsePrimedPc;
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
 			final List<PatternType> patterns) {
@@ -128,6 +129,8 @@ public class Req2BoogieTranslator {
 			init = riog.getInitializationPatterns();
 			requirements = riog.getRequirements();
 		}
+
+		mUsePrimedPc = prefs.getBoolean(Pea2BoogiePreferences.LABEL_USE_PRIMED_PC);
 
 		final IReq2Pea req2pea = createReq2Pea(req2peaTransformers, init, requirements);
 		if (req2pea.hasErrors()) {
@@ -415,7 +418,13 @@ public class Req2BoogieTranslator {
 				phaseIndex = i;
 			}
 		}
-		smtList.add(genPCAssign(pcName, phaseIndex, bl));
+
+		if(mUsePrimedPc) {
+			smtList.add(genPCAssign(mSymboltable.getPrimedVarId(pcName), phaseIndex, bl));
+		} else {
+			smtList.add(genPCAssign(pcName, phaseIndex, bl));
+		}
+
 
 		return smtList.toArray(new Statement[smtList.size()]);
 	}
@@ -449,7 +458,11 @@ public class Req2BoogieTranslator {
 	}
 
 	private List<Statement> genStateVarsAssign() {
-		return mSymboltable.getStateVars().stream().map(this::genStateVarAssign).collect(Collectors.toList());
+		final List<Statement> assignments = mSymboltable.getStateVars().stream().map(this::genStateVarAssign).collect(Collectors.toList());
+		if (mUsePrimedPc) {
+			assignments.addAll(mSymboltable.getPcVars().stream().map(this::genStateVarAssign).collect(Collectors.toList()));
+		}
+		return assignments;
 	}
 
 	private AssignmentStatement genStateVarAssign(final String stateVar) {

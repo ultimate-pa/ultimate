@@ -9,8 +9,8 @@ Set Inputs:
 Found Test for TEST_req6_Globally_BndInvariance_tt5   
 Set Inputs:
  	I1 := true  
- Wait at most 1  for: 
-	O1 == true  	
+ Wait at most 5  for: 
+	O1 == true   	
 */
 
 Input I1 is bool

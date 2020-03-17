@@ -18,7 +18,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Skolemize\ terms=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Translate\ Boogie\ integers\ to\ SMT\ bitvectors=false
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.1.25
@@ -63,6 +62,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.pea2boogie/PEA\ Transformation\ Mode=REQ_TEST
 /instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Report\ trivial\ rt-consistency=true
 /instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Rt-inconsistency\ range=2
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Use\ primed\ PCs=true
 @de.uni_freiburg.informatik.ultimate.pea2boogie=0.1.25
 file_export_version=3.0
 

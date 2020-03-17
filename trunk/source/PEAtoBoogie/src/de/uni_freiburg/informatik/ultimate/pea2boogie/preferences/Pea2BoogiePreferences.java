@@ -85,6 +85,12 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			+ "The rest is internal. Note: this is the most conservative assignment suited for demos, but "
 			+ " usually not helpful in the wild";
 
+	public static final String LABEL_USE_PRIMED_PC = "Use primed PCs";
+	private static final boolean DEF_USE_PRIMED_PC = false;
+	private static final String DESC_USE_PRIMED_PC = "Primed variables are used to store what location will be reached"
+			+ "next instead of overwriting the program counter of every automaton directly."
+			+ "Note: This is necessary for test generation.";
+
 	public enum PEATransformerMode{
 		REQ_CHECK, REQ_TEST
 	}
@@ -113,7 +119,9 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 					DEF_RT_INCONSISTENCY_USE_ALL_INVARIANTS, DESC_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
 					PreferenceType.Boolean),
 			new UltimatePreferenceItem<>(LABEL_GUESS_IN_OUT,
-					DEF_GUESS_IN_OUT, DESC_GUESS_IN_OUT, PreferenceType.Boolean)};
+					DEF_GUESS_IN_OUT, DESC_GUESS_IN_OUT, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_USE_PRIMED_PC,
+					DEF_USE_PRIMED_PC, DESC_USE_PRIMED_PC, PreferenceType.Boolean)};
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {
