@@ -87,6 +87,7 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 	private int mNumberOfMergingCondidates = 0;
 	private int mNumberOfMergedEventPairs = 0;
 	private int mNumberOfAddOperationsToTheCandQueue = 0;
+	private final Set<Event<LETTER, PLACE>> mVitalRepresentatives = new HashSet<>();
 	
 	public FinitePrefix2PetriNet(final AutomataLibraryServices services,
 			final IFinitePrefix2PetriNetStateFactory<PLACE> stateFactory, final BranchingProcess<LETTER, PLACE> bp)
@@ -227,15 +228,14 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 					companion2cutoff.addPair(e.getCompanion(), e);
 				}
 			}
-			final Set<Event<LETTER,PLACE>> vitalEvents = new HashSet<>();
 			final ArrayDeque<Event<LETTER, PLACE>> worklist = new ArrayDeque<>();
 			for (final Condition<LETTER, PLACE> c: bp.getAcceptingConditions()) {// TODO: Try if the condition representatives are sufficient
 				final Event<LETTER, PLACE> predRepresentative = mEventRepresentatives.find(c.getPredecessorEvent());
-				if (vitalEvents.add(predRepresentative)) {
+				if (mVitalRepresentatives.add(predRepresentative)) {
 					worklist.add(predRepresentative);
 				}
 				for (final Event<LETTER, PLACE> e : bp.getCoRelation().computeCoRelatatedEvents(c)) {
-					if (vitalEvents.add(mEventRepresentatives.find(e))) {
+					if (mVitalRepresentatives.add(mEventRepresentatives.find(e))) {
 						worklist.add(mEventRepresentatives.find(e));
 					}
 				}
@@ -245,19 +245,20 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 				for (final Event<LETTER, PLACE> e : mEventRepresentatives.getEquivalenceClassMembers(representative)) {
 					for (final Event<LETTER, PLACE> predEvent: e.getPredecessorEvents()) {
 						final Event<LETTER, PLACE> predEventRep = mEventRepresentatives.find(predEvent);
-						if (vitalEvents.add(predEventRep)) {
+						if (mVitalRepresentatives.add(predEventRep)) {
 							worklist.add(predEventRep);
 						}
 					}
 					for (final Event<LETTER, PLACE> cutoffEvent: companion2cutoff.getImage(e)) {
 						final Event<LETTER, PLACE> cutoffEventRep = mEventRepresentatives.find(cutoffEvent);
-						if (vitalEvents.add(cutoffEventRep)) {
+						if (mVitalRepresentatives.add(cutoffEventRep)) {
 							worklist.add(cutoffEventRep);
 						}
 					}
 				}
 			}
-			releventEvents.retainAll(vitalEvents);
+			mVitalRepresentatives.remove(bp.getDummyRoot());
+			releventEvents.retainAll(mVitalRepresentatives);
 		}
 		/*final Map<Event<LETTER, PLACE>, Integer> backfoldingId = new HashMap<>();
 
@@ -290,7 +291,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 								.equals(mConditionRepresentatives.find(e2.getPredecessorConditions())))): "There exists no 2 events with same predecessors conditions and transition";
 			}
 		}*/
-
 		final Map<Condition<LETTER, PLACE>, PLACE> placeMap = new HashMap<>();
 		for (final Condition<LETTER, PLACE> c : mConditionRepresentatives.getAllRepresentatives()) {
 			final boolean isInitial = containsInitial(mConditionRepresentatives.getEquivalenceClassMembers(c),
@@ -329,7 +329,6 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 			}
 		} else {
 		*/
-		releventEvents.remove(bp.getDummyRoot());
 		for (final Event<LETTER, PLACE> e : releventEvents) {
 			final Set<PLACE> preds = new HashSet<>();
 			final Set<PLACE> succs = new HashSet<>();
@@ -411,7 +410,10 @@ public final class FinitePrefix2PetriNet<LETTER, PLACE>
 		}
 		*/
 	}
-
+	public  Set<ITransition<LETTER, PLACE>> computeVitalTransitions(){
+		assert mRemoveDeadTransitions: "remove dead transitions must be enabled";
+		return mVitalRepresentatives.stream().map(x -> x.getTransition()).collect(Collectors.toSet());
+	}
 	private boolean containsInitial(final Set<Condition<LETTER, PLACE>> equivalenceClassMembers,
 			final Collection<Condition<LETTER, PLACE>> initialConditions) {
 		return initialConditions.stream().anyMatch(x -> equivalenceClassMembers.contains(x));
