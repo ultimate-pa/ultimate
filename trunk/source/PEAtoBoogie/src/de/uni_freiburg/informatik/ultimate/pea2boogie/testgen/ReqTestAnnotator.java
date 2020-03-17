@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
@@ -201,39 +202,38 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 		return statements;
 	}*/
 
+	/*
+	 * returns assertions that are fulfilled if the effect phase of the tracking automaton is left (and does not enter
+	 * another phase being an effect phase).
+	 */
 	private List<Statement> genTestPhaseEffectAssertion(final PhaseEventAutomata pea, final Set<Integer> effectPhases) {
 		final List<Statement> statements = new ArrayList<>();
 		for(final int effectPhaseIndex: effectPhases) {
 			final Expression thisExpr = new BinaryExpression(mLocation, BinaryExpression.Operator.COMPEQ,
 					mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea)),
 					new IntegerLiteral(mLocation, Integer.toString(effectPhaseIndex)));
-			final Expression nextExpr = variableNotInList(mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea) + "'"), effectPhases);
-			final Expression stateDescr = new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND, thisExpr, nextExpr);
+			final Expression nextExpr = genIdentNotInSet(
+					mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea) + "'"), effectPhases);
+			final Expression leavingPhaseAssertion=
+					new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND, thisExpr, nextExpr);
 			final NamedAttribute[] attr = new NamedAttribute[] {
 					new NamedAttribute(mLocation, TEST_ASSERTION_PREFIX + pea.getName() + Integer.toString(effectPhaseIndex), new Expression[] {}) };
 			final Statement assrt = new AssertStatement(mLocation, attr,
-					new UnaryExpression(mLocation, UnaryExpression.Operator.LOGICNEG, stateDescr));
+					new UnaryExpression(mLocation, UnaryExpression.Operator.LOGICNEG, leavingPhaseAssertion));
 			statements.add(assrt);
 		}
-
 		return statements;
 	}
 
-	private Expression variableNotInList(IdentifierExpression ident, Set<Integer> values) {
-		Expression expr = null;
-		for(final int value: values) {
-			if(expr == null) {
-				expr = new BinaryExpression(mLocation, BinaryExpression.Operator.COMPNEQ,
-						ident, new IntegerLiteral(mLocation, Integer.toString(value)));
-			} else {
-				expr = new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND,
-						expr, new BinaryExpression(mLocation, BinaryExpression.Operator.COMPNEQ,
-								ident, new IntegerLiteral(mLocation, Integer.toString(value))));
-			}
+	private Expression genIdentNotInSet(IdentifierExpression ident, final Set<Integer> notInSet) {
+		Expression ret = new BooleanLiteral(mLocation, true);
+		for(final int notEqInt: notInSet) {
+			final Expression comparison = new BinaryExpression(mLocation, BinaryExpression.Operator.COMPNEQ, ident,
+					new IntegerLiteral(mLocation, Integer.toString(notEqInt)));
+			ret = new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICAND, ret, comparison);
 		}
-		return expr;
+		return ret;
 	}
-
 
 	private List<Statement> genTestEdgeEffectAssertion(final PhaseEventAutomata pea,
 			final Map<Integer, Integer> effectEdges) {
