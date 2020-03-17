@@ -15,10 +15,13 @@ import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IntersectNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
@@ -150,11 +153,17 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		return intersect(getThreadAutomata(), new StringFactory(), mAutomataServices, mLogger);
 	}
 
+	private boolean isInterleaving(final List<Integer> intTrace) throws AutomataLibraryException {
+		final NestedWord<Integer> nestedWord =
+				NestedWord.nestedWord(new Word<>(intTrace.toArray(new Integer[intTrace.size()])));
+		return new Accepts<>(mAutomataServices, buildMhbAutomaton(), nestedWord).getResult();
+	}
+
 	public INestedWordAutomaton<Integer, String> buildMcrAutomaton(final List<LETTER> trace)
 			throws AutomataLibraryException {
 		mLogger.info("Constructing automaton for MCR equivalence class.");
-		assert new HashSet<>(trace)
-				.equals(new HashSet<>(mOriginalTrace)) : "Can only create an automaton for interleavings";
+		// Determine all previous writes
+		final List<Integer> intTrace = new ArrayList<>(trace.size());
 		final List<Map<IProgramVar, Integer>> previousWrite = new ArrayList<>(trace.size());
 		final Map<LETTER, Integer> counts = new HashMap<>();
 		final Map<IProgramVar, Integer> lastWrittenBy = new HashMap<>();
@@ -167,17 +176,19 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			previousWrite.add(previousWrites);
 			final int count = counts.getOrDefault(action, 0);
 			final int index = mActions2Indices.get(action).get(count);
+			intTrace.add(index);
 			for (final IProgramVar written : transformula.getAssignedVars()) {
 				lastWrittenBy.put(written, index);
 			}
 			counts.put(action, count + 1);
 		}
+		assert isInterleaving(intTrace) : "Can only create an automaton for interleavings";
 		final VpAlphabet<Integer> alphabet =
 				new VpAlphabet<>(IntStream.range(0, mOriginalTrace.size()).boxed().collect(Collectors.toSet()));
-		final List<INestedWordAutomaton<Integer, String>> automata = new ArrayList<>();
-		automata.addAll(getThreadAutomata());
-		final StringFactory factory = new StringFactory();
+		// Add all thread automata
+		final List<INestedWordAutomaton<Integer, String>> automata = new ArrayList<>(getThreadAutomata());
 		// Construct automata for each read to be preceded by the same write
+		final StringFactory factory = new StringFactory();
 		for (int read = 0; read < mOriginalTrace.size(); read++) {
 			final Map<IProgramVar, Integer> previousWrites = previousWrite.get(read);
 			if (previousWrites == null) {
