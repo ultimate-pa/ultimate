@@ -167,11 +167,6 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 				mCounterexample, mPredicateUnifier, mPrefs));
 	}
 
-	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleAcceleratedInterpolation() {
-		return createModuleWrapperIfNecessary(new IpTcStrategyModuleAcceleratedInterpolation<>(mLogger,
-				mPrefs.getIcfgContainer(), mCounterexample, mPredicateUnifier, mPrefs));
-	}
-
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModulePreferences() {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModulePreferences<>(mTaskIdentifier, mServices, mPrefs,
 				mCounterexample, mPrecondition, mPostcondition,
