@@ -96,6 +96,7 @@ public class AcceleratedInterpolationMain<LETTER extends IIcfgTransition<?>>
 
 		mAccelerator = new Accelerator();
 		for (final IcfgLocation loopHead : mIcfg.getLoopLocations()) {
+			// TODO: Possibly extract your own loops, e.g., walking over the trace and counting locations.
 			final List<LETTER> loopBody = getLoop(loopHead);
 			if (loopBody.isEmpty()) {
 				continue;
@@ -111,15 +112,19 @@ public class AcceleratedInterpolationMain<LETTER extends IIcfgTransition<?>>
 	/**
 	 * Get a given loop's transitions
 	 *
+	 * TODO: This extracts the smallest repetition of the first loop of loopHead; in particular, this extracts only one
+	 * loop per loop head
+	 *
 	 * @param loopHead
 	 *            beginning of the loop
 	 *
 	 * @return body of the loop
 	 */
 	private List<LETTER> getLoop(final IcfgLocation loopHead) {
-		int start = 0, end = 0;
+		int start = 0;
+		int end = 0;
+		int cnt = 0;
 		for (final LETTER loc : mCounterexample) {
-			int cnt = 0;
 			if (loc.getSource() == loopHead) {
 				if (cnt > start) {
 					end = cnt;
