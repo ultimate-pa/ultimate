@@ -153,9 +153,9 @@ public class PeaToDotTestSuite {
 		final Formatter fmt = new Formatter();
 
 		final File[] posFailureImages =
-				new File(POS_FAILURE_IMAGE_DIR).listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName));
+				POS_FAILURE_IMAGE_DIR.listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName));
 		final File[] negFailureImages =
-				new File(FAILURE_IMAGE_DIR).listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName));
+				NEG_FAILURE_IMAGE_DIR.listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName));
 
 		if (!markdownFile.exists()) {
 			fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
