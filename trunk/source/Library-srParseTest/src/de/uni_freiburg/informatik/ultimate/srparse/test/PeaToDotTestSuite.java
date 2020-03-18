@@ -82,7 +82,8 @@ public class PeaToDotTestSuite {
 	private static final File ROOT_DIR = new File("/media/Daten/projects/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
 	private static final File PEA_IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
-	private static final File FAILURE_PATH_IMAGE_DIR = new File(ROOT_DIR + "/img/failure_paths");
+	private static final File POS_FAILURE_IMAGE_DIR = new File(ROOT_DIR + "/img/failure_paths/positive");
+	private static final File NEG_FAILURE_IMAGE_DIR = new File(ROOT_DIR + "/img/failure_paths/negative");
 
 	private static final String LINE_SEP = CoreUtil.getPlatformLineSeparator();
 
@@ -149,8 +150,12 @@ public class PeaToDotTestSuite {
 	private void writeMarkdownFile(final String counterTrace) throws IOException {
 		final File markdownFile = new File(MARKDOWN_DIR + "/" + mPatternName + ".md");
 		final File peaImage = new File(PEA_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + ".svg");
-		final File failureImage = new File(FAILURE_PATH_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + "_0.svg");
 		final Formatter fmt = new Formatter();
+
+		final File[] posFailureImages =
+				new File(POS_FAILURE_IMAGE_DIR).listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName));
+		final File[] negFailureImages =
+				new File(FAILURE_IMAGE_DIR).listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName));
 
 		if (!markdownFile.exists()) {
 			fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
@@ -168,20 +173,26 @@ public class PeaToDotTestSuite {
 					mPatternName, mScopeName, LINE_SEP);
 		}
 
-		if (failureImage.exists()) {
+		if (posFailureImages.length > 0 || negFailureImages.length > 0) {
 			fmt.format(LINE_SEP);
 			fmt.format("<div class=\"pattern-examples\"></div>%s", LINE_SEP);
 			fmt.format("| Positive example | Negative example |%s", LINE_SEP);
 			fmt.format("| --- | --- |%s", LINE_SEP);
 
-			int i = 0;
-			while (new File(FAILURE_PATH_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + "_" + i + ".svg")
-					.exists()) {
-				fmt.format("| ![](%s/%s/%s_%s_%d.svg) | |%s", "..",
-						ROOT_DIR.toPath().relativize(FAILURE_PATH_IMAGE_DIR.toPath()), mPatternName, mScopeName, i,
-						LINE_SEP);
+			for (int i = 0; i < Math.max(posFailureImages.length, negFailureImages.length); i++) {
+				String lhs = "", rhs = "";
 
-				i++;
+				if (i < posFailureImages.length) {
+					lhs = "![](../" + ROOT_DIR.toPath().relativize(POS_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
+							+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg)";
+				}
+
+				if (i < negFailureImages.length) {
+					rhs = "![](../" + ROOT_DIR.toPath().relativize(NEG_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
+							+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg)";
+				}
+
+				fmt.format("| %s | %s |%s", lhs, rhs, LINE_SEP);
 			}
 		}
 		fmt.format(LINE_SEP);
