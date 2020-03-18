@@ -149,9 +149,7 @@ public class PeaToDotTestSuite {
 	private void writeMarkdownFile(final String counterTrace) throws IOException {
 		final File markdownFile = new File(MARKDOWN_DIR + "/" + mPatternName + ".md");
 		final File peaImage = new File(PEA_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + ".svg");
-		final File failurePathImage =
-				new File(FAILURE_PATH_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + "_0.svg");
-
+		final File failureImage = new File(FAILURE_PATH_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + "_0.svg");
 		final Formatter fmt = new Formatter();
 
 		if (!markdownFile.exists()) {
@@ -169,13 +167,22 @@ public class PeaToDotTestSuite {
 			fmt.format("![](%s/%s/%s_%s.svg)%s", "..", ROOT_DIR.toPath().relativize(PEA_IMAGE_DIR.toPath()),
 					mPatternName, mScopeName, LINE_SEP);
 		}
-		if (failurePathImage.exists()) {
+
+		if (failureImage.exists()) {
 			fmt.format(LINE_SEP);
 			fmt.format("<div class=\"pattern-examples\"></div>%s", LINE_SEP);
 			fmt.format("| Positive example | Negative example |%s", LINE_SEP);
 			fmt.format("| --- | --- |%s", LINE_SEP);
-			fmt.format("| ![](%s/%s/%s_%s_0.svg) | |%s", "..",
-					ROOT_DIR.toPath().relativize(FAILURE_PATH_IMAGE_DIR.toPath()), mPatternName, mScopeName, LINE_SEP);
+
+			int i = 0;
+			while (new File(FAILURE_PATH_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + "_" + i + ".svg")
+					.exists()) {
+				fmt.format("| ![](%s/%s/%s_%s_%d.svg) | |%s", "..",
+						ROOT_DIR.toPath().relativize(FAILURE_PATH_IMAGE_DIR.toPath()), mPatternName, mScopeName, i,
+						LINE_SEP);
+
+				i++;
+			}
 		}
 		fmt.format(LINE_SEP);
 
