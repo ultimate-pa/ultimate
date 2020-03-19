@@ -142,7 +142,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			return casted.getPredecessors();
 		}
 	}
-	
+
 	private void addMinuendPlace(final PLACE newMinuendPlace) {
 		final boolean newlyAdded = mMinuendPlaces.add(newMinuendPlace);
 		if (newlyAdded) {
@@ -154,7 +154,7 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 			}
 		}
 	}
-	
+
 	private void addSubtrahendState(final PLACE newSubtrahendState) {
 		final boolean newlyAdded = mSubtrahendStates.add(newSubtrahendState);
 		if (newlyAdded) {
@@ -613,13 +613,13 @@ public class DifferencePetriNet<LETTER, PLACE> implements IPetriNetSuccessorProv
 				final Set<PLACE> successors = new LinkedHashSet<>();
 				for (final PLACE petriNetSuccessor : mMinuend.getSuccessors(inputTransition)) {
 					// possibly first time that we saw this place, add
-					mMinuendPlaces.add(petriNetSuccessor);
+					addMinuendPlace(petriNetSuccessor);
 					successors.add(petriNetSuccessor);
 				}
 				final int totalOrderId = mNumberOfConstructedTransitions;
 				mNumberOfConstructedTransitions++;
-				result = new Transition<>(inputTransition.getSymbol(), mMinuend.getPredecessors(inputTransition), successors,
-						totalOrderId);
+				result = mYetConstructedResult.addTransition(inputTransition.getSymbol(),
+						mMinuend.getPredecessors(inputTransition), successors, totalOrderId);
 				mInputTransition2State2OutputTransition.put(inputTransition, null, result);
 				mTransitions.put(result, (Transition<LETTER, PLACE>) result);
 				final ITransition<LETTER, PLACE> valueBefore = mNew2Old.put(result, inputTransition);
