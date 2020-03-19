@@ -98,6 +98,16 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 		mPathProgramCache = pathProgramCache;
 	}
 
+	public StrategyModuleMcr<LETTER> createStrategyModuleMcr(final StrategyFactory<LETTER> strategyFactory) {
+		isOnlyDefaultPrePostConditions();
+		final boolean useInterpolantConsolidation = mPrefs.getUseInterpolantConsolidation();
+		if (useInterpolantConsolidation) {
+			throw new UnsupportedOperationException("Interpolant consolidation and MCR cannot be combined");
+		}
+		return new StrategyModuleMcr<>(mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory, strategyFactory,
+				mCounterexample, mAbstraction, mTaskIdentifier);
+	}
+
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSmtInterpolCraig(final boolean useTimeout,
 			final InterpolationTechnique technique, final boolean arrayInterpolation,
 			final AssertCodeBlockOrder... order) {
@@ -155,11 +165,6 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModulePdr() {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModulePdr<>(mLogger, mPrecondition, mPostcondition,
 				mCounterexample, mPredicateUnifier, mPrefs));
-	}
-
-	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleAcceleratedInterpolation() {
-		return createModuleWrapperIfNecessary(new IpTcStrategyModuleAcceleratedInterpolation<>(mLogger,
-				mPrefs.getIcfgContainer(), mCounterexample, mPredicateUnifier, mPrefs));
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModulePreferences() {

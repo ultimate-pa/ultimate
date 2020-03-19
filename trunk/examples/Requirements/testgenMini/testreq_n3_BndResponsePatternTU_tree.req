@@ -1,18 +1,18 @@
 /*
 ReqTestResultTest: Found Test for TEST_req3_Globally_BndInvariance_tt4    
 Set Inputs:
- 	I1 := 3  S2 := true  
+ 	I1 := 3  S2 := false  
  Wait at most 5  for: 
 	O1 == true  
  
 Set Inputs:
- 	S2 := true  I1 := 3  
+ 	I1 := 3  S2 := true  
  Wait at most 1  for: 
 	O1 == true  
  
 Set Inputs:
- 	I1 := 3  S2 := true  
- Wait at most 1  for: 
+ 	I1 := 3  S2 := true    
+ Wait at most 4  for: 
 	O1 == true  
  
 Found Test for TEST_req3_Globally_BndInvariance_tt5  

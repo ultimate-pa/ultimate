@@ -89,3 +89,5 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator/Output\ file\ extension=.svg
 @de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator=0.1.25
 file_export_version=3.0
+
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Use\ primed\ PCs=true

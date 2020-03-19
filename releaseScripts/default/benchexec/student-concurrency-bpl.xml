@@ -21,43 +21,18 @@
 	</rundefinition>
     
     <rundefinition name="Automizer FA-SemanticLbe-MCR">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe-MCR.epf</option>
+        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-SemanticLbe-McrStrategy.epf</option>
 	</rundefinition>
 
     <rundefinition name="Automizer FA-VariableLbe-MCR">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-VariableLbe-MCR.epf</option>
+        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-VariableLbe-McrStrategy.epf</option>
 	</rundefinition>
 
     <rundefinition name="Automizer FA-NoLbe-MCR">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-MCR.epf</option>
+        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-FA-NoLbe-McrStrategy.epf</option>
 	</rundefinition>
 
-
-    <rundefinition name="Automizer PN-SemanticLbe">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe.epf</option>
-	</rundefinition>
-
-    <rundefinition name="Automizer PN-VariableLbe">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe.epf</option>
-	</rundefinition>
-
-    <rundefinition name="Automizer PN-NoLbe">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
-	</rundefinition>
-    
-    <rundefinition name="Automizer PN-SemanticLbe-MCR">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-SemanticLbe-MCR.epf</option>
-	</rundefinition>
-
-    <rundefinition name="Automizer PN-VariableLbe-MCR">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-VariableLbe-MCR.epf</option>
-	</rundefinition>
-
-    <rundefinition name="Automizer PN-NoLbe-MCR">
-        <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe-MCR.epf</option>
-	</rundefinition>
-
-    
+   
 	<tasks name="Synth">
 		<includesfile>../../../trunk/examples/bench-mcr-synth.set</includesfile>
 		<propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>

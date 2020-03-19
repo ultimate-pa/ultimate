@@ -63,19 +63,29 @@ public class PEAtoBoogieObserver extends BaseObserver {
 		final PEATransformerMode mode =
 				prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE, PEATransformerMode.class);
 		if (mode == PEATransformerMode.REQ_CHECK) {
-			return new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.emptyList()).getUnit();
+			return generateReqCheckBoogie(patterns);
 		} else if (mode == PEATransformerMode.REQ_TEST) {
-			// TODO: would it be nicer to get the symbol table via annotations?
-			final Req2BoogieTranslator translator = new Req2BoogieTranslator(mServices, mLogger, patterns,
-					Collections.singletonList(new Req2CauseTrackingPeaTransformer(mServices, mLogger)));
-			final ReqTestResultUtil mReporter =
-					new ReqTestResultUtil(mLogger, mServices, translator.getReqSymbolTable());
-			// register CEX transformer that removes program executions from CEX.
-			final Function<IResult, IResult> resultTransformer = mReporter::convertTraceAbstractionResult;
-			mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
-			return translator.getUnit();
+			return generateReqTestBoogie(patterns);
 		} else {
 			return null;
 		}
 	}
+
+	private IElement generateReqCheckBoogie(final List<PatternType> patterns) {
+		return new Req2BoogieTranslator(mServices, mLogger, patterns, Collections.emptyList()).getUnit();
+	}
+
+	private IElement generateReqTestBoogie(final List<PatternType> patterns) {
+		// TODO: would it be nicer to get the symbol table via annotations?
+		final Req2BoogieTranslator translator = new Req2BoogieTranslator(mServices, mLogger, patterns,
+				Collections.singletonList(new Req2CauseTrackingPeaTransformer(mServices, mLogger)));
+		final ReqTestResultUtil mReporter =
+				new ReqTestResultUtil(mLogger, mServices, translator.getReqSymbolTable());
+		// register CEX transformer that removes program executions from CEX.
+		final Function<IResult, IResult> resultTransformer = mReporter::convertTraceAbstractionResult;
+		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
+		return translator.getUnit();
+	}
+
+
 }

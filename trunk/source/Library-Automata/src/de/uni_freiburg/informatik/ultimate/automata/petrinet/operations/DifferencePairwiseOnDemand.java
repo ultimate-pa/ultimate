@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -76,6 +77,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
 	private final DifferenceSynchronizationInformation<LETTER, PLACE> mDifferenceSynchronizationInformation;
+	private DifferencePetriNet mDifference;
 
 	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
 			final AutomataLibraryServices services, final SF factory, final IPetriNet<LETTER, PLACE> minuendNet,
@@ -114,16 +116,16 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 						"Subtrahend is not yet constructed. Will not use universal subtrahend loopers optimization.");
 			}
 		}
-		final DifferencePetriNet<LETTER, PLACE> difference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend,
+		mDifference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend,
 				universalSubtrahendLoopers);
-		mFinitePrefixOfResult = new FinitePrefix<LETTER, PLACE>(mServices, difference);
-		mResult = difference.getYetConstructedPetriNet();
+		mFinitePrefixOfResult = new FinitePrefix<LETTER, PLACE>(mServices, mDifference);
+		mResult = mDifference.getYetConstructedPetriNet();
 
 		final Set<ITransition<LETTER, PLACE>> vitalTransitionsOfDifference = mFinitePrefixOfResult.getResult()
 				.computeVitalTransitions();
-		mDifferenceSynchronizationInformation = difference
+		mDifferenceSynchronizationInformation = mDifference
 				.computeDifferenceSynchronizationInformation(vitalTransitionsOfDifference, true);
-		final int allTransitions = difference.getYetConstructedPetriNet().getTransitions().size();
+		final int allTransitions = mDifference.getYetConstructedPetriNet().getTransitions().size();
 		final int deadTransitions = allTransitions - vitalTransitionsOfDifference.size();
 		{
 			final int looperLetters = mMinuend.getAlphabet().size()
@@ -143,6 +145,11 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		this(services, factory, minuendNet, subtrahendDfa, null);
+	}
+
+
+	public Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> getTransitionBacktranslation() {
+		return mDifference.getTransitionBacktranslation();
 	}
 
 	@Override
@@ -182,6 +189,8 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 	public BoundedPetriNet<LETTER, PLACE> getResult() {
 		return mResult;
 	}
+
+
 
 	public DifferenceSynchronizationInformation<LETTER, PLACE> getDifferenceSynchronizationInformation() {
 		return mDifferenceSynchronizationInformation;

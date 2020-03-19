@@ -144,12 +144,15 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 				assert (step.getWaitTime().size() == 1);
 				final RealLiteral waitTime = ((RealLiteral) step.getWaitTime().iterator().next());
 				clock.getAndAdd(Integer.parseInt(waitTime.getValue()));
+
+				step.getInputAssignment().forEach((k, v) -> parseAssignment(k, v, observables, clock.get()));
+				step.getOutputAssignment().forEach((k, v) -> parseAssignment(k, v, observables, clock.get()));
 			}
 
 			try {
 				final String[] command = new String[] { "python", mScriptFile.getPath(), "-o",
 						mOutputDir.getPath() + "/" + mPatternName + "_" + mScopeName + "_" + i + mOutputFileExtension,
-						"-a", "1" };
+						"-a", "0" };
 
 				final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);
 				final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));

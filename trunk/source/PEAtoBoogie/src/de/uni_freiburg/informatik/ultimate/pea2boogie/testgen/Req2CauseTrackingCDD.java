@@ -108,7 +108,7 @@ public class Req2CauseTrackingCDD {
 		final Decision<?> decision = cdd.getDecision();
 		if (decision instanceof RangeDecision) {
 			final RangeDecision d = (RangeDecision) decision;
-			return transformClockDecisionInvariant(d, children);
+			transformClockDecisionInvariant(d, children);
 		}
 		return CDD.create(cdd.getDecision(), children);
 	}
@@ -126,8 +126,7 @@ public class Req2CauseTrackingCDD {
 
 	private CDD transformPrefixClockDecisionInvariant(RangeDecision d, int trueChild) {
 		switch (d.getOp(trueChild)) {
-		case RangeDecision.OP_GTEQ:
-			return RangeDecision.create(d.getVar(), RangeDecision.OP_EQ, d.getVal(trueChild));
+		//TODO care about <>_{<= x} E things only, rest of clocks in peas are already ok
 		default:
 			return RangeDecision.create(d.getVar(), d.getOp(trueChild) , d.getVal(trueChild));
 		}
@@ -172,13 +171,9 @@ public class Req2CauseTrackingCDD {
 
 	private CDD transformPrefixClockDecisionGuard(RangeDecision d, int trueChild) {
 		switch (d.getOp(trueChild)) {
-		case RangeDecision.OP_LTEQ:
-			return RangeDecision.create(d.getVar(), RangeDecision.OP_LTEQ, CONST_MIN_DELAY);
-		case RangeDecision.OP_GTEQ:
-			return RangeDecision.create(d.getVar(), RangeDecision.OP_EQ, d.getVal(trueChild));
+		//TODO care about <>_{<= x} E things only, rest of clocks in peas are already ok
 		default:
-			//all else may not occur in our requirements thus far;
-			return CDD.FALSE;
+			return RangeDecision.create(d.getVar(), d.getOp(trueChild) , d.getVal(trueChild));
 		}
 	}
 

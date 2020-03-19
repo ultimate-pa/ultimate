@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -17,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2Pea;
@@ -51,6 +53,9 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
 		for (final PatternType p : mInitPattern) {
 			builder.addInitPattern((InitializationPattern) p);
+			if (((InitializationPattern) p).getCategory() == VariableCategory.OUT) {
+				builder.addAuxvar(new BoogieLocation("", -1, -1, -1, -1), "u_" + p.getId() , "bool");
+			}
 		}
 		for (final Map.Entry<PatternType, PhaseEventAutomata> entry : simplePeas.entrySet()) {
 			mPattern2Peas.put(entry.getKey(), transformPea(entry.getKey(), entry.getValue(), symbolTable));
@@ -58,6 +63,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		for (final Entry<PatternType, PhaseEventAutomata> entry : mPattern2Peas.entrySet()) {
 			builder.addPea(entry.getKey(), entry.getValue());
 		}
+		builder.addAuxvar(new BoogieLocation("", -1, -1, -1, -1), ReqTestAnnotator.INITIAL_STEP_FLAG , "bool");
 		mSymbolTable = builder.constructSymbolTable();
 	}
 
