@@ -45,6 +45,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 	public static final String TEST_ASSERTION_PREFIX = "testgen_";
 	public static final String INITIAL_STEP_FLAG = "testgen_initial_step_flag";
 	public static final String TRACKING_VAR_PREFIX = "u_";
+	public static final String TEST_PREFAIL_FLAG = "testgen_prefail_";
 
 	public ReqTestAnnotator(final IUltimateServiceProvider services, final ILogger logger,
 			final Req2CauseTrackingPea req2Pea) {
@@ -238,13 +239,16 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 		return ret;
 	}
 
+	/*
+	 * Create test generator annotations for effects happening on edges (e.g. q_n --- O' ---> q_1) in two steps:
+	 * 1. create an assume that works like the phase assumtions above, but assumes that a profecy' variable holds
+	 * 2. assert that the profecy variable does not hold
+	 */
 	private List<Statement> genTestEdgeEffectAssertion(final PhaseEventAutomata pea,
 			final Map<Integer, Integer> effectEdges) {
-		// for effects on edges use pc== /\ u_v so we know we walked over the edge and are in the state the effect
-		// maifests in
 		final List<Statement> statements = new ArrayList<>();
 		for (final Map.Entry<Integer, Integer> edgeIndexes : effectEdges.entrySet()) {
-			final String testName = "prefail_" + pea.getName() + Integer.toString(edgeIndexes.getValue()) + "_"
+			final String testName = TEST_PREFAIL_FLAG + pea.getName() + Integer.toString(edgeIndexes.getValue()) + "_"
 					+ Integer.toString(edgeIndexes.getKey()) + "'";
 			final Expression thisExpr = new BinaryExpression(mLocation, BinaryExpression.Operator.COMPEQ,
 					mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(pea)),
