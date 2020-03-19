@@ -128,8 +128,14 @@ public class PatternBuilder {
 	}
 
 	public PatternType build() {
-		if (mClazz == null || mId == null || mScope == null) {
-			throw new IllegalStateException("Type, Id or Scope of pattern not yet specified");
+		if (mClazz == null) {
+			throw new IllegalStateException("Type of pattern not yet specified");
+		}
+		if (mId == null) {
+			throw new IllegalStateException("Id of pattern not yet specified");
+		}
+		if (mScope == null) {
+			throw new IllegalStateException("Scope of pattern not yet specified");
 		}
 		final PatternTypeConstructor constr = CONSTRUCTORS.get(mClazz);
 		if (constr == null) {
