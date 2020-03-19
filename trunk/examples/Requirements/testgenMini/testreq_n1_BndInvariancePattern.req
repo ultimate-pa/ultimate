@@ -1,20 +1,14 @@
 /*
-- ReqTestResultTest: Found Test for testgen_req1_Globally_BndInvariance_tt4
+ - ReqTestResultTest: Found Test for testgen_req1_Globally_BndInvariance_tt4   
 Set Inputs:
  	I1 := true  
- Wait at most 5  for: 
+ Wait at most 1  for: 
 	O1 == true  
  
 Set Inputs:
  	I1 := false  
  Wait at most 5  for: 
-	O1 == true  
- 
-- ReqTestResultTest: Found Test for testgen_req1_Globally_BndInvariance_tt5    
-Set Inputs:
- 	I1 := true  
- Wait at most 5  for: 
-	O1 == true  
+	O1 == true
 */
 
 Input I1 is bool 
