@@ -77,9 +77,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 	// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
-	private static final boolean CREATE_NEW_FILES = true;
+	private static final boolean CREATE_NEW_FILES = false;
 
-	private static final File ROOT_DIR = new File("/media/Daten/projects/hanfor/documentation/docs");
+	private static final File ROOT_DIR = new File("/mnt/Daten/projects/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
 	private static final File PEA_IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
 	private static final File POS_FAILURE_IMAGE_DIR = new File(ROOT_DIR + "/img/failure_paths/positive");
@@ -153,9 +153,9 @@ public class PeaToDotTestSuite {
 		final Formatter fmt = new Formatter();
 
 		final File[] posFailureImages =
-				POS_FAILURE_IMAGE_DIR.listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName));
+				POS_FAILURE_IMAGE_DIR.listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName + "_"));
 		final File[] negFailureImages =
-				NEG_FAILURE_IMAGE_DIR.listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName));
+				NEG_FAILURE_IMAGE_DIR.listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName + "_"));
 
 		if (!markdownFile.exists()) {
 			fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
