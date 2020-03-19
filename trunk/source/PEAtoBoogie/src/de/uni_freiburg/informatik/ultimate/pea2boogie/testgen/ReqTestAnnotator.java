@@ -23,13 +23,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaAnnotator;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
 
@@ -41,6 +44,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 	private final Req2CauseTrackingPea mReq2Pea;
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 	private final Map<PhaseEventAutomata, ReqEffectStore> mPea2EffectStore;
+	private final IPreferenceProvider mPrefs;
 
 	public static final String TEST_ASSERTION_PREFIX = "testgen_";
 	public static final String INITIAL_STEP_FLAG = "testgen_initial_step_flag";
@@ -56,6 +60,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 		mLocation = new BoogieLocation("", -1, -1, -1, -1);
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		mPea2EffectStore = mReq2Pea.getReqEffectStore();
+		mPrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
 
 	@Override
@@ -135,7 +140,9 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 		for (final Integer phaseNum : mPea2EffectStore.get(pea).getEffectPhaseIndexes()) {
 			disjuncts.addAll(genPhaseEffectTracking(pea, currentVar, phaseNum));
 		}
-		//disjuncts.add(mSymbolTable.getIdentifierExpression(mSymbolTable.getPrimedVarId(INITIAL_STEP_FALG)));
+		if (mSymbolTable.getOutputVars().contains(currentVar) && mPrefs.getBoolean(Pea2BoogiePreferences.LABEL_CHOOSE_INITIAL)) {
+			disjuncts.add(mSymbolTable.getIdentifierExpression(mSymbolTable.getPrimedVarId(INITIAL_STEP_FLAG)));
+		}
 		return disjuncts;
 	}
 

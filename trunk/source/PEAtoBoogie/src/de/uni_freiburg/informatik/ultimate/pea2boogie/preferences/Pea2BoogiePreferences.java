@@ -91,6 +91,13 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			+ "next instead of overwriting the program counter of every automaton directly."
 			+ "Note: This is necessary for test generation.";
 
+	public static final String LABEL_CHOOSE_INITIAL = "Choose init. Output assignment";
+	private static final boolean DEF_CHOOSE_INITIAL = false;
+	private static final String DESC_CHOOSE_INITIAL = "Allow for the test generator to initially choose an arbitrary"
+			+ "value for all output variables. This shall help finding tests for systems with feedback loops i.e. that "
+			+ "require a previosu state to determine the successor state. Note: this will only work for the very first"
+			+ "step independend of length or usefulness.";
+
 	public enum PEATransformerMode{
 		REQ_CHECK, REQ_TEST
 	}
@@ -121,7 +128,9 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			new UltimatePreferenceItem<>(LABEL_GUESS_IN_OUT,
 					DEF_GUESS_IN_OUT, DESC_GUESS_IN_OUT, PreferenceType.Boolean),
 			new UltimatePreferenceItem<>(LABEL_USE_PRIMED_PC,
-					DEF_USE_PRIMED_PC, DESC_USE_PRIMED_PC, PreferenceType.Boolean)};
+					DEF_USE_PRIMED_PC, DESC_USE_PRIMED_PC, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_CHOOSE_INITIAL,
+					DEF_CHOOSE_INITIAL, DESC_CHOOSE_INITIAL, PreferenceType.Boolean)};
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {
