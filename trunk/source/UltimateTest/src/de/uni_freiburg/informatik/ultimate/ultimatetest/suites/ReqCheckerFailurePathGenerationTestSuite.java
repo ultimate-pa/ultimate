@@ -62,7 +62,7 @@ public class ReqCheckerFailurePathGenerationTestSuite extends AbstractEvalTestSu
 	}
 
 	private static final String TOOLCHAIN = "ReqCheckFailurePathGeneration.xml";
-	private static final String SETTINGS = "ReqCheckFailurePathGeneration.epf";
+	private static final String SETTINGS = "default/reqcheck/ReqCheck-ReqToTest.epf";
 	private static final String REQ_DIR = "examples/Requirements/failure-paths";
 
 	private static final String[] REQ = new String[] { ".req" };
