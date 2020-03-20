@@ -81,37 +81,35 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		final StringFactory factory = new StringFactory();
 		final List<INestedWordAutomaton<Integer, String>> automata = new ArrayList<>();
 		final List<QualifiedTracePredicates> tracePredicates = new ArrayList<>();
-		final List<List<Integer>> intTraces = new ArrayList<>();
+		final List<List<LETTER>> traces = new ArrayList<>();
 		INestedWordAutomaton<Integer, String> mhbAutomaton = automatonBuilder.buildMhbAutomaton();
 		NestedRun<Integer, ?> run = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
-		List<LETTER> currentTrace = null;
 		int iteration = 0;
 		while (run != null) {
 			mLogger.info("---- MCR iteration " + iteration++ + " ----");
 			final NestedRun<LETTER, ?> counterexample = convertRun(run);
 			final Pair<LBool, QualifiedTracePredicates> proof =
 					mProofProvider.getProof(counterexample, getPrecondition(), getPostcondition());
-			currentTrace = counterexample.getWord().asList();
+			final List<LETTER> trace = counterexample.getWord().asList();
 			final LBool feasibility = proof.getFirst();
 			if (feasibility != LBool.UNSAT) {
 				// We found a feasible error trace
-				return new McrTraceCheckResult<>(currentTrace, feasibility, null, null);
+				return new McrTraceCheckResult<>(trace, feasibility, null, null);
 			}
 			// TODO: Use interpolant automata (from settings) here?
-			final INestedWordAutomaton<Integer, String> mcrAutomaton = automatonBuilder.buildMcrAutomaton(currentTrace);
+			final INestedWordAutomaton<Integer, String> mcrAutomaton = automatonBuilder.buildMcrAutomaton(trace);
 			automata.add(mcrAutomaton);
 			tracePredicates.add(proof.getSecond());
-			intTraces.add(run.getWord().asList());
+			traces.add(trace);
 			mhbAutomaton = new Difference<>(mAutomataServices, factory, mhbAutomaton, mcrAutomaton).getResult();
 			run = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
 		}
 		// All interleavings are infeasible
-		final List<IPredicate> lastPredicates =
-				tracePredicates.get(tracePredicates.size() - 1).getTracePredicates().getPredicates();
-		final IPredicate[] interpolants = lastPredicates.toArray(new IPredicate[lastPredicates.size()]);
+		final List<IPredicate> predicates = tracePredicates.get(0).getTracePredicates().getPredicates();
+		final IPredicate[] interpolants = predicates.toArray(new IPredicate[predicates.size()]);
 		final NestedWordAutomaton<LETTER, IPredicate> interpolantAutomaton =
-				automatonBuilder.buildInterpolantAutomaton(automata, intTraces, tracePredicates);
-		return new McrTraceCheckResult<>(currentTrace, LBool.UNSAT, interpolantAutomaton, interpolants);
+				automatonBuilder.buildInterpolantAutomaton(automata, traces, tracePredicates);
+		return new McrTraceCheckResult<>(traces.get(0), LBool.UNSAT, interpolantAutomaton, interpolants);
 	}
 
 	@SuppressWarnings("unchecked")
