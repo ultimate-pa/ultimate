@@ -56,8 +56,7 @@ public class TransitionUnifier<LETTER, PLACE> {
 		final Set<Transition<LETTER, PLACE>> transitionsWithSameHash = mHash2Transitions.getImage(hash);
 		for (final Transition<LETTER, PLACE> tOld : transitionsWithSameHash) {
 			if (areSimilar(tNew, tOld)) {
-				mHash2Transitions.addPair(hash, tNew);
-				return tNew;
+				return tOld;
 			}
 		}
 		mHash2Transitions.addPair(hash, tNew);

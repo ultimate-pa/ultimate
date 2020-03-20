@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 
 public class Req2CauseTrackingCDD {
 
@@ -31,18 +32,19 @@ public class Req2CauseTrackingCDD {
 	}
 
 	public CDD transformInvariant(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars,
-			final boolean isEffectPhase) {
-		final Set<String> vars = getCddVariables(cdd);
-		vars.removeAll(inputVars);
+			final Set<String> activePhaseVars, final boolean isEffectPhase) {
+		final Set<String> trackedVars = getCddVariables(cdd);
+		trackedVars.removeAll(inputVars);
+		trackedVars.retainAll(activePhaseVars);
 		if (isEffectPhase) {
-			vars.removeAll(effectVars);
+			trackedVars.removeAll(effectVars);
 		}
-		final CDD newGuard = addTrackingGuards(cdd, vars);
+		final CDD newGuard = addTrackingGuards(cdd, trackedVars);
 		return newGuard;
 	}
 
-	public CDD transformGurad(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars,
-			final boolean isEffectEdge) {
+	public CDD transformGurad(final IReqSymbolTable symbolTable, final CDD cdd, final Set<String> effectVars,
+			final Set<String> toTrackVars, final Set<String> inputVars, final boolean isEffectEdge) {
 		final Set<String> vars = getCddVariables(cdd);
 		vars.removeAll(inputVars);
 		if (isEffectEdge) {
@@ -88,13 +90,7 @@ public class Req2CauseTrackingCDD {
 
 
 	public CDD transformClockInvariant(CDD cdd, boolean effectState) {
-		if (cdd == CDD.TRUE) {
-			return cdd;
-		}
-		if (cdd == CDD.FALSE) {
-			return cdd;
-		}
-		if (!effectState) {
+		if (cdd == CDD.TRUE || cdd == CDD.FALSE || !effectState) {
 			return cdd;
 		}
 
@@ -132,14 +128,40 @@ public class Req2CauseTrackingCDD {
 		}
 	}
 
+	/*
+	 * Transforms a CDD containing a range decision as follows:
+	 * -  t <= c  to  t >= c
+	 *
+	 * Note: if the CDD is no range decision, this will return CDD.True
+	 */
+	public CDD transformLowerToUpperClockGuard(CDD clockGuard) {
+		CDD returnDecision = CDD.TRUE;
+		if(clockGuard.getDecision() instanceof RangeDecision) {
+			final RangeDecision d = (RangeDecision)clockGuard.getDecision();
+			final CDD[] children = clockGuard.getChilds();
+			for (int i = 0; i < children.length; i++) {
+				if (children[i] == CDD.FALSE) {
+					continue;
+				}
+				returnDecision = returnDecision.and(transformLowerToUpperClockGuard(d, i));
+			}
+		} else {
+			mLogger.warn("Unexpected CDD format: " + clockGuard.TRUE + "(CDD(RangeDecision) was expected)");
+		}
+		return returnDecision;
+	}
+
+	private CDD transformLowerToUpperClockGuard(RangeDecision d, int trueChild) {
+		switch (d.getOp(trueChild)) {
+		case RangeDecision.OP_LTEQ:
+			return RangeDecision.create(d.getVar(), RangeDecision.OP_GTEQ , d.getVal(trueChild));
+		default:
+			return RangeDecision.create(d.getVar(), d.getOp(trueChild) , d.getVal(trueChild));
+		}
+	}
+
 	public CDD transformGuardClock(final CDD cdd, boolean effectEdge) {
-		if (cdd == CDD.TRUE) {
-			return cdd;
-		}
-		if (cdd == CDD.FALSE) {
-			return cdd;
-		}
-		if (!effectEdge) {
+		if (cdd == CDD.TRUE || cdd == CDD.FALSE || !effectEdge) {
 			return cdd;
 		}
 
@@ -234,10 +256,7 @@ public class Req2CauseTrackingCDD {
 	}
 
 	private static void extractAtomics(final CDD cdd, final Set<CDD> atomics) {
-		if (cdd == CDD.TRUE) {
-			return;
-		}
-		if (cdd == CDD.FALSE) {
+		if (cdd == CDD.TRUE || cdd == CDD.FALSE) {
 			return;
 		}
 		if (cdd.isAtomic()) {
@@ -259,13 +278,9 @@ public class Req2CauseTrackingCDD {
 	}
 
 	private static void extractVars(final CDD cdd, final Set<String> variables) {
-		if (cdd == CDD.TRUE) {
+		if (cdd == CDD.TRUE || cdd == CDD.FALSE) {
 			return;
 		}
-		if (cdd == CDD.FALSE) {
-			return;
-		}
-
 		variables.addAll(getVarsFromDecision(cdd.getDecision()));
 		if (cdd.getChilds() != null) {
 			for (final CDD child : cdd.getChilds()) {
