@@ -198,7 +198,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				
 						
 						if (closedList.contains(succ.hashCode())) {
-							mLogger.warn("Skipping" + succ);
 							continue;
 						}
 						
