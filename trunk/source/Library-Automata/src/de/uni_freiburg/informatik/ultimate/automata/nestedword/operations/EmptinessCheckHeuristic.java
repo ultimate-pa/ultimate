@@ -59,7 +59,7 @@ public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE,
 		// Check transition formula using a TermClassifier, then assign a score depending on the scoring method.
 		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
 		UnmodifiableTransFormula transformula = null;
-		if (trans instanceof IInternalAction) {
+		if (trans instanceof IInternalAction && mScoringMethod != ScoringMethod.ZERO) {
 			transformula = ((IInternalAction) trans).getTransformula();
 			final Term formula = transformula.getFormula();
 			tc.checkTerm(formula);

@@ -32,12 +32,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+
+import javax.swing.plaf.basic.BasicScrollPaneUI.HSBChangeListener;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -73,6 +76,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	private final NestedRun<LETTER, STATE> mAcceptingRun;
 	private final STATE mDummyEmptyStackState;
 	private final IHeuristic<STATE, LETTER> mHeuristic;
+	private final HashMap<Integer, Integer> mVisitedCount;
 
 	/**
 	 * Default constructor. Here we search a run from the initial states of the automaton to the final states of the
@@ -114,6 +118,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		mIsGoalState = funIsGoalState;
 		mIsForbiddenState = funIsForbiddenState;
 		mHeuristic = heuristic;
+		mVisitedCount = new HashMap<>();
 		assert startStates != null;
 		assert mIsGoalState != null;
 		assert mIsForbiddenState != null;
@@ -140,79 +145,97 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	 */
 	private NestedRun<LETTER, STATE> getAcceptingRun(final Collection<STATE> startStates,
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
-
-		final HashedPriorityQueue<Item> worklist =
-				new HashedPriorityQueue<>((a, b) -> Double.compare(a.mExpectedCostToTarget, b.mExpectedCostToTarget));
-		final Set<Item> closed = new HashSet<>();
-
-		for (final STATE state : startStates) {
-			worklist.add(new Item(state));
-		}
-
-		while (!worklist.isEmpty()) {
-			if (!mServices.getProgressAwareTimer().continueProcessing()) {
-				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
-				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
-				throw new AutomataOperationCanceledException(rti);
-			}
-			final Item current = worklist.poll();
-			if(mLogger.isDebugEnabled()) {
-			   mLogger.debug("----");
-			   mLogger.debug("Cur " + current);
-			}
-			if (mIsGoalState.test(current.mTargetState)) {
-				return current.constructRun();
-			}
-
-			final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current);
-			boolean compareSuccessors = false;
-			Map<IsEmptyHeuristic<LETTER, STATE>.Item, Integer> comparedSuccessors = Collections.emptyMap();
-			if(mHeuristic instanceof EmptinessCheckHeuristic<?,?>) {
-				if(((EmptinessCheckHeuristic) mHeuristic).getScoringMethod() == ScoringMethod.COMPARE_FEATURES) {
-					compareSuccessors = true;
-					comparedSuccessors = mHeuristic.compareSuccessors(unvaluatedSuccessors);
-				}
-			}
-
-			for (final Item succ : unvaluatedSuccessors) {
-				final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
-				if (worklist.contains(succ)) {
-					final Item oldSucc = worklist.find(succ);
-					if (costSoFar >= oldSucc.mCostSoFar) {
-						// we already know the successor and our current way is not
-						// better than the new one
-						continue;
-					}
-				}
-				double expectedCost = 0;
-				if(compareSuccessors && !comparedSuccessors.isEmpty()) {
-					expectedCost = costSoFar + (comparedSuccessors.getOrDefault(succ, 0));
-				}else {
-					expectedCost = costSoFar + heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
-				}
-
-				final boolean rem = worklist.remove(succ);
-				if (!rem && !closed.add(succ)) {
-					// if
-					if(mLogger.isDebugEnabled()) {
-					mLogger.debug("REM " + rem);
-					}
-					continue;
-				}
-				succ.setExpectedCostToTarget(expectedCost);
-				if (!succ.isLowest()) {
-					continue;
-				}
-				succ.setCostSoFar(costSoFar);
-				worklist.add(succ);
-				if(mLogger.isDebugEnabled()) {
-					mLogger.debug("Add " + succ);
-				}
-
-			}
-		}
-		return null;
+        
+		  return AStarSearch(startStates, heuristic);
 	}
+	
+	private NestedRun<LETTER, STATE> AStarSearch(final Collection<STATE> startStates,
+			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
+		    // Our worklist, contains all states we have to explore.
+			final HashedPriorityQueue<Item> openList =
+			new HashedPriorityQueue<>((a, b) -> Double.compare(a.mExpectedCostToTarget, b.mExpectedCostToTarget));
+			final HashSet<Integer> closedList = new HashSet<Integer>();
+				
+				// Add all initial states to worklist.
+				for (final STATE state : startStates) {
+					openList.add(new Item(state));
+				}
+		                  
+				while (!openList.isEmpty()) {
+					if (!mServices.getProgressAwareTimer().continueProcessing()) {
+						final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
+						final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
+						throw new AutomataOperationCanceledException(rti);
+					}
+					// Get and remove item form worklist.
+					final Item current = openList.poll();
+					closedList.add(current.hashCode());
+					
+					// Construct run if current state is goal.
+					if (mIsGoalState.test(current.mTargetState)) {
+						return current.constructRun();
+					}
+
+					if(mLogger.isDebugEnabled()) {
+					   mLogger.debug("----");
+					   mLogger.debug("Cur " + current);
+					   mLogger.warn("HASH: " + current.hashCode());
+					}
+
+					final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current);
+					
+					// COMPARE_SUCCESSORS heuristic
+					boolean compareSuccessors = false;
+					Map<IsEmptyHeuristic<LETTER, STATE>.Item, Integer> comparedSuccessors = Collections.emptyMap();
+					if(mHeuristic instanceof EmptinessCheckHeuristic<?,?>) {
+						if(((EmptinessCheckHeuristic) mHeuristic).getScoringMethod() == ScoringMethod.COMPARE_FEATURES) {
+							compareSuccessors = true;
+							comparedSuccessors = mHeuristic.compareSuccessors(unvaluatedSuccessors);
+						}
+					}
+
+					for (final Item succ : unvaluatedSuccessors) {
+				
+						
+						if (closedList.contains(succ.hashCode())) {
+							mLogger.warn("Skipping" + succ);
+							continue;
+						}
+						
+						// Set concrete cost. 
+						final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
+						
+						if(!openList.contains(succ)) {
+							openList.add(succ);
+							if(mLogger.isDebugEnabled()) {
+								mLogger.debug("Add " + succ);
+							}
+
+						} else if(costSoFar >= succ.mCostSoFar) {
+							continue;
+						}
+						
+						succ.setCostSoFar(costSoFar);
+						
+						double expectedCost = 0;						
+						// COMPARE_SUCCESSORS heuristic
+						if(compareSuccessors && !comparedSuccessors.isEmpty()) {
+							expectedCost = costSoFar + (comparedSuccessors.getOrDefault(succ, 0));
+						} else {
+							expectedCost = costSoFar + heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
+						}
+
+						succ.setExpectedCostToTarget(expectedCost);
+						
+						if (!succ.isLowest()) {
+							continue;
+						}
+						succ.setCostSoFar(costSoFar);
+					}
+				}
+				return null;
+	}
+	
 
 	private List<Item> getUnvaluatedSuccessors(final Item current) {
 		final List<Item> rtr = new ArrayList<>();
@@ -328,7 +351,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		private double mExpectedCostToTarget;
 
 		/**
-		 * Create initial worklist item.
+		 * Create initial worklist item.^
 		 *
 		 * @param initialState
 		 */
@@ -462,7 +485,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			final int prime = 31;
 			int result = 1;
 			result = (prime * result) + ((mTargetState == null) ? 0 : mTargetState.hashCode());
-			result = (prime * result) + ((mHierPreStates == null) ? 0 : mHierPreStates.hashCode());
+			result = (prime * result) + ((mHierPreStates == null) ? 0 : mHierPreStates.peek().hashCode());
 			result = (prime * result) + ((mTransition == null) ? 0 : mTransition.hashCode());
 			return result;
 		}
