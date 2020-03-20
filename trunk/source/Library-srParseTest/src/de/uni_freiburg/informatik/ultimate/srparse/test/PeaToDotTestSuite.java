@@ -165,7 +165,7 @@ public class PeaToDotTestSuite {
 		fmt.format(LINE_SEP);
 		fmt.format("### %s %s%s", mPatternName, mScopeName, LINE_SEP);
 		fmt.format("```%s%s%s```%s", LINE_SEP, mPatternString, LINE_SEP, LINE_SEP);
-		fmt.format("```%sCounterexample: %s%s```%s", LINE_SEP, counterTrace, LINE_SEP, LINE_SEP);
+		fmt.format("```%sCountertraces: %s%s```%s", LINE_SEP, counterTrace, LINE_SEP, LINE_SEP);
 
 		if (peaImage.exists()) {
 			fmt.format(LINE_SEP);
@@ -176,7 +176,7 @@ public class PeaToDotTestSuite {
 		if (posFailureImages.length > 0 || negFailureImages.length > 0) {
 			fmt.format(LINE_SEP);
 			fmt.format("<div class=\"pattern-examples\"></div>%s", LINE_SEP);
-			fmt.format("| Positive example | Negative example |%s", LINE_SEP);
+			fmt.format("| Positive Example | Negative Example |%s", LINE_SEP);
 			fmt.format("| --- | --- |%s", LINE_SEP);
 
 			for (int i = 0; i < Math.max(posFailureImages.length, negFailureImages.length); i++) {
