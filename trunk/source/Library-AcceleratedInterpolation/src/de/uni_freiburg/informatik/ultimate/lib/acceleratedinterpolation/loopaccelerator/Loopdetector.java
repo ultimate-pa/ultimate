@@ -25,18 +25,20 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.lib.loopaccelerator;
+package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator;
 
-import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolationMain;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 
 /**
  *
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents the loop accelerator needed for
- *         {@link AcceleratedInterpolationMain}
+ *         {@link AcceleratedInterpolation}
  */
-public class Accelerator {
-	public Accelerator() {
+public class Loopdetector<LETTER extends IIcfgTransition<?>> {
+	public Loopdetector(final List<LETTER> trace) {
 
 	}
-
 }

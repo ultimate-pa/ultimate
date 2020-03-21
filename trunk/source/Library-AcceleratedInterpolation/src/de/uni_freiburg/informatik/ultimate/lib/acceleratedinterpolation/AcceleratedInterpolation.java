@@ -37,7 +37,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.loopaccelerator.Accelerator;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *
  * @param <LETTER>
  */
-public class AcceleratedInterpolationMain<LETTER extends IIcfgTransition<?>>
+public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>>
 		implements IInterpolatingTraceCheck<LETTER> {
 
 	private final ILogger mLogger;
@@ -88,7 +88,7 @@ public class AcceleratedInterpolationMain<LETTER extends IIcfgTransition<?>>
 	private final Map<IcfgLocation, List<LETTER>> mLoops;
 	private final Accelerator mAccelerator;
 
-	public AcceleratedInterpolationMain(final ILogger logger, final ITraceCheckPreferences prefs,
+	public AcceleratedInterpolation(final ILogger logger, final ITraceCheckPreferences prefs,
 			final ManagedScript script, final IPredicateUnifier predicateUnifier, final List<LETTER> counterexample) {
 		mLogger = logger;
 		mScript = script;
@@ -125,6 +125,7 @@ public class AcceleratedInterpolationMain<LETTER extends IIcfgTransition<?>>
 				mInterpolants = generateInterpolants();
 			}
 		} else {
+			mLogger.debug("Found loops, starting acceleration");
 			mIsTraceCorrect = computeAcceleratedFeasibility();
 		}
 	}
@@ -187,7 +188,7 @@ public class AcceleratedInterpolationMain<LETTER extends IIcfgTransition<?>>
 		interpolants[mCounterexample.size()] = mPredicateUnifier.getFalsePredicate();
 		for (int i = 1; i <= mCounterexample.size(); i++) {
 			interpolants[i] = mPredicateUnifier.getOrConstructPredicate(mPredTransformer
-					.strongestPostcondition(mInterpolants[i - 1], mCounterexample.get(i - 1).getTransformula()));
+					.strongestPostcondition(interpolants[i - 1], mCounterexample.get(i - 1).getTransformula()));
 		}
 		final IPredicate[] actualInterpolants = Arrays.copyOfRange(interpolants, 1, mCounterexample.size());
 		return actualInterpolants;
