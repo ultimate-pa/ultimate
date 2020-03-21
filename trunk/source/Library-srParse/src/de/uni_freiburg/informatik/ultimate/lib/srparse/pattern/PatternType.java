@@ -40,7 +40,8 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompilerStateless;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 /**
- *
+ * All Hanfor patterns have this type as base type.
+ * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -110,8 +111,7 @@ public abstract class PatternType {
 		final CDD[] cdds = getCddsAsArray();
 		final int[] durations = getDurationsAsIntArray(id2bounds);
 		assert cdds.length == getExpectedCddSize() : "Wrong number of observables for pattern " + getName();
-		assert durations.length == getExpectedDurationSize() : "Wrong number of durations for pattern "
-				+ getName();
+		assert durations.length == getExpectedDurationSize() : "Wrong number of durations for pattern " + getName();
 		return transform(cdds, durations);
 	}
 

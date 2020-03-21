@@ -40,8 +40,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import javax.swing.plaf.basic.BasicScrollPaneUI.HSBChangeListener;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -89,10 +87,10 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	 * @see #IsEmpty(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
 	 */
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final IHeuristic<STATE, LETTER> heuristic)
-					throws AutomataOperationCanceledException {
-		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false, a -> operand.isFinal(a),
-				heuristic);
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
+		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false,
+				a -> operand.isFinal(a), heuristic);
 	}
 
 	/**
@@ -103,7 +101,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	public IsEmptyHeuristic(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Set<STATE> startStates, final Predicate<STATE> funIsForbiddenState,
 			final Predicate<STATE> funIsGoalState, final IHeuristic<STATE, LETTER> heuristic)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, (INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>) operand, startStates,
 				funIsForbiddenState, funIsGoalState, heuristic);
 		assert operand.getStates().containsAll(startStates) : "unknown states";
@@ -145,96 +143,95 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	 */
 	private NestedRun<LETTER, STATE> getAcceptingRun(final Collection<STATE> startStates,
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
-        
-		  return AStarSearch(startStates, heuristic);
+
+		return AStarSearch(startStates, heuristic);
 	}
-	
+
 	private NestedRun<LETTER, STATE> AStarSearch(final Collection<STATE> startStates,
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
-		    // Our worklist, contains all states we have to explore.
-			final HashedPriorityQueue<Item> openList =
-			new HashedPriorityQueue<>((a, b) -> Double.compare(a.mExpectedCostToTarget, b.mExpectedCostToTarget));
-			final HashSet<Integer> closedList = new HashSet<Integer>();
-				
-				// Add all initial states to worklist.
-				for (final STATE state : startStates) {
-					openList.add(new Item(state));
+		// Our worklist, contains all states we have to explore.
+		final HashedPriorityQueue<Item> openList =
+				new HashedPriorityQueue<>((a, b) -> Double.compare(a.mExpectedCostToTarget, b.mExpectedCostToTarget));
+		final HashSet<Integer> closedList = new HashSet<>();
+
+		// Add all initial states to worklist.
+		for (final STATE state : startStates) {
+			openList.add(new Item(state));
+		}
+
+		while (!openList.isEmpty()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
+				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
+				throw new AutomataOperationCanceledException(rti);
+			}
+			// Get and remove item form worklist.
+			final Item current = openList.poll();
+			closedList.add(current.hashCode());
+
+			// Construct run if current state is goal.
+			if (mIsGoalState.test(current.mTargetState)) {
+				return current.constructRun();
+			}
+
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("----");
+				mLogger.debug("Cur " + current);
+				mLogger.warn("HASH: " + current.hashCode());
+			}
+
+			final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current);
+
+			// COMPARE_SUCCESSORS heuristic
+			boolean compareSuccessors = false;
+			Map<IsEmptyHeuristic<LETTER, STATE>.Item, Integer> comparedSuccessors = Collections.emptyMap();
+			if (mHeuristic instanceof EmptinessCheckHeuristic<?, ?>) {
+				if (((EmptinessCheckHeuristic) mHeuristic).getScoringMethod() == ScoringMethod.COMPARE_FEATURES) {
+					compareSuccessors = true;
+					comparedSuccessors = mHeuristic.compareSuccessors(unvaluatedSuccessors);
 				}
-		                  
-				while (!openList.isEmpty()) {
-					if (!mServices.getProgressAwareTimer().continueProcessing()) {
-						final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
-						final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
-						throw new AutomataOperationCanceledException(rti);
-					}
-					// Get and remove item form worklist.
-					final Item current = openList.poll();
-					closedList.add(current.hashCode());
-					
-					// Construct run if current state is goal.
-					if (mIsGoalState.test(current.mTargetState)) {
-						return current.constructRun();
-					}
+			}
 
-					if(mLogger.isDebugEnabled()) {
-					   mLogger.debug("----");
-					   mLogger.debug("Cur " + current);
-					   mLogger.warn("HASH: " + current.hashCode());
-					}
+			for (final Item succ : unvaluatedSuccessors) {
 
-					final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current);
-					
-					// COMPARE_SUCCESSORS heuristic
-					boolean compareSuccessors = false;
-					Map<IsEmptyHeuristic<LETTER, STATE>.Item, Integer> comparedSuccessors = Collections.emptyMap();
-					if(mHeuristic instanceof EmptinessCheckHeuristic<?,?>) {
-						if(((EmptinessCheckHeuristic) mHeuristic).getScoringMethod() == ScoringMethod.COMPARE_FEATURES) {
-							compareSuccessors = true;
-							comparedSuccessors = mHeuristic.compareSuccessors(unvaluatedSuccessors);
-						}
-					}
-
-					for (final Item succ : unvaluatedSuccessors) {
-				
-						
-						if (closedList.contains(succ.hashCode())) {
-							continue;
-						}
-						
-						// Set concrete cost. 
-						final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
-						
-						if(!openList.contains(succ)) {
-							openList.add(succ);
-							if(mLogger.isDebugEnabled()) {
-								mLogger.debug("Add " + succ);
-							}
-
-						} else if(costSoFar >= succ.mCostSoFar) {
-							continue;
-						}
-						
-						succ.setCostSoFar(costSoFar);
-						
-						double expectedCost = 0;						
-						// COMPARE_SUCCESSORS heuristic
-						if(compareSuccessors && !comparedSuccessors.isEmpty()) {
-							expectedCost = costSoFar + (comparedSuccessors.getOrDefault(succ, 0));
-						} else {
-							expectedCost = costSoFar + heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
-						}
-
-						succ.setExpectedCostToTarget(expectedCost);
-						
-						if (!succ.isLowest()) {
-							continue;
-						}
-						succ.setCostSoFar(costSoFar);
-					}
+				if (closedList.contains(succ.hashCode())) {
+					continue;
 				}
-				return null;
+
+				// Set concrete cost.
+				final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
+
+				if (!openList.contains(succ)) {
+					openList.add(succ);
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("Add " + succ);
+					}
+
+				} else if (costSoFar >= succ.mCostSoFar) {
+					continue;
+				}
+
+				succ.setCostSoFar(costSoFar);
+
+				double expectedCost = 0;
+				// COMPARE_SUCCESSORS heuristic
+				if (compareSuccessors && !comparedSuccessors.isEmpty()) {
+					expectedCost = costSoFar + comparedSuccessors.getOrDefault(succ, 0);
+				} else {
+					expectedCost = costSoFar
+							+ heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
+				}
+
+				succ.setExpectedCostToTarget(expectedCost);
+
+				if (!succ.isLowest()) {
+					continue;
+				}
+				succ.setCostSoFar(costSoFar);
+			}
+		}
+		return null;
 	}
-	
 
 	private List<Item> getUnvaluatedSuccessors(final Item current) {
 		final List<Item> rtr = new ArrayList<>();
@@ -308,7 +305,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (mLogger.isWarnEnabled()) {
 				mLogger.warn("Correctness of emptinessCheck not tested.");
 			}
-			correct = (new Accepts<>(mServices, mOperand, mAcceptingRun.getWord())).getResult();
+			correct = new Accepts<>(mServices, mOperand, mAcceptingRun.getWord()).getResult();
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Finished testing correctness of emptinessCheck");
 			}
@@ -483,9 +480,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = (prime * result) + ((mTargetState == null) ? 0 : mTargetState.hashCode());
-			result = (prime * result) + ((mHierPreStates == null) ? 0 : mHierPreStates.peek().hashCode());
-			result = (prime * result) + ((mTransition == null) ? 0 : mTransition.hashCode());
+			result = prime * result + (mTargetState == null ? 0 : mTargetState.hashCode());
+			result = prime * result + (mHierPreStates == null ? 0 : mHierPreStates.peek().hashCode());
+			result = prime * result + (mTransition == null ? 0 : mTransition.hashCode());
 			return result;
 		}
 
@@ -530,7 +527,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		public String toString() {
 			return String.format("{?} {%s} %s (%s) {%s} (g=%f, h=%f, f=%f, s=%d)", mHierPreStates.peek().hashCode(),
 					mTransition == null ? 0 : mTransition.hashCode(), mItemType, mTargetState.hashCode(), mCostSoFar,
-							mLowestExpectedCost, mExpectedCostToTarget, mHierPreStates.size());
+					mLowestExpectedCost, mExpectedCostToTarget, mHierPreStates.size());
 		}
 	}
 
