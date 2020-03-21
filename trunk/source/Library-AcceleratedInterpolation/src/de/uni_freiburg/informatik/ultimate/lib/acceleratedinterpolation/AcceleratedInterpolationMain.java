@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +40,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.loopaccelerator.Accelerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
@@ -51,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -71,10 +76,14 @@ public class AcceleratedInterpolationMain<LETTER extends IIcfgTransition<?>>
 	private final IUltimateServiceProvider mServices;
 	private final List<LETTER> mCounterexample;
 	private final IPredicateUnifier mPredicateUnifier;
+	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredTransformer;
 	private final ITraceCheckPreferences mPrefs;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
 	private LBool mIsTraceCorrect;
-	private final IPredicate[] mInterpolants;
+	private IPredicate[] mInterpolants;
+	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mFeasibleProgramExecution;
+	private final TraceCheckReasonUnknown mReasonUnknown;
+	private final boolean mTraceCheckFinishedNormally;
 
 	private final Map<IcfgLocation, List<LETTER>> mLoops;
 	private final Accelerator mAccelerator;
@@ -95,6 +104,12 @@ public class AcceleratedInterpolationMain<LETTER extends IIcfgTransition<?>>
 		mInterpolants[mCounterexample.size() - 1] = mPredicateUnifier.getFalsePredicate();
 
 		mAccelerator = new Accelerator();
+		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
+
+		// TODO give a better reason
+		mReasonUnknown = null;
+		mTraceCheckFinishedNormally = true;
+
 		for (final IcfgLocation loopHead : mIcfg.getLoopLocations()) {
 			// TODO: Possibly extract your own loops, e.g., walking over the trace and counting locations.
 			final List<LETTER> loopBody = getLoop(loopHead);
@@ -105,7 +120,12 @@ public class AcceleratedInterpolationMain<LETTER extends IIcfgTransition<?>>
 		}
 		if (mLoops.isEmpty()) {
 			mLogger.debug("No loops found in this trace.");
-			checkFeasibility(mCounterexample);
+			mIsTraceCorrect = checkFeasibility(mCounterexample);
+			if (mIsTraceCorrect == LBool.UNSAT) {
+				mInterpolants = generateInterpolants();
+			}
+		} else {
+			mIsTraceCorrect = computeAcceleratedFeasibility();
 		}
 	}
 
@@ -137,6 +157,10 @@ public class AcceleratedInterpolationMain<LETTER extends IIcfgTransition<?>>
 		return mCounterexample.subList(start, end);
 	}
 
+	private LBool computeAcceleratedFeasibility() {
+		return LBool.UNKNOWN;
+	}
+
 	private List<LETTER> accelerateLoop(final List<LETTER> trace) {
 		return trace;
 	}
@@ -155,6 +179,28 @@ public class AcceleratedInterpolationMain<LETTER extends IIcfgTransition<?>>
 		}
 		final LBool result = SmtUtils.checkSatTerm(mScript.getScript(), tf.getFormula());
 		return result;
+	}
+
+	private IPredicate[] generateInterpolants() {
+		final IPredicate[] interpolants = new IPredicate[mCounterexample.size() + 1];
+		interpolants[0] = mPredicateUnifier.getTruePredicate();
+		interpolants[mCounterexample.size()] = mPredicateUnifier.getFalsePredicate();
+		for (int i = 1; i <= mCounterexample.size(); i++) {
+			interpolants[i] = mPredicateUnifier.getOrConstructPredicate(mPredTransformer
+					.strongestPostcondition(mInterpolants[i - 1], mCounterexample.get(i - 1).getTransformula()));
+		}
+		final IPredicate[] actualInterpolants = Arrays.copyOfRange(interpolants, 1, mCounterexample.size());
+		return actualInterpolants;
+	}
+
+	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> computeProgramExecution() {
+		// TODO: construct a real IProgramExecution using
+		// IcfgProgramExecutionBuilder (DD needs to refactor s.t. the
+		// class becomes available here).
+		if (mIsTraceCorrect == LBool.SAT) {
+			return IProgramExecution.emptyExecution(Term.class, IcfgEdge.class);
+		}
+		return null;
 	}
 
 	@Override
@@ -184,20 +230,20 @@ public class AcceleratedInterpolationMain<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
-		// TODO Auto-generated method stub
-		return null;
+		if (mFeasibleProgramExecution == null) {
+			mFeasibleProgramExecution = computeProgramExecution();
+		}
+		return mFeasibleProgramExecution;
 	}
 
 	@Override
 	public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
-		// TODO Auto-generated method stub
-		return null;
+		return mReasonUnknown;
 	}
 
 	@Override
 	public boolean wasTracecheckFinishedNormally() {
-		// TODO Auto-generated method stub
-		return false;
+		return mTraceCheckFinishedNormally;
 	}
 
 	@Override
@@ -207,8 +253,7 @@ public class AcceleratedInterpolationMain<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	public IPredicate[] getInterpolants() {
-		// TODO Auto-generated method stub
-		return null;
+		return mInterpolants;
 	}
 
 	@Override
