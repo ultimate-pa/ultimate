@@ -63,7 +63,7 @@ public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE,
 			transformula = ((IInternalAction) trans).getTransformula();
 			final Term formula = transformula.getFormula();
 			tc.checkTerm(formula);
-			final double score = tc.get_score(mScoringMethod);
+			final double score = tc.getScore(mScoringMethod);
 			mCheckedTransitions.put(trans, score);
 		} else {
 			mCheckedTransitions.put(trans, 0.0);

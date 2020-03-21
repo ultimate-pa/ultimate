@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -74,7 +73,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	private final NestedRun<LETTER, STATE> mAcceptingRun;
 	private final STATE mDummyEmptyStackState;
 	private final IHeuristic<STATE, LETTER> mHeuristic;
-	private final HashMap<Integer, Integer> mVisitedCount;
 
 	/**
 	 * Default constructor. Here we search a run from the initial states of the automaton to the final states of the
@@ -116,7 +114,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		mIsGoalState = funIsGoalState;
 		mIsForbiddenState = funIsForbiddenState;
 		mHeuristic = heuristic;
-		mVisitedCount = new HashMap<>();
 		assert startStates != null;
 		assert mIsGoalState != null;
 		assert mIsForbiddenState != null;
@@ -185,8 +182,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			// COMPARE_SUCCESSORS heuristic
 			boolean compareSuccessors = false;
 			Map<IsEmptyHeuristic<LETTER, STATE>.Item, Integer> comparedSuccessors = Collections.emptyMap();
+			// TODO: Do not distinguish between heuristic types in this class
 			if (mHeuristic instanceof EmptinessCheckHeuristic<?, ?>) {
-				if (((EmptinessCheckHeuristic) mHeuristic).getScoringMethod() == ScoringMethod.COMPARE_FEATURES) {
+				if (((EmptinessCheckHeuristic<?, ?>) mHeuristic).getScoringMethod() == ScoringMethod.COMPARE_FEATURES) {
 					compareSuccessors = true;
 					comparedSuccessors = mHeuristic.compareSuccessors(unvaluatedSuccessors);
 				}
