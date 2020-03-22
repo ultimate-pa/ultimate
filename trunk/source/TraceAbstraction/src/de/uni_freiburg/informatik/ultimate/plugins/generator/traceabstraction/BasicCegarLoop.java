@@ -391,6 +391,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					new EmptinessCheckHeuristic<>(mLogger, mScoringMethod);
 			mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(mServices), abstraction, heuristic)
 					.getNestedRun();
+			assert mCounterexample != null
+					|| new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy)
+							.getNestedRun() == null : "IsEmptyHeuristic did not find a path, but IsEmpty did!";
 		} else {
 			mCounterexample =
 					new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
