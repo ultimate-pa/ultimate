@@ -32,6 +32,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -132,17 +133,27 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 		}
 		final HashRelation<ITransition<LETTER, PLACE>, PLACE> stateChangers = new HashRelation<>();
 		for (final Entry<ITransition<LETTER, PLACE>, HashSet<PLACE>> entry : mStateChangers.entrySet()) {
+			final Set<ITransition<LETTER, PLACE>> differenceTransitions = minuendTransition2differenceTransitions
+					.getImage(entry.getKey());
 			for (final PLACE automatonState : entry.getValue()) {
 				if (!redundantPlaces.contains(automatonState)) {
-					stateChangers.addPair(entry.getKey(), automatonState);
+					final ITransition<LETTER, PLACE> projectedTransition = differenceTransitions2projectedTransitions
+							.get(differenceTransitions.iterator().next());
+					stateChangers.addPair(projectedTransition, automatonState);
 				}
 			}
 		}
 		final HashRelation<ITransition<LETTER, PLACE>, PLACE> blockingTransitions = new HashRelation<>();
 		for (final Entry<ITransition<LETTER, PLACE>, HashSet<PLACE>> entry : mBlockingTransitions.entrySet()) {
-			for (final PLACE automatonState : entry.getValue()) {
-				if (!redundantPlaces.contains(automatonState)) {
-					blockingTransitions.addPair(entry.getKey(), automatonState);
+			final Set<ITransition<LETTER, PLACE>> differenceTransitions = minuendTransition2differenceTransitions
+					.getImage(entry.getKey());
+			if (!differenceTransitions.isEmpty()) {
+				for (final PLACE automatonState : entry.getValue()) {
+					final ITransition<LETTER, PLACE> projectedTransition = differenceTransitions2projectedTransitions
+							.get(differenceTransitions.iterator().next());
+					if (!redundantPlaces.contains(automatonState)) {
+						blockingTransitions.addPair(projectedTransition, automatonState);
+					}
 				}
 			}
 		}
@@ -158,5 +169,50 @@ public class DifferenceSynchronizationInformation<LETTER, PLACE> {
 			final Set<ITransition<LETTER, PLACE>> differenceTransitions, final PLACE automatonState) {
 		return differenceTransitions.stream().allMatch(x -> redundantSelfloopFlow.containsPair(x, automatonState));
 	}
+
+	public boolean isCompatible(final IPetriNet<LETTER, PLACE> net) {
+		if(!net.getAlphabet().containsAll(getChangerLetters())) {
+			return false;
+		}
+		if (!net.getTransitions().containsAll(getStateChangers().getDomain())) {
+			return false;
+		}
+		if (!net.getTransitions().containsAll(getSelfloops().getDomain())) {
+			return false;
+		}
+		if (!net.getTransitions().containsAll(getBlockingTransitions().getDomain())) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder builder = new StringBuilder();
+		builder.append("DifferenceSynchronizationInformation [mChangerLetters=");
+		builder.append(System.lineSeparator());
+		builder.append(mChangerLetters);
+		builder.append(System.lineSeparator());
+		builder.append(", mSelfloops=");
+		builder.append(System.lineSeparator());
+		builder.append(mSelfloops);
+		builder.append(System.lineSeparator());
+		builder.append(", mStateChangers=");
+		builder.append(System.lineSeparator());
+		builder.append(mStateChangers);
+		builder.append(System.lineSeparator());
+		builder.append(", mBlockingTransitions=");
+		builder.append(System.lineSeparator());
+		builder.append(mBlockingTransitions);
+		builder.append(System.lineSeparator());
+		builder.append(", mContributingTransitions=");
+		builder.append(System.lineSeparator());
+		builder.append(mContributingTransitions);
+		builder.append(System.lineSeparator());
+		builder.append("]");
+		return builder.toString();
+	}
+
+
 
 }
