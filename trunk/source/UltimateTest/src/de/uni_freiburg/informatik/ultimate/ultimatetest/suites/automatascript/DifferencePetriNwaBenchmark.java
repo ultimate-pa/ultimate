@@ -53,6 +53,7 @@ public class DifferencePetriNwaBenchmark extends UltimateTestSuite {
 	private static final File TOOLCHAIN_FILE =
 			new File(TestUtil.getPathFromTrunk("examples/toolchains/AutomataScriptInterpreter.xml"));
 	private static final String[] DIRECTORIES = {
+//		"examples/Automata/regression/pn/operations/difference",
 //		"examples/Automata/benchmarks/pn/difference-small",
 //		"examples/Automata/benchmarks/pn/difference-small-reach-only",
 		"examples/Automata/benchmarks/pn/difference-materialistic/",
