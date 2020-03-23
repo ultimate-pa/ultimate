@@ -244,9 +244,8 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 			throw new IllegalArgumentException("Transition with id " + transitionId + " was already added.");
 		}
 		final Transition<LETTER, PLACE> transition = new Transition<>(letter, preds, succs, transitionId);
-		final Transition<LETTER, PLACE> existingTransition = mTransitionUnifier.add(transition);
+		final Transition<LETTER, PLACE> existingTransition = mTransitionUnifier.findOrRegister(transition);
 		if (existingTransition != null) {
-			System.out.println("Did not add twice");
 			return existingTransition;
 		}
 

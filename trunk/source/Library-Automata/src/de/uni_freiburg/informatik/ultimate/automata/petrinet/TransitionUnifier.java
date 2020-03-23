@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * We call two {@link Transition}s similar if they have the same letter, the
- * same predecessors and the same successors. It seems wastefull to have similar
+ * same predecessors and the same successors. It seems wasteful to have similar
  * transitions in a Petri net. Objects of this class can detect similar
  * transitions.
  *
@@ -49,9 +49,9 @@ public class TransitionUnifier<LETTER, PLACE> {
 
 	/**
 	 * @return A transition that is similar to tNew if such a transition has been
-	 *         added in the past and null otherwise.
+	 *         registered in the past and null otherwise.
 	 */
-	public Transition<LETTER, PLACE> add(final Transition<LETTER, PLACE> tNew) {
+	public Transition<LETTER, PLACE> findOrRegister(final Transition<LETTER, PLACE> tNew) {
 		final int hash = computeHash(tNew);
 		final Set<Transition<LETTER, PLACE>> transitionsWithSameHash = mHash2Transitions.getImage(hash);
 		for (final Transition<LETTER, PLACE> tOld : transitionsWithSameHash) {
