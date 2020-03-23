@@ -244,6 +244,12 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 			throw new IllegalArgumentException("Transition with id " + transitionId + " was already added.");
 		}
 		final Transition<LETTER, PLACE> transition = new Transition<>(letter, preds, succs, transitionId);
+		final Transition<LETTER, PLACE> existingTransition = mTransitionUnifier.add(transition);
+		if (existingTransition != null) {
+			System.out.println("Did not add twice");
+			return existingTransition;
+		}
+
 		for (final PLACE predPlace : preds) {
 			assert mPlaces.contains(predPlace) : "Place not in net: " + predPlace;
 			mSuccessors.addPair(predPlace, transition);
@@ -254,9 +260,6 @@ public final class BoundedPetriNet<LETTER, PLACE> implements IPetriNet<LETTER, P
 		}
 		mTransitions.add(transition);
 		mTransitionIds.add(transition.getTotalOrderId());
-		if (mTransitionUnifier.add(transition) != null) {
-			throw new AssertionError("two similar transitions in net");
-		}
 		mSizeOfFlowRelation += (preds.size() + succs.size());
 		return transition;
 
