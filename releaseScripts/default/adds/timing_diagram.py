@@ -29,6 +29,10 @@ class TimingDiagram:
         signal.x.append(max_step)
         signal.y.append(signal.y[-1])
 
+      # Replace dont care with 0.
+      for i in range(len(signal.y)):
+        signal.y[i] = signal.y[i] if signal.y[i] != -1 else 0
+
   def plot(self):
     yticks, yticklabels = [], []
     fig, ax = plt.gcf(), plt.gca()

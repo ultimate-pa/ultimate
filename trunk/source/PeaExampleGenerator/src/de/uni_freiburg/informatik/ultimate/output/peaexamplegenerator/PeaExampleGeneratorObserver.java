@@ -34,9 +34,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -137,9 +139,20 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 			final List<TestStep> steps = reqTestResultTests.get(i).getTestSteps();
 			final AtomicInteger clock = new AtomicInteger(); // Var used in lambda must be final. NagNagNag
 
+			final Set<IdentifierExpression> identifierExpressions = new HashSet<>();
 			for (final TestStep step : steps) {
+				identifierExpressions.addAll(step.getInputAssignment().keySet());
+				identifierExpressions.addAll(step.getOutputAssignment().keySet());
+			}
+
+			for (final TestStep step : steps) {
+				final Set<IdentifierExpression> dontCares = new HashSet<>(identifierExpressions);
+				dontCares.removeAll(step.getInputAssignment().keySet());
+				dontCares.removeAll(step.getOutputAssignment().keySet());
+
 				step.getInputAssignment().forEach((k, v) -> parseAssignment(k, v, observables, clock.get()));
 				step.getOutputAssignment().forEach((k, v) -> parseAssignment(k, v, observables, clock.get()));
+				dontCares.forEach(k -> parseAssignment(k, null, observables, clock.get()));
 
 				assert (step.getWaitTime().size() == 1);
 				final RealLiteral waitTime = ((RealLiteral) step.getWaitTime().iterator().next());
@@ -147,6 +160,7 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 
 				step.getInputAssignment().forEach((k, v) -> parseAssignment(k, v, observables, clock.get()));
 				step.getOutputAssignment().forEach((k, v) -> parseAssignment(k, v, observables, clock.get()));
+				dontCares.forEach(k -> parseAssignment(k, null, observables, clock.get()));
 			}
 
 			try {
@@ -175,8 +189,12 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 	private static void parseAssignment(final IdentifierExpression identifier, final Collection<Expression> expressions,
 			final Map<String, Pair<List<Integer>, List<Integer>>> observables, final int clock) {
 
-		assert (expressions.size() == 1);
-		final int value = ((BooleanLiteral) expressions.iterator().next()).getValue() ? 1 : 0;
+		int value = -1;
+		if (expressions != null) {
+			assert (expressions.size() == 1);
+			value = ((BooleanLiteral) expressions.iterator().next()).getValue() ? 1 : 0;
+		}
+
 		final Pair<List<Integer>, List<Integer>> values = observables.computeIfAbsent(identifier.getIdentifier(),
 				e -> new Pair<>(new ArrayList<>(), new ArrayList<>()));
 
