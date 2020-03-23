@@ -73,7 +73,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 	private final IPetriNet<LETTER, PLACE> mMinuend;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> mSubtrahend;
 
-	private final FinitePrefix<LETTER, PLACE> mFinitePrefixOfResult;
+	private final FinitePrefix<LETTER, PLACE> mFinitePrefixOfDifference;
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 
 	private final DifferenceSynchronizationInformation<LETTER, PLACE> mDifferenceSynchronizationInformation;
@@ -116,12 +116,11 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 						"Subtrahend is not yet constructed. Will not use universal subtrahend loopers optimization.");
 			}
 		}
-		mDifference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend,
-				universalSubtrahendLoopers);
-		mFinitePrefixOfResult = new FinitePrefix<LETTER, PLACE>(mServices, mDifference);
+		mDifference = new DifferencePetriNet<>(mServices, mMinuend, mSubtrahend, universalSubtrahendLoopers);
+		mFinitePrefixOfDifference = new FinitePrefix<LETTER, PLACE>(mServices, mDifference);
 		mResult = mDifference.getYetConstructedPetriNet();
 
-		final Set<ITransition<LETTER, PLACE>> vitalTransitionsOfDifference = mFinitePrefixOfResult.getResult()
+		final Set<ITransition<LETTER, PLACE>> vitalTransitionsOfDifference = mFinitePrefixOfDifference.getResult()
 				.computeVitalTransitions();
 		mDifferenceSynchronizationInformation = mDifference
 				.computeDifferenceSynchronizationInformation(vitalTransitionsOfDifference, true);
@@ -147,7 +146,6 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 		this(services, factory, minuendNet, subtrahendDfa, null);
 	}
 
-
 	public Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> getTransitionBacktranslation() {
 		return mDifference.getTransitionBacktranslation();
 	}
@@ -166,7 +164,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
-		statistics.addAllStatistics(mFinitePrefixOfResult.getAutomataOperationStatistics());
+		statistics.addAllStatistics(mFinitePrefixOfDifference.getAutomataOperationStatistics());
 		statistics.addKeyValuePair(StatisticsType.PETRI_ALPHABET, mResult.getAlphabet().size());
 		statistics.addKeyValuePair(StatisticsType.PETRI_PLACES, mResult.getPlaces().size());
 		statistics.addKeyValuePair(StatisticsType.PETRI_TRANSITIONS, mResult.getTransitions().size());
@@ -190,7 +188,9 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 		return mResult;
 	}
 
-
+	public FinitePrefix<LETTER, PLACE> getFinitePrefixOfDifference() {
+		return mFinitePrefixOfDifference;
+	}
 
 	public DifferenceSynchronizationInformation<LETTER, PLACE> getDifferenceSynchronizationInformation() {
 		return mDifferenceSynchronizationInformation;
