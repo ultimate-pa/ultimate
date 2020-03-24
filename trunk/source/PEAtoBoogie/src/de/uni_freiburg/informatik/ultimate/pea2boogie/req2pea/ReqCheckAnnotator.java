@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2020 Vincent Langenfeld <langenfv@tf.uni-freiburg.de>
+ * Copyright (C) 2020 University of Freiburg
+ *
+ * This file is part of the ULTIMATE PEAtoBoogie plug-in.
+ *
+ * The ULTIMATE PEAtoBoogie plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE PEAtoBoogie plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE PEAtoBoogie plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE PEAtoBoogie plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE PEAtoBoogie plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
 import java.util.ArrayList;
@@ -30,10 +56,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
@@ -46,6 +74,11 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTrans
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
 
+/**
+ * 
+ * @author Vincent Langenfeld <langenfv@tf.uni-freiburg.de>
+ *
+ */
 public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 	private static final boolean DEBUG_ONLY_FIRST_NON_TRIVIAL_RT_INCONSISTENCY = false;
@@ -64,14 +97,14 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 	private final IReqSymbolTable mSymbolTable;
-	private final Map<PatternType, PhaseEventAutomata> mReq2Automata;
+	private final Map<PatternType, ReqPeas> mReq2Automata;
 
 	public ReqCheckAnnotator(final IUltimateServiceProvider services, final ILogger logger,
-			final Map<PatternType, PhaseEventAutomata> req2Automata, IReqSymbolTable symbolTable) {
+			final Map<PatternType, ReqPeas> pattern2Peas, final IReqSymbolTable symbolTable) {
 		mLogger = logger;
 		mServices = services;
 		mSymbolTable = symbolTable;
-		mReq2Automata = req2Automata;
+		mReq2Automata = pattern2Peas;
 		mPeaResultUtil = new PeaResultUtil(mLogger, mServices);
 		// TODO: Add locations to pattern type to generate meaningful boogie locations
 		mUnitLocation = new BoogieLocation("", -1, -1, -1, -1);
@@ -123,7 +156,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return generateAnnotations();
 	}
 
-
 	private List<Statement> generateAnnotations() {
 		final List<Statement> annotations = new ArrayList<>();
 		if (mCheckConsistency) {
@@ -136,7 +168,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return annotations;
 	}
 
-	private List<Statement> genCheckConsistency(final BoogieLocation bl) {
+	private static List<Statement> genCheckConsistency(final BoogieLocation bl) {
 		final ReqCheck check = new ReqCheck(Spec.CONSISTENCY);
 		final Expression expr = ExpressionFactory.createBooleanLiteral(bl, false);
 		return Collections.singletonList(createAssert(expr, check, "CONSISTENCY"));
@@ -206,7 +238,6 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		return stmtList;
 	}
 
-
 	private Statement genAssertRTInconsistency(final Entry<PatternType, PhaseEventAutomata>[] subset) {
 		final Set<PhaseEventAutomata> automataSet =
 				Arrays.stream(subset).map(a -> a.getValue()).collect(Collectors.toSet());
@@ -263,12 +294,14 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 
 		final List<Statement> stmtList = new ArrayList<>();
-		for (final Entry<PatternType, PhaseEventAutomata> entry : mReq2Automata.entrySet()) {
-			final Statement assertStmt = genAssertNonVacuous(entry.getKey(), entry.getValue(), bl);
-			if (assertStmt != null) {
-				stmtList.add(assertStmt);
+		for (final Entry<PatternType, ReqPeas> entry : mReq2Automata.entrySet()) {
+			final PatternType pattern = entry.getKey();
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
+				final Statement assertStmt = genAssertNonVacuous(pattern, pea.getValue(), bl);
+				if (assertStmt != null) {
+					stmtList.add(assertStmt);
+				}
 			}
-
 		}
 		return stmtList;
 	}
@@ -357,11 +390,11 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 	@Override
 	public List<Statement> getPreChecks() {
-		return Collections.EMPTY_LIST;
+		return Collections.emptyList();
 	}
 
 	@Override
 	public List<Statement> getPostTransitionChecks() {
-		return Collections.EMPTY_LIST;
+		return Collections.emptyList();
 	}
 }

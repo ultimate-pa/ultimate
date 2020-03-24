@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -53,36 +54,33 @@ public class UniversalityPattern extends PatternType {
 	}
 
 	@Override
-	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
+	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		final SrParseScope scope = getScope();
 		final CDD S = cdds[0];
 
+		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			final CounterTrace ct = counterTrace(phaseT(), phase(S.negate()), phaseT());
-			return ct;
+			ct = counterTrace(phaseT(), phase(S.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD P = scope.getCdd1();
-			final CounterTrace ct = counterTrace(phase(P.negate()), phase(S.negate().and(P.negate())), phaseT());
-			return ct;
+			ct = counterTrace(phase(P.negate()), phase(S.negate().and(P.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			final CounterTrace ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
-					phase(S.negate().and(Q.negate())), phaseT());
-			return ct;
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(S.negate().and(Q.negate())),
+					phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
-			final CounterTrace ct = counterTrace(phaseT(), phase(P), phaseT(), phase(S.negate()), phaseT());
-			return ct;
+			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(S.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			final CounterTrace ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
-					phase(S.negate().and(Q.negate())), phase(Q.negate()), phase(Q), phaseT());
-			return ct;
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(S.negate().and(Q.negate())),
+					phase(Q.negate()), phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
+		return Collections.singletonList(ct);
 	}
 
 	@Override

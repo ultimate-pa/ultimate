@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -50,7 +51,7 @@ public class ResponseChain21Pattern extends PatternType {
 	}
 
 	@Override
-	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
+	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		final SrParseScope scope = getScope();
 		// note: P and Q are reserved for scope, cdds are parsed in reverse order
 		final CDD U = cdds[0];
@@ -67,7 +68,6 @@ public class ResponseChain21Pattern extends PatternType {
 					phase(P.negate()), phase(P.negate().and(U)), phase(P.negate().and(T.negate())), phase(P.negate()),
 					phase(P), phaseT());
 
-			return ct;
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = getScope().getCdd1();
 			final CDD Q = getScope().getCdd2();
@@ -76,9 +76,10 @@ public class ResponseChain21Pattern extends PatternType {
 			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R)),
 					phase(Q.negate()), phase(Q.negate().and(S)), phase(Q.negate()), phase(Q.negate().and(U)),
 					phase(Q.negate().and(T.negate())), phase(Q), phaseT());
-			return ct;
+		} else {
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
-		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+		return Collections.singletonList(ct);
 	}
 
 	@Override

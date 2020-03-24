@@ -123,7 +123,6 @@ public class ReqSymboltableBuilder {
 			return;
 		}
 
-
 		switch (initPattern.getCategory()) {
 		case CONST:
 			addVar(name, type, initPattern, mConstVars);
@@ -146,6 +145,10 @@ public class ReqSymboltableBuilder {
 		}
 	}
 
+	/**
+	 * Add the variables and clocks of a PEA generated from a pattern to the symbol table.
+	 * 
+	 */
 	public void addPea(final PatternType pattern, final PhaseEventAutomata pea) {
 		addVar(getPcName(pea), BoogieType.TYPE_INT, pattern, mPcVars);
 		pea.getClocks().forEach(a -> addVar(a, BoogieType.TYPE_REAL, pattern, mClockVars));
@@ -177,7 +180,7 @@ public class ReqSymboltableBuilder {
 
 	public void addAuxvar(final String name, final String typeString, final PatternType source) {
 		addVar(name, toPrimitiveType(typeString), source, this.mStateVars);
-	}
+		}
 
 	public IReqSymbolTable constructSymbolTable() {
 		final String deltaVar = declareDeltaVar();
@@ -267,7 +270,7 @@ public class ReqSymboltableBuilder {
 				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		mId2IdExpr.put(name, idExpr);
 		mId2VarLHS.put(name, new VariableLHS(loc, name));
-	}
+		}
 
 	private void checkVar(final String name, final PatternType source) {
 		if (mId2Type.containsKey(name)) {
@@ -483,7 +486,7 @@ public class ReqSymboltableBuilder {
 			final List<Declaration> rtr = new ArrayList<>();
 			// add constant declarations
 			varlists.stream().map(a -> new ConstDeclaration(a.getLocation(), EMPTY_ATTRIBUTES, false, a, null, false))
-			.forEachOrdered(rtr::add);
+					.forEachOrdered(rtr::add);
 			// add axiom for each constant
 			for (final VarList varlist : varlists) {
 				for (final String id : varlist.getIdentifiers()) {

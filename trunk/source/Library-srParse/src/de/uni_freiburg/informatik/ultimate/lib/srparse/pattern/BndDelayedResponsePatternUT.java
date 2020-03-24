@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -49,7 +50,7 @@ public class BndDelayedResponsePatternUT extends PatternType {
 	}
 
 	@Override
-	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
+	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		assert cdds.length == 2 && durations.length == 2;
 
 		final SrParseScope scope = getScope();
@@ -61,8 +62,8 @@ public class BndDelayedResponsePatternUT extends PatternType {
 
 		if (scope instanceof SrParseScopeGlobally) {
 			// TODO: needs 2 ct formulas
-			return counterTrace(phaseT(), phase(R), phase(CDD.TRUE, BoundTypes.LESSEQUAL, c1),
-					phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT());
+			return Collections.singletonList(counterTrace(phaseT(), phase(R), phase(CDD.TRUE, BoundTypes.LESSEQUAL, c1),
+					phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT()));
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}

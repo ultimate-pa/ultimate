@@ -44,7 +44,7 @@ public class PossibilityPattern extends PatternType {
 	}
 
 	@Override
-	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
+	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		throw new PatternScopeNotImplemented(getScope().getClass(), getClass());
 	}
 

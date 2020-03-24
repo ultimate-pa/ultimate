@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -51,7 +52,7 @@ public class PrecedenceChain12Pattern extends PatternType {
 	}
 
 	@Override
-	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
+	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		final SrParseScope scope = getScope();
 		// note: Q and R are reserved for scope, cdds are parsed in reverse order
 		final CDD P = cdds[2];
@@ -86,7 +87,7 @@ public class PrecedenceChain12Pattern extends PatternType {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
 
-		return ct;
+		return Collections.singletonList(ct);
 	}
 
 	@Override

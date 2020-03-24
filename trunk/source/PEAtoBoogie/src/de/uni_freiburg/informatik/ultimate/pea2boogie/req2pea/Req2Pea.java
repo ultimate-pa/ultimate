@@ -34,13 +34,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
@@ -57,7 +60,7 @@ public class Req2Pea implements IReq2Pea {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final PeaResultUtil mResultUtil;
-	private final Map<PatternType, PhaseEventAutomata> mPattern2Peas;
+	private final Map<PatternType, ReqPeas> mPattern2Peas;
 	private final IReqSymbolTable mSymbolTable;
 	private final boolean mHasErrors;
 
@@ -66,7 +69,6 @@ public class Req2Pea implements IReq2Pea {
 		mLogger = logger;
 		mServices = services;
 		mResultUtil = new PeaResultUtil(mLogger, mServices);
-
 
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
 
@@ -78,8 +80,10 @@ public class Req2Pea implements IReq2Pea {
 		final Map<String, Integer> id2bounds = builder.getId2Bounds();
 		mPattern2Peas = generatePeas(requirements, id2bounds);
 
-		for (final Entry<PatternType, PhaseEventAutomata> entry : mPattern2Peas.entrySet()) {
-			builder.addPea(entry.getKey(), entry.getValue());
+		for (final Entry<PatternType, ReqPeas> entry : mPattern2Peas.entrySet()) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
+				builder.addPea(entry.getKey(), pea.getValue());
+			}
 		}
 
 		mSymbolTable = builder.constructSymbolTable();
@@ -97,7 +101,7 @@ public class Req2Pea implements IReq2Pea {
 	}
 
 	@Override
-	public Map<PatternType, PhaseEventAutomata> getPattern2Peas() {
+	public Map<PatternType, ReqPeas> getPattern2Peas() {
 		return Collections.unmodifiableMap(mPattern2Peas);
 	}
 
@@ -106,16 +110,15 @@ public class Req2Pea implements IReq2Pea {
 		return mSymbolTable;
 	}
 
-	private Map<PatternType, PhaseEventAutomata> generatePeas(final List<PatternType> patterns,
+	private Map<PatternType, ReqPeas> generatePeas(final List<PatternType> patterns,
 			final Map<String, Integer> id2bounds) {
-		final Map<PatternType, PhaseEventAutomata> req2automata = new LinkedHashMap<>();
+		final Map<PatternType, ReqPeas> req2automata = new LinkedHashMap<>();
 		mLogger.info(String.format("Transforming %s requirements to PEAs", patterns.size()));
 
 		final Map<Class<?>, Integer> counter = new HashMap<>();
 
 		for (final PatternType pat : patterns) {
-
-			final PhaseEventAutomata pea;
+			final ReqPeas pea;
 			try {
 				if (ENABLE_DEBUG_LOGS) {
 					mLogger.info("Transforming " + pat.getId());
@@ -127,14 +130,19 @@ public class Req2Pea implements IReq2Pea {
 				mResultUtil.transformationError(pat, reason);
 				continue;
 			}
-			if (pea.getInit().length == 0) {
-				mResultUtil.transformationError(pat, "No initial phase");
+
+			if (pea.getCounterTrace2Pea().stream().map(Entry::getValue).anyMatch(a -> a.getInit().length == 0)) {
+				mResultUtil.transformationError(pat, "A PEA is missing its initial phase");
 				continue;
 			}
-			final PhaseEventAutomata old = req2automata.put(pat, pea);
+			final ReqPeas old = req2automata.put(pat, pea);
 			if (old != null) {
-				mResultUtil.transformationError(pat, "Duplicate automaton: " + old.getName() + " and " + pea.getName());
-				continue;
+				final String msg = String.format("Duplicate automata: %s and %s",
+						old.getCounterTrace2Pea().stream().map(a -> a.getValue().getName())
+								.collect(Collectors.joining(",")),
+						pea.getCounterTrace2Pea().stream().map(Entry::getValue).map(PhaseEventAutomata::getName)
+								.collect(Collectors.joining(",")));
+				mResultUtil.transformationError(pat, msg);
 			}
 		}
 		mLogger.info("Following types of requirements were processed");
@@ -153,8 +161,8 @@ public class Req2Pea implements IReq2Pea {
 	}
 
 	@Override
-	public void transform(IReq2Pea previous) {
-		//do nothing, as this IReq2Pea should generate new Peas from reqs and do not do any transformation.
+	public void transform(final IReq2Pea previous) {
+		// do nothing, as this IReq2Pea should generate new Peas from reqs and do not do any transformation.
 	}
 
 	@Override

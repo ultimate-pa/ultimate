@@ -45,7 +45,7 @@ public class ResponseChain12Pattern extends PatternType {
 	}
 
 	@Override
-	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
+	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		final SrParseScope scope = getScope();
 		final CDD P = cdds[2];
 		final CDD S = cdds[1];

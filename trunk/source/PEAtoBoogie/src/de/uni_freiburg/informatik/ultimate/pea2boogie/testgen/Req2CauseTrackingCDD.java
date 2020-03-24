@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
@@ -22,12 +23,9 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 
 public class Req2CauseTrackingCDD {
 
-	private final ILogger mLogger;
 	private final Map<String, String> mTrackingVars;
-	private final int CONST_MIN_DELAY = 1;
 
 	public Req2CauseTrackingCDD(final ILogger logger) {
-		mLogger = logger;
 		mTrackingVars = new HashMap<>();
 	}
 
@@ -39,8 +37,7 @@ public class Req2CauseTrackingCDD {
 		if (isEffectPhase) {
 			trackedVars.removeAll(effectVars);
 		}
-		final CDD newGuard = addTrackingGuards(cdd, trackedVars,negateTrackingVar);
-		return newGuard;
+		return addTrackingGuards(cdd, trackedVars, negateTrackingVar);
 	}
 
 	public CDD transformGurad(final IReqSymbolTable symbolTable, final CDD cdd, final Set<String> effectVars,
@@ -54,8 +51,7 @@ public class Req2CauseTrackingCDD {
 		vars.removeAll(effectVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
 		vars.removeAll(inputVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
 		final CDD newGuard = addTrackingGuards(cdd, vars, false);
-		final CDD wClocks = transformGuardClock(newGuard, isEffectEdge);
-		return wClocks;
+		return transformGuardClock(newGuard, isEffectEdge);
 	}
 
 	private CDD addTrackingGuards(final CDD cdd, final Set<String> trackedVars, final boolean negateTrackingVar) {
@@ -92,8 +88,7 @@ public class Req2CauseTrackingCDD {
 		return annotatedCDD;
 	}
 
-
-	public CDD transformClockInvariant(CDD cdd, boolean effectState) {
+	public CDD transformClockInvariant(final CDD cdd, final boolean effectState) {
 		if (cdd == CDD.TRUE || cdd == CDD.FALSE || !effectState) {
 			return cdd;
 		}
@@ -113,7 +108,7 @@ public class Req2CauseTrackingCDD {
 		return CDD.create(cdd.getDecision(), children);
 	}
 
-	private CDD transformClockDecisionInvariant(RangeDecision d, CDD[] children) {
+	private static CDD transformClockDecisionInvariant(final RangeDecision d, final CDD[] children) {
 		CDD returnDecision = CDD.TRUE;
 		for (int i = 0; i < children.length; i++) {
 			if (children[i] == CDD.FALSE) {
@@ -124,17 +119,16 @@ public class Req2CauseTrackingCDD {
 		return returnDecision;
 	}
 
-	private CDD transformPrefixClockDecisionInvariant(RangeDecision d, int trueChild) {
+	private static CDD transformPrefixClockDecisionInvariant(final RangeDecision d, final int trueChild) {
 		switch (d.getOp(trueChild)) {
-		//TODO care about <>_{<= x} E things only, rest of clocks in peas are already ok
+		// TODO care about <>_{<= x} E things only, rest of clocks in peas are already ok
 		default:
-			return RangeDecision.create(d.getVar(), d.getOp(trueChild) , d.getVal(trueChild));
+			return RangeDecision.create(d.getVar(), d.getOp(trueChild), d.getVal(trueChild));
 		}
 	}
 
 	/*
-	 * Transforms a CDD containing a range decision as follows:
-	 * -  t <= c  to  t >= c
+	 * Transforms a CDD containing a range decision as follows: - t <= c to t >= c
 	 *
 	 * Note: if the CDD is no range decision, this will return CDD.True
 	 */
@@ -165,17 +159,16 @@ public class Req2CauseTrackingCDD {
 		return CDD.create(cdd.getDecision(), children);
 	}
 
-
-	private CDD transformLowerToUpperClockGuard(RangeDecision d, int trueChild) {
+	private static CDD transformLowerToUpperClockGuard(final RangeDecision d, final int trueChild) {
 		switch (d.getOp(trueChild)) {
 		case RangeDecision.OP_LTEQ:
-			return RangeDecision.create(d.getVar(), RangeDecision.OP_GTEQ , d.getVal(trueChild));
+			return RangeDecision.create(d.getVar(), RangeDecision.OP_GTEQ, d.getVal(trueChild));
 		default:
-			return RangeDecision.create(d.getVar(), d.getOp(trueChild) , d.getVal(trueChild));
+			return RangeDecision.create(d.getVar(), d.getOp(trueChild), d.getVal(trueChild));
 		}
 	}
 
-	public CDD transformGuardClock(final CDD cdd, boolean effectEdge) {
+	public CDD transformGuardClock(final CDD cdd, final boolean effectEdge) {
 		if (cdd == CDD.TRUE || cdd == CDD.FALSE || !effectEdge) {
 			return cdd;
 		}
@@ -202,20 +195,24 @@ public class Req2CauseTrackingCDD {
 		return CDD.create(cdd.getDecision(), children);
 	}
 
-	private CDD transformPrefixClockDecisionGuard(RangeDecision d, int trueChild) {
+	private static CDD transformPrefixClockDecisionGuard(final RangeDecision d, final int trueChild) {
 		switch (d.getOp(trueChild)) {
-		//TODO care about <>_{<= x} E things only, rest of clocks in peas are already ok
+		// TODO care about <>_{<= x} E things only, rest of clocks in peas are already ok
 		default:
-			return RangeDecision.create(d.getVar(), d.getOp(trueChild) , d.getVal(trueChild));
+			return RangeDecision.create(d.getVar(), d.getOp(trueChild), d.getVal(trueChild));
 		}
 	}
 
-	public static Set<String> getAllVariables(PatternType pattern,  Map<String, Integer> id2bounds){
-		final DCPhase[] tc = pattern.constructCounterTrace(id2bounds).getPhases();
-		// find max phase and second max phase, compare
+	public static Set<String> getAllVariables(final PatternType pattern, final Map<String, Integer> id2bounds) {
+		final List<CounterTrace> cts = pattern.constructCounterTrace(id2bounds);
 		final Set<String> variables = new HashSet<>();
-		for (final DCPhase p : tc) {
-			variables.addAll(getCddVariables(p.getInvariant()));
+
+		for (final CounterTrace ct : cts) {
+			final DCPhase[] tc = ct.getPhases();
+			// find max phase and second max phase, compare
+			for (final DCPhase p : tc) {
+				variables.addAll(getCddVariables(p.getInvariant()));
+			}
 		}
 		return variables;
 	}
@@ -230,14 +227,21 @@ public class Req2CauseTrackingCDD {
 	}
 
 	public static Set<String> getEffectVariables(final PatternType pattern, final Map<String, Integer> id2bounds) {
-		final DCPhase[] tc = pattern.constructCounterTrace(id2bounds).getPhases();
-		//find max phase and second max phase, compare
-		final CDD finalStateInvar = tc[tc.length - 2].getInvariant();
-		if(tc.length >= 3) {
-			final CDD beforeStateInvar = tc[tc.length - 3].getInvariant();
-			return getDifferences(beforeStateInvar, finalStateInvar);
+		final List<CounterTrace> cts = pattern.constructCounterTrace(id2bounds);
+		final Set<String> variables = new HashSet<>();
+
+		for (final CounterTrace ct : cts) {
+			final DCPhase[] tc = ct.getPhases();
+			// find max phase and second max phase, compare
+			final CDD finalStateInvar = tc[tc.length - 2].getInvariant();
+			if (tc.length >= 3) {
+				final CDD beforeStateInvar = tc[tc.length - 3].getInvariant();
+				variables.addAll(getDifferences(beforeStateInvar, finalStateInvar));
+			} else {
+				variables.addAll(getCddVariables(finalStateInvar));
+			}
 		}
-		return getCddVariables(finalStateInvar);
+		return variables;
 	}
 
 	private static Set<String> getDifferences(final CDD beforeStateInvar, final CDD finalStateInvar) {
@@ -324,6 +328,5 @@ public class Req2CauseTrackingCDD {
 	public Map<String, String> getTrackingVars() {
 		return mTrackingVars;
 	}
-
 
 }

@@ -14,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -51,19 +50,19 @@ public class ReqTestResultUtil {
 		final List<TestStep> testSteps = new ArrayList<>();
 		@SuppressWarnings("unchecked")
 		final IProgramExecution<?, Expression> translatedPe = (IProgramExecution<?, Expression>) mServices
-		.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
-		final AtomicTraceElement<IElement> finalElement =
-				((AtomicTraceElement<IElement>) translatedPe.getTraceElement(translatedPe.getLength() - 1));
+				.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
+		final AtomicTraceElement<?> finalElement = translatedPe.getTraceElement(translatedPe.getLength() - 1);
 		ProgramState<Expression> peek = null;
 		for (int i = 0; i < translatedPe.getLength(); i++) {
 			if (translatedPe.getProgramState(i) != null) {
 				peek = translatedPe.getProgramState(i);
 			}
-			final AtomicTraceElement<IElement> ate = ((AtomicTraceElement<IElement>) translatedPe.getTraceElement(i));
+			final AtomicTraceElement<?> ate = translatedPe.getTraceElement(i);
 			if (ate.getStep() == finalElement.getStep()) {
 				if (peek == null) {
-					mLogger.error("Assertion did not contain state (but would have been neccessary for test generation):"
-							+ ate.getStep().toString());
+					mLogger.error(
+							"Assertion did not contain state (but would have been neccessary for test generation):"
+									+ ate.getStep().toString());
 					continue;
 				}
 				testSteps.add(getTestStep(peek));
@@ -83,8 +82,8 @@ public class ReqTestResultUtil {
 				inputAssignment.put((IdentifierExpression) exp, programState.getValues(exp));
 			} else if (exp instanceof IdentifierExpression && mReqSymbolTable.getDeltaVarName().equals(ident)) {
 				waitForTime = programState.getValues(exp);
-			} else if (exp instanceof IdentifierExpression && mReqSymbolTable.getOutputVars().contains(ident) &&
-					isSetByEffect(ident, programState)){
+			} else if (exp instanceof IdentifierExpression && mReqSymbolTable.getOutputVars().contains(ident)
+					&& isSetByEffect(ident, programState)) {
 				outputAssignment.put((IdentifierExpression) exp, programState.getValues(exp));
 			}
 
@@ -92,23 +91,22 @@ public class ReqTestResultUtil {
 		return new TestStep(inputAssignment, outputAssignment, waitForTime);
 	}
 
-	private boolean isSetByEffect(String ident, final ProgramState<Expression> programState) {
+	private boolean isSetByEffect(final String ident, final ProgramState<Expression> programState) {
 		final String trackingVar = ReqTestAnnotator.getTrackingVar(ident);
 		for (final Expression identExpr : programState.getVariables()) {
-			if (((IdentifierExpression)identExpr).getIdentifier().equals(trackingVar)) {
-				for (final Expression expr: programState.getValues(identExpr)) {
+			if (((IdentifierExpression) identExpr).getIdentifier().equals(trackingVar)) {
+				for (final Expression expr : programState.getValues(identExpr)) {
 					if (expr instanceof BooleanLiteral) {
-						return ((BooleanLiteral)expr).getValue();
-					} else {
-						mLogger.error("Unsuspected Value for tracking Variable for var: " + ident);
+						return ((BooleanLiteral) expr).getValue();
 					}
+					mLogger.error("Unsuspected Value for tracking Variable for var: " + ident);
 				}
 			}
 		}
 		return false;
 	}
 
-	private static String getTestAssertionName(final IElement e) {
+	private static String getTestAssertionName(final Object e) {
 		if (e instanceof AssertStatement) {
 			final NamedAttribute[] attrs = ((AssertStatement) e).getAttributes();
 			if (attrs != null && attrs.length > 0) {

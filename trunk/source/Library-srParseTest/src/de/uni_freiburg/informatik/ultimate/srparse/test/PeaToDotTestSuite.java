@@ -39,6 +39,7 @@ import java.util.Formatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -65,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternScopeNotImplemented;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -110,22 +112,23 @@ public class PeaToDotTestSuite {
 
 	@Test
 	public void testDot() throws IOException, InterruptedException {
-		final PhaseEventAutomata pea;
-		final CounterTrace counterTrace;
 
 		if (!CREATE_NEW_FILES) {
 			return;
 		}
 
+		final ReqPeas reqPeas;
 		try {
-			pea = mPattern.transformToPea(mLogger, mDurationToBounds);
-			counterTrace = mPattern.constructCounterTrace(mDurationToBounds);
+			reqPeas = mPattern.transformToPea(mLogger, mDurationToBounds);
 		} catch (final PatternScopeNotImplemented e) {
-			return; // Oops, somebody forgot to implement that sh.. ;-)
+			mLogger.fatal("Pattern not implemented: " + mPattern.getId());
+			return; // Oops, somebody forgot to implement t
 		}
 
-		writeSvgFile(DotWriterNew.createDotString(pea));
-		writeMarkdownFile(counterTrace.toString());
+		for (final Entry<CounterTrace, PhaseEventAutomata> entry : reqPeas.getCounterTrace2Pea()) {
+			writeSvgFile(DotWriterNew.createDotString(entry.getValue()));
+			writeMarkdownFile(entry.getKey().toString());
+		}
 	}
 
 	private void writeSvgFile(final String dot) throws IOException, InterruptedException {
@@ -210,11 +213,11 @@ public class PeaToDotTestSuite {
 		}
 
 		// Check if root directory exists.
-		assert (Files.isDirectory(ROOT_DIR.toPath())) : "Directory not found: " + ROOT_DIR;
+		assert Files.isDirectory(ROOT_DIR.toPath()) : "Directory not found: " + ROOT_DIR;
 
 		// Check if markdown, pea image directory exist, otherwise create them.
-		assert (PEA_IMAGE_DIR.isDirectory() || PEA_IMAGE_DIR.mkdirs()) : "Failed to create directory: " + PEA_IMAGE_DIR;
-		assert (MARKDOWN_DIR.isDirectory() || MARKDOWN_DIR.mkdirs()) : "Failed to create directory: " + MARKDOWN_DIR;
+		assert PEA_IMAGE_DIR.isDirectory() || PEA_IMAGE_DIR.mkdirs() : "Failed to create directory: " + PEA_IMAGE_DIR;
+		assert MARKDOWN_DIR.isDirectory() || MARKDOWN_DIR.mkdirs() : "Failed to create directory: " + MARKDOWN_DIR;
 
 		// Delete auto generated files.
 		Stream.of(PEA_IMAGE_DIR.listFiles()).filter(a -> a.getName().endsWith(".svg")).forEach(a -> a.delete());

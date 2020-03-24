@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -48,7 +49,7 @@ public class TogglePattern extends PatternType {
 	}
 
 	@Override
-	protected CounterTrace transform(final CDD[] cdds, final int[] durations) {
+	protected List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		final SrParseScope scope = getScope();
 		final CDD S = cdds[0];
 		final CDD P = cdds[1];
@@ -57,7 +58,7 @@ public class TogglePattern extends PatternType {
 		if (scope instanceof SrParseScopeGlobally) {
 			final CounterTrace ct = counterTrace(phaseT(), phase(P.and(S)), phase(P.negate()),
 					phase(P.negate().and(T.negate())), phaseT());
-			return ct;
+			return Collections.singletonList(ct);
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}

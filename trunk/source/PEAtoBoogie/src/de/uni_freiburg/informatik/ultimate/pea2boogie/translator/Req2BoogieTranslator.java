@@ -68,11 +68,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
@@ -93,7 +95,7 @@ import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer
 public class Req2BoogieTranslator {
 
 	private final Unit mUnit;
-	private final Map<PatternType, PhaseEventAutomata> mReq2Automata;
+	private final Map<PatternType, ReqPeas> mReq2Automata;
 	private final BoogieLocation mUnitLocation;
 
 	private final ILogger mLogger;
@@ -170,11 +172,11 @@ public class Req2BoogieTranslator {
 		return req2pea;
 	}
 
-	private void annotateContainedPatternSet(final Unit unit, final Map<PatternType, PhaseEventAutomata> req2Automata,
+	private static void annotateContainedPatternSet(final Unit unit, final Map<PatternType, ?> req2Automata2,
 			final List<InitializationPattern> init) {
 		final List<PatternType> patternList = new ArrayList<>(init);
-		req2Automata.entrySet().stream().map(e -> e.getKey()).forEachOrdered(patternList::add);
-		new PatternContainer(patternList).annotate(mUnit);
+		req2Automata2.entrySet().stream().map(Entry::getKey).forEachOrdered(patternList::add);
+		new PatternContainer(patternList).annotate(unit);
 	}
 
 	public Unit getUnit() {
@@ -419,12 +421,11 @@ public class Req2BoogieTranslator {
 			}
 		}
 
-		if(mUsePrimedPc) {
+		if (mUsePrimedPc) {
 			smtList.add(genPCAssign(mSymboltable.getPrimedVarId(pcName), phaseIndex, bl));
 		} else {
 			smtList.add(genPCAssign(pcName, phaseIndex, bl));
 		}
-
 
 		return smtList.toArray(new Statement[smtList.size()]);
 	}
@@ -502,15 +503,20 @@ public class Req2BoogieTranslator {
 		final List<Statement> stmtList = new ArrayList<>();
 		stmtList.addAll(genDelay(bl));
 
-		for (final Entry<PatternType, PhaseEventAutomata> entry : mReq2Automata.entrySet()) {
-			stmtList.addAll(
-					genInvariantGuards(entry.getKey(), entry.getValue(), mSymboltable.getPcName(entry.getValue()), bl));
+		for (final Entry<PatternType, ReqPeas> entry : mReq2Automata.entrySet()) {
+			final PatternType pattern = entry.getKey();
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
+				stmtList.addAll(
+						genInvariantGuards(pattern, pea.getValue(), mSymboltable.getPcName(pea.getValue()), bl));
+			}
 		}
 
 		stmtList.addAll(mReqCheckAnnotator.getStateChecks());
 
-		for (final Entry<PatternType, PhaseEventAutomata> entry : mReq2Automata.entrySet()) {
-			stmtList.add(genOuterIfTransition(entry.getValue(), mSymboltable.getPcName(entry.getValue()), bl));
+		for (final Entry<PatternType, ReqPeas> entry : mReq2Automata.entrySet()) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
+				stmtList.add(genOuterIfTransition(pea.getValue(), mSymboltable.getPcName(pea.getValue()), bl));
+			}
 		}
 
 		stmtList.addAll(mReqCheckAnnotator.getPostTransitionChecks());
@@ -568,11 +574,13 @@ public class Req2BoogieTranslator {
 
 	private List<Statement> genInitialPhasesStmts(final BoogieLocation bl) {
 		final List<Statement> stmts = new ArrayList<>();
-		for (final Entry<PatternType, PhaseEventAutomata> entry : mReq2Automata.entrySet()) {
-			final PhaseEventAutomata aut = entry.getValue();
-			final VariableLHS lhs = mSymboltable.getVariableLhs(mSymboltable.getPcName(aut));
-			stmts.add(new HavocStatement(lhs.getLocation(), new VariableLHS[] { lhs }));
-			stmts.add(new AssumeStatement(lhs.getLocation(), genPcExpr(aut)));
+		for (final Entry<PatternType, ReqPeas> entry : mReq2Automata.entrySet()) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : entry.getValue().getCounterTrace2Pea()) {
+				final PhaseEventAutomata aut = ct2pea.getValue();
+				final VariableLHS lhs = mSymboltable.getVariableLhs(mSymboltable.getPcName(aut));
+				stmts.add(new HavocStatement(lhs.getLocation(), new VariableLHS[] { lhs }));
+				stmts.add(new AssumeStatement(lhs.getLocation(), genPcExpr(aut)));
+			}
 		}
 		return stmts;
 	}

@@ -69,10 +69,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -87,6 +89,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -137,7 +140,7 @@ public class RtInconcistencyConditionGenerator {
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final PeaResultUtil peaResultUtil, final IReqSymbolTable symboltable,
-			final Map<PatternType, PhaseEventAutomata> req2Automata, final BoogieDeclarations boogieDeclarations,
+			final Map<PatternType, ReqPeas> req2Automata, final BoogieDeclarations boogieDeclarations,
 			final boolean separateInvariantHandling) throws InvariantInfeasibleException {
 		mReqSymboltable = symboltable;
 		mServices = services;
@@ -211,12 +214,22 @@ public class RtInconcistencyConditionGenerator {
 	 * Return a subset of requirements that should be used for generating rt-inconsistency checks.
 	 */
 	public List<Entry<PatternType, PhaseEventAutomata>>
-			getRelevantRequirements(final Map<PatternType, PhaseEventAutomata> req2Automata) {
-		if (mSeparateInvariantHandling) {
-			// we only consider automata that do not represent invariants or which have a disjunctive invariant
-			return req2Automata.entrySet().stream().filter(this::filterReqs).collect(Collectors.toList());
+			getRelevantRequirements(final Map<PatternType, ReqPeas> req2Automata) {
+		// we only consider automata that do not represent invariants or which have a disjunctive invariant
+		final List<Entry<PatternType, PhaseEventAutomata>> rtr = new ArrayList<>();
+		for (final Entry<PatternType, ReqPeas> entry : req2Automata.entrySet()) {
+			final PatternType pattern = entry.getKey();
+			final ReqPeas peas = entry.getValue();
+
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : peas.getCounterTrace2Pea()) {
+				rtr.add(new Pair<>(pattern, pea.getValue()));
+			}
 		}
-		return req2Automata.entrySet().stream().collect(Collectors.toList());
+
+		if (mSeparateInvariantHandling) {
+			return rtr.stream().filter(a -> filterReqs(a.getValue())).collect(Collectors.toList());
+		}
+		return rtr;
 	}
 
 	/**
@@ -226,8 +239,8 @@ public class RtInconcistencyConditionGenerator {
 	 * @param entry
 	 * @return
 	 */
-	private boolean filterReqs(final Entry<PatternType, PhaseEventAutomata> entry) {
-		final Phase[] phases = entry.getValue().getPhases();
+	private boolean filterReqs(final PhaseEventAutomata pea) {
+		final Phase[] phases = pea.getPhases();
 		if (phases.length != 1) {
 			// this is not an invariant, filter it out
 			return true;
@@ -238,11 +251,8 @@ public class RtInconcistencyConditionGenerator {
 		}
 		assert phases.length == 1;
 		final Term stateInv = mCddToSmt.toSmt(phases[0].getStateInvariant());
-		if (SmtUtils.getDisjuncts(stateInv).length != 1) {
-			// this is an invariant with a top-level disjunction, filter it out
-			return true;
-		}
-		return false;
+		// this is an invariant with a top-level disjunction, filter it out
+		return SmtUtils.getDisjuncts(stateInv).length != 1;
 	}
 
 	private Script buildSolver(final IUltimateServiceProvider services) throws AssertionError {
@@ -399,33 +409,20 @@ public class RtInconcistencyConditionGenerator {
 		return SmtUtils.simplify(mManagedScript, term, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 	}
 
-	private Term constructPrimedStateInvariant(final Map<PatternType, PhaseEventAutomata> req2Automata)
+	private Term constructPrimedStateInvariant(final Map<PatternType, ReqPeas> req2Automata)
 			throws InvariantInfeasibleException {
 
 		final Map<PatternType, CDD> primedStateInvariants = new HashMap<>();
-		for (final Entry<PatternType, PhaseEventAutomata> entry : req2Automata.entrySet()) {
-			if (filterReqs(entry)) {
-				// this is not an invariant we want to consider
-				continue;
+		for (final Entry<PatternType, ReqPeas> entry : req2Automata.entrySet()) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
+				if (filterReqs(pea.getValue())) {
+					// this is not an invariant we want to consider
+					continue;
+				}
+				primedStateInvariants.put(entry.getKey(),
+						pea.getValue().getPhases()[0].getStateInvariant().prime(mReqSymboltable.getConstVars()));
 			}
-			primedStateInvariants.put(entry.getKey(),
-					entry.getValue().getPhases()[0].getStateInvariant().prime(mReqSymboltable.getConstVars()));
 		}
-
-		// prepare const equalities
-		// final List<Term> constEqs = new ArrayList<>();
-		// for (final String constVar : mReqSymboltable.getConstVars()) {
-		// final Expression constvalue = mReqSymboltable.getConstValue(constVar);
-		// final Term valTerm = getRational(constvalue);
-		// final Term varTerm = mCddToSmt.getTermVarTerm(constVar);
-		// final Term varPrimedTerm = mCddToSmt.getTermVarTerm(ReqSymboltable.getPrimedVarId(constVar));
-		// final Term constEq = mScript.term("=", valTerm, varTerm);
-		// final Term constPrimedEq = mScript.term("=", valTerm, varPrimedTerm);
-		// constEqs.add(constEq);
-		// constEqs.add(constPrimedEq);
-		// }
-		//
-		// final Term constEqsTerm = SmtUtils.and(mScript, constEqs);
 
 		final Term result;
 		final Map<PatternType, Term> terms;

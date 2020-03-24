@@ -26,9 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -38,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompilerStateless;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * All Hanfor patterns have this type as base type.
@@ -52,7 +56,7 @@ public abstract class PatternType {
 	private final SrParseScope mScope;
 	private final String mId;
 
-	private PhaseEventAutomata mPea;
+	private ReqPeas mPEAs;
 
 	public PatternType(final SrParseScope scope, final String id, final List<CDD> cdds, final List<String> durations) {
 		mScope = scope;
@@ -73,11 +77,11 @@ public abstract class PatternType {
 		return getCdds().toArray(new CDD[getCdds().size()]);
 	}
 
-	public String[] getDurationsAsArray() {
+	private String[] getDurationsAsArray() {
 		return getDuration().toArray(new String[getDuration().size()]);
 	}
 
-	public int[] getDurationsAsIntArray(final Map<String, Integer> id2bounds) {
+	private int[] getDurationsAsIntArray(final Map<String, Integer> id2bounds) {
 		final String[] durations = getDurationsAsArray();
 		final int[] rtr = new int[durations.length];
 		for (int i = 0; i < durations.length; ++i) {
@@ -96,18 +100,23 @@ public abstract class PatternType {
 
 	public abstract PatternType rename(String newName);
 
-	public PhaseEventAutomata transformToPea(final ILogger logger, final Map<String, Integer> id2bounds) {
-		if (mPea == null) {
-			final CounterTrace ct = constructCounterTrace(id2bounds);
+	public ReqPeas transformToPea(final ILogger logger, final Map<String, Integer> id2bounds) {
+		if (mPEAs == null) {
+			final List<CounterTrace> cts = constructCounterTrace(id2bounds);
 			final String name = getId() + "_" + createPeaSuffix();
-			final Trace2PeaCompilerStateless compiler =
-					new Trace2PeaCompilerStateless(logger, name, ct, id2bounds.keySet());
-			mPea = compiler.getResult();
+
+			final List<Entry<CounterTrace, PhaseEventAutomata>> peas = new ArrayList<>(cts.size());
+			for (final CounterTrace ct : cts) {
+				final Trace2PeaCompilerStateless compiler =
+						new Trace2PeaCompilerStateless(logger, name, ct, id2bounds.keySet());
+				peas.add(new Pair<>(ct, compiler.getResult()));
+			}
+			mPEAs = new ReqPeas(this, peas);
 		}
-		return mPea;
+		return mPEAs;
 	}
 
-	public CounterTrace constructCounterTrace(final Map<String, Integer> id2bounds) {
+	public List<CounterTrace> constructCounterTrace(final Map<String, Integer> id2bounds) {
 		final CDD[] cdds = getCddsAsArray();
 		final int[] durations = getDurationsAsIntArray(id2bounds);
 		assert cdds.length == getExpectedCddSize() : "Wrong number of observables for pattern " + getName();
@@ -115,7 +124,7 @@ public abstract class PatternType {
 		return transform(cdds, durations);
 	}
 
-	protected abstract CounterTrace transform(CDD[] cdds, int[] durations);
+	protected abstract List<CounterTrace> transform(CDD[] cdds, int[] durations);
 
 	public abstract int getExpectedCddSize();
 
@@ -257,6 +266,32 @@ public abstract class PatternType {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public static final class ReqPeas {
+		private final PatternType mReq;
+		private final List<Entry<CounterTrace, PhaseEventAutomata>> mPeas;
+
+		public ReqPeas(final PatternType req, final List<Entry<CounterTrace, PhaseEventAutomata>> peas) {
+			mReq = Objects.requireNonNull(req);
+			mPeas = Collections.unmodifiableList(Objects.requireNonNull(peas));
+			if (mPeas.isEmpty()) {
+				throw new IllegalArgumentException("peas is empty");
+			}
+		}
+
+		public PatternType getPattern() {
+			return mReq;
+		}
+
+		public List<Entry<CounterTrace, PhaseEventAutomata>> getCounterTrace2Pea() {
+			return mPeas;
+		}
 	}
 
 }

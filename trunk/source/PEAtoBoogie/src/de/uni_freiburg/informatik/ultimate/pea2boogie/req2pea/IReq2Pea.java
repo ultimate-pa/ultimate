@@ -30,22 +30,26 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 
 /**
+ *
+ * {@link IReq2Pea} is a transformer of patterns and {@link PhaseEventAutomata} (PEAs) to a new mapping of patterns and
+ * PEAs. As a {@link IReqSymbolTable} is
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public interface IReq2Pea {
 
-	Map<PatternType, PhaseEventAutomata> getPattern2Peas();
+	Map<PatternType, ReqPeas> getPattern2Peas();
 
 	IReqSymbolTable getSymboltable();
-	
+
 	void transform(IReq2Pea req2pea);
 
 	boolean hasErrors();
-	
+
 	IReq2PeaAnnotator getAnnotator();
 }

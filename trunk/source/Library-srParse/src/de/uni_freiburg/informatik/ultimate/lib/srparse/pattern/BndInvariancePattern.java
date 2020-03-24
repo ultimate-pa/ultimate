@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -52,7 +53,7 @@ public class BndInvariancePattern extends PatternType {
 	}
 
 	@Override
-	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
+	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		final SrParseScope scope = getScope();
 		// note: P and Q are reserved for scope, cdds are parsed in reverse order
 		final CDD R = cdds[1];
@@ -85,7 +86,7 @@ public class BndInvariancePattern extends PatternType {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
 
-		return ct;
+		return Collections.singletonList(ct);
 	}
 
 	@Override

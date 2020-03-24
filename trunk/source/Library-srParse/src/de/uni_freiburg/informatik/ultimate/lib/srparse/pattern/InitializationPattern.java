@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -93,7 +95,7 @@ public class InitializationPattern extends PatternType {
 	}
 
 	@Override
-	protected CounterTrace transform(final CDD[] cdds, final int[] durations) {
+	protected List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		throw new UnsupportedOperationException();
 	}
 

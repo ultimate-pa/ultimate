@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -49,7 +50,7 @@ public class BndTriggeredEntryConditionPattern extends PatternType {
 	}
 
 	@Override
-	protected CounterTrace transform(final CDD[] cdds, final int[] durations) {
+	protected List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		assert cdds.length == 3 && durations.length == 1;
 
 		final SrParseScope scope = getScope();
@@ -59,8 +60,9 @@ public class BndTriggeredEntryConditionPattern extends PatternType {
 		final int c1 = durations[0];
 
 		if (scope instanceof SrParseScopeGlobally) {
-			return counterTrace(phaseT(), phase(Q, BoundTypes.GREATEREQUAL, c1), phase(S.negate().and(R).and(Q)),
-					phaseT());
+			final CounterTrace ct = counterTrace(phaseT(), phase(Q, BoundTypes.GREATEREQUAL, c1),
+					phase(S.negate().and(R).and(Q)), phaseT());
+			return Collections.singletonList(ct);
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 

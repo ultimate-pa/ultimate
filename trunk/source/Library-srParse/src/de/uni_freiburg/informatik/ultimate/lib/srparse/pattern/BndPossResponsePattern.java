@@ -47,7 +47,7 @@ public class BndPossResponsePattern extends PatternType {
 	}
 
 	@Override
-	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
+	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		final SrParseScope scope = getScope();
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
