@@ -56,6 +56,8 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 	private final Set<String> mOutputVars;
 	private final Set<String> mAuxVars;
 	private final Set<String> mClockVars;
+	private final Set<String> mHistoryVars;
+
 
 	private final ILocation mDummyLocation;
 
@@ -74,6 +76,7 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 		mOutputVars = new LinkedHashSet<>();
 		mAuxVars = new LinkedHashSet<>();
 		mClockVars = new LinkedHashSet<>();
+		mHistoryVars = new LinkedHashSet<>();
 
 		mDummyLocation = new BoogieLocation("", -1, -1, -1, -1);
 	}
@@ -109,10 +112,12 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 		return mHiddenVars;
 	}
 
+	@Override
 	public Set<String> getOutputVars() {
 		return mOutputVars;
 	}
 
+	@Override
 	public Set<String> getInputVars() {
 		return mInputVars;
 	}
@@ -124,6 +129,11 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 
 	public Set<String> getAuxVars() {
 		return mAuxVars;
+	}
+
+	@Override
+	public Set<String> getHistoryVars() {
+		return mHistoryVars;
 	}
 
 	@Override
@@ -351,6 +361,12 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 
 	@Override
 	public Map<String, Expression> getConstToValue() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getHistoryVarId(String name) {
 		// TODO Auto-generated method stub
 		return null;
 	}

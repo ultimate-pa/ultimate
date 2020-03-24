@@ -22,8 +22,10 @@ public interface IReqSymbolTable {
 
 	public Set<String> getPrimedVars();
 
+	public Set<String> getHistoryVars();
+
 	public Set<String> getEventVars();
-	
+
 	public Set<String> getInputVars();
 
 	public Set<String> getOutputVars();
@@ -37,6 +39,8 @@ public interface IReqSymbolTable {
 	public Collection<String> getStateVars();
 
 	public String getPrimedVarId(String stateVar);
+
+	public String getHistoryVarId(String name);
 
 	public Collection<? extends String> getPcVars();
 

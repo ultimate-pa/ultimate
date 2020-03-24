@@ -458,16 +458,20 @@ public class Req2BoogieTranslator {
 	}
 
 	private List<Statement> genStateVarsAssign() {
-		final List<Statement> assignments = mSymboltable.getStateVars().stream().map(this::genStateVarAssign).collect(Collectors.toList());
-		if (mUsePrimedPc) {
-			assignments.addAll(mSymboltable.getPcVars().stream().map(this::genStateVarAssign).collect(Collectors.toList()));
-		}
+		final List<Statement> assignments = mSymboltable.getStateVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList());
+		assignments.addAll(mSymboltable.getStateVars().stream().map(this::genStateVarAssignPrimed).collect(Collectors.toList()));
 		return assignments;
 	}
 
-	private AssignmentStatement genStateVarAssign(final String stateVar) {
+	private AssignmentStatement genStateVarAssignPrimed(final String stateVar) {
 		final VariableLHS lhsVar = mSymboltable.getVariableLhs(stateVar);
 		final IdentifierExpression rhs = mSymboltable.getIdentifierExpression(mSymboltable.getPrimedVarId(stateVar));
+		return genAssignmentStmt(rhs.getLocation(), lhsVar, rhs);
+	}
+
+	private AssignmentStatement genStateVarAssignHistory(final String stateVar) {
+		final VariableLHS lhsVar = mSymboltable.getVariableLhs(stateVar);
+		final IdentifierExpression rhs = mSymboltable.getIdentifierExpression(mSymboltable.getHistoryVarId(stateVar));
 		return genAssignmentStmt(rhs.getLocation(), lhsVar, rhs);
 	}
 

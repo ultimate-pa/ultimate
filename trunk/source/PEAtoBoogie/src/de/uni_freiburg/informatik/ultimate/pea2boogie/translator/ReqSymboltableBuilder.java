@@ -81,6 +81,7 @@ public class ReqSymboltableBuilder {
 	private final Set<String> mStateVars;
 	private final Set<String> mConstVars;
 	private final Set<String> mPrimedVars;
+	private final Set<String> mHistoryVars;
 	private final Set<String> mEventVars;
 	private final Set<String> mPcVars;
 	private final Set<String> mClockVars;
@@ -100,6 +101,7 @@ public class ReqSymboltableBuilder {
 		mStateVars = new LinkedHashSet<>();
 		mConstVars = new LinkedHashSet<>();
 		mPrimedVars = new LinkedHashSet<>();
+		mHistoryVars = new LinkedHashSet<>();
 		mEventVars = new LinkedHashSet<>();
 		mPcVars = new LinkedHashSet<>();
 		mClockVars = new LinkedHashSet<>();
@@ -198,11 +200,23 @@ public class ReqSymboltableBuilder {
 		mId2IdExpr.put(primedName, idExprp);
 		mId2VarLHS.put(primedName, new VariableLHS(loc, primedName));
 
+		final String historyName = getHistoryVarId(name);
+		mPrimedVars.add(historyName);
+		final BoogieType olhp = mId2Type.put(historyName, type);
+		if (olhp != null && olhp != type) {
+			mId2Type.put(historyName, BoogieType.TYPE_ERROR);
+			return;
+		}
+		final IdentifierExpression idExprh = ExpressionFactory.constructIdentifierExpression(loc, type, historyName,
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		mId2IdExpr.put(historyName, idExprh);
+		mId2VarLHS.put(historyName, new VariableLHS(loc, historyName));
+
 	}
 
 	public IReqSymbolTable constructSymbolTable() {
 		final String deltaVar = declareDeltaVar();
-		return new ReqSymbolTable(deltaVar, mId2Type, mId2IdExpr, mId2VarLHS, mStateVars, mPrimedVars, mConstVars,
+		return new ReqSymbolTable(deltaVar, mId2Type, mId2IdExpr, mId2VarLHS, mStateVars, mPrimedVars, mHistoryVars, mConstVars,
 				mEventVars, mPcVars, mClockVars, mReq2Loc, mConst2Value, mInputVars, mOutputVars);
 	}
 
@@ -257,6 +271,18 @@ public class ReqSymboltableBuilder {
 	}
 
 	private void addVar(final String name, final BoogieType type, final PatternType source, final Set<String> kind) {
+		mLogger.warn("Registered Var :" + name );
+		addVarOneKind(name, type, source, kind);
+		if (source instanceof InitializationPattern
+				&& ((InitializationPattern) source).getCategory() == VariableCategory.CONST) {
+			// consts do not need primed variables
+			return;
+		}
+		addVarOneKind(getHistoryVarId(name), type, source, mHistoryVars);
+		addVarOneKind(getPrimedVarId(name), type, source, mPrimedVars);
+	}
+
+	private void addVarOneKind(final String name, final BoogieType type, final PatternType source, final Set<String> kind) {
 		if (type == null && (!kind.contains(name) || !mId2Type.containsKey(name))) {
 			throw new AssertionError();
 		}
@@ -269,6 +295,7 @@ public class ReqSymboltableBuilder {
 		if (old != null && old != type) {
 			addErrorError(name, new ErrorInfo(ErrorType.DUPLICATE_DECLARATION, source));
 			mId2Type.put(name, BoogieType.TYPE_ERROR);
+			mLogger.error("Ausgestiegen!!!");
 			return;
 		}
 
@@ -277,15 +304,6 @@ public class ReqSymboltableBuilder {
 				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		mId2IdExpr.put(name, idExpr);
 		mId2VarLHS.put(name, new VariableLHS(loc, name));
-		if (source instanceof InitializationPattern
-				&& ((InitializationPattern) source).getCategory() == VariableCategory.CONST) {
-			// consts do not need primed variables
-			return;
-		}
-		if (mPrimedVars.contains(name)) {
-			return;
-		}
-		addVar(getPrimedVarId(name), type, source, mPrimedVars);
 	}
 
 	private void checkVar(final String name, final PatternType source) {
@@ -334,6 +352,10 @@ public class ReqSymboltableBuilder {
 		return name + "'";
 	}
 
+	private static String getHistoryVarId(final String name) {
+		return "'" + name;
+	}
+
 	private static String getPcName(final PhaseEventAutomata aut) {
 		return aut.getName() + "_pc";
 	}
@@ -349,6 +371,7 @@ public class ReqSymboltableBuilder {
 		private final Set<String> mStateVars;
 		private final Set<String> mConstVars;
 		private final Set<String> mPrimedVars;
+		private final Set<String> mHistoryVars;
 		private final Set<String> mEventVars;
 		private final Set<String> mPcVars;
 		private final Set<String> mClockVars;
@@ -358,7 +381,7 @@ public class ReqSymboltableBuilder {
 
 		private ReqSymbolTable(final String deltaVar, final Map<String, BoogieType> id2Type,
 				final Map<String, IdentifierExpression> id2idExp, final Map<String, VariableLHS> id2VarLhs,
-				final Set<String> stateVars, final Set<String> primedVars, final Set<String> constVars,
+				final Set<String> stateVars, final Set<String> primedVars, final Set<String> historyVars, final Set<String> constVars,
 				final Set<String> eventVars, final Set<String> pcVars, final Set<String> clockVars,
 				final Map<PatternType, BoogieLocation> req2loc, final Map<String, Expression> const2Value,
 				final Set<String> inputVars, final Set<String> outputVars) {
@@ -369,6 +392,7 @@ public class ReqSymboltableBuilder {
 			mStateVars = Collections.unmodifiableSet(stateVars);
 			mConstVars = Collections.unmodifiableSet(constVars);
 			mPrimedVars = Collections.unmodifiableSet(primedVars);
+			mHistoryVars = Collections.unmodifiableSet(historyVars);
 			mEventVars = Collections.unmodifiableSet(eventVars);
 			mPcVars = Collections.unmodifiableSet(pcVars);
 			mClockVars = Collections.unmodifiableSet(clockVars);
@@ -407,6 +431,11 @@ public class ReqSymboltableBuilder {
 		@Override
 		public Set<String> getStateVars() {
 			return mStateVars;
+		}
+
+		@Override
+		public Set<String> getHistoryVars() {
+			return mHistoryVars;
 		}
 
 		@Override
@@ -459,6 +488,12 @@ public class ReqSymboltableBuilder {
 			return ReqSymboltableBuilder.getPrimedVarId(name);
 		}
 
+
+		@Override
+		public String getHistoryVarId(final String name) {
+			return ReqSymboltableBuilder.getHistoryVarId(name);
+		}
+
 		@Override
 		public Collection<? extends Declaration> getDeclarations() {
 			final List<Declaration> decls = new ArrayList<>();
@@ -468,6 +503,7 @@ public class ReqSymboltableBuilder {
 			decls.addAll(constructConstDeclarations(mConstVars));
 			decls.addAll(constructVariableDeclarations(mStateVars));
 			decls.addAll(constructVariableDeclarations(mPrimedVars));
+			decls.addAll(constructVariableDeclarations(mHistoryVars));
 			decls.addAll(constructVariableDeclarations(mEventVars));
 			return decls;
 		}
