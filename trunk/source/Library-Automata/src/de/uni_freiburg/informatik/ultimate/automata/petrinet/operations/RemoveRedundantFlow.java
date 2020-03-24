@@ -82,27 +82,30 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	private final BoundedPetriNet<LETTER, PLACE> mResult;
 	private final Set<PLACE> mRedundantPlaces;
 	private final Set<PLACE> mEligibleRedundancyCandidates;
+	private final Set<PLACE> mEligibleRestrictorCandidates;
 	private int mRestrictorConditionChecks = 0;
 	private final NestedMap2<PLACE, PLACE, Boolean> mRestrictorPlaceCache = new NestedMap2<>();
 	private final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> mInput2projected;
 
 	public RemoveRedundantFlow(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		this(services, operand, null, null);
+		this(services, operand, null, null, null);
 	}
 
 	public RemoveRedundantFlow(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand,
-			final BranchingProcess<LETTER, PLACE> finPre, final Set<PLACE> eligibleRedundancyCandidates)
+			final BranchingProcess<LETTER, PLACE> finPre, final Set<PLACE> eligibleRedundancyCandidates,
+			final Set<PLACE> eligibleRestrictorCandidates)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mOperand = operand;
 		mEligibleRedundancyCandidates = eligibleRedundancyCandidates;
+		mEligibleRestrictorCandidates = eligibleRestrictorCandidates;
 		printStartMessage();
 		if (finPre != null) {
 			mFinitePrefixOperation = null;
 			mFinPre = finPre;
 		} else {
-			mFinitePrefixOperation = new FinitePrefix<LETTER, PLACE>(services, operand);
+			mFinitePrefixOperation = new FinitePrefix<>(services, operand);
 			mFinPre = mFinitePrefixOperation.getResult();
 		}
 		final HashRelation<ITransition<LETTER, PLACE>, PLACE> redundantFlow = new HashRelation<>();
@@ -133,9 +136,7 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 	}
 
 	private boolean isEligibleRestrictorCandidate(final PLACE p) {
-		return true;
-		// return mEligibleRedundancyCandidates == null ||
-		// mEligibleRedundancyCandidates.contains(p);
+		return mEligibleRestrictorCandidates == null || mEligibleRestrictorCandidates.contains(p);
 	}
 
 	private boolean isRedundantPlace(final PLACE p, final IPetriNet<LETTER, PLACE> operand,

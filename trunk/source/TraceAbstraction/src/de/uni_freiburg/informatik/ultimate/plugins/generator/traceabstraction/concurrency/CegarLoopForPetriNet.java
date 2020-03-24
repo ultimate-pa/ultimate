@@ -437,7 +437,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			case REMOVE_REDUNDANT_FLOW:
 				final Set<IPredicate> redundancyCandidates = input.getPlaces().stream()
 						.filter(x -> !mProgramPointPlaces.contains(x)).collect(Collectors.toSet());
-				reducedNet = new RemoveRedundantFlow<>(new AutomataLibraryServices(mServices), input, null,
+				reducedNet = new RemoveRedundantFlow<>(new AutomataLibraryServices(mServices), input, null, null,
 						null).getResult();
 				break;
 			default:
