@@ -1,214 +1,422 @@
+#!/usr/bin/env python3
+
 import argparse
+import logging
 import os
+import pathlib
+import platform
 import shutil
+import signal
 import subprocess
-import re
-
-def parseArguments():
-  parser = argparse.ArgumentParser()
-
-  parser.add_argument('req_file', metavar='req-file', type=str, help='Reqirement file. (*.req)')
-  parser.add_argument('req_repo_folder', metavar='req-repo-folder', type=str,
-    help='The path to the repository which contains the requirements folder.')
-  parser.add_argument('req_folder', type=str, metavar='req-folder',
-    help='The path to the requirements folder.')
-  parser.add_argument('--rt-inconsistency-range', type=int, default=2,
-    help='The amount of requirements which are checked together for RT-inconsistency. (default: 2)')
-  parser.add_argument('--timeout-per-assertion', type=int, default=900,
-    help='Amount of seconds until analysis of an assertion is timed out. (default: 900)')
-
-  args = parser.parse_args()
-
-  # Don't touch this, unless you know what you are doing.
-  args.automizer_folder = '.'
-  args.ultimate_binary = args.automizer_folder + '/plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar'
-  # Path to the vacuity extractor script.
-  args.vac_extractor = './extract_vac_reasons.sh'
-  # Path to Ultimate Automizer (remember those binaries we created earlier? that's what you want!).
-  args.reqcheck_toolchain = './config/ReqCheck.xml'
-  args.reqcheck_settings = './config/ReqCheck-nonlin.epf'
-  args.testgen_toolchain = './config/ReqToTest.xml'
-  args.testgen_settings = './config/ReqCheck-ReqToTest.epf'
-
-  print('PARAMETERS:')
-  print('- req-file:', args.req_file)
-  print('- req-repo-folder:', args.req_repo_folder)
-  print('- req-folder:', args.req_folder)
-  print('- rt-inconsistency-range:', args.rt_inconsistency_range)
-  print('- timeout-per-assertion:', args.timeout_per_assertion)
-
-  print('- automizer-folder:', args.automizer_folder)
-  print('- ultimate-binary:', args.ultimate_binary)
-  print('- vac-extractor:', args.vac_extractor)
-  print('- reqcheck-toolchain:', args.reqcheck_toolchain)
-  print('- reqcheck-settings:', args.reqcheck_settings)
-  print('- testgen-toolchain:', args.testgen_toolchain)
-  print('- testgen-settings:', args.testgen_settings)
-
-  # Check arguments.
-  for directory in [args.req_repo_folder, args.req_folder, args.automizer_folder]:
-    if not os.path.isdir(directory):
-      raise ValueError('Could not find directory: %s' % directory)
-
-  for file in [args.req_file, args.ultimate_binary, args.vac_extractor, args.reqcheck_toolchain, args.reqcheck_settings,
-      args.testgen_toolchain, args.testgen_settings]:
-    if not os.path.isfile(file):
-      raise ValueError('Could not find file: %s' % file)
-
-  return args
+import sys
+from typing import Optional, List
 
 
-def prepare_dirs(dirs):
-  for d in dirs:
-    if os.path.isdir(d):
-      continue
+class _ExitCode:
+    """
+    Specify a named exit code for global usage.
+    """
+    _exit_codes = ["SUCCESS", "FAIL_NO_ACTION", "FAIL_SIGNAL", "FAIL_FILE_AS_DIR", "FAIL_SUBPROCESS",
+                   "FAIL_MISSING_LOGFILE", "USER_DO_NOT_CREATE_DIR", "USER_DO_NOT_DELETE_DIR",
+                   "USER_DO_NOT_DELETE_FILE"]
 
-    if 'y' != input('%s does not exist, should I create it? (y / n): ' % d):
-      print('Exiting now.')
-      exit(2)
+    def __init__(self):
+        pass
 
-    os.makedirs(d)
-    print('Succesfully created: %s' % d)
+    def __getattr__(self, name):
+        if name in _ExitCode._exit_codes:
+            return _ExitCode._exit_codes.index(name)
+        raise AttributeError("Exit code %s not found" % name)
 
 
-def run_reqcheck(args):
-  #os.chdir(args.automizer_folder)
-  #cwd = os.getcwd()
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="This script is a wrapper script for Ultimate ReqAnalyzer. "
+                    "It shows progress and handles the execution of test generation and requirement analysis."
 
-  dump_folder = args.automizer_folder + '/dump-' + args.req_filename + args.req_extension
-  if os.path.isdir(dump_folder):
-    if 'y' != input('Found existing dump folder: %s. Should I delete it? (y / n): ' % dump_folder):
-      print('Exiting now.')
-      exit(1)
-
-    shutil.rmtree(dump_folder)
-
-  if os.path.isfile(args.reqcheck_log):
-    if 'y' != input('Found existing logfile: %s. Should I delete it? (y / n): ' % args.reqcheck_log):
-      print('Exiting now.')
-      exit(1)
-
-    os.remove(args.reqcheck_log)
-
-  print()
-  print('Analyzing:', args.req_file)
-  print('Using logfile:', args.reqcheck_log)
-  print()
-  os.mkdir(dump_folder)
-
-  log = subprocess.check_output(
-    'java ' \
-    '-Dosgi.configuration.area=config/ ' \
-    '-Xmx100G ' \
-    '-Xss4m ' \
-    '-jar plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar ' \
-    '-tc ' + args.reqcheck_toolchain + ' ' \
-    '-s ' + args.reqcheck_settings + ' ' \
-    '-i ' + args.req_file + ' ' \
-    '--core.print.statistic.results false ' \
-    '--traceabstraction.dump.smt.script.to.file true ' \
-    '--traceabstraction.to.the.following.directory=' + dump_folder + ' ' \
-    '--traceabstraction.limit.analysis.time ' + str(args.timeout_per_assertion) + ' ' \
-    '--pea2boogie.always.use.all.invariants.during.rt-inconsistency.checks true ' \
-    '--pea2boogie.check.vacuity true ' \
-    '--pea2boogie.check.consistency true ' \
-    '--pea2boogie.check.rt-inconsistency true ' \
-    '--pea2boogie.report.trivial.rt-consistency false ' \
-    '--pea2boogie.rt-inconsistency.range ' + str(args.rt_inconsistency_range),
-    shell=True
-  )
-
-  with open(args.reqcheck_log, 'wb+') as logfile:
-    logfile.write(log)
-
-  # Postprocess results with vacuity extractor.
-  if not os.path.isfile(args.reqcheck_log):
-    print('Logfile was not created.')
-    exit(1)
-
-  print('Extracting results to:', args.reqcheck_relevant_log)
-
-  is_vacuous = False
-  with open(args.reqcheck_log, 'r') as logfile:
-    excludes = 'StatisticsResult|ReqCheckSuccessResult'
-    matches = [i for i in re.findall('  - .*', logfile.read()) if not re.search(excludes, i)]
-    relevant_log = os.linesep.join(matches)
-    is_vacuous = 'vacuous' in relevant_log
-
-    with open(args.reqcheck_relevant_log, 'w+') as relevant_logfile:
-      relevant_logfile.write(relevant_log)
-
-  # TODO: Call vac_extractor python
-  if is_vacuous:
-    print('Analyzing reasons for vacuity.')
-    subprocess.call(
-      args.vac_extractor + ' ' + \
-      args.req_file + ' ' + \
-      args.reqcheck_log + ' ' + \
-      args.req_repo_folder + ' ' \
-      ' ' # TODO: remove that
     )
-    shutil.move('*.vac.req', args.log_folder)
-  
-  if not is_vacuous:
-    print('No vacuities found.')
+
+    parser.add_argument("input", metavar='<file>', type=check_file,
+                        help='Requirement file. (*.req)'
+                        )
+
+    parser.add_argument("--log", metavar="<file>", nargs=1, default=None,
+                        help="Log the output of the script to <file>")
+    parser.add_argument("--log-level", dest="log_level", nargs='?', default=logging.INFO,
+                        choices=["DEBUG", "INFO", "ERROR", "WARN"],
+                        help="Log level of the script. Default: INFO")
+    parser.add_argument("-f", "--force", action="store_true", help="Suppress all prompts")
+
+    parser.add_argument("-o", "--output", metavar='<dir>', type=str, default=None,
+                        help='Folder where reports (*.relevant.log, vacuous .req subsets, etc.) are saved. '
+                             'Default: Beside input file.'
+                        )
+
+    parser.add_argument("--tmp-dir", metavar='<dir>', type=str, default=None,
+                        help='Folder where full Ultimate logs and .smt2 dumps are saved. '
+                             'Default: In reqcheck/ besides input file.'
+                        )
+
+    parser.add_argument("-ar", "--analyze-requirements", action="store_true", default=True,
+                        help="Run requirement analysis.")
+    parser.add_argument("-gt", "--generate-tests", action="store_true", default=True,
+                        help="Run test generation.")
+
+    parser.add_argument('--rt-inconsistency-range', type=int, default=2,
+                        help='The amount of requirements which are checked together for RT-inconsistency. Default: 2')
+    parser.add_argument('--timeout-per-assertion', type=int, default=900,
+                        help='Amount of seconds until analysis of an assertion is timed out. Default: 900')
+
+    config_files = parser.add_argument_group(title='Ultimate location and configuration files',
+                                             description='Control the location of Ultimate ReqChecker itself and'
+                                                         ' various config files. '
+                                                         'You should normally never change these settings. '
+                                             )
+    config_files.add_argument('--ultimate-dir', type=check_dir, metavar='<file>', default='.',
+                              help="The path to Ultimate ReqAnalyzer."
+                                   "Default: ."
+                              )
+
+    config_files.add_argument('--reqcheck-toolchain', type=check_file, metavar='<file>', default='config/ReqCheck.xml',
+                              help="The Ultimate toolchain file (.xml) that will be used during requirements checking."
+                                   "Default: config/ReqCheck.xml"
+                              )
+
+    config_files.add_argument('--reqcheck-settings', type=check_file, metavar='<file>',
+                              default='config/ReqCheck-nonlin.epf',
+                              help="The Ultimate settings file (.epf) that will be used during requirements checking."
+                                   "Default: config/ReqCheck-nonlin.epf"
+                              )
+
+    config_files.add_argument('--testgen-toolchain', type=check_file, metavar='<file>', default='config/ReqToTest.xml',
+                              help="The Ultimate toolchain file (.xml) that will be used during test generation."
+                                   "Default: config/ReqToTest.xml"
+                              )
+
+    config_files.add_argument('--testgen-settings', type=check_file, metavar='<file>',
+                              default='config/ReqCheck-ReqToTest.epf',
+                              help="The Ultimate settings file (.epf) that will be used during test generation."
+                                   "Default: config/ReqCheck-ReqToTest.epf"
+                              )
+
+    args = parser.parse_args()
+
+    if not args.analyze_requirements and not args.generate_tests:
+        parser.print_help()
+        sys.exit(ExitCode.FAIL_NO_ACTION)
+
+    return args
 
 
-def run_testgen(args):
-  print('Using logfile:', args.testgen_log)
+def token_string_or_file(arg):
+    if not os.path.exists(arg):
+        return arg
+    else:
+        return open(arg, "r").read().strip()
 
-  log = subprocess.check_output(
-    'java ' \
-    '-Dosgi.configuration.area=config/ ' \
-    '-Xmx100G ' \
-    '-Xss4m ' \
-    '-jar plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar ' \
-    '-tc ' + args.testgen_toolchain + ' ' \
-    '-s ' + args.testgen_settings + ' ' \
-    '-i ' + args.req_file + ' ' \
-    '--core.print.statistic.results false ' \
-    '--rcfgbuilder.simplify.code.blocks false ' \
-    '--rcfgbuilder.size.of.a.code.block LoopFreeBlock ' \
-    '--traceabstraction.limit.analysis.time ' + str(args.timeout_per_assertion) + ' ' \
-    '--rcfgbuilder.add.additional.assume.for.each.assert false',
-    shell=True
-  )
 
-  relevant_log = re.sub('(.|\n|\r\n)*--- Results ---', '--- Results ---', log.decode('utf-8'))
+def check_dir(arg):
+    if not os.path.exists(arg):
+        msg = "Directory {} does not exist".format(arg)
+        print(msg)
+        raise argparse.ArgumentError(msg)
+    return arg
 
-  with open(args.testgen_log, 'wb+') as logfile:
-    logfile.write(log)
 
-  with open(args.testgen_relevant_log, 'w+') as relevant_logfile:
-    relevant_logfile.write(relevant_log)
+def check_file(arg):
+    if not os.path.isfile(arg):
+        msg = "{} does not exist or is not a file".format(arg)
+        print(msg)
+        raise argparse.ArgumentError(msg)
+    return arg
+
+
+def create_dirs_if_necessary(args, dirs):
+    for d in dirs:
+        if os.path.isdir(d):
+            continue
+
+        if not confirm_if_necessary(args, '{} does not exist, should I create it?'.format(d)):
+            sys.exit(ExitCode.USER_DO_NOT_CREATE_DIR)
+
+        os.makedirs(d)
+
+
+def delete_dir_if_necessary(args, d):
+    if os.path.isfile(d):
+        logging.fatal("Will not delete file {}".format(d))
+        sys.exit(ExitCode.FAIL_FILE_AS_DIR)
+
+    if not os.path.isdir(d):
+        return
+
+    if not confirm_if_necessary(args, '{} exists, should I delete it?'.format(d)):
+        sys.exit(ExitCode.USER_DO_NOT_DELETE_DIR)
+
+    shutil.rmtree(d)
+
+
+def delete_file_if_necessary(args, file):
+    if not os.path.isfile(file):
+        return
+
+    if not confirm_if_necessary(args, '{} exists, should I delete it?'.format(file)):
+        sys.exit(ExitCode.USER_DO_NOT_DELETE_FILE)
+
+    os.remove(file)
+
+
+def init_child_process():
+    new_umask = 0o022
+    os.umask(new_umask)
+
+
+def call_desperate(call_args: Optional[List[str]]):
+    if call_args is None:
+        call_args = []
+
+    try:
+        if platform == "linux" or platform == "linux2":
+            child_process = subprocess.Popen(call_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                             stderr=subprocess.STDOUT, shell=False,
+                                             preexec_fn=init_child_process)
+        else:
+            child_process = subprocess.Popen(call_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                             stderr=subprocess.STDOUT, shell=False)
+    except Exception as ex:
+        logger.fatal('Error trying to open subprocess {}'.format(str(call_args)))
+        logger.fatal(ex)
+        sys.exit(ExitCode.FAIL_SUBPROCESS)
+    return child_process
+
+
+def confirm(prompt=None, default_response=False) -> bool:
+    """prompts for yes or no response from the user. Returns True for yes and
+    False for no.
+
+    'resp' should be set to the default value assumed by the caller when
+    user simply types ENTER.
+
+    >>> confirm(prompt='Create Directory?', default_response=True)
+    Create Directory? [y]|n:
+    True
+    >>> confirm(prompt='Create Directory?', default_response=False)
+    Create Directory? [n]|y:
+    False
+    >>> confirm(prompt='Create Directory?', default_response=False)
+    Create Directory? [n]|y: y
+    True
+    """
+
+    if prompt is None:
+        prompt = 'Confirm'
+    if default_response:
+        prompt = '%s [%s]|%s: ' % (prompt, 'y', 'n')
+    else:
+        prompt = '%s [%s]|%s: ' % (prompt, 'n', 'y')
+
+    while True:
+        ans = input(prompt)
+        if not ans:
+            return default_response
+        if ans not in ['y', 'Y', 'n', 'N']:
+            print('please enter y or n.')
+            continue
+        if ans == 'y' or ans == 'Y':
+            return True
+        if ans == 'n' or ans == 'N':
+            return False
+
+
+def confirm_if_necessary(args, prompt: str = None, default_response: bool = False):
+    if args.force:
+        return True
+    return confirm(prompt, default_response)
+
+
+def signal_handler(sig, frame):
+    print('Killed by {}'.format(sig))
+    sys.exit(ExitCode.FAIL_SIGNAL)
+
+
+def handle_log(args):
+    global logger
+    handler = logging.FileHandler(args.log)
+    handler.setLevel(args.log_level)
+    log_formatter = logging.Formatter('%(asctime)s %(name)-8s %(levelname)-6s: %(message)s')
+    handler.setFormatter(log_formatter)
+    logger.addHandler(handler)
+
+
+def handle_analyze_requirements(args):
+    logger.info('Running ReqChecker')
+
+    os.chdir(args.ultimate_dir)
+    dump_folder = os.path.join(args.tmp_dir, 'dump', args.req_basename)
+    delete_dir_if_necessary(args, dump_folder)
+    logger.info('Creating dump folder {}'.format(dump_folder))
+    pathlib.Path(dump_folder).mkdir(parents=True, exist_ok=True)
+    delete_file_if_necessary(args, args.reqcheck_log)
+
+    logger.info('Analyzing {}'.format(args.input))
+    logger.info('Using logfile {}'.format(args.reqcheck_log))
+
+    cmd = [
+        'java',
+        '-Dosgi.configuration.area=config/',
+        '-Xmx100G',
+        '-Xss4m',
+        '-jar', 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar',
+        '-tc', args.reqcheck_toolchain,
+        '-s', args.reqcheck_settings,
+        '-i', args.input,
+        '--core.print.statistic.results', 'false',
+        '--traceabstraction.dump.smt.script.to.file', 'true',
+        '--traceabstraction.to.the.following.directory', dump_folder,
+        '--traceabstraction.limit.analysis.time', str(args.timeout_per_assertion),
+        '--pea2boogie.always.use.all.invariants.during.rt-inconsistency.checks', 'true',
+        '--pea2boogie.check.vacuity', 'true',
+        '--pea2boogie.check.consistency', 'true',
+        '--pea2boogie.check.rt-inconsistency', 'true',
+        '--pea2boogie.report.trivial.rt-consistency', 'false',
+        '--pea2boogie.rt-inconsistency.range', str(args.rt_inconsistency_range),
+    ]
+
+    ultimate_process = call_desperate(cmd)
+
+    relevant_log = []
+    with open(args.reqcheck_log, 'w') as logfile:
+        line = ""
+        while True:
+            last_line = line
+            line = ultimate_process.stdout.readline().decode('utf-8', 'ignore')
+
+            ultimate_process.poll()
+            if ultimate_process.returncode is not None and not line:
+                if ultimate_process.returncode == 0:
+                    logger.info('Execution finished normally')
+                else:
+                    logger.error('Execution finished with exit code {}'.format(str(ultimate_process.returncode)))
+                break
+            logfile.write(line)
+
+            if "ReqCheckSuccessResult" in last_line or "ReqCheckFailResult" in last_line:
+                relevant_log += [last_line + line]
+
+        # TODO: add progress bars for the two stages
+        # TODO: Scan for vacuity
+
+    # Postprocess results with vacuity extractor.
+    if not os.path.isfile(args.reqcheck_log):
+        logger.error('Logfile {} was not created'.format(args.reqcheck_log))
+        sys.exit(ExitCode.FAIL_MISSING_LOGFILE)
+
+    logger.info('Extracting results to {}'.format(args.reqcheck_relevant_log))
+
+    # Note the spaces
+    is_vacuous = any(' vacuous ' in l for l in relevant_log)
+    with open(args.reqcheck_relevant_log, 'w+') as relevant_logfile:
+        relevant_logfile.write(os.linesep.join(relevant_log))
+
+    # TODO: Call vac_extractor python
+    if is_vacuous:
+        logger.info('Analyzing reasons for vacuity')
+        # TODO: Integrate extract_vac_reasons.sh
+        # shutil.move('*.vac.req', args.log_folder)
+        logger.warning("NO VACUITY EXTRACTION YET")
+    else:
+        logger.info('No vacuities found.')
+
+
+def handle_generate_tests(args):
+    logger.info('Running test generation')
+    logger.info('Using logfile {}'.format(args.testgen_log))
+
+    cmd = [
+        'java',
+        '-Dosgi.configuration.area=config/',
+        '-Xmx100G',
+        '-Xss4m',
+        '-jar', 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar',
+        '-tc', args.testgen_toolchain,
+        '-s', args.testgen_settings,
+        '-i', args.input,
+        '--core.print.statistic.results', 'false',
+        '--traceabstraction.limit.analysis.time', str(args.timeout_per_assertion),
+        '--rcfgbuilder.simplify.code.blocks', 'false',
+        '--rcfgbuilder.size.of.a.code.block', 'LoopFreeBlock',
+        '--rcfgbuilder.add.additional.assume.for.each.assert', 'false',
+    ]
+
+    ultimate_process = call_desperate(cmd)
+
+    is_relevant = False
+    with open(args.testgen_log, 'w') as logfile, open(args.testgen_relevant_log, 'w') as relevant_logfile:
+        while (True):
+            line = ultimate_process.stdout.readline().decode('utf-8', 'ignore')
+
+            ultimate_process.poll()
+            if ultimate_process.returncode is not None and not line:
+                if ultimate_process.returncode == 0:
+                    logger.info('Execution finished normally')
+                else:
+                    logger.error('Execution finished with exit code {}'.format(str(ultimate_process.returncode)))
+                break
+            logfile.write(line)
+            if is_relevant:
+                relevant_logfile.write(line)
+
+            if "--- Results ---" in line:
+                is_relevant = True
+
+        # TODO: add progress bars for the two stages
 
 
 def main():
-  args = parseArguments()
+    args = parse_args()
+    global logger
+    logger.setLevel(args.log_level)
 
-  args.req_filename, args.req_extension = os.path.splitext(os.path.basename(args.req_file))
-  args.reqcheck_log = args.req_folder + '/' + args.req_filename + args.req_extension + '.log'
-  args.testgen_log = args.req_folder + '/' + args.req_filename + args.req_extension + '.testgen.log'
-  args.log_folder = args.req_folder + '/logs/' + args.req_filename
-  args.reqcheck_relevant_log = args.log_folder + '/' + args.req_filename + args.req_extension + '.relevant.log'
-  args.testgen_relevant_log = args.log_folder + '/' + args.req_filename + args.req_extension + '.testgen.log'
+    if args.log:
+        handle_log(args)
 
-  print()
-  print('- reqcheck_log:', args.reqcheck_log)
-  print('- testgen_log:', args.testgen_log)
-  print('- log_folder:', args.log_folder)
-  print('- reqcheck_relevant_log:', args.reqcheck_relevant_log)
-  print('- testgen_relevant_log:', args.testgen_relevant_log)
-  print()
+    args.input = os.path.abspath(args.input)
+    req_folder = os.path.dirname(args.input)
+    args.req_basename, req_extension = os.path.splitext(os.path.basename(args.input))
+    req_filename = args.req_basename + req_extension
 
-  prepare_dirs([args.log_folder])
+    if not args.output:
+        args.output = req_folder
 
-  print('Running ReqChecker.')
-  run_reqcheck(args)
+    if not args.tmp_dir:
+        args.tmp_dir = os.path.join(req_folder, "reqcheck")
 
-  print('Running TestGen.')
-  run_testgen(args)
+    create_dirs_if_necessary(args, [args.output, args.tmp_dir])
 
+    args.reqcheck_log = os.path.join(req_folder, req_filename + '.log')
+    args.testgen_log = os.path.join(req_folder, req_filename + '.testgen.log')
+
+    args.reqcheck_relevant_log = os.path.join(args.output, req_filename + '.relevant.log')
+    args.testgen_relevant_log = os.path.join(args.output, req_filename + '.testgen.relevant.log')
+
+    if args.analyze_requirements:
+        handle_analyze_requirements(args)
+
+    if args.generate_tests:
+        handle_generate_tests(args)
+
+    # TODO: Print results
+
+
+LOG_FORMAT_STR = '%(message)s'
+logging.basicConfig(format=LOG_FORMAT_STR)
+logger = logging.getLogger(__package__)
+ExitCode = _ExitCode()
 
 if __name__ == "__main__":
-  main()
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    if platform.system() != 'Windows':
+        # just ignore pipe exceptions
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    main()
