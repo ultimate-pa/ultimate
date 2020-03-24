@@ -32,14 +32,14 @@ public class Req2CauseTrackingCDD {
 	}
 
 	public CDD transformInvariant(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars,
-			final Set<String> activePhaseVars, final boolean isEffectPhase) {
+			final Set<String> activePhaseVars, final boolean isEffectPhase, final boolean negateTrackingVar) {
 		final Set<String> trackedVars = getCddVariables(cdd);
 		trackedVars.removeAll(inputVars);
 		trackedVars.retainAll(activePhaseVars);
 		if (isEffectPhase) {
 			trackedVars.removeAll(effectVars);
 		}
-		final CDD newGuard = addTrackingGuards(cdd, trackedVars);
+		final CDD newGuard = addTrackingGuards(cdd, trackedVars,negateTrackingVar);
 		return newGuard;
 	}
 
@@ -53,12 +53,12 @@ public class Req2CauseTrackingCDD {
 		// TODO remove primed effect variables in a nicer way
 		vars.removeAll(effectVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
 		vars.removeAll(inputVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
-		final CDD newGuard = addTrackingGuards(cdd, vars);
+		final CDD newGuard = addTrackingGuards(cdd, vars, false);
 		final CDD wClocks = transformGuardClock(newGuard, isEffectEdge);
 		return wClocks;
 	}
 
-	private CDD addTrackingGuards(CDD cdd, final Set<String> trackedVars) {
+	private CDD addTrackingGuards(final CDD cdd, final Set<String> trackedVars, final boolean negateTrackingVar) {
 		if (cdd == CDD.TRUE) {
 			return cdd;
 		}
@@ -69,11 +69,11 @@ public class Req2CauseTrackingCDD {
 		final List<CDD> newChildren = new ArrayList<>();
 		if (cdd.getChilds() != null) {
 			for (final CDD child : cdd.getChilds()) {
-				newChildren.add(addTrackingGuards(child, trackedVars));
+				newChildren.add(addTrackingGuards(child, trackedVars, negateTrackingVar));
 			}
 		}
 
-		cdd = CDD.create(cdd.getDecision(), newChildren.toArray(new CDD[newChildren.size()]));
+		CDD annotatedCDD = CDD.create(cdd.getDecision(), newChildren.toArray(new CDD[newChildren.size()]));
 		for (final String v : getVarsFromDecision(cdd.getDecision())) {
 			if (trackedVars.contains(v)) {
 				final String varName = "u_" + v;
@@ -82,10 +82,14 @@ public class Req2CauseTrackingCDD {
 					mTrackingVars.put(varName, "bool");
 				}
 				final CDD trackGurad = CDD.create(new BooleanDecision(varName), CDD.TRUE_CHILDS);
-				cdd = trackGurad.and(cdd);
+				if (negateTrackingVar) {
+					annotatedCDD = trackGurad.and(cdd.negate());
+				} else {
+					annotatedCDD = trackGurad.and(cdd);
+				}
 			}
 		}
-		return cdd;
+		return annotatedCDD;
 	}
 
 
@@ -134,22 +138,33 @@ public class Req2CauseTrackingCDD {
 	 *
 	 * Note: if the CDD is no range decision, this will return CDD.True
 	 */
-	public CDD transformLowerToUpperClockGuard(CDD clockGuard) {
-		CDD returnDecision = CDD.TRUE;
-		if(clockGuard.getDecision() instanceof RangeDecision) {
-			final RangeDecision d = (RangeDecision)clockGuard.getDecision();
-			final CDD[] children = clockGuard.getChilds();
+	public CDD transformLowerToUpperClockGuard(final CDD cdd) {
+		if (cdd == CDD.TRUE || cdd == CDD.FALSE) {
+			return cdd;
+		}
+
+		final List<CDD> newChildren = new ArrayList<>();
+		if (cdd.getChilds() != null) {
+			for (final CDD child : cdd.getChilds()) {
+				newChildren.add(transformLowerToUpperClockGuard(child));
+			}
+		}
+		final CDD[] children = newChildren.toArray(new CDD[newChildren.size()]);
+		final Decision<?> decision = cdd.getDecision();
+		if (decision instanceof RangeDecision) {
+			CDD returnDecision = CDD.TRUE;
+			final RangeDecision d = (RangeDecision) decision;
 			for (int i = 0; i < children.length; i++) {
 				if (children[i] == CDD.FALSE) {
 					continue;
 				}
 				returnDecision = returnDecision.and(transformLowerToUpperClockGuard(d, i));
 			}
-		} else {
-			mLogger.warn("Unexpected CDD format: " + clockGuard.TRUE + "(CDD(RangeDecision) was expected)");
+			return returnDecision;
 		}
-		return returnDecision;
+		return CDD.create(cdd.getDecision(), children);
 	}
+
 
 	private CDD transformLowerToUpperClockGuard(RangeDecision d, int trueChild) {
 		switch (d.getOp(trueChild)) {
@@ -175,20 +190,16 @@ public class Req2CauseTrackingCDD {
 		final Decision<?> decision = cdd.getDecision();
 		if (decision instanceof RangeDecision) {
 			final RangeDecision d = (RangeDecision) decision;
-			return transformClockDecisionGuard(d, children);
+			CDD returnDecision = CDD.TRUE;
+			for (int i = 0; i < children.length; i++) {
+				if (children[i] == CDD.FALSE) {
+					continue;
+				}
+				returnDecision = returnDecision.and(transformPrefixClockDecisionGuard(d, i));
+			}
+			return returnDecision;
 		}
 		return CDD.create(cdd.getDecision(), children);
-	}
-
-	private CDD transformClockDecisionGuard(final RangeDecision d, final CDD[] children) {
-		CDD returnDecision = CDD.TRUE;
-		for (int i = 0; i < children.length; i++) {
-			if (children[i] == CDD.FALSE) {
-				continue;
-			}
-			returnDecision = returnDecision.and(transformPrefixClockDecisionGuard(d, i));
-		}
-		return returnDecision;
 	}
 
 	private CDD transformPrefixClockDecisionGuard(RangeDecision d, int trueChild) {

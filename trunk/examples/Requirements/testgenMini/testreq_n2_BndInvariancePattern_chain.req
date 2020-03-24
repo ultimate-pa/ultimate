@@ -1,8 +1,17 @@
 /* Found Test for TEST_req6_Globally_BndInvariance_tt4
 Set Inputs:
  	I1 := true  
+ Wait 1  
+ 
+Set Inputs:
+ 	I1 := false  
  Wait at most 5  for: 
 	O1 == true  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait at most 5  for: 
+	O1 == true   
 */
 
 Input I1 is bool

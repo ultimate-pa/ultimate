@@ -10,15 +10,8 @@ Set Inputs:
  
 Set Inputs:
  	I1 := false  
- Wait 5  
- 
-Set Inputs:
- 	I1 := false  
- Wait 5  
- 
-Set Inputs:
- 	I1 := false  
- Wait 5  
+ Wait at most 5  for: 
+	O1 == true  
  
 Set Inputs:
  	I1 := false  
@@ -28,7 +21,17 @@ Set Inputs:
 Set Inputs:
  	I1 := false  
  Wait at most 5  for: 
-	O1 == true   
+	O1 == true  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait at most 5  for: 
+	O1 == true  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait at most 5  for: 
+	O1 == true
 */
 
 Input I1 is bool
