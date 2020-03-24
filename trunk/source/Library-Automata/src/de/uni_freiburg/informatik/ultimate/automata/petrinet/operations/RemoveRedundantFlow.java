@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -46,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.FinitePrefix;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
@@ -70,9 +68,9 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 
 	private static final boolean DEBUG_LOG_RESTRICTOR_INFORMATION = false;
 	/**
-	 * Idea: If true we only check if (p,p') is a restrictor-redundancy pair if the
-	 * restrictor candidate p does not have more conditions than the redundancy
-	 * candidate p'
+	 * Idea: If true we only check if (p,p') is a restrictor-redundancy pair if
+	 * the restrictor candidate p does not have more conditions than the
+	 * redundancy candidate p'
 	 */
 	private static final boolean MOUNTAIN_COCK_HEURISTIC = false;
 	private final IPetriNet<LETTER, PLACE> mOperand;
@@ -146,9 +144,10 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		}
 		final Set<ITransition<LETTER, PLACE>> succTrans = operand.getSuccessors(p);
 		if (succTrans.isEmpty()) {
-			// TODO 20200225 Matthias: At the moment places without successor transitions
-			// are not considered redundant. Otherwise we would produce transitions without
-			// successor which are not yet supported by the unfolding.
+			// TODO 20200225 Matthias: At the moment places without successor
+			// transitions are not considered redundant. Otherwise we would
+			// produce transitions without successor which are not yet supported
+			// by the unfolding.
 			return false;
 		}
 		for (final ITransition<LETTER, PLACE> t : succTrans) {
@@ -169,6 +168,9 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 					// do nothing
 					// must not use flow that is already marked for removal
 				} else {
+					if (!mServices.getProgressAwareTimer().continueProcessing()) {
+						throw new AutomataOperationCanceledException(getClass());
+					}
 					final boolean isRestrictorPlace = isRestrictorPlace(redundancyCandidate, p);
 					if (isRestrictorPlace) {
 						if (DEBUG_LOG_RESTRICTOR_INFORMATION) {
@@ -200,8 +202,8 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		for (final Condition<LETTER, PLACE> restrictorCandidateCondition : mFinPre.place2cond(restrictorCandidate)) {
 			if (restrictorCandidateCondition.getPredecessorEvent().isCutoffEvent()) {
 				// we may omit the check because if the the candidate is not a
-				// restrictor condition there is also another condition
-				// of the same place that is not a restrictor condition and not
+				// restrictor condition there is also another condition of the
+				// same place that is not a restrictor condition and not
 				// successor of a cut-off event.
 			} else {
 				final boolean isRestrictorCondition = isRestrictorCondition(restrictorCandidateCondition,
@@ -218,9 +220,6 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 			final PLACE redundancyCandidate, final ICoRelation<LETTER, PLACE> coRelation)
 			throws AutomataOperationCanceledException {
 		mRestrictorConditionChecks++;
-		if (timeout()) {
-			throw new AutomataOperationCanceledException(getClass());
-		}
 		final Optional<Condition<LETTER, PLACE>> redundancyCandidateCondition = restrictorCandidateCondition
 				.getPredecessorEvent().getConditionMark().stream().filter(x -> x.getPlace().equals(redundancyCandidate))
 				.findAny();
@@ -230,19 +229,6 @@ public class RemoveRedundantFlow<LETTER, PLACE, CRSF extends IStateFactory<PLACE
 		final boolean isRestrictorCondition = redundancyCandidateCondition.get().getSuccessorEvents().stream()
 				.allMatch(x -> !coRelation.isInCoRelation(restrictorCandidateCondition, x));
 		return isRestrictorCondition;
-	}
-
-	private HashRelation<ITransition<LETTER, PLACE>, Event<LETTER, PLACE>> computeTransitionEventRelation(
-			final Collection<Event<LETTER, PLACE>> events) {
-		final HashRelation<ITransition<LETTER, PLACE>, Event<LETTER, PLACE>> result = new HashRelation<>();
-		for (final Event<LETTER, PLACE> e : events) {
-			result.addPair(e.getTransition(), e);
-		}
-		return result;
-	}
-
-	private boolean timeout() {
-		return !mServices.getProgressAwareTimer().continueProcessing();
 	}
 
 	@Override
