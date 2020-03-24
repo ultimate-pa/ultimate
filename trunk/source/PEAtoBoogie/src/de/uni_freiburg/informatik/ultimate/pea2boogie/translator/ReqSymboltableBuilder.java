@@ -175,43 +175,8 @@ public class ReqSymboltableBuilder {
 		}
 	}
 
-	public void addAuxvar(BoogieLocation loc, final String name, final String typeString) {
-		final BoogiePrimitiveType type = toPrimitiveType(typeString);
-		mStateVars.add(name);
-		final BoogieType old = mId2Type.put(name, type);
-		if (old != null && old != type) {
-			mId2Type.put(name, BoogieType.TYPE_ERROR);
-			return;
-		}
-		final IdentifierExpression idExpr = ExpressionFactory.constructIdentifierExpression(loc, type, name,
-				DeclarationInformation.DECLARATIONINFO_GLOBAL);
-		mId2IdExpr.put(name, idExpr);
-		mId2VarLHS.put(name, new VariableLHS(loc, name));
-
-		final String primedName = getPrimedVarId(name);
-		mPrimedVars.add(primedName);
-		final BoogieType oldp = mId2Type.put(primedName, type);
-		if (oldp != null && oldp != type) {
-			mId2Type.put(primedName, BoogieType.TYPE_ERROR);
-			return;
-		}
-		final IdentifierExpression idExprp = ExpressionFactory.constructIdentifierExpression(loc, type, primedName,
-				DeclarationInformation.DECLARATIONINFO_GLOBAL);
-		mId2IdExpr.put(primedName, idExprp);
-		mId2VarLHS.put(primedName, new VariableLHS(loc, primedName));
-
-		final String historyName = getHistoryVarId(name);
-		mPrimedVars.add(historyName);
-		final BoogieType olhp = mId2Type.put(historyName, type);
-		if (olhp != null && olhp != type) {
-			mId2Type.put(historyName, BoogieType.TYPE_ERROR);
-			return;
-		}
-		final IdentifierExpression idExprh = ExpressionFactory.constructIdentifierExpression(loc, type, historyName,
-				DeclarationInformation.DECLARATIONINFO_GLOBAL);
-		mId2IdExpr.put(historyName, idExprh);
-		mId2VarLHS.put(historyName, new VariableLHS(loc, historyName));
-
+	public void addAuxvar(final String name, final String typeString, final PatternType source) {
+		addVar(name, toPrimitiveType(typeString), source, this.mStateVars);
 	}
 
 	public IReqSymbolTable constructSymbolTable() {
@@ -271,7 +236,6 @@ public class ReqSymboltableBuilder {
 	}
 
 	private void addVar(final String name, final BoogieType type, final PatternType source, final Set<String> kind) {
-		mLogger.warn("Registered Var :" + name );
 		addVarOneKind(name, type, source, kind);
 		if (source instanceof InitializationPattern
 				&& ((InitializationPattern) source).getCategory() == VariableCategory.CONST) {
@@ -295,7 +259,6 @@ public class ReqSymboltableBuilder {
 		if (old != null && old != type) {
 			addErrorError(name, new ErrorInfo(ErrorType.DUPLICATE_DECLARATION, source));
 			mId2Type.put(name, BoogieType.TYPE_ERROR);
-			mLogger.error("Ausgestiegen!!!");
 			return;
 		}
 

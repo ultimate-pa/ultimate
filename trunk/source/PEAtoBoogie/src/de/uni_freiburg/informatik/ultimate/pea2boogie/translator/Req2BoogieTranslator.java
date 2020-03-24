@@ -460,6 +460,7 @@ public class Req2BoogieTranslator {
 	private List<Statement> genStateVarsAssign() {
 		final List<Statement> assignments = mSymboltable.getStateVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList());
 		assignments.addAll(mSymboltable.getStateVars().stream().map(this::genStateVarAssignPrimed).collect(Collectors.toList()));
+		assignments.addAll(mSymboltable.getPcVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
 		return assignments;
 	}
 
@@ -470,8 +471,8 @@ public class Req2BoogieTranslator {
 	}
 
 	private AssignmentStatement genStateVarAssignHistory(final String stateVar) {
-		final VariableLHS lhsVar = mSymboltable.getVariableLhs(stateVar);
-		final IdentifierExpression rhs = mSymboltable.getIdentifierExpression(mSymboltable.getHistoryVarId(stateVar));
+		final VariableLHS lhsVar = mSymboltable.getVariableLhs(mSymboltable.getHistoryVarId(stateVar));
+		final IdentifierExpression rhs = mSymboltable.getIdentifierExpression(stateVar);
 		return genAssignmentStmt(rhs.getLocation(), lhsVar, rhs);
 	}
 
@@ -603,7 +604,11 @@ public class Req2BoogieTranslator {
 	private Statement[] generateProcedureBodyStmts(final BoogieLocation bl, final List<InitializationPattern> init) {
 		final List<Statement> statements = new ArrayList<>();
 		statements.addAll(genInitialPhasesStmts(bl));
+		statements.addAll(genInitialPhasesStmts(bl));
 		statements.addAll(genClockInitStmts());
+		//Assign the history vars with the initial state as if a small stutter step had occured initally.
+		statements.addAll(mSymboltable.getStateVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
+		statements.addAll(mSymboltable.getPcVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
 		statements.addAll(mReqCheckAnnotator.getPreChecks());
 		statements.add(genWhileStmt(bl));
 		return statements.toArray(new Statement[statements.size()]);
@@ -643,6 +648,7 @@ public class Req2BoogieTranslator {
 		modifiedVarsList.add(mSymboltable.getDeltaVarName());
 		modifiedVarsList.addAll(mSymboltable.getStateVars());
 		modifiedVarsList.addAll(mSymboltable.getPrimedVars());
+		modifiedVarsList.addAll(mSymboltable.getHistoryVars());
 		modifiedVarsList.addAll(mSymboltable.getEventVars());
 
 		final VariableLHS[] modifiedVars = new VariableLHS[modifiedVarsList.size()];

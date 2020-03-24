@@ -58,8 +58,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		for (final PatternType p : mInitPattern) {
 			builder.addInitPattern((InitializationPattern) p);
 			if (((InitializationPattern) p).getCategory() == VariableCategory.OUT) {
-				builder.addAuxvar(mLocation ,
-						ReqTestAnnotator.getTrackingVar(p.getId()), "bool");
+				builder.addAuxvar(ReqTestAnnotator.getTrackingVar(p.getId()), "bool", p);
 			}
 		}
 		final Map<PatternType, PhaseEventAutomata> simplePeas = req2pea.getPattern2Peas();
@@ -70,7 +69,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		for (final Entry<PatternType, PhaseEventAutomata> entry : mPattern2Peas.entrySet()) {
 			builder.addPea(entry.getKey(), entry.getValue());
 		}
-		builder.addAuxvar(mLocation, ReqTestAnnotator.INITIAL_STEP_FLAG , "bool");
+		//builder.addAuxvar(mLocation, ReqTestAnnotator.INITIAL_STEP_FLAG , "bool");
 		mSymbolTable = builder.constructSymbolTable();
 	}
 
