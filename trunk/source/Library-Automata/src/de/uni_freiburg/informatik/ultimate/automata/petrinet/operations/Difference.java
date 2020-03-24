@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -130,7 +131,16 @@ public final class Difference
 	private static final boolean COMPUTE_DIFFERENCE_SYNCHRONIZATION_INFORMATION_VIA_UNFOLDING = true;
 
 	private final LoopSyncMethod mLoopSyncMethod;
+	
+	/**
+	 * If true, we apply our {@link RemoveRedundantFlow} operation to the
+	 * on-demand computed preliminary difference. We take all information about
+	 * redundant, and update the {@link DifferenceSynchronizationInformation}
+	 * accordingly and obtain a result where some redundant flow is removed.
+	 */
+	private final boolean mRemoveRedundantFlow;
 
+	private final BoundedPetriNet<LETTER, PLACE> mInputMinuend;
 	private final BoundedPetriNet<LETTER, PLACE> mMinuend;
 	private final INestedWordAutomaton<LETTER, PLACE> mSubtrahend;
 	private final IBlackWhiteStateFactory<PLACE> mContentFactory;
@@ -141,63 +151,93 @@ public final class Difference
 
 	private final DifferenceSynchronizationInformation<LETTER, PLACE> mDsi;
 
-//	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mDsi.getSelfloops();
-//	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mDsi.getStateChangers();
-//	private final HashRelation<ITransition<LETTER,PLACE>, PLACE> mDsi.getBlockingTransitions();
-//	private final Collection<ITransition<LETTER, PLACE>> mContributingTransitions;
-
 	private final Map<PLACE, PLACE> mWhitePlace = new HashMap<>();
 	private final Map<PLACE, PLACE> mBlackPlace = new HashMap<>();
+
 
 	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(final AutomataLibraryServices services,
 			final SF factory, final BoundedPetriNet<LETTER, PLACE> minuendNet,
 			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.HEURISTIC, null);
+		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.HEURISTIC, null, false);
 	}
 
 	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(final AutomataLibraryServices services,
 			final SF factory, final BoundedPetriNet<LETTER, PLACE> minuendNet,
 			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa, final String loopSyncMethod)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.valueOf(loopSyncMethod), null);
+		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.valueOf(loopSyncMethod), null, false);
 	}
 
 	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(final AutomataLibraryServices services,
-			final SF factory, final BoundedPetriNet<LETTER, PLACE> minuendNet,
+			final SF factory, final BoundedPetriNet<LETTER, PLACE> originalMinuend,
 			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa, final LoopSyncMethod loopSyncMethod,
-			final DifferenceSynchronizationInformation<LETTER, PLACE> synchronizationInformation)
-			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+			final DifferenceSynchronizationInformation<LETTER, PLACE> synchronizationInformation,
+			final boolean removeRedundantFlow) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
-		mMinuend = minuendNet;
 		mSubtrahend = subtrahendDfa;
 		mContentFactory = factory;
 		mLoopSyncMethod = loopSyncMethod;
+		mInputMinuend = originalMinuend;
+		mRemoveRedundantFlow = removeRedundantFlow;
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
 		assert checkSubtrahendProperties();
 		if (resultTriviallyEmpty()) {
+			mMinuend = originalMinuend;
 			mLogger.debug("Difference trivially empty");
 			mDsi = new DifferenceSynchronizationInformation<>(new HashSet<>(), new HashRelation<>(),
 					new HashRelation<>(), new HashSet<>(mMinuend.getTransitions()), new HashRelation<>(), false, false);
 			mResult = new BoundedPetriNet<>(mServices, mMinuend.getAlphabet(), true);
 		} else {
 			if (synchronizationInformation != null) {
+				mMinuend = originalMinuend;
 				mDsi = synchronizationInformation;
 			} else {
 				if (COMPUTE_DIFFERENCE_SYNCHRONIZATION_INFORMATION_VIA_UNFOLDING) {
 					final DifferencePairwiseOnDemand<LETTER, PLACE, CRSF> diff = new DifferencePairwiseOnDemand<>(
-							mServices, null, minuendNet, subtrahendDfa);
-					mDsi = diff.getDifferenceSynchronizationInformation();
+							mServices, null, originalMinuend, subtrahendDfa);
+					if (mRemoveRedundantFlow) {
+						final RemoveRedundantFlow<LETTER, PLACE, ?> rrf = new RemoveRedundantFlow<>(mServices,
+								diff.getResult(), diff.getFinitePrefixOfDifference().getResult(), null,
+//								diff.getResult(), null, null,
+								mInputMinuend.getPlaces());
+						final ProjectToSubnet<LETTER, PLACE> pts = new ProjectToSubnet<>(services, rrf.getResult(),
+								new HashRelation<>(), mSubtrahend.getStates());
+						mMinuend = pts.getResult();
+						final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> minuendTransition2differenceTransitions = new HashRelation<>();
+						for (final Entry<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> entry : diff.getTransitionBacktranslation().entrySet()) {
+							final ITransition<LETTER, PLACE> diffTransition = entry.getKey();
+							assert diffTransition != null;
+							minuendTransition2differenceTransitions.addPair(entry.getValue(), diffTransition);
+						}
+						final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> differenceTransitions2projectedTransitions = new HashMap<>();
+						for (final Entry<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> entry : rrf.getOld2projected().entrySet()) {
+							final ITransition<LETTER, PLACE> diffTransition = entry.getKey();
+							final ITransition<LETTER, PLACE> rrfTransition = entry.getValue();
+							assert rrfTransition != null;
+							final ITransition<LETTER, PLACE> projTransition = pts.getTransitionMapping().get(rrfTransition);
+							assert projTransition != null;
+							differenceTransitions2projectedTransitions.put(diffTransition, projTransition);
+						}
+						mDsi = diff.getDifferenceSynchronizationInformation().transformThroughRemoveRedundantFlow(
+								minuendTransition2differenceTransitions, differenceTransitions2projectedTransitions,
+								rrf.getRedundantSelfloopFlow(), rrf.getRedundantPlaces());
+					} else {
+						mMinuend = originalMinuend;
+						mDsi = diff.getDifferenceSynchronizationInformation();
+					}
 				} else {
+					mMinuend = originalMinuend;
 					mDsi = new DifferenceSynchronizationInformation<>(new HashSet<>(), new HashRelation<>(),
 							new HashRelation<>(), new HashSet<>(mMinuend.getTransitions()), new HashRelation<>(), false,
 							false);
 					partitionStates();
 				}
 			}
+			assert mDsi.isCompatible(mMinuend) : "incompatible DSI";
 			copyNetPlaces();
 			addBlackAndWhitePlaces();
 			addTransitions();
@@ -211,14 +251,14 @@ public final class Difference
 		// subtrahend L(A)◦Σ^* accepts everything ==> difference is empty
 		return mSubtrahend.isFinal(onlyElement(mSubtrahend.getInitialStates()))
 				// minuend L(N) is empty ==> difference is empty
-				|| mMinuend.getInitialPlaces().isEmpty()
-				|| mMinuend.getAcceptingPlaces().isEmpty();
+				|| mInputMinuend.getInitialPlaces().isEmpty()
+				|| mInputMinuend.getAcceptingPlaces().isEmpty();
 	}
 
 	private boolean checkSubtrahendProperties() {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(mSubtrahend)) {
 			throw new IllegalArgumentException("subtrahend must be a finite automaton");
-		} else if (!IAutomaton.sameAlphabet(mMinuend, mSubtrahend)) {
+		} else if (!IAutomaton.sameAlphabet(mInputMinuend, mSubtrahend)) {
 			// not really necessary, but different alphabets could be hinting at bugs in other operations
 			throw new IllegalArgumentException("minuend and subtrahend must use same alphabet");
 		} else if (mSubtrahend.getInitialStates().size() != 1) {
@@ -231,7 +271,7 @@ public final class Difference
 
 	@Override
 	public String startMessage() {
-		return "Start " + getOperationName() + ". First operand " + mMinuend.sizeInformation()
+		return "Start " + getOperationName() + ". First operand " + mInputMinuend.sizeInformation()
 				+ ". Second operand " + mSubtrahend.sizeInformation();
 	}
 
