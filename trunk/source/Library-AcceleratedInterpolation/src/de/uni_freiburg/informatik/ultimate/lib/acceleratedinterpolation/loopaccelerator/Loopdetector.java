@@ -28,8 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -74,9 +76,27 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 		if (loopHeads.isEmpty()) {
 			mLogger.debug("Found no loopheads in trace!" + mTrace);
 			return;
-		} else {
-			mLogger.debug("found possible Loopheads" + loopHeads);
 		}
+		mLogger.debug("found possible Loopheads" + loopHeads);
+		loopHeads.addAll(locFirstSeen);
+		final Map<IcfgLocation, List<LETTER>> loops = new HashMap<>();
+		for (final Pair<IcfgLocation, Integer> loopHead : loopHeads) {
+			for (final Pair<IcfgLocation, Integer> loopTail : loopHeads) {
+				if (loopHead.getFirst() == loopTail.getFirst() && loopHead.getSecond() != loopTail.getSecond()) {
+					final int pos1 = loopHead.getSecond();
+					final int pos2 = loopTail.getSecond();
+					final int start = (pos1 < pos2) ? pos1 : pos2;
+					final int end = (pos1 >= pos2) ? pos1 : pos2;
+					final List<LETTER> loopBody = new ArrayList<>(mTrace.subList(start, end));
+					loops.put(loopHead.getFirst(), loopBody);
+				}
+			}
+		}
+		mLogger.debug("computed loops");
+	}
+
+	private void getUniqueLoops(final HashMap<IcfgLocation, List<LETTER>> loopBodys) {
+
 	}
 
 	private List<IcfgLocation> statementsToLocations(final List<LETTER> trace) {
