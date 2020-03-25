@@ -87,7 +87,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 
 	private final Map<IcfgLocation, List<LETTER>> mLoops;
 	private final Accelerator mAccelerator;
-	private final Loopdetector mLoopdetector;
+	private final Loopdetector<LETTER> mLoopdetector;
 
 	public AcceleratedInterpolation(final ILogger logger, final ITraceCheckPreferences prefs,
 			final ManagedScript script, final IPredicateUnifier predicateUnifier, final List<LETTER> counterexample) {
@@ -105,7 +105,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mInterpolants[mCounterexample.size() - 1] = mPredicateUnifier.getFalsePredicate();
 
 		mAccelerator = new Accelerator();
-		mLoopdetector = new Loopdetector<LETTER>();
+		mLoopdetector = new Loopdetector<>(mCounterexample, mLogger);
 		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 
 		// TODO give a better reason

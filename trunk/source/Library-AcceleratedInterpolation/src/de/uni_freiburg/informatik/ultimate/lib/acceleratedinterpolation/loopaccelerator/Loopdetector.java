@@ -28,35 +28,61 @@
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
- * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents the loop accelerator needed for
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class represents the loop detector needed for
  *         {@link AcceleratedInterpolation}
  */
 public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 
 	private List<LETTER> mTrace;
-	private List<IcfgLocation> mTraceLocations;
+	private final List<IcfgLocation> mTraceLocations;
+	private final ILogger mLogger;
 
-	public Loopdetector() {
-		mTrace = new ArrayList<>();
-		mTraceLocations = new ArrayList<>();
+	public Loopdetector(final List<LETTER> trace, final ILogger logger) {
+		mLogger = logger;
+		mTrace = trace;
+		mTraceLocations = statementsToLocations(trace);
+
+		mLogger.debug("Loopdetector created.");
 	}
 
 	public void getLoop() {
-		mTraceLocations = statementsToLocations();
+		final Set<IcfgLocation> possLoopHeads = new HashSet<>();
+		final Set<Pair<IcfgLocation, Integer>> locFirstSeen = new HashSet<>();
+		final Set<Pair<IcfgLocation, Integer>> loopHeads = new HashSet<>();
+
+		int i = 0;
+		for (final IcfgLocation loc : mTraceLocations) {
+			if (!possLoopHeads.add(loc)) {
+				loopHeads.add(new Pair<>(loc, i));
+			} else {
+				locFirstSeen.add(new Pair<>(loc, i));
+			}
+			i++;
+		}
+		if (loopHeads.isEmpty()) {
+			mLogger.debug("Found no loopheads in trace!" + mTrace);
+			return;
+		} else {
+			mLogger.debug("found possible Loopheads" + loopHeads);
+		}
 	}
 
-	private List<IcfgLocation> statementsToLocations() {
+	private List<IcfgLocation> statementsToLocations(final List<LETTER> trace) {
 		final List<IcfgLocation> traceLocations = new ArrayList<>();
 
-		for (final LETTER stm : mTrace) {
+		for (final LETTER stm : trace) {
 			traceLocations.add(stm.getSource());
 		}
 		return traceLocations;
