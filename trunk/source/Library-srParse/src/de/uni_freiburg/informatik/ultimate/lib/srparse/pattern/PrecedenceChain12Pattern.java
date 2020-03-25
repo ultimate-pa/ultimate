@@ -62,11 +62,11 @@ public class PrecedenceChain12Pattern extends PatternType {
 		// TODO: ct must still be checked
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			ct = counterTrace(phase(P.negate()), phase(S), phaseT(), phase(T), phaseT());
+			ct = counterTrace(phase(T.negate()), phase(P), phaseT(), phase(S), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD Q = scope.getCdd1();
-			ct = counterTrace(phase(P.negate().and(Q.negate())), phase(S.and(Q.negate()).and(P.negate())),
-					phase(Q.negate()), phase(T.and(Q.negate())), phaseT());
+			ct = counterTrace(phase(T.negate().and(Q.negate())), phase(P.and(Q.negate())),
+					phase(Q.negate()), phase(S.and(Q.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();
