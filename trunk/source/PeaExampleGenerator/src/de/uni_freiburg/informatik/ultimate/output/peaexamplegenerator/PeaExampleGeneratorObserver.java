@@ -30,21 +30,19 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
@@ -60,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.ReqTestResultTest;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.TestStep;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -135,32 +132,26 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 		}
 
 		for (int i = 0; i < reqTestResultTests.size(); i++) {
-			final Map<String, Pair<List<Integer>, List<Integer>>> observables = new HashMap<>();
-			final List<TestStep> steps = reqTestResultTests.get(i).getTestSteps();
-			final AtomicInteger clock = new AtomicInteger(); // Var used in lambda must be final. NagNagNag
+			final Map<String, String> observables = new HashMap<>();
+			final List<TestStep> testSteps = reqTestResultTests.get(i).getTestSteps();
 
-			final Set<IdentifierExpression> identifierExpressions = new HashSet<>();
-			for (final TestStep step : steps) {
-				identifierExpressions.addAll(step.getInputAssignment().keySet());
-				identifierExpressions.addAll(step.getOutputAssignment().keySet());
-			}
+			final Set<String> identifiers = new HashSet<>();
+			testSteps.forEach(e -> identifiers.addAll(e.getIdentifier()));
 
-			for (final TestStep step : steps) {
-				final Set<IdentifierExpression> dontCares = new HashSet<>(identifierExpressions);
-				dontCares.removeAll(step.getInputAssignment().keySet());
-				dontCares.removeAll(step.getOutputAssignment().keySet());
-
-				step.getInputAssignment().forEach((k, v) -> parseAssignment(k, v, observables, clock.get()));
-				step.getOutputAssignment().forEach((k, v) -> parseAssignment(k, v, observables, clock.get()));
-				dontCares.forEach(k -> parseAssignment(k, null, observables, clock.get()));
-
+			for (final TestStep step : testSteps) {
 				assert (step.getWaitTime().size() == 1);
-				final RealLiteral waitTime = ((RealLiteral) step.getWaitTime().iterator().next());
-				clock.getAndAdd(Integer.parseInt(waitTime.getValue()));
+				final int waitTime = Integer.parseInt(((RealLiteral) step.getWaitTime().iterator().next()).getValue());
 
-				step.getInputAssignment().forEach((k, v) -> parseAssignment(k, v, observables, clock.get()));
-				step.getOutputAssignment().forEach((k, v) -> parseAssignment(k, v, observables, clock.get()));
-				dontCares.forEach(k -> parseAssignment(k, null, observables, clock.get()));
+				final Set<String> dontCares = new HashSet<>(identifiers);
+				dontCares.removeAll(step.getIdentifier());
+
+				step.getInputAssignment()
+						.forEach((k, v) -> parseAssignment(k.getIdentifier(), v, waitTime, observables));
+
+				step.getOutputAssignment()
+						.forEach((k, v) -> parseAssignment(k.getIdentifier(), v, waitTime, observables));
+
+				dontCares.forEach(k -> parseAssignment(k, null, waitTime, observables));
 			}
 
 			try {
@@ -186,36 +177,43 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 		}
 	}
 
-	private static void parseAssignment(final IdentifierExpression identifier, final Collection<Expression> expressions,
-			final Map<String, Pair<List<Integer>, List<Integer>>> observables, final int clock) {
+	private static void parseAssignment(final String identifier, final Collection<Expression> expression,
+			final int waitTime, final Map<String, String> observables) {
 
-		int value = -1;
-		if (expressions != null) {
-			assert (expressions.size() == 1);
-			value = ((BooleanLiteral) expressions.iterator().next()).getValue() ? 1 : 0;
+		final String values = observables.computeIfAbsent(identifier, e -> new String());
+		String value = "x";
+
+		if (expression != null) {
+			assert (expression.size() == 1);
+			value = ((BooleanLiteral) expression.iterator().next()).getValue() ? "h" : "l";
+		}
+		value = values.endsWith(value) ? "." : value;
+
+		final StringBuilder sb = new StringBuilder(values);
+		for (int i = 0; i < waitTime; i++) {
+			sb.append(".");
 		}
 
-		final Pair<List<Integer>, List<Integer>> values = observables.computeIfAbsent(identifier.getIdentifier(),
-				e -> new Pair<>(new ArrayList<>(), new ArrayList<>()));
-
-		values.getFirst().add(clock);
-		values.getSecond().add(value);
+		observables.put(identifier, sb.toString());
 	}
 
-	private static String jsonString(final String id, final Map<String, Pair<List<Integer>, List<Integer>>> signals) {
+	private static String jsonString(final String name, final Map<String, String> signals) {
 		final StringBuilder result = new StringBuilder();
+		final Formatter fmt = new Formatter();
 
-		for (final Entry<String, Pair<List<Integer>, List<Integer>>> signal : signals.entrySet()) {
-			result.append("{");
-			result.append("\"id\": \"" + signal.getKey() + "\", ");
-			result.append("\"x\": " + signal.getValue().getFirst() + ", ");
-			result.append("\"y\": " + signal.getValue().getSecond());
-			result.append("}, ");
+		for (final Entry<String, String> signal : signals.entrySet()) {
+			fmt.format("{\"name\": \"%s\", \"wave\": \"%s\"}", signal.getKey(), signal.getValue());
+
+			if (result.length() > 0) {
+				result.append(", ");
+			}
+			result.append(fmt.toString());
 		}
-		result.setLength(result.length() - 2);
 
-		result.insert(0, "{\"id\": \"" + id + "\", \"signals\": [");
-		result.append("]}");
+		result.insert(0, "{\"signal\": [");
+		result.append("], ");
+		result.append("\"head\": {\"text\": \"" + name + "\"}");
+		result.append("}");
 
 		return result.toString();
 	}

@@ -2,8 +2,10 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.testgen;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -35,6 +37,14 @@ public class TestStep {
 
 	public Collection<Expression> getWaitTime() {
 		return Collections.unmodifiableCollection(mWaitTime);
+	}
+
+	public Set<String> getIdentifier() {
+		final Set<String> result = new HashSet<>();
+		mInputAssignment.keySet().forEach(e -> result.add(e.getIdentifier()));
+		mOutputAssignment.keySet().forEach(e -> result.add(e.getIdentifier()));
+
+		return result;
 	}
 
 	@Override
