@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Xn
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -146,8 +147,13 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	@Override
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
-		// TODO: Only a workaround, use from RefinementEngine
-		return new InterpolantComputationStatus();
+		if (isCorrect() == LBool.UNSAT) {
+			return new InterpolantComputationStatus();
+		} else if (isCorrect() == LBool.SAT) {
+			return new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
+		} else {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	@Override
