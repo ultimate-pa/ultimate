@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Loopdetector;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -68,8 +69,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *
  * @param <LETTER>
  */
-public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>>
-		implements IInterpolatingTraceCheck<LETTER> {
+public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> implements IInterpolatingTraceCheck<LETTER> {
 
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
@@ -87,6 +87,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>>
 
 	private final Map<IcfgLocation, List<LETTER>> mLoops;
 	private final Accelerator mAccelerator;
+	private final Loopdetector mLoopdetector;
 
 	public AcceleratedInterpolation(final ILogger logger, final ITraceCheckPreferences prefs,
 			final ManagedScript script, final IPredicateUnifier predicateUnifier, final List<LETTER> counterexample) {
@@ -104,20 +105,16 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>>
 		mInterpolants[mCounterexample.size() - 1] = mPredicateUnifier.getFalsePredicate();
 
 		mAccelerator = new Accelerator();
+		mLoopdetector = new Loopdetector<LETTER>();
 		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 
 		// TODO give a better reason
 		mReasonUnknown = null;
 		mTraceCheckFinishedNormally = true;
 
-		for (final IcfgLocation loopHead : mIcfg.getLoopLocations()) {
-			// TODO: Possibly extract your own loops, e.g., walking over the trace and counting locations.
-			final List<LETTER> loopBody = getLoop(loopHead);
-			if (loopBody.isEmpty()) {
-				continue;
-			}
-			mLoops.put(loopHead, new ArrayList<>(getLoop(loopHead)));
-		}
+		mLoopdetector.setTrace(mCounterexample);
+		mLoopdetector.getLoop();
+
 		if (mLoops.isEmpty()) {
 			mLogger.debug("No loops found in this trace.");
 			mIsTraceCorrect = checkFeasibility(mCounterexample);
@@ -128,34 +125,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>>
 			mLogger.debug("Found loops, starting acceleration");
 			mIsTraceCorrect = computeAcceleratedFeasibility();
 		}
-	}
-
-	/**
-	 * Get a given loop's transitions
-	 *
-	 * TODO: This extracts the smallest repetition of the first loop of loopHead; in particular, this extracts only one
-	 * loop per loop head
-	 *
-	 * @param loopHead
-	 *            beginning of the loop
-	 *
-	 * @return body of the loop
-	 */
-	private List<LETTER> getLoop(final IcfgLocation loopHead) {
-		int start = 0;
-		int end = 0;
-		int cnt = 0;
-		for (final LETTER loc : mCounterexample) {
-			if (loc.getSource() == loopHead) {
-				if (cnt > start) {
-					end = cnt;
-				} else {
-					start = cnt;
-				}
-				cnt++;
-			}
-		}
-		return mCounterexample.subList(start, end);
 	}
 
 	private LBool computeAcceleratedFeasibility() {

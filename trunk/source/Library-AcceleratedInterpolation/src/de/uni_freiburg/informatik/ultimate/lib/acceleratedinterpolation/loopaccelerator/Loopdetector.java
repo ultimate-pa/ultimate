@@ -27,10 +27,12 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  *
@@ -38,7 +40,65 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  *         {@link AcceleratedInterpolation}
  */
 public class Loopdetector<LETTER extends IIcfgTransition<?>> {
-	public Loopdetector(final List<LETTER> trace) {
 
+	private List<LETTER> mTrace;
+	private List<IcfgLocation> mTraceLocations;
+
+	public Loopdetector() {
+		mTrace = new ArrayList<>();
+		mTraceLocations = new ArrayList<>();
+	}
+
+	public void getLoop() {
+		mTraceLocations = statementsToLocations();
+	}
+
+	private List<IcfgLocation> statementsToLocations() {
+		final List<IcfgLocation> traceLocations = new ArrayList<>();
+
+		for (final LETTER stm : mTrace) {
+			traceLocations.add(stm.getSource());
+		}
+		return traceLocations;
+	}
+
+	/**
+	 * Get a given loop's transitions
+	 *
+	 * TODO: This extracts the smallest repetition of the first loop of loopHead; in particular, this extracts only one
+	 * loop per loop head
+	 *
+	 * @param loopHead
+	 *            beginning of the loop
+	 *
+	 * @return body of the loop
+	 */
+	public List<LETTER> getLoopNaive(final IcfgLocation loopHead, final List<LETTER> trace) {
+		int start = 0;
+		int end = 0;
+		int cnt = 0;
+		for (final LETTER loc : trace) {
+			if (loc.getSource() == loopHead) {
+				if (cnt > start) {
+					end = cnt;
+				} else {
+					start = cnt;
+				}
+				cnt++;
+			}
+		}
+		return trace.subList(start, end);
+	}
+
+	public void setTrace(final List<LETTER> trace) {
+		mTrace = trace;
+	}
+
+	public List<LETTER> getTrace() {
+		return mTrace;
+	}
+
+	public List<IcfgLocation> getTraceLocations() {
+		return mTraceLocations;
 	}
 }
