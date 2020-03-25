@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableB
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * 
+ *
  * @author Vincent Langenfeld <langenfv@tf.uni-freiburg.de>
  *
  */
@@ -103,6 +103,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				final PhaseEventAutomata newPea =
 						transformPea(pattern, pea.getValue(), symbolTable, pea.getKey().getPhases());
 				newCt2pea.add(new Pair<>(pea.getKey(), newPea));
+				builder.addPea(pattern, newPea);
 			}
 			mPattern2Peas.put(pattern, new ReqPeas(pattern, newCt2pea));
 		}
