@@ -49,7 +49,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final ManagedScript mManagedScript;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
 	private final Set<LETTER> mAlphabet;
-	private final IMcrResultProvider<LETTER> mProofProvider;
+	private final IMcrResultProvider<LETTER> mResultProvider;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final List<LETTER> mInitialTrace;
@@ -58,7 +58,8 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	public Mcr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final List<LETTER> trace,
-			final Set<LETTER> alphabet, final IMcrResultProvider<LETTER> proofProvider) throws AutomataLibraryException {
+			final Set<LETTER> alphabet, final IMcrResultProvider<LETTER> resultProvider)
+			throws AutomataLibraryException {
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
 		mServices = prefs.getUltimateServices();
@@ -68,7 +69,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		mXnfConversionTechnique = prefs.getXnfConversionTechnique();
 		mSimplificationTechnique = prefs.getSimplificationTechnique();
 		mEmptyStackStateFactory = emptyStackStateFactory;
-		mProofProvider = proofProvider;
+		mResultProvider = resultProvider;
 		mInitialTrace = trace;
 		// Explore all the interleavings of trace
 		mResult = exploreInterleavings(trace);
@@ -90,7 +91,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		while (run != null) {
 			mLogger.info("---- MCR iteration " + iteration++ + " ----");
 			final IRun<LETTER, ?> counterexample = convertRun(run);
-			result = mProofProvider.getResult(counterexample, getPrecondition(), getPostcondition());
+			result = mResultProvider.getResult(counterexample, getPrecondition(), getPostcondition());
 			final List<LETTER> trace = counterexample.getWord().asList();
 			if (result.isCorrect() != LBool.UNSAT) {
 				// We found a feasible error trace
