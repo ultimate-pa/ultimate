@@ -32,9 +32,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -48,7 +49,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final ManagedScript mManagedScript;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackStateFactory;
 	private final Set<LETTER> mAlphabet;
-	private final IProofProvider<LETTER> mProofProvider;
+	private final IMcrResultProvider<LETTER> mProofProvider;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final List<LETTER> mInitialTrace;
@@ -57,7 +58,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	public Mcr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackStateFactory, final List<LETTER> trace,
-			final Set<LETTER> alphabet, final IProofProvider<LETTER> proofProvider) throws AutomataLibraryException {
+			final Set<LETTER> alphabet, final IMcrResultProvider<LETTER> proofProvider) throws AutomataLibraryException {
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
 		mServices = prefs.getUltimateServices();
@@ -85,35 +86,33 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		INestedWordAutomaton<Integer, String> mhbAutomaton = automatonBuilder.buildMhbAutomaton();
 		NestedRun<Integer, ?> run = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
 		int iteration = 0;
+		McrTraceCheckResult<LETTER> result = null;
 		while (run != null) {
 			mLogger.info("---- MCR iteration " + iteration++ + " ----");
-			final NestedRun<LETTER, ?> counterexample = convertRun(run);
-			final Pair<LBool, QualifiedTracePredicates> proof =
-					mProofProvider.getProof(counterexample, getPrecondition(), getPostcondition());
+			final IRun<LETTER, ?> counterexample = convertRun(run);
+			result = mProofProvider.getResult(counterexample, getPrecondition(), getPostcondition());
 			final List<LETTER> trace = counterexample.getWord().asList();
-			final LBool feasibility = proof.getFirst();
-			if (feasibility != LBool.UNSAT) {
+			if (result.isCorrect() != LBool.UNSAT) {
 				// We found a feasible error trace
-				return new McrTraceCheckResult<>(trace, feasibility, null, null);
+				return result;
 			}
 			// TODO: Use interpolant automata (from settings) here?
 			final INestedWordAutomaton<Integer, String> mcrAutomaton = automatonBuilder.buildMcrAutomaton(trace);
 			automata.add(mcrAutomaton);
-			tracePredicates.add(proof.getSecond());
+			tracePredicates.add(result.getQualifiedTracePredicates());
 			traces.add(trace);
 			mhbAutomaton = new Difference<>(mAutomataServices, factory, mhbAutomaton, mcrAutomaton).getResult();
 			run = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
 		}
-		// All interleavings are infeasible
-		final List<IPredicate> predicates = tracePredicates.get(0).getTracePredicates().getPredicates();
-		final IPredicate[] interpolants = predicates.toArray(new IPredicate[predicates.size()]);
+		// All interleavings are infeasible, therefore create an interpolant automaton
 		final NestedWordAutomaton<LETTER, IPredicate> interpolantAutomaton =
 				automatonBuilder.buildInterpolantAutomaton(automata, traces, tracePredicates);
-		return new McrTraceCheckResult<>(traces.get(0), LBool.UNSAT, interpolantAutomaton, interpolants);
+		result.setAutomaton(interpolantAutomaton);
+		return result;
 	}
 
 	@SuppressWarnings("unchecked")
-	private <STATE> NestedRun<LETTER, STATE> convertRun(final NestedRun<Integer, STATE> intRun) {
+	private <STATE> IRun<LETTER, STATE> convertRun(final NestedRun<Integer, STATE> intRun) {
 		final LETTER[] symbols = (LETTER[]) intRun.getWord().asList().stream().map(mInitialTrace::get)
 				.toArray(IIcfgTransition<?>[]::new);
 		return new NestedRun<>(NestedWord.nestedWord(new Word<>(symbols)), intRun.getStateSequence());
@@ -172,25 +171,22 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	@Override
 	public boolean providesRcfgProgramExecution() {
-		return isCorrect() != LBool.SAT;
+		return mResult.providesExecution();
 	}
 
 	@Override
 	public IProgramExecution<IIcfgTransition<IcfgLocation>, Term> getRcfgProgramExecution() {
-		// TODO Auto-generated method stub
-		return null;
+		return mResult.getExecution();
 	}
 
 	@Override
 	public IStatisticsDataProvider getStatistics() {
-		// TODO Auto-generated method stub
-		return null;
+		return mResult.getStatistics();
 	}
 
 	@Override
 	public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
-		// TODO Auto-generated method stub
-		return null;
+		return new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, null, ExceptionHandlingCategory.KNOWN_THROW);
 	}
 
 	@Override
@@ -199,8 +195,8 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		return true;
 	}
 
-	public interface IProofProvider<LETTER extends IIcfgTransition<?>> {
-		Pair<LBool, QualifiedTracePredicates> getProof(IRun<LETTER, ?> counterexample, IPredicate precondition,
+	public interface IMcrResultProvider<LETTER extends IIcfgTransition<?>> {
+		McrTraceCheckResult<LETTER> getResult(IRun<LETTER, ?> counterexample, IPredicate precondition,
 				IPredicate postcondition);
 	}
 }

@@ -13,7 +13,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.Mcr;
-import de.uni_freiburg.informatik.ultimate.lib.mcr.Mcr.IProofProvider;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.McrTraceCheckResult;
+import de.uni_freiburg.informatik.ultimate.lib.mcr.Mcr.IMcrResultProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -22,19 +23,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
-		implements IIpTcStrategyModule<Mcr<LETTER>, LETTER>, IIpAbStrategyModule<LETTER>, IProofProvider<LETTER> {
+		implements IIpTcStrategyModule<Mcr<LETTER>, LETTER>, IIpAbStrategyModule<LETTER>, IMcrResultProvider<LETTER> {
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<?> mPrefs;
 	private final StrategyFactory<LETTER> mStrategyFactory;
@@ -80,7 +75,7 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
-		return new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, null, ExceptionHandlingCategory.KNOWN_THROW);
+		return getOrConstruct().getTraceCheckReasonUnknown();
 	}
 
 	@Override
@@ -145,32 +140,33 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public Pair<LBool, QualifiedTracePredicates> getProof(final IRun<LETTER, ?> counterexample,
-			final IPredicate precondition, final IPredicate postcondition) {
+	public McrTraceCheckResult<LETTER> getResult(final IRun<LETTER, ?> counterexample, final IPredicate precondition,
+			final IPredicate postcondition) {
 		// Run mRefinementEngine for the given trace
 		final RefinementStrategy refinementStrategy = mPrefs.getMcrRefinementStrategy();
 		if (refinementStrategy == RefinementStrategy.MCR) {
 			throw new IllegalStateException("MCR cannot used with MCR as internal strategy.");
 		}
-
-		final IPreconditionProvider preconditionProvider = (predicateUnifer) -> precondition;
-		final IPostconditionProvider postconditionProvider = (predicateUnifer) -> postcondition;
-
-		final IRefinementStrategy<LETTER> strategy = mStrategyFactory.constructStrategy(counterexample, mAbstraction,
-				mTaskIdentifier, mEmptyStackFactory, preconditionProvider, postconditionProvider, refinementStrategy);
+		final IRefinementStrategy<LETTER> strategy =
+				mStrategyFactory.constructStrategy(counterexample, mAbstraction, mTaskIdentifier, mEmptyStackFactory,
+						(predicateUnifer) -> precondition, (predicateUnifer) -> postcondition, refinementStrategy);
 		mRefinementEngine = new AutomatonFreeRefinementEngine<>(mLogger, strategy);
+		final List<LETTER> trace = counterexample.getWord().asList();
+		final RefinementEngineStatisticsGenerator statistics = mRefinementEngine.getRefinementEngineStatistics();
 		final LBool feasibility = mRefinementEngine.getCounterexampleFeasibility();
+		// We found a feasible counterexample
 		if (feasibility != LBool.UNSAT) {
-			return new Pair<>(feasibility, null);
+			return McrTraceCheckResult.constructFeasibleResult(trace, feasibility, statistics,
+					mRefinementEngine.getIcfgProgramExecution());
 		}
 		// Extract interpolants, try to get a perfect sequence
 		final Collection<QualifiedTracePredicates> proofs = mRefinementEngine.getInfeasibilityProof();
 		if (proofs.isEmpty()) {
-			return new Pair<>(feasibility, null);
+			return McrTraceCheckResult.constructInfeasibleResult(trace, null, statistics);
 		}
 		final QualifiedTracePredicates predicate =
 				proofs.stream().filter(a -> a.isPerfect()).findAny().orElse(proofs.stream().findFirst().get());
 		mUsedPredicates.add(predicate);
-		return new Pair<>(feasibility, predicate);
+		return McrTraceCheckResult.constructInfeasibleResult(trace, predicate, statistics);
 	}
 }
