@@ -446,7 +446,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		} else if (mCounterexample == null && isEmptyCounterexample != null) {
 			mLogger.warn("IsEmptyHeuristic found no path but IsEmpty did.");
 			new PathProgramDumper(mIcfg, mServices, isEmptyCounterexample,
-					"tmp/dump/cex" + isEmptyCounterexample.hashCode() + ".bpl", InputMode.ICFG);
+					"/tmp/dump/cex" + isEmptyCounterexample.hashCode() + ".bpl", InputMode.ICFG);
 		} else if (mCounterexample != null && isEmptyCounterexample != null) {
 			if (mCounterexample != isEmptyCounterexample) {
 				mLogger.info("IsEmptyHeuristic and IsEmpty found a path, but they differ");
