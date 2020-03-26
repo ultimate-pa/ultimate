@@ -98,9 +98,8 @@ def main():
   ax.set_yticklabels(y_ticklabels)
 
   plt.tight_layout()
-  plt.show()
+  plt.savefig(args.output) if args.output else plt.show()
 
-  print(plt_colors.TABLEAU_COLORS)
 
 if __name__ == "__main__":
   main()

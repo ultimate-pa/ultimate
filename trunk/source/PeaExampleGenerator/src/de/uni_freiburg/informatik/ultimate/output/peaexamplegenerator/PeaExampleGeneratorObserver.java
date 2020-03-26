@@ -198,9 +198,9 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 
 	private static String jsonString(final String name, final Map<String, String> signals) {
 		final StringBuilder result = new StringBuilder();
-		final Formatter fmt = new Formatter();
 
 		for (final Entry<String, String> signal : signals.entrySet()) {
+			final Formatter fmt = new Formatter();
 			fmt.format("{\"name\": \"%s\", \"wave\": \"%s\"}", signal.getKey(), signal.getValue());
 
 			if (result.length() > 0) {
@@ -213,6 +213,8 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 		result.append("], ");
 		result.append("\"head\": {\"text\": \"" + name + "\"}");
 		result.append("}");
+
+		System.out.println(result.toString());
 
 		return result.toString();
 	}
