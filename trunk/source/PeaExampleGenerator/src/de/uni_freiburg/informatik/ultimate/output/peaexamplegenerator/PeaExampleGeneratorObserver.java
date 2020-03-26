@@ -176,8 +176,8 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 		}
 	}
 
-	private static void parseAssignment(final String identifier, final Collection<Expression> expression,
-			final int waitTime, final Map<String, String> observables) {
+	private void parseAssignment(final String identifier, final Collection<Expression> expression, final int waitTime,
+			final Map<String, String> observables) {
 
 		final String values = observables.computeIfAbsent(identifier, e -> new String());
 		String value = "x";
@@ -188,12 +188,11 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 		}
 		value = values.endsWith(value) ? "." : value;
 
-		final StringBuilder sb = new StringBuilder(values);
 		for (int i = 0; i < waitTime; i++) {
-			sb.append(".");
+			value += ".";
 		}
 
-		observables.put(identifier, sb.toString());
+		observables.put(identifier, value);
 	}
 
 	private static String jsonString(final String name, final Map<String, String> signals) {
