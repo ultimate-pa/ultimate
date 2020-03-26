@@ -96,6 +96,7 @@ def main():
   # Set ticks, tick labels.
   ax.set_yticks(y_ticks)
   ax.set_yticklabels(y_ticklabels)
+  ax.set_ylim(y_ticks[0] -1, y_ticks[-1] + 1)
 
   plt.tight_layout()
   plt.savefig(args.output) if args.output else plt.show()
