@@ -85,12 +85,6 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			+ "The rest is internal. Note: this is the most conservative assignment suited for demos, but "
 			+ " usually not helpful in the wild";
 
-	public static final String LABEL_USE_PRIMED_PC = "Use primed PCs";
-	private static final boolean DEF_USE_PRIMED_PC = false;
-	private static final String DESC_USE_PRIMED_PC = "Primed variables are used to store what location will be reached"
-			+ "next instead of overwriting the program counter of every automaton directly."
-			+ "Note: This is necessary for test generation.";
-
 	public static final String LABEL_CHOOSE_INITIAL = "Choose init. Output assignment";
 	private static final boolean DEF_CHOOSE_INITIAL = false;
 	private static final String DESC_CHOOSE_INITIAL = "Allow for the test generator to initially choose an arbitrary"
@@ -127,8 +121,6 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 					PreferenceType.Boolean),
 			new UltimatePreferenceItem<>(LABEL_GUESS_IN_OUT,
 					DEF_GUESS_IN_OUT, DESC_GUESS_IN_OUT, PreferenceType.Boolean),
-			new UltimatePreferenceItem<>(LABEL_USE_PRIMED_PC,
-					DEF_USE_PRIMED_PC, DESC_USE_PRIMED_PC, PreferenceType.Boolean),
 			new UltimatePreferenceItem<>(LABEL_CHOOSE_INITIAL,
 					DEF_CHOOSE_INITIAL, DESC_CHOOSE_INITIAL, PreferenceType.Boolean)};
 	}

@@ -105,7 +105,6 @@ public class Req2BoogieTranslator {
 
 	private final IReqSymbolTable mSymboltable;
 	private IReq2PeaAnnotator mReqCheckAnnotator;
-	private final boolean mUsePrimedPc;
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
 			final List<PatternType> patterns) {
@@ -131,8 +130,6 @@ public class Req2BoogieTranslator {
 			init = riog.getInitializationPatterns();
 			requirements = riog.getRequirements();
 		}
-
-		mUsePrimedPc = prefs.getBoolean(Pea2BoogiePreferences.LABEL_USE_PRIMED_PC);
 
 		final IReq2Pea req2pea = createReq2Pea(req2peaTransformers, init, requirements);
 		if (req2pea.hasErrors()) {
@@ -421,11 +418,7 @@ public class Req2BoogieTranslator {
 			}
 		}
 
-		if (mUsePrimedPc) {
-			smtList.add(genPCAssign(mSymboltable.getPrimedVarId(pcName), phaseIndex, bl));
-		} else {
-			smtList.add(genPCAssign(pcName, phaseIndex, bl));
-		}
+		smtList.add(genPCAssign(pcName, phaseIndex, bl));
 
 		return smtList.toArray(new Statement[smtList.size()]);
 	}
