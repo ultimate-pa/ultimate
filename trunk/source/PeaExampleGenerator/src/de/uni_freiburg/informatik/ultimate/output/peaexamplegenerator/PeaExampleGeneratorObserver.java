@@ -156,8 +156,7 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 
 			try {
 				final String[] command = new String[] { "python", mScriptFile.getPath(), "-o",
-						mOutputDir.getPath() + "/" + mPatternName + "_" + mScopeName + "_" + i + mOutputFileExtension,
-						"-a", "0" };
+						mOutputDir.getPath() + "/" + mPatternName + "_" + mScopeName + "_" + i + mOutputFileExtension };
 
 				final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices);
 				final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
