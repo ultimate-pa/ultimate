@@ -32,12 +32,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -141,30 +143,184 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	private NestedRun<LETTER, STATE> getAcceptingRun(final Collection<STATE> startStates,
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
 
-		return AStarSearch(startStates, heuristic);
+		return AStarDD(startStates, heuristic);
+	}
+
+	private NestedRun<LETTER, STATE> AStarDD(final Collection<STATE> startStates,
+			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
+		final HashedPriorityQueue<Item> worklist =
+				new HashedPriorityQueue<>((a, b) -> Double.compare(a.mExpectedCostToTarget, b.mExpectedCostToTarget));
+		final Set<Integer> closed = new HashSet<>();
+
+		for (final STATE state : startStates) {
+			worklist.add(new Item(state));
+		}
+
+		while (!worklist.isEmpty()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
+				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
+				throw new AutomataOperationCanceledException(rti);
+			}
+			final Item current = worklist.poll();
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("----");
+				mLogger.debug("WORKLIST SIZE: " + worklist.size());
+				mLogger.debug("Cur " + current);
+				mLogger.warn("HASH: " + current.hashCode());
+
+			}
+
+			if (mIsGoalState.test(current.mTargetState)) {
+				return current.constructRun();
+			}
+
+			final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current);
+			if (mLogger.isDebugEnabled()) {
+				final List<Integer> succHashes =
+						unvaluatedSuccessors.stream().map(m -> m.hashCode()).collect(Collectors.toList());
+				mLogger.debug("Successors: " + succHashes.toString());
+			}
+
+			for (final Item succ : unvaluatedSuccessors) {
+				final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
+				if (worklist.contains(succ)) {
+					final Item oldSucc = worklist.find(succ);
+					if (costSoFar >= oldSucc.mCostSoFar) {
+						// we already know the successor and our current way is not
+						// better than the new one
+						continue;
+					}
+				}
+
+				final double expectedCost = costSoFar
+						+ heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
+
+				final boolean rem = worklist.remove(succ);
+				if (!rem && !closed.add(succ.hashCode())) {
+					// if
+					mLogger.debug("REM " + rem);
+					continue;
+				}
+				succ.setExpectedCostToTarget(expectedCost);
+				if (!succ.isLowest()) {
+					continue;
+				}
+				succ.setCostSoFar(costSoFar);
+				worklist.add(succ);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.warn("----");
+					mLogger.debug("Add " + succ);
+					mLogger.warn("SUCC " + succ);
+					mLogger.warn("SUCC HASH: " + succ.hashCode());
+					mLogger.warn("SUCC COST SO FAR: " + costSoFar);
+					mLogger.warn("SUCC EXPECTED COST " + expectedCost);
+				}
+
+			}
+		}
+		return null;
 	}
 
 	private NestedRun<LETTER, STATE> AStarSearch(final Collection<STATE> startStates,
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
 		// Our worklist, contains all states we have to explore.
-		final HashedPriorityQueue<Item> openList =
+		final HashedPriorityQueue<Item> workqueue =
 				new HashedPriorityQueue<>((a, b) -> Double.compare(a.mExpectedCostToTarget, b.mExpectedCostToTarget));
-		final HashSet<Integer> closedList = new HashSet<>();
+		final HashSet<Integer> visitedStates = new HashSet<>();
+		final HashMap<Integer, Item> hashToItem = new HashMap<>();
 
-		// Add all initial states to worklist.
+		// Add all initial states to a queue.
 		for (final STATE state : startStates) {
-			openList.add(new Item(state));
+			workqueue.add(new Item(state));
 		}
 
-		while (!openList.isEmpty()) {
+		while (!workqueue.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
 				throw new AutomataOperationCanceledException(rti);
 			}
 			// Get and remove item form worklist.
-			final Item current = openList.poll();
-			closedList.add(current.hashCode());
+			final Item current = workqueue.poll();
+
+			// Construct run if current state is goal.
+			if (mIsGoalState.test(current.mTargetState)) {
+				return current.constructRun();
+			}
+
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("----");
+				mLogger.debug("Cur " + current);
+				mLogger.warn("HASH: " + current.hashCode());
+			}
+
+			if (visitedStates.contains(current.hashCode())) {
+				mLogger.warn("ALREADY VISITED");
+				continue;
+			}
+			visitedStates.add(current.hashCode());
+
+			// if (!visitedStates.contains(current.hashCode())) {
+
+			final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current);
+			if (mLogger.isDebugEnabled()) {
+				final List<Integer> succHashes =
+						unvaluatedSuccessors.stream().map(m -> m.hashCode()).collect(Collectors.toList());
+				mLogger.debug("Successors: " + succHashes.toString());
+			}
+			for (final Item succ : unvaluatedSuccessors) {
+
+				// Construct run if current state is goal.
+				if (mIsGoalState.test(succ.mTargetState)) {
+					return succ.constructRun();
+				}
+
+				final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
+				// Set concrete cost.
+				succ.setCostSoFar(costSoFar);
+				final double expectedCost = succ.mCostSoFar
+						+ heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
+				succ.setExpectedCostToTarget(expectedCost);
+
+				workqueue.add(succ);
+
+				if (mLogger.isDebugEnabled()) {
+					mLogger.warn("----");
+					mLogger.warn("SUCC " + succ);
+					mLogger.warn("SUCC HASH: " + succ.hashCode());
+					mLogger.warn("SUCC COST SO FAR: " + costSoFar);
+					mLogger.warn("SUCC EXPECTED COST " + expectedCost);
+				}
+
+			}
+		}
+		// }
+		return null;
+	}
+
+	// WIP
+	private NestedRun<LETTER, STATE> AStarSearchCompareSuccessors(final Collection<STATE> startStates,
+			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
+		// Our worklist, contains all states we have to explore.
+		final HashedPriorityQueue<Item> workqueue =
+				new HashedPriorityQueue<>((a, b) -> Double.compare(a.mExpectedCostToTarget, b.mExpectedCostToTarget));
+		final HashSet<Integer> visitedStates = new HashSet<>();
+
+		// Add all initial states to a queue.
+		for (final STATE state : startStates) {
+			workqueue.add(new Item(state));
+		}
+
+		while (!workqueue.isEmpty()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
+				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
+				throw new AutomataOperationCanceledException(rti);
+			}
+			// Get and remove item form worklist.
+			final Item current = workqueue.poll();
+			visitedStates.add(current.hashCode());
 
 			// Construct run if current state is goal.
 			if (mIsGoalState.test(current.mTargetState)) {
@@ -192,24 +348,19 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 			for (final Item succ : unvaluatedSuccessors) {
 
-				if (closedList.contains(succ.hashCode())) {
+				if (visitedStates.contains(succ.hashCode())) {
 					continue;
+				}
+
+				if (!workqueue.contains(succ)) {
+					workqueue.add(succ);
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("Add " + succ);
+					}
 				}
 
 				// Set concrete cost.
 				final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
-
-				if (!openList.contains(succ)) {
-					openList.add(succ);
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug("Add " + succ);
-					}
-
-				} else if (costSoFar >= succ.mCostSoFar) {
-					continue;
-				}
-
-				succ.setCostSoFar(costSoFar);
 
 				double expectedCost = 0;
 				// COMPARE_SUCCESSORS heuristic
@@ -220,6 +371,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 							+ heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
 				}
 
+				succ.setCostSoFar(costSoFar);
 				succ.setExpectedCostToTarget(expectedCost);
 
 				if (!succ.isLowest()) {
