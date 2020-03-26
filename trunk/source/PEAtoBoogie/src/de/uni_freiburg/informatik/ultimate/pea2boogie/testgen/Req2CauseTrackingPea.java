@@ -246,12 +246,13 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		return activeCDDs;
 	}
 
-	private static int getDCEffectPhaseIndex(final Phase[] oldLocations) {
+	private int getDCEffectPhaseIndex(final Phase[] oldLocations) {
 		// Find the last phase that is mentioned in automaton. Its the effect phase.
 		int lastDcPhase = 0;
 		for (int i = 0; i < oldLocations.length; i++) {
 			for (final Phase p : oldLocations) {
-				if ((p.getPhaseBits().isActive(i) || p.getPhaseBits().isWaiting(i) || p.getPhaseBits().isExact(i))
+				final PhaseBits pb = p.getPhaseBits();
+				if (pb != null && (pb.isActive(i) || pb.isWaiting(i) || pb.isExact(i))
 						&& i > lastDcPhase) {
 					lastDcPhase = i;
 				}
