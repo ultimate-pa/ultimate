@@ -188,11 +188,11 @@ public class PeaExampleGeneratorObserver extends BaseObserver {
 		}
 		value = values.endsWith(value) ? "." : value;
 
-		for (int i = 0; i < waitTime; i++) {
+		for (int i = 0; i < waitTime - 1; i++) {
 			value += ".";
 		}
 
-		observables.put(identifier, value);
+		observables.put(identifier, values + value);
 	}
 
 	private static String jsonString(final String name, final Map<String, String> signals) {
