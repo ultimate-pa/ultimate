@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator;
+package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector;
 
 import java.util.List;
 import java.util.Map;
@@ -46,17 +46,19 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 	private final List<IcfgLocation> mTraceLocations;
 	private final ILogger mLogger;
 
+	private final CycleFinder mCycleFinder;
+
 	public Loopdetector(final List<LETTER> trace, final ILogger logger) {
 		mLogger = logger;
 		mTrace = trace;
-		mTraceLocations = LoopdetectorUtils.statementsToLocations(mTrace);
+		mCycleFinder = new CycleFinder();
+		mTraceLocations = mCycleFinder.statementsToLocations(mTrace);
 
 		mLogger.debug("Loopdetector created.");
 	}
 
 	public void getLoops() {
-		final Map<IcfgLocation, List<Integer>> possibleLoopHeads =
-				LoopdetectorUtils.getPossibleCyclesInTrace(mTraceLocations);
+		final Map<IcfgLocation, List<Integer>> possibleLoopHeads = mCycleFinder.getCyclesInTrace(mTraceLocations);
 	}
 
 	public void setTrace(final List<LETTER> trace) {

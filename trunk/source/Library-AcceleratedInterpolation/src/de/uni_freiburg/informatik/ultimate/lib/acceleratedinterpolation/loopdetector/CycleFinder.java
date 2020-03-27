@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator;
+package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,13 +43,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  * @author Jonas Werner (wernerj@informatik.uni-freiburg.de) This class provides some static oeprations for finding
  *         loops. {@link AcceleratedInterpolation}
  */
-public class LoopdetectorUtils {
+public class CycleFinder {
 
-	private LoopdetectorUtils() {
-		// Util class -> no instantiation
+	public CycleFinder() {
 	}
 
-	public static Map<IcfgLocation, List<Integer>> getPossibleCyclesInTrace(final List<IcfgLocation> traceOfLocations) {
+	public Map<IcfgLocation, List<Integer>> getCyclesInTrace(final List<IcfgLocation> traceOfLocations) {
 		final Set<IcfgLocation> possLoopHeads = new HashSet<>();
 		final Map<IcfgLocation, Integer> locFirstSeen = new HashMap<>();
 		final Map<IcfgLocation, List<Integer>> loopHeads = new HashMap<>();
@@ -86,7 +85,7 @@ public class LoopdetectorUtils {
 	 *
 	 * @return body of the loop
 	 */
-	public static <LETTER extends IIcfgTransition<?>> List<LETTER> getCyclesFromTraceNaive(final IcfgLocation loopHead,
+	public <LETTER extends IIcfgTransition<?>> List<LETTER> getCyclesInTraceNaive(final IcfgLocation loopHead,
 			final List<LETTER> trace) {
 		int start = 0;
 		int end = 0;
@@ -111,8 +110,7 @@ public class LoopdetectorUtils {
 	 * @param trace
 	 * @return
 	 */
-	public static <LETTER extends IIcfgTransition<?>> List<IcfgLocation>
-			statementsToLocations(final List<LETTER> trace) {
+	public <LETTER extends IIcfgTransition<?>> List<IcfgLocation> statementsToLocations(final List<LETTER> trace) {
 		final List<IcfgLocation> traceLocations = new ArrayList<>();
 
 		for (final LETTER stm : trace) {
