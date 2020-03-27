@@ -201,9 +201,9 @@ public final class Difference
 							mServices, null, originalMinuend, subtrahendDfa);
 					if (mRemoveRedundantFlow) {
 						final RemoveRedundantFlow<LETTER, PLACE, ?> rrf = new RemoveRedundantFlow<>(mServices,
-								diff.getResult(), diff.getFinitePrefixOfDifference().getResult(), null,
-//								diff.getResult(), null, null,
-								mInputMinuend.getPlaces());
+								diff.getResult(), diff.getFinitePrefixOfDifference().getResult(),
+								// diff.getResult(), null,
+								mInputMinuend.getPlaces(), mInputMinuend.getPlaces());
 						final ProjectToSubnet<LETTER, PLACE> pts = new ProjectToSubnet<>(services, rrf.getResult(),
 								new HashRelation<>(), mSubtrahend.getStates());
 						mMinuend = pts.getResult();
