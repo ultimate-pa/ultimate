@@ -5,11 +5,14 @@ import logging
 import os
 import pathlib
 import platform
+import re
 import shutil
 import signal
 import subprocess
 import sys
 from typing import Optional, List
+
+from tqdm import tqdm
 
 
 class _ExitCode:
@@ -27,6 +30,19 @@ class _ExitCode:
         if name in _ExitCode._exit_codes:
             return _ExitCode._exit_codes.index(name)
         raise AttributeError("Exit code %s not found" % name)
+
+
+class SimpleMatcher:
+    def __init__(self, regex):
+        self.__regex = re.compile(regex)
+        self.__match = None
+
+    def match(self, line):
+        self.__match = self.__regex.match(line)
+        return bool(self.__match)
+
+    def group(self, i):
+        return self.__match.group(i)
 
 
 def parse_args() -> argparse.Namespace:
@@ -57,9 +73,9 @@ def parse_args() -> argparse.Namespace:
                              'Default: In reqcheck/ besides input file.'
                         )
 
-    parser.add_argument("-ar", "--analyze-requirements", action="store_true", default=True,
+    parser.add_argument("-ar", "--analyze-requirements", action="store_true",
                         help="Run requirement analysis.")
-    parser.add_argument("-gt", "--generate-tests", action="store_true", default=True,
+    parser.add_argument("-gt", "--generate-tests", action="store_true",
                         help="Run test generation.")
 
     parser.add_argument('--rt-inconsistency-range', type=int, default=2,
@@ -239,6 +255,64 @@ def signal_handler(sig, frame):
     sys.exit(ExitCode.FAIL_SIGNAL)
 
 
+def update_line(ultimate_process, logfile):
+    line = ultimate_process.stdout.readline().decode('utf-8', 'ignore')
+
+    ultimate_process.poll()
+    if ultimate_process.returncode is not None and not line:
+        if ultimate_process.returncode == 0:
+            logger.info('Execution finished normally')
+        else:
+            logger.error('Execution finished with exit code {}'.format(str(ultimate_process.returncode)))
+        return None, True
+    logfile.write(line)
+    return line, False
+
+
+def update_progress_bar_plugin_end(line, progress_bar):
+    if progress_bar and re_plugin_end.match(line):
+        progress_bar.close()
+        progress_bar = None
+    return progress_bar
+
+
+def create_and_update_progress_bar_phase1(line, counter, total, progress_bar):
+    if re_phase1_start.match(line):
+        total = int(re_phase1_start.group(1))
+        progress_bar = tqdm(total=total)
+        progress_bar.set_description('Phase 1: Creating rt-inconsistency checks')
+    elif re_phase1_progress.match(line):
+        progress = int(re_phase1_progress.group(1))
+        counter += progress
+        progress_bar.update(progress)
+    elif re_phase1_end.match(line):
+        progress = int(re_phase1_end.group(1))
+        if progress == total:
+            progress_bar.update(total - counter)
+            counter = total
+    else:
+        progress_bar = update_progress_bar_plugin_end(line, progress_bar)
+    return counter, total, progress_bar
+
+
+def create_and_update_progress_bar_phase2(line, counter, total, progress_bar, desc):
+    if re_phase2_start.match(line):
+        total = int(re_phase2_start.group(1))
+        progress_bar = tqdm(total=total)
+        progress_bar.set_description(desc)
+    elif re_phase2_description.match(line):
+        progress_bar.set_description(
+            '{} {} for requirement {}'.format(desc, re_phase2_description.group(1), re_phase2_description.group(2))
+        )
+    elif re_phase2_progress.match(line):
+        progress = int(re_phase2_progress.group(3))
+        counter += progress
+        progress_bar.update(1)
+    else:
+        progress_bar = update_progress_bar_plugin_end(line, progress_bar)
+    return counter, total, progress_bar
+
+
 def handle_log(args):
     global logger
     handler = logging.FileHandler(args.log)
@@ -285,38 +359,40 @@ def handle_analyze_requirements(args):
     ultimate_process = call_desperate(cmd)
 
     relevant_log = []
-    with open(args.reqcheck_log, 'w') as logfile:
+
+    progress_bar = None
+
+    phase1_counter = 0
+    phase1_total = 0
+    phase2_counter = 0
+    phase2_total = 0
+    logger.info('Started ReqChecker with PID {}'.format(ultimate_process.pid))
+    with open(args.reqcheck_log, 'w', buffering=1) as logfile:
         line = ""
         while True:
             last_line = line
-            line = ultimate_process.stdout.readline().decode('utf-8', 'ignore')
-
-            ultimate_process.poll()
-            if ultimate_process.returncode is not None and not line:
-                if ultimate_process.returncode == 0:
-                    logger.info('Execution finished normally')
-                else:
-                    logger.error('Execution finished with exit code {}'.format(str(ultimate_process.returncode)))
+            line, end_reached = update_line(ultimate_process, logfile)
+            if end_reached:
                 break
-            logfile.write(line)
 
             if "ReqCheckSuccessResult" in last_line or "ReqCheckFailResult" in last_line:
                 relevant_log += [last_line + line]
 
-        # TODO: add progress bars for the two stages
-        # TODO: Scan for vacuity
-
-    # Postprocess results with vacuity extractor.
-    if not os.path.isfile(args.reqcheck_log):
-        logger.error('Logfile {} was not created'.format(args.reqcheck_log))
-        sys.exit(ExitCode.FAIL_MISSING_LOGFILE)
+            # show and update progress bars
+            phase1_counter, phase1_total, progress_bar = create_and_update_progress_bar_phase1(
+                line, phase1_counter, phase1_total, progress_bar
+            )
+            phase2_counter, phase2_total, progress_bar = create_and_update_progress_bar_phase2(
+                line, phase2_counter, phase2_total, progress_bar, "Phase 2: Checking assertion(s)"
+            )
 
     logger.info('Extracting results to {}'.format(args.reqcheck_relevant_log))
-
-    # Note the spaces
-    is_vacuous = any(' vacuous ' in l for l in relevant_log)
     with open(args.reqcheck_relevant_log, 'w+') as relevant_logfile:
         relevant_logfile.write(os.linesep.join(relevant_log))
+
+    # Postprocess results with vacuity extractor.
+    # Note the spaces
+    is_vacuous = any(' vacuous ' in l for l in relevant_log)
 
     # TODO: Call vac_extractor python
     if is_vacuous:
@@ -351,25 +427,25 @@ def handle_generate_tests(args):
     ultimate_process = call_desperate(cmd)
 
     is_relevant = False
+    counter = 0
+    total = 0
+    progress_bar = None
+    logger.info('Started ReqChecker with PID {}'.format(ultimate_process.pid))
     with open(args.testgen_log, 'w') as logfile, open(args.testgen_relevant_log, 'w') as relevant_logfile:
         while (True):
-            line = ultimate_process.stdout.readline().decode('utf-8', 'ignore')
-
-            ultimate_process.poll()
-            if ultimate_process.returncode is not None and not line:
-                if ultimate_process.returncode == 0:
-                    logger.info('Execution finished normally')
-                else:
-                    logger.error('Execution finished with exit code {}'.format(str(ultimate_process.returncode)))
+            line, end_reached = update_line(ultimate_process, logfile)
+            if end_reached:
                 break
-            logfile.write(line)
+
             if is_relevant:
                 relevant_logfile.write(line)
 
             if "--- Results ---" in line:
                 is_relevant = True
 
-        # TODO: add progress bars for the two stages
+            counter, total, progress_bar = create_and_update_progress_bar_phase2(
+                line, counter, total, progress_bar, "Checking assertion(s)"
+            )
 
 
 def main():
@@ -407,6 +483,17 @@ def main():
 
     # TODO: Print results
 
+
+# regex for progress bars
+re_phase1_start = SimpleMatcher(r'.*Computing rt-inconsistency assertions for (\d+) subsets')
+re_phase1_progress = SimpleMatcher(r'.*?(\d+) subsets remaining')
+re_phase1_end = SimpleMatcher(r'.*?(\d+) checks, \d+ trivial consistent, \d+ non-trivial')
+re_phase2_start = SimpleMatcher(r'.* trace abstraction to program that has (\d+) error locations')
+re_phase2_description = SimpleMatcher(
+    r'.*======== Iteration 0==of CEGAR loop == myProcedureErr\d+ASSERT_VIOLATION(\w+)for(.*?)========')
+re_phase2_progress = SimpleMatcher(
+    r'.*Result for error location myProcedureErr\d+ASSERT_VIOLATION\w+(.*?) was (\w+) \((\d+)/\d+\)')
+re_plugin_end = SimpleMatcher(r'.*------------------------ END.*')
 
 LOG_FORMAT_STR = '%(message)s'
 logging.basicConfig(format=LOG_FORMAT_STR)
