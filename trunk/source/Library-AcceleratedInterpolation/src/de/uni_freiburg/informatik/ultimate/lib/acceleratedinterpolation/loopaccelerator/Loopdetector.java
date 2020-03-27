@@ -27,18 +27,13 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -54,86 +49,14 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 	public Loopdetector(final List<LETTER> trace, final ILogger logger) {
 		mLogger = logger;
 		mTrace = trace;
-		mTraceLocations = statementsToLocations(trace);
+		mTraceLocations = LoopdetectorUtils.statementsToLocations(mTrace);
 
 		mLogger.debug("Loopdetector created.");
 	}
 
-	public void getLoop() {
-		final Set<IcfgLocation> possLoopHeads = new HashSet<>();
-		final Set<Pair<IcfgLocation, Integer>> locFirstSeen = new HashSet<>();
-		final Set<Pair<IcfgLocation, Integer>> loopHeads = new HashSet<>();
-
-		int i = 0;
-		for (final IcfgLocation loc : mTraceLocations) {
-			if (!possLoopHeads.add(loc)) {
-				loopHeads.add(new Pair<>(loc, i));
-			} else {
-				locFirstSeen.add(new Pair<>(loc, i));
-			}
-			i++;
-		}
-		if (loopHeads.isEmpty()) {
-			mLogger.debug("Found no loopheads in trace!" + mTrace);
-			return;
-		}
-		mLogger.debug("found possible Loopheads" + loopHeads);
-		loopHeads.addAll(locFirstSeen);
-		final Map<IcfgLocation, List<LETTER>> loops = new HashMap<>();
-		for (final Pair<IcfgLocation, Integer> loopHead : loopHeads) {
-			for (final Pair<IcfgLocation, Integer> loopTail : loopHeads) {
-				if (loopHead.getFirst() == loopTail.getFirst() && loopHead.getSecond() != loopTail.getSecond()) {
-					final int pos1 = loopHead.getSecond();
-					final int pos2 = loopTail.getSecond();
-					final int start = (pos1 < pos2) ? pos1 : pos2;
-					final int end = (pos1 >= pos2) ? pos1 : pos2;
-					final List<LETTER> loopBody = new ArrayList<>(mTrace.subList(start, end));
-					loops.put(loopHead.getFirst(), loopBody);
-				}
-			}
-		}
-		mLogger.debug("computed loops");
-	}
-
-	private void getUniqueLoops(final HashMap<IcfgLocation, List<LETTER>> loopBodys) {
-
-	}
-
-	private List<IcfgLocation> statementsToLocations(final List<LETTER> trace) {
-		final List<IcfgLocation> traceLocations = new ArrayList<>();
-
-		for (final LETTER stm : trace) {
-			traceLocations.add(stm.getSource());
-		}
-		return traceLocations;
-	}
-
-	/**
-	 * Get a given loop's transitions
-	 *
-	 * TODO: This extracts the smallest repetition of the first loop of loopHead; in particular, this extracts only one
-	 * loop per loop head
-	 *
-	 * @param loopHead
-	 *            beginning of the loop
-	 *
-	 * @return body of the loop
-	 */
-	public List<LETTER> getLoopNaive(final IcfgLocation loopHead, final List<LETTER> trace) {
-		int start = 0;
-		int end = 0;
-		int cnt = 0;
-		for (final LETTER loc : trace) {
-			if (loc.getSource() == loopHead) {
-				if (cnt > start) {
-					end = cnt;
-				} else {
-					start = cnt;
-				}
-				cnt++;
-			}
-		}
-		return trace.subList(start, end);
+	public void getLoops() {
+		final Map<IcfgLocation, List<Integer>> possibleLoopHeads =
+				LoopdetectorUtils.getPossibleCyclesInTrace(mTraceLocations);
 	}
 
 	public void setTrace(final List<LETTER> trace) {

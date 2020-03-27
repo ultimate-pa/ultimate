@@ -113,7 +113,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mTraceCheckFinishedNormally = true;
 
 		mLoopdetector.setTrace(mCounterexample);
-		mLoopdetector.getLoop();
+		mLoopdetector.getLoops();
 
 		if (mLoops.isEmpty()) {
 			mLogger.debug("No loops found in this trace.");
