@@ -45,6 +45,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  */
 public class LoopdetectorUtils {
 
+	private LoopdetectorUtils() {
+		// Util class -> no instantiation
+	}
+
 	public static Map<IcfgLocation, List<Integer>> getPossibleCyclesInTrace(final List<IcfgLocation> traceOfLocations) {
 		final Set<IcfgLocation> possLoopHeads = new HashSet<>();
 		final Map<IcfgLocation, Integer> locFirstSeen = new HashMap<>();
@@ -102,7 +106,7 @@ public class LoopdetectorUtils {
 
 	/**
 	 * Given a trace of program transitions, this converts them to represent corresponsing program locations.
-	 * 
+	 *
 	 * @param <LETTER>
 	 * @param trace
 	 * @return
