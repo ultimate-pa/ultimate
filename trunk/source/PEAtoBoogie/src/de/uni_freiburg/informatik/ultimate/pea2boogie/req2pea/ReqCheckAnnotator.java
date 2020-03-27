@@ -219,7 +219,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 				throw new ToolchainCanceledException(getClass(),
 						"Computing rt-inconsistency assertions, still " + subsetsSize + " left");
 			}
-			if (subsetsSize % 1000 == 0) {
+			if (subsetsSize % 10 == 0) {
 				mLogger.info(subsetsSize + " subsets remaining");
 				mRtInconcistencyConditionGenerator.logStats();
 			}
