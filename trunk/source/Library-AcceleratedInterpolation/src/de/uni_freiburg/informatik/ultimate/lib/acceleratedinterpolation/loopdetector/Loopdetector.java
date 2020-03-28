@@ -83,7 +83,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 	 * @param possibleCycles
 	 * @return
 	 */
-	private final Map<IcfgLocation, List<LETTER>> cyclePaths(final Map<IcfgLocation, List<Integer>> possibleCycles) {
+	private Map<IcfgLocation, List<LETTER>> cyclePaths(final Map<IcfgLocation, List<Integer>> possibleCycles) {
 		final Map<IcfgLocation, List<LETTER>> cycleTransitions = new HashMap<>();
 		for (final Entry<IcfgLocation, List<Integer>> cycle : possibleCycles.entrySet()) {
 			final IcfgLocation loopHead = cycle.getKey();
@@ -103,7 +103,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 	 *            List of cycles that are possibly nested
 	 * @return
 	 */
-	private final Set<IcfgLocation> getNestedCycles(final Map<IcfgLocation, List<Integer>> cyclesWithNested) {
+	private Set<IcfgLocation> getNestedCycles(final Map<IcfgLocation, List<Integer>> cyclesWithNested) {
 		final Set<IcfgLocation> nestedCycles = new HashSet<>();
 		for (final Iterator<Map.Entry<IcfgLocation, List<Integer>>> cycles =
 				cyclesWithNested.entrySet().iterator(); cycles.hasNext();) {
