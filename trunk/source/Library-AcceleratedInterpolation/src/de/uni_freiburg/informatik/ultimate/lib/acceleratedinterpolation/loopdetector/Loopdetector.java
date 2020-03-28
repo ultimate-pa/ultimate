@@ -27,8 +27,13 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
@@ -57,8 +62,69 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 		mLogger.debug("Loopdetector created.");
 	}
 
+	/**
+	 * Calculates loops from a given trace.
+	 */
 	public void getLoops() {
-		final Map<IcfgLocation, List<Integer>> possibleLoopHeads = mCycleFinder.getCyclesInTrace(mTraceLocations);
+		final Map<IcfgLocation, List<Integer>> possibleCycles = mCycleFinder.getCyclesInTrace(mTraceLocations);
+		mLogger.debug("Found Loopheads");
+		final Set<IcfgLocation> nestedCycles = getNestedCycles(possibleCycles);
+
+		final Map<IcfgLocation, List<Integer>> withoutNestedCycles = new HashMap<>(possibleCycles);
+		for (final IcfgLocation nestedHead : nestedCycles) {
+			withoutNestedCycles.remove(nestedHead);
+		}
+		mLogger.debug("");
+	}
+
+	/**
+	 * Transform an interval to statements in the trace.
+	 *
+	 * @param possibleCycles
+	 * @return
+	 */
+	private final Map<IcfgLocation, List<LETTER>> cyclePaths(final Map<IcfgLocation, List<Integer>> possibleCycles) {
+		final Map<IcfgLocation, List<LETTER>> cycleTransitions = new HashMap<>();
+		for (final Entry<IcfgLocation, List<Integer>> cycle : possibleCycles.entrySet()) {
+			final IcfgLocation loopHead = cycle.getKey();
+		}
+		return cycleTransitions;
+	}
+
+	/**
+	 * Given a list of cycles with their respective repetition locations, check what kind of cycle each are: There are 2
+	 * kind of cycles: 1: Disjunct -> They do not intersect, meaning there is a gap between the last repetition location
+	 * of one cycle with the first repetition of the other 2: Nested -> Two loops are nested if the interval of
+	 * repetitions of one loop lie within the interval of the other.
+	 *
+	 * We do not need nested loops.
+	 *
+	 * @param cyclesWithNested
+	 *            List of cycles that are possibly nested
+	 * @return
+	 */
+	private final Set<IcfgLocation> getNestedCycles(final Map<IcfgLocation, List<Integer>> cyclesWithNested) {
+		final Set<IcfgLocation> nestedCycles = new HashSet<>();
+		for (final Iterator<Map.Entry<IcfgLocation, List<Integer>>> cycles =
+				cyclesWithNested.entrySet().iterator(); cycles.hasNext();) {
+			final Map.Entry<IcfgLocation, List<Integer>> cycle = cycles.next();
+			final IcfgLocation loopHead = cycle.getKey();
+			final int firstOccurence = cycle.getValue().get(0);
+			final int lastOccurence = cycle.getValue().get(cycle.getValue().size() - 1);
+
+			for (final Iterator<Map.Entry<IcfgLocation, List<Integer>>> otherCycles =
+					cyclesWithNested.entrySet().iterator(); otherCycles.hasNext();) {
+				final Map.Entry<IcfgLocation, List<Integer>> otherCycle = otherCycles.next();
+				final IcfgLocation loopHeadOther = otherCycle.getKey();
+				final int firstOccurenceOther = otherCycle.getValue().get(0);
+				final int lastOccurenceOther = otherCycle.getValue().get(otherCycle.getValue().size() - 1);
+				if (loopHead != loopHeadOther
+						&& (firstOccurence < firstOccurenceOther && lastOccurence > lastOccurenceOther)) {
+					nestedCycles.add(loopHeadOther);
+				}
+			}
+		}
+		return nestedCycles;
 	}
 
 	public void setTrace(final List<LETTER> trace) {

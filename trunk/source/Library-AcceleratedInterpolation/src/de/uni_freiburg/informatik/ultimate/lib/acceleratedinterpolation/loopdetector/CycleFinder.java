@@ -48,6 +48,12 @@ public class CycleFinder {
 	public CycleFinder() {
 	}
 
+	/**
+	 * Searches for cycles in a given trace.
+	 * 
+	 * @param traceOfLocations
+	 * @return
+	 */
 	public Map<IcfgLocation, List<Integer>> getCyclesInTrace(final List<IcfgLocation> traceOfLocations) {
 		final Set<IcfgLocation> possLoopHeads = new HashSet<>();
 		final Map<IcfgLocation, Integer> locFirstSeen = new HashMap<>();

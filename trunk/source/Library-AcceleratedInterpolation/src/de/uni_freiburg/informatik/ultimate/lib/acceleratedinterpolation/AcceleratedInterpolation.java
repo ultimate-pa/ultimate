@@ -112,7 +112,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mReasonUnknown = null;
 		mTraceCheckFinishedNormally = true;
 
-		mLoopdetector.setTrace(mCounterexample);
 		mLoopdetector.getLoops();
 
 		if (mLoops.isEmpty()) {
