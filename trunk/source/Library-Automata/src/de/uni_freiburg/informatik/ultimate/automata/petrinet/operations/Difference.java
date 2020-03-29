@@ -185,24 +185,51 @@ public final class Difference
 			mLogger.info(startMessage());
 		}
 		assert checkSubtrahendProperties();
-		if (resultTriviallyEmpty()) {
-			mMinuend = originalMinuend;
-			mLogger.debug("Difference trivially empty");
-			mDsi = new DifferenceSynchronizationInformation<>(new HashSet<>(), new HashRelation<>(),
-					new HashRelation<>(), new HashSet<>(mMinuend.getTransitions()), new HashRelation<>(), false, false);
-			mResult = new BoundedPetriNet<>(mServices, mMinuend.getAlphabet(), true);
+		if (dpod != null) {
+			if (mRemoveRedundantFlow) {
+				final RemoveRedundantFlow<LETTER, PLACE, ?> rrf = new RemoveRedundantFlow<>(mServices,
+						dpod.getResult(), dpod.getFinitePrefixOfDifference().getResult(), mInputMinuend.getPlaces(),
+						//							diff.getResult(), null, null,
+						mInputMinuend.getPlaces());
+				final ProjectToSubnet<LETTER, PLACE> pts = new ProjectToSubnet<>(services, rrf.getResult(),
+						new HashRelation<>(), mSubtrahend.getStates());
+				mMinuend = pts.getResult();
+				final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> minuendTransition2differenceTransitions = new HashRelation<>();
+				for (final Entry<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> entry : dpod.getTransitionBacktranslation().entrySet()) {
+					final ITransition<LETTER, PLACE> diffTransition = entry.getKey();
+					assert diffTransition != null;
+					minuendTransition2differenceTransitions.addPair(entry.getValue(), diffTransition);
+				}
+				final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> differenceTransitions2projectedTransitions = new HashMap<>();
+				for (final Entry<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> entry : rrf.getOld2projected().entrySet()) {
+					final ITransition<LETTER, PLACE> diffTransition = entry.getKey();
+					final ITransition<LETTER, PLACE> rrfTransition = entry.getValue();
+					assert rrfTransition != null;
+					final ITransition<LETTER, PLACE> projTransition = pts.getTransitionMapping().get(rrfTransition);
+					assert projTransition != null;
+					differenceTransitions2projectedTransitions.put(diffTransition, projTransition);
+				}
+				mDsi = dpod.getDifferenceSynchronizationInformation().transformThroughRemoveRedundantFlow(
+						minuendTransition2differenceTransitions, differenceTransitions2projectedTransitions,
+						rrf.getRedundantSelfloopFlow(), rrf.getRedundantPlaces());
+			} else {
+				mMinuend = originalMinuend;
+				mDsi = dpod.getDifferenceSynchronizationInformation();
+			}
 		} else {
-			if (dpod != null) {
+			if (COMPUTE_DIFFERENCE_SYNCHRONIZATION_INFORMATION_VIA_UNFOLDING) {
+				final DifferencePairwiseOnDemand<LETTER, PLACE, CRSF> diff = new DifferencePairwiseOnDemand<>(
+						mServices, null, originalMinuend, subtrahendDfa);
 				if (mRemoveRedundantFlow) {
 					final RemoveRedundantFlow<LETTER, PLACE, ?> rrf = new RemoveRedundantFlow<>(mServices,
-							dpod.getResult(), dpod.getFinitePrefixOfDifference().getResult(), mInputMinuend.getPlaces(),
-//							diff.getResult(), null, null,
-							mInputMinuend.getPlaces());
+							diff.getResult(), diff.getFinitePrefixOfDifference().getResult(),
+							// diff.getResult(), null,
+							mInputMinuend.getPlaces(), mInputMinuend.getPlaces());
 					final ProjectToSubnet<LETTER, PLACE> pts = new ProjectToSubnet<>(services, rrf.getResult(),
 							new HashRelation<>(), mSubtrahend.getStates());
 					mMinuend = pts.getResult();
 					final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> minuendTransition2differenceTransitions = new HashRelation<>();
-					for (final Entry<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> entry : dpod.getTransitionBacktranslation().entrySet()) {
+					for (final Entry<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> entry : diff.getTransitionBacktranslation().entrySet()) {
 						final ITransition<LETTER, PLACE> diffTransition = entry.getKey();
 						assert diffTransition != null;
 						minuendTransition2differenceTransitions.addPair(entry.getValue(), diffTransition);
@@ -216,71 +243,28 @@ public final class Difference
 						assert projTransition != null;
 						differenceTransitions2projectedTransitions.put(diffTransition, projTransition);
 					}
-					mDsi = dpod.getDifferenceSynchronizationInformation().transformThroughRemoveRedundantFlow(
+					mDsi = diff.getDifferenceSynchronizationInformation().transformThroughRemoveRedundantFlow(
 							minuendTransition2differenceTransitions, differenceTransitions2projectedTransitions,
 							rrf.getRedundantSelfloopFlow(), rrf.getRedundantPlaces());
 				} else {
 					mMinuend = originalMinuend;
-					mDsi = dpod.getDifferenceSynchronizationInformation();
+					mDsi = diff.getDifferenceSynchronizationInformation();
 				}
 			} else {
-				if (COMPUTE_DIFFERENCE_SYNCHRONIZATION_INFORMATION_VIA_UNFOLDING) {
-					final DifferencePairwiseOnDemand<LETTER, PLACE, CRSF> diff = new DifferencePairwiseOnDemand<>(
-							mServices, null, originalMinuend, subtrahendDfa);
-					if (mRemoveRedundantFlow) {
-						final RemoveRedundantFlow<LETTER, PLACE, ?> rrf = new RemoveRedundantFlow<>(mServices,
-								diff.getResult(), diff.getFinitePrefixOfDifference().getResult(),
-								// diff.getResult(), null,
-								mInputMinuend.getPlaces(), mInputMinuend.getPlaces());
-						final ProjectToSubnet<LETTER, PLACE> pts = new ProjectToSubnet<>(services, rrf.getResult(),
-								new HashRelation<>(), mSubtrahend.getStates());
-						mMinuend = pts.getResult();
-						final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> minuendTransition2differenceTransitions = new HashRelation<>();
-						for (final Entry<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> entry : diff.getTransitionBacktranslation().entrySet()) {
-							final ITransition<LETTER, PLACE> diffTransition = entry.getKey();
-							assert diffTransition != null;
-							minuendTransition2differenceTransitions.addPair(entry.getValue(), diffTransition);
-						}
-						final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> differenceTransitions2projectedTransitions = new HashMap<>();
-						for (final Entry<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> entry : rrf.getOld2projected().entrySet()) {
-							final ITransition<LETTER, PLACE> diffTransition = entry.getKey();
-							final ITransition<LETTER, PLACE> rrfTransition = entry.getValue();
-							assert rrfTransition != null;
-							final ITransition<LETTER, PLACE> projTransition = pts.getTransitionMapping().get(rrfTransition);
-							assert projTransition != null;
-							differenceTransitions2projectedTransitions.put(diffTransition, projTransition);
-						}
-						mDsi = diff.getDifferenceSynchronizationInformation().transformThroughRemoveRedundantFlow(
-								minuendTransition2differenceTransitions, differenceTransitions2projectedTransitions,
-								rrf.getRedundantSelfloopFlow(), rrf.getRedundantPlaces());
-					} else {
-						mMinuend = originalMinuend;
-						mDsi = diff.getDifferenceSynchronizationInformation();
-					}
-				} else {
-					mMinuend = originalMinuend;
-					mDsi = new DifferenceSynchronizationInformation<>(new HashSet<>(), new HashRelation<>(),
-							new HashRelation<>(), new HashSet<>(mMinuend.getTransitions()), new HashRelation<>(), false,
-							false);
-					partitionStates();
-				}
+				mMinuend = originalMinuend;
+				mDsi = new DifferenceSynchronizationInformation<>(new HashSet<>(), new HashRelation<>(),
+						new HashRelation<>(), new HashSet<>(mMinuend.getTransitions()), new HashRelation<>(), false,
+						false);
+				partitionStates();
 			}
-			assert mDsi.isCompatible(mMinuend) : "incompatible DSI";
-			copyNetPlaces();
-			addBlackAndWhitePlaces();
-			addTransitions();
 		}
+		assert mDsi.isCompatible(mMinuend) : "incompatible DSI";
+		copyNetPlaces();
+		addBlackAndWhitePlaces();
+		addTransitions();
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
-	}
-
-	private boolean resultTriviallyEmpty() {
-		// subtrahend L(A)◦Σ^* accepts everything ==> difference is empty
-		return mSubtrahend.isFinal(onlyElement(mSubtrahend.getInitialStates()))
-				// minuend L(N) is empty ==> difference is empty
-				|| mInputMinuend.getInitialPlaces().isEmpty()
-				|| mInputMinuend.getAcceptingPlaces().isEmpty();
 	}
 
 	private boolean checkSubtrahendProperties() {
