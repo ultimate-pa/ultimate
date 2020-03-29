@@ -454,7 +454,6 @@ public class Req2BoogieTranslator {
 	private List<Statement> genStateVarsAssign() {
 		final List<Statement> assignments = mSymboltable.getStateVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList());
 		assignments.addAll(mSymboltable.getStateVars().stream().map(this::genStateVarAssignPrimed).collect(Collectors.toList()));
-		assignments.addAll(mSymboltable.getPcVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
 		return assignments;
 	}
 
@@ -505,6 +504,7 @@ public class Req2BoogieTranslator {
 		}
 
 		stmtList.addAll(mReqCheckAnnotator.getStateChecks());
+		stmtList.addAll(mSymboltable.getPcVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
 
 		for (final Entry<PatternType, ReqPeas> entry : mReq2Automata.entrySet()) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {

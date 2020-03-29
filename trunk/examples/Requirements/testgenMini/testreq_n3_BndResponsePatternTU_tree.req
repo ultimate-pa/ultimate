@@ -1,6 +1,17 @@
 /* 
-No Test 
-Should have Test
+Set Inputs:
+ 	I1 := 3  I2 := false  
+ Wait 5  
+ 
+Set Inputs:
+ 	I1 := 3  I2 := true  
+ Wait at most 5  for: 
+	O1 == true  
+ 
+Set Inputs:
+ 	I1 := 3  I2 := false  
+ Wait at most 5  for: 
+	O1 == true
 */
 
 

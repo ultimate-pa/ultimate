@@ -69,6 +69,11 @@ public class ReqEffectStore {
 		return mOutputEffectPhase;
 	}
 
+	public Map<Integer, Integer> getOutputEffectEdges() {
+		return mOutputEffectEdges;
+	}
+
+
 	public boolean isEffectEdge(final Integer sourcePhaseIndex, final Integer targetPhaseIndex) {
 		return mEffectEdges.containsKey(sourcePhaseIndex) && mEffectEdges.get(sourcePhaseIndex) == targetPhaseIndex;
 	}

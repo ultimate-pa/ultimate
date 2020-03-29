@@ -79,7 +79,7 @@ public class Req2CauseTrackingCDD {
 				}
 				final CDD trackGurad = CDD.create(new BooleanDecision(varName), CDD.TRUE_CHILDS);
 				if (negateTrackingVar) {
-					annotatedCDD = trackGurad.and(cdd.negate());
+					annotatedCDD = trackGurad.negate().and(cdd);
 				} else {
 					annotatedCDD = trackGurad.and(cdd);
 				}
