@@ -58,38 +58,41 @@ class ExplodeAssertions:
     def __get_top_operands(self, s):
         operands = []
         pstack = []
-        last_space = None
+        no_par_op = ''
 
         for i, c in enumerate(s):
             if c == '(':
                 pstack.append(i)
+                if no_par_op != '':
+                    operands.append(no_par_op.strip())
+                    no_par_op = ''
             elif c == ')':
                 if len(pstack) == 0:
-                    print(s)
-                    raise IndexError("No matching closing parens at: " + str(i))
+                    raise IndexError("No matching closing parenthesis at index {} for input line {}".format(str(i), s))
                 j = pstack.pop()
-                last_space = None
                 if len(pstack) == 0:
                     operands.append(s[j:i + 1])
             elif c == ' ':
-                if not last_space:
-                    last_space = i
-                else:
-                    if len(pstack) == 0:
-                        # we have a top level operand without parenthesis
-                        operands.append(s[last_space:i + 1])
-                    last_space = i
+                if len(pstack) == 0 and no_par_op != '':
+                    operands.append(no_par_op.strip())
+                    no_par_op = ''
+            elif len(pstack) == 0:
+                # we have a top level operand without parenthesis ;
+                # we want to capture all from now until the first opening parenthesis in one operand
+                no_par_op += c
 
         if len(pstack) > 0:
-            print(s)
-            raise IndexError("No matching opening parens at: " + str(pstack.pop()))
+            raise IndexError(
+                "No matching opening parenthesis at index {} for input line {}".format(str(pstack.pop()), s))
+        if no_par_op != '':
+            operands.append(no_par_op.strip())
         return operands
 
-    def __split_and(self, s):
+    def split_and(self, s):
         if s.startswith('(and'):
             rtr = []
             for operand in self.__get_top_operands(s[5:len(s) - 1]):
-                rtr = rtr + self.__split_and(operand)
+                rtr = rtr + self.split_and(operand)
             return rtr
         else:
             return [s]
@@ -101,12 +104,12 @@ class ExplodeAssertions:
         with open(input_smt_file, encoding='utf-8') as f, open(output_smt_file, 'w', encoding='utf-8') as o:
             for line in f.readlines():
                 if line.startswith("(assert (!"):
-                    m = re.search('\(assert \(! (.*?) :named (.*?)\)\)', line)
+                    m = re.search(r'\(assert \(! (.*?) :named (.*?)\)\)', line)
                     formula = m.group(1)
+                    name = m.group(2)
                     if formula == 'true':
                         continue
-                    name = m.group(2)
-                    asserts = self.__split_and(formula)
+                    asserts = self.split_and(formula)
                     if len(asserts) == 1:
                         o.write('(assert (! {} :named {}))\n'.format(asserts[0], name))
                     else:
