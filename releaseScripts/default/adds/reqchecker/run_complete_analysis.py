@@ -10,6 +10,8 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
+from collections import Set
 from typing import Optional, List
 
 from tqdm import tqdm
@@ -43,6 +45,77 @@ class SimpleMatcher:
 
     def group(self, i):
         return self.__match.group(i)
+
+
+class ExplodeAssertions:
+    """
+    Convert (assert (and o1 o2 ...)) to (assert o1) (assert o2) (assert ...) in .smt2 files
+    """
+
+    def __init__(self):
+        pass
+
+    def __get_top_operands(self, s):
+        operands = []
+        pstack = []
+        last_space = None
+
+        for i, c in enumerate(s):
+            if c == '(':
+                pstack.append(i)
+            elif c == ')':
+                if len(pstack) == 0:
+                    print(s)
+                    raise IndexError("No matching closing parens at: " + str(i))
+                j = pstack.pop()
+                last_space = None
+                if len(pstack) == 0:
+                    operands.append(s[j:i + 1])
+            elif c == ' ':
+                if not last_space:
+                    last_space = i
+                else:
+                    if len(pstack) == 0:
+                        # we have a top level operand without parenthesis
+                        operands.append(s[last_space:i + 1])
+                    last_space = i
+
+        if len(pstack) > 0:
+            print(s)
+            raise IndexError("No matching opening parens at: " + str(pstack.pop()))
+        return operands
+
+    def __split_and(self, s):
+        if s.startswith('(and'):
+            rtr = []
+            for operand in self.__get_top_operands(s[5:len(s) - 1]):
+                rtr = rtr + self.__split_and(operand)
+            return rtr
+        else:
+            return [s]
+
+    def explode(self, input_smt_file, output_smt_file):
+        if input_smt_file == output_smt_file:
+            raise ValueError('Input and output file must be different')
+
+        with open(input_smt_file, encoding='utf-8') as f, open(output_smt_file, 'w', encoding='utf-8') as o:
+            for line in f.readlines():
+                if line.startswith("(assert (!"):
+                    m = re.search('\(assert \(! (.*?) :named (.*?)\)\)', line)
+                    formula = m.group(1)
+                    if formula == 'true':
+                        continue
+                    name = m.group(2)
+                    asserts = self.__split_and(formula)
+                    if len(asserts) == 1:
+                        o.write('(assert (! {} :named {}))\n'.format(asserts[0], name))
+                    else:
+                        i = 0
+                        for sub in asserts:
+                            o.write('(assert (! {} :named {}))\n'.format(sub, name + '_' + str(i)))
+                            i = i + 1
+                else:
+                    o.write(line)
 
 
 def parse_args() -> argparse.Namespace:
@@ -115,12 +188,41 @@ def parse_args() -> argparse.Namespace:
                                    "Default: config/ReqCheck-ReqToTest.epf"
                               )
 
+    config_files.add_argument('--z3', type=str, metavar='<file>',
+                              default=None,
+                              help="A path to a working z3 binary."
+                                   "Default: <ultimate-dir>/z3"
+                              )
+
     args = parser.parse_args()
 
     if not args.analyze_requirements and not args.generate_tests:
         parser.print_help()
         sys.exit(ExitCode.FAIL_NO_ACTION)
 
+    return args
+
+
+def set_complex_arg_defaults(args):
+    args.input = os.path.abspath(args.input)
+    req_folder = os.path.dirname(args.input)
+    args.req_basename, req_extension = os.path.splitext(os.path.basename(args.input))
+    req_filename = args.req_basename + req_extension
+    if not args.output:
+        args.output = req_folder
+    if not args.tmp_dir:
+        args.tmp_dir = os.path.join(req_folder, 'reqcheck_' + args.req_basename + '_tmp')
+    if not args.z3:
+        args.z3 = os.path.join(os.path.abspath(args.ultimate_dir), 'z3')
+        if not os.path.exists(args.z3):
+            raise argparse.ArgumentError(
+                "z3 instance does not exists at \"{}\". Consider setting \"--z3\".".format(args.z3))
+
+    create_dirs_if_necessary(args, [args.output, args.tmp_dir])
+    args.reqcheck_log = os.path.join(req_folder, req_filename + '.log')
+    args.testgen_log = os.path.join(req_folder, req_filename + '.testgen.log')
+    args.reqcheck_relevant_log = os.path.join(args.output, req_filename + '.relevant.log')
+    args.testgen_relevant_log = os.path.join(args.output, req_filename + '.testgen.relevant.log')
     return args
 
 
@@ -187,7 +289,7 @@ def init_child_process():
     os.umask(new_umask)
 
 
-def call_desperate(call_args: Optional[List[str]]):
+def call(call_args: Optional[List[str]]):
     if call_args is None:
         call_args = []
 
@@ -255,17 +357,20 @@ def signal_handler(sig, frame):
     sys.exit(ExitCode.FAIL_SIGNAL)
 
 
-def update_line(ultimate_process, logfile):
-    line = ultimate_process.stdout.readline().decode('utf-8', 'ignore')
+def update_line(subp, logfile=None):
+    line = subp.stdout.readline().decode('utf-8', 'ignore')
 
-    ultimate_process.poll()
-    if ultimate_process.returncode is not None and not line:
-        if ultimate_process.returncode == 0:
-            logger.info('Execution finished normally')
+    subp.poll()
+    if subp.returncode is not None and not line:
+        if subp.returncode == 0:
+            logger.debug('Execution finished normally')
         else:
-            logger.error('Execution finished with exit code {}'.format(str(ultimate_process.returncode)))
+            logger.error(
+                'Execution of {} (PID {}) finished with exit code {}'.format(
+                    " ".join(subp.args), subp.pid, str(subp.returncode)))
         return None, True
-    logfile.write(line)
+    if logfile:
+        logfile.write(line)
     return line, False
 
 
@@ -313,6 +418,183 @@ def create_and_update_progress_bar_phase2(line, counter, total, progress_bar, de
     return counter, total, progress_bar
 
 
+def make_z3_compatible(filename):
+    # sed-like replacement
+    repls = [
+        (re.compile(r'\(get-interpolants.*'), '(get-unsat-core)'),
+        (re.compile(r'.*produce-interpolants.*'), ''),
+        (re.compile(r'.*:interpolant-check-mode.*'), ''),
+        (re.compile(r'.*:proof-transformation.*'), ''),
+        (re.compile(r'.*:array-interpolation.*'), ''),
+    ]
+
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as tmp_file:
+        with open(filename) as src_file:
+            for line in src_file:
+                for pattern, repl in repls:
+                    line = pattern.sub(repl, line)
+                tmp_file.write(line)
+
+    shutil.copystat(filename, tmp_file.name)
+    shutil.move(tmp_file.name, filename)
+
+
+def extract_vacuity_reasons(args, dump_folder, vacuous_reqs):
+    # collect all vacuous reqs from Ultimate results
+    re_vac_req = SimpleMatcher(r'.*ReqCheckFailResult.*Requirement (.*?) is vacuous.*')
+    vac_req_ids = set()
+    for line in vacuous_reqs:
+        if re_vac_req.match(line):
+            vac_req_ids.add(re_vac_req.group(1))
+
+    # collect all req_ids from req file
+    re_req_id = SimpleMatcher(r'^(\w*?):.*$')
+    with open(args.input, 'r') as req_file:
+        req_ids = set()
+        for line in req_file.readlines():
+            if re_req_id.match(line):
+                req_ids.add(re_req_id.group(1))
+    logger.debug('Identified requirement ids {}'.format(req_ids))
+
+    # extract vacuity reasons for each vacuous requirement
+    vac_req_ids_pb = tqdm(vac_req_ids)
+    for vac_req_id in vac_req_ids_pb:
+        vac_req_ids_pb.set_description(('Phase 3: Extracting vacuity reasons for {}'.format(vac_req_id)))
+        relevant_req_ids = extract_vacuity_reason(args, dump_folder, req_ids, vac_req_id)
+
+        # create new .req file only containing relevant requirements
+        tmp_req_file = os.path.join(dump_folder, args.req_basename + '.' + vac_req_id + '.vac.req')
+        extract_vacuity_project_reqs(args, req_ids, relevant_req_ids, tmp_req_file)
+
+        # run ultimate with small block encoding (SBE) on new .req file
+        dump_folder_sbe = extract_vacuity_run_ultimate_sbe(args, tmp_req_file, vac_req_id, vac_req_ids_pb)
+
+        # re-analyze the results of the SBE ultimate run
+        relevant_req_ids = extract_vacuity_reason(args, dump_folder_sbe, req_ids, vac_req_id)
+        extract_vacuity_project_reqs(args, req_ids, relevant_req_ids, tmp_req_file)
+
+        # move the resulting projected file to the log folder
+        shutil.move(tmp_req_file, os.path.join(args.output, os.path.basename(tmp_req_file)))
+
+
+def extract_vacuity_project_reqs(args, req_ids, relevant_req_ids, tmp_req_file):
+    irrelevant_req_ids = req_ids.difference(relevant_req_ids)
+    with open(args.input, 'r') as source, open(tmp_req_file, 'w') as target:
+        for line in source:
+            if any(id in line for id in irrelevant_req_ids):
+                continue
+            target.write(line)
+
+
+def extract_vacuity_run_ultimate_sbe(args, tmp_req_file, vac_req_id, pb):
+    dump_folder_sbe = os.path.join(args.tmp_dir, 'dump_sbe', args.req_basename + '_' + vac_req_id)
+    pathlib.Path(dump_folder_sbe).mkdir(parents=True, exist_ok=True)
+    logfile_name = os.path.join(dump_folder_sbe, 'ultimate.log')
+    cmd = create_common_ultimate_cli_args(args, args.reqcheck_toolchain, args.reqcheck_settings, tmp_req_file)
+    cmd += create_reqchecker_cli_args(args, dump_folder_sbe)
+    cmd += [
+        '--rcfgbuilder.size.of.a.code.block', 'SingleStatement',
+    ]
+    ultimate_process = call(cmd)
+    pb.set_description(
+        'Running ReqChecker for vacuity analysis of {} with PID {}'.format(vac_req_id, ultimate_process.pid))
+    with open(logfile_name, 'w') as logfile:
+        while True:
+            line, end_reached = update_line(ultimate_process, logfile)
+            if end_reached:
+                break
+    return dump_folder_sbe
+
+
+def extract_vacuity_reason(args, dump_folder, req_ids, vac_req_id):
+    # find .smt2 files that were dumped during the analysis for vac_req_id
+    smt_files = []
+    for file in os.listdir(dump_folder):
+        name = os.path.basename(file)
+        if file.endswith('.smt2') and 'VAC' in name and vac_req_id in name:
+            logger.debug('Collected {} for {}'.format(file, vac_req_id))
+            smt_files += [os.path.join(dump_folder, file)]
+    # compute the set of relevant requirements for each .smt2 file
+    relevant_req_ids = set()
+    for smt_file in smt_files:
+        tmp_smt_filename = smt_file + '.lbe'
+        # explode this file (convert top-level conjunction in assert in many separate asserts)
+        ExplodeAssertions().explode(smt_file, tmp_smt_filename)
+
+        # change various SMTLIB artifacts of Ultimate s.t. the file becomes compatible with z3 and computes the
+        # unsat core instead of interpolants
+        make_z3_compatible(tmp_smt_filename)
+
+        # execute z3 on the file
+        relevant_lines = extract_vacuity_run_z3(args, tmp_smt_filename)
+
+        # extract ssa's that are in the unsat core from line after unsat
+        ssas = set([ssa.rstrip() for rel_line in relevant_lines for ssa in
+                    rel_line.replace('(', '').replace(')', '').split(' ')])
+
+        logger.debug('Looking for unsat core SSAs {} in {}'.format(ssas, tmp_smt_filename))
+
+        with open(tmp_smt_filename, 'r') as tmp_smt_file:
+            for assertion in [line for line in tmp_smt_file.readlines() if
+                              any(ssa in line for ssa in ssas)]:
+                relevant_req_ids.update([id for id in req_ids if id in assertion])
+
+    logger.debug('Found {} requirements relevant for vacuity of {}'.format(len(relevant_req_ids), vac_req_id))
+    logger.debug('Relevant requirements for {} are {}'.format(vac_req_id, relevant_req_ids))
+    if vac_req_id not in relevant_req_ids:
+        logger.error(
+            '{} is not in the list of relevant requirement ids {], something is wrong!'.format(
+                vac_req_id, relevant_req_ids)
+        )
+    return relevant_req_ids
+
+
+def extract_vacuity_run_z3(args, tmp_smt_filename):
+    z3 = call([args.z3, tmp_smt_filename])
+    logger.debug('Running z3 with PID {} on {}'.format(z3.pid, tmp_smt_filename))
+
+    line = None
+    relevant_lines = []
+    while True:
+        last_line = line
+        line, end_reached = update_line(z3)
+        if end_reached:
+            break
+        logger.debug(line.rstrip())
+
+        if last_line and 'unsat' in last_line:
+            relevant_lines += [line]
+    return relevant_lines
+
+
+def create_common_ultimate_cli_args(args, toolchain, settings, input):
+    return [
+        'java',
+        '-Dosgi.configuration.area=config/',
+        '-Xmx100G',
+        '-Xss4m',
+        '-jar', 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar',
+        '-tc', toolchain,
+        '-s', settings,
+        '-i', input,
+        '--core.print.statistic.results', 'false',
+        '--traceabstraction.limit.analysis.time', str(args.timeout_per_assertion),
+    ]
+
+
+def create_reqchecker_cli_args(args, dump_folder):
+    return [
+        '--traceabstraction.dump.smt.script.to.file', 'true',
+        '--traceabstraction.to.the.following.directory', dump_folder,
+        '--pea2boogie.always.use.all.invariants.during.rt-inconsistency.checks', 'true',
+        '--pea2boogie.check.vacuity', 'true',
+        '--pea2boogie.check.consistency', 'true',
+        '--pea2boogie.check.rt-inconsistency', 'true',
+        '--pea2boogie.report.trivial.rt-consistency', 'false',
+        '--pea2boogie.rt-inconsistency.range', str(args.rt_inconsistency_range),
+    ]
+
+
 def handle_log(args):
     global logger
     handler = logging.FileHandler(args.log)
@@ -326,8 +608,8 @@ def handle_analyze_requirements(args):
     logger.info('Running ReqChecker')
 
     os.chdir(args.ultimate_dir)
+    delete_dir_if_necessary(args, args.tmp_dir)
     dump_folder = os.path.join(args.tmp_dir, 'dump', args.req_basename)
-    delete_dir_if_necessary(args, dump_folder)
     logger.info('Creating dump folder {}'.format(dump_folder))
     pathlib.Path(dump_folder).mkdir(parents=True, exist_ok=True)
     delete_file_if_necessary(args, args.reqcheck_log)
@@ -335,28 +617,13 @@ def handle_analyze_requirements(args):
     logger.info('Analyzing {}'.format(args.input))
     logger.info('Using logfile {}'.format(args.reqcheck_log))
 
-    cmd = [
-        'java',
-        '-Dosgi.configuration.area=config/',
-        '-Xmx100G',
-        '-Xss4m',
-        '-jar', 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar',
-        '-tc', args.reqcheck_toolchain,
-        '-s', args.reqcheck_settings,
-        '-i', args.input,
-        '--core.print.statistic.results', 'false',
-        '--traceabstraction.dump.smt.script.to.file', 'true',
-        '--traceabstraction.to.the.following.directory', dump_folder,
-        '--traceabstraction.limit.analysis.time', str(args.timeout_per_assertion),
-        '--pea2boogie.always.use.all.invariants.during.rt-inconsistency.checks', 'true',
-        '--pea2boogie.check.vacuity', 'true',
-        '--pea2boogie.check.consistency', 'true',
-        '--pea2boogie.check.rt-inconsistency', 'true',
-        '--pea2boogie.report.trivial.rt-consistency', 'false',
-        '--pea2boogie.rt-inconsistency.range', str(args.rt_inconsistency_range),
+    cmd = create_common_ultimate_cli_args(args, args.reqcheck_toolchain, args.reqcheck_settings, args.input)
+    cmd += create_reqchecker_cli_args(args, dump_folder)
+    cmd += [
+        '--rcfgbuilder.size.of.a.code.block', 'LoopFreeBlock',
     ]
 
-    ultimate_process = call_desperate(cmd)
+    ultimate_process = call(cmd)
 
     relevant_log = []
     relevant_results = [
@@ -397,14 +664,9 @@ def handle_analyze_requirements(args):
 
     # Postprocess results with vacuity extractor.
     # Note the spaces
-    is_vacuous = any(' vacuous ' in l for l in relevant_log)
-
-    # TODO: Call vac_extractor python
-    if is_vacuous:
-        logger.info('Analyzing reasons for vacuity')
-        # TODO: Integrate extract_vac_reasons.sh
-        # shutil.move('*.vac.req', args.log_folder)
-        logger.warning("NO VACUITY EXTRACTION YET")
+    vacuous_reqs = [line for line in relevant_log if 'is vacuous' in line]
+    if any(vacuous_reqs):
+        extract_vacuity_reasons(args, dump_folder, vacuous_reqs)
     else:
         logger.info('No vacuities found.')
 
@@ -413,23 +675,14 @@ def handle_generate_tests(args):
     logger.info('Running test generation')
     logger.info('Using logfile {}'.format(args.testgen_log))
 
-    cmd = [
-        'java',
-        '-Dosgi.configuration.area=config/',
-        '-Xmx100G',
-        '-Xss4m',
-        '-jar', 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar',
-        '-tc', args.testgen_toolchain,
-        '-s', args.testgen_settings,
-        '-i', args.input,
-        '--core.print.statistic.results', 'false',
-        '--traceabstraction.limit.analysis.time', str(args.timeout_per_assertion),
+    cmd = create_common_ultimate_cli_args(args, args.testgen_toolchain, args.testgen_settings, args.input)
+    cmd += [
         '--rcfgbuilder.simplify.code.blocks', 'false',
         '--rcfgbuilder.size.of.a.code.block', 'LoopFreeBlock',
         '--rcfgbuilder.add.additional.assume.for.each.assert', 'false',
     ]
 
-    ultimate_process = call_desperate(cmd)
+    ultimate_process = call(cmd)
 
     is_relevant = False
     counter = 0
@@ -461,24 +714,7 @@ def main():
     if args.log:
         handle_log(args)
 
-    args.input = os.path.abspath(args.input)
-    req_folder = os.path.dirname(args.input)
-    args.req_basename, req_extension = os.path.splitext(os.path.basename(args.input))
-    req_filename = args.req_basename + req_extension
-
-    if not args.output:
-        args.output = req_folder
-
-    if not args.tmp_dir:
-        args.tmp_dir = os.path.join(req_folder, "reqcheck")
-
-    create_dirs_if_necessary(args, [args.output, args.tmp_dir])
-
-    args.reqcheck_log = os.path.join(req_folder, req_filename + '.log')
-    args.testgen_log = os.path.join(req_folder, req_filename + '.testgen.log')
-
-    args.reqcheck_relevant_log = os.path.join(args.output, req_filename + '.relevant.log')
-    args.testgen_relevant_log = os.path.join(args.output, req_filename + '.testgen.relevant.log')
+    args = set_complex_arg_defaults(args)
 
     if args.analyze_requirements:
         handle_analyze_requirements(args)
