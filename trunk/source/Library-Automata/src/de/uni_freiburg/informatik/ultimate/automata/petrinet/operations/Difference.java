@@ -172,8 +172,8 @@ public final class Difference
 	public <SF extends IBlackWhiteStateFactory<PLACE>> Difference(final AutomataLibraryServices services,
 			final SF factory, final BoundedPetriNet<LETTER, PLACE> originalMinuend,
 			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa, final LoopSyncMethod loopSyncMethod,
-			final DifferencePairwiseOnDemand<LETTER, PLACE, ?> dpod,
-			final boolean removeRedundantFlow) throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+			final DifferencePairwiseOnDemand<LETTER, PLACE, ?> inputDpod, final boolean removeRedundantFlow)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		super(services);
 		mSubtrahend = subtrahendDfa;
 		mContentFactory = factory;
@@ -185,23 +185,39 @@ public final class Difference
 			mLogger.info(startMessage());
 		}
 		assert checkSubtrahendProperties();
-		if (dpod != null) {
+
+		final DifferencePairwiseOnDemand<LETTER, PLACE, ?> dpod;
+		if (inputDpod == null && COMPUTE_DIFFERENCE_SYNCHRONIZATION_INFORMATION_VIA_UNFOLDING) {
+			dpod = new DifferencePairwiseOnDemand<>(mServices, null, originalMinuend, subtrahendDfa);
+		} else {
+			dpod = null;
+		}
+		if (!COMPUTE_DIFFERENCE_SYNCHRONIZATION_INFORMATION_VIA_UNFOLDING) {
 			if (mRemoveRedundantFlow) {
-				final RemoveRedundantFlow<LETTER, PLACE, ?> rrf = new RemoveRedundantFlow<>(mServices,
-						dpod.getResult(), dpod.getFinitePrefixOfDifference().getResult(), mInputMinuend.getPlaces(),
-						//							diff.getResult(), null, null,
+				throw new UnsupportedOperationException("Cannot remove rundundant flow without finite prefix.");
+			}
+			mMinuend = originalMinuend;
+			mDsi = new DifferenceSynchronizationInformation<>(new HashSet<>(), new HashRelation<>(),
+					new HashRelation<>(), new HashSet<>(mMinuend.getTransitions()), new HashRelation<>(), false, false);
+			partitionStates();
+		} else {
+			if (mRemoveRedundantFlow) {
+				final RemoveRedundantFlow<LETTER, PLACE, ?> rrf = new RemoveRedundantFlow<>(mServices, dpod.getResult(),
+						dpod.getFinitePrefixOfDifference().getResult(), mInputMinuend.getPlaces(),
 						mInputMinuend.getPlaces());
 				final ProjectToSubnet<LETTER, PLACE> pts = new ProjectToSubnet<>(services, rrf.getResult(),
 						new HashRelation<>(), mSubtrahend.getStates());
 				mMinuend = pts.getResult();
 				final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> minuendTransition2differenceTransitions = new HashRelation<>();
-				for (final Entry<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> entry : dpod.getTransitionBacktranslation().entrySet()) {
+				for (final Entry<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> entry : dpod
+						.getTransitionBacktranslation().entrySet()) {
 					final ITransition<LETTER, PLACE> diffTransition = entry.getKey();
 					assert diffTransition != null;
 					minuendTransition2differenceTransitions.addPair(entry.getValue(), diffTransition);
 				}
 				final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> differenceTransitions2projectedTransitions = new HashMap<>();
-				for (final Entry<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> entry : rrf.getOld2projected().entrySet()) {
+				for (final Entry<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> entry : rrf.getOld2projected()
+						.entrySet()) {
 					final ITransition<LETTER, PLACE> diffTransition = entry.getKey();
 					final ITransition<LETTER, PLACE> rrfTransition = entry.getValue();
 					assert rrfTransition != null;
@@ -215,47 +231,6 @@ public final class Difference
 			} else {
 				mMinuend = originalMinuend;
 				mDsi = dpod.getDifferenceSynchronizationInformation();
-			}
-		} else {
-			if (COMPUTE_DIFFERENCE_SYNCHRONIZATION_INFORMATION_VIA_UNFOLDING) {
-				final DifferencePairwiseOnDemand<LETTER, PLACE, CRSF> diff = new DifferencePairwiseOnDemand<>(
-						mServices, null, originalMinuend, subtrahendDfa);
-				if (mRemoveRedundantFlow) {
-					final RemoveRedundantFlow<LETTER, PLACE, ?> rrf = new RemoveRedundantFlow<>(mServices,
-							diff.getResult(), diff.getFinitePrefixOfDifference().getResult(),
-							// diff.getResult(), null,
-							mInputMinuend.getPlaces(), mInputMinuend.getPlaces());
-					final ProjectToSubnet<LETTER, PLACE> pts = new ProjectToSubnet<>(services, rrf.getResult(),
-							new HashRelation<>(), mSubtrahend.getStates());
-					mMinuend = pts.getResult();
-					final HashRelation<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> minuendTransition2differenceTransitions = new HashRelation<>();
-					for (final Entry<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> entry : diff.getTransitionBacktranslation().entrySet()) {
-						final ITransition<LETTER, PLACE> diffTransition = entry.getKey();
-						assert diffTransition != null;
-						minuendTransition2differenceTransitions.addPair(entry.getValue(), diffTransition);
-					}
-					final Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> differenceTransitions2projectedTransitions = new HashMap<>();
-					for (final Entry<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> entry : rrf.getOld2projected().entrySet()) {
-						final ITransition<LETTER, PLACE> diffTransition = entry.getKey();
-						final ITransition<LETTER, PLACE> rrfTransition = entry.getValue();
-						assert rrfTransition != null;
-						final ITransition<LETTER, PLACE> projTransition = pts.getTransitionMapping().get(rrfTransition);
-						assert projTransition != null;
-						differenceTransitions2projectedTransitions.put(diffTransition, projTransition);
-					}
-					mDsi = diff.getDifferenceSynchronizationInformation().transformThroughRemoveRedundantFlow(
-							minuendTransition2differenceTransitions, differenceTransitions2projectedTransitions,
-							rrf.getRedundantSelfloopFlow(), rrf.getRedundantPlaces());
-				} else {
-					mMinuend = originalMinuend;
-					mDsi = diff.getDifferenceSynchronizationInformation();
-				}
-			} else {
-				mMinuend = originalMinuend;
-				mDsi = new DifferenceSynchronizationInformation<>(new HashSet<>(), new HashRelation<>(),
-						new HashRelation<>(), new HashSet<>(mMinuend.getTransitions()), new HashRelation<>(), false,
-						false);
-				partitionStates();
 			}
 		}
 		assert mDsi.isCompatible(mMinuend) : "incompatible DSI";
