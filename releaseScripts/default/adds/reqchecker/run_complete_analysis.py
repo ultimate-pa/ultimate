@@ -359,6 +359,11 @@ def handle_analyze_requirements(args):
     ultimate_process = call_desperate(cmd)
 
     relevant_log = []
+    relevant_results = [
+        'ReqCheckSuccessResult',
+        'ReqCheckFailResult',
+        'RequirementInconsistentErrorResult',
+    ]
 
     progress_bar = None
 
@@ -375,7 +380,7 @@ def handle_analyze_requirements(args):
             if end_reached:
                 break
 
-            if "ReqCheckSuccessResult" in last_line or "ReqCheckFailResult" in last_line:
+            if any([keyword in last_line for keyword in relevant_results]):
                 relevant_log += [last_line + line]
 
             # show and update progress bars
