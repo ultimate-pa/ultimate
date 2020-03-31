@@ -1,22 +1,21 @@
-//#Unsafe
+//#Safe
 /* Date: 2018-05-25
  * Author: jonaswerner95@gmail.com
  *
- * A simple program
+ * loop with two paths inside, where both go through a shared node.
  *
  */
 
 procedure main() {
 	var x : int;
-	x := 0;
+	x := 2;
 	
 	while (x <= 10) {
-		if (x % 2 == 0) {
-			x := x + 1;
+		if (x < 2) {
+		
 		} else {
-			x := x + 2;
+			x := x + 1;
 		}
-		x := x + 2;
 	}	
 	assert x == 11;
 }

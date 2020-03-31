@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -69,24 +70,35 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 		final Map<IcfgLocation, List<Integer>> possibleCycles = mCycleFinder.getCyclesInTrace(mTraceLocations);
 		mLogger.debug("Found Loopheads");
 		final Set<IcfgLocation> nestedCycles = getNestedCycles(possibleCycles);
+		final Map<IcfgLocation, Set<List<LETTER>>> cycleTraces;
 
 		final Map<IcfgLocation, List<Integer>> withoutNestedCycles = new HashMap<>(possibleCycles);
 		for (final IcfgLocation nestedHead : nestedCycles) {
 			withoutNestedCycles.remove(nestedHead);
 		}
+		cycleTraces = cyclePaths(withoutNestedCycles);
 		mLogger.debug("");
 	}
 
 	/**
-	 * Transform an interval to statements in the trace.
+	 * Transform an interval into statements of the trace.
 	 *
 	 * @param possibleCycles
 	 * @return
 	 */
-	private Map<IcfgLocation, List<LETTER>> cyclePaths(final Map<IcfgLocation, List<Integer>> possibleCycles) {
-		final Map<IcfgLocation, List<LETTER>> cycleTransitions = new HashMap<>();
-		for (final Entry<IcfgLocation, List<Integer>> cycle : possibleCycles.entrySet()) {
+	private Map<IcfgLocation, Set<List<LETTER>>> cyclePaths(final Map<IcfgLocation, List<Integer>> cycles) {
+		final Map<IcfgLocation, Set<List<LETTER>>> cycleTransitions = new HashMap<>();
+		for (final Entry<IcfgLocation, List<Integer>> cycle : cycles.entrySet()) {
+			final Set<List<LETTER>> statements = new HashSet<>();
 			final IcfgLocation loopHead = cycle.getKey();
+			int i = 1;
+			while (i < cycle.getValue().size()) {
+				final List<LETTER> trace =
+						new ArrayList<>(mTrace.subList(cycle.getValue().get(i - 1), cycle.getValue().get(i)));
+				statements.add(trace);
+				i++;
+			}
+			cycleTransitions.put(loopHead, statements);
 		}
 		return cycleTransitions;
 	}

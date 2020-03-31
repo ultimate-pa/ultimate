@@ -16,7 +16,7 @@ procedure main() {
 		} else {
 			x := x + 2;
 		}
-		x := x + 1;
+		x := x + 2;
 	}	
 	assert x == 12;
 }
