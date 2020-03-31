@@ -11,7 +11,6 @@ import signal
 import subprocess
 import sys
 import tempfile
-from collections import Set
 from typing import Optional, List
 
 from tqdm import tqdm
