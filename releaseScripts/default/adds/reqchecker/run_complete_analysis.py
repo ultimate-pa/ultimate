@@ -141,12 +141,12 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument("-o", "--output", metavar='<dir>', type=str, default=None,
                         help='Folder where reports (*.relevant.log, vacuous .req subsets, etc.) are saved. '
-                             'Default: Beside input file.'
+                             'Default: In directory log_<input>/ besides input file.'
                         )
 
     parser.add_argument("--tmp-dir", metavar='<dir>', type=str, default=None,
                         help='Folder where full Ultimate logs and .smt2 dumps are saved. '
-                             'Default: In reqcheck/ besides input file.'
+                             'Default: In directory reqcheck_<input>_tmp/ besides input file.'
                         )
 
     parser.add_argument("-ar", "--analyze-requirements", action="store_true",
@@ -212,7 +212,7 @@ def set_complex_arg_defaults(args):
     args.req_basename, req_extension = os.path.splitext(os.path.basename(args.input))
     req_filename = args.req_basename + req_extension
     if not args.output:
-        args.output = req_folder
+        args.output = os.path.join(req_folder, 'log_' + args.req_basename)
     if not args.tmp_dir:
         args.tmp_dir = os.path.join(req_folder, 'reqcheck_' + args.req_basename + '_tmp')
     if not args.z3:
@@ -257,7 +257,7 @@ def create_dirs_if_necessary(args, dirs):
         if os.path.isdir(d):
             continue
 
-        if not confirm_if_necessary(args, '{} does not exist, should I create it?'.format(d)):
+        if not confirm_if_necessary(args, 'Directory {} does not exist, should I create it?'.format(d)):
             sys.exit(ExitCode.USER_DO_NOT_CREATE_DIR)
 
         os.makedirs(d)
@@ -271,7 +271,7 @@ def delete_dir_if_necessary(args, d):
     if not os.path.isdir(d):
         return
 
-    if not confirm_if_necessary(args, '{} exists, should I delete it?'.format(d)):
+    if not confirm_if_necessary(args, 'Directory {} exists, should I delete it?'.format(d)):
         sys.exit(ExitCode.USER_DO_NOT_DELETE_DIR)
 
     shutil.rmtree(d)
@@ -281,7 +281,7 @@ def delete_file_if_necessary(args, file):
     if not os.path.isfile(file):
         return
 
-    if not confirm_if_necessary(args, '{} exists, should I delete it?'.format(file)):
+    if not confirm_if_necessary(args, 'File {} exists, should I delete it?'.format(file)):
         sys.exit(ExitCode.USER_DO_NOT_DELETE_FILE)
 
     os.remove(file)
