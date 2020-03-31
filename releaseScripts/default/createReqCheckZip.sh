@@ -44,9 +44,7 @@ ADDS=(
     "adds/LICENSE*"
     "adds/*LICENSE"
     "adds/reqchecker/README"
-    "adds/reqchecker/explode_script.py"
-    "adds/reqchecker/extract_vac_reasons.sh"
-    "adds/reqchecker/run_complete_analysis.sh"
+    "adds/reqchecker/run_complete_analysis.py"
 )
 
 # architecture-specific variables

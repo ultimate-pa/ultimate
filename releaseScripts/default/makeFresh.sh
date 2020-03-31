@@ -28,12 +28,9 @@ for platform in {linux,win32}; do
 
     # DeltaDebugger
     exitOnFail bash createDeltaDebuggerDir.sh $platform
-    
-    if [ "$platform" = "linux" ]; then
-      # ReqCheck
-      exitOnFail bash createReqCheckZip.sh ReqCheck $platform ReqCheck.xml ReqCheck.xml
-    fi
 
+    # ReqCheck
+    exitOnFail bash createReqCheckZip.sh ReqCheck $platform ReqCheck.xml ReqCheck.xml
 done
 
 exit 0
