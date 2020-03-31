@@ -604,6 +604,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public ExpressionResult convertFloatToFloat(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
+		assert rexp.getLrValue().getCType().isSmtFloat();
 		final CPrimitive conversionType = newType.setIsSmtFloat(true);
 		final String prefixedFunctionName = declareConversionFunction(loc,
 				(CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), conversionType);
@@ -716,8 +717,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
 
-		final Expression exp1float = transformBitvectorToFloat(loc, exp1, type1.getType());
-		final Expression exp2float = transformBitvectorToFloat(loc, exp2, type2.getType());
+		// final Expression exp1float = transformBitvectorToFloat(loc, exp1, type1.getType());
+		// final Expression exp2float = transformBitvectorToFloat(loc, exp2, type2.getType());
 
 		boolean isNegated = false;
 		final String smtFunctionName;
@@ -748,7 +749,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		declareFloatingPointFunction(loc, smtFunctionName, true, false, new CPrimitive(CPrimitives.BOOL), type1, type2);
 		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type1);
 		Expression result = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-				new Expression[] { exp1float, exp2float }, BoogieType.TYPE_BOOL);
+				new Expression[] { exp1, exp2 }, BoogieType.TYPE_BOOL);
 
 		if (isNegated) {
 			result = ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, result);
@@ -1369,6 +1370,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector,
 			final CPrimitives floatType) {
 		assert floatType.isFloatingType();
+		assert bitvector.getType().toString().startsWith("bv");
 		final CPrimitive conversionType = new CPrimitive(floatType.getSMTVariant());
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(floatType);
 		final Expression significantBits = extractBits(loc, bitvector, fps.getSignificant() - 1, 0);

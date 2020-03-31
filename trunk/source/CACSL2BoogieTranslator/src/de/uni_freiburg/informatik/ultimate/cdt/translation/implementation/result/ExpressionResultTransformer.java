@@ -1050,7 +1050,7 @@ public class ExpressionResultTransformer {
 							new RValue(mExprTrans.transformBitvectorToFloat(loc, operand.getLrValue().getValue(), 
 									((CPrimitive) operandType).getSMTVariant().getType()),
 									((CPrimitive) operandType).getSMTVariant())).build(),
-							resultType);
+							resultType.getSMTVariant());
 				}
 			} else {
 				throw new UnsupportedSyntaxException(loc,
