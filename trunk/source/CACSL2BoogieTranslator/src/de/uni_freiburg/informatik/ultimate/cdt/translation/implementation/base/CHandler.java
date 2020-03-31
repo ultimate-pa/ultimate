@@ -4514,11 +4514,10 @@ public class CHandler {
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		left = mExprResultTransformer.rexBoolToInt(left, loc);
 		right = mExprResultTransformer.rexBoolToInt(right, loc);
-		
-		
+
 		CType lType = left.getLrValue().getCType().getUnderlyingType();
 		CType rType = right.getLrValue().getCType().getUnderlyingType();
-		
+
 		final Expression expr;
 
 		// Convert integer with a value of 0 to a Null pointer if necessary
@@ -4542,10 +4541,13 @@ public class CHandler {
 					mExprResultTransformer.usualArithmeticConversions(loc, left, right);
 			left = newOps.getFirst();
 			right = newOps.getSecond();
+			lType = left.getLrValue().getCType().getUnderlyingType();
+			rType = right.getLrValue().getCType().getUnderlyingType();
+			assert lType.isSmtFloat() && rType.isSmtFloat() || !lType.isSmtFloat() && !rType.isSmtFloat();
+
 			result = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 			expr = mExpressionTranslation.constructBinaryComparisonExpression(loc, op, left.getLrValue().getValue(),
-					(CPrimitive) left.getLrValue().getCType().getUnderlyingType(), right.getLrValue().getValue(),
-					(CPrimitive) right.getLrValue().getCType().getUnderlyingType());
+					(CPrimitive) lType, right.getLrValue().getValue(), (CPrimitive) rType);
 		} else if (lType instanceof CPointer && rType instanceof CPointer) {
 			final Expression baseEquality = constructPointerComponentRelation(loc, IASTBinaryExpression.op_equals,
 					left.getLrValue().getValue(), right.getLrValue().getValue(), SFO.POINTER_BASE);

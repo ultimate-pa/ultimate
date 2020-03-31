@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieTypeConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -468,13 +469,13 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	private void declareFloatingPointFunction(final ILocation loc, final String smtFunctionName,
 			final boolean boogieResultTypeBool, final boolean isRounded, final CPrimitive resultCType,
 			final int[] indices, final CPrimitive... paramCType) {
-		
+
 		final CPrimitive[] newParams = new CPrimitive[paramCType.length];
-		
+
 		for (int i = 0; i < paramCType.length; i++) {
 			newParams[i] = paramCType[i].getSMTVariant();
 		}
-		
+
 		// first parameter defined Boogie function name
 		final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, newParams[0]);
 		if (mFunctionDeclarations.getDeclaredFunctions().containsKey(boogieFunctionName)) {
@@ -604,7 +605,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public ExpressionResult convertFloatToFloat(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
-		assert rexp.getLrValue().getCType().isSmtFloat();
+		assert rexp.getLrValue().getUnderlyingType().isSmtFloat();
 		final CPrimitive conversionType = newType.setIsSmtFloat(true);
 		final String prefixedFunctionName = declareConversionFunction(loc,
 				(CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), conversionType);
@@ -788,8 +789,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final CPrimitive type2_smt;
 		final Expression exp1Processed;
 		final Expression exp2Processed;
-		
-		if(!type1.isSmtFloat()) {
+
+		if (!type1.isSmtFloat()) {
 			exp1Processed = transformBitvectorToFloat(loc, exp1, type1.getType());
 			exp2Processed = transformBitvectorToFloat(loc, exp2, type2.getType());
 			type1_smt = type1.getSMTVariant();
@@ -800,8 +801,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			type1_smt = type1;
 			type2_smt = type2;
 		}
-		
-		
+
 		boolean isRounded = true;
 		final String smtFunctionName;
 		switch (nodeOperator) {
@@ -1370,7 +1370,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector,
 			final CPrimitives floatType) {
 		assert floatType.isFloatingType();
-		assert bitvector.getType().toString().startsWith("bv");
+		assert TypeCheckHelper.getBitVecLength(bitvector.getType()) != -1;
 		final CPrimitive conversionType = new CPrimitive(floatType.getSMTVariant());
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(floatType);
 		final Expression significantBits = extractBits(loc, bitvector, fps.getSignificant() - 1, 0);

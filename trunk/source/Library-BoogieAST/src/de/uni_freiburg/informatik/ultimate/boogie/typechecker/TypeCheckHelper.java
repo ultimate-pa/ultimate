@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 /**
  * Contains methods that infer the Boogie type for any kind of composite Boogie expression from its component's types.
@@ -294,6 +295,13 @@ public class TypeCheckHelper {
 
 	public static void internalError(final String message) {
 		throw new AssertionError(message);
+	}
+
+	public static int getBitVecLength(final IBoogieType t) {
+		if (!(t instanceof BoogieType)) {
+			return -1;
+		}
+		return getBitVecLength((BoogieType) t);
 	}
 
 	public static int getBitVecLength(BoogieType t) {
