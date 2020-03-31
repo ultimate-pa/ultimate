@@ -215,10 +215,12 @@ def set_complex_arg_defaults(args):
     if not args.tmp_dir:
         args.tmp_dir = os.path.join(req_folder, 'reqcheck_' + args.req_basename + '_tmp')
     if not args.z3:
-        args.z3 = os.path.join(os.path.abspath(args.ultimate_dir), 'z3')
+        if platform.system() == "Windows":
+            args.z3 = os.path.join(os.path.abspath(args.ultimate_dir), 'z3.exe')
+        else:
+            args.z3 = os.path.join(os.path.abspath(args.ultimate_dir), 'z3')
         if not os.path.exists(args.z3):
-            raise argparse.ArgumentError(
-                "z3 instance does not exists at \"{}\". Consider setting \"--z3\".".format(args.z3))
+            raise ValueError("z3 instance does not exists at \"{}\". Consider setting \"--z3\".".format(args.z3))
 
     create_dirs_if_necessary(args, [args.output, args.tmp_dir])
     args.reqcheck_log = os.path.join(req_folder, req_filename + '.log')
@@ -296,7 +298,7 @@ def call(call_args: Optional[List[str]]):
         call_args = []
 
     try:
-        if platform == "linux" or platform == "linux2":
+        if platform.system() == "Linux":
             child_process = subprocess.Popen(call_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                              stderr=subprocess.STDOUT, shell=False,
                                              preexec_fn=init_child_process)
@@ -372,7 +374,7 @@ def update_line(subp, logfile=None):
                     " ".join(subp.args), subp.pid, str(subp.returncode)))
         return None, True
     if logfile:
-        logfile.write(line)
+        logfile.write(line.rstrip() + '\n')
     return line, False
 
 
@@ -650,7 +652,7 @@ def handle_analyze_requirements(args):
                 break
 
             if any([keyword in last_line for keyword in relevant_results]):
-                relevant_log += [last_line + line]
+                relevant_log += [last_line.rstrip() + '\n' + line.rstrip() + '\n']
 
             # show and update progress bars
             phase1_counter, phase1_total, progress_bar = create_and_update_progress_bar_phase1(
@@ -662,7 +664,7 @@ def handle_analyze_requirements(args):
 
     logger.info('Extracting results to {}'.format(args.reqcheck_relevant_log))
     with open(args.reqcheck_relevant_log, 'w+') as relevant_logfile:
-        relevant_logfile.write(os.linesep.join(relevant_log))
+        relevant_logfile.write("".join(relevant_log))
 
     # Postprocess results with vacuity extractor.
     # Note the spaces
@@ -698,7 +700,7 @@ def handle_generate_tests(args):
                 break
 
             if is_relevant:
-                relevant_logfile.write(line)
+                relevant_logfile.write(line.rstrip() + '\n')
 
             if "--- Results ---" in line:
                 is_relevant = True
