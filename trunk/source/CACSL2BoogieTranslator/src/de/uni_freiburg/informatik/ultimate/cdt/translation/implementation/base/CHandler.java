@@ -4514,9 +4514,11 @@ public class CHandler {
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		left = mExprResultTransformer.rexBoolToInt(left, loc);
 		right = mExprResultTransformer.rexBoolToInt(right, loc);
+		
+		
 		CType lType = left.getLrValue().getCType().getUnderlyingType();
 		CType rType = right.getLrValue().getCType().getUnderlyingType();
-
+		
 		final Expression expr;
 
 		// Convert integer with a value of 0 to a Null pointer if necessary

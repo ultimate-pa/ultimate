@@ -237,6 +237,9 @@ public abstract class CType {
 		if (mIsVolatile != other.mIsVolatile) {
 			return false;
 		}
+		if (mIsSmtFloat != other.mIsSmtFloat) {
+			return false;
+		}
 		return true;
 	}
 }

@@ -893,10 +893,15 @@ public class ExpressionResultTransformer {
 			rightRex = doIntegerPromotion(loc, rightRex);
 		}
 
-		final CPrimitive resultType = determineResultOfUsualArithmeticConversions(
+		CPrimitive resultType = determineResultOfUsualArithmeticConversions(
 				(CPrimitive) leftRex.getLrValue().getCType().getUnderlyingType(),
 				(CPrimitive) rightRex.getLrValue().getCType().getUnderlyingType());
 
+		if (resultType.isFloatingType()) {
+			resultType = resultType.getSMTVariant();
+		}
+		
+		
 		leftRex = convertIfNecessary(loc, leftRex, resultType);
 		rightRex = convertIfNecessary(loc, rightRex, resultType);
 
@@ -1039,7 +1044,13 @@ public class ExpressionResultTransformer {
 					expr = mExprTrans.convertFloatToFloat(loc, operand, resultType);
 					exprResult = constructBitvecResult(expr.getLrValue(), loc);
 				} else {
-					exprResult = operand;
+					// TODO: Check if this is correct
+					exprResult = mExprTrans.convertFloatToFloat(loc,
+							new ExpressionResultBuilder().addAllExceptLrValue(operand).setLrValue(
+							new RValue(mExprTrans.transformBitvectorToFloat(loc, operand.getLrValue().getValue(), 
+									((CPrimitive) operandType).getSMTVariant().getType()),
+									((CPrimitive) operandType).getSMTVariant())).build(),
+							resultType);
 				}
 			} else {
 				throw new UnsupportedSyntaxException(loc,
@@ -1085,8 +1096,9 @@ public class ExpressionResultTransformer {
 			final List<ExpressionResult> args, final FloatFunction function) {
 		final String functionName = function.getFunctionName();
 		// TODO: remove hardcoded comparison.
-		if ("signbit".equals(functionName) || "copysign".equals(functionName) || "fmod".equals(functionName)
-				|| !rvalue.getCType().isFloatingType()) {
+		if (!rvalue.getCType().isFloatingType()) {
+			return new ExpressionResultBuilder().addAllExceptLrValue(args).setLrValue(rvalue).build();
+		} else if ("signbit".equals(functionName) || "copysign".equals(functionName) || "fmod".equals(functionName)) {
 			return new ExpressionResultBuilder().addAllExceptLrValue(args)
 					.setLrValue(new RValue(rvalue.getValue(), ((CPrimitive) rvalue.getCType()).getFloatCounterpart())).build();
 		}
@@ -1095,7 +1107,6 @@ public class ExpressionResultTransformer {
 
 	public ExpressionResult constructBitvecResult(final LRValue rvalue, final ILocation loc) {
 		final CPrimitive cType = (CPrimitive) rvalue.getCType();
-		assert cType.isSmtFloat() : "not an SMT float";
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
@@ -1103,12 +1114,20 @@ public class ExpressionResultTransformer {
 		resultBuilder.addAuxVar(auxvarinfo);
 
 		final Expression[] arguments = new Expression[] { rvalue.getValue() };
-		final CallStatement call = StatementFactory.constructCallStatement(loc, false,
-				new VariableLHS[] { auxvarinfo.getLhs() },
-				"float_to_bitvec" + Integer.toString(mTypeSizes.getFloatingPointSize(cType).getBitSize()), arguments);
-		resultBuilder.addStatement(call);
-		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), cType.getBvVaraint()));
-		return resultBuilder.build();
+
+		if (cType.isSmtFloat()) {
+			assert cType.isSmtFloat() : "not an SMT float";
+			final CallStatement call = StatementFactory.constructCallStatement(loc, false,
+					new VariableLHS[] { auxvarinfo.getLhs() },
+					"float_to_bitvec" + Integer.toString(mTypeSizes.getFloatingPointSize(cType).getBitSize()), arguments);
+			resultBuilder.addStatement(call);
+			resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), cType.getBvVaraint()));
+			return resultBuilder.build();
+		} else {
+			// assert cType.isSmtFloat() : "not an SMT float";
+			resultBuilder.setLrValue(rvalue);
+			return resultBuilder.build();
+		}
 	}
 
 }

@@ -49,11 +49,17 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 		mTimeout = DEFAULT_TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
-		mIncludeFilterRegexToolchain = ".*(CToBoogieTranslation/regression).*";
-	}
+		mExcludeFilterRegexInput = ".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation).*";
+		mIncludeFilterRegexInput = ".*Float.*";
+		}
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition) {
 		return new SafetyCheckTestResultDecider(runDefinition, false);
+	}
+	
+	@Override
+	protected boolean createLogs() {
+		return true;
 	}
 }
