@@ -384,7 +384,7 @@ def update_line(subp, logfile=None):
                 'Execution of {} (PID {}) finished with exit code {}'.format(
                     " ".join(subp.args), subp.pid, str(subp.returncode)))
             global running_processes
-        running_processes -= [subp]
+        running_processes.remove(subp)
         return None, True
     if logfile:
         logfile.write(line.rstrip() + '\n')
@@ -404,12 +404,12 @@ def create_and_update_progress_bar_phase1(line, counter, total, progress_bar):
         progress_bar = tqdm(total=total)
         progress_bar.set_description('Phase 1: Creating rt-inconsistency checks')
     elif re_phase1_progress.match(line):
-        progress = int(re_phase1_progress.group(1))
+        progress = total - int(re_phase1_progress.group(1))
         counter += progress
         progress_bar.update(progress)
     elif re_phase1_end.match(line):
         progress = int(re_phase1_end.group(1))
-        if progress == total:
+        if progress == total and counter < total:
             progress_bar.update(total - counter)
             counter = total
     else:
@@ -769,6 +769,8 @@ if __name__ == "__main__":
     atexit.register(cleanup_subprocesses)
     try:
         main()
+    except SystemExit:
+        pass
     except:
         print(traceback.format_exc())
         sys.exit(ExitCode.FAIL_EXCEPTION)
