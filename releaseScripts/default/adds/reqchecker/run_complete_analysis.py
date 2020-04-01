@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import atexit
 import logging
 import os
 import pathlib
@@ -11,6 +12,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import traceback
 from typing import Optional, List
 
 from tqdm import tqdm
@@ -21,7 +23,7 @@ class _ExitCode:
     Specify a named exit code for global usage.
     """
     _exit_codes = ["SUCCESS", "FAIL_NO_ACTION", "FAIL_SIGNAL", "FAIL_FILE_AS_DIR", "FAIL_SUBPROCESS",
-                   "FAIL_MISSING_LOGFILE", "USER_DO_NOT_CREATE_DIR", "USER_DO_NOT_DELETE_DIR",
+                   "FAIL_MISSING_LOGFILE", "FAIL_EXCEPTION", "USER_DO_NOT_CREATE_DIR", "USER_DO_NOT_DELETE_DIR",
                    "USER_DO_NOT_DELETE_FILE"]
 
     def __init__(self):
@@ -309,6 +311,8 @@ def call(call_args: Optional[List[str]]):
         logger.fatal('Error trying to open subprocess {}'.format(str(call_args)))
         logger.fatal(ex)
         sys.exit(ExitCode.FAIL_SUBPROCESS)
+    global running_processes
+    running_processes += [child_process]
     return child_process
 
 
@@ -358,7 +362,14 @@ def confirm_if_necessary(args, prompt: str = None, default_response: bool = Fals
 
 def signal_handler(sig, frame):
     print('Killed by {}'.format(sig))
+    cleanup_subprocesses()
     sys.exit(ExitCode.FAIL_SIGNAL)
+
+
+def cleanup_subprocesses():
+    for subp in running_processes:
+        print('Killing left-over subprocess {}'.format(subp.pid))
+        subp.kill()
 
 
 def update_line(subp, logfile=None):
@@ -372,6 +383,8 @@ def update_line(subp, logfile=None):
             logger.error(
                 'Execution of {} (PID {}) finished with exit code {}'.format(
                     " ".join(subp.args), subp.pid, str(subp.returncode)))
+            global running_processes
+        running_processes -= [subp]
         return None, True
     if logfile:
         logfile.write(line.rstrip() + '\n')
@@ -740,10 +753,12 @@ re_phase2_progress = SimpleMatcher(
     r'.*Result for error location myProcedureErr\d+ASSERT_VIOLATION\w+(.*?) was (\w+) \((\d+)/\d+\)')
 re_plugin_end = SimpleMatcher(r'.*------------------------ END.*')
 
+# global variables
 LOG_FORMAT_STR = '%(message)s'
 logging.basicConfig(format=LOG_FORMAT_STR)
 logger = logging.getLogger(__package__)
 ExitCode = _ExitCode()
+running_processes = []
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
@@ -751,4 +766,9 @@ if __name__ == "__main__":
     if platform.system() != 'Windows':
         # just ignore pipe exceptions
         signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-    main()
+    atexit.register(cleanup_subprocesses)
+    try:
+        main()
+    except:
+        print(traceback.format_exc())
+        sys.exit(ExitCode.FAIL_EXCEPTION)
