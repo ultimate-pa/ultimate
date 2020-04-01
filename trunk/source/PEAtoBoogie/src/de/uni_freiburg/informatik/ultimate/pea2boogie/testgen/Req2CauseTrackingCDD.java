@@ -19,7 +19,6 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 
 public class Req2CauseTrackingCDD {
 
@@ -40,8 +39,7 @@ public class Req2CauseTrackingCDD {
 		return addTrackingGuards(cdd, trackedVars, negateTrackingVar);
 	}
 
-	public CDD transformGurad(final IReqSymbolTable symbolTable, final CDD cdd, final Set<String> effectVars,
-			final Set<String> toTrackVars, final Set<String> inputVars, final boolean isEffectEdge) {
+	public CDD transformGurad(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars, final boolean isEffectEdge) {
 		final Set<String> vars = getCddVariables(cdd);
 		vars.removeAll(inputVars);
 		if (isEffectEdge) {
@@ -72,7 +70,7 @@ public class Req2CauseTrackingCDD {
 		CDD annotatedCDD = CDD.create(cdd.getDecision(), newChildren.toArray(new CDD[newChildren.size()]));
 		for (final String v : getVarsFromDecision(cdd.getDecision())) {
 			if (trackedVars.contains(v)) {
-				final String varName = "u_" + v;
+				final String varName = ReqTestAnnotator.TRACKING_VAR_PREFIX + v;
 				// TODO more elegant way to check if its a primed var
 				if (!v.endsWith("'")) {
 					mTrackingVars.put(varName, "bool");

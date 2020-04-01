@@ -308,8 +308,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				final Phase sourcePhase = newLocations[seem + i];
 				final boolean effectTransition = isEffectTransition(sourcePhase, trans, effectDCPhaseId, effectCdd);
 				// apply same transformations to CDDs must be done as in the invariants
-				final CDD guard = mCddTransformer.transformGurad(mSymbolTable, trans.getGuard(), effectVars,
-						Collections.emptySet(), reqSymbolTable.getInputVars(), effectTransition);
+				final CDD guard = mCddTransformer.transformGurad(trans.getGuard(), effectVars, reqSymbolTable.getInputVars(), effectTransition);
 				sourcePhase.addTransition(newLocations[seem + dest], guard, trans.getResets());
 			}
 		}
