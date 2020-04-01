@@ -404,9 +404,9 @@ def create_and_update_progress_bar_phase1(line, counter, total, progress_bar):
         progress_bar = tqdm(total=total)
         progress_bar.set_description('Phase 1: Creating rt-inconsistency checks')
     elif re_phase1_progress.match(line):
-        progress = total - int(re_phase1_progress.group(1))
-        counter += progress
-        progress_bar.update(progress)
+        finished = total - int(re_phase1_progress.group(1))
+        progress_bar.update(finished-counter)
+        counter = finished
     elif re_phase1_end.match(line):
         progress = int(re_phase1_end.group(1))
         if progress == total and counter < total:
