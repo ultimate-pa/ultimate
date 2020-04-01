@@ -28,20 +28,22 @@ public class Req2CauseTrackingCDD {
 		mTrackingVars = new HashMap<>();
 	}
 
-	public CDD transformInvariant(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars,
-			final Set<String> activePhaseVars, final boolean isEffectPhase, final boolean negateTrackingVar) {
+	public CDD transformInvariant(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars, final Set<String> constVars,
+			final Set<String> activePhaseVars,  final boolean isEffectPhase, final boolean negateTrackingVar) {
 		final Set<String> trackedVars = getCddVariables(cdd);
 		trackedVars.removeAll(inputVars);
 		trackedVars.retainAll(activePhaseVars);
+		trackedVars.removeAll(constVars);
 		if (isEffectPhase) {
 			trackedVars.removeAll(effectVars);
 		}
 		return addTrackingGuards(cdd, trackedVars, negateTrackingVar);
 	}
 
-	public CDD transformGurad(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars, final boolean isEffectEdge) {
+	public CDD transformGurad(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars, final Set<String> constVars, final boolean isEffectEdge) {
 		final Set<String> vars = getCddVariables(cdd);
 		vars.removeAll(inputVars);
+		vars.removeAll(constVars);
 		if (isEffectEdge) {
 			vars.removeAll(effectVars);
 		}

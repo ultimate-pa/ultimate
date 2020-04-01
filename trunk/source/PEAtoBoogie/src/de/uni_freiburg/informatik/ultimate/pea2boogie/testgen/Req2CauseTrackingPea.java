@@ -156,7 +156,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			final int offset = oldPea.getPhases().length;
 			// decide which pea phases have an effect
 			final int newEffectLocationIndex = offset + i;
-			if (phaseIsEffectPhase(oldPhases[i], dcEffectPhase)) {
+			if (isEffectLocation(oldPhases[i], dcEffectPhase)) {
 				reqEffectStore.addEffectPhaseIndex(newEffectLocationIndex);
 				if (!Collections.disjoint(effectVars, oldSymbolTable.getOutputVars())) {
 					reqEffectStore.addOutputEffectPhaseIndex(newEffectLocationIndex);
@@ -175,7 +175,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		}
 	}
 
-	private static boolean phaseIsEffectPhase(final Phase location, final int effectDCPhase) {
+	private static boolean isEffectLocation(final Phase location, final int effectDCPhase) {
 		if (location.getPhaseBits() == null) {
 			return false;
 		}
@@ -210,20 +210,20 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		final Phase[] newPhases = new Phase[2 * oldPhases.length];
 		for (int i = 0; i < oldPhases.length; i++) {
 			final Phase oldPhase = oldPhases[i];
-			final boolean isEffectPhase = phaseIsEffectPhase(oldPhases[i], effectPhase);
+			final boolean isEffectPhase = isEffectLocation(oldPhases[i], effectPhase);
 			final Set<CDD> activePhaseInvars = getActiveDCPhaseInvariants(oldPhase, dcFormula);
 			final Set<String> activePhaseVars = new HashSet<>();
 			for (final CDD invar : activePhaseInvars) {
 				activePhaseVars.addAll(Req2CauseTrackingCDD.getCddVariables(invar));
 			}
 			final CDD upperStateInvar = mCddTransformer.transformInvariant(oldPhase.getStateInvariant(), effectVars,
-					reqSymbolTable.getInputVars(), activePhaseVars, phaseIsEffectPhase(oldPhase, effectPhase), true);
+					reqSymbolTable.getInputVars(), reqSymbolTable.getConstVars(), activePhaseVars, isEffectLocation(oldPhase, effectPhase), true);
 			newPhases[i] = new Phase(oldPhase.getName(), upperStateInvar, oldPhase.getClockInvariant());
 
 			// if the effect is active, or if the effect is waiting (encoding is equivalent)
 			final CDD trackingStateInvar = mCddTransformer.transformInvariant(oldPhase.getStateInvariant(), effectVars,
-					reqSymbolTable.getInputVars(), activePhaseVars,
-					phaseIsEffectPhase(oldPhase, effectPhase) || phaseWaitEffect(oldPhase, effectPhase), false);
+					reqSymbolTable.getInputVars(), reqSymbolTable.getConstVars(), activePhaseVars,
+					isEffectLocation(oldPhase, effectPhase) || phaseWaitEffect(oldPhase, effectPhase), false);
 			final CDD newClockInvariant =
 					mCddTransformer.transformClockInvariant(oldPhase.getClockInvariant(), isEffectPhase);
 			final Phase trackingLocation =
@@ -308,7 +308,8 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				final Phase sourcePhase = newLocations[seem + i];
 				final boolean effectTransition = isEffectTransition(sourcePhase, trans, effectDCPhaseId, effectCdd);
 				// apply same transformations to CDDs must be done as in the invariants
-				final CDD guard = mCddTransformer.transformGurad(trans.getGuard(), effectVars, reqSymbolTable.getInputVars(), effectTransition);
+				final CDD guard = mCddTransformer.transformGurad(trans.getGuard(), effectVars, reqSymbolTable.getInputVars(),
+						reqSymbolTable.getConstVars(), effectTransition);
 				sourcePhase.addTransition(newLocations[seem + dest], guard, trans.getResets());
 			}
 		}
@@ -316,7 +317,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		for (int i = 0; i < seem; i++) {
 			CDD clockGuard = CDD.TRUE;
 			// check that there is no effect pending when going to the upper automaton
-			if (phaseIsEffectPhase(oldLocations[i], effectDCPhaseId)) {
+			if (isEffectLocation(oldLocations[i], effectDCPhaseId)) {
 				final CDD oldClockInvar = oldLocations[i].getClockInvariant();
 				clockGuard = mCddTransformer.transformLowerToUpperClockGuard(oldClockInvar);
 			}
