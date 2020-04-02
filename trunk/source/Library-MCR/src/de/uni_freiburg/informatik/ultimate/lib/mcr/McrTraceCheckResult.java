@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.mcr;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -15,14 +17,15 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class McrTraceCheckResult<LETTER extends IIcfgTransition<?>> {
 	private final List<LETTER> mTrace;
 	private final LBool mIsCorrect;
-	private final QualifiedTracePredicates mQualifiedTracePredicates;
+	private final Collection<QualifiedTracePredicates> mQualifiedTracePredicates;
 	private final IStatisticsDataProvider mStatistics;
 	private final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mExecution;
 
 	private NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
 
 	private McrTraceCheckResult(final List<LETTER> trace, final LBool isCorrect,
-			final QualifiedTracePredicates qualifiedTracePredicates, final IStatisticsDataProvider statistics,
+			final Collection<QualifiedTracePredicates> qualifiedTracePredicates,
+			final IStatisticsDataProvider statistics,
 			final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> execution) {
 		mTrace = trace;
 		mIsCorrect = isCorrect;
@@ -34,11 +37,11 @@ public class McrTraceCheckResult<LETTER extends IIcfgTransition<?>> {
 	public static <LETTER extends IIcfgTransition<?>> McrTraceCheckResult<LETTER> constructFeasibleResult(
 			final List<LETTER> trace, final LBool isCorrect, final IStatisticsDataProvider statistics,
 			final IProgramExecution<IIcfgTransition<IcfgLocation>, Term> execution) {
-		return new McrTraceCheckResult<>(trace, isCorrect, null, statistics, execution);
+		return new McrTraceCheckResult<>(trace, isCorrect, Collections.emptyList(), statistics, execution);
 	}
 
 	public static <LETTER extends IIcfgTransition<?>> McrTraceCheckResult<LETTER> constructInfeasibleResult(
-			final List<LETTER> trace, final QualifiedTracePredicates qualifiedTracePredicates,
+			final List<LETTER> trace, final Collection<QualifiedTracePredicates> qualifiedTracePredicates,
 			final IStatisticsDataProvider statistics) {
 		return new McrTraceCheckResult<>(trace, LBool.UNSAT, qualifiedTracePredicates, statistics, null);
 	}
@@ -60,14 +63,15 @@ public class McrTraceCheckResult<LETTER extends IIcfgTransition<?>> {
 	}
 
 	public IPredicate[] getInterpolants() {
-		if (mQualifiedTracePredicates == null) {
+		if (mQualifiedTracePredicates.isEmpty()) {
 			return null;
 		}
-		final List<IPredicate> predicates = mQualifiedTracePredicates.getPredicates();
+		// TODO: Look for perfect predicates instead?
+		final List<IPredicate> predicates = mQualifiedTracePredicates.stream().findAny().get().getPredicates();
 		return predicates.toArray(new IPredicate[predicates.size()]);
 	}
 
-	public QualifiedTracePredicates getQualifiedTracePredicates() {
+	public Collection<QualifiedTracePredicates> getQualifiedTracePredicates() {
 		return mQualifiedTracePredicates;
 	}
 

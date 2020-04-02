@@ -1,11 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -39,10 +37,9 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 			final List<QualifiedTracePredicates> imperfectIpps) throws AutomataOperationCanceledException {
 		if (mResult == null) {
 			try {
-				final INestedWordAutomaton<Integer, ?> mcrAutomaton = mAutomatonBuilder.buildMcrAutomaton(mTrace);
 				final List<QualifiedTracePredicates> qtp = perfectIpps.isEmpty() ? imperfectIpps : perfectIpps;
-				final NestedWordAutomaton<LETTER, IPredicate> ipAutomaton = mAutomatonBuilder.buildInterpolantAutomaton(
-						Collections.nCopies(qtp.size(), mcrAutomaton), Collections.nCopies(qtp.size(), mTrace), qtp);
+				final NestedWordAutomaton<LETTER, IPredicate> ipAutomaton =
+						mAutomatonBuilder.buildInterpolantAutomaton(mTrace, qtp);
 				return new IpAbStrategyModuleResult<>(ipAutomaton, qtp);
 			} catch (final AutomataLibraryException e) {
 				throw new RuntimeException(e);

@@ -59,6 +59,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final VpAlphabet<LETTER> mAlphabet;
 
 	private List<INestedWordAutomaton<Integer, String>> mThreadAutomata;
+	private NestedWordAutomaton<LETTER, String> mMhbAutomaton;
 
 	private final HashRelation<IProgramVar, Integer> mVariables2Writes;
 	private final Map<LETTER, List<Integer>> mActions2Indices;
@@ -149,14 +150,43 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		return mThreadAutomata;
 	}
 
-	public INestedWordAutomaton<Integer, String> buildMhbAutomaton() throws AutomataLibraryException {
-		return intersect(getThreadAutomata(), new StringFactory(), mAutomataServices, mLogger);
+	public NestedWordAutomaton<LETTER, String> buildMhbAutomaton() throws AutomataLibraryException {
+		if (mMhbAutomaton == null) {
+			final StringFactory factory = new StringFactory();
+			mMhbAutomaton = new NestedWordAutomaton<>(mAutomataServices, mAlphabet, factory);
+			final INestedWordAutomaton<Integer, String> intAutomaton =
+					intersect(getThreadAutomata(), factory, mAutomataServices, mLogger);
+			final Set<String> initialStates = intAutomaton.getInitialStates();
+			final Set<String> finalStates = new HashSet<>(intAutomaton.getFinalStates());
+			final LinkedList<String> queue = new LinkedList<>(finalStates);
+			for (final String state : finalStates) {
+				mMhbAutomaton.addState(initialStates.contains(state), true, state);
+			}
+			final Set<String> visited = new HashSet<>();
+			while (!queue.isEmpty()) {
+				final String state = queue.remove();
+				if (!visited.add(state)) {
+					continue;
+				}
+				for (final IncomingInternalTransition<Integer, String> edge : intAutomaton
+						.internalPredecessors(state)) {
+					final LETTER letter = mOriginalTrace.get(edge.getLetter());
+					final String pred = edge.getPred();
+					if (!mMhbAutomaton.contains(pred)) {
+						mMhbAutomaton.addState(initialStates.contains(pred), finalStates.contains(pred), pred);
+					}
+					mMhbAutomaton.addInternalTransition(pred, letter, state);
+					queue.add(pred);
+				}
+			}
+		}
+		return mMhbAutomaton;
 	}
 
-	private boolean isInterleaving(final List<Integer> intTrace) throws AutomataLibraryException {
-		final NestedWord<Integer> nestedWord =
-				NestedWord.nestedWord(new Word<>(intTrace.toArray(new Integer[intTrace.size()])));
-		return new Accepts<>(mAutomataServices, buildMhbAutomaton(), nestedWord).getResult();
+	@SuppressWarnings("unchecked")
+	private boolean isInterleaving(final List<LETTER> trace) throws AutomataLibraryException {
+		final Word<LETTER> word = new Word<>((LETTER[]) trace.toArray(new IIcfgTransition<?>[trace.size()]));
+		return new Accepts<>(mAutomataServices, buildMhbAutomaton(), NestedWord.nestedWord(word)).getResult();
 	}
 
 	private List<Integer> getIntTrace(final List<LETTER> trace) {
@@ -170,16 +200,15 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		return intTrace;
 	}
 
-	public INestedWordAutomaton<Integer, String> buildMcrAutomaton(final List<LETTER> trace)
+	private INestedWordAutomaton<Integer, String> buildMcrAutomaton(final List<Integer> intTrace)
 			throws AutomataLibraryException {
 		mLogger.info("Constructing automaton for MCR equivalence class.");
 		// Determine all previous writes
-		final List<Integer> intTrace = getIntTrace(trace);
-		final List<Map<IProgramVar, Integer>> previousWrite = new ArrayList<>(trace.size());
+		final List<Map<IProgramVar, Integer>> previousWrite = new ArrayList<>(intTrace.size());
 		final Map<IProgramVar, Integer> lastWrittenBy = new HashMap<>();
-		for (int i = 0; i < trace.size(); i++) {
+		for (int i = 0; i < intTrace.size(); i++) {
 			final Map<IProgramVar, Integer> previousWrites = new HashMap<>();
-			final TransFormula transformula = trace.get(i).getTransformula();
+			final TransFormula transformula = mOriginalTrace.get(intTrace.get(i)).getTransformula();
 			for (final IProgramVar read : transformula.getInVars().keySet()) {
 				previousWrites.put(read, lastWrittenBy.get(read));
 			}
@@ -188,7 +217,6 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				lastWrittenBy.put(written, intTrace.get(i));
 			}
 		}
-		assert isInterleaving(intTrace) : "Can only create an automaton for interleavings";
 		final VpAlphabet<Integer> alphabet =
 				new VpAlphabet<>(IntStream.range(0, mOriginalTrace.size()).boxed().collect(Collectors.toSet()));
 		// Add all thread automata
@@ -250,10 +278,11 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		return result;
 	}
 
-	public <STATE> NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(
-			final List<INestedWordAutomaton<Integer, STATE>> automata, final List<List<LETTER>> traces,
-			final List<QualifiedTracePredicates> tracePredicates) {
-		assert automata.size() == traces.size() && traces.size() == tracePredicates.size();
+	public NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(final List<LETTER> trace,
+			final Collection<QualifiedTracePredicates> tracePredicates) throws AutomataLibraryException {
+		assert isInterleaving(trace) : "Can only create an automaton for interleavings";
+		final List<Integer> intTrace = getIntTrace(trace);
+		final INestedWordAutomaton<Integer, String> automaton = buildMcrAutomaton(intTrace);
 		mLogger.info("Constructing interpolant automaton by labelling MCR automaton.");
 		final NestedWordAutomaton<LETTER, IPredicate> result =
 				new NestedWordAutomaton<>(mAutomataServices, mAlphabet, mEmptyStackFactory);
@@ -262,20 +291,18 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		int wpCalls = 0;
 		result.addState(true, false, mPredicateUnifier.getTruePredicate());
 		result.addState(false, true, mPredicateUnifier.getFalsePredicate());
-		for (int j = 0; j < automata.size(); j++) {
-			final INestedWordAutomaton<Integer, STATE> automaton = automata.get(j);
-			final List<IPredicate> interpolants = tracePredicates.get(j).getPredicates();
-			final List<Integer> intTrace = getIntTrace(traces.get(j));
-			final Map<STATE, IPredicate> stateMap = new HashMap<>();
+		for (final QualifiedTracePredicates tp : tracePredicates) {
+			final List<IPredicate> interpolants = tp.getPredicates();
+			final Map<String, IPredicate> stateMap = new HashMap<>();
 			// Fill stateMap and automaton with the given interpolants
-			final LinkedList<STATE> queue = new LinkedList<>();
-			STATE currentState = automaton.getInitialStates().iterator().next();
+			final LinkedList<String> queue = new LinkedList<>();
+			String currentState = automaton.getInitialStates().iterator().next();
 			IPredicate currentPredicate = mPredicateUnifier.getTruePredicate();
 			stateMap.put(currentState, currentPredicate);
 			queue.add(currentState);
-			for (int i = 0; i < mOriginalTrace.size(); i++) {
+			for (int i = 0; i < trace.size(); i++) {
 				final int index = intTrace.get(i);
-				final Iterator<OutgoingInternalTransition<Integer, STATE>> succStates =
+				final Iterator<OutgoingInternalTransition<Integer, String>> succStates =
 						automaton.internalSuccessors(currentState, index).iterator();
 				if (!succStates.hasNext()) {
 					throw new IllegalStateException("Trace is not present in the MCR automaton");
@@ -294,13 +321,13 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				stateMap.put(currentState, currentPredicate);
 			}
 			while (!queue.isEmpty()) {
-				final STATE state = queue.remove();
+				final String state = queue.remove();
 				final IPredicate predicate = stateMap.get(state);
 				if (predicate == null) {
 					throw new IllegalStateException("Trying to visit an uncovered state.");
 				}
-				for (final IncomingInternalTransition<Integer, STATE> edge : automaton.internalPredecessors(state)) {
-					final STATE predecessor = edge.getPred();
+				for (final IncomingInternalTransition<Integer, String> edge : automaton.internalPredecessors(state)) {
+					final String predecessor = edge.getPred();
 					IPredicate predPredicate = stateMap.get(predecessor);
 					final LETTER action = mOriginalTrace.get(edge.getLetter());
 					// If the predecessor is already labeled, we can continue

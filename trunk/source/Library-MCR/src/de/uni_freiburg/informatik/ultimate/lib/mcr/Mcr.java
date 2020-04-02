@@ -8,10 +8,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
@@ -26,7 +24,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Si
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -53,7 +50,6 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	private final IMcrResultProvider<LETTER> mResultProvider;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final List<LETTER> mInitialTrace;
 
 	private final McrTraceCheckResult<LETTER> mResult;
 
@@ -71,7 +67,6 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		mSimplificationTechnique = prefs.getSimplificationTechnique();
 		mEmptyStackStateFactory = emptyStackStateFactory;
 		mResultProvider = resultProvider;
-		mInitialTrace = trace;
 		// Explore all the interleavings of trace
 		mResult = exploreInterleavings(trace);
 	}
@@ -82,42 +77,41 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				new McrAutomatonBuilder<>(initialTrace, mPredicateUnifier, mEmptyStackStateFactory, mLogger, mAlphabet,
 						mServices, mManagedScript, mXnfConversionTechnique, mSimplificationTechnique);
 		final StringFactory factory = new StringFactory();
-		final List<INestedWordAutomaton<Integer, String>> automata = new ArrayList<>();
-		final List<QualifiedTracePredicates> tracePredicates = new ArrayList<>();
-		final List<List<LETTER>> traces = new ArrayList<>();
-		INestedWordAutomaton<Integer, String> mhbAutomaton = automatonBuilder.buildMhbAutomaton();
-		NestedRun<Integer, ?> run = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
+		final List<INestedWordAutomaton<LETTER, IPredicate>> automata = new ArrayList<>();
+		INestedWordAutomaton<LETTER, String> mhbAutomaton = automatonBuilder.buildMhbAutomaton();
+		NestedRun<LETTER, ?> run = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
 		int iteration = 0;
 		McrTraceCheckResult<LETTER> result = null;
 		while (run != null) {
 			mLogger.info("---- MCR iteration " + iteration++ + " ----");
-			final IRun<LETTER, ?> counterexample = convertRun(run);
-			result = mResultProvider.getResult(counterexample, getPrecondition(), getPostcondition());
-			final List<LETTER> trace = counterexample.getWord().asList();
+			result = mResultProvider.getResult(run, getPrecondition(), getPostcondition());
+			final List<LETTER> trace = run.getWord().asList();
 			if (result.isCorrect() != LBool.UNSAT) {
 				// We found a feasible error trace
 				return result;
 			}
-			// TODO: Use interpolant automata (from settings) here?
-			final INestedWordAutomaton<Integer, String> mcrAutomaton = automatonBuilder.buildMcrAutomaton(trace);
-			automata.add(mcrAutomaton);
-			tracePredicates.add(result.getQualifiedTracePredicates());
-			traces.add(trace);
-			mhbAutomaton = new Difference<>(mAutomataServices, factory, mhbAutomaton, mcrAutomaton).getResult();
+			final INestedWordAutomaton<LETTER, IPredicate> automaton =
+					automatonBuilder.buildInterpolantAutomaton(trace, result.getQualifiedTracePredicates());
+			automata.add(automaton);
+			final INestedWordAutomaton<LETTER, String> convertedAutomaton = convertInterpolantAutomaton(automaton);
+			mhbAutomaton = new Difference<>(mAutomataServices, factory, mhbAutomaton, convertedAutomaton).getResult();
 			run = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
 		}
 		// All interleavings are infeasible, therefore create an interpolant automaton
-		final NestedWordAutomaton<LETTER, IPredicate> interpolantAutomaton =
-				automatonBuilder.buildInterpolantAutomaton(automata, traces, tracePredicates);
-		result.setAutomaton(interpolantAutomaton);
+		result.setAutomaton(unionAutomata(automata));
 		return result;
 	}
 
-	@SuppressWarnings("unchecked")
-	private <STATE> IRun<LETTER, STATE> convertRun(final NestedRun<Integer, STATE> intRun) {
-		final LETTER[] symbols = (LETTER[]) intRun.getWord().asList().stream().map(mInitialTrace::get)
-				.toArray(IIcfgTransition<?>[]::new);
-		return new NestedRun<>(NestedWord.nestedWord(new Word<>(symbols)), intRun.getStateSequence());
+	private INestedWordAutomaton<LETTER, String>
+			convertInterpolantAutomaton(final INestedWordAutomaton<LETTER, IPredicate> automaton) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private NestedWordAutomaton<LETTER, IPredicate>
+			unionAutomata(final List<INestedWordAutomaton<LETTER, IPredicate>> automata) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	public NestedWordAutomaton<LETTER, IPredicate> getAutomaton() {
@@ -147,11 +141,12 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 
 	@Override
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
-		if (isCorrect() == LBool.UNSAT) {
+		switch (isCorrect()) {
+		case SAT:
 			return new InterpolantComputationStatus();
-		} else if (isCorrect() == LBool.SAT) {
+		case UNKNOWN:
 			return new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
-		} else {
+		default:
 			throw new UnsupportedOperationException();
 		}
 	}

@@ -160,13 +160,8 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
 					mRefinementEngine.getIcfgProgramExecution());
 		}
 		// Extract interpolants, try to get a perfect sequence
-		final Collection<QualifiedTracePredicates> proofs = mRefinementEngine.getInfeasibilityProof();
-		if (proofs.isEmpty()) {
-			return McrTraceCheckResult.constructInfeasibleResult(trace, null, statistics);
-		}
-		final QualifiedTracePredicates predicate =
-				proofs.stream().filter(a -> a.isPerfect()).findAny().orElse(proofs.stream().findFirst().get());
-		mUsedPredicates.add(predicate);
-		return McrTraceCheckResult.constructInfeasibleResult(trace, predicate, statistics);
+		final Collection<QualifiedTracePredicates> proof = mRefinementEngine.getInfeasibilityProof();
+		mUsedPredicates.addAll(proof);
+		return McrTraceCheckResult.constructInfeasibleResult(trace, proof, statistics);
 	}
 }
