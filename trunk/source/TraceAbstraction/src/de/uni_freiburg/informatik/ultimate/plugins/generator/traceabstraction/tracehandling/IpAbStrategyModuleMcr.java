@@ -5,6 +5,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.mcr.McrAutomatonBuilder;
@@ -25,8 +26,8 @@ public class IpAbStrategyModuleMcr<LETTER extends IIcfgTransition<?>> implements
 	public IpAbStrategyModuleMcr(final List<LETTER> trace, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final ILogger logger,
 			final ITraceCheckPreferences prefs, final Set<LETTER> alphabet) {
-		mAutomatonBuilder = new McrAutomatonBuilder<>(trace, predicateUnifier, emptyStackFactory, logger, alphabet,
-				prefs.getUltimateServices(), prefs.getCfgSmtToolkit().getManagedScript(),
+		mAutomatonBuilder = new McrAutomatonBuilder<>(trace, predicateUnifier, emptyStackFactory, logger,
+				new VpAlphabet<>(alphabet), prefs.getUltimateServices(), prefs.getCfgSmtToolkit().getManagedScript(),
 				prefs.getXnfConversionTechnique(), prefs.getSimplificationTechnique());
 		mTrace = trace;
 

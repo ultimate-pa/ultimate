@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -59,7 +60,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final VpAlphabet<LETTER> mAlphabet;
 
 	private List<INestedWordAutomaton<Integer, String>> mThreadAutomata;
-	private NestedWordAutomaton<LETTER, String> mMhbAutomaton;
+	private NestedWordAutomaton<LETTER, IPredicate> mMhbAutomaton;
 
 	private final HashRelation<IProgramVar, Integer> mVariables2Writes;
 	private final Map<LETTER, List<Integer>> mActions2Indices;
@@ -67,8 +68,8 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	public McrAutomatonBuilder(final List<LETTER> trace, final IPredicateUnifier predicateUnifier,
 			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final ILogger logger,
-			final Set<LETTER> alphabet, final IUltimateServiceProvider services, final ManagedScript managedScript,
-			final XnfConversionTechnique xnfConversionTechnique,
+			final VpAlphabet<LETTER> alphabet, final IUltimateServiceProvider services,
+			final ManagedScript managedScript, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
 		mOriginalTrace = trace;
 		mLogger = logger;
@@ -79,7 +80,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mEmptyStackFactory = emptyStackFactory;
-		mAlphabet = new VpAlphabet<>(alphabet);
+		mAlphabet = alphabet;
 		mVariables2Writes = new HashRelation<>();
 		mThreads2SortedActions = new HashMap<>();
 		mActions2Indices = new HashMap<>();
@@ -150,17 +151,20 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		return mThreadAutomata;
 	}
 
-	public NestedWordAutomaton<LETTER, String> buildMhbAutomaton() throws AutomataLibraryException {
+	public NestedWordAutomaton<LETTER, IPredicate>
+			buildMhbAutomaton(final Function<String, IPredicate> predicateProvider) throws AutomataLibraryException {
 		if (mMhbAutomaton == null) {
-			final StringFactory factory = new StringFactory();
-			mMhbAutomaton = new NestedWordAutomaton<>(mAutomataServices, mAlphabet, factory);
+			mMhbAutomaton = new NestedWordAutomaton<>(mAutomataServices, mAlphabet, mEmptyStackFactory);
 			final INestedWordAutomaton<Integer, String> intAutomaton =
-					intersect(getThreadAutomata(), factory, mAutomataServices, mLogger);
+					intersect(getThreadAutomata(), new StringFactory(), mAutomataServices, mLogger);
 			final Set<String> initialStates = intAutomaton.getInitialStates();
 			final Set<String> finalStates = new HashSet<>(intAutomaton.getFinalStates());
 			final LinkedList<String> queue = new LinkedList<>(finalStates);
-			for (final String state : finalStates) {
-				mMhbAutomaton.addState(initialStates.contains(state), true, state);
+			final Map<String, IPredicate> states2Predicates = new HashMap<>();
+			for (final String state : intAutomaton.getStates()) {
+				final IPredicate predicate = predicateProvider.apply(state);
+				states2Predicates.put(state, predicate);
+				mMhbAutomaton.addState(initialStates.contains(state), finalStates.contains(state), predicate);
 			}
 			final Set<String> visited = new HashSet<>();
 			while (!queue.isEmpty()) {
@@ -171,12 +175,8 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				for (final IncomingInternalTransition<Integer, String> edge : intAutomaton
 						.internalPredecessors(state)) {
 					final LETTER letter = mOriginalTrace.get(edge.getLetter());
-					final String pred = edge.getPred();
-					if (!mMhbAutomaton.contains(pred)) {
-						mMhbAutomaton.addState(initialStates.contains(pred), finalStates.contains(pred), pred);
-					}
-					mMhbAutomaton.addInternalTransition(pred, letter, state);
-					queue.add(pred);
+					mMhbAutomaton.addInternalTransition(states2Predicates.get(edge.getPred()), letter, states2Predicates.get(state));
+					queue.add(edge.getPred());
 				}
 			}
 		}
@@ -185,8 +185,9 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	@SuppressWarnings("unchecked")
 	private boolean isInterleaving(final List<LETTER> trace) throws AutomataLibraryException {
+		assert mMhbAutomaton != null;
 		final Word<LETTER> word = new Word<>((LETTER[]) trace.toArray(new IIcfgTransition<?>[trace.size()]));
-		return new Accepts<>(mAutomataServices, buildMhbAutomaton(), NestedWord.nestedWord(word)).getResult();
+		return new Accepts<>(mAutomataServices, mMhbAutomaton, NestedWord.nestedWord(word)).getResult();
 	}
 
 	private List<Integer> getIntTrace(final List<LETTER> trace) {

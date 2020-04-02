@@ -24,6 +24,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.Mcr.IMcrResultProvider;
 
@@ -139,16 +141,15 @@ public class StrategyModuleMcr<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public McrTraceCheckResult<LETTER> getResult(final IRun<LETTER, ?> counterexample, final IPredicate precondition,
-			final IPredicate postcondition) {
+	public McrTraceCheckResult<LETTER> getResult(final IRun<LETTER, ?> counterexample) {
 		// Run mRefinementEngine for the given trace
 		final RefinementStrategy refinementStrategy = mPrefs.getMcrRefinementStrategy();
 		if (refinementStrategy == RefinementStrategy.MCR) {
 			throw new IllegalStateException("MCR cannot used with MCR as internal strategy.");
 		}
-		final IRefinementStrategy<LETTER> strategy =
-				mStrategyFactory.constructStrategy(counterexample, mAbstraction, mTaskIdentifier, mEmptyStackFactory,
-						(predicateUnifer) -> precondition, (predicateUnifer) -> postcondition, refinementStrategy);
+		final IRefinementStrategy<LETTER> strategy = mStrategyFactory.constructStrategy(counterexample, mAbstraction,
+				mTaskIdentifier, mEmptyStackFactory, IPreconditionProvider.constructDefaultPreconditionProvider(),
+				IPostconditionProvider.constructDefaultPostconditionProvider(), refinementStrategy);
 		mRefinementEngine = new AutomatonFreeRefinementEngine<>(mLogger, strategy);
 		final List<LETTER> trace = counterexample.getWord().asList();
 		final RefinementEngineStatisticsGenerator statistics = mRefinementEngine.getRefinementEngineStatistics();
