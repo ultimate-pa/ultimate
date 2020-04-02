@@ -51,7 +51,7 @@ public class Req2CauseTrackingCDD {
 		vars.removeAll(effectVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
 		vars.removeAll(inputVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
 		final CDD newGuard = addTrackingGuards(cdd, vars, false);
-		return transformGuardClock(newGuard, isEffectEdge);
+		return newGuard;
 	}
 
 	private CDD addTrackingGuards(final CDD cdd, final Set<String> trackedVars, final boolean negateTrackingVar) {
@@ -88,51 +88,12 @@ public class Req2CauseTrackingCDD {
 		return annotatedCDD;
 	}
 
-	public CDD transformClockInvariant(final CDD cdd, final boolean effectState) {
-		if (cdd == CDD.TRUE || cdd == CDD.FALSE || !effectState) {
-			return cdd;
-		}
-
-		final List<CDD> newChildren = new ArrayList<>();
-		if (cdd.getChilds() != null) {
-			for (final CDD child : cdd.getChilds()) {
-				newChildren.add(transformClockInvariant(child, effectState));
-			}
-		}
-		final CDD[] children = newChildren.toArray(new CDD[newChildren.size()]);
-		final Decision<?> decision = cdd.getDecision();
-		if (decision instanceof RangeDecision) {
-			final RangeDecision d = (RangeDecision) decision;
-			transformClockDecisionInvariant(d, children);
-		}
-		return CDD.create(cdd.getDecision(), children);
-	}
-
-	private static CDD transformClockDecisionInvariant(final RangeDecision d, final CDD[] children) {
-		CDD returnDecision = CDD.TRUE;
-		for (int i = 0; i < children.length; i++) {
-			if (children[i] == CDD.FALSE) {
-				continue;
-			}
-			returnDecision = returnDecision.and(transformPrefixClockDecisionInvariant(d, i));
-		}
-		return returnDecision;
-	}
-
-	private static CDD transformPrefixClockDecisionInvariant(final RangeDecision d, final int trueChild) {
-		switch (d.getOp(trueChild)) {
-		// TODO care about <>_{<= x} E things only, rest of clocks in peas are already ok
-		default:
-			return RangeDecision.create(d.getVar(), d.getOp(trueChild), d.getVal(trueChild));
-		}
-	}
-
 	/*
 	 * Transforms a CDD containing a range decision as follows: - t <= c to t >= c
 	 *
 	 * Note: if the CDD is no range decision, this will return CDD.True
 	 */
-	public CDD transformLowerToUpperClockGuard(final CDD cdd) {
+	public CDD upperToLowerBoundCdd(final CDD cdd) {
 		if (cdd == CDD.TRUE || cdd == CDD.FALSE) {
 			return cdd;
 		}
@@ -140,7 +101,7 @@ public class Req2CauseTrackingCDD {
 		final List<CDD> newChildren = new ArrayList<>();
 		if (cdd.getChilds() != null) {
 			for (final CDD child : cdd.getChilds()) {
-				newChildren.add(transformLowerToUpperClockGuard(child));
+				newChildren.add(upperToLowerBoundCdd(child));
 			}
 		}
 		final CDD[] children = newChildren.toArray(new CDD[newChildren.size()]);
@@ -152,52 +113,17 @@ public class Req2CauseTrackingCDD {
 				if (children[i] == CDD.FALSE) {
 					continue;
 				}
-				returnDecision = returnDecision.and(transformLowerToUpperClockGuard(d, i));
+				returnDecision = returnDecision.and(upperToLowerBoundDecision(d, i));
 			}
 			return returnDecision;
 		}
 		return CDD.create(cdd.getDecision(), children);
 	}
 
-	private static CDD transformLowerToUpperClockGuard(final RangeDecision d, final int trueChild) {
+	private static CDD upperToLowerBoundDecision(final RangeDecision d, final int trueChild) {
 		switch (d.getOp(trueChild)) {
 		case RangeDecision.OP_LTEQ:
 			return RangeDecision.create(d.getVar(), RangeDecision.OP_GTEQ, d.getVal(trueChild));
-		default:
-			return RangeDecision.create(d.getVar(), d.getOp(trueChild), d.getVal(trueChild));
-		}
-	}
-
-	public CDD transformGuardClock(final CDD cdd, final boolean effectEdge) {
-		if (cdd == CDD.TRUE || cdd == CDD.FALSE || !effectEdge) {
-			return cdd;
-		}
-
-		final List<CDD> newChildren = new ArrayList<>();
-		if (cdd.getChilds() != null) {
-			for (final CDD child : cdd.getChilds()) {
-				newChildren.add(transformClockInvariant(child, effectEdge));
-			}
-		}
-		final CDD[] children = newChildren.toArray(new CDD[newChildren.size()]);
-		final Decision<?> decision = cdd.getDecision();
-		if (decision instanceof RangeDecision) {
-			final RangeDecision d = (RangeDecision) decision;
-			CDD returnDecision = CDD.TRUE;
-			for (int i = 0; i < children.length; i++) {
-				if (children[i] == CDD.FALSE) {
-					continue;
-				}
-				returnDecision = returnDecision.and(transformPrefixClockDecisionGuard(d, i));
-			}
-			return returnDecision;
-		}
-		return CDD.create(cdd.getDecision(), children);
-	}
-
-	private static CDD transformPrefixClockDecisionGuard(final RangeDecision d, final int trueChild) {
-		switch (d.getOp(trueChild)) {
-		// TODO care about <>_{<= x} E things only, rest of clocks in peas are already ok
 		default:
 			return RangeDecision.create(d.getVar(), d.getOp(trueChild), d.getVal(trueChild));
 		}

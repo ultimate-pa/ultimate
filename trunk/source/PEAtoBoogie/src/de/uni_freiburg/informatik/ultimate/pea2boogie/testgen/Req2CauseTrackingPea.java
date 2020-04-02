@@ -132,8 +132,8 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				transformLocations(pattern, oldPea, oldSymbolTable, effectCdd, effectVars, dcEffectPhase, dcFormula);
 		final Phase[] newInit = getInitialPhases(oldLocations);
 		copyOldTransitions(oldPea.getPhases(), newLocations);
-		connectTrackingAutomaton(newLocations, oldLocations, effectVars, oldSymbolTable,
-				new ArrayList<>(oldPea.getClocks()), dcEffectPhase, effectCdd);
+		copyTransitionsToLower(newLocations, effectVars, oldSymbolTable, dcEffectPhase, effectCdd);
+		connectUpperToLowerAutomaton(newLocations, oldLocations, new ArrayList<>(oldPea.getClocks()), dcEffectPhase);
 		final List<String> newClocks = new ArrayList<>(oldPea.getClocks());
 		final Map<String, String> newVariables = new HashMap<>(oldPea.getVariables());
 		newVariables.putAll(mCddTransformer.getTrackingVars());
@@ -180,6 +180,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			return false;
 		}
 		final PhaseBits pb = location.getPhaseBits();
+		//TODO: also return false if phase contains a disjunction
 		return pb.isActive(effectDCPhase) && !pb.isWaiting(effectDCPhase);
 	}
 
@@ -210,7 +211,6 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		final Phase[] newPhases = new Phase[2 * oldPhases.length];
 		for (int i = 0; i < oldPhases.length; i++) {
 			final Phase oldPhase = oldPhases[i];
-			final boolean isEffectPhase = isEffectLocation(oldPhases[i], effectPhase);
 			final Set<CDD> activePhaseInvars = getActiveDCPhaseInvariants(oldPhase, dcFormula);
 			final Set<String> activePhaseVars = new HashSet<>();
 			for (final CDD invar : activePhaseInvars) {
@@ -224,10 +224,8 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			final CDD trackingStateInvar = mCddTransformer.transformInvariant(oldPhase.getStateInvariant(), effectVars,
 					reqSymbolTable.getInputVars(), reqSymbolTable.getConstVars(), activePhaseVars,
 					isEffectLocation(oldPhase, effectPhase) || phaseWaitEffect(oldPhase, effectPhase), false);
-			final CDD newClockInvariant =
-					mCddTransformer.transformClockInvariant(oldPhase.getClockInvariant(), isEffectPhase);
 			final Phase trackingLocation =
-					new Phase(oldPhase.getName() + LOWER_AUTOMATON_SUFFIX, trackingStateInvar, newClockInvariant);
+					new Phase(oldPhase.getName() + LOWER_AUTOMATON_SUFFIX, trackingStateInvar, oldPhase.getClockInvariant());
 			newPhases[oldPhases.length + i] = trackingLocation;
 			if (oldPhase.isInit) {
 				trackingLocation.isInit = true;
@@ -290,15 +288,11 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	}
 
 	/*
-	 * Connect lower and upper automaton by the following transitions: - connect every location with its copy in the
-	 * lower automaton iff upper location is initial - connect every location in the lower automaton with its copy in
-	 * the upper automaton iff the location does not encode any obligation for the future (i.e. has an edge to the first
-	 * phase). Add timing bounds so that the test generator can not bail to the upper automaton before all obligations
-	 * are fulfilled.
+	 * Copy all transitions from the upper automaton to the lower automaton.
+	 * Add tracking guards and clock transformations in the process.
 	 */
-	private void connectTrackingAutomaton(final Phase[] newLocations, final Phase[] oldLocations,
-			final Set<String> effectVars, final IReqSymbolTable reqSymbolTable, final List<String> clocks,
-			final int effectDCPhaseId, final CDD effectCdd) {
+	private void copyTransitionsToLower(final Phase[] newLocations, final Set<String> effectVars,
+			final IReqSymbolTable reqSymbolTable, final int effectDCPhaseId, final CDD effectCdd) {
 		final int seem = newLocations.length / 2;
 		final List<Phase> indexList = Arrays.asList(newLocations);
 		// copy edges in first to second automaton
@@ -313,20 +307,28 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				sourcePhase.addTransition(newLocations[seem + dest], guard, trans.getResets());
 			}
 		}
-		// conect the copies
+	}
+
+	/*
+	 * Connect lower and upper automaton by the following transitions:
+	 * - connect every location with its copy in the lower automaton iff upper location is initial
+	 * - connect every location in the lower automaton with its copy in the upper automaton
+	 * iff the location does not encode any obligation for the future (i.e. has an edge to the first phase).
+	 * Add timing bounds so that the test generator can not bail to the upper automaton before all obligations
+	 * are fulfilled.
+	 */
+	private void connectUpperToLowerAutomaton(final Phase[] newLocations, final Phase[] oldLocations, final List<String> clocks,
+			final int effectDCPhaseId) {
+		final int seem = newLocations.length / 2;
 		for (int i = 0; i < seem; i++) {
 			CDD clockGuard = CDD.TRUE;
-			// check that there is no effect pending when going to the upper automaton
 			if (isEffectLocation(oldLocations[i], effectDCPhaseId)) {
 				final CDD oldClockInvar = oldLocations[i].getClockInvariant();
-				clockGuard = mCddTransformer.transformLowerToUpperClockGuard(oldClockInvar);
+				clockGuard = mCddTransformer.upperToLowerBoundCdd(oldClockInvar);
 			}
-			// if there is no edge back to the first phase, there is some obligation to fulfill first
 			if (oldLocations[i].getOutgoingTransition(oldLocations[0]) != null) {
 				newLocations[seem + i].addTransition(newLocations[i], clockGuard, new String[0]);
 			}
-			// if the phase is not initial, you shall not switch to the lower automaton (as part of the prefix is not
-			// proven)
 			if (oldLocations[i].isInit) {
 				newLocations[i].addTransition(newLocations[seem + i], CDD.TRUE,
 						clocks.toArray(new String[clocks.size()]));
