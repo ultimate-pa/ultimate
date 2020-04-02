@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.NamedAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.AutomatonWithImplicitSelfloops;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference;
@@ -125,6 +127,8 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	 */
 	private static final int DEBUG_DUMP_DRYRUNRESULT_THRESHOLD = 24 * 60 * 60;
 
+	private static final boolean USE_COUNTEREXAMPLE_CACHE = false;
+
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
 	/**
@@ -143,6 +147,8 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	private final PetriCegarLoopStatisticsGenerator mPetriClStatisticsGenerator;
 
 	private Set<IPredicate> mProgramPointPlaces;
+	
+	private final CounterexampleCache mCounterexampleCache = new CounterexampleCache();
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -207,25 +213,28 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
-		final BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
-		final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
-		final EventOrderEnum eventOrder = mPref.eventOrder();
+		if (USE_COUNTEREXAMPLE_CACHE && mIteration != 1) {
+			mCounterexample = mCounterexampleCache.getCounterexample();
+		} else {
+			final BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
+			final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
+			final EventOrderEnum eventOrder = mPref.eventOrder();
 
-		mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString());
-		PetriNetUnfolder<LETTER, IPredicate> unf;
-		try {
-			unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices), abstraction, eventOrder,
-					cutOffSameTrans, true);
-		} catch (final PetriNetNot1SafeException e) {
-			throw new UnsupportedOperationException(e.getMessage());
-		} finally {
-			mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString());
+			mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString());
+			PetriNetUnfolder<LETTER, IPredicate> unf;
+			try {
+				unf = new PetriNetUnfolder<>(new AutomataLibraryServices(mServices), abstraction, eventOrder,
+						cutOffSameTrans, true);
+			} catch (final PetriNetNot1SafeException e) {
+				throw new UnsupportedOperationException(e.getMessage());
+			} finally {
+				mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString());
+			}
+			final BranchingProcess<LETTER, IPredicate> finPrefix = unf.getFinitePrefix();
+			mCoRelationQueries += (finPrefix.getCoRelation().getQueryCounterYes()
+					+ finPrefix.getCoRelation().getQueryCounterNo());
+			mCounterexample = unf.getAcceptingRun();
 		}
-		final BranchingProcess<LETTER, IPredicate> finPrefix = unf.getFinitePrefix();
-		mCoRelationQueries += (finPrefix.getCoRelation().getQueryCounterYes()
-				+ finPrefix.getCoRelation().getQueryCounterNo());
-
-		mCounterexample = unf.getAcceptingRun();
 		if (mCounterexample == null) {
 			return true;
 		}
@@ -278,6 +287,10 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 			final Pair<INestedWordAutomaton<LETTER, IPredicate>, DifferencePairwiseOnDemand<LETTER, IPredicate, ?>> enhancementResult = enhanceAnddeterminizeInterpolantAutomaton(
 					mInterpolAutomaton, htc);
 			dia = enhancementResult.getFirst();
+			if (USE_COUNTEREXAMPLE_CACHE) {
+				final PetriNetRun<LETTER, ?> run = enhancementResult.getSecond().getFinitePrefixOfDifference().getAcceptingRun();
+				mCounterexampleCache.setCounterexample(run);
+			}
 
 			if (mPref.dumpAutomata()) {
 				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
@@ -619,6 +632,18 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	@Override
 	public IStatisticsDataProvider getCegarLoopBenchmark() {
 		return mPetriClStatisticsGenerator;
+	}
+	
+	private class CounterexampleCache {
+		private IRun<LETTER, ?> mCounterexample;
+
+		public IRun<LETTER, ?> getCounterexample() {
+			return mCounterexample;
+		}
+
+		public void setCounterexample(final IRun<LETTER, ?> counterexample) {
+			mCounterexample = counterexample;
+		}
 	}
 
 
