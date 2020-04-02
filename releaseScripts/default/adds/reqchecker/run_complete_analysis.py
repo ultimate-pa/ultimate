@@ -514,7 +514,7 @@ def extract_vacuity_run_ultimate_sbe(args, tmp_req_file, vac_req_id, pb):
     ]
     ultimate_process = call(cmd)
     pb.set_description(
-        'Running ReqChecker for vacuity analysis of {} with PID {}'.format(vac_req_id, ultimate_process.pid))
+        'Phase 3: Running ReqChecker for vacuity analysis of {} with PID {}'.format(vac_req_id, ultimate_process.pid))
     with open(logfile_name, 'w') as logfile:
         while True:
             line, end_reached = update_line(ultimate_process, logfile)
