@@ -6,19 +6,22 @@
 
 package synthesis;
 
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class ConjunctionTemplate extends Template {
-	private Set<RelationTemplate> mRelations;
+	private ArrayList<RelationTemplate> mRelations;
+	String mName;
+	
 	public ConjunctionTemplate(int conjuncts , int[] relation,
 			Set<TermVariable> vars, String name) {
-		mRelations = new TreeSet<RelationTemplate>();
+		mRelations = new ArrayList<RelationTemplate>();
 		for(int i=0; i<conjuncts; i++){
-			// TODO change name
-			RelationTemplate t = new RelationTemplate(relation[i], vars, name);
+			mName = name;
+			RelationTemplate t = new RelationTemplate(relation[i], vars, name + "-" + i);
 			mRelations.add(t);
 		}
 	}

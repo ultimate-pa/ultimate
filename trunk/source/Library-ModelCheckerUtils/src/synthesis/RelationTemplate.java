@@ -13,8 +13,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class RelationTemplate extends Template {
 	Term mTerm;
+	String mName;
 	public RelationTemplate(int relation,
 			Set<TermVariable> vars, String name) {
+		mName = name;
 		int l = vars.size();
 		int i = 0;
 		for (TermVariable v : vars ){
