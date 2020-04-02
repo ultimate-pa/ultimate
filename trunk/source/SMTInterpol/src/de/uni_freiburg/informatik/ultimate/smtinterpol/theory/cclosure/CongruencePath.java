@@ -187,7 +187,7 @@ public class CongruencePath {
 	 */
 	private SubPath computePathTo(CCTerm t, CCTerm end) {
 		final SubPath path =
-				new SubPath(t, mClosure.mEngine.isProofGenerationEnabled());
+				new SubPath(t, mClosure.isProofGenerationEnabled());
 		CCTerm startCongruence = t;
 		while (t != end) {
 			if (t.mOldRep.mReasonLiteral != null) {
@@ -341,7 +341,7 @@ public class CongruencePath {
 	}
 
 	public Clause computeCycle(CCTerm lconstant, CCTerm rconstant, boolean produceProofs) {
-		mClosure.mEngine.getLogger().debug("computeCycle for Constants");
+		mClosure.getLogger().debug("computeCycle for Constants");
 		computePath(lconstant, rconstant);
 		final Literal[] cycle = new Literal[mAllLiterals.size()];
 		int i = 0;

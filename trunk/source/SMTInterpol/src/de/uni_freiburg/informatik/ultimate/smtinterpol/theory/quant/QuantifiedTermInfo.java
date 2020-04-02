@@ -18,6 +18,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -85,21 +89,56 @@ public class QuantifiedTermInfo {
 		}
 	}
 
-	/**
-	 * Check if all summands of an affine term are "simple" EU terms, i.e., they are ground, or an application of an
-	 * uninterpreted function where all arguments are variables or simple EU terms. (Exception: select behaves as an
-	 * uninterpreted function but may not have a variable as first argument.)
-	 * 
-	 * @param affine
-	 *            the SMTAffineTerm to check.
-	 * @return true, if all summands are "simple" EU terms; false otherwise.
-	 */
-	public static boolean hasOnlySimpleEssentiallyUninterpretedSummands(final SMTAffineTerm affine) {
-		boolean isAllSimple = true;
-		for (final Term smd : affine.getSummands().keySet()) {
-			isAllSimple &= isSimpleEssentiallyUninterpreted(smd);
+	public static boolean containsArithmeticOnlyAtTopLevel(final QuantLiteral atom) {
+		assert !atom.isNegated();
+		if (atom instanceof QuantBoundConstraint) {
+			return containsArithmeticOnlyAtTopLevel(((QuantBoundConstraint) atom).getAffineTerm());
+		} else {
+			final QuantEquality eq = (QuantEquality) atom;
+			final SMTAffineTerm lhsAff = new SMTAffineTerm(eq.getLhs());
+			if (containsArithmeticOnlyAtTopLevel(lhsAff)) {
+				final SMTAffineTerm rhsAff = new SMTAffineTerm(eq.getRhs());
+				return containsArithmeticOnlyAtTopLevel(rhsAff);
+			}
 		}
-		return isAllSimple;
+		return false;
+	}
+
+	public static boolean containsAppTermsForEachVar(final QuantLiteral atom) {
+		assert !atom.isNegated();
+		final Set<Term> allSummandsWithoutCoeffs = new HashSet<>();
+		if (atom instanceof QuantEquality) {
+			final QuantEquality eq = (QuantEquality) atom;
+			final Term lhs = eq.getLhs();
+			final Term rhs = eq.getRhs();
+			final SMTAffineTerm lhsAff = new SMTAffineTerm(lhs);
+			final SMTAffineTerm rhsAff = new SMTAffineTerm(rhs);
+			allSummandsWithoutCoeffs.addAll(lhsAff.getSummands().keySet());
+			allSummandsWithoutCoeffs.addAll(rhsAff.getSummands().keySet());
+		} else {
+			final QuantBoundConstraint bc = (QuantBoundConstraint) atom;
+			allSummandsWithoutCoeffs.addAll(bc.getAffineTerm().getSummands().keySet());
+		}
+		final Set<Term> varTerms = new HashSet<>();
+		final Set<TermVariable> varsInApps = new HashSet<>();
+		for (final Term smd : allSummandsWithoutCoeffs) {
+			if (smd instanceof TermVariable) {
+				varTerms.add(smd);
+			} else if (smd.getFreeVars().length != 0) {
+				varsInApps.addAll(Arrays.asList(smd.getFreeVars()));
+			}
+		}
+		varTerms.removeAll(varsInApps);
+		return varTerms.isEmpty();
+	}
+
+	public static boolean containsArithmeticOnlyAtTopLevel(final SMTAffineTerm at) {
+		for (final Term smd : at.getSummands().keySet()) {
+			if (!(smd instanceof TermVariable) && !isNonVarUFTerm(smd)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -113,7 +152,7 @@ public class QuantifiedTermInfo {
 	 *            the term to check.
 	 * @return true, if the term is a "simple" EU term, false otherwise.
 	 */
-	public static boolean isSimpleEssentiallyUninterpreted(final Term term) {
+	public static boolean isNonVarUFTerm(final Term term) {
 		if (term.getFreeVars().length != 0) {
 			if (term instanceof TermVariable) {
 				return false;
@@ -126,15 +165,15 @@ public class QuantifiedTermInfo {
 				}
 				final Term[] args = at.getParameters();
 				if (func.getName().equals("select")) {
-					if (!isSimpleEssentiallyUninterpreted(args[0])) {
+					if (!isNonVarUFTerm(args[0])) {
 						return false; // Quantified arrays are not allowed.
 					}
-					if (!(args[1] instanceof TermVariable) && !isSimpleEssentiallyUninterpreted(args[1])) {
+					if (!(args[1] instanceof TermVariable) && !isNonVarUFTerm(args[1])) {
 						return false;
 					}
 				} else {
 					for (final Term arg : args) {
-						if (!(arg instanceof TermVariable) && !isSimpleEssentiallyUninterpreted(arg)) {
+						if (!(arg instanceof TermVariable) && !isNonVarUFTerm(arg)) {
 							return false;
 						}
 					}
@@ -143,4 +182,18 @@ public class QuantifiedTermInfo {
 		}
 		return true;
 	}
+
+	/**
+	 * Check if a term is an application term with an internal {@literal @}AUX function used by the clausifier.
+	 * @param term
+	 * @return
+	 */
+	public static boolean isAuxApplication(final Term term) {
+		if (term instanceof ApplicationTerm) {
+			FunctionSymbol fsym = ((ApplicationTerm) term).getFunction();
+			return fsym.isIntern() && fsym.getName().startsWith("@AUX");
+		}
+		return false;
+	}
+
 }

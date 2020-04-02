@@ -22,7 +22,6 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
@@ -49,8 +48,9 @@ public class CCAppTerm extends CCTerm {
 		}
 	}
 
-	public CCAppTerm(boolean isFunc, int parentPos, CCTerm func, CCTerm arg, SharedTerm term, CClosure engine) {
-		super(isFunc, parentPos, term, HashUtils.hashJenkins(func.hashCode(), arg));
+	public CCAppTerm(final boolean isFunc, final int parentPos, final CCTerm func, final CCTerm arg,
+			final CClosure engine) {
+		super(isFunc, parentPos, HashUtils.hashJenkins(func.hashCode(), arg));
 		mFunc = func;
 		mArg = arg;
 		// firstFormula = Integer.MAX_VALUE; lastFormula = -1;
@@ -76,7 +76,7 @@ public class CCAppTerm extends CCTerm {
 	 * @param engine
 	 *            the congruence closure engine.
 	 */
-	public void addParentInfo(CClosure engine) {
+	public void addParentInfo(final CClosure engine) {
 		CCTerm func = mFunc;
 		CCTerm arg = mArg;
 
@@ -99,6 +99,9 @@ public class CCAppTerm extends CCTerm {
 		}
 		func.mCCPars.addParentInfo(0, mLeftParInfo, true, engine);
 		arg.mCCPars.addParentInfo(func.mParentPosition, mRightParInfo, true, engine);
+		assert invariant();
+		assert func.invariant();
+		assert arg.invariant();
 	}
 
 	public void unlinkParentInfos() {
@@ -117,18 +120,18 @@ public class CCAppTerm extends CCTerm {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		final HashMap<CCAppTerm, Integer> visited = new HashMap<CCAppTerm, Integer>();
+		final HashMap<CCAppTerm, Integer> visited = new HashMap<>();
 		final ArrayDeque<Object> todo = new ArrayDeque<>();
 		todo.add(")");
 		todo.add(this);
 		todo.add("(");
 		while (!todo.isEmpty()) {
-			Object item = todo.removeLast();
+			final Object item = todo.removeLast();
 			if (item instanceof String) {
 				sb.append(item);
 			} else if (item instanceof CCAppTerm) {
-				CCAppTerm app = (CCAppTerm) item;
-				Integer id = visited.get(item);
+				final CCAppTerm app = (CCAppTerm) item;
+				final Integer id = visited.get(item);
 				if (id != null) {
 					sb.append("@" + id);
 				} else {

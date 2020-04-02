@@ -20,6 +20,7 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.dawg;
 
 import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,6 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -281,6 +283,119 @@ public class Dawg<LETTER, VALUE> {
 		return mapInternal(map, new HashMap<>());
 	}
 
+	private <V2> Dawg<LETTER, V2> mapWithKeyInternal(final BiFunction<List<LETTER>, VALUE, V2> map,
+			final ArrayList<LETTER> key) {
+		if (mElseTransition == null) {
+			return createConst(0, map.apply(key, mFinal));
+		} else {
+			key.add(null);
+			Dawg<LETTER, V2> elseCase = mElseTransition.mapWithKeyInternal(map, key);
+			key.remove(key.size() - 1);
+			if (mTransitions.isEmpty()) {
+				return elseCase.createParent();
+			} else {
+				Map<LETTER, Dawg<LETTER, V2>> newTransitions = new LinkedHashMap<>();
+				for (Map.Entry<LETTER, Dawg<LETTER, VALUE>> entry : mTransitions.entrySet()) {
+					LETTER letter = entry.getKey();
+					key.add(letter);
+					Dawg<LETTER, V2> mapped = entry.getValue().mapWithKeyInternal(map, key);
+					key.remove(key.size() - 1);
+					if (mapped != elseCase) {
+						newTransitions.put(letter, mapped);
+					}
+				}
+				return createDawg(newTransitions, elseCase);
+			}
+		}
+	}
+
+	/**
+	 * Create a new dawg that uses the given map to map each key/value pair to a new value. This creates a dawg that
+	 * maps each key to {@code map.apply(key, this.getValue(key))}.
+	 * 
+	 * @param map
+	 *            the map function
+	 * @return the mapped dawg.
+	 */
+	public <V2> Dawg<LETTER, V2> mapWithKey(final BiFunction<List<LETTER>, VALUE, V2> map) {
+		return mapWithKeyInternal(map, new ArrayList<>());
+	}
+
+	/**
+	 * Create a new dawg that uses the given map to map each letter to a new letter. This is an internal function that
+	 * works on a set of input dawgs. If the keys of two entries are mapped to the same new key, the union function is
+	 * used to determine the new value. The union function is also used to combine the values from several input dawgs.
+	 * 
+	 * @param input
+	 *            the set of input dawgs.
+	 * @param map
+	 *            the letter map.
+	 * @param union
+	 *            the union for values with keys that are mapped to identical keys.
+	 * @return the mapped dawg.
+	 */
+	private static <LETTER, VALUE, LETTER2> Dawg<LETTER2, VALUE> mapKeysInternal(Set<Dawg<LETTER, VALUE>> input,
+			final Function<LETTER, LETTER2> map, 
+			final BiFunction<VALUE, VALUE, VALUE> union) {
+		boolean isFinal = false;
+		VALUE finalValue = null;
+		// successors stores for each new key all old dawgs which are the successor of some old key in some
+		// of the input dawgs where the old key is mapped to the new key.
+		HashMap<LETTER2, HashSet<Dawg<LETTER, VALUE>>> successors = new LinkedHashMap<>();
+		// elseSuccessors stores all else transitions of all input dawgs.
+		HashSet<Dawg<LETTER, VALUE>> elseSuccessors = new LinkedHashSet<>();
+		for (Dawg<LETTER, VALUE> inputDawg : input) {
+			if (inputDawg.mElseTransition == null) {
+				assert elseSuccessors.isEmpty() : "input set must not contain both final and non-final dawgs";
+				isFinal = true;
+				if (finalValue == null) {
+					finalValue = inputDawg.getFinalValue();
+				} else if (!finalValue.equals(inputDawg.getFinalValue())) {
+					// union the finalValue, unless they are already equal.
+					finalValue = union.apply(finalValue, inputDawg.getFinalValue());
+				}
+			} else {
+				assert !isFinal : "input set must not contain both final and non-final dawgs";
+				for (Map.Entry<LETTER, Dawg<LETTER, VALUE>> entry : inputDawg.mTransitions.entrySet()) {
+					LETTER2 newKey = map.apply(entry.getKey());
+					HashSet<Dawg<LETTER, VALUE>> succs = successors.get(newKey);
+					if (succs == null) {
+						succs = new LinkedHashSet<>();
+						successors.put(newKey, succs);
+					}
+					succs.add(entry.getValue());
+				}
+				elseSuccessors.add(inputDawg.mElseTransition);
+			}
+		}
+		if (isFinal) {
+			// new final dawg.
+			return createConst(0, finalValue);
+		} else {
+			// build new dawgs recursively by mapping the successors and elseSuccessors to new dawgs.
+			HashMap<LETTER2, Dawg<LETTER2, VALUE>> newTransitions = new LinkedHashMap<>();
+			for (Map.Entry<LETTER2, HashSet<Dawg<LETTER, VALUE>>> entry : successors.entrySet()) {
+				newTransitions.put(entry.getKey(), mapKeysInternal(entry.getValue(), map, union));
+			}
+			return createDawg(newTransitions, mapKeysInternal(elseSuccessors, map, union));
+		}
+	}
+
+	/**
+	 * Create a new dawg that uses the given map to map each letter to a new letter. If the keys of two entries are
+	 * mapped to the same new key, the union function is used to determine the new value.
+	 * 
+	 * @param map
+	 *            the letter map
+	 * @param union
+	 *            the union for values with keys that are mapped to identical keys.
+	 * @return the mapped dawg.
+	 */
+	public <LETTER2> Dawg<LETTER2, VALUE> mapKeys(final Function<LETTER, LETTER2> map,
+			final BiFunction<VALUE, VALUE, VALUE> union) {
+		return mapKeysInternal(Collections.singleton(this), map, union);
+	}
+
 	public boolean isFinal() {
 		return mTransitions == null;
 	}
@@ -426,6 +541,68 @@ public class Dawg<LETTER, VALUE> {
 						final Entry<LETTER, VALUE> suffixEntry = mSubIterator.next();
 						List<LETTER> newKey = new ConsList<LETTER>(mCurrentEntry.getKey(), suffixEntry.getKey());
 						return new Dawg.Entry<>(newKey, suffixEntry.getValue());
+					}
+				};
+			}
+		};
+	}
+
+	public Iterable<VALUE> values() {
+		if (isFinal()) {
+			return Collections.singleton(this.mFinal);
+		}
+		return new Iterable<VALUE>() {
+			private Set<Dawg<LETTER, VALUE>> mVisited = new HashSet<>();
+			@Override
+			public Iterator<VALUE> iterator() {
+				return new Iterator<VALUE>() {
+					/**
+					 * Iterator for all transitions. This is set to null, when we iterate the dawg for the
+					 * elseTransition.
+					 */
+					Iterator<Dawg<LETTER, VALUE>> mTransIterator =
+							mTransitions.values().iterator();
+					/**
+					 * The entry currently iterated. If this is null, then we need to get the next entry from
+					 * mTransIterator. This is an entry in the mTransitions hash map, or a special entry for the else
+					 * transition with null key.
+					 */
+					Dawg<LETTER, VALUE> mCurrentEntry = null;
+					/**
+					 * The iterator for the Dawg in mCurrentEntry.
+					 */
+					Iterator<VALUE> mSubIterator = null;
+
+					@Override
+					public boolean hasNext() {
+						while (mSubIterator == null || !mSubIterator.hasNext()) {
+							if (mTransIterator == null) {
+								/* we iterated everything, even the default transition */
+								return false;
+							}
+							if (mTransIterator.hasNext()) {
+								mCurrentEntry = mTransIterator.next();
+							} else {
+								mTransIterator = null;
+								mCurrentEntry = mElseTransition;
+							}
+							if (mVisited.add(mCurrentEntry)) {
+								mSubIterator = mCurrentEntry.values().iterator();
+							} else {
+								mSubIterator = null;
+							}
+						}
+						return true;
+					}
+
+					@Override
+					public VALUE next() {
+						if (!hasNext()) {
+							throw new NoSuchElementException();
+						}
+						assert mSubIterator != null && mSubIterator.hasNext();
+						assert mCurrentEntry != null;
+						return mSubIterator.next();
 					}
 				};
 			}

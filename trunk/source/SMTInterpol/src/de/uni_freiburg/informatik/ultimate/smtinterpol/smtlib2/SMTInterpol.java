@@ -141,36 +141,32 @@ public class SMTInterpol extends NoopScript {
 		public void setLogic(final Theory theory, final Logics logic) {
 			final Sort[] polySort = theory.createSortVariables("A");
 			final int leftassoc = FunctionSymbol.LEFTASSOC;
-			// Damn Java compiler...
-			Sort proof = null;
-			Sort[] proof2 = null;
 			final Sort bool = theory.getSort("Bool");
 			final Sort[] bool1 = { bool };
 			if (mProofMode > 0) {
 				// Partial proofs.
 				// Declare all symbols needed for proof production
 				declareInternalSort(theory, ProofConstants.SORT_PROOF, 0, 0);
-				proof = theory.getSort(ProofConstants.SORT_PROOF);
-				proof2 = new Sort[] { proof, proof };
+				final Sort proof = theory.getSort(ProofConstants.SORT_PROOF);
+				final Sort[] proof2 = new Sort[] { proof, proof };
 				declareInternalFunction(theory, ProofConstants.FN_RES, proof2, proof, leftassoc);
 				declareInternalFunction(theory, ProofConstants.FN_LEMMA, bool1, proof, 0);
 				declareInternalFunction(theory, ProofConstants.FN_CLAUSE, new Sort[] { proof, bool }, proof, 0);
 				declareInternalFunction(theory, ProofConstants.FN_ASSUMPTION, bool1, proof, 0);
 				declareInternalFunction(theory, ProofConstants.FN_ASSERTED, bool1, proof, 0);
-			}
-			if (mProofMode > 1) {
-				// Full proofs.
-				declareInternalPolymorphicFunction(theory, ProofConstants.FN_REFL, polySort, polySort, proof, 0);
-				declareInternalFunction(theory, ProofConstants.FN_TRANS, proof2, proof, leftassoc);
-				declareInternalFunction(theory, ProofConstants.FN_CONG, proof2, proof, leftassoc);
-				declareInternalFunction(theory, ProofConstants.FN_EXISTS, new Sort[] { proof }, proof, 0);
-				declareInternalFunction(theory, ProofConstants.FN_SPLIT, new Sort[] { proof, bool }, proof, 0);
-				declareInternalFunction(theory, ProofConstants.FN_EQ, proof2, proof, 0);
-				declareInternalFunction(theory, ProofConstants.FN_REWRITE, bool1, proof, 0);
-				declareInternalFunction(theory, ProofConstants.FN_TAUTOLOGY, bool1, proof, 0);
+				if (mProofMode > 1) {
+					// Full proofs.
+					declareInternalPolymorphicFunction(theory, ProofConstants.FN_REFL, polySort, polySort, proof, 0);
+					declareInternalFunction(theory, ProofConstants.FN_TRANS, proof2, proof, leftassoc);
+					declareInternalFunction(theory, ProofConstants.FN_CONG, proof2, proof, leftassoc);
+					declareInternalFunction(theory, ProofConstants.FN_EXISTS, new Sort[] { proof }, proof, 0);
+					declareInternalFunction(theory, ProofConstants.FN_SPLIT, new Sort[] { proof, bool }, proof, 0);
+					declareInternalFunction(theory, ProofConstants.FN_EQ, proof2, proof, 0);
+					declareInternalFunction(theory, ProofConstants.FN_REWRITE, bool1, proof, 0);
+					declareInternalFunction(theory, ProofConstants.FN_TAUTOLOGY, bool1, proof, 0);
+				}
 			}
 			// the EQ function for CC interpolation
-			proof2 = new Sort[] { proof, proof };
 			declareInternalPolymorphicFunction(theory, Interpolator.EQ, polySort,
 					new Sort[] { polySort[0], polySort[0] }, bool, FunctionSymbol.UNINTERPRETEDINTERNAL);
 			defineFunction(theory, new FunctionSymbolFactory("@undefined") {
@@ -382,6 +378,8 @@ public class SMTInterpol extends NoopScript {
 			mAssertions.clear();
 		}
 		mOptions.reset();
+		mNextQuickCheck = 1;
+		mNumAsserts = 0;
 	}
 
 	@Override
@@ -495,7 +493,7 @@ public class SMTInterpol extends NoopScript {
 								mLogger.fatal("Model does not satisfy " + asserted.toStringDirect());
 							}
 						}
-					} catch (UnsupportedOperationException ex) {
+					} catch (final UnsupportedOperationException ex) {
 						mLogger.warn("Model check mode not working: %s", ex.getMessage());
 					}
 				}
@@ -596,9 +594,10 @@ public class SMTInterpol extends NoopScript {
 			// This has to be before set-logic since we need to capture
 			// initialization of CClosure.
 			mEngine.setProofGeneration(proofMode > 0);
-			mClausifier.setEPR(getBooleanOption(SolverOptions.EPR));
-			mClausifier.setQuantifierTheory(getBooleanOption(SolverOptions.E_MATCHING),
-					getBooleanOption(SolverOptions.UNKNOWN_TERM_DAWGS));
+			mClausifier.setQuantifierOptions(getBooleanOption(SolverOptions.EPR),
+					getBooleanOption(SolverOptions.E_MATCHING), getBooleanOption(SolverOptions.UNKNOWN_TERM_DAWGS),
+					getBooleanOption(SolverOptions.PROPAGATE_UNKNOWN_TERMS),
+					getBooleanOption(SolverOptions.PROPAGATE_UNKNOWN_AUX));
 			mClausifier.setLogic(logic);
 			final boolean produceAssignment = getBooleanOption(":produce-assignments");
 			mClausifier.setAssignmentProduction(produceAssignment);
@@ -1337,7 +1336,7 @@ public class SMTInterpol extends NoopScript {
 	}
 
 	private final boolean getBooleanOption(final String option) {
-		return ((Boolean) mOptions.get(option)).booleanValue();
+		return (Boolean) mOptions.get(option);
 	}
 
 	public boolean isTerminationRequested() {

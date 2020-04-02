@@ -183,7 +183,7 @@ public class Explainer {
 	 */
 	public int getDecideLevel() {
 		return mExplainedLiteral == null
-				? mSolver.mEngine.getDecideLevel()
+				? mSolver.getEngine().getDecideLevel()
 				: mExplainedLiteral.getAtom().getDecideLevel();
 	}
 

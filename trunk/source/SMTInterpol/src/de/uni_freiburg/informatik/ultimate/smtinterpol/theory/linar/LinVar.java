@@ -27,7 +27,7 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 
 /**
@@ -246,12 +246,14 @@ public class LinVar implements Comparable<LinVar> {
 	}
 
 	/**
-	 * Get the shared term from which this non-basic linvar was created.
-	 * @throws ClassCastException if this is not an initially non-basic variable.
-	 * @return the shared term.
+	 * Get the term which this non-basic linvar represents.
+	 *
+	 * @throws ClassCastException
+	 *             if this is not an initially non-basic variable.
+	 * @return the term.
 	 */
-	public SharedTerm getSharedTerm() {
-		return (SharedTerm) mName;
+	public Term getTerm() {
+		return (Term) mName;
 	}
 
 	public boolean checkCoeffChain(final LinArSolve solver) {
@@ -270,6 +272,7 @@ public class LinVar implements Comparable<LinVar> {
 		assert mat.isConstant() && mat.getConstant().equals(InfinitesimalNumber.ZERO);
 		return true;
 	}
+
 	public boolean isFixed() {
 		return mUpper != null && mLower != null
 			&& mUpper.getBound().equals(mLower.getBound());

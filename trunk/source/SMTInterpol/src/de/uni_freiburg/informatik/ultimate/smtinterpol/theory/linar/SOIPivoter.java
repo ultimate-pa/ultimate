@@ -246,7 +246,7 @@ public class SOIPivoter {
 						bestDiff = soidiff;
 						mBestLimiter = limiter;
 						if (bestDiff.equals(mSOIValue)) {
-							mSolver.mEngine.getLogger().debug("Solved it!", bestDiff);
+							mSolver.getLogger().debug("Solved it!", bestDiff);
 							return true;
 						}
 					}
@@ -255,12 +255,12 @@ public class SOIPivoter {
 			}
 			assert weight.signum() <= 0;
 		}
-		mSolver.mEngine.getLogger().debug("Best Candidate: (%s)", bestDiff);
+		mSolver.getLogger().debug("Best Candidate: (%s)", bestDiff);
 		return mBestLimiter != null;
 	}
 
 	public Clause computeConflict() {
-		final Explainer explainer = new Explainer(mSolver, mSolver.mEngine.isProofGenerationEnabled(), null);
+		final Explainer explainer = new Explainer(mSolver, mSolver.getEngine().isProofGenerationEnabled(), null);
 		for (final LinVar var : mSolver.mLinvars) {
 			if (var.getValue().isub(var.getLowerBound()).signum() > 0) {
 				var.mLowerLiteral.explain(explainer, InfinitesimalNumber.ZERO, Rational.MONE);
@@ -277,7 +277,7 @@ public class SOIPivoter {
 			final LiteralReason reason = coeff.signum() < 0 ? colVar.mUpperLiteral : colVar.mLowerLiteral;
 			reason.explain(explainer, InfinitesimalNumber.ZERO, coeff.negate());
 		}
-		return explainer.createClause(mSolver.mEngine);
+		return explainer.createClause(mSolver.getEngine());
 	}
 
 	/**
@@ -286,13 +286,13 @@ public class SOIPivoter {
 	 * @return a conflict clause if some conflict was found, or null, if a solution satisfying all bounds was found.
 	 */
 	public Clause fixOobs() {
-		mSolver.mEngine.getLogger().debug("=== fixoobs ===");
+		mSolver.getLogger().debug("=== fixoobs ===");
 		while (true) {
 			if (!computeSOI()) {
 				return null;
 			}
-			if (mSolver.mEngine.getLogger().isDebugEnabled()) {
-				mSolver.mEngine.getLogger().debug("SOI: %s.%04d", mSOIValue.getRealValue().floor(),
+			if (mSolver.getLogger().isDebugEnabled()) {
+				mSolver.getLogger().debug("SOI: %s.%04d", mSOIValue.getRealValue().floor(),
 						mSOIValue.getRealValue().frac().mul(BigInteger.valueOf(10000)).floor().numerator().intValue());
 			}
 			if (!findPivot()) {
@@ -307,11 +307,11 @@ public class SOIPivoter {
 				computeSOI();
 				if (checkZeroFreedom()) {
 					if (mBestLimiter == null) {
-						mSolver.mEngine.getLogger().debug("Conflict after %d Bland pivot steps", blandPivotStep);
+						mSolver.getLogger().debug("Conflict after %d Bland pivot steps", blandPivotStep);
 						return computeConflict();
 					}
 				} else {
-					mSolver.mEngine.getLogger().debug("Finished %d Bland pivot steps", blandPivotStep);
+					mSolver.getLogger().debug("Finished %d Bland pivot steps", blandPivotStep);
 					findPivot();
 					assert mBestLimiter.mFreedom.signum() > 0;
 				}

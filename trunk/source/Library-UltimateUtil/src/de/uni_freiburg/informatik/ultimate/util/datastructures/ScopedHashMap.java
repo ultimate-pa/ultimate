@@ -93,7 +93,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 		return mMap;
 	}
 
-	HashMap<K, V> undoMap() {
+	public HashMap<K, V> undoMap() {
 		return mHistory[mCurScope];
 	}
 

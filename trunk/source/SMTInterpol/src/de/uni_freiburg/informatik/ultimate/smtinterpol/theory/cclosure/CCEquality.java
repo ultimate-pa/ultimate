@@ -42,7 +42,7 @@ public class CCEquality extends DPLLAtom {
 		}
 	}
 
-	CCEquality(int assertionstacklevel, CCTerm c1, CCTerm c2) {
+	CCEquality(final int assertionstacklevel, final CCTerm c1, final CCTerm c2) {
 		super(HashUtils.hashJenkins(c1.hashCode(), c2), assertionstacklevel);
 		mLhs = c1;
 		mRhs = c2;
@@ -65,7 +65,7 @@ public class CCEquality extends DPLLAtom {
 		return mLasd;
 	}
 
-	public void setLASharedData(LAEquality lasd, Rational factor) {
+	public void setLASharedData(final LAEquality lasd, final Rational factor) {
 		mLasd = lasd;
 		mLAFactor = factor;
 	}
@@ -86,10 +86,8 @@ public class CCEquality extends DPLLAtom {
 	}
 
 	@Override
-	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
-		final Term lhs = mLhs.toSMTTerm(smtTheory);
-		final Term rhs = mRhs.toSMTTerm(smtTheory);
-		final Term res = smtTheory.term("=", lhs, rhs);
+	public Term getSMTFormula(final Theory smtTheory, final boolean quoted) {
+		final Term res = smtTheory.term("=", mLhs.getFlatTerm(), mRhs.getFlatTerm());
 		return quoted ? smtTheory.annotatedTerm(QUOTED_CC, res) : res;
 	}
 

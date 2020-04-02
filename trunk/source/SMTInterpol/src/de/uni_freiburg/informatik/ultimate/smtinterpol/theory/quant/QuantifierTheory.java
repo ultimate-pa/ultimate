@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
@@ -47,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CClosure;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.util.Pair;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinArSolve;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.ematching.EMatching;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedArrayList;
@@ -71,7 +71,7 @@ public class QuantifierTheory implements ITheory {
 
 	private final EMatching mEMatching;
 	private final InstantiationManager mInstantiationManager;
-	private final Map<Sort, SharedTerm> mLambdas;
+	private final Map<Sort, Term> mLambdas;
 
 	/**
 	 * Clauses that only the QuantifierTheory knows, i.e. that contain at least one literal with an (implicitly)
@@ -86,25 +86,31 @@ public class QuantifierTheory implements ITheory {
 	 * still have one undefined literal (and is a unit clause).
 	 */
 	private final Map<Literal, Set<InstClause>> mPotentialConflictAndUnitClauses;
+	private int mDecideLevelOfLastCheckpoint;
 
 	// Statistics
-	private long mDERGroundCount, mConflictCount, mPropCount, mFinalCount;
-	long mCheckpointTime, mFindEmatchingTime, mFinalCheckTime, mEMatchingTime;
-	long mDawgTime;
+	long mNumInstancesProduced, mNumInstancesDER, mNumInstancesProducedCP, mNumInstancesProducedFC;
+	private long mNumCheckpoints, mNumCheckpointsWithNewEval, mNumConflicts, mNumProps, mNumFinalcheck;
+	private long mCheckpointTime, mFindEmatchingTime, mFinalCheckTime, mEMatchingTime, mDawgTime;
 
-	// TODO: For testing only
+	// Options
 	boolean mUseEMatching;
-	boolean mUse4InstanceValuesInDawgs;
+	boolean mUseUnknownTermValueInDawgs;
+	boolean mPropagateNewAux;
+	boolean mPropagateNewTerms;
 
 	public QuantifierTheory(final Theory th, final DPLLEngine engine, final Clausifier clausifier,
-			final boolean useEMatching, final boolean useUnknownTermDawgs) {
+			final boolean useEMatching, final boolean useUnknownTermDawgs, final boolean propagateNewTerms,
+			final boolean propagateNewAux) {
 		mClausifier = clausifier;
 		mLogger = clausifier.getLogger();
 		mTheory = th;
 		mEngine = engine;
 
 		mUseEMatching = useEMatching;
-		mUse4InstanceValuesInDawgs = useUnknownTermDawgs;
+		mUseUnknownTermValueInDawgs = useUnknownTermDawgs;
+		mPropagateNewTerms = propagateNewTerms;
+		mPropagateNewAux = propagateNewAux;
 
 		mCClosure = clausifier.getCClosure();
 		mLinArSolve = clausifier.getLASolver();
@@ -116,6 +122,7 @@ public class QuantifierTheory implements ITheory {
 		mQuantClauses = new ScopedArrayList<>();
 
 		mPotentialConflictAndUnitClauses = new LinkedHashMap<>();
+		mDecideLevelOfLastCheckpoint = mEngine.getDecideLevel();
 	}
 
 	@Override
@@ -132,7 +139,7 @@ public class QuantifierTheory implements ITheory {
 
 	@Override
 	public Clause setLiteral(final Literal literal) {
-
+		// Remove clauses that have become true from potential conflict and unit clauses.
 		if (mPotentialConflictAndUnitClauses.containsKey(literal)) {
 			for (final InstClause instClause : mPotentialConflictAndUnitClauses.remove(literal)) {
 				assert instClause.mLits.contains(literal);
@@ -149,13 +156,16 @@ public class QuantifierTheory implements ITheory {
 				}
 			}
 		}
+		// Remove former undef negated lit (now false) from map and decrease number of undef lits in clauses containing
+		// the negated lit.
 		if (mPotentialConflictAndUnitClauses.containsKey(literal.negate())) {
 			for (final InstClause instClause : mPotentialConflictAndUnitClauses.remove(literal.negate())) {
 				assert instClause.mNumUndefLits > 0;
 				instClause.mNumUndefLits -= 1;
 				if (instClause.isConflict()) {
+					assert !Config.EXPENSIVE_ASSERTS || instClause.countAndSetUndefLits() == 0;
 					mLogger.debug("Quant conflict: %s", instClause);
-					mConflictCount++;
+					mNumConflicts++;
 					return instClause.toClause(mEngine.isProofGenerationEnabled());
 				}
 			}
@@ -170,14 +180,27 @@ public class QuantifierTheory implements ITheory {
 
 	@Override
 	public Clause checkpoint() {
+		mNumCheckpoints++;
 		long time;
 		if (Config.PROFILE_TIME) {
 			time = System.nanoTime();
 		}
+		// Don't search for new conflict and unit clauses if there are still potential conflict and unit clauses in the
+		// queue.
+		if (mLinArSolve == null) {
+			assert mPotentialConflictAndUnitClauses.isEmpty()
+					|| mEngine.getDecideLevel() <= mDecideLevelOfLastCheckpoint;
+		}
+		mDecideLevelOfLastCheckpoint = mEngine.getDecideLevel();
+		if (!mPotentialConflictAndUnitClauses.isEmpty()) {
+			return null;
+		}
+
+		mNumCheckpointsWithNewEval++;
 		final Collection<InstClause> conflictAndUnitInstances;
 		if (mUseEMatching) {
 			mEMatching.run();
-			conflictAndUnitInstances = mInstantiationManager.findConflictAndUnitInstancesWithNewEMatching();
+			conflictAndUnitInstances = mInstantiationManager.findConflictAndUnitInstancesWithEMatching();
 			if (Config.PROFILE_TIME) {
 				mFindEmatchingTime += System.nanoTime() - time;
 			}
@@ -194,7 +217,7 @@ public class QuantifierTheory implements ITheory {
 		if (conflict != null) {
 			mLogger.debug("Quant conflict: %s", conflict);
 			mEngine.learnClause(conflict);
-			mConflictCount++;
+			mNumConflicts++;
 		}
 		if (Config.PROFILE_TIME) {
 			mCheckpointTime += System.nanoTime() - time;
@@ -208,23 +231,17 @@ public class QuantifierTheory implements ITheory {
 		if (Config.PROFILE_TIME) {
 			time = System.nanoTime();
 		}
-		mFinalCount++;
-		Clause conflict = checkpoint();
-		if (conflict != null) {
-			return conflict;
-		}
-		if (mUseEMatching) {
-			for (final QuantClause clause : mQuantClauses) {
-				if (mEngine.isTerminationRequested()) {
-					return null;
-				}
-				clause.updateInterestingTermsAllVars();
-			}
-		}
+		mNumFinalcheck++;
 		assert mPotentialConflictAndUnitClauses.isEmpty();
-		conflict = mInstantiationManager.instantiateAll();
+		for (final QuantClause clause : mQuantClauses) {
+			if (mEngine.isTerminationRequested()) {
+				return null;
+			}
+			clause.updateInterestingTermsAllVars();
+		}
+		final Clause conflict = mInstantiationManager.instantiateSomeNotSat();
 		if (conflict != null) {
-			mConflictCount++;
+			mNumConflicts++;
 			mEngine.learnClause(conflict);
 		}
 		if (Config.PROFILE_TIME) {
@@ -242,10 +259,11 @@ public class QuantifierTheory implements ITheory {
 			final Literal lit = entry.getKey();
 			for (final InstClause inst : entry.getValue()) {
 				if (inst.isUnit()) {
+					assert !Config.EXPENSIVE_ASSERTS || inst.countAndSetUndefLits() == 1;
 					final Clause expl = inst.toClause(mEngine.isProofGenerationEnabled());
 					lit.getAtom().mExplanation = expl;
 					mEngine.learnClause(expl);
-					mPropCount++;
+					mNumProps++;
 					mLogger.debug("Quant Prop: %s Reason: %s", lit, lit.getAtom().mExplanation);
 					return lit;
 				} else {
@@ -270,12 +288,15 @@ public class QuantifierTheory implements ITheory {
 
 	@Override
 	public void printStatistics(final LogProxy logger) {
-		logger.info("Quant: DER produced " + mDERGroundCount + " ground clause(s).");
-		logger.info("Quant: Conflicts: " + mConflictCount + " Props: " + mPropCount + " Final Checks: " + mFinalCount);
+		logger.info("Quant: DER produced %d ground clause(s).", mNumInstancesDER);
+		logger.info("Quant: Instances produced: %d (Checkpoint: %d, Final check: %d)", mNumInstancesProduced,
+				mNumInstancesProducedCP, mNumInstancesProducedFC);
+		logger.info("Quant: Conflicts: %d Props: %d Checkpoints (with new evaluation): %d (%d) Final Checks: %d",
+				mNumConflicts, mNumProps, mNumCheckpoints, mNumCheckpointsWithNewEval, mNumFinalcheck);
 		logger.info(
-				"Quant times: Checkpoint %.3f Find with E-matching: %.3f Dawg %.3f Final Check %.3f E-Matching %.3f",
-				mCheckpointTime / 1000 / 1000.0, mFindEmatchingTime / 1000 / 1000.0, mDawgTime / 1000 / 1000.0,
-				mFinalCheckTime / 1000 / 1000.0, mEMatchingTime / 1000 / 1000.0);
+				"Quant times: Checkpoint: %.3f Find with E-matching: %.3f E-Matching: %.3f Dawg: %.3f Final Check: %.3f",
+				mCheckpointTime / 1000 / 1000.0, mFindEmatchingTime / 1000 / 1000.0, mEMatchingTime / 1000 / 1000.0,
+				mDawgTime / 1000 / 1000.0, mFinalCheckTime / 1000 / 1000.0);
 	}
 
 	@Override
@@ -300,7 +321,6 @@ public class QuantifierTheory implements ITheory {
 	public Clause backtrackComplete() {
 		final int decisionLevel = mClausifier.getEngine().getDecideLevel();
 		mEMatching.undo(decisionLevel);
-		mInstantiationManager.resetDawgs();
 		mInstantiationManager.resetInterestingTerms();
 		mPotentialConflictAndUnitClauses.clear();
 		return null;
@@ -319,24 +339,29 @@ public class QuantifierTheory implements ITheory {
 	}
 
 	@Override
-	public Object push() {
+	public void push() {
 		mQuantClauses.beginScope();
-		return null;
 	}
 
 	@Override
-	public void pop(final Object object, final int targetlevel) {
+	public void pop() {
 		mQuantClauses.endScope();
 	}
 
 	@Override
 	public Object[] getStatistics() {
 		return new Object[] { ":Quant",
-				new Object[][] { { "DER ground results", mDERGroundCount }, { "Conflicts", mConflictCount },
-						{ "Propagations", mPropCount }, { "Final Checks", mFinalCount },
-						{ "Times", new Object[][] { { "Checkpoint", mCheckpointTime },
-								{ "Find E-matching", mFindEmatchingTime },
-								{ "Final Check", mFinalCheckTime }, { "E-Matching", mEMatchingTime } } } } };
+				new Object[][] { { "DER ground results", mNumInstancesDER },
+						{ "Instances produced", mNumInstancesProduced },
+						{ "thereof in checkpoint", mNumInstancesProducedCP },
+						{ "and in final check", mNumInstancesProducedFC }, { "Conflicts", mNumConflicts },
+						{ "Propagations", mNumProps }, { "Checkpoints", mNumCheckpoints },
+						{ "Checkpoints with new evaluation", mNumCheckpointsWithNewEval },
+						{ "Final Checks", mNumFinalcheck },
+						{ "Times",
+								new Object[][] { { "Checkpoint", mCheckpointTime },
+										{ "Find E-matching", mFindEmatchingTime }, { "E-Matching", mEMatchingTime },
+										{ "Final Check", mFinalCheckTime } } } } };
 
 	}
 
@@ -537,7 +562,8 @@ public class QuantifierTheory implements ITheory {
 	 *            The source of the clause.
 	 * @return an array of ILiteral containing all literals after DER; null if the clause became true.
 	 */
-	public ILiteral[] performDestructiveEqualityReasoning(final Literal[] groundLits, final QuantLiteral[] quantLits,
+	public Pair<ILiteral[], Map<TermVariable, Term>> performDestructiveEqualityReasoning(final Literal[] groundLits,
+			final QuantLiteral[] quantLits,
 			final SourceAnnotation source) {
 		final DestructiveEqualityReasoning der =
 				new DestructiveEqualityReasoning(this, groundLits, quantLits, source);
@@ -548,9 +574,9 @@ public class QuantifierTheory implements ITheory {
 			}
 			final Literal[] groundLitsAfterDER = der.getGroundLitsAfterDER();
 			final QuantLiteral[] quantLitsAfterDER = der.getQuantLitsAfterDER();
-			if (quantLitsAfterDER.length == 0 && mLogger.isDebugEnabled()) {
+			if (quantLitsAfterDER.length == 0) {
 				mLogger.debug("Quant: DER returned ground clause.");
-				mDERGroundCount++;
+				mNumInstancesDER++;
 			}
 			litsAfterDER.addAll(Arrays.asList(groundLitsAfterDER));
 			litsAfterDER.addAll(Arrays.asList(quantLitsAfterDER));
@@ -558,7 +584,8 @@ public class QuantifierTheory implements ITheory {
 			litsAfterDER.addAll(Arrays.asList(groundLits));
 			litsAfterDER.addAll(Arrays.asList(quantLits));
 		}
-		return litsAfterDER.toArray(new ILiteral[litsAfterDER.size()]);
+		return new Pair<>(litsAfterDER.toArray(new ILiteral[litsAfterDER.size()]),
+				der.getSigma());
 	}
 
 	/**
@@ -654,19 +681,17 @@ public class QuantifierTheory implements ITheory {
 		return mTheory;
 	}
 
-	protected SharedTerm getLambda(final Sort sort) {
+	protected Term getLambda(final Sort sort) {
 		if (mLambdas.containsKey(sort)) {
 			return mLambdas.get(sort);
 		}
-		Term lambdaTerm;
+		Term lambda;
 		if (sort.getName().equals("Bool")) {
-			lambdaTerm = mTheory.mTrue;
+			lambda = mTheory.mTrue;
 		} else {
 			final FunctionSymbol fsym = mTheory.getFunctionWithResult("@0", null, sort, new Sort[0]);
-			lambdaTerm = mTheory.term(fsym);
+			lambda = mTheory.term(fsym);
 		}
-		final SharedTerm lambda =
-				mClausifier.getSharedTerm(lambdaTerm, SourceAnnotation.EMPTY_SOURCE_ANNOT);
 		mLambdas.put(sort, lambda);
 		return lambda;
 	}
@@ -686,9 +711,9 @@ public class QuantifierTheory implements ITheory {
 						return DPLLEngine.INCOMPLETE_QUANTIFIER;
 					}
 				}
-				for (final SharedTerm lambda : mLambdas.values()) {
+				for (final Term lambda : mLambdas.values()) {
 					if (!lambda.getSort().isNumericSort()) {
-						final CCTerm lambdaCC = lambda.getCCTerm();
+						final CCTerm lambdaCC = mClausifier.getCCTerm(lambda);
 						if (lambdaCC != null && lambdaCC.getNumMembers() > 1) {
 							return DPLLEngine.INCOMPLETE_QUANTIFIER;
 						}
@@ -715,40 +740,45 @@ public class QuantifierTheory implements ITheory {
 			if (mEngine.isTerminationRequested()) {
 				return null;
 			}
-			boolean isConflict = true;
-			boolean isTrueInst = false;
-			int numUndef = 0;
-			// Count the number of undefined literals
-			for (final Literal lit : inst.mLits) {
-				if (lit.getAtom().getDecideStatus() == lit) {
-					isTrueInst = true;
-					continue;
-				}
-				if (lit.getAtom().getDecideStatus() == null) {
-					numUndef++;
-				}
+			final int numUndefLits = inst.countAndSetUndefLits();
+			if (numUndefLits == -1) { // Instance is true.
+				continue;
 			}
-			if (isTrueInst) {
-				continue; // Don't add true instances.
-				// TODO They should be detected during literal evaluation, but it doesn't work as expected, see below.
+			if (numUndefLits == 0) {
+				return inst.toClause(mEngine.isProofGenerationEnabled());
 			}
-			inst.mNumUndefLits = numUndef;
 			for (final Literal lit : inst.mLits) {
-				// assert lit.getAtom().getDecideStatus() != lit;
-				// TODO It happens that the assertion is violated. Not sure whether evaluation of literals (as terms)
-				// works correctly, even with CC.
 				if (lit.getAtom().getDecideStatus() == null) {
-					isConflict = false;
 					if (!mPotentialConflictAndUnitClauses.containsKey(lit)) {
 						mPotentialConflictAndUnitClauses.put(lit, new LinkedHashSet<>());
 					}
 					mPotentialConflictAndUnitClauses.get(lit).add(inst);
 				}
 			}
-			if (isConflict) {
-				return inst.toClause(mEngine.isProofGenerationEnabled());
-			}
 		}
 		return null;
+	}
+
+	Term getRepresentativeTerm(final Term term) {
+		final CCTerm ccTerm = getClausifier().getCCTerm(term);
+		return ccTerm == null ? term : ccTerm.getRepresentative().getFlatTerm();
+	}
+
+	public enum InstanceOrigin {
+		DER(":DER"), CHECKPOINT(":Checkpoint"), FINALCHECK(":Finalcheck");
+		String mOrigin;
+
+		private InstanceOrigin(final String origin) {
+			mOrigin = origin;
+		}
+
+		/**
+		 * Get the name of the instance origin. This can be used in an annotation for the lemma.
+		 *
+		 * @return the annotation key for the instantiation lemma.
+		 */
+		public String getOrigin() {
+			return mOrigin;
+		}
 	}
 }

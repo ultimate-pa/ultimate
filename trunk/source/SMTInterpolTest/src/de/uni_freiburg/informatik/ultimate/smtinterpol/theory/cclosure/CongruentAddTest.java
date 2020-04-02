@@ -27,13 +27,12 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier.CCTermBuilder;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
@@ -86,33 +85,29 @@ public class CongruentAddTest {
 		mH = mTheory.declareFunction("h", paramSort2, sort);
 		mTerms = new CCTerm[6];// NOCHECKSTYLE
 		for (int i = 0; i < 6; ++i) {// NOCHECKSTYLE
-			final FunctionSymbol sym = mTheory.declareFunction("x" + i, Script.EMPTY_SORT_ARRAY, sort);
-			mTerms[i] = mClosure.getFuncTerm(sym);
+			final String xi = "x" + i;
+			mTheory.declareFunction(xi, Script.EMPTY_SORT_ARRAY, sort);
+			mTerms[i] = mClausifier.createCCTerm(mTheory.term(xi), null);
 		}
-		final FunctionSymbol funcd = mTheory.declareFunction("d", Script.EMPTY_SORT_ARRAY, sort);
-		final FunctionSymbol funcc = mTheory.declareFunction("c", Script.EMPTY_SORT_ARRAY, sort);
-		final FunctionSymbol funcb = mTheory.declareFunction("b", Script.EMPTY_SORT_ARRAY, sort);
-		final FunctionSymbol funca = mTheory.declareFunction("a", Script.EMPTY_SORT_ARRAY, sort);
-		mD = mClosure.getFuncTerm(funcd);
-		mC = mClosure.getFuncTerm(funcc);
-		mB = mClosure.getFuncTerm(funcb);
-		mA = mClosure.getFuncTerm(funca);
-		final SharedTerm shareda = mClausifier.getSharedTerm(mTheory.term(funca), mSource);
-		final SharedTerm sharedb = mClausifier.getSharedTerm(mTheory.term(funcb), mSource);
-		final SharedTerm sharedc = mClausifier.getSharedTerm(mTheory.term(funcc), mSource);
-		final SharedTerm sharedd = mClausifier.getSharedTerm(mTheory.term(funcd), mSource);
-		final CCTermBuilder builder = mClausifier.new CCTermBuilder(mSource);
-		builder.convert(shareda.getTerm());
-		builder.convert(sharedb.getTerm());
-		builder.convert(sharedc.getTerm());
-		builder.convert(sharedd.getTerm());
-		final EqualityProxy eqab = mClausifier.createEqualityProxy(shareda, sharedb);
+		mTheory.declareFunction("d", Script.EMPTY_SORT_ARRAY, sort);
+		mTheory.declareFunction("c", Script.EMPTY_SORT_ARRAY, sort);
+		mTheory.declareFunction("b", Script.EMPTY_SORT_ARRAY, sort);
+		mTheory.declareFunction("a", Script.EMPTY_SORT_ARRAY, sort);
+		final Term termd = mTheory.term("d");
+		final Term termc = mTheory.term("c");
+		final Term termb = mTheory.term("b");
+		final Term terma = mTheory.term("a");
+		mD = mClausifier.createCCTerm(termd, null);
+		mC = mClausifier.createCCTerm(termc, null);
+		mB = mClausifier.createCCTerm(termb, null);
+		mA = mClausifier.createCCTerm(terma, null);
+		final EqualityProxy eqab = mClausifier.createEqualityProxy(terma, termb);
 		Assert.assertNotSame(EqualityProxy.getTrueProxy(), eqab);
 		Assert.assertNotSame(EqualityProxy.getFalseProxy(), eqab);
-		final EqualityProxy eqbc = mClausifier.createEqualityProxy(sharedb, sharedc);
+		final EqualityProxy eqbc = mClausifier.createEqualityProxy(termb, termc);
 		Assert.assertNotSame(EqualityProxy.getTrueProxy(), eqbc);
 		Assert.assertNotSame(EqualityProxy.getFalseProxy(), eqbc);
-		final EqualityProxy eqcd = mClausifier.createEqualityProxy(sharedc, sharedd);
+		final EqualityProxy eqcd = mClausifier.createEqualityProxy(termc, termd);
 		Assert.assertNotSame(EqualityProxy.getTrueProxy(), eqcd);
 		Assert.assertNotSame(EqualityProxy.getFalseProxy(), eqcd);
 		mAB = (CCEquality) eqab.getLiteral(mSource);
@@ -174,12 +169,12 @@ public class CongruentAddTest {
 		for (int i = 0; i < 3; ++i) {
 			Assert.assertSame(mTerms[2 * i].getRepresentative(), mTerms[2 * i + 1].getRepresentative());
 		}
-		CCTerm h0 = mClosure.createAppTerm(true, mClosure.getFuncTerm(mH), mTerms[0]);
-		CCTerm h02 = mClosure.createAppTerm(true, h0, mTerms[2]);
-		CCTerm h024 = mClosure.createAppTerm(false, h02, mTerms[4]);
-		CCTerm h1 = mClosure.createAppTerm(true, mClosure.getFuncTerm(mH), mTerms[1]);
-		CCTerm h13 = mClosure.createAppTerm(true, h1, mTerms[3]);
-		CCTerm h135 = mClosure.createAppTerm(false, h13, mTerms[5]);
+		final CCTerm h0 = mClosure.createAppTerm(true, mClosure.getFuncTerm(mH), mTerms[0]);
+		final CCTerm h02 = mClosure.createAppTerm(true, h0, mTerms[2]);
+		final CCTerm h024 = mClosure.createAppTerm(false, h02, mTerms[4]);
+		final CCTerm h1 = mClosure.createAppTerm(true, mClosure.getFuncTerm(mH), mTerms[1]);
+		final CCTerm h13 = mClosure.createAppTerm(true, h1, mTerms[3]);
+		final CCTerm h135 = mClosure.createAppTerm(false, h13, mTerms[5]);
 		conflict = mClosure.checkpoint();
 		Assert.assertNull(conflict);
 		Assert.assertSame(h024.getRepresentative(), h135.getRepresentative());
@@ -206,7 +201,7 @@ public class CongruentAddTest {
 		long time = System.nanoTime();
 		mFa = mClosure.createAppTerm(false, mClosure.getFuncTerm(mF), mA);
 		time -= System.nanoTime();
-		mClosure.mEngine.getLogger().info("f(a)-creation time: " + -time);
+		mClosure.getLogger().info("f(a)-creation time: %d ns", -time);
 		// We can even remove this step and still get an error
 		conflict = mClosure.checkpoint();
 		Assert.assertNull(conflict);
@@ -218,7 +213,7 @@ public class CongruentAddTest {
 		time = System.nanoTime();
 		mFd = mClosure.createAppTerm(false, mClosure.getFuncTerm(mF), mD);
 		time -= System.nanoTime();
-		mClosure.mEngine.getLogger().info("f(d)-creation time: " + -time);
+		mClosure.getLogger().info("f(d)-creation time: %d ns", -time);
 		conflict = mClosure.checkpoint();
 		Assert.assertNull(conflict);
 		Assert.assertSame(mFa.getRepresentative(), mFb.getRepresentative());

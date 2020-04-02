@@ -378,14 +378,13 @@ public class EprTheory implements ITheory {
 	}
 
 	@Override
-	public Object push() {
+	public void push() {
 		mLogger.debug("EPRDEBUG: (EprTheory) PUSH");
 		mAtomsAddedToDPLLEngine.beginScope();
-		return null;
 	}
 
 	@Override
-	public void pop(final Object object, final int targetlevel) {
+	public void pop() {
 		mLogger.debug("EPRDEBUG: (EprTheory) POP");
 		mAtomsAddedToDPLLEngine.endScope();
 	}

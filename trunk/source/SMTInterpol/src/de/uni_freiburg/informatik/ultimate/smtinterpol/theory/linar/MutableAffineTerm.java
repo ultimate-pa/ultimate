@@ -211,7 +211,7 @@ public class MutableAffineTerm {
 		int offset = 0;
 		for (final Map.Entry<LinVar, Rational> me : mSummands.entrySet()) {
 			final LinVar lv = me.getKey();
-			Term convme = lv.getSharedTerm().getRealTerm();
+			Term convme = lv.getTerm();
 			// if affine term is integral it may only add integers.
 			assert (!isInt || lv.isInt());
 			assert (!isInt || me.getValue().isIntegral());

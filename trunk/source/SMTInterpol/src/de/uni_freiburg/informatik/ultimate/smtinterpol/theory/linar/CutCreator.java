@@ -705,8 +705,8 @@ public class CutCreator {
 		assert mURows[row].mIndices[0].mIsInt;
 
 		final Literal cut = mURows[row].createConstraint();
-		if (mSolver.mEngine.getLogger().isDebugEnabled()) {
-			mSolver.mEngine.getLogger().debug(
+		if (mSolver.getLogger().isDebugEnabled()) {
+			mSolver.getLogger().debug(
 					(isTight ? "cut on " : "branch on ") + cut);
 		}
 		// suggest branch
@@ -728,18 +728,18 @@ public class CutCreator {
 		for (int i = 0; i < mAColumns.length; i++) {
 			mgcdColumn(i);
 		}
-		if (mSolver.mEngine.getLogger().isDebugEnabled()) {
-			mSolver.mEngine.getLogger().debug("Cuts From Proofs");
-			mSolver.mEngine.getLogger().debug("cols");
+		if (mSolver.getLogger().isDebugEnabled()) {
+			mSolver.getLogger().debug("Cuts From Proofs");
+			mSolver.getLogger().debug("cols");
 			for (int i = 0; i < mAColumns.length; i++) {
 				if (mAColumns[i].mCoeffs.length != 1
 						|| !mAColumns[i].mCoeffs[0].equals(BigInteger.ONE)) {
-					mSolver.mEngine.getLogger().debug("[" + i + "] " + mAColumns[i]);
+					mSolver.getLogger().debug("[" + i + "] " + mAColumns[i]);
 				}
 			}
-			mSolver.mEngine.getLogger().debug("rows");
+			mSolver.getLogger().debug("rows");
 			for (int i = 0; i < mURows.length; i++) {
-				mSolver.mEngine.getLogger().debug("[" + i + "] " + mURows[i]);
+				mSolver.getLogger().debug("[" + i + "] " + mURows[i]);
 			}
 		}
 

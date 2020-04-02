@@ -19,13 +19,12 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 
 public class CCBaseTerm extends CCTerm {
 	Object mSymbol;
 
-	public CCBaseTerm(boolean isFunc, int parentPos, Object symb, SharedTerm term) {
-		super(isFunc, parentPos, term, symb.hashCode());
+	public CCBaseTerm(final boolean isFunc, final int parentPos, final Object symb) {
+		super(isFunc, parentPos, symb.hashCode());
 		mSymbol = symb;
 	}
 

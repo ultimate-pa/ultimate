@@ -117,6 +117,6 @@ public class NoopProofTracker implements IProofTracker {
 	@Override
 	public Term forall(final QuantifiedFormula quant, final Term negNewBody) {
 		final Theory theory = quant.getTheory();
-		return theory.not(theory.exists(quant.getVariables(), negNewBody));
+		return theory.term("not", theory.exists(quant.getVariables(), negNewBody));
 	}
 }

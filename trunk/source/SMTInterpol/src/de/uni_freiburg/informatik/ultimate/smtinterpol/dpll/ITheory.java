@@ -143,21 +143,20 @@ public interface ITheory {
 	 * @param atom Atom to remove.
 	 */
 	public void removeAtom(DPLLAtom atom);
+	
 	/**
-	 * Save data needed to restore the stack level.  This method is called
-	 * during a push on the assertion stack and should return an object suitable
-	 * to restore the current state.
-	 * @see #pop(Object)
-	 * @return Description of the current state.
+	 * This is called when the SMT script issues a push.
+	 * 
+	 * @see #pop()
 	 */
-	public Object push();
+	public void push();
+	
 	/**
-	 * Restore the previous state of the assertion stack.  The parameter is the
-	 * object returned by the corresponding call to {@link #push() push}.
-	 * @param object 		Saved state.
-	 * @param targetlevel	The target stacklevel
+	 * This is called when the SMT script issues a pop.
+	 * 
+	 * @see #push()
 	 */
-	public void pop(Object object, int targetlevel);
+	public void pop();
 	/**
 	 * Command used to implement the (get-info :all-statistics) command.  Solver
 	 * should return an array containing an identification as keyword and an

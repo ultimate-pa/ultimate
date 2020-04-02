@@ -20,12 +20,12 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.convert;
 
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier.CCTermBuilder;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCEquality;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffineTerm;
 
 public class EqualityProxy {
 
@@ -67,20 +67,10 @@ public class EqualityProxy {
 		return FALSE;
 	}
 
-	private final class RemoveAtom extends Clausifier.TrailObject {
-
-		@Override
-		public void undo() {
-			mEqAtom = null;
-		}
-
-	}
-
 	final Clausifier mClausifier;
-	final SharedTerm mLhs, mRhs;
-	DPLLAtom mEqAtom;
+	final Term mLhs, mRhs;
 
-	public EqualityProxy(final Clausifier clausifier, final SharedTerm lhs, final SharedTerm rhs) {
+	public EqualityProxy(final Clausifier clausifier, final Term lhs, final Term rhs) {
 		mClausifier = clausifier;
 		mLhs = lhs;
 		mRhs = rhs;
@@ -88,9 +78,15 @@ public class EqualityProxy {
 
 	public LAEquality createLAEquality() {
 		/* create la part */
-		final MutableAffineTerm at = mClausifier.createMutableAffinTerm(mLhs);
-		at.add(Rational.MONE, mClausifier.createMutableAffinTerm(mRhs));
-		return mClausifier.getLASolver().createEquality(at);
+		final SMTAffineTerm affine = SMTAffineTerm.create(mLhs);
+		affine.add(Rational.MONE, SMTAffineTerm.create(mRhs));
+		return mClausifier.getLASolver().createEquality(mClausifier.createMutableAffinTerm(affine, null));
+	}
+
+	public Rational computeNormFactor(final Term lhs, final Term rhs) {
+		final SMTAffineTerm affine = SMTAffineTerm.create(lhs);
+		affine.add(Rational.MONE, rhs);
+		return affine.getGcd().inverse();
 	}
 
 	/**
@@ -105,110 +101,105 @@ public class EqualityProxy {
 	 * @param rhs the right hand side.
 	 * @return The created (or cached) CCEquality.
 	 */
-	public CCEquality createCCEquality(final SharedTerm lhs, final SharedTerm rhs) {
-		assert lhs.mCCterm != null && rhs.mCCterm != null;
+	public CCEquality createCCEquality(final Term lhs, final Term rhs) {
+		assert lhs.getSort().isNumericSort();
+		final CCTerm ccLhs = mClausifier.getCCTerm(lhs);
+		final CCTerm ccRhs = mClausifier.getCCTerm(rhs);
+		assert ccLhs != null && ccRhs != null;
+		DPLLAtom eqAtom = getLiteral(null);
 		LAEquality laeq;
-		if (mEqAtom == null) {
-			mEqAtom = laeq = createLAEquality();
-			mClausifier.addToUndoTrail(new RemoveAtom());
-		} else if (mEqAtom instanceof CCEquality) {
-			final CCEquality eq = (CCEquality) mEqAtom;
+		if (eqAtom instanceof CCEquality) {
+			final CCEquality eq = (CCEquality) eqAtom;
 			laeq = eq.getLASharedData();
 			if (laeq == null) {
-				final MutableAffineTerm at = mClausifier.createMutableAffinTerm(mLhs);
-				at.add(Rational.MONE, mClausifier.createMutableAffinTerm(mRhs));
-				final Rational normFactor = at.getGCD().inverse();
+				final Rational normFactor = computeNormFactor(mLhs, mRhs);
 				laeq = createLAEquality();
 				laeq.addDependentAtom(eq);
 				eq.setLASharedData(laeq, normFactor);
 			}
 		} else {
-			laeq = (LAEquality) mEqAtom;
+			laeq = (LAEquality) eqAtom;
 		}
 		for (final CCEquality eq : laeq.getDependentEqualities()) {
 			assert (eq.getLASharedData() == laeq);
-			if (eq.getLhs() == lhs.mCCterm && eq.getRhs() == rhs.mCCterm) {
+			if (eq.getLhs() == ccLhs && eq.getRhs() == ccRhs) {
 				return eq;
 			}
-			if (eq.getRhs() == lhs.mCCterm && eq.getLhs() == rhs.mCCterm) {
+			if (eq.getRhs() == ccLhs && eq.getLhs() == ccRhs) {
 				return eq;
 			}
 		}
-		final CCEquality eq = mClausifier.getCClosure().createCCEquality(
-		        mClausifier.getStackLevel(), lhs.mCCterm, rhs.mCCterm);
-		final MutableAffineTerm at = mClausifier.createMutableAffinTerm(lhs);
-		at.add(Rational.MONE, mClausifier.createMutableAffinTerm(rhs));
-		final Rational normFactor = at.getGCD().inverse();
+		final CCEquality eq = mClausifier.getCClosure().createCCEquality(mClausifier.getStackLevel(), ccLhs, ccRhs);
+		final Rational normFactor = computeNormFactor(lhs, rhs);
 		laeq.addDependentAtom(eq);
 		eq.setLASharedData(laeq, normFactor);
 		return eq;
 	}
 
-	private DPLLAtom createAtom(final SourceAnnotation source) {
-		if (mLhs.mCCterm == null && mRhs.mCCterm == null) {
+	private DPLLAtom createAtom(final Term eqTerm, final SourceAnnotation source) {
+		mClausifier.addTermAxioms(mLhs, source);
+		mClausifier.addTermAxioms(mRhs, source);
+
+		final CCTerm lhsCCTerm = mClausifier.getCCTerm(mLhs);
+		final CCTerm rhsCCTerm = mClausifier.getCCTerm(mRhs);
+		boolean hasLhsLA = mClausifier.getLATerm(mLhs) != null;
+		boolean hasRhsLA = mClausifier.getLATerm(mRhs) != null;
+		if (lhsCCTerm == null && rhsCCTerm == null) {
 			/* if both terms do not exist in CClosure yet, it may be better to
 			 * create them in linear arithmetic.
 			 * Do this, if we don't have a CClosure, or the other term is
 			 * already in linear arithmetic.
 			 */
-			if (mClausifier.getCClosure() == null
-					|| mLhs.mOffset != null && mRhs.mOffset == null) {
-				//m_Clausifier.createMutableAffinTerm(mRhs);
-				mRhs.shareWithLinAr();
+			if ((mClausifier.getCClosure() == null || hasLhsLA) && !hasRhsLA) {
+				mClausifier.createLinVar(mRhs, source);
+				hasRhsLA = true;
 			}
-			if (mClausifier.getCClosure() == null
-					|| mLhs.mOffset == null && mRhs.mOffset != null) {
-				//m_Clausifier.createMutableAffinTerm(mLhs);
-				mLhs.shareWithLinAr();
+			if ((mClausifier.getCClosure() == null || hasRhsLA) && !hasLhsLA) {
+				mClausifier.createLinVar(mLhs, source);
+				hasLhsLA = true;
 			}
-		}
-
-		if (mLhs.getSort() != mRhs.getSort()) {
-			/* This can only happen in Logic LIRA, where one of the
-			 * shared terms is integer and the other is real.
-			 *
-			 * In this case we need to create the equality in the LASolver
-			 * to check for integral values for the integer part.
-			 */
-			return createLAEquality();
-		}
-
-		/* check if the shared terms share at least one theory. */
-		if (!((mLhs.mCCterm != null && mRhs.mCCterm != null)
-				|| (mLhs.mOffset != null && mRhs.mOffset != null))) {
-			/* let them share congruence closure */
-			final CCTermBuilder cc = mClausifier.new CCTermBuilder(source);
-			cc.convert(mLhs.getTerm());
-			cc.convert(mRhs.getTerm());
 		}
 
 		/* Get linear arithmetic info, if both are arithmetic */
-		if (mLhs.mOffset != null && mRhs.mOffset != null) { // NOPMD
+		if (hasLhsLA && hasRhsLA) {
 			return createLAEquality();
 		} else {
+			/* let them share congruence closure */
+			final CCTerm ccLhs = mClausifier.createCCTerm(mLhs, source);
+			final CCTerm ccRhs = mClausifier.createCCTerm(mRhs, source);
+
+			/* Creating the CC terms could have created the equality */
+			DPLLAtom atom = (DPLLAtom) mClausifier.getILiteral(eqTerm);
+			if (atom != null) {
+				return atom;
+			}
+
 			/* create CC equality */
-			return mClausifier.getCClosure().createCCEquality(
-					mClausifier.getStackLevel(), mLhs.mCCterm, mRhs.mCCterm);
+			return mClausifier.getCClosure().createCCEquality(mClausifier.getStackLevel(), ccLhs, ccRhs);
 		}
 	}
 
 	public DPLLAtom getLiteral(final SourceAnnotation source) {
-		if (mEqAtom == null) {
-			mEqAtom = createAtom(source);
-			if (mClausifier.getLogger().isDebugEnabled()) {
-				mClausifier.getLogger().debug("Created Equality: " + mEqAtom);
-			}
+		Term eqTerm = mLhs.getTheory().term("=", mLhs, mRhs);
+		DPLLAtom lit = (DPLLAtom) mClausifier.getILiteral(eqTerm);
+		if (lit == null) {
+			lit = createAtom(eqTerm, source);
+			mClausifier.getLogger().debug("Created Equality: %s", lit);
+			mClausifier.setTermFlags(eqTerm, mClausifier.getTermFlags(eqTerm)
+					| Clausifier.POS_AUX_AXIOMS_ADDED
+					| Clausifier.NEG_AUX_AXIOMS_ADDED);
+			mClausifier.setLiteral(eqTerm, lit);
 		}
-		return mEqAtom;
+		return (DPLLAtom) lit;
 	}
 
 	@Override
 	public String toString() {
 		final PrintTerm pt = new PrintTerm();
 		final StringBuilder sb = new StringBuilder();
-		pt.append(sb, mLhs.getRealTerm());
+		pt.append(sb, mLhs);
 		sb.append(" == ");
-		pt.append(sb, mRhs.getRealTerm());
+		pt.append(sb, mRhs);
 		return sb.toString();
 	}
 

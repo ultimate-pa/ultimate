@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
 
 /**
@@ -38,14 +39,17 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
  */
 @RunWith(JUnit4.class)
 public final class PairHashTest {
+	private final int NUMTERMS = 100;
+
 	Theory mTheory;
-	CClosure mEngine;
+	CClosure mCClosure;
 	CCTerm[] mTerms;
 
 	public PairHashTest() {
 		mTheory = new Theory(Logics.QF_UF);
 		final DPLLEngine dpllEngine = new DPLLEngine(mTheory, new DefaultLogger(), () -> false);
-		mEngine = new CClosure(dpllEngine);
+		final Clausifier clausifier = new Clausifier(dpllEngine, 0);
+		mCClosure = new CClosure(clausifier);
 		createtermss();
 		dpllEngine.getLogger().setLoglevel(LogProxy.LOGLEVEL_DEBUG);
 	}
@@ -53,54 +57,54 @@ public final class PairHashTest {
 	public void createtermss() {
 		mTheory.declareSort("U", 0);
 		final Sort sort = mTheory.getSort("U");
-		mTerms = new CCTerm[100];// NOCHECKSTYLE
-		for (int i = 0; i < 100; i++) {// NOCHECKSTYLE
+		mTerms = new CCTerm[NUMTERMS];
+		for (int i = 0; i < NUMTERMS; i++) {
 			final FunctionSymbol sym = mTheory.declareFunction("x" + i, new Sort[0], sort);
-			mTerms[i] = mEngine.createFuncTerm(sym, new CCTerm[0], null);
+			mTerms[i] = mCClosure.createAnonTerm(mTheory.term(sym));
 		}
 	}
 
 	@Test
 	public void testAll() {
-		mEngine.createCCEquality(0, mTerms[5], mTerms[7]);// NOCHECKSTYLE
-		mEngine.createCCEquality(0, mTerms[3], mTerms[7]);// NOCHECKSTYLE
-		mEngine.createCCEquality(0, mTerms[5], mTerms[9]);// NOCHECKSTYLE
-		mEngine.createCCEquality(0, mTerms[2], mTerms[11]);// NOCHECKSTYLE
-		mEngine.createCCEquality(0, mTerms[15], mTerms[53]);// NOCHECKSTYLE
-		mEngine.createCCEquality(0, mTerms[4], mTerms[12]);// NOCHECKSTYLE
-		mEngine.createCCEquality(0, mTerms[5], mTerms[13]);// NOCHECKSTYLE
+		mCClosure.createCCEquality(0, mTerms[5], mTerms[7]);// NOCHECKSTYLE
+		mCClosure.createCCEquality(0, mTerms[3], mTerms[7]);// NOCHECKSTYLE
+		mCClosure.createCCEquality(0, mTerms[5], mTerms[9]);// NOCHECKSTYLE
+		mCClosure.createCCEquality(0, mTerms[2], mTerms[11]);// NOCHECKSTYLE
+		mCClosure.createCCEquality(0, mTerms[15], mTerms[53]);// NOCHECKSTYLE
+		mCClosure.createCCEquality(0, mTerms[4], mTerms[12]);// NOCHECKSTYLE
+		mCClosure.createCCEquality(0, mTerms[5], mTerms[13]);// NOCHECKSTYLE
 		for (int i = 1; i < 100; i += i) {// NOCHECKSTYLE
 			for (int j = 0; j + i < 100; j += 2 * i) {// NOCHECKSTYLE
-				mTerms[j].merge(mEngine, mTerms[j + i], mEngine.createCCEquality(1, mTerms[j], mTerms[j + i]));
+				mTerms[j].merge(mCClosure, mTerms[j + i], mCClosure.createCCEquality(1, mTerms[j], mTerms[j + i]));
 			}
 		}
-		mEngine.createCCEquality(0, mTerms[15], mTerms[9]);// NOCHECKSTYLE
-		mEngine.createCCEquality(0, mTerms[11], mTerms[32]);// NOCHECKSTYLE
-		mEngine.createCCEquality(0, mTerms[3], mTerms[34]);// NOCHECKSTYLE
-		mEngine.createCCEquality(0, mTerms[2], mTerms[6]);// NOCHECKSTYLE
-		mEngine.createCCEquality(0, mTerms[5], mTerms[12]);// NOCHECKSTYLE
-		mEngine.createCCEquality(0, mTerms[4], mTerms[13]);// NOCHECKSTYLE
+		mCClosure.createCCEquality(0, mTerms[15], mTerms[9]);// NOCHECKSTYLE
+		mCClosure.createCCEquality(0, mTerms[11], mTerms[32]);// NOCHECKSTYLE
+		mCClosure.createCCEquality(0, mTerms[3], mTerms[34]);// NOCHECKSTYLE
+		mCClosure.createCCEquality(0, mTerms[2], mTerms[6]);// NOCHECKSTYLE
+		mCClosure.createCCEquality(0, mTerms[5], mTerms[12]);// NOCHECKSTYLE
+		mCClosure.createCCEquality(0, mTerms[4], mTerms[13]);// NOCHECKSTYLE
 
 		for (int i = 64; i >= 1; i /= 2) {// NOCHECKSTYLE
 			for (int j = 99 / 2 / i * 2 * i; j >= 0; j -= 2 * i) {// NOCHECKSTYLE
 				if (j + i < 100) {// NOCHECKSTYLE
 					final CCTerm lhs = mTerms[j];
 					final CCTerm rhs = mTerms[j + i];
-					final CCTerm tmp = mEngine.mMerges.pop();
+					final CCTerm tmp = mCClosure.mMerges.pop();
 					if (tmp == lhs) {
-						lhs.mRepStar.invertEqualEdges(mEngine);
-						lhs.undoMerge(mEngine, rhs);
+						lhs.mRepStar.invertEqualEdges(mCClosure);
+						lhs.undoMerge(mCClosure, rhs);
 					} else {
 						assert tmp == rhs;
-						rhs.mRepStar.invertEqualEdges(mEngine);
-						rhs.undoMerge(mEngine, lhs);
+						rhs.mRepStar.invertEqualEdges(mCClosure);
+						rhs.undoMerge(mCClosure, lhs);
 					}
 				}
 			}
 		}
-		Assert.assertNotNull(mEngine.mPairHash.getInfo(mTerms[15], mTerms[9]));// NOCHECKSTYLE
-		Assert.assertNotNull(mEngine.mPairHash.getInfo(mTerms[11], mTerms[32]));// NOCHECKSTYLE
-		Assert.assertNotNull(mEngine.mPairHash.getInfo(mTerms[3], mTerms[34]));// NOCHECKSTYLE
-		Assert.assertNotNull(mEngine.mPairHash.getInfo(mTerms[2], mTerms[6]));// NOCHECKSTYLE
+		Assert.assertNotNull(mCClosure.mPairHash.getInfo(mTerms[15], mTerms[9]));// NOCHECKSTYLE
+		Assert.assertNotNull(mCClosure.mPairHash.getInfo(mTerms[11], mTerms[32]));// NOCHECKSTYLE
+		Assert.assertNotNull(mCClosure.mPairHash.getInfo(mTerms[3], mTerms[34]));// NOCHECKSTYLE
+		Assert.assertNotNull(mCClosure.mPairHash.getInfo(mTerms[2], mTerms[6]));// NOCHECKSTYLE
 	}
 }

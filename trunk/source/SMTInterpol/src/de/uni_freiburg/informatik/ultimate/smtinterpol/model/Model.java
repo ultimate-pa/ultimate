@@ -113,7 +113,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 				throw new InternalError("Unknown theory: " + theory);
 			}
 		}
-		final SharedTermEvaluator ste = new SharedTermEvaluator(la);
+		final SharedTermEvaluator ste = new SharedTermEvaluator(clausifier);
 		if (la != null) {
 			la.fillInModel(this, t, ste);
 		}

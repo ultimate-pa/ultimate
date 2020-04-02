@@ -93,10 +93,22 @@ public abstract class DPLLAtom extends Literal {
 		return 1;
 	}
 
+	/**
+	 * The decide level of the atom. This is the number of atoms that were decided before this atom got its truth value.
+	 * It is -1 if the atom is currently unset.
+	 * 
+	 * @return the decide level of the literal.
+	 */
 	public final int getDecideLevel() {
 		return mDecideLevel;
 	}
 
+	/**
+	 * The stack position. This is the position in the DPLL stack that contains the current atom (or negated atom). It
+	 * is -1 if the atom is currently unset.
+	 * 
+	 * @return the stack position.
+	 */
 	public final int getStackPosition() {
 		return mStackPosition;
 	}

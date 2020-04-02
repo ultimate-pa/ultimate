@@ -26,14 +26,14 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation.RuleKind;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
 /**
@@ -64,7 +64,7 @@ public class CCProofGenerator {
 		}
 
 		public SymmetricPair<CCTerm> getPathEnds() {
-			return new SymmetricPair<CCTerm>(mPath[0], mPath[mPath.length - 1]);
+			return new SymmetricPair<>(mPath[0], mPath[mPath.length - 1]);
 		}
 
 		@Override
@@ -86,7 +86,7 @@ public class CCProofGenerator {
 		}
 
 		public SymmetricPair<CCTerm> toSymmetricPair() {
-			return new SymmetricPair<CCTerm>(mLeft, mRight);
+			return new SymmetricPair<>(mLeft, mRight);
 		}
 
 		public CCTerm getLeft() {
@@ -426,7 +426,7 @@ public class CCProofGenerator {
 			final CCTerm idx1 = ArrayTheory.getIndexFromSelect((CCAppTerm) selectEquality.getFirst());
 			final CCTerm idx2 = ArrayTheory.getIndexFromSelect((CCAppTerm) selectEquality.getSecond());
 			if (idx1 != idx2) {
-				mainProof.collectEquality(new SymmetricPair<CCTerm>(idx1, idx2));
+				mainProof.collectEquality(new SymmetricPair<>(idx1, idx2));
 			}
 			// Only a weak path, which must be the first path
 			assert mIndexedPaths[0].getIndex() != null;
@@ -520,8 +520,8 @@ public class CCProofGenerator {
 		}
 		for (final ProofInfo entry : info.getSubProofs()) {
 			if (!auxLiterals.containsKey(entry.getDiseq())) {
-				final Term lhs = entry.getDiseq().getFirst().toSMTTerm(theory);
-				final Term rhs = entry.getDiseq().getSecond().toSMTTerm(theory);
+				final Term lhs = entry.getDiseq().getFirst().getFlatTerm();
+				final Term rhs = entry.getDiseq().getSecond().getFlatTerm();
 				auxLiterals.put(entry.getDiseq(), theory.term("=", lhs, rhs));
 			}
 			/* these are always negated equalities */
@@ -541,14 +541,14 @@ public class CCProofGenerator {
 			final CCTerm[] path = p.getPath();
 			final Term[] subs = new Term[path.length];
 			for (int j = 0; j < path.length; ++j) {
-				subs[j] = path[j].toSMTTerm(theory);
+				subs[j] = path[j].getFlatTerm();
 			}
 			if (index == null) {
 				subannots[k++] = ":subpath";
 				subannots[k++] = subs;
 			} else {
 				subannots[k++] = ":weakpath";
-				subannots[k++] = new Object[] { index.toSMTTerm(theory), subs };
+				subannots[k++] = new Object[] { index.getFlatTerm(), subs };
 			}
 		}
 		final Annotation[] annots = new Annotation[] { new Annotation(rule.getKind(), subannots) };
@@ -577,11 +577,15 @@ public class CCProofGenerator {
 			if (lemmaNo == 0) { // main lemma
 				final CCTerm diseqLHS = mAnnot.getDiseq().getFirst();
 				final CCTerm diseqRHS = mAnnot.getDiseq().getSecond();
-				final CCEquality diseqAtom = CClosure.createEquality(diseqLHS, diseqRHS);
-				if (diseqAtom != null) {
-					diseq = diseqAtom.getSMTFormula(theory, false);
+				final Literal diseqLit = mEqualityLiterals.get(new SymmetricPair<>(diseqLHS, diseqRHS));
+				if (diseqLit != null) {
+					// disequality must occur positively in lemma or not at all.
+					assert diseqLit.getSign() > 0;
+					// use the same order of sides as in the literal appearing in the lemma.
+					diseq = diseqLit.getSMTFormula(theory, false);
 				} else {
-					diseq = theory.term("=", diseqLHS.toSMTTerm(theory), diseqRHS.toSMTTerm(theory));
+					// if disequality does not occur, it is a trivial disequality.
+					diseq = theory.term("=", diseqLHS.getFlatTerm(), diseqRHS.getFlatTerm());
 					isTrivialDiseq = true;
 				}
 			} else {
@@ -616,24 +620,14 @@ public class CCProofGenerator {
 	}
 
 	private boolean isTrivialDisequality(final SymmetricPair<CCTerm> termPair) {
-		final SharedTerm first = termPair.getFirst().getSharedTerm();
-		final SharedTerm second = termPair.getSecond().getSharedTerm();
-		if (first == null || second == null || first.getOffset() == null || second.getOffset() == null) {
-			return false;
+		final CCTerm first = termPair.getFirst();
+		final CCTerm second = termPair.getSecond();
+		final SMTAffineTerm smtAffine = SMTAffineTerm.create(first.getFlatTerm());
+		smtAffine.add(Rational.MONE, second.getFlatTerm());
+		if (smtAffine.isConstant()) {
+			return smtAffine.getConstant() != Rational.ZERO;
 		}
-		if (first.getLinVar() == second.getLinVar() && first.getFactor() == second.getFactor()) {
-			return first.getOffset() != second.getOffset();
-		}
-		final MutableAffineTerm sum = new MutableAffineTerm();
-		if (first.getLinVar() != null) {
-			sum.add(first.getFactor(), first.getLinVar());
-		}
-		sum.add(first.getOffset());
-		if (second.getLinVar() != null) {
-			sum.add(second.getFactor().negate(), second.getLinVar());
-		}
-		sum.add(second.getOffset().negate());
-		return sum.isInt() && !sum.getConstant().div(sum.getGCD()).isIntegral();
+		return smtAffine.isAllIntSummands() && !smtAffine.getConstant().div(smtAffine.getGcd()).isIntegral();
 	}
 
 	private boolean isStoreTerm(CCTerm term) {
@@ -693,7 +687,7 @@ public class CCProofGenerator {
 	 */
 	private ProofInfo findCongruencePaths(CCTerm first, CCTerm second) {
 		final ProofInfo proofInfo = new ProofInfo();
-		proofInfo.mLemmaDiseq = new SymmetricPair<CCTerm>(first, second);
+		proofInfo.mLemmaDiseq = new SymmetricPair<>(first, second);
 		proofInfo.mProofPaths = new IndexedPath[] { new IndexedPath(null, new CCTerm[] { first, second }) };
 		while (first != second) {
 			if (!(first instanceof CCAppTerm) || !(second instanceof CCAppTerm)) {

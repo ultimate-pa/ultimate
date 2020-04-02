@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -327,6 +328,14 @@ public class ProofChecker extends NonRecursive {
 	Stack<Term> mStackResults = new Stack<Term>();
 
 	/**
+	 * Statistics.
+	 */
+	private int mNumInstancesUsed;
+	private int mNumInstancesFromDER;
+	private int mNumInstancesFromCheckpoint;
+	private int mNumInstancesFromFinalcheck;
+
+	/**
 	 * Create a proof checker.
 	 *
 	 * @param script
@@ -370,6 +379,11 @@ public class ProofChecker extends NonRecursive {
 		mAssertions = null;
 		mCacheConv = null;
 
+		// TODO Handle this in a better way (e.g. as part of statistics)
+		if (proof.getTheory().getLogic().isQuantified()) {
+			mLogger.warn("Proof: Instances of quantified clauses used: %d (DER: %d Checkpoint: %d Final check: %d)",
+					mNumInstancesUsed, mNumInstancesFromDER, mNumInstancesFromCheckpoint, mNumInstancesFromFinalcheck);
+		}
 		return mError == 0;
 	}
 
@@ -502,6 +516,17 @@ public class ProofChecker extends NonRecursive {
 		} else if (lemmaType == ":EQ") {
 			checkEQLemma(clause);
 		} else if (lemmaType == ":inst") {
+			mNumInstancesUsed++;
+			final Object[] subannots = ((Object[]) lemmaAnnotation);
+			assert subannots.length == 7 && subannots[6] instanceof String;
+			final String solverPart = (String) subannots[6];
+			if (solverPart == ":DER") {
+				mNumInstancesFromDER++;
+			} else if (solverPart == ":Checkpoint") {
+				mNumInstancesFromCheckpoint++;
+			} else if (solverPart == ":Finalcheck") {
+				mNumInstancesFromFinalcheck++;
+			}
 			reportWarning("Quantifier instantiation lemmas are not checked!");
 		} else {
 			reportError("Cannot deal with lemma " + lemmaType);
@@ -1941,6 +1966,8 @@ public class ProofChecker extends NonRecursive {
 			okay = checkRewriteIntern(eqParams[0], eqParams[1]);
 			break;
 		case ":forallExists":
+			okay = checkRewriteForallExists(eqParams[0], eqParams[1]);
+			break;
 		case ":sorry":
 			reportWarning("rule " + rewriteRule + " not checked!");
 			okay = true;
@@ -2955,6 +2982,32 @@ public class ProofChecker extends NonRecursive {
 			return lhs == rhs;
 		}
 		return false;
+	}
+
+	boolean checkRewriteForallExists(final Term lhs, Term rhs) {
+		// lhs: (forall (vs) F)
+		// rhs: (not (exists (vs) (not F)))
+		if (!isApplication("not", rhs)) {
+			return false;
+		}
+		Term rhsArg = ((ApplicationTerm) rhs).getParameters()[0];
+		if (!(lhs instanceof QuantifiedFormula) || !(rhsArg instanceof QuantifiedFormula)) {
+			return false;
+		}
+		QuantifiedFormula forall = (QuantifiedFormula) lhs;
+		QuantifiedFormula exists = (QuantifiedFormula) rhsArg;
+		if (forall.getQuantifier() != QuantifiedFormula.FORALL || exists.getQuantifier() != QuantifiedFormula.EXISTS) {
+			return false;
+		}
+		if (!Arrays.equals(forall.getVariables(), exists.getVariables())) {
+			return false;
+		}
+		Term forallSubformula = forall.getSubformula();
+		Term existsSubformula = exists.getSubformula();
+		if (!isApplication("not", existsSubformula)) {
+			return false;
+		}
+		return forallSubformula == ((ApplicationTerm) existsSubformula).getParameters()[0];
 	}
 
 	/**

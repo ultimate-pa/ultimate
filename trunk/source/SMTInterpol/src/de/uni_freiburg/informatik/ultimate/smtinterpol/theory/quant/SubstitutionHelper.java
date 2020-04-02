@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ILiteral;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
@@ -45,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffin
 
 /**
  * Helper class for substitution in quantified clauses.
- * 
+ *
  * @author Tanja Schindler
  *
  */
@@ -74,13 +73,13 @@ public class SubstitutionHelper {
 	/**
 	 * Apply the given substitution to the given clause. The resulting literals and the corresponding term can be
 	 * retrieved afterwards.
-	 * 
+	 *
 	 * This method also performs simplifications on literals and on the clause. The steps are:<br>
 	 * (1) Apply the substitution for the single literals, normalize and simplify the terms.<br>
 	 * (2) Build the disjunction ---> Proof rules cong, refl, etc. <br>
 	 * (3) Remove duplicates and false literals ---> Proof rule simpOr. <br>
 	 * (4) Build the actual literals.
-	 * 
+	 *
 	 * TODO Proof production.
 	 */
 	public void substituteInClause() {
@@ -141,9 +140,7 @@ public class SubstitutionHelper {
 					final Term lhs = atomApp.getParameters()[0];
 					final Term rhs = atomApp.getParameters()[1];
 					if (atomApp.getFreeVars().length == 0) { // Ground equality or predicate.
-						final SharedTerm sharedLhs = mClausifier.getSharedTerm(lhs, mSource);
-						final SharedTerm sharedRhs = mClausifier.getSharedTerm(rhs, mSource);
-						final EqualityProxy eq = mClausifier.createEqualityProxy(sharedLhs, sharedRhs);
+						final EqualityProxy eq = mClausifier.createEqualityProxy(lhs, rhs);
 						assert eq != EqualityProxy.getTrueProxy() && eq != EqualityProxy.getFalseProxy();
 						newAtom = eq.getLiteral(mSource);
 					} else {
@@ -153,9 +150,8 @@ public class SubstitutionHelper {
 				} else { // Predicates
 					assert atomApp.getFreeVars().length == 0; // Quantified predicates are stored as equalities.
 					assert atomApp.getSort() == mQuantTheory.getTheory().getBooleanSort();
-					final SharedTerm sharedLhs = mClausifier.getSharedTerm(atomApp, mSource);
-					final SharedTerm sharedRhs =
-							mClausifier.getSharedTerm(mQuantTheory.getTheory().mTrue, mSource);
+					final Term sharedLhs = atomApp;
+					final Term sharedRhs = mQuantTheory.getTheory().mTrue;
 					final EqualityProxy eq = mClausifier.createEqualityProxy(sharedLhs, sharedRhs);
 					assert eq != EqualityProxy.getTrueProxy() && eq != EqualityProxy.getFalseProxy();
 					newAtom = eq.getLiteral(mSource);
@@ -209,7 +205,7 @@ public class SubstitutionHelper {
 
 	/**
 	 * After applying the substitution, get the resulting ground literals.
-	 * 
+	 *
 	 * @return An array, possibly of length 0, containing the resulting ground literals if the clause is not simplified
 	 *         to true; null if the clause is simplified to true.
 	 */
@@ -220,7 +216,7 @@ public class SubstitutionHelper {
 
 	/**
 	 * After applying the substitution, get the resulting quantified literals.
-	 * 
+	 *
 	 * @return An array, possibly of length 0, containing the resulting quantified literals if the clause is not
 	 *         simplified to true; null if the clause is simplified to true.
 	 */
@@ -231,7 +227,7 @@ public class SubstitutionHelper {
 
 	/**
 	 * After applying the substitution, get the resulting clause term.
-	 * 
+	 *
 	 * @return the term representing the substituted clause. Note that it can be false or true.
 	 */
 	public Term getResultingClauseTerm() {
@@ -241,14 +237,14 @@ public class SubstitutionHelper {
 
 	/**
 	 * Compute the result of applying a given variable substitution on a given quantified literal.
-	 * 
+	 *
 	 * This method also normalizes and simplifies the resulting terms. The steps are:<br>
 	 * (i) Substitute using FormulaUnLet ---> Proof rule for substitution.<br>
 	 * (ii) Normalize using TermCompiler ---> Proof rule canonicalSum, cong, etc.<br>
 	 * (iii) Simplify true and false lits.
-	 * 
+	 *
 	 * TODO Proof production.
-	 * 
+	 *
 	 * @return the term resulting from the substitution.
 	 */
 	private Term computeSubstitutedLiteralAsTerm(final QuantLiteral lit, final Map<TermVariable, Term> sigma) {
@@ -278,8 +274,7 @@ public class SubstitutionHelper {
 			final Term subsLhs = subsEq.getParameters()[0];
 			final Term subsRhs = subsEq.getParameters()[1];
 
-			if (subsLhs instanceof ApplicationTerm
-					&& ((ApplicationTerm) subsLhs).getFunction().getName().startsWith("@AUX")) {
+			if (QuantifiedTermInfo.isAuxApplication(subsLhs)) {
 				assert subsRhs == mQuantTheory.getTheory().mTrue;
 				final ApplicationTerm subsAuxTerm = (ApplicationTerm) subsLhs;
 				final Term[] oldArgs = subsAuxTerm.getParameters();
@@ -302,7 +297,7 @@ public class SubstitutionHelper {
 		// Simplify equality literals similar to EqualityProxy. (TermCompiler already takes care of <= literals).
 		Term simplified = normalized;
 		assert simplified instanceof ApplicationTerm;
-		ApplicationTerm appTerm = (ApplicationTerm) simplified;
+		final ApplicationTerm appTerm = (ApplicationTerm) simplified;
 		if (appTerm.getFunction().getName() == "=") {
 			final Term lhs = appTerm.getParameters()[0];
 			final Term rhs = appTerm.getParameters()[1];

@@ -587,8 +587,8 @@ public class TermCompiler extends TermTransformer {
 		} else {
 			// We should create (forall (x) (newBody x))
 			// This becomes (not (exists (x) (not (newBody x))))
-			final Term notNewBody = mTracker.congruence(mTracker.reflexivity(theory.term("not", old.getSubformula())),
-					new Term[] { newBody });
+			final Term notNewBody = mUtils.convertNot(mTracker
+					.congruence(mTracker.reflexivity(theory.term("not", old.getSubformula())), new Term[] { newBody }));
 			setResult(mUtils.convertNot(mTracker.forall(old, notNewBody)));
 		}
 	}

@@ -27,7 +27,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.EprEqualityPredicate;
@@ -73,12 +72,7 @@ public class EprGroundEqualityAtom extends EprGroundPredicateAtom {
 	}
 
 	public CCEquality getCCEquality(final Clausifier clausif) {
-
-		final SharedTerm stL = clausif.getSharedTerm(mLhs, getSourceAnnotation());
-		final SharedTerm stR = clausif.getSharedTerm(mRhs, getSourceAnnotation());
-
-		final EqualityProxy eq = clausif.
-						createEqualityProxy(stL, stR);
+		final EqualityProxy eq = clausif.createEqualityProxy(mLhs, mRhs);
 				// Safe since m_Term is neither true nor false
 		if (eq == EqualityProxy.getTrueProxy()) {
 			return null;

@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
@@ -49,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.atoms.EprGroun
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.atoms.EprGroundPredicateAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.atoms.EprQuantifiedEqualityAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.atoms.EprQuantifiedPredicateAtom;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashSet;
 
 /**
  *
@@ -144,10 +142,9 @@ public class EprHelpers {
 			final Clausifier clausif = eprTheory.getClausifier();
 			if (resultAtom instanceof EprGroundPredicateAtom) {
 				// basically copied from Clausifier.createBooleanLit()
-				final SharedTerm st = clausif.getSharedTerm(((EprGroundPredicateAtom) resultAtom).getTerm(), source);
+				final Term t = ((EprGroundPredicateAtom) resultAtom).getTerm();
 
-				final EqualityProxy eq = clausif.
-						createEqualityProxy(st, clausif.getSharedTerm(eprTheory.getTheory().mTrue, source));
+				final EqualityProxy eq = clausif.createEqualityProxy(t, eprTheory.getTheory().mTrue);
 				// Safe since m_Term is neither true nor false
 				assert eq != EqualityProxy.getTrueProxy();
 				assert eq != EqualityProxy.getFalseProxy();
@@ -158,11 +155,7 @@ public class EprHelpers {
 				if (t1.equals(t2)) {
 					resultAtom = new DPLLAtom.TrueAtom();
 				} else {
-					final SharedTerm st1 = clausif.getSharedTerm(((EprAtom) resultAtom).getArguments()[0], source);
-					final SharedTerm st2 = clausif.getSharedTerm(((EprAtom) resultAtom).getArguments()[1], source);
-					final EqualityProxy eq = new EqualityProxy(clausif,
-							st1,
-							st2);
+					final EqualityProxy eq = clausif.createEqualityProxy(t1, t2);
 					resultAtom = eq.getLiteral(source);
 				}
 			} else {

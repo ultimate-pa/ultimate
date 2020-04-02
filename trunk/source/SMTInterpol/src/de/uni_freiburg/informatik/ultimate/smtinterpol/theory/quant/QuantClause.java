@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
@@ -67,7 +66,7 @@ public class QuantClause {
 	 * For each variable, the set of potentially interesting substitutions for instantiation. The key stores the
 	 * SharedTerm of the representative in case the value term has a CCTerm.
 	 */
-	private final LinkedHashMap<SharedTerm, SharedTerm>[] mInterestingTermsForVars;
+	private final LinkedHashMap<Term, Term>[] mInterestingTermsForVars;
 
 	/**
 	 * Build a new QuantClause. At least one literal must not be ground. This should only be called after performing
@@ -95,7 +94,7 @@ public class QuantClause {
 		for (int i = 0; i < mVars.length; i++) {
 			mVarInfos[i] = new VarInfo();
 		}
-		
+
 		collectVarInfos();
 		mInterestingTermsForVars = new LinkedHashMap[mVars.length];
 		for (int i = 0; i < mVars.length; i++) {
@@ -150,13 +149,13 @@ public class QuantClause {
 
 	/**
 	 * Get the ground terms that are compared with the given variable in an arithmetical literal.
-	 * 
+	 *
 	 * @param var
 	 *            the variable.
 	 * @return the ground bound terms (both upper and lower) for the given variable.
 	 */
-	public Set<SharedTerm> getGroundBounds(final TermVariable var) {
-		final Set<SharedTerm> bounds = new LinkedHashSet<>();
+	public Set<Term> getGroundBounds(final TermVariable var) {
+		final Set<Term> bounds = new LinkedHashSet<>();
 		bounds.addAll(mVarInfos[getVarIndex(var)].mUpperGroundBounds);
 		bounds.addAll(mVarInfos[getVarIndex(var)].mLowerGroundBounds);
 		return bounds;
@@ -164,7 +163,7 @@ public class QuantClause {
 
 	/**
 	 * Get the variable terms that are compared with the given variable in an arithmetical literal.
-	 * 
+	 *
 	 * @param var
 	 *            the variable.
 	 * @return the variable bound terms (both upper and lower) for the given variable.
@@ -179,10 +178,10 @@ public class QuantClause {
 	/**
 	 * Get the interesting terms for instantiation for all variables. This should only be called after updating the
 	 * interesting terms.
-	 * 
+	 *
 	 * @return the interesting substitution terms for all variables.
 	 */
-	public LinkedHashMap<SharedTerm, SharedTerm>[] getInterestingTerms() {
+	public LinkedHashMap<Term, Term>[] getInterestingTerms() {
 		return mInterestingTermsForVars;
 	}
 
@@ -202,7 +201,7 @@ public class QuantClause {
 		final int quantLength = mQuantLits.length;
 		final Term[] litTerms = new Term[groundLength + quantLength];
 		for (int i = 0; i < groundLength; i++) {
-			litTerms[0] = mGroundLits[i].getSMTFormula(theory);
+			litTerms[i] = mGroundLits[i].getSMTFormula(theory);
 		}
 		for (int i = 0; i < quantLength; i++) {
 			litTerms[i + groundLength] = mQuantLits[i].getTerm();
@@ -216,7 +215,7 @@ public class QuantClause {
 	 * @return an array containing the free variables in this clause.
 	 */
 	private TermVariable[] computeVars() {
-		final Set<TermVariable> varSet = new LinkedHashSet<TermVariable>();
+		final Set<TermVariable> varSet = new LinkedHashSet<>();
 		for (final QuantLiteral lit : mQuantLits) {
 			final TermVariable[] vars = lit.getTerm().getFreeVars();
 			Collections.addAll(varSet, vars);
@@ -226,12 +225,12 @@ public class QuantClause {
 
 	/**
 	 * Get the position of a given variable.
-	 * 
+	 *
 	 * @param var
 	 *            a TermVariable
 	 * @return the position of var, if contained in this clause.
 	 */
-	int getVarIndex(TermVariable var) {
+	int getVarIndex(final TermVariable var) {
 		return Arrays.asList(mVars).indexOf(var);
 	}
 
@@ -239,7 +238,7 @@ public class QuantClause {
 	 * Go through the quantified literals in this clause to collect information about the appearing variables. In
 	 * particular, for each variable we collect the lower and upper ground bounds and variable bounds, and the functions
 	 * and positions where the variable appears as argument.
-	 * 
+	 *
 	 * TODO What about offsets? (See paper)
 	 */
 	private void collectVarInfos() {
@@ -265,12 +264,9 @@ public class QuantClause {
 								final int pos = getVarIndex((TermVariable) smd);
 								final VarInfo varInfo = mVarInfos[pos];
 								if (fac.isNegative()) {
-									varInfo.addUpperGroundBound(
-											mQuantTheory.getClausifier().getSharedTerm(remainderTerm,
-													mSource));
+									varInfo.addUpperGroundBound(remainderTerm);
 								} else {
-									varInfo.addLowerGroundBound(mQuantTheory.getClausifier()
-											.getSharedTerm(remainderTerm, mSource));
+									varInfo.addLowerGroundBound(remainderTerm);
 								}
 							} else if (remainderTerm instanceof TermVariable) {
 								final int pos = getVarIndex((TermVariable) smd);
@@ -303,10 +299,8 @@ public class QuantClause {
 							upperAffine.add(Rational.ONE);
 							final Term lowerBound = lowerAffine.toTerm(rhs.getSort());
 							final Term upperBound = upperAffine.toTerm(rhs.getSort());
-							varInfo.addLowerGroundBound(
-									mQuantTheory.getClausifier().getSharedTerm(lowerBound, mSource));
-							varInfo.addUpperGroundBound(
-									mQuantTheory.getClausifier().getSharedTerm(upperBound, mSource));
+							varInfo.addLowerGroundBound(lowerBound);
+							varInfo.addUpperGroundBound(upperBound);
 						}
 					}
 				}
@@ -324,11 +318,11 @@ public class QuantClause {
 
 	/**
 	 * For each variable in the given term, add the functions and positions where it appears as argument to the VarInfo.
-	 * 
+	 *
 	 * @param qTerm
 	 *            a function application.
 	 */
-	private void addAllVarPos(ApplicationTerm qTerm) {
+	private void addAllVarPos(final ApplicationTerm qTerm) {
 		final FunctionSymbol func = qTerm.getFunction();
 		final Term[] args = qTerm.getParameters();
 		if (!func.isInterpreted() || func.getName() == "select") {
@@ -355,7 +349,7 @@ public class QuantClause {
 
 	/**
 	 * Collects the lower and upper bound and the default terms for a variable for instantiation.
-	 * 
+	 *
 	 * @param varPos
 	 *            the position of the variable.
 	 */
@@ -363,14 +357,12 @@ public class QuantClause {
 		addAllInteresting(mInterestingTermsForVars[varPos], mVarInfos[varPos].mLowerGroundBounds);
 		addAllInteresting(mInterestingTermsForVars[varPos], mVarInfos[varPos].mUpperGroundBounds);
 		if (mVars[varPos].getSort().getName() == "Bool") {
-			final SharedTerm sharedTrue =
-					mQuantTheory.getClausifier().getSharedTerm(mQuantTheory.getTheory().mTrue, mSource);
-			final SharedTerm sharedFalse =
-					mQuantTheory.getClausifier().getSharedTerm(mQuantTheory.getTheory().mFalse, mSource);
+			final Term sharedTrue = mQuantTheory.getTheory().mTrue;
+			final Term sharedFalse = mQuantTheory.getTheory().mFalse;
 			mInterestingTermsForVars[varPos].put(sharedTrue, sharedTrue);
 			mInterestingTermsForVars[varPos].put(sharedFalse, sharedFalse);
 		} else {
-			final SharedTerm lambda = mQuantTheory.getLambda(mVars[varPos].getSort());
+			final Term lambda = mQuantTheory.getLambda(mVars[varPos].getSort());
 			mInterestingTermsForVars[varPos].put(lambda, lambda);
 		}
 	}
@@ -383,8 +375,8 @@ public class QuantClause {
 		while (changed && !mQuantTheory.getEngine().isTerminationRequested()) {
 			changed = false;
 			for (int i = 0; i < mVars.length; i++) {
-				for (TermVariable t : getVarBounds(mVars[i])) {
-					int j = getVarIndex(t);
+				for (final TermVariable t : getVarBounds(mVars[i])) {
+					final int j = getVarIndex(t);
 					changed = addAllInteresting(mInterestingTermsForVars[i], mInterestingTermsForVars[j].values());
 				}
 			}
@@ -419,21 +411,11 @@ public class QuantClause {
 				final Collection<CCTerm> argTerms = mQuantTheory.mCClosure.getArgTermsForFunc(func, i);
 				if (argTerms != null) {
 					for (final CCTerm ccTerm : argTerms) {
-						final SharedTerm repShared, ccShared;
-						if (ccTerm.getRepresentative().getSharedTerm() != null) {
-							repShared = ccTerm.getRepresentative().getSharedTerm();
-						} else {
-							repShared = ccTerm.getRepresentative().getFlatTerm();
-						}
-							if (ccTerm.getSharedTerm() != null) {
-								ccShared = ccTerm.getSharedTerm();
-							} else {
-								ccShared = ccTerm.getFlatTerm();
-							}
-							mInterestingTermsForVars[varNum].put(repShared, ccShared);
-						}
+						final Term repShared = ccTerm.getRepresentative().getFlatTerm();
+						mInterestingTermsForVars[varNum].put(repShared, ccTerm.getFlatTerm());
 					}
 				}
+			}
 			if (pos.get(1) && func.getName() == "select" && var.getSort().getName() == "Int") {
 				// Add all store indices +-1.
 				final Sort[] storeSorts = new Sort[3];
@@ -445,25 +427,15 @@ public class QuantClause {
 				if (storeIndices != null) {
 					for (final CCTerm idx : storeIndices) {
 						for (final Rational offset : new Rational[] { Rational.ONE, Rational.MONE }) {
-							final SMTAffineTerm idxPlusMinusOneAff = new SMTAffineTerm(idx.getSharedTerm().getTerm());
+							final Term idxTerm = idx.getFlatTerm();
+							final SMTAffineTerm idxPlusMinusOneAff = new SMTAffineTerm(idxTerm);
 							idxPlusMinusOneAff.add(offset);
-							final SharedTerm shared = mQuantTheory.getClausifier()
-									.getSharedTerm(idxPlusMinusOneAff.toTerm(idx.getSharedTerm().getSort()),
-											mSource);
-							SharedTerm repShared = shared;
-							final CCTerm cc = shared.getCCTerm();
-							if (cc != null) {
-								final SharedTerm ccRepShared = cc.getRepresentative().getSharedTerm();
-								if (ccRepShared != null) {
-									repShared = ccRepShared;
-								} else if (cc.getSharedTerm() != null) {
-									repShared = cc.getSharedTerm();
-								}
-							}
-								mInterestingTermsForVars[varNum].put(repShared, shared);
-							}
+							final Term shared = idxPlusMinusOneAff.toTerm(idxTerm.getSort());
+							final Term repShared = mQuantTheory.getRepresentativeTerm(shared);
+							mInterestingTermsForVars[varNum].put(repShared, shared);
 						}
 					}
+				}
 			} // TODO: maybe for store(a,x,v) we need all i in select(b,i)
 		}
 	}
@@ -480,13 +452,10 @@ public class QuantClause {
 	 *            The interesting terms that should be added, if no equivalent term is in the map yet.
 	 * @return true if new terms were added, false otherwise.
 	 */
-	private boolean addAllInteresting(Map<SharedTerm, SharedTerm> interestingTerms, Collection<SharedTerm> newTerms) {
+	private boolean addAllInteresting(final Map<Term, Term> interestingTerms, final Collection<Term> newTerms) {
 		boolean changed = false;
-		for (SharedTerm newTerm : newTerms) {
-			SharedTerm rep = newTerm;
-			if (newTerm.getCCTerm() != null) {
-				rep = newTerm.getCCTerm().getRepresentative().getFlatTerm();
-			}
+		for (final Term newTerm : newTerms) {
+			final Term rep = mQuantTheory.getRepresentativeTerm(newTerm);
 			if (!interestingTerms.containsKey(rep)) {
 				interestingTerms.put(rep, newTerm);
 				changed = true;
@@ -500,23 +469,23 @@ public class QuantClause {
 	 * argument's position, and the lower and upper bounds for the variable.
 	 */
 	private class VarInfo {
-		private Map<FunctionSymbol, BitSet> mFuncArgPositions;
+		private final Map<FunctionSymbol, BitSet> mFuncArgPositions;
 		// TODO Do we need both lower and upper bounds?
-		private Set<SharedTerm> mLowerGroundBounds;
-		private Set<SharedTerm> mUpperGroundBounds;
-		private Set<TermVariable> mLowerVarBounds;
-		private Set<TermVariable> mUpperVarBounds;
+		private final Set<Term> mLowerGroundBounds;
+		private final Set<Term> mUpperGroundBounds;
+		private final Set<TermVariable> mLowerVarBounds;
+		private final Set<TermVariable> mUpperVarBounds;
 
 		/**
 		 * Create a new VarInfo. This is used to store information for one variable: - lower and upper ground bounds and
 		 * - functions and positions where the variable appears as argument.
 		 */
 		VarInfo() {
-			mFuncArgPositions = new LinkedHashMap<FunctionSymbol, BitSet>();
-			mLowerGroundBounds = new LinkedHashSet<SharedTerm>();
-			mUpperGroundBounds = new LinkedHashSet<SharedTerm>();
-			mLowerVarBounds = new LinkedHashSet<TermVariable>();
-			mUpperVarBounds = new LinkedHashSet<TermVariable>();
+			mFuncArgPositions = new LinkedHashMap<>();
+			mLowerGroundBounds = new LinkedHashSet<>();
+			mUpperGroundBounds = new LinkedHashSet<>();
+			mLowerVarBounds = new LinkedHashSet<>();
+			mUpperVarBounds = new LinkedHashSet<>();
 		}
 
 		/**
@@ -529,20 +498,20 @@ public class QuantClause {
 		 */
 		void addPosition(final FunctionSymbol func, final int pos) {
 			if (mFuncArgPositions.containsKey(func)) {
-				BitSet occs = mFuncArgPositions.get(func);
+				final BitSet occs = mFuncArgPositions.get(func);
 				occs.set(pos);
 			} else {
-				BitSet occs = new BitSet(func.getParameterSorts().length);
+				final BitSet occs = new BitSet(func.getParameterSorts().length);
 				occs.set(pos);
 				mFuncArgPositions.put(func, occs);
 			}
 		}
 
-		void addLowerGroundBound(final SharedTerm lowerBound) {
+		void addLowerGroundBound(final Term lowerBound) {
 			mLowerGroundBounds.add(lowerBound);
 		}
 
-		void addUpperGroundBound(final SharedTerm upperBound) {
+		void addUpperGroundBound(final Term upperBound) {
 			mUpperGroundBounds.add(upperBound);
 		}
 

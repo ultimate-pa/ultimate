@@ -18,27 +18,29 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import java.util.Map.Entry;
+
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinArSolve;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinVar;
 
 public class SharedTermEvaluator {
-	private final LinArSolve mLa;
-	public SharedTermEvaluator(final LinArSolve la) {
-		mLa = la;
+	private final Clausifier mClausifier;
+
+	public SharedTermEvaluator(final Clausifier clausifier) {
+		mClausifier = clausifier;
 	}
-	public Rational evaluate(final SharedTerm st, final Theory t) {
-		if (st.validShared()) {
-			if (st.getLinVar() == null) {
-				/* This can only happen if st.getTerm() is a numeric constant term */
-				return (Rational) ((ConstantTerm) st.getTerm()).getValue();
-			}
-			final Rational val = st.getFactor().mul(mLa.realValue(st.getLinVar())).
-				add(st.getOffset());
-			return val;
+
+	public Rational evaluate(final Term term, final Theory t) {
+		SMTAffineTerm affine = SMTAffineTerm.create(term);
+		Rational value = affine.getConstant();
+		for (Entry<Term, Rational> entry : affine.getSummands().entrySet()) {
+			LinVar var = mClausifier.getLinVar(entry.getKey());
+			value = value.addmul(mClausifier.getLASolver().realValue(var), entry.getValue());
 		}
-		throw new InternalError("Not a valid shared term: " + st.getTerm());
+		return value;
 	}
 }

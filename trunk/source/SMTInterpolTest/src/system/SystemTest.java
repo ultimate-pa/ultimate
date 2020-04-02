@@ -80,9 +80,11 @@ public class SystemTest {
 			}
 
 		};
-		if (!f.getAbsolutePath().contains("epr") && !f.getAbsolutePath().contains("quant")) {
+		if (!f.getAbsolutePath().contains("epr")) {
 			solver.setOption(":proof-check-mode", true);
-			solver.setOption(":model-check-mode", true);
+			if (!f.getAbsolutePath().contains("quant")) {
+				solver.setOption(":model-check-mode", true);
+			}
 			solver.setOption(":interpolant-check-mode", true);
 		}
 		if (f.getAbsolutePath().contains("test" + File.separatorChar + "epr")) {

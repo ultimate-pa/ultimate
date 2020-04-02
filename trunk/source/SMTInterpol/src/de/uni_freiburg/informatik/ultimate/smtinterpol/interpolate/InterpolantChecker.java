@@ -404,7 +404,7 @@ public class InterpolantChecker {
 		final LogProxy logger = mInterpolator.getLogger();
 		final int old = logger.getLoglevel();
 		try {
-			logger.setLoglevel(LogProxy.LOGLEVEL_ERROR);
+			// logger.setLoglevel(LogProxy.LOGLEVEL_ERROR);
 			final SymbolChecker checker = new SymbolChecker(mGlobals, subOccurrences[interpolants.length]);
 			for (int part = 0; part < numPartitions; part++) {
 				mCheckingSolver.push(1);

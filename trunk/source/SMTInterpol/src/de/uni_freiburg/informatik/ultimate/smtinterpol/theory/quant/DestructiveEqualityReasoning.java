@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantLiteral.NegQuantLiteral;
 
@@ -40,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantLiteral
  * <p>
  * This is, if a quantified clause contains a literal (x != t), every occurrence of x is substituted by t, and the
  * literal is dropped.
- * 
+ *
  * @author Tanja Schindler
  *
  */
@@ -53,14 +54,14 @@ class DestructiveEqualityReasoning {
 	private final QuantLiteral[] mQuantLits;
 	private final SourceAnnotation mSource;
 
-	private Map<TermVariable, Term> mSigma;
+	private final Map<TermVariable, Term> mSigma;
 	private boolean mIsChanged;
 	private boolean mIsTriviallyTrue;
 	private Literal[] mGroundLitsAfterDER;
 	private QuantLiteral[] mQuantLitsAfterDER;
 
-	DestructiveEqualityReasoning(QuantifierTheory quantTheory, Literal[] groundLits, QuantLiteral[] quantLits,
-			SourceAnnotation source) {
+	DestructiveEqualityReasoning(final QuantifierTheory quantTheory, final Literal[] groundLits, final QuantLiteral[] quantLits,
+			final SourceAnnotation source) {
 		mQuantTheory = quantTheory;
 		mClausifier = quantTheory.getClausifier();
 
@@ -78,7 +79,7 @@ class DestructiveEqualityReasoning {
 	 * <p>
 	 * If something has changed, the result can be obtained by calling getGroundLitsAfterDER() and
 	 * getQuantLitsAfterDER(), respectively.
-	 * 
+	 *
 	 * @return true if DER changed something, i.e., a variable has been removed; false otherwise.
 	 */
 	boolean applyDestructiveEqualityReasoning() {
@@ -92,7 +93,7 @@ class DestructiveEqualityReasoning {
 
 	/**
 	 * Check if the clause is trivially true.
-	 * 
+	 *
 	 * @return true, if the clause is trivially true; false otherwise.
 	 */
 	public boolean isTriviallyTrue() {
@@ -101,7 +102,7 @@ class DestructiveEqualityReasoning {
 
 	/**
 	 * Get the ground literals after destructive equality reasoning was performed.
-	 * 
+	 *
 	 * @return an array containing the ground literals after DER. Can have length 0.
 	 */
 	Literal[] getGroundLitsAfterDER() {
@@ -114,7 +115,7 @@ class DestructiveEqualityReasoning {
 
 	/**
 	 * Get the quantified literals after destructive equality reasoning was performed.
-	 * 
+	 *
 	 * @return an array containing the quantified literals after DER. Can have length 0.
 	 */
 	QuantLiteral[] getQuantLitsAfterDER() {
@@ -123,6 +124,10 @@ class DestructiveEqualityReasoning {
 			return mQuantLits;
 		}
 		return mQuantLitsAfterDER;
+	}
+
+	Map<TermVariable, Term> getSigma() {
+		return mSigma;
 	}
 
 	/**
@@ -141,7 +146,7 @@ class DestructiveEqualityReasoning {
 		final Map<TermVariable, Term> groundAndVarSubsForVar = new LinkedHashMap<>();
 		final Map<TermVariable, List<Term>> potentialSubsForVar = new LinkedHashMap<>();
 		// Step 1:
-		for (QuantLiteral qLit : mQuantLits) {
+		for (final QuantLiteral qLit : mQuantLits) {
 			if (qLit.mIsDERUsable) {
 				assert qLit instanceof NegQuantLiteral && qLit.getAtom() instanceof QuantEquality;
 				final QuantEquality varEq = (QuantEquality) qLit.mAtom;
@@ -204,8 +209,8 @@ class DestructiveEqualityReasoning {
 							final FormulaUnLet unletter = new FormulaUnLet();
 							unletter.addSubstitutions(mSigma);
 							Term subs = unletter.unlet(potentialSubs);
-							subs = mClausifier.getTermCompiler().transform(subs);
-							mSigma.put(var, subs);
+							final IProofTracker tracker = mClausifier.getTracker();
+							subs = tracker.getProvedTerm(mClausifier.getTermCompiler().transform(subs));
 							mSigma.put((TermVariable) varRep, subs);
 						}
 					}
@@ -216,9 +221,9 @@ class DestructiveEqualityReasoning {
 
 	/**
 	 * For a variable x, find sigma*(x).
-	 * 
+	 *
 	 * We define sigma(x) = x if x has no substitution so far.
-	 * 
+	 *
 	 * @return The Term sigma*(x).
 	 */
 	private Term findRep(final TermVariable var) {
@@ -261,7 +266,7 @@ class DestructiveEqualityReasoning {
 		subsHelper.substituteInClause();
 		mGroundLitsAfterDER = subsHelper.getResultingGroundLits();
 		mQuantLitsAfterDER = subsHelper.getResultingQuantLits();
-		
+
 		if (subsHelper.getResultingClauseTerm() == mQuantTheory.getTheory().mTrue) {
 			mIsTriviallyTrue = true;
 		}
