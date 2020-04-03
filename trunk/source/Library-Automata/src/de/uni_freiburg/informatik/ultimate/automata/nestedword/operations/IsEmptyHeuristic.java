@@ -305,9 +305,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				continue;
 			}
 
-			final STATE stateKk = current.findHierPredecessor();
+			STATE stateKk = current.findHierPredecessor();
 			if (stateKk == null) {
-				continue;
+				stateKk = mDummyEmptyStackState;
 			}
 			rtr.add(new Item(succ, stateKk, symbol, current, ItemType.RETURN));
 		}
