@@ -440,7 +440,14 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + ((mTargetState == null) ? 0 : mTargetState.hashCode());
-			result = prime * result + ((mHierPreStates == null) ? 0 : mHierPreStates.hashCode());
+
+			if (mHierPreStates == null) {
+				result = prime * result;
+			} else if (mHierPreStates.isEmpty()) {
+				result = prime * result + mHierPreStates.hashCode();
+			} else {
+				result = prime * result + mHierPreStates.peek().hashCode();
+			}
 			result = prime * result + ((mTransition == null) ? 0 : mTransition.hashCode());
 			return result;
 		}
@@ -465,18 +472,22 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			} else if (!mTargetState.equals(other.mTargetState)) {
 				return false;
 			}
-			if (mHierPreStates == null) {
-				if (other.mHierPreStates != null) {
-					return false;
-				}
-			} else if (!mHierPreStates.equals(other.mHierPreStates)) {
-				return false;
-			}
 			if (mTransition == null) {
 				if (other.mTransition != null) {
 					return false;
 				}
 			} else if (!mTransition.equals(other.mTransition)) {
+				return false;
+			}
+			if (mHierPreStates == null) {
+				if (other.mHierPreStates != null) {
+					return false;
+				}
+			} else if (mHierPreStates.isEmpty()) {
+				if (!other.mHierPreStates.isEmpty()) {
+					return false;
+				}
+			} else if (!mHierPreStates.peek().equals(other.mHierPreStates.peek())) {
 				return false;
 			}
 			return true;
