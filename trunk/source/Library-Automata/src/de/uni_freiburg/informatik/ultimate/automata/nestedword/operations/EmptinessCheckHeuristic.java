@@ -28,14 +28,11 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.IHeuristic;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeature;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractor;
@@ -83,47 +80,48 @@ public class EmptinessCheckHeuristic<STATE, LETTER> implements IHeuristic<STATE,
 	}
 
 	@Override
-	public int getConcreteCost(final LETTER trans) {
+	public double getConcreteCost(final LETTER trans) {
 		// Our concrete const is 1, such that our heuristic always underestimates.
-		return 1;
+		return 1.0;
 	}
 
-	@Override
-	public Map<IsEmptyHeuristic<LETTER, STATE>.Item, Integer> compareSuccessors(final List<IsEmptyHeuristic<LETTER, STATE>.Item> successors) {
-		final Map<IsEmptyHeuristic<LETTER, STATE>.Item, Integer> successorToLosses = new HashMap<>();
-		final Map<SMTFeature,IsEmptyHeuristic<LETTER, STATE>.Item> featureToSuccessor = new HashMap<>();
-		if(successors.size() == 1) {
-			successorToLosses.put(successors.get(0), 0);
-			return successorToLosses;
-		}
-		// For each successor extract a SMTFeature, if the transition is of type IInternalAction
-		successors.forEach(e -> {
-			final LETTER trans = e.getTransition();
-			UnmodifiableTransFormula transformula = null;
-			// We only want to consider IInternalAction's
-			if (trans instanceof IInternalAction) {
-				transformula = ((IInternalAction) trans).getTransformula();
-				featureToSuccessor.put(mFeatureExtractor.extractFeatureRaw(transformula.getFormula()),e);
-			}
-		});
-
-		// Pairwise compare successors
-		for (final Entry<SMTFeature, IsEmptyHeuristic<LETTER, STATE>.Item> entry1 : featureToSuccessor.entrySet()) {
-			final SMTFeature feature1 = entry1.getKey();
-			for (final Entry<SMTFeature, IsEmptyHeuristic<LETTER, STATE>.Item> entry2 : featureToSuccessor.entrySet()) {
-				final SMTFeature feature2 = entry2.getKey();
-				if(feature1 == feature2) {
-					// do nothing
-				}else{
-					// We calculate which feature is worse and increase its number of losses.
-					// In the end, the worst feature has the highest score.
-					final SMTFeature looser = SMTFeature.chooseLooser(feature1,feature2);
-					final IsEmptyHeuristic<LETTER, STATE>.Item successor  = featureToSuccessor.get(looser);
-					final int curr_score = successorToLosses.getOrDefault(looser, 0) + 1;
-					successorToLosses.put(successor, curr_score);
-				}
-			}
-		}
-		return successorToLosses;
-	}
+	// @Override
+	// public Map<IsEmptyHeuristic<LETTER, STATE>.Item, Integer>
+	// compareSuccessors(final List<IsEmptyHeuristic<LETTER, STATE>.Item> successors) {
+	// final Map<IsEmptyHeuristic<LETTER, STATE>.Item, Integer> successorToLosses = new HashMap<>();
+	// final Map<SMTFeature, IsEmptyHeuristic<LETTER, STATE>.Item> featureToSuccessor = new HashMap<>();
+	// if (successors.size() == 1) {
+	// successorToLosses.put(successors.get(0), 0);
+	// return successorToLosses;
+	// }
+	// // For each successor extract a SMTFeature, if the transition is of type IInternalAction
+	// successors.forEach(e -> {
+	// final LETTER trans = e.getTransition();
+	// UnmodifiableTransFormula transformula = null;
+	// // We only want to consider IInternalAction's
+	// if (trans instanceof IInternalAction) {
+	// transformula = ((IInternalAction) trans).getTransformula();
+	// featureToSuccessor.put(mFeatureExtractor.extractFeatureRaw(transformula.getFormula()), e);
+	// }
+	// });
+	//
+	// // Pairwise compare successors
+	// for (final Entry<SMTFeature, IsEmptyHeuristic<LETTER, STATE>.Item> entry1 : featureToSuccessor.entrySet()) {
+	// final SMTFeature feature1 = entry1.getKey();
+	// for (final Entry<SMTFeature, IsEmptyHeuristic<LETTER, STATE>.Item> entry2 : featureToSuccessor.entrySet()) {
+	// final SMTFeature feature2 = entry2.getKey();
+	// if (feature1 == feature2) {
+	// // do nothing
+	// } else {
+	// // We calculate which feature is worse and increase its number of losses.
+	// // In the end, the worst feature has the highest score.
+	// final SMTFeature looser = SMTFeature.chooseLooser(feature1, feature2);
+	// final IsEmptyHeuristic<LETTER, STATE>.Item successor = featureToSuccessor.get(looser);
+	// final int curr_score = successorToLosses.getOrDefault(looser, 0) + 1;
+	// successorToLosses.put(successor, curr_score);
+	// }
+	// }
+	// }
+	// return successorToLosses;
+	// }
 }

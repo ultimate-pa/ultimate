@@ -390,9 +390,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mUseHeuristicEmptinessCheck) {
 			final EmptinessCheckHeuristic<IPredicate, LETTER> heuristic =
 					new EmptinessCheckHeuristic<>(mLogger, mScoringMethod);
-			mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(mServices), abstraction, heuristic)
-					.getNestedRun();
-			checkIsEmptyHeuristic(abstraction);
+			mCounterexample =
+					new IsEmptyHeuristic<>(new AutomataLibraryServices(mServices), abstraction).getNestedRun();
+			assert checkIsEmptyHeuristic(abstraction) : "IsEmptyHeuristic did not match IsEmpty";
 
 		} else {
 			mCounterexample =
@@ -431,29 +431,36 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		return false;
 	}
 
-	private void checkIsEmptyHeuristic(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction)
+	private boolean checkIsEmptyHeuristic(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction)
 			throws AutomataOperationCanceledException {
-
-		final NestedRun<LETTER, IPredicate> isEmptyCounterexample =
+		final NestedRun<LETTER, IPredicate> isEmptyHeuristicCex = (NestedRun<LETTER, IPredicate>) mCounterexample;
+		final NestedRun<LETTER, IPredicate> isEmptyCex =
 				new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
 
-		if (mCounterexample == null && isEmptyCounterexample == null) {
-			mLogger.info("IsEmptyHeuristic and IsEmpty found no path.");
-		} else if (mCounterexample != null && isEmptyCounterexample == null) {
-			mLogger.warn("IsEmptyHeuristic found a path but IsEmpty did not.");
-			new PathProgramDumper(mIcfg, mServices, (NestedRun<? extends IAction, IPredicate>) mCounterexample,
-					"/tmp/dump/cex" + mCounterexample.hashCode() + ".bpl", InputMode.ICFG);
-		} else if (mCounterexample == null && isEmptyCounterexample != null) {
-			mLogger.warn("IsEmptyHeuristic found no path but IsEmpty did.");
-			new PathProgramDumper(mIcfg, mServices, isEmptyCounterexample,
-					"/tmp/dump/cex" + isEmptyCounterexample.hashCode() + ".bpl", InputMode.ICFG);
-		} else if (mCounterexample != null && isEmptyCounterexample != null) {
-			if (mCounterexample != isEmptyCounterexample) {
+		if (isEmptyHeuristicCex == null && isEmptyCex == null) {
+			return true;
+		} else if (isEmptyHeuristicCex != null && isEmptyCex == null) {
+			mLogger.fatal("IsEmptyHeuristic found a path but IsEmpty did not.");
+			mLogger.fatal("IsEmptyHeuristic: " + isEmptyHeuristicCex);
+			new PathProgramDumper(mIcfg, mServices, isEmptyHeuristicCex,
+					"/tmp/dump/cex" + isEmptyHeuristicCex.hashCode() + ".bpl", InputMode.ICFG);
+			return false;
+		} else if (isEmptyHeuristicCex == null && isEmptyCex != null) {
+			mLogger.fatal("IsEmptyHeuristic found no path but IsEmpty did.");
+			mLogger.fatal("IsEmpty         : " + isEmptyCex);
+			new PathProgramDumper(mIcfg, mServices, isEmptyCex, "/tmp/dump/cex" + isEmptyCex.hashCode() + ".bpl",
+					InputMode.ICFG);
+			return false;
+		} else if (isEmptyHeuristicCex != null && isEmptyCex != null) {
+			if (!NestedRun.isEqual(isEmptyHeuristicCex, isEmptyCex)) {
 				mLogger.info("IsEmptyHeuristic and IsEmpty found a path, but they differ");
-			} else {
-				mLogger.info("IsEmptyHeuristic and IsEmpty found the same path");
+				mLogger.info("IsEmptyHeuristic: " + isEmptyHeuristicCex);
+				mLogger.info("IsEmpty         : " + isEmptyCex);
 			}
+			return true;
 		}
+		mLogger.fatal("Should not happen");
+		return false;
 	}
 
 	private void checkForDangerInvariantAndReport() {

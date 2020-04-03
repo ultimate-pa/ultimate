@@ -1,7 +1,6 @@
 /*
  * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2019 Julian Löffler (loefflju@informatik.uni-freiburg.de), Breee@github
- * Copyright (C) 2017-2019 University of Freiburg
+ * Copyright (C) 2017 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
  *
@@ -37,7 +36,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -71,11 +69,26 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	private final Predicate<STATE> mIsForbiddenState;
 	private final NestedRun<LETTER, STATE> mAcceptingRun;
 	private final STATE mDummyEmptyStackState;
-	private final IHeuristic<STATE, LETTER> mHeuristic;
 
 	/**
 	 * Default constructor. Here we search a run from the initial states of the automaton to the final states of the
-	 * automaton.
+	 * automaton and use the zero heuristic.
+	 *
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            input NWA
+	 * @see #IsEmpty(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
+	 */
+	public IsEmptyHeuristic(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
+		this(services, operand, IHeuristic.getZeroHeuristic());
+	}
+
+	/**
+	 * Default constructor. Here we search a run from the initial states of the automaton to the final states of the
+	 * automaton and use the zero heuristic.
 	 *
 	 * @param services
 	 *            Ultimate services
@@ -112,7 +125,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		mOperand = operand;
 		mIsGoalState = funIsGoalState;
 		mIsForbiddenState = funIsForbiddenState;
-		mHeuristic = heuristic;
 		assert startStates != null;
 		assert mIsGoalState != null;
 		assert mIsForbiddenState != null;
@@ -140,46 +152,26 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	private NestedRun<LETTER, STATE> getAcceptingRun(final Collection<STATE> startStates,
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
 
-		return AStarDD(startStates, heuristic);
-	}
-
-	private NestedRun<LETTER, STATE> AStarDD(final Collection<STATE> startStates,
-			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
 		final HashedPriorityQueue<Item> worklist =
 				new HashedPriorityQueue<>((a, b) -> Double.compare(a.mExpectedCostToTarget, b.mExpectedCostToTarget));
-		final Set<Integer> closed = new HashSet<>();
+		final Set<Item> closed = new HashSet<>();
 
 		for (final STATE state : startStates) {
 			worklist.add(new Item(state));
 		}
 
 		while (!worklist.isEmpty()) {
-
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
 				throw new AutomataOperationCanceledException(rti);
 			}
-
 			final Item current = worklist.poll();
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("----");
-				mLogger.debug("Cur " + current);
-				mLogger.debug("HASH: " + current.hashCode());
-				// mLogger.debug(current.getHierPreState().hashCode() + "->" + current.mTargetState.hashCode());
-
-			}
-
 			if (mIsGoalState.test(current.mTargetState)) {
 				return current.constructRun();
 			}
 
 			final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current);
-			if (mLogger.isDebugEnabled()) {
-				final List<Integer> succHashes =
-						unvaluatedSuccessors.stream().map(m -> m.hashCode()).collect(Collectors.toList());
-				mLogger.debug("Successors: " + succHashes.toString());
-			}
 
 			for (final Item succ : unvaluatedSuccessors) {
 				final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
@@ -194,11 +186,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 				final double expectedCost = costSoFar
 						+ heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
-
 				final boolean rem = worklist.remove(succ);
-				if (!rem && !closed.add(succ.hashCode())) {
-					// if
-					mLogger.debug("REM " + rem);
+				if (!rem && !closed.add(succ)) {
 					continue;
 				}
 				succ.setExpectedCostToTarget(expectedCost);
@@ -207,69 +196,14 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				}
 				succ.setCostSoFar(costSoFar);
 				worklist.add(succ);
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("----");
-					mLogger.debug("Add " + succ);
-					mLogger.debug("SUCC " + succ);
-					mLogger.debug("SUCC HASH: " + succ.hashCode());
-					mLogger.debug("SUCC COST SO FAR: " + costSoFar);
-					mLogger.debug("SUCC EXPECTED COST " + expectedCost);
-				}
-
 			}
 		}
 		return null;
 	}
 
-	// WIP
-	/*
-	 * private NestedRun<LETTER, STATE> AStarSearchCompareSuccessors(final Collection<STATE> startStates, final
-	 * IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException { // Our worklist, contains all
-	 * states we have to explore. final HashedPriorityQueue<Item> workqueue = new HashedPriorityQueue<>((a, b) ->
-	 * Double.compare(a.mExpectedCostToTarget, b.mExpectedCostToTarget)); final HashSet<Integer> visitedStates = new
-	 * HashSet<>();
-	 *
-	 * // Add all initial states to a queue. for (final STATE state : startStates) { workqueue.add(new Item(state)); }
-	 *
-	 * while (!workqueue.isEmpty()) { if (!mServices.getProgressAwareTimer().continueProcessing()) { final String
-	 * taskDescription = "searching accepting run (input had " + mOperand.size() + " states)"; final RunningTaskInfo rti
-	 * = new RunningTaskInfo(getClass(), taskDescription); throw new AutomataOperationCanceledException(rti); } // Get
-	 * and remove item form worklist. final Item current = workqueue.poll(); visitedStates.add(current.hashCode());
-	 *
-	 * // Construct run if current state is goal. if (mIsGoalState.test(current.mTargetState)) { return
-	 * current.constructRun(); }
-	 *
-	 * if (mLogger.isDebugEnabled()) { mLogger.debug("----"); mLogger.debug("Cur " + current); mLogger.debug("HASH: " +
-	 * current.hashCode()); }
-	 *
-	 * final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current);
-	 *
-	 * // COMPARE_SUCCESSORS heuristic boolean compareSuccessors = false; Map<IsEmptyHeuristic<LETTER, STATE>.Item,
-	 * Integer> comparedSuccessors = Collections.emptyMap(); // TODO: Do not distinguish between heuristic types in this
-	 * class if (mHeuristic instanceof EmptinessCheckHeuristic<?, ?>) { if (((EmptinessCheckHeuristic<?, ?>)
-	 * mHeuristic).getScoringMethod() == ScoringMethod.COMPARE_FEATURES) { compareSuccessors = true; comparedSuccessors
-	 * = mHeuristic.compareSuccessors(unvaluatedSuccessors); } }
-	 *
-	 * for (final Item succ : unvaluatedSuccessors) {
-	 *
-	 * if (visitedStates.contains(succ.hashCode())) { continue; }
-	 *
-	 * if (!workqueue.contains(succ)) { workqueue.add(succ); if (mLogger.isDebugEnabled()) { mLogger.debug("Add " +
-	 * succ); } }
-	 *
-	 * // Set concrete cost. final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
-	 *
-	 * double expectedCost = 0; // COMPARE_SUCCESSORS heuristic if (compareSuccessors && !comparedSuccessors.isEmpty())
-	 * { expectedCost = costSoFar + comparedSuccessors.getOrDefault(succ, 0); } else { expectedCost = costSoFar +
-	 * heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition); }
-	 *
-	 * succ.setCostSoFar(costSoFar); succ.setExpectedCostToTarget(expectedCost);
-	 *
-	 * if (!succ.isLowest()) { continue; } succ.setCostSoFar(costSoFar); } } return null; }
-	 */
-
 	private List<Item> getUnvaluatedSuccessors(final Item current) {
 		final List<Item> rtr = new ArrayList<>();
+
 		// process internal transitions
 		for (final OutgoingInternalTransition<LETTER, STATE> transition : mOperand
 				.internalSuccessors(current.mTargetState)) {
@@ -278,7 +212,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (mIsForbiddenState.test(succ)) {
 				continue;
 			}
-			rtr.add(new Item(succ, current.mTargetState, symbol, current, ItemType.INTERNAL));
+			rtr.add(new Item(succ, current.getHierPreState(), symbol, current, ItemType.INTERNAL));
 		}
 
 		// process call transitions
@@ -337,13 +271,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				mLogger.warn("Emptiness not double checked ");
 			}
 		} else {
-			if (mLogger.isWarnEnabled()) {
-				mLogger.warn("Correctness of emptinessCheck not tested.");
-			}
-			correct = new Accepts<>(mServices, mOperand, mAcceptingRun.getWord()).getResult();
-			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Finished testing correctness of emptinessCheck");
-			}
+			correct = (new Accepts<>(mServices, mOperand, mAcceptingRun.getWord())).getResult();
 		}
 		return correct;
 	}
@@ -366,7 +294,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
-	public class Item implements Comparable<Item> {
+	private class Item implements Comparable<Item> {
 
 		private final STATE mTargetState;
 		private final Deque<STATE> mHierPreStates;
@@ -374,7 +302,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		private final Item mBackPointer;
 		private final ItemType mItemType;
 
-		// g-value, how much have we already ph payed?
+		// g-value, how much have we already payed?
 		private double mCostSoFar;
 		// h-value
 		private double mLowestExpectedCost;
@@ -382,7 +310,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		private double mExpectedCostToTarget;
 
 		/**
-		 * Create initial worklist item.^
+		 * Create initial worklist item.
 		 *
 		 * @param initialState
 		 */
@@ -418,12 +346,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			mTransition = letter;
 			mBackPointer = predecessor;
 			mItemType = symbolType;
-			setExpectedCostToTarget(Double.MAX_VALUE);
-			mLowestExpectedCost = Double.MAX_VALUE;
-		}
-
-		public LETTER getTransition() {
-			return mTransition;
+			setExpectedCostToTarget(Integer.MAX_VALUE);
+			mLowestExpectedCost = Integer.MAX_VALUE;
 		}
 
 		void setExpectedCostToTarget(final double value) {
@@ -515,9 +439,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + (mTargetState == null ? 0 : mTargetState.hashCode());
-			result = prime * result + (mHierPreStates == null ? 0 : mHierPreStates.peek().hashCode());
-			result = prime * result + (mTransition == null ? 0 : mTransition.hashCode());
+			result = prime * result + ((mTargetState == null) ? 0 : mTargetState.hashCode());
+			result = prime * result + ((mHierPreStates == null) ? 0 : mHierPreStates.hashCode());
+			result = prime * result + ((mTransition == null) ? 0 : mTransition.hashCode());
 			return result;
 		}
 
@@ -566,4 +490,33 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		}
 	}
 
+	/**
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 * @param <STATE>
+	 *            Type of states
+	 * @param <LETTER>
+	 *            Type of transitions
+	 */
+	public interface IHeuristic<STATE, LETTER> {
+
+		double getHeuristicValue(STATE state, STATE stateK, LETTER trans);
+
+		double getConcreteCost(LETTER trans);
+
+		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getZeroHeuristic() {
+			return new IHeuristic<STATE, LETTER>() {
+				@Override
+				public final double getHeuristicValue(final STATE state, final STATE stateK, final LETTER trans) {
+					return 0.0;
+				}
+
+				@Override
+				public final double getConcreteCost(final LETTER e) {
+					return 1.0;
+				}
+			};
+		}
+	}
 }

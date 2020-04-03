@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -27,12 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 
 /**
  * A run over a nested word.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -48,7 +49,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 
 	/**
 	 * Constructor with a nested word and a sequence of states.
-	 * 
+	 *
 	 * @param nestedWord
 	 *            nested word
 	 * @param stateSequence
@@ -66,7 +67,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 
 	/**
 	 * Constructor for a run of length 1.
-	 * 
+	 *
 	 * @param state
 	 *            the only state
 	 */
@@ -82,7 +83,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 
 	/**
 	 * Constructor for a run of length 2.
-	 * 
+	 *
 	 * @param state0
 	 *            first state
 	 * @param symbol
@@ -171,7 +172,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 
 	/**
 	 * Concatenate another nested run.
-	 * 
+	 *
 	 * @param run
 	 *            another nested run
 	 * @return new nested run being the concatenation
@@ -229,5 +230,35 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 				.append(BLANK);
 		// @formatter:on
 		return builder.toString();
+	}
+
+	/**
+	 * Check if two runs are the same.
+	 *
+	 * @return true iff both runs are null or both runs have equal states and equal symbols at the same positions, false
+	 *         otherwise.
+	 */
+	public static <LETTER, STATE> boolean isEqual(final NestedRun<LETTER, STATE> runA,
+			final NestedRun<LETTER, STATE> runB) {
+		if (runA == null || runB == null) {
+			return runA == null && runB == null;
+		}
+		if (runA.getLength() != runB.getLength()) {
+			return false;
+		}
+		for (int i = 0; i < runA.getLength(); ++i) {
+			final STATE stateA = runA.getStateAtPosition(i);
+			final STATE stateB = runB.getStateAtPosition(i);
+			if (!Objects.equals(stateA, stateB)) {
+				return false;
+			}
+			final LETTER symbolA = runA.getSymbol(i);
+			final LETTER symbolB = runB.getSymbol(i);
+			if (!Objects.equals(symbolA, symbolB)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }
