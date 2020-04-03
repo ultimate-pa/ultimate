@@ -512,8 +512,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 				}
 				final long start = System.nanoTime();
 				try {
-					dpod = new DifferencePairwiseOnDemand<>(
-							new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
+					dpod = new DifferencePairwiseOnDemand<>(new AutomataLibraryServices(mServices),
 							(IPetriNet<LETTER, IPredicate>) mAbstraction, raw, universalSubtrahendLoopers);
 				} catch (final AutomataOperationCanceledException tce) {
 					final String taskDescription = generateOnDemandEnhancementCanceledMessage(interpolAutomaton,

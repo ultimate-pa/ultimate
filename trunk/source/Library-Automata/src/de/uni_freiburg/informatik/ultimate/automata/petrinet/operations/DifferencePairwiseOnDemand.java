@@ -80,7 +80,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 	private DifferencePetriNet mDifference;
 
 	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> DifferencePairwiseOnDemand(
-			final AutomataLibraryServices services, final SF factory, final IPetriNet<LETTER, PLACE> minuendNet,
+			final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> minuendNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa,
 			final Set<LETTER> userProvidedUniversalSubtrahendLoopers)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
@@ -143,7 +143,7 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 			final AutomataLibraryServices services, final SF factory, final IPetriNet<LETTER, PLACE> minuendNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		this(services, factory, minuendNet, subtrahendDfa, null);
+		this(services, minuendNet, subtrahendDfa, null);
 	}
 
 	public Map<ITransition<LETTER, PLACE>, ITransition<LETTER, PLACE>> getTransitionBacktranslation() {
