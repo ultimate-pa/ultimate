@@ -127,7 +127,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 	 */
 	private static final int DEBUG_DUMP_DRYRUNRESULT_THRESHOLD = 24 * 60 * 60;
 
-	private static final boolean USE_COUNTEREXAMPLE_CACHE = false;
+	private static final boolean USE_COUNTEREXAMPLE_CACHE = true;
 
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
@@ -213,7 +213,7 @@ public class CegarLoopForPetriNet<LETTER extends IIcfgTransition<?>> extends Bas
 
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
-		if (USE_COUNTEREXAMPLE_CACHE && mIteration != 1) {
+		if (USE_COUNTEREXAMPLE_CACHE && mIteration != 0) {
 			mCounterexample = mCounterexampleCache.getCounterexample();
 		} else {
 			final BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
