@@ -246,19 +246,21 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE> {
 		if (runA.getLength() != runB.getLength()) {
 			return false;
 		}
-		for (int i = 0; i < runA.getLength(); ++i) {
+		final int length = runA.getLength();
+		for (int i = 0; i < length; ++i) {
 			final STATE stateA = runA.getStateAtPosition(i);
 			final STATE stateB = runB.getStateAtPosition(i);
 			if (!Objects.equals(stateA, stateB)) {
 				return false;
 			}
-			final LETTER symbolA = runA.getSymbol(i);
-			final LETTER symbolB = runB.getSymbol(i);
-			if (!Objects.equals(symbolA, symbolB)) {
-				return false;
+			if (i < length - 1) {
+				final LETTER symbolA = runA.getSymbol(i);
+				final LETTER symbolB = runB.getSymbol(i);
+				if (!Objects.equals(symbolA, symbolB)) {
+					return false;
+				}
 			}
 		}
-
 		return true;
 	}
 }
