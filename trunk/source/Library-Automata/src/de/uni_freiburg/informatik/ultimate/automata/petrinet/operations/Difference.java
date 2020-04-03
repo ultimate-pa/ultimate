@@ -190,7 +190,7 @@ public final class Difference
 		if (inputDpod == null && COMPUTE_DIFFERENCE_SYNCHRONIZATION_INFORMATION_VIA_UNFOLDING) {
 			dpod = new DifferencePairwiseOnDemand<>(mServices, null, originalMinuend, subtrahendDfa);
 		} else {
-			dpod = null;
+			dpod = inputDpod;
 		}
 		if (!COMPUTE_DIFFERENCE_SYNCHRONIZATION_INFORMATION_VIA_UNFOLDING) {
 			if (mRemoveRedundantFlow) {
