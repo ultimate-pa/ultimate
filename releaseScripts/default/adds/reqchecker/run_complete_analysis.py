@@ -513,6 +513,7 @@ def extract_vacuity_run_ultimate_sbe(args, tmp_req_file, vac_req_id, pb):
     cmd += create_reqchecker_cli_args(args, dump_folder_sbe)
     cmd += [
         '--rcfgbuilder.size.of.a.code.block', 'SingleStatement',
+        '--pea2boogie.check.rt-inconsistency', 'false',
     ]
     ultimate_process = call(cmd)
     pb.set_description(
@@ -607,7 +608,6 @@ def create_reqchecker_cli_args(args, dump_folder):
         '--pea2boogie.always.use.all.invariants.during.rt-inconsistency.checks', 'true',
         '--pea2boogie.check.vacuity', 'true',
         '--pea2boogie.check.consistency', 'true',
-        '--pea2boogie.check.rt-inconsistency', 'true',
         '--pea2boogie.report.trivial.rt-consistency', 'false',
         '--pea2boogie.rt-inconsistency.range', str(args.rt_inconsistency_range),
     ]
@@ -639,6 +639,7 @@ def handle_analyze_requirements(args):
     cmd += create_reqchecker_cli_args(args, dump_folder)
     cmd += [
         '--rcfgbuilder.size.of.a.code.block', 'LoopFreeBlock',
+        '--pea2boogie.check.rt-inconsistency', 'true',
     ]
 
     ultimate_process = call(cmd)
