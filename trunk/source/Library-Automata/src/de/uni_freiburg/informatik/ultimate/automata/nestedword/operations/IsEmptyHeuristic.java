@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -238,12 +237,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (mIsForbiddenState.test(succ)) {
 				continue;
 			}
-
-			STATE stateKk = current.findHierPredecessor();
-			if (stateKk == null) {
-				stateKk = mDummyEmptyStackState;
-			}
-			rtr.add(new Item(succ, stateKk, symbol, current, ItemType.RETURN));
+			// hierachical predecessor will be taken from current
+			rtr.add(new Item(succ, null, symbol, current, ItemType.RETURN));
 		}
 
 		return rtr;
@@ -372,15 +367,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		public STATE getHierPreState() {
 			return mHierPreStates.peek();
-		}
-
-		public STATE findHierPredecessor() {
-			if (mHierPreStates.size() < 2) {
-				return null;
-			}
-			final Iterator<STATE> iter = mHierPreStates.iterator();
-			iter.next();
-			return iter.next();
 		}
 
 		public NestedRun<LETTER, STATE> constructRun() {

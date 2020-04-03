@@ -111,7 +111,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramDumper.InputMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
@@ -442,14 +441,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		} else if (isEmptyHeuristicCex != null && isEmptyCex == null) {
 			mLogger.fatal("IsEmptyHeuristic found a path but IsEmpty did not.");
 			mLogger.fatal("IsEmptyHeuristic: " + isEmptyHeuristicCex);
-			new PathProgramDumper(mIcfg, mServices, isEmptyHeuristicCex,
-					"/tmp/dump/cex" + isEmptyHeuristicCex.hashCode() + ".bpl", InputMode.ICFG);
 			return false;
 		} else if (isEmptyHeuristicCex == null && isEmptyCex != null) {
 			mLogger.fatal("IsEmptyHeuristic found no path but IsEmpty did.");
 			mLogger.fatal("IsEmpty         : " + isEmptyCex);
-			new PathProgramDumper(mIcfg, mServices, isEmptyCex, "/tmp/dump/cex" + isEmptyCex.hashCode() + ".bpl",
-					InputMode.ICFG);
 			return false;
 		} else if (isEmptyHeuristicCex != null && isEmptyCex != null) {
 			if (!NestedRun.isEqual(isEmptyHeuristicCex, isEmptyCex)) {
