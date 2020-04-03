@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
-import argparse
 import atexit
+import sys
+
+import argparse
 import logging
 import os
 import pathlib
@@ -10,12 +12,10 @@ import re
 import shutil
 import signal
 import subprocess
-import sys
 import tempfile
 import traceback
-from typing import Optional, List
-
 from tqdm import tqdm
+from typing import Optional, List
 
 
 class _ExitCode:
@@ -478,24 +478,27 @@ def extract_vacuity_reasons(args, dump_folder, vacuous_reqs):
         vac_req_ids_pb.set_description(('Phase 3: Extracting vacuity reasons for {}'.format(vac_req_id)))
         relevant_req_ids = extract_vacuity_reason(args, dump_folder, req_ids, vac_req_id)
 
-        # create new .req file only containing relevant requirements
-        tmp_req_file = os.path.join(dump_folder, args.req_basename + '.' + vac_req_id + '.vac.req')
-        extract_vacuity_project_reqs(args, req_ids, relevant_req_ids, tmp_req_file)
+        # create new .req file only containing relevant requirements from LBE
+        tmp_req_file_lbe = os.path.join(dump_folder, args.req_basename + '.' + vac_req_id + '.lbe.vac.req')
+        extract_vacuity_project_reqs(args, req_ids, relevant_req_ids, tmp_req_file_lbe)
 
         # run ultimate with small block encoding (SBE) on new .req file
-        dump_folder_sbe = extract_vacuity_run_ultimate_sbe(args, tmp_req_file, vac_req_id, vac_req_ids_pb)
+        dump_folder_sbe = extract_vacuity_run_ultimate_sbe(args, tmp_req_file_lbe, vac_req_id, vac_req_ids_pb)
 
         # re-analyze the results of the SBE ultimate run
         relevant_req_ids = extract_vacuity_reason(args, dump_folder_sbe, req_ids, vac_req_id)
-        extract_vacuity_project_reqs(args, req_ids, relevant_req_ids, tmp_req_file)
 
-        # move the resulting projected file to the log folder
-        shutil.move(tmp_req_file, os.path.join(args.output, os.path.basename(tmp_req_file)))
+        # create new .req file only containing relevant requirements from SBE
+        tmp_req_file_sbe = os.path.join(dump_folder, args.req_basename + '.' + vac_req_id + '.vac.req')
+        extract_vacuity_project_reqs(args, req_ids, relevant_req_ids, tmp_req_file_sbe)
+
+        # move the SBE .req file to the log folder
+        shutil.move(tmp_req_file_sbe, os.path.join(args.output, os.path.basename(tmp_req_file_sbe)))
 
 
-def extract_vacuity_project_reqs(args, req_ids, relevant_req_ids, tmp_req_file):
+def extract_vacuity_project_reqs(args, req_ids, relevant_req_ids, target_req_file):
     irrelevant_req_ids = req_ids.difference(relevant_req_ids)
-    with open(args.input, 'r') as source, open(tmp_req_file, 'w') as target:
+    with open(args.input, 'r') as source, open(target_req_file, 'w') as target:
         for line in source:
             if any(id in line for id in irrelevant_req_ids):
                 continue
