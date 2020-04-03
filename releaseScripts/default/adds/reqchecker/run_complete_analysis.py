@@ -32,7 +32,7 @@ class _ExitCode:
     def __getattr__(self, name):
         if name in _ExitCode._exit_codes:
             return _ExitCode._exit_codes.index(name)
-        raise AttributeError("Exit code %s not found" % name)
+        raise AttributeError(f"Exit code {name} not found")
 
 
 class SimpleMatcher:
@@ -69,7 +69,7 @@ class ExplodeAssertions:
                     no_par_op = ''
             elif c == ')':
                 if len(pstack) == 0:
-                    raise IndexError("No matching closing parenthesis at index {} for input line {}".format(str(i), s))
+                    raise IndexError(f"No matching closing parenthesis at index {str(i)} for input line {s}")
                 j = pstack.pop()
                 if len(pstack) == 0:
                     operands.append(s[j:i + 1])
@@ -84,7 +84,7 @@ class ExplodeAssertions:
 
         if len(pstack) > 0:
             raise IndexError(
-                "No matching opening parenthesis at index {} for input line {}".format(str(pstack.pop()), s))
+                f"No matching opening parenthesis at index {str(pstack.pop())} for input line {s}")
         if no_par_op != '':
             operands.append(no_par_op.strip())
         return operands
@@ -112,11 +112,11 @@ class ExplodeAssertions:
                         continue
                     asserts = self.split_and(formula)
                     if len(asserts) == 1:
-                        o.write('(assert (! {} :named {}))\n'.format(asserts[0], name))
+                        o.write(f'(assert (! {asserts[0]} :named {name}))\n')
                     else:
                         i = 0
                         for sub in asserts:
-                            o.write('(assert (! {} :named {}))\n'.format(sub, name + '_' + str(i)))
+                            o.write(f'(assert (! {sub} :named {name + "_" + str(i)}))\n')
                             i = i + 1
                 else:
                     o.write(line)
@@ -222,7 +222,7 @@ def set_complex_arg_defaults(args):
         else:
             args.z3 = os.path.join(os.path.abspath(args.ultimate_dir), 'z3')
         if not os.path.exists(args.z3):
-            raise ValueError("z3 instance does not exists at \"{}\". Consider setting \"--z3\".".format(args.z3))
+            raise ValueError(f"z3 instance does not exists at \"{args.z3}\". Consider setting \"--z3\".")
 
     create_dirs_if_necessary(args, [args.output, args.tmp_dir])
     args.reqcheck_log = os.path.join(req_folder, req_filename + '.log')
@@ -241,7 +241,7 @@ def token_string_or_file(arg):
 
 def check_dir(arg):
     if not os.path.exists(arg):
-        msg = "Directory {} does not exist".format(arg)
+        msg = f"Directory {arg} does not exist"
         print(msg)
         raise argparse.ArgumentError(msg)
     return arg
@@ -249,7 +249,7 @@ def check_dir(arg):
 
 def check_file(arg):
     if not os.path.isfile(arg):
-        msg = "{} does not exist or is not a file".format(arg)
+        msg = f"{arg} does not exist or is not a file"
         print(msg)
         raise argparse.ArgumentError(msg)
     return arg
@@ -260,7 +260,7 @@ def create_dirs_if_necessary(args, dirs):
         if os.path.isdir(d):
             continue
 
-        if not confirm_if_necessary(args, 'Directory {} does not exist, should I create it?'.format(d)):
+        if not confirm_if_necessary(args, f'Directory {d} does not exist, should I create it?'):
             sys.exit(ExitCode.USER_DO_NOT_CREATE_DIR)
 
         os.makedirs(d)
@@ -268,13 +268,13 @@ def create_dirs_if_necessary(args, dirs):
 
 def delete_dir_if_necessary(args, d):
     if os.path.isfile(d):
-        logging.fatal("Will not delete file {}".format(d))
+        logging.fatal(f"Will not delete file {d}")
         sys.exit(ExitCode.FAIL_FILE_AS_DIR)
 
     if not os.path.isdir(d):
         return
 
-    if not confirm_if_necessary(args, 'Directory {} exists, should I delete it?'.format(d)):
+    if not confirm_if_necessary(args, f'Directory {d} exists, should I delete it?'):
         sys.exit(ExitCode.USER_DO_NOT_DELETE_DIR)
 
     shutil.rmtree(d)
@@ -284,7 +284,7 @@ def delete_file_if_necessary(args, file):
     if not os.path.isfile(file):
         return
 
-    if not confirm_if_necessary(args, 'File {} exists, should I delete it?'.format(file)):
+    if not confirm_if_necessary(args, f'File {file} exists, should I delete it?'):
         sys.exit(ExitCode.USER_DO_NOT_DELETE_FILE)
 
     os.remove(file)
@@ -308,7 +308,7 @@ def call(call_args: Optional[List[str]]):
             child_process = subprocess.Popen(call_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                              stderr=subprocess.STDOUT, shell=False)
     except Exception as ex:
-        logger.fatal('Error trying to open subprocess {}'.format(str(call_args)))
+        logger.fatal(f'Error trying to open subprocess {str(call_args)}')
         logger.fatal(ex)
         sys.exit(ExitCode.FAIL_SUBPROCESS)
     global running_processes
@@ -337,9 +337,9 @@ def confirm(prompt=None, default_response=False) -> bool:
     if prompt is None:
         prompt = 'Confirm'
     if default_response:
-        prompt = '%s [%s]|%s: ' % (prompt, 'y', 'n')
+        prompt = f'{prompt} [{"y"}]|{"n"}: '
     else:
-        prompt = '%s [%s]|%s: ' % (prompt, 'n', 'y')
+        prompt = f'{prompt} [{"n"}]|{"y"}: '
 
     while True:
         ans = input(prompt)
@@ -361,14 +361,14 @@ def confirm_if_necessary(args, prompt: str = None, default_response: bool = Fals
 
 
 def signal_handler(sig, frame):
-    print('Killed by {}'.format(sig))
+    print(f'Killed by {sig}')
     cleanup_subprocesses()
     sys.exit(ExitCode.FAIL_SIGNAL)
 
 
 def cleanup_subprocesses():
     for subp in running_processes:
-        print('Killing left-over subprocess {}'.format(subp.pid))
+        print(f'Killing left-over subprocess {subp.pid}')
         subp.kill()
 
 
@@ -381,8 +381,7 @@ def update_line(subp, logfile=None):
             logger.debug('Execution finished normally')
         else:
             logger.error(
-                'Execution of {} (PID {}) finished with exit code {}'.format(
-                    " ".join(subp.args), subp.pid, str(subp.returncode)))
+                f'Execution of {" ".join(subp.args)} (PID {subp.pid}) finished with exit code {str(subp.returncode)}')
             global running_processes
         running_processes.remove(subp)
         return None, True
@@ -405,7 +404,7 @@ def create_and_update_progress_bar_phase1(line, counter, total, progress_bar):
         progress_bar.set_description('Phase 1: Creating rt-inconsistency checks')
     elif re_phase1_progress.match(line):
         finished = total - int(re_phase1_progress.group(1))
-        progress_bar.update(finished-counter)
+        progress_bar.update(finished - counter)
         counter = finished
     elif re_phase1_end.match(line):
         progress = int(re_phase1_end.group(1))
@@ -424,7 +423,7 @@ def create_and_update_progress_bar_phase2(line, counter, total, progress_bar, de
         progress_bar.set_description(desc)
     elif re_phase2_description.match(line):
         progress_bar.set_description(
-            '{} {} for requirement {}'.format(desc, re_phase2_description.group(1), re_phase2_description.group(2))
+            f'{desc} {re_phase2_description.group(1)} for requirement {re_phase2_description.group(2)}'
         )
     elif re_phase2_progress.match(line):
         progress = int(re_phase2_progress.group(3))
@@ -471,7 +470,7 @@ def extract_vacuity_reasons(args, dump_folder, vacuous_reqs):
         for line in req_file.readlines():
             if re_req_id.match(line):
                 req_ids.add(re_req_id.group(1))
-    logger.debug('Identified requirement ids {}'.format(req_ids))
+    logger.debug(f'Identified requirement ids {req_ids}')
 
     # extract vacuity reasons for each vacuous requirement
     vac_req_ids_pb = tqdm(vac_req_ids)
@@ -514,7 +513,7 @@ def extract_vacuity_run_ultimate_sbe(args, tmp_req_file, vac_req_id, pb):
     ]
     ultimate_process = call(cmd)
     pb.set_description(
-        'Phase 3: Running ReqChecker for vacuity analysis of {} with PID {}'.format(vac_req_id, ultimate_process.pid))
+        f'Phase 3: Running ReqChecker for vacuity analysis of {vac_req_id} with PID {ultimate_process.pid}')
     with open(logfile_name, 'w') as logfile:
         while True:
             line, end_reached = update_line(ultimate_process, logfile)
@@ -529,7 +528,7 @@ def extract_vacuity_reason(args, dump_folder, req_ids, vac_req_id):
     for file in os.listdir(dump_folder):
         name = os.path.basename(file)
         if file.endswith('.smt2') and 'VAC' in name and vac_req_id in name:
-            logger.debug('Collected {} for {}'.format(file, vac_req_id))
+            logger.debug(f'Collected {file} for {vac_req_id}')
             smt_files += [os.path.join(dump_folder, file)]
     # compute the set of relevant requirements for each .smt2 file
     relevant_req_ids = set()
@@ -549,19 +548,18 @@ def extract_vacuity_reason(args, dump_folder, req_ids, vac_req_id):
         ssas = set([ssa.rstrip() for rel_line in relevant_lines for ssa in
                     rel_line.replace('(', '').replace(')', '').split(' ')])
 
-        logger.debug('Looking for unsat core SSAs {} in {}'.format(ssas, tmp_smt_filename))
+        logger.debug(f'Looking for unsat core SSAs {ssas} in {tmp_smt_filename}')
 
         with open(tmp_smt_filename, 'r') as tmp_smt_file:
             for assertion in [line for line in tmp_smt_file.readlines() if
                               any(ssa in line for ssa in ssas)]:
                 relevant_req_ids.update([id for id in req_ids if id in assertion])
 
-    logger.debug('Found {} requirements relevant for vacuity of {}'.format(len(relevant_req_ids), vac_req_id))
-    logger.debug('Relevant requirements for {} are {}'.format(vac_req_id, relevant_req_ids))
+    logger.debug(f'Found {len(relevant_req_ids)} requirements relevant for vacuity of {vac_req_id}')
+    logger.debug(f'Relevant requirements for {vac_req_id} are {relevant_req_ids}')
     if vac_req_id not in relevant_req_ids:
         logger.error(
-            '{} is not in the list of relevant requirement ids {], something is wrong!'.format(
-                vac_req_id, relevant_req_ids)
+            f'{vac_req_id} is not in the list of relevant requirement ids {relevant_req_ids}, something is wrong!'
         )
     return relevant_req_ids
 
@@ -627,12 +625,12 @@ def handle_analyze_requirements(args):
     os.chdir(args.ultimate_dir)
     delete_dir_if_necessary(args, args.tmp_dir)
     dump_folder = os.path.join(args.tmp_dir, 'dump', args.req_basename)
-    logger.info('Creating dump folder {}'.format(dump_folder))
+    logger.info(f'Creating dump folder {dump_folder}')
     pathlib.Path(dump_folder).mkdir(parents=True, exist_ok=True)
     delete_file_if_necessary(args, args.reqcheck_log)
 
-    logger.info('Analyzing {}'.format(args.input))
-    logger.info('Using logfile {}'.format(args.reqcheck_log))
+    logger.info(f'Analyzing {args.input}')
+    logger.info(f'Using logfile {args.reqcheck_log}')
 
     cmd = create_common_ultimate_cli_args(args, args.reqcheck_toolchain, args.reqcheck_settings, args.input)
     cmd += create_reqchecker_cli_args(args, dump_folder)
@@ -655,7 +653,7 @@ def handle_analyze_requirements(args):
     phase1_total = 0
     phase2_counter = 0
     phase2_total = 0
-    logger.info('Started ReqChecker with PID {}'.format(ultimate_process.pid))
+    logger.info(f'Started ReqChecker with PID {ultimate_process.pid}')
     with open(args.reqcheck_log, 'w', buffering=1) as logfile:
         line = ""
         while True:
@@ -675,7 +673,7 @@ def handle_analyze_requirements(args):
                 line, phase2_counter, phase2_total, progress_bar, "Phase 2: Checking assertion(s)"
             )
 
-    logger.info('Extracting results to {}'.format(args.reqcheck_relevant_log))
+    logger.info(f'Extracting results to {args.reqcheck_relevant_log}')
     with open(args.reqcheck_relevant_log, 'w+') as relevant_logfile:
         relevant_logfile.write("".join(relevant_log))
 
@@ -690,7 +688,7 @@ def handle_analyze_requirements(args):
 
 def handle_generate_tests(args):
     logger.info('Running test generation')
-    logger.info('Using logfile {}'.format(args.testgen_log))
+    logger.info(f'Using logfile {args.testgen_log}')
 
     cmd = create_common_ultimate_cli_args(args, args.testgen_toolchain, args.testgen_settings, args.input)
     cmd += [
@@ -705,7 +703,7 @@ def handle_generate_tests(args):
     counter = 0
     total = 0
     progress_bar = None
-    logger.info('Started ReqChecker with PID {}'.format(ultimate_process.pid))
+    logger.info(f'Started ReqChecker with PID {ultimate_process.pid}')
     with open(args.testgen_log, 'w') as logfile, open(args.testgen_relevant_log, 'w') as relevant_logfile:
         while (True):
             line, end_reached = update_line(ultimate_process, logfile)
