@@ -97,9 +97,7 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 		final PredicateFactoryRefinement factory = new PredicateFactoryRefinement(mServices, managedScript,
 				predicateFactory, false, Collections.emptySet());
 		final List<INestedWordAutomaton<LETTER, IPredicate>> automata = new ArrayList<>();
-		final Term trueTerm = managedScript.getScript().term("true");
-		INestedWordAutomaton<LETTER, IPredicate> mhbAutomaton =
-				automatonBuilder.buildMhbAutomaton(x -> predicateFactory.newSPredicate(null, trueTerm));
+		INestedWordAutomaton<LETTER, IPredicate> mhbAutomaton = automatonBuilder.buildMhbAutomaton(predicateFactory);
 		NestedRun<LETTER, ?> counterexample = new IsEmpty<>(mAutomataServices, mhbAutomaton).getNestedRun();
 		int iteration = 0;
 		McrTraceCheckResult<LETTER> result = null;
@@ -183,9 +181,9 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 	@Override
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
 		switch (isCorrect()) {
-		case SAT:
+		case UNSAT:
 			return new InterpolantComputationStatus();
-		case UNKNOWN:
+		case SAT:
 			return new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
 		default:
 			throw new UnsupportedOperationException();

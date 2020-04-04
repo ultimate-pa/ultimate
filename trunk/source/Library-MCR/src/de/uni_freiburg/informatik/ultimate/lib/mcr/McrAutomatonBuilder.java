@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -42,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -151,8 +151,8 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		return mThreadAutomata;
 	}
 
-	public NestedWordAutomaton<LETTER, IPredicate>
-			buildMhbAutomaton(final Function<String, IPredicate> predicateProvider) throws AutomataLibraryException {
+	public NestedWordAutomaton<LETTER, IPredicate> buildMhbAutomaton(final PredicateFactory predicateFactory)
+			throws AutomataLibraryException {
 		if (mMhbAutomaton == null) {
 			mMhbAutomaton = new NestedWordAutomaton<>(mAutomataServices, mAlphabet, mEmptyStackFactory);
 			final INestedWordAutomaton<Integer, String> intAutomaton =
@@ -161,8 +161,10 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final Set<String> finalStates = new HashSet<>(intAutomaton.getFinalStates());
 			final LinkedList<String> queue = new LinkedList<>(finalStates);
 			final Map<String, IPredicate> states2Predicates = new HashMap<>();
+			final Term trueTerm = mManagedScript.getScript().term("true");
 			for (final String state : intAutomaton.getStates()) {
-				final IPredicate predicate = predicateProvider.apply(state);
+				// final IPredicate predicate = predicateFactory.newDebugPredicate(state);
+				final IPredicate predicate = predicateFactory.newSPredicate(null, trueTerm);
 				states2Predicates.put(state, predicate);
 				mMhbAutomaton.addState(initialStates.contains(state), finalStates.contains(state), predicate);
 			}
@@ -175,7 +177,8 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				for (final IncomingInternalTransition<Integer, String> edge : intAutomaton
 						.internalPredecessors(state)) {
 					final LETTER letter = mOriginalTrace.get(edge.getLetter());
-					mMhbAutomaton.addInternalTransition(states2Predicates.get(edge.getPred()), letter, states2Predicates.get(state));
+					mMhbAutomaton.addInternalTransition(states2Predicates.get(edge.getPred()), letter,
+							states2Predicates.get(state));
 					queue.add(edge.getPred());
 				}
 			}
