@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class HistoryRecordingScript extends WrapperScript {
+public class HistoryRecordingScript extends WrapperScript {
 
 	private final Deque<ISmtDeclarable> mHistory;
 	private final Map<String, ISmtDeclarable> mSymbolTable;
@@ -206,7 +206,7 @@ public final class HistoryRecordingScript extends WrapperScript {
 	 */
 	public static HistoryRecordingScript extractHistoryRecordingScript(final Script script) {
 		if (script instanceof HistoryRecordingScript) {
-			return ((HistoryRecordingScript) script);
+			return (HistoryRecordingScript) script;
 		}
 		if (script instanceof WrapperScript) {
 			return ((WrapperScript) script).findBacking(HistoryRecordingScript.class);

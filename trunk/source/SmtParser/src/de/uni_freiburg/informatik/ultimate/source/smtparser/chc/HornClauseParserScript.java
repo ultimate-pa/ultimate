@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscri
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -83,7 +84,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HornClauseParserScript extends NoopScript implements INonSolverScript {
+public class HornClauseParserScript extends HistoryRecordingScript implements INonSolverScript {
 
 	private final String M_COMPLEX_TERM = "sbcnst";
 	private final String M_REPEATING_VARS = "sbrptng";
@@ -121,6 +122,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 
 	public HornClauseParserScript(final IUltimateServiceProvider services, final ILogger logger, final String filename,
 			final ManagedScript smtSolverScript, final Logics logic) {
+		super(new NoopScript());
 		mServices = services;
 		mLogger = logger;
 		mFilename = filename;
