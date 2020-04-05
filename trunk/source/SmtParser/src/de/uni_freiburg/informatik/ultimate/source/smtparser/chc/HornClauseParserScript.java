@@ -27,16 +27,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.source.smtparser.chc;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -60,9 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet.UnletType;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -71,13 +68,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.source.smtparser.Activator;
 import de.uni_freiburg.informatik.ultimate.source.smtparser.SmtParserPreferenceInitializer;
@@ -120,7 +115,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	private boolean mSawCheckSat = false;
 	private boolean mFinished;
 
-	private final Stack<Triple<String, List<String>, List<Term>>> mSimplificationStack;
+	private final Deque<Triple<String, List<String>, List<Term>>> mSimplificationStack;
 
 	private final IPreferenceProvider mPreferences;
 
@@ -131,7 +126,6 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 		mFilename = filename;
 		mBackendSmtSolver = smtSolverScript;
 		mLogic = logic;
-		setupBackendSolver();
 		mDeclaredPredicateSymbols = new HashSet<>();
 
 		mManagedScript = new ManagedScript(services, this);
@@ -140,7 +134,7 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 
 		mSymbolTable = new HcSymbolTable(this, mBackendSmtSolver);
 
-		mSimplificationStack = new Stack<>();
+		mSimplificationStack = new ArrayDeque<>();
 
 		mPreferences = services.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
@@ -157,46 +151,13 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 		return HornClauseAST.create(annot);
 	}
 
-	/**
-	 * Make the necessary settings in the background solver, like set-logic etc.
-	 *
-	 * @param smtSolverScript
-	 */
-	private void setupBackendSolver() {
-
-		// mBackendSmtSolver.setLogic(Logics.AUFLIRA); //TODO: do this according
-		// to a setting
-
-		// TODO possibly set some options etc.
-	}
-
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException {
-		assert logic.equals("HORN") : "Error: the SmtParser-setting HornSolverMode is set, "
-				+ "but the smt2 file sets the logic to something other than HORN";
 		if (!logic.equals("HORN")) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Error: the SmtParser-setting HornSolverMode is set, "
+					+ "but the smt2 file sets the logic to something other than HORN");
 		}
-
 		super.setLogic(mLogic);
-	}
-
-	@Override
-	public void setLogic(final Logics logic) throws UnsupportedOperationException {
-		super.setLogic(logic);
-	}
-
-	@Override
-	public void setOption(final String opt, final Object value) throws UnsupportedOperationException, SMTLIBException {
-		// just handing it over to the backend solver
-		super.setOption(opt, value);
-		// mBackendSmtSolver.setOption(opt, value);
-	}
-
-	@Override
-	public void declareSort(final String sort, final int arity) throws SMTLIBException {
-		super.declareSort(sort, arity);
-		// mBackendSmtSolver.declareSort(sort, arity);
 	}
 
 	@Override
@@ -431,36 +392,6 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	}
 
 	@Override
-	public QuotedObject echo(final QuotedObject msg) {
-		// TODO possibly just write it through the logger..
-		return super.echo(msg);
-	}
-
-	@Override
-	public Sort sort(final String sortname, final Sort... params) throws SMTLIBException {
-		return super.sort(sortname, params);
-		// return mBackendSmtSolver.sort(sortname, params);
-	}
-
-	@Override
-	public Sort sort(final String sortname, final String[] indices, final Sort... params) throws SMTLIBException {
-		return super.sort(sortname, indices, params);
-		// return mBackendSmtSolver.sort(sortname, indices, params);
-	}
-
-	@Override
-	public Sort[] sortVariables(final String... names) throws SMTLIBException {
-		// return mBackendSmtSolver.sortVariables(names);
-		return super.sortVariables(names);
-	}
-
-	@Override
-	public Term term(final String funcname, final Term... params) throws SMTLIBException {
-		// return mBackendSmtSolver.term(funcname, params);
-		return super.term(funcname, params);
-	}
-
-	@Override
 	public Term term(final String funcname, final String[] indices, final Sort returnSort, final Term... params)
 			throws SMTLIBException {
 
@@ -490,177 +421,6 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 	}
 
 	@Override
-	public Theory getTheory() {
-		// TODO: maybe return the theory of the backend solver
-		return super.getTheory();
-	}
-
-	@Override
-	public void setInfo(final String info, final Object value) {
-		// TODO Auto-generated method stub
-		super.setInfo(info, value);
-	}
-
-	@Override
-	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition) throws SMTLIBException {
-		super.defineSort(sort, sortParams, definition);
-		// mBackendSmtSolver.defineSort(sort, sortParams, definition);
-	}
-
-	@Override
-	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
-			throws SMTLIBException {
-		// TODO Auto-generated method stub
-		super.defineFun(fun, params, resultSort, definition);
-	}
-
-	@Override
-	public void push(final int levels) {
-		// TODO Auto-generated method stub
-		super.push(levels);
-	}
-
-	@Override
-	public void pop(final int levels) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		super.pop(levels);
-	}
-
-	@Override
-	public Term[] getAssertions() throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return super.getAssertions();
-	}
-
-	@Override
-	public Term getProof() throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return super.getProof();
-	}
-
-	@Override
-	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return super.getUnsatCore();
-	}
-
-	@Override
-	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return super.getValue(terms);
-	}
-
-	@Override
-	public Assignments getAssignment() throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return super.getAssignment();
-	}
-
-	@Override
-	public Object getOption(final String opt) throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return super.getOption(opt);
-	}
-
-	@Override
-	public Object getInfo(final String info) throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return super.getInfo(info);
-	}
-
-	@Override
-	public Term simplify(final Term term) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return super.simplify(term);
-	}
-
-	@Override
-	public void reset() {
-		// TODO Auto-generated method stub
-		super.reset();
-	}
-
-	@Override
-	public Term[] getInterpolants(final Term[] partition) throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return super.getInterpolants(partition);
-	}
-
-	@Override
-	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
-			throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return super.getInterpolants(partition, startOfSubtree);
-	}
-
-	@Override
-	public void exit() {
-		// TODO Auto-generated method stub
-		super.exit();
-	}
-
-	@Override
-	public Term quantifier(final int quantor, final TermVariable[] vars, final Term body, final Term[]... patterns)
-			throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return super.quantifier(quantor, vars, body, patterns);
-	}
-
-	@Override
-	public Term let(final TermVariable[] vars, final Term[] values, final Term body) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return super.let(vars, values, body);
-	}
-
-	@Override
-	public Term annotate(final Term t, final Annotation... annotations) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return super.annotate(t, annotations);
-	}
-
-	@Override
-	public Term numeral(final String num) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return super.numeral(num);
-	}
-
-	@Override
-	public Term numeral(final BigInteger num) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return super.numeral(num);
-	}
-
-	@Override
-	public Term decimal(final String decimal) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return super.decimal(decimal);
-	}
-
-	@Override
-	public Term decimal(final BigDecimal decimal) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return super.decimal(decimal);
-	}
-
-	@Override
-	public Term string(final String str) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return super.string(str);
-	}
-
-	@Override
-	public Term hexadecimal(final String hex) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return super.hexadecimal(hex);
-	}
-
-	@Override
-	public Term binary(final String bin) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return super.binary(bin);
-	}
-
-	@Override
 	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
 		return new Model() {
 
@@ -684,25 +444,6 @@ public class HornClauseParserScript extends NoopScript implements INonSolverScri
 				throw new UnsupportedOperationException();
 			}
 		};
-	}
-
-	@Override
-	public Iterable<Term[]> checkAllsat(final Term[] predicates) throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return super.checkAllsat(predicates);
-	}
-
-	@Override
-	public Term[] findImpliedEquality(final Term[] x, final Term[] y)
-			throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return super.findImpliedEquality(x, y);
-	}
-
-	@Override
-	public TermVariable variable(final String varname, final Sort sort) throws SMTLIBException {
-		// return mBackendSmtSolver.variable(varname, sort);
-		return super.variable(varname, sort);
 	}
 
 	static class NoSubtermFulfillsPredicate extends TermTransformer {
