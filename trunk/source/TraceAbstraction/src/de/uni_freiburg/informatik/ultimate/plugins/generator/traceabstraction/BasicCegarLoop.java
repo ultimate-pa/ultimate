@@ -248,7 +248,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		super(services, name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
 				services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mPathProgramDumpController = new PathProgramDumpController<>(mServices, mPref, mIcfg);
-		if (mFallbackToFpIfInterprocedural && (rootNode.getProcedureEntryNodes().size() > 1)) {
+		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1) {
 			if (interpolation == InterpolationTechnique.FPandBP) {
 				mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
 				mInterpolation = InterpolationTechnique.ForwardPredicates;
@@ -365,7 +365,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 
 		if (mComputeHoareAnnotation
-				&& (mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles)) {
+				&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
 			final INestedWordAutomaton<LETTER, IPredicate> nwa =
 					(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
 			for (final IPredicate pred : nwa.getStates()) {
@@ -421,7 +421,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			checkForDangerInvariantAndReport();
 		}
 
-		if (mPref.hasLimitTraceHistogram() && (traceHistogram.getMax() > mPref.getLimitTraceHistogram())) {
+		if (mPref.hasLimitTraceHistogram() && traceHistogram.getMax() > mPref.getLimitTraceHistogram()) {
 			final String taskDescription =
 					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + mIteration;
 			throw new TaskCanceledException(UserDefinedLimit.TRACE_HISTOGRAM, getClass(), taskDescription);
@@ -440,17 +440,21 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			return true;
 		} else if (isEmptyHeuristicCex != null && isEmptyCex == null) {
 			mLogger.fatal("IsEmptyHeuristic found a path but IsEmpty did not.");
-			mLogger.fatal("IsEmptyHeuristic: " + isEmptyHeuristicCex);
+			mLogger.fatal("IsEmptyHeuristic: " + isEmptyHeuristicCex.getWord());
 			return false;
 		} else if (isEmptyHeuristicCex == null && isEmptyCex != null) {
 			mLogger.fatal("IsEmptyHeuristic found no path but IsEmpty did.");
-			mLogger.fatal("IsEmpty         : " + isEmptyCex);
+			mLogger.fatal("IsEmpty         : " + isEmptyCex.getWord());
 			return false;
 		} else if (isEmptyHeuristicCex != null && isEmptyCex != null) {
 			if (!NestedRun.isEqual(isEmptyHeuristicCex, isEmptyCex)) {
-				mLogger.info("IsEmptyHeuristic and IsEmpty found a path, but they differ");
-				mLogger.info("IsEmptyHeuristic: " + isEmptyHeuristicCex);
-				mLogger.info("IsEmpty         : " + isEmptyCex);
+				if (isEmptyHeuristicCex.getLength() > isEmptyCex.getLength()) {
+					mLogger.warn("IsEmptyHeuristic and IsEmpty found a path, but isEmptyHeuristic was longer!");
+				} else {
+					mLogger.info("IsEmptyHeuristic and IsEmpty found a path, but they differ");
+				}
+				mLogger.info("IsEmptyHeuristic: " + isEmptyHeuristicCex.getWord());
+				mLogger.info("IsEmpty         : " + isEmptyCex.getWord());
 			}
 			return true;
 		}
@@ -486,8 +490,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
 
 		try {
-			if (mPref.hasLimitPathProgramCount() && (mPref.getLimitPathProgramCount() < mStrategyFactory
-					.getPathProgramCache().getPathProgramCount(mCounterexample))) {
+			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
+					.getPathProgramCache().getPathProgramCount(mCounterexample)) {
 				final String taskDescription = "bailout by path program count limit in iteration " + mIteration;
 				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
 			}
@@ -514,7 +518,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(mCounterexample.getWord());
 			}
 
-			if ((mFaultLocalizationMode != RelevanceAnalysisMode.NONE) && (feasibility == LBool.SAT)) {
+			if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE && feasibility == LBool.SAT) {
 				final INestedWordAutomaton<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton
 						.constructAutomatonWithSPredicates(mServices, super.mIcfg, mStateFactoryForRefinement,
 								super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
@@ -679,7 +683,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private boolean checkPathProgramRemoval()
 			throws AutomataLibraryException, AutomataOperationCanceledException, AssertionError {
 		final boolean pathProgramShouldHaveBeenRemoved = mRefinementEngine.somePerfectSequenceFound()
-				&& (mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NONE);
+				&& mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NONE;
 		if (!pathProgramShouldHaveBeenRemoved) {
 			return true;
 		}
@@ -1023,7 +1027,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			// statistics
 			final int oldSize = mAbstraction.size();
 			final int newSize = newAbstraction.size();
-			assert (oldSize == 0) || (oldSize >= newSize) : "Minimization increased state space";
+			assert oldSize == 0 || oldSize >= newSize : "Minimization increased state space";
 
 			// use result
 			mAbstraction = newAbstraction;
@@ -1050,8 +1054,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	@Override
 	public IElement getArtifact() {
-		if ((mPref.artifact() == Artifact.ABSTRACTION) || (mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON)
-				|| (mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON)) {
+		if (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON
+				|| mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 
 			if (mArtifactAutomaton == null) {
 				mLogger.warn("Preferred Artifact not available," + " visualizing the RCFG instead");
