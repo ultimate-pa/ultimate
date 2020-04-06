@@ -319,6 +319,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		private final LETTER mTransition;
 		private final Item mBackPointer;
 		private final ItemType mItemType;
+		private final int mHashCode;
 
 		// g-value, how much have we already payed?
 		private double mCostSoFar;
@@ -366,6 +367,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			mItemType = symbolType;
 			setExpectedCostToTarget(Double.MAX_VALUE);
 			mLowestExpectedCost = Double.MAX_VALUE;
+			mHashCode = computeHashCode();
 		}
 
 		void setExpectedCostToTarget(final double value) {
@@ -446,6 +448,10 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		@Override
 		public int hashCode() {
+			return mHashCode;
+		}
+
+		private int computeHashCode() {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + (mTargetState == null ? 0 : mTargetState.hashCode());
