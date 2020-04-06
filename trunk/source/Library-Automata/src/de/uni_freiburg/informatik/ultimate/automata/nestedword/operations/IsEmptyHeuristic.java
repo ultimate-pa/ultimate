@@ -163,7 +163,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			mLogger.debug(String.format("Initial queue: %s", worklist));
 		}
 
-		final Map<Item, Double> lowest = new HashMap<>();
+		final Map<Integer, Double> lowest = new HashMap<>();
 		while (!worklist.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
@@ -188,7 +188,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 				final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
 
-				final Double lowestCostSoFar = lowest.get(succ);
+				final Double lowestCostSoFar = lowest.get(succ.hashCode());
 				if (lowestCostSoFar != null) {
 					if (costSoFar >= lowestCostSoFar) {
 						// we have already seen this successor but with a lower cost, so we should not explore with a
@@ -218,7 +218,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					mLogger.debug(String.format("    Insert as %s", succ));
 				}
 				worklist.add(succ);
-				lowest.put(succ, costSoFar);
+				lowest.put(succ.hashCode(), costSoFar);
 			}
 		}
 		return null;
