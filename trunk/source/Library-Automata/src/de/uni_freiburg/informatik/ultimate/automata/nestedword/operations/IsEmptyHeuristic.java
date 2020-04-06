@@ -31,7 +31,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -161,6 +163,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			mLogger.debug(String.format("Initial queue: %s", worklist));
 		}
 
+		final Map<Item, Double> lowest = new HashMap<>();
 		while (!worklist.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
@@ -168,6 +171,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				throw new AutomataOperationCanceledException(rti);
 			}
 			final Item current = worklist.poll();
+
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(String.format("Current: %s", current));
 			}
@@ -177,26 +181,33 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			}
 
 			final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current);
-
 			for (final Item succ : unvaluatedSuccessors) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format("  Succ: %s", succ));
 				}
+
 				final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
-				if (worklist.contains(succ)) {
-					final Item oldSucc = worklist.find(succ);
-					if (costSoFar >= oldSucc.mCostSoFar) {
-						// we already know the successor and our current way is not
-						// better than the new one
-						mLogger.debug("    Skip (already have better)");
+
+				final Double lowestCostSoFar = lowest.get(succ);
+				if (lowestCostSoFar != null) {
+					if (costSoFar >= lowestCostSoFar) {
+						// we have already seen this successor but with a lower cost, so we should not explore with a
+						// higher cost
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug(String.format("    Skip (cost %s, but have seen with with cost %s)",
+									costSoFar, lowestCostSoFar));
+						}
 						continue;
+					}
+					// we have already seen this successor, but with a higher cost
+					// we remove it from the worklist to speed up exploration
+					if (worklist.contains(succ)) {
+						worklist.remove(succ);
 					}
 				}
 
 				final double expectedCost = costSoFar
 						+ heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
-				worklist.remove(succ);
-
 				succ.setExpectedCostToTarget(expectedCost);
 				if (!succ.isLowest()) {
 					mLogger.debug("    Skip (not lowest cost)");
@@ -207,6 +218,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					mLogger.debug(String.format("    Insert as %s", succ));
 				}
 				worklist.add(succ);
+				lowest.put(succ, costSoFar);
 			}
 		}
 		return null;
@@ -249,10 +261,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (mIsForbiddenState.test(succ)) {
 				continue;
 			}
-			// hierachical predecessor will be taken from current
+			// hierarchical predecessor will be taken from current
 			rtr.add(new Item(succ, null, symbol, current, ItemType.RETURN));
 		}
-
 		return rtr;
 	}
 
@@ -353,8 +364,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			mTransition = letter;
 			mBackPointer = predecessor;
 			mItemType = symbolType;
-			setExpectedCostToTarget(Integer.MAX_VALUE);
-			mLowestExpectedCost = Integer.MAX_VALUE;
+			setExpectedCostToTarget(Double.MAX_VALUE);
+			mLowestExpectedCost = Double.MAX_VALUE;
 		}
 
 		void setExpectedCostToTarget(final double value) {
@@ -441,10 +452,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 			if (mHierPreStates == null) {
 				result = prime * result;
-			} else if (mHierPreStates.isEmpty()) {
-				result = prime * result + mHierPreStates.hashCode();
 			} else {
-				result = prime * result + mHierPreStates.peek().hashCode();
+				result = prime * result + mHierPreStates.hashCode();
 			}
 			result = prime * result + (mTransition == null ? 0 : mTransition.hashCode());
 			return result;
@@ -481,11 +490,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				if (other.mHierPreStates != null) {
 					return false;
 				}
-			} else if (mHierPreStates.isEmpty()) {
-				if (!other.mHierPreStates.isEmpty()) {
-					return false;
-				}
-			} else if (!mHierPreStates.peek().equals(other.mHierPreStates.peek())) {
+			} else if (!mHierPreStates.equals(other.mHierPreStates)) {
 				return false;
 			}
 			return true;
@@ -493,10 +498,17 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		@Override
 		public String toString() {
-			return String.format("{?} {%s} %s (%s) {%s} (g=%f, h=%f, f=%f, s=%d)", mHierPreStates.peek().hashCode(),
-					mTransition == null ? 0 : mTransition.hashCode(), mItemType, mTargetState.hashCode(), mCostSoFar,
-					mLowestExpectedCost, mExpectedCostToTarget, mHierPreStates.size());
+			if (mCostSoFar == 0.0) {
+				return String.format("%8s: {%s} T%s {%s}", mItemType, mHierPreStates.peek().hashCode(),
+						mTransition == null ? 0 : mTransition.hashCode(), mTargetState.hashCode());
+
+			}
+			return String.format("%8s: {%s} T%s {%s} (g=%f, h=%f, f=%f, s=%d)", mItemType,
+					mHierPreStates.peek().hashCode(), mTransition == null ? 0 : mTransition.hashCode(),
+					mTargetState.hashCode(), mCostSoFar, mLowestExpectedCost, mExpectedCostToTarget,
+					mHierPreStates.size());
 		}
+
 	}
 
 	/**
