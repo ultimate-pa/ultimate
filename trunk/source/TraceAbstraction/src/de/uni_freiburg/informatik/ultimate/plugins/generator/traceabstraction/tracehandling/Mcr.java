@@ -149,7 +149,6 @@ public class Mcr<LETTER extends IIcfgTransition<?>> implements IInterpolatingTra
 				}
 			}
 		}
-		mLogger.info(result);
 		return result;
 	}
 

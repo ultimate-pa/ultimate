@@ -27,7 +27,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -60,7 +59,6 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final VpAlphabet<LETTER> mAlphabet;
 
 	private List<INestedWordAutomaton<Integer, String>> mThreadAutomata;
-	private NestedWordAutomaton<LETTER, IPredicate> mMhbAutomaton;
 
 	private final HashRelation<IProgramVar, Integer> mVariables2Writes;
 	private final Map<LETTER, List<Integer>> mActions2Indices;
@@ -153,44 +151,40 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	public NestedWordAutomaton<LETTER, IPredicate> buildMhbAutomaton(final PredicateFactory predicateFactory)
 			throws AutomataLibraryException {
-		if (mMhbAutomaton == null) {
-			mMhbAutomaton = new NestedWordAutomaton<>(mAutomataServices, mAlphabet, mEmptyStackFactory);
-			final INestedWordAutomaton<Integer, String> intAutomaton =
-					intersect(getThreadAutomata(), new StringFactory(), mAutomataServices, mLogger);
-			final Set<String> initialStates = intAutomaton.getInitialStates();
-			final Set<String> finalStates = new HashSet<>(intAutomaton.getFinalStates());
-			final LinkedList<String> queue = new LinkedList<>(finalStates);
-			final Map<String, IPredicate> states2Predicates = new HashMap<>();
-			final Term trueTerm = mManagedScript.getScript().term("true");
-			for (final String state : intAutomaton.getStates()) {
-				// final IPredicate predicate = predicateFactory.newDebugPredicate(state);
-				final IPredicate predicate = predicateFactory.newSPredicate(null, trueTerm);
-				states2Predicates.put(state, predicate);
-				mMhbAutomaton.addState(initialStates.contains(state), finalStates.contains(state), predicate);
+		final NestedWordAutomaton<LETTER, IPredicate> result =
+				new NestedWordAutomaton<>(mAutomataServices, mAlphabet, mEmptyStackFactory);
+		final INestedWordAutomaton<Integer, String> intAutomaton = intersectNwa(getThreadAutomata());
+		final Set<String> initialStates = intAutomaton.getInitialStates();
+		final Set<String> finalStates = new HashSet<>(intAutomaton.getFinalStates());
+		final LinkedList<String> queue = new LinkedList<>(finalStates);
+		final Map<String, IPredicate> states2Predicates = new HashMap<>();
+		final Term trueTerm = mManagedScript.getScript().term("true");
+		for (final String state : intAutomaton.getStates()) {
+			// final IPredicate predicate = predicateFactory.newDebugPredicate(state);
+			final IPredicate predicate = predicateFactory.newSPredicate(null, trueTerm);
+			states2Predicates.put(state, predicate);
+			result.addState(initialStates.contains(state), finalStates.contains(state), predicate);
+		}
+		final Set<String> visited = new HashSet<>();
+		while (!queue.isEmpty()) {
+			final String state = queue.remove();
+			if (!visited.add(state)) {
+				continue;
 			}
-			final Set<String> visited = new HashSet<>();
-			while (!queue.isEmpty()) {
-				final String state = queue.remove();
-				if (!visited.add(state)) {
-					continue;
-				}
-				for (final IncomingInternalTransition<Integer, String> edge : intAutomaton
-						.internalPredecessors(state)) {
-					final LETTER letter = mOriginalTrace.get(edge.getLetter());
-					mMhbAutomaton.addInternalTransition(states2Predicates.get(edge.getPred()), letter,
-							states2Predicates.get(state));
-					queue.add(edge.getPred());
-				}
+			for (final IncomingInternalTransition<Integer, String> edge : intAutomaton.internalPredecessors(state)) {
+				final LETTER letter = mOriginalTrace.get(edge.getLetter());
+				result.addInternalTransition(states2Predicates.get(edge.getPred()), letter,
+						states2Predicates.get(state));
+				queue.add(edge.getPred());
 			}
 		}
-		return mMhbAutomaton;
+		return result;
 	}
 
-	@SuppressWarnings("unchecked")
-	private boolean isInterleaving(final List<LETTER> trace) throws AutomataLibraryException {
-		assert mMhbAutomaton != null;
-		final Word<LETTER> word = new Word<>((LETTER[]) trace.toArray(new IIcfgTransition<?>[trace.size()]));
-		return new Accepts<>(mAutomataServices, mMhbAutomaton, NestedWord.nestedWord(word)).getResult();
+	private boolean isInterleaving(final List<Integer> intTrace) throws AutomataLibraryException {
+		final INwaOutgoingLetterAndTransitionProvider<Integer, String> mhbAutomaton = intersect(getThreadAutomata());
+		final Word<Integer> word = new Word<>(intTrace.toArray(new Integer[intTrace.size()]));
+		return new Accepts<>(mAutomataServices, mhbAutomaton, NestedWord.nestedWord(word)).getResult();
 	}
 
 	private List<Integer> getIntTrace(final List<LETTER> trace) {
@@ -260,32 +254,36 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				automata.add(nwa);
 			}
 		}
-		return intersect(automata, factory, mAutomataServices, mLogger);
+		return intersectNwa(automata);
 	}
 
-	private static <LETTER, STATE> INestedWordAutomaton<LETTER, STATE> intersect(
-			final Collection<INestedWordAutomaton<LETTER, STATE>> automata,
-			final IIntersectionStateFactory<STATE> stateFactory, final AutomataLibraryServices services,
-			final ILogger logger) throws AutomataLibraryException {
-		logger.info("Started intersection.");
-		INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> intersection = null;
-		for (final INestedWordAutomaton<LETTER, STATE> a : automata) {
-			if (intersection == null) {
-				intersection = a;
+	private INestedWordAutomaton<Integer, String> intersectNwa(
+			final Collection<INestedWordAutomaton<Integer, String>> automata) throws AutomataLibraryException {
+		mLogger.info("Started intersection.");
+		final INestedWordAutomaton<Integer, String> result =
+				new NestedWordAutomatonReachableStates<>(mAutomataServices, intersect(automata));
+		mLogger.info("Finished intersection with " + result.sizeInformation());
+		return result;
+	}
+
+	private static INwaOutgoingLetterAndTransitionProvider<Integer, String> intersect(
+			final Collection<INestedWordAutomaton<Integer, String>> automata) throws AutomataLibraryException {
+		final StringFactory factory = new StringFactory();
+		INwaOutgoingLetterAndTransitionProvider<Integer, String> result = null;
+		for (final INestedWordAutomaton<Integer, String> a : automata) {
+			if (result == null) {
+				result = a;
 			} else {
-				intersection = new IntersectNwa<>(intersection, a, stateFactory, false);
+				result = new IntersectNwa<>(result, a, factory, false);
 			}
 		}
-		final INestedWordAutomaton<LETTER, STATE> result =
-				new NestedWordAutomatonReachableStates<>(services, intersection);
-		logger.info("Finished intersection with " + result.sizeInformation());
 		return result;
 	}
 
 	public NestedWordAutomaton<LETTER, IPredicate> buildInterpolantAutomaton(final List<LETTER> trace,
 			final Collection<QualifiedTracePredicates> tracePredicates) throws AutomataLibraryException {
-		assert isInterleaving(trace) : "Can only create an automaton for interleavings";
 		final List<Integer> intTrace = getIntTrace(trace);
+		assert isInterleaving(intTrace) : "Can only create an automaton for interleavings";
 		final INestedWordAutomaton<Integer, String> automaton = buildMcrAutomaton(intTrace);
 		mLogger.info("Constructing interpolant automaton by labelling MCR automaton.");
 		final NestedWordAutomaton<LETTER, IPredicate> result =
