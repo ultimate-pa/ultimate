@@ -26,12 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
+import java.util.AbstractList;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -189,21 +191,20 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
 
 				final Double lowestCostSoFar = lowest.get(succ.hashCode());
-				if (lowestCostSoFar != null) {
-					if (costSoFar >= lowestCostSoFar) {
-						// we have already seen this successor but with a lower cost, so we should not explore with a
-						// higher cost
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug(String.format("    Skip (cost %s, but have seen with with cost %s)",
-									costSoFar, lowestCostSoFar));
-						}
-						continue;
+				if (lowestCostSoFar != null && costSoFar >= lowestCostSoFar) {
+					// we have already seen this successor but with a lower cost, so we should not explore with a
+					// higher cost
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(String.format("    Skip (cost %s, but have seen with with cost %s)", costSoFar,
+								lowestCostSoFar));
 					}
-					// we have already seen this successor, but with a higher cost
-					// we remove it from the worklist to speed up exploration
-					if (worklist.contains(succ)) {
-						worklist.remove(succ);
-					}
+					continue;
+				}
+
+				// we will change the cost of this item, so we have to remove it if it is already in the queue, because
+				// its queue position will not be updated otherwise
+				if (worklist.contains(succ)) {
+					worklist.remove(succ);
 				}
 
 				final double expectedCost = costSoFar
@@ -352,13 +353,13 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (symbolType == ItemType.INTERNAL) {
 				mHierPreStates = predecessor.mHierPreStates;
 			} else if (symbolType == ItemType.RETURN) {
-				mHierPreStates = new ArrayDeque<>(predecessor.mHierPreStates);
+				mHierPreStates = new ElementHashedArrayDeque<>(predecessor.mHierPreStates);
 				mHierPreStates.pop();
 			} else if (symbolType == ItemType.CALL) {
-				mHierPreStates = new ArrayDeque<>(predecessor.mHierPreStates);
+				mHierPreStates = new ElementHashedArrayDeque<>(predecessor.mHierPreStates);
 				mHierPreStates.push(hierPreState);
 			} else {
-				mHierPreStates = new ArrayDeque<>();
+				mHierPreStates = new ElementHashedArrayDeque<>();
 				mHierPreStates.push(hierPreState);
 			}
 
@@ -505,14 +506,13 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		@Override
 		public String toString() {
 			if (mCostSoFar == 0.0) {
-				return String.format("%8s: {%s} T%s {%s}", mItemType, mHierPreStates.peek().hashCode(),
+				return String.format("%8s: {%s} T%s {%s}", mItemType, mHierPreStates.hashCode(),
 						mTransition == null ? 0 : mTransition.hashCode(), mTargetState.hashCode());
 
 			}
-			return String.format("%8s: {%s} T%s {%s} (g=%f, h=%f, f=%f, s=%d)", mItemType,
-					mHierPreStates.peek().hashCode(), mTransition == null ? 0 : mTransition.hashCode(),
-					mTargetState.hashCode(), mCostSoFar, mLowestExpectedCost, mExpectedCostToTarget,
-					mHierPreStates.size());
+			return String.format("%8s: {%s} T%s {%s} (g=%f, h=%f, f=%f, s=%d)", mItemType, mHierPreStates.hashCode(),
+					mTransition == null ? 0 : mTransition.hashCode(), mTargetState.hashCode(), mCostSoFar,
+					mLowestExpectedCost, mExpectedCostToTarget, mHierPreStates.size());
 		}
 
 	}
@@ -544,6 +544,57 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					return 1.0;
 				}
 			};
+		}
+	}
+
+	/**
+	 * An {@link ArrayDeque} that uses {@link #hashCode()} and {@link #equals(Object)} of an {@link AbstractList}.
+	 * 
+	 * This means that two queues with the same elements in the same order are equal and have the same hashcode.
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 * @param <E>
+	 */
+	private static final class ElementHashedArrayDeque<E> extends ArrayDeque<E> {
+		private static final long serialVersionUID = 1L;
+
+		public ElementHashedArrayDeque() {
+			super();
+		}
+
+		public ElementHashedArrayDeque(final Collection<? extends E> c) {
+			super(c);
+		}
+
+		@Override
+		public int hashCode() {
+			int hashCode = 1;
+			for (final E e : this) {
+				hashCode = 31 * hashCode + (e == null ? 0 : e.hashCode());
+			}
+			return hashCode;
+		}
+
+		@Override
+		public boolean equals(final Object o) {
+			if (o == this) {
+				return true;
+			}
+			if (!(o instanceof List)) {
+				return false;
+			}
+
+			final Iterator<E> e1 = iterator();
+			final Iterator<?> e2 = ((List<?>) o).iterator();
+			while (e1.hasNext() && e2.hasNext()) {
+				final E o1 = e1.next();
+				final Object o2 = e2.next();
+				if (!(o1 == null ? o2 == null : o1.equals(o2))) {
+					return false;
+				}
+			}
+			return !(e1.hasNext() || e2.hasNext());
 		}
 	}
 }
