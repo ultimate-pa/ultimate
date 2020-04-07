@@ -93,7 +93,7 @@ public class Req2CauseTrackingCDD {
 	 *
 	 * Note: if the CDD is no range decision, this will return CDD.True
 	 */
-	public CDD upperToLowerBoundCdd(final CDD cdd) {
+	public CDD upperToLowerBoundCdd(final CDD cdd, boolean dropOther) {
 		if (cdd == CDD.TRUE || cdd == CDD.FALSE) {
 			return cdd;
 		}
@@ -101,7 +101,7 @@ public class Req2CauseTrackingCDD {
 		final List<CDD> newChildren = new ArrayList<>();
 		if (cdd.getChilds() != null) {
 			for (final CDD child : cdd.getChilds()) {
-				newChildren.add(upperToLowerBoundCdd(child));
+				newChildren.add(upperToLowerBoundCdd(child, dropOther));
 			}
 		}
 		final CDD[] children = newChildren.toArray(new CDD[newChildren.size()]);
@@ -113,7 +113,12 @@ public class Req2CauseTrackingCDD {
 				if (children[i] == CDD.FALSE) {
 					continue;
 				}
-				returnDecision = returnDecision.and(upperToLowerBoundDecision(d, i));
+				if (dropOther) {
+					returnDecision = returnDecision.and(upperToLowerBoundDecisionDropOther(d, i));
+				} else {
+					returnDecision = returnDecision.and(upperToLowerBoundDecision(d, i));
+				}
+
 			}
 			return returnDecision;
 		}
@@ -126,6 +131,15 @@ public class Req2CauseTrackingCDD {
 			return RangeDecision.create(d.getVar(), RangeDecision.OP_GTEQ, d.getVal(trueChild));
 		default:
 			return RangeDecision.create(d.getVar(), d.getOp(trueChild), d.getVal(trueChild));
+		}
+	}
+
+	private static CDD upperToLowerBoundDecisionDropOther(final RangeDecision d, final int trueChild) {
+		switch (d.getOp(trueChild)) {
+		case RangeDecision.OP_LTEQ:
+			return RangeDecision.create(d.getVar(), RangeDecision.OP_GTEQ, d.getVal(trueChild));
+		default:
+			return CDD.TRUE;
 		}
 	}
 

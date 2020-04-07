@@ -132,7 +132,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				transformLocations(pattern, oldPea, oldSymbolTable, effectCdd, effectVars, dcEffectPhase, dcFormula);
 		final Phase[] newInit = getInitialPhases(oldLocations);
 		copyOldTransitions(oldPea.getPhases(), newLocations);
-		copyTransitionsToLower(newLocations, effectVars, oldSymbolTable, dcEffectPhase, effectCdd);
+		copyTransitionsToLower(oldLocations, newLocations, effectVars, oldSymbolTable, dcEffectPhase, effectCdd);
 		connectUpperToLowerAutomaton(newLocations, oldLocations, new ArrayList<>(oldPea.getClocks()), dcEffectPhase);
 		final List<String> newClocks = new ArrayList<>(oldPea.getClocks());
 		final Map<String, String> newVariables = new HashMap<>(oldPea.getVariables());
@@ -291,8 +291,9 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 	 * Copy all transitions from the upper automaton to the lower automaton.
 	 * Add tracking guards and clock transformations in the process.
 	 */
-	private void copyTransitionsToLower(final Phase[] newLocations, final Set<String> effectVars,
-			final IReqSymbolTable reqSymbolTable, final int effectDCPhaseId, final CDD effectCdd) {
+	private void copyTransitionsToLower(final Phase[] oldLocations, final Phase[] newLocations,
+			final Set<String> effectVars, final IReqSymbolTable reqSymbolTable, final int effectDCPhaseId,
+			final CDD effectCdd) {
 		final int seem = newLocations.length / 2;
 		final List<Phase> indexList = Arrays.asList(newLocations);
 		// copy edges in first to second automaton
@@ -301,10 +302,17 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				final int dest = indexList.indexOf(trans.getDest());
 				final Phase sourcePhase = newLocations[seem + i];
 				final boolean effectTransition = isEffectTransition(sourcePhase, trans, effectDCPhaseId, effectCdd);
-				// apply same transformations to CDDs must be done as in the invariants
-				final CDD guard = mCddTransformer.transformGurad(trans.getGuard(), effectVars, reqSymbolTable.getInputVars(),
+				// add tracking variables to cdds on the edge
+				CDD guard = mCddTransformer.transformGurad(trans.getGuard(), effectVars, reqSymbolTable.getInputVars(),
 						reqSymbolTable.getConstVars(), effectTransition);
+				// add time bound in lower automaton if effect phase has an upper bound
+				if (oldLocations[i].getPhaseBits().isWaiting(effectDCPhaseId)
+						&& !oldLocations[dest].getPhaseBits().isWaiting(effectDCPhaseId)) {
+					guard = guard.and(mCddTransformer.upperToLowerBoundCdd(sourcePhase.getClockInvariant(), true));
+					mLogger.error(guard);
+				}
 				sourcePhase.addTransition(newLocations[seem + dest], guard, trans.getResets());
+
 			}
 		}
 	}
@@ -324,7 +332,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			CDD clockGuard = CDD.TRUE;
 			if (isEffectLocation(oldLocations[i], effectDCPhaseId)) {
 				final CDD oldClockInvar = oldLocations[i].getClockInvariant();
-				clockGuard = mCddTransformer.upperToLowerBoundCdd(oldClockInvar);
+				clockGuard = mCddTransformer.upperToLowerBoundCdd(oldClockInvar, false);
 			}
 			if (oldLocations[i].getOutgoingTransition(oldLocations[0]) != null) {
 				newLocations[seem + i].addTransition(newLocations[i], clockGuard, new String[0]);
