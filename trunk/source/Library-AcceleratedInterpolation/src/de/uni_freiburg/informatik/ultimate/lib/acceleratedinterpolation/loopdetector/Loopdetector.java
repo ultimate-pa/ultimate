@@ -66,7 +66,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 	/**
 	 * Calculates loops from a given trace.
 	 */
-	public void getLoops() {
+	public Map<IcfgLocation, Set<List<LETTER>>> getLoops() {
 		final Map<IcfgLocation, List<Integer>> possibleCycles = mCycleFinder.getCyclesInTrace(mTraceLocations);
 		mLogger.debug("Found Loopheads");
 		final Set<IcfgLocation> nestedCycles = getNestedCycles(possibleCycles);
@@ -77,7 +77,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 			withoutNestedCycles.remove(nestedHead);
 		}
 		cycleTraces = cyclePaths(withoutNestedCycles);
-		mLogger.debug("");
+		return cycleTraces;
 	}
 
 	/**

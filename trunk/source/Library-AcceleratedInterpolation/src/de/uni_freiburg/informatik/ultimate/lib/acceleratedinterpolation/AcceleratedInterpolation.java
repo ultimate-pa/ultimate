@@ -31,13 +31,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator.AccelerationMethod;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.Loopdetector;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -85,7 +89,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final TraceCheckReasonUnknown mReasonUnknown;
 	private final boolean mTraceCheckFinishedNormally;
 
-	private final Map<IcfgLocation, List<LETTER>> mLoops;
+	private final Map<IcfgLocation, Set<List<LETTER>>> mLoops;
+	private final Map<IcfgLocation, Set<UnmodifiableTransFormula>> mAccelerations;
 	private final Accelerator mAccelerator;
 	private final Loopdetector<LETTER> mLoopdetector;
 
@@ -98,13 +103,13 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mPredicateUnifier = predicateUnifier;
 		mPrefs = prefs;
 		mIcfg = mPrefs.getIcfgContainer();
-		mLoops = new HashMap<>();
+		mAccelerations = new HashMap<>();
 		mLogger.debug("Accelerated Interpolation engaged!");
 		mInterpolants = new IPredicate[mCounterexample.size()];
 		mInterpolants[0] = mPredicateUnifier.getTruePredicate();
 		mInterpolants[mCounterexample.size() - 1] = mPredicateUnifier.getFalsePredicate();
 
-		mAccelerator = new Accelerator();
+		mAccelerator = new Accelerator<>(mLogger, mScript, mServices);
 		mLoopdetector = new Loopdetector<>(mCounterexample, mLogger);
 		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 
@@ -112,42 +117,59 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mReasonUnknown = null;
 		mTraceCheckFinishedNormally = true;
 
-		mLoopdetector.getLoops();
-
+		mLoops = mLoopdetector.getLoops();
 		if (mLoops.isEmpty()) {
 			mLogger.debug("No loops found in this trace.");
 			mIsTraceCorrect = checkFeasibility(mCounterexample);
 			if (mIsTraceCorrect == LBool.UNSAT) {
 				mInterpolants = generateInterpolants();
+				return;
 			}
-		} else {
-			mLogger.debug("Found loops, starting acceleration");
-			mIsTraceCorrect = computeAcceleratedFeasibility();
 		}
-	}
-
-	private LBool computeAcceleratedFeasibility() {
-		return LBool.UNKNOWN;
-	}
-
-	private List<LETTER> accelerateLoop(final List<LETTER> trace) {
-		return trace;
+		mLogger.debug("Found loops, starting acceleration");
+		for (final Entry<IcfgLocation, Set<List<LETTER>>> loophead : mLoops.entrySet()) {
+			final Set<UnmodifiableTransFormula> accelerations = new HashSet<>();
+			for (final List<LETTER> loop : loophead.getValue()) {
+				final UnmodifiableTransFormula loopRelation = traceToTf(loop);
+				final UnmodifiableTransFormula acceleratedLoopRelation =
+						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.FAST_UPR);
+				accelerations.add(acceleratedLoopRelation);
+			}
+			mAccelerations.put(loophead.getKey(), accelerations);
+		}
+		mIsTraceCorrect = checkFeasibility(mCounterexample);
+		if (mIsTraceCorrect == LBool.UNSAT) {
+			mInterpolants = generateInterpolants();
+		}
 	}
 
 	private LBool checkFeasibility(final List<LETTER> trace) {
-		UnmodifiableTransFormula tf = trace.get(0).getTransformula();
+		final UnmodifiableTransFormula tf = trace.get(0).getTransformula();
+		final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
+		tfs.add(tf);
 		int i = 1;
 		while (i < trace.size()) {
-			final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
-			tfs.add(tf);
+			final LETTER l = trace.get(i);
+			if (mAccelerations.containsKey(l.getSource())) {
+				tfs.addAll(mAccelerations.get(l.getSource()));
+			}
 			tfs.add(trace.get(i).getTransformula());
-			tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, false, false, false,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA,
-					tfs);
 			i++;
 		}
-		final LBool result = SmtUtils.checkSatTerm(mScript.getScript(), tf.getFormula());
+		final UnmodifiableTransFormula traceTf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript,
+				false, false, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+				SimplificationTechnique.SIMPLIFY_DDA, tfs);
+		final LBool result = SmtUtils.checkSatTerm(mScript.getScript(), traceTf.getFormula());
 		return result;
+	}
+
+	private UnmodifiableTransFormula traceToTf(final List<LETTER> trace) {
+		final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
+		for (final LETTER l : trace) {
+			tfs.add(l.getTransformula());
+		}
+		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true, true,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA, tfs);
 	}
 
 	private IPredicate[] generateInterpolants() {

@@ -8,11 +8,13 @@
 
 procedure main() {
 	var x : int;
+	var y : int;
 	x := 2;
+	y := 0;
 	
 	while (x <= 10) {
-		if (x < 2) {
-		
+		if (y < 2) {
+			y := y+1;
 		} else {
 			x := x + 1;
 		}
