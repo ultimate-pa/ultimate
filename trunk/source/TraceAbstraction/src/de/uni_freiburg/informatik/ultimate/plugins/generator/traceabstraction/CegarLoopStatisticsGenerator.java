@@ -124,7 +124,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	public Object getValue(final String key) {
 		final CegarLoopStatisticsDefinitions keyEnum = Enum.valueOf(CegarLoopStatisticsDefinitions.class, key);
 		switch (keyEnum) {
-		case Result:
+		case VerificationResult:
 			return mResult;
 		case OverallTime:
 		case AutomataDifference:

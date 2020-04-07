@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
-	Result(Result.class, CegarLoopStatisticsUtils.DEFAULT_AGGREGATION_FUN, StatisticsType.KEY_BEFORE_DATA),
+	VerificationResult(Result.class, CegarLoopStatisticsUtils.DEFAULT_AGGREGATION_FUN, StatisticsType.KEY_BEFORE_DATA),
 
 	OverallTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
