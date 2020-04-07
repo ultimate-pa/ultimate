@@ -163,6 +163,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 			} catch (final Throwable ex) {
 				logWithFreshLogger(starter, ex,
 						"There was an exception during the writing of summary or log information");
+				throw ex;
 			}
 
 			starter.complete();
