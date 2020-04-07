@@ -57,6 +57,7 @@ known_exceptions = {
     "No suitable file found in config dir": True,
     "AssertionError: var is still there": True,
     "IllegalStateException: Petrification does not provide enough thread instances": True,
+    "IllegalStateException: ManagedScript already locked by": False,
     "ExceptionOrErrorResult": False,
     "was unable to instantiate class": True,
     "de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.ParserInitializationException: Parser initialization failed": True,
