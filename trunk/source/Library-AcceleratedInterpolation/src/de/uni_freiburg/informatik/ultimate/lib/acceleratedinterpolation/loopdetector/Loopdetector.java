@@ -56,7 +56,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 
 	public Loopdetector(final List<LETTER> trace, final ILogger logger) {
 		mLogger = logger;
-		mTrace = trace;
+		mTrace = new ArrayList<>(trace);
 		mCycleFinder = new CycleFinder();
 		mTraceLocations = mCycleFinder.statementsToLocations(mTrace);
 

@@ -123,8 +123,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			mIsTraceCorrect = checkFeasibility(mCounterexample);
 			if (mIsTraceCorrect == LBool.UNSAT) {
 				mInterpolants = generateInterpolants();
-				return;
 			}
+			return;
 		}
 		mLogger.debug("Found loops, starting acceleration");
 		for (final Entry<IcfgLocation, Set<List<LETTER>>> loophead : mLoops.entrySet()) {
@@ -132,7 +132,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			for (final List<LETTER> loop : loophead.getValue()) {
 				final UnmodifiableTransFormula loopRelation = traceToTf(loop);
 				final UnmodifiableTransFormula acceleratedLoopRelation =
-						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.FAST_UPR);
+						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.NONE);
 				accelerations.add(acceleratedLoopRelation);
 			}
 			mAccelerations.put(loophead.getKey(), accelerations);
@@ -150,9 +150,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		int i = 1;
 		while (i < trace.size()) {
 			final LETTER l = trace.get(i);
-			if (mAccelerations.containsKey(l.getSource())) {
-				tfs.addAll(mAccelerations.get(l.getSource()));
-			}
 			tfs.add(trace.get(i).getTransformula());
 			i++;
 		}

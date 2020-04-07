@@ -50,7 +50,7 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 	 * How to deal with procedures.
 	 */
 	public enum AccelerationMethod {
-		FAST_UPR, OVERAPPROXIMATION, UNDERAPPROXIMATION
+		NONE, FAST_UPR, OVERAPPROXIMATION, UNDERAPPROXIMATION
 	}
 
 	private final ILogger mLogger;
@@ -67,6 +67,8 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 	public UnmodifiableTransFormula accelerateLoop(final UnmodifiableTransFormula loop,
 			final AccelerationMethod accelerationMethod) {
 		switch (accelerationMethod) {
+		case NONE:
+			break;
 		case FAST_UPR:
 			return fastUprAcceleration(loop);
 		case OVERAPPROXIMATION:
