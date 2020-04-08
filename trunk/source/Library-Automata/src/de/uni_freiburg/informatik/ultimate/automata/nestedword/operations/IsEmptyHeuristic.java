@@ -36,8 +36,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -165,7 +167,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			mLogger.debug(String.format("Initial queue: %s", worklist));
 		}
 
-		final Map<Integer, Double> lowest = new HashMap<>();
+		final Map<Item, Double> lowest = new HashMap<>();
 		while (!worklist.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
@@ -183,6 +185,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			}
 
 			final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current);
+			if (mLogger.isDebugEnabled() && unvaluatedSuccessors.isEmpty()) {
+				mLogger.debug("  No successors");
+			}
 			for (final Item succ : unvaluatedSuccessors) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format("  Succ: %s", succ));
@@ -190,21 +195,26 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 				final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
 
-				final Double lowestCostSoFar = lowest.get(succ.hashCode());
-				if (lowestCostSoFar != null && costSoFar >= lowestCostSoFar) {
-					// we have already seen this successor but with a lower cost, so we should not explore with a
-					// higher cost
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug(String.format("    Skip (cost %s, but have seen with with cost %s)", costSoFar,
-								lowestCostSoFar));
+				final Double lowestCostSoFar = lowest.get(succ);
+				if (lowestCostSoFar != null) {
+					if (costSoFar >= lowestCostSoFar) {
+						// we have already seen this successor but with a lower cost, so we should not explore with a
+						// higher cost
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug(String.format("    Skip (cost %s, but have seen with cost %s)", costSoFar,
+									lowestCostSoFar));
+						}
+						continue;
 					}
-					continue;
-				}
+				} else {
+					// if the succ is not yet in lowest, it might be that an item with a call stack that is a prefix
+					// of the current succ is already in the list
+					// TODO: This check is rather expensive, but with a dedicated data structure it could be much
+					// cheaper, e.g., something similar to a suffix tree
+					if (!isCheapestPrefix(lowest, succ, costSoFar)) {
+						continue;
+					}
 
-				// we will change the cost of this item, so we have to remove it if it is already in the queue, because
-				// its queue position will not be updated otherwise
-				if (worklist.contains(succ)) {
-					worklist.remove(succ);
 				}
 
 				final double expectedCost = costSoFar
@@ -214,15 +224,61 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					mLogger.debug("    Skip (not lowest cost)");
 					continue;
 				}
+
 				succ.setCostSoFar(costSoFar);
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(String.format("    Insert as %s", succ));
+
+				// we changed the cost of this item, so we have to remove it if it is already in the queue, because
+				// its queue position will not be updated otherwise
+				if (worklist.contains(succ)) {
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(String.format("    Updated: %s", succ));
+					}
+					worklist.remove(succ);
+				} else if (mLogger.isDebugEnabled()) {
+					mLogger.debug(String.format("    Insert: %s", succ));
 				}
 				worklist.add(succ);
-				lowest.put(succ.hashCode(), costSoFar);
+				lowest.put(succ, costSoFar);
 			}
 		}
 		return null;
+	}
+
+	private boolean isCheapestPrefix(final Map<Item, Double> lowest, final Item succ, final double costSoFar) {
+		for (final Entry<Item, Double> entry : lowest.entrySet()) {
+			final Item item = entry.getKey();
+
+			if (!item.mTransition.equals(succ.mTransition)) {
+				// we only need to check against the same transition
+				continue;
+			}
+
+			final double lowestCostSoFar = entry.getValue();
+			if (item.mHierPreStates.size() >= succ.mHierPreStates.size()) {
+				// item cannot be prefix, is either longer, or, if it is the same length, has a different
+				// hashcode (checked before)
+				continue;
+			}
+
+			if (item.isHierStatesPrefixOf(succ)) {
+				// if (item.mHierPreStates.size() == succ.mHierPreStates.size()) {
+				// assert lowest.containsKey(succ) : String.format(
+				// "How can it be that !lowest.containsKey(succ)? item.hash=%s, succ.hash=%s, item.equals(succ)==%s and
+				// item is taken from lowest",
+				// item.hashCode(), succ.hashCode(), item.equals(succ));
+				// }
+				if (costSoFar >= lowestCostSoFar) {
+					// we have already seen this successor but with a lower cost, so we should not explore
+					// with a higher cost
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(String.format("    Skip (cost %s, but have seen prefix with cost %s: %s)",
+								costSoFar, lowestCostSoFar, item));
+					}
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	private List<Item> getUnvaluatedSuccessors(final Item current) {
@@ -395,6 +451,24 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			return mHierPreStates.peek();
 		}
 
+		/**
+		 * 
+		 * @return true iff the hierachical pre states of this items are a prefix of the hierachical pre states of the
+		 *         other item, false otherwise.
+		 */
+		public boolean isHierStatesPrefixOf(final Item other) {
+			final Iterator<STATE> iter = mHierPreStates.descendingIterator();
+			final Iterator<STATE> otherIter = other.mHierPreStates.descendingIterator();
+			while (iter.hasNext() && otherIter.hasNext()) {
+				final STATE o1 = iter.next();
+				final STATE o2 = otherIter.next();
+				if (!(o1 == null ? o2 == null : o1.equals(o2))) {
+					return false;
+				}
+			}
+			return !iter.hasNext();
+		}
+
 		public NestedRun<LETTER, STATE> constructRun() {
 			final List<Item> runInItems = new ArrayList<>();
 			Item current = this;
@@ -455,13 +529,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		private int computeHashCode() {
 			final int prime = 31;
 			int result = 1;
+			result = prime * result + (mHierPreStates == null ? 0 : mHierPreStates.hashCode());
 			result = prime * result + (mTargetState == null ? 0 : mTargetState.hashCode());
-
-			if (mHierPreStates == null) {
-				result = prime * result;
-			} else {
-				result = prime * result + mHierPreStates.hashCode();
-			}
 			result = prime * result + (mTransition == null ? 0 : mTransition.hashCode());
 			return result;
 		}
@@ -477,8 +546,14 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			@SuppressWarnings("unchecked")
 			final Item other = (Item) obj;
+			if (mHierPreStates == null) {
+				if (other.mHierPreStates != null) {
+					return false;
+				}
+			} else if (!mHierPreStates.equals(other.mHierPreStates)) {
+				return false;
+			}
 			if (mTargetState == null) {
 				if (other.mTargetState != null) {
 					return false;
@@ -493,24 +568,20 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			} else if (!mTransition.equals(other.mTransition)) {
 				return false;
 			}
-			if (mHierPreStates == null) {
-				if (other.mHierPreStates != null) {
-					return false;
-				}
-			} else if (!mHierPreStates.equals(other.mHierPreStates)) {
-				return false;
-			}
 			return true;
 		}
 
 		@Override
 		public String toString() {
+			final String hier =
+					mHierPreStates.stream().map(a -> String.valueOf(a.hashCode())).collect(Collectors.joining(","));
+
 			if (mCostSoFar == 0.0) {
-				return String.format("%8s: {%s} T%s {%s}", mItemType, mHierPreStates.hashCode(),
+				return String.format("%8s: {%s} T%s {%s}", mItemType, hier,
 						mTransition == null ? 0 : mTransition.hashCode(), mTargetState.hashCode());
 
 			}
-			return String.format("%8s: {%s} T%s {%s} (g=%f, h=%f, f=%f, s=%d)", mItemType, mHierPreStates.hashCode(),
+			return String.format("%8s: {%s} T%s {%s} (g=%f, h=%f, f=%f, s=%d)", mItemType, hier,
 					mTransition == null ? 0 : mTransition.hashCode(), mTargetState.hashCode(), mCostSoFar,
 					mLowestExpectedCost, mExpectedCostToTarget, mHierPreStates.size());
 		}
@@ -581,12 +652,12 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (o == this) {
 				return true;
 			}
-			if (!(o instanceof List)) {
+			if (!(o instanceof ElementHashedArrayDeque)) {
 				return false;
 			}
 
 			final Iterator<E> e1 = iterator();
-			final Iterator<?> e2 = ((List<?>) o).iterator();
+			final Iterator<?> e2 = ((ElementHashedArrayDeque<?>) o).iterator();
 			while (e1.hasNext() && e2.hasNext()) {
 				final E o1 = e1.next();
 				final Object o2 = e2.next();
