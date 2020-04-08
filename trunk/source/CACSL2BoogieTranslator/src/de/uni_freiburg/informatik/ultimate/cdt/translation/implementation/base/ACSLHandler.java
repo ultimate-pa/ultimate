@@ -426,6 +426,7 @@ public class ACSLHandler implements IACSLHandler {
 				ExpressionResult left = dispatchSwitch(main, node.getLeft(), loc);
 				ExpressionResult right = dispatchSwitch(main, node.getRight(), loc);
 				final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+				resultBuilder.addAllExceptLrValue(left);
 				resultBuilder.addAllExceptLrValue(right);
 				left = mExprResultTransformer.rexIntToBool(left, loc);
 				right = mExprResultTransformer.rexIntToBool(right, loc);
