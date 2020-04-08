@@ -32,6 +32,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -75,13 +76,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Dumps {@link PatternType} to dot and markdown files used in hanfor documentation.
  *
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
+ * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  */
 @RunWith(Parameterized.class)
 public class PeaToDotTestSuite {
 	// Set to true, if you want to create new svg and markdown files for the hanfor documentation.
 	private static final boolean CREATE_NEW_FILES = false;
 
-	private static final File ROOT_DIR = new File("/mnt/Daten/projects/hanfor/documentation/docs");
+	private static final File ROOT_DIR = new File("/mnt/data/projects/hanfor/documentation/docs");
 	private static final File MARKDOWN_DIR = new File(ROOT_DIR + "/references/patterns");
 	private static final File PEA_IMAGE_DIR = new File(ROOT_DIR + "/img/patterns");
 	private static final File POS_FAILURE_IMAGE_DIR = new File(ROOT_DIR + "/img/failure_paths/positive");
@@ -122,17 +124,37 @@ public class PeaToDotTestSuite {
 			reqPeas = mPattern.transformToPea(mLogger, mDurationToBounds);
 		} catch (final PatternScopeNotImplemented e) {
 			mLogger.fatal("Pattern not implemented: " + mPattern.getId());
-			return; // Oops, somebody forgot to implement t
+			return; // Oops, somebody forgot to implement this
 		}
 
 		for (final Entry<CounterTrace, PhaseEventAutomata> entry : reqPeas.getCounterTrace2Pea()) {
 			writeSvgFile(DotWriterNew.createDotString(entry.getValue()));
-			writeMarkdownFile(entry.getKey().toString());
 		}
+
+		// Collect all countertraces belonging to the same scope name.
+		for (int i = 0, n = reqPeas.getCounterTrace2Pea().size(); i < n; i++) {
+			final List<String> cts = new ArrayList<>();
+			final String name = reqPeas.getCounterTrace2Pea().get(i).getValue().getName();
+			cts.add(reqPeas.getCounterTrace2Pea().get(i).getKey().toString());
+
+			for (int j = i + 1; j < n; j++) {
+				if (reqPeas.getCounterTrace2Pea().get(j).getValue().getName().equals(name)) {
+					cts.add(reqPeas.getCounterTrace2Pea().get(j).getKey().toString());
+				}
+
+				i = j;
+			}
+			writeMarkdownFile(name, cts);
+		}
+
 	}
 
 	private void writeSvgFile(final String dot) throws IOException, InterruptedException {
-		final File file = new File(PEA_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + ".svg");
+
+		final int numPea =
+				PEA_IMAGE_DIR.listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName + "_")).length;
+
+		final File file = new File(PEA_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + "_" + numPea + ".svg");
 
 		final String[] command = new String[] { "dot", "-Tsvg", "-o", file.toString() };
 		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServiceProvider);
@@ -150,6 +172,74 @@ public class PeaToDotTestSuite {
 		}
 	}
 
+	private void writeMarkdownFile(final String name, final List<String> cts) throws IOException {
+		final File markdownFile = new File(MARKDOWN_DIR + "/" + mPatternName + ".md");
+		final int numPea =
+				PEA_IMAGE_DIR.listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName + "_")).length;
+		final Formatter fmt = new Formatter();
+
+		final File[] posFailureImages =
+				POS_FAILURE_IMAGE_DIR.listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName + "_"));
+		final File[] negFailureImages =
+				NEG_FAILURE_IMAGE_DIR.listFiles((d, n) -> n.startsWith(mPatternName + "_" + mScopeName + "_"));
+
+		if (!markdownFile.exists()) {
+			fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
+			fmt.format("## %s%s", mPatternName, LINE_SEP);
+		}
+
+		fmt.format(LINE_SEP);
+		fmt.format("### %s %s%s", mPatternName, mScopeName, LINE_SEP);
+		fmt.format("```%s%s%s```%s", LINE_SEP, mPatternString, LINE_SEP, LINE_SEP);
+		fmt.format("%s```%sCountertraces: ", LINE_SEP, LINE_SEP);
+
+		for (int i = 0; i < cts.size(); i++) {
+			fmt.format("(%s)", cts.get(i));
+			if (i != (cts.size() - 1)) {
+				fmt.format(", ");
+			}
+		}
+
+		fmt.format("%s```%s", LINE_SEP, LINE_SEP);
+
+		assert (numPea == cts.size());
+		for (int i = numPea; i > 0; i--) {
+			fmt.format(LINE_SEP);
+			fmt.format("![](%s/%s/%s_%s_%d.svg)%s", "..", ROOT_DIR.toPath().relativize(PEA_IMAGE_DIR.toPath()),
+					mPatternName, mScopeName, (numPea - i), LINE_SEP);
+		}
+
+		if (posFailureImages.length > 0 || negFailureImages.length > 0) {
+			fmt.format(LINE_SEP);
+			fmt.format("<div class=\"pattern-examples\"></div>%s", LINE_SEP);
+			fmt.format("| Positive Example | Negative Example |%s", LINE_SEP);
+			fmt.format("| --- | --- |%s", LINE_SEP);
+
+			for (int i = 0; i < Math.max(posFailureImages.length, negFailureImages.length); i++) {
+				String lhs = "", rhs = "";
+
+				if (i < posFailureImages.length) {
+					lhs = "![](../" + ROOT_DIR.toPath().relativize(POS_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
+							+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg)";
+				}
+
+				if (i < negFailureImages.length) {
+					rhs = "![](../" + ROOT_DIR.toPath().relativize(NEG_FAILURE_IMAGE_DIR.toPath()) + "/" + mPatternName
+							+ "_" + mScopeName + "_" + String.valueOf(i) + ".svg)";
+				}
+
+				fmt.format("| %s | %s |%s", lhs, rhs, LINE_SEP);
+			}
+		}
+		fmt.format(LINE_SEP);
+
+		final BufferedWriter writer = new BufferedWriter(new FileWriter(markdownFile, true));
+		writer.write(fmt.toString());
+		writer.close();
+		fmt.close();
+	}
+
+	@Deprecated
 	private void writeMarkdownFile(final String counterTrace) throws IOException {
 		final File markdownFile = new File(MARKDOWN_DIR + "/" + mPatternName + ".md");
 		final File peaImage = new File(PEA_IMAGE_DIR + "/" + mPatternName + "_" + mScopeName + ".svg");
