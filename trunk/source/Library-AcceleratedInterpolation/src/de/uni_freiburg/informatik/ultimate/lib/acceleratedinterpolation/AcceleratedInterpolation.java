@@ -132,7 +132,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			for (final List<LETTER> loop : loophead.getValue()) {
 				final UnmodifiableTransFormula loopRelation = traceToTf(loop);
 				final UnmodifiableTransFormula acceleratedLoopRelation =
-						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.NONE);
+						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.FAST_UPR);
 				accelerations.add(acceleratedLoopRelation);
 			}
 			mAccelerations.put(loophead.getKey(), accelerations);
@@ -143,6 +143,12 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		}
 	}
 
+	/**
+	 * Check whether a given trace is feasible or not.
+	 * 
+	 * @param trace
+	 * @return
+	 */
 	private LBool checkFeasibility(final List<LETTER> trace) {
 		final UnmodifiableTransFormula tf = trace.get(0).getTransformula();
 		final List<UnmodifiableTransFormula> tfs = new ArrayList<>();

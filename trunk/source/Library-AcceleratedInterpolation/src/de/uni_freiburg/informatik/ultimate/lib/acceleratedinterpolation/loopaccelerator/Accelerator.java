@@ -64,6 +64,14 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 		mServices = services;
 	}
 
+	/**
+	 * Given a loop in form of an {@link UnmodifiableTransFormula} and specifiying which acceleration method, return a
+	 * loop acceleration.
+	 *
+	 * @param loop
+	 * @param accelerationMethod
+	 * @return
+	 */
 	public UnmodifiableTransFormula accelerateLoop(final UnmodifiableTransFormula loop,
 			final AccelerationMethod accelerationMethod) {
 		switch (accelerationMethod) {
@@ -79,6 +87,12 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 		return loop;
 	}
 
+	/**
+	 * Accelerate a loop using FastUPR
+	 * 
+	 * @param loop
+	 * @return
+	 */
 	private UnmodifiableTransFormula fastUprAcceleration(final UnmodifiableTransFormula loop) {
 		try {
 			mLogger.debug("Accelerating Loop using FastUPR");
