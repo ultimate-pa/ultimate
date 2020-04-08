@@ -60,19 +60,21 @@ public class BndDelayedResponsePatternUT extends PatternType {
 		final CDD S = cdds[0];
 		final int c1 = durations[0];
 		final int c2 = durations[1];
-		
+
 		if (scope instanceof SrParseScopeGlobally) {
 			// TODO: needs 2 ct formulas
-			//return Collections.singletonList(counterTrace(phaseT(), phase(R), phase(CDD.TRUE, BoundTypes.LESSEQUAL, c1),
-			//		phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT()));
-			
-			CounterTrace ct1 = counterTrace(phaseT(), phase(R), phase(S.negate(), BoundTypes.GREATER, c1), phaseT());
-			CounterTrace ct2 = counterTrace(phaseT(), phase(R), phase(S.negate(), BoundTypes.LESSEQUAL, c1),
-					phase(S, BoundTypes.LESS, c2), phaseT());
-			List ct = new ArrayList();
+			// return Collections.singletonList(counterTrace(phaseT(), phase(R), phase(CDD.TRUE, BoundTypes.LESSEQUAL,
+			// c1),
+			// phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT()));
+
+			final CounterTrace ct1 =
+					counterTrace(phaseT(), phase(R), phase(S.negate(), BoundTypes.GREATER, c1), phaseT());
+			final CounterTrace ct2 = counterTrace(phaseT(), phase(R), phase(S.negate(), BoundTypes.LESSEQUAL, c1),
+					phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT());
+			final List ct = new ArrayList();
 			Collections.addAll(ct, ct1, ct2);
 			return ct;
-			
+
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
