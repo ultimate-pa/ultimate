@@ -168,12 +168,14 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		}
 
 		final Map<Item, Double> lowest = new HashMap<>();
+
 		while (!worklist.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
 				throw new AutomataOperationCanceledException(rti);
 			}
+
 			final Item current = worklist.poll();
 
 			if (mLogger.isDebugEnabled()) {
@@ -207,11 +209,11 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 						continue;
 					}
 				} else {
-					// if the succ is not yet in lowest, it might be that an item with a call stack that is a prefix
-					// of the current succ is already in the list
+					// if the succ is not yet in lowest, there can still be an item with a call stack that has the same
+					// ancestor as the current succ -- if this item is cheaper, we do not insert.
 					// TODO: This check is rather expensive, but with a dedicated data structure it could be much
 					// cheaper, e.g., something similar to a suffix tree
-					if (!isCheapestPrefix(lowest, succ, costSoFar)) {
+					if (succ.mItemType == ItemType.CALL && !isCheapestAncestor(lowest, succ, costSoFar)) {
 						continue;
 					}
 
@@ -229,11 +231,10 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 				// we changed the cost of this item, so we have to remove it if it is already in the queue, because
 				// its queue position will not be updated otherwise
-				if (worklist.contains(succ)) {
+				if (worklist.remove(succ)) {
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug(String.format("    Updated: %s", succ));
 					}
-					worklist.remove(succ);
 				} else if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format("    Insert: %s", succ));
 				}
@@ -244,9 +245,15 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		return null;
 	}
 
-	private boolean isCheapestPrefix(final Map<Item, Double> lowest, final Item succ, final double costSoFar) {
+	private boolean isCheapestAncestor(final Map<Item, Double> lowest, final Item succ, final double costSoFar) {
+		assert succ.mItemType == ItemType.CALL : "It only makes sense to check Calls for cheapest ancestor";
 		for (final Entry<Item, Double> entry : lowest.entrySet()) {
 			final Item item = entry.getKey();
+
+			if (item.mItemType != ItemType.CALL) {
+				// we only need to check calls
+				continue;
+			}
 
 			if (!item.mTransition.equals(succ.mTransition)) {
 				// we only need to check against the same transition
@@ -260,13 +267,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				continue;
 			}
 
-			if (item.isHierStatesPrefixOf(succ)) {
-				// if (item.mHierPreStates.size() == succ.mHierPreStates.size()) {
-				// assert lowest.containsKey(succ) : String.format(
-				// "How can it be that !lowest.containsKey(succ)? item.hash=%s, succ.hash=%s, item.equals(succ)==%s and
-				// item is taken from lowest",
-				// item.hashCode(), succ.hashCode(), item.equals(succ));
-				// }
+			if (item.isAncestorEqual(succ)) {
 				if (costSoFar >= lowestCostSoFar) {
 					// we have already seen this successor but with a lower cost, so we should not explore
 					// with a higher cost
@@ -305,14 +306,15 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			rtr.add(new Item(succ, current.mTargetState, symbol, current, ItemType.CALL));
 		}
 
-		if (current.getHierPreState() == null) {
-			// there is no return transition
+		final STATE hierPre = current.getHierPreState();
+		if (hierPre == null || hierPre == mDummyEmptyStackState) {
+			// there is no (valid) return transition
 			return rtr;
 		}
 
 		// process return transitions
 		for (final OutgoingReturnTransition<LETTER, STATE> transition : mOperand
-				.returnSuccessorsGivenHier(current.mTargetState, current.getHierPreState())) {
+				.returnSuccessorsGivenHier(current.mTargetState, hierPre)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
 			if (mIsForbiddenState.test(succ)) {
@@ -452,7 +454,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		}
 
 		/**
-		 * 
 		 * @return true iff the hierachical pre states of this items are a prefix of the hierachical pre states of the
 		 *         other item, false otherwise.
 		 */
@@ -467,6 +468,27 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				}
 			}
 			return !iter.hasNext();
+		}
+
+		/**
+		 * 
+		 * @return true iff the last two hierarchical pre states of this item are equal to the last two hierarchical pre
+		 *         states of the other item, false otherwise.
+		 */
+		public boolean isAncestorEqual(final Item other) {
+			final Iterator<STATE> iter = mHierPreStates.iterator();
+			final Iterator<STATE> otherIter = other.mHierPreStates.iterator();
+
+			int i = 0;
+			while (iter.hasNext() && otherIter.hasNext() && i < 2) {
+				final STATE o1 = iter.next();
+				final STATE o2 = otherIter.next();
+				if (!(o1 == null ? o2 == null : o1.equals(o2))) {
+					return false;
+				}
+				++i;
+			}
+			return i == 2;
 		}
 
 		public NestedRun<LETTER, STATE> constructRun() {

@@ -77,8 +77,8 @@ public class HashedPriorityQueue<E> implements Queue<E>, Set<E>, Collection<E> {
 
 	@Override
 	public boolean remove(final Object successor) {
-		if (mQueue.remove(successor)) {
-			mSet.remove(successor);
+		if (mSet.remove(successor)) {
+			mQueue.remove(successor);
 			return true;
 		}
 		return false;
