@@ -452,7 +452,10 @@ def __get_out_of_ressources_ymls(input_dir):
             # files = elem.attrib["files"]
             yml = elem.attrib["name"]
             base_yml = ntpath.basename(yml)
-            status = elem.find("./column[@title='status']").attrib["value"]
+            status_tag = elem.find("./column[@title='status']")
+            if status_tag is None:
+                continue
+            status = status_tag.attrib["value"]
             logfile_name = "{}.{}.log".format(toolname, base_yml)
             if status == "TIMEOUT":
                 timeout_ymls += [logfile_name]
