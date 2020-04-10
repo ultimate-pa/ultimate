@@ -261,7 +261,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				continue;
 			}
 
-			if (item.isAncestorEqual(succ)) {
+			if (item.isHierStatesPrefixOf(succ)) {
 				if (costSoFar >= lowestCostSoFar) {
 					// we have already seen this successor but with a lower cost, so we should not explore
 					// with a higher cost
