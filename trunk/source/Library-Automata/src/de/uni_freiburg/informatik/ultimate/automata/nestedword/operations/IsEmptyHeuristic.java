@@ -208,26 +208,20 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 						}
 						continue;
 					}
-				} else {
-					// if the succ is not yet in lowest, there can still be an item with a call stack that has the same
-					// ancestor as the current succ -- if this item is cheaper, we do not insert.
-					// TODO: This check is rather expensive, but with a dedicated data structure it could be much
-					// cheaper, e.g., something similar to a suffix tree
-					if (succ.mItemType == ItemType.CALL && !isCheapestAncestor(lowest, succ, costSoFar)) {
-						continue;
-					}
-
 				}
 
-				final double expectedCost = costSoFar
-						+ heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
-				succ.setExpectedCostToTarget(expectedCost);
-				if (!succ.isLowest()) {
-					mLogger.debug("    Skip (not lowest cost)");
+				// if the succ is not yet in lowest, there can still be an item with a call stack that has the same
+				// ancestor as the current succ -- if this item is cheaper, we do not insert.
+				// TODO: This check is rather expensive, but with a dedicated data structure it could be much
+				// cheaper, e.g., something similar to a suffix tree
+				if (succ.mItemType == ItemType.CALL && !isCheapestAncestor(lowest, succ, costSoFar)) {
 					continue;
 				}
 
+				final double expectedCostToTarget =
+						heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
 				succ.setCostSoFar(costSoFar);
+				succ.setExpectedCostToTarget(expectedCostToTarget);
 
 				// we changed the cost of this item, so we have to remove it if it is already in the queue, because
 				// its queue position will not be updated otherwise
@@ -342,15 +336,10 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		boolean correct = true;
 		if (mAcceptingRun == null) {
-			if (mLogger.isWarnEnabled()) {
-				mLogger.warn("Emptiness not double checked ");
-			}
-		} else {
-			correct = new Accepts<>(mServices, mOperand, mAcceptingRun.getWord()).getResult();
+			return !new IsEmpty<>(mServices, mOperand).getResult();
 		}
-		return correct;
+		return new Accepts<>(mServices, mOperand, mAcceptingRun.getWord()).getResult();
 	}
 
 	@Override
@@ -382,15 +371,13 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		// g-value, how much have we already payed?
 		private double mCostSoFar;
-		// h-value
-		private double mLowestExpectedCost;
+		// h-value, i.e., how expensive from here to target using this node
+		private double mEstimatedCostToTargetFromHere;
 		// f-value, i.e. how expensive from start to target if we use this node, i.e. g+h
 		private double mExpectedCostToTarget;
 
 		/**
 		 * Create initial worklist item.
-		 *
-		 * @param initialState
 		 */
 		Item(final STATE initialState) {
 			this(initialState, mDummyEmptyStackState, null, null, ItemType.INITIAL);
@@ -399,11 +386,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		/**
 		 * Create new worklist item.
 		 *
-		 * @param targetState
-		 * @param hierPreState
-		 * @param letter
-		 * @param predecessor
-		 * @param symbolType
 		 */
 		Item(final STATE targetState, final STATE hierPreState, final LETTER letter, final Item predecessor,
 				final ItemType symbolType) {
@@ -424,24 +406,19 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			mTransition = letter;
 			mBackPointer = predecessor;
 			mItemType = symbolType;
-			setExpectedCostToTarget(Double.MAX_VALUE);
-			mLowestExpectedCost = Double.MAX_VALUE;
+			mCostSoFar = 0.0;
+			mExpectedCostToTarget = Double.MAX_VALUE;
+			mEstimatedCostToTargetFromHere = Double.MAX_VALUE;
 			mHashCode = computeHashCode();
 		}
 
 		void setExpectedCostToTarget(final double value) {
-			mExpectedCostToTarget = value;
-			if (value < mLowestExpectedCost) {
-				mLowestExpectedCost = value;
-			}
+			mEstimatedCostToTargetFromHere = value;
+			mExpectedCostToTarget = mEstimatedCostToTargetFromHere + mCostSoFar;
 		}
 
 		void setCostSoFar(final double costSoFar) {
 			mCostSoFar = costSoFar;
-		}
-
-		boolean isLowest() {
-			return mLowestExpectedCost == mExpectedCostToTarget;
 		}
 
 		@Override
@@ -454,7 +431,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		}
 
 		/**
-		 * @return true iff the hierachical pre states of this items are a prefix of the hierachical pre states of the
+		 * @return true iff the hierarchical pre states of this items are a prefix of the hierarchical pre states of the
 		 *         other item, false otherwise.
 		 */
 		public boolean isHierStatesPrefixOf(final Item other) {
@@ -539,7 +516,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			}
 
 			final NestedWord<LETTER> nestedWord = new NestedWord<>(word, nestingRelation);
-
 			return new NestedRun<>(nestedWord, stateSequence);
 		}
 
@@ -605,7 +581,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			}
 			return String.format("%8s: {%s} T%s {%s} (g=%f, h=%f, f=%f, s=%d)", mItemType, hier,
 					mTransition == null ? 0 : mTransition.hashCode(), mTargetState.hashCode(), mCostSoFar,
-					mLowestExpectedCost, mExpectedCostToTarget, mHierPreStates.size());
+					mEstimatedCostToTargetFromHere, mExpectedCostToTarget, mHierPreStates.size());
 		}
 
 	}

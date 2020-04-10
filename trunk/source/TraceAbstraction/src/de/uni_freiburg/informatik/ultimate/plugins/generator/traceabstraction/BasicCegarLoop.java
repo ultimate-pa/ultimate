@@ -40,6 +40,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -436,15 +437,18 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final NestedRun<LETTER, IPredicate> isEmptyCex =
 				new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
 
+		final Function<NestedRun<LETTER, IPredicate>, String> toStr =
+				a -> a.getWord().asList().stream().map(b -> "T" + b.hashCode()).collect(Collectors.joining(" "));
+
 		if (isEmptyHeuristicCex == null && isEmptyCex == null) {
 			return true;
 		} else if (isEmptyHeuristicCex != null && isEmptyCex == null) {
 			mLogger.fatal("IsEmptyHeuristic found a path but IsEmpty did not.");
-			mLogger.fatal("IsEmptyHeuristic: " + isEmptyHeuristicCex.getWord());
+			mLogger.fatal("IsEmptyHeuristic: " + toStr.apply(isEmptyHeuristicCex));
 			return false;
 		} else if (isEmptyHeuristicCex == null && isEmptyCex != null) {
 			mLogger.fatal("IsEmptyHeuristic found no path but IsEmpty did.");
-			mLogger.fatal("IsEmpty         : " + isEmptyCex.getWord());
+			mLogger.fatal("IsEmpty         : " + toStr.apply(isEmptyCex));
 			return false;
 		} else if (isEmptyHeuristicCex != null && isEmptyCex != null) {
 			if (!NestedRun.isEqual(isEmptyHeuristicCex, isEmptyCex)) {
@@ -453,8 +457,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				} else {
 					mLogger.info("IsEmptyHeuristic and IsEmpty found a path, but they differ");
 				}
-				mLogger.info("IsEmptyHeuristic: " + isEmptyHeuristicCex.getWord());
-				mLogger.info("IsEmpty         : " + isEmptyCex.getWord());
+				mLogger.info("IsEmptyHeuristic: " + toStr.apply(isEmptyHeuristicCex));
+				mLogger.info("IsEmpty         : " + toStr.apply(isEmptyCex));
 			}
 			return true;
 		}
