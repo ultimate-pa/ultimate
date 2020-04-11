@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashedPriorityQueue;
 
 /**
@@ -167,7 +169,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			mLogger.debug(String.format("Initial queue: %s", worklist));
 		}
 
+		// TODO: Two separate maps, one for call, one for internal/return
 		final Map<Item, Double> lowest = new HashMap<>();
+		final Map<Transition, SummaryItem> summaries = new HashMap<>();
 
 		while (!worklist.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
@@ -186,40 +190,79 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				return current.constructRun();
 			}
 
+			if (current.mItemType == ItemType.RETURN) {
+				final Item callItem = current.findCorrespondingCallItem();
+				final Transition callTrans = new Transition(callItem);
+				final SummaryItem oldSummary = summaries.get(callTrans);
+				if (oldSummary == null) {
+					final SummaryItem sItem = new SummaryItem(current, callItem);
+					summaries.put(callTrans, sItem);
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(String.format("  Is fresh summary: %s", sItem));
+					}
+				} else {
+					final double summaryCost = current.mCostSoFar - callItem.mCostSoFar;
+					if (summaryCost < oldSummary.mSummaryCost) {
+						final SummaryItem sItem = new SummaryItem(current, callItem);
+						summaries.put(callTrans, sItem);
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug(String.format("  Is cheaper summary: %s", sItem));
+						}
+					}
+				}
+			}
+
 			final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current);
 			if (mLogger.isDebugEnabled() && unvaluatedSuccessors.isEmpty()) {
 				mLogger.debug("  No successors");
 			}
-			for (final Item succ : unvaluatedSuccessors) {
+			for (Item succ : unvaluatedSuccessors) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format("  Succ: %s", succ));
 				}
 
-				final double costSoFar = current.mCostSoFar + heuristic.getConcreteCost(succ.mTransition);
+				final double concreteCost = heuristic.getConcreteCost(succ.mLetter);
+				double costSoFar = current.mCostSoFar + concreteCost;
+
+				if (succ.mItemType == ItemType.CALL) {
+					final Transition callTrans = new Transition(succ);
+					final SummaryItem summary = summaries.get(callTrans);
+					if (summary != null) {
+						// there is a summary for this call and we are going to use it.
+						// we need to subtract the concrete cost for this transition, because it is already part of the
+						// summary
+						costSoFar += summary.mSummaryCost - concreteCost;
+						succ = new Item(succ, summary);
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug(String.format("    Using summary instead: %s", summary));
+							mLogger.debug(String.format("    New Succ: %s", succ));
+						}
+					}
+				}
 
 				final Double lowestCostSoFar = lowest.get(succ);
-				if (lowestCostSoFar != null) {
-					if (costSoFar >= lowestCostSoFar) {
-						// we have already seen this successor but with a lower cost, so we should not explore with a
-						// higher cost
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug(String.format("    Skip (cost %s, but have seen with cost %s)", costSoFar,
-									lowestCostSoFar));
-						}
+				if (lowestCostSoFar != null && costSoFar >= lowestCostSoFar) {
+					// we have already seen this successor but with a lower cost, so we should not explore with a
+					// higher cost
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(String.format("    Skip (cost %s, but have seen with cost %s)", costSoFar,
+								lowestCostSoFar));
+					}
+					continue;
+				}
+				if (succ.mItemType == ItemType.CALL) {
+					if (!isCheapestAncestor(lowest, succ, costSoFar)) {
+						// if the succ is not yet in lowest, there can still be an item with a call stack that has the
+						// same
+						// ancestor as the current succ -- if this item is cheaper, we do not insert.
+						// TODO: This check is rather expensive, but with a dedicated data structure it could be much
+						// cheaper, e.g., something similar to a suffix tree
 						continue;
 					}
 				}
 
-				// if the succ is not yet in lowest, there can still be an item with a call stack that has the same
-				// ancestor as the current succ -- if this item is cheaper, we do not insert.
-				// TODO: This check is rather expensive, but with a dedicated data structure it could be much
-				// cheaper, e.g., something similar to a suffix tree
-				if (succ.mItemType == ItemType.CALL && !isCheapestAncestor(lowest, succ, costSoFar)) {
-					continue;
-				}
-
 				final double expectedCostToTarget =
-						heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mTransition);
+						heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mLetter);
 				succ.setCostSoFar(costSoFar);
 				succ.setExpectedCostToTarget(expectedCostToTarget);
 
@@ -234,6 +277,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				}
 				worklist.add(succ);
 				lowest.put(succ, costSoFar);
+
 			}
 		}
 		return null;
@@ -249,7 +293,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				continue;
 			}
 
-			if (!item.mTransition.equals(succ.mTransition)) {
+			if (!item.mLetter.equals(succ.mLetter)) {
 				// we only need to check against the same transition
 				continue;
 			}
@@ -354,18 +398,101 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		CALL, RETURN, INTERNAL, INITIAL
 	}
 
+	private class Transition {
+		private final STATE mTargetState;
+		private final STATE mHierPreState;
+		private final LETTER mTransition;
+		private final int mHash;
+
+		private Transition(final Item item) {
+			mTransition = item.mLetter;
+			mTargetState = item.mTargetState;
+			mHierPreState = item.getHierPreState();
+			mHash = HashUtils.hashHsieh(31, mHierPreState, mTargetState, mTransition);
+		}
+
+		@Override
+		public int hashCode() {
+			return mHash;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final Transition other = (Transition) obj;
+			if (!mHierPreState.equals(other.mHierPreState)) {
+				return false;
+			}
+			if (!mTargetState.equals(other.mTargetState)) {
+				return false;
+			}
+			if (!mTransition.equals(other.mTransition)) {
+				return false;
+			}
+			return true;
+		}
+
+	}
+
+	private interface IWithBackPointer {
+		IWithBackPointer getBackpointer();
+	}
+
+	private class SummaryItem implements IWithBackPointer {
+
+		// the actual cost of this summary, i.e., the cost of the subpath in this summary
+		private final double mSummaryCost;
+		private final NestedRun<LETTER, STATE> mSubrun;
+		private final IWithBackPointer mBackPointer;
+		private final Item mReturnItem;
+
+		public SummaryItem(final Item returnItem, final Item callItem) {
+			mSummaryCost = returnItem.mCostSoFar - callItem.mCostSoFar;
+			mBackPointer = callItem;
+			mSubrun = returnItem.constructRun(a -> a == callItem, true);
+			mReturnItem = returnItem;
+			assert mSubrun != null;
+		}
+
+		public SummaryItem(final Item callItem, final SummaryItem summary) {
+			mSummaryCost = summary.mSummaryCost;
+			mSubrun = summary.mSubrun;
+			mReturnItem = summary.mReturnItem;
+			mBackPointer = callItem;
+			assert mSubrun != null;
+		}
+
+		@Override
+		public IWithBackPointer getBackpointer() {
+			return mBackPointer;
+		}
+
+		@Override
+		public String toString() {
+			return String.format(" Summary {%s} (cost=%s)", mBackPointer, mSummaryCost);
+		}
+	}
+
 	/**
 	 * Internal datastructure that represents worklist item.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
-	private class Item implements Comparable<Item> {
+	private class Item implements Comparable<Item>, IWithBackPointer {
 
 		private final STATE mTargetState;
 		private final Deque<STATE> mHierPreStates;
-		private final LETTER mTransition;
-		private final Item mBackPointer;
+		private final LETTER mLetter;
+		private final IWithBackPointer mBackPointer;
 		private final ItemType mItemType;
 		private final int mHashCode;
 
@@ -385,7 +512,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		/**
 		 * Create new worklist item.
-		 *
 		 */
 		Item(final STATE targetState, final STATE hierPreState, final LETTER letter, final Item predecessor,
 				final ItemType symbolType) {
@@ -403,9 +529,24 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				mHierPreStates.push(hierPreState);
 			}
 
-			mTransition = letter;
+			mLetter = letter;
 			mBackPointer = predecessor;
 			mItemType = symbolType;
+
+			mCostSoFar = 0.0;
+			mExpectedCostToTarget = Double.MAX_VALUE;
+			mEstimatedCostToTargetFromHere = Double.MAX_VALUE;
+			mHashCode = computeHashCode();
+		}
+
+		Item(final Item callItem, final SummaryItem summary) {
+			mTargetState = summary.mReturnItem.mTargetState;
+			mHierPreStates = new ElementHashedArrayDeque<>(callItem.mHierPreStates);
+			mHierPreStates.pop();
+			mLetter = summary.mReturnItem.mLetter;
+			mBackPointer = new SummaryItem(callItem, summary);
+			mItemType = ItemType.RETURN;
+
 			mCostSoFar = 0.0;
 			mExpectedCostToTarget = Double.MAX_VALUE;
 			mEstimatedCostToTargetFromHere = Double.MAX_VALUE;
@@ -468,32 +609,100 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			return i == 2;
 		}
 
+		public Item findCorrespondingCallItem() {
+			if (mItemType != ItemType.RETURN) {
+				return null;
+			}
+			IWithBackPointer current = this.mBackPointer;
+
+			final Deque<IWithBackPointer> localStack = new ArrayDeque<>();
+			while (current != null) {
+				if (current.getClass() == getClass()) {
+					final Item curr = (Item) current;
+					if (curr.mItemType == ItemType.RETURN) {
+						localStack.push(curr);
+					} else if (curr.mItemType == ItemType.CALL) {
+						if (localStack.isEmpty()) {
+							return curr;
+						}
+						localStack.pop();
+					}
+				}
+				current = current.getBackpointer();
+			}
+			return null;
+		}
+
 		public NestedRun<LETTER, STATE> constructRun() {
-			final List<Item> runInItems = new ArrayList<>();
-			Item current = this;
+			return constructRun(Objects::isNull, false);
+		}
+
+		@SuppressWarnings("unchecked")
+		public NestedRun<LETTER, STATE> constructRun(final Predicate<IWithBackPointer> until,
+				final boolean keepBreakItem) {
+			final List<IWithBackPointer> runInItems = new ArrayList<>();
+			IWithBackPointer current = this;
 			while (true) {
 				runInItems.add(current);
-				current = current.mBackPointer;
-				if (current == null) {
+				current = current.getBackpointer();
+				if (until.test(current)) {
+					if (keepBreakItem) {
+						runInItems.add(current);
+					}
 					break;
 				}
 			}
 			Collections.reverse(runInItems);
 
+			final List<NestedRun<LETTER, STATE>> subruns = new ArrayList<>();
+			List<Item> currentSubrun = new ArrayList<>();
+			for (final IWithBackPointer elem : runInItems) {
+				if (elem.getClass() == getClass()) {
+					currentSubrun.add((Item) elem);
+				} else if (elem instanceof IsEmptyHeuristic.SummaryItem) {
+					subruns.add(constructRunFromItems(currentSubrun));
+					subruns.add(((IsEmptyHeuristic.SummaryItem) elem).mSubrun);
+					currentSubrun = new ArrayList<>();
+				}
+			}
+			if (!currentSubrun.isEmpty()) {
+				subruns.add(constructRunFromItems(currentSubrun));
+			}
+			assert !subruns.isEmpty();
+			final Iterator<NestedRun<LETTER, STATE>> iter = subruns.iterator();
+			NestedRun<LETTER, STATE> run = null;
+			while (iter.hasNext()) {
+				if (run == null) {
+					run = iter.next();
+				} else {
+					run = run.concatenate(iter.next());
+				}
+
+			}
+			return run;
+		}
+
+		private NestedRun<LETTER, STATE> constructRunFromItems(final List<Item> runInItems) {
+			if (runInItems.isEmpty()) {
+				throw new IllegalArgumentException();
+			}
 			// construct nesting relation
 			final ArrayList<STATE> stateSequence = new ArrayList<>();
+			final Item firstItem = runInItems.get(0);
+			stateSequence.add(firstItem.mTargetState);
 			@SuppressWarnings("unchecked")
 			final LETTER[] word = (LETTER[]) new Object[runInItems.size() - 1];
+			return constructRunFromItemsWithoutInitialState(runInItems.subList(1, runInItems.size()), stateSequence,
+					word);
+		}
 
+		private NestedRun<LETTER, STATE> constructRunFromItemsWithoutInitialState(final List<Item> runInItems,
+				final ArrayList<STATE> stateSequence, final LETTER[] word) {
 			final Deque<Integer> callIndices = new ArrayDeque<>();
 			final int[] nestingRelation = new int[word.length];
 			int i = 0;
 			for (final Item item : runInItems) {
-				if (item.mTransition == null) {
-					stateSequence.add(item.mTargetState);
-					continue;
-				}
-				word[i] = item.mTransition;
+				word[i] = item.mLetter;
 				stateSequence.add(item.mTargetState);
 				switch (item.mItemType) {
 				case CALL:
@@ -504,17 +713,21 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					nestingRelation[i] = NestedWord.INTERNAL_POSITION;
 					break;
 				case RETURN:
-					final int lastCall = callIndices.pop();
-					nestingRelation[i] = lastCall;
-					nestingRelation[lastCall] = i;
+					if (callIndices.isEmpty()) {
+						nestingRelation[i] = NestedWord.MINUS_INFINITY;
+					} else {
+						final int lastCall = callIndices.pop();
+						nestingRelation[i] = lastCall;
+						nestingRelation[lastCall] = i;
+					}
 					break;
 				case INITIAL:
 				default:
 					throw new UnsupportedOperationException();
 				}
+
 				++i;
 			}
-
 			final NestedWord<LETTER> nestedWord = new NestedWord<>(word, nestingRelation);
 			return new NestedRun<>(nestedWord, stateSequence);
 		}
@@ -529,7 +742,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			int result = 1;
 			result = prime * result + (mHierPreStates == null ? 0 : mHierPreStates.hashCode());
 			result = prime * result + (mTargetState == null ? 0 : mTargetState.hashCode());
-			result = prime * result + (mTransition == null ? 0 : mTransition.hashCode());
+			result = prime * result + (mLetter == null ? 0 : mLetter.hashCode());
 			return result;
 		}
 
@@ -559,11 +772,11 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			} else if (!mTargetState.equals(other.mTargetState)) {
 				return false;
 			}
-			if (mTransition == null) {
-				if (other.mTransition != null) {
+			if (mLetter == null) {
+				if (other.mLetter != null) {
 					return false;
 				}
-			} else if (!mTransition.equals(other.mTransition)) {
+			} else if (!mLetter.equals(other.mLetter)) {
 				return false;
 			}
 			return true;
@@ -575,13 +788,18 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					mHierPreStates.stream().map(a -> String.valueOf(a.hashCode())).collect(Collectors.joining(","));
 
 			if (mCostSoFar == 0.0) {
-				return String.format("%8s: {%s} T%s {%s}", mItemType, hier,
-						mTransition == null ? 0 : mTransition.hashCode(), mTargetState.hashCode());
+				return String.format("%8s: {%s} T%s {%s}", mItemType, hier, mLetter == null ? 0 : mLetter.hashCode(),
+						mTargetState.hashCode());
 
 			}
 			return String.format("%8s: {%s} T%s {%s} (g=%f, h=%f, f=%f, s=%d)", mItemType, hier,
-					mTransition == null ? 0 : mTransition.hashCode(), mTargetState.hashCode(), mCostSoFar,
+					mLetter == null ? 0 : mLetter.hashCode(), mTargetState.hashCode(), mCostSoFar,
 					mEstimatedCostToTargetFromHere, mExpectedCostToTarget, mHierPreStates.size());
+		}
+
+		@Override
+		public IWithBackPointer getBackpointer() {
+			return mBackPointer;
 		}
 
 	}
