@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.util;
 public final class HashUtils {
 	
 	// deadbeaf leads to hash conflicts on f...
-	private final static int BASE = 0xcafebabe;
+	private static final int BASE = 0xcafebabe;
 	
 	private HashUtils() {
 		// Hide constructor
