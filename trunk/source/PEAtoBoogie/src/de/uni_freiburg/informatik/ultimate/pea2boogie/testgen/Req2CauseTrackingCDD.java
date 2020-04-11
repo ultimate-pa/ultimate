@@ -23,38 +23,67 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 public class Req2CauseTrackingCDD {
 
 	private final Map<String, String> mTrackingVars;
+	private final ILogger mLogger;
 
 	public Req2CauseTrackingCDD(final ILogger logger) {
 		mTrackingVars = new HashMap<>();
+		mLogger = logger;
 	}
 
-	public CDD transformInvariant(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars, final Set<String> constVars,
-			final Set<String> activePhaseVars,  final boolean isEffectPhase, final boolean negateTrackingVar) {
-		final Set<String> trackedVars = getCddVariables(cdd);
-		trackedVars.removeAll(inputVars);
-		trackedVars.retainAll(activePhaseVars);
-		trackedVars.removeAll(constVars);
-		if (isEffectPhase) {
-			trackedVars.removeAll(effectVars);
+	/*
+	 * Add tracking guards to the invariant.
+	 * Note that no tracking vars are added for: inputs, constants
+	 * Tracking vars are only added for the requirements effect vars if this is no effect phase.
+	 */
+	public CDD transformInvariantTracking(final CDD cdd, final Set<String> trackedVars, final Set<String> effectVars,
+			final boolean isEffectPhase) {
+		final CDD[] conjuncts = cdd.toDNF();    //TODO: this ignores disjunction on boogie expression level
+		if (conjuncts.length > 1 && isEffectPhase) {
+			final Set<CDD> effectConjuncts = getEffectConjuncts(conjuncts, effectVars);
+			if (effectConjuncts.size() > 1) {
+				mLogger.warn("Nondeterministic requirement (will be ignored) with effect: " + cdd.toString());
+				mLogger.error("got Effects: " + effectConjuncts);
+				return CDD.FALSE;
+			} else {
+				// get effect part
+				final CDD result = effectConjuncts.stream().reduce(CDD.TRUE, (a,b) -> {return a.and(b);} );
+				mLogger.warn("Effect part of disjunct: " + result);
+				// and force trigger to be triggered
+				final Set<CDD> triggerConjuncts = getTriggerConjuncts(conjuncts, effectVars);
+				final CDD intermed = result.and(triggerConjuncts.stream().reduce(CDD.TRUE, (a,b) -> {return a.and(b.negate());} ));
+				mLogger.warn("Trigger part of disjunct: " + intermed);
+				mLogger.error("Transforming: "+ result.and(intermed) + " with tracking vars " + trackedVars);
+				return addTrackingGuards(result.and(intermed), trackedVars);
+			}
+		} else {
+			return addTrackingGuards(cdd, trackedVars);
 		}
-		return addTrackingGuards(cdd, trackedVars, negateTrackingVar);
 	}
 
-	public CDD transformGurad(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars, final Set<String> constVars, final boolean isEffectEdge) {
-		final Set<String> vars = getCddVariables(cdd);
-		vars.removeAll(inputVars);
-		vars.removeAll(constVars);
-		if (isEffectEdge) {
-			vars.removeAll(effectVars);
+	private static Set<CDD> getEffectConjuncts(CDD[] conjuncts, Set<String> effectVars) {
+		final Set<CDD> effectDisjuncts = new HashSet<>();
+		for(final CDD cdd: conjuncts){
+			final Set<String> effectVarsOfCDD = getCddVariables(cdd);
+			effectVarsOfCDD.retainAll(effectVars);
+			if (effectVarsOfCDD.size() > 0) {
+				effectDisjuncts.add(cdd);
+			}
 		}
-		// TODO remove primed effect variables in a nicer way
-		vars.removeAll(effectVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
-		vars.removeAll(inputVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
-		final CDD newGuard = addTrackingGuards(cdd, vars, false);
-		return newGuard;
+		return effectDisjuncts;
 	}
 
-	private CDD addTrackingGuards(final CDD cdd, final Set<String> trackedVars, final boolean negateTrackingVar) {
+	private static Set<CDD> getTriggerConjuncts(CDD[] conjuncts, Set<String> effectVars) {
+		final Set<CDD> triggerDisjuncts = new HashSet<>();
+		for(final CDD cdd: conjuncts){
+			final Set<String> triggerVars = getCddVariables(cdd);
+			if (!triggerVars.removeAll(effectVars)) { //only add if removing effects dones not change set of vars
+				triggerDisjuncts.add(cdd);
+			}
+		}
+		return triggerDisjuncts;
+	}
+
+	private CDD addTrackingGuards(final CDD cdd, final Set<String> trackedVars) {
 		if (cdd == CDD.TRUE) {
 			return cdd;
 		}
@@ -65,7 +94,7 @@ public class Req2CauseTrackingCDD {
 		final List<CDD> newChildren = new ArrayList<>();
 		if (cdd.getChilds() != null) {
 			for (final CDD child : cdd.getChilds()) {
-				newChildren.add(addTrackingGuards(child, trackedVars, negateTrackingVar));
+				newChildren.add(addTrackingGuards(child, trackedVars));
 			}
 		}
 
@@ -78,11 +107,7 @@ public class Req2CauseTrackingCDD {
 					mTrackingVars.put(varName, "bool");
 				}
 				final CDD trackGurad = CDD.create(new BooleanDecision(varName), CDD.TRUE_CHILDS);
-				if (negateTrackingVar) {
-					annotatedCDD = trackGurad.negate().and(cdd);
-				} else {
-					annotatedCDD = trackGurad.and(cdd);
-				}
+				annotatedCDD = trackGurad.and(cdd);
 			}
 		}
 		return annotatedCDD;
@@ -142,6 +167,21 @@ public class Req2CauseTrackingCDD {
 			return CDD.TRUE;
 		}
 	}
+
+	public CDD transformGurad(final CDD cdd, final Set<String> effectVars, final Set<String> inputVars, final Set<String> constVars, final boolean isEffectEdge) {
+		final Set<String> vars = getCddVariables(cdd);
+		vars.removeAll(inputVars);
+		vars.removeAll(constVars);
+		if (isEffectEdge) {
+			vars.removeAll(effectVars);
+		}
+		// TODO remove primed effect variables in a nicer way
+		vars.removeAll(effectVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
+		vars.removeAll(inputVars.stream().map(var -> var + "'").collect(Collectors.toSet()));
+		final CDD newGuard = addTrackingGuards(cdd, vars);
+		return newGuard;
+	}
+
 
 	public static Set<String> getAllVariables(final PatternType pattern, final Map<String, Integer> id2bounds) {
 		final List<CounterTrace> cts = pattern.constructCounterTrace(id2bounds);
