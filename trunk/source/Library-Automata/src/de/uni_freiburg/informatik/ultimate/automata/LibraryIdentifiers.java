@@ -35,7 +35,7 @@ public final class LibraryIdentifiers {
 	/**
 	 * The plugin ID of the automata library.
 	 */
-	public static final String PLUGIN_ID = "UltimateAutomataLibrary";
+	public static final String PLUGIN_ID = LibraryIdentifiers.class.getPackage().getName();
 
 	private LibraryIdentifiers() {
 		// hidden constructor
