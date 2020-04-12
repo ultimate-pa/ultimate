@@ -1,0 +1,5 @@
+
+Input I1 is bool
+Output O1 is bool
+
+req6: Globally, it is always the case that if "I1" holds, then "O1" holds after at most "10" time units

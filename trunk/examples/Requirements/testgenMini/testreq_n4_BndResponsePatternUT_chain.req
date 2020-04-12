@@ -1,0 +1,31 @@
+/*
+Set Inputs:
+ 	I1 := true  
+ Wait 10  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait 10  
+ 
+Set Inputs:
+ 	I1 := true  
+ Wait at most 1  for: 
+	O1 == true  
+ 
+Set Inputs:
+ 	I1 := true  
+ Wait 1  
+*/
+
+Input I1 is bool
+Internal H1 is bool
+Internal H2 is bool
+Internal H3 is bool
+Output O1 is bool
+
+req1: Globally, it is always the case that if "H1" holds, then "H2" holds after at most "10" time units
+req2: Globally, it is always the case that if "H2" holds, then "H3" holds after at most "10" time units
+
+req3: Globally, it is always the case that if "I1" holds, then "H1" holds as well
+req4: Globally, it is always the case that if "H3" holds, then "O1" holds as well
+

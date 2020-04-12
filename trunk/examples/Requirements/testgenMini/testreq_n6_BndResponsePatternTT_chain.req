@@ -1,0 +1,102 @@
+/*
+- ReqTestResultTest: Found Test for testgen_req6_Globally_BndResponseTT_tt7   
+Set Inputs:
+ 	I1 := true  
+ Wait 5  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait 5  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait 5  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait 5  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait 5  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait 5  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait at most 5  for: 
+	O1 == true  
+ 
+- ReqTestResultTest: Found Test for testgen_req6_Globally_BndResponseTT_tt8    
+Set Inputs:
+ 	I1 := true  
+ Wait 5  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait 3  
+ 
+Set Inputs:
+ 	I1 := true  
+ Wait 2  
+ 
+Set Inputs:
+ 	I1 := true  
+ Wait 3  
+ 
+Set Inputs:
+ 	I1 := true  
+ Wait 2  
+ 
+Set Inputs:
+ 	I1 := true  
+ Wait 3  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait 2  
+ 
+Set Inputs:
+ 	I1 := true  
+ Wait 3  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait 2  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait 3  
+ 
+Set Inputs:
+ 	I1 := false  
+ Wait 2  
+ 
+Set Inputs:
+ 	I1 := true  
+ Wait at most 3  for: 
+	O1 == true  
+ 
+Set Inputs:
+ 	I1 := true  
+ Wait at most 1  for: 
+	O1 == true
+*/
+
+Input I1 is bool
+Internal S1 is bool 
+Internal S2 is bool 
+Internal S3 is bool 
+Internal S4 is bool 
+Internal S5 is bool 
+Output O1 is bool
+
+
+req1: Globally, it is always the case that if "I1" holds for at least "5" time units, then "S1" holds afterwards for at least "5" time units
+req2: Globally, it is always the case that if "S1" holds for at least "5" time units, then "S2" holds afterwards for at least "5" time units
+req3: Globally, it is always the case that if "S2" holds for at least "5" time units, then "S3" holds afterwards for at least "5" time units
+req4: Globally, it is always the case that if "S3" holds for at least "5" time units, then "S4" holds afterwards for at least "5" time units
+req5: Globally, it is always the case that if "S4" holds for at least "5" time units, then "S5" holds afterwards for at least "5" time units
+req6: Globally, it is always the case that if "S5" holds for at least "5" time units, then "O1" holds afterwards for at least "5" time units
