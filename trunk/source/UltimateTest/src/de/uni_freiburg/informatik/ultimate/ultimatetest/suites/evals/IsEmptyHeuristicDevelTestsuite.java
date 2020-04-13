@@ -65,6 +65,7 @@ public class IsEmptyHeuristicDevelTestsuite extends AbstractEvalTestSuite {
 			"examples/programs/openBugs/bug02_isEmptyHeuristic_recursion.c",
 			"examples/programs/openBugs/bug03_IsEmptyHeuristic.c",
 			"examples/programs/openBugs/bug04_IsEmptyHeuristic.c",
+			"examples/programs/openBugs/bug05_IsEmptyHeuristic.c",
 			"examples/svcomp/array-examples/sanfoundry_43_ground.i",
 			"examples/svcomp/ldv-linux-3.4-simple/43_1a_cilled_ok_nondet_linux-43_1a-drivers--net--phy--icplus.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.i",
 			"examples/svcomp/ldv-linux-3.4-simple/43_1a_cilled_ok_nondet_linux-43_1a-drivers--hid--hid-kensington.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.i",

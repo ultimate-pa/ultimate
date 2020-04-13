@@ -171,7 +171,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		// TODO: Two separate maps, one for call, one for internal/return
 		final Map<Item, Double> lowest = new HashMap<>();
-		final Map<Transition, SummaryItem> summaries = new HashMap<>();
+		final Map<Transition, Map<Item, SummaryItem>> summaries = new HashMap<>();
 
 		while (!worklist.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
@@ -191,54 +191,24 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			}
 
 			if (current.mItemType == ItemType.RETURN) {
-				final Item callItem = current.findCorrespondingCallItem();
-				final Transition callTrans = new Transition(callItem);
-				final SummaryItem oldSummary = summaries.get(callTrans);
-				if (oldSummary == null) {
-					final SummaryItem sItem = new SummaryItem(current, callItem);
-					summaries.put(callTrans, sItem);
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug(String.format("  Is fresh summary: %s", sItem));
-					}
-				} else {
-					final double summaryCost = current.mCostSoFar - callItem.mCostSoFar;
-					if (summaryCost < oldSummary.mSummaryCost) {
-						final SummaryItem sItem = new SummaryItem(current, callItem);
-						summaries.put(callTrans, sItem);
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug(String.format("  Is cheaper summary: %s", sItem));
-						}
-					}
-				}
+				updateSummaries(summaries, current);
 			}
 
 			final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current);
 			if (mLogger.isDebugEnabled() && unvaluatedSuccessors.isEmpty()) {
 				mLogger.debug("  No successors");
+				continue;
 			}
-			for (Item succ : unvaluatedSuccessors) {
+
+			final List<Item> successors =
+					addCostAndSummaries(unvaluatedSuccessors, summaries, heuristic, current.mCostSoFar);
+
+			for (final Item succ : successors) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format("  Succ: %s", succ));
 				}
 
-				final double concreteCost = heuristic.getConcreteCost(succ.mLetter);
-				double costSoFar = current.mCostSoFar + concreteCost;
-
-				if (succ.mItemType == ItemType.CALL) {
-					final Transition callTrans = new Transition(succ);
-					final SummaryItem summary = summaries.get(callTrans);
-					if (summary != null) {
-						// there is a summary for this call and we are going to use it.
-						// we need to subtract the concrete cost for this transition, because it is already part of the
-						// summary
-						costSoFar += summary.mSummaryCost - concreteCost;
-						succ = new Item(succ, summary);
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug(String.format("    Using summary instead: %s", summary));
-							mLogger.debug(String.format("    New Succ: %s", succ));
-						}
-					}
-				}
+				final double costSoFar = succ.mCostSoFar;
 
 				final Double lowestCostSoFar = lowest.get(succ);
 				if (lowestCostSoFar != null && costSoFar >= lowestCostSoFar) {
@@ -263,7 +233,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 				final double expectedCostToTarget =
 						heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mLetter);
-				succ.setCostSoFar(costSoFar);
 				succ.setExpectedCostToTarget(expectedCostToTarget);
 
 				// we changed the cost of this item, so we have to remove it if it is already in the queue, because
@@ -281,6 +250,69 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			}
 		}
 		return null;
+	}
+
+	private List<Item> addCostAndSummaries(final List<Item> succs,
+			final Map<Transition, Map<Item, SummaryItem>> summaries, final IHeuristic<STATE, LETTER> heuristic,
+			final double currentCostSoFar) {
+
+		final List<Item> newSuccs = new ArrayList<>(2 * succs.size());
+		for (final Item succ : succs) {
+			if (succ.mItemType == ItemType.CALL) {
+				final Transition callTrans = new Transition(succ);
+				final Map<Item, SummaryItem> summary = summaries.get(callTrans);
+				if (summary != null) {
+					assert !summary.isEmpty();
+					// there is a summary for this call and we are going to use it.
+					// we need to subtract the concrete cost for this transition, because it is already part of the
+					// summary
+					for (final Entry<Item, SummaryItem> entry : summary.entrySet()) {
+						final SummaryItem sumItem = entry.getValue();
+						final Item newSucc = new Item(succ, sumItem);
+						newSucc.setCostSoFar(sumItem.mSummaryCost);
+						newSuccs.add(newSucc);
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug(String.format("  Using summary %s instead of %s", summary, succ));
+						}
+
+					}
+					continue;
+				}
+			}
+
+			final double concreteCost = heuristic.getConcreteCost(succ.mLetter);
+			succ.setCostSoFar(currentCostSoFar + concreteCost);
+			newSuccs.add(succ);
+		}
+
+		return newSuccs;
+	}
+
+	private void updateSummaries(final Map<Transition, Map<Item, SummaryItem>> summaries, final Item returnItem) {
+		final Item callItem = returnItem.findCorrespondingCallItem();
+		final Transition callTrans = new Transition(callItem);
+		final Map<Item, SummaryItem> oldSummaries = summaries.computeIfAbsent(callTrans, k -> new HashMap<>());
+
+		final SummaryItem oldSummary = oldSummaries.get(returnItem);
+		if (oldSummary == null) {
+			final SummaryItem sItem = new SummaryItem(returnItem, callItem);
+			oldSummaries.put(returnItem, sItem);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(String.format("  Is fresh summary: %s", sItem));
+			}
+		} else {
+			final double summaryCost = returnItem.mCostSoFar - callItem.mCostSoFar;
+			if (summaryCost < oldSummary.mSummaryCost) {
+				final SummaryItem sItem = new SummaryItem(returnItem, callItem);
+				oldSummaries.put(returnItem, sItem);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(String.format("  Is cheaper summary: %s", sItem));
+				}
+			} else if (mLogger.isDebugEnabled()) {
+				mLogger.debug(String.format("  Will not replace old summary (cost %s) with this one (cost %s)",
+						oldSummary.mSummaryCost, summaryCost));
+			}
+		}
 	}
 
 	private boolean isCheapestAncestor(final Map<Item, Double> lowest, final Item succ, final double costSoFar) {
@@ -477,7 +509,30 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		@Override
 		public String toString() {
-			return String.format(" Summary {%s} (cost=%s)", mBackPointer, mSummaryCost);
+			return String.format(" Summary for {%s} to {%s} (cost=%s)", mBackPointer, mReturnItem, mSummaryCost);
+		}
+
+		@Override
+		public int hashCode() {
+			return 31 + mReturnItem.hashCode();
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final SummaryItem other = (SummaryItem) obj;
+			if (!mReturnItem.equals(other.mReturnItem)) {
+				return false;
+			}
+			return true;
 		}
 	}
 
