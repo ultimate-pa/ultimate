@@ -72,9 +72,9 @@ public class Req2Pea implements IReq2Pea {
 
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
 
-		for (final PatternType pattern : init) {
+		for (final InitializationPattern pattern : init) {
 			if (pattern instanceof InitializationPattern) {
-				builder.addInitPattern((InitializationPattern) pattern);
+				builder.addInitPattern(pattern);
 			}
 		}
 		final Map<String, Integer> id2bounds = builder.getId2Bounds();

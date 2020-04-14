@@ -78,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPe
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2Pea;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaAnnotator;
@@ -121,6 +122,23 @@ public class Req2BoogieTranslator {
 
 		List<PatternType> requirements =
 				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
+
+		// check for duplicate IDs
+		final List<Entry<String, Integer>> duplicates = requirements.stream().map(PatternType::getId)
+				.collect(Collectors.toMap(k -> k, v -> 1, (v1, v2) -> v1 + v2)).entrySet().stream()
+				.filter(a -> a.getValue() > 1).collect(Collectors.toList());
+		if (!duplicates.isEmpty()) {
+			final PeaResultUtil resultUtil = new PeaResultUtil(mLogger, mServices);
+			for (final Entry<String, Integer> dupl : duplicates) {
+				resultUtil.typeError(dupl.getKey(),
+						String.format("Requirement id \"%s\" occurs %s times", dupl.getKey(), dupl.getValue()));
+			}
+			mUnitLocation = null;
+			mUnit = null;
+			mReq2Automata = null;
+			mSymboltable = null;
+			return;
+		}
 
 		List<InitializationPattern> init = patterns.stream().filter(a -> a instanceof InitializationPattern)
 				.map(a -> (InitializationPattern) a).collect(Collectors.toList());
@@ -452,8 +470,10 @@ public class Req2BoogieTranslator {
 	}
 
 	private List<Statement> genStateVarsAssign() {
-		final List<Statement> assignments = mSymboltable.getStateVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList());
-		assignments.addAll(mSymboltable.getStateVars().stream().map(this::genStateVarAssignPrimed).collect(Collectors.toList()));
+		final List<Statement> assignments =
+				mSymboltable.getStateVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList());
+		assignments.addAll(
+				mSymboltable.getStateVars().stream().map(this::genStateVarAssignPrimed).collect(Collectors.toList()));
 		return assignments;
 	}
 
@@ -504,7 +524,8 @@ public class Req2BoogieTranslator {
 		}
 
 		stmtList.addAll(mReqCheckAnnotator.getStateChecks());
-		stmtList.addAll(mSymboltable.getPcVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
+		stmtList.addAll(
+				mSymboltable.getPcVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
 
 		for (final Entry<PatternType, ReqPeas> entry : mReq2Automata.entrySet()) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : entry.getValue().getCounterTrace2Pea()) {
@@ -607,9 +628,11 @@ public class Req2BoogieTranslator {
 		statements.addAll(genInitialPhasesStmts(bl));
 		statements.addAll(genInitialPhasesStmts(bl));
 		statements.addAll(genClockInitStmts());
-		//Assign the history vars with the initial state as if a small stutter step had occured initally.
-		statements.addAll(mSymboltable.getStateVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
-		statements.addAll(mSymboltable.getPcVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
+		// Assign the history vars with the initial state as if a small stutter step had occured initally.
+		statements.addAll(
+				mSymboltable.getStateVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
+		statements.addAll(
+				mSymboltable.getPcVars().stream().map(this::genStateVarAssignHistory).collect(Collectors.toList()));
 		statements.addAll(mReqCheckAnnotator.getPreChecks());
 		statements.add(genWhileStmt(bl));
 		return statements.toArray(new Statement[statements.size()]);

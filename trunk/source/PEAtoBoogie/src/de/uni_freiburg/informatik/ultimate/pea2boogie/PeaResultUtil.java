@@ -89,7 +89,11 @@ public class PeaResultUtil {
 	}
 
 	public void typeError(final PatternType req, final String description) {
-		errorAndAbort(new RequirementTypeErrorResult(req.getId(), description));
+		typeError(req.getId(), description);
+	}
+
+	public void typeError(final String reqId, final String description) {
+		errorAndAbort(new RequirementTypeErrorResult(reqId, description));
 	}
 
 	public void typeError(final String description, final Expression expr) {
