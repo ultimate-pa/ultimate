@@ -43,6 +43,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -96,6 +97,22 @@ public class ReflectionUtil {
 		}
 		return String.format("[L%4s] %15.15s.%s", theFrame.getLineNumber(),
 				getCallerClassName(callStackDepth + 1).getSimpleName(), theFrame.getMethodName());
+	}
+
+	/**
+	 * Transfer the stack frame signature as String to a consumer for easy debugging.
+	 */
+	public static void supplyCallStackStrings(final Consumer<String> consumer) {
+		final StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
+		for (int i = 0; i < callStack.length; ++i) {
+			final StackTraceElement theFrame = callStack[i];
+			consumer.accept(String.format("[L%-4s] %30.30s %s", theFrame.getLineNumber(),
+					truncateFromLeft(theFrame.getClassName(), 30), theFrame.getMethodName()));
+		}
+	}
+
+	private static String truncateFromLeft(final String s, final int length) {
+		return s.length() > length ? s.substring(s.length() - length) : s;
 	}
 
 	/**
