@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.EmptinessCheckHeuristic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty.SearchStrategy;
@@ -66,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.SmtFeatureHeuristic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -238,7 +238,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
 	private boolean mFirstReuseDump = true;
 	private boolean mUseHeuristicEmptinessCheck = false;
-	private ScoringMethod mScoringMethod = ScoringMethod.NUM_FUNCTIONS;
+	private final ScoringMethod mScoringMethod;
 
 	private PetriNetLargeBlockEncoding mLBE;
 
@@ -388,10 +388,16 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction;
 
 		if (mUseHeuristicEmptinessCheck) {
-			final EmptinessCheckHeuristic<IPredicate, LETTER> heuristic =
-					new EmptinessCheckHeuristic<>(mLogger, mScoringMethod);
-			mCounterexample =
-					new IsEmptyHeuristic<>(new AutomataLibraryServices(mServices), abstraction).getNestedRun();
+			if (mScoringMethod == ScoringMethod.ZERO) {
+				mCounterexample =
+						new IsEmptyHeuristic<>(new AutomataLibraryServices(mServices), abstraction).getNestedRun();
+			} else {
+				final SmtFeatureHeuristic<IPredicate, LETTER> heuristic =
+						new SmtFeatureHeuristic<>(mLogger, mScoringMethod);
+				mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(mServices), abstraction, heuristic)
+						.getNestedRun();
+			}
+
 			assert checkIsEmptyHeuristic(abstraction) : "IsEmptyHeuristic did not match IsEmpty";
 
 		} else {
