@@ -98,6 +98,17 @@ public class InstantiationManager {
 		mClauseInstances.put(qClause, new LinkedHashMap<>());
 	}
 
+	public void removeClause(final QuantClause clause) {
+		assert mClauseInstances.containsKey(clause);
+		mClauseInstances.remove(clause);
+	}
+
+	public void removeAllInstClauses() {
+		for (final Map<List<Term>, InstClause> instClauses : mClauseInstances.values()) {
+			instClauses.clear();
+		}
+	}
+
 	/**
 	 * Reset the interesting terms for a variable.
 	 */

@@ -1214,14 +1214,13 @@ public class CClosure implements ITheory {
 		if (t1.mRep == t1) {
 			assert t2.mRep == t2;
 			final CCTermPairHash.Info info = mPairHash.getInfo(t1, t2);
-			if (info == null) {
-				// We never created a pair hash for this...
-				return;
-			}
-			info.mEqlits.prepareRemove(eq.getEntry());
-			eq.getEntry().removeFromList();
-			if (info.isEmpty()) {
-				mPairHash.removePairInfo(info);
+			if (info != null) {
+				// Remove pair hash info
+				info.mEqlits.prepareRemove(eq.getEntry());
+				eq.getEntry().removeFromList();
+				if (info.isEmpty()) {
+					mPairHash.removePairInfo(info);
+				}
 			}
 		} else {
 			final boolean isLast = t1.mRep == t2;

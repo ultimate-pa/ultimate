@@ -66,6 +66,7 @@ public class EMatching {
 	 * corresponding SubstitutionInfo
 	 */
 	private final Map<QuantLiteral, Dawg<Term, SubstitutionInfo>> mAtomSubsDawgs;
+	private final Map<QuantClause, ArrayList<Triple<ICode, CCTerm[], Integer>>> mClauseCodes;
 	private final Set<QuantLiteral> mEmatchingLiterals;
 	final SubstitutionInfo mEmptySubs;
 
@@ -73,6 +74,7 @@ public class EMatching {
 		mQuantTheory = quantifierTheory;
 		mTodoStack = new ArrayDeque<>();
 		mAtomSubsDawgs = new HashMap<>();
+		mClauseCodes = new HashMap<>();
 		mUndoInformation = new LinkedHashMap<>();
 		mEmptySubs = new SubstitutionInfo(new ArrayList<CCTerm>(), new LinkedHashMap<>());
 		mEmatchingLiterals = new HashSet<>();
@@ -85,7 +87,9 @@ public class EMatching {
 	 * appear at top level (i.e., not under an uninterpreted function symbol) must also appear under an uninterpreted
 	 * function symbol.
 	 */
-	public void addPatterns(final QuantClause qClause) {
+	public void addClause(final QuantClause qClause) {
+		assert !mClauseCodes.containsKey(qClause);
+		final ArrayList<Triple<ICode, CCTerm[], Integer>> clauseCodes = new ArrayList<>();
 		for (final QuantLiteral qLit : qClause.getQuantLits()) {
 			final QuantLiteral qAtom = qLit.getAtom();
 			if (QuantifiedTermInfo.containsArithmeticOnlyAtTopLevel(qAtom)
@@ -115,7 +119,38 @@ public class EMatching {
 							new PatternCompiler(mQuantTheory, qAtom, patterns.toArray(new Term[patterns.size()]))
 									.compile();
 					addCode(newCode.getFirst(), newCode.getSecond(), 0);
+					clauseCodes.add(new Triple<>(newCode.getFirst(), newCode.getSecond(), 0));
 				}
+			}
+		}
+		mClauseCodes.put(qClause, clauseCodes);
+	}
+
+	/**
+	 * Remove everything related to the given clause in the E-Matching engine. This should be called when a pop command
+	 * removes a quantified clause.
+	 * 
+	 * @param qClause
+	 *            The quantified clause that is removed.
+	 */
+	public void removeClause(final QuantClause qClause) {
+		mClauseCodes.remove(qClause);
+		for (final QuantLiteral qLit : qClause.getQuantLits()) {
+			mEmatchingLiterals.remove(qLit);
+			mAtomSubsDawgs.remove(qLit.getAtom());
+		}
+	}
+
+	/**
+	 * Remove all triggers. This should be called after a pop command. This method also adds the E-matching code for the
+	 * current quantified clauses to the E-matching stack.
+	 */
+	public void removeAllTriggers() {
+		undo(-1);
+		for (final QuantClause qClause : mQuantTheory.getQuantClauses()) {
+			assert mClauseCodes.containsKey(qClause);
+			for (final Triple<ICode, CCTerm[], Integer> code : mClauseCodes.get(qClause)) {
+				mTodoStack.add(code);
 			}
 		}
 	}
