@@ -93,67 +93,100 @@ public interface Script {
 	 */
 	public void setLogic(Logics logic)
 		throws UnsupportedOperationException, SMTLIBException;
+
 	/**
-	 * Set an option for the solver.  At least the options described in the
-	 * standard should be valid options.
-	 * @param opt   Name of the option.  Note that it has to start with
-	 *              <pre>:</pre>.
-	 * @param value Value for this option.
-	 * @throws UnsupportedOperationException If the option is unsupported.
-	 * @throws SMTLIBException In case of type errors.
+	 * Set an option for the solver. At least the options described in the standard should be valid options.
+	 *
+	 * @param opt
+	 *            Name of the option. Note that it has to start with a colon ({@code :}).
+	 * @param value
+	 *            Value for this option.
+	 * @throws UnsupportedOperationException
+	 *             If the option is unsupported.
+	 * @throws SMTLIBException
+	 *             In case of type errors.
 	 */
 	public void setOption(String opt, Object value)
 		throws UnsupportedOperationException, SMTLIBException;
+
 	/**
-	 * Set some information for the solver.  Note that according to the standard
-	 * a solver has to return success, but ignore the info.
-	 * @param info  Name of the info.  Note that it has to start with
-	 *              <pre>:</pre>.
-	 * @param value Value for this info.
+	 * Set some information for the solver. Note that according to the standard a solver has to return success, but
+	 * ignore the info.
+	 *
+	 * @param info
+	 *            Name of the info. Note that it has to start with a colon ({@code :}).
+	 * @param value
+	 *            Value for this info.
 	 */
 	public void setInfo(String info, Object value);
+
 	/**
-	 * Check if constr is the Constructor of a Datatype within the Theory.
-	 * @param constr The Name of the constructor.
-	 * @return The Contructor or null if it does not exist.
+	 * Check if constructor is the Constructor of a Datatype within the Theory.
+	 *
+	 * @param constructor
+	 *            The Name of the constructor.
+	 * @return The Constructor or null if it does not exist.
 	 */
 	public FunctionSymbol getFunctionSymbol(String constructor);
+
 	/**
 	 * Declare constructors of a datatype.
-	 * @param name Name of the Constructor.
-	 * @param selectors The selectors of the Constructor.
-	 * @param argumentSorts The argumentSorts of the Constructor.
+	 *
+	 * @param name
+	 *            Name of the Constructor.
+	 * @param selectors
+	 *            The selectors of the Constructor.
+	 * @param argumentSorts
+	 *            The argumentSorts of the Constructor.
 	 * @return The array of constructors.
-	 * @throws SMTLIBException.
+	 * @throws SMTLIBException
+	 *             if name or selectors contain invalid characters.
 	 */
 	public DataType.Constructor constructor(String name, String[] selectors, Sort[] argumentSorts)
 		throws SMTLIBException;
+
 	/**
 	 * Create a new datatype.
-	 * @param sort Sort of the datatypes.
-	 * @param typename Name of the datatypes.
+	 *
+	 * @param typename
+	 *            Name of the datatypes.
+	 * @param numParams
+	 *            The number of generic arguments for generic datatypes.
 	 * @return The datatype object.
-	 * @throws SMTLIBException.
+	 * @throws SMTLIBException
+	 *             if typename contains invalid characters.
 	 */
 	public DataType datatype(String typename, int numParams)
-		throws SMTLIBException;	
+		throws SMTLIBException;
+
 	/**
 	 * Declare new datatypes by setting their constructors.
+	 *
 	 * @param datatype
-	 * @param constrs The constructors.
-	 * @throws SMTLIBException.
+	 * @param constrs
+	 *            The constructors.
+	 * @throws SMTLIBException
+	 *             if any problem occurs, e.g. symbols with same name already declared.
 	 */
 	public void declareDatatype(DataType datatype, DataType.Constructor[] constrs)
 		throws SMTLIBException;
+
 	/**
 	 * Declare new datatypes by setting their constructors.
-	 * @param datatypes 
-	 * @param constrs The constructors.
-	 * @throws SMTLIBException.
+	 *
+	 * @param datatypes
+	 *            the datatypes to declare.
+	 * @param constrs
+	 *            The constructors for each datatype (with {@code constrs.length == datatypes.length}).
+	 * @param sortParams
+	 *            The sort parameters for each datatype, the outer array contains null if the datatype is not generic
+	 *            ({@code sortParams.length == datatypes.length}).
+	 * @throws SMTLIBException
+	 *             if any problem occurs, e.g, symbols with same name already declared, wrong array lengths.
 	 */
 	public void declareDatatypes(DataType[] datatypes, DataType.Constructor[][] constrs, Sort[][] sortParams)
 		throws SMTLIBException;
-	
+
 	/**
 	 * Declare a user-defined sort.
 	 * @param sort  The name of the new sort.
@@ -329,15 +362,18 @@ public interface Script {
 	 * @throws UnsupportedOperationException If option is unsupported.
 	 */
 	public Object getOption(String opt) throws UnsupportedOperationException;
+	
 	/**
-	 * Get information from the solver.  Note that the solver only has to
-	 * implement the info values described in the standard.
-	 * @param info Name of the info.  Note that it has to start with
-	 *             <pre>:</pre>.
+	 * Get information from the solver. Note that the solver only has to implement the info values described in the
+	 * standard.
+	 * 
+	 * @param info
+	 *            Name of the info. Note that it has to start with a colon ({@code :}).
 	 * @return Value of the option.
-	 * @throws UnsupportedOperationException If the info is unsupported.
-	 * @throws SMTLIBException If info is <code>:reason-unknown</code> but last
-	 *                         check did not return unknown.
+	 * @throws UnsupportedOperationException
+	 *             If the info is unsupported.
+	 * @throws SMTLIBException
+	 *             If info is <code>:reason-unknown</code> but last check did not return unknown.
 	 */
 	public Object getInfo(String info)
 		throws UnsupportedOperationException, SMTLIBException;
@@ -440,14 +476,19 @@ public interface Script {
 	 */
 	public Term let(TermVariable[] vars, Term[] values, Term body)
 		throws SMTLIBException;
-	
+
 	/**
 	 * Create a match term.
-	 * @param dataArg The term that is to be matched.
-	 * @param vars The variables of each pattern.
-	 * @param cases The match cases.
+	 *
+	 * @param dataArg
+	 *            The term that is to be matched.
+	 * @param vars
+	 *            The variables of each pattern.
+	 * @param cases
+	 *            The match cases.
 	 * @return The match term.
 	 * @throws SMTLIBException
+	 *             if a problem occurs (with a human readable description).
 	 */
 	public Term match(final Term dataArg, final TermVariable[][] vars, final Term[] cases,
 			DataType.Constructor[] constructors) throws SMTLIBException;

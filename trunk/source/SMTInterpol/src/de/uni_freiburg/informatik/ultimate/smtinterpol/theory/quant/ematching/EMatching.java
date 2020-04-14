@@ -142,12 +142,21 @@ public class EMatching {
 	}
 
 	/**
-	 * Remove all triggers. This should be called after a pop command. This method also adds the E-matching code for the
-	 * current quantified clauses to the E-matching stack.
+	 * Remove all triggers. This should be called after a pop command.
 	 */
 	public void removeAllTriggers() {
 		undo(-1);
-		for (final QuantClause qClause : mQuantTheory.getQuantClauses()) {
+	}
+
+	/**
+	 * This should be called after a pop command.
+	 * 
+	 * @param clauses
+	 *            The current quantified clauses.
+	 */
+	public void reAddClauses(final Iterable<QuantClause> clauses) {
+		assert mTodoStack.isEmpty() && mUndoInformation.isEmpty();
+		for (final QuantClause qClause : clauses) {
 			assert mClauseCodes.containsKey(qClause);
 			for (final Triple<ICode, CCTerm[], Integer> code : mClauseCodes.get(qClause)) {
 				mTodoStack.add(code);

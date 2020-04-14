@@ -353,6 +353,7 @@ public class QuantifierTheory implements ITheory {
 			mEMatching.removeClause(quantClause);
 		}
 		mQuantClauses.endScope();
+		mEMatching.reAddClauses(mQuantClauses);
 	}
 
 	@Override

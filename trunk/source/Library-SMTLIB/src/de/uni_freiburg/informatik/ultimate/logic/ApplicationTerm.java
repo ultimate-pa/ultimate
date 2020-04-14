@@ -23,14 +23,11 @@ import java.util.ArrayDeque;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
- * Represents a function application term.  This consists of a function
- * symbol and zero or more sub-terms (the parameters of the function).
- * A constant is represented as function application with zero parameters.
+ * Represents a function application term. This consists of a function symbol and zero or more sub-terms (the parameters
+ * of the function). A constant is represented as function application with zero parameters.
  *
- * An application term is created by
- * {@link Script#term(String, Term...)} or
- * for indexed function symbols or for symbols with generic return sort by
- * {@link Script#term(String, java.math.BigInteger[], Sort, Term...)}.
+ * An application term is created by {@link Script#term(String, Term...)} or for indexed function symbols or for symbols
+ * with generic return sort by {@link Script#term(String, String[], Sort, Term...)}.
  *
  * @author hoenicke
  */
@@ -38,7 +35,7 @@ public class ApplicationTerm extends Term {
 	final FunctionSymbol mFunction;
 	final Term[] mParameters;
 
-	ApplicationTerm(FunctionSymbol function, Term[] parameters, int hash) {
+	ApplicationTerm(final FunctionSymbol function, final Term[] parameters, final int hash) {
 		super(hash);
 		function.typecheck(parameters);
 		mFunction   = function;
@@ -72,7 +69,7 @@ public class ApplicationTerm extends Term {
 	}
 
 	static final int hashApplication(
-			FunctionSymbol func, Term[] parameters) {
+			final FunctionSymbol func, final Term[] parameters) {
 		return HashUtils.hashJenkins(func.hashCode(), (Object[])parameters);
 	}
 
@@ -80,7 +77,7 @@ public class ApplicationTerm extends Term {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void toStringHelper(ArrayDeque<Object> mTodo) {
+	public void toStringHelper(final ArrayDeque<Object> mTodo) {
 		final String func = getFunction().getApplicationString();
 		final Term[] args = getParameters();
 		if (args.length == 0) {

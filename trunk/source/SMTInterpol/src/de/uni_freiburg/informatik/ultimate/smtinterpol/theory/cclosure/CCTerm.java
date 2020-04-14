@@ -23,7 +23,6 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleList;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
@@ -256,10 +255,8 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 		 * as sterm is a newly shared term, which must be linear independent
 		 * of all previously created terms.
 		 */
-		final EqualityProxy eqForm = engine.mClausifier.createEqualityProxy(mFlatTerm, otherSharedTerm.mFlatTerm);
-		assert (eqForm != EqualityProxy.getTrueProxy());
-		assert (eqForm != EqualityProxy.getFalseProxy());
-		final CCEquality cceq = eqForm.createCCEquality(mFlatTerm, otherSharedTerm.mFlatTerm);
+		final CCEquality cceq = engine.createEquality(this, otherSharedTerm, true);
+		assert cceq != null;
 		if (engine.getLogger().isDebugEnabled()) {
 			engine.getLogger().debug("PL: %s", cceq);
 		}

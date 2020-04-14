@@ -144,7 +144,7 @@ public class EprHelpers {
 				// basically copied from Clausifier.createBooleanLit()
 				final Term t = ((EprGroundPredicateAtom) resultAtom).getTerm();
 
-				final EqualityProxy eq = clausif.createEqualityProxy(t, eprTheory.getTheory().mTrue);
+				final EqualityProxy eq = clausif.createEqualityProxy(t, eprTheory.getTheory().mTrue, source);
 				// Safe since m_Term is neither true nor false
 				assert eq != EqualityProxy.getTrueProxy();
 				assert eq != EqualityProxy.getFalseProxy();
@@ -155,7 +155,7 @@ public class EprHelpers {
 				if (t1.equals(t2)) {
 					resultAtom = new DPLLAtom.TrueAtom();
 				} else {
-					final EqualityProxy eq = clausif.createEqualityProxy(t1, t2);
+					final EqualityProxy eq = clausif.createEqualityProxy(t1, t2, source);
 					resultAtom = eq.getLiteral(source);
 				}
 			} else {

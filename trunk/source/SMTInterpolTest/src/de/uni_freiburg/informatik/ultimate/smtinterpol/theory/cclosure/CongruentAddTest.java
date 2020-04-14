@@ -101,13 +101,13 @@ public class CongruentAddTest {
 		mC = mClausifier.createCCTerm(termc, null);
 		mB = mClausifier.createCCTerm(termb, null);
 		mA = mClausifier.createCCTerm(terma, null);
-		final EqualityProxy eqab = mClausifier.createEqualityProxy(terma, termb);
+		final EqualityProxy eqab = mClausifier.createEqualityProxy(terma, termb, mSource);
 		Assert.assertNotSame(EqualityProxy.getTrueProxy(), eqab);
 		Assert.assertNotSame(EqualityProxy.getFalseProxy(), eqab);
-		final EqualityProxy eqbc = mClausifier.createEqualityProxy(termb, termc);
+		final EqualityProxy eqbc = mClausifier.createEqualityProxy(termb, termc, mSource);
 		Assert.assertNotSame(EqualityProxy.getTrueProxy(), eqbc);
 		Assert.assertNotSame(EqualityProxy.getFalseProxy(), eqbc);
-		final EqualityProxy eqcd = mClausifier.createEqualityProxy(termc, termd);
+		final EqualityProxy eqcd = mClausifier.createEqualityProxy(termc, termd, mSource);
 		Assert.assertNotSame(EqualityProxy.getTrueProxy(), eqcd);
 		Assert.assertNotSame(EqualityProxy.getFalseProxy(), eqcd);
 		mAB = (CCEquality) eqab.getLiteral(mSource);

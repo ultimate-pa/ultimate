@@ -1884,7 +1884,7 @@ public class LinArSolve implements ITheory {
 					}
 				}
 				assert lhs.getSort() == rhs.getSort();
-				eq = mClausifier.createEqualityProxy(lhs, rhs);
+				eq = mClausifier.createEqualityProxy(lhs, rhs, null);
 				assert eq != EqualityProxy.getTrueProxy();
 				assert eq != EqualityProxy.getFalseProxy();
 				cceq = eq.createCCEquality(lhs, rhs);

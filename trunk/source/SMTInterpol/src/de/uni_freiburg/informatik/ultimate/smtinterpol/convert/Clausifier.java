@@ -572,7 +572,7 @@ public class Clausifier {
 						// TODO Find trivially true or false QuantLiterals.
 						lit = mQuantTheory.getQuantEquality(positive, mCollector.getSource(), lhs, rhs);
 					} else {
-						final EqualityProxy eq = createEqualityProxy(lhs, rhs);
+						final EqualityProxy eq = createEqualityProxy(lhs, rhs, mCollector.getSource());
 						// eq == true and positive ==> set to true
 						// eq == true and !positive ==> noop
 						// eq == false and !positive ==> set to true
@@ -1595,8 +1595,8 @@ public class Clausifier {
 	 */
 	public void addExcludedMiddleAxiom(final Term term, final SourceAnnotation source) {
 		final Theory theory = term.getTheory();
-		final EqualityProxy trueProxy = createEqualityProxy(term, theory.mTrue);
-		final EqualityProxy falseProxy = createEqualityProxy(term, theory.mFalse);
+		final EqualityProxy trueProxy = createEqualityProxy(term, theory.mTrue, source);
+		final EqualityProxy falseProxy = createEqualityProxy(term, theory.mFalse, source);
 		// These asserts should hold since we do not add excluded middle
 		// axioms for true or false, and the equality proxies are
 		// non-numeric
@@ -1632,7 +1632,21 @@ public class Clausifier {
 		collector.perform();
 	}
 
-	public EqualityProxy createEqualityProxy(final Term lhs, final Term rhs) {
+	/**
+	 * Create an equality proxy for the terms lhs and rhs. This will check for trivial equality and return a false or
+	 * true proxy instead. For others it creates the equality proxy. It also creates the terms and their term axioms for
+	 * non-trivial equalities.
+	 *
+	 * @param lhs
+	 *            the left-hand side of the equality
+	 * @param rhs
+	 *            the right-hand side of the equality.
+	 * @param source
+	 *            the source annotation used for term axioms. Use {@code null} to indicate that terms and their axioms
+	 *            have already been created (used for N-O theory combination).
+	 * @return the equality proxy.
+	 */
+	public EqualityProxy createEqualityProxy(final Term lhs, final Term rhs, final SourceAnnotation source) {
 		final SMTAffineTerm diff = new SMTAffineTerm(lhs);
 		diff.negate();
 		diff.add(new SMTAffineTerm(rhs));
@@ -1652,6 +1666,10 @@ public class Clausifier {
 		// check for unsatisfiable integer formula, e.g. 2x + 2y = 1.
 		if (sort.getName().equals("Int") && !diff.getConstant().isIntegral()) {
 			return EqualityProxy.getFalseProxy();
+		}
+		if (source != null) {
+			addTermAxioms(lhs, source);
+			addTermAxioms(rhs, source);
 		}
 		// we cannot really normalize the sign of the term. Try both signs.
 		EqualityProxy eqForm = mEqualities.get(diff);
@@ -1751,7 +1769,7 @@ public class Clausifier {
 			 * axiom true != false will be removed from the assertion stack as well.
 			 */
 			final SourceAnnotation source = SourceAnnotation.EMPTY_SOURCE_ANNOT;
-			final Literal atom = createEqualityProxy(mTheory.mTrue, mTheory.mFalse).getLiteral(source);
+			final Literal atom = createEqualityProxy(mTheory.mTrue, mTheory.mFalse, source).getLiteral(source);
 			final Term trueEqFalse = mTheory.term("=", mTheory.mTrue, mTheory.mFalse);
 			final Term axiom = mTracker.auxAxiom(mTheory.not(trueEqFalse), ProofConstants.AUX_TRUE_NOT_FALSE);
 			final BuildClause bc = new BuildClause(axiom, source);
@@ -2020,7 +2038,7 @@ public class Clausifier {
 			if (fs.getName().equals("<=")) {
 				lit = createLeq0(at, source);
 			} else if (fs.getName().equals("=") && at.getParameters()[0].getSort() != mTheory.getBooleanSort()) {
-				final EqualityProxy ep = createEqualityProxy(at.getParameters()[0], at.getParameters()[1]);
+				final EqualityProxy ep = createEqualityProxy(at.getParameters()[0], at.getParameters()[1], source);
 				if (ep == EqualityProxy.getTrueProxy()) {
 					lit = new DPLLAtom.TrueAtom();
 				} else if (ep == EqualityProxy.getFalseProxy()) {
@@ -2093,7 +2111,7 @@ public class Clausifier {
 					}
 				} else {
 					// replace a predicate atom "(p x)" by "(p x) = true"
-					final EqualityProxy eq = createEqualityProxy(term, mTheory.mTrue);
+					final EqualityProxy eq = createEqualityProxy(term, mTheory.mTrue, source);
 					// Safe since m_Term is neither true nor false
 					assert eq != EqualityProxy.getTrueProxy();
 					assert eq != EqualityProxy.getFalseProxy();
@@ -2148,7 +2166,7 @@ public class Clausifier {
 			assert iLit instanceof Literal;
 			res = (Literal) iLit;
 		} else if (fs.getName().equals("=")) {
-			final EqualityProxy ep = createEqualityProxy(at.getParameters()[0], at.getParameters()[1]);
+			final EqualityProxy ep = createEqualityProxy(at.getParameters()[0], at.getParameters()[1], source);
 			if (ep == EqualityProxy.getFalseProxy()) {
 				res = new TrueAtom().negate();
 			} else if (ep == EqualityProxy.getTrueProxy()) {

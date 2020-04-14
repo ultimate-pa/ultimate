@@ -72,7 +72,7 @@ public class EprGroundEqualityAtom extends EprGroundPredicateAtom {
 	}
 
 	public CCEquality getCCEquality(final Clausifier clausif) {
-		final EqualityProxy eq = clausif.createEqualityProxy(mLhs, mRhs);
+		final EqualityProxy eq = clausif.createEqualityProxy(mLhs, mRhs, getSourceAnnotation());
 				// Safe since m_Term is neither true nor false
 		if (eq == EqualityProxy.getTrueProxy()) {
 			return null;

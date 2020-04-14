@@ -987,7 +987,7 @@ public class CClosure implements ITheory {
 
 	public CCEquality createEquality(final CCTerm t1, final CCTerm t2, final boolean createLAEquality) {
 		assert t1 != t2;
-		final EqualityProxy ep = mClausifier.createEqualityProxy(t1.getFlatTerm(), t2.getFlatTerm());
+		final EqualityProxy ep = mClausifier.createEqualityProxy(t1.getFlatTerm(), t2.getFlatTerm(), null);
 		if (ep == EqualityProxy.getFalseProxy()) {
 			return null;
 		}
