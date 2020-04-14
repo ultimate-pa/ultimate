@@ -1,8 +1,12 @@
+//#Unsafe
 /*
+ * 2020-04-11
+ * Delta-debugged example from ldv-regression/rule60_list2.i
+ * For IsEmptyHeuristic: AssertionError: IsEmptyHeuristic did not match IsEmpty
+ * 
+ * Author: dietsch@cs.uni-freiburg.de
+ */
 
-2020-04-11: Delta-debugged example from ldv-regression/rule60_list2.i for IsEmptyHeuristic
-
-*/
 void __blast_assert()
 {
  ERROR: __VERIFIER_error();

@@ -1,9 +1,11 @@
+//#Unsafe
 /*
-
-2020-04-10: Delta-debugged example from ldv-linux-3.0/usb_urb-drivers-input-tablet-kbtab.ko.cil.out.i for IsEmptyHeuristic
-
-*/
-
+ * 2020-04-10
+ * Delta-debugged example from ldv-linux-3.0/usb_urb-drivers-input-tablet-kbtab.ko.cil.out.i
+ * For IsEmptyHeuristic: AssertionError: IsEmptyHeuristic did not match IsEmpty
+ * 
+ * Author: dietsch@cs.uni-freiburg.de
+ */
 
 void  ( __attribute__((__always_inline__)) kmalloc)(int size ,
                                                                     int flags )

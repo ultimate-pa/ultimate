@@ -1,5 +1,11 @@
 //#Safe
-
+/*
+ * 2020-04-07
+ * Manual example for IsEmptyHeuristic: AssertionError: IsEmptyHeuristic did not match IsEmpty
+ * 
+ * Author: Bree
+ */
+ 
 /* i for outer loop, j for inner loop, both going 0 to n-1 */
 void recursion(int n, int i, int j)
 {
