@@ -57,7 +57,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private final VpAlphabet<LETTER> mAlphabet;
-	private final Set<Integer> mRange;
+	private final VpAlphabet<Integer> mIntAlphabet;
 
 	private List<INestedWordAutomaton<Integer, String>> mThreadAutomata;
 
@@ -80,7 +80,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mEmptyStackFactory = emptyStackFactory;
 		mAlphabet = alphabet;
-		mRange = IntStream.range(0, trace.size()).boxed().collect(Collectors.toSet());
+		mIntAlphabet = new VpAlphabet<>(IntStream.range(0, trace.size()).boxed().collect(Collectors.toSet()));
 		mVariables2Writes = new HashRelation<>();
 		mThreads2SortedActions = new HashMap<>();
 		mActions2Indices = new HashMap<>();
@@ -128,19 +128,18 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final StringFactory factory = new StringFactory();
 			// Construct automata for the MHB relation
 			for (final List<Integer> threadActions : mThreads2SortedActions.values()) {
-				final Set<Integer> otherActions = new HashSet<>(mRange);
 				final NestedWordAutomaton<Integer, String> nwa =
-						new NestedWordAutomaton<>(mAutomataServices, new VpAlphabet<>(mRange), factory);
-				otherActions.removeAll(threadActions);
-				nwa.addState(true, false, getState(0));
-				for (final Integer otherAction : otherActions) {
-					nwa.addInternalTransition(getState(0), otherAction, getState(0));
-				}
-				for (int i = 0; i < threadActions.size(); i++) {
-					nwa.addState(false, i + 1 == threadActions.size(), getState(i + 1));
-					nwa.addInternalTransition(getState(i), threadActions.get(i), getState(i + 1));
-					for (final Integer otherAction : otherActions) {
-						nwa.addInternalTransition(getState(i + 1), otherAction, getState(i + 1));
+						new NestedWordAutomaton<>(mAutomataServices, mIntAlphabet, factory);
+				final Set<Integer> threadActionSet = new HashSet<>(threadActions);
+				for (int i = 0; i <= threadActions.size(); i++) {
+					nwa.addState(i == 0, i == threadActions.size(), getState(i));
+					if (i > 0) {
+						nwa.addInternalTransition(getState(i - 1), threadActions.get(i - 1), getState(i));
+					}
+					for (int other = 0; other < mOriginalTrace.size(); other++) {
+						if (!threadActionSet.contains(other)) {
+							nwa.addInternalTransition(getState(i), other, getState(i));
+						}
 					}
 				}
 				mThreadAutomata.add(nwa);
@@ -225,7 +224,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				final Integer write = entry.getValue();
 				final IProgramVar var = entry.getKey();
 				final NestedWordAutomaton<Integer, String> nwa =
-						new NestedWordAutomaton<>(mAutomataServices, new VpAlphabet<>(mRange), factory);
+						new NestedWordAutomaton<>(mAutomataServices, mIntAlphabet, factory);
 				final Set<Integer> writesOnVar = mVariables2Writes.getImage(var);
 				nwa.addState(write == null, false, getState(1));
 				nwa.addState(false, true, getState(2));
