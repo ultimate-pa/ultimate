@@ -57,6 +57,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 	private final VpAlphabet<LETTER> mAlphabet;
+	private final Set<Integer> mRange;
 
 	private List<INestedWordAutomaton<Integer, String>> mThreadAutomata;
 
@@ -79,6 +80,7 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mEmptyStackFactory = emptyStackFactory;
 		mAlphabet = alphabet;
+		mRange = IntStream.range(0, trace.size()).boxed().collect(Collectors.toSet());
 		mVariables2Writes = new HashRelation<>();
 		mThreads2SortedActions = new HashMap<>();
 		mActions2Indices = new HashMap<>();
@@ -123,14 +125,12 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private List<INestedWordAutomaton<Integer, String>> getThreadAutomata() {
 		if (mThreadAutomata == null) {
 			mThreadAutomata = new ArrayList<>();
-			final Set<Integer> range = IntStream.range(0, mOriginalTrace.size()).boxed().collect(Collectors.toSet());
-			final VpAlphabet<Integer> alphabet = new VpAlphabet<>(range);
 			final StringFactory factory = new StringFactory();
 			// Construct automata for the MHB relation
 			for (final List<Integer> threadActions : mThreads2SortedActions.values()) {
-				final Set<Integer> otherActions = new HashSet<>(range);
+				final Set<Integer> otherActions = new HashSet<>(mRange);
 				final NestedWordAutomaton<Integer, String> nwa =
-						new NestedWordAutomaton<>(mAutomataServices, alphabet, factory);
+						new NestedWordAutomaton<>(mAutomataServices, new VpAlphabet<>(mRange), factory);
 				otherActions.removeAll(threadActions);
 				nwa.addState(true, false, getState(0));
 				for (final Integer otherAction : otherActions) {
@@ -160,7 +160,6 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final Map<String, IPredicate> states2Predicates = new HashMap<>();
 		final Term trueTerm = mManagedScript.getScript().term("true");
 		for (final String state : intAutomaton.getStates()) {
-			// final IPredicate predicate = predicateFactory.newDebugPredicate(state);
 			final IPredicate predicate = predicateFactory.newSPredicate(null, trueTerm);
 			states2Predicates.put(state, predicate);
 			result.addState(initialStates.contains(state), finalStates.contains(state), predicate);
@@ -204,33 +203,29 @@ public class McrAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		// Determine all previous writes
 		final List<Map<IProgramVar, Integer>> previousWrite = new ArrayList<>(intTrace.size());
 		final Map<IProgramVar, Integer> lastWrittenBy = new HashMap<>();
-		for (int i = 0; i < intTrace.size(); i++) {
+		for (final int index : intTrace) {
 			final Map<IProgramVar, Integer> previousWrites = new HashMap<>();
-			final TransFormula transformula = mOriginalTrace.get(intTrace.get(i)).getTransformula();
+			final TransFormula transformula = mOriginalTrace.get(index).getTransformula();
 			for (final IProgramVar read : transformula.getInVars().keySet()) {
 				previousWrites.put(read, lastWrittenBy.get(read));
 			}
 			previousWrite.add(previousWrites);
 			for (final IProgramVar written : transformula.getAssignedVars()) {
-				lastWrittenBy.put(written, intTrace.get(i));
+				lastWrittenBy.put(written, index);
 			}
 		}
-		final VpAlphabet<Integer> alphabet =
-				new VpAlphabet<>(IntStream.range(0, mOriginalTrace.size()).boxed().collect(Collectors.toSet()));
 		// Add all thread automata
 		final List<INestedWordAutomaton<Integer, String>> automata = new ArrayList<>(getThreadAutomata());
 		// Construct automata for each read to be preceded by the same write
 		final StringFactory factory = new StringFactory();
-		for (int read = 0; read < mOriginalTrace.size(); read++) {
-			final Map<IProgramVar, Integer> previousWrites = previousWrite.get(read);
-			if (previousWrites == null) {
-				continue;
-			}
+		for (int j = 0; j < mOriginalTrace.size(); j++) {
+			final int read = intTrace.get(j);
+			final Map<IProgramVar, Integer> previousWrites = previousWrite.get(j);
 			for (final Entry<IProgramVar, Integer> entry : previousWrites.entrySet()) {
 				final Integer write = entry.getValue();
 				final IProgramVar var = entry.getKey();
 				final NestedWordAutomaton<Integer, String> nwa =
-						new NestedWordAutomaton<>(mAutomataServices, alphabet, factory);
+						new NestedWordAutomaton<>(mAutomataServices, new VpAlphabet<>(mRange), factory);
 				final Set<Integer> writesOnVar = mVariables2Writes.getImage(var);
 				nwa.addState(write == null, false, getState(1));
 				nwa.addState(false, true, getState(2));
