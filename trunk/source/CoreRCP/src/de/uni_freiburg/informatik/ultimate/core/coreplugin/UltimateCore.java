@@ -167,7 +167,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			instanceLocation.set(new URL("file", null, randomWorkspaceLoc), false);
 			final File toDelete = new File(randomWorkspaceLoc);
 			final Thread deleteWorkspaceThread =
-					new Thread((Runnable) () -> CoreUtil.deleteDirectory(toDelete), "DeleteRandomWorkspace");
+					new Thread(() -> CoreUtil.deleteDirectory(toDelete), "DeleteRandomWorkspace");
 			Runtime.getRuntime().addShutdownHook(deleteWorkspaceThread);
 		}
 

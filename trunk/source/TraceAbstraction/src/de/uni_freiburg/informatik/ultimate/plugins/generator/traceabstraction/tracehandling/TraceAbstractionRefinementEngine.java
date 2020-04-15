@@ -141,7 +141,7 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 					ipps.stream().filter(a -> a.isPerfect()).collect(Collectors.toList());
 			final List<QualifiedTracePredicates> imperfectIpps =
 					ipps.stream().filter(a -> !a.isPerfect()).collect(Collectors.toList());
-			;
+
 			final IpAbStrategyModuleResult<LETTER> result =
 					interpolantAutomatonBuilder.buildInterpolantAutomaton(perfectIpps, imperfectIpps);
 			mInterpolantAutomaton = result.getAutomaton();
