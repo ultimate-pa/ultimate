@@ -244,7 +244,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 			}
 		} catch (final ToolchainCanceledException e) {
 			feasibilityResult = new FeasibilityCheckResult(LBool.UNKNOWN,
-					new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT, e, ExceptionHandlingCategory.KNOWN_THROW),
+					new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT, e, ExceptionHandlingCategory.KNOWN_IGNORE),
 					false);
 		} catch (final SMTLIBException e) {
 			feasibilityResult =
