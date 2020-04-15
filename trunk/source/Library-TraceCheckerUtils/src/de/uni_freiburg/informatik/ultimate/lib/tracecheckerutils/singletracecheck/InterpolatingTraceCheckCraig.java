@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckStatisticsGenerator.InterpolantType;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -120,34 +121,16 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 						mTraceCheckBenchmarkGenerator.addBackwardCoveringInformation(bci);
 					}
 				}
-			} catch (final UnsupportedOperationException | SMTLIBException e) {
-				final String message = e.getMessage();
-				if (message == null) {
-					mLogger.fatal("solver crashed with " + e.getClass().getSimpleName() + " whose message is null");
-					throw e;
-				}
-				if (e instanceof UnsupportedOperationException && checkIfMessageMeansSolverCannotInterpolate(message)) {
-					// SMTInterpol throws this during interpolation for unsupported fragments such as arrays
-					ics = new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, e);
-				} else if (e instanceof SMTLIBException && "Unsupported non-linear arithmetic".equals(message)) {
-					// SMTInterpol was somehow able to determine satisfiability but detects
-					// non-linear arithmetic during interpolation
-					ics = new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, e);
-				} else {
-					throw e;
-				}
-				mTraceCheckFinished = true;
+			} catch (final UnsupportedOperationException e) {
+				ics = handleUnsupportedOperationException(e);
+			} catch (final SMTLIBException e) {
+				ics = handleSmtLibException(e);
 			} catch (final IllegalArgumentException e) {
-				final String message = e.getMessage();
-				if (message != null && message.startsWith("Did not find overload for function =")) {
-					// DD: this is a known bug in SMTInterpol; until it is fixed, we catch it here so that we can run
-					// benchmarks
-					ics = new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CRASH, e);
-				} else {
-					throw e;
-				}
+				ics = handleIllegalArgumentException(e);
+			} catch (final NestedTraceCheckException e) {
+				ics = handleNestedTraceCheckException(e);
 			}
-
+			mTraceCheckFinished = true;
 			mInterpolantComputationStatus = ics;
 		} else if (isCorrect() == LBool.SAT) {
 			mInterpolantComputationStatus = new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
@@ -172,7 +155,61 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 				xnfConversionTechnique, simplificationTechnique, false);
 	}
 
-	private static boolean checkIfMessageMeansSolverCannotInterpolate(final String message) {
+	private InterpolantComputationStatus handleNestedTraceCheckException(final NestedTraceCheckException e) {
+		// unwrap nested exception and handle it here
+		final Throwable cause = e.getCause();
+		final InterpolantComputationStatus ics;
+		if (cause instanceof UnsupportedOperationException) {
+			ics = handleUnsupportedOperationException((UnsupportedOperationException) cause);
+		} else if (cause instanceof SMTLIBException) {
+			ics = handleSmtLibException((SMTLIBException) cause);
+		} else if (cause instanceof IllegalArgumentException) {
+			ics = handleIllegalArgumentException((IllegalArgumentException) cause);
+		} else {
+			throw e;
+		}
+		return ics;
+	}
+
+	private InterpolantComputationStatus handleUnsupportedOperationException(final UnsupportedOperationException e) {
+		final String message = throwIfNoMessage(e);
+		if (isMessageSolverCannotInterpolate(message)) {
+			// SMTInterpol throws this during interpolation for unsupported fragments such as arrays
+			return new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, e);
+		}
+		throw e;
+	}
+
+	private InterpolantComputationStatus handleSmtLibException(final SMTLIBException e) {
+		final String message = throwIfNoMessage(e);
+		if ("Unsupported non-linear arithmetic".equals(message)) {
+			// SMTInterpol was somehow able to determine satisfiability but detects
+			// non-linear arithmetic during interpolation
+			return new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, e);
+		}
+		throw e;
+	}
+
+	private InterpolantComputationStatus handleIllegalArgumentException(final IllegalArgumentException e) {
+		final String message = throwIfNoMessage(e);
+		if (message.startsWith("Did not find overload for function =")) {
+			// DD: this is a known bug in SMTInterpol; until it is fixed, we catch it here so that we can run
+			// benchmarks
+			return new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CRASH, e);
+		}
+		throw e;
+	}
+
+	private String throwIfNoMessage(final RuntimeException e) {
+		final String message = e.getMessage();
+		if (message == null) {
+			mLogger.fatal("Solver crashed with " + e.getClass().getSimpleName() + " whose message is null");
+			throw e;
+		}
+		return message;
+	}
+
+	private static boolean isMessageSolverCannotInterpolate(final String message) {
 		return message.startsWith("Cannot interpolate") || message.equals(NestedInterpolantsBuilder.DIFF_IS_UNSUPPORTED)
 				|| message.startsWith("Unknown lemma type!");
 	}
@@ -359,10 +396,13 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 				throw new AssertionError(
 						"has to be unsat by construction, we do check only for interpolant computation");
 			} else if (isSafe == LBool.UNKNOWN) {
-				if (mServices.getProgressMonitorService().continueProcessing()) {
-					throw new AssertionError("UNKNOWN during nested interpolation. I don't know how to continue");
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(this.getClass(), "construction of nested interpolants");
+
 				}
-				throw new ToolchainCanceledException(this.getClass(), "construction of nested interpolants");
+				final TraceCheckReasonUnknown reasonsUnknown = tc.getTraceCheckReasonUnknown();
+				throw new NestedTraceCheckException("UNKNOWN during nested interpolation. I don't know how to continue",
+						reasonsUnknown.getException());
 			}
 			// tc.computeInterpolants_Recursive(interpolatedPositions, mPredicateUnifier);
 			final IPredicate[] interpolantSubsequence = tc.getInterpolants();
@@ -422,6 +462,18 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 			}
 		}
 		return newInterpolatedPositions;
+	}
+
+	/**
+	 * A {@link RuntimeException} that can be thrown when a nested trace check fails.
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	private static final class NestedTraceCheckException extends RuntimeException {
+		public NestedTraceCheckException(final String message, final Throwable cause) {
+			super(message, cause);
+		}
 	}
 
 }
