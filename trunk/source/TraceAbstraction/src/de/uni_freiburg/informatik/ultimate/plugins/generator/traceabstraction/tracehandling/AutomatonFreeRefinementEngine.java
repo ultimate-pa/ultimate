@@ -279,14 +279,7 @@ public final class AutomatonFreeRefinementEngine<LETTER extends IIcfgTransition<
 		default:
 			throw new IllegalArgumentException("Unknown exception category: " + exceptionCategory);
 		}
-		final boolean throwException =
-				tcra.getExceptionHandlingCategory().throwException(mStrategy.getExceptionBlacklist());
-		if (throwException) {
-			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Global settings require throwing the exception.");
-			}
-			throw new AssertionError(tcra.getException());
-		}
+		throwIfNecessary(tcra.getExceptionHandlingCategory(), tcra.getException());
 	}
 
 	private IIpgStrategyModule<?, LETTER> tryExecuteInterpolantGenerator() {
@@ -335,13 +328,26 @@ public final class AutomatonFreeRefinementEngine<LETTER extends IIcfgTransition<
 		default:
 			throw new AssertionError("unknown case : " + status.getStatus());
 		}
-		final boolean throwException = category.throwException(mStrategy.getExceptionBlacklist());
-		if (throwException) {
-			throw new AssertionError(status.getException());
-		}
+		throwIfNecessary(category, status.getException());
 		final String message = status.getException() == null ? "Unknown" : status.getException().getMessage();
 		mLogger.warn("Interpolation failed due to " + category + ": " + message);
 		return null;
+	}
+
+	private void throwIfNecessary(final ExceptionHandlingCategory category, final Throwable t) {
+		// note: you only need to use this function if you did not get the throwable from a catch block!
+		final boolean throwException = category.throwException(mStrategy.getExceptionBlacklist());
+		if (throwException) {
+			mLogger.warn("Global settings require throwing the following exception");
+			// throw unchecked exceptions directly, wrap checked exceptions in AssertionError
+			if (t instanceof Error) {
+				throw (Error) t;
+			}
+			if (t instanceof RuntimeException) {
+				throw (RuntimeException) t;
+			}
+			throw new AssertionError(t);
+		}
 	}
 
 	private void logModule(final String msg, final Object module) {
