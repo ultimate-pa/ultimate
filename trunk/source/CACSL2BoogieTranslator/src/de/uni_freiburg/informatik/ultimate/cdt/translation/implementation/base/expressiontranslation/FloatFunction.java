@@ -96,12 +96,12 @@ public class FloatFunction {
 	public CPrimitive getType() {
 		switch (mTypeSuffix) {
 		case "f":
-			return new CPrimitive(CPrimitives.FLOAT);
+			return new CPrimitive(CPrimitives.FLOAT_SMT);
 		case "":
 		case "d":
-			return new CPrimitive(CPrimitives.DOUBLE);
+			return new CPrimitive(CPrimitives.DOUBLE_SMT);
 		case "l":
-			return new CPrimitive(CPrimitives.LONGDOUBLE);
+			return new CPrimitive(CPrimitives.LONGDOUBLE_SMT);
 		default:
 			throw new AssertionError("unknown type suffix " + mTypeSuffix);
 		}
@@ -141,6 +141,11 @@ public class FloatFunction {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public String toString() {
+		return mPrefix + mFunction + mTypeSuffix;
 	}
 
 }

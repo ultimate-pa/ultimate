@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieTypeConstructor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
@@ -229,7 +230,7 @@ public class TypeHandler implements ITypeHandler {
 			// there is no void in Boogie,
 			// so we simply have no result variable.
 			final CPrimitive cvar = new CPrimitive(node);
-			return (new TypesResult(null, false, true, cvar));
+			return new TypesResult(null, false, true, cvar);
 		}
 		case IASTSimpleDeclSpecifier.t_unspecified: {
 			final String msg = "unspecified type, defaulting to int";
@@ -242,7 +243,7 @@ public class TypeHandler implements ITypeHandler {
 			// NOTE: in a extended implementation we should
 			// handle here different types of int (short, long,...)
 			final CPrimitive cvar = new CPrimitive(node);
-			return (new TypesResult(cPrimitive2AstType(loc, cvar), node.isConst(), false, cvar));
+			return new TypesResult(cPrimitive2AstType(loc, cvar), node.isConst(), false, cvar);
 		}
 		case IASTSimpleDeclSpecifier.t_double:
 		case IASTSimpleDeclSpecifier.t_float: {
@@ -274,8 +275,8 @@ public class TypeHandler implements ITypeHandler {
 			// no restrictions / asserts in boogie
 			if (node.isLongLong() || node.isLong() || node.isShort() || node.isUnsigned()) {
 				final CPrimitive cvar = new CPrimitive(node);
-				return (new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT), node.isConst(), false,
-						cvar));
+				return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT), node.isConst(), false,
+						cvar);
 			}
 			// if we do not find a type we cancel with Exception
 			final String msg = "TypeHandler: We do not support this type!" + node.getType();
@@ -292,14 +293,14 @@ public class TypeHandler implements ITypeHandler {
 			// quick solution --> TODO: maybe make this dependent on includes,
 			// maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
 			if (cId.equals("size_t") || cId.equals("ssize_t")) {
-				return (new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
-						new CPrimitive(CPrimitives.UINT)));
+				return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
+						new CPrimitive(CPrimitives.UINT));
 			} else if (cId.equals("__builtin_va_list")) {
-				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
-						new CPointer(new CPrimitive(CPrimitives.CHAR))));
+				return new TypesResult(constructPointerType(loc), node.isConst(), false,
+						new CPointer(new CPrimitive(CPrimitives.CHAR)));
 			} else if (cId.equals("__pthread_list_t")) {
-				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
-						new CPointer(new CPrimitive(CPrimitives.VOID))));
+				return new TypesResult(constructPointerType(loc), node.isConst(), false,
+						new CPointer(new CPrimitive(CPrimitives.VOID)));
 			} else if (cId.equals("__float128")) {
 				// DD 2020-12-02: Not entirely accurate, because it is actually architecture dependent.
 				// see https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format and
@@ -534,7 +535,7 @@ public class TypeHandler implements ITypeHandler {
 		final SymbolTableValue oldStv = mSymboltable.findCSymbol(hook, name);
 
 		CType newDefiningType;
-		if ((oldStv.getCType() instanceof CNamed)) {
+		if (oldStv.getCType() instanceof CNamed) {
 			// end of chain not yet reached
 			final CType definingTypeOfDefiningType = constructUpdatedCNamedAndAddToSymbolTable(
 					((CNamed) oldStv.getCType()).getName(), completeStruct, alreadyRedirected, hook);
@@ -762,11 +763,16 @@ public class TypeHandler implements ITypeHandler {
 		final CType cType = cTypeRaw.getUnderlyingType();
 
 		if (cType instanceof CPrimitive) {
+			final CPrimitive cPrimitive = (CPrimitive) cType;
 			if (mTranslationSettings.isBitvectorTranslation()) {
-				final Integer byteSize = mTypeSizes.getSize(((CPrimitive) cType).getType());
+				if (cPrimitive.isSmtFloat()) {
+					return BoogieType
+							.createConstructedType(new BoogieTypeConstructor("C_" + cType.toString(), false, 0, null));
+				}
+				final Integer byteSize = mTypeSizes.getSize(cPrimitive.getType());
 				return BoogieType.createBitvectorType(byteSize * 8);
 			}
-			switch (((CPrimitive) cType).getGeneralType()) {
+			switch (cPrimitive.getGeneralType()) {
 			case FLOATTYPE:
 				return BoogieType.TYPE_REAL;
 			case INTTYPE:
@@ -1009,7 +1015,7 @@ public class TypeHandler implements ITypeHandler {
 	private static boolean areMatchingTypes(final CEnum type1, final CEnum type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
 
-		if (!(type1.getName().equals(type2.getName()))) {
+		if (!type1.getName().equals(type2.getName())) {
 			return false;
 		}
 
@@ -1017,7 +1023,7 @@ public class TypeHandler implements ITypeHandler {
 			return false;
 		}
 		for (int i = 0; i < type1.getFieldCount(); i++) {
-			if (!(type1.getFieldIds()[i].equals(type2.getFieldIds()[i]))) {
+			if (!type1.getFieldIds()[i].equals(type2.getFieldIds()[i])) {
 				return false;
 			}
 		}
@@ -1078,7 +1084,7 @@ public class TypeHandler implements ITypeHandler {
 
 		// TODO: DD: Do field names really impact type matching? I am not so sure that this is always the case
 		for (int i = 0; i < type1.getFieldIds().length - 1; i++) {
-			if (!(type1.getFieldIds()[i].equals(type2.getFieldIds()[i]))) {
+			if (!type1.getFieldIds()[i].equals(type2.getFieldIds()[i])) {
 				return false;
 			}
 		}

@@ -1117,12 +1117,15 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					new Expression[] { argumentProcessed.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
 			return new RValue(expr, resultType);
 		} else if ("isnan".equals(floatFunction.getFunctionName())) {
+			checkIsFloatPrimitive(argumentProcessed);
 			final String smtFunctionName = "fp.isNaN";
 			return constructSmtFloatClassificationFunction(loc, smtFunctionName, argumentProcessed);
 		} else if ("isinf".equals(floatFunction.getFunctionName())) {
+			checkIsFloatPrimitive(argumentProcessed);
 			final String smtFunctionName = "fp.isInfinite";
 			return constructSmtFloatClassificationFunction(loc, smtFunctionName, argumentProcessed);
 		} else if ("isnormal".equals(floatFunction.getFunctionName())) {
+			checkIsFloatPrimitive(argumentProcessed);
 			final String smtFunctionName = "fp.isNormal";
 			return constructSmtFloatClassificationFunction(loc, smtFunctionName, argumentProcessed);
 		} else if ("isfinite".equals(floatFunction.getFunctionName())
@@ -1213,18 +1216,17 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		if ("fmod".equals(func_name) || "signbit".equals(func_name) || "copysign".equals(func_name)
 				|| argument.getCType().isSmtFloat()) {
 			return argument;
-		} else {
-			return new RValue(
-					transformBitvectorToFloat(loc, argument.getValue(), ((CPrimitive) argument.getCType()).getType()),
-					argument.getCType());
 		}
+		return new RValue(
+				transformBitvectorToFloat(loc, argument.getValue(), ((CPrimitive) argument.getCType()).getType()),
+				argument.getCType());
 	}
 
 	private static void checkIsFloatPrimitive(final RValue argument) {
-		if (!(argument.getCType().getUnderlyingType() instanceof CPrimitive)
-				|| !((CPrimitive) argument.getCType().getUnderlyingType()).getType().isFloatingType()) {
-			throw new IllegalArgumentException(
-					"can apply float operation only to floating type, but saw " + argument.getCType());
+		final CType cType = argument.getCType().getUnderlyingType();
+		if (!(cType instanceof CPrimitive) || !((CPrimitive) cType).getType().isFloatingType() || !cType.isSmtFloat()) {
+			throw new UnsupportedOperationException(
+					"can apply float operation only to SMT floating type, but saw " + argument.getCType());
 		}
 	}
 
