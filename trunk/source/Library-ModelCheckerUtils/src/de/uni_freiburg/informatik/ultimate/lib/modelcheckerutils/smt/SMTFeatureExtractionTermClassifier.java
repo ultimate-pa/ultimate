@@ -91,7 +91,8 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 	}
 
 	/**
-	 * Check a/another Term and add the result to the existing classification results.
+	 * Check a/another Term and add the result to the existing classification
+	 * results.
 	 */
 	public void checkTerm(final Term term) {
 		mTermsInWhichWeAlreadyDescended = new HashSet<>();
@@ -171,6 +172,18 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		return mVariableEquivalenceClasses;
 	}
 
+	private double normalize(double score, double lower_bound, double upper_bound) {
+		// Normalizes a given value to a certain interval.
+		// Normalize to [0,1]
+		double normalized_score = 1.0 - (1.0 / (score != 0 ? (double) score : 1.0));
+
+		// Scale to [lower_bound,upper_bound]
+		double range = upper_bound - lower_bound;
+		normalized_score = (normalized_score * range) + lower_bound;
+
+		return normalized_score;
+	}
+
 	public double getScore(final ScoringMethod scoringMethod) {
 		int score = 0;
 		if (scoringMethod == ScoringMethod.DEPENDENCY) {
@@ -196,13 +209,11 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		} else {
 			throw new UnsupportedOperationException("Unsupported ScoringMethod " + scoringMethod.toString());
 		}
-		final double normalized = 1.0 - 1.0 / (score != 0 ? (double) score : 1.0);
+		final double normalized = normalize(score, 0.5, 1);
+
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("stack " + mAssertionStack.toString());
-			mLogger.debug("eqclass " + mVariableEquivalenceClasses.getAllEquivalenceClasses().toString());
-			mLogger.debug("eqclass_sizes " + getVariableEquivalenceClassSizes());
 			mLogger.debug("score " + score);
-			mLogger.debug("normalized_score " + normalized);
+			mLogger.debug("normalized " + normalized);
 		}
 		return normalized;
 	}
@@ -319,7 +330,8 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 					// In this case we can add this term to the current termset.
 					createAndAddToTermset(eq_class_id, term1);
 
-					// Term 2 has to be explored further. If the function is "or", we create a new termset.
+					// Term 2 has to be explored further. If the function is "or", we create a new
+					// termset.
 					final int new_class_id = functionname.equals("or") ? mTermsets.size() + 1 : eq_class_id;
 					if (term2 instanceof ApplicationTerm) {
 						collectVariables((ApplicationTerm) term2, ((ApplicationTerm) term2).getFunction().getName(),
