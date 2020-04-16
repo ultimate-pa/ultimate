@@ -408,7 +408,7 @@ public final class SFO {
 	 *         creating constants.
 	 */
 	public static String getBoogieFunctionName(final String smtFunctionName, final CPrimitive type) {
-		return getBoogieFunctionName(smtFunctionName, new CPrimitive(type.getType().getBVVariant()).toString());
+		return getBoogieFunctionName(smtFunctionName, new CPrimitive(type.getType().getBvVariant()).toString());
 	}
 
 	private static String getBoogieFunctionName(final String smtFunctionName, final String suffix) {

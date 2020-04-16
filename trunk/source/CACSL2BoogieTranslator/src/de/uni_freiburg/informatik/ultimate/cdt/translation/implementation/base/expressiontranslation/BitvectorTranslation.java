@@ -134,8 +134,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			mSmtIdentifier = smtIdentifier;
 			final CACSLLocation loc = LocationFactory.createIgnoreCLocation();
 			final String boogieId = SFO.AUXILIARY_FUNCTION_PREFIX + smtIdentifier;
-			mBoogieExpr = ExpressionFactory.constructIdentifierExpression(loc, FLOAT_ROUNDING_MODE_BOOGIE_TYPE, boogieId,
-					DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			mBoogieExpr = ExpressionFactory.constructIdentifierExpression(loc, FLOAT_ROUNDING_MODE_BOOGIE_TYPE,
+					boogieId, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 			mVarlist = new VarList(loc, new String[] { boogieId }, FLOAT_ROUNDING_MODE_BOOGIE_TYPE.toASTType(loc));
 		}
 
@@ -172,6 +172,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	public static final String FLOAT_VAR_NAME_CURRENT_ROUNDING_MODE = "~CRM";
 	public static final String FLOAT_PROC_SET_CURRENT_ROUNDING_MODE = "ULTIMATE.setCRM";
+	public static final String FLOAT_PROC_FLOAT_TO_BV = "ULTIMATE.float_to_bitvec";
 
 	public static final String SMT_LIB_NAN = "NaN";
 	public static final String SMT_LIB_PLUS_INF = "+oo";
@@ -211,7 +212,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public Expression constructLiteralForFloatingType(final ILocation loc, final CPrimitive type,
 			final BigDecimal value) {
-		final CPrimitive type_bv = type.getBvVaraint();
+		final CPrimitive type_bv = type.getBvVariant();
 		if (mSettings.overapproximateFloatingPointOperations()) {
 			return super.constructOverapproximationFloatLiteral(loc, value.toString(), type_bv);
 		}

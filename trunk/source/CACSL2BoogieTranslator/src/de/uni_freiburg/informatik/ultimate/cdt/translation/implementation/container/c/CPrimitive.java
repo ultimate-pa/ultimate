@@ -147,11 +147,10 @@ public class CPrimitive extends CType {
 
 		private final CPrimitiveCategory mPrimitiveCategory;
 
-
 		private CPrimitives(final CPrimitiveCategory generalprimitive) {
 			mPrimitiveCategory = generalprimitive;
 		}
-		
+
 		public boolean isIntegertype() {
 			return mPrimitiveCategory == CPrimitiveCategory.INTTYPE;
 		}
@@ -165,9 +164,9 @@ public class CPrimitive extends CType {
 		}
 
 		public boolean isSmtFloat() {
-			return this == CPrimitives.FLOAT_SMT || this == CPrimitives.DOUBLE_SMT 
-					|| this == CPrimitives.LONGDOUBLE_SMT || this == CPrimitives.COMPLEX_FLOAT_SMT
-					|| this == CPrimitives.COMPLEX_DOUBLE_SMT || this == CPrimitives.COMPLEX_LONGDOUBLE_SMT;
+			return this == CPrimitives.FLOAT_SMT || this == CPrimitives.DOUBLE_SMT || this == CPrimitives.LONGDOUBLE_SMT
+					|| this == CPrimitives.COMPLEX_FLOAT_SMT || this == CPrimitives.COMPLEX_DOUBLE_SMT
+					|| this == CPrimitives.COMPLEX_LONGDOUBLE_SMT;
 		}
 
 		/**
@@ -228,8 +227,7 @@ public class CPrimitive extends CType {
 			}
 		}
 
-		public CPrimitives getBVVariant() {
-			// TODO Auto-generated method stub
+		public CPrimitives getBvVariant() {
 			switch (this) {
 			case COMPLEX_DOUBLE:
 			case COMPLEX_DOUBLE_SMT:
@@ -267,9 +265,8 @@ public class CPrimitive extends CType {
 				throw new UnsupportedOperationException("Unhandled case: " + this);
 			}
 		}
-		
+
 		public CPrimitives getSMTVariant() {
-			// TODO Auto-generated method stub
 			switch (this) {
 			case COMPLEX_DOUBLE:
 			case COMPLEX_DOUBLE_SMT:
@@ -344,9 +341,9 @@ public class CPrimitive extends CType {
 	public CPrimitive setIsSmtFloat(final boolean isSmtFloat) {
 		return new CPrimitive(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), isSmtFloat, getType());
 	}
-	
+
 	public CPrimitive getFloatCounterpart() {
-		return new CPrimitive(this.mType.getFloatCounterpart());
+		return new CPrimitive(mType.getFloatCounterpart());
 	}
 
 	/**
@@ -451,15 +448,14 @@ public class CPrimitive extends CType {
 		}
 		mGeneralType = getGeneralType(mType);
 	}
-	
+
 	public CPrimitive getSMTVariant() {
-		return new CPrimitive(this.mType.getSMTVariant());
-	}
-	
-	public CPrimitive getBvVaraint() {
-		return new CPrimitive(this.mType.getBVVariant());
+		return new CPrimitive(mType.getSMTVariant());
 	}
 
+	public CPrimitive getBvVariant() {
+		return new CPrimitive(mType.getBvVariant());
+	}
 
 	private static CPrimitiveCategory getGeneralType(final CPrimitives type) throws AssertionError {
 		switch (type) {
@@ -532,8 +528,8 @@ public class CPrimitive extends CType {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((mGeneralType == null) ? 0 : mGeneralType.hashCode());
-		result = prime * result + ((mType == null) ? 0 : mType.hashCode());
+		result = prime * result + (mGeneralType == null ? 0 : mGeneralType.hashCode());
+		result = prime * result + (mType == null ? 0 : mType.hashCode());
 		return result;
 	}
 

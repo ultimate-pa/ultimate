@@ -455,9 +455,10 @@ public class PostProcessor {
 		final IdentifierExpression functionArgumentIdentifierExpression =
 				ExpressionFactory.constructIdentifierExpression(loc, intBoogieType, functionArgumentVariableName,
 						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, functionName));
-		final VariableLHS roundingModeGlobalVariableLHS = ExpressionFactory.constructVariableLHS(loc,
-				BitvectorTranslation.FLOAT_ROUNDING_MODE_BOOGIE_TYPE, BitvectorTranslation.FLOAT_VAR_NAME_CURRENT_ROUNDING_MODE,
-				DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		final VariableLHS roundingModeGlobalVariableLHS =
+				ExpressionFactory.constructVariableLHS(loc, BitvectorTranslation.FLOAT_ROUNDING_MODE_BOOGIE_TYPE,
+						BitvectorTranslation.FLOAT_VAR_NAME_CURRENT_ROUNDING_MODE,
+						DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		final VariableLHS returnVariableLHS = ExpressionFactory.constructVariableLHS(loc, intBoogieType,
 				returnVariableName, new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, functionName));
 
@@ -545,11 +546,9 @@ public class PostProcessor {
 
 	private void createFloatToBitvectorProcedure(final ILocation loc, final int bytes) {
 		// TODO: DOUBLE AND LONGDOUBLE
-		final String functionName = "float_to_bitvec" + Integer.toString(bytes * 8);
+		final String functionName = BitvectorTranslation.FLOAT_PROC_FLOAT_TO_BV + Integer.toString(bytes * 8);
 		final String inVar = "f_in";
 		final String outVar = "bv_out";
-
-		final List<Statement> statements = new ArrayList<>();
 
 		CPrimitives floatCPrimitives = null;
 		switch (bytes) {
@@ -562,6 +561,8 @@ public class PostProcessor {
 		case 16:
 			floatCPrimitives = CPrimitives.LONGDOUBLE;
 			break;
+		default:
+			throw new UnsupportedOperationException("Unexpected float width: " + bytes);
 		}
 		final CPrimitive cType = new CPrimitive(floatCPrimitives);
 		final CPrimitive smtCType = new CPrimitive(floatCPrimitives.getFloatCounterpart());
@@ -604,13 +605,6 @@ public class PostProcessor {
 
 		// add the procedure declaration
 		mProcedureManager.addSpecificationsToCurrentProcedure(specs);
-
-		final Body procedureBody = mProcedureManager.constructBody(loc, new VariableDeclaration[0],
-				statements.toArray(new Statement[statements.size()]), functionName);
-
-		final Procedure procedureImplementation = new Procedure(loc, new Attribute[0], functionName, new String[0],
-				inVarList, outVarList, null, procedureBody);
-
 		mProcedureManager.endCustomProcedure(mCHandler, functionName);
 	}
 
