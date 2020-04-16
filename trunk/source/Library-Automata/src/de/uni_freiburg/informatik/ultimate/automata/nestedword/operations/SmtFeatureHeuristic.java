@@ -32,6 +32,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.IHeuristic;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier.ScoringMethod;
@@ -54,16 +55,19 @@ public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LET
 	}
 
 	public double checkTransition(final LETTER trans) {
-		// Check transition formula using a TermClassifier, then assign a score depending on the scoring method.
+		// Check transition formula using a TermClassifier, then assign a score
+		// depending on the scoring method.
 
 		if (trans instanceof IInternalAction) {
 			final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
 			final Term formula = ((IInternalAction) trans).getTransformula().getFormula();
 			tc.checkTerm(formula);
 			return tc.getScore(mScoringMethod);
+		} else if (trans instanceof ICallAction) {
+			return 1.0;
+		} else {
+			return 0.5;
 		}
-		// TODO: Handle call, return
-		return 0.0;
 	}
 
 	@Override
@@ -74,7 +78,6 @@ public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LET
 	@Override
 	public double getConcreteCost(final LETTER trans) {
 		// Our concrete const is 1, such that our heuristic always underestimates.
-		// TODO: use heuristic value as cost to get not necessarily shortest, but cheapest paths
-		return 1.0;
+		return mScoreCache.computeIfAbsent(trans, this::checkTransition);
 	}
 }
