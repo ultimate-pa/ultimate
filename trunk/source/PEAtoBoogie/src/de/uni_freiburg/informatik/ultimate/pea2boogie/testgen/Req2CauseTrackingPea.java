@@ -233,22 +233,19 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		if (pb == null) {
 			return Collections.emptySet();
 		}
-		for(int i = 0; i < dcFormula.length && pb!= null; i++) {
-			if((pb.isActive(i) && !pb.isWaiting(i)) || pb.isExact(i) || i == effectPhase) {
+		for(int i = 0; i < dcFormula.length; i++) {
+			if((pb.isActive(i) && !pb.isWaiting(i)) || pb.isExact(i)) {
 				final CDD invar = dcFormula[i].getInvariant();
 				final Set<String> cddVars = Req2CauseTrackingCDD.getCddVariables(invar);
-				if (effectPhase != i) {
-					//when in effect phase, remove only effect vars
-					cddVars.removeAll(effectVars);
-				}
 				//if the prior to last phase is a true phase, look ahead and see what we have to do to NOT
 				// enter the effect phase on accident
 				if (invar == CDD.TRUE && i == effectPhase) {
-					mLogger.warn("Adding additional phase...:" + dcFormula[i+1]);
 					cddVars.addAll(Req2CauseTrackingCDD.getCddVariables(dcFormula[i+1].getInvariant()));
+				}
+				if (effectPhase == i) {
+					//when in effect phase or waiting for effect phase, remove only effect vars
 					cddVars.removeAll(effectVars);
 				}
-				mLogger.warn("CDD   " + dcFormula[i].getInvariant() + "    with Vars  " + cddVars);
 				toTrackVars.addAll(cddVars);
 			}
 		}

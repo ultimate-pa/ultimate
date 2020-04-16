@@ -40,9 +40,9 @@ public class Req2CauseTrackingCDD {
 		final CDD[] conjuncts = cdd.toDNF();    //TODO: this ignores disjunction on boogie expression level
 		if (conjuncts.length > 1 && isEffectPhase) {
 			final Set<CDD> effectConjuncts = getEffectConjuncts(conjuncts, effectVars);
+			mLogger.warn("Nondeterministic requirement with effect: " + cdd.toString());
 			if (effectConjuncts.size() > 1) {
-				mLogger.warn("Nondeterministic requirement (will be ignored) with effect: " + cdd.toString());
-				mLogger.error("got Effects: " + effectConjuncts);
+				mLogger.error("Nondet. effect (no lower Automaton): " + effectConjuncts);
 				return CDD.FALSE;
 			} else {
 				// get effect part
@@ -52,7 +52,6 @@ public class Req2CauseTrackingCDD {
 				final Set<CDD> triggerConjuncts = getTriggerConjuncts(conjuncts, effectVars);
 				final CDD intermed = result.and(triggerConjuncts.stream().reduce(CDD.TRUE, (a,b) -> {return a.and(b.negate());} ));
 				mLogger.warn("Trigger part of disjunct: " + intermed);
-				mLogger.error("Transforming: "+ result.and(intermed) + " with tracking vars " + trackedVars);
 				return addTrackingGuards(result.and(intermed), trackedVars);
 			}
 		} else {
@@ -83,11 +82,9 @@ public class Req2CauseTrackingCDD {
 		return triggerDisjuncts;
 	}
 
+
 	private CDD addTrackingGuards(final CDD cdd, final Set<String> trackedVars) {
-		if (cdd == CDD.TRUE) {
-			return cdd;
-		}
-		if (cdd == CDD.FALSE) {
+		if (cdd == CDD.TRUE || cdd == CDD.FALSE) {
 			return cdd;
 		}
 
@@ -97,8 +94,9 @@ public class Req2CauseTrackingCDD {
 				newChildren.add(addTrackingGuards(child, trackedVars));
 			}
 		}
+		final CDD annotatedCDD = CDD.create(cdd.getDecision(), newChildren.toArray(new CDD[newChildren.size()]));
 
-		CDD annotatedCDD = CDD.create(cdd.getDecision(), newChildren.toArray(new CDD[newChildren.size()]));
+		CDD trackGurad = CDD.TRUE;
 		for (final String v : getVarsFromDecision(cdd.getDecision())) {
 			if (trackedVars.contains(v)) {
 				final String varName = ReqTestAnnotator.TRACKING_VAR_PREFIX + v;
@@ -106,12 +104,13 @@ public class Req2CauseTrackingCDD {
 				if (!v.endsWith("'")) {
 					mTrackingVars.put(varName, "bool");
 				}
-				final CDD trackGurad = CDD.create(new BooleanDecision(varName), CDD.TRUE_CHILDS);
-				annotatedCDD = trackGurad.and(cdd);
+				trackGurad = trackGurad.and(BooleanDecision.create(varName));
 			}
 		}
-		return annotatedCDD;
+		mLogger.info("Track Gurad for ("+ cdd + ") is :"+ trackGurad);
+		return annotatedCDD.and(trackGurad);
 	}
+
 
 	/*
 	 * Transforms a CDD containing a range decision as follows: - t <= c to t >= c
@@ -224,7 +223,7 @@ public class Req2CauseTrackingCDD {
 		return variables;
 	}
 
-	private static Set<String> getDifferences(final CDD beforeStateInvar, final CDD finalStateInvar) {
+	public static Set<String> getDifferences(final CDD beforeStateInvar, final CDD finalStateInvar) {
 		final Set<String> differences = getCddVariables(finalStateInvar);
 		// collect the atomics from both cdds
 		final Set<CDD> beforeAtomics = getCDDAtoms(beforeStateInvar);
