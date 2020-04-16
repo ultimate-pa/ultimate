@@ -626,7 +626,6 @@ public class Req2BoogieTranslator {
 	private Statement[] generateProcedureBodyStmts(final BoogieLocation bl, final List<InitializationPattern> init) {
 		final List<Statement> statements = new ArrayList<>();
 		statements.addAll(genInitialPhasesStmts(bl));
-		statements.addAll(genInitialPhasesStmts(bl));
 		statements.addAll(genClockInitStmts());
 		// Assign the history vars with the initial state as if a small stutter step had occured initally.
 		statements.addAll(

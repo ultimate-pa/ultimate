@@ -66,7 +66,6 @@ public class BndDelayedResponsePatternUT extends PatternType {
 			ct.add(counterTrace(phaseT(), phase(R), phase(S.negate(), BoundTypes.LESSEQUAL, c1),
 					phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT()));
 			return ct;
-
 		}
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
