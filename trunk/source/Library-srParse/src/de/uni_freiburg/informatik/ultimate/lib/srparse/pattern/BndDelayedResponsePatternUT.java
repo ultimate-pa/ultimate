@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -62,17 +61,10 @@ public class BndDelayedResponsePatternUT extends PatternType {
 		final int c2 = durations[1];
 
 		if (scope instanceof SrParseScopeGlobally) {
-			// TODO: needs 2 ct formulas
-			// return Collections.singletonList(counterTrace(phaseT(), phase(R), phase(CDD.TRUE, BoundTypes.LESSEQUAL,
-			// c1),
-			// phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT()));
-
-			final CounterTrace ct1 =
-					counterTrace(phaseT(), phase(R), phase(S.negate(), BoundTypes.GREATER, c1), phaseT());
-			final CounterTrace ct2 = counterTrace(phaseT(), phase(R), phase(S.negate(), BoundTypes.LESSEQUAL, c1),
-					phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT());
-			final List ct = new ArrayList();
-			Collections.addAll(ct, ct1, ct2);
+			final List<CounterTrace> ct = new ArrayList<>();
+			ct.add(counterTrace(phaseT(), phase(R), phase(S.negate(), BoundTypes.GREATER, c1), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(R), phase(S.negate(), BoundTypes.LESSEQUAL, c1),
+					phase(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT()));
 			return ct;
 
 		}
