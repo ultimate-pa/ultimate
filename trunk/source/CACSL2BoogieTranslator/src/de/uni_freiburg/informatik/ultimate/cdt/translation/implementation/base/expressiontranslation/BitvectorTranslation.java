@@ -170,9 +170,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public static final ASTType ROUNDING_MODE_BOOGIE_AST_TYPE =
 			ROUNDING_MODE_BOOGIE_TYPE.toASTType(LocationFactory.createIgnoreCLocation());
 
-	public static final String ULTIMATE_VAR_CURRENT_ROUNDING_MODE = "currentRoundingMode";
+	public static final String ULTIMATE_VAR_CURRENT_ROUNDING_MODE = "~CRM";
 
-	public static final String ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE = "ULTIMATE.setCurrentRoundingMode";
+	public static final String ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE = "ULTIMATE.setCRM";
 
 	public static final String SMT_LIB_NAN = "NaN";
 	public static final String SMT_LIB_PLUS_INF = "+oo";
