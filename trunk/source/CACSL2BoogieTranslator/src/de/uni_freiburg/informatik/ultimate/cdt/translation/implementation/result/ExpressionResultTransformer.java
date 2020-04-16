@@ -883,33 +883,39 @@ public class ExpressionResultTransformer {
 	 */
 	public Pair<ExpressionResult, ExpressionResult> usualArithmeticConversions(final ILocation loc,
 			ExpressionResult leftRex, ExpressionResult rightRex) {
-		final CPrimitive leftPrimitive =
-				(CPrimitive) CEnum.replaceEnumWithInt(leftRex.getLrValue().getCType().getUnderlyingType());
-		final CPrimitive rightPrimitive =
-				(CPrimitive) CEnum.replaceEnumWithInt(leftRex.getLrValue().getCType().getUnderlyingType());
+		CType leftRType = leftRex.getLrValue().getCType().getUnderlyingType();
+		CType rightRType = rightRex.getLrValue().getCType().getUnderlyingType();
+
+		final CPrimitive leftPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(leftRType);
+		final CPrimitive rightPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(rightRType);
 		if (leftPrimitive.isIntegerType()) {
 			leftRex = doIntegerPromotion(loc, leftRex);
+			leftRType = leftRex.getLrValue().getCType().getUnderlyingType();
 		}
 		if (rightPrimitive.isIntegerType()) {
 			rightRex = doIntegerPromotion(loc, rightRex);
+			rightRType = rightRex.getLrValue().getCType().getUnderlyingType();
 		}
 
-		CPrimitive resultType = determineResultOfUsualArithmeticConversions(
-				(CPrimitive) leftRex.getLrValue().getCType().getUnderlyingType(),
-				(CPrimitive) rightRex.getLrValue().getCType().getUnderlyingType());
+		CPrimitive resultType =
+				determineResultOfUsualArithmeticConversions((CPrimitive) leftRType, (CPrimitive) rightRType);
 
 		if (resultType.isFloatingType()) {
 			resultType = resultType.getSMTVariant();
 		}
 
 		leftRex = convertIfNecessary(loc, leftRex, resultType);
+		leftRType = leftRex.getLrValue().getCType().getUnderlyingType();
 		rightRex = convertIfNecessary(loc, rightRex, resultType);
+		rightRType = rightRex.getLrValue().getCType().getUnderlyingType();
 
-		if (!leftRex.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
-			throw new AssertionError("conversion failed");
+		if (!leftRType.equals(resultType)) {
+			throw new AssertionError(
+					String.format("conversion failed for left. Actual %s , expected %s", leftRType, resultType));
 		}
-		if (!rightRex.getLrValue().getCType().getUnderlyingType().equals(resultType)) {
-			throw new AssertionError("conversion failed");
+		if (!rightRType.equals(resultType)) {
+			throw new AssertionError(
+					String.format("conversion failed for right: Actual %s , expected %s", rightRType, resultType));
 		}
 		return new Pair<>(leftRex, rightRex);
 	}
@@ -1031,40 +1037,39 @@ public class ExpressionResultTransformer {
 			} else if (operandType.isFloatingType()) {
 				exprResult = mExprTrans.convertFloatToInt(loc, operand, resultType);
 			} else {
-				throw new UnsupportedSyntaxException(loc,
-						"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
+				throw new UnsupportedSyntaxException(loc, "conversion from " + operandType + " to " + resultType);
 			}
 		} else if (resultType.isFloatingType()) {
 			final ExpressionResult expr;
 			if (operandType.isIntegerType()) {
 				expr = mExprTrans.convertIntToFloat(loc, operand, resultType);
-				exprResult = constructBitvecResult(expr.getLrValue(), loc);
 			} else if (operandType.isFloatingType()) {
-				if (operand.getLrValue().getCType().isSmtFloat()) {
+				if (operandType.isSmtFloat()) {
 					expr = mExprTrans.convertFloatToFloat(loc, operand, resultType);
-					exprResult = constructBitvecResult(expr.getLrValue(), loc);
 				} else {
+					// if we have a bv type we need to convert it to smt, perform the actual float-to-float conversion,
+					// and then convert it back
 					// TODO: Check if this is correct
-					exprResult =
-							mExprTrans
-									.convertFloatToFloat(loc,
-											new ExpressionResultBuilder().addAllExceptLrValue(operand)
-													.setLrValue(new RValue(
-															mExprTrans.transformBitvectorToFloat(loc,
-																	operand.getLrValue().getValue(),
-																	((CPrimitive) operandType).getSMTVariant()
-																			.getType()),
-															((CPrimitive) operandType).getSMTVariant()))
-													.build(),
-											resultType.getSMTVariant());
+					final ExpressionResult in = new ExpressionResultBuilder().addAllExceptLrValue(operand)
+							.setLrValue(new RValue(
+									mExprTrans.transformBitvectorToFloat(loc, operand.getLrValue().getValue(),
+											((CPrimitive) operandType).getSMTVariant().getType()),
+									((CPrimitive) operandType).getSMTVariant()))
+							.build();
+					expr = mExprTrans.convertFloatToFloat(loc, in, resultType.getSMTVariant());
 				}
 			} else {
-				throw new UnsupportedSyntaxException(loc,
-						"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
+				throw new UnsupportedSyntaxException(loc, "conversion from " + operandType + " to " + resultType);
 			}
+			if (resultType.isSmtFloat()) {
+				exprResult = expr;
+			} else {
+				exprResult = new ExpressionResultBuilder(expr).resetLrValue(null)
+						.addAllIncludingLrValue(constructBitvecResult(expr.getLrValue(), loc)).build();
+			}
+
 		} else {
-			throw new UnsupportedSyntaxException(loc,
-					"conversion from " + operand.getLrValue().getCType().getUnderlyingType() + " to " + resultType);
+			throw new UnsupportedSyntaxException(loc, "conversion from " + operandType + " to " + resultType);
 		}
 		return exprResult;
 	}
