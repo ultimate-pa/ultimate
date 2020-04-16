@@ -4076,23 +4076,9 @@ public class CHandler {
 
 		final RValue rval = new RValue(expr, typeOfResult, false, false);
 
-		// TODO: backtranslation to bitvec here. This should be more modular.
 		if (lType.isArithmeticType() && rType.isArithmeticType()
 				&& (lType.isFloatingType() || rType.isFloatingType())) {
-
-			// TODO: near-duplicate in ExpressionResultTransformer
-			final Expression[] arguments = new Expression[] { rval.getValue() };
-			final CPrimitive cType = ((CPrimitive) rval.getCType()).getBvVariant();
-			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
-			builder.addDeclaration(auxvarinfo.getVarDec());
-			builder.addAuxVar(auxvarinfo);
-			final CallStatement call =
-					StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { auxvarinfo.getLhs() },
-							("float_to_bitvec" + Integer.toString(mTypeSizes.getFloatingPointSize(cType).getBitSize()))
-									.intern(),
-							arguments);
-			builder.addStatement(call);
-			builder.setLrValue(new RValue(auxvarinfo.getExp(), cType));
+			builder.addAllIncludingLrValue(mExprResultTransformer.constructBitvecResult(rval, loc));
 		} else {
 			builder.setLrValue(rval);
 		}
@@ -4469,21 +4455,7 @@ public class CHandler {
 
 		if (lType.isArithmeticType() && rType.isArithmeticType()
 				&& (lType.isFloatingType() || rType.isFloatingType())) {
-
-			final Expression[] arguments = new Expression[] { rval.getValue() };
-			final CPrimitive cType = (CPrimitive) rval.getCType();
-			assert cType.isSmtFloat() : "not an SMT float";
-
-			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
-			builder.addDeclaration(auxvarinfo.getVarDec());
-			builder.addAuxVar(auxvarinfo);
-			final CallStatement call =
-					StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { auxvarinfo.getLhs() },
-							"float_to_bitvec" + Integer.toString(mTypeSizes.getFloatingPointSize(cType).getBitSize()),
-							arguments);
-
-			builder.addStatement(call);
-			builder.setLrValue(new RValue(auxvarinfo.getExp(), cType.getFloatCounterpart()));
+			builder.addAllIncludingLrValue(mExprResultTransformer.constructBitvecResult(rval, loc));
 		} else {
 			builder.setLrValue(rval);
 		}
@@ -4659,9 +4631,8 @@ public class CHandler {
 			final RValue rval = new RValue(bwexpr, resultType, false);
 			if (resultType.isFloatingType()) {
 				return mExprResultTransformer.constructBitvecResult(rval, loc);
-			} else {
-				return result.setLrValue(rval).build();
 			}
+			return result.setLrValue(rval).build();
 		default:
 			throw new IllegalArgumentException("not a unary arithmetic operator " + op);
 		}
