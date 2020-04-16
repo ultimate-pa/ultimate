@@ -134,9 +134,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			mSmtIdentifier = smtIdentifier;
 			final CACSLLocation loc = LocationFactory.createIgnoreCLocation();
 			final String boogieId = SFO.AUXILIARY_FUNCTION_PREFIX + smtIdentifier;
-			mBoogieExpr = ExpressionFactory.constructIdentifierExpression(loc, ROUNDING_MODE_BOOGIE_TYPE, boogieId,
+			mBoogieExpr = ExpressionFactory.constructIdentifierExpression(loc, FLOAT_ROUNDING_MODE_BOOGIE_TYPE, boogieId,
 					DeclarationInformation.DECLARATIONINFO_GLOBAL);
-			mVarlist = new VarList(loc, new String[] { boogieId }, ROUNDING_MODE_BOOGIE_TYPE.toASTType(loc));
+			mVarlist = new VarList(loc, new String[] { boogieId }, FLOAT_ROUNDING_MODE_BOOGIE_TYPE.toASTType(loc));
 		}
 
 		public String getSmtIdentifier() {
@@ -162,17 +162,16 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	// holds the current rounding mode ONLY when fesetround is disabled
 	private final IdentifierExpression mCurrentRoundingMode;
 
-	public static final String ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER = "FloatRoundingMode";
-	public static final String ROUNDING_MODE_SMT_TYPE_IDENTIFIER = "RoundingMode";
+	public static final String FLOAT_ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER = "FloatRoundingMode";
+	public static final String FLOAT_ROUNDING_MODE_SMT_TYPE_IDENTIFIER = "RoundingMode";
 
-	public static final BoogieType ROUNDING_MODE_BOOGIE_TYPE = BoogieType.createConstructedType(
-			new BoogieTypeConstructor(ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER, false, 0, new int[0]));
-	public static final ASTType ROUNDING_MODE_BOOGIE_AST_TYPE =
-			ROUNDING_MODE_BOOGIE_TYPE.toASTType(LocationFactory.createIgnoreCLocation());
+	public static final BoogieType FLOAT_ROUNDING_MODE_BOOGIE_TYPE = BoogieType.createConstructedType(
+			new BoogieTypeConstructor(FLOAT_ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER, false, 0, new int[0]));
+	public static final ASTType FLOAT_ROUNDING_MODE_BOOGIE_AST_TYPE =
+			FLOAT_ROUNDING_MODE_BOOGIE_TYPE.toASTType(LocationFactory.createIgnoreCLocation());
 
-	public static final String ULTIMATE_VAR_CURRENT_ROUNDING_MODE = "~CRM";
-
-	public static final String ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE = "ULTIMATE.setCRM";
+	public static final String FLOAT_VAR_NAME_CURRENT_ROUNDING_MODE = "~CRM";
+	public static final String FLOAT_PROC_SET_CURRENT_ROUNDING_MODE = "ULTIMATE.setCRM";
 
 	public static final String SMT_LIB_NAN = "NaN";
 	public static final String SMT_LIB_PLUS_INF = "+oo";
@@ -488,7 +487,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final ASTType[] paramASTTypes = new ASTType[newParams.length + 1];
 			final ASTType resultASTType = mTypeHandler.cType2AstType(loc, resultCType);
 			int counter = 1;
-			paramASTTypes[0] = BitvectorTranslation.ROUNDING_MODE_BOOGIE_AST_TYPE;
+			paramASTTypes[0] = BitvectorTranslation.FLOAT_ROUNDING_MODE_BOOGIE_AST_TYPE;
 			for (final CPrimitive cType : newParams) {
 				paramASTTypes[counter] = mTypeHandler.cType2AstType(loc, cType);
 				counter += 1;
@@ -509,7 +508,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	private void declareFloatingPointConstructorFromReal(final ILocation loc, final CPrimitive type) {
 		final String smtFunctionName = "to_fp";
 		final ASTType[] paramASTTypes = new ASTType[2];
-		paramASTTypes[0] = BitvectorTranslation.ROUNDING_MODE_BOOGIE_AST_TYPE;
+		paramASTTypes[0] = BitvectorTranslation.FLOAT_ROUNDING_MODE_BOOGIE_AST_TYPE;
 		paramASTTypes[1] = new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL);
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type.getType());
 		final Attribute[] attributes = generateAttributes(loc, mSettings.overapproximateFloatingPointOperations(),
@@ -875,7 +874,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 			final Attribute[] attributes;
 			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, oldType);
-			final ASTType roundingMode = BitvectorTranslation.ROUNDING_MODE_BOOGIE_AST_TYPE;
+			final ASTType roundingMode = BitvectorTranslation.FLOAT_ROUNDING_MODE_BOOGIE_AST_TYPE;
 			if (newType.isFloatingType()) {
 				final int[] indices = new int[2];
 				final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(newType.getType());
@@ -975,7 +974,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public Expression getCurrentRoundingMode() {
 		if (mSettings.isFesetroundEnabled()) {
 			return ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
-					ROUNDING_MODE_BOOGIE_TYPE, ULTIMATE_VAR_CURRENT_ROUNDING_MODE,
+					FLOAT_ROUNDING_MODE_BOOGIE_TYPE, FLOAT_VAR_NAME_CURRENT_ROUNDING_MODE,
 					DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		}
 		return mCurrentRoundingMode;
@@ -1442,8 +1441,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final Expression one = mTypeSizes.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ONE);
 
 			final IdentifierExpression globalVarIdentifier =
-					ExpressionFactory.constructIdentifierExpression(loc, ROUNDING_MODE_BOOGIE_TYPE,
-							ULTIMATE_VAR_CURRENT_ROUNDING_MODE, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+					ExpressionFactory.constructIdentifierExpression(loc, FLOAT_ROUNDING_MODE_BOOGIE_TYPE,
+							FLOAT_VAR_NAME_CURRENT_ROUNDING_MODE, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 			// creates conditional expressions
 			final Expression eqRTZ = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
@@ -1494,7 +1493,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			auxVars.add(auxvar);
 			final LocalLValue llv = new LocalLValue(auxvar.getLhs(), intCPrimitive, null);
 			final CallStatement result = StatementFactory.constructCallStatement(loc, false,
-					new VariableLHS[] { auxvar.getLhs() }, ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE, arguments);
+					new VariableLHS[] { auxvar.getLhs() }, FLOAT_PROC_SET_CURRENT_ROUNDING_MODE, arguments);
 
 			final ExpressionResultBuilder resultBuider = new ExpressionResultBuilder();
 			resultBuider.addDeclaration(auxvar.getVarDec());
