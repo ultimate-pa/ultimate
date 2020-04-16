@@ -1108,15 +1108,16 @@ public class ExpressionResultTransformer {
 
 	public ExpressionResult constructBitvecResult(final LRValue rvalue, final ILocation loc) {
 		final CPrimitive cType = (CPrimitive) rvalue.getCType();
-		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
-		resultBuilder.addAuxVar(auxvarinfo);
-
 		final Expression[] arguments = new Expression[] { rvalue.getValue() };
 
 		if (cType.isSmtFloat()) {
+			final AuxVarInfo auxvarinfo =
+					mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType.getBvVariant(), SFO.AUXVAR.NONDET);
+			resultBuilder.addDeclaration(auxvarinfo.getVarDec());
+			resultBuilder.addAuxVar(auxvarinfo);
+
 			assert cType.isSmtFloat() : "not an SMT float";
 			final CallStatement call =
 					StatementFactory
