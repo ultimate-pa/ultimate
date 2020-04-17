@@ -159,7 +159,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
 
 		final HashedPriorityQueue<Item> worklist =
-				new HashedPriorityQueue<>((a, b) -> Double.compare(a.mExpectedCostToTarget, b.mExpectedCostToTarget));
+				new HashedPriorityQueue<>((a, b) -> Double.compare(a.mEstimatedCostToTarget, b.mEstimatedCostToTarget));
 
 		for (final STATE state : startStates) {
 			worklist.add(new Item(state));
@@ -220,20 +220,17 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					}
 					continue;
 				}
-				if (succ.mItemType == ItemType.CALL) {
-					if (!isCheapestAncestor(lowest, succ, costSoFar)) {
-						// if the succ is not yet in lowest, there can still be an item with a call stack that has the
-						// same
-						// ancestor as the current succ -- if this item is cheaper, we do not insert.
-						// TODO: This check is rather expensive, but with a dedicated data structure it could be much
-						// cheaper, e.g., something similar to a suffix tree
-						continue;
-					}
+				if (succ.mItemType == ItemType.CALL && !isCheapestAncestor(lowest, succ, costSoFar)) {
+					// if the succ is not yet in lowest, there can still be an item with a call stack that has the
+					// same ancestor as the current succ -- if this item is cheaper, we do not insert.
+					// TODO: isCheapestAncestor is rather expensive, but with a dedicated data structure it could be
+					// much cheaper, e.g., something similar to a suffix tree
+					continue;
 				}
 
 				final double expectedCostToTarget =
 						heuristic.getHeuristicValue(succ.mTargetState, succ.getHierPreState(), succ.mLetter);
-				succ.setExpectedCostToTarget(expectedCostToTarget);
+				succ.setEstimatedCostToTarget(expectedCostToTarget);
 
 				// we changed the cost of this item, so we have to remove it if it is already in the queue, because
 				// its queue position will not be updated otherwise
@@ -337,16 +334,14 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				continue;
 			}
 
-			if (item.isHierStatesPrefixOf(succ)) {
-				if (costSoFar >= lowestCostSoFar) {
-					// we have already seen this successor but with a lower cost, so we should not explore
-					// with a higher cost
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug(String.format("    Skip (cost %s, but have seen prefix with cost %s: %s)",
-								costSoFar, lowestCostSoFar, item));
-					}
-					return false;
+			if (item.isHierStatesPrefixOf(succ) && costSoFar >= lowestCostSoFar) {
+				// we have already seen this successor but with a lower cost, so we should not explore
+				// with a higher cost
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(String.format("    Skip (cost %s, but have seen prefix with cost %s: %s)", costSoFar,
+							lowestCostSoFar, item));
 				}
+				return false;
 			}
 		}
 		return true;
@@ -459,6 +454,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
+			@SuppressWarnings("unchecked")
 			final Transition other = (Transition) obj;
 			if (!mHierPreState.equals(other.mHierPreState)) {
 				return false;
@@ -466,10 +462,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (!mTargetState.equals(other.mTargetState)) {
 				return false;
 			}
-			if (!mTransition.equals(other.mTransition)) {
-				return false;
-			}
-			return true;
+			return mTransition.equals(other.mTransition);
 		}
 
 	}
@@ -528,11 +521,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
+			@SuppressWarnings("unchecked")
 			final SummaryItem other = (SummaryItem) obj;
-			if (!mReturnItem.equals(other.mReturnItem)) {
-				return false;
-			}
-			return true;
+			return mReturnItem.equals(other.mReturnItem);
 		}
 	}
 
@@ -556,7 +547,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		// h-value, i.e., how expensive from here to target using this node
 		private double mEstimatedCostToTargetFromHere;
 		// f-value, i.e. how expensive from start to target if we use this node, i.e. g+h
-		private double mExpectedCostToTarget;
+		private double mEstimatedCostToTarget;
 
 		/**
 		 * Create initial worklist item.
@@ -589,7 +580,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			mItemType = symbolType;
 
 			mCostSoFar = 0.0;
-			mExpectedCostToTarget = Double.MAX_VALUE;
+			mEstimatedCostToTarget = Double.MAX_VALUE;
 			mEstimatedCostToTargetFromHere = Double.MAX_VALUE;
 			mHashCode = computeHashCode();
 		}
@@ -603,14 +594,14 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			mItemType = ItemType.RETURN;
 
 			mCostSoFar = 0.0;
-			mExpectedCostToTarget = Double.MAX_VALUE;
+			mEstimatedCostToTarget = Double.MAX_VALUE;
 			mEstimatedCostToTargetFromHere = Double.MAX_VALUE;
 			mHashCode = computeHashCode();
 		}
 
-		void setExpectedCostToTarget(final double value) {
+		void setEstimatedCostToTarget(final double value) {
 			mEstimatedCostToTargetFromHere = value;
-			mExpectedCostToTarget = mEstimatedCostToTargetFromHere + mCostSoFar;
+			mEstimatedCostToTarget = mEstimatedCostToTargetFromHere + mCostSoFar;
 		}
 
 		void setCostSoFar(final double costSoFar) {
@@ -619,7 +610,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		@Override
 		public int compareTo(final Item o) {
-			return Double.compare(mExpectedCostToTarget, o.mExpectedCostToTarget);
+			return Double.compare(mEstimatedCostToTarget, o.mEstimatedCostToTarget);
 		}
 
 		public STATE getHierPreState() {
@@ -673,6 +664,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			final Deque<IWithBackPointer> localStack = new ArrayDeque<>();
 			while (current != null) {
 				if (current.getClass() == getClass()) {
+					@SuppressWarnings("unchecked")
 					final Item curr = (Item) current;
 					if (curr.mItemType == ItemType.RETURN) {
 						localStack.push(curr);
@@ -716,7 +708,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					currentSubrun.add((Item) elem);
 				} else if (elem instanceof IsEmptyHeuristic.SummaryItem) {
 					subruns.add(constructRunFromItems(currentSubrun));
-					subruns.add(((IsEmptyHeuristic.SummaryItem) elem).mSubrun);
+					subruns.add(((SummaryItem) elem).mSubrun);
 					currentSubrun = new ArrayList<>();
 				}
 			}
@@ -812,6 +804,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
+			@SuppressWarnings("unchecked")
 			final Item other = (Item) obj;
 			if (mHierPreStates == null) {
 				if (other.mHierPreStates != null) {
@@ -849,7 +842,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			}
 			return String.format("%8s: {%s} T%s {%s} (g=%f, h=%f, f=%f, s=%d)", mItemType, hier,
 					mLetter == null ? 0 : mLetter.hashCode(), mTargetState.hashCode(), mCostSoFar,
-					mEstimatedCostToTargetFromHere, mExpectedCostToTarget, mHierPreStates.size());
+					mEstimatedCostToTargetFromHere, mEstimatedCostToTarget, mHierPreStates.size());
 		}
 
 		@Override
