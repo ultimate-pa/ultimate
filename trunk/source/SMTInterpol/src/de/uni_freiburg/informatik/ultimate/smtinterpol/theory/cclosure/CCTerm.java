@@ -148,6 +148,10 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 		mHashCode = hash;
 	}
 
+	public boolean isFunc() {
+		return mIsFunc;
+	}
+
 	boolean pairHashValid(final CClosure engine) {
 		if (Config.EXPENSIVE_ASSERTS) {
 			for (final CCTermPairHash.Info.Entry pentry : mPairInfos) {

@@ -145,6 +145,7 @@ public class EMatching {
 	 * Remove all triggers. This should be called after a pop command.
 	 */
 	public void removeAllTriggers() {
+		assert mUndoInformation.keySet().size() <= 1;
 		undo(-1);
 	}
 

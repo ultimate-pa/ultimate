@@ -72,7 +72,7 @@ public class ModelBuilder {
 		Rational biggest = Rational.MONE;
 		final Set<CCTerm> delayed = new HashSet<>();
 		for (final CCTerm term : terms) {
-			if (term == term.mRepStar) {
+			if (term == term.mRepStar && !term.isFunc()) {
 				int value;
 				final Term smtterm = term.getFlatTerm();
 				if (smtterm.getSort().isNumericSort()) {
@@ -116,11 +116,14 @@ public class ModelBuilder {
 
 	public void fillInFunctions(final List<CCTerm> terms, final Model model, final Theory t) {
 		for (final CCTerm term : terms) {
-			add(model, term, term.getRepresentative().mModelVal, t);
+			if (!term.isFunc()) {
+				add(model, term, term.getRepresentative().mModelVal, t);
+			}
 		}
 	}
 
 	private void add(final Model model, final CCTerm term, final int value, final Theory t) {
+		assert !term.isFunc();
 		if (term instanceof CCBaseTerm) {
 			final CCBaseTerm bt = (CCBaseTerm) term;
 			final Term btTerm = bt.getFlatTerm();
@@ -134,7 +137,6 @@ public class ModelBuilder {
 		} else {
 			// It is a CCAppTerm
 			final CCAppTerm app = (CCAppTerm) term;
-			assert(!app.mIsFunc);
 			addApp(model, app, value, t);
 		}
 	}

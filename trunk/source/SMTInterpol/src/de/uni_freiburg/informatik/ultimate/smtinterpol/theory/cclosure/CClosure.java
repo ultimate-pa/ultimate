@@ -167,6 +167,7 @@ public class CClosure implements ITheory {
 
 	public CCTerm createAnonTerm(final Term term) {
 		final CCTerm ccTerm = new CCBaseTerm(false, mNumFunctionPositions, term);
+		mAllTerms.add(ccTerm);
 		mAnonTerms.put(term, ccTerm);
 		return ccTerm;
 	}
@@ -281,6 +282,7 @@ public class CClosure implements ITheory {
 			}
 		}
 		final CCAppTerm term = new CCAppTerm(isFunc, isFunc ? func.mParentPosition + 1 : 0, func, arg, this);
+		mAllTerms.add(term);
 		term.addParentInfo(this);
 		final CCAppTerm congruentTerm = findCongruentAppTerm(func, arg);
 		getLogger().debug("createAppTerm %s congruent: %s", term, congruentTerm);
@@ -331,6 +333,7 @@ public class CClosure implements ITheory {
 		CCBaseTerm term = mSymbolicTerms.get(sym);
 		if (term == null) {
 			term = new CCBaseTerm(sym.getParameterSorts().length > 0, mNumFunctionPositions, sym);
+			mAllTerms.add(term);
 			mNumFunctionPositions += sym.getParameterSorts().length;
 			mSymbolicTerms.put(sym, term);
 		}
@@ -489,6 +492,11 @@ public class CClosure implements ITheory {
 	public void removeCompareTrigger(final CompareTrigger trigger) {
 		CCTerm t1 = trigger.getLhs();
 		CCTerm t2 = trigger.getRhs();
+		if (!mAllTerms.contains(t1) || !mAllTerms.contains(t2)) {
+			return; // FIXME This is a workaround for the problem that pop() first removes terms, then triggers, as it
+			// is executed for CClosure first. Then this method can be called for a trigger where the
+			// corresponding terms have already been removed.
+		}
 		while (true) {
 			// make t1 the term that was merged before t2 was merged.
 			if (t1.mMergeTime > t2.mMergeTime) {
@@ -583,6 +591,11 @@ public class CClosure implements ITheory {
 			/* this is a reverse trigger */
 			termWithTrigger = trigger.getArgument();
 			parentPos = func.mParentPosition + trigger.getArgPosition();
+		}
+		if (!mAllTerms.contains(termWithTrigger)) {
+			return; // FIXME This is a workaround for the problem that pop() first removes terms, then triggers, as it
+			// is executed for CClosure first. Then this method can be called for a trigger where the
+			// corresponding term has already been removed.
 		}
 		while (termWithTrigger != termWithTrigger.mRep) {
 			final CCParentInfo info = termWithTrigger.mCCPars.createInfo(parentPos);
@@ -765,7 +778,6 @@ public class CClosure implements ITheory {
 
 	public void addTerm(final CCTerm ccterm, final Term term) {
 		ccterm.mFlatTerm = term;
-		mAllTerms.add(ccterm);
 	}
 
 	public void addSharedTerm(final CCTerm ccterm) {
@@ -1008,7 +1020,7 @@ public class CClosure implements ITheory {
 		// assert(checkCongruence());
 		logger.info("Equivalence Classes:");
 		for (final CCTerm t : mAllTerms) {
-			if (t == t.mRepStar) {
+			if (t == t.mRepStar && !t.isFunc()) {
 				final StringBuilder sb = new StringBuilder();
 				String comma = "";
 				for (final CCTerm t2 : t.mMembers) {
@@ -1130,7 +1142,7 @@ public class CClosure implements ITheory {
 				getLogger().debug("No longer congruent: %s and %s", lhs, rhs);
 			}
 		}
-		mRecheckOnBacktrackLits = newRecheckOnBacktrackLits;
+		mRecheckOnBacktrackCongs = newRecheckOnBacktrackCongs;
 		return buildCongruence();
 	}
 
@@ -1262,6 +1274,9 @@ public class CClosure implements ITheory {
 
 	@Override
 	public void pop() {
+		assert mRecheckOnBacktrackCongs.isEmpty();
+		assert mRecheckOnBacktrackLits.isEmpty();
+		assert mPendingCongruences.isEmpty();
 		mNumFunctionPositions = mNumFunctionPositionsStack.remove(mNumFunctionPositionsStack.size() - 1);
 		for (final CCTerm t : mAllTerms.currentScope()) {
 			removeTerm(t);
