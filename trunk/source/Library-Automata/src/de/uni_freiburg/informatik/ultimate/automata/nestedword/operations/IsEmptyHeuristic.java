@@ -173,6 +173,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		final Map<Item, Double> lowest = new HashMap<>();
 		final Map<Transition, Map<Item, SummaryItem>> summaries = new HashMap<>();
 
+		// TODO: keep track of used summaries to add items to worklist if necessary
+
 		while (!worklist.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
@@ -186,7 +188,10 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				mLogger.debug(String.format("Current: %s", current));
 			}
 			if (mIsGoalState.test(current.mTargetState)) {
-				mLogger.debug("  Is target");
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("  Is target");
+					printDebugStats(lowest, summaries);
+				}
 				return current.constructRun();
 			}
 
@@ -246,7 +251,19 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 			}
 		}
+		if (mLogger.isDebugEnabled()) {
+			printDebugStats(lowest, summaries);
+		}
 		return null;
+	}
+
+	private void printDebugStats(final Map<Item, Double> lowest,
+			final Map<Transition, Map<Item, SummaryItem>> summaries) {
+		mLogger.debug(String.format("Found %d lowest configurations", lowest.size()));
+		mLogger.debug(String.format("Found summaries for %d calls", summaries.size()));
+		mLogger.debug(String.format("Summary size histogram: [%s]",
+				summaries.entrySet().stream().map(a -> a.getValue().size()).sorted((a, b) -> -Integer.compare(a, b))
+						.map(String::valueOf).collect(Collectors.joining(","))));
 	}
 
 	private List<Item> addCostAndSummaries(final List<Item> succs,
@@ -840,9 +857,15 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 						mTargetState.hashCode());
 
 			}
-			return String.format("%8s: {%s} T%s {%s} (g=%f, h=%f, f=%f, s=%d)", mItemType, hier,
-					mLetter == null ? 0 : mLetter.hashCode(), mTargetState.hashCode(), mCostSoFar,
-					mEstimatedCostToTargetFromHere, mEstimatedCostToTarget, mHierPreStates.size());
+
+			final String ectt =
+					mEstimatedCostToTarget == Double.MAX_VALUE ? "MAX" : String.valueOf(mEstimatedCostToTarget);
+			final String ecttfh = mEstimatedCostToTargetFromHere == Double.MAX_VALUE ? "MAX"
+					: String.valueOf(mEstimatedCostToTargetFromHere);
+
+			return String.format("%8s: {%s} T%s {%s} (g=%f, h=%s, f=%s, s=%d)", mItemType, hier,
+					mLetter == null ? 0 : mLetter.hashCode(), mTargetState.hashCode(), mCostSoFar, ecttfh, ectt,
+					mHierPreStates.size());
 		}
 
 		@Override
