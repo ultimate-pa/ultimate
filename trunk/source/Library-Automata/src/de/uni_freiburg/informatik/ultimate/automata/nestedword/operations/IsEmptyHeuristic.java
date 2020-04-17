@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -106,8 +107,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
-		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false,
-				a -> operand.isFinal(a), heuristic);
+		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false, operand::isFinal,
+				heuristic);
 	}
 
 	/**
@@ -976,6 +977,43 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				@Override
 				public final double getConcreteCost(final LETTER e) {
 					return 1.0;
+				}
+			};
+		}
+
+		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getRandomHeuristicHalf(final long seed) {
+			return new IHeuristic<STATE, LETTER>() {
+
+				private final Random mRandom = new Random(seed);
+				private final Map<LETTER, Double> mConcreteCosts = new HashMap<>();
+
+				@Override
+				public final double getHeuristicValue(final STATE state, final STATE stateK, final LETTER trans) {
+					// normalize to [0.5 , 1.0]
+					return 0.5 * mRandom.nextDouble() + 0.5;
+				}
+
+				@Override
+				public final double getConcreteCost(final LETTER e) {
+					return mConcreteCosts.computeIfAbsent(e, a -> 0.5 * mRandom.nextDouble() + 0.5);
+				}
+			};
+		}
+
+		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getRandomHeuristicFull(final long seed) {
+			return new IHeuristic<STATE, LETTER>() {
+
+				private final Random mRandom = new Random(seed);
+				private final Map<LETTER, Double> mConcreteCosts = new HashMap<>();
+
+				@Override
+				public final double getHeuristicValue(final STATE state, final STATE stateK, final LETTER trans) {
+					return mRandom.nextDouble();
+				}
+
+				@Override
+				public final double getConcreteCost(final LETTER e) {
+					return 0.1 + mRandom.nextDouble();
 				}
 			};
 		}
