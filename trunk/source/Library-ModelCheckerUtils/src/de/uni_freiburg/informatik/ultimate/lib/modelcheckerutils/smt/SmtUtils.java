@@ -49,12 +49,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.bdd.SimplifyBdd;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.DnfTransformer;
@@ -1163,11 +1163,11 @@ public final class SmtUtils {
 	 */
 	private static Term comparison(final Script script, final String functionSymbol, final Term lhs, final Term rhs) {
 		final Term rawTerm = script.term(functionSymbol, lhs, rhs);
-		final AffineRelation ar = AffineRelation.convert(script, rawTerm);
-		if (ar == null) {
+		final PolynomialRelation polyRel = PolynomialRelation.convert(script, rawTerm);
+		if (polyRel == null) {
 			return rawTerm;
 		} else {
-			return ar.positiveNormalForm(script);
+			return polyRel.positiveNormalForm(script);
 		}
 	}
 
@@ -2090,7 +2090,7 @@ public final class SmtUtils {
 	public static boolean areFormulasEquivalent(final Term formula1, final Term formula2, final Script script) {
 		return checkEquivalence(formula1, formula2, script) == LBool.UNSAT;
 	}
-	
+
 	/**
 	 * @return LBool.UNSAT if SMT solver was able to prove that both formulas
 	 *         are equivalent, LBool.SAT if SMT solver was able to prove that

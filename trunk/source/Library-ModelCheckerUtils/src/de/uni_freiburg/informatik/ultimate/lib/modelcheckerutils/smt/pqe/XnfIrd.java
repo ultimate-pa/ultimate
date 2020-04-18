@@ -37,9 +37,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -122,22 +122,22 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 					return null;
 				}
 
-				final AffineRelation affineRelation = AffineRelation.convert(script, oldParam);
-				if (affineRelation == null) {
+				final PolynomialRelation polyRel = PolynomialRelation.convert(script, oldParam);
+				if (polyRel == null) {
 					// unable to eliminate quantifier
 					return null;
 				}
-				if (!affineRelation.isVariable(tv)) {
+				if (!polyRel.isVariable(tv)) {
 					// unable to eliminate quantifier
 					// tv occurs in affine relation but not as affine variable
 					// it might occur inside a function or array.
 					return null;
 				}
-				final boolean solveabelWoCaseDist = isSolvableWithoutCaseDistinction(script, tv, affineRelation);
+				final boolean solveabelWoCaseDist = isSolvableWithoutCaseDistinction(script, tv, polyRel);
 				if (!solveabelWoCaseDist) {
 					return null;
 				}
-				final RelationSymbol relationSymbol = affineRelation.getRelationSymbol();
+				final RelationSymbol relationSymbol = polyRel.getRelationSymbol();
 				switch (relationSymbol) {
 				case EQ:
 					if (quantifier == QuantifiedFormula.EXISTS) {
@@ -188,12 +188,12 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	}
 
 	private static boolean isSolvableWithoutCaseDistinction(final Script script, final TermVariable tv,
-			final AffineRelation affineRelation) {
+			final PolynomialRelation polyRel) {
 		assert Arrays.equals(AssumptionForSolvability.values(), new AssumptionForSolvability[] {
 				AssumptionForSolvability.INTEGER_DIVISIBLE_BY_CONSTANT, AssumptionForSolvability.REAL_DIVISOR_NOT_ZERO,
 				AssumptionForSolvability.INTEGER_DIVISOR_NOT_ZERO,
 				AssumptionForSolvability.INTEGER_DIVISIBLE_BY_VARIABLE }) : "A new value was added to enum and has to be considered here";
-		final SolvedBinaryRelation sbr = affineRelation.solveForSubject(script, tv);
+		final SolvedBinaryRelation sbr = polyRel.solveForSubject(script, tv);
 		if (sbr == null) {
 			return false;
 		} else {

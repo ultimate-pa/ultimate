@@ -49,10 +49,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateNormalFormUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -152,7 +152,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 
 	private Term[] tryToEliminate_SbrBased(final int quantifier, final Term[] dualJuncts,
 			final Set<TermVariable> eliminatees) {
-		LinkedHashMap<Term, AffineRelation> term2relation = new LinkedHashMap<>();
+		LinkedHashMap<Term, PolynomialRelation> term2relation = new LinkedHashMap<>();
 		for (final Term dualJunct : dualJuncts) {
 			term2relation.put(dualJunct, null);
 		}
@@ -179,7 +179,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 					it.remove();
 					continue;
 				}
-				final LinkedHashMap<Term, AffineRelation> withoutTv;
+				final LinkedHashMap<Term, PolynomialRelation> withoutTv;
 
 				if (allowIntegerDivisibilityAssumptions) {
 					withoutTv = tryToEliminateOneVarAllowAssumptions(mScript, quantifier, term2relation, tv);
@@ -198,8 +198,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		return term2relation.keySet().toArray(new Term[term2relation.keySet().size()]);
 	}
 
-	private LinkedHashMap<Term, AffineRelation> tryToEliminateOneVar(final Script script, final int quantifier,
-			final LinkedHashMap<Term, AffineRelation> term2relation, final TermVariable tv) {
+	private LinkedHashMap<Term, PolynomialRelation> tryToEliminateOneVar(final Script script, final int quantifier,
+			final LinkedHashMap<Term, PolynomialRelation> term2relation, final TermVariable tv) {
 		// returns probably map in the future
 		final Pair<Term, SolvedBinaryRelation> solution = tryToSolveWithoutAssumptionsAndUpdateEntries(script,
 				quantifier, term2relation, tv);
@@ -210,8 +210,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		}
 	}
 
-	private LinkedHashMap<Term, AffineRelation> tryToEliminateOneVarAllowAssumptions(final Script script,
-			final int quantifier, final LinkedHashMap<Term, AffineRelation> term2relation, final TermVariable tv) {
+	private LinkedHashMap<Term, PolynomialRelation> tryToEliminateOneVarAllowAssumptions(final Script script,
+			final int quantifier, final LinkedHashMap<Term, PolynomialRelation> term2relation, final TermVariable tv) {
 		final Map<EnumSet<AssumptionForSolvability>, Pair<SolvedBinaryRelation, Term>> map = tryToSolveAllowAssumptions(
 				mScript, quantifier, term2relation, tv);
 		if (map.isEmpty()) {
@@ -222,7 +222,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			if (solution == null) {
 				throw new UnsupportedOperationException("Not yet implemented: DER support for " + map.keySet());
 			} else {
-				final LinkedHashMap<Term, AffineRelation> result = replace(script, term2relation, solution.getFirst(),
+				final LinkedHashMap<Term, PolynomialRelation> result = replace(script, term2relation, solution.getFirst(),
 						solution.getSecond());
 				final Term moduloConstraint = QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier,
 						solution.getFirst().getAssumptionsMap()
@@ -236,8 +236,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 
 
 	private Pair<Term, SolvedBinaryRelation> tryToSolveWithoutAssumptionsAndUpdateEntries(final Script script,
-			final int quantifier, final LinkedHashMap<Term, AffineRelation> term2relation, final TermVariable tv) {
-		for (final Entry<Term, AffineRelation> entry : term2relation.entrySet()) {
+			final int quantifier, final LinkedHashMap<Term, PolynomialRelation> term2relation, final TermVariable tv) {
+		for (final Entry<Term, PolynomialRelation> entry : term2relation.entrySet()) {
 			if (Arrays.asList(entry.getKey().getFreeVars()).contains(tv)) {
 				SolvedBinaryRelation sbr;
 				sbr = tryToSolveAndUpdateEntry(script, quantifier, tv, entry);
@@ -250,10 +250,10 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	}
 
 	private Map<EnumSet<AssumptionForSolvability>, Pair<SolvedBinaryRelation, Term>> tryToSolveAllowAssumptions(
-			final Script script, final int quantifier, final LinkedHashMap<Term, AffineRelation> term2relation,
+			final Script script, final int quantifier, final LinkedHashMap<Term, PolynomialRelation> term2relation,
 			final TermVariable tv) {
 		final Map<EnumSet<AssumptionForSolvability>, Pair<SolvedBinaryRelation, Term>> result = new HashMap<>();
-		for (final Entry<Term, AffineRelation> entry : term2relation.entrySet()) {
+		for (final Entry<Term, PolynomialRelation> entry : term2relation.entrySet()) {
 			if (entry.getValue() != null) {
 				// we must use this method only in a second round, all
 				// AffineRelations have been cached
@@ -274,13 +274,13 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	}
 
 
-	private LinkedHashMap<Term, AffineRelation> replace(final Script script,
-			final LinkedHashMap<Term, AffineRelation> term2relation, final SolvedBinaryRelation sbr,
+	private LinkedHashMap<Term, PolynomialRelation> replace(final Script script,
+			final LinkedHashMap<Term, PolynomialRelation> term2relation, final SolvedBinaryRelation sbr,
 			final Term termOfSbr) {
 		final Map<Term, Term> substitutionMapping = Collections.singletonMap(sbr.getLeftHandSide(),
 				sbr.getRightHandSide());
-		final LinkedHashMap<Term, AffineRelation> result = new LinkedHashMap<>();
-		for (final Entry<Term, AffineRelation> entry : term2relation.entrySet()) {
+		final LinkedHashMap<Term, PolynomialRelation> result = new LinkedHashMap<>();
+		for (final Entry<Term, PolynomialRelation> entry : term2relation.entrySet()) {
 			if (entry.getKey() == termOfSbr) {
 				// skip this entry, it would become equivalent to the neutral
 				// element of the logical connective
@@ -300,7 +300,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	}
 
 	private SolvedBinaryRelation tryToSolveAndUpdateEntry(final Script script, final int quantifier,
-			final TermVariable tv, final Entry<Term, AffineRelation> entry) {
+			final TermVariable tv, final Entry<Term, PolynomialRelation> entry) {
 		final SolvedBinaryRelation sbr;
 		if (entry.getValue() != null) {
 			// cached AffineRelation available
@@ -322,12 +322,12 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 				if (sber != null) {
 					sbr = sber;
 				} else {
-					final AffineRelation affRel = AffineRelation.convert(script, entry.getKey());
-					if (affRel == null) {
+					final PolynomialRelation polyRel = PolynomialRelation.convert(script, entry.getKey());
+					if (polyRel == null) {
 						sbr = null;
 					} else {
-						entry.setValue(affRel);
-						sbr = affRel.solveForSubject(script, tv);
+						entry.setValue(polyRel);
+						sbr = polyRel.solveForSubject(script, tv);
 					}
 				}
 			}
@@ -396,9 +396,9 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	private Term substituteAndNormalize(final Substitution substitution, final Term term) {
 		Term result = substitution.transform(term);
 		if (term != result) {
-			final AffineRelation afr = AffineRelation.convert(mScript, result);
-			if (afr != null) {
-				result = afr.positiveNormalForm(mScript);
+			final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, result);
+			if (polyRel != null) {
+				result = polyRel.positiveNormalForm(mScript);
 			}
 		}
 		return result;

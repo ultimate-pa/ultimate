@@ -42,11 +42,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Ex
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AbstractGeneralizedAffineRelation.TransformInequality;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -161,16 +161,16 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				} else {
 					throw new AssertionError("unknown quantifier");
 				}
-				final AffineRelation rel = AffineRelation.convert(mScript, term, transform);
-				if (rel == null) {
+				final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, term, transform);
+				if (polyRel == null) {
 					// no chance to eliminate the variable
 					return null;
 				}
-				if (!rel.isVariable(eliminatee)) {
+				if (!polyRel.isVariable(eliminatee)) {
 					// eliminatee occurs probably only in select
 					return null;
 				}
-				final SolvedBinaryRelation sbr = rel.solveForSubject(mScript, eliminatee);
+				final SolvedBinaryRelation sbr = polyRel.solveForSubject(mScript, eliminatee);
 				if (sbr == null) {
 					return null;
 				}
@@ -267,7 +267,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	/**
 	 * transforms
 	 * (a != b) to (a < b OR a > b) for exist quantifier and
-	 * (a = b) to (a <= b OR a >= b) for forall quantifier 
+	 * (a = b) to (a <= b OR a >= b) for forall quantifier
 	 * uses solveForSubject on both disjuncts to get the right hand side of the both relations.
 	 * returns lower/upper bound right hand side.
 	 */
@@ -287,11 +287,11 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(originalTerm);
 
 		final BinaryNumericRelation lowerBoundBnr = bnr.changeRelationSymbol(lowerRelationSymbol);
-		final AffineRelation relLower = AffineRelation.convert(mScript, lowerBoundBnr.toTerm(mScript), transform);
+		final PolynomialRelation relLower = PolynomialRelation.convert(mScript, lowerBoundBnr.toTerm(mScript), transform);
 		final SolvedBinaryRelation sbrLower = relLower.solveForSubject(mScript, eliminatee);
 
 		final BinaryNumericRelation upperBoundBnr = bnr.changeRelationSymbol(upperRelationSymbol);
-		final AffineRelation relUpper = AffineRelation.convert(mScript, upperBoundBnr.toTerm(mScript), transform);
+		final PolynomialRelation relUpper = PolynomialRelation.convert(mScript, upperBoundBnr.toTerm(mScript), transform);
 		final SolvedBinaryRelation sbrUpper = relUpper.solveForSubject(mScript, eliminatee);
 
 		if ((sbrLower == null) || (sbrUpper == null)) {
@@ -325,11 +325,11 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 
 	private Term buildInequality(final String symbol, final Term lhs, final Term rhs) {
 		final Term term = mScript.term(symbol, lhs, rhs);
-		final AffineRelation rel = AffineRelation.convert(mScript, term);
-		if (rel == null) {
+		final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, term);
+		if (polyRel == null) {
 			throw new AssertionError("should be affine");
 		}
-		return rel.positiveNormalForm(mScript);
+		return polyRel.positiveNormalForm(mScript);
 	}
 
 	private Term buildInequality(final int quantifier, final Bound lowerBound, final Bound upperBound) {
@@ -348,11 +348,11 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		}
 		final String symbol = isStrict ? "<" : "<=";
 		final Term term = mScript.term(symbol, lowerBound.getTerm(), upperBound.getTerm());
-		final AffineRelation rel = AffineRelation.convert(mScript, term);
-		if (rel == null) {
+		final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, term);
+		if (polyRel == null) {
 			throw new AssertionError("should be affine");
 		}
-		return rel.positiveNormalForm(mScript);
+		return polyRel.positiveNormalForm(mScript);
 	}
 
 	private Term constructConjunction(final int quantifier, final List<Term> resultAtoms) {

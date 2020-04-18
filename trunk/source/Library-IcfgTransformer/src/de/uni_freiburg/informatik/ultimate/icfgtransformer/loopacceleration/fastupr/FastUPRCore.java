@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -391,7 +391,7 @@ public class FastUPRCore {
 		mUtils.output("CNF");
 		mUtils.output(cnfRelation.toString());
 
-		// Get all SubTerms seperated by conjunction.
+		// Get all SubTerms separated by conjunction.
 
 		final Set<Term> subTerms = mOctagonDetector.getConjunctSubTerms(cnfRelation);
 		mUtils.debug("Term count:" + subTerms.size());
@@ -402,8 +402,8 @@ public class FastUPRCore {
 
 			// Get Term in positive Normal Form
 
-			final AffineRelation affine = AffineRelation.convert(script, t);
-			t = affine.positiveNormalForm(script);
+			final PolynomialRelation polyRel = PolynomialRelation.convert(script, t);
+			t = polyRel.positiveNormalForm(script);
 			mUtils.debug("Term as Positive Normal Form:");
 			mUtils.debug(t.toString());
 

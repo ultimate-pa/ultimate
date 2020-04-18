@@ -30,10 +30,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ContainsSubterm;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -139,11 +139,11 @@ public class EqualityInformation {
 				// not even binary equality relation that contains givenTerm
 				continue;
 			}
-			final AffineRelation affRel = AffineRelation.convert(script, context[i]);
-			if (affRel == null) {
+			final PolynomialRelation polyRel = PolynomialRelation.convert(script, context[i]);
+			if (polyRel == null) {
 				continue;
 			}
-			final EqualityInformation eqInfo = getEqinfo(script, givenTerm, affRel, forbiddenTerm, i);
+			final EqualityInformation eqInfo = getEqinfo(script, givenTerm, polyRel, forbiddenTerm, i);
 			if (eqInfo != null) {
 				return eqInfo;
 			}
@@ -152,11 +152,11 @@ public class EqualityInformation {
 		return null;
 	}
 
-	public static EqualityInformation getEqinfo(final Script script, final Term givenTerm, final AffineRelation affRel,
+	public static EqualityInformation getEqinfo(final Script script, final Term givenTerm, final PolynomialRelation polyRel,
 			final Term forbiddenTerm, final int i) {
-		if (affRel.isVariable(givenTerm)) {
+		if (polyRel.isVariable(givenTerm)) {
 			Term equalTerm;
-			final SolvedBinaryRelation sbr = affRel.solveForSubject(script, givenTerm);
+			final SolvedBinaryRelation sbr = polyRel.solveForSubject(script, givenTerm);
 			if (sbr == null || !sbr.getAssumptionsMap().isEmpty()) {
 				return null;
 			} else {
@@ -165,7 +165,7 @@ public class EqualityInformation {
 			if (forbiddenTerm != null && isSubterm(forbiddenTerm, equalTerm)) {
 				return null;
 			}
-			return new EqualityInformation(i, givenTerm, equalTerm, affRel.getRelationSymbol());
+			return new EqualityInformation(i, givenTerm, equalTerm, polyRel.getRelationSymbol());
 		}
 		return null;
 	}
@@ -193,11 +193,11 @@ public class EqualityInformation {
 		final Set<Term> equivalentTerms = new HashSet<>();
 		final Set<Term> disjointTerms = new HashSet<>();
 		for (int i = 0; i < context.length; i++) {
-			final AffineRelation affRel = AffineRelation.convert(script, context[i]);
-			if (affRel == null) {
+			final PolynomialRelation polyRel = PolynomialRelation.convert(script, context[i]);
+			if (polyRel == null) {
 				continue;
 			}
-			final EqualityInformation eqInfo = getEqinfo(script, givenTerm, affRel, forbiddenTerm, i);
+			final EqualityInformation eqInfo = getEqinfo(script, givenTerm, polyRel, forbiddenTerm, i);
 			if (eqInfo != null) {
 				switch (eqInfo.getRelationSymbol()) {
 				case DISTINCT:

@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
 /**
  * Represents an term of the form ψ ▷ φ, where ψ and φ are
- * {@link PolynomialTerm}s or {@link AffineTerm}s and ▷ is a binary relation symbol 
+ * {@link PolynomialTerm}s or {@link AffineTerm}s and ▷ is a binary relation symbol
  * from the following list.
  * <p>
  * ▷ ∈ { =, !=, \<=, \<, \>=, \> }
@@ -104,12 +104,14 @@ public class PolynomialRelation implements IBinaryRelation {
 	public enum TrivialityStatus {
 		EQUIVALENT_TO_TRUE, EQUIVALENT_TO_FALSE, NONTRIVIAL
 	}
-	
+
 	/**
 	 * Create {@link PolynomialRelation} from {@link IPolynomialTerm} and {@link RelationSymbol}.
 	 *
 	 * Resulting relation is then <code><term> <symbol> 0</code>.
+	 * @deprecated no constructor for this special case
 	 */
+	@Deprecated
 	public PolynomialRelation(final Script script, final AbstractGeneralizedAffineTerm<?> term,
 			final RelationSymbol relationSymbol) {
 		mPolynomialTerm = Objects.requireNonNull(checkThenCast(term));
@@ -123,12 +125,12 @@ public class PolynomialRelation implements IBinaryRelation {
 			mOriginalTerm = null;
 		}
 	}
-	
+
 	public PolynomialRelation(final Script script, final TransformInequality transformInequality,
-			final RelationSymbol relationSymbol, final AbstractGeneralizedAffineTerm<?> polyLhs, 
+			final RelationSymbol relationSymbol, final AbstractGeneralizedAffineTerm<?> polyLhs,
 			final AbstractGeneralizedAffineTerm<?> polyRhs, final Term originalTerm) {
 		mOriginalTerm = originalTerm;
-		final AbstractGeneralizedAffineTerm<Term> difference = sum(checkThenCast(polyLhs), 
+		final AbstractGeneralizedAffineTerm<Term> difference = sum(checkThenCast(polyLhs),
 				mul(checkThenCast(polyRhs), Rational.MONE));
 		final AbstractGeneralizedAffineTerm<Term> polyTerm;
 		final RelationSymbol relationSymbolAfterTransformation;
@@ -193,7 +195,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		mTrivialityStatus = computeTrivialityStatus(polyTerm, relationSymbolAfterTransformation);
 	}
 
-	private AbstractGeneralizedAffineTerm<Term> sum(final AbstractGeneralizedAffineTerm<Term> op1, 
+	private AbstractGeneralizedAffineTerm<Term> sum(final AbstractGeneralizedAffineTerm<Term> op1,
 			final AbstractGeneralizedAffineTerm<Term> op2) {
 		final AbstractGeneralizedAffineTerm<Term> result;
 		if (op1.isAffine() && op2.isAffine()) {
@@ -231,13 +233,13 @@ public class PolynomialRelation implements IBinaryRelation {
 		}
 		return unsafeCast(poly);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private static AbstractGeneralizedAffineTerm<Term> unsafeCast(final AbstractGeneralizedAffineTerm<?> poly) {
 		return (AbstractGeneralizedAffineTerm<Term>) poly;
 	}
-	
-	private static TrivialityStatus computeTrivialityStatus(final AbstractGeneralizedAffineTerm<Term> term, 
+
+	private static TrivialityStatus computeTrivialityStatus(final AbstractGeneralizedAffineTerm<Term> term,
 			final RelationSymbol symbol) {
 		if (!term.isConstant()) {
 			return TrivialityStatus.NONTRIVIAL;
@@ -260,15 +262,15 @@ public class PolynomialRelation implements IBinaryRelation {
 			throw new UnsupportedOperationException("unknown relation symbol: " + symbol);
 		}
 	}
-	
-	private static TrivialityStatus computeTrivialityStatus(final AbstractGeneralizedAffineTerm<Term> term, 
+
+	private static TrivialityStatus computeTrivialityStatus(final AbstractGeneralizedAffineTerm<Term> term,
 			final Predicate<Integer> pred) {
 		if (pred.test(term.getConstant().signum())) {
 			return TrivialityStatus.EQUIVALENT_TO_TRUE;
 		}
 		return TrivialityStatus.EQUIVALENT_TO_FALSE;
 	}
-	
+
 	public RelationSymbol getRelationSymbol() {
 		return mRelationSymbol;
 	}
@@ -317,7 +319,7 @@ public class PolynomialRelation implements IBinaryRelation {
 			return result;
 		}
 	}
-	
+
 	private static LBool isEquivalent(final Script script, final Term term1, final Term term2) {
 		Term comp = script.term("=", term1, term2);
 		comp = script.term("not", comp);
@@ -332,7 +334,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		final Term impli2 = SmtUtils.implies(script, konJ, originalTerm);
 		return isEquivalent(script, impli1, impli2);
 	}
-	
+
 	private static Term product(final Script script, final Rational rational, final Term term) {
 		if (rational.equals(Rational.ONE)) {
 			return term;
@@ -429,7 +431,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Returns a {@link MultiCaseSolvedBinaryRelation} that is equivalent to this PolynomialRelation or null if we
 	 * cannot find such a {@link MultiCaseSolvedBinaryRelation}.
@@ -556,7 +558,7 @@ public class PolynomialRelation implements IBinaryRelation {
 						.transform(allowedSubterm.getParameters()[0]);
 				if (!recursion.isVariable(subject)) {
 					// recursiv call for terms of form: "(mod ...(mod subject const1)... const 2)"
-					final MultiCaseSolvedBinaryRelation mcsbr = AffineRelation
+					final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation
 							.convert(script, SmtUtils.binaryEquality(script, allowedSubterm.getParameters()[0], sum))
 							.solveForSubject(script, subject, xnf);
 					final SupportingTerm recSupTerm = new SupportingTerm(mcsbr.asTerm(script),
@@ -564,7 +566,7 @@ public class PolynomialRelation implements IBinaryRelation {
 					mcsb.conjoinWithConjunction(recSupTerm);
 				} else {
 					// solve terms of form (mod (subterm) const) where subterm contains x but is no mod or div term
-					final SolvedBinaryRelation sbr = AffineRelation
+					final SolvedBinaryRelation sbr = PolynomialRelation
 							.convert(script, SmtUtils.binaryEquality(script, allowedSubterm.getParameters()[0], sum))
 							.solveForSubject(script, subject);
 					mcsb.conjoinWithConjunction(sbr);
@@ -637,7 +639,7 @@ public class PolynomialRelation implements IBinaryRelation {
 						if (isEqOrDistinct(mRelationSymbol) || exp % 2 == 0) {
 							nextCases.add(constructDivByVarDistinctZeroCase(script, previousCase, var2exp));
 						} else {
-							//We have to distinguish the case now into two cases, 
+							//We have to distinguish the case now into two cases,
 							//since the RelationSymbol has to be swapped, when we divide by a negative variable.
 							nextCases.add(constructDivByVarLessZeroCase(script, previousCase, var2exp));
 							nextCases.add(constructDivByVarGreaterZeroCase(script, previousCase, var2exp));
@@ -656,7 +658,7 @@ public class PolynomialRelation implements IBinaryRelation {
 			}
 			mcsb.conjoinWithDnf(dnf);
 		}
-		
+
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
 		if (!subjectInAllowedSubterm) {
 			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
@@ -768,7 +770,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		final Term varDistinctZero = SmtUtils.distinct(script, zeroTerm, var2exp.getKey());
 		suppTerms.add(
 				new SupportingTerm(varDistinctZero, IntricateOperation.DIV_BY_NONCONSTANT, Collections.emptySet()));
-		
+
 		if (SmtSortUtils.isIntSort(mPolynomialTerm.getSort()) && isEqOrDistinct(relSym)) {
 			final Term[] vars = new Term[exp];
 			for (int i = 0; i < vars.length; i++) {
@@ -777,10 +779,10 @@ public class PolynomialRelation implements IBinaryRelation {
 			final Term varPowExp = SmtUtils.mul(script, mPolynomialTerm.getSort(), vars);
 			final Term rhsModVarPowExp = SmtUtils.mod(script, rhs, varPowExp);
 			final Term rhsDivisibleByVarPowExp = SmtUtils.binaryEquality(script, zeroTerm, rhsModVarPowExp);
-			suppTerms.add(new SupportingTerm(rhsDivisibleByVarPowExp, IntricateOperation.DIV_BY_NONCONSTANT, 
+			suppTerms.add(new SupportingTerm(rhsDivisibleByVarPowExp, IntricateOperation.DIV_BY_NONCONSTANT,
 					Collections.emptySet()));
 		}
-		
+
 		return new IntermediateCase(suppTerms, MultiCaseSolvedBinaryRelation.Xnf.DNF, rhsDividedByVar, relSym);
 	}
 
@@ -993,8 +995,8 @@ public class PolynomialRelation implements IBinaryRelation {
 	private boolean isBvAndCantBeSolved(final Rational coeffOfSubject, final Term abstractVarOfSubject) {
 		return  SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort())
 				&& (divisionByVariablesNecessary(abstractVarOfSubject)
-						|| !(coeffOfSubject.equals(Rational.ONE) 
-								|| isBvMinusOne(coeffOfSubject, mPolynomialTerm.getSort()))); 
+						|| !(coeffOfSubject.equals(Rational.ONE)
+								|| isBvMinusOne(coeffOfSubject, mPolynomialTerm.getSort())));
 	}
 
 	private boolean isBvMinusOne(final Rational number, final Sort bvSort) {
@@ -1005,8 +1007,8 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	private boolean isNegative(final Rational coeffOfSubject) {
-		return coeffOfSubject.isNegative() 
-				|| (SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort()) 
+		return coeffOfSubject.isNegative()
+				|| (SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort())
 						&& isBvMinusOne(coeffOfSubject, mPolynomialTerm.getSort()));
 	}
 
@@ -1083,7 +1085,7 @@ public class PolynomialRelation implements IBinaryRelation {
 	public static PolynomialRelation convert(final Script script, final Term term) {
 		return convert(script, term, TransformInequality.NO_TRANFORMATION);
 	}
-	
+
 	public static PolynomialRelation convert(final Script script, final Term term,
 			final TransformInequality transformInequality) {
 		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);

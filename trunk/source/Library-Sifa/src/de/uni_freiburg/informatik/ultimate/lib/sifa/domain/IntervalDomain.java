@@ -44,8 +44,8 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -236,13 +236,13 @@ public class IntervalDomain implements IDomain {
 	}
 
 	private Collection<SolvedBinaryRelation> solveForAllSubjects(final Term term) {
-		final AffineRelation affineRel = AffineRelation.convert(mTools.getScript(), term);
-		if (affineRel == null) {
+		final PolynomialRelation polyRel = PolynomialRelation.convert(mTools.getScript(), term);
+		if (polyRel == null) {
 			return Collections.emptyList();
 		}
 		final Collection<SolvedBinaryRelation> result = new ArrayList<>();
 		for (final TermVariable subject : term.getFreeVars()) {
-			final SolvedBinaryRelation solved = affineRel.solveForSubject(mTools.getScript(), subject);
+			final SolvedBinaryRelation solved = polyRel.solveForSubject(mTools.getScript(), subject);
 			if (solved != null) {
 				result.add(solved);
 			}

@@ -622,7 +622,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 						.transform(allowedSubterm.getParameters()[0]);
 				if (!recursion.isVariable(subject)) {
 					// recursiv call for terms of form: "(mod ...(mod subject const1)... const 2)"
-					final MultiCaseSolvedBinaryRelation mcsbr = AffineRelation
+					final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation
 							.convert(script, SmtUtils.binaryEquality(script, allowedSubterm.getParameters()[0], sum))
 							.solveForSubject(script, subject, xnf);
 					final SupportingTerm recSupTerm = new SupportingTerm(mcsbr.asTerm(script),
@@ -630,7 +630,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 					mcsb.conjoinWithConjunction(recSupTerm);
 				} else {
 					// solve terms of form (mod (subterm) const) where subterm contains x but is no mod or div term
-					final SolvedBinaryRelation sbr = AffineRelation
+					final SolvedBinaryRelation sbr = PolynomialRelation
 							.convert(script, SmtUtils.binaryEquality(script, allowedSubterm.getParameters()[0], sum))
 							.solveForSubject(script, subject);
 					mcsb.conjoinWithConjunction(sbr);
@@ -703,7 +703,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 						if (isEqOrDistinct(mRelationSymbol) || exp % 2 == 0) {
 							nextCases.add(constructDivByVarDistinctZeroCase(script, previousCase, var2exp));
 						} else {
-							//We have to distinguish the case now into two cases, 
+							//We have to distinguish the case now into two cases,
 							//since the RelationSymbol has to be swapped, when we divide by a negative variable.
 							nextCases.add(constructDivByVarLessZeroCase(script, previousCase, var2exp));
 							nextCases.add(constructDivByVarGreaterZeroCase(script, previousCase, var2exp));
@@ -722,7 +722,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			}
 			mcsb.conjoinWithDnf(dnf);
 		}
-		
+
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
 		if (!subjectInAllowedSubterm) {
 			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
@@ -737,31 +737,31 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		}
 		return false;
 	}
-	
+
 	private boolean isEqOrDistinct(final RelationSymbol relSym) {
 		return (relSym.equals(RelationSymbol.EQ)) || (relSym.equals(RelationSymbol.DISTINCT));
 	}
-	
+
 	private boolean isBvAndCantBeSolved(final Rational coeffOfSubject, final Term abstractVarOfSubject) {
 		return  SmtSortUtils.isBitvecSort(mAffineTerm.getSort())
 				&& (divisionByVariablesNecessary(abstractVarOfSubject)
-						|| !(coeffOfSubject.equals(Rational.ONE) 
-								|| isBvMinusOne(coeffOfSubject, mAffineTerm.getSort()))); 
+						|| !(coeffOfSubject.equals(Rational.ONE)
+								|| isBvMinusOne(coeffOfSubject, mAffineTerm.getSort())));
 	}
-	
+
 	private boolean isBvMinusOne(final Rational number, final Sort bvSort) {
 		final int vecSize = Integer.valueOf(bvSort.getIndices()[0]).intValue();
 		final BigInteger minusOne = new BigInteger("2").pow(vecSize).subtract(BigInteger.ONE);
 		final Rational rationalMinusOne = Rational.valueOf(minusOne, BigInteger.ONE);
 		return number.equals(rationalMinusOne);
 	}
-	
+
 	private boolean isNegative(final Rational coeffOfSubject) {
-		return coeffOfSubject.isNegative() 
-				|| (SmtSortUtils.isBitvecSort(mAffineTerm.getSort()) 
+		return coeffOfSubject.isNegative()
+				|| (SmtSortUtils.isBitvecSort(mAffineTerm.getSort())
 						&& isBvMinusOne(coeffOfSubject, mAffineTerm.getSort()));
 	}
-	
+
 	private Case constructDivByVarEqualZeroCase(final Script script, final IntermediateCase previousCase,
 			final Term var) {
 		final RelationSymbol relSym = previousCase.getIntermediateRelationSymbol();
@@ -812,7 +812,7 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 		final Term varDistinctZero = SmtUtils.distinct(script, zeroTerm, var2exp.getKey());
 		suppTerms.add(
 				new SupportingTerm(varDistinctZero, IntricateOperation.DIV_BY_NONCONSTANT, Collections.emptySet()));
-		
+
 		if (SmtSortUtils.isIntSort(mAffineTerm.getSort()) && isEqOrDistinct(relSym)) {
 			final Term[] vars = new Term[exp];
 			for (int i = 0; i < vars.length; i++) {
@@ -821,10 +821,10 @@ public abstract class AbstractGeneralizedAffineRelation<AGAT extends AbstractGen
 			final Term varPowExp = SmtUtils.mul(script, mAffineTerm.getSort(), vars);
 			final Term rhsModVarPowExp = SmtUtils.mod(script, rhs, varPowExp);
 			final Term rhsDivisibleByVarPowExp = SmtUtils.binaryEquality(script, zeroTerm, rhsModVarPowExp);
-			suppTerms.add(new SupportingTerm(rhsDivisibleByVarPowExp, IntricateOperation.DIV_BY_NONCONSTANT, 
+			suppTerms.add(new SupportingTerm(rhsDivisibleByVarPowExp, IntricateOperation.DIV_BY_NONCONSTANT,
 					Collections.emptySet()));
 		}
-		
+
 		return new IntermediateCase(suppTerms, MultiCaseSolvedBinaryRelation.Xnf.DNF, rhsDividedByVar, relSym);
 	}
 
