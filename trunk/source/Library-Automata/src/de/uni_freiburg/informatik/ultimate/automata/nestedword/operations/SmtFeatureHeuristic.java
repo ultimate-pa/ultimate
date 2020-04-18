@@ -45,10 +45,6 @@ public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LET
 	private final ScoringMethod mScoringMethod;
 
 	public SmtFeatureHeuristic(final ILogger logger, final ScoringMethod scoringMethod) {
-		if (scoringMethod == ScoringMethod.ZERO) {
-			throw new IllegalArgumentException(
-					"Zero scoring not supported; use zero heuristic from IHeuristic instead");
-		}
 		mLogger = logger;
 		mScoreCache = new HashMap<>();
 		mScoringMethod = scoringMethod;

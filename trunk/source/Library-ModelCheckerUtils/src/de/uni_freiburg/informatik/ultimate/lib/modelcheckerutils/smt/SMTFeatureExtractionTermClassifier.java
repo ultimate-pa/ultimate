@@ -91,8 +91,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 	}
 
 	/**
-	 * Check a/another Term and add the result to the existing classification
-	 * results.
+	 * Check a/another Term and add the result to the existing classification results.
 	 */
 	public void checkTerm(final Term term) {
 		mTermsInWhichWeAlreadyDescended = new HashSet<>();
@@ -104,7 +103,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 	}
 
 	public enum ScoringMethod {
-		ZERO, NUM_FUNCTIONS, NUM_VARIABLES, DAGSIZE, DEPENDENCY, BIGGEST_EQUIVALENCE_CLASS, AVERAGE_EQUIVALENCE_CLASS,
+		NUM_FUNCTIONS, NUM_VARIABLES, DAGSIZE, DEPENDENCY, BIGGEST_EQUIVALENCE_CLASS, AVERAGE_EQUIVALENCE_CLASS,
 		NUMBER_OF_EQUIVALENCE_CLASSES, NUMBER_OF_SELECT_FUNCTIONS, NUMBER_OF_STORE_FUNCTIONS, COMPARE_FEATURES,
 	}
 
@@ -172,13 +171,13 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		return mVariableEquivalenceClasses;
 	}
 
-	private double normalize(double score, double lower_bound, double upper_bound) {
+	private double normalize(final double score, final double lower_bound, final double upper_bound) {
 		// Normalizes a given value to a certain interval.
 		// Normalize to [0,1]
 		double normalized_score = 1.0 - (1.0 / (score != 0 ? (double) score : 1.0));
 
 		// Scale to [lower_bound,upper_bound]
-		double range = upper_bound - lower_bound;
+		final double range = upper_bound - lower_bound;
 		normalized_score = (normalized_score * range) + lower_bound;
 
 		return normalized_score;
@@ -204,8 +203,6 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 			score = getOccuringFunctionNames().getOrDefault("select", 0);
 		} else if (scoringMethod == ScoringMethod.NUMBER_OF_STORE_FUNCTIONS) {
 			score = getOccuringFunctionNames().getOrDefault("store", 0);
-		} else if (scoringMethod == ScoringMethod.ZERO) {
-			score = 0;
 		} else {
 			throw new UnsupportedOperationException("Unsupported ScoringMethod " + scoringMethod.toString());
 		}
