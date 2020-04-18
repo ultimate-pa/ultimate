@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -62,6 +63,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inters
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty.SearchStrategy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.AStarHeuristic;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.IHeuristic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
@@ -239,6 +242,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private boolean mFirstReuseDump = true;
 	private boolean mUseHeuristicEmptinessCheck = false;
 	private final ScoringMethod mScoringMethod;
+	private final AStarHeuristic mAStarHeuristic;
 
 	private PetriNetLargeBlockEncoding mLBE;
 
@@ -323,6 +327,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		// Heuristic Emptiness Check
 		mUseHeuristicEmptinessCheck = taPrefs.useHeuristicEmptinessCheck();
 		mScoringMethod = taPrefs.HeuristicEmptinessCheckScoringMethod();
+		mAStarHeuristic = taPrefs.HeuristicEmptinessCheckAStarHeuristic();
 	}
 
 	@Override
@@ -388,14 +393,26 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction;
 
 		if (mUseHeuristicEmptinessCheck) {
-			if (mScoringMethod == ScoringMethod.ZERO) {
-				mCounterexample =
-						new IsEmptyHeuristic<>(new AutomataLibraryServices(mServices), abstraction).getNestedRun();
+			IHeuristic<IPredicate, LETTER> heuristic = null;
+			if (mAStarHeuristic == AStarHeuristic.ZERO) {
+				heuristic = IHeuristic.getZeroHeuristic();
+
+			} else if (mAStarHeuristic == AStarHeuristic.SMT_FEATURE_COMPARISON) {
+				heuristic = new SmtFeatureHeuristic<>(mLogger, mScoringMethod);
 			} else {
-				final SmtFeatureHeuristic<IPredicate, LETTER> heuristic =
-						new SmtFeatureHeuristic<>(mLogger, mScoringMethod);
+				final long seed = Instant.now().getEpochSecond();
+				if (mAStarHeuristic == AStarHeuristic.RANDOM_HALF) {
+					heuristic = IHeuristic.getRandomHeuristicHalf(seed);
+				} else if (mAStarHeuristic == AStarHeuristic.RANDOM_FULL) {
+					heuristic = IHeuristic.getRandomHeuristicFull(seed);
+				}
+			}
+			if (heuristic != null) {
 				mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(mServices), abstraction, heuristic)
 						.getNestedRun();
+			} else {
+				throw new UnsupportedOperationException(
+						"Heuristic  " + mAStarHeuristic.toString() + " is not Supported");
 			}
 
 			assert checkIsEmptyHeuristic(abstraction) : "IsEmptyHeuristic did not match IsEmpty";
