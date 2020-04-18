@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.AStarHeuristic;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -73,7 +74,8 @@ public final class TAPreferences {
 	private final int mLimitPathProgramCount;
 	private final boolean mCollectInterpolantStatistics;
 	private final boolean mHeuristicEmptinessCheck;
-	private final ScoringMethod mHeuristicEmptinessCheckScoringMethod;
+	private final AStarHeuristic mHeuristicEmptinessCheckAStarHeuristic;
+	private final ScoringMethod mHeuristicEmptinessCheckSmtFeatureScoringMethod;
 	private final boolean mSMTFeatureExtraction;
 	private final String mSMTFeatureExtractionDumpPath;
 	private final boolean mOverrideInterpolantAutomaton;
@@ -151,7 +153,11 @@ public final class TAPreferences {
 		mHeuristicEmptinessCheck =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK);
 
-		mHeuristicEmptinessCheckScoringMethod =
+		mHeuristicEmptinessCheckAStarHeuristic =
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC,
+						AStarHeuristic.class);
+
+		mHeuristicEmptinessCheckSmtFeatureScoringMethod =
 				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
 						ScoringMethod.class);
 
@@ -388,7 +394,11 @@ public final class TAPreferences {
 	}
 
 	public ScoringMethod HeuristicEmptinessCheckScoringMethod() {
-		return mHeuristicEmptinessCheckScoringMethod;
+		return mHeuristicEmptinessCheckSmtFeatureScoringMethod;
+	}
+
+	public AStarHeuristic HeuristicEmptinessCheckAStarHeuristic() {
+		return mHeuristicEmptinessCheckAStarHeuristic;
 	}
 
 	public boolean useSMTFeatureExtraction() {

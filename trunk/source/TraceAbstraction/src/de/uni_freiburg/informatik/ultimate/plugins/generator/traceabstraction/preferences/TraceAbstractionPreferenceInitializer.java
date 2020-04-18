@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.AStarHeuristic;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
@@ -244,10 +245,16 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"Use heuristics to traverse/explorew a NWA during the check emptiness";
 
 	public static final String LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD =
-			"Scoring method to Use during heuristic emptiness check";
+			"Scoring method to use during heuristic emptiness check";
 	public static final ScoringMethod DEF_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD = ScoringMethod.DAGSIZE;
 	public static final String DESC_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD =
 			"Defines what Scoring method is used to score outgoing transitions of a NWA during the emptiness check.";
+
+	public static final String LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC =
+			"AStar heuristic to use during heuristic emptiness check";
+	public static final AStarHeuristic DEF_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC = AStarHeuristic.ZERO;
+	public static final String DESC_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC =
+			"Defines which Heuristic is used by AStar during exploration of a NWA during the emptiness check.";
 
 	public static final String LABEL_SMT_FEATURE_EXTRACTION = "Extract SMT features during analysis";
 	public static final boolean DEF_SMT_FEATURE_EXTRACTION = false;
@@ -392,6 +399,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Combo, RefinementStrategyExceptionBlacklist.values()),
 				new UltimatePreferenceItem<>(LABEL_HEURISTIC_EMPTINESS_CHECK, DEF_HEURISTIC_EMPTINESS_CHECK,
 						DESC_HEURISTIC_EMPTINESS_CHECK, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC,
+						DEF_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC, DESC_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC,
+						PreferenceType.Combo, AStarHeuristic.values()),
 				new UltimatePreferenceItem<>(LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
 						DEF_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD, DESC_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
 						PreferenceType.Combo, ScoringMethod.values()),
