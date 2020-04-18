@@ -729,7 +729,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		}
 
 		/**
-		 * 
+		 *
 		 * @return true iff the last two hierarchical pre states of this item are equal to the last two hierarchical pre
 		 *         states of the other item, false otherwise.
 		 */
@@ -952,6 +952,10 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 	}
 
+	public enum AStarHeuristic {
+		ZERO, RANDOM_HALF, RANDOM_FULL, SMT_FEATURE_COMPARISON
+	}
+
 	/**
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -1021,9 +1025,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 	/**
 	 * An {@link ArrayDeque} that uses {@link #hashCode()} and {@link #equals(Object)} of an {@link AbstractList}.
-	 * 
+	 *
 	 * This means that two queues with the same elements in the same order are equal and have the same hashcode.
-	 * 
+	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 * @param <E>
