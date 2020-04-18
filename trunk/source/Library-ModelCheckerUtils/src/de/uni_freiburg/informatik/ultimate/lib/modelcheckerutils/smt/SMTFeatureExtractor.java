@@ -58,14 +58,14 @@ public class SMTFeatureExtractor {
 			final String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("uuuu-MM-dd"));
 			mFilename = mDumpPath.resolve(timestamp + "-smtfeatures.csv");
 			createDumpFile();
-		}else {
+		} else {
 			mDumpPath = null;
 			mFilename = null;
 		}
 	}
 
-	public SMTFeature extractFeatureRaw(final Term term){
-		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
+	public SMTFeature extractFeatureRaw(final Term term) {
+		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier();
 		tc.checkTerm(term);
 		final SMTFeature feature = new SMTFeature();
 		feature.containsArrays = tc.hasArrays();
@@ -85,14 +85,14 @@ public class SMTFeatureExtractor {
 		return feature;
 	}
 
-	public void extractFeature(final List<Term> assertions, final double time, final String result, final String solvername)
-			throws IllegalAccessException, IOException {
-		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
+	public void extractFeature(final List<Term> assertions, final double time, final String result,
+			final String solvername) throws IllegalAccessException, IOException {
+		final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier();
 		for (final Term term : assertions) {
 			tc.checkTerm(term);
 		}
 		final SMTFeature feature = new SMTFeature();
-		//feature.assertionStack = tc.getAssertionStack();
+		// feature.assertionStack = tc.getAssertionStack();
 		feature.assertionStackHashCode = tc.getAssertionStack().hashCode();
 		feature.containsArrays = tc.hasArrays();
 		feature.occuringFunctions = tc.getOccuringFunctionNames();
@@ -111,7 +111,7 @@ public class SMTFeatureExtractor {
 		feature.solvertime = time;
 		feature.solvername = solvername;
 		mFeatures.add(feature);
-		if(mDumpFeatures) {
+		if (mDumpFeatures) {
 			dumpFeature(feature);
 		}
 	}

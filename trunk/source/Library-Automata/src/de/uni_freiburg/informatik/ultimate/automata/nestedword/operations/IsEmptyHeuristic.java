@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
+import java.time.Instant;
 import java.util.AbstractList;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -57,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashedPriorityQueue;
@@ -971,6 +973,32 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		double getConcreteCost(LETTER trans);
 
+		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getHeuristic(final AStarHeuristic astarHeuristic,
+				final ScoringMethod scoringMethod) {
+			IHeuristic<STATE, LETTER> heuristic = null;
+			if (astarHeuristic == AStarHeuristic.ZERO) {
+				heuristic = IHeuristic.getZeroHeuristic();
+
+			} else if (astarHeuristic == AStarHeuristic.SMT_FEATURE_COMPARISON) {
+				heuristic = IHeuristic.getSmtFeatureHeuristic(scoringMethod);
+			} else {
+				final long seed = Instant.now().getEpochSecond();
+				if (astarHeuristic == AStarHeuristic.RANDOM_HALF) {
+					heuristic = IHeuristic.getRandomHeuristicHalf(seed);
+				} else if (astarHeuristic == AStarHeuristic.RANDOM_FULL) {
+					heuristic = IHeuristic.getRandomHeuristicFull(seed);
+				}
+			}
+
+			if (heuristic != null) {
+				return heuristic;
+			} else {
+				throw new UnsupportedOperationException(
+						"Heuristic  " + astarHeuristic.toString() + " is not Supported");
+			}
+
+		}
+
 		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getZeroHeuristic() {
 			return new IHeuristic<STATE, LETTER>() {
 				@Override
@@ -1021,6 +1049,12 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				}
 			};
 		}
+
+		public static <STATE, LETTER> SmtFeatureHeuristic<STATE, LETTER>
+				getSmtFeatureHeuristic(final ScoringMethod scoringMethod) {
+			return new SmtFeatureHeuristic<STATE, LETTER>(scoringMethod);
+		}
+
 	}
 
 	/**

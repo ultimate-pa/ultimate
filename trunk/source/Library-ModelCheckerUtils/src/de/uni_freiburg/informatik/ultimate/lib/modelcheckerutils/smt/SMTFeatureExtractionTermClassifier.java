@@ -35,7 +35,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -50,8 +49,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class SMTFeatureExtractionTermClassifier extends NonRecursive {
-
-	private final ILogger mLogger;
 
 	private Set<Term> mTermsInWhichWeAlreadyDescended;
 	private final Map<String, Integer> mOccuringSortNames;
@@ -70,9 +67,8 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 	private final ArrayList<String> mAssertionStack;
 	private final Map<Term, Integer> mVariableToCount;
 
-	public SMTFeatureExtractionTermClassifier(final ILogger logger) {
+	public SMTFeatureExtractionTermClassifier() {
 		super();
-		mLogger = logger;
 		mOccuringSortNames = new HashMap<>();
 		mOccuringFunctionNames = new HashMap<>();
 		mOccuringQuantifiers = new HashMap<>();
@@ -175,7 +171,6 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 		// Normalizes a given value to a certain interval.
 		// Normalize to [0,1]
 		double normalized_score = 1.0 - (1.0 / (score != 0 ? (double) score : 1.0));
-
 		// Scale to [lower_bound,upper_bound]
 		final double range = upper_bound - lower_bound;
 		normalized_score = (normalized_score * range) + lower_bound;
@@ -207,11 +202,6 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 			throw new UnsupportedOperationException("Unsupported ScoringMethod " + scoringMethod.toString());
 		}
 		final double normalized = normalize(score, 0.5, 1);
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("score " + score);
-			mLogger.debug("normalized " + normalized);
-		}
 		return normalized;
 	}
 

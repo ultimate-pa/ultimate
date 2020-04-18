@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.IHeuristic;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier;
@@ -40,12 +39,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LETTER> {
 
-	private final ILogger mLogger;
 	private final Map<LETTER, Double> mScoreCache;
 	private final ScoringMethod mScoringMethod;
 
-	public SmtFeatureHeuristic(final ILogger logger, final ScoringMethod scoringMethod) {
-		mLogger = logger;
+	public SmtFeatureHeuristic(final ScoringMethod scoringMethod) {
 		mScoreCache = new HashMap<>();
 		mScoringMethod = scoringMethod;
 	}
@@ -55,7 +52,7 @@ public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LET
 		// depending on the scoring method.
 
 		if (trans instanceof IInternalAction) {
-			final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier(mLogger);
+			final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier();
 			final Term formula = ((IInternalAction) trans).getTransformula().getFormula();
 			tc.checkTerm(formula);
 			return tc.getScore(mScoringMethod);
