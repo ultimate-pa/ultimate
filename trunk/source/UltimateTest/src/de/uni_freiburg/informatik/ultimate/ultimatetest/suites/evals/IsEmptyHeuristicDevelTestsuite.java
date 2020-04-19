@@ -122,7 +122,7 @@ public class IsEmptyHeuristicDevelTestsuite extends AbstractEvalTestSuite {
 		final IUltimateServiceProvider overlay = oldServices.registerPreferenceLayer(getClass(), pluginId);
 		final IPreferenceProvider prefProvider = overlay.getPreferenceProvider(pluginId);
 		prefProvider.put(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK, true);
-		prefProvider.put(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD, "ZERO");
+		prefProvider.put(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC, "ZERO");
 		return overlay;
 	}
 
