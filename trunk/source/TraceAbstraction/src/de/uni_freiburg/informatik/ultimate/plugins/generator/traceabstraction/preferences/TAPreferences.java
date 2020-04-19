@@ -75,6 +75,7 @@ public final class TAPreferences {
 	private final boolean mCollectInterpolantStatistics;
 	private final boolean mHeuristicEmptinessCheck;
 	private final AStarHeuristic mHeuristicEmptinessCheckAStarHeuristic;
+	private final Integer mHeuristicEmptinessCheckAStarHeuristicRandomSeed;
 	private final ScoringMethod mHeuristicEmptinessCheckSmtFeatureScoringMethod;
 	private final boolean mSMTFeatureExtraction;
 	private final String mSMTFeatureExtractionDumpPath;
@@ -160,6 +161,10 @@ public final class TAPreferences {
 		mHeuristicEmptinessCheckSmtFeatureScoringMethod =
 				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
 						ScoringMethod.class);
+
+		mHeuristicEmptinessCheckAStarHeuristicRandomSeed = mPrefs.getInt(
+				TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED,
+				1337);
 
 		mSMTFeatureExtraction = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION);
 		mSMTFeatureExtractionDumpPath =
@@ -399,6 +404,10 @@ public final class TAPreferences {
 
 	public AStarHeuristic HeuristicEmptinessCheckAStarHeuristic() {
 		return mHeuristicEmptinessCheckAStarHeuristic;
+	}
+
+	public Integer HeuristicEmptinessCheckAStarHeuristicRandomSeed() {
+		return mHeuristicEmptinessCheckAStarHeuristicRandomSeed;
 	}
 
 	public boolean useSMTFeatureExtraction() {

@@ -241,6 +241,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private boolean mUseHeuristicEmptinessCheck = false;
 	private final ScoringMethod mScoringMethod;
 	private final AStarHeuristic mAStarHeuristic;
+	private final Integer mAStarRandomHeuristicSeed;
 
 	private PetriNetLargeBlockEncoding mLBE;
 
@@ -326,6 +327,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mUseHeuristicEmptinessCheck = taPrefs.useHeuristicEmptinessCheck();
 		mScoringMethod = taPrefs.HeuristicEmptinessCheckScoringMethod();
 		mAStarHeuristic = taPrefs.HeuristicEmptinessCheckAStarHeuristic();
+		mAStarRandomHeuristicSeed = taPrefs.HeuristicEmptinessCheckAStarHeuristicRandomSeed();
 	}
 
 	@Override
@@ -392,7 +394,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		if (mUseHeuristicEmptinessCheck) {
 			mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(mServices), abstraction,
-					IHeuristic.getHeuristic(mAStarHeuristic, mScoringMethod)).getNestedRun();
+					IHeuristic.getHeuristic(mAStarHeuristic, mScoringMethod, mAStarRandomHeuristicSeed)).getNestedRun();
 
 			assert checkIsEmptyHeuristic(abstraction) : "IsEmptyHeuristic did not match IsEmpty";
 		} else {

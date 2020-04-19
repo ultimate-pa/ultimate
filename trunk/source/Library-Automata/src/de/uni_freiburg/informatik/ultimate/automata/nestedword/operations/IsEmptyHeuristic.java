@@ -984,21 +984,16 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		double getConcreteCost(LETTER trans);
 
 		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getHeuristic(final AStarHeuristic astarHeuristic,
-				final ScoringMethod scoringMethod) {
+				final ScoringMethod scoringMethod, final Integer seed) {
 			IHeuristic<STATE, LETTER> heuristic = null;
 			if (astarHeuristic == AStarHeuristic.ZERO) {
 				heuristic = IHeuristic.getZeroHeuristic();
-
 			} else if (astarHeuristic == AStarHeuristic.SMT_FEATURE_COMPARISON) {
 				heuristic = IHeuristic.getSmtFeatureHeuristic(scoringMethod);
-			} else {
-				// final long seed = Instant.now().getEpochSecond();
-				final long seed = 1337;
-				if (astarHeuristic == AStarHeuristic.RANDOM_HALF) {
-					heuristic = IHeuristic.getRandomHeuristicHalf(seed);
-				} else if (astarHeuristic == AStarHeuristic.RANDOM_FULL) {
-					heuristic = IHeuristic.getRandomHeuristicFull(seed);
-				}
+			} else if (astarHeuristic == AStarHeuristic.RANDOM_HALF) {
+				heuristic = IHeuristic.getRandomHeuristicHalf(seed);
+			} else if (astarHeuristic == AStarHeuristic.RANDOM_FULL) {
+				heuristic = IHeuristic.getRandomHeuristicFull(seed);
 			}
 
 			if (heuristic != null) {

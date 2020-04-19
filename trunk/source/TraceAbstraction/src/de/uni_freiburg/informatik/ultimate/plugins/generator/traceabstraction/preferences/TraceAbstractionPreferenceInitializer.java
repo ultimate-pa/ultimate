@@ -256,6 +256,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String DESC_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC =
 			"Defines which Heuristic is used by AStar during exploration of a NWA during the emptiness check.";
 
+	public static final String LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED =
+			"AStar random heuristic seed";
+	public static final Integer DEF_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED = 1337;
+	public static final String DESC_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED =
+			"Defines which seed is used for RANDOM_HALF and RANDOM_FULL heuristic";
+
 	public static final String LABEL_SMT_FEATURE_EXTRACTION = "Extract SMT features during analysis";
 	public static final boolean DEF_SMT_FEATURE_EXTRACTION = false;
 	public static final String DESC_SMT_FEATURE_EXTRACTION = "We Extract SMT features during analysis and dump them.";
@@ -402,6 +408,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC,
 						DEF_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC, DESC_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC,
 						PreferenceType.Combo, AStarHeuristic.values()),
+				new UltimatePreferenceItem<>(LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED,
+						DEF_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED,
+						DESC_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_000_000)),
 				new UltimatePreferenceItem<>(LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
 						DEF_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD, DESC_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD,
 						PreferenceType.Combo, ScoringMethod.values()),
