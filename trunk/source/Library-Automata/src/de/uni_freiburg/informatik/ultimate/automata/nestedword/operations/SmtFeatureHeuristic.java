@@ -78,7 +78,6 @@ public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LET
 
 	@Override
 	public double getConcreteCost(final LETTER trans) {
-		// Our concrete const is 1, such that our heuristic always underestimates.
 		return mScoreCache.computeIfAbsent(trans, this::checkTransition);
 	}
 
@@ -100,6 +99,8 @@ public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LET
 				transformula = ((IAction) trans).getTransformula();
 				featureToSuccessor.put(mFeatureExtractor.extractFeatureRaw(transformula.getFormula()), trans);
 			}
+
+			// TODO: what happens with transitions, that are no IActions, can that even happen?
 		});
 
 		// Pairwise compare successors
@@ -112,6 +113,7 @@ public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LET
 				} else {
 					// We calculate which feature is worse and increase its number of losses.
 					// In the end, the worst feature has the highest score.
+					// TODO: Handle INTERNAL, CALL, RETURN separately.
 					final SMTFeature looser = SMTFeature.chooseLooser(feature1, feature2);
 					final LETTER looser_trans = featureToSuccessor.get(looser);
 					final Double curr_looser_score = mScoreCache.getOrDefault(looser_trans, 0.5) + 1;
