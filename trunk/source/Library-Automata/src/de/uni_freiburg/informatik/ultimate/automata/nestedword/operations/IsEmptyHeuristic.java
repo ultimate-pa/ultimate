@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
-import java.time.Instant;
 import java.util.AbstractList;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -993,7 +992,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			} else if (astarHeuristic == AStarHeuristic.SMT_FEATURE_COMPARISON) {
 				heuristic = IHeuristic.getSmtFeatureHeuristic(scoringMethod);
 			} else {
-				final long seed = Instant.now().getEpochSecond();
+				// final long seed = Instant.now().getEpochSecond();
+				final long seed = 1337;
 				if (astarHeuristic == AStarHeuristic.RANDOM_HALF) {
 					heuristic = IHeuristic.getRandomHeuristicHalf(seed);
 				} else if (astarHeuristic == AStarHeuristic.RANDOM_FULL) {
