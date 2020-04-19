@@ -28,23 +28,31 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.IHeuristic;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeature;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier.ScoringMethod;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractor;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LETTER> {
 
 	private final Map<LETTER, Double> mScoreCache;
 	private final ScoringMethod mScoringMethod;
+	private final SMTFeatureExtractor mFeatureExtractor;
 
 	public SmtFeatureHeuristic(final ScoringMethod scoringMethod) {
 		mScoreCache = new HashMap<>();
 		mScoringMethod = scoringMethod;
+		mFeatureExtractor = new SMTFeatureExtractor(null, null, false);
 	}
 
 	public double checkTransition(final LETTER trans) {
@@ -72,5 +80,52 @@ public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LET
 	public double getConcreteCost(final LETTER trans) {
 		// Our concrete const is 1, such that our heuristic always underestimates.
 		return mScoreCache.computeIfAbsent(trans, this::checkTransition);
+	}
+
+	public void compareSuccessors(final List<IsEmptyHeuristic<LETTER, STATE>.Item> successors) {
+		final Map<SMTFeature, LETTER> featureToSuccessor = new HashMap<>();
+		mScoreCache.clear();
+
+		if (successors.size() == 1) {
+			mScoreCache.put(successors.iterator().next().getLetter(), 0.5);
+			return;
+		}
+
+		// For each successor extract a SMTFeature
+		successors.forEach(e -> {
+			final LETTER trans = e.getLetter();
+			UnmodifiableTransFormula transformula = null;
+			// We only want to consider IAction's
+			if (trans instanceof IAction) {
+				transformula = ((IAction) trans).getTransformula();
+				featureToSuccessor.put(mFeatureExtractor.extractFeatureRaw(transformula.getFormula()), trans);
+			}
+		});
+
+		// Pairwise compare successors
+		for (final Entry<SMTFeature, LETTER> entry1 : featureToSuccessor.entrySet()) {
+			final SMTFeature feature1 = entry1.getKey();
+			for (final Entry<SMTFeature, LETTER> entry2 : featureToSuccessor.entrySet()) {
+				final SMTFeature feature2 = entry2.getKey();
+				if (feature1 == feature2) {
+					// do nothing
+				} else {
+					// We calculate which feature is worse and increase its number of losses.
+					// In the end, the worst feature has the highest score.
+					final SMTFeature looser = SMTFeature.chooseLooser(feature1, feature2);
+					final LETTER looser_trans = featureToSuccessor.get(looser);
+					final Double curr_looser_score = mScoreCache.getOrDefault(looser_trans, 0.5) + 1;
+					mScoreCache.put(looser_trans, curr_looser_score);
+					final LETTER winner_trans = looser != feature1 ? entry1.getValue() : entry2.getValue();
+					if (!mScoreCache.containsKey(winner_trans)) {
+						mScoreCache.put(winner_trans, 0.5);
+					}
+				}
+			}
+		}
+	}
+
+	public ScoringMethod getScoringMethod() {
+		return mScoringMethod;
 	}
 }

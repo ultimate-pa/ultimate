@@ -211,6 +211,13 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				continue;
 			}
 
+			// TODO: find a better way to do this, I don't want any checks regarding the heuristic / scoring method
+			// here.
+			if (heuristic instanceof SmtFeatureHeuristic && ((SmtFeatureHeuristic<STATE, LETTER>) heuristic)
+					.getScoringMethod() == ScoringMethod.COMPARE_FEATURES) {
+				((SmtFeatureHeuristic<STATE, LETTER>) heuristic).compareSuccessors(unvaluatedSuccessors);
+			}
+
 			final List<Item> successors =
 					addCostAndSummaries(unvaluatedSuccessors, summaries, usedSummaries, heuristic, current.mCostSoFar);
 			successors.addAll(stragglingSummaries);
@@ -629,7 +636,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
-	private class Item implements Comparable<Item>, IWithBackPointer {
+	public class Item implements Comparable<Item>, IWithBackPointer {
 
 		private final STATE mTargetState;
 		private final Deque<STATE> mHierPreStates;
@@ -950,6 +957,10 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		@Override
 		public IWithBackPointer getBackpointer() {
 			return mBackPointer;
+		}
+
+		public LETTER getLetter() {
+			return mLetter;
 		}
 
 	}
