@@ -901,7 +901,7 @@ public class ExpressionResultTransformer {
 				determineResultOfUsualArithmeticConversions((CPrimitive) leftRType, (CPrimitive) rightRType);
 
 		if (resultType.isFloatingType()) {
-			resultType = resultType.getSMTVariant();
+			resultType = resultType.getSmtVariant();
 		}
 
 		leftRex = convertIfNecessary(loc, leftRex, resultType);
@@ -933,12 +933,21 @@ public class ExpressionResultTransformer {
 			} else if (leftPrimitive.getType() == CPrimitives.COMPLEX_FLOAT
 					|| rightPrimitive.getType() == CPrimitives.COMPLEX_FLOAT) {
 				throw new UnsupportedOperationException("complex types not yet supported");
+			} else if (leftPrimitive.getType() == CPrimitives.LONGDOUBLE_SMT
+					|| rightPrimitive.getType() == CPrimitives.LONGDOUBLE_SMT) {
+				return new CPrimitive(CPrimitives.LONGDOUBLE_SMT);
 			} else if (leftPrimitive.getType() == CPrimitives.LONGDOUBLE
 					|| rightPrimitive.getType() == CPrimitives.LONGDOUBLE) {
 				return new CPrimitive(CPrimitives.LONGDOUBLE);
+			} else if (leftPrimitive.getType() == CPrimitives.DOUBLE_SMT
+					|| rightPrimitive.getType() == CPrimitives.DOUBLE_SMT) {
+				return new CPrimitive(CPrimitives.DOUBLE_SMT);
 			} else if (leftPrimitive.getType() == CPrimitives.DOUBLE
 					|| rightPrimitive.getType() == CPrimitives.DOUBLE) {
 				return new CPrimitive(CPrimitives.DOUBLE);
+			} else if (leftPrimitive.getType() == CPrimitives.FLOAT_SMT
+					|| rightPrimitive.getType() == CPrimitives.FLOAT_SMT) {
+				return new CPrimitive(CPrimitives.FLOAT_SMT);
 			} else if (leftPrimitive.getType() == CPrimitives.FLOAT || rightPrimitive.getType() == CPrimitives.FLOAT) {
 				return new CPrimitive(CPrimitives.FLOAT);
 			} else {
@@ -1040,32 +1049,46 @@ public class ExpressionResultTransformer {
 				throw new UnsupportedSyntaxException(loc, "conversion from " + operandType + " to " + resultType);
 			}
 		} else if (resultType.isFloatingType()) {
-			final ExpressionResult expr;
 			if (operandType.isIntegerType()) {
-				expr = mExprTrans.convertIntToFloat(loc, operand, resultType);
+				exprResult = mExprTrans.convertIntToFloat(loc, operand, resultType);
 			} else if (operandType.isFloatingType()) {
 				if (operandType.isSmtFloat()) {
-					expr = mExprTrans.convertFloatToFloat(loc, operand, resultType);
+					if (resultType.isSmtFloat()) {
+						exprResult = mExprTrans.convertFloatToFloat(loc, operand, resultType);
+					} else {
+						// operand is SMT, result is BV
+						// 1. perform conversion, 2. convert result to BV
+						final ExpressionResult converted =
+								mExprTrans.convertFloatToFloat(loc, operand, resultType.getSmtVariant());
+						exprResult = new ExpressionResultBuilder().addAllExceptLrValue(converted)
+								.addAllIncludingLrValue(constructBitvecResult(converted.getLrValue(), loc)).build();
+					}
 				} else {
-					// if we have a bv type we need to convert it to smt, perform the actual float-to-float conversion,
-					// and then convert it back
-					// TODO: Check if this is correct
-					final ExpressionResult in = new ExpressionResultBuilder().addAllExceptLrValue(operand)
-							.setLrValue(new RValue(
-									mExprTrans.transformBitvectorToFloat(loc, operand.getLrValue().getValue(),
-											((CPrimitive) operandType).getSMTVariant().getType()),
-									((CPrimitive) operandType).getSMTVariant()))
-							.build();
-					expr = mExprTrans.convertFloatToFloat(loc, in, resultType.getSMTVariant());
+					if (resultType.isSmtFloat()) {
+						// operand is BV, result is SMT
+						// 1. convert operand to SMT, 2. perform conversion
+						final CPrimitive smtOperandCType = ((CPrimitive) operandType).getSmtVariant();
+						final RValue smtOperandRValue = new RValue(mExprTrans.transformBitvectorToFloat(loc,
+								operand.getLrValue().getValue(), smtOperandCType.getType()), smtOperandCType);
+						final ExpressionResult smtOperand = new ExpressionResultBuilder().addAllExceptLrValue(operand)
+								.setLrValue(smtOperandRValue).build();
+						exprResult = mExprTrans.convertFloatToFloat(loc, smtOperand, resultType);
+					} else {
+						// operand is BV, result is BV
+						// 1. convert operand to SMT, 2. perform conversion, 3. convert result to BV
+						final CPrimitive smtOperandCType = ((CPrimitive) operandType).getSmtVariant();
+						final RValue smtOperandRValue = new RValue(mExprTrans.transformBitvectorToFloat(loc,
+								operand.getLrValue().getValue(), smtOperandCType.getType()), smtOperandCType);
+						final ExpressionResult smtOperand = new ExpressionResultBuilder().addAllExceptLrValue(operand)
+								.setLrValue(smtOperandRValue).build();
+						final ExpressionResult converted =
+								mExprTrans.convertFloatToFloat(loc, smtOperand, resultType.getSmtVariant());
+						exprResult = new ExpressionResultBuilder().addAllExceptLrValue(converted)
+								.addAllIncludingLrValue(constructBitvecResult(converted.getLrValue(), loc)).build();
+					}
 				}
 			} else {
 				throw new UnsupportedSyntaxException(loc, "conversion from " + operandType + " to " + resultType);
-			}
-			if (resultType.isSmtFloat()) {
-				exprResult = expr;
-			} else {
-				exprResult = new ExpressionResultBuilder(expr).resetLrValue(null)
-						.addAllIncludingLrValue(constructBitvecResult(expr.getLrValue(), loc)).build();
 			}
 
 		} else {
@@ -1091,24 +1114,21 @@ public class ExpressionResultTransformer {
 		return nullPointerConstant;
 	}
 
-	public ExpressionResult constructBitvecResultIfNecessary(final RValue rvalue, final ILocation loc,
-			final ExpressionResult arg, final FloatFunction function) {
-		return this.constructBitvecResultIfNecessary(rvalue, loc, new ArrayList<>(java.util.Arrays.asList(arg)),
-				function);
-	}
-
 	public ExpressionResult constructBitvecResultIfNecessary(final LRValue rvalue, final ILocation loc,
 			final List<ExpressionResult> args, final FloatFunction function) {
+		// TODO: add cases in which we need to convert to bitvec (i.e., when the float function can produce nans)
+
 		final String functionName = function.getFunctionName();
-		// TODO: remove hardcoded comparison.
-		if (!rvalue.getCType().isFloatingType()) {
-			return new ExpressionResultBuilder().addAllExceptLrValue(args).setLrValue(rvalue).build();
-		} else if ("signbit".equals(functionName) || "copysign".equals(functionName) || "fmod".equals(functionName)) {
-			return new ExpressionResultBuilder().addAllExceptLrValue(args)
-					.setLrValue(new RValue(rvalue.getValue(), ((CPrimitive) rvalue.getCType()).getFloatCounterpart()))
-					.build();
-		}
-		return constructBitvecResult(rvalue, loc);
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(args);
+		return erb.setLrValue(rvalue).build();
+
+		// if (!rvalue.getCType().isFloatingType()) {
+		// return erb.setLrValue(rvalue).build();
+		// } else if ("signbit".equals(functionName) || "copysign".equals(functionName) || "fmod".equals(functionName))
+		// {
+		// return erb.setLrValue(rvalue).build();
+		// }
+		// return erb.addAllIncludingLrValue(constructBitvecResult(rvalue, loc)).build();
 	}
 
 	public ExpressionResult constructBitvecResult(final LRValue rvalue, final ILocation loc) {

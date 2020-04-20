@@ -131,9 +131,12 @@ public abstract class ExpressionTranslation {
 	public final Expression constructUnaryExpression(final ILocation loc, final int nodeOperator, final Expression exp,
 			final CPrimitive type) {
 		if (type.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
-
-			final Expression expFloat = transformBitvectorToFloat(loc, exp, type.getType());
-
+			final Expression expFloat;
+			if (type.isSmtFloat()) {
+				expFloat = exp;
+			} else {
+				expFloat = transformBitvectorToFloat(loc, exp, type.getType());
+			}
 			return constructUnaryFloatingPointExpression(loc, nodeOperator, expFloat, type);
 		}
 		return constructUnaryIntegerExpression(loc, nodeOperator, exp, type);
@@ -547,6 +550,9 @@ public abstract class ExpressionTranslation {
 		return attributes;
 	}
 
+	/**
+	 * Transform an Expression of type Bitvector to an SMT-Float
+	 */
 	public abstract Expression transformBitvectorToFloat(ILocation loc, Expression bitvector, CPrimitives floatType);
 
 	public abstract Expression transformFloatToBitvector(ILocation loc, Expression value, CPrimitives cprimitive);

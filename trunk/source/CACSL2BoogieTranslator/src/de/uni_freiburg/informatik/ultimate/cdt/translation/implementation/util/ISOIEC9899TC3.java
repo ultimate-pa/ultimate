@@ -402,11 +402,11 @@ public final class ISOIEC9899TC3 {
 		// Set floatIndices depending on the value of the val
 		final CPrimitive resultType;
 		if (floatSuffix == null || floatSuffix.equals("d") || floatSuffix.equals("D")) {
-			resultType = new CPrimitive(CPrimitive.CPrimitives.DOUBLE);
+			resultType = new CPrimitive(CPrimitive.CPrimitives.DOUBLE_SMT);
 		} else if (floatSuffix.equals("f") || floatSuffix.equals("F")) {
-			resultType = new CPrimitive(CPrimitive.CPrimitives.FLOAT);
+			resultType = new CPrimitive(CPrimitive.CPrimitives.FLOAT_SMT);
 		} else if (floatSuffix.equals("l") || floatSuffix.equals("L")) {
-			resultType = new CPrimitive(CPrimitive.CPrimitives.LONGDOUBLE);
+			resultType = new CPrimitive(CPrimitive.CPrimitives.LONGDOUBLE_SMT);
 		} else {
 			throw new IllegalArgumentException("not a float type");
 		}
@@ -601,6 +601,11 @@ public final class ISOIEC9899TC3 {
 
 		public CPrimitive getCPrimitive() {
 			return mCPrimitive;
+		}
+
+		@Override
+		public String toString() {
+			return String.format("%s : %s", getDecimalRepresenation(), getCPrimitive());
 		}
 
 	}

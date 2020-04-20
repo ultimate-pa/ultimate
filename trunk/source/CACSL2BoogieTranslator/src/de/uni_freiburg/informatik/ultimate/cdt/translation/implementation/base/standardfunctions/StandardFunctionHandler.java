@@ -1708,7 +1708,8 @@ public class StandardFunctionHandler {
 		final ExpressionResult arg = handleFloatArguments(main, node, loc, name, 1, floatFunction).get(0);
 		final RValue rvalue =
 				mExpressionTranslation.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.getLrValue());
-		return mExprResultTransformer.constructBitvecResultIfNecessary(rvalue, loc, arg, floatFunction);
+		return mExprResultTransformer.constructBitvecResultIfNecessary(rvalue, loc, Collections.singletonList(arg),
+				floatFunction);
 	}
 
 	private Result handleBinaryFloatFunction(final IDispatcher main, final IASTFunctionCallExpression node,

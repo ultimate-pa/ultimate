@@ -144,6 +144,10 @@ public class ExpressionResult extends Result {
 		return mLrVal.getCType();
 	}
 
+	public CType getUnderlyingCType() {
+		return getCType().getUnderlyingType();
+	}
+
 	public List<Statement> getStatements() {
 		return Collections.unmodifiableList(mStmt);
 	}

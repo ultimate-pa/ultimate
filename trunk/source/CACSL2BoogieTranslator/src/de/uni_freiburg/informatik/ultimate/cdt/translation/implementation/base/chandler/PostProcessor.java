@@ -565,7 +565,7 @@ public class PostProcessor {
 			throw new UnsupportedOperationException("Unexpected float width: " + bytes);
 		}
 		final CPrimitive cType = new CPrimitive(floatCPrimitives);
-		final CPrimitive smtCType = new CPrimitive(floatCPrimitives.getFloatCounterpart());
+		final CPrimitive smtCType = new CPrimitive(floatCPrimitives.getSmtFloatCounterpart());
 		final ASTType smtFloatAstType = mTypeHandler.cType2AstType(loc, smtCType);
 		final ASTType floatAstType = mTypeHandler.cType2AstType(loc, cType);
 		final BoogieType floatBoogieType = (BoogieType) floatAstType.getBoogieType();

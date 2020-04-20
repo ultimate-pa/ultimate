@@ -182,7 +182,7 @@ public class CPrimitive extends CType {
 		 * @return the dual of a float type, e.g., the dual of {@link CPrimitives#FLOAT} is
 		 *         {@link CPrimitives#FLOAT_SMT}
 		 */
-		public CPrimitives getFloatCounterpart() {
+		public CPrimitives getSmtFloatCounterpart() {
 			switch (this) {
 			case COMPLEX_DOUBLE:
 				return COMPLEX_DOUBLE_SMT;
@@ -342,8 +342,8 @@ public class CPrimitive extends CType {
 		return new CPrimitive(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), isSmtFloat, getType());
 	}
 
-	public CPrimitive getFloatCounterpart() {
-		return new CPrimitive(mType.getFloatCounterpart());
+	public CPrimitive getSmtFloatCounterpart() {
+		return new CPrimitive(mType.getSmtFloatCounterpart());
 	}
 
 	/**
@@ -449,7 +449,7 @@ public class CPrimitive extends CType {
 		mGeneralType = getGeneralType(mType);
 	}
 
-	public CPrimitive getSMTVariant() {
+	public CPrimitive getSmtVariant() {
 		return new CPrimitive(mType.getSMTVariant());
 	}
 

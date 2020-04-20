@@ -3990,15 +3990,15 @@ public class CHandler {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 
-		CType lType = left.getLrValue().getCType().getUnderlyingType();
-		final CType rType = right.getLrValue().getCType().getUnderlyingType();
+		CType lType = left.getUnderlyingCType();
+		CType rType = right.getUnderlyingCType();
 
 		if (lType instanceof CArray && rType.isArithmeticType()) {
 			// arrays decay to pointers in this case
 			assert !(((CArray) lType).getBound().getCType() instanceof CArray) : "TODO: think about this case";
 			final CType valueType = ((CArray) lType).getValueType().getUnderlyingType();
 			left = mExprResultTransformer.performImplicitConversion(left, new CPointer(valueType), loc);
-			lType = left.getLrValue().getCType().getUnderlyingType();
+			lType = left.getUnderlyingCType();
 		}
 
 		final ExpressionResultBuilder builder;
@@ -4009,16 +4009,18 @@ public class CHandler {
 					mExprResultTransformer.usualArithmeticConversions(loc, left, right);
 			left = newOps.getFirst();
 			right = newOps.getSecond();
+			lType = left.getUnderlyingCType();
+			rType = right.getUnderlyingCType();
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
-
-			typeOfResult = ((CPrimitive) left.getLrValue().getCType()).getSMTVariant();
-			// TODO: Do we need this?
-			// assert typeOfResult.equals(right.getLrValue().getCType());
+			if (lType.isFloatingType()) {
+				typeOfResult = ((CPrimitive) left.getCType()).getSmtVariant();
+			} else {
+				typeOfResult = lType;
+			}
 
 			addIntegerBoundsCheck(loc, builder, (CPrimitive) typeOfResult, op, hook, left.getLrValue().getValue(),
 					right.getLrValue().getValue());
 
-			// TODO: Don't use type of result here wtf
 			expr = mExpressionTranslation.constructArithmeticExpression(loc, op, left.getLrValue().getValue(),
 					(CPrimitive) lType, right.getLrValue().getValue(), (CPrimitive) rType);
 		} else if (lType instanceof CPointer && rType.isArithmeticType()) {
@@ -4108,9 +4110,9 @@ public class CHandler {
 			return intermediateResult;
 		}
 		case IASTBinaryExpression.op_plusAssign:
-		case IASTBinaryExpression.op_minusAssign: {
+		case IASTBinaryExpression.op_minusAssign:
 			return makeAssignment(loc, lhs, Collections.emptyList(), intermediateResult, hook);
-		}
+
 		default:
 			throw new AssertionError("no additive operation " + op);
 		}
@@ -4567,7 +4569,7 @@ public class CHandler {
 	ExpressionResult handleUnaryArithmeticOperators(final ILocation loc, final int op, ExpressionResult operand,
 			final IASTNode hook) {
 		assert operand.getLrValue() instanceof RValue : "no RValue";
-		final CType inputType = operand.getLrValue().getCType().getUnderlyingType();
+		final CType inputType = operand.getUnderlyingCType();
 
 		switch (op) {
 		case IASTUnaryExpression.op_not: {
@@ -4630,7 +4632,7 @@ public class CHandler {
 			// TODO: bitvec procedure here
 			final RValue rval = new RValue(bwexpr, resultType, false);
 			if (resultType.isFloatingType()) {
-				return mExprResultTransformer.constructBitvecResult(rval, loc);
+				return result.addAllIncludingLrValue(mExprResultTransformer.constructBitvecResult(rval, loc)).build();
 			}
 			return result.setLrValue(rval).build();
 		default:
