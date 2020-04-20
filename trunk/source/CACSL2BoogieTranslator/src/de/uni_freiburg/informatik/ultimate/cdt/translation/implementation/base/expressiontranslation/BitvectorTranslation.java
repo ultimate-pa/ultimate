@@ -1187,8 +1187,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		if (arg.getCType().isSmtFloat()) {
 			return arg;
 		}
-		return new RValue(transformBitvectorToFloat(loc, arg.getValue(), ((CPrimitive) arg.getCType()).getType()),
-				arg.getCType());
+		final CPrimitive argType = (CPrimitive) arg.getCType();
+		return new RValue(transformBitvectorToFloat(loc, arg.getValue(), argType.getType()), argType.getSmtVariant());
 	}
 
 	private static void checkIsFloatPrimitive(final RValue argument) {
