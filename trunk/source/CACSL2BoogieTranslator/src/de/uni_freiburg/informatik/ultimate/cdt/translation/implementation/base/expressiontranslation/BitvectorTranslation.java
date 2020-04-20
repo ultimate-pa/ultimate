@@ -936,31 +936,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		return new ExpressionResult(new RValue(func, type));
 	}
 
-	public ExpressionResult createRoundingMode(final ILocation loc, final String name) {
-		final String smtFunctionName;
-		final CPrimitive type;
-		if (name.equals("INFINITY") || name.equals("inf") || name.equals("inff")) {
-			smtFunctionName = SMT_LIB_PLUS_INF;
-			type = new CPrimitive(CPrimitives.DOUBLE);
-		} else if (name.equals("NAN") || name.equals("nan")) {
-			smtFunctionName = SMT_LIB_NAN;
-			type = new CPrimitive(CPrimitives.DOUBLE);
-		} else if (name.equals("nanl")) {
-			smtFunctionName = SMT_LIB_NAN;
-			type = new CPrimitive(CPrimitives.LONGDOUBLE);
-		} else if (name.equals("nanf")) {
-			smtFunctionName = SMT_LIB_NAN;
-			type = new CPrimitive(CPrimitives.FLOAT);
-		} else {
-			throw new IllegalArgumentException("not a nan or infinity type");
-		}
-		declareFloatConstant(loc, smtFunctionName, type);
-		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type);
-		final Expression func = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-				new Expression[] {}, mTypeHandler.getBoogieTypeForCType(type));
-		return new ExpressionResult(new RValue(func, type));
-	}
-
 	@Override
 	public void declareFloatConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type) {
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type.getType());
@@ -1370,11 +1345,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector,
-			final CPrimitives floatType) {
-		assert floatType.isFloatingType();
-		assert TypeCheckHelper.getBitVecLength(bitvector.getType()) != -1;
-		final CPrimitive conversionType = new CPrimitive(floatType.getSMTVariant());
-		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(floatType);
+			final CPrimitives targetfloatType) {
+		assert targetfloatType.isFloatingType() : "Target type is not float";
+		assert TypeCheckHelper.getBitVecLength(bitvector.getType()) != -1 : "BV expression is not BV";
+		final CPrimitive conversionType = new CPrimitive(targetfloatType.getSMTVariant());
+		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(targetfloatType);
 		final Expression significantBits = extractBits(loc, bitvector, fps.getSignificant() - 1, 0);
 		final Expression exponentBits = extractBits(loc, bitvector, fps.getDataSize() - 1, fps.getSignificant() - 1);
 		final Expression signBit = extractBits(loc, bitvector, fps.getDataSize(), fps.getDataSize() - 1);
