@@ -4080,7 +4080,7 @@ public class CHandler {
 
 		if (lType.isArithmeticType() && rType.isArithmeticType()
 				&& (lType.isFloatingType() || rType.isFloatingType())) {
-			builder.addAllIncludingLrValue(mExprResultTransformer.constructBitvecResult(rval, loc));
+			builder.addAllIncludingLrValue(mExprResultTransformer.convertToBvFloatIfNecessary(rval, loc));
 		} else {
 			builder.setLrValue(rval);
 		}
@@ -4457,7 +4457,7 @@ public class CHandler {
 
 		if (lType.isArithmeticType() && rType.isArithmeticType()
 				&& (lType.isFloatingType() || rType.isFloatingType())) {
-			builder.addAllIncludingLrValue(mExprResultTransformer.constructBitvecResult(rval, loc));
+			builder.addAllIncludingLrValue(mExprResultTransformer.convertToBvFloatIfNecessary(rval, loc));
 		} else {
 			builder.setLrValue(rval);
 		}
@@ -4632,7 +4632,7 @@ public class CHandler {
 			// TODO: bitvec procedure here
 			final RValue rval = new RValue(bwexpr, resultType, false);
 			if (resultType.isFloatingType()) {
-				return result.addAllIncludingLrValue(mExprResultTransformer.constructBitvecResult(rval, loc)).build();
+				return result.addAllIncludingLrValue(mExprResultTransformer.convertToBvFloatIfNecessary(rval, loc)).build();
 			}
 			return result.setLrValue(rval).build();
 		default:

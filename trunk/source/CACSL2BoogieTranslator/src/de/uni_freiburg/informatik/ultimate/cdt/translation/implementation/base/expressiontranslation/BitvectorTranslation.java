@@ -959,7 +959,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public RValue constructOtherUnaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
 			final RValue argument) {
 
-		final RValue argumentProcessed = convertToFloatIfNecessary(loc, floatFunction, argument);
+		final RValue argumentProcessed = convertToSmtFloatIfNecessary(loc, argument);
 
 		if ("sqrt".equals(floatFunction.getFunctionName())) {
 			checkIsFloatPrimitive(argumentProcessed);
@@ -1183,17 +1183,12 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		throw new UnsupportedOperationException("not yet supported float operation " + floatFunction.getFunctionName());
 	}
 
-	private RValue convertToFloatIfNecessary(final ILocation loc, final FloatFunction floatFunction,
-			final RValue argument) {
-		final String func_name = floatFunction.getFunctionName();
-		// Does not convert to smt float if it already is one.
-		if ("fmod".equals(func_name) || "signbit".equals(func_name) || "copysign".equals(func_name)
-				|| argument.getCType().isSmtFloat()) {
-			return argument;
+	private RValue convertToSmtFloatIfNecessary(final ILocation loc, final RValue arg) {
+		if (arg.getCType().isSmtFloat()) {
+			return arg;
 		}
-		return new RValue(
-				transformBitvectorToFloat(loc, argument.getValue(), ((CPrimitive) argument.getCType()).getType()),
-				argument.getCType());
+		return new RValue(transformBitvectorToFloat(loc, arg.getValue(), ((CPrimitive) arg.getCType()).getType()),
+				arg.getCType());
 	}
 
 	private static void checkIsFloatPrimitive(final RValue argument) {
@@ -1209,18 +1204,15 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final RValue first, final RValue second) {
 		// TODO Auto-generated method stub
 
-		final RValue firstProcessed = convertToFloatIfNecessary(loc, floatFunction, first);
-		final RValue secondProcessed = convertToFloatIfNecessary(loc, floatFunction, second);
-
 		switch (floatFunction.getFunctionName()) {
 		case "fmin":
-			return delegateOtherBinaryFloatOperationToSmt(loc, firstProcessed, secondProcessed, "fp.min");
+			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.min");
 		case "fmax":
-			return delegateOtherBinaryFloatOperationToSmt(loc, firstProcessed, secondProcessed, "fp.max");
+			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.max");
 		case "remainder":
 			// TODO: Remove until unsoundness can be investigated
+			// return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
 			break;
-		// return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
 		case "fmod":
 			/**
 			 * 7.12.10.1 The fmod functions
@@ -1234,30 +1226,32 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			// fmod guarantees that the return value is the same sign as the first argument (x)
 			// copies the sign of firts element to remainder value
 			// Copysign might not be correct - fmod does not guarantee -NaNs
-			final RValue remainderValue =
-					delegateOtherBinaryFloatOperationToSmt(loc, firstProcessed, secondProcessed, "fp.rem");
+			final RValue remainderValue = delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
 			final FloatFunction copySignFunction = FloatFunction.decode("copysign");
-			return constructOtherBinaryFloatOperation(loc, copySignFunction, remainderValue, firstProcessed);
+			return constructOtherBinaryFloatOperation(loc, copySignFunction, remainderValue, first);
 		// TODO: Check if conversion to float can be omitted and only called in
 		// constructArithmeticFloatingPointExpression()
 		case "fdim":
 			final FloatFunction isNaN = FloatFunction.decode("isnan");
 
 			// if (first || second) is NaN -> NaN
-			final RValue firstIsNaN = constructOtherUnaryFloatOperation(loc, isNaN, firstProcessed);
-			final RValue secondIsNaN = constructOtherUnaryFloatOperation(loc, isNaN, secondProcessed);
+			final RValue firstIsNaN = constructOtherUnaryFloatOperation(loc, isNaN, first);
+			final RValue secondIsNaN = constructOtherUnaryFloatOperation(loc, isNaN, second);
+
+			final RValue firstConverted = convertToSmtFloatIfNecessary(loc, first);
+			final RValue secondConverted = convertToSmtFloatIfNecessary(loc, second);
 
 			// if first>second, first - second, else +0
-			final CPrimitive typeFirst = (CPrimitive) firstProcessed.getCType().getUnderlyingType();
-			final CPrimitive typeSecond = (CPrimitive) secondProcessed.getCType().getUnderlyingType();
+			final CPrimitive typeFirst = (CPrimitive) firstConverted.getUnderlyingType();
+			final CPrimitive typeSecond = (CPrimitive) secondConverted.getUnderlyingType();
 
 			final Expression comparison =
 					constructBinaryComparisonFloatingPointExpression(loc, IASTBinaryExpression.op_greaterThan,
-							firstProcessed.getValue(), typeFirst, secondProcessed.getValue(), typeSecond);
+							firstConverted.getValue(), typeFirst, secondConverted.getValue(), typeSecond);
 
 			final Expression subtraction =
 					constructArithmeticFloatingPointExpression(loc, IASTBinaryExpression.op_minus,
-							firstProcessed.getValue(), typeFirst, secondProcessed.getValue(), typeSecond);
+							firstConverted.getValue(), typeFirst, secondConverted.getValue(), typeSecond);
 
 			final Expression zero = constructLiteralForFloatingType(loc, typeFirst, BigDecimal.ZERO);
 
@@ -1265,10 +1259,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					ExpressionFactory.constructIfThenElseExpression(loc, comparison, subtraction, zero);
 
 			final Expression secondNaNExpr = ExpressionFactory.constructIfThenElseExpression(loc,
-					secondIsNaN.getValue(), secondProcessed.getValue(), resultExprFdim);
+					secondIsNaN.getValue(), secondConverted.getValue(), resultExprFdim);
 
 			final Expression firstNaNExpr = ExpressionFactory.constructIfThenElseExpression(loc, firstIsNaN.getValue(),
-					firstProcessed.getValue(), secondNaNExpr);
+					firstConverted.getValue(), secondNaNExpr);
 
 			return new RValue(firstNaNExpr, typeFirst);
 		case "copysign":
@@ -1288,18 +1282,18 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			// final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegativeSecond,
 			// negative, absoluteValue.getValue());
 			// return new RValue(resultExpr, resultType);
+
 			final FloatingPointSize firstFpSize =
-					mTypeSizes.getFloatingPointSize(((CPrimitive) firstProcessed.getCType()).getType());
+					mTypeSizes.getFloatingPointSize(((CPrimitive) first.getCType()).getType());
 			final FloatingPointSize secondFpSize =
-					mTypeSizes.getFloatingPointSize(((CPrimitive) secondProcessed.getCType()).getType());
-			final Expression unsignedBitVec =
-					extractBits(loc, firstProcessed.getValue(), firstFpSize.getDataSize() - 1, 0);
-			final Expression signBit = extractBits(loc, secondProcessed.getValue(), secondFpSize.getDataSize(),
-					secondFpSize.getDataSize() - 1);
+					mTypeSizes.getFloatingPointSize(((CPrimitive) second.getCType()).getType());
+			final Expression unsignedBitVec = extractBits(loc, first.getValue(), firstFpSize.getDataSize() - 1, 0);
+			final Expression signBit =
+					extractBits(loc, second.getValue(), secondFpSize.getDataSize(), secondFpSize.getDataSize() - 1);
 
 			final List<Expression> resultAsList = Arrays.asList(unsignedBitVec, signBit);
 			final Expression result = concatBits(loc, resultAsList, firstFpSize.getBitSize());
-			return new RValue(result, firstProcessed.getCType().getUnderlyingType());
+			return new RValue(result, first.getCType().getUnderlyingType());
 		default:
 			break;
 		}
@@ -1308,18 +1302,19 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	private RValue delegateOtherBinaryFloatOperationToSmt(final ILocation loc, final RValue first, final RValue second,
 			final String smtFunctionName) {
-		checkIsFloatPrimitive(first);
-		checkIsFloatPrimitive(second);
-		final CPrimitive firstArgumentType = (CPrimitive) first.getCType().getUnderlyingType();
+		final RValue firstConverted = convertToSmtFloatIfNecessary(loc, first);
+		final RValue secondConverted = convertToSmtFloatIfNecessary(loc, second);
+		checkIsFloatPrimitive(firstConverted);
+		checkIsFloatPrimitive(secondConverted);
 
-		final CPrimitive secondArgumentType = (CPrimitive) first.getCType().getUnderlyingType();
-		if (!firstArgumentType.equals(secondArgumentType)) {
-			throw new IllegalArgumentException("No mixed type arguments allowed");
+		final CPrimitive firstCType = (CPrimitive) first.getUnderlyingType();
+		final CPrimitive secondCType = (CPrimitive) first.getUnderlyingType();
+		if (!firstCType.equals(secondCType)) {
+			throw new AssertionError("No mixed type arguments allowed");
 		}
-		declareFloatingPointFunction(loc, smtFunctionName, false, false, firstArgumentType, firstArgumentType,
-				secondArgumentType);
-		final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, firstArgumentType);
-		final CPrimitive resultType = firstArgumentType;
+		declareFloatingPointFunction(loc, smtFunctionName, false, false, firstCType, firstCType, secondCType);
+		final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, firstCType);
+		final CPrimitive resultType = firstCType;
 		final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 				new Expression[] { first.getValue(), second.getValue() },
 				mTypeHandler.getBoogieTypeForCType(resultType));

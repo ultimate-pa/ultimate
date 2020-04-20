@@ -1708,8 +1708,9 @@ public class StandardFunctionHandler {
 		final ExpressionResult arg = handleFloatArguments(main, node, loc, name, 1, floatFunction).get(0);
 		final RValue rvalue =
 				mExpressionTranslation.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.getLrValue());
-		return mExprResultTransformer.constructBitvecResultIfNecessary(rvalue, loc, Collections.singletonList(arg),
-				floatFunction);
+		final ExpressionResultBuilder erb =
+				new ExpressionResultBuilder().addAllExceptLrValue(Collections.singletonList(arg));
+		return erb.setLrValue(rvalue).build();
 	}
 
 	private Result handleBinaryFloatFunction(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1718,7 +1719,8 @@ public class StandardFunctionHandler {
 		final List<ExpressionResult> args = handleFloatArguments(main, node, loc, name, 2, floatFunction);
 		final RValue rvalue = mExpressionTranslation.constructOtherBinaryFloatOperation(loc, floatFunction,
 				(RValue) args.get(0).getLrValue(), (RValue) args.get(1).getLrValue());
-		return mExprResultTransformer.constructBitvecResultIfNecessary(rvalue, loc, args, floatFunction);
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(args);
+		return erb.setLrValue(rvalue).build();
 	}
 
 	private List<ExpressionResult> handleFloatArguments(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1735,16 +1737,8 @@ public class StandardFunctionHandler {
 					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, argument);
 			final ExpressionResult convertedArgument =
 					mExprResultTransformer.convertIfNecessary(loc, decayedArgument, floatFunction.getType());
-			rtr.add(convertedArgument);
-		}
 
-		final CPrimitive typeDeterminedByName = floatFunction.getType();
-		if (typeDeterminedByName != null) {
-			final List<ExpressionResult> newRtr = new ArrayList<>();
-			for (final ExpressionResult arg : rtr) {
-				newRtr.add(mExprResultTransformer.convertIfNecessary(loc, arg, typeDeterminedByName));
-			}
-			return newRtr;
+			rtr.add(convertedArgument);
 		}
 		return rtr;
 	}

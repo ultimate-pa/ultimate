@@ -65,20 +65,23 @@ public class FloatFunction {
 			"fdim" // see 7.12.12.1
 	};
 
-	public static final Set<String> CONVERT_TO_BITVEC = new HashSet<>(Arrays.asList("sqrt", "fabs", "fmin", "fmax",
-			"trunc", "round", "lround", "llround", "floor", "ceil", "sin", "remainder", "fmod", "fdim"));
+	private static final Set<String> IS_BITVEC_FLOAT_FUNCTION =
+			new HashSet<>(Arrays.asList("sqrt", "fabs", "fmin", "fmax", "trunc", "round", "lround", "llround", "floor",
+					"ceil", "sin", "remainder", "fmod", "fdim", "copysign"));
 
 	private static final String[] TYPE_SUFFIXES = { "f", "d", "l" };
 
 	private final String mPrefix;
 	private final String mFunction;
 	private final String mTypeSuffix;
+	private final boolean mIsBv;
 
 	public FloatFunction(final String prefix, final String function, final String typeSuffix) {
 		super();
 		mPrefix = prefix;
 		mFunction = function;
 		mTypeSuffix = typeSuffix;
+		mIsBv = IS_BITVEC_FLOAT_FUNCTION.contains(mFunction);
 	}
 
 	public String getPrefix() {
@@ -94,6 +97,13 @@ public class FloatFunction {
 	}
 
 	public CPrimitive getType() {
+		if (isBvFloat()) {
+			return getSmtType().getBvVariant();
+		}
+		return getSmtType();
+	}
+
+	private CPrimitive getSmtType() {
 		switch (mTypeSuffix) {
 		case "f":
 			return new CPrimitive(CPrimitives.FLOAT_SMT);
@@ -105,6 +115,10 @@ public class FloatFunction {
 		default:
 			throw new AssertionError("unknown type suffix " + mTypeSuffix);
 		}
+	}
+
+	public boolean isBvFloat() {
+		return mIsBv;
 	}
 
 	public static FloatFunction decode(final String fullFunctionName) {

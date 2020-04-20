@@ -31,7 +31,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -60,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -1060,8 +1058,11 @@ public class ExpressionResultTransformer {
 						// 1. perform conversion, 2. convert result to BV
 						final ExpressionResult converted =
 								mExprTrans.convertFloatToFloat(loc, operand, resultType.getSmtVariant());
-						exprResult = new ExpressionResultBuilder().addAllExceptLrValue(converted)
-								.addAllIncludingLrValue(constructBitvecResult(converted.getLrValue(), loc)).build();
+						exprResult =
+								new ExpressionResultBuilder().addAllExceptLrValue(converted)
+										.addAllIncludingLrValue(
+												convertToBvFloatIfNecessary(converted.getLrValue(), loc))
+										.build();
 					}
 				} else {
 					if (resultType.isSmtFloat()) {
@@ -1083,8 +1084,11 @@ public class ExpressionResultTransformer {
 								.setLrValue(smtOperandRValue).build();
 						final ExpressionResult converted =
 								mExprTrans.convertFloatToFloat(loc, smtOperand, resultType.getSmtVariant());
-						exprResult = new ExpressionResultBuilder().addAllExceptLrValue(converted)
-								.addAllIncludingLrValue(constructBitvecResult(converted.getLrValue(), loc)).build();
+						exprResult =
+								new ExpressionResultBuilder().addAllExceptLrValue(converted)
+										.addAllIncludingLrValue(
+												convertToBvFloatIfNecessary(converted.getLrValue(), loc))
+										.build();
 					}
 				}
 			} else {
@@ -1114,48 +1118,29 @@ public class ExpressionResultTransformer {
 		return nullPointerConstant;
 	}
 
-	public ExpressionResult constructBitvecResultIfNecessary(final LRValue rvalue, final ILocation loc,
-			final List<ExpressionResult> args, final FloatFunction function) {
-		// TODO: add cases in which we need to convert to bitvec (i.e., when the float function can produce nans)
-
-		final String functionName = function.getFunctionName();
-		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(args);
-		return erb.setLrValue(rvalue).build();
-
-		// if (!rvalue.getCType().isFloatingType()) {
-		// return erb.setLrValue(rvalue).build();
-		// } else if ("signbit".equals(functionName) || "copysign".equals(functionName) || "fmod".equals(functionName))
-		// {
-		// return erb.setLrValue(rvalue).build();
-		// }
-		// return erb.addAllIncludingLrValue(constructBitvecResult(rvalue, loc)).build();
-	}
-
-	public ExpressionResult constructBitvecResult(final LRValue rvalue, final ILocation loc) {
+	public ExpressionResult convertToBvFloatIfNecessary(final LRValue rvalue, final ILocation loc) {
 		final CPrimitive cType = (CPrimitive) rvalue.getCType();
-
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		final Expression[] arguments = new Expression[] { rvalue.getValue() };
-
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
 		if (cType.isSmtFloat()) {
 			final AuxVarInfo auxvarinfo =
 					mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType.getBvVariant(), SFO.AUXVAR.NONDET);
-			resultBuilder.addDeclaration(auxvarinfo.getVarDec());
-			resultBuilder.addAuxVar(auxvarinfo);
+			erb.addDeclaration(auxvarinfo.getVarDec());
+			erb.addAuxVar(auxvarinfo);
 
 			assert cType.isSmtFloat() : "not an SMT float";
+			final Expression[] arguments = new Expression[] { rvalue.getValue() };
 			final CallStatement call =
 					StatementFactory
 							.constructCallStatement(loc, false, new VariableLHS[] { auxvarinfo.getLhs() },
 									BitvectorTranslation.FLOAT_PROC_FLOAT_TO_BV
 											+ Integer.toString(mTypeSizes.getFloatingPointSize(cType).getBitSize()),
 									arguments);
-			resultBuilder.addStatement(call);
-			resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), cType.getBvVariant()));
-			return resultBuilder.build();
+			erb.addStatement(call);
+			erb.setLrValue(new RValue(auxvarinfo.getExp(), cType.getBvVariant()));
+			return erb.build();
 		}
-		resultBuilder.setLrValue(rvalue);
-		return resultBuilder.build();
+		erb.setLrValue(rvalue);
+		return erb.build();
 	}
 
 	@FunctionalInterface
