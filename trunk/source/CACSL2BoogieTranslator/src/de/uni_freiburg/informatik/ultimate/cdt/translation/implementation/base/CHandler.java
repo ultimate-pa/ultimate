@@ -2508,7 +2508,7 @@ public class CHandler {
 	/**
 	 *
 	 * @param loc
-	 * @param leftHandSide
+	 * @param lhs
 	 *            value of the left hand side that will be assigned to
 	 * @param leftHandSideOtherUnionFields
 	 *            information about union fields that need to be havocced in our struct representation of an off-heap
@@ -2521,31 +2521,31 @@ public class CHandler {
 	 *            <li>side effects that are needed to prepare the value of the left hand side of the assignment
 	 * @return
 	 */
-	public ExpressionResult makeAssignment(final ILocation loc, final LRValue leftHandSide,
+	public ExpressionResult makeAssignment(final ILocation loc, final LRValue lhs,
 			final Collection<ExpressionResult> leftHandSideOtherUnionFields, final ExpressionResult rhs,
 			final IASTNode hook) {
 
 		// do implicit cast -- assume the types are compatible
 		final ExpressionResult rhsConverted =
-				mExprResultTransformer.performImplicitConversion(rhs, leftHandSide.getCType(), loc);
+				mExprResultTransformer.performImplicitConversion(rhs, lhs.getCType(), loc);
 		final RValue rightHandSideValueWithConversionsApplied = (RValue) rhsConverted.getLrValue();
 
 		// for wraparound --> and avoiding it for ints that store pointers
 		// updates the value in the symbol table accordingly
 		// TODO: this is really ugly, do we still need this??
 		if (rightHandSideValueWithConversionsApplied.isIntFromPointer()) {
-			if (leftHandSide instanceof HeapLValue) {
-				final Expression address = ((HeapLValue) leftHandSide).getAddress();
+			if (lhs instanceof HeapLValue) {
+				final Expression address = ((HeapLValue) lhs).getAddress();
 				if (address instanceof IdentifierExpression) {
 					final String lId =
-							((IdentifierExpression) ((HeapLValue) leftHandSide).getAddress()).getIdentifier();
+							((IdentifierExpression) ((HeapLValue) lhs).getAddress()).getIdentifier();
 					markAsIntFromPointer(loc, lId, hook);
 				} else {
 					// TODO
 				}
-			} else if (leftHandSide instanceof LocalLValue) {
+			} else if (lhs instanceof LocalLValue) {
 				String lId = null;
-				final LeftHandSide value = ((LocalLValue) leftHandSide).getLhs();
+				final LeftHandSide value = ((LocalLValue) lhs).getLhs();
 				if (value instanceof VariableLHS) {
 					lId = ((VariableLHS) value).getIdentifier();
 					markAsIntFromPointer(loc, lId, hook);
@@ -2557,13 +2557,13 @@ public class CHandler {
 		}
 
 		// add the assignment statement
-		if (leftHandSide instanceof HeapLValue) {
+		if (lhs instanceof HeapLValue) {
 			// left hand side of assignment is on heap
 
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllExceptLrValue(rhsConverted);
 
 			// construct and add a statement that
-			final HeapLValue hlv = (HeapLValue) leftHandSide;
+			final HeapLValue hlv = (HeapLValue) lhs;
 
 			Expression rhsWithBitfieldTreatment;
 			if (hlv.getBitfieldInformation() != null) {
@@ -2581,7 +2581,7 @@ public class CHandler {
 			builder.setLrValue(rightHandSideValueWithConversionsApplied);
 
 			return builder.build();
-		} else if (leftHandSide instanceof LocalLValue) {
+		} else if (lhs instanceof LocalLValue) {
 			// left hand side of assignment is off heap
 
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
@@ -2594,7 +2594,7 @@ public class CHandler {
 			builder.addOverapprox(rhsConverted.getOverapprs());
 			builder.addAuxVars(rhsConverted.getAuxVars());
 
-			final LocalLValue lValue = (LocalLValue) leftHandSide;
+			final LocalLValue lValue = (LocalLValue) lhs;
 			builder.setLrValue(lValue);
 
 			Expression rhsWithBitfieldTreatment;

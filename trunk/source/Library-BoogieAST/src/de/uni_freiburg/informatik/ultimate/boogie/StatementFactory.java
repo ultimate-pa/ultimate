@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public class StatementFactory {
 
-
 	public static AssignmentStatement constructSingleAssignmentStatement(final ILocation loc, final LeftHandSide lhs,
 			final Expression rhs) {
 		return constructAssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { rhs });
@@ -61,8 +60,8 @@ public class StatementFactory {
 		final BoogieType[] rhsTypes = new BoogieType[rhs.length];
 		for (int i = 0; i < lhs.length; i++) {
 			lhsIds[i] = TypeCheckHelper.getLeftHandSideIdentifier(lhs[i]);
-			lhsTypes[i] = (BoogieType) lhs[i].getType();
-			rhsTypes[i] = (BoogieType) rhs[i].getType();
+			lhsTypes[i] = ((BoogieType) lhs[i].getType()).getUnderlyingType();
+			rhsTypes[i] = ((BoogieType) rhs[i].getType()).getUnderlyingType();
 			assert lhsTypes[i] != null;
 			assert rhsTypes[i] != null;
 		}
@@ -71,7 +70,6 @@ public class StatementFactory {
 
 		return new AssignmentStatement(loc, lhs, rhs);
 	}
-
 
 	public static CallStatement constructCallStatement(final ILocation loc, final boolean isForall,
 			final VariableLHS[] variableLHSs, final String methodName, final Expression[] arguments) {
