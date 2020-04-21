@@ -407,7 +407,7 @@ public abstract class ExpressionTranslation {
 	public abstract Expression eraseBits(final ILocation loc, final Expression value, final CPrimitive cType,
 			final int remainingWith, final IASTNode hook);
 
-	public abstract Expression concatBits(ILocation loc, List<Expression> dataChunks, int size);
+	public abstract Expression concatBits(ILocation loc, List<Expression> dataChunks);
 
 	public abstract Expression signExtend(ILocation loc, Expression operand, int bitsBefore, int bitsAfter);
 

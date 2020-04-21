@@ -2092,7 +2092,7 @@ public class MemoryHandler {
 					dataChunks[dataChunks.length - 1 - i] = constructOneDimensionalArrayAccess(loc, arr, index);
 				}
 			}
-			dataFromHeap = mExpressionTranslation.concatBits(loc, Arrays.asList(dataChunks), hda.getSize());
+			dataFromHeap = mExpressionTranslation.concatBits(loc, Arrays.asList(dataChunks));
 		}
 
 		if (mMemoryModel instanceof MemoryModel_SingleBitprecise

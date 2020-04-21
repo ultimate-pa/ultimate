@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -664,9 +663,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		// do nothing. not needed for bitvectors
 	}
 
-	// What is int size used for?
 	@Override
-	public Expression concatBits(final ILocation loc, final List<Expression> dataChunks, final int size) {
+	public Expression concatBits(final ILocation loc, final List<Expression> dataChunks) {
 		Expression result;
 		final Iterator<Expression> it = dataChunks.iterator();
 		result = it.next();
@@ -1202,7 +1200,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public RValue constructOtherBinaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
 			final RValue first, final RValue second) {
-		// TODO Auto-generated method stub
+
+		// Note: arguments are already converted to the correct float variant based on FloatFunction#isBvFloat
+		// If they are not, do not try to convert in BitvectorTranslation, but fix it further up in the call hierarchy
 
 		switch (floatFunction.getFunctionName()) {
 		case "fmin":
@@ -1266,34 +1266,37 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 			return new RValue(firstNaNExpr, typeFirst);
 		case "copysign":
+			/**
+			 * https://en.cppreference.com/w/c/numeric/math/copysign
+			 * 
+			 * If no errors occur, the floating point value with the magnitude of x and the sign of y is returned.
+			 * 
+			 * If x is NaN, then NaN with the sign of y is returned.
+			 * 
+			 * If y is -0, the result is only negative if the implementation supports the signed zero consistently in
+			 * arithmetic operations.
+			 * 
+			 * This function is not subject to any errors specified in math_errhandling. If the implementation supports
+			 * IEEE floating-point arithmetic (IEC 60559), the returned value is exact (FE_INEXACT is never raised) and
+			 * independent of the current rounding mode.
+			 *
+			 * 
+			 * 
+			 */
 
-			// TODO: Handle negative NaN, check unsoundness
-			// if second is negative, return arithneg of abs(first), else return abs(first)
-			// final FloatFunction absfloatFunction = FloatFunction.decode("fabs");
-			// final RValue absoluteValue = constructOtherUnaryFloatOperation(loc, absfloatFunction, first);
-			//
-			// final String smtNegativeFunctionName = "fp.isNegative";
-			// final RValue secondNegativeRvalue =
-			// constructSmtFloatClassificationFunction(loc, smtNegativeFunctionName, second);
-			// final Expression isNegativeSecond = secondNegativeRvalue.getValue();
-			// final CPrimitive resultType = (CPrimitive) first.getCType().getUnderlyingType();
-			// final Expression negative = constructUnaryFloatingPointExpression(loc, IASTUnaryExpression.op_minus,
-			// absoluteValue.getValue(), resultType);
-			// final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegativeSecond,
-			// negative, absoluteValue.getValue());
-			// return new RValue(resultExpr, resultType);
+			// TODO: Handle negative NaN
 
-			final FloatingPointSize firstFpSize =
+			// base case looks like, e.g., ~fp~DOUBLE(y[64:63],x[63:52],x[52:0])
+			final FloatingPointSize argSize =
 					mTypeSizes.getFloatingPointSize(((CPrimitive) first.getCType()).getType());
-			final FloatingPointSize secondFpSize =
-					mTypeSizes.getFloatingPointSize(((CPrimitive) second.getCType()).getType());
-			final Expression unsignedBitVec = extractBits(loc, first.getValue(), firstFpSize.getDataSize() - 1, 0);
+			assert argSize.getBitSize() == mTypeSizes.getFloatingPointSize(((CPrimitive) second.getCType()).getType())
+					.getBitSize() : "arguments have different size ";
+			final Expression unsignedBitVec = extractBits(loc, first.getValue(), argSize.getDataSize() - 1, 0);
 			final Expression signBit =
-					extractBits(loc, second.getValue(), secondFpSize.getDataSize(), secondFpSize.getDataSize() - 1);
-
-			final List<Expression> resultAsList = Arrays.asList(unsignedBitVec, signBit);
-			final Expression result = concatBits(loc, resultAsList, firstFpSize.getBitSize());
-			return new RValue(result, first.getCType().getUnderlyingType());
+					extractBits(loc, second.getValue(), argSize.getDataSize(), argSize.getDataSize() - 1);
+			final Expression result = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.BITVECCONCAT,
+					signBit, unsignedBitVec);
+			return new RValue(result, first.getUnderlyingType());
 		default:
 			break;
 		}

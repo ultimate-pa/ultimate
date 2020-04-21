@@ -662,7 +662,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression concatBits(final ILocation loc, final List<Expression> dataChunks, final int size) {
+	public Expression concatBits(final ILocation loc, final List<Expression> dataChunks) {
 		// we probably also have to provide information if input is signed/unsigned
 		throw new UnsupportedOperationException("not yet implemented in non-bitprecise translation");
 	}
