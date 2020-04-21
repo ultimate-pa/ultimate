@@ -336,17 +336,6 @@ public class CPrimitive extends CType {
 	}
 
 	/**
-	 * @see CType#isSmtFloat()
-	 */
-	public CPrimitive setIsSmtFloat(final boolean isSmtFloat) {
-		return new CPrimitive(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), isSmtFloat, getType());
-	}
-
-	public CPrimitive getSmtFloatCounterpart() {
-		return new CPrimitive(mType.getSmtFloatCounterpart());
-	}
-
-	/**
 	 * Constructor.
 	 *
 	 * @param cDeclSpec

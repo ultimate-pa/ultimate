@@ -685,7 +685,7 @@ public class ExpressionResultTransformer {
 		if (newType instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) newType;
 			if (cPrimitive.isIntegerType()) {
-				return convertToIntegerType(loc, expr, (CPrimitive) newType);
+				return convertIfNecessary(loc, expr, (CPrimitive) newType);
 			}
 			if (cPrimitive.isRealFloatingType()) {
 				return convertToFloatingType(loc, expr, (CPrimitive) newType);
@@ -701,7 +701,7 @@ public class ExpressionResultTransformer {
 		if (newType instanceof CEnum) {
 			// C standard 6.4.4.3.2
 			// An identifier declared as an enumeration constant has type int.
-			return convertToIntegerType(loc, expr, new CPrimitive(CPrimitives.INT));
+			return convertIfNecessary(loc, expr, new CPrimitive(CPrimitives.INT));
 		}
 		if (newType instanceof CArray) {
 			throw new AssertionError("cannot convert to CArray");
@@ -711,41 +711,6 @@ public class ExpressionResultTransformer {
 		}
 		if (newType instanceof CStructOrUnion) {
 			throw new UnsupportedSyntaxException(loc, "conversion to CStruct not implemented.");
-		}
-		throw new AssertionError("unknown type " + newType);
-	}
-
-	private ExpressionResult convertToIntegerType(final ILocation loc, final ExpressionResult rexp,
-			final CPrimitive newType) {
-		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
-		final CType oldType = rexp.getLrValue().getCType().getUnderlyingType();
-		if (oldType instanceof CPrimitive) {
-			final CPrimitive cPrimitive = (CPrimitive) oldType;
-			if (cPrimitive.isIntegerType()) {
-				return mExprTrans.convertIntToInt(loc, rexp, newType);
-			}
-			if (cPrimitive.isRealFloatingType()) {
-				return mExprTrans.convertFloatToInt(loc, rexp, newType);
-			}
-			if (cPrimitive.getType().equals(CPrimitives.VOID)) {
-				throw new IncorrectSyntaxException(loc, "cannot convert from void");
-			}
-			throw new AssertionError("unknown type " + newType);
-		}
-		if (oldType instanceof CPointer) {
-			return mExprTrans.convertPointerToInt(loc, rexp, newType);
-		}
-		if (oldType instanceof CEnum) {
-			return mExprTrans.convertIntToInt(loc, rexp, newType);
-		}
-		if (oldType instanceof CArray) {
-			throw new AssertionError("cannot convert from CArray");
-		}
-		if (oldType instanceof CFunction) {
-			throw new AssertionError("cannot convert from CFunction");
-		}
-		if (oldType instanceof CStructOrUnion) {
-			throw new UnsupportedSyntaxException(loc, "conversion from CStruct not implemented.");
 		}
 		throw new AssertionError("unknown type " + newType);
 	}
@@ -1042,13 +1007,31 @@ public class ExpressionResultTransformer {
 			if (operandType.isIntegerType()) {
 				exprResult = mExprTrans.convertIntToInt(loc, operand, resultType);
 			} else if (operandType.isFloatingType()) {
-				exprResult = mExprTrans.convertFloatToInt(loc, operand, resultType);
+				if (operandType.isSmtFloat()) {
+					exprResult = mExprTrans.convertFloatToInt(loc, operand, resultType);
+				} else {
+					// first convert operand to smt float
+					final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(operand);
+					final CPrimitive smtOperandCType = ((CPrimitive) operandType).getSmtVariant();
+					final RValue smtOperandRValue = new RValue(mExprTrans.transformBitvectorToFloat(loc,
+							operand.getLrValue().getValue(), smtOperandCType.getType()), smtOperandCType);
+					erb.setLrValue(smtOperandRValue);
+					exprResult = mExprTrans.convertFloatToInt(loc, erb.build(), resultType);
+				}
 			} else {
 				throw new UnsupportedSyntaxException(loc, "conversion from " + operandType + " to " + resultType);
 			}
 		} else if (resultType.isFloatingType()) {
 			if (operandType.isIntegerType()) {
-				exprResult = mExprTrans.convertIntToFloat(loc, operand, resultType);
+				if (resultType.isSmtFloat()) {
+					exprResult = mExprTrans.convertIntToFloat(loc, operand, resultType);
+				} else {
+					final ExpressionResult smtResult =
+							mExprTrans.convertIntToFloat(loc, operand, resultType.getSmtVariant());
+					final ExpressionResult bvResult = convertToBvFloatIfNecessary(smtResult.getLrValue(), loc);
+					exprResult = new ExpressionResultBuilder().addAllExceptLrValue(smtResult)
+							.addAllIncludingLrValue(bvResult).build();
+				}
 			} else if (operandType.isFloatingType()) {
 				if (operandType.isSmtFloat()) {
 					if (resultType.isSmtFloat()) {
@@ -1058,11 +1041,9 @@ public class ExpressionResultTransformer {
 						// 1. perform conversion, 2. convert result to BV
 						final ExpressionResult converted =
 								mExprTrans.convertFloatToFloat(loc, operand, resultType.getSmtVariant());
-						exprResult =
-								new ExpressionResultBuilder().addAllExceptLrValue(converted)
-										.addAllIncludingLrValue(
-												convertToBvFloatIfNecessary(converted.getLrValue(), loc))
-										.build();
+						exprResult = new ExpressionResultBuilder().addAllExceptLrValue(converted)
+								.addAllIncludingLrValue(convertToBvFloatIfNecessary(converted.getLrValue(), loc))
+								.build();
 					}
 				} else {
 					if (resultType.isSmtFloat()) {
@@ -1084,11 +1065,9 @@ public class ExpressionResultTransformer {
 								.setLrValue(smtOperandRValue).build();
 						final ExpressionResult converted =
 								mExprTrans.convertFloatToFloat(loc, smtOperand, resultType.getSmtVariant());
-						exprResult =
-								new ExpressionResultBuilder().addAllExceptLrValue(converted)
-										.addAllIncludingLrValue(
-												convertToBvFloatIfNecessary(converted.getLrValue(), loc))
-										.build();
+						exprResult = new ExpressionResultBuilder().addAllExceptLrValue(converted)
+								.addAllIncludingLrValue(convertToBvFloatIfNecessary(converted.getLrValue(), loc))
+								.build();
 					}
 				}
 			} else {

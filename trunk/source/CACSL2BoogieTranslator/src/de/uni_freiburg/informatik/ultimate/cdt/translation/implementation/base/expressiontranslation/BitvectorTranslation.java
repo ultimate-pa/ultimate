@@ -581,14 +581,15 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public ExpressionResult convertIntToFloat(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
-		final CPrimitive conversionType = newType.setIsSmtFloat(true);
-		final String prefixedFunctionName = declareConversionFunction(loc,
-				(CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), conversionType);
+		assert rexp.getUnderlyingCType().isIntegerType();
+		assert newType.getUnderlyingType().isFloatingType() && newType.getUnderlyingType().isSmtFloat();
+		final String prefixedFunctionName =
+				declareConversionFunction(loc, (CPrimitive) rexp.getLrValue().getCType().getUnderlyingType(), newType);
 		final Expression oldExpression = rexp.getLrValue().getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { getCurrentRoundingMode(), oldExpression },
-				mTypeHandler.getBoogieTypeForCType(conversionType));
-		final RValue rVal = new RValue(resultExpression, conversionType, false, false);
+				mTypeHandler.getBoogieTypeForCType(newType));
+		final RValue rVal = new RValue(resultExpression, newType, false, false);
 		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
 
