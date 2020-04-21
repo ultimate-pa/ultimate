@@ -32,6 +32,7 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -84,14 +85,8 @@ public abstract class LRValue {
 	}
 
 	@Override
-	public final String toString() {
-		if (this instanceof HeapLValue) {
-			return "address: " + ((HeapLValue) this).getAddress();
-		} else if (this instanceof LocalLValue) {
-			return "lhs: " + ((LocalLValue) this).getLhs();
-		} else {
-			return "value: " + getValue();
-		}
+	public String toString() {
+		return "value: " + BoogiePrettyPrinter.print(getValue()) + " : " + getUnderlyingType();
 	}
 
 	/**
@@ -121,10 +116,10 @@ public abstract class LRValue {
 
 		if (value instanceof StructConstructor) {
 			final StructConstructor sc = (StructConstructor) value;
-			if (sc.getFieldValues().length == 2 && sc.getFieldIdentifiers()[0].equals(SFO.POINTER_BASE) &&
-					sc.getFieldIdentifiers()[1].equals(SFO.POINTER_OFFSET) &&
-					BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[0])) &&
-					BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[1]))) {
+			if (sc.getFieldValues().length == 2 && sc.getFieldIdentifiers()[0].equals(SFO.POINTER_BASE)
+					&& sc.getFieldIdentifiers()[1].equals(SFO.POINTER_OFFSET)
+					&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[0]))
+					&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[1]))) {
 				return true;
 			}
 		}

@@ -176,7 +176,7 @@ public class ExpressionResult extends Result {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("ExpressionResult");
-		sb.append("LrVal: " + mLrVal);
+		sb.append(" LrVal: ").append(mLrVal);
 		return sb.toString();
 	}
 

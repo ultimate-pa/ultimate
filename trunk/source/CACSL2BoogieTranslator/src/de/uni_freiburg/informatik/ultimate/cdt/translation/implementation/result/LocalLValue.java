@@ -79,4 +79,9 @@ public class LocalLValue extends LRValue {
 	public BitfieldInformation getBitfieldInformation() {
 		return mBitfieldInformation;
 	}
+
+	@Override
+	public String toString() {
+		return "lhs: " + getLhs() + " : " + getUnderlyingType();
+	}
 }
