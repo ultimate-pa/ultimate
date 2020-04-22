@@ -311,6 +311,8 @@ public class Interpolator extends NonRecursive {
 							|| leafTermInfo.getLemmaType().equals(":read-const-weakeq"))) {
 				final ArrayInterpolator ipolator = new ArrayInterpolator(this);
 				interpolants = ipolator.computeInterpolants(leaf);
+			} else if (leafTermInfo.getLemmaType().equals(":inst")) {
+				throw new UnsupportedOperationException("Interpolation not supported for quantified formulae.");
 			} else {
 				throw new UnsupportedOperationException("Unknown lemma type!");
 			}
@@ -434,6 +436,7 @@ public class Interpolator extends NonRecursive {
 
 		public Occurrence() {
 			mInA = new BitSet(mNumInterpolants + 1);
+			mInA.set(mNumInterpolants);
 			mInB = new BitSet(mNumInterpolants + 1);
 		}
 
@@ -600,7 +603,10 @@ public class Interpolator extends NonRecursive {
 			final ProofNode pn = clause.getProof();
 			assert pn instanceof LeafNode;
 			final LeafNode ln = (LeafNode) pn;
-			assert ((LeafNode) pn).hasSourceAnnotation();
+			if (ln.getLeafKind() == LeafNode.QUANT_INST) {
+				throw new UnsupportedOperationException("Interpolation not supported for quantified formulae.");
+			}
+			assert ln.hasSourceAnnotation();
 			final String source = ((SourceAnnotation) ln.getTheoryAnnotation()).getAnnotation();
 			final int partition = mPartitions.containsKey(source) ? mPartitions.get(source) : -1;
 			for (int i = 0; i < clause.getSize(); i++) {
