@@ -259,7 +259,7 @@ public class PostProcessor {
 	 * debugging. However, that this located in this class and fixed to bitvectors is a workaround.
 	 *
 	 */
-	public ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(final ILocation loc) {
+	private List<Declaration> declarePrimitiveDataTypeSynonyms(final ILocation loc) {
 		final ArrayList<Declaration> decls = new ArrayList<>();
 		for (final CPrimitive.CPrimitives cPrimitive : CPrimitive.CPrimitives.values()) {
 			final CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
@@ -284,7 +284,7 @@ public class PostProcessor {
 	 * Generate FloatingPoint types
 	 *
 	 */
-	public List<Declaration> declareFloatDataTypes(final ILocation loc) {
+	private List<Declaration> declareFloatDataTypes(final ILocation loc) {
 		final List<Declaration> decls = new ArrayList<>();
 
 		// handle non-complex float types
@@ -367,7 +367,7 @@ public class PostProcessor {
 				new CPrimitive(cPrimitive));
 	}
 
-	public ArrayList<Declaration> declareRoundingModeDataTypes(final ILocation loc) {
+	private List<Declaration> declareRoundingModeDataTypes(final ILocation loc) {
 		final ArrayList<Declaration> decls = new ArrayList<>();
 
 		final Attribute[] attributesRM;
@@ -546,8 +546,7 @@ public class PostProcessor {
 	}
 
 	private void createFloatToBitvectorProcedure(final ILocation loc, final int bytes) {
-		// TODO: DOUBLE AND LONGDOUBLE
-		CPrimitives floatCPrimitives = null;
+		final CPrimitives floatCPrimitives;
 		switch (bytes) {
 		case 4:
 			floatCPrimitives = CPrimitives.FLOAT;
@@ -570,6 +569,7 @@ public class PostProcessor {
 		final CPrimitive smtCType = new CPrimitive(floatCPrimitives.getSmtFloatCounterpart());
 		final ASTType smtFloatAstType = mTypeHandler.cType2AstType(loc, smtCType);
 		final ASTType floatAstType = mTypeHandler.cType2AstType(loc, cType);
+		final BoogieType smtFloatBoogieType = (BoogieType) smtFloatAstType.getBoogieType();
 		final BoogieType floatBoogieType = (BoogieType) floatAstType.getBoogieType();
 
 		final VarList[] inVarList = new VarList[] { new VarList(loc, new String[] { inVar }, smtFloatAstType) };
@@ -583,7 +583,7 @@ public class PostProcessor {
 		// make the specification ensures bv_out == ~fp~(f_in[xx:xx], f_in[yy:yy], f_in[zz:zz]);
 		final List<Specification> specs = new ArrayList<>();
 
-		final Expression inVarExp = ExpressionFactory.constructIdentifierExpression(loc, floatBoogieType, inVar,
+		final Expression inVarExp = ExpressionFactory.constructIdentifierExpression(loc, smtFloatBoogieType, inVar,
 				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, functionName));
 		final Expression outVarExp = ExpressionFactory.constructIdentifierExpression(loc, floatBoogieType, outVar,
 				new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, functionName));
@@ -591,17 +591,8 @@ public class PostProcessor {
 		final Expression outVarToFloat =
 				mExpressionTranslation.transformBitvectorToFloat(loc, outVarExp, floatCPrimitives);
 
-		// final String smtFunctionName = "fp.eq";
-		// final String fullFunctionName = SFO.getBoogieFunctionName("fp.eq", cType);
-		// final Expression comparison = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-		// new Expression[] { inVarExp, outVarToFloat }, BoogieType.TYPE_BOOL);
-
 		final Expression comparison =
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, inVarExp, outVarToFloat);
-
-		// declare fp.eq as necessary
-		// mExpressionTranslation.declareFloatingPointFunction(loc, smtFunctionName, true, false,
-		// new CPrimitive(CPrimitives.BOOL), cType, cType);
 
 		final EnsuresSpecification spec =
 				mProcedureManager.constructEnsuresSpecification(loc, false, comparison, Collections.emptySet());
