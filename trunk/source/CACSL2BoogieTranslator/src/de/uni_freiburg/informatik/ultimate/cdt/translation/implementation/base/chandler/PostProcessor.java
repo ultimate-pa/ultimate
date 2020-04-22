@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -546,7 +547,7 @@ public class PostProcessor {
 
 	private void createFloatToBitvectorProcedure(final ILocation loc, final int bytes) {
 		// TODO: DOUBLE AND LONGDOUBLE
-				CPrimitives floatCPrimitives = null;
+		CPrimitives floatCPrimitives = null;
 		switch (bytes) {
 		case 4:
 			floatCPrimitives = CPrimitives.FLOAT;
@@ -560,11 +561,11 @@ public class PostProcessor {
 		default:
 			throw new UnsupportedOperationException("Unexpected float width: " + bytes);
 		}
-		
+
 		final String functionName = BitvectorTranslation.FLOAT_PROC_FLOAT_TO_BV + floatCPrimitives.toString();
 		final String inVar = "f_in";
 		final String outVar = "bv_out";
-		
+
 		final CPrimitive cType = new CPrimitive(floatCPrimitives);
 		final CPrimitive smtCType = new CPrimitive(floatCPrimitives.getSmtFloatCounterpart());
 		final ASTType smtFloatAstType = mTypeHandler.cType2AstType(loc, smtCType);
@@ -590,14 +591,17 @@ public class PostProcessor {
 		final Expression outVarToFloat =
 				mExpressionTranslation.transformBitvectorToFloat(loc, outVarExp, floatCPrimitives);
 
-		final String smtFunctionName = "fp.eq";
-		final String fullFunctionName = SFO.getBoogieFunctionName("fp.eq", cType);
-		final Expression comparison = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
-				new Expression[] { inVarExp, outVarToFloat }, BoogieType.TYPE_BOOL);
+		// final String smtFunctionName = "fp.eq";
+		// final String fullFunctionName = SFO.getBoogieFunctionName("fp.eq", cType);
+		// final Expression comparison = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+		// new Expression[] { inVarExp, outVarToFloat }, BoogieType.TYPE_BOOL);
+
+		final Expression comparison =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, inVarExp, outVarToFloat);
 
 		// declare fp.eq as necessary
-		mExpressionTranslation.declareFloatingPointFunction(loc, smtFunctionName, true, false,
-				new CPrimitive(CPrimitives.BOOL), cType, cType);
+		// mExpressionTranslation.declareFloatingPointFunction(loc, smtFunctionName, true, false,
+		// new CPrimitive(CPrimitives.BOOL), cType, cType);
 
 		final EnsuresSpecification spec =
 				mProcedureManager.constructEnsuresSpecification(loc, false, comparison, Collections.emptySet());
