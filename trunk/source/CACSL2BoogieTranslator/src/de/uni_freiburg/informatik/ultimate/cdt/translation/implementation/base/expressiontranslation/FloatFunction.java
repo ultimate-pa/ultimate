@@ -65,8 +65,7 @@ public class FloatFunction {
 			"fdim" // see 7.12.12.1
 	};
 
-	private static final Set<String> IS_BITVEC_FLOAT_FUNCTION = new HashSet<>(Arrays.asList("sqrt", "fabs", "fmin",
-			"fmax", "trunc", "round", "lround", "llround", "floor", "sin", "remainder", "fmod", "fdim", "copysign"));
+	private static final Set<String> IS_BITVEC_FLOAT_FUNCTION = new HashSet<>(Arrays.asList("copysign"));
 
 	private static final String[] TYPE_SUFFIXES = { "f", "d", "l" };
 
