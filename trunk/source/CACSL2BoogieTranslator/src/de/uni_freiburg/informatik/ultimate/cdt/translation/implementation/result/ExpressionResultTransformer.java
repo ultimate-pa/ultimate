@@ -1112,7 +1112,7 @@ public class ExpressionResultTransformer {
 					StatementFactory
 							.constructCallStatement(loc, false, new VariableLHS[] { auxvarinfo.getLhs() },
 									BitvectorTranslation.FLOAT_PROC_FLOAT_TO_BV
-											+ Integer.toString(mTypeSizes.getFloatingPointSize(cType).getBitSize()),
+											+ cType.getBvVariant().toString(),
 									arguments);
 			erb.addStatement(call);
 			erb.setLrValue(new RValue(auxvarinfo.getExp(), cType.getBvVariant()));

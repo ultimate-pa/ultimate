@@ -546,11 +546,7 @@ public class PostProcessor {
 
 	private void createFloatToBitvectorProcedure(final ILocation loc, final int bytes) {
 		// TODO: DOUBLE AND LONGDOUBLE
-		final String functionName = BitvectorTranslation.FLOAT_PROC_FLOAT_TO_BV + Integer.toString(bytes * 8);
-		final String inVar = "f_in";
-		final String outVar = "bv_out";
-
-		CPrimitives floatCPrimitives = null;
+				CPrimitives floatCPrimitives = null;
 		switch (bytes) {
 		case 4:
 			floatCPrimitives = CPrimitives.FLOAT;
@@ -564,6 +560,11 @@ public class PostProcessor {
 		default:
 			throw new UnsupportedOperationException("Unexpected float width: " + bytes);
 		}
+		
+		final String functionName = BitvectorTranslation.FLOAT_PROC_FLOAT_TO_BV + floatCPrimitives.toString();
+		final String inVar = "f_in";
+		final String outVar = "bv_out";
+		
 		final CPrimitive cType = new CPrimitive(floatCPrimitives);
 		final CPrimitive smtCType = new CPrimitive(floatCPrimitives.getSmtFloatCounterpart());
 		final ASTType smtFloatAstType = mTypeHandler.cType2AstType(loc, smtCType);

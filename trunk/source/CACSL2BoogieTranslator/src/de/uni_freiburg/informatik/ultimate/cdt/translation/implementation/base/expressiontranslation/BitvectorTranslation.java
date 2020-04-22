@@ -171,7 +171,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	public static final String FLOAT_VAR_NAME_CURRENT_ROUNDING_MODE = "~CRM";
 	public static final String FLOAT_PROC_SET_CURRENT_ROUNDING_MODE = "ULTIMATE.setCRM";
-	public static final String FLOAT_PROC_FLOAT_TO_BV = "ULTIMATE.float_to_bitvec";
+	public static final String FLOAT_PROC_FLOAT_TO_BV = "ULTIMATE.float_to_bitvec_";
 
 	public static final String SMT_LIB_NAN = "NaN";
 	public static final String SMT_LIB_PLUS_INF = "+oo";
