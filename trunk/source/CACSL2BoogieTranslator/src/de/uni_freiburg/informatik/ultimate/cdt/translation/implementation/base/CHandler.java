@@ -2537,8 +2537,7 @@ public class CHandler {
 			if (lhs instanceof HeapLValue) {
 				final Expression address = ((HeapLValue) lhs).getAddress();
 				if (address instanceof IdentifierExpression) {
-					final String lId =
-							((IdentifierExpression) ((HeapLValue) lhs).getAddress()).getIdentifier();
+					final String lId = ((IdentifierExpression) ((HeapLValue) lhs).getAddress()).getIdentifier();
 					markAsIntFromPointer(loc, lId, hook);
 				} else {
 					// TODO
@@ -3785,23 +3784,24 @@ public class CHandler {
 	 * <code>t~post</code> stores the old value of the object to which the lvalue <code>LV</code> refers.
 	 */
 	private Result handlePostfixIncrementAndDecrement(final ILocation loc, final int postfixOp,
-			ExpressionResult exprRes, final IASTNode hook) {
+			final ExpressionResult exprRes, final IASTNode hook) {
 		assert !exprRes.getLrValue().isBoogieBool();
-		final LRValue modifiedLValue = exprRes.getLrValue();
-		exprRes = mExprResultTransformer.switchToRValue(exprRes, loc, hook);
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllIncludingLrValue(exprRes);
+		final LRValue originalLValue = exprRes.getLrValue();
+
+		final ExpressionResultBuilder builder =
+				new ExpressionResultBuilder(mExprResultTransformer.switchToRValue(exprRes, loc, hook));
 
 		// In this case we need a temporary variable for the old value
 		final AuxVarInfo auxvar =
-				mAuxVarInfoBuilder.constructAuxVarInfo(loc, exprRes.getLrValue().getCType(), SFO.AUXVAR.POST_MOD);
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, builder.getLrValue().getCType(), SFO.AUXVAR.POST_MOD);
 		builder.addDeclaration(auxvar.getVarDec());
 		builder.addAuxVar(auxvar);
 
 		// assign the old value to the temporary variable
 		final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
-		final Expression[] oldValue = new Expression[] { exprRes.getLrValue().getValue() };
+		final Expression[] oldValue = new Expression[] { builder.getLrValue().getValue() };
 		builder.addStatement(StatementFactory.constructAssignmentStatement(loc, tmpAsLhs, oldValue));
-		final CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
+		final CType oType = builder.getLrValue().getUnderlyingType();
 		final RValue tmpRValue = new RValue(auxvar.getExp(), oType);
 
 		final int op;
@@ -3810,7 +3810,7 @@ public class CHandler {
 		} else if (postfixOp == IASTUnaryExpression.op_postFixDecr) {
 			op = IASTBinaryExpression.op_minus;
 		} else {
-			throw new AssertionError("no postfix");
+			throw new AssertionError("no postfix operator");
 		}
 
 		// in-/decremented value
@@ -3819,7 +3819,7 @@ public class CHandler {
 
 		builder.setOrResetLrValue(new RValue(valueXcremented, oType, false, false));
 		final ExpressionResult assign =
-				makeAssignment(loc, modifiedLValue, Collections.emptyList(), builder.build(), hook);
+				makeAssignment(loc, originalLValue, Collections.emptyList(), builder.build(), hook);
 		return new ExpressionResultBuilder().addAllExceptLrValue(assign).setLrValue(tmpRValue).build();
 	}
 
@@ -4632,7 +4632,8 @@ public class CHandler {
 			// TODO: bitvec procedure here
 			final RValue rval = new RValue(bwexpr, resultType, false);
 			if (resultType.isFloatingType()) {
-				return result.addAllIncludingLrValue(mExprResultTransformer.convertToBvFloatIfNecessary(rval, loc)).build();
+				return result.addAllIncludingLrValue(mExprResultTransformer.convertToBvFloatIfNecessary(rval, loc))
+						.build();
 			}
 			return result.setLrValue(rval).build();
 		default:
