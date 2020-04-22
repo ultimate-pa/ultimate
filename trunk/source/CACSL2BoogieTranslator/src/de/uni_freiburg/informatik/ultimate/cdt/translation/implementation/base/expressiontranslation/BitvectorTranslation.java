@@ -211,9 +211,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public Expression constructLiteralForFloatingType(final ILocation loc, final CPrimitive type,
 			final BigDecimal value) {
+		assert type.isFloatingType() : "Cannot construct Float literal for " + type;
 		if (mSettings.overapproximateFloatingPointOperations()) {
 			return super.constructOverapproximationFloatLiteral(loc, value.toString(), type);
 		}
+		assert type.isSmtFloat() : "Cannot create literal for BvFloat as it is not an expression";
 		final Expression[] arguments;
 		final String smtFunctionName;
 		if (value.compareTo(BigDecimal.ZERO) == 0) {
@@ -227,6 +229,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final String functionName = SFO.getBoogieFunctionName(smtFunctionName, type);
 		return ExpressionFactory.constructFunctionApplication(loc, functionName, arguments,
 				mTypeHandler.getBoogieTypeForCType(type));
+
 	}
 
 	@Override
@@ -1345,7 +1348,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector,
 			final CPrimitives targetType) {
 		assert targetType.isFloatingType() : "Target type is not float";
-		assert TypeCheckHelper.getBitVecLength(bitvector.getType()) != -1 : "BV expression is not BV";
+		assert TypeCheckHelper.getBitVecLength(bitvector.getType()) != -1 : "BV expression is not BV but "
+				+ bitvector.getType();
 		final CPrimitive targetCTypeSMT = new CPrimitive(targetType.getSMTVariant());
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(targetType);
 		final Expression significantBits = extractBits(loc, bitvector, fps.getSignificant() - 1, 0);

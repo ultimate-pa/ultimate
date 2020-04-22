@@ -6,8 +6,8 @@
  */
 
 int main(void) {
-	float f = 1.0;
+	float f = 1.0f;
 	f++;
-	//@ assert f == 2.0;
+	//@ assert f == 2.0f;
 	return 0;
 }

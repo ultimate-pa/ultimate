@@ -3403,38 +3403,59 @@ public class CHandler {
 	 * by the size of the pointsToType and call the method that adds (depending on the settings) an check if the pointer
 	 * arithmetic was legal.
 	 *
-	 * @param result
+	 * @param erb
 	 *            note that this method has sideeffects on this object! (add..BoundCheck(..) calls)
 	 */
-	private Expression constructXcrementedValue(final ILocation loc, final ExpressionResultBuilder result,
-			final CType ctype, final int op, final Expression value, final IASTNode hook) {
+	private Expression constructXcrementedValue(final ILocation loc, final ExpressionResultBuilder erb, final int op,
+			final LRValue value, final IASTNode hook) {
 		assert op == IASTBinaryExpression.op_plus
 				|| op == IASTBinaryExpression.op_minus : "has to be either minus or plus";
+
 		final Expression valueIncremented;
+		final CType ctype = value.getCType();
+		final Expression expr = value.getValue();
 		if (ctype instanceof CPointer) {
 			final CPointer cPointer = (CPointer) ctype;
 			final Expression oneEpr = mTypeSizes.constructLiteralForIntegerType(loc,
 					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 			final CPrimitive oneType = mExpressionTranslation.getCTypeOfPointerComponents();
 			final RValue one = new RValue(oneEpr, oneType);
-			valueIncremented =
-					mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.getPointsToType(), hook);
-			addOffsetInBoundsCheck(loc, valueIncremented, result);
+			valueIncremented = mMemoryHandler.doPointerArithmetic(op, loc, expr, one, cPointer.getPointsToType(), hook);
+			addOffsetInBoundsCheck(loc, valueIncremented, erb);
 		} else if (ctype instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) ctype;
 
 			final Expression one;
-			if (ctype.isFloatingType()) {
-				one = mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ONE);
+			if (cPrimitive.isFloatingType()) {
+				final Expression smtOne = mExpressionTranslation.constructLiteralForFloatingType(loc,
+						cPrimitive.getSmtVariant(), BigDecimal.ONE);
+				if (cPrimitive.isSmtFloat()) {
+					one = smtOne;
+				} else {
+					final ExpressionResult bvOneResult = mExprResultTransformer
+							.convertToBvFloatIfNecessary(new RValue(smtOne, cPrimitive.getSmtVariant()), loc);
+					erb.addAllExceptLrValue(bvOneResult);
+					one = bvOneResult.getLrValue().getValue();
+				}
 			} else {
 				one = mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
 			}
-			addIntegerBoundsCheck(loc, result, cPrimitive, op, hook, value, one);
-			valueIncremented =
-					mExpressionTranslation.constructArithmeticExpression(loc, op, value, cPrimitive, one, cPrimitive);
+			addIntegerBoundsCheck(loc, erb, cPrimitive, op, hook, expr, one);
+
+			final Expression smtValueIncremented =
+					mExpressionTranslation.constructArithmeticExpression(loc, op, expr, cPrimitive, one, cPrimitive);
+			if (cPrimitive.isFloatingType() && !cPrimitive.isSmtFloat()) {
+				final ExpressionResult bvValueIncremented = mExprResultTransformer
+						.convertToBvFloatIfNecessary(new RValue(smtValueIncremented, cPrimitive.getSmtVariant()), loc);
+				erb.addAllExceptLrValue(bvValueIncremented);
+				valueIncremented = bvValueIncremented.getLrValue().getValue();
+			} else {
+				valueIncremented = smtValueIncremented;
+			}
 		} else {
 			throw new IllegalArgumentException("input has to be CPointer or CPrimitive");
 		}
+
 		return valueIncremented;
 	}
 
@@ -3814,12 +3835,13 @@ public class CHandler {
 		}
 
 		// in-/decremented value
-		final Expression valueXcremented =
-				constructXcrementedValue(loc, builder, oType, op, tmpRValue.getValue(), hook);
+		final Expression valueXcremented = constructXcrementedValue(loc, builder, op, tmpRValue, hook);
 
-		builder.setOrResetLrValue(new RValue(valueXcremented, oType, false, false));
+		final ExpressionResult incrementedValue = builder.setOrResetLrValue(new RValue(valueXcremented, oType)).build();
+		final ExpressionResult convertedValue = mExprResultTransformer.convertIfNecessary(loc, incrementedValue,
+				(CPrimitive) originalLValue.getUnderlyingType());
 		final ExpressionResult assign =
-				makeAssignment(loc, originalLValue, Collections.emptyList(), builder.build(), hook);
+				makeAssignment(loc, originalLValue, Collections.emptyList(), convertedValue, hook);
 		return new ExpressionResultBuilder().addAllExceptLrValue(assign).setLrValue(tmpRValue).build();
 	}
 
@@ -3858,8 +3880,7 @@ public class CHandler {
 
 		final CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
 		// in-/decremented value
-		final Expression valueXcremented =
-				constructXcrementedValue(loc, builder, oType, op, exprRes.getLrValue().getValue(), hook);
+		final Expression valueXcremented = constructXcrementedValue(loc, builder, op, exprRes.getLrValue(), hook);
 
 		// assign the old value to the temporary variable
 		final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
