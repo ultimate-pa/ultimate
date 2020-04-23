@@ -1226,9 +1226,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			 * The fmod functions return the value x − ny, for some integer n such that, if y is nonzero, the result has
 			 * the same sign as x and magnitude less than the magnitude of y. If y is zero, whether a domain error
 			 * occurs or the fmod functions return zero is implementation- defined.
+			 * 
+			 * see also https://en.cppreference.com/w/c/numeric/math/fmod (notes above incomplete)
 			 */
 			// fmod guarantees that the return value is the same sign as the first argument (x)
-			// copies the sign of firts element to remainder value
+			// copies the sign of first element to remainder value
 			// Copysign might not be correct - fmod does not guarantee -NaNs
 			final RValue remainderValue = delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
 			final FloatFunction copySignFunction = FloatFunction.decode("copysign");
