@@ -130,6 +130,7 @@ public class Theory {
 	private int mTvarCtr = 0;
 
 	private int mSkolemCounter = 0;
+	private int mAuxCounter = 0;
 
 	private boolean mGlobalDecls;
 
@@ -1601,7 +1602,7 @@ public class Theory {
 		}
 	}
 
-	/******************** SKOLEMIZATION SUPPORT ***************************/
+	/******************** QUANTIFIER SUPPORT ***************************/
 	public Term skolemize(final TermVariable tv, final QuantifiedFormula qf) {
 		final TermVariable[] freeVars = qf.getFreeVars();
 		final Term[] args = new Term[freeVars.length];
@@ -1613,6 +1614,18 @@ public class Theory {
 		final FunctionSymbol fsym = new FunctionSymbol("@" + tv.getName() + "_skolem_" + mSkolemCounter++, null,
 				freeVarSorts, tv.getSort(), null, null, 0);
 		return term(fsym, args);
+	}
+
+	/**
+	 * Create a fresh auxiliary function that stands for the given term and takes the given variables as arguments.
+	 */
+	public FunctionSymbol createFreshAuxFunction(final TermVariable[] vars, final Term term) {
+		final Sort[] paramSorts = new Sort[vars.length];
+		for (int i = 0; i < vars.length; i++) {
+			paramSorts[i] = vars[i].getSort();
+		}
+		return declareInternalFunction("@AUX" + (mAuxCounter++), paramSorts, vars, term,
+				FunctionSymbol.UNINTERPRETEDINTERNAL); // TODO Change flag?
 	}
 
 	public void resetAssertions() {

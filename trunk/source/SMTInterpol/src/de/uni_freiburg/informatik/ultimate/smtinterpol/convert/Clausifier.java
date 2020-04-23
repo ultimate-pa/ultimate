@@ -1243,7 +1243,6 @@ public class Clausifier {
 	private final TermCompiler mCompiler = new TermCompiler();
 	private final OccurrenceCounter mOccCounter = new OccurrenceCounter();
 	private final Deque<Operation> mTodoStack = new ArrayDeque<>();
-	private int mAuxCounter = 0;
 
 	private final Theory mTheory;
 	private final DPLLEngine mEngine;
@@ -1697,14 +1696,11 @@ public class Clausifier {
 				assert mTheory.getLogic().isQuantified() : "quantified variables in quantifier-free theory";
 				final TermVariable[] freeVars = new TermVariable[term.getFreeVars().length];
 				final Term[] freeVarsAsTerm = new Term[freeVars.length];
-				final Sort[] paramTypes = new Sort[freeVars.length];
 				for (int i = 0; i < freeVars.length; i++) {
 					freeVars[i] = term.getFreeVars()[i];
 					freeVarsAsTerm[i] = freeVars[i];
-					paramTypes[i] = freeVars[i].getSort();
 				}
-				final FunctionSymbol fs = mTheory.declareInternalFunction("@AUX" + (mAuxCounter++), paramTypes,
-						freeVars, term, FunctionSymbol.UNINTERPRETEDINTERNAL); // TODO change flag in the future
+				final FunctionSymbol fs = mTheory.createFreshAuxFunction(freeVars, term);
 				final ApplicationTerm auxTerm = mTheory.term(fs, freeVarsAsTerm);
 				if (mIsEprEnabled) {
 					lit = mEprTheory.getEprAtom(auxTerm, 0, mStackLevel, SourceAnnotation.EMPTY_SOURCE_ANNOT);
