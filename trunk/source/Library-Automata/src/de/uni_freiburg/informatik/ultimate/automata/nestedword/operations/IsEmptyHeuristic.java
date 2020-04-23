@@ -984,25 +984,20 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		double getConcreteCost(LETTER trans);
 
 		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getHeuristic(final AStarHeuristic astarHeuristic,
-				final ScoringMethod scoringMethod, final Integer seed) {
-			IHeuristic<STATE, LETTER> heuristic = null;
-			if (astarHeuristic == AStarHeuristic.ZERO) {
-				heuristic = IHeuristic.getZeroHeuristic();
-			} else if (astarHeuristic == AStarHeuristic.SMT_FEATURE_COMPARISON) {
-				heuristic = IHeuristic.getSmtFeatureHeuristic(scoringMethod);
-			} else if (astarHeuristic == AStarHeuristic.RANDOM_HALF) {
-				heuristic = IHeuristic.getRandomHeuristicHalf(seed);
-			} else if (astarHeuristic == AStarHeuristic.RANDOM_FULL) {
-				heuristic = IHeuristic.getRandomHeuristicFull(seed);
-			}
+				final ScoringMethod scoringMethod, final long seed) {
+			switch (astarHeuristic) {
+			case RANDOM_FULL:
+				return IHeuristic.getRandomHeuristicFull(seed);
+			case RANDOM_HALF:
+				return IHeuristic.getRandomHeuristicHalf(seed);
+			case SMT_FEATURE_COMPARISON:
+				return IHeuristic.getSmtFeatureHeuristic(scoringMethod);
+			case ZERO:
+				return IHeuristic.getZeroHeuristic();
+			default:
+				throw new UnsupportedOperationException("Unknown heuristic: " + astarHeuristic.toString());
 
-			if (heuristic != null) {
-				return heuristic;
-			} else {
-				throw new UnsupportedOperationException(
-						"Heuristic  " + astarHeuristic.toString() + " is not Supported");
 			}
-
 		}
 
 		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getZeroHeuristic() {
@@ -1051,14 +1046,14 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 				@Override
 				public final double getConcreteCost(final LETTER e) {
-					return 0.1 + mRandom.nextDouble();
+					return mConcreteCosts.computeIfAbsent(e, a -> 0.1 + mRandom.nextDouble());
 				}
 			};
 		}
 
 		public static <STATE, LETTER> SmtFeatureHeuristic<STATE, LETTER>
 				getSmtFeatureHeuristic(final ScoringMethod scoringMethod) {
-			return new SmtFeatureHeuristic<STATE, LETTER>(scoringMethod);
+			return new SmtFeatureHeuristic<>(scoringMethod);
 		}
 
 	}
