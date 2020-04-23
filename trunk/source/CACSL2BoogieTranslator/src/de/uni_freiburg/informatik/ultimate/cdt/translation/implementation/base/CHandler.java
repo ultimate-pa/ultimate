@@ -2339,31 +2339,33 @@ public class CHandler {
 		case IASTUnaryExpression.op_minus:
 		case IASTUnaryExpression.op_not:
 		case IASTUnaryExpression.op_plus:
-		case IASTUnaryExpression.op_tilde: {
+		case IASTUnaryExpression.op_tilde:
 			final ExpressionResult rop = mExprResultTransformer.switchToRValue(operand, loc, node);
 			return handleUnaryArithmeticOperators(loc, node.getOperator(), rop, node);
-		}
+
 		case IASTUnaryExpression.op_postFixIncr:
-		case IASTUnaryExpression.op_postFixDecr: {
+		case IASTUnaryExpression.op_postFixDecr:
 			return handlePostfixIncrementAndDecrement(loc, node.getOperator(), operand, node);
-		}
+
 		case IASTUnaryExpression.op_prefixDecr:
-		case IASTUnaryExpression.op_prefixIncr: {
+		case IASTUnaryExpression.op_prefixIncr:
 			return handlePrefixIncrementAndDecrement(node.getOperator(), loc, operand, node);
-		}
+
 		case IASTUnaryExpression.op_bracketedPrimary:
 			return operand;
 		case IASTUnaryExpression.op_sizeof:
+			// TODO: sizeof expr for VLAs is unclear (see
+			// https://en.cppreference.com/w/c/language/sizeof)
 			final CType operandType = operand.getCType().getUnderlyingType();
-			return new ExpressionResult(
-					new RValue(mMemoryHandler.calculateSizeOf(loc, operandType, node), mTypeSizeComputer.getSizeT()),
-					Collections.emptySet());
-		case IASTUnaryExpression.op_star: {
+			return new ExpressionResultBuilder(operand).setOrResetLrValue(
+					new RValue(mMemoryHandler.calculateSizeOf(loc, operandType, node), mTypeSizeComputer.getSizeT()))
+					.build();
+		case IASTUnaryExpression.op_star:
 			return handleIndirectionOperator(operand, loc, node);
-		}
-		case IASTUnaryExpression.op_amper: {
+
+		case IASTUnaryExpression.op_amper:
 			return handleAddressOfOperator(operand, loc, node);
-		}
+
 		case IASTUnaryExpression.op_alignOf:
 		default:
 			final String msg = "Unknown or unsupported unary operation: " + node.getOperator();
@@ -4142,8 +4144,9 @@ public class CHandler {
 	/**
 	 * Handle conditional operator according to Section 6.5.15 of C11. Assumes that opCondition, opPositive, and
 	 * opNegative are the results from handling the operands. Requires that the {@link LRValue} of operands is an
-	 * {@link RValue} (i.e., switchToRValueIfNecessary was applied if needed). TODO: Check all corner cases, write some
-	 * testfiles.
+	 * {@link RValue} (i.e., switchToRValueIfNecessary was applied if needed).
+	 * 
+	 * TODO: Check all corner cases, write some testfiles.
 	 *
 	 */
 	ExpressionResult handleConditionalOperator(final ILocation loc, final ExpressionResult opConditionRaw,
@@ -4335,9 +4338,9 @@ public class CHandler {
 			}
 			resultBuilder.addStatement(rtrStatement);
 		} else if (isBranchDead) {
-			assignAuxVar(loc, opPositive, resultBuilder, auxvar, null, secondArgIsVoid);
+			resultBuilder.addAllExceptLrValue(opPositive);
 		} else {
-			assignAuxVar(loc, opNegative, resultBuilder, auxvar, null, thirdArgIsVoid);
+			resultBuilder.addAllExceptLrValue(opNegative);
 		}
 
 		if (isBranchDead == null) {
