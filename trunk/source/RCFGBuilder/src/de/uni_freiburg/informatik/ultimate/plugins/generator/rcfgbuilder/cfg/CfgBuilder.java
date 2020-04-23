@@ -295,7 +295,8 @@ public class CfgBuilder {
 		mLogger.info("Removed " + mRemovedAssumeTrueStatements + " assume(true) statements.");
 
 		if (!isAtomicCompositionComplete()) {
-			throw new UnsupportedOperationException("Large block encoding incomplete: Is there illegal control flow (e.g. loops) within an atomic block?");
+			throw new UnsupportedOperationException(
+					"Large block encoding incomplete: Is there illegal control flow (e.g. loops) within an atomic block?");
 		}
 
 		return icfg;
@@ -305,11 +306,13 @@ public class CfgBuilder {
 		return IcfgLocationIterator.asStream(mIcfg).allMatch(loc -> {
 			if (isStartOfAtomicBlock(loc)) {
 				return loc.getOutgoingNodes().stream().allMatch(successor -> {
-					if (isEndOfAtomicBlock(successor) || ((BoogieIcfgLocation)successor).isErrorLocation()) {
+					if (isEndOfAtomicBlock(successor) || ((BoogieIcfgLocation) successor).isErrorLocation()) {
 						return true;
 					}
-					mLogger.warn("Unexpected successor node of atomic block begin: %s is neither atomic block end nor error location.", successor);
-					return ((BoogieIcfgLocation)successor).getOutgoingNodes().isEmpty();
+					mLogger.warn(
+							"Unexpected successor node of atomic block begin: %s is neither atomic block end nor error location.",
+							successor);
+					return ((BoogieIcfgLocation) successor).getOutgoingNodes().isEmpty();
 				});
 			}
 			return true;
@@ -334,6 +337,7 @@ public class CfgBuilder {
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
 
 		final boolean dumpSmtScriptToFile = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
+		final boolean compressSmtScript = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_COMPRESS_SMT_DUMP_FILE);
 		final String pathOfDumpedScript = prefs.getString(RcfgPreferenceInitializer.LABEL_DUMP_PATH);
 
 		final String commandExternalSolver = prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
@@ -348,7 +352,7 @@ public class CfgBuilder {
 				Logics.valueOf(prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
 				.setUseFakeIncrementalScript(fakeNonIncrementalScript)
-				.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename)
+				.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename, compressSmtScript)
 				.setDumpUnsatCoreTrackBenchmark(dumpUnsatCoreTrackBenchmark)
 				.setDumpMainTrackBenchmark(dumpMainTrackBenchmark)
 				.setUseExternalSolver(true, commandExternalSolver, logicForExternalSolver).setSolverMode(solverMode);
@@ -513,7 +517,7 @@ public class CfgBuilder {
 				} else if (st instanceof GotoStatement) {
 					mAllGotoTargets.addAll(Arrays.asList(((GotoStatement) st).getLabels()));
 				} else if (st instanceof AtomicStatement) {
-					processStatements(((AtomicStatement)st).getBody());
+					processStatements(((AtomicStatement) st).getBody());
 				} else if (st instanceof AssignmentStatement || st instanceof AssumeStatement
 						|| st instanceof HavocStatement || st instanceof Label || st instanceof JoinStatement
 						|| st instanceof CallStatement || st instanceof ReturnStatement
@@ -820,9 +824,8 @@ public class CfgBuilder {
 				}
 				if (mCurrent instanceof BoogieIcfgLocation) {
 					assert precedingSt instanceof Label || precedingSt instanceof CallStatement
-							|| precedingSt instanceof ForkStatement
-							|| precedingSt instanceof JoinStatement
-							|| isEndOfAtomicBlock((IcfgLocation)mCurrent) : "If mcurrent is LocNode, then st is first "
+							|| precedingSt instanceof ForkStatement || precedingSt instanceof JoinStatement
+							|| isEndOfAtomicBlock((IcfgLocation) mCurrent) : "If mcurrent is LocNode, then st is first "
 									+ "statement of a block; first statement after a call, fork, or join; or follows an atomic block";
 				}
 				processCallStatement((CallStatement) st);
@@ -1297,7 +1300,8 @@ public class CfgBuilder {
 			final boolean procedureHasImplementation = mBoogieDeclarations.getProcImplementation().containsKey(callee);
 			final boolean nonFreeRequiresIsEmpty = requiresNonFree == null || requiresNonFree.isEmpty();
 
-			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock) && !procedureHasImplementation && nonFreeRequiresIsEmpty) {
+			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock)
+					&& !procedureHasImplementation && nonFreeRequiresIsEmpty) {
 				if (mCurrent instanceof BoogieIcfgLocation) {
 					startNewStatementSequenceAndAddStatement(st, Origin.IMPLEMENTATION);
 				} else if (mCurrent instanceof CodeBlock) {
@@ -1556,7 +1560,9 @@ public class CfgBuilder {
 	/**
 	 * Defines which statements will be composed.
 	 */
-	enum InternalLbeMode { ONLY_ATOMIC_BLOCK, ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS, ALL }
+	enum InternalLbeMode {
+		ONLY_ATOMIC_BLOCK, ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS, ALL
+	}
 
 	private class LargeBlockEncoding {
 
@@ -1674,7 +1680,8 @@ public class CfgBuilder {
 			if (pp.getIncomingEdges().isEmpty() || pp.getOutgoingEdges().isEmpty()) {
 				return false;
 			}
-			if (DataStructureUtils.haveNonEmptyIntersection(new HashSet<>(pp.getIncomingEdges()), new HashSet<>(pp.getOutgoingEdges()))) {
+			if (DataStructureUtils.haveNonEmptyIntersection(new HashSet<>(pp.getIncomingEdges()),
+					new HashSet<>(pp.getOutgoingEdges()))) {
 				return false; // do not allow loops
 			}
 
@@ -1723,7 +1730,7 @@ public class CfgBuilder {
 			case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
 				// TODO #FaultLocalization
 				throw new UnsupportedOperationException();
-				// return isInAtomicBlock || isBetweenSequencePoints;
+			// return isInAtomicBlock || isBetweenSequencePoints;
 			case ONLY_ATOMIC_BLOCK:
 				return isInAtomicBlock;
 			default:

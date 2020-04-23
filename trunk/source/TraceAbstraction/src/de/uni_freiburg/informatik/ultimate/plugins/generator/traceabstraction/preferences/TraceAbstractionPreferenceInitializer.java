@@ -335,6 +335,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_DUMP_PATH,
 						RcfgPreferenceInitializer.DEF_DUMP_PATH, PreferenceType.Directory),
+				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_COMPRESS_SMT_DUMP_FILE, false,
+						RcfgPreferenceInitializer.DESC_COMPRESS_SMT_DUMP_FILE, PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>(LABEL_INTERPOLATED_LOCS, DEF_INTERPOLANTS, PreferenceType.Combo,
 						InterpolationTechnique.values()),

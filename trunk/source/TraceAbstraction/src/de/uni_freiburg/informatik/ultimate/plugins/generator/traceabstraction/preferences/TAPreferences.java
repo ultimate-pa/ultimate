@@ -211,6 +211,10 @@ public final class TAPreferences {
 		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
 	}
 
+	public boolean compressDumpedSmtScript() {
+		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_COMPRESS_SMT_DUMP_FILE);
+	}
+
 	public String pathOfDumpedScript() {
 		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_DUMP_PATH);
 	}

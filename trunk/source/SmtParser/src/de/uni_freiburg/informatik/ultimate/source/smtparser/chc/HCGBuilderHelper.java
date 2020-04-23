@@ -67,7 +67,7 @@ public class HCGBuilderHelper {
 			final boolean fakeNonIncrementalSolver = false;
 			final SolverSettings settings = SolverBuilder.constructSolverSettings().setSolverMode(solverMode)
 					.setUseFakeIncrementalScript(fakeNonIncrementalSolver)
-					.setDumpSmtScriptToFile(dumpScript, dumpPath, filename);
+					.setDumpSmtScriptToFile(dumpScript, dumpPath, filename, false);
 
 			if (solverMode.isExternal()) {
 				mSolverSettings = settings.setUseExternalSolver(true, commandExternalSolver, mLogicForExternalSolver);

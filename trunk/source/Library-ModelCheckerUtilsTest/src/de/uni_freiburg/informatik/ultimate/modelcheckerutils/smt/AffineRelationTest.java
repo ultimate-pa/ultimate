@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -79,7 +79,7 @@ public class AffineRelationTest {
 			final String file = "AffineRelationTestScript.smt2";
 			try {
 				mScript = new LoggingScript(mScript, file, true);
-			} catch (final FileNotFoundException e) {
+			} catch (final IOException e) {
 				throw new AssertionError("Cannot write script to " + file);
 			}
 		}
@@ -306,13 +306,13 @@ public class AffineRelationTest {
 
 	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf)
 			throws NotAffineException {
-		final MultiCaseSolvedBinaryRelation mcsbr = AffineRelation.convert(mScript, inputAsTerm)
-				.solveForSubject(mScript, x, xnf);
+		final MultiCaseSolvedBinaryRelation mcsbr =
+				AffineRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x, xnf);
 		final Term solvedAsTerm = mcsbr.asTerm(mScript);
 		final Term tmp;
 		if (USE_QUANTIFIER_ELIMINATION_TO_SIMPLIFY_INPUT_OF_EQUIVALENCE_CHECK) {
-		tmp = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, solvedAsTerm,
-				SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			tmp = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, solvedAsTerm,
+					SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		} else {
 			tmp = solvedAsTerm;
 		}

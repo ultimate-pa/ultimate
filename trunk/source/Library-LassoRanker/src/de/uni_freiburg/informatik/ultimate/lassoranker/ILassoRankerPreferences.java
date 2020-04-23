@@ -150,7 +150,8 @@ public interface ILassoRankerPreferences {
 
 		return SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(isFakeNonIncrementalScript())
 				.setUseExternalSolver(true, getExternalSolverCommand(), null).setSolverMode(solverMode)
-				.setDumpSmtScriptToFile(isDumpSmtSolverScript(), getPathOfDumpedScript(), getBaseNameOfDumpedScript())
+				.setDumpSmtScriptToFile(isDumpSmtSolverScript(), getPathOfDumpedScript(), getBaseNameOfDumpedScript(),
+						false)
 				.setSmtInterpolTimeout(timeoutSmtInterpol);
 	}
 

@@ -25,7 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -63,7 +63,8 @@ public class PolynomialRelationTest {
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final String SOLVER_COMMAND_Z3 = "z3 SMTLIB2_COMPLIANT=true -t:3500 -memory:2024 -smt2 -in";
-	private static final String SOLVER_COMMAND_CVC4 = "cvc4 --incremental --print-success --lang smt --rewrite-divk --tlimit-per=3000";
+	private static final String SOLVER_COMMAND_CVC4 =
+			"cvc4 --incremental --print-success --lang smt --rewrite-divk --tlimit-per=3000";
 	private static final String SOLVER_COMMAND_MATHSAT = "mathsat";
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
@@ -72,7 +73,7 @@ public class PolynomialRelationTest {
 	private Sort mIntSort;
 
 	@Before
-	public void setUp() throws FileNotFoundException {
+	public void setUp() throws IOException {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
 		final Script tmp = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND_Z3, LogLevel.INFO));
 		if (WRITE_SMT_SCRIPTS_TO_FILE) {
@@ -244,7 +245,7 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationBvPolyEQ01() throws NotAffineException{
+	public void relationBvPolyEQ01() throws NotAffineException {
 		final String inputSTR = "(= (bvmul (_ bv255 8) xb) (bvmul (_ bv64 8) yb yb yb))";
 		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
 		mScript.declareFun("xb", new Sort[0], bv8);
@@ -253,7 +254,7 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationBvPolyEQ02() throws NotAffineException{
+	public void relationBvPolyEQ02() throws NotAffineException {
 		final String inputSTR = "(= (bvmul (_ bv1 8) xb) (bvmul (_ bv64 8) yb yb yb))";
 		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
 		mScript.declareFun("xb", new Sort[0], bv8);
@@ -262,7 +263,7 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationBvPolyEQ03() throws NotAffineException{
+	public void relationBvPolyEQ03() throws NotAffineException {
 		final String inputSTR = "(= (bvmul (_ bv255 8) xb yb) (bvmul (_ bv64 8) yb yb yb))";
 		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
 		mScript.declareFun("xb", new Sort[0], bv8);
@@ -271,7 +272,7 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationBvPolyEQ04() throws NotAffineException{
+	public void relationBvPolyEQ04() throws NotAffineException {
 		final String inputSTR = "(= (bvmul (_ bv252 8) xb) (bvmul (_ bv64 8) yb yb yb))";
 		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
 		mScript.declareFun("xb", new Sort[0], bv8);
@@ -280,7 +281,7 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationBvEQ05() throws NotAffineException{
+	public void relationBvEQ05() throws NotAffineException {
 		final String inputSTR = "(= (bvmul (_ bv255 8) xb) (bvmul (_ bv8 8) yb))";
 		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
 		mScript.declareFun("xb", new Sort[0], bv8);
@@ -347,7 +348,7 @@ public class PolynomialRelationTest {
 		final String inputSTR = "(= (* 3 yi xi) (* 333 yi yi yi))";
 		testSolveForSubject(inputSTR, "xi");
 	}
-	
+
 	public void relationIntPolyUnknownEQ12() throws NotAffineException {
 		final String inputSTR = "(= (* yi (+ 6 (* yi xi))) (+ 3 yi))";
 		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
@@ -363,28 +364,29 @@ public class PolynomialRelationTest {
 		final String inputSTR = "(= (* 3 (div xi 6) (+ 5 (div yi zi))) (* yi zi))";
 		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
 	}
-	
+
 	@Test
 	public void relationIntPolyZ3CVC4MATHSATEQ15() throws NotAffineException {
 		final String inputSTR = "(= (* yi (+ 6 xi)) (+ 3 yi))";
 		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
 	}
-	
-//	/**
-//	 * Currently fails because some coefficient is null, this probably will be handled when the
-//  * "Todo if no constantTErm throw error or handle it" is finished
-//	 */
-//	@Test
-//	public void relationIntPolyUnknownEQ16() throws NotAffineException {
-//		final String inputSTR = "(= (div (div xi 5 2) (div yi zi)) yi))";
-//		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
-//	}
+
+	// /**
+	// * Currently fails because some coefficient is null, this probably will be handled when the
+	// * "Todo if no constantTErm throw error or handle it" is finished
+	// */
+	// @Test
+	// public void relationIntPolyUnknownEQ16() throws NotAffineException {
+	// final String inputSTR = "(= (div (div xi 5 2) (div yi zi)) yi))";
+	// testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
+	// }
 
 	private MultiCaseSolvedBinaryRelation polyRelOnLeftHandSide(final String termAsString, final String varString)
 			throws NotAffineException {
 		final Term var = TermParseUtils.parseTerm(mScript, varString);
-		final MultiCaseSolvedBinaryRelation sbr = PolynomialRelation
-				.convert(mScript, TermParseUtils.parseTerm(mScript, termAsString)).solveForSubject(mScript, var, Xnf.DNF);
+		final MultiCaseSolvedBinaryRelation sbr =
+				PolynomialRelation.convert(mScript, TermParseUtils.parseTerm(mScript, termAsString))
+						.solveForSubject(mScript, var, Xnf.DNF);
 		return sbr;
 	}
 
@@ -393,7 +395,7 @@ public class PolynomialRelationTest {
 		final Term x = TermParseUtils.parseTerm(mScript, subject);
 		testSingleCaseSolveForSubject(inputAsTerm, x);
 		testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.DNF);
-		//testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.CNF); this is not yet implemented?
+		// testMultiCaseSolveForSubject(inputAsTerm, x, Xnf.CNF); this is not yet implemented?
 	}
 
 	private void testSolveForSubjectMultiCaseOnly(final String inputAsString, final String subject)
@@ -412,8 +414,8 @@ public class PolynomialRelationTest {
 
 	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf)
 			throws NotAffineException {
-		final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.convert(mScript, inputAsTerm)
-				.solveForSubject(mScript, x, xnf);
+		final MultiCaseSolvedBinaryRelation mcsbr =
+				PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x, xnf);
 		final Term solvedAsTerm = mcsbr.asTerm(mScript);
 		mScript.echo(new QuotedObject("Checking if input and output of multiCaseSolveForSubject are equivalent"));
 		Assert.assertTrue(SmtUtils.areFormulasEquivalent(inputAsTerm, solvedAsTerm, mScript));

@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.chcprinter;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +79,7 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 	}
 
 	@Override
-	public boolean process(final IElement root) throws FileNotFoundException {
+	public boolean process(final IElement root) throws IOException {
 
 		if (!(root instanceof HornClauseAST)) {
 			return true;
@@ -123,11 +122,9 @@ public class ChcSmtPrinterObserver extends BaseObserver {
 		// add info
 		{
 			loggingScript.setInfo(":source",
-					new QuotedObject(
-							"CHC Constraint Logic: " + annot.getChcCategoryInfo().getConstraintLogic() + "\n"
-							+ "                   "
-							+ "Contains non-linear Horn clauses: "
-									+ annot.getChcCategoryInfo().containsNonLinearHornClauses()));
+					new QuotedObject("CHC Constraint Logic: " + annot.getChcCategoryInfo().getConstraintLogic() + "\n"
+							+ "                   " + "Contains non-linear Horn clauses: "
+							+ annot.getChcCategoryInfo().containsNonLinearHornClauses()));
 		}
 
 		if (PRODUCE_UNSAT_CORES) {

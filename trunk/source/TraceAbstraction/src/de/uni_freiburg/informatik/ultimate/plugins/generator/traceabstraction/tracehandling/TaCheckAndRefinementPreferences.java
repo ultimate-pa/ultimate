@@ -88,6 +88,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final boolean mUsePredicateTrieBasedPredicateUnifier;
 	private final String mFeatureVectorDumpPath;
 	private final boolean mDumpFeatureVectors;
+	private final boolean mCompressDumpedScript;
 
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
@@ -130,6 +131,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		mFakeNonIncrementalSolver = taPrefs.fakeNonIncrementalSolver();
 		mCommandExternalSolver = taPrefs.commandExternalSolver();
 		mDumpSmtScriptToFile = taPrefs.dumpSmtScriptToFile();
+		mCompressDumpedScript = taPrefs.compressDumpedSmtScript();
 		mPathOfDumpedScript = taPrefs.pathOfDumpedScript();
 		mLogicForExternalSolver = taPrefs.logicForExternalSolver();
 		mExceptionBlacklist = taPrefs.getRefinementStrategyExceptionSpecification();
@@ -195,6 +197,10 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	@Override
 	public boolean getDumpSmtScriptToFile() {
 		return mDumpSmtScriptToFile;
+	}
+
+	private boolean compressDumpedScript() {
+		return mCompressDumpedScript;
 	}
 
 	@Override
@@ -299,7 +305,8 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	public SolverSettings constructSolverSettings(final TaskIdentifier identifier) {
 		return SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(getFakeNonIncrementalSolver())
 				.setDumpFeatureVectors(dumpFeatureVectors(), getFeatureVectorsDumpPath())
-				.setDumpSmtScriptToFile(getDumpSmtScriptToFile(), getPathOfDumpedScript(), identifier.toString())
+				.setDumpSmtScriptToFile(getDumpSmtScriptToFile(), getPathOfDumpedScript(), identifier.toString(),
+						compressDumpedScript())
 				.setUseExternalSolver(getUseSeparateSolverForTracechecks(), getCommandExternalSolver(),
 						getLogicForExternalSolver())
 				.setSolverMode(getSolverMode());

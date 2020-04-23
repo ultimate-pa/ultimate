@@ -273,7 +273,7 @@ public class InvariantSynthesisStarter {
 				.setSolverMode(SolverMode.External_DefaultMode).setUseFakeIncrementalScript(fakeNonIncrementalScript)
 				.setUseExternalSolver(useExternalSolver, commandExternalSolver, null)
 				.setSmtInterpolTimeout(timeoutSmtInterpol)
-				.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
+				.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript, false);
 
 		final boolean useUnsatCores = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_UNSAT_CORES);
 		final boolean useLBE = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_LARGE_BLOCK_ENCODING);

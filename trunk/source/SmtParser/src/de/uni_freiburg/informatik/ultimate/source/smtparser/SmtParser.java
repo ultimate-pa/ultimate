@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.source.smtparser;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -244,7 +243,7 @@ public class SmtParser implements ISource {
 					.getString(SmtParserPreferenceInitializer.LABEL_SMT_DUMP_PATH);
 			if (!folderOfDumpedFile.isEmpty()) {
 				solverSettings = solverSettings.setDumpSmtScriptToFile(true, folderOfDumpedFile,
-						"UltimateEliminatorBackEndSolverInput.smt2");
+						"UltimateEliminatorBackEndSolverInput.smt2", false);
 			}
 
 			final Script backEnd = SolverBuilder.buildScript(mServices, solverSettings);
@@ -292,7 +291,7 @@ public class SmtParser implements ISource {
 	}
 
 	private void runFilterUnusedDeclarationsMode(final File file, final String directory, final LogProxy logProxy)
-			throws FileNotFoundException {
+			throws IOException {
 		final CollectNamesScript cns = new CollectNamesScript();
 
 		final OptionMap optionMap = new OptionMap(logProxy, true);
@@ -343,7 +342,7 @@ public class SmtParser implements ISource {
 		private final Set<String> mAllowedNames;
 
 		public FilteredLoggingScript(final String file, final boolean autoFlush, final Set<String> allowedNames)
-				throws FileNotFoundException {
+				throws IOException {
 			super(file, autoFlush);
 			mAllowedNames = allowedNames;
 		}

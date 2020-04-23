@@ -129,7 +129,7 @@ public class SpaceExPreferenceManager {
 		mSolverSettings = SolverBuilder.constructSolverSettings().setSolverMode(mSolverMode)
 				.setUseFakeIncrementalScript(mFakeNonIncrementalScript)
 				.setUseExternalSolver(true, mCommandExternalSolver, mLogicForExternalSolver)
-				.setDumpSmtScriptToFile(mDumpSmtScriptToFile, mPathOfDumpedScript, mModelFilename)
+				.setDumpSmtScriptToFile(mDumpSmtScriptToFile, mPathOfDumpedScript, mModelFilename, false)
 				.setDumpUnsatCoreTrackBenchmark(mDumpUsatCoreTrackBenchmark)
 				.setDumpMainTrackBenchmark(mDumpMainTrackBenchmark);
 	}

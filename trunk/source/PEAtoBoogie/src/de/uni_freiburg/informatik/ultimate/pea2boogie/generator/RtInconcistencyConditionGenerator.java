@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -266,7 +266,7 @@ public class RtInconcistencyConditionGenerator {
 		}
 		try {
 			return new LoggingScript(solver, SOLVER_LOGFILE, false);
-		} catch (final FileNotFoundException e) {
+		} catch (final IOException e) {
 			mLogger.error("Could not create log file for solver, disabling logging. ");
 			return solver;
 		}

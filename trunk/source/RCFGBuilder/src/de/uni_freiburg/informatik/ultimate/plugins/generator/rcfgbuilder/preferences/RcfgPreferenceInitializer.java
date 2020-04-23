@@ -58,7 +58,8 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_ASSUME_FOR_ASSERT = "Add additional assume for each assert";
 	public static final boolean DEF_ASSUME_FOR_ASSERT = !false;
 
-	private static final String DESC_ASSUME_FOR_ASSERT = "While checking some specification, assume that all other specifications hold. This is only sound in a setting where the verification process stops after the first violated specification was found.";
+	private static final String DESC_ASSUME_FOR_ASSERT =
+			"While checking some specification, assume that all other specifications hold. This is only sound in a setting where the verification process stops after the first violated specification was found.";
 
 	public static final String LABEL_SOLVER = "SMT solver";
 	public static final SolverMode DEF_SOLVER = SolverMode.External_ModelsAndUnsatCoreMode;
@@ -80,6 +81,8 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CNF = "Convert code blocks to CNF";
 	public static final String LABEL_REMOVE_GOTO_EDGES = "Remove goto edges from RCFG";
 	public static final String LABEL_DUMP_TO_FILE = "Dump SMT script to file";
+	public static final String LABEL_COMPRESS_SMT_DUMP_FILE = "Compress dumped SMT script";
+	public static final String DESC_COMPRESS_SMT_DUMP_FILE = "Compress the written .smt2 script with GZip";
 	public static final String LABEL_DUMP_UNSAT_CORE_BENCHMARK = "Dump unsat core track benchmark to file";
 	public static final String LABEL_DUMP_MAIN_TRACK_BENCHMARK = "Dump main track benchmark to file";
 	public static final String LABEL_DUMP_PATH = "To the following directory";
@@ -117,6 +120,8 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_DUMP_TO_FILE, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DUMP_UNSAT_CORE_BENCHMARK, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DUMP_MAIN_TRACK_BENCHMARK, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_COMPRESS_SMT_DUMP_FILE, false, DESC_COMPRESS_SMT_DUMP_FILE,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH, DEF_DUMP_PATH, PreferenceType.Directory), };
 	}
 
