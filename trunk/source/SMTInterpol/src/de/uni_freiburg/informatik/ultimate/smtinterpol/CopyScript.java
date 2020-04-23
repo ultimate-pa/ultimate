@@ -18,13 +18,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 
 public class CopyScript extends LoggingScript {
 
-	public CopyScript() throws FileNotFoundException {
+	public CopyScript() throws IOException {
 		super("<stdout>", true);
 	}
 

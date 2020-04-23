@@ -19,12 +19,13 @@
 package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * A logging script variant. This is actually a wrapper around a concrete implementation of the {@link Script} interface
@@ -59,10 +60,10 @@ public class LoggingScript extends WrapperScript {
 	 *            The name of the logging file (should end in .smt2).
 	 * @param autoFlush
 	 *            Automatically flush the output stream after every command.
-	 * @throws FileNotFoundException
-	 *             If the file cannot be opened.
+	 * @throws IOException
+	 *             IOException If an I/O error has occurred.
 	 */
-	public LoggingScript(final String file, final boolean autoFlush) throws FileNotFoundException {
+	public LoggingScript(final String file, final boolean autoFlush) throws IOException {
 		this(new NoopScript(), file, autoFlush);
 	}
 
@@ -76,11 +77,10 @@ public class LoggingScript extends WrapperScript {
 	 *            Automatically flush the output stream after every command.
 	 * @param useCSE
 	 *            Use common subexpression elimination in output (introduces let terms)
-	 * @throws FileNotFoundException
-	 *             If the file cannot be opened.
+	 * @throws IOException
+	 *             IOException If an I/O error has occurred.
 	 */
-	public LoggingScript(final String file, final boolean autoFlush, final boolean useCSE)
-			throws FileNotFoundException {
+	public LoggingScript(final String file, final boolean autoFlush, final boolean useCSE) throws IOException {
 		this(new NoopScript(), file, autoFlush, useCSE);
 	}
 
@@ -94,10 +94,10 @@ public class LoggingScript extends WrapperScript {
 	 *            The name of the logging file (should end in .smt2).
 	 * @param autoFlush
 	 *            Automatically flush the output stream after every command.
-	 * @throws FileNotFoundException
-	 *             If the file cannot be opened.
+	 * @throws IOException
+	 *             IOException If an I/O error has occurred.
 	 */
-	public LoggingScript(final Script script, final String file, final boolean autoFlush) throws FileNotFoundException {
+	public LoggingScript(final Script script, final String file, final boolean autoFlush) throws IOException {
 		this(script, file, autoFlush, false);
 	}
 
@@ -113,11 +113,11 @@ public class LoggingScript extends WrapperScript {
 	 *            Automatically flush the output stream after every command.
 	 * @param useCSE
 	 *            Use common subexpression elimination in output (introduces let terms)
-	 * @throws FileNotFoundException
-	 *             If the file cannot be opened.
+	 * @throws IOException
+	 *             IOException If an I/O error has occurred.
 	 */
 	public LoggingScript(final Script script, final String file, final boolean autoFlush, final boolean useCSE)
-			throws FileNotFoundException {
+			throws IOException {
 		super(script);
 		OutputStream out;
 		if (file.equals("<stdout>")) {
@@ -126,6 +126,9 @@ public class LoggingScript extends WrapperScript {
 			out = System.err;
 		} else {
 			out = new FileOutputStream(file);
+			if (file.endsWith(".gz")) {
+				out = new GZIPOutputStream(out);
+			}
 		}
 		mPw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(out)), autoFlush);
 		mLetter = useCSE ? new FormulaLet() : null;
@@ -200,8 +203,7 @@ public class LoggingScript extends WrapperScript {
 	}
 
 	@Override
-	public void declareDatatype(DataType datatype, DataType.Constructor[] constrs)
-		throws SMTLIBException {
+	public void declareDatatype(final DataType datatype, final DataType.Constructor[] constrs) throws SMTLIBException {
 		assert datatype.mNumParams == 0;
 		mPw.print("(declare-datatype ");
 		mPw.print(PrintTerm.quoteIdentifier(datatype.getName()));
@@ -224,12 +226,12 @@ public class LoggingScript extends WrapperScript {
 	}
 
 	@Override
-	public void declareDatatypes(DataType[] datatypes, DataType.Constructor[][] constrs, Sort[][] sortParams)
-		throws SMTLIBException {
+	public void declareDatatypes(final DataType[] datatypes, final DataType.Constructor[][] constrs,
+			final Sort[][] sortParams) throws SMTLIBException {
 		assert datatypes.length == constrs.length && datatypes.length == sortParams.length;
 		mPw.print("(declare-datatypes (");
 		String sep1 = "";
-		for (DataType datatype : datatypes) {
+		for (final DataType datatype : datatypes) {
 			mPw.print(sep1);
 			sep1 = " ";
 			mPw.print("(");
@@ -246,7 +248,7 @@ public class LoggingScript extends WrapperScript {
 			if (sortParams[i] != null) {
 				mPw.print("(par (");
 				String sep3 = "";
-				for (Sort param : sortParams[i]) {
+				for (final Sort param : sortParams[i]) {
 					mPw.print(sep3);
 					sep3 = " ";
 					mPw.print(param);
@@ -255,7 +257,7 @@ public class LoggingScript extends WrapperScript {
 			}
 			mPw.print("(");
 			String sep4 = "";
-			for (DataType.Constructor constructor : constrs[i]) {
+			for (final DataType.Constructor constructor : constrs[i]) {
 				mPw.print(sep4);
 				sep4 = " ";
 				mPw.print("(");

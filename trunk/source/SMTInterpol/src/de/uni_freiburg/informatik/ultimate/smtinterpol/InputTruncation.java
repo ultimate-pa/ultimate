@@ -18,7 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
@@ -45,7 +45,7 @@ public final class InputTruncation {
 					new LoggingScript(new SMTInterpol(logger), outfile, true),
 					options);
 			pe.parseScript(infile);
-		} catch (final FileNotFoundException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 	}

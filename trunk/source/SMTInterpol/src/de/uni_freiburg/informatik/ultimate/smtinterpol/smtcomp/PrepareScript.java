@@ -18,7 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.smtcomp;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,7 +43,7 @@ public class PrepareScript extends LoggingScript {
 
 	private final Track mTrack;
 
-	public PrepareScript(final Track track, final String file) throws FileNotFoundException {
+	public PrepareScript(final Track track, final String file) throws IOException {
 		super(file, false);
 		mTrack = track;
 		if (track.hasInitalOption()) {

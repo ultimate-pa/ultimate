@@ -18,7 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.logic.FormulaLet;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -35,7 +35,7 @@ public class DefinitionExpander extends LoggingScript {
 			UnletType.EXPAND_DEFINITIONS);
 	private final FormulaLet mLetter = new FormulaLet();
 
-	public DefinitionExpander(String outfile) throws FileNotFoundException {
+	public DefinitionExpander(String outfile) throws IOException {
 		super(outfile, true);
 	}
 
@@ -55,7 +55,7 @@ public class DefinitionExpander extends LoggingScript {
 			final ParseEnvironment pe = new ParseEnvironment(
 					new DefinitionExpander(outfile), options);
 			pe.parseScript(infile);
-		} catch (final FileNotFoundException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 	}

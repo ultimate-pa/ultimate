@@ -18,7 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.logic.FormulaLet;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -34,7 +34,7 @@ public class TermCompilerTester extends LoggingScript {
 	TermCompiler mCompiler = new TermCompiler();
 	FormulaLet mLetter = new FormulaLet();
 
-	public TermCompilerTester() throws FileNotFoundException {
+	public TermCompilerTester() throws IOException {
 		super("<stdout>", true);
 	}
 

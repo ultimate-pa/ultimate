@@ -18,7 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
@@ -29,7 +29,7 @@ public class Unletter extends LoggingScript {
 
 	private final FormulaUnLet mUnletter = new FormulaUnLet();
 
-	public Unletter() throws FileNotFoundException {
+	public Unletter() throws IOException {
 		super("<stdout>", true);
 	}
 

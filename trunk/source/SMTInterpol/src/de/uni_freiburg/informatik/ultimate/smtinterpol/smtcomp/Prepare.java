@@ -19,6 +19,7 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.smtcomp;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
@@ -34,7 +35,7 @@ public class Prepare implements ExitHook {
 	 * @param args
 	 * @throws FileNotFoundException
 	 */
-	public static void main(String[] args) throws FileNotFoundException {
+	public static void main(String[] args) throws IOException {
 		Track track = Track.MAIN;
 		int fileStartIdx = 0;
 		if (args[0].equals("--track")) {

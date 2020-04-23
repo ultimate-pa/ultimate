@@ -18,7 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.convert;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.logic.FormulaLet;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 public class CompilerTest {
 
 	public static class MyLoggingScript extends LoggingScript {
-		public MyLoggingScript(final String filename) throws FileNotFoundException {
+		public MyLoggingScript(final String filename) throws IOException {
 			super(filename, false);
 		}
 
