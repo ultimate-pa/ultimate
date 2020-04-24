@@ -177,6 +177,8 @@ public class SolverBuilder {
 			final TerminationRequest termRequest =
 					new SMTInterpolTerminationRequest(services.getProgressMonitorService());
 			script = new SMTInterpol(loggerWrapper, termRequest);
+			// ensure that SMTInterpol is exited when toolchain ends
+			script = new SelfDestructingSolverStorable(script, services.getStorage());
 		}
 		if (settings.dumpSmtScriptToFile()) {
 			script = wrapScriptWithLoggingScript(script, solverLogger, settings.constructFullPathOfDumpedScript());
@@ -199,11 +201,7 @@ public class SolverBuilder {
 			script = new LoggingScriptForMainTrackBenchmarks(script, settings.getBaseNameOfDumpedScript(),
 					settings.getPathOfDumpedScript());
 		}
-		// ensure that solvers are exited when toolchain ends
-		final SelfDestructingSolverStorable solverStorable =
-				new SelfDestructingSolverStorable(script, services.getStorage());
-
-		return new HistoryRecordingScript(solverStorable);
+		return new HistoryRecordingScript(script);
 	}
 
 	public static Script buildAndInitializeSolver(final IUltimateServiceProvider services,
@@ -659,16 +657,23 @@ public class SolverBuilder {
 
 		@Override
 		public void destroy() {
-			super.exit();
 			if (mStorage != null) {
-				mStorage.removeStorable(getKey());
-				mStorage = null;
+				super.exit();
+				removeFromStorage();
 			}
 		}
 
 		@Override
 		public void exit() {
-			destroy();
+			super.exit();
+			removeFromStorage();
+		}
+
+		private void removeFromStorage() {
+			if (mStorage != null) {
+				mStorage.removeStorable(getKey());
+				mStorage = null;
+			}
 		}
 
 		private String getKey() {
