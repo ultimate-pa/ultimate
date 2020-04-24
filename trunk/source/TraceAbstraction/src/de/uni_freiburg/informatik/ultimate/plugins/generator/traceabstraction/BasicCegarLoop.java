@@ -773,11 +773,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			}
 
 			if (mPref.dumpAutomata()) {
-				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "Enhanced"
-						+ automatonType.getShortString() + "Automaton";
-				super.writeAutomatonToFile(subtrahend, filename);
-			}
-			if (mPref.dumpAutomata()) {
 				final String filename =
 						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "AbstractionAfterDifference";
 				super.writeAutomatonToFile(subtrahend, filename);
@@ -799,6 +794,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				}
 			}
 			mAbstraction = diff.getResult();
+			if (mPref.dumpAutomata()) {
+				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
+						+ "AbstractionAfterDifferenceAndDeadEndRemoval";
+				super.writeAutomatonToFile(mAbstraction, filename);
+			}
 
 		} finally {
 			mCegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
