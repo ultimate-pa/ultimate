@@ -41,6 +41,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -943,12 +944,20 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		@Override
 		public String toString() {
-			final String hier =
-					mHierPreStates.stream().map(a -> String.valueOf(a.hashCode())).collect(Collectors.joining(","));
+			final boolean USE_HASH = false;
+
+			final Function<Object, String> toStr;
+			if (USE_HASH) {
+				toStr = a -> String.valueOf(a.hashCode());
+			} else {
+				toStr = Objects::toString;
+			}
+
+			final String hier = mHierPreStates.stream().map(toStr).collect(Collectors.joining(","));
 
 			if (mCostSoFar == 0.0) {
-				return String.format("%8s: {%s} T%s {%s}", mItemType, hier, mLetter == null ? 0 : mLetter.hashCode(),
-						mTargetState.hashCode());
+				return String.format("%8s: {%s} T%s {%s}", mItemType, hier, mLetter == null ? 0 : toStr.apply(mLetter),
+						toStr.apply(mTargetState));
 
 			}
 
@@ -958,7 +967,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					: String.valueOf(mEstimatedCostToTargetFromHere);
 
 			return String.format("%8s: {%s} T%s {%s} (g=%f, h=%s, f=%s, s=%d)", mItemType, hier,
-					mLetter == null ? 0 : mLetter.hashCode(), mTargetState.hashCode(), mCostSoFar, ecttfh, ectt,
+					mLetter == null ? 0 : toStr.apply(mLetter), toStr.apply(mTargetState), mCostSoFar, ecttfh, ectt,
 					mHierPreStates.size());
 		}
 
