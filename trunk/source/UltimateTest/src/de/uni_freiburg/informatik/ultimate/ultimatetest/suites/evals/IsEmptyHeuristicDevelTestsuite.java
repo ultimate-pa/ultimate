@@ -55,7 +55,7 @@ public class IsEmptyHeuristicDevelTestsuite extends AbstractEvalTestSuite {
 
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
-			new Triple<>("AutomizerC.xml", C, "default/automizer/svcomp-Reach-32bit-Automizer_Default.epf"),
+			new Triple<>("AutomizerC.xml", C, "heuristics/AutomizerC_Reach_32bit_Default_ZeroHeuristic.epf"),
 
 	};
 
@@ -74,7 +74,7 @@ public class IsEmptyHeuristicDevelTestsuite extends AbstractEvalTestSuite {
 			"examples/svcomp/ldv-linux-3.4-simple/43_1a_cilled_ok_nondet_linux-43_1a-drivers--hid--hid-kensington.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.i",
 			"examples/svcomp/ldv-commit-tester/main3_arch-x86-oprofile-oprofile-ko--131_1a--79db8ef-1.i",
 			"examples/svcomp/ldv-regression/rule57_ebda_blast.c_1.i",
-			"examples/svcomp/ldv-linux-3.0/usb_urb-drivers-input-tablet-kbtab.ko.cil.out.i",
+			// "examples/svcomp/ldv-linux-3.0/usb_urb-drivers-input-tablet-kbtab.ko.cil.out.i",
 
 	};
 
