@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -73,6 +74,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.HashedPriorityQue
  *            state type
  */
 public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
+
+	private static final boolean DEBUG_MESSAGES_USE_HASHCODE = false;
 
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private final Predicate<STATE> mIsGoalState;
@@ -176,6 +179,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		// TODO: Two separate maps, one for call, one for internal/return
 		final Map<Item, Double> lowestOther = new HashMap<>();
 		final Map<Item, Double> lowestCall = new HashMap<>();
+		final Map<STATE, Set<STATE>> discoveredUniqueReturnStates = new HashMap<>();
+		final Map<STATE, Set<Item>> delayedCalls = new HashMap<>();
 		final Map<CallTransition, Map<ReturnTransition, SummaryItem>> summaries = new HashMap<>();
 		final Map<CallTransition, Map<ReturnTransition, Set<Item>>> usedSummaries = new HashMap<>();
 
@@ -206,7 +211,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				stragglingSummaries = Collections.emptyList();
 			}
 
-			final List<Item> unvaluatedSuccessors = getUnvaluatedSuccessors(current);
+			final List<Item> unvaluatedSuccessors =
+					getUnvaluatedSuccessors(current, discoveredUniqueReturnStates, delayedCalls);
 			if (mLogger.isDebugEnabled() && unvaluatedSuccessors.isEmpty()) {
 				mLogger.debug("  No successors");
 				continue;
@@ -247,11 +253,13 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					}
 					continue;
 				}
-				if (succ.mItemType == ItemType.CALL && !isCheapestAncestor(lowestCall, succ, costSoFar)) {
+				if (succ.mItemType == ItemType.CALL
+						&& !isCheapestAncestor(lowestCall, discoveredUniqueReturnStates, succ, costSoFar)) {
 					// if the succ is not yet in lowest, there can still be an item with a call stack that has the
 					// same ancestor as the current succ -- if this item is cheaper, we do not insert.
 					// TODO: isCheapestAncestor is rather expensive, but with a dedicated data structure it could be
 					// much cheaper, e.g., something similar to a suffix tree
+					delayedCalls.computeIfAbsent(current.getHierPreState(), a -> new LinkedHashSet<>()).add(succ);
 					continue;
 				}
 
@@ -299,6 +307,11 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		final List<Item> newSuccs = new ArrayList<>(2 * succs.size());
 		for (final Item succ : succs) {
+			if (succ.mCostSoFar >= 0.0) {
+				// these are delayed calls
+				newSuccs.add(succ);
+				continue;
+			}
 			if (succ.mItemType == ItemType.CALL) {
 				final CallTransition callTrans = new CallTransition(succ);
 				final Map<ReturnTransition, SummaryItem> summary = summaries.get(callTrans);
@@ -389,7 +402,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		return Collections.emptyList();
 	}
 
-	private boolean isCheapestAncestor(final Map<Item, Double> lowest, final Item succ, final double costSoFar) {
+	private boolean isCheapestAncestor(final Map<Item, Double> lowest,
+			final Map<STATE, Set<STATE>> discoveredUniqueReturnStates, final Item succ, final double costSoFar) {
 		assert succ.mItemType == ItemType.CALL : "It only makes sense to check Calls for cheapest ancestor";
 		for (final Entry<Item, Double> entry : lowest.entrySet()) {
 			final Item item = entry.getKey();
@@ -405,13 +419,15 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				// hashcode (checked before)
 				continue;
 			}
-
-			if (item.isHierStatesPrefixOf(succ) && costSoFar >= lowestCostSoFar) {
+			final int extension =
+					discoveredUniqueReturnStates.getOrDefault(succ.getHierPreState(), Collections.emptySet()).size();
+			if (item.isHierStatesPrefixOf(succ, extension) && costSoFar >= lowestCostSoFar) {
 				// we have already seen this successor but with a lower cost, so we should not explore
 				// with a higher cost
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(String.format("    Skip (cost %s, but have seen prefix with cost %s: %s)", costSoFar,
-							lowestCostSoFar, item));
+					mLogger.debug(String.format(
+							"    Skip for now (cost %s, but have seen %d-extended prefix with cost %s: %s)", costSoFar,
+							extension, lowestCostSoFar, item));
 				}
 				return false;
 			}
@@ -419,7 +435,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		return true;
 	}
 
-	private List<Item> getUnvaluatedSuccessors(final Item current) {
+	private List<Item> getUnvaluatedSuccessors(final Item current,
+			final Map<STATE, Set<STATE>> discoveredUniqueReturnStates, final Map<STATE, Set<Item>> delayedCalls) {
 		final List<Item> rtr = new ArrayList<>();
 
 		// process internal transitions
@@ -449,6 +466,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			return rtr;
 		}
 
+		final int old = rtr.size();
 		// process return transitions
 		for (final OutgoingReturnTransition<LETTER, STATE> transition : mOperand
 				.returnSuccessorsGivenHier(current.mTargetState, hierPre)) {
@@ -459,6 +477,18 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			}
 			// hierarchical predecessor will be taken from current
 			rtr.add(new Item(succ, null, symbol, current, ItemType.RETURN));
+		}
+		if (old != rtr.size()) {
+			// we found a new state from which a hierPre call can take at least one return
+			discoveredUniqueReturnStates.computeIfAbsent(hierPre, a -> new HashSet<>()).add(current.mTargetState);
+
+			final Set<Item> hierDelayedCalls = delayedCalls.remove(hierPre);
+			if (hierDelayedCalls != null) {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(String.format("  Re-adding %d delayed calls", hierDelayedCalls.size()));
+				}
+				rtr.addAll(hierDelayedCalls);
+			}
 		}
 		return rtr;
 	}
@@ -489,6 +519,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		final boolean accepts = new Accepts<>(mServices, mOperand, mAcceptingRun.getWord()).getResult();
 		if (!accepts) {
 			mLogger.fatal(getClass().getSimpleName() + " found a run, but it is not accepted");
+		}
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Run is " + mAcceptingRun);
 		}
 		return accepts;
 	}
@@ -697,7 +730,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			mBackPointer = predecessor;
 			mItemType = symbolType;
 
-			mCostSoFar = 0.0;
+			mCostSoFar = -1.0;
 			mEstimatedCostToTarget = Double.MAX_VALUE;
 			mEstimatedCostToTargetFromHere = Double.MAX_VALUE;
 			mHashCode = computeHashCode();
@@ -711,7 +744,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			mBackPointer = new SummaryItem(callItem, summary);
 			mItemType = ItemType.RETURN;
 
-			mCostSoFar = 0.0;
+			mCostSoFar = -1.0;
 			mEstimatedCostToTarget = Double.MAX_VALUE;
 			mEstimatedCostToTargetFromHere = Double.MAX_VALUE;
 			mHashCode = computeHashCode();
@@ -750,6 +783,33 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				}
 			}
 			return !iter.hasNext();
+		}
+
+		/**
+		 * @return true iff the hierarchical pre states of this items are a prefix of the hierarchical pre states of the
+		 *         other item ignoring the maxExtension items on top of this, false otherwise.
+		 */
+		public boolean isHierStatesPrefixOf(final Item other, int maxExtension) {
+			final Iterator<STATE> iter = mHierPreStates.descendingIterator();
+			final Iterator<STATE> otherIter = other.mHierPreStates.descendingIterator();
+			while (iter.hasNext() && otherIter.hasNext()) {
+				final STATE o1 = iter.next();
+				final STATE o2 = otherIter.next();
+				if (!(o1 == null ? o2 == null : o1.equals(o2))) {
+					return false;
+				}
+			}
+
+			if (iter.hasNext()) {
+				// we have more items, but the other one does not, so we are not a prefix
+				return false;
+			}
+			// we are a prefix of other, but we are lenient for up to maxExtension:
+			while (otherIter.hasNext() && maxExtension > 0) {
+				maxExtension--;
+				otherIter.next();
+			}
+			return otherIter.hasNext() || maxExtension < 0;
 		}
 
 		/**
@@ -950,10 +1010,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		@Override
 		public String toString() {
-			final boolean USE_HASH = false;
 
 			final Function<Object, String> toStr;
-			if (USE_HASH) {
+			if (DEBUG_MESSAGES_USE_HASHCODE) {
 				toStr = a -> String.valueOf(a.hashCode());
 			} else {
 				toStr = Objects::toString;
