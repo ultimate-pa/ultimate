@@ -351,13 +351,7 @@ public final class MonitoredProcess implements IStorable {
 				throw new IllegalArgumentException("millis must be larger than zero");
 			}
 
-			new Thread(new Runnable() {
-
-				@Override
-				public void run() {
-					impatientWaitUntilTime(millis);
-				}
-			}, "CountdownTimeout watcher for " + mID).start();
+			new Thread((Runnable) () -> impatientWaitUntilTime(millis), "CountdownTimeout watcher for " + mID).start();
 		}
 	}
 
@@ -380,13 +374,8 @@ public final class MonitoredProcess implements IStorable {
 				throw new IllegalArgumentException("millis must be non-negative");
 			}
 
-			new Thread(new Runnable() {
-
-				@Override
-				public void run() {
-					impatientWaitUntilToolchainTimeout(gracePeriod);
-				}
-			}, "ToolchainTimeout watcher for " + mID).start();
+			new Thread((Runnable) () -> impatientWaitUntilToolchainTimeout(gracePeriod),
+					"ToolchainTimeout watcher for " + mID).start();
 		}
 	}
 
@@ -557,6 +546,12 @@ public final class MonitoredProcess implements IStorable {
 		final InputStreamReader streamReader = new InputStreamReader(inputStream, Charset.defaultCharset());
 		final String threadName = "MonitoredProcess " + mID + " StreamBuffer " + name;
 		new Thread(new PipePump(outputStream, streamReader, endOfPumps, name), threadName).start();
+	}
+
+	@Override
+	public String toString() {
+		return String.format("%s (%s): %s (exit command is %s)", getClass().getSimpleName(), mID, mCommand,
+				mExitCommand);
 	}
 
 	/**
