@@ -32,6 +32,8 @@ import java.math.BigDecimal;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.DiffWrapperScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
@@ -40,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.TerminationRequest;
@@ -196,7 +199,11 @@ public class SolverBuilder {
 			script = new LoggingScriptForMainTrackBenchmarks(script, settings.getBaseNameOfDumpedScript(),
 					settings.getPathOfDumpedScript());
 		}
-		return new HistoryRecordingScript(script);
+		// ensure that solvers are exited when toolchain ends
+		final SelfDestructingSolverStorable solverStorable =
+				new SelfDestructingSolverStorable(script, services.getStorage());
+
+		return new HistoryRecordingScript(solverStorable);
 	}
 
 	public static Script buildAndInitializeSolver(final IUltimateServiceProvider services,
@@ -635,7 +642,37 @@ public class SolverBuilder {
 			return string + System.getProperty("file.separator");
 
 		}
-
 	}
 
+	private static final class SelfDestructingSolverStorable extends WrapperScript implements IStorable {
+
+		private static int sCounter = 0;
+		private final int mId;
+		private IToolchainStorage mStorage;
+
+		protected SelfDestructingSolverStorable(final Script wrappedScript, final IToolchainStorage storage) {
+			super(wrappedScript);
+			mId = sCounter++;
+			mStorage = storage;
+			mStorage.putStorable(getKey(), this);
+		}
+
+		@Override
+		public void destroy() {
+			super.exit();
+			if (mStorage != null) {
+				mStorage.removeStorable(getKey());
+				mStorage = null;
+			}
+		}
+
+		@Override
+		public void exit() {
+			destroy();
+		}
+
+		private String getKey() {
+			return getClass().getSimpleName() + mId;
+		}
+	}
 }
