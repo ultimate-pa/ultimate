@@ -174,7 +174,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		}
 
 		// TODO: Two separate maps, one for call, one for internal/return
-		final Map<Item, Double> lowest = new HashMap<>();
+		final Map<Item, Double> lowestOther = new HashMap<>();
+		final Map<Item, Double> lowestCall = new HashMap<>();
 		final Map<CallTransition, Map<ReturnTransition, SummaryItem>> summaries = new HashMap<>();
 		final Map<CallTransition, Map<ReturnTransition, Set<Item>>> usedSummaries = new HashMap<>();
 
@@ -193,7 +194,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			if (mIsGoalState.test(current.mTargetState)) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("  Is target");
-					printDebugStats(lowest, summaries);
+					printDebugStats(lowestCall, lowestOther, summaries);
 				}
 				return current.constructRun();
 			}
@@ -230,7 +231,13 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 				final double costSoFar = succ.mCostSoFar;
 
-				final Double lowestCostSoFar = lowest.get(succ);
+				final Double lowestCostSoFar;
+				if (succ.mItemType == ItemType.CALL) {
+					lowestCostSoFar = lowestCall.get(succ);
+				} else {
+					lowestCostSoFar = lowestOther.get(succ);
+				}
+
 				if (lowestCostSoFar != null && costSoFar >= lowestCostSoFar) {
 					// we have already seen this successor but with a lower cost, so we should not explore with a
 					// higher cost
@@ -240,7 +247,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					}
 					continue;
 				}
-				if (succ.mItemType == ItemType.CALL && !isCheapestAncestor(lowest, succ, costSoFar)) {
+				if (succ.mItemType == ItemType.CALL && !isCheapestAncestor(lowestCall, succ, costSoFar)) {
 					// if the succ is not yet in lowest, there can still be an item with a call stack that has the
 					// same ancestor as the current succ -- if this item is cheaper, we do not insert.
 					// TODO: isCheapestAncestor is rather expensive, but with a dedicated data structure it could be
@@ -262,19 +269,23 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					mLogger.debug(String.format("    Insert: %s", succ));
 				}
 				worklist.add(succ);
-				lowest.put(succ, costSoFar);
-
+				if (succ.mItemType == ItemType.CALL) {
+					lowestCall.put(succ, costSoFar);
+				} else {
+					lowestOther.put(succ, costSoFar);
+				}
 			}
 		}
 		if (mLogger.isDebugEnabled()) {
-			printDebugStats(lowest, summaries);
+			printDebugStats(lowestCall, lowestOther, summaries);
 		}
 		return null;
 	}
 
-	private void printDebugStats(final Map<Item, Double> lowest,
+	private void printDebugStats(final Map<Item, Double> lowestCall, final Map<Item, Double> lowestOther,
 			final Map<CallTransition, Map<ReturnTransition, SummaryItem>> summaries) {
-		mLogger.debug(String.format("Found %d lowest configurations", lowest.size()));
+		mLogger.debug(String.format("Found %d lowest call configurations", lowestCall.size()));
+		mLogger.debug(String.format("Found %d lowest configurations", lowestOther.size()));
 		mLogger.debug(String.format("Found summaries for %d calls", summaries.size()));
 		mLogger.debug(String.format("Summary size histogram: [%s]",
 				summaries.entrySet().stream().map(a -> a.getValue().size()).sorted((a, b) -> -Integer.compare(a, b))
@@ -382,11 +393,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		assert succ.mItemType == ItemType.CALL : "It only makes sense to check Calls for cheapest ancestor";
 		for (final Entry<Item, Double> entry : lowest.entrySet()) {
 			final Item item = entry.getKey();
-
-			if (item.mItemType != ItemType.CALL) {
-				// we only need to check calls
-				continue;
-			}
 
 			if (!item.mLetter.equals(succ.mLetter)) {
 				// we only need to check against the same transition
