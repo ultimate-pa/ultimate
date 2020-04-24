@@ -212,6 +212,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 			// TODO: find a better way to do this, I don't want any checks regarding the heuristic / scoring method
 			// here.
+			// DD 2020-04-24: If you have to see all the successors , why do you skip summary successors?
 			if (heuristic instanceof SmtFeatureHeuristic && ((SmtFeatureHeuristic<STATE, LETTER>) heuristic)
 					.getScoringMethod() == ScoringMethod.COMPARE_FEATURES) {
 				((SmtFeatureHeuristic<STATE, LETTER>) heuristic).compareSuccessors(unvaluatedSuccessors);
@@ -472,9 +473,17 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mAcceptingRun == null) {
-			return !new IsEmpty<>(mServices, mOperand).getResult();
+			final boolean isEmpty = new IsEmpty<>(mServices, mOperand).getResult();
+			if (!isEmpty) {
+				mLogger.fatal("IsEmpty found an accepting run and " + getClass().getSimpleName() + " did not");
+			}
+			return isEmpty;
 		}
-		return new Accepts<>(mServices, mOperand, mAcceptingRun.getWord()).getResult();
+		final boolean accepts = new Accepts<>(mServices, mOperand, mAcceptingRun.getWord()).getResult();
+		if (!accepts) {
+			mLogger.fatal(getClass().getSimpleName() + " found a run, but it is not accepted");
+		}
+		return accepts;
 	}
 
 	@Override
