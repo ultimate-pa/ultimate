@@ -63,8 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutom
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Writes the automaton definition for given automata. Writing can either be to
- * a string or to a file.
+ * Writes the automaton definition for given automata. Writing can either be to a string or to a file.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -89,21 +88,18 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	public enum Format {
 		/**
 		 * Automata script.<br>
-		 * The {@link #toString()} representation of {@link LETTER} and {@link STATE} is
-		 * used.
+		 * The {@link #toString()} representation of {@link LETTER} and {@link STATE} is used.
 		 */
 		ATS(ATS_EXTENSION),
 		/**
 		 * Automata script.<br>
-		 * The {@link #toString()} representations of {@link LETTER} and {@link STATE}
-		 * are ignored. The {@link TestFileWriter} introduces new names, e.g. the
-		 * letters of the alphabet are <tt>a0, ..., an</tt>.
+		 * The {@link #toString()} representations of {@link LETTER} and {@link STATE} are ignored. The
+		 * {@link TestFileWriter} introduces new names, e.g. the letters of the alphabet are <tt>a0, ..., an</tt>.
 		 */
 		ATS_NUMERATE(ATS_EXTENSION),
 		/**
 		 * Automata script.<br>
-		 * The {@link #toString()} representation of {@link LETTER} and {@link STATE}
-		 * plus a number is used.
+		 * The {@link #toString()} representation of {@link LETTER} and {@link STATE} plus a number is used.
 		 */
 		ATS_QUOTED(ATS_EXTENSION),
 		/**
@@ -160,8 +156,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 * @param automata
 	 *            sequence of automata to print
 	 * @param append
-	 *            whether the automata should be added at the end of the file (true)
-	 *            or replace the content of the file (false)
+	 *            whether the automata should be added at the end of the file (true) or replace the content of the file
+	 *            (false)
 	 */
 	public AutomatonDefinitionPrinter(final AutomataLibraryServices services, final String automatonName,
 			final String fileName, final Format format, final String message, final boolean append,
@@ -170,7 +166,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		final FileWriter fileWriter = getFileWriterWithOptionalAppend(fileName, format, append);
 		if (fileWriter != null) {
 			if (mLogger.isWarnEnabled()) {
-				mLogger.warn("Dumping automata.");
+				mLogger.warn(String.format("Dumping automata %s to %s", automatonName, fileName));
 			}
 			final PrintWriter printWriter = new PrintWriter(fileWriter);
 			printAutomataToFileWriter(mServices, printWriter, automatonName, format, message, automata);
@@ -220,11 +216,10 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	}
 
 	/**
-	 * Writes the passed {@link IAutomaton} objects to files if the option is
-	 * enabled. Does nothing otherwise.
+	 * Writes the passed {@link IAutomaton} objects to files if the option is enabled. Does nothing otherwise.
 	 * <p>
-	 * This method is intended to be used for dumping automata when an error occurs
-	 * e.g., when the {@link IOperation#checkResult()} method fails.
+	 * This method is intended to be used for dumping automata when an error occurs e.g., when the
+	 * {@link IOperation#checkResult()} method fails.
 	 *
 	 * @param services
 	 *            Ultimate services
@@ -288,7 +283,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		return dateFormat.format(date);
 	}
 
-	private void printAutomataToFileWriter(final AutomataLibraryServices services, final PrintWriter printWriter,
+	private static void printAutomataToFileWriter(final AutomataLibraryServices services, final PrintWriter printWriter,
 			final String automatonName, final Format format, final String atsHeaderMessage,
 			final IAutomaton<?, ?>... automata) {
 		switch (format) {
@@ -332,7 +327,6 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 *            output format
 	 * @param printWriter
 	 */
-	@SuppressWarnings("unchecked")
 	private static <LETTER, STATE> void printAutomaton(final AutomataLibraryServices services,
 			final NamedAutomaton<LETTER, STATE> na, final Format format, final PrintWriter printWriter) {
 		if (na.getAutomaton() instanceof INwaOutgoingLetterAndTransitionProvider) {
@@ -345,9 +339,10 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 					printWriter);
 		} else if (na.getAutomaton() instanceof TreeAutomatonBU<?, ?>) {
 			printTreeAutomaton(na.getName(), (TreeAutomatonBU<?, STATE>) na.getAutomaton(), format, printWriter);
-		} else if (na.getAutomaton() instanceof BranchingProcess<?, ?>)
+		} else if (na.getAutomaton() instanceof BranchingProcess<?, ?>) {
 			printBranchingProcess(na.getName(), (BranchingProcess<LETTER, STATE>) na.getAutomaton(), format,
 					printWriter);
+		}
 	}
 
 	private static <LETTER, STATE> void printTreeAutomaton(final String name,
@@ -421,8 +416,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	private static <LETTER, STATE> void printPetriNet(final String name, final IPetriNet<LETTER, STATE> net,
 			final Format format, final PrintWriter printWriter) throws AssertionError {
 		if (!(net instanceof BoundedPetriNet)) {
-			final String msg = "Unknown Petri net type. Only supported type is "
-					+ BoundedPetriNet.class.getSimpleName();
+			final String msg =
+					"Unknown Petri net type. Only supported type is " + BoundedPetriNet.class.getSimpleName();
 			throw new IllegalArgumentException(msg);
 		}
 
@@ -466,8 +461,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			final BranchingProcess<LETTER, STATE> branchingProcess, final Format format, final PrintWriter printWriter)
 			throws AssertionError {
 		if (!(branchingProcess instanceof BranchingProcess)) {
-			final String msg = "Unknown Petri branching process. Only supported type is "
-					+ BranchingProcess.class.getSimpleName();
+			final String msg =
+					"Unknown Petri branching process. Only supported type is " + BranchingProcess.class.getSimpleName();
 			throw new IllegalArgumentException(msg);
 		}
 
@@ -488,18 +483,20 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	public static class NamedAutomaton<LETTER, STATE> {
 		private final String mName;
 		private final IAutomaton<LETTER, STATE> mAutomaton;
+
 		public NamedAutomaton(final String name, final IAutomaton<LETTER, STATE> automaton) {
 			super();
 			mName = name;
 			mAutomaton = automaton;
 		}
+
 		public String getName() {
 			return mName;
 		}
+
 		public IAutomaton<LETTER, STATE> getAutomaton() {
 			return mAutomaton;
 		}
-
 
 	}
 }
