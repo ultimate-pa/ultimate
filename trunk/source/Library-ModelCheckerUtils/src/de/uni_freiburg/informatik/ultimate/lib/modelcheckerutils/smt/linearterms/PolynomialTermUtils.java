@@ -87,10 +87,10 @@ public class PolynomialTermUtils {
 			final IPolynomialTerm[] polynomialArgs, final Script script) {
 		final Term simplifiedVariable;
 		final Rational coefficient;
-		if (functionSymbol == "/") {
+		if (functionSymbol.equals("/")) {
 			coefficient = constructCoefficient(polynomialArgs);
 			simplifiedVariable = constructFutureVariableReal(polynomialArgs, script);
-		} else if (functionSymbol == "div") {
+		} else if (functionSymbol.equals("div")) {
 			coefficient = Rational.ONE;
 			simplifiedVariable = constructFutureVariableInt(polynomialArgs, script);
 		} else {
