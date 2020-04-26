@@ -87,7 +87,6 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 * polynomialTerms.
 	 */
 	public static IPolynomialTerm mulPolynomials(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
-		// assert poly1.getSort() == poly2.getSort() : "sort mismatch";
 		final Sort s = poly1.getSort();
 		final Rational coeff = calculateProductCoefficient(poly1, poly2);
 		final Map<Monomial, Rational> polyMap = calculateProductMap(poly1, poly2);

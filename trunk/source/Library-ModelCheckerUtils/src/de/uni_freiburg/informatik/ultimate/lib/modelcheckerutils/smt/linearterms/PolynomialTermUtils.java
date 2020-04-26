@@ -209,8 +209,7 @@ public class PolynomialTermUtils {
 				denominatorConstants.add(divArray[i]);
 			}
 		}
-
-		if (denominatorConstants.size() == 0) {
+		if (denominatorConstants.isEmpty()) {
 			return divArray[0];
 		} else {
 			return divideIPolynomialTermByConstants(divArray[0], denominatorConstants, script);
@@ -316,9 +315,7 @@ public class PolynomialTermUtils {
 		Rational newCoeff;
 		for (final Entry<MNL, Rational> entry : agAffineTerm.getAbstractVariable2Coefficient().entrySet()) {
 			newCoeff = SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(entry.getValue()), divident));
-			if (newCoeff == Rational.ZERO) {
-				continue;
-			} else {
+			if (newCoeff != Rational.ZERO) {
 				mapBuilder.put(entry.getKey(), newCoeff);
 			}
 		}
@@ -381,8 +378,7 @@ public class PolynomialTermUtils {
 		for (final IPolynomialTerm term : summands) {
 			for (final Map.Entry<MNL, Rational> summand : term2map.apply(term).entrySet()) {
 				// assert summand.getKey().getSort() == mSort : "Sort mismatch: " +
-				// summand.getKey().getSort() + " vs. "
-				// + mSort;
+				// summand.getKey().getSort() + " vs. " + mSort;
 				final Rational coeff = variable2Coefficient.get(summand.getKey());
 				if (coeff == null) {
 					variable2Coefficient.put(summand.getKey(), summand.getValue());

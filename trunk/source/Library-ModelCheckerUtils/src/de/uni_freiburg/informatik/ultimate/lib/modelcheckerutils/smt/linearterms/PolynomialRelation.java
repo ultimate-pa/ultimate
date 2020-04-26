@@ -271,8 +271,9 @@ public class PolynomialRelation implements IBinaryRelation {
 			final Predicate<Integer> pred) {
 		if (pred.test(term.getConstant().signum())) {
 			return TrivialityStatus.EQUIVALENT_TO_TRUE;
+		} else {
+			return TrivialityStatus.EQUIVALENT_TO_FALSE;
 		}
-		return TrivialityStatus.EQUIVALENT_TO_FALSE;
 	}
 
 	public RelationSymbol getRelationSymbol() {
@@ -1016,8 +1017,8 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	private boolean isBvMinusOne(final Rational number, final Sort bvSort) {
-		final int vecSize = Integer.valueOf(bvSort.getIndices()[0]).intValue();
-		final BigInteger minusOne = new BigInteger("2").pow(vecSize).subtract(BigInteger.ONE);
+		final int vecSize = Integer.parseInt(bvSort.getIndices()[0]);
+		final BigInteger minusOne = BigInteger.valueOf(2).pow(vecSize).subtract(BigInteger.ONE);
 		final Rational rationalMinusOne = Rational.valueOf(minusOne, BigInteger.ONE);
 		return number.equals(rationalMinusOne);
 	}
