@@ -64,11 +64,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
-
 /**
  * Represents an term of the form ψ ▷ φ, where ψ and φ are
- * {@link PolynomialTerm}s or {@link AffineTerm}s and ▷ is a binary relation symbol
- * from the following list.
+ * {@link PolynomialTerm}s or {@link AffineTerm}s and ▷ is a binary relation
+ * symbol from the following list.
  * <p>
  * ▷ ∈ { =, !=, \<=, \<, \>=, \> }
  * </p>
@@ -80,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.util.VMUtils;
  * summands are moved to the right hand side.
  * </ul>
  * </p>
+ *
  * @author Leonard Fichtner
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -93,7 +93,8 @@ public class PolynomialRelation implements IBinaryRelation {
 	protected final RelationSymbol mRelationSymbol;
 	protected final TrivialityStatus mTrivialityStatus;
 	/**
-	 * Affine term ψ such that the relation ψ ▷ 0 is equivalent to the mOriginalTerm.
+	 * Affine term ψ such that the relation ψ ▷ 0 is equivalent to the
+	 * mOriginalTerm.
 	 */
 	protected final AbstractGeneralizedAffineTerm<Term> mPolynomialTerm;
 
@@ -106,9 +107,11 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * Create {@link PolynomialRelation} from {@link IPolynomialTerm} and {@link RelationSymbol}.
+	 * Create {@link PolynomialRelation} from {@link IPolynomialTerm} and
+	 * {@link RelationSymbol}.
 	 *
 	 * Resulting relation is then <code><term> <symbol> 0</code>.
+	 *
 	 * @deprecated no constructor for this special case
 	 */
 	@Deprecated
@@ -223,13 +226,14 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * Given a AbstractGeneralizedAffineTerm, check whether it is of Type AffineTerm and PolynomialTerm.
-	 * If yes, cast it (UNSAFE) and return the result, throw an exception otherwise.
+	 * Given a AbstractGeneralizedAffineTerm, check whether it is of Type AffineTerm
+	 * and PolynomialTerm. If yes, cast it (UNSAFE) and return the result, throw an
+	 * exception otherwise.
 	 */
-	private static AbstractGeneralizedAffineTerm<Term> checkThenCast(final AbstractGeneralizedAffineTerm<?> poly){
+	private static AbstractGeneralizedAffineTerm<Term> checkThenCast(final AbstractGeneralizedAffineTerm<?> poly) {
 		if (!(poly instanceof AffineTerm || poly instanceof PolynomialTerm)) {
-			throw new IllegalArgumentException("PolynomialRelation accepts only AffineTerm "
-					+ "and PolynomialTerm as internal terms.");
+			throw new IllegalArgumentException(
+					"PolynomialRelation accepts only AffineTerm " + "and PolynomialTerm as internal terms.");
 		}
 		return unsafeCast(poly);
 	}
@@ -280,8 +284,9 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * Returns a term representation of this PolynomialRelation where each summand occurs only positive and the greater-than
-	 * relation symbols are replaced by less-than relation symbols. If the term is equivalent to <i>true</i> (resp.
+	 * Returns a term representation of this PolynomialRelation where each summand
+	 * occurs only positive and the greater-than relation symbols are replaced by
+	 * less-than relation symbols. If the term is equivalent to <i>true</i> (resp.
 	 * <i>false</i>) we return <i>true</i> (resp. <i>false</i>).
 	 */
 	public Term positiveNormalForm(final Script script) {
@@ -303,10 +308,11 @@ public class PolynomialRelation implements IBinaryRelation {
 			}
 			if (mPolynomialTerm.getConstant() != Rational.ZERO) {
 				if (mPolynomialTerm.getConstant().isNegative()) {
-					rhsSummands.add(
-							SmtUtils.rational2Term(script, mPolynomialTerm.getConstant().abs(), mPolynomialTerm.getSort()));
+					rhsSummands.add(SmtUtils.rational2Term(script, mPolynomialTerm.getConstant().abs(),
+							mPolynomialTerm.getSort()));
 				} else {
-					lhsSummands.add(SmtUtils.rational2Term(script, mPolynomialTerm.getConstant(), mPolynomialTerm.getSort()));
+					lhsSummands.add(
+							SmtUtils.rational2Term(script, mPolynomialTerm.getConstant(), mPolynomialTerm.getSort()));
 				}
 			}
 			final Term lhsTerm = SmtUtils.sum(script, mPolynomialTerm.getSort(),
@@ -347,8 +353,9 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * Returns a {@link SolvedBinaryRelation} that is equivalent to this PolynomialRelation or null if we cannot find
-	 * such a {@link SolvedBinaryRelation}.
+	 * Returns a {@link SolvedBinaryRelation} that is equivalent to this
+	 * PolynomialRelation or null if we cannot find such a
+	 * {@link SolvedBinaryRelation}.
 	 */
 	@Override
 	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) {
@@ -433,8 +440,9 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * Returns a {@link MultiCaseSolvedBinaryRelation} that is equivalent to this PolynomialRelation or null if we
-	 * cannot find such a {@link MultiCaseSolvedBinaryRelation}.
+	 * Returns a {@link MultiCaseSolvedBinaryRelation} that is equivalent to this
+	 * PolynomialRelation or null if we cannot find such a
+	 * {@link MultiCaseSolvedBinaryRelation}.
 	 */
 	public MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf) {
@@ -543,9 +551,11 @@ public class PolynomialRelation implements IBinaryRelation {
 					mcsb.reportAdditionalIntricateOperation(IntricateOperation.DIV_BY_INTEGER_CONSTANT);
 				}
 			} else if (subjectInAllowedSubterm) {
-				// Solve for subject in affineterm with a parameter of form (mod/div (subterm with subject) constant)
+				// Solve for subject in affineterm with a parameter of form (mod/div (subterm
+				// with subject) constant)
 				final Sort termSort = mPolynomialTerm.getSort();
-				// recVarName ensures different names in each recursion, since AffineRelation is made new each time
+				// recVarName ensures different names in each recursion, since AffineRelation is
+				// made new each time
 				final int recVarName = allowedSubterm.toString().length();
 				final TermVariable auxDiv = script.variable("aux_div_" + recVarName, termSort);
 				final TermVariable auxMod = script.variable("aux_mod_" + recVarName, termSort);
@@ -554,8 +564,8 @@ public class PolynomialRelation implements IBinaryRelation {
 						SmtUtils.rational2Term(script, coeffOfSubject, termSort), auxDiv);
 				final Term sum = SmtUtils.sum(script, termSort, auxMod, multiplication);
 
-				final AbstractGeneralizedAffineTerm recursion = (AbstractGeneralizedAffineTerm) new AffineTermTransformer(script)
-						.transform(allowedSubterm.getParameters()[0]);
+				final AbstractGeneralizedAffineTerm recursion = (AbstractGeneralizedAffineTerm) new AffineTermTransformer(
+						script).transform(allowedSubterm.getParameters()[0]);
 				if (!recursion.isVariable(subject)) {
 					// recursiv call for terms of form: "(mod ...(mod subject const1)... const 2)"
 					final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation
@@ -565,7 +575,8 @@ public class PolynomialRelation implements IBinaryRelation {
 							IntricateOperation.MUL_BY_INTEGER_CONSTANT, mcsbr.getAuxiliaryVariables());
 					mcsb.conjoinWithConjunction(recSupTerm);
 				} else {
-					// solve terms of form (mod (subterm) const) where subterm contains x but is no mod or div term
+					// solve terms of form (mod (subterm) const) where subterm contains x but is no
+					// mod or div term
 					final SolvedBinaryRelation sbr = PolynomialRelation
 							.convert(script, SmtUtils.binaryEquality(script, allowedSubterm.getParameters()[0], sum))
 							.solveForSubject(script, subject);
@@ -612,12 +623,13 @@ public class PolynomialRelation implements IBinaryRelation {
 			}
 		}
 		if (divisionByVariablesNecessary(abstractVarOfSubject)) {
-			// TODO 13.11.2019: When we divide by variables we could actually sometimes simplify the resulting division,
-			// in the case that this variable is not zero (and therefore we can simplify f.ex. x/x to 1).
-			// Also we could sometimes get Conjuncts like x!=0, that are already in the case distinction.
+			// TODO 13.11.2019 Leonard: When we divide by variables we could actually
+			// sometimes simplify the resulting division, in the case that this variable is
+			// not zero (and therefore we can simplify f.ex. x/x to 1). Also we could
+			// sometimes get conjuncts like x!=0, that are already in the case distinction.
 			// Handle this in the MultiCaseSolutionBuilder?
-			// At the moment this seems like much work relative to little effect, so I was asked to leave this comment
-			// here for the future.
+			// At the moment this seems like much work relative to little effect, so I was
+			// asked to leave this comment here for the future.
 			final Collection<Case> finishedCases = new ArrayList<>();
 			Collection<IntermediateCase> previousCases = new ArrayList<>();
 			Collection<IntermediateCase> nextCases = new ArrayList<>();
@@ -639,8 +651,9 @@ public class PolynomialRelation implements IBinaryRelation {
 						if (isEqOrDistinct(mRelationSymbol) || exp % 2 == 0) {
 							nextCases.add(constructDivByVarDistinctZeroCase(script, previousCase, var2exp));
 						} else {
-							//We have to distinguish the case now into two cases,
-							//since the RelationSymbol has to be swapped, when we divide by a negative variable.
+							// We have to distinguish the case now into two cases,
+							// since the RelationSymbol has to be swapped, when we divide by a negative
+							// variable.
 							nextCases.add(constructDivByVarLessZeroCase(script, previousCase, var2exp));
 							nextCases.add(constructDivByVarGreaterZeroCase(script, previousCase, var2exp));
 						}
@@ -668,8 +681,8 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * go thru the parameters of the affineTerm and search for a term of form (mod subterm const) or (div subterm const)
-	 * where subterm contains the subject
+	 * go thru the parameters of the affineTerm and search for a term of form (mod
+	 * subterm const) or (div subterm const) where subterm contains the subject
 	 *
 	 * @return (mod/div ... (mod/div subject const)... const)
 	 */
@@ -729,7 +742,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		final Term varEqualZero = SmtUtils.binaryEquality(script, zeroTerm, var);
 		suppTerms.add(new SupportingTerm(varEqualZero, IntricateOperation.DIV_BY_NONCONSTANT, Collections.emptySet()));
 		final Term rhsRelationZeroTerm;
-		switch(relSym) {
+		switch (relSym) {
 		case EQ:
 			rhsRelationZeroTerm = SmtUtils.binaryEquality(script, zeroTerm, rhs);
 			break;
@@ -853,9 +866,11 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * Try to bring everything but abstractVarOfSubject to the right-hand side. Try to divide the coefficient of every
-	 * other variable and the constant by the coeffOfAbstractVar. If the sort is not real and for some coefficient the
-	 * quotient is not integral return null. Otherwise return the {@link Term} representation of the right-hand side.
+	 * Try to bring everything but abstractVarOfSubject to the right-hand side. Try
+	 * to divide the coefficient of every other variable and the constant by the
+	 * coeffOfAbstractVar. If the sort is not real and for some coefficient the
+	 * quotient is not integral return null. Otherwise return the {@link Term}
+	 * representation of the right-hand side.
 	 */
 	private Term constructRhsForAbstractVariable(final Script script, final Term abstractVarOfSubject,
 			final Rational coeffOfAbstractVar) {
@@ -866,10 +881,11 @@ public class PolynomialRelation implements IBinaryRelation {
 			} else {
 				final Rational newCoeff;
 				if (SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort())) {
-					//This only works because we know that in our cases coeffOfAbstractVar is always
-					//its own multiplicative inverse.
+					// This only works because we know that in our cases coeffOfAbstractVar is
+					// always
+					// its own multiplicative inverse.
 					newCoeff = entry.getValue().mul(coeffOfAbstractVar);
-				}else {
+				} else {
 					newCoeff = entry.getValue().div(coeffOfAbstractVar);
 				}
 				if (newCoeff.isIntegral() || SmtSortUtils.isRealSort(mPolynomialTerm.getSort())) {
@@ -891,10 +907,11 @@ public class PolynomialRelation implements IBinaryRelation {
 		if (!mPolynomialTerm.getConstant().equals(Rational.ZERO)) {
 			final Rational newConstant;
 			if (SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort())) {
-				//This only works because we know that in our cases coeffOfAbstractVar is always
-				//its own multiplicative inverse.
+				// This only works because we know that in our cases coeffOfAbstractVar is
+				// always
+				// its own multiplicative inverse.
 				newConstant = mPolynomialTerm.getConstant().mul(coeffOfAbstractVar);
-			}else {
+			} else {
 				newConstant = mPolynomialTerm.getConstant().div(coeffOfAbstractVar);
 			}
 			if (newConstant.isIntegral() || SmtSortUtils.isRealSort(mPolynomialTerm.getSort())) {
@@ -959,8 +976,8 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/*
-	 * construct DivTerm for LESS and GEQ case, where the default divTerm can't be used. "secondRat" depends on the sign
-	 * of the coefficient.
+	 * construct DivTerm for LESS and GEQ case, where the default divTerm can't be
+	 * used. "secondRat" depends on the sign of the coefficient.
 	 */
 	private Term constructDivTerm(final Script script, final Term rhsTermWithoutDivision, final Rational coeffOfSubject,
 			final Rational secondRat) {
@@ -982,7 +999,7 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	private boolean divisionByVariablesNecessary(final Term abstractVarOfSubject) {
-		if(abstractVarOfSubject instanceof Monomial) {
+		if (abstractVarOfSubject instanceof Monomial) {
 			return !((Monomial) abstractVarOfSubject).isLinear();
 		}
 		return false;
@@ -993,10 +1010,9 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	private boolean isBvAndCantBeSolved(final Rational coeffOfSubject, final Term abstractVarOfSubject) {
-		return  SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort())
-				&& (divisionByVariablesNecessary(abstractVarOfSubject)
-						|| !(coeffOfSubject.equals(Rational.ONE)
-								|| isBvMinusOne(coeffOfSubject, mPolynomialTerm.getSort())));
+		return SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort()) && (divisionByVariablesNecessary(
+				abstractVarOfSubject)
+				|| !(coeffOfSubject.equals(Rational.ONE) || isBvMinusOne(coeffOfSubject, mPolynomialTerm.getSort())));
 	}
 
 	private boolean isBvMinusOne(final Rational number, final Sort bvSort) {
@@ -1007,26 +1023,27 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	private boolean isNegative(final Rational coeffOfSubject) {
-		return coeffOfSubject.isNegative()
-				|| (SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort())
-						&& isBvMinusOne(coeffOfSubject, mPolynomialTerm.getSort()));
+		return coeffOfSubject.isNegative() || (SmtSortUtils.isBitvecSort(mPolynomialTerm.getSort())
+				&& isBvMinusOne(coeffOfSubject, mPolynomialTerm.getSort()));
 	}
 
 	/**
-	 * Check if subject occurs in exactly one abstract variable. Assumes that subject is variable of at least one
-	 * abstract variable (throws AssertionError otherwise). Returns null if subject occurs in more that one abstract
+	 * Check if subject occurs in exactly one abstract variable. Assumes that
+	 * subject is variable of at least one abstract variable (throws AssertionError
+	 * otherwise). Returns null if subject occurs in more that one abstract
 	 * variable, returns the abstract variable of the subject otherwise.
 	 */
 	private Term getTheAbstractVarOfSubject(final Term subject) {
 		if (mPolynomialTerm.isAffine()) {
 			return getVarOfSubject(subject);
-		}else {
+		} else {
 			return getMonomialOfSubject(subject);
 		}
 	}
 
 	/**
-	 * This implements getAbstractVarOfSubject in case that this Relation represents a truly polynomial relation.
+	 * This implements getAbstractVarOfSubject in case that this Relation represents
+	 * a truly polynomial relation.
 	 */
 	private Term getMonomialOfSubject(final Term subject) {
 		boolean subjectOccurred = false;
@@ -1036,11 +1053,11 @@ public class PolynomialRelation implements IBinaryRelation {
 				if (var2exp.getKey() == subject) {
 					if (var2exp.getValue() != Rational.ONE || subjectOccurred) {
 						return null;
-					}else {
+					} else {
 						subjectOccurred = true;
 						abstractVarOfSubject = concreteVar;
 					}
-				}else {
+				} else {
 					final boolean subjectOccursAsSubterm = new SubtermPropertyChecker(x -> x == subject)
 							.isPropertySatisfied(var2exp.getKey());
 					if (subjectOccursAsSubterm) {
@@ -1059,7 +1076,8 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * This implements getAbstractVarOfSubject in case that this is an affine Relation.
+	 * This implements getAbstractVarOfSubject in case that this is an affine
+	 * Relation.
 	 */
 	private Term getVarOfSubject(final Term subject) {
 		boolean subjectOccurred = false;

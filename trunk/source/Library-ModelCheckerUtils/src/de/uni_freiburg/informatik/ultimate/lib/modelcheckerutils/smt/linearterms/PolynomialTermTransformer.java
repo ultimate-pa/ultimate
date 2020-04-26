@@ -14,8 +14,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Transforms a {@link Term} which is "polynomial" into our {@link PolynomialTerm} data
- * structure. The result is an auxiliary error term if the input was not polynomial.
+ * Transforms a {@link Term} which is "polynomial" into our
+ * {@link PolynomialTerm} data structure. The result is an auxiliary error term
+ * if the input was not polynomial.
  *
  * The transformation is done by an recursive algorithm. However, in order to
  * circumvent the problem that the performance of Java virtual machines is
@@ -34,9 +35,9 @@ public class PolynomialTermTransformer extends TermTransformer {
 	/**
 	 * Predicate that defines which Terms might be variables of the
 	 * {@link PolynomialTerm}. Currently, every {@link TermVariable} and every
-	 * {@link ApplicationTerm} can be a variable of the result. In
-	 * the future this may become a parameter in order to allow users
-	 * of this class to be more restrictive.
+	 * {@link ApplicationTerm} can be a variable of the result. In the future this
+	 * may become a parameter in order to allow users of this class to be more
+	 * restrictive.
 	 */
 	private final Predicate<Term> mIsPolynomialVariable = (x -> ((x instanceof TermVariable)
 			|| (x instanceof ApplicationTerm)));
@@ -101,9 +102,9 @@ public class PolynomialTermTransformer extends TermTransformer {
 
 	/**
 	 * Check if term is an {@link ApplicationTerm} whose {@link FunctionSymbol}
-	 * represents an "polynomial function". We call a function an "polynomial function" if
-	 * it implements an addition, subtraction, multiplication, or real number
-	 * division.
+	 * represents an "polynomial function". We call a function an "polynomial
+	 * function" if it implements an addition, subtraction, multiplication, or real
+	 * number division.
 	 */
 	private static boolean isPolynomialFunction(final Term term) {
 		if (term instanceof ApplicationTerm) {
@@ -116,10 +117,9 @@ public class PolynomialTermTransformer extends TermTransformer {
 
 	private static boolean isPolynomialFunctionSymbol(final String funName) {
 		return (funName.equals("+") || funName.equals("-") || funName.equals("*") || funName.equals("/")
-				|| funName.equals("bvadd") || funName.equals("bvsub") || funName.equals("bvmul") || funName.equals("div"));
+				|| funName.equals("bvadd") || funName.equals("bvsub") || funName.equals("bvmul")
+				|| funName.equals("div"));
 	}
-
-
 
 	@Override
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
@@ -127,7 +127,8 @@ public class PolynomialTermTransformer extends TermTransformer {
 		// TermTransformer descend to subformulas.
 		// Here, the arguments are the result of the "recursive" calls for the
 		// subformulas.
-		assert (isPolynomialFunctionSymbol(appTerm.getFunction().getName())) : "We only descended for polynomial functions";
+		assert (isPolynomialFunctionSymbol(
+				appTerm.getFunction().getName())) : "We only descended for polynomial functions";
 		// First, we check if some of this arguments is the auxiliary error term.
 		// If this is the case, we report that input is not polynomial.
 		final IPolynomialTerm[] polynomialArgs = castAndCheckForNonPolynomialArguments(newArgs);
@@ -141,11 +142,11 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Create an IPolynomialTerm out of the polynomialArgs, according to the given funName, if possible.
+	 * Create an IPolynomialTerm out of the polynomialArgs, according to the given
+	 * funName, if possible.
 	 */
-	private IPolynomialTerm convertArgumentsToFunction(final IPolynomialTerm[] polynomialArgs,
-													   final String funName) {
-		switch(funName) {
+	private IPolynomialTerm convertArgumentsToFunction(final IPolynomialTerm[] polynomialArgs, final String funName) {
+		switch (funName) {
 		case "*":
 			return multiply(polynomialArgs);
 
@@ -186,14 +187,14 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Cast the interface IPolynomialTerm in a way that the TermTransformer
-	 * accepts the result for "setResult". Execute "setResult" afterwards.
+	 * Cast the interface IPolynomialTerm in a way that the TermTransformer accepts
+	 * the result for "setResult". Execute "setResult" afterwards.
 	 */
-	private void castAndSetResult(final IPolynomialTerm poly){
+	private void castAndSetResult(final IPolynomialTerm poly) {
 		if (poly instanceof PolynomialTerm) {
 			setResult((PolynomialTerm) poly);
 			return;
-		}else if(poly instanceof AffineTerm) {
+		} else if (poly instanceof AffineTerm) {
 			setResult((AffineTerm) poly);
 			return;
 		}
@@ -223,10 +224,12 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Determines whether the product of two polynomialTerms will most likely be truly polynomial (not affine).
-	 * (It can still happen, that the result is affine, but we can't say that at this point in the code. The PolynomialTerm-class
-	 *  should return an AffineTerm if that's the case. Why not use PolynomialTerm everytime, then? Because of efficiency-reasons.)
-	 * If the result is truly polynomial it returns true, false otherwise.
+	 * Determines whether the product of two polynomialTerms will most likely be
+	 * truly polynomial (not affine). (It can still happen, that the result is
+	 * affine, but we can't say that at this point in the code. The
+	 * PolynomialTerm-class should return an AffineTerm if that's the case. Why not
+	 * use PolynomialTerm everytime, then? Because of efficiency-reasons.) If the
+	 * result is truly polynomial it returns true, false otherwise.
 	 */
 	private static boolean productWillBePolynomial(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
 		return !poly1.isAffine() || !poly2.isAffine() || (!poly1.isConstant() && !poly2.isConstant());
@@ -238,17 +241,17 @@ public class PolynomialTermTransformer extends TermTransformer {
 	private static IPolynomialTerm add(final IPolynomialTerm[] polynomialArgs) {
 		if (someTermIsPolynomial(polynomialArgs)) {
 			return PolynomialTerm.sum(polynomialArgs);
-		}else {
+		} else {
 			return AffineTerm.sum(polynomialArgs);
 		}
 	}
 
 	/**
-	 * Returns true when one of the given Terms is truly polynomial
-	 * (not representable by an AffineTerm).
+	 * Returns true when one of the given Terms is truly polynomial (not
+	 * representable by an AffineTerm).
 	 */
 	private static boolean someTermIsPolynomial(final IPolynomialTerm[] polynomialTerms) {
-		for (final IPolynomialTerm polynomialTerm: polynomialTerms) {
+		for (final IPolynomialTerm polynomialTerm : polynomialTerms) {
 			if (!polynomialTerm.isAffine()) {
 				return true;
 			}
@@ -268,9 +271,9 @@ public class PolynomialTermTransformer extends TermTransformer {
 
 	/**
 	 * Given {@link PolynomialTerm}s <code>t1,t2,...,tn</code> construct an
-	 * {@link PolynomialTerm} that represents the difference <code>t1-t2-...-tn</code>,
-	 * i.e., the {@link PolynomialTerm} that is equivalent to
-	 * <code>t1-(t2+...+tn)</code>
+	 * {@link PolynomialTerm} that represents the difference
+	 * <code>t1-t2-...-tn</code>, i.e., the {@link PolynomialTerm} that is
+	 * equivalent to <code>t1-(t2+...+tn)</code>
 	 */
 	private static IPolynomialTerm subtract(final IPolynomialTerm[] input) {
 		assert input.length > 1;
@@ -286,48 +289,49 @@ public class PolynomialTermTransformer extends TermTransformer {
 
 	/**
 	 * Given {@link PolynomialTerm}s <code>t1,t2,...,tn</code> construct an
-	 * {@link PolynomialTerm} that represents the quotient <code>t1/t2/.../tn</code>,
-	 * i.e., the {@link PolynomialTerm} that is equivalent to
-	 * <code>t1*((1/t2)*...*(1/tn))</code>. Note that the function "/" is only
-	 * defined for the sort of reals. For integer division we have the function "div"
-	 * which is currently partially supported by our polynomial terms.
-	 * If this is not possible, treat the whole
-	 * division term as a variable and return it, wrapped in an AffineTerm.
+	 * {@link PolynomialTerm} that represents the quotient
+	 * <code>t1/t2/.../tn</code>, i.e., the {@link PolynomialTerm} that is
+	 * equivalent to <code>t1*((1/t2)*...*(1/tn))</code>. Note that the function "/"
+	 * is only defined for the sort of reals. For integer division we have the
+	 * function "div" which is currently partially supported by our polynomial
+	 * terms. If this is not possible, treat the whole division term as a variable
+	 * and return it, wrapped in an AffineTerm.
 	 */
 	private IPolynomialTerm divide(final IPolynomialTerm[] polynomialArgs) {
 		assert SmtSortUtils.isRealSort(polynomialArgs[0].getSort());
 
-		//Only Term at position 0 may be not affine.
+		// Only Term at position 0 may be not affine.
 		if (polynomialArgs[0].isAffine()) {
 			return AffineTerm.divide(polynomialArgs, mScript);
-		}else {
+		} else {
 			return PolynomialTerm.divide(polynomialArgs, mScript);
 		}
 	}
 
 	/**
 	 * Given {@link PolynomialTerm}s <code>t1,t2,...,tn</code> construct an
-	 * {@link PolynomialTerm} that represents the quotient <code>t1 div t2 div ... div tn</code>,
-	 * Note that the function "div" does currently only work if all coefficients and the constant of t1
-	 * is divisible by t2...tn. Also only t1 may have variables, t2...tn must be constants.
-	 * For the "usual" division we have the function "divide".
-	 * If this is not possible, treat the whole
-	 * division term as a variable and return it, wrapped in an AffineTerm.
+	 * {@link PolynomialTerm} that represents the quotient
+	 * <code>t1 div t2 div ... div tn</code>, Note that the function "div" does
+	 * currently only work if all coefficients and the constant of t1 is divisible
+	 * by t2...tn. Also only t1 may have variables, t2...tn must be constants. For
+	 * the "usual" division we have the function "divide". If this is not possible,
+	 * treat the whole division term as a variable and return it, wrapped in an
+	 * AffineTerm.
 	 */
 	private IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs) {
 		assert SmtSortUtils.isIntSort(polynomialArgs[0].getSort());
 
-		//Only Term at position 0 may be not affine.
+		// Only Term at position 0 may be not affine.
 		if (polynomialArgs[0].isAffine()) {
 			return AffineTerm.div(polynomialArgs, mScript);
-		}else {
+		} else {
 			return PolynomialTerm.div(polynomialArgs, mScript);
 		}
 	}
 
 	/**
-	 * Convert an array of {@link Term}s into an an array of {@link PolynomialTerm}s by
-	 * casting every single element. In case an element of the input is our
+	 * Convert an array of {@link Term}s into an an array of {@link PolynomialTerm}s
+	 * by casting every single element. In case an element of the input is our
 	 * auxiliary error term we return null instead.
 	 */
 	private static IPolynomialTerm[] castAndCheckForNonPolynomialArguments(final Term[] terms) {
