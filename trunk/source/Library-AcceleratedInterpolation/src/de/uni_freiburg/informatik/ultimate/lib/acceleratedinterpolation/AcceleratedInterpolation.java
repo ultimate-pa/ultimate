@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -79,6 +80,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 	private final List<LETTER> mCounterexample;
+	private final List<UnmodifiableTransFormula> mCounterexampleTf;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredTransformer;
 	private final ITraceCheckPreferences mPrefs;
@@ -90,8 +92,10 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final boolean mTraceCheckFinishedNormally;
 
 	private final Map<IcfgLocation, Set<List<LETTER>>> mLoops;
+	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoopExitTransitions;
+	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
 	private final Map<IcfgLocation, Set<UnmodifiableTransFormula>> mAccelerations;
-	private final Accelerator mAccelerator;
+	private final Accelerator<LETTER> mAccelerator;
 	private final Loopdetector<LETTER> mLoopdetector;
 
 	public AcceleratedInterpolation(final ILogger logger, final ITraceCheckPreferences prefs,
@@ -100,6 +104,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mScript = script;
 		mServices = prefs.getUltimateServices();
 		mCounterexample = counterexample;
+		mCounterexampleTf = traceToListOfTfs(mCounterexample);
 		mPredicateUnifier = predicateUnifier;
 		mPrefs = prefs;
 		mIcfg = mPrefs.getIcfgContainer();
@@ -117,46 +122,79 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mReasonUnknown = null;
 		mTraceCheckFinishedNormally = true;
 
+		/*
+		 * Find loops in the trace.
+		 */
 		mLoops = mLoopdetector.getLoops();
+		mLoopExitTransitions = mLoopdetector.getLoopExitTransitions();
+		mLoopSize = mLoopdetector.getLoopSize();
 		if (mLoops.isEmpty()) {
 			mLogger.debug("No loops found in this trace.");
-			mIsTraceCorrect = checkFeasibility(mCounterexample);
+			mIsTraceCorrect = checkFeasibility(mCounterexampleTf);
 			if (mIsTraceCorrect == LBool.UNSAT) {
 				mInterpolants = generateInterpolants();
 			}
 			return;
 		}
+
+		/*
+		 * After finding loops in the trace, start calculating loop accelerations.
+		 */
 		mLogger.debug("Found loops, starting acceleration");
 		for (final Entry<IcfgLocation, Set<List<LETTER>>> loophead : mLoops.entrySet()) {
 			final Set<UnmodifiableTransFormula> accelerations = new HashSet<>();
 			for (final List<LETTER> loop : loophead.getValue()) {
 				final UnmodifiableTransFormula loopRelation = traceToTf(loop);
 				final UnmodifiableTransFormula acceleratedLoopRelation =
-						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.FAST_UPR);
+						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.NONE);
 				accelerations.add(acceleratedLoopRelation);
 			}
 			mAccelerations.put(loophead.getKey(), accelerations);
 		}
-		mIsTraceCorrect = checkFeasibility(mCounterexample);
+		final List<UnmodifiableTransFormula> traceScheme = generateMetaTrace();
+		mIsTraceCorrect = checkFeasibility(traceScheme);
 		if (mIsTraceCorrect == LBool.UNSAT) {
 			mInterpolants = generateInterpolants();
 		}
 	}
 
+	private List<UnmodifiableTransFormula> generateMetaTrace() {
+		final List<LETTER> counterExampleNonAccelerated = new ArrayList<>(mCounterexample);
+		final List<UnmodifiableTransFormula> counterExampleAccelerated = new ArrayList<>();
+		for (int i = 0; i < counterExampleNonAccelerated.size(); i++) {
+			final LETTER l = counterExampleNonAccelerated.get(i);
+			if (!mLoops.containsKey(l.getTarget())) {
+				counterExampleAccelerated.add(l.getTransformula());
+				continue;
+			}
+			final Set<List<LETTER>> loopTrace = new HashSet<>(mLoops.get(l.getTarget()));
+			for (final List<LETTER> loop : loopTrace) {
+				for (final UnmodifiableTransFormula tf : mAccelerations.get(l.getTarget())) {
+					counterExampleAccelerated.add(tf);
+				}
+			}
+			final UnmodifiableTransFormula loopExit = mLoopExitTransitions.get(l.getTarget());
+			counterExampleAccelerated.add(loopExit);
+			final Pair<Integer, Integer> loopSize = mLoopSize.get(l.getTarget());
+			i = loopSize.getSecond();
+		}
+		return counterExampleAccelerated;
+	}
+
 	/**
 	 * Check whether a given trace is feasible or not.
-	 * 
+	 *
 	 * @param trace
 	 * @return
 	 */
-	private LBool checkFeasibility(final List<LETTER> trace) {
-		final UnmodifiableTransFormula tf = trace.get(0).getTransformula();
+	private LBool checkFeasibility(final List<UnmodifiableTransFormula> trace) {
+		final UnmodifiableTransFormula tf = trace.get(0);
 		final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
 		tfs.add(tf);
 		int i = 1;
 		while (i < trace.size()) {
-			final LETTER l = trace.get(i);
-			tfs.add(trace.get(i).getTransformula());
+			final UnmodifiableTransFormula l = trace.get(i);
+			tfs.add(trace.get(i));
 			i++;
 		}
 		final UnmodifiableTransFormula traceTf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript,
@@ -173,6 +211,14 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		}
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true, true,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA, tfs);
+	}
+
+	private List<UnmodifiableTransFormula> traceToListOfTfs(final List<LETTER> trace) {
+		final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
+		for (final LETTER l : trace) {
+			tfs.add(l.getTransformula());
+		}
+		return tfs;
 	}
 
 	private IPredicate[] generateInterpolants() {

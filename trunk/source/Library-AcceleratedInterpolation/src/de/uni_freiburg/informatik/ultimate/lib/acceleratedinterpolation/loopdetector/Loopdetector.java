@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -51,6 +53,9 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 	private List<LETTER> mTrace;
 	private final List<IcfgLocation> mTraceLocations;
 	private final ILogger mLogger;
+	private Map<IcfgLocation, Set<List<LETTER>>> mLoops;
+	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoopExitTransitions;
+	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
 
 	private final CycleFinder mCycleFinder;
 
@@ -59,25 +64,46 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 		mTrace = new ArrayList<>(trace);
 		mCycleFinder = new CycleFinder();
 		mTraceLocations = mCycleFinder.statementsToLocations(mTrace);
-
-		mLogger.debug("Loopdetector created.");
+		mLoops = new HashMap<>();
+		mLoopExitTransitions = new HashMap<>();
+		mLoopSize = new HashMap<>();
+		mLogger.debug("Loopdetector: created.");
+		mLogger.debug("Loopdetector: Searching for Loops");
+		findLoopPaths();
 	}
 
 	/**
 	 * Calculates loops from a given trace.
 	 */
-	public Map<IcfgLocation, Set<List<LETTER>>> getLoops() {
+	private void findLoopPaths() {
 		final Map<IcfgLocation, List<Integer>> possibleCycles = mCycleFinder.getCyclesInTrace(mTraceLocations);
-		mLogger.debug("Found Loopheads");
+		mLogger.debug("Loopdetector: Found Loops");
 		final Set<IcfgLocation> nestedCycles = getNestedCycles(possibleCycles);
-		final Map<IcfgLocation, Set<List<LETTER>>> cycleTraces;
-
 		final Map<IcfgLocation, List<Integer>> withoutNestedCycles = new HashMap<>(possibleCycles);
 		for (final IcfgLocation nestedHead : nestedCycles) {
 			withoutNestedCycles.remove(nestedHead);
 		}
-		cycleTraces = cyclePaths(withoutNestedCycles);
-		return cycleTraces;
+		mLoops = cyclePaths(withoutNestedCycles);
+		for (final Entry<IcfgLocation, List<Integer>> loop : withoutNestedCycles.entrySet()) {
+			final IcfgLocation loopHead = loop.getKey();
+			final List<Integer> loopSize = loop.getValue();
+			final int loopExitTrans =
+					withoutNestedCycles.get(loopHead).get(withoutNestedCycles.get(loopHead).size() - 1);
+			mLoopExitTransitions.put(loopHead, mTrace.get(loopExitTrans).getTransformula());
+			mLoopSize.put(loopHead, new Pair<>(loopSize.get(0), loopSize.get(loopSize.size() - 1)));
+		}
+	}
+
+	public Map<IcfgLocation, Set<List<LETTER>>> getLoops() {
+		return mLoops;
+	}
+
+	public Map<IcfgLocation, UnmodifiableTransFormula> getLoopExitTransitions() {
+		return mLoopExitTransitions;
+	}
+
+	public Map<IcfgLocation, Pair<Integer, Integer>> getLoopSize() {
+		return mLoopSize;
 	}
 
 	/**
