@@ -337,7 +337,21 @@ public class PolynomialTest {
 		final String expectedOutputAsString = "(* (/ 1.0 42.0) (/ 42.0 x 10.0 y))";
 		runSyntaxWithoutPermutationsTest(inputAsString, expectedOutputAsString);
 	}
-	
+
+	/**
+	 * Similar as {@link PolynomialTest#realDivisionLeftAssoc05} but where
+	 * variables have been replaced by the zero literal.
+	 */
+	@Test
+	public void realDivisionLeftAssoc05ZeroLiteral() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x", new Sort[0], realSort);
+		mScript.declareFun("y", new Sort[0], realSort);
+		final String inputAsString = "(/ 42.0 0.0 5.0 2.0 0.0 21.0 2.0)";
+		final String expectedOutputAsString = "(* (/ 1.0 42.0) (/ 42.0 0.0 10.0 0.0))";
+		runSyntaxWithoutPermutationsTest(inputAsString, expectedOutputAsString);
+	}
+
 	/**
 	 * Result should be 
 	 * <pre>(/ 42 x y)</pre>

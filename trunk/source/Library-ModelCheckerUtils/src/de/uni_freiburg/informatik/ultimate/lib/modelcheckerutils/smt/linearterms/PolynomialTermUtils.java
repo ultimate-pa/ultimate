@@ -107,7 +107,7 @@ public class PolynomialTermUtils {
 	private static Rational constructCoefficient(final IPolynomialTerm[] polynomialArgs) {
 		Rational coeff = Rational.ONE;
 		for (int i = polynomialArgs.length - 1; i >= 0; i--) {
-			if (polynomialArgs[i].isConstant() && !polynomialArgs[i].getConstant().equals(Rational.ONE)) {
+			if (polynomialArgs[i].isConstant() && !polynomialArgs[i].getConstant().equals(Rational.ZERO)) {
 				coeff = coeff.mul(polynomialArgs[i].getConstant());
 			} else {
 				break;
