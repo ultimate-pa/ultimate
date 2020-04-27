@@ -114,7 +114,7 @@ public class AffineRelation extends AbstractGeneralizedAffineRelation<AffineTerm
 			}
 		}
 		if (!subjectOccurred) {
-			throw new AssertionError("superclass already chekced that subject is abstract var");
+			throw new AssertionError("superclass already checked that subject is abstract var");
 		}
 		return subject;
 	}
