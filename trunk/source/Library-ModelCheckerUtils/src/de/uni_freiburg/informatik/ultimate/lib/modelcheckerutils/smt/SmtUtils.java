@@ -2240,6 +2240,10 @@ public final class SmtUtils {
 		}
 	}
 
+	public static double approximateAsDouble(final Rational rat) {
+		return rat.numerator().doubleValue() / rat.denominator().doubleValue();
+	}
+
 	public static class ExtendedSimplificationResult {
 		private final Term mSimplifiedTerm;
 		private final long mSimplificationTimeNano;
