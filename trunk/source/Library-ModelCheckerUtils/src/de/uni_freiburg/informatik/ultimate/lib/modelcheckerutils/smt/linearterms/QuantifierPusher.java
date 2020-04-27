@@ -316,10 +316,9 @@ public class QuantifierPusher extends TermTransformer {
 			offset++;
 		}
 		final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
-		logger.info(
-				"Distributing " + resultOuterParams.length + " "
-						+ QuantifierUtils.getNameOfCorrespondingJuncts(quantifier) + " over " + dualFiniteParams.length
-						+ " " + QuantifierUtils.getNameOfDualJuncts(quantifier));
+		logger.info("Distributing " + resultOuterParams.length + " "
+				+ QuantifierUtils.getNameOfCorrespondingJuncts(quantifier) + " over " + dualFiniteParams.length + " "
+				+ QuantifierUtils.getNameOfDualJuncts(quantifier));
 		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, quantifier, resultOuterParams);
 		return result;
 	}
