@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator.AccelerationMethod;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.Loopdetector;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -83,13 +83,16 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final List<UnmodifiableTransFormula> mCounterexampleTf;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredTransformer;
+	private final PredicateHelper<LETTER> mPredHelper;
 	private final ITraceCheckPreferences mPrefs;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
+	private final IIcfgSymbolTable mSymbolTable;
 	private LBool mIsTraceCorrect;
 	private IPredicate[] mInterpolants;
 	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mFeasibleProgramExecution;
 	private final TraceCheckReasonUnknown mReasonUnknown;
 	private final boolean mTraceCheckFinishedNormally;
+	private final Interpolator mInterpolator;
 
 	private final Map<IcfgLocation, Set<List<LETTER>>> mLoops;
 	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoopExitTransitions;
@@ -104,10 +107,10 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mScript = script;
 		mServices = prefs.getUltimateServices();
 		mCounterexample = counterexample;
-		mCounterexampleTf = traceToListOfTfs(mCounterexample);
 		mPredicateUnifier = predicateUnifier;
 		mPrefs = prefs;
 		mIcfg = mPrefs.getIcfgContainer();
+		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 		mAccelerations = new HashMap<>();
 		mLogger.debug("Accelerated Interpolation engaged!");
 		mInterpolants = new IPredicate[mCounterexample.size()];
@@ -117,6 +120,10 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mAccelerator = new Accelerator<>(mLogger, mScript, mServices);
 		mLoopdetector = new Loopdetector<>(mCounterexample, mLogger);
 		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
+
+		mPredHelper = new PredicateHelper<>(mPredicateUnifier, mPredTransformer, mLogger, mScript, mServices);
+		mInterpolator = new Interpolator(mPredicateUnifier, mPredTransformer, mLogger, mScript, mServices, mPredHelper);
+		mCounterexampleTf = mPredHelper.traceToListOfTfs(mCounterexample);
 
 		// TODO give a better reason
 		mReasonUnknown = null;
@@ -132,7 +139,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			mLogger.debug("No loops found in this trace.");
 			mIsTraceCorrect = checkFeasibility(mCounterexampleTf);
 			if (mIsTraceCorrect == LBool.UNSAT) {
-				mInterpolants = generateInterpolants();
+				mInterpolants = mInterpolator.generateInterpolantsPost(mPredHelper.traceToListOfTfs(mCounterexample));
 			}
 			return;
 		}
@@ -144,7 +151,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		for (final Entry<IcfgLocation, Set<List<LETTER>>> loophead : mLoops.entrySet()) {
 			final Set<UnmodifiableTransFormula> accelerations = new HashSet<>();
 			for (final List<LETTER> loop : loophead.getValue()) {
-				final UnmodifiableTransFormula loopRelation = traceToTf(loop);
+				final UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
 				final UnmodifiableTransFormula acceleratedLoopRelation =
 						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.NONE);
 				accelerations.add(acceleratedLoopRelation);
@@ -152,9 +159,10 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			mAccelerations.put(loophead.getKey(), accelerations);
 		}
 		final List<UnmodifiableTransFormula> traceScheme = generateMetaTrace();
-		mIsTraceCorrect = checkFeasibility(traceScheme);
+		mIsTraceCorrect = checkFeasibility(mCounterexampleTf);
 		if (mIsTraceCorrect == LBool.UNSAT) {
-			mInterpolants = generateInterpolants();
+			final IPredicate[] preds = mInterpolator.generateInterpolants(mCounterexampleTf);
+			mInterpolants = preds;
 		}
 	}
 
@@ -202,35 +210,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				SimplificationTechnique.SIMPLIFY_DDA, tfs);
 		final LBool result = SmtUtils.checkSatTerm(mScript.getScript(), traceTf.getFormula());
 		return result;
-	}
-
-	private UnmodifiableTransFormula traceToTf(final List<LETTER> trace) {
-		final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
-		for (final LETTER l : trace) {
-			tfs.add(l.getTransformula());
-		}
-		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true, true,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA, tfs);
-	}
-
-	private List<UnmodifiableTransFormula> traceToListOfTfs(final List<LETTER> trace) {
-		final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
-		for (final LETTER l : trace) {
-			tfs.add(l.getTransformula());
-		}
-		return tfs;
-	}
-
-	private IPredicate[] generateInterpolants() {
-		final IPredicate[] interpolants = new IPredicate[mCounterexample.size() + 1];
-		interpolants[0] = mPredicateUnifier.getTruePredicate();
-		interpolants[mCounterexample.size()] = mPredicateUnifier.getFalsePredicate();
-		for (int i = 1; i <= mCounterexample.size(); i++) {
-			interpolants[i] = mPredicateUnifier.getOrConstructPredicate(mPredTransformer
-					.strongestPostcondition(interpolants[i - 1], mCounterexample.get(i - 1).getTransformula()));
-		}
-		final IPredicate[] actualInterpolants = Arrays.copyOfRange(interpolants, 1, mCounterexample.size());
-		return actualInterpolants;
 	}
 
 	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> computeProgramExecution() {
