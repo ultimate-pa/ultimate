@@ -31,11 +31,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.OctagonRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -128,11 +129,12 @@ public class OctagonRelationTest {
 	}
 
 	private String octRelAsString(final String termAsString) {
-		final AffineRelation affRel = AffineRelation.convert(mScript, TermParseUtils.parseTerm(mScript, termAsString));
-		if (affRel == null) {
+		final PolynomialRelation polyRel = PolynomialRelation.convert(mScript,
+				TermParseUtils.parseTerm(mScript, termAsString));
+		if (polyRel == null) {
 			throw new IllegalArgumentException("Invalid test case. Term was not affine.");
 		}
-		final OctagonRelation octRel = OctagonRelation.from(affRel);
+		final OctagonRelation octRel = OctagonRelation.from(polyRel);
 		return octRel == null ? null : octRel.toString();
 	}
 
