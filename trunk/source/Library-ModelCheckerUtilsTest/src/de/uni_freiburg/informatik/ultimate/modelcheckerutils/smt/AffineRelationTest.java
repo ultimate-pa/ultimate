@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtil
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation;
@@ -300,14 +300,14 @@ public class AffineRelationTest {
 	}
 
 	private void testSingleCaseSolveForSubject(final Term inputAsTerm, final Term x) throws NotAffineException {
-		final SolvedBinaryRelation sbr = AffineRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x);
+		final SolvedBinaryRelation sbr = PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x);
 		Assert.assertTrue(assumptionsImpliesEquality(inputAsTerm, sbr));
 	}
 
 	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf)
 			throws NotAffineException {
 		final MultiCaseSolvedBinaryRelation mcsbr =
-				AffineRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x, xnf);
+				PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x, xnf);
 		final Term solvedAsTerm = mcsbr.asTerm(mScript);
 		final Term tmp;
 		if (USE_QUANTIFIER_ELIMINATION_TO_SIMPLIFY_INPUT_OF_EQUIVALENCE_CHECK) {
