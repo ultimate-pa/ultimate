@@ -285,7 +285,8 @@ public class Req2BoogieTranslator {
 	 * @param bl
 	 * @return the array of (two) statements that check the invariant.
 	 */
-	private Statement[] genCheckPhaseInvariant(final Phase phase, final BoogieLocation bl) {
+	private Statement[] genCheckPhaseInvariant(final Phase phase, final BoogieLocation bl,
+			PeaLocationAnnotation peaLocationAnnotation) {
 		final CDD clockInvCdd = phase.getClockInvariant();
 		final AssumeStatement assumeClInv;
 		if (clockInvCdd != CDD.TRUE) {
@@ -306,7 +307,12 @@ public class Req2BoogieTranslator {
 		if (assumeClInv == null && assumeStateInv == null) {
 			return null;
 		}
-
+		if (assumeClInv != null) {
+			peaLocationAnnotation.annotate(assumeClInv);
+		}
+		if (assumeStateInv != null) {
+			peaLocationAnnotation.annotate(assumeStateInv);
+		}
 		return concatStmt(assumeClInv, assumeStateInv);
 	}
 
@@ -387,7 +393,9 @@ public class Req2BoogieTranslator {
 		final Statement[] emptyElseBody = new Statement[0];
 		for (int i = 0; i < phases.length; i++) {
 			final Expression ifCon = genComparePhaseCounter(i, pcName, bl);
-			final Statement[] ifBody = genCheckPhaseInvariant(phases[i], bl);
+			final PeaLocationAnnotation peaLocAnnotation = new PeaLocationAnnotation(Collections.singletonList(automaton),
+					Collections.singletonList(phases[i]));
+			final Statement[] ifBody = genCheckPhaseInvariant(phases[i], bl, peaLocAnnotation);
 			if (ifBody == null) {
 				mLogger.warn("phase without clock or state invariant for " + patternType);
 				continue;
