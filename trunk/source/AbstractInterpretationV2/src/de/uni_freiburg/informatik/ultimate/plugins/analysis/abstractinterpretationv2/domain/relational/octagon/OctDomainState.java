@@ -44,15 +44,15 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator.EvalResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.OctagonRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -1164,14 +1164,14 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		if (SmtUtils.isFalseLiteral(term)) {
 			return EvalResult.FALSE;
 		}
-		OctagonRelation octRel;
-		final AffineRelation affRel = AffineRelation.convert(script, term);
-		if (affRel == null) {
+		final OctagonRelation octRel;
+		final PolynomialRelation polyRel = PolynomialRelation.convert(script, term);
+		if (polyRel == null || !polyRel.isAffine()) {
 			//term is not an affine relation
 			return EvalResult.UNKNOWN; // alternatively apply SMT solver
 			// TODO (optional) special treatment for boolean variables
 		}
-		octRel = OctagonRelation.from(affRel);
+		octRel = OctagonRelation.from(polyRel);
 		if (octRel == null) {
 			return EvalResult.UNKNOWN; // alternatively apply SMT solver
 		}
