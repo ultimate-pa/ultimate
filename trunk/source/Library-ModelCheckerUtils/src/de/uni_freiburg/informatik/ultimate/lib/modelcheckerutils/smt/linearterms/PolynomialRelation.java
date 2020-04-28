@@ -867,6 +867,14 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	/**
+	 * @return true iff the relation ψ ▷ φ has (after simplification) a form where ψ
+	 *         and φ are both affine terms.
+	 */
+	public boolean isAffine() {
+		return mPolynomialTerm.isAffine();
+	}
+
+	/**
 	 * Try to bring everything but abstractVarOfSubject to the right-hand side. Try
 	 * to divide the coefficient of every other variable and the constant by the
 	 * coeffOfAbstractVar. If the sort is not real and for some coefficient the
