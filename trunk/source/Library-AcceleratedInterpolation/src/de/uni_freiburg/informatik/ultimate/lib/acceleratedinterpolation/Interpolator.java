@@ -35,6 +35,16 @@ public class Interpolator {
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 
+	/**
+	 * Class to help with interplation.
+	 *
+	 * @param predicateUnifier
+	 * @param predTransformer
+	 * @param logger
+	 * @param script
+	 * @param services
+	 * @param predHelper
+	 */
 	public Interpolator(final IPredicateUnifier predicateUnifier,
 			final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer, final ILogger logger,
 			final ManagedScript script, final IUltimateServiceProvider services, final PredicateHelper predHelper) {
@@ -46,6 +56,12 @@ public class Interpolator {
 		mServices = services;
 	}
 
+	/**
+	 * Generate inteprolants using a given infeasible counterexample.
+	 *
+	 * @param counterexample
+	 * @return
+	 */
 	public IPredicate[] generateInterpolants(final List<UnmodifiableTransFormula> counterexample) {
 		final IPredicate[] interpolants = new IPredicate[counterexample.size() + 1];
 
@@ -75,7 +91,7 @@ public class Interpolator {
 
 			final Map<Term, Term> subIn = new HashMap<>();
 			final Map<Term, Term> subOut = new HashMap<>();
-			final Map<Term, Term> subFirst = new HashMap<>();
+			// final Map<Term, Term> subFirst = new HashMap<>();
 			for (final Entry<IProgramVar, TermVariable> inVar : inVars.entrySet()) {
 				subIn.put(inVar.getKey().getDefaultConstant(), inVar.getKey().getTermVariable());
 			}
@@ -100,6 +116,12 @@ public class Interpolator {
 		return actualInterpolants;
 	}
 
+	/**
+	 * Naive way of generating interpolants, by just applying the post operator
+	 *
+	 * @param counterexample
+	 * @return
+	 */
 	public IPredicate[] generateInterpolantsPost(final List<UnmodifiableTransFormula> counterexample) {
 		final IPredicate[] interpolants = new IPredicate[counterexample.size() + 1];
 		interpolants[0] = mPredicateUnifier.getTruePredicate();

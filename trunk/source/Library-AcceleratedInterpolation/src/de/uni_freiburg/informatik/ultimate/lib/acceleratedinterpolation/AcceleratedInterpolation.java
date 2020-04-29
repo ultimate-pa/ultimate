@@ -166,13 +166,19 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		}
 	}
 
+	/**
+	 * Transform the counterexample to a meta trace by "pulling" loopheads into two locations.
+	 *
+	 * @return
+	 */
 	private List<UnmodifiableTransFormula> generateMetaTrace() {
 		final List<LETTER> counterExampleNonAccelerated = new ArrayList<>(mCounterexample);
 		final List<UnmodifiableTransFormula> counterExampleAccelerated = new ArrayList<>();
 		for (int i = 0; i < counterExampleNonAccelerated.size(); i++) {
 			final LETTER l = counterExampleNonAccelerated.get(i);
+			counterExampleAccelerated.add(l.getTransformula());
+
 			if (!mLoops.containsKey(l.getTarget())) {
-				counterExampleAccelerated.add(l.getTransformula());
 				continue;
 			}
 			final Set<List<LETTER>> loopTrace = new HashSet<>(mLoops.get(l.getTarget()));
