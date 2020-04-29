@@ -1,24 +1,25 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie.testgen;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ReqEffectStore {
 
 	private final Set<String> mEffectVars;
 	private final Set<Integer> mEffectPhase;
 	private final Set<Integer> mOutputEffectPhase;
-	private final Map<Integer, Integer> mEffectEdges;
-	private final Map<Integer, Integer> mOutputEffectEdges;
+	private final Set<Pair<Integer, Integer>> mEffectEdges;
+	private final Set<Pair<Integer, Integer>> mOutputEffectEdges;
 
 	public ReqEffectStore() {
 		mEffectPhase = new HashSet<>();
 		mOutputEffectPhase = new HashSet<>();
 		mEffectVars = new HashSet<>();
-		mEffectEdges = new HashMap<>();
-		mOutputEffectEdges = new HashMap<>();
+		mEffectEdges = new HashSet<>();
+		mOutputEffectEdges = new HashSet<>();
 	}
 
 	public void addEffectVars(final Set<String> effectVars) {
@@ -34,11 +35,11 @@ public class ReqEffectStore {
 	}
 
 	public void addEffectEdgeIndex(final Integer sourcePhaseIndex, final Integer targetPhaseIndex) {
-		mEffectEdges.put(sourcePhaseIndex, targetPhaseIndex);
+		mEffectEdges.add(new Pair<Integer, Integer>(sourcePhaseIndex, targetPhaseIndex));
 	}
 
 	public void addOutputEffectEdgeIndex(final Integer sourcePhaseIndex, final Integer targetPhaseIndex) {
-		mOutputEffectEdges.put(sourcePhaseIndex, targetPhaseIndex);
+		mOutputEffectEdges.add(new Pair<Integer, Integer>(sourcePhaseIndex, targetPhaseIndex));
 	}
 
 	public Set<String> getEffectVars() {
@@ -54,10 +55,10 @@ public class ReqEffectStore {
 	}
 
 	public Set<Integer> getEffectEdgeSourceIndexes() {
-		return mEffectEdges.keySet();
+		return mEffectEdges.stream().map(p -> p.getFirst()).collect(Collectors.toSet());
 	}
 
-	public Map<Integer, Integer> getEffectEdges() {
+	public Set<Pair<Integer, Integer>> getEffectEdges() {
 		return mEffectEdges;
 	}
 
@@ -69,18 +70,17 @@ public class ReqEffectStore {
 		return mOutputEffectPhase;
 	}
 
-	public Map<Integer, Integer> getOutputEffectEdges() {
+	public Set<Pair<Integer, Integer>> getOutputEffectEdges() {
 		return mOutputEffectEdges;
 	}
 
 
 	public boolean isEffectEdge(final Integer sourcePhaseIndex, final Integer targetPhaseIndex) {
-		return mEffectEdges.containsKey(sourcePhaseIndex) && mEffectEdges.get(sourcePhaseIndex) == targetPhaseIndex;
+		return mEffectEdges.contains(new Pair<Integer, Integer>(sourcePhaseIndex, targetPhaseIndex));
 	}
 
 	public boolean isOutputEffectEdge(final Integer sourcePhaseIndex, final Integer targetPhaseIndex) {
-		return mOutputEffectEdges.containsKey(sourcePhaseIndex)
-				&& mOutputEffectEdges.get(sourcePhaseIndex) == targetPhaseIndex;
+		return mOutputEffectEdges.contains(new Pair<Integer, Integer>(sourcePhaseIndex, targetPhaseIndex));
 	}
 
 }

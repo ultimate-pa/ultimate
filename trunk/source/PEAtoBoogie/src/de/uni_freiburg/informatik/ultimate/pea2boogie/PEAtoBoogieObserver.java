@@ -77,10 +77,11 @@ public class PEAtoBoogieObserver extends BaseObserver {
 
 	private IElement generateReqTestBoogie(final List<PatternType> patterns) {
 		// TODO: would it be nicer to get the symbol table via annotations?
+		final Req2CauseTrackingPeaTransformer transformer = new Req2CauseTrackingPeaTransformer(mServices, mLogger);
 		final Req2BoogieTranslator translator = new Req2BoogieTranslator(mServices, mLogger, patterns,
-				Collections.singletonList(new Req2CauseTrackingPeaTransformer(mServices, mLogger)));
+				Collections.singletonList(transformer));
 		final ReqTestResultUtil mReporter =
-				new ReqTestResultUtil(mLogger, mServices, translator.getReqSymbolTable());
+				new ReqTestResultUtil(mLogger, mServices, translator.getReqSymbolTable(), transformer.getEffectStore());
 		// register CEX transformer that removes program executions from CEX.
 		final Function<IResult, IResult> resultTransformer = mReporter::convertTraceAbstractionResult;
 		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);

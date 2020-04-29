@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.StrictInvariant;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaAnnotator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CDDTranslator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
 
 public class ReqTestAnnotator implements IReq2PeaAnnotator {
@@ -229,9 +230,9 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 	 * i.e. now there is an effect determining the variable
 	 */
 	private List<Statement> genTestEdgeEffectAssertion(final PhaseEventAutomata pea,
-			final Map<Integer, Integer> effectEdges) {
+			final Set<Pair<Integer, Integer>> effectEdges) {
 		final List<Statement> statements = new ArrayList<>();
-		for (final Map.Entry<Integer, Integer> edgeIndexes : effectEdges.entrySet()) {
+		for (final Pair<Integer,Integer> edgeIndexes : effectEdges) {
 			final Expression lastExpr = new BinaryExpression(mLocation, BinaryExpression.Operator.COMPEQ,
 					mSymbolTable.getIdentifierExpression(mSymbolTable.getHistoryVarId(mSymbolTable.getPcName(pea))),
 					new IntegerLiteral(mLocation, Integer.toString(edgeIndexes.getKey())));

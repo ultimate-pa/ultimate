@@ -358,6 +358,10 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 		return mSymbolTable;
 	}
 
+	public Map<PhaseEventAutomata, ReqEffectStore> getEffectStore() {
+		return mPea2EffectStore;
+	}
+
 	@Override
 	public boolean hasErrors() {
 		return mHasErrors;

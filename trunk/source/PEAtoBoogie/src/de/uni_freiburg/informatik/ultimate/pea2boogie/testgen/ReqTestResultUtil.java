@@ -2,14 +2,19 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.testgen;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
@@ -20,6 +25,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 
 public class ReqTestResultUtil {
@@ -27,12 +34,14 @@ public class ReqTestResultUtil {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IReqSymbolTable mReqSymbolTable;
+	private final Map<PhaseEventAutomata, ReqEffectStore> mReqEffectStore;
 
 	public ReqTestResultUtil(final ILogger logger, final IUltimateServiceProvider services,
-			final IReqSymbolTable reqSymbolTable) {
+			final IReqSymbolTable reqSymbolTable, final Map<PhaseEventAutomata, ReqEffectStore> effectStore) {
 		mLogger = logger;
 		mServices = services;
 		mReqSymbolTable = reqSymbolTable;
+		mReqEffectStore = effectStore;
 	}
 
 	public IResult convertTraceAbstractionResult(final IResult result) {
@@ -50,26 +59,233 @@ public class ReqTestResultUtil {
 		final List<TestStep> testSteps = new ArrayList<>();
 		@SuppressWarnings("unchecked")
 		final IProgramExecution<?, Expression> translatedPe = (IProgramExecution<?, Expression>) mServices
-				.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
+		.getBacktranslationService().translateProgramExecution(result.getProgramExecution());
 		final AtomicTraceElement<?> finalElement = translatedPe.getTraceElement(translatedPe.getLength() - 1);
-		ProgramState<Expression> peek = null;
+		ProgramState<Expression> recentProgramState = null;
+
+		final List<ProgramState<Expression>> states = new ArrayList<>();
 		for (int i = 0; i < translatedPe.getLength(); i++) {
 			if (translatedPe.getProgramState(i) != null) {
-				peek = translatedPe.getProgramState(i);
+				recentProgramState = translatedPe.getProgramState(i);
 			}
 			final AtomicTraceElement<?> ate = translatedPe.getTraceElement(i);
 			if (ate.getStep() == finalElement.getStep()) {
-				if (peek == null) {
+				if (recentProgramState == null) {
 					mLogger.error(
 							"Assertion did not contain state (but would have been neccessary for test generation):"
 									+ ate.getStep().toString());
 					continue;
 				}
-				testSteps.add(getTestStep(peek));
-				peek = null;
+
+				testSteps.add(getTestStep(recentProgramState));
+				states.add(recentProgramState);
+				recentProgramState = null;
 			}
 		}
+		for(int i = 0; i < states.size() -1; i++) {
+			mLogger.error("---------------------------------------------------------------");
+			calcualteGraphStep(mReqEffectStore.keySet(), states.get(i), states.get(i+1));
+		}
 		return new ReqTestResultTest(testSteps, getTestAssertionName(finalElement.getStep()));
+	}
+
+	public class TestRelationNode {
+
+		private final PhaseEventAutomata mReq;
+		private final Set<PhaseEventAutomata> mDetermined;
+		private final Set<String> mVarName;
+		private final Set<String> mInputs;
+		private final Set<String> mOutputs;
+		private final boolean mIsBoundResponse;
+		//TODO: store time bound
+
+		/*
+		 * Describes a reqirement "req" determining variables "varName" for requirements "determined" and
+		 * outputs "out" using inputs "in"
+		 */
+		public TestRelationNode(PhaseEventAutomata req, Set<String> varName, Set<String> inputs, Set<String> outputs,
+				boolean boundResponse) {
+			mReq = req;
+			mVarName = varName;
+			mDetermined = new HashSet<>();
+			mInputs = inputs;
+			mOutputs = outputs;
+			mIsBoundResponse = boundResponse;
+
+		}
+
+		public void addDeterminedReq(PhaseEventAutomata d) {
+			mDetermined.add(d);
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder();
+			sb.append(mInputs.toString());
+			sb.append("--input-->");
+			sb.append(mReq.getName());
+			if (mIsBoundResponse) {
+				sb.append(" -<><><><>-internal-(");
+			} else {
+				sb.append(" ----------internal-(");
+			}
+			sb.append(mVarName.toString());
+			sb.append(" )--------output-( ");
+			sb.append(mOutputs.toString());
+			sb.append(" )---------------> ");
+			sb.append(mDetermined.toString());
+			sb.append("\n");
+			return sb.toString();
+		}
+
+	}
+
+	private void calcualteGraphStep(Set<PhaseEventAutomata> peas, ProgramState<Expression> programState,
+			ProgramState<Expression> successorState) {
+		final Map<PhaseEventAutomata, TestRelationNode> edge = new HashMap<>();
+		//TODO loop over all non-upper reqs, everything except the dependees is in the resultedge and pc information
+		for(final PhaseEventAutomata pea: peas) {
+			final Collection<Expression> pcs = getVariableValuation(mReqSymbolTable.getPcName(pea), programState);
+			//get current location index of the pea
+			final Expression[] pca = pcs.toArray(new Expression[pcs.size()]);
+			final int pc = Integer.parseInt(((IntegerLiteral)pca[0]).getValue()); //TODO: validation
+			if (pc < pea.getPhases().length/2) {
+				//automaton is in its upper half, so it does not set anything
+				continue;
+			}
+			//get phase invariant  and all variables therein
+			final CDD invar = pea.getPhases()[pc].getStateInvariant();
+			final Set<String> vars = Req2CauseTrackingCDD.getCddVariables(invar);
+			Set<String> effectVars = Collections.emptySet();
+			Set<String> determinedOutputs = Collections.emptySet();
+			if (isInEffectPhase(pea, programState)) {
+				//remove effects if pea is in effect phase
+				vars.removeAll(mReqEffectStore.get(pea).getEffectVars());
+				effectVars = mReqEffectStore.get(pea).getEffectVars();
+				determinedOutputs = mReqEffectStore.get(pea).getEffectVars();
+				determinedOutputs.retainAll(mReqSymbolTable.getOutputVars());
+
+			}
+			//TODO: generate input sets
+			final Set<String> requiredInputs = Req2CauseTrackingCDD.getCddVariables(invar);
+			requiredInputs.retainAll(mReqSymbolTable.getInputVars());
+			edge.put(pea,  new TestRelationNode(pea, effectVars , requiredInputs, determinedOutputs,
+					!mReqEffectStore.get(pea).getEffectEdges().isEmpty() && mReqEffectStore.get(pea).getEffectPhaseIndexes().isEmpty()
+					));
+		}
+		//TODO connect to requirements determining internal variables
+		for(final PhaseEventAutomata pea: peas) {
+			final Collection<Expression> pcs = getVariableValuation(mReqSymbolTable.getPcName(pea), programState);
+			//get current location index of the pea
+			final Expression[] pca = pcs.toArray(new Expression[pcs.size()]);
+			final int pc = Integer.parseInt(((IntegerLiteral)pca[0]).getValue()); //TODO: validation
+			if (pc < pea.getPhases().length/2) {
+				//automaton is in its upper half, so it does not use anything
+				continue;
+			}
+			//get phase invariant  and all variables therein
+			final CDD invar = pea.getPhases()[pc].getStateInvariant();
+			final Set<String> vars = Req2CauseTrackingCDD.getCddVariables(invar);
+			if (isInEffectPhase(pea, programState)) {
+				//remove effects if pea is in effect phase
+				vars.removeAll(mReqEffectStore.get(pea).getEffectVars());
+			}
+			vars.removeAll(mReqSymbolTable.getConstVars());
+			vars.removeAll(mReqSymbolTable.getInputVars());
+			//build up graph connections
+			for(final String var: vars) {
+				calculateDeterminingReqs(var, programState).stream().forEach(d -> edge.get(d).addDeterminedReq(pea));
+				calculateEntryEffects(var, successorState).stream().forEach(d -> edge.get(d).addDeterminedReq(pea));
+			}
+		}
+		mLogger.error(edge);
+	}
+
+
+	/*
+	 * Calculates the set of requirements that determine the value of a given variable varName in the automaton
+	 * configuration given by the current program state.
+	 */
+	private Set<PhaseEventAutomata> calculateDeterminingReqs(String varName, ProgramState<Expression> programState) {
+		//todo return accodring node of graph here (req1, v, req2) read "req1 enables req2 by setting v"
+		final Set<PhaseEventAutomata> determiners = new HashSet<>();
+		for(final Entry<PhaseEventAutomata, ReqEffectStore> entry: mReqEffectStore.entrySet()) {
+			final ReqEffectStore reqEffectStore = entry.getValue();
+			if(!reqEffectStore.getEffectVars().contains(varName)) {
+				continue;
+			}
+			if(isInEffectPhase(entry.getKey(), programState)){
+				determiners.add(entry.getKey());
+			}
+		}
+		return determiners;
+	}
+
+
+	/*
+	 * True if the pea is in an effect phase (any location including the highest phase) in the given program state.
+	 */
+	private boolean isInEffectPhase(PhaseEventAutomata pea, ProgramState<Expression> programState) {
+		final ReqEffectStore store = mReqEffectStore.get(pea);
+		if (store == null) {
+			return false;
+		}
+		final String pcIdent = mReqSymbolTable.getPcName(pea);
+		final Collection<Expression> values = getVariableValuation(pcIdent, programState);
+		for(final Expression expr: values) {
+			if (expr instanceof IntegerLiteral) {
+				final int value = Integer.parseInt(((IntegerLiteral)expr).getValue());
+				if (store.getEffectPhaseIndexes().contains(value)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/*
+	 * Calculates the set of requirements that will be able to determine the value of variable varName by a
+	 * bound response effect.
+	 */
+	private Set<PhaseEventAutomata> calculateEntryEffects(String varName, ProgramState<Expression> programState) {
+		//todo return accodring node of graph here (req1, v, req2) read "req1 enables req2 by setting v"
+		final Set<PhaseEventAutomata> determiners = new HashSet<>();
+		for(final Entry<PhaseEventAutomata, ReqEffectStore> entry: mReqEffectStore.entrySet()) {
+			final ReqEffectStore reqEffectStore = entry.getValue();
+			if(!reqEffectStore.getEffectVars().contains(varName)) {
+				continue;
+			}
+			if(endsInEffectEdge(entry.getKey(), programState)){
+				determiners.add(entry.getKey());
+			}
+		}
+		return determiners;
+	}
+
+	/*
+	 * True if the pea just took a transition over an effect transition (any transition leaving a highest waiting phase)
+	 *  i.e. the effect variables are determined by the requirements effect in this program state.
+	 */
+	private boolean endsInEffectEdge(PhaseEventAutomata pea, ProgramState<Expression> programState) {
+		final ReqEffectStore store = mReqEffectStore.get(pea);
+		if (store == null) {
+			return false;
+		}
+		final String pcIdent = mReqSymbolTable.getPcName(pea);
+		final Collection<Expression> pcValues = getVariableValuation(pcIdent, programState);
+		final String primePcIdent = mReqSymbolTable.getHistoryVarId(mReqSymbolTable.getPcName(pea));
+		final Collection<Expression> primePcValues = getVariableValuation(primePcIdent, programState);
+		for(final Expression exprPrime: primePcValues) {
+			final int valuePrimePc = Integer.parseInt(((IntegerLiteral)exprPrime).getValue());
+			for(final Expression expr: pcValues) {
+				final int valuePc = Integer.parseInt(((IntegerLiteral)expr).getValue());
+				if (store.getEffectEdges().stream()
+						.filter(e -> e.getFirst() == valuePrimePc && e.getSecond() == valuePc).count() > 0) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	private TestStep getTestStep(final ProgramState<Expression> programState) {
@@ -89,6 +305,15 @@ public class ReqTestResultUtil {
 
 		}
 		return new TestStep(inputAssignment, outputAssignment, waitForTime);
+	}
+
+	private static Collection<Expression> getVariableValuation(String varName, ProgramState<Expression> programState){
+		final Expression identExpr =  programState.getVariables().stream()
+				.filter(v -> ((IdentifierExpression)v).getIdentifier().equals(varName)).findFirst().orElse(null);
+		if (identExpr == null) {
+			return Collections.emptySet();
+		}
+		return programState.getValues(identExpr);
 	}
 
 	private boolean isSetByEffect(final String ident, final ProgramState<Expression> programState) {
