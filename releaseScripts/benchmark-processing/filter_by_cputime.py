@@ -5,11 +5,14 @@ import glob
 import os
 from pathlib import Path
 
-parser = argparse.ArgumentParser(description='filter results by cpu_time for all tools and generate merged sets for each architecture')
-parser.add_argument('-i','--input', help='csv file which contains benchmark results', required=True)
-parser.add_argument('-o','--output-dir', help='output dir', required=False)
+parser = argparse.ArgumentParser(
+    description='filter results by cpu_time for all tools and generate merged sets for each architecture')
+parser.add_argument('-i', '--input', help='csv file which contains benchmark results', required=True)
+parser.add_argument('-o', '--output-dir', help='output dir', required=True)
 parser.add_argument('-t', '--time', help='cpu time filter, A single row will be excluded if the cpu time is >= for ALL tools in this row. ', required=True)
-parser.add_argument('-sv', '--sv-benchmark-dir', help='path to sv-bechmarks directory, which contains C programs', required=True)
+parser.add_argument('-sv', '--sv-benchmark-dir',
+                    help='path to sv-bechmarks directory, which contains C programs', required=True)
+
 
 class BenchmarkMaster:
 
@@ -26,7 +29,7 @@ class BenchmarkMaster:
                 print(f'skipping file {file}')
                 continue
             if file.endswith(".cfg"):
-                with open(full_path, "r") as cfg: 
+                with open(full_path, "r") as cfg:
                     for row in cfg:
                         match = re.match(".*Architecture:.*(32|64).*", row)
                         if match:
@@ -45,6 +48,7 @@ class BenchmarkMaster:
             if re.match(pattern, filename):
                 print(f"{filename} matches {pattern} in set {setname}")
                 return setname
+
     def get_original_arch(self, setname):
         print(f'set {setname}')
         return self.set_to_arch[setname]
@@ -60,10 +64,10 @@ class BenchmarkMaster:
                 arch_to_files[original_arch].append(outfile)
             else:
                 print(f'{outfile} has no matching set')
-        
+
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-        for arch,files in arch_to_files.items():
+        for arch, files in arch_to_files.items():
             prefix = f'{output_dir}/merged_{arch}_set'
             with open(f'{prefix}.set', "w+") as out_set, open(f'{prefix}.cfg', "w+") as out_cfg:
                 for filename in files:
@@ -71,46 +75,29 @@ class BenchmarkMaster:
                 description = f"Description: Contains tasks which have cpu time < {time} s"
                 architecture = f"Architecture: {arch} bit"
                 out_cfg.write(f"{description}\n{architecture}")
-            
 
-
-
-
-
-
-
-
-def filter_by_time(input_file, time):
-    output = []
-    total_rows = 0
-    with open(input_file, "r") as csv_file:
-        reader = csv.reader(csv_file, delimiter="\t")
-        next(reader) # skip tools
-        next(reader) # skip sets
-        header = next(reader)
-        cpu_time_indices = [i for (i,r) in enumerate(header) if r.strip() == "cputime (s)"]
-        for row in reader:
-            total_rows += 1
-            if not all([float(row[i]) >= float(time) for i in cpu_time_indices]):
-                output.append(row[0])
-    print("\n".join(output))
-    print(f"iterated over {total_rows} lines")
-    print(f"output contains {len(output)} files")
-    return output
-
+    def filter_by_time(self, input_file, time):
+        output = []
+        total_rows = 0
+        with open(input_file, "r") as csv_file:
+            reader = csv.reader(csv_file, delimiter="\t")
+            next(reader)  # skip tools
+            next(reader)  # skip sets
+            header = next(reader)
+            cpu_time_indices = [i for (i, r) in enumerate(
+                header) if r.strip() == "cputime (s)"]
+            for row in reader:
+                total_rows += 1
+                if not all([float(row[i]) >= float(time) for i in cpu_time_indices]):
+                    output.append(row[0])
+        print("\n".join(output))
+        print(f"iterated over {total_rows} lines")
+        print(f"output contains {len(output)} files")
+        return output
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
-
-    input_file = args.input
-    output_dir = args.output_dir
-    time = args.time
-
-    sv_benchmark_dir = args.sv_benchmark_dir
-
-    bm = BenchmarkMaster(sv_benchmark_dir)
-    
-    output = filter_by_time(input_file=input_file, time=time)
-    bm.generate_sets(output, output_dir,time)
-
+    bm = BenchmarkMaster(args.sv_benchmark_dir)
+    filtered = bm.filter_by_time(input_file=args.input, time=args.time)
+    bm.generate_sets(filtered, args.output_dir, args.time)
