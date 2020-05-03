@@ -17,13 +17,16 @@ public class TestStep {
 
 	final Map<IdentifierExpression, Collection<Expression>> mInputAssignment;
 	final Map<IdentifierExpression, Collection<Expression>> mOutputAssignment;
+	final Map<IdentifierExpression, Collection<Expression>> mWaitForAssignment;
 	final Collection<Expression> mWaitTime;
 
 	public TestStep(final Map<IdentifierExpression, Collection<Expression>> inputAssignment,
 			final Map<IdentifierExpression, Collection<Expression>> outputAssignment,
+			final Map<IdentifierExpression, Collection<Expression>> waitForAssignment,
 			final Collection<Expression> delta) {
 		mInputAssignment = inputAssignment;
 		mOutputAssignment = outputAssignment;
+		mWaitForAssignment = waitForAssignment;
 		mWaitTime = delta;
 	}
 
@@ -51,27 +54,36 @@ public class TestStep {
 	public String toString() {
 		final StringBuilder result = new StringBuilder();
 
-		result.append("\nSet Inputs:\n \t");
+		result.append("\nSet Inputs:\n");
 		for (final Entry<IdentifierExpression, Collection<Expression>> entry : mInputAssignment.entrySet()) {
+			result.append("\t");
 			result.append(entry.getKey().getIdentifier());
 			result.append(" := ");
 			result.append(formatIdentToValue(entry.getValue()));
+			result.append("\n");
 		}
-
-		result.append("\n ");
 		if (mOutputAssignment.size() > 0) {
-			result.append("Wait at most ");
-			result.append(formatIdentToValue(mWaitTime));
-			result.append("for: \n\t");
+			result.append("Observe: \n");
 			for (final Entry<IdentifierExpression, Collection<Expression>> entry : mOutputAssignment.entrySet()) {
+				result.append("\t");
 				result.append(entry.getKey().getIdentifier());
 				result.append(" == ");
 				result.append(formatIdentToValue(entry.getValue()));
+				result.append("\n");
 			}
-		} else {
-			result.append("Wait ");
-			result.append(formatIdentToValue(mWaitTime));
 		}
+		result.append("Wait " + formatIdentToValue(mWaitTime) + "time Units");
+		if (mWaitForAssignment.size() > 0) {
+			result.append(" or for output: \n ");
+			for (final Entry<IdentifierExpression, Collection<Expression>> entry : mWaitForAssignment.entrySet()) {
+				result.append("\t");
+				result.append(entry.getKey().getIdentifier());
+				result.append(" == ");
+				result.append(formatIdentToValue(entry.getValue()));
+				result.append("\n");
+			}
+		}
+
 		result.append("\n ");
 		return result.toString();
 	}
