@@ -6,9 +6,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -48,21 +51,85 @@ public class Interpolator {
 	public Interpolator(final IPredicateUnifier predicateUnifier,
 			final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer, final ILogger logger,
 			final ManagedScript script, final IUltimateServiceProvider services, final PredicateHelper predHelper) {
+
 		mPredicateUnifier = predicateUnifier;
 		mPredTransformer = predTransformer;
 		mPredHelper = predHelper;
 		mScript = script;
 		mLogger = logger;
 		mServices = services;
+
 	}
 
 	/**
-	 * Generate inteprolants using a given infeasible counterexample.
+	 * Generate inteprolants using a given infeasible counterexample. WITH the knowledge that the counterexample
+	 * contains loops.
 	 *
 	 * @param counterexample
 	 * @return
 	 */
-	public IPredicate[] generateInterpolants(final List<UnmodifiableTransFormula> counterexample) {
+	public <LETTER extends IIcfgTransition<?>> IPredicate[] generateInterpolants(final List<LETTER> counterexample,
+			final Map<IcfgLocation, Set<UnmodifiableTransFormula>> accelerations,
+			final Map<IcfgLocation, Pair<Integer, Integer>> loopSizes) {
+		final IPredicate[] interpolants = new IPredicate[counterexample.size() + 1];
+
+		interpolants[0] = mPredicateUnifier.getTruePredicate();
+		interpolants[counterexample.size()] = mPredicateUnifier.getFalsePredicate();
+		final Term[] counterexampleTerms = new Term[counterexample.size()];
+		for (int i = 0; i < counterexample.size(); i++) {
+			counterexampleTerms[i] = counterexample.get(i).getTransformula().getFormula();
+		}
+		for (int j = 0; j < counterexample.size(); j++) {
+			final LETTER l = counterexample.get(j);
+			final Term first = mPredTransformer.strongestPostcondition(interpolants[j], l.getTransformula());
+			final IPredicate firstPred = mPredicateUnifier.getOrConstructPredicate(first);
+			Term second = mPredicateUnifier.getTruePredicate().getFormula();
+
+			final List<UnmodifiableTransFormula> secondTfList = new ArrayList<>();
+
+			for (int k = j + 1; k < counterexample.size(); k++) {
+				final LETTER m = counterexample.get(k);
+				second = SmtUtils.and(mScript.getScript(), second,
+						counterexample.get(k).getTransformula().getClosedFormula());
+				secondTfList.add(counterexample.get(k).getTransformula());
+				if (accelerations.containsKey(m.getTarget())) {
+					if (accelerations.get(m.getTarget()).size() > 1) {
+						mLogger.debug("Dealing with multiple accelerations is not DONE YET!");
+						throw new UnsupportedOperationException();
+					}
+					for (final UnmodifiableTransFormula accelTf : accelerations.get(m.getTarget())) {
+						secondTfList.add(accelTf);
+					}
+				}
+			}
+			/*
+			 * note: auxvar elimination yields error. because aux vars have no defaultconstant -> but we need closed
+			 * formula.
+			 */
+			final UnmodifiableTransFormula secondTf = TransFormulaUtils.sequentialComposition(mLogger, mServices,
+					mScript, false, false, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+					SimplificationTechnique.SIMPLIFY_DDA, secondTfList);
+			IPredicate interpolPred = computeInterpolantBinary(firstPred, secondTf);
+			if (interpolPred == mPredicateUnifier.getTruePredicate()) {
+				final Term t =
+						mPredTransformer.strongestPostcondition(interpolPred, counterexample.get(j).getTransformula());
+				interpolPred = mPredicateUnifier.getOrConstructPredicate(t);
+			}
+			interpolants[j + 1] = interpolPred;
+		}
+		final IPredicate[] actualInterpolants = Arrays.copyOfRange(interpolants, 1, counterexample.size());
+		return actualInterpolants;
+	}
+
+	/**
+	 * compute interpolants for a given counterexample, with the assumption that there are no loops in it.
+	 *
+	 * @param <LETTER>
+	 * @param counterexample
+	 * @return
+	 */
+	public <LETTER extends IIcfgTransition<?>> IPredicate[]
+			generateInterpolants(final List<UnmodifiableTransFormula> counterexample) {
 		final IPredicate[] interpolants = new IPredicate[counterexample.size() + 1];
 
 		interpolants[0] = mPredicateUnifier.getTruePredicate();
@@ -82,35 +149,21 @@ public class Interpolator {
 				second = SmtUtils.and(mScript.getScript(), second, counterexample.get(k).getClosedFormula());
 				secondTfList.add(counterexample.get(k));
 			}
+			/*
+			 * note: auxvar elimination yields error. because aux vars have no defaultconstant -> but we need closed
+			 * formula.
+			 */
 			final UnmodifiableTransFormula secondTf = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-					mScript, true, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+					mScript, false, false, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 					SimplificationTechnique.SIMPLIFY_DDA, secondTfList);
 
-			final Map<IProgramVar, TermVariable> inVars = secondTf.getOutVars();
-			final Map<IProgramVar, TermVariable> outVars = secondTf.getOutVars();
-
-			final Map<Term, Term> subIn = new HashMap<>();
-			final Map<Term, Term> subOut = new HashMap<>();
-			// final Map<Term, Term> subFirst = new HashMap<>();
-			for (final Entry<IProgramVar, TermVariable> inVar : inVars.entrySet()) {
-				subIn.put(inVar.getKey().getDefaultConstant(), inVar.getKey().getTermVariable());
-			}
-			for (final Entry<IProgramVar, TermVariable> outVar : outVars.entrySet()) {
-				subOut.put(outVar.getKey().getPrimedConstant(), outVar.getKey().getTermVariable());
+			IPredicate interpolPred = computeInterpolantBinary(firstPred, secondTf);
+			if (interpolPred == mPredicateUnifier.getTruePredicate()) {
+				final Term t = mPredTransformer.strongestPostcondition(interpolPred, counterexample.get(j));
+				interpolPred = mPredicateUnifier.getOrConstructPredicate(t);
 			}
 
-			final Pair<LBool, Term> interpolPair = SmtUtils.interpolateBinary(mScript.getScript(),
-					firstPred.getClosedFormula(), secondTf.getClosedFormula());
-			/*
-			 * Interpolant consists of constants, we need to unconstant them
-			 */
-			final Substitution substitutionIn = new Substitution(mScript, subIn);
-			Term interpolant = substitutionIn.transform(interpolPair.getSecond());
-
-			final Substitution substitutionOut = new Substitution(mScript, subOut);
-			interpolant = substitutionOut.transform(interpolant);
-
-			interpolants[j + 1] = mPredicateUnifier.getOrConstructPredicate(interpolant);
+			interpolants[j + 1] = interpolPred;
 		}
 		final IPredicate[] actualInterpolants = Arrays.copyOfRange(interpolants, 1, counterexample.size());
 		return actualInterpolants;
@@ -132,5 +185,44 @@ public class Interpolator {
 		}
 		final IPredicate[] actualInterpolants = Arrays.copyOfRange(interpolants, 1, counterexample.size());
 		return actualInterpolants;
+	}
+
+	/**
+	 * Compute BINARY interpolants for a given partition.
+	 * 
+	 * @param firstPred
+	 * @param secondTf
+	 * @return
+	 */
+	private IPredicate computeInterpolantBinary(final IPredicate firstPred, final UnmodifiableTransFormula secondTf) {
+		final Map<IProgramVar, TermVariable> inVars = secondTf.getOutVars();
+		final Map<IProgramVar, TermVariable> outVars = secondTf.getOutVars();
+
+		final Map<Term, Term> subIn = new HashMap<>();
+		final Map<Term, Term> subOut = new HashMap<>();
+		// final Map<Term, Term> subFirst = new HashMap<>();
+		for (final Entry<IProgramVar, TermVariable> inVar : inVars.entrySet()) {
+			subIn.put(inVar.getKey().getDefaultConstant(), inVar.getKey().getTermVariable());
+		}
+		for (final Entry<IProgramVar, TermVariable> outVar : outVars.entrySet()) {
+			subOut.put(outVar.getKey().getPrimedConstant(), outVar.getKey().getTermVariable());
+		}
+
+		final Pair<LBool, Term> interpolPair = SmtUtils.interpolateBinary(mScript.getScript(),
+				firstPred.getClosedFormula(), secondTf.getClosedFormula());
+		/*
+		 * Interpolant consists of constants, we need to unconstant them
+		 */
+		final Substitution substitutionIn = new Substitution(mScript, subIn);
+		Term interpolant = substitutionIn.transform(interpolPair.getSecond());
+
+		final Substitution substitutionOut = new Substitution(mScript, subOut);
+		interpolant = substitutionOut.transform(interpolant);
+		return mPredicateUnifier.getOrConstructPredicate(interpolant);
+	}
+
+	public IPredicate[] getInterpolantFromTraceSchemeSp() {
+		final IPredicate[] interpolants = new IPredicate[0];
+		return interpolants;
 	}
 }

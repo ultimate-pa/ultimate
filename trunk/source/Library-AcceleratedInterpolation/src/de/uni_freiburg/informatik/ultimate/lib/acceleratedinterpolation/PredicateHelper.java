@@ -39,7 +39,7 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 		for (final LETTER l : trace) {
 			tfs.add(l.getTransformula());
 		}
-		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true, true,
+		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, false, true,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA, tfs);
 	}
 

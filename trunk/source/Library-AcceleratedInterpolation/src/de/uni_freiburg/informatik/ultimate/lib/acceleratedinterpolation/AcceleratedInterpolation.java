@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator.AccelerationMethod;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.Loopdetector;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -50,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -86,7 +86,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final PredicateHelper<LETTER> mPredHelper;
 	private final ITraceCheckPreferences mPrefs;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
-	private final IIcfgSymbolTable mSymbolTable;
 	private LBool mIsTraceCorrect;
 	private IPredicate[] mInterpolants;
 	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mFeasibleProgramExecution;
@@ -110,7 +109,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mPredicateUnifier = predicateUnifier;
 		mPrefs = prefs;
 		mIcfg = mPrefs.getIcfgContainer();
-		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 		mAccelerations = new HashMap<>();
 		mLogger.debug("Accelerated Interpolation engaged!");
 		mInterpolants = new IPredicate[mCounterexample.size()];
@@ -139,7 +137,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			mLogger.debug("No loops found in this trace.");
 			mIsTraceCorrect = checkFeasibility(mCounterexampleTf);
 			if (mIsTraceCorrect == LBool.UNSAT) {
-				mInterpolants = mInterpolator.generateInterpolantsPost(mPredHelper.traceToListOfTfs(mCounterexample));
+				mInterpolants = mInterpolator.generateInterpolants(mCounterexampleTf);
 			}
 			return;
 		}
@@ -154,16 +152,28 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				final UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
 				final UnmodifiableTransFormula acceleratedLoopRelation =
 						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.NONE);
+				final Term t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
+						acceleratedLoopRelation.getFormula(), SimplificationTechnique.SIMPLIFY_BDD_FIRST_ORDER,
+						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 				accelerations.add(acceleratedLoopRelation);
 			}
 			mAccelerations.put(loophead.getKey(), accelerations);
 		}
+		/*
+		 * TODO: there are not enough interpolants for the trace generated. Fix: Use post in trace with acceleration
+		 */
 		final List<UnmodifiableTransFormula> traceScheme = generateMetaTrace();
 		mIsTraceCorrect = checkFeasibility(mCounterexampleTf);
 		if (mIsTraceCorrect == LBool.UNSAT) {
-			final IPredicate[] preds = mInterpolator.generateInterpolants(mCounterexampleTf);
-			mInterpolants = preds;
+			// final IPredicate[] traceSchemeInterpolants = mInterpolator.generateInterpolants(traceScheme);
+			final IPredicate[] traceInteprolants =
+					mInterpolator.generateInterpolants(mCounterexample, mAccelerations, mLoopSize);
+			mInterpolants = traceInteprolants;
 		}
+		/*
+		 * Use this instead of interpolate binary, partition ist wie dier trace aufgeteilt wird.
+		 */
+		// mScript.getScript().getInterpolants(partition, startOfSubtree)
 	}
 
 	/**
