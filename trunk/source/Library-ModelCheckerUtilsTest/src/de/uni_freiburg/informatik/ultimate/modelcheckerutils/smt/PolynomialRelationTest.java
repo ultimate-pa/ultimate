@@ -91,6 +91,7 @@ public class PolynomialRelationTest {
 		declareVar("x", mRealSort); // Subject
 		declareVar("y", mRealSort);
 		declareVar("z", mRealSort);
+		declareVar("ri", mRealSort);
 		declareVar("xi", mIntSort); // Subject
 		declareVar("yi", mIntSort);
 		declareVar("zi", mIntSort);
@@ -136,6 +137,18 @@ public class PolynomialRelationTest {
 	public void relationRealEQ4() throws NotAffineException {
 		final String inputSTR = "(= (* 6.0 (+ y x)) (* 7.0 z) )";
 		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealPolyEQPurist01() throws NotAffineException {
+		final String inputSTR = "(= (* y x) ri)";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealPolyEQPurist02() throws NotAffineException {
+		final String inputSTR = "(= (* y x z) ri)";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
 	}
 
 	@Test
@@ -188,6 +201,12 @@ public class PolynomialRelationTest {
 	public void relationRealGEQ01() throws NotAffineException {
 		final String inputSTR = "(>= (* 3.0 x) lo )";
 		testSolveForSubject(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealPolyGEQPurist01() throws NotAffineException {
+		final String inputSTR = "(>= (* x y) ri)";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
 	}
 
 	@Test
