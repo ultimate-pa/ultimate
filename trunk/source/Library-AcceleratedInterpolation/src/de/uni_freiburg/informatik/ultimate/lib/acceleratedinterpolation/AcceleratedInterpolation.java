@@ -36,9 +36,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.Interpolator.InterpolationMethod;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator.AccelerationMethod;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.Loopdetector;
@@ -79,6 +81,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
+	private final Word<LETTER> mCounterexampleTrace;
 	private final List<LETTER> mCounterexample;
 	private final List<UnmodifiableTransFormula> mCounterexampleTf;
 	private final IPredicateUnifier mPredicateUnifier;
@@ -91,7 +94,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mFeasibleProgramExecution;
 	private final TraceCheckReasonUnknown mReasonUnknown;
 	private final boolean mTraceCheckFinishedNormally;
-	private final Interpolator mInterpolator;
+	private final Interpolator<LETTER> mInterpolator;
 
 	private final Map<IcfgLocation, Set<List<LETTER>>> mLoops;
 	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoopExitTransitions;
@@ -101,11 +104,12 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final Loopdetector<LETTER> mLoopdetector;
 
 	public AcceleratedInterpolation(final ILogger logger, final ITraceCheckPreferences prefs,
-			final ManagedScript script, final IPredicateUnifier predicateUnifier, final List<LETTER> counterexample) {
+			final ManagedScript script, final IPredicateUnifier predicateUnifier, final Word<LETTER> counterexample) {
 		mLogger = logger;
 		mScript = script;
 		mServices = prefs.getUltimateServices();
-		mCounterexample = counterexample;
+		mCounterexampleTrace = counterexample;
+		mCounterexample = mCounterexampleTrace.asList();
 		mPredicateUnifier = predicateUnifier;
 		mPrefs = prefs;
 		mIcfg = mPrefs.getIcfgContainer();
@@ -120,7 +124,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 
 		mPredHelper = new PredicateHelper<>(mPredicateUnifier, mPredTransformer, mLogger, mScript, mServices);
-		mInterpolator = new Interpolator(mPredicateUnifier, mPredTransformer, mLogger, mScript, mServices, mPredHelper);
+		mInterpolator =
+				new Interpolator<>(mPredicateUnifier, mPredTransformer, mLogger, mScript, mServices, mPredHelper);
 		mCounterexampleTf = mPredHelper.traceToListOfTfs(mCounterexample);
 
 		// TODO give a better reason
@@ -137,7 +142,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			mLogger.debug("No loops found in this trace.");
 			mIsTraceCorrect = checkFeasibility(mCounterexampleTf);
 			if (mIsTraceCorrect == LBool.UNSAT) {
-				mInterpolants = mInterpolator.generateInterpolants(mCounterexampleTf);
+				mInterpolants = mInterpolator.generateInterpolants(InterpolationMethod.BINARY, mCounterexample, null);
 			}
 			return;
 		}
@@ -167,13 +172,9 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		if (mIsTraceCorrect == LBool.UNSAT) {
 			// final IPredicate[] traceSchemeInterpolants = mInterpolator.generateInterpolants(traceScheme);
 			final IPredicate[] traceInteprolants =
-					mInterpolator.generateInterpolants(mCounterexample, mAccelerations, mLoopSize);
+					mInterpolator.generateInterpolants(InterpolationMethod.TREE, mCounterexample, mAccelerations);
 			mInterpolants = traceInteprolants;
 		}
-		/*
-		 * Use this instead of interpolate binary, partition ist wie dier trace aufgeteilt wird.
-		 */
-		// mScript.getScript().getInterpolants(partition, startOfSubtree)
 	}
 
 	/**

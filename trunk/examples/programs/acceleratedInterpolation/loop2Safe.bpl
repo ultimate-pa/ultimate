@@ -13,8 +13,8 @@ procedure main() {
 	y := 0;
 	
 	while (x <= 10) {
-		if (y < 2) {
-			y := y+1;
+		if (x < 2) {
+			x := x + 1;
 		} else {
 			x := x + 1;
 		}
