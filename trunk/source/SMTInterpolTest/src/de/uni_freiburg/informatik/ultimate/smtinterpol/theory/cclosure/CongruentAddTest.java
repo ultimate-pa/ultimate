@@ -221,7 +221,6 @@ public class CongruentAddTest {
 		Assert.assertSame(mFc.getRepresentative(), mFd.getRepresentative());
 		mDPLL.backtrackLiteral(mBC);
 		mClosure.backtrackComplete();
-		mDPLL.decreaseDecideLevel();
 		conflict = mClosure.checkpoint();
 		Assert.assertNull(conflict);
 		Assert.assertSame(mA.getRepresentative(), mB.getRepresentative());

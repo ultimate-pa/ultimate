@@ -1772,7 +1772,7 @@ public class LinArSolve implements ITheory {
 			if (lower.getRealValue().equals(upper.getRealValue())) {
 				// We can only change epsilons; we either choose as difference upper/2 or lower/2 and half the
 				// difference until we find a solution.
-				ExactInfinitesimalNumber curDiff = upper.signum() > 0 ? upper : lower;
+				ExactInfinitesimalNumber curDiff = (upper.signum() > 0 ? upper : lower).div(Rational.TWO);
 				assert curDiff.signum() != 0 && lower.compareTo(curDiff) < 0 && curDiff.compareTo(upper) < 0;
 				while (prohibitions.contains(curDiff) || hasSharing(sharedPoints, curDiff)) {
 					curDiff = curDiff.div(Rational.TWO);

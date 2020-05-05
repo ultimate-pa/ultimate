@@ -26,8 +26,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ILiteral;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTheory.InstanceOrigin;
 
 /**
@@ -45,6 +46,7 @@ public class QuantAnnotation implements IAnnotation {
 	private final TermVariable[] mVars;
 	private final Term[] mSubs;
 	private final InstanceOrigin mOrigin;
+	private final SourceAnnotation mSource;
 
 	/**
 	 * Annotation for instances of quantified clauses.
@@ -59,6 +61,7 @@ public class QuantAnnotation implements IAnnotation {
 		mVars = qClause.getVars();
 		mSubs = subs;
 		mOrigin = origin;
+		mSource = qClause.getSource();
 	}
 
 	/**
@@ -71,25 +74,34 @@ public class QuantAnnotation implements IAnnotation {
 	 * @param theory
 	 *            the theory.
 	 */
-	public QuantAnnotation(final ILiteral[] lits, final Map<TermVariable, Term> subs, final Theory theory,
-			final InstanceOrigin origin) {
-		final Term[] litTerms = new Term[lits.length];
-		for (int i = 0; i < lits.length; i++) {
+	public QuantAnnotation(final Literal[] lits, final QuantLiteral[] qLits, final Map<TermVariable, Term> subs,
+			final Theory theory, final InstanceOrigin origin, final SourceAnnotation source) {
+		final Term[] litTerms = new Term[lits.length + qLits.length];
+		int i = 0;
+		for (; i < lits.length; i++) {
 			litTerms[i] = lits[i].getSMTFormula(theory, false);
+		}
+		for (int j = 0; j < qLits.length; j++) {
+			litTerms[i + j] = qLits[j].getSMTFormula(theory, false);
 		}
 		mQuantClauseTerm = theory.or(litTerms);
 		mVars = subs.keySet().toArray(new TermVariable[subs.keySet().size()]);
 		mSubs = new Term[mVars.length];
-		for (int i = 0; i < mVars.length; i++) {
-			mSubs[i] = subs.get(mVars[i]);
+		for (int k = 0; k < mVars.length; k++) {
+			mSubs[k] = subs.get(mVars[k]);
 		}
 		mOrigin = origin;
+		mSource = source;
+	}
+
+	public SourceAnnotation getSource() {
+		return mSource;
 	}
 
 	@Override
 	public Term toTerm(Clause cls, Theory theory) {
 		final Term base = cls.toTerm(theory);
-		final Object[] subannots = new Object[7];
+		final Object[] subannots = new Object[8];
 		subannots[0] = ":quantClause";
 		subannots[1] = mQuantClauseTerm;
 		subannots[2] = ":vars";
@@ -97,6 +109,7 @@ public class QuantAnnotation implements IAnnotation {
 		subannots[4] = ":subs";
 		subannots[5] = mSubs;
 		subannots[6] = mOrigin.getOrigin();
+		subannots[7] = mSource;
 		final Annotation[] annots = new Annotation[] { new Annotation(":inst", subannots) };
 		return theory.term(ProofConstants.FN_LEMMA, theory.annotatedTerm(annots, base));
 	}

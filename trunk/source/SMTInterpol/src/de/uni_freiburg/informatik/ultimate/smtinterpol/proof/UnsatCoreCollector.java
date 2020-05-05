@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode.Antecedent;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.IdentityHashSet;
 
 /**
@@ -67,6 +68,13 @@ public class UnsatCoreCollector {
 							&& l.getTheoryAnnotation() instanceof SourceAnnotation) {
 						final String name = ((SourceAnnotation) l.getTheoryAnnotation()).
 							getAnnotation();
+						// Guard against unnamed clauses
+						if (!name.isEmpty()) {
+							res.add(name);
+						}
+					} else if (l.getLeafKind() == LeafNode.QUANT_INST) {
+						final QuantAnnotation annot = (QuantAnnotation) l.getTheoryAnnotation();
+						final String name = annot.getSource().getAnnotation();
 						// Guard against unnamed clauses
 						if (!name.isEmpty()) {
 							res.add(name);

@@ -764,8 +764,8 @@ public class Clausifier {
 						}
 						final ProofNode derProof =
 								new LeafNode(LeafNode.QUANT_INST,
-										new QuantAnnotation(lits, resultFromDER.getSecond(), getTheory(),
-												InstanceOrigin.DER));
+										new QuantAnnotation(lits, quantLits, resultFromDER.getSecond(), getTheory(),
+												InstanceOrigin.DER, mSource));
 						addClause(groundLits, null, derProof);
 					} else {
 						mQuantTheory.addQuantClause(litsAfterDER, mSource);
@@ -2139,7 +2139,7 @@ public class Clausifier {
 		tmp = null;
 		mOccCounter.count(tmp2);
 
-		ApplicationTerm at = (ApplicationTerm) tmp2;
+		ApplicationTerm at = (ApplicationTerm) mTracker.getProvedTerm(tmp2);
 		boolean negated = false;
 		FunctionSymbol fs = at.getFunction();
 		if (fs == mTheory.mNot) {

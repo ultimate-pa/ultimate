@@ -82,7 +82,7 @@ public class DPLLEngine {
 	/**
 	 * List of all input clauses. This list should not contain any learned clauses!
 	 */
-	private final SimpleList<Clause> mClauses = new SimpleList<Clause>();
+	private final SimpleList<Clause> mClauses = new SimpleList<>();
 
 	/**
 	 * Empty clause. This is a cache that speeds up detecting unsatisfiability in the case our proof does not depend on
@@ -93,12 +93,12 @@ public class DPLLEngine {
 	/**
 	 * The literals assumed in the last check-sat-assuming call.
 	 */
-	private Set<Literal> mAssumptionLiterals = new LinkedHashSet<>();
+	private final Set<Literal> mAssumptionLiterals = new LinkedHashSet<>();
 
 	/* Statistics */
 	private int mConflicts, mDecides, mTProps, mProps;
 	private int mNumSolvedAtoms, mNumClauses, mNumAxiomClauses;
-	SimpleList<Clause> mLearnedClauses = new SimpleList<Clause>();
+	SimpleList<Clause> mLearnedClauses = new SimpleList<>();
 	private long mPropTime, mPropClauseTime, mExplainTime;
 	private long mSetTime, mCheckTime, mBacktrackTime;
 	private final Theory mSmtTheory;
@@ -120,7 +120,7 @@ public class DPLLEngine {
 	 * is added to the DPLL stack and removed on backtracking. The DPLL stack usually works as a stack, but there are
 	 * some exceptions where literals are created and inserted into the middle of the stack.
 	 */
-	ArrayList<Literal> mDPLLStack = new ArrayList<Literal>();
+	ArrayList<Literal> mDPLLStack = new ArrayList<>();
 
 	/**
 	 * The list of all theories.
@@ -615,17 +615,17 @@ public class DPLLEngine {
 	 */
 	private Clause explainConflict(final Clause clause) {
 		mLogger.debug("explain conflict %s", clause);
-		final HashSet<Literal> level0Ants = new HashSet<Literal>();
+		final HashSet<Literal> level0Ants = new HashSet<>();
 		List<Antecedent> antecedents = null;
 		if (isProofGenerationEnabled()) {
-			antecedents = new ArrayList<Antecedent>();
+			antecedents = new ArrayList<>();
 		}
 		int expstacklevel = clause.mStacklevel;
 		mConflicts++;
 		assert checkDecideLevel();
 		mAtomScale *= Config.ATOM_ACTIVITY_FACTOR;
 		mClsScale *= Config.CLS_ACTIVITY_FACTOR;
-		final Set<Literal> conflict = new CuckooHashSet<Literal>();
+		final Set<Literal> conflict = new CuckooHashSet<>();
 		int maxDecideLevel = mBaseLevel + 1;
 		int numLitsOnMaxDecideLevel = 0;
 		int numAssumptions = 0;
@@ -695,10 +695,6 @@ public class DPLLEngine {
 			final Literal lit = mDPLLStack.remove(mDPLLStack.size() - 1);
 			assert !conflict.contains(lit.negate());
 			assert !conflict.contains(lit);
-			if (lit.getAtom().mExplanation == null) {
-				decreaseDecideLevel();
-			}
-			assert checkDecideLevel();
 			backtrackLiteral(lit);
 			assert checkDecideLevel();
 		}
@@ -761,10 +757,6 @@ public class DPLLEngine {
 		while (mCurrentDecideLevel >= maxDecideLevel) {
 			final Literal lit = mDPLLStack.remove(mDPLLStack.size() - 1);
 			assert !conflict.contains(lit.negate());
-			if (lit.getAtom().mExplanation == null) {
-				decreaseDecideLevel();
-			}
-			assert checkDecideLevel();
 			backtrackLiteral(lit);
 			assert checkDecideLevel();
 		}
@@ -893,14 +885,14 @@ public class DPLLEngine {
 		final Integer REDUNDANT = 1;
 		final Integer FAILED = 2;
 		final Integer KEEP = 3;// NOCHECKSTYLE
-		final HashMap<Literal, Integer> status = new HashMap<Literal, Integer>();
+		final HashMap<Literal, Integer> status = new HashMap<>();
 		for (final Literal l : conflict) {
 			if (l.getAtom().getDecideStatus() != null) {
 				assert l.getAtom().getDecideStatus() == l;
 				status.put(l, REDUNDANT);
 			}
 		}
-		final ArrayDeque<Literal> todo = new ArrayDeque<Literal>();
+		final ArrayDeque<Literal> todo = new ArrayDeque<>();
 		final Iterator<Literal> it = conflict.iterator();
 		litloop: while (it.hasNext()) {
 			final Literal lit = it.next();
@@ -982,7 +974,6 @@ public class DPLLEngine {
 				while (mDPLLStack.size() > i) {
 					backtrackLiteral(mDPLLStack.remove(mDPLLStack.size() - 1));
 				}
-				decreaseDecideLevel();
 			}
 		}
 	}
@@ -992,6 +983,9 @@ public class DPLLEngine {
 		mLogger.debug("B %s", literal);
 		final DPLLAtom atom = literal.getAtom();
 		mWatcherBackList.moveAll(atom.mBacktrackWatchers);
+		if (atom.mExplanation == null) {
+			decreaseDecideLevel();
+		}
 		atom.mExplanation = null;
 		atom.mDecideStatus = null;
 		atom.mDecideLevel = -1;
@@ -1101,7 +1095,7 @@ public class DPLLEngine {
 			if (Config.INITIAL_PHASE_BIAS_JW) {
 				// Compute for all remaining atoms an initial polarity according
 				// to Jeruslaw Wang
-				final Map<Literal, Double> scores = new HashMap<Literal, Double>();
+				final Map<Literal, Double> scores = new HashMap<>();
 				clause_loop: for (final Clause c : mClauses) {
 					double inc = 1.0;
 					for (final Literal lit : c.mLiterals) {
@@ -1256,9 +1250,6 @@ public class DPLLEngine {
 							final Literal lit = mDPLLStack.remove(mDPLLStack.size() - 1);
 							assert lit.getAtom().mDecideLevel != mBaseLevel;
 							final Object litexpl = lit.getAtom().mExplanation;
-							if (litexpl == null) {
-								decreaseDecideLevel();
-							}
 							if (litexpl instanceof Clause) {
 								((Clause) litexpl).mActivity += mClsScale;
 								// ((Clause) litexpl).usedTimes++;
@@ -1401,7 +1392,7 @@ public class DPLLEngine {
 			mAssignments.beginScope();
 		}
 		mAtomList.beginScope();
-		for (ITheory theory : getAttachedTheories()) {
+		for (final ITheory theory : getAttachedTheories()) {
 			theory.push();
 		}
 		++mPushPopLevel;
@@ -1434,7 +1425,7 @@ public class DPLLEngine {
 			assert conflict == null;
 		}
 		unlearnClauses(targetstacklevel);
-		mCurrentDecideLevel = 0;
+		assert mCurrentDecideLevel == 0;
 		mNumSolvedAtoms = 0;
 		final Iterator<Clause> inputit = mClauses.iterator();
 		while (inputit.hasNext()) {
@@ -1454,13 +1445,13 @@ public class DPLLEngine {
 			}
 		}
 		for (int i = 0; i < numpops; ++i) {
-			for (ITheory theory : getAttachedTheories()) {
+			for (final ITheory theory : getAttachedTheories()) {
 				theory.pop();
 			}
 			if (mAssignments != null) {
 				mAssignments.endScope();
 			}
-			for (DPLLAtom atom : mAtomList.currentScope()) {
+			for (final DPLLAtom atom : mAtomList.currentScope()) {
 				removeAtom(atom);
 			}
 			mAtomList.endScope();
@@ -1483,7 +1474,7 @@ public class DPLLEngine {
 	}
 
 	public boolean hasModel() {
-		for (ITheory t : mTheories) {
+		for (final ITheory t : mTheories) {
 			provideCompleteness(t.checkCompleteness());
 		}
 		return mHasModel && mCompleteness == COMPLETE;
@@ -1653,7 +1644,7 @@ public class DPLLEngine {
 	public void setProduceAssignments(final boolean value) {
 		assert mPushPopLevel == 0 && mAssignments == null || mAssignments.isEmpty();
 		if (value) {
-			mAssignments = new ScopedHashMap<String, Literal>();
+			mAssignments = new ScopedHashMap<>();
 		} else {
 			mAssignments = null;
 		}
@@ -1671,7 +1662,7 @@ public class DPLLEngine {
 		if (!isProduceAssignments()) {
 			return null;
 		}
-		final HashMap<String, Boolean> assignment = new HashMap<String, Boolean>(mAssignments.size(), 1.0f);
+		final HashMap<String, Boolean> assignment = new HashMap<>(mAssignments.size(), 1.0f);
 		for (final Map.Entry<String, Literal> me : mAssignments.entrySet()) {
 			assignment.put(me.getKey(), me.getValue().getAtom().mDecideStatus == me.getValue());
 		}
@@ -1737,7 +1728,7 @@ public class DPLLEngine {
 		}
 		final Clause conflict = finalizeBacktrack();
 		assert conflict == null;
-		mCurrentDecideLevel = mBaseLevel;
+		assert mCurrentDecideLevel == mBaseLevel;
 	}
 
 	public void flipNamedLiteral(final String name) throws SMTLIBException {
@@ -1747,7 +1738,7 @@ public class DPLLEngine {
 		}
 		final Clause conflict = finalizeBacktrack();
 		assert conflict == null;
-		mCurrentDecideLevel = mBaseLevel;
+		assert mCurrentDecideLevel == mBaseLevel;
 		final Literal lit = mAssignments.get(name);
 		if (lit == null) {
 			throw new SMTLIBException("Name " + name + " not known");
@@ -1846,22 +1837,23 @@ public class DPLLEngine {
 	 */
 	public void clearAssumptions() {
 		/* check if we need to clear any assumptions */
-		if (mBaseLevel == 0) {
-			return;
-		}
 		mAssumptionLiterals.clear();
 		mLogger.debug("Clearing Assumptions (Baselevel is %d)", mBaseLevel);
-		while (!mDPLLStack.isEmpty()) {
-			final Literal top = mDPLLStack.get(mDPLLStack.size() - 1);
-			if (top.getAtom().getDecideLevel() == 0) {
-				break;
-			}
-			mDPLLStack.remove(mDPLLStack.size() - 1);
-			backtrackLiteral(top);
+		while (mCurrentDecideLevel > 0) {
+			final Literal lit = mDPLLStack.remove(mDPLLStack.size() - 1);
+			backtrackLiteral(lit);
 		}
+		assert mCurrentDecideLevel == 0;
 		mBaseLevel = 0;
-		mCurrentDecideLevel = 0;
-		mUnsatClause = finalizeBacktrack();
+		/* clear unsat clause, if it has assumptions */
+		if (mUnsatClause != null && mUnsatClause.getSize() > 0) {
+			mUnsatClause = null;
+		}
+
+		final Clause conflict = finalizeBacktrack();
+		if (conflict != null) {
+			explain(conflict);
+		}
 	}
 
 	/**

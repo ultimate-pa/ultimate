@@ -360,43 +360,36 @@ public class InterpolantChecker {
 		boolean error = false;
 		final int numPartitions = interpolants.length + 1;
 
-		final Term[] inputFormulas = new Term[numPartitions];
-		for (final Map.Entry<String, Integer> entry : partitions.entrySet()) {
-			final int part = entry.getValue();
-			final Term term = mCheckingSolver.term(entry.getKey());
-			if (inputFormulas[part] == null) {
-				inputFormulas[part] = term;
-			} else {
-				inputFormulas[part] = mCheckingSolver.term("and", inputFormulas[part], term);
-			}
-		}
-
 		// Compute the symbol occurrence:
 		final SymbolCollector collector = new SymbolCollector();
 		@SuppressWarnings("unchecked")
 		final Set<FunctionSymbol>[] occs = new Set[numPartitions];
-		for (int i = 0; i < numPartitions; i++) {
-			collector.collect(inputFormulas[i]);
-			occs[i] = collector.getSymbols();
+		for (int part = 0; part < numPartitions; part++) {
+			for (final Entry<String, Integer> entry : mInterpolator.mPartitions.entrySet()) {
+				if (entry.getValue() == part) {
+					collector.collect(mCheckingSolver.term(entry.getKey()));
+				}
+			}
+			occs[part] = collector.getSymbols();
 		}
 		// Compute for each partition, in how many the subpartitions symbol occurs.
 		@SuppressWarnings("unchecked")
 		final Map<FunctionSymbol, Integer>[] subOccurrences = new Map[numPartitions];
-		for (int i = 0; i < numPartitions; ++i) {
+		for (int part = 0; part < numPartitions; ++part) {
 			// Find children
-			subOccurrences[i] = new HashMap<>();
-			for (final FunctionSymbol fsym : occs[i]) {
-				subOccurrences[i].put(fsym, 1);
+			subOccurrences[part] = new HashMap<>();
+			for (final FunctionSymbol fsym : occs[part]) {
+				subOccurrences[part].put(fsym, 1);
 			}
-			for (int child = i - 1; child >= mInterpolator.mStartOfSubtrees[i];
+			for (int child = part - 1; child >= mInterpolator.mStartOfSubtrees[part];
 					child = mInterpolator.mStartOfSubtrees[child] - 1) {
 				// join occurrence maps
 				for (final Map.Entry<FunctionSymbol, Integer> entry : subOccurrences[child].entrySet()) {
-					Integer ival = subOccurrences[i].get(entry.getKey());
+					Integer ival = subOccurrences[part].get(entry.getKey());
 					if (ival == null) {
 						ival = 0;
 					}
-					subOccurrences[i].put(entry.getKey(), ival + entry.getValue());
+					subOccurrences[part].put(entry.getKey(), ival + entry.getValue());
 				}
 			}
 		}
@@ -414,7 +407,11 @@ public class InterpolantChecker {
 					mCheckingSolver.assertTerm(interpolants[child]);
 				}
 				// assert input formula
-				mCheckingSolver.assertTerm(inputFormulas[part]);
+				for (final Entry<String, Integer> entry : mInterpolator.mPartitions.entrySet()) {
+					if (entry.getValue() == part) {
+						mCheckingSolver.assertTerm(mCheckingSolver.term(entry.getKey()));
+					}
+				}
 				if (part != interpolants.length) {
 					// Check symbol condition
 					if (checker.check(interpolants[part], subOccurrences[part])) {

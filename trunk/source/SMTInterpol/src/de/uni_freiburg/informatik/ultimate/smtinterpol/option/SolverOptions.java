@@ -77,19 +77,19 @@ public class SolverOptions {
 				false, false, "Enable interpolant production.");
 		mModelCheckMode = new BooleanOption(false, true,
 				"Check satisfiable formulas against the produced model.");
-		mProofTrans = new EnumOption<AvailableTransformations>(
+		mProofTrans = new EnumOption<>(
 				AvailableTransformations.NONE, true,
 				AvailableTransformations.class,
 				"Algorithm used to transform the resolution proof tree.");
 		mModelsPartial = new BooleanOption(false, true, "Don't totalize models.");
-		mCheckType = new EnumOption<CheckType>(CheckType.FULL, true,
+		mCheckType = new EnumOption<>(CheckType.FULL, true,
 				CheckType.class, "Strength of check used in check-sat command.");
 		mSimpIps = new BooleanOption(false, true,
 				"Apply strong context simplification to generated interpolants.");
 		mArrayInterpolation = new BooleanOption(true, true, "Support interpolation for array theory lemmas.");
 		mProofCheckMode = new BooleanOption(false,
 				false, "Check the produced proof for unsatisfiable formulas.");
-		mSimpCheckType = new EnumOption<CheckType>(CheckType.QUICK, true,
+		mSimpCheckType = new EnumOption<>(CheckType.QUICK, true,
 				CheckType.class, "Strength of checks used by the strong context"
 				+ " simplifier used in the simplify command");
 
@@ -138,7 +138,7 @@ public class SolverOptions {
 				"Assume formula is in EPR fragment. This give an error if the formula is outside EPR."));
 		options.addOption(E_MATCHING, new BooleanOption(true, false,
 				"Quantifier Theory: Use E-matching for conflict and unit search."));
-		options.addOption(UNKNOWN_TERM_DAWGS, new BooleanOption(false, false,
+		options.addOption(UNKNOWN_TERM_DAWGS, new BooleanOption(true, false,
 				"Quantifier Theory: Use fourth instance value UNKNOWN_TERM as default in literal dawgs."));
 		options.addOption(PROPAGATE_UNKNOWN_TERMS, new BooleanOption(false, false,
 				"Quantifier Theory: Allow propagation on atoms with non-existing term."));

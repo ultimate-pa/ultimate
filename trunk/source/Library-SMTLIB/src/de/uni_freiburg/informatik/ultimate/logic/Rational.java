@@ -20,6 +20,8 @@ package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
+
 /**
  * Class that represents a rational number num/denom,
  * where num and denom are BigInteger.  This class also handles
@@ -263,7 +265,8 @@ public class Rational implements Comparable<Rational> {
 
 		@Override
 		public int hashCode() {
-			return mBignum.hashCode() * 257 + mBigdenom.hashCode();
+			final int hashNum = HashUtils.hashJenkins(0, mBignum.toByteArray());
+			return HashUtils.hashJenkins(hashNum, mBigdenom.toByteArray());
 		}
 
 		@Override
@@ -785,7 +788,7 @@ public class Rational implements Comparable<Rational> {
 	 */
 	@Override
 	public int hashCode() {
-		return mNum * 257 + mDenom;
+		return HashUtils.hashJenkins(mNum, mDenom);
 	}
 	/**
 	 * Get a string representation of this number.  This is

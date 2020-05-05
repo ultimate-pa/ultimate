@@ -941,9 +941,9 @@ command ::= SETLOGIC symbol:logic
             	parser.env.printError(se.getMessage());
             }  :}
           | ASSERT term:t
-            {: if (hasError())
+            {: if (hasError()) {
                    parser.env.printError(getError());
-               else {
+               } else {
                	try {
                    parser.env.getScript().assertTerm(t);
                    parser.env.printSuccess();
@@ -961,12 +961,18 @@ command ::= SETLOGIC symbol:logic
             	parser.env.printError(se.getMessage());
             } :}
           | CHECKSATASSUMING LPAR term*:t RPAR
-            {: try {
-                Script.LBool res = parser.env.getScript().checkSatAssuming(t);
-                parser.env.printResponse(res);
-            } catch(SMTLIBException se) {
-            	parser.env.printError(se.getMessage());
-            } :}
+            {:
+				if (hasError()) {
+					parser.env.printError(getError());
+				} else {
+					try {
+						Script.LBool res = parser.env.getScript().checkSatAssuming(t);
+						parser.env.printResponse(res);
+					} catch(SMTLIBException se) {
+						parser.env.printError(se.getMessage());
+					}
+				}
+            :}
           | GETASSERTIONS
             {: try {
             	Term[] res = parser.env.getScript().getAssertions();
