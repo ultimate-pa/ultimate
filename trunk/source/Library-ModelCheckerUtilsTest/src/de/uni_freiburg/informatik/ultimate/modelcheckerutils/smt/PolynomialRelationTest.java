@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
@@ -68,9 +67,6 @@ public class PolynomialRelationTest {
 	private static final String SOLVER_COMMAND_MATHSAT = "mathsat";
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
-	private ManagedScript mMgdScript;
-	private Sort mRealSort;
-	private Sort mIntSort;
 
 	@Before
 	public void setUp() throws IOException {
@@ -81,16 +77,10 @@ public class PolynomialRelationTest {
 		} else {
 			mScript = tmp;
 		}
-		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
 
 		new VarDecl(SmtSortUtils::getRealSort, "hi", "lo", "x", "y", "z", "ri").declareVars(mScript);
 		new VarDecl(SmtSortUtils::getIntSort, "xi", "yi", "zi").declareVars(mScript);
-	}
-
-	private Term declareVar(final String name, final Sort sort) {
-		mScript.declareFun(name, new Sort[0], sort);
-		return mScript.term(name);
 	}
 
 	@After
