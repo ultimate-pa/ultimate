@@ -83,18 +83,9 @@ public class PolynomialRelationTest {
 		}
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
-		mRealSort = SmtSortUtils.getRealSort(mMgdScript);
-		mIntSort = SmtSortUtils.getIntSort(mMgdScript);
 
-		declareVar("hi", mRealSort); // lower bound
-		declareVar("lo", mRealSort); // upper bound
-		declareVar("x", mRealSort); // Subject
-		declareVar("y", mRealSort);
-		declareVar("z", mRealSort);
-		declareVar("ri", mRealSort);
-		declareVar("xi", mIntSort); // Subject
-		declareVar("yi", mIntSort);
-		declareVar("zi", mIntSort);
+		new VarDecl(SmtSortUtils::getRealSort, "hi", "lo", "x", "y", "z", "ri").declareVars(mScript);
+		new VarDecl(SmtSortUtils::getIntSort, "xi", "yi", "zi").declareVars(mScript);
 	}
 
 	private Term declareVar(final String name, final Sort sort) {
