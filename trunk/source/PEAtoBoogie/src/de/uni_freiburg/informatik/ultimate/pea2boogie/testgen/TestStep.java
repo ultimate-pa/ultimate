@@ -72,9 +72,8 @@ public class TestStep {
 				result.append("\n");
 			}
 		}
-		result.append("Wait " + formatIdentToValue(mWaitTime) + "time Units");
 		if (mWaitForAssignment.size() > 0) {
-			result.append(" or for output: \n ");
+			result.append("Wait " + formatIdentToValue(mWaitTime) + "for output:\n");
 			for (final Entry<IdentifierExpression, Collection<Expression>> entry : mWaitForAssignment.entrySet()) {
 				result.append("\t");
 				result.append(entry.getKey().getIdentifier());
@@ -82,6 +81,8 @@ public class TestStep {
 				result.append(formatIdentToValue(entry.getValue()));
 				result.append("\n");
 			}
+		} else {
+			result.append("For the following " + formatIdentToValue(mWaitTime) + "time Units");
 		}
 
 		result.append("\n ");
