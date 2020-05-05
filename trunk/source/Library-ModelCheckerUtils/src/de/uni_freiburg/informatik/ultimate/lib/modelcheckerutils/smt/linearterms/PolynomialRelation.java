@@ -763,7 +763,7 @@ public class PolynomialRelation implements IBinaryRelation {
 			rhsRelationZeroTerm = SmtUtils.greater(script, zeroTerm, rhs);
 			break;
 		default:
-			throw new UnsupportedOperationException("No such RelationSymbol known.");
+			throw new AssertionError("Unknown RelationSymbol: " + relSym);
 		}
 		suppTerms.add(
 				new SupportingTerm(rhsRelationZeroTerm, IntricateOperation.DIV_BY_NONCONSTANT, Collections.emptySet()));
