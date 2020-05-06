@@ -76,7 +76,7 @@ public class MultiCaseSolutionBuilder {
 			if (mCases.isEmpty()) {
 				mCases.add(new Case(null, Collections.emptySet(), mXnf));
 			}
-			mCases = buildCopyAndAddToEachCase(mCases, newConjuncts);
+			mCases = buildCopyAndAddToEachCase(mCases, buildCase(newConjuncts));
 			break;
 		default:
 			throw new AssertionError();
@@ -109,7 +109,7 @@ public class MultiCaseSolutionBuilder {
 	 * inner collections represent conjunctions the outer collection represents
 	 * a disjunction of these conjunctions.
 	 */
-	public void conjoinWithDnf(final Collection<Collection<?>> dnf) {
+	public void conjoinWithDnf(final Collection<Case> dnf) {
 		if (mConstructionFinished) {
 			throw new IllegalStateException("construction already finished");
 		}
@@ -118,11 +118,11 @@ public class MultiCaseSolutionBuilder {
 			throw new UnsupportedOperationException("not yet implemented");
 		case DNF:
 			final List<Case> resultCases = new ArrayList<Case>();
-			for (final Collection<?> conjunction : dnf) {
+			for (final Case conjunction : dnf) {
 				if (mCases.isEmpty()) {
-					resultCases.add(buildCase(conjunction.toArray()));
+					resultCases.add(conjunction);
 				}else {
-					resultCases.addAll(buildCopyAndAddToEachCase(mCases, conjunction.toArray()));
+					resultCases.addAll(buildCopyAndAddToEachCase(mCases, conjunction));
 				}
 			}
 			mCases = resultCases;
@@ -194,28 +194,23 @@ public class MultiCaseSolutionBuilder {
 	}
 
 	/**
-	 * Return a copy of the list of cases, where we added the elements newElems
-	 * to each case.
+	 * Return a copy of the list of cases, where we added the elements of
+	 * distributionCase to each case.
 	 */
-	private List<Case> buildCopyAndAddToEachCase(final List<Case> cases, final Object... newElems) {
+	private List<Case> buildCopyAndAddToEachCase(final List<Case> cases, final Case distributionCase) {
 		final List<Case> newCases = new ArrayList<>();
 		for (final Case c : cases) {
 			SolvedBinaryRelation solvedBinaryRelation = null;
 			final Set<SupportingTerm> supportingTerms = new HashSet<>(c.getSupportingTerms());
 			solvedBinaryRelation = c.getSolvedBinaryRelation();
-			for (final Object newElem : newElems) {
-				if (newElem instanceof SolvedBinaryRelation) {
+				if (distributionCase.getSolvedBinaryRelation() != null) {
 					if (solvedBinaryRelation == null) {
-						solvedBinaryRelation = (SolvedBinaryRelation) newElem;
+						solvedBinaryRelation = distributionCase.getSolvedBinaryRelation();
 					} else {
 						throw new AssertionError("already have a solvedBinayRelation");
 					}
-				} else if (newElem instanceof SupportingTerm) {
-					supportingTerms.add((SupportingTerm) newElem);
-				} else {
-					throw new UnsupportedOperationException();
 				}
-			}
+				supportingTerms.addAll(distributionCase.getSupportingTerms());
 			final Case newCase = new Case(solvedBinaryRelation, supportingTerms, mXnf);
 			newCases.add(newCase);
 		}

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterm
 
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ITermProviderOnDemand;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -46,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class SolvedBinaryRelation {
+public class SolvedBinaryRelation implements ITermProviderOnDemand {
 
 	public enum AssumptionForSolvability {
 		INTEGER_DIVISIBLE_BY_CONSTANT, REAL_DIVISOR_NOT_ZERO, INTEGER_DIVISOR_NOT_ZERO, INTEGER_DIVISIBLE_BY_VARIABLE
@@ -96,6 +97,7 @@ public class SolvedBinaryRelation {
 	/**
 	 * @return This relation as SMT term. (Without the additional assumption.)
 	 */
+	@Override
 	public Term asTerm(final Script script) {
 		return script.term(mRelationSymbol.toString(), mLeftHandSide, mRightHandSide);
 	}
