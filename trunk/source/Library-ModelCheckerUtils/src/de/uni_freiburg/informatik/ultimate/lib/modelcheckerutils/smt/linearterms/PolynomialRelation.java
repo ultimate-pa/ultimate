@@ -666,11 +666,7 @@ public class PolynomialRelation implements IBinaryRelation {
 			for (final IntermediateCase finishedCase : previousCases) {
 				finishedCases.add(finishedCase.finalizeCase(subject));
 			}
-			final Collection<Collection<?>> dnf = new ArrayList<>();
-			for (final Case c : finishedCases) {
-				dnf.add(transformCaseIntoCollection(c));
-			}
-			mcsb.conjoinWithDnf(dnf);
+			mcsb.conjoinWithDnf(finishedCases);
 		}
 
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
