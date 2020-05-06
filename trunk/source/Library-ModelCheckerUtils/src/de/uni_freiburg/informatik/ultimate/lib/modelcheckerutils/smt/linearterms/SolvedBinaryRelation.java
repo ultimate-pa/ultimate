@@ -96,7 +96,7 @@ public class SolvedBinaryRelation {
 	/**
 	 * @return This relation as SMT term. (Without the additional assumption.)
 	 */
-	public Term relationToTerm(final Script script) {
+	public Term asTerm(final Script script) {
 		return script.term(mRelationSymbol.toString(), mLeftHandSide, mRightHandSide);
 	}
 

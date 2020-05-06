@@ -428,7 +428,7 @@ public class PolynomialRelation implements IBinaryRelation {
 
 		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
 				assumptionMapBuilder.getExplicitAssumptionMap());
-		final Term relationToTerm = result.relationToTerm(script);
+		final Term relationToTerm = result.asTerm(script);
 		if (!assumptionMapBuilder.isEmpty()) {
 			assert script instanceof INonSolverScript
 					|| assumptionImpliesEquivalence(script, mOriginalTerm, relationToTerm, assumptionMapBuilder

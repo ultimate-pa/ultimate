@@ -423,10 +423,10 @@ public class PolynomialRelationTest {
 
 	private boolean assumptionsImpliesEquality(final Term originalTerm, final SolvedBinaryRelation sbr) {
 		if (sbr.getAssumptionsMap().isEmpty()) {
-			return SmtUtils.areFormulasEquivalent(sbr.relationToTerm(mScript), originalTerm, mScript);
+			return SmtUtils.areFormulasEquivalent(sbr.asTerm(mScript), originalTerm, mScript);
 		} else {
 			final Term disJ = SmtUtils.not(mScript, SmtUtils.and(mScript, sbr.getAssumptionsMap().values()));
-			final Term impli1 = SmtUtils.or(mScript, disJ, sbr.relationToTerm(mScript));
+			final Term impli1 = SmtUtils.or(mScript, disJ, sbr.asTerm(mScript));
 			final Term impli2 = SmtUtils.or(mScript, disJ, originalTerm);
 			return SmtUtils.areFormulasEquivalent(impli1, impli2, mScript);
 		}

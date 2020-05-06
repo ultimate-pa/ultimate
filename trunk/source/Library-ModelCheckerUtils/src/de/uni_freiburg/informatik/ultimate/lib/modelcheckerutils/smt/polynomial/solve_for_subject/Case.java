@@ -90,7 +90,7 @@ public class Case implements ITermProviderOnDemand {
 	public Term asTerm(final Script script) {
 		final Collection<Term> params = mSupportingTerms.stream().map(x -> x.asTerm()).collect(Collectors.toList());
 		if (mSolvedBinaryRelation != null) {
-			params.add(mSolvedBinaryRelation.relationToTerm(script));
+			params.add(mSolvedBinaryRelation.asTerm(script));
 		}
 		final Term result;
 		switch (mXnf) {
