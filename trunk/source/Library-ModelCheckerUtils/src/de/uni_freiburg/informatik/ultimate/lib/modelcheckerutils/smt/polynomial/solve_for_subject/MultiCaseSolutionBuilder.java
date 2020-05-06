@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.LexicographicCounter;
 
 /**
  * Builder for {@link MultiCaseSolvedBinaryRelation}.
@@ -130,6 +131,22 @@ public class MultiCaseSolutionBuilder {
 			throw new AssertionError();
 		}
 
+	}
+
+	private static List<List<?>> convertDnfToCnf(final List<List<?>> dnf) {
+		final int[] numberOfValues = dnf.stream().mapToInt(x -> x.size()).toArray();
+		final LexicographicCounter lc = new LexicographicCounter(numberOfValues);
+		final List<List<?>> result = new ArrayList<>();
+		do {
+			final List<Object> inner = new ArrayList<>();
+			for (int i=0; i< dnf.size(); i++) {
+				final Object atom = dnf.get(i).get(lc.getCurrentValue()[i]);
+				inner.add(atom);
+			}
+			result.add(inner);
+			lc.increment();
+		} while (!lc.isZero());
+		return result;
 	}
 
 	public void reportAdditionalIntricateOperation(final IntricateOperation intricateOperation) {
