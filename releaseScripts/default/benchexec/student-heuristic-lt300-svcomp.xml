@@ -74,7 +74,8 @@
       <includesfile>../../../trunk/examples/svcomp/heuristic_less_300s_reach64.set</includesfile>
     </tasks>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-    <option name="--traceabstraction.astar.heuristic.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
+    <option name="--traceabstraction.astar.heuristic.to.use.during.heuristic.emptiness.check">SMT_FEATURE_COMPARISON</option>
+    <option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_FUNCTIONS</option>
   </rundefinition>
   
   
@@ -90,7 +91,8 @@
       <includesfile>../../../trunk/examples/svcomp/heuristic_less_300s_reach64.set</includesfile>
     </tasks>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-    <option name="--traceabstraction.astar.heuristic.to.use.during.heuristic.emptiness.check">NUM_VARIABLES</option>
+    <option name="--traceabstraction.astar.heuristic.to.use.during.heuristic.emptiness.check">SMT_FEATURE_COMPARISON</option>
+    <option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUM_VARIABLES</option>
   </rundefinition>
   
   <rundefinition name="Automizer DAGSIZE">
@@ -105,7 +107,8 @@
       <includesfile>../../../trunk/examples/svcomp/heuristic_less_300s_reach64.set</includesfile>
     </tasks>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-    <option name="--traceabstraction.astar.heuristic.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
+    <option name="--traceabstraction.astar.heuristic.to.use.during.heuristic.emptiness.check">SMT_FEATURE_COMPARISON</option>
+    <option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">DAGSIZE</option>
   </rundefinition>
   
   <rundefinition name="Automizer BIGGEST_EQUIVALENCE_CLASS">
@@ -120,7 +123,8 @@
       <includesfile>../../../trunk/examples/svcomp/heuristic_less_300s_reach64.set</includesfile>
     </tasks>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-    <option name="--traceabstraction.astar.heuristic.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
+    <option name="--traceabstraction.astar.heuristic.to.use.during.heuristic.emptiness.check">SMT_FEATURE_COMPARISON</option>
+    <option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">BIGGEST_EQUIVALENCE_CLASS</option>
   </rundefinition>
   
   <rundefinition name="Automizer NUMBER_OF_SELECT_FUNCTIONS">
@@ -135,7 +139,9 @@
       <includesfile>../../../trunk/examples/svcomp/heuristic_less_300s_reach64.set</includesfile>
     </tasks>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-    <option name="--traceabstraction.astar.heuristic.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
+    <option name="--traceabstraction.astar.heuristic.to.use.during.heuristic.emptiness.check">SMT_FEATURE_COMPARISON</option>
+    <option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_SELECT_FUNCTIONS</option>
+
   </rundefinition>
   
   <rundefinition name="Automizer NUMBER_OF_STORE_FUNCTIONS">
@@ -150,7 +156,8 @@
       <includesfile>../../../trunk/examples/svcomp/heuristic_less_300s_reach64.set</includesfile>
     </tasks>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-    <option name="--traceabstraction.astar.heuristic.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
+    <option name="--traceabstraction.astar.heuristic.to.use.during.heuristic.emptiness.check">SMT_FEATURE_COMPARISON</option>
+    <option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">NUMBER_OF_STORE_FUNCTIONS</option>
   </rundefinition>
   
   <rundefinition name="Automizer COMPARE_FEATURES">
@@ -165,7 +172,8 @@
       <includesfile>../../../trunk/examples/svcomp/heuristic_less_300s_reach64.set</includesfile>
     </tasks>
     <option name="--traceabstraction.use.heuristic.emptiness.check">true</option>
-    <option name="--traceabstraction.astar.heuristic.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
+    <option name="--traceabstraction.astar.heuristic.to.use.during.heuristic.emptiness.check">SMT_FEATURE_COMPARISON</option>
+    <option name="--traceabstraction.scoring.method.to.use.during.heuristic.emptiness.check">COMPARE_FEATURES</option>
   </rundefinition>
 
 
