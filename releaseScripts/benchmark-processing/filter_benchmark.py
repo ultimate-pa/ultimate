@@ -124,7 +124,7 @@ if __name__ == "__main__":
     #print(qualified)
     #print(unqualified)
 
-    with open("result_filter/64_set.set", "w+") as set64, open("result_filter/32_set.set", "w+") as set32:
+    with open("64_set.set", "w+") as set64, open("32_set.set", "w+") as set32:
         for file,yml,arch in qualified:
             if arch == "64":
                 set64.write(yml +"\n")
