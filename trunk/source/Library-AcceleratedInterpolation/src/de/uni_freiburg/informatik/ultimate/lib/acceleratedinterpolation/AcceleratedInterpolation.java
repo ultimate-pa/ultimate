@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -55,6 +55,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuan
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
@@ -65,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -81,7 +85,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
-	private final Word<LETTER> mCounterexampleTrace;
+	private final IRun<LETTER, IPredicate> mCounterexampleTrace;
 	private final List<LETTER> mCounterexample;
 	private final List<UnmodifiableTransFormula> mCounterexampleTf;
 	private final IPredicateUnifier mPredicateUnifier;
@@ -104,12 +108,13 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final Loopdetector<LETTER> mLoopdetector;
 
 	public AcceleratedInterpolation(final ILogger logger, final ITraceCheckPreferences prefs,
-			final ManagedScript script, final IPredicateUnifier predicateUnifier, final Word<LETTER> counterexample) {
+			final ManagedScript script, final IPredicateUnifier predicateUnifier,
+			final IRun<LETTER, IPredicate> counterexample) {
 		mLogger = logger;
 		mScript = script;
 		mServices = prefs.getUltimateServices();
 		mCounterexampleTrace = counterexample;
-		mCounterexample = mCounterexampleTrace.asList();
+		mCounterexample = mCounterexampleTrace.getWord().asList();
 		mPredicateUnifier = predicateUnifier;
 		mPrefs = prefs;
 		mIcfg = mPrefs.getIcfgContainer();
@@ -164,10 +169,39 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			}
 			mAccelerations.put(loophead.getKey(), accelerations);
 		}
-		/*
-		 * TODO: there are not enough interpolants for the trace generated. Fix: Use post in trace with acceleration
-		 */
+		// TODO: there are not enough interpolants for the trace generated. Fix: Use post in trace with acceleration
+		// TODO: DD 2020-05-07: Do not "just" generate a list of UnmodifiableTransFormula, but a
+		// IRun<IAction,IPredicate>. Use mCounterexample to get the IPredicates.
+
 		final List<UnmodifiableTransFormula> traceScheme = generateMetaTrace();
+
+		// TODO: DD 2020-05-07: The code here creates an InterpolatingTraceCheckCraig with settings for
+		// Craig_NestedInterpolation -- we could also try and wrap a strategy module to gain more flexibility.
+
+		// final IRun<IAction, IPredicate> traceSchemeRun = null;
+		// final NestedWord<IAction> nestedWord = NestedWord.nestedWord(traceSchemeRun.getWord());
+		// final TreeMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
+		// final boolean instanticateArrayExt = true;
+		// final boolean innerRecursiveNestedInterpolationCall = false;
+		//
+
+		// TODO: DD 2020-05-07: It might be necessary to create a fresh mScript instance for the interpolation, in
+		// particular if you want to interpolate multiple times. Hence, I added constructManagedScriptForInterpolation()
+		// -- but perhaps you want to re-use the script from CfgSmtScript
+
+		// final ManagedScript ipScript = constructManagedScriptForInterpolation();
+		// final InterpolatingTraceCheckCraig<IAction> itcc = new InterpolatingTraceCheckCraig<>(getPrecondition(),
+		// getPostcondition(), pendingContexts, nestedWord, traceSchemeRun.getStateSequence(), mServices,
+		// mPrefs.getCfgSmtToolkit(), ipScript, (PredicateFactory) mPredicateUnifier.getPredicateFactory(),
+		// mPredicateUnifier, mPrefs.getAssertCodeBlocksOrder(), mPrefs.computeCounterexample(),
+		// mPrefs.collectInterpolantStatistics(), InterpolationTechnique.Craig_NestedInterpolation,
+		// instanticateArrayExt, mPrefs.getXnfConversionTechnique(), mPrefs.getSimplificationTechnique(),
+		// innerRecursiveNestedInterpolationCall);
+		// mIsTraceCorrect = itcc.isCorrect();
+		// if (mIsTraceCorrect == LBool.UNSAT) {
+		// mInterpolants = itcc.getInterpolants();
+		// }
+
 		mIsTraceCorrect = checkFeasibility(mCounterexampleTf);
 		if (mIsTraceCorrect == LBool.UNSAT) {
 			// final IPredicate[] traceSchemeInterpolants = mInterpolator.generateInterpolants(traceScheme);
@@ -175,6 +209,16 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 					mInterpolator.generateInterpolants(InterpolationMethod.TREE, mCounterexample, mAccelerations);
 			mInterpolants = traceInteprolants;
 		}
+	}
+
+	private ManagedScript constructManagedScriptForInterpolation() throws AssertionError {
+		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(false)
+				.setSolverMode(SolverMode.Internal_SMTInterpol);
+		final String solverId = solverSettings.getBaseNameOfDumpedScript();
+		final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, solverId);
+		final ManagedScript mgdScriptTc = new ManagedScript(mServices, tcSolver);
+		mPrefs.getIcfgContainer().getCfgSmtToolkit().getSmtFunctionsAndAxioms().transferAllSymbols(tcSolver);
+		return mgdScriptTc;
 	}
 
 	/**
