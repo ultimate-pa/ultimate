@@ -518,7 +518,7 @@ public class ProofChecker extends NonRecursive {
 		} else if (lemmaType == ":inst") {
 			mNumInstancesUsed++;
 			final Object[] subannots = ((Object[]) lemmaAnnotation);
-			assert subannots.length == 7 && subannots[6] instanceof String;
+			assert subannots.length == 8 && subannots[6] instanceof String;
 			final String solverPart = (String) subannots[6];
 			if (solverPart == ":DER") {
 				mNumInstancesFromDER++;
