@@ -89,7 +89,9 @@ public interface ITraceCheckPreferences {
 		 * Assert in two steps: First terms with small constants (currently, terms that contain constants smaller than
 		 * 10), then the rest.
 		 */
-		TERMS_WITH_SMALL_CONSTANTS_FIRST
+		TERMS_WITH_SMALL_CONSTANTS_FIRST,
+
+		SMT_FEATURE_HEURISTIC
 	}
 
 	boolean getUseSeparateSolverForTracechecks();

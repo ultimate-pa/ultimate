@@ -31,6 +31,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -52,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashTreeRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This class implements the possibility to partially (and in different order) annotate and assert the statements of a
@@ -172,8 +174,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * Partition the statements of the given trace according to their depth.
 	 */
 	private <LOC> Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(
-			final NestedWord<? extends IAction> trace, final HashTreeRelation<LOC, Integer> rwt,
-			final List<LOC> pps) {
+			final NestedWord<? extends IAction> trace, final HashTreeRelation<LOC, Integer> rwt, final List<LOC> pps) {
 		final Map<Integer, Set<Integer>> depth2Statements = new HashMap<>();
 
 		dfsPartitionStatementsAccordingToDepth(0, trace.length(), 0, rwt, depth2Statements, pps);
@@ -185,8 +186,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	public void buildAnnotatedSsaAndAssertTerms() {
 		assert mCheckSat == 0 : "You should not call this method twice";
 		final List<IcfgLocation> pps = TraceCheckUtils.getSequenceOfProgramPoints(mTrace);
-		final HashTreeRelation<IcfgLocation, Integer> rwt =
-				computeRelationWithTreeSetForTrace(0, mTrace.length(), pps);
+		final HashTreeRelation<IcfgLocation, Integer> rwt = computeRelationWithTreeSetForTrace(0, mTrace.length(), pps);
 
 		final Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, mTrace.length());
 		mAnnotSSA = new ModifiableNestedFormulas<>(mTrace, new TreeMap<Integer, Term>());
@@ -243,6 +243,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		} // Apply 5. Heuristic
 		else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST) {
 			mSatisfiable = annotateAndAssertStmtsAccording5Heuristic(mTrace, callPositions, pendingReturnPositions);
+		} else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.SMT_FEATURE_HEURISTIC) {
+			mSatisfiable =
+					annotateAndAssertStmtsAccordingSMTFeatureHeuristic(mTrace, callPositions, pendingReturnPositions);
 		} else {
 			throw new AssertionError("unknown heuristic " + mAssertCodeBlocksOrder);
 		}
@@ -341,8 +344,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	private boolean termHasConstantGreaterThan(final Term t, final int constantSize) {
 		if (t instanceof ApplicationTerm) {
 			final Term[] args = ((ApplicationTerm) t).getParameters();
-			for (int i = 0; i < args.length; i++) {
-				if (termHasConstantGreaterThan(args[i], constantSize)) {
+			for (final Term arg : args) {
+				if (termHasConstantGreaterThan(arg, constantSize)) {
 					return true;
 				}
 			}
@@ -405,6 +408,46 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		// Report benchmarks
 		mTcbg.reportNewCheckSat();
 		mTcbg.reportNewAssertedCodeBlocks(remainingStmts.size());
+		return sat;
+	}
+
+	// Function to score a trace, according to a heuristic.
+	private List<Pair<Term, Double>> ScoreTrace(final NestedWord<? extends IAction> trace) {
+		final List<Pair<Term, Double>> termScorePairs = new ArrayList<Pair<Term, Double>>();
+
+		// TODO
+
+		Collections.sort(termScorePairs, Comparator.comparing(p -> p.getSecond()));
+		return termScorePairs;
+	}
+
+	// Function to partition a list of Terms according to their scores.
+	private List<Set<Integer>> partitionStmtsAccordingToHeuristicValues(final List<Pair<Term, Double>> termScorePairs) {
+		final List<Set<Integer>> partitions = new ArrayList<Set<Integer>>();
+
+		// TODO
+
+		return partitions;
+	}
+
+	private LBool annotateAndAssertStmtsAccordingSMTFeatureHeuristic(final NestedWord<? extends IAction> trace,
+			final Collection<Integer> callPositions, final Collection<Integer> pendingReturnPositions) {
+		LBool sat = null;
+		// Score Trace Terms and order them according to score.
+		final List<Pair<Term, Double>> termScorePairs = ScoreTrace(trace);
+		final List<Set<Integer>> partitions = partitionStmtsAccordingToHeuristicValues(termScorePairs);
+
+		for (final Set<Integer> partition : partitions) {
+			// TODO
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, partition);
+			sat = mMgdScriptTc.getScript().checkSat();
+			// Report benchmarks
+			mTcbg.reportNewCheckSat();
+			mTcbg.reportNewAssertedCodeBlocks(partition.size());
+			if (sat == LBool.UNSAT) {
+				return sat;
+			}
+		}
 		return sat;
 	}
 
