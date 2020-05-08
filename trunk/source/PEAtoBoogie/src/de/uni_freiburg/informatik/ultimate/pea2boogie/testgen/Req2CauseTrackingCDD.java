@@ -37,22 +37,19 @@ public class Req2CauseTrackingCDD {
 	 */
 	public CDD transformInvariantTracking(final CDD cdd, final Set<String> trackedVars, final Set<String> effectVars,
 			final boolean isEffectPhase) {
-		final CDD[] conjuncts = cdd.toDNF();    //TODO: this ignores disjunction on boogie expression level
+		final CDD[] conjuncts = cdd.toDNF();
 		if (conjuncts.length > 1 && isEffectPhase) {
 			final Set<CDD> effectConjuncts = getEffectConjuncts(conjuncts, effectVars);
-			mLogger.warn("Nondeterministic requirement with effect: " + cdd.toString());
-			if (effectConjuncts.size() > 1) {
-				mLogger.error("Nondet. effect (no lower Automaton): " + effectConjuncts);
-				return CDD.FALSE;
-			} else {
+			if (hasDeterministicEffect(conjuncts, effectVars)) {
 				// get effect part
 				final CDD result = effectConjuncts.stream().reduce(CDD.TRUE, (a,b) -> {return a.and(b);} );
-				mLogger.warn("Effect part of disjunct: " + result);
 				// and force trigger to be triggered
 				final Set<CDD> triggerConjuncts = getTriggerConjuncts(conjuncts, effectVars);
 				final CDD intermed = result.and(triggerConjuncts.stream().reduce(CDD.TRUE, (a,b) -> {return a.and(b.negate());} ));
-				mLogger.warn("Trigger part of disjunct: " + intermed);
 				return addTrackingGuards(result.and(intermed), trackedVars);
+			} else {
+				mLogger.error("Nondet. effect (will not build lower Automaton): " + effectConjuncts);
+				return CDD.FALSE;
 			}
 		} else {
 			return addTrackingGuards(cdd, trackedVars);
@@ -241,6 +238,36 @@ public class Req2CauseTrackingCDD {
 			differences.retainAll(localDifferences);
 		}
 		return differences;
+	}
+
+	private boolean hasDeterministicEffect(final CDD[] cdds, Set<String> effectVars) {
+		final Set<CDD> effectsPivoth = getEffectDecisions(cdds[0], effectVars);
+		mLogger.warn("reference Effect: " + effectsPivoth);
+		for(int i = 1; i < cdds.length; i++) {
+			final Set<CDD> effects = getEffectDecisions(cdds[i], effectVars);
+			if(!effects.isEmpty() && !effects.equals(effectsPivoth)) {
+				mLogger.warn("non-det with Effect: " + getEffectDecisions(cdds[i], effectVars));
+				return false;
+			}
+		}
+		return true;
+	}
+
+
+	private static Set<CDD> getEffectDecisions(final CDD cdd, Set<String> effectVars){
+		final Set<CDD> atomics = getCDDAtoms(cdd);
+		final Set<CDD> effectAtoms = new HashSet<>();
+		for(final CDD atom : atomics) {
+			final Decision<?> d = atom.getDecision();
+			if (d instanceof BoogieBooleanExpressionDecision) {
+				for(final String var: effectVars) {
+					if( ((BoogieBooleanExpressionDecision) d).getVars().containsKey(var)) {
+						effectAtoms.add(atom);
+					}
+				}
+			}
+		}
+		return effectAtoms;
 	}
 
 	public static Set<CDD> getCDDAtoms(final CDD cdd) {
