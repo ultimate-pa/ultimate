@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2020 Jonas Werner (wernerj@informatik.uni-freiburg.de)
+ * Copyright (C) 2020 University of Freiburg
+ *
+ * This file is part of the ULTIMATE accelerated interpolation library .
+ *
+ * The ULTIMATE framework is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE framework is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE accelerated interpolation library . If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE PDR library , or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE accelerated interpolation library grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation;
 
 import java.util.ArrayList;
@@ -7,7 +34,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -23,8 +53,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitutio
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -33,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class Interpolator<LETTER extends IIcfgTransition<?>> {
 
 	public enum InterpolationMethod {
-		POST, BINARY, TREE
+		POST, BINARY, CRAIG_NESTED, CRAIG_TREE
 	}
 
 	private final IPredicateUnifier mPredicateUnifier;
@@ -42,6 +76,9 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
+	private final ITraceCheckPreferences mPrefs;
+	private IPredicate[] mInterpolants;
+	private LBool mIsTraceCorrect;
 
 	/**
 	 * Class to help with interplation.
@@ -55,7 +92,8 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 	 */
 	public Interpolator(final IPredicateUnifier predicateUnifier,
 			final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer, final ILogger logger,
-			final ManagedScript script, final IUltimateServiceProvider services, final PredicateHelper predHelper) {
+			final ManagedScript script, final IUltimateServiceProvider services, final PredicateHelper predHelper,
+			final ITraceCheckPreferences prefs) {
 
 		mPredicateUnifier = predicateUnifier;
 		mPredTransformer = predTransformer;
@@ -63,19 +101,25 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 		mScript = script;
 		mLogger = logger;
 		mServices = services;
+		mPrefs = prefs;
+		mIsTraceCorrect = null;
+		mInterpolants = new IPredicate[0];
 
 	}
 
-	public IPredicate[] generateInterpolants(final InterpolationMethod interpolationMethod,
-			final List<LETTER> counterexample, final Map<IcfgLocation, Set<UnmodifiableTransFormula>> accelerations) {
+	public void generateInterpolants(final InterpolationMethod interpolationMethod,
+			final IRun<LETTER, IPredicate> counterexample,
+			final Map<IcfgLocation, Set<UnmodifiableTransFormula>> accelerations) {
 		switch (interpolationMethod) {
 		case POST:
-			return generateInterpolantsPost(counterexample);
+			generateInterpolantsPost(counterexample);
+			return;
 		case BINARY:
-			return generateInterpolantsBinary(counterexample, accelerations);
-		case TREE:
-			return generateInterpolantsTree(counterexample, accelerations);
-
+			generateInterpolantsBinary(counterexample, accelerations);
+			return;
+		case CRAIG_NESTED:
+			generateInterpolantsCraigNested(counterexample, accelerations);
+			return;
 		default:
 			throw new UnsupportedOperationException();
 		}
@@ -88,7 +132,8 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 	 * @param counterexample
 	 * @return
 	 */
-	private IPredicate[] generateInterpolantsPost(final List<LETTER> counterexample) {
+	private IPredicate[] generateInterpolantsPost(final IRun<LETTER, IPredicate> counterexampleRun) {
+		final List<LETTER> counterexample = counterexampleRun.getWord().asList();
 		final IPredicate[] interpolants = new IPredicate[counterexample.size() + 1];
 		interpolants[0] = mPredicateUnifier.getTruePredicate();
 		interpolants[counterexample.size()] = mPredicateUnifier.getFalsePredicate();
@@ -102,13 +147,14 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 
 	/**
 	 * Generate inteprolants using a given infeasible counterexample. WITH the knowledge that the counterexample
-	 * contains loops.
+	 * contains loops using binary interpolation.
 	 *
 	 * @param counterexample
 	 * @return
 	 */
-	private IPredicate[] generateInterpolantsBinary(final List<LETTER> counterexample,
+	private IPredicate[] generateInterpolantsBinary(final IRun<LETTER, IPredicate> counterexampleRun,
 			final Map<IcfgLocation, Set<UnmodifiableTransFormula>> accelerations) {
+		final List<LETTER> counterexample = counterexampleRun.getWord().asList();
 		final IPredicate[] interpolants = new IPredicate[counterexample.size() + 1];
 
 		interpolants[0] = mPredicateUnifier.getTruePredicate();
@@ -131,6 +177,9 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 						counterexample.get(k).getTransformula().getClosedFormula());
 				secondTfList.add(counterexample.get(k).getTransformula());
 				if (accelerations != null && accelerations.containsKey(m.getTarget())) {
+					/*
+					 * TODO Multiple accelerations. (underapprox)
+					 */
 					if (accelerations != null && accelerations.get(m.getTarget()).size() > 1) {
 						mLogger.debug("Dealing with multiple accelerations is not DONE YET!");
 						throw new UnsupportedOperationException();
@@ -157,32 +206,6 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 		}
 		final IPredicate[] actualInterpolants = Arrays.copyOfRange(interpolants, 1, counterexample.size());
 		return actualInterpolants;
-	}
-
-	/**
-	 * Naive way of generating interpolants, by just applying the post operator
-	 *
-	 * @param counterexample
-	 * @return
-	 */
-	private IPredicate[] generateInterpolantsTree(final List<LETTER> counterexample,
-			final Map<IcfgLocation, Set<UnmodifiableTransFormula>> accelerations) {
-
-		final Term[] partition = new ApplicationTerm[counterexample.size()];
-
-		for (int i = 0; i < counterexample.size(); ++i) {
-			final Term t = counterexample.get(i).getTransformula().getClosedFormula();
-			final String str = Integer.toString(i);
-			final Term tt = SmtUtils.annotateAndAssert(mScript.getScript(), t, str);
-			partition[i] = tt;
-
-		}
-		mScript.getScript().push(1);
-		final Term[] interpolants = mScript.getScript().getInterpolants(partition);
-
-		final IPredicate[] interpolantsPred = new IPredicate[counterexample.size()];
-		mScript.getScript().pop(1);
-		return interpolantsPred;
 	}
 
 	/**
@@ -228,8 +251,42 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 		return mPredicateUnifier.getOrConstructPredicate(interpolant);
 	}
 
-	public IPredicate[] getInterpolantFromTraceSchemeSp() {
-		final IPredicate[] interpolants = new IPredicate[0];
-		return interpolants;
+	/**
+	 * Generation of interpolants by instantiating an {@link InterpolatingTraceCheckCraig} The code creates an
+	 * InterpolatingTraceCheckCraig with settings for Craig_NestedInterpolation -- we could also try and wrap a strategy
+	 * module to gain more flexibility.
+	 *
+	 * @param counterexample
+	 */
+	private void generateInterpolantsCraigNested(final IRun<LETTER, IPredicate> counterexampleRun,
+			final Map<IcfgLocation, Set<UnmodifiableTransFormula>> accelerations) {
+
+		final List<LETTER> counterexample = counterexampleRun.getWord().asList();
+		final NestedWord<LETTER> nestedWord = TraceCheckUtils.toNestedWord(counterexample);
+		final TreeMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
+		final boolean instanticateArrayExt = true;
+		final boolean innerRecursiveNestedInterpolationCall = false;
+		final IPredicate preCondition = mPredicateUnifier.getTruePredicate();
+		final IPredicate postCondition = mPredicateUnifier.getFalsePredicate();
+
+		final InterpolatingTraceCheckCraig<LETTER> itcc = new InterpolatingTraceCheckCraig<>(preCondition,
+				postCondition, pendingContexts, nestedWord, counterexampleRun.getStateSequence(), mServices,
+				mPrefs.getCfgSmtToolkit(), mScript, (PredicateFactory) mPredicateUnifier.getPredicateFactory(),
+				mPredicateUnifier, mPrefs.getAssertCodeBlocksOrder(), mPrefs.computeCounterexample(),
+				mPrefs.collectInterpolantStatistics(), InterpolationTechnique.Craig_NestedInterpolation,
+				instanticateArrayExt, mPrefs.getXnfConversionTechnique(), mPrefs.getSimplificationTechnique(),
+				innerRecursiveNestedInterpolationCall);
+		mIsTraceCorrect = itcc.isCorrect();
+		if (mIsTraceCorrect == LBool.UNSAT) {
+			mInterpolants = itcc.getInterpolants();
+		}
+	}
+
+	public LBool isTraceCorrect() {
+		return mIsTraceCorrect;
+	}
+
+	public IPredicate[] getInterpolants() {
+		return mInterpolants;
 	}
 }

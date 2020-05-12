@@ -18,5 +18,5 @@ procedure main() {
 		}
 		x := x + 2;
 	}	
-	assert x == 12;
+	assert x == 13;
 }

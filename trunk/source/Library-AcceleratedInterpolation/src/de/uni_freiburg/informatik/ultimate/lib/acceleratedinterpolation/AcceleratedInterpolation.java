@@ -49,10 +49,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
@@ -81,7 +79,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @param <LETTER>
  */
 public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> implements IInterpolatingTraceCheck<LETTER> {
-
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
@@ -93,12 +90,11 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final PredicateHelper<LETTER> mPredHelper;
 	private final ITraceCheckPreferences mPrefs;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
-	private LBool mIsTraceCorrect;
+	private final LBool mIsTraceCorrect;
 	private IPredicate[] mInterpolants;
 	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mFeasibleProgramExecution;
 	private final TraceCheckReasonUnknown mReasonUnknown;
 	private final boolean mTraceCheckFinishedNormally;
-	private final Interpolator<LETTER> mInterpolator;
 
 	private final Map<IcfgLocation, Set<List<LETTER>>> mLoops;
 	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoopExitTransitions;
@@ -129,8 +125,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 
 		mPredHelper = new PredicateHelper<>(mPredicateUnifier, mPredTransformer, mLogger, mScript, mServices);
-		mInterpolator =
-				new Interpolator<>(mPredicateUnifier, mPredTransformer, mLogger, mScript, mServices, mPredHelper);
 		mCounterexampleTf = mPredHelper.traceToListOfTfs(mCounterexample);
 
 		// TODO give a better reason
@@ -143,19 +137,10 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mLoops = mLoopdetector.getLoops();
 		mLoopExitTransitions = mLoopdetector.getLoopExitTransitions();
 		mLoopSize = mLoopdetector.getLoopSize();
-		if (mLoops.isEmpty()) {
-			mLogger.debug("No loops found in this trace.");
-			mIsTraceCorrect = checkFeasibility(mCounterexampleTf);
-			if (mIsTraceCorrect == LBool.UNSAT) {
-				mInterpolants = mInterpolator.generateInterpolants(InterpolationMethod.BINARY, mCounterexample, null);
-			}
-			return;
-		}
 
 		/*
 		 * After finding loops in the trace, start calculating loop accelerations.
 		 */
-		mLogger.debug("Found loops, starting acceleration");
 		for (final Entry<IcfgLocation, Set<List<LETTER>>> loophead : mLoops.entrySet()) {
 			final Set<UnmodifiableTransFormula> accelerations = new HashSet<>();
 			for (final List<LETTER> loop : loophead.getValue()) {
@@ -169,48 +154,42 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			}
 			mAccelerations.put(loophead.getKey(), accelerations);
 		}
-		// TODO: there are not enough interpolants for the trace generated. Fix: Use post in trace with acceleration
-		// TODO: DD 2020-05-07: Do not "just" generate a list of UnmodifiableTransFormula, but a
-		// IRun<IAction,IPredicate>. Use mCounterexample to get the IPredicates.
-
-		final List<UnmodifiableTransFormula> traceScheme = generateMetaTrace();
-
-		// TODO: DD 2020-05-07: The code here creates an InterpolatingTraceCheckCraig with settings for
-		// Craig_NestedInterpolation -- we could also try and wrap a strategy module to gain more flexibility.
-
-		// final IRun<IAction, IPredicate> traceSchemeRun = null;
-		// final NestedWord<IAction> nestedWord = NestedWord.nestedWord(traceSchemeRun.getWord());
-		// final TreeMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
-		// final boolean instanticateArrayExt = true;
-		// final boolean innerRecursiveNestedInterpolationCall = false;
-		//
 
 		// TODO: DD 2020-05-07: It might be necessary to create a fresh mScript instance for the interpolation, in
 		// particular if you want to interpolate multiple times. Hence, I added constructManagedScriptForInterpolation()
 		// -- but perhaps you want to re-use the script from CfgSmtScript
+		final ManagedScript ipScript = constructManagedScriptForInterpolation();
+		final Interpolator<LETTER> interpolator = new Interpolator<>(mPredicateUnifier, mPredTransformer, mLogger,
+				ipScript, mServices, mPredHelper, mPrefs);
 
-		// final ManagedScript ipScript = constructManagedScriptForInterpolation();
-		// final InterpolatingTraceCheckCraig<IAction> itcc = new InterpolatingTraceCheckCraig<>(getPrecondition(),
-		// getPostcondition(), pendingContexts, nestedWord, traceSchemeRun.getStateSequence(), mServices,
-		// mPrefs.getCfgSmtToolkit(), ipScript, (PredicateFactory) mPredicateUnifier.getPredicateFactory(),
-		// mPredicateUnifier, mPrefs.getAssertCodeBlocksOrder(), mPrefs.computeCounterexample(),
-		// mPrefs.collectInterpolantStatistics(), InterpolationTechnique.Craig_NestedInterpolation,
-		// instanticateArrayExt, mPrefs.getXnfConversionTechnique(), mPrefs.getSimplificationTechnique(),
-		// innerRecursiveNestedInterpolationCall);
-		// mIsTraceCorrect = itcc.isCorrect();
-		// if (mIsTraceCorrect == LBool.UNSAT) {
-		// mInterpolants = itcc.getInterpolants();
-		// }
+		if (mLoops.isEmpty()) {
+			mLogger.debug("No loops found in this trace.");
+			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, counterexample, null);
+			mIsTraceCorrect = interpolator.isTraceCorrect();
+			if (mIsTraceCorrect == LBool.UNSAT) {
+				mInterpolants = interpolator.getInterpolants();
+			}
+			return;
+		}
 
-		mIsTraceCorrect = checkFeasibility(mCounterexampleTf);
+		// TODO: DD 2020-05-07: Do not "just" generate a list of UnmodifiableTransFormula, but a
+		// IRun<IAction,IPredicate>. Use mCounterexample to get the IPredicates.
+		final List<UnmodifiableTransFormula> traceScheme = generateMetaTrace();
+
+		interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, counterexample, mAccelerations);
+		mIsTraceCorrect = interpolator.isTraceCorrect();
 		if (mIsTraceCorrect == LBool.UNSAT) {
-			// final IPredicate[] traceSchemeInterpolants = mInterpolator.generateInterpolants(traceScheme);
-			final IPredicate[] traceInteprolants =
-					mInterpolator.generateInterpolants(InterpolationMethod.TREE, mCounterexample, mAccelerations);
-			mInterpolants = traceInteprolants;
+			mInterpolants = interpolator.getInterpolants();
 		}
 	}
 
+	/**
+	 * It might be necessary to create a fresh mScript instance for the interpolation, in particular if you want to
+	 * interpolate multiple times.
+	 *
+	 * @return
+	 * @throws AssertionError
+	 */
 	private ManagedScript constructManagedScriptForInterpolation() throws AssertionError {
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(false)
 				.setSolverMode(SolverMode.Internal_SMTInterpol);
@@ -248,29 +227,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			i = loopSize.getSecond();
 		}
 		return counterExampleAccelerated;
-	}
-
-	/**
-	 * Check whether a given trace is feasible or not.
-	 *
-	 * @param trace
-	 * @return
-	 */
-	private LBool checkFeasibility(final List<UnmodifiableTransFormula> trace) {
-		final UnmodifiableTransFormula tf = trace.get(0);
-		final List<UnmodifiableTransFormula> tfs = new ArrayList<>();
-		tfs.add(tf);
-		int i = 1;
-		while (i < trace.size()) {
-			final UnmodifiableTransFormula l = trace.get(i);
-			tfs.add(trace.get(i));
-			i++;
-		}
-		final UnmodifiableTransFormula traceTf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript,
-				false, false, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				SimplificationTechnique.SIMPLIFY_DDA, tfs);
-		final LBool result = SmtUtils.checkSatTerm(mScript.getScript(), traceTf.getFormula());
-		return result;
 	}
 
 	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> computeProgramExecution() {
