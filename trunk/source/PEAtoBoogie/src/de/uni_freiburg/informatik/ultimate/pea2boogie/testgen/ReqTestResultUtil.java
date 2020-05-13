@@ -85,9 +85,12 @@ public class ReqTestResultUtil {
 		for(int i = 0; i < states.size() -1; i++) {
 			testSteps.add(getTestStepGraph(calcualteGraphStep(mReqEffectStore.keySet(), states.get(i), states.get(i+1)), states.get(i), states.get(i+1)));
 		}
-		//TODO decide if last state is necessary depending on the type of tested requirement
-		testSteps.add(getTestStepGraph(calcualteGraphStep(mReqEffectStore.keySet(), states.get(states.size()-1),
-				states.get(states.size()-1)), states.get(states.size()-1), states.get(states.size()-1)));
+		//decide if last state is necessary
+		final TestStep lastStep = getTestStepGraph(calcualteGraphStep(mReqEffectStore.keySet(), states.get(states.size()-1),
+				states.get(states.size()-1)), states.get(states.size()-1), states.get(states.size()-1));
+		if (lastStep.hasOutput()){
+			testSteps.add(lastStep);
+		}
 		return new ReqTestResultTest(testSteps, getTestAssertionName(finalElement.getStep()));
 	}
 

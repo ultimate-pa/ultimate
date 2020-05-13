@@ -42,6 +42,10 @@ public class TestStep {
 		return Collections.unmodifiableCollection(mWaitTime);
 	}
 
+	public boolean hasOutput() {
+		return !mOutputAssignment.isEmpty();
+	}
+
 	public Set<String> getIdentifier() {
 		final Set<String> result = new HashSet<>();
 		mInputAssignment.keySet().forEach(e -> result.add(e.getIdentifier()));
