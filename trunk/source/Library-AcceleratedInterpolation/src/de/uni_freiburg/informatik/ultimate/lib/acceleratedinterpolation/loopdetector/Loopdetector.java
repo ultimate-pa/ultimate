@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -54,7 +53,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 	private final List<IcfgLocation> mTraceLocations;
 	private final ILogger mLogger;
 	private Map<IcfgLocation, Set<List<LETTER>>> mLoops;
-	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoopExitTransitions;
+	private final Map<IcfgLocation, LETTER> mLoopExitTransitions;
 	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
 
 	private final CycleFinder mCycleFinder;
@@ -89,7 +88,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 			final List<Integer> loopSize = loop.getValue();
 			final int loopExitTrans =
 					withoutNestedCycles.get(loopHead).get(withoutNestedCycles.get(loopHead).size() - 1);
-			mLoopExitTransitions.put(loopHead, mTrace.get(loopExitTrans).getTransformula());
+			mLoopExitTransitions.put(loopHead, mTrace.get(loopExitTrans));
 			mLoopSize.put(loopHead, new Pair<>(loopSize.get(0), loopSize.get(loopSize.size() - 1)));
 		}
 	}
@@ -98,7 +97,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 		return mLoops;
 	}
 
-	public Map<IcfgLocation, UnmodifiableTransFormula> getLoopExitTransitions() {
+	public Map<IcfgLocation, LETTER> getLoopExitTransitions() {
 		return mLoopExitTransitions;
 	}
 
