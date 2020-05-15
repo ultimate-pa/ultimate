@@ -322,12 +322,12 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	}
 
 	/**
-	 * replace variables in term with its default termvariables
+	 * replace variables in term with its default termvariables, needed for {@link IPredicate} creation
 	 *
 	 * @param t
 	 * @return
 	 */
-	private final Term normalizeTerm(final UnmodifiableTransFormula t) {
+	private Term normalizeTerm(final UnmodifiableTransFormula t) {
 		final HashMap<Term, Term> subMap = new HashMap<>();
 		final Term tTerm = t.getFormula();
 
