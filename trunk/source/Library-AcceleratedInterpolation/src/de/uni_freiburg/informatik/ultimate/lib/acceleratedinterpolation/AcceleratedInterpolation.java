@@ -186,12 +186,12 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			final UnmodifiableTransFormula loopDisjunction = TransFormulaUtils.parallelComposition(mLogger, mServices,
 					0, mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, accelerations);
 
+			/*
+			 * Maybe a flag for Underapproximation?
+			 */
 			mAccelerations.put(loophead.getKey(), loopDisjunction);
 		}
 
-		// TODO: DD 2020-05-07: It might be necessary to create a fresh mScript instance for the interpolation, in
-		// particular if you want to interpolate multiple times. Hence, I added constructManagedScriptForInterpolation()
-		// -- but perhaps you want to re-use the script from CfgSmtScript
 		final ManagedScript ipScript = constructManagedScriptForInterpolation();
 		final Interpolator<LETTER> interpolator =
 				new Interpolator<>(mPredUnifier, mPredTransformer, mLogger, ipScript, mServices, mPredHelper, mPrefs);
@@ -206,30 +206,45 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			return;
 		}
 
-		// TODO: DD 2020-05-07: Do not "just" generate a list of UnmodifiableTransFormula, but a
-		// IRun<IAction,IPredicate>. Use mCounterexample to get the IPredicates.
 		final NestedRun<LETTER, IPredicate> traceScheme = generateMetaTrace();
 
-		interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
+		interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, traceScheme);
+		// interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
+
 		mIsTraceCorrect = interpolator.isTraceCorrect();
 		if (mIsTraceCorrect == LBool.UNSAT) {
 			final IPredicate[] tempInterpolants = interpolator.getInterpolants();
-			final IPredicate[] inductiveInterpolants = constructInductivePost(tempInterpolants);
-			mInterpolants = interpolator.getInterpolants();
+			final IPredicate[] inductiveInterpolants = constructInductive(tempInterpolants);
+
+			// mInterpolants = interpolator.getInterpolants();
+			mInterpolants = inductiveInterpolants;
 		}
 	}
 
-	private IPredicate[] constructInductivePost(final IPredicate[] preds) {
-		final IPredicate[] actualInterpolants = new IPredicate[mCounterexample.size()];
-
-		// TODO only one loop at the moment.
-		for (int i = 0; i < mCounterexample.size(); i++) {
+	/**
+	 * Transforms the tracescheme interpolants to inductive interpolants
+	 */
+	private IPredicate[] constructInductive(final IPredicate[] preds) {
+		final IPredicate[] actualInterpolants = new IPredicate[mCounterexample.size() - 1];
+		int cnt = 0;
+		for (int i = 0; i < actualInterpolants.length; i++) {
 			final IcfgLocation target = mCounterexample.get(i).getTarget();
+			actualInterpolants[i] = preds[cnt];
+
 			if (mAccelerations.containsKey(target)) {
-				final UnmodifiableTransFormula acceleration = mAccelerations.get(target);
+				final Pair<Integer, Integer> loopSize = mLoopSize.get(target);
+				for (int j = i + 1; j < loopSize.getSecond(); j++) {
+					final UnmodifiableTransFormula transRel = mCounterexample.get(j).getTransformula();
+					final Term loopPostTerm =
+							mPredTransformer.strongestPostcondition(actualInterpolants[j - 1], transRel);
+					actualInterpolants[j] = mPredUnifier.getOrConstructPredicate(loopPostTerm);
+				}
+				i = loopSize.getSecond() - 1;
+				cnt++;
 			}
+			cnt++;
 		}
-		return null;
+		return actualInterpolants;
 	}
 
 	/**
