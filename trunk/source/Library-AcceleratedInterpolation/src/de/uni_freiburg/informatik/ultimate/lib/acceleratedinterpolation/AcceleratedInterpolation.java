@@ -115,7 +115,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final Map<IcfgLocation, Set<List<LETTER>>> mLoops;
 	private final Map<IcfgLocation, LETTER> mLoopExitTransitions;
 	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
-	private final Map<IcfgLocation, Set<UnmodifiableTransFormula>> mAccelerations;
+	private final Map<IcfgLocation, UnmodifiableTransFormula> mAccelerations;
 	private final Accelerator<LETTER> mAccelerator;
 	private final Loopdetector<LETTER> mLoopdetector;
 
@@ -160,10 +160,10 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		 * After finding loops in the trace, start calculating loop accelerations.
 		 */
 		for (final Entry<IcfgLocation, Set<List<LETTER>>> loophead : mLoops.entrySet()) {
-			final Set<UnmodifiableTransFormula> accelerations = new HashSet<>();
+			final UnmodifiableTransFormula[] accelerations = new UnmodifiableTransFormula[loophead.getValue().size()];
+			int i = 0;
 			for (final List<LETTER> loop : loophead.getValue()) {
 				final UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
-
 				final UnmodifiableTransFormula acceleratedLoopRelation =
 						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.NONE);
 
@@ -180,9 +180,13 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				tfb.setFormula(t);
 				tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 				final UnmodifiableTransFormula accelerationNoQuantifiersTf = tfb.finishConstruction(mScript);
-				accelerations.add(accelerationNoQuantifiersTf);
+				accelerations[i] = accelerationNoQuantifiersTf;
+				i++;
 			}
-			mAccelerations.put(loophead.getKey(), accelerations);
+			final UnmodifiableTransFormula loopDisjunction = TransFormulaUtils.parallelComposition(mLogger, mServices,
+					0, mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, accelerations);
+
+			mAccelerations.put(loophead.getKey(), loopDisjunction);
 		}
 
 		// TODO: DD 2020-05-07: It might be necessary to create a fresh mScript instance for the interpolation, in
@@ -194,7 +198,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 
 		if (mLoops.isEmpty()) {
 			mLogger.debug("No loops found in this trace.");
-			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace, null);
+			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
 			mIsTraceCorrect = interpolator.isTraceCorrect();
 			if (mIsTraceCorrect == LBool.UNSAT) {
 				mInterpolants = interpolator.getInterpolants();
@@ -206,11 +210,26 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		// IRun<IAction,IPredicate>. Use mCounterexample to get the IPredicates.
 		final NestedRun<LETTER, IPredicate> traceScheme = generateMetaTrace();
 
-		interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace, mAccelerations);
+		interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
 		mIsTraceCorrect = interpolator.isTraceCorrect();
 		if (mIsTraceCorrect == LBool.UNSAT) {
+			final IPredicate[] tempInterpolants = interpolator.getInterpolants();
+			final IPredicate[] inductiveInterpolants = constructInductivePost(tempInterpolants);
 			mInterpolants = interpolator.getInterpolants();
 		}
+	}
+
+	private IPredicate[] constructInductivePost(final IPredicate[] preds) {
+		final IPredicate[] actualInterpolants = new IPredicate[mCounterexample.size()];
+
+		// TODO only one loop at the moment.
+		for (int i = 0; i < mCounterexample.size(); i++) {
+			final IcfgLocation target = mCounterexample.get(i).getTarget();
+			if (mAccelerations.containsKey(target)) {
+				final UnmodifiableTransFormula acceleration = mAccelerations.get(target);
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -258,19 +277,9 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			}
 
 			final Set<List<LETTER>> loopTrace = new HashSet<>(mLoops.get(l.getTarget()));
-			final UnmodifiableTransFormula[] tfs =
-					new UnmodifiableTransFormula[mAccelerations.get(l.getTarget()).size()];
-			int j = 0;
-			for (final UnmodifiableTransFormula tf : mAccelerations.get(l.getTarget())) {
-				counterExampleAccelerated.add(tf);
-				tfs[j] = tf;
-				j++;
-			}
-
 			final PredicateFactory predFactory = new PredicateFactory(mServices, mScript, mSymbolTable);
 
-			final UnmodifiableTransFormula loopAcceleration = TransFormulaUtils.parallelComposition(mLogger, mServices,
-					0, mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, tfs);
+			final UnmodifiableTransFormula loopAcceleration = mAccelerations.get(l.getTarget());
 
 			final LETTER loopExitTransition = mLoopExitTransitions.get(l.getTarget());
 			final IcfgLocation loopExitLocation = loopExitTransition.getTarget();
