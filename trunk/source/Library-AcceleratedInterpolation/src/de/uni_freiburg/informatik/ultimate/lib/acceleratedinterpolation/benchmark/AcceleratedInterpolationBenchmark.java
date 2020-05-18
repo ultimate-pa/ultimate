@@ -127,7 +127,7 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 
 		private static final AccelInterpolStatisticsType INSTANCE = new AccelInterpolStatisticsType();
 
-		public AccelInterpolStatisticsType() {
+		AccelInterpolStatisticsType() {
 			super(AcceleratedInterpolationStatisticsDefinitions.class);
 		}
 
