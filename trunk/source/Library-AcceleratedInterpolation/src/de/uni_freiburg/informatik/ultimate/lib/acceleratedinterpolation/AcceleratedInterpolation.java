@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.Interpolator.InterpolationMethod;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator.AccelerationMethod;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.Loopdetector;
@@ -119,6 +120,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final Accelerator<LETTER> mAccelerator;
 	private final Loopdetector<LETTER> mLoopdetector;
 
+	private final AcceleratedInterpolationBenchmark mAccelInterpolBench;
+
 	public AcceleratedInterpolation(final ILogger logger, final ITraceCheckPreferences prefs,
 			final ManagedScript script, final IPredicateUnifier predicateUnifier,
 			final IRun<LETTER, IPredicate> counterexample) {
@@ -128,6 +131,12 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mCounterexampleTrace = counterexample;
 		mCounterexample = mCounterexampleTrace.getWord().asList();
 		mPrefs = prefs;
+
+		/**
+		 * Is there a possibility to save things like how many loop accelerations/time for each of them?
+		 */
+		mAccelInterpolBench = new AcceleratedInterpolationBenchmark();
+
 		mIcfg = mPrefs.getIcfgContainer();
 		mIcfgEdgeFactory = mIcfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 		mPredUnifier = predicateUnifier;
@@ -206,6 +215,9 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			return;
 		}
 
+		/**
+		 * translate the given trace into a meta trace which makes use of the loop acceleration.
+		 */
 		final NestedRun<LETTER, IPredicate> traceScheme = generateMetaTrace();
 
 		interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, traceScheme);
