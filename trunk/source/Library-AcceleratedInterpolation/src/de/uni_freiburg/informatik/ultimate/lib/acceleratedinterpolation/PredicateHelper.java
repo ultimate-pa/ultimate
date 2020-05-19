@@ -29,7 +29,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -37,13 +40,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 	private final IPredicateUnifier mPredicateUnifier;
@@ -77,5 +83,31 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 			tfs.add(l.getTransformula());
 		}
 		return tfs;
+	}
+
+	/**
+	 * replace variables in term with its default termvariables, needed for {@link IPredicate} creation
+	 *
+	 * @param t
+	 * @return
+	 */
+	public Term normalizeTerm(final UnmodifiableTransFormula t) {
+		final HashMap<Term, Term> subMap = new HashMap<>();
+		final Term tTerm = t.getFormula();
+
+		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
+		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
+
+		for (final Entry<IProgramVar, TermVariable> outVar : t.getOutVars().entrySet()) {
+			subMap.put(outVar.getValue(), outVar.getKey().getTermVariable());
+			outVars.put(outVar.getKey(), outVar.getKey().getTermVariable());
+		}
+		for (final Entry<IProgramVar, TermVariable> inVar : t.getInVars().entrySet()) {
+			subMap.put(inVar.getValue(), inVar.getKey().getTermVariable());
+			inVars.put(inVar.getKey(), inVar.getKey().getTermVariable());
+		}
+		final Substitution sub = new Substitution(mScript, subMap);
+		final Term newTerm = sub.transform(tTerm);
+		return newTerm;
 	}
 }

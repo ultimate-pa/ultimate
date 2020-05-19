@@ -59,14 +59,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
@@ -213,10 +211,20 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			mAccelerations.put(loophead.getKey(), loopDisjunction);
 		}
 
+		/*
+		 * Use new Script for interpolation:
+		 */
 		final ManagedScript ipScript = constructManagedScriptForInterpolation();
+		/*
+		 * Or use CFG's script for interpolation:
+		 */
+		// final ManagedScript ipScript = mScript;
 		final Interpolator<LETTER> interpolator =
 				new Interpolator<>(mPredUnifier, mPredTransformer, mLogger, ipScript, mServices, mPredHelper, mPrefs);
 
+		/*
+		 * Use Cfg's Script for interpolation:
+		 */
 		if (mLoops.isEmpty()) {
 			mLogger.debug("No loops found in this trace.");
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
@@ -246,7 +254,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	}
 
 	/**
-	 * Transforms the tracescheme interpolants to inductive interpolants
+	 * Transforms the tracescheme interpolants to inductive interpolants Problem: either not enough inteprolants or not
+	 * inductive
 	 */
 	private IPredicate[] constructInductive(final IPredicate[] preds) {
 		final IPredicate[] actualInterpolants = new IPredicate[mCounterexample.size() - 1];
@@ -328,6 +337,9 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 
 			final IcfgLocation newExitLocation = new IcfgLocation(newExitId, loopExitLocation.getProcedure());
 
+			/**
+			 * TODO: Deal with unsafe cast!
+			 */
 			final LETTER acceleratedTransition = (LETTER) mIcfgEdgeFactory.createInternalTransition(l.getTarget(),
 					newExitLocation, l.getTarget().getPayload(), loopAcceleration);
 			final LETTER newLoopExitTransition = (LETTER) mIcfgEdgeFactory.createInternalTransition(newExitLocation,
@@ -336,8 +348,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			counterExampleAcceleratedLetter.add(acceleratedTransition);
 			counterExampleAcceleratedLetter.add(newLoopExitTransition);
 
-			final Term acceleratedTransitionDefaultVars = normalizeTerm(loopAcceleration);
-			final Term newExitTransitionDefaultVars = normalizeTerm(loopExitTransition.getTransformula());
+			final Term acceleratedTransitionDefaultVars = mPredHelper.normalizeTerm(loopAcceleration);
+			final Term newExitTransitionDefaultVars = mPredHelper.normalizeTerm(loopExitTransition.getTransformula());
 
 			final SPredicate acceleratedSPred =
 					predFactory.newSPredicate(newExitLocation, acceleratedTransitionDefaultVars);
@@ -367,32 +379,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			return IProgramExecution.emptyExecution(Term.class, IcfgEdge.class);
 		}
 		return null;
-	}
-
-	/**
-	 * replace variables in term with its default termvariables, needed for {@link IPredicate} creation
-	 *
-	 * @param t
-	 * @return
-	 */
-	private Term normalizeTerm(final UnmodifiableTransFormula t) {
-		final HashMap<Term, Term> subMap = new HashMap<>();
-		final Term tTerm = t.getFormula();
-
-		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-
-		for (final Entry<IProgramVar, TermVariable> outVar : t.getOutVars().entrySet()) {
-			subMap.put(outVar.getValue(), outVar.getKey().getTermVariable());
-			outVars.put(outVar.getKey(), outVar.getKey().getTermVariable());
-		}
-		for (final Entry<IProgramVar, TermVariable> inVar : t.getInVars().entrySet()) {
-			subMap.put(inVar.getValue(), inVar.getKey().getTermVariable());
-			inVars.put(inVar.getKey(), inVar.getKey().getTermVariable());
-		}
-		final Substitution sub = new Substitution(mScript, subMap);
-		final Term newTerm = sub.transform(tTerm);
-		return newTerm;
 	}
 
 	@Override
