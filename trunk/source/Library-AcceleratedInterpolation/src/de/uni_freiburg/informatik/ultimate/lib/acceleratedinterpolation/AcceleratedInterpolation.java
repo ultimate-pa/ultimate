@@ -94,6 +94,15 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  * @param <LETTER>
  */
 public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> implements IInterpolatingTraceCheck<LETTER> {
+
+	/**
+	 * Indicate if the loop acceleration is bounded (-> precise: only one acceleration per loop), or unbounded (->
+	 * underapproximation: multiple accelerations per loop)
+	 */
+	public enum AccelerationApproximationType {
+		PRECISE, UNDERAPPROXIMATION
+	}
+
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
@@ -119,6 +128,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final Map<IcfgLocation, UnmodifiableTransFormula> mAccelerations;
 	private final Accelerator<LETTER> mAccelerator;
 	private final Loopdetector<LETTER> mLoopdetector;
+	private AccelerationApproximationType mApproximationType;
 
 	private final AcceleratedInterpolationBenchmark mAccelInterpolBench;
 
@@ -153,6 +163,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 
 		mPredHelper = new PredicateHelper<>(mPredUnifier, mPredTransformer, mLogger, mScript, mServices);
 		mCounterexampleTf = mPredHelper.traceToListOfTfs(mCounterexample);
+
+		mApproximationType = AccelerationApproximationType.PRECISE;
 
 		// TODO give a better reason
 		mReasonUnknown = null;
@@ -192,12 +204,12 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				accelerations[i] = accelerationNoQuantifiersTf;
 				i++;
 			}
+			if (accelerations.length > 1) {
+				mApproximationType = AccelerationApproximationType.UNDERAPPROXIMATION;
+			}
 			final UnmodifiableTransFormula loopDisjunction = TransFormulaUtils.parallelComposition(mLogger, mServices,
 					0, mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, accelerations);
 
-			/*
-			 * Maybe a flag for Underapproximation?
-			 */
 			mAccelerations.put(loophead.getKey(), loopDisjunction);
 		}
 

@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscri
  */
 public class Accelerator<LETTER extends IIcfgTransition<?>> {
 	/**
-	 * How to deal with procedures.
+	 * How to deal with loops.
 	 */
 	public enum AccelerationMethod {
 		NONE, FAST_UPR, OVERAPPROXIMATION, UNDERAPPROXIMATION
@@ -89,7 +89,7 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 
 	/**
 	 * Accelerate a loop using FastUPR
-	 * 
+	 *
 	 * @param loop
 	 * @return
 	 */
