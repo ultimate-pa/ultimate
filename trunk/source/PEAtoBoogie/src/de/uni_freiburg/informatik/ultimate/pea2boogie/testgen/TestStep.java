@@ -87,6 +87,7 @@ public class TestStep {
 			}
 		} else {
 			result.append("For the following " + formatIdentToValue(mWaitTime) + "time Units");
+			result.append("\n");
 		}
 
 		result.append("\n ");

@@ -86,6 +86,7 @@ public class ReqTestResultUtil {
 			testSteps.add(getTestStepGraph(calcualteGraphStep(mReqEffectStore.keySet(), states.get(i), states.get(i+1)), states.get(i), states.get(i+1)));
 		}
 		//decide if last state is necessary
+		//TODO: do that using annotations on the assertions
 		final TestStep lastStep = getTestStepGraph(calcualteGraphStep(mReqEffectStore.keySet(), states.get(states.size()-1),
 				states.get(states.size()-1)), states.get(states.size()-1), states.get(states.size()-1));
 		if (lastStep.hasOutput()){
