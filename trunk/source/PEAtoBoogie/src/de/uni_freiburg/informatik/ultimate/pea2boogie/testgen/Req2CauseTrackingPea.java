@@ -249,9 +249,9 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				toTrackVars.addAll(cddVars);
 			}
 		}
-		//remove everything that is waiting i.e. variables of waiting phases
-		// will change according to clock anyways
-		final Set<String> waitingVars = new HashSet<>();
+		//TODO: this was a bad idea:
+		// to per CDD, i.e. encode each observable on its own!
+		/*final Set<String> waitingVars = new HashSet<>();
 		for(int i = 0; i < dcFormula.length; i++) {
 			if(pb.isActive(i) && pb.isWaiting(i)) {
 				final CDD invar = dcFormula[i].getInvariant();
@@ -259,7 +259,8 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				waitingVars.addAll(cddVars);
 			}
 		}
-		toTrackVars.removeAll(waitingVars);
+		waitingVars.retainAll(effectVars); //again, only effectvars!
+		toTrackVars.removeAll(waitingVars);*/
 		return toTrackVars;
 	}
 
