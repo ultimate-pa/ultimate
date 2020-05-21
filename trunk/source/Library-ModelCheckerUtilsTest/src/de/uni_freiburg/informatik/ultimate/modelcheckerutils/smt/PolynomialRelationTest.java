@@ -79,7 +79,7 @@ public class PolynomialRelationTest {
 		}
 		mScript.setLogic(Logics.ALL);
 
-		new VarDecl(SmtSortUtils::getRealSort, "hi", "lo", "x", "y", "z", "ri").declareVars(mScript);
+		new VarDecl(SmtSortUtils::getRealSort, "hi", "lo", "x", "y", "z", "u", "ri").declareVars(mScript);
 		new VarDecl(SmtSortUtils::getIntSort, "xi", "yi", "zi").declareVars(mScript);
 	}
 
@@ -187,6 +187,12 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationRealPolyGEQPurist01() throws NotAffineException {
 		final String inputSTR = "(>= (* x y) ri)";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
+	}
+
+	@Test
+	public void relationRealPolyGEQPurist02() throws NotAffineException {
+		final String inputSTR = "(>= (* x y y y z z u) ri)";
 		testSolveForSubjectMultiCaseOnly(inputSTR, "x");
 	}
 
