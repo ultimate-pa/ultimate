@@ -1601,6 +1601,23 @@ public final class SmtUtils {
 	}
 
 	/**
+	 * Apply division but use some simplifications.
+	 */
+	public static Term division(final Script script, final Sort sort, final Term... params) {
+		if (SmtSortUtils.isRealSort(sort)) {
+			return SmtUtils.divReal(script, params);
+		} else if (SmtSortUtils.isIntSort(sort)) {
+			return SmtUtils.divInt(script, params);
+		} else if (SmtSortUtils.isBitvecSort(sort)) {
+			throw new UnsupportedOperationException("Division with simplifications for bitvectors is not yet supported");
+		} else if (SmtSortUtils.isFloatingpointSort(sort)) {
+			throw new UnsupportedOperationException("Division with simplifications for floats is not yet supported");
+		} else {
+			throw new AssertionError("Division does not make sense for sort " + sort);
+		}
+	}
+
+	/**
 	 * Returns a possibly simplified version of the Term (mod dividend divisor). If dividend and divisor are both
 	 * literals the returned Term is a literal which is equivalent to the result of the operation. If only the divisor
 	 * is a literal we apply modulo to all coefficients of the dividend (helpful simplification in case where
