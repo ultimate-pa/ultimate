@@ -307,6 +307,12 @@ public class PolynomialRelationTest {
 		testSolveForSubject(inputSTR, "xi");
 	}
 
+	@Test
+	public void relationIntPolyPuristEq() throws NotAffineException {
+		final String inputSTR = "(= (* yi xi) zi )";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
+	}
+
 	public void relationIntPolyMATHSATEQ3() throws NotAffineException {
 		final String inputSTR = "(= (* 6 (* yi xi)) (+ 3 (* zi zi)))";
 		testSolveForSubject(inputSTR, "xi");
