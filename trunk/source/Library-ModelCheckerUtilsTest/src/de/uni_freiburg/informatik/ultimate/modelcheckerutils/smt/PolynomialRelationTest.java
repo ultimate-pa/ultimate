@@ -313,6 +313,18 @@ public class PolynomialRelationTest {
 		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
 	}
 
+	/**
+	 * One of the supporting terms in the y-not-zero-case
+	 * is not (< xi (div zi yi)) but (< xi (+ (div (- zi 1)  yi) 1))
+	 * You can see the problem for yi=2, xi=1, and zi=3
+	 *
+	 */
+	@Test
+	public void relationIntPolyPuristLeq() throws NotAffineException {
+		final String inputSTR = "(< (* yi xi) zi )";
+		testSolveForSubjectMultiCaseOnly(inputSTR, "xi");
+	}
+
 	public void relationIntPolyMATHSATEQ3() throws NotAffineException {
 		final String inputSTR = "(= (* 6 (* yi xi)) (+ 3 (* zi zi)))";
 		testSolveForSubject(inputSTR, "xi");
