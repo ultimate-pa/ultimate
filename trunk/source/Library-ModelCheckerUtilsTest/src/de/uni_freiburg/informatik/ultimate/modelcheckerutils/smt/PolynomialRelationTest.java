@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
@@ -506,7 +507,21 @@ public class PolynomialRelationTest {
 				PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x, xnf);
 		final Term solvedAsTerm = mcsbr.asTerm(mScript);
 		mScript.echo(new QuotedObject("Checking if input and output of multiCaseSolveForSubject are equivalent"));
-		Assert.assertTrue(SmtUtils.areFormulasEquivalent(inputAsTerm, solvedAsTerm, mScript));
+		final LBool lbool = SmtUtils.checkEquivalence(inputAsTerm, solvedAsTerm, mScript);
+		switch (lbool) {
+		case SAT:
+			Assert.assertTrue("solveForSubject is unsound", false);
+			break;
+		case UNKNOWN:
+			Assert.assertTrue("Insufficient ressources to check soundness", false);
+			break;
+		case UNSAT:
+			// equivalence as expected
+			break;
+		default:
+			throw new AssertionError("unknown value " + lbool);
+		}
+
 	}
 
 	@Deprecated
