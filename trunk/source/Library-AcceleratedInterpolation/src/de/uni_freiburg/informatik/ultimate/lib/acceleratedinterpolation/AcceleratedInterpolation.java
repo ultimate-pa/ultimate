@@ -184,7 +184,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			for (final List<LETTER> loop : loophead.getValue()) {
 				final UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
 				final UnmodifiableTransFormula acceleratedLoopRelation =
-						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.NONE);
+						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.FAST_UPR);
 
 				final Term t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
 						acceleratedLoopRelation.getFormula(), SimplificationTechnique.SIMPLIFY_BDD_FIRST_ORDER,
@@ -255,17 +255,30 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 
 	/**
 	 * Transforms the tracescheme interpolants to inductive interpolants Problem: either not enough inteprolants or not
-	 * inductive
+	 * inductive TODO build a trace scheme with \epsilon for unbounded/underapprox loops
 	 */
 	private IPredicate[] constructInductive(final IPredicate[] preds) {
 		final IPredicate[] actualInterpolants = new IPredicate[mCounterexample.size() - 1];
 		int cnt = 0;
 		for (int i = 0; i < actualInterpolants.length; i++) {
 			final IcfgLocation target = mCounterexample.get(i).getTarget();
-			actualInterpolants[i] = preds[cnt];
 
 			if (mAccelerations.containsKey(target)) {
 				final Pair<Integer, Integer> loopSize = mLoopSize.get(target);
+				final UnmodifiableTransFormula loopAccelerationTf = mAccelerations.get(target);
+				if (i >= preds.length) {
+					mLogger.debug("STOP");
+				}
+				IPredicate interpolantPred = preds[cnt];
+
+				if (mPredHelper.predContainsTfVar(interpolantPred, loopAccelerationTf)) {
+					Term postPredTf = mPredTransformer.strongestPostcondition(interpolantPred, loopAccelerationTf);
+					postPredTf = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, postPredTf,
+							SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+					interpolantPred = mPredUnifier.getOrConstructPredicate(postPredTf);
+				}
+
+				actualInterpolants[i] = interpolantPred;
 				for (int j = i + 1; j < loopSize.getSecond(); j++) {
 					final UnmodifiableTransFormula transRel = mCounterexample.get(j).getTransformula();
 					final Term loopPostTerm =
@@ -274,6 +287,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				}
 				i = loopSize.getSecond() - 1;
 				cnt++;
+			} else {
+				actualInterpolants[i] = preds[cnt];
 			}
 			cnt++;
 		}

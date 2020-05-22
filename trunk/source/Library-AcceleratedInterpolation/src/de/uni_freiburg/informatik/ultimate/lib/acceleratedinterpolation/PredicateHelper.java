@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -109,5 +110,17 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 		final Substitution sub = new Substitution(mScript, subMap);
 		final Term newTerm = sub.transform(tTerm);
 		return newTerm;
+	}
+
+	public boolean predContainsTfVar(final IPredicate predicate, final UnmodifiableTransFormula tf) {
+		final Set<IProgramVar> predVars = predicate.getVars();
+		final Set<IProgramVar> tfInVars = tf.getInVars().keySet();
+		final Set<IProgramVar> tfOutVars = tf.getOutVars().keySet();
+		for (final IProgramVar pv : predVars) {
+			if (tfInVars.contains(pv) || tfOutVars.contains(pv)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
