@@ -447,7 +447,7 @@ public class PolynomialRelation implements IBinaryRelation {
 	 */
 	public MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf) {
-		boolean subjectInAllowedSubterm = false;
+		boolean subjectIsNotAVariableButOccursInDivOrModSubterm = false;
 		ApplicationTerm allowedSubterm = null;
 		if (!isVariable(subject)) {
 			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
@@ -455,14 +455,14 @@ public class PolynomialRelation implements IBinaryRelation {
 			} else {
 				allowedSubterm = searchModOrDivSubterm(mPolynomialTerm.toTerm(script), script, subject);
 				if (allowedSubterm != null) {
-					subjectInAllowedSubterm = true;
+					subjectIsNotAVariableButOccursInDivOrModSubterm = true;
 				} else {
 					return null;
 				}
 			}
 		}
 		Term abstractVarOfSubject = getTheAbstractVarOfSubject(subject);
-		if (subjectInAllowedSubterm && (abstractVarOfSubject == null)) {
+		if (subjectIsNotAVariableButOccursInDivOrModSubterm && (abstractVarOfSubject == null)) {
 			abstractVarOfSubject = subject;
 		}
 		if (abstractVarOfSubject == null) {
@@ -473,7 +473,7 @@ public class PolynomialRelation implements IBinaryRelation {
 			}
 		}
 		Rational coeffOfSubject = mPolynomialTerm.getAbstractVariable2Coefficient().get(abstractVarOfSubject);
-		if (subjectInAllowedSubterm && (coeffOfSubject == null)) {
+		if (subjectIsNotAVariableButOccursInDivOrModSubterm && (coeffOfSubject == null)) {
 			final ConstantTerm coeffTerm = (ConstantTerm) allowedSubterm.getParameters()[1];
 			coeffOfSubject = SmtUtils.convertConstantTermToRational(coeffTerm);
 			// TODO if no constantTErm throw error or handle it
@@ -507,7 +507,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		final MultiCaseSolutionBuilder mcsb = new MultiCaseSolutionBuilder(subject, xnf);
 		Term rhsTerm = null;
 		if (simplySolvableRhsTerm == null) {
-			if (!subjectInAllowedSubterm) {
+			if (!subjectIsNotAVariableButOccursInDivOrModSubterm) {
 				final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 						Rational.ONE);
 				rhsTerm = constructRhsIntegerQuotient(script, mRelationSymbol, coeffOfSubject, rhsTermWithoutDivision);
@@ -551,7 +551,7 @@ public class PolynomialRelation implements IBinaryRelation {
 					// there is no SupporingTerm that provides this information
 					mcsb.reportAdditionalIntricateOperation(IntricateOperation.DIV_BY_INTEGER_CONSTANT);
 				}
-			} else if (subjectInAllowedSubterm) {
+			} else if (subjectIsNotAVariableButOccursInDivOrModSubterm) {
 				// Solve for subject in affineterm with a parameter of form (mod/div (subterm
 				// with subject) constant)
 				final Sort termSort = mPolynomialTerm.getSort();
@@ -670,7 +670,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		}
 
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
-		if (!subjectInAllowedSubterm) {
+		if (!subjectIsNotAVariableButOccursInDivOrModSubterm) {
 			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
 					result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		}
