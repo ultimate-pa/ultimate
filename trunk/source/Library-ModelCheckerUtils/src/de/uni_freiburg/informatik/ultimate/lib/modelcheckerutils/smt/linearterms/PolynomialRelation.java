@@ -406,7 +406,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		if (simpliySolvableRhsTerm == null) {
 			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 					Rational.ONE);
-			rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
+			rhsTerm = constructRhsIntegerQuotient(script, mRelationSymbol, coeffOfSubject, rhsTermWithoutDivision);
 			// EQ and DISTINCT need Modulo Assumption
 			if (isEqOrDistinct(mRelationSymbol)) {
 				assumptionMapBuilder.putDivisibleByConstant(rhsTermWithoutDivision,
@@ -510,7 +510,7 @@ public class PolynomialRelation implements IBinaryRelation {
 			if (!subjectInAllowedSubterm) {
 				final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 						Rational.ONE);
-				rhsTerm = integerDivision(script, coeffOfSubject, rhsTermWithoutDivision);
+				rhsTerm = constructRhsIntegerQuotient(script, mRelationSymbol, coeffOfSubject, rhsTermWithoutDivision);
 				final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
 						Collections.emptyMap());
 				// EQ and DISTINCT need Modulo Assumption
@@ -934,66 +934,92 @@ public class PolynomialRelation implements IBinaryRelation {
 		return rhsTerm;
 	}
 
-	private Term integerDivision(final Script script, final Rational coeffOfSubject,
-			final Term rhsTermWithoutDivision) {
-		// Default DivTerm
-		final Term divTerm;
-		// change DivTerm according to the given relation symbol
-		switch (mRelationSymbol) {
+	/**
+	 * If we divide an integer RHS, the result is nontrivial. If we just apply
+	 * division some information related to divisibility is lost.
+	 * <ul>
+	 * <li>If the relation symbol is EQ or DISTINCT, the lost information is that
+	 * the RHS was (resp. was not) divisible by the divisor. And can be added later.
+	 * </li>
+	 * <li>Otherwise, the lost information is more complicated, we can not easily
+	 * add it later. Instead, we construct a more complicated quotient that depends
+	 * on
+	 * <ul>
+	 * <li>the sign of the divident's values</li>
+	 * <li>the relation symbol</li>
+	 * </ul>
+	 * and ensures that no information is lost.</li>
+	 * </ul>
+	 */
+	private static Term constructRhsIntegerQuotient(final Script script, final RelationSymbol relSymb,
+			final Rational coeffOfSubject, final Term rhs) {
+		final Term result;
+		switch (relSymb) {
 		case LESS:
 			if (!coeffOfSubject.isNegative()) {
 				// k*x < t is equivalent to x < (t-1 div k)+1 for positive k
-				divTerm = constructDivTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.ONE);
+				result = constructRhsIntegerQuotientHelper(script, rhs, coeffOfSubject, Rational.ONE);
 			} else {
 				// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
-				divTerm = constructDivTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.MONE);
+				result = constructRhsIntegerQuotientHelper(script, rhs, coeffOfSubject, Rational.MONE);
 			}
 			break;
 		case GREATER:
 			// k*x > t is equivalent to x > (t div k) for all k
-			divTerm = SmtUtils.div(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mPolynomialTerm.getSort()));
+			result = SmtUtils.div(script, rhs, coeffOfSubject.toTerm(rhs.getSort()));
 			break;
 		case LEQ:
 			// k*x <= t is equivalent to x <= (t div k) for positive k
-			divTerm = SmtUtils.div(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mPolynomialTerm.getSort()));
+			result = SmtUtils.div(script, rhs, coeffOfSubject.toTerm(rhs.getSort()));
 			break;
 		case GEQ:
 			if (!coeffOfSubject.isNegative()) {
 				// k*x >= t is equivalent to x >= (t - 1 div k) + 1 for positive k
-				divTerm = constructDivTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.ONE);
+				result = constructRhsIntegerQuotientHelper(script, rhs, coeffOfSubject, Rational.ONE);
 			} else {
 				// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
-				divTerm = constructDivTerm(script, rhsTermWithoutDivision, coeffOfSubject, Rational.MONE);
+				result = constructRhsIntegerQuotientHelper(script, rhs, coeffOfSubject, Rational.MONE);
 			}
 			break;
 		case EQ:
-			// Default DivTerm with modulo Assumption
-			divTerm = SmtUtils.div(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mPolynomialTerm.getSort()));
+			// Default quotient, additional divisibility information has to be added later
+			result = SmtUtils.div(script, rhs, coeffOfSubject.toTerm(rhs.getSort()));
 			break;
 		case DISTINCT:
-			// Default DivTerm with modulo Assumption
-			divTerm = SmtUtils.div(script, rhsTermWithoutDivision, coeffOfSubject.toTerm(mPolynomialTerm.getSort()));
+			// Default quotient, additional divisibility information has to be added later
+			result = SmtUtils.div(script, rhs, coeffOfSubject.toTerm(rhs.getSort()));
 			break;
 		default:
-			throw new AssertionError("unknown relation symbol: " + mRelationSymbol);
+			throw new AssertionError("unknown relation symbol: " + relSymb);
 		}
-		return divTerm;
+		return result;
 	}
 
-	/*
-	 * construct DivTerm for LESS and GEQ case, where the default divTerm can't be
-	 * used. "secondRat" depends on the sign of the coefficient.
+	/**
+	 * Construct quotient
+	 *
+	 * <pre>
+	 * ((divident - 1) / divisor) + postDivisionOffset
+	 * </pre>
+	 *
+	 * which is required for LESS, GREATER, LEQ, and GEQ. See
+	 * {@link PolynomialRelation#constructRhsIntegerQuotient}
+	 *
+	 * @param postDivisionOffset
+	 *            value that is added after the division and that is determined from
+	 *            the relation symbol and the sign of the divisor's values.
 	 */
-	private Term constructDivTerm(final Script script, final Term rhsTermWithoutDivision, final Rational coeffOfSubject,
-			final Rational secondRat) {
-		final Term divArgument = SmtUtils.sum(script, mPolynomialTerm.getSort(), rhsTermWithoutDivision,
-				SmtUtils.rational2Term(script, Rational.MONE, mPolynomialTerm.getSort()));
+	private static Term constructRhsIntegerQuotientHelper(final Script script, final Term divident,
+			final Rational divisor, final Rational postDivisionOffset) {
+		// The preDivisionOffset is always minus one.
+		final Term preDivisionOffset = SmtUtils.rational2Term(script, Rational.MONE, divident.getSort());
+		final Term divArgument = SmtUtils.sum(script, divident.getSort(), divident, preDivisionOffset);
 		final Term simplifiedDivArgument = ((IPolynomialTerm) (new PolynomialTermTransformer(script))
 				.transform(divArgument)).toTerm(script);
-		final Term divTerm = SmtUtils.div(script, simplifiedDivArgument,
-				SmtUtils.rational2Term(script, coeffOfSubject, mPolynomialTerm.getSort()));
-		return SmtUtils.sum(script, mPolynomialTerm.getSort(), divTerm,
-				SmtUtils.rational2Term(script, secondRat, mPolynomialTerm.getSort()));
+		final Term quotient = SmtUtils.div(script, simplifiedDivArgument,
+				SmtUtils.rational2Term(script, divisor, divident.getSort()));
+		return SmtUtils.sum(script, divident.getSort(), quotient,
+				SmtUtils.rational2Term(script, postDivisionOffset, divident.getSort()));
 	}
 
 	/**
