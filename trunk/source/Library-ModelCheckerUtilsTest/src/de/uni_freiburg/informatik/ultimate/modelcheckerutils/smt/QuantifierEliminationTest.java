@@ -886,7 +886,7 @@ public class QuantifierEliminationTest {
 		}
 
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-		return mScript.quantifier(quantor, vars.toArray(new TermVariable[vars.size()]), formulaAsTerm, new Term[0]);
+		return mScript.quantifier(quantor, vars.toArray(new TermVariable[vars.size()]), formulaAsTerm);
 	}
 
 	private Term elim(final Term quantFormula) {
