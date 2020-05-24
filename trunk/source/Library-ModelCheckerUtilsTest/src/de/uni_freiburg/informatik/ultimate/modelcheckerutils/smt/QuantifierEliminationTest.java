@@ -537,7 +537,7 @@ public class QuantifierEliminationTest {
 		logger.info("Result: " + result);
 		if (checkResultIsQuantifierFree) {
 			final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
-			Assert.assertTrue(resultIsQuantifierFree);
+			Assert.assertTrue("Not quantifier-free ", resultIsQuantifierFree);
 		}
 		if (expectedResultAsString != null) {
 			final boolean resultIsEquivalentToExpectedResult =
