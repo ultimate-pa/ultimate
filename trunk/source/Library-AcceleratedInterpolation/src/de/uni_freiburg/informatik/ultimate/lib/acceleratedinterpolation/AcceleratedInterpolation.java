@@ -119,6 +119,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final TraceCheckReasonUnknown mReasonUnknown;
 	private final boolean mTraceCheckFinishedNormally;
 	private final IIcfgSymbolTable mSymbolTable;
+	private final Integer mDelay;
 
 	private final Map<IcfgLocation, Set<List<LETTER>>> mLoops;
 	private final Map<IcfgLocation, LETTER> mLoopExitTransitions;
@@ -141,6 +142,11 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mPrefs = prefs;
 
 		/**
+		 * Delay states how often a loop has to be iterated through to get accelerated.
+		 */
+		mDelay = 2;
+
+		/**
 		 * Is there a possibility to save things like how many loop accelerations/time for each of them?
 		 */
 		mAccelInterpolBench = new AcceleratedInterpolationBenchmark();
@@ -156,7 +162,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 
 		mAccelerator = new Accelerator<>(mLogger, mScript, mServices);
-		mLoopdetector = new Loopdetector<>(mCounterexample, mLogger);
+		mLoopdetector = new Loopdetector<>(mCounterexample, mLogger, mDelay);
 		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 
 		mPredHelper = new PredicateHelper<>(mPredUnifier, mPredTransformer, mLogger, mScript, mServices);
@@ -266,9 +272,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			if (mAccelerations.containsKey(target)) {
 				final Pair<Integer, Integer> loopSize = mLoopSize.get(target);
 				final UnmodifiableTransFormula loopAccelerationTf = mAccelerations.get(target);
-				if (i >= preds.length) {
-					mLogger.debug("STOP");
-				}
 				IPredicate interpolantPred = preds[cnt];
 
 				if (mPredHelper.predContainsTfVar(interpolantPred, loopAccelerationTf)) {

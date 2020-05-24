@@ -55,10 +55,20 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 	private Map<IcfgLocation, Set<List<LETTER>>> mLoops;
 	private final Map<IcfgLocation, LETTER> mLoopExitTransitions;
 	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
+	private final Integer mDelay;
 
 	private final CycleFinder mCycleFinder;
 
-	public Loopdetector(final List<LETTER> trace, final ILogger logger) {
+	/**
+	 * construct to find loops in a given trace.
+	 *
+	 * @param trace
+	 * @param logger
+	 * @param delay
+	 *            How many iterations of a loop are needed until we decide to accelerate it. The lower the earlier the
+	 *            loop gets accelerated.
+	 */
+	public Loopdetector(final List<LETTER> trace, final ILogger logger, final Integer delay) {
 		mLogger = logger;
 		mTrace = new ArrayList<>(trace);
 		mCycleFinder = new CycleFinder();
@@ -66,9 +76,13 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 		mLoops = new HashMap<>();
 		mLoopExitTransitions = new HashMap<>();
 		mLoopSize = new HashMap<>();
+		mDelay = delay;
 		mLogger.debug("Loopdetector: created.");
 		mLogger.debug("Loopdetector: Searching for Loops");
 		findLoopPaths();
+		if (!mLoops.isEmpty()) {
+			checkDelay();
+		}
 	}
 
 	/**
@@ -90,6 +104,29 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 					withoutNestedCycles.get(loopHead).get(withoutNestedCycles.get(loopHead).size() - 1);
 			mLoopExitTransitions.put(loopHead, mTrace.get(loopExitTrans));
 			mLoopSize.put(loopHead, new Pair<>(loopSize.get(0), loopSize.get(loopSize.size() - 1)));
+		}
+	}
+
+	/**
+	 * Check if the loops are iterated through more than the delay states. If not, remove them, so that they do not get
+	 * accelerated.
+	 */
+	private void checkDelay() {
+		for (final Entry<IcfgLocation, Set<List<LETTER>>> loop : mLoops.entrySet()) {
+			Integer smallestLoopSize = Integer.MAX_VALUE;
+			for (final List<LETTER> loopsize : loop.getValue()) {
+				if (loopsize.size() < smallestLoopSize) {
+					smallestLoopSize = loopsize.size();
+				}
+			}
+			final Pair<Integer, Integer> overallLoopSize = mLoopSize.get(loop.getKey());
+			final Integer trueLoopSize = overallLoopSize.getSecond() - overallLoopSize.getFirst();
+			final Integer delayCheck = smallestLoopSize * mDelay;
+			if (delayCheck > trueLoopSize) {
+				mLoops.remove(loop.getKey());
+				mLoopSize.remove(loop.getKey());
+				mLoopExitTransitions.remove(loop.getKey());
+			}
 		}
 	}
 
