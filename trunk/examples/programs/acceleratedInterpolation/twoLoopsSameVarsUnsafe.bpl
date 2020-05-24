@@ -18,5 +18,5 @@ procedure main() {
 	while (x < 20) {
 		x := x + 1;
 	}
-	assert x == 20;
+	assert x == 21;
 }

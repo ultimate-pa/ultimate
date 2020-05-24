@@ -112,7 +112,8 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 	 * accelerated.
 	 */
 	private void checkDelay() {
-		for (final Entry<IcfgLocation, Set<List<LETTER>>> loop : mLoops.entrySet()) {
+		final Map<IcfgLocation, Set<List<LETTER>>> loopMap = new HashMap<>(mLoops);
+		for (final Entry<IcfgLocation, Set<List<LETTER>>> loop : loopMap.entrySet()) {
 			Integer smallestLoopSize = Integer.MAX_VALUE;
 			for (final List<LETTER> loopsize : loop.getValue()) {
 				if (loopsize.size() < smallestLoopSize) {

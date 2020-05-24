@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -60,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
@@ -119,7 +119,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final TraceCheckReasonUnknown mReasonUnknown;
 	private final boolean mTraceCheckFinishedNormally;
 	private final IIcfgSymbolTable mSymbolTable;
-	private final Integer mDelay;
 
 	private final Map<IcfgLocation, Set<List<LETTER>>> mLoops;
 	private final Map<IcfgLocation, LETTER> mLoopExitTransitions;
@@ -142,11 +141,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mPrefs = prefs;
 
 		/**
-		 * Delay states how often a loop has to be iterated through to get accelerated.
-		 */
-		mDelay = 2;
-
-		/**
 		 * Is there a possibility to save things like how many loop accelerations/time for each of them?
 		 */
 		mAccelInterpolBench = new AcceleratedInterpolationBenchmark();
@@ -162,7 +156,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 
 		mAccelerator = new Accelerator<>(mLogger, mScript, mServices);
-		mLoopdetector = new Loopdetector<>(mCounterexample, mLogger, mDelay);
+		mLoopdetector = new Loopdetector<>(mCounterexample, mLogger, 1);
 		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 
 		mPredHelper = new PredicateHelper<>(mPredUnifier, mPredTransformer, mLogger, mScript, mServices);
@@ -278,7 +272,14 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 					Term postPredTf = mPredTransformer.strongestPostcondition(interpolantPred, loopAccelerationTf);
 					postPredTf = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, postPredTf,
 							SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+					final Term newLoopEntryTerm = SmtUtils.or(mScript.getScript(), preds[cnt].getFormula(), postPredTf);
+
+					/**
+					 * TODO Is a disjunction more useful?
+					 */
 					interpolantPred = mPredUnifier.getOrConstructPredicate(postPredTf);
+					interpolantPred = mPredUnifier.getOrConstructPredicate(newLoopEntryTerm);
+
 				}
 
 				actualInterpolants[i] = interpolantPred;
@@ -341,15 +342,10 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			if (!mLoops.containsKey(l.getTarget())) {
 				continue;
 			}
-
-			final Set<List<LETTER>> loopTrace = new HashSet<>(mLoops.get(l.getTarget()));
 			final PredicateFactory predFactory = new PredicateFactory(mServices, mScript, mSymbolTable);
-
 			final UnmodifiableTransFormula loopAcceleration = mAccelerations.get(l.getTarget());
-
 			final LETTER loopExitTransition = mLoopExitTransitions.get(l.getTarget());
 			final IcfgLocation loopExitLocation = loopExitTransition.getTarget();
-
 			final StringDebugIdentifier newExitId =
 					new StringDebugIdentifier(loopExitLocation.getDebugIdentifier().toString() + "_primed");
 
@@ -375,8 +371,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 
 			acceleratedTraceSchemeStates.add(traceStates.get(i + 1));
 			acceleratedTraceSchemeStates.add(acceleratedSPred);
-			// acceleratedTraceSchemeStates.add(newExitSPred);
-			// counterExampleAccelerated.add(loopExitTransition.getTransformula());
 			final Pair<Integer, Integer> loopSize = mLoopSize.get(l.getTarget());
 			i = loopSize.getSecond();
 		}
