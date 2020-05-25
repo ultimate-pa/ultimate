@@ -243,89 +243,90 @@ public class QuantifierPusher extends TermTransformer {
 
 		final int quantifier = quantifiedFormula.getQuantifier();
 		Set<TermVariable> eliminatees = new HashSet<>(Arrays.asList(quantifiedFormula.getVariables()));
+
+		Term[] dualFiniteParams = QuantifierUtils.getXjunctsInner(quantifier, appTerm);
 		{
-
-			Term[] dualFiniteParams = QuantifierUtils.getXjunctsInner(quantifier, appTerm);
 			final Term eliminationResult = applyEliminationTechniques(quantifier, eliminatees, dualFiniteParams);
-			if (eliminationResult == null) {
-				// nothing was removed
-				if (mApplyDistributivity) {
-
-					if (eliminatees.size() > 1 && ELIMINATEE_SEQUENTIALIZATION) {
-						final EliminationTask et = doit(quantifier, eliminatees, dualFiniteParams);
-						if (et.getEliminatees().isEmpty()) {
-							return et.toTerm(mScript);
-						} else {
-							final Term[] correspondingFinite = QuantifierUtils.getXjunctsOuter(quantifier, et.getTerm());
-							if (correspondingFinite.length > 1) {
-								return pushOverCorrespondingFiniteConnective((QuantifiedFormula) et.toTerm(mScript));
-							} else {
-								dualFiniteParams = QuantifierUtils.getXjunctsInner(quantifier, et.getTerm());
-								eliminatees = et.getEliminatees();
-							}
-						}
-					}
-
-					if (DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION) {
-					final int rec = DerScout.computeRecommendation(mScript, eliminatees, dualFiniteParams, quantifier);
-						if (rec != -1) {
-							final CondisDepthCode cdc = new CondisDepthCodeGenerator().transduce(appTerm);
-							final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
-							logger.info("Applying distributivity to a " + cdc + " term");
-							final Term correspondingFinite = applyDistributivityAndPushOneStep(quantifier, eliminatees,
-									dualFiniteParams, rec);
-							return correspondingFinite;
-						}
-					}
-
-					// 2016-12-17 Matthias TODO:
-					// before applying distributivity bring each disjunct in
-					// NNF (with quantifier push)
-					// if afterwards some disjunct is disjunction then re-apply
-					// the tryToPushOverDualFiniteConnective method
-					for (int i = 0; i < dualFiniteParams.length; i++) {
-						// this loop just selects some
-						// correspondingFiniteJunction that we start with
-						// recursive calls will take of other
-						// correspondingFiniteJunctions.
-						// Hence, we do not continue to iterate
-						// after the first correspondingFiniteJunction
-						// was found.
-						// TODO: optimization: have a closer look at atoms
-						// inside to determine where we apply distributivity
-						// first (e.g., somewhere where some (dis)equality
-						// allows us to apply DER
-						if (isCorrespondingFinite(dualFiniteParams[i], quantifier)) {
-							final Term correspondingFinite =
-									applyDistributivityAndPushOneStep(quantifier, eliminatees, dualFiniteParams, i);
-							if (!EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION) {
-								return correspondingFinite;
-							}
-							final Term pushed =
-									new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques)
-											.transform(correspondingFinite);
-							if (allStillQuantified(eliminatees, pushed)) {
-								// we should not pay the high price for applying distributivity if we do not get
-								// a formula with less quantified variales in return
-								// TODO 20190323 Matthias: WARNING
-								// <pre>
-								// returns false negatives if the QuantifierPusher
-								// would rename the quantified variables (currently not the case)
-								// returns false positives if the coincidentally there is an inner quantified
-								// variables that has the same name.
-								// </pre>
-								return quantifiedFormula;
-							} else {
-								return pushed;
-							}
-						}
-					}
-				}
-				// failed to apply distributivity, return original
-				return quantifiedFormula;
+			if (eliminationResult != null) {
+				// something was removed
+				return eliminationResult;
 			}
-			return eliminationResult;
 		}
+		if (!mApplyDistributivity) {
+			// return original
+			return quantifiedFormula;
+		}
+
+		if (eliminatees.size() > 1 && ELIMINATEE_SEQUENTIALIZATION) {
+			final EliminationTask et = doit(quantifier, eliminatees, dualFiniteParams);
+			if (et.getEliminatees().isEmpty()) {
+				return et.toTerm(mScript);
+			} else {
+				final Term[] correspondingFinite = QuantifierUtils.getXjunctsOuter(quantifier, et.getTerm());
+				if (correspondingFinite.length > 1) {
+					return pushOverCorrespondingFiniteConnective((QuantifiedFormula) et.toTerm(mScript));
+				} else {
+					dualFiniteParams = QuantifierUtils.getXjunctsInner(quantifier, et.getTerm());
+					eliminatees = et.getEliminatees();
+				}
+			}
+		}
+
+		if (DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION) {
+			final int rec = DerScout.computeRecommendation(mScript, eliminatees, dualFiniteParams, quantifier);
+			if (rec != -1) {
+				final CondisDepthCode cdc = new CondisDepthCodeGenerator().transduce(appTerm);
+				final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
+				logger.info("Applying distributivity to a " + cdc + " term");
+				final Term correspondingFinite = applyDistributivityAndPushOneStep(quantifier, eliminatees,
+						dualFiniteParams, rec);
+				return correspondingFinite;
+			}
+		}
+
+		// 2016-12-17 Matthias TODO:
+		// before applying distributivity bring each disjunct in
+		// NNF (with quantifier push)
+		// if afterwards some disjunct is disjunction then re-apply
+		// the tryToPushOverDualFiniteConnective method
+		for (int i = 0; i < dualFiniteParams.length; i++) {
+			// this loop just selects some
+			// correspondingFiniteJunction that we start with
+			// recursive calls will take of other
+			// correspondingFiniteJunctions.
+			// Hence, we do not continue to iterate
+			// after the first correspondingFiniteJunction
+			// was found.
+			// TODO: optimization: have a closer look at atoms
+			// inside to determine where we apply distributivity
+			// first (e.g., somewhere where some (dis)equality
+			// allows us to apply DER
+			if (isCorrespondingFinite(dualFiniteParams[i], quantifier)) {
+				final Term correspondingFinite = applyDistributivityAndPushOneStep(quantifier, eliminatees,
+						dualFiniteParams, i);
+				if (!EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION) {
+					return correspondingFinite;
+				}
+				final Term pushed = new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques)
+						.transform(correspondingFinite);
+				if (allStillQuantified(eliminatees, pushed)) {
+					// we should not pay the high price for applying distributivity if we do not get
+					// a formula with less quantified variales in return
+					// TODO 20190323 Matthias: WARNING
+					// <pre>
+					// returns false negatives if the QuantifierPusher
+					// would rename the quantified variables (currently not the case)
+					// returns false positives if the coincidentally there is an inner quantified
+					// variables that has the same name.
+					// </pre>
+					return quantifiedFormula;
+				} else {
+					return pushed;
+				}
+			}
+		}
+		// failed to apply distributivity, return original
+		return quantifiedFormula;
 	}
 
 	private EliminationTask doit(final int quantifier, final Set<TermVariable> eliminatees, final Term[] dualFiniteParams) {
