@@ -28,14 +28,22 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterm
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.CondisDepthCodeGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.CondisDepthCodeGenerator.CondisDepthCode;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.DerScout;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.DerScout.DerApplicability;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.EliminationTask;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
@@ -54,12 +62,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
- * Transform a Term into form where quantifier are pushed as much inwards as possible and quantifiers are eliminated via
- * local quantifier elimination techniques if possible
+ * Transform a Term into form where quantifier are pushed as much inwards as
+ * possible and quantifiers are eliminated via local quantifier elimination
+ * techniques if possible
  *
- * @author Matthias Heizmann
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class QuantifierPusher extends TermTransformer {
@@ -90,6 +101,10 @@ public class QuantifierPusher extends TermTransformer {
 	 *
 	 */
 	private static final boolean EVALUATE_SUCCESS_OF_DISTRIBUTIVITY_APPLICATION = true;
+
+	private static final boolean ELIMINATEE_SEQUENTIALIZATION = true;
+
+	private static final boolean DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION = true;
 
 	private final Script mScript;
 	private final IUltimateServiceProvider mServices;
@@ -227,14 +242,42 @@ public class QuantifierPusher extends TermTransformer {
 		// if not exists return
 
 		final int quantifier = quantifiedFormula.getQuantifier();
-		final Set<TermVariable> eliminatees = new HashSet<>(Arrays.asList(quantifiedFormula.getVariables()));
+		Set<TermVariable> eliminatees = new HashSet<>(Arrays.asList(quantifiedFormula.getVariables()));
 		{
 
-			final Term[] dualFiniteParams = QuantifierUtils.getXjunctsInner(quantifier, appTerm);
+			Term[] dualFiniteParams = QuantifierUtils.getXjunctsInner(quantifier, appTerm);
 			final Term eliminationResult = applyEliminationTechniques(quantifier, eliminatees, dualFiniteParams);
 			if (eliminationResult == null) {
 				// nothing was removed
 				if (mApplyDistributivity) {
+
+					if (eliminatees.size() > 1 && ELIMINATEE_SEQUENTIALIZATION) {
+						final EliminationTask et = doit(quantifier, eliminatees, dualFiniteParams);
+						if (et.getEliminatees().isEmpty()) {
+							return et.toTerm(mScript);
+						} else {
+							final Term[] correspondingFinite = QuantifierUtils.getXjunctsOuter(quantifier, et.getTerm());
+							if (correspondingFinite.length > 1) {
+								return pushOverCorrespondingFiniteConnective((QuantifiedFormula) et.toTerm(mScript));
+							} else {
+								dualFiniteParams = QuantifierUtils.getXjunctsInner(quantifier, et.getTerm());
+								eliminatees = et.getEliminatees();
+							}
+						}
+					}
+
+					if (DER_BASED_DISTRIBUTION_PARAMETER_PRESELECTION) {
+					final int rec = DerScout.computeRecommendation(mScript, eliminatees, dualFiniteParams, quantifier);
+						if (rec != -1) {
+							final CondisDepthCode cdc = new CondisDepthCodeGenerator().transduce(appTerm);
+							final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
+							logger.info("Applying distributivity to a " + cdc + " term");
+							final Term correspondingFinite = applyDistributivityAndPushOneStep(quantifier, eliminatees,
+									dualFiniteParams, rec);
+							return correspondingFinite;
+						}
+					}
+
 					// 2016-12-17 Matthias TODO:
 					// before applying distributivity bring each disjunct in
 					// NNF (with quantifier push)
@@ -283,7 +326,105 @@ public class QuantifierPusher extends TermTransformer {
 			}
 			return eliminationResult;
 		}
+	}
 
+	private EliminationTask doit(final int quantifier, final Set<TermVariable> eliminatees, final Term[] dualFiniteParams) {
+		final List<TermVariable> remainingEliminatees = new ArrayList<>(eliminatees);
+		List<Term> currentDualFiniteParams = new ArrayList<>(Arrays.asList(dualFiniteParams));
+		List<TermVariable> remainingEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(remainingEliminatees, currentDualFiniteParams);
+		while (!remainingEliminateesThatDoNotOccurInAllParams.isEmpty()) {
+			final TermVariable eliminatee = selectBestEliminatee(quantifier, remainingEliminateesThatDoNotOccurInAllParams, currentDualFiniteParams);
+			final List<Term> finiteParamsWithEliminatee = new ArrayList<>();
+			final List<Term> finiteParamsWithoutEliminatee = new ArrayList<>();
+			for (final Term dualFiniteParam : currentDualFiniteParams) {
+				if (Arrays.asList(dualFiniteParam.getFreeVars()).contains(eliminatee)) {
+					finiteParamsWithEliminatee.add(dualFiniteParam);
+				} else {
+					finiteParamsWithoutEliminatee.add(dualFiniteParam);
+				}
+			}
+			if (finiteParamsWithoutEliminatee.isEmpty()) {
+				throw new AssertionError("Eliminatee cannot occur in all");
+			}
+			final List<TermVariable> minionEliminatees = determineMinionEliminatees(eliminatees,
+					finiteParamsWithoutEliminatee);
+			final Term dualFiniteJunction = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
+					finiteParamsWithEliminatee);
+			final Term quantified = SmtUtils.quantifier(mScript, quantifier, new HashSet<>(minionEliminatees),
+					dualFiniteJunction);
+			final Term pushed = new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques)
+					.transform(quantified);
+			remainingEliminatees.removeAll(minionEliminatees);
+			final List<Term> pushedFiniteParams = Arrays.asList(QuantifierUtils.getXjunctsInner(quantifier, pushed));
+			currentDualFiniteParams = new ArrayList<>(pushedFiniteParams);
+			currentDualFiniteParams.addAll(finiteParamsWithoutEliminatee);
+			remainingEliminateesThatDoNotOccurInAllParams = remaningEliminateeThatDoNotOccurInAllParams(remainingEliminatees, currentDualFiniteParams);
+		}
+		return new EliminationTask(quantifier, new HashSet<>(remainingEliminatees),
+				QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, currentDualFiniteParams));
+	}
+
+
+
+	private TermVariable selectBestEliminatee(final int quantifier, final List<TermVariable> eliminatees, final List<Term> currentDualFiniteParams) {
+		if (eliminatees.size() == 1) {
+			return eliminatees.iterator().next();
+		}
+		final Map<TermVariable, Long> score = computeDerApplicabilityScore(mScript, quantifier, eliminatees,
+				currentDualFiniteParams);
+//		final Map<TermVariable, Long> inhabitedParamTreesizes = computeTreesizeOfInhabitedParams(eliminatees,
+//				currentDualFiniteParams);
+		final TreeHashRelation<Long, TermVariable> tr = new TreeHashRelation<>();
+		tr.reverseAddAll(score);
+		final Entry<Long, HashSet<TermVariable>> best = tr.entrySet().iterator().next();
+		return best.getValue().iterator().next();
+	}
+
+	private Map<TermVariable, Long> computeDerApplicabilityScore(final Script script, final int quantifier, final List<TermVariable> eliminatees,
+			final List<Term> currentDualFiniteParams) {
+		final Term correspondingFiniteJunction = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, currentDualFiniteParams);
+		final Map<TermVariable, Long> result = new HashMap<>();
+		for (final TermVariable eliminatee : eliminatees) {
+			final DerApplicability da = new DerScout(eliminatee, script, quantifier).transduce(correspondingFiniteJunction);
+			final long score = da.getWithoutDerCases().subtract(da.getWithoutVarCases()).longValueExact();
+			result.put(eliminatee, score);
+		}
+		return result;
+
+	}
+
+	private Map<TermVariable, Long> computeTreesizeOfInhabitedParams(final List<TermVariable> eliminatees,
+			final List<Term> currentDualFiniteParams) {
+		final List<Long> treeSize = currentDualFiniteParams.stream().map(x -> new DAGSize().treesize(x)).collect(Collectors.toList());
+		final Map<TermVariable, Long> result = new HashMap<>();
+		for (final TermVariable eliminatee : eliminatees) {
+			long s = 0;
+			for (int i=0; i<currentDualFiniteParams.size(); i++) {
+				if (Arrays.asList(currentDualFiniteParams.get(i).getFreeVars()).contains(eliminatee)) {
+					s += treeSize.get(i);
+				}
+			}
+			result.put(eliminatee, s);
+		}
+		return result;
+	}
+
+	private List<TermVariable> remaningEliminateeThatDoNotOccurInAllParams(final List<TermVariable> remainingEliminatees,
+			final List<Term> currentDualFiniteParams) {
+		return remainingEliminatees.stream().filter(eliminatee -> currentDualFiniteParams.stream()
+				.anyMatch(param -> !Arrays.asList(param.getFreeVars()).contains(eliminatee))).collect(Collectors.toList());
+	}
+
+	/**
+	 * @return eliminatees that do not occur as free variable in any of the
+	 *         termsWithoutMasterEliminatee
+	 */
+	private List<TermVariable> determineMinionEliminatees(final Set<TermVariable> eliminatees,
+			final List<Term> termsWithoutMasterEliminatee) {
+		return eliminatees.stream()
+				.filter(eliminatee -> termsWithoutMasterEliminatee.stream()
+						.allMatch(param -> !Arrays.asList(param.getFreeVars()).contains(eliminatee)))
+				.collect(Collectors.toList());
 	}
 
 	private boolean allStillQuantified(final Set<TermVariable> eliminatees, final Term pushed) {
