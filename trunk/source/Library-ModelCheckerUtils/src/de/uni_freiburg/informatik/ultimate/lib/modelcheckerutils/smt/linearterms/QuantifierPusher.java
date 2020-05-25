@@ -243,8 +243,20 @@ public class QuantifierPusher extends TermTransformer {
 
 		final int quantifier = quantifiedFormula.getQuantifier();
 		Set<TermVariable> eliminatees = new HashSet<>(Arrays.asList(quantifiedFormula.getVariables()));
-
 		Term[] dualFiniteParams = QuantifierUtils.getXjunctsInner(quantifier, appTerm);
+		// TODO 20200525 Matthias:
+		// (1) maybe elimination techniques should be applied before
+		// and after pushing params
+		// (2) Keep pushed params even if we do not (successfully) apply distribution
+		for (int i = 0; i < dualFiniteParams.length; i++) {
+			if (dualFiniteParams[i] instanceof QuantifiedFormula) {
+				dualFiniteParams[i] = new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques)
+						.transform(dualFiniteParams[i]);
+			}
+		}
+		// flatten params, might be necessary if some param was quantified formula
+		dualFiniteParams = QuantifierUtils.getXjunctsInner(quantifier,
+				QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, dualFiniteParams));
 		{
 			final Term eliminationResult = applyEliminationTechniques(quantifier, eliminatees, dualFiniteParams);
 			if (eliminationResult != null) {
