@@ -534,4 +534,16 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	public Set<R> projectToRange(final Set<D> input) {
 		return input.stream().flatMap(x -> getImage(x).stream()).collect(Collectors.toSet());
 	}
+
+	/**
+	 * For all entries (k,v) of the map add the reverse pair (v,k) to this relation.
+	 * @return true iff some new element was added
+	 */
+	public boolean reverseAddAll(final Map<R, D> map) {
+		boolean someNewValueAdded = false;
+		for (final Entry<R, D> entry : map.entrySet()) {
+			someNewValueAdded |= addPair(entry.getValue(), entry.getKey());
+		}
+		return someNewValueAdded;
+	}
 }
