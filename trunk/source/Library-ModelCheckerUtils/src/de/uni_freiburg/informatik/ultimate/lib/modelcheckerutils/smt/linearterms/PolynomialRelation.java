@@ -955,7 +955,7 @@ public class PolynomialRelation implements IBinaryRelation {
 	 * </ul>
 	 */
 	private static Term constructRhsIntegerQuotient(final Script script, final RelationSymbol relSymb,
-			final Term rhs, final boolean divisorIsPositive, final Term divisor) {
+			final Term rhs, final boolean divisorIsPositive, final Term... divisor) {
 		final Term result;
 		switch (relSymb) {
 		case LESS:
@@ -969,11 +969,11 @@ public class PolynomialRelation implements IBinaryRelation {
 			break;
 		case GREATER:
 			// k*x > t is equivalent to x > (t div k) for all k
-			result = SmtUtils.div(script, rhs, divisor);
+			result = SmtUtils.division(script, rhs.getSort(), prepend(rhs, divisor));
 			break;
 		case LEQ:
 			// k*x <= t is equivalent to x <= (t div k) for positive k
-			result = SmtUtils.div(script, rhs, divisor);
+			result = SmtUtils.division(script, rhs.getSort(), prepend(rhs, divisor));
 			break;
 		case GEQ:
 			if (divisorIsPositive) {
@@ -986,11 +986,11 @@ public class PolynomialRelation implements IBinaryRelation {
 			break;
 		case EQ:
 			// Default quotient, additional divisibility information has to be added later
-			result = SmtUtils.div(script, rhs, divisor);
+			result = SmtUtils.division(script, rhs.getSort(), prepend(rhs, divisor));
 			break;
 		case DISTINCT:
 			// Default quotient, additional divisibility information has to be added later
-			result = SmtUtils.div(script, rhs, divisor);
+			result = SmtUtils.division(script, rhs.getSort(), prepend(rhs, divisor));
 			break;
 		default:
 			throw new AssertionError("unknown relation symbol: " + relSymb);
@@ -1018,13 +1018,18 @@ public class PolynomialRelation implements IBinaryRelation {
 		final Term divArgument = SmtUtils.sum(script, divident.getSort(), divident, preDivisionOffset);
 		final Term simplifiedDivArgument = ((IPolynomialTerm) (new PolynomialTermTransformer(script))
 				.transform(divArgument)).toTerm(script);
-		final List<Term> divisionParams = new ArrayList<>(divisor.length + 1);
-		divisionParams.add(simplifiedDivArgument);
-		divisionParams.addAll(Arrays.asList(divisor));
-		final Term quotient = SmtUtils.division(script, divident.getSort(),
-				divisionParams.toArray(new Term[divisionParams.size()]));
+		final Term[] result = prepend(simplifiedDivArgument, divisor);
+		final Term quotient = SmtUtils.division(script, divident.getSort(), result);
 		return SmtUtils.sum(script, divident.getSort(), quotient,
 				SmtUtils.rational2Term(script, postDivisionOffset, divident.getSort()));
+	}
+
+	private static Term[] prepend(final Term head, final Term... tail) {
+		final List<Term> resultAsList = new ArrayList<>(tail.length + 1);
+		resultAsList.add(head);
+		resultAsList.addAll(Arrays.asList(tail));
+		final Term[] resultArray = resultAsList.toArray(new Term[resultAsList.size()]);
+		return resultArray;
 	}
 
 	/**
