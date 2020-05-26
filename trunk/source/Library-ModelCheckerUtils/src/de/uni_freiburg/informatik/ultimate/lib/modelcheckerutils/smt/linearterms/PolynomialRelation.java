@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterm
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -406,8 +407,8 @@ public class PolynomialRelation implements IBinaryRelation {
 		if (simpliySolvableRhsTerm == null) {
 			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 					Rational.ONE);
-			rhsTerm = constructRhsIntegerQuotient(script, mRelationSymbol, !coeffOfSubject.isNegative(),
-					coeffOfSubject.toTerm(rhsTermWithoutDivision.getSort()), rhsTermWithoutDivision);
+			rhsTerm = constructRhsIntegerQuotient(script, mRelationSymbol, rhsTermWithoutDivision,
+					!coeffOfSubject.isNegative(), coeffOfSubject.toTerm(rhsTermWithoutDivision.getSort()));
 			// EQ and DISTINCT need Modulo Assumption
 			if (isEqOrDistinct(mRelationSymbol)) {
 				assumptionMapBuilder.putDivisibleByConstant(rhsTermWithoutDivision,
@@ -511,8 +512,8 @@ public class PolynomialRelation implements IBinaryRelation {
 			if (!subjectIsNotAVariableButOccursInDivOrModSubterm) {
 				final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 						Rational.ONE);
-				rhsTerm = constructRhsIntegerQuotient(script, mRelationSymbol, !coeffOfSubject.isNegative(),
-						coeffOfSubject.toTerm(rhsTermWithoutDivision.getSort()), rhsTermWithoutDivision);
+				rhsTerm = constructRhsIntegerQuotient(script, mRelationSymbol, rhsTermWithoutDivision,
+						!coeffOfSubject.isNegative(), coeffOfSubject.toTerm(rhsTermWithoutDivision.getSort()));
 				final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
 						Collections.emptyMap());
 				// EQ and DISTINCT need Modulo Assumption
@@ -954,16 +955,16 @@ public class PolynomialRelation implements IBinaryRelation {
 	 * </ul>
 	 */
 	private static Term constructRhsIntegerQuotient(final Script script, final RelationSymbol relSymb,
-			final boolean divisorIsPositive, final Term divisor, final Term rhs) {
+			final Term rhs, final boolean divisorIsPositive, final Term divisor) {
 		final Term result;
 		switch (relSymb) {
 		case LESS:
 			if (divisorIsPositive) {
 				// k*x < t is equivalent to x < (t-1 div k)+1 for positive k
-				result = constructRhsIntegerQuotientHelper(script, rhs, divisor, Rational.ONE);
+				result = constructRhsIntegerQuotientHelper(script, rhs, Rational.ONE, divisor);
 			} else {
 				// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
-				result = constructRhsIntegerQuotientHelper(script, rhs, divisor, Rational.MONE);
+				result = constructRhsIntegerQuotientHelper(script, rhs, Rational.MONE, divisor);
 			}
 			break;
 		case GREATER:
@@ -977,10 +978,10 @@ public class PolynomialRelation implements IBinaryRelation {
 		case GEQ:
 			if (divisorIsPositive) {
 				// k*x >= t is equivalent to x >= (t - 1 div k) + 1 for positive k
-				result = constructRhsIntegerQuotientHelper(script, rhs, divisor, Rational.ONE);
+				result = constructRhsIntegerQuotientHelper(script, rhs, Rational.ONE, divisor);
 			} else {
 				// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
-				result = constructRhsIntegerQuotientHelper(script, rhs, divisor, Rational.MONE);
+				result = constructRhsIntegerQuotientHelper(script, rhs, Rational.MONE, divisor);
 			}
 			break;
 		case EQ:
@@ -1006,19 +1007,22 @@ public class PolynomialRelation implements IBinaryRelation {
 	 *
 	 * which is required for LESS, GREATER, LEQ, and GEQ. See
 	 * {@link PolynomialRelation#constructRhsIntegerQuotient}
-	 *
 	 * @param postDivisionOffset
 	 *            value that is added after the division and that is determined from
 	 *            the relation symbol and the sign of the divisor's values.
 	 */
 	private static Term constructRhsIntegerQuotientHelper(final Script script, final Term divident,
-			final Term divisor, final Rational postDivisionOffset) {
+			final Rational postDivisionOffset, final Term... divisor) {
 		// The preDivisionOffset is always minus one.
 		final Term preDivisionOffset = SmtUtils.rational2Term(script, Rational.MONE, divident.getSort());
 		final Term divArgument = SmtUtils.sum(script, divident.getSort(), divident, preDivisionOffset);
 		final Term simplifiedDivArgument = ((IPolynomialTerm) (new PolynomialTermTransformer(script))
 				.transform(divArgument)).toTerm(script);
-		final Term quotient = SmtUtils.div(script, simplifiedDivArgument, divisor);
+		final List<Term> divisionParams = new ArrayList<>(divisor.length + 1);
+		divisionParams.add(simplifiedDivArgument);
+		divisionParams.addAll(Arrays.asList(divisor));
+		final Term quotient = SmtUtils.division(script, divident.getSort(),
+				divisionParams.toArray(new Term[divisionParams.size()]));
 		return SmtUtils.sum(script, divident.getSort(), quotient,
 				SmtUtils.rational2Term(script, postDivisionOffset, divident.getSort()));
 	}
