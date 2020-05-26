@@ -1569,14 +1569,20 @@ public final class SmtUtils {
 						// do nothing
 					} else {
 						final Rational numerator = tryToConvertToLiteral(resultParams.get(0));
-						final Rational resultRat = numerator.div(nextAsRational);
-						if (resultRat.isIntegral()) {
-							final Term resultTerm = resultRat.toTerm(SmtSortUtils.getIntSort(script));
-							resultParams.set(0, resultTerm);
-						} else {
+						if (numerator == null) {
 							// cannot simplify
 							resultParams.add(inputParams[i]);
 							simplificationPossible = false;
+						} else {
+							final Rational resultRat = numerator.div(nextAsRational);
+							if (resultRat.isIntegral()) {
+								final Term resultTerm = resultRat.toTerm(SmtSortUtils.getIntSort(script));
+								resultParams.set(0, resultTerm);
+							} else {
+								// cannot simplify
+								resultParams.add(inputParams[i]);
+								simplificationPossible = false;
+							}
 						}
 					}
 				}
