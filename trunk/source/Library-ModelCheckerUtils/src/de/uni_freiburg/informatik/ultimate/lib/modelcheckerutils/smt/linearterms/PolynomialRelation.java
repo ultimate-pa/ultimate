@@ -406,7 +406,8 @@ public class PolynomialRelation implements IBinaryRelation {
 		if (simpliySolvableRhsTerm == null) {
 			final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 					Rational.ONE);
-			rhsTerm = constructRhsIntegerQuotient(script, mRelationSymbol, coeffOfSubject, rhsTermWithoutDivision);
+			rhsTerm = constructRhsIntegerQuotient(script, mRelationSymbol, !coeffOfSubject.isNegative(),
+					coeffOfSubject.toTerm(rhsTermWithoutDivision.getSort()), rhsTermWithoutDivision);
 			// EQ and DISTINCT need Modulo Assumption
 			if (isEqOrDistinct(mRelationSymbol)) {
 				assumptionMapBuilder.putDivisibleByConstant(rhsTermWithoutDivision,
@@ -510,7 +511,8 @@ public class PolynomialRelation implements IBinaryRelation {
 			if (!subjectIsNotAVariableButOccursInDivOrModSubterm) {
 				final Term rhsTermWithoutDivision = constructRhsForAbstractVariable(script, abstractVarOfSubject,
 						Rational.ONE);
-				rhsTerm = constructRhsIntegerQuotient(script, mRelationSymbol, coeffOfSubject, rhsTermWithoutDivision);
+				rhsTerm = constructRhsIntegerQuotient(script, mRelationSymbol, !coeffOfSubject.isNegative(),
+						coeffOfSubject.toTerm(rhsTermWithoutDivision.getSort()), rhsTermWithoutDivision);
 				final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
 						Collections.emptyMap());
 				// EQ and DISTINCT need Modulo Assumption
@@ -952,42 +954,42 @@ public class PolynomialRelation implements IBinaryRelation {
 	 * </ul>
 	 */
 	private static Term constructRhsIntegerQuotient(final Script script, final RelationSymbol relSymb,
-			final Rational coeffOfSubject, final Term rhs) {
+			final boolean divisorIsPositive, final Term divisor, final Term rhs) {
 		final Term result;
 		switch (relSymb) {
 		case LESS:
-			if (!coeffOfSubject.isNegative()) {
+			if (divisorIsPositive) {
 				// k*x < t is equivalent to x < (t-1 div k)+1 for positive k
-				result = constructRhsIntegerQuotientHelper(script, rhs, coeffOfSubject, Rational.ONE);
+				result = constructRhsIntegerQuotientHelper(script, rhs, divisor, Rational.ONE);
 			} else {
 				// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
-				result = constructRhsIntegerQuotientHelper(script, rhs, coeffOfSubject, Rational.MONE);
+				result = constructRhsIntegerQuotientHelper(script, rhs, divisor, Rational.MONE);
 			}
 			break;
 		case GREATER:
 			// k*x > t is equivalent to x > (t div k) for all k
-			result = SmtUtils.div(script, rhs, coeffOfSubject.toTerm(rhs.getSort()));
+			result = SmtUtils.div(script, rhs, divisor);
 			break;
 		case LEQ:
 			// k*x <= t is equivalent to x <= (t div k) for positive k
-			result = SmtUtils.div(script, rhs, coeffOfSubject.toTerm(rhs.getSort()));
+			result = SmtUtils.div(script, rhs, divisor);
 			break;
 		case GEQ:
-			if (!coeffOfSubject.isNegative()) {
+			if (divisorIsPositive) {
 				// k*x >= t is equivalent to x >= (t - 1 div k) + 1 for positive k
-				result = constructRhsIntegerQuotientHelper(script, rhs, coeffOfSubject, Rational.ONE);
+				result = constructRhsIntegerQuotientHelper(script, rhs, divisor, Rational.ONE);
 			} else {
 				// -k*x >= t is equivalent to x <= (t - 1 div -k) - 1
-				result = constructRhsIntegerQuotientHelper(script, rhs, coeffOfSubject, Rational.MONE);
+				result = constructRhsIntegerQuotientHelper(script, rhs, divisor, Rational.MONE);
 			}
 			break;
 		case EQ:
 			// Default quotient, additional divisibility information has to be added later
-			result = SmtUtils.div(script, rhs, coeffOfSubject.toTerm(rhs.getSort()));
+			result = SmtUtils.div(script, rhs, divisor);
 			break;
 		case DISTINCT:
 			// Default quotient, additional divisibility information has to be added later
-			result = SmtUtils.div(script, rhs, coeffOfSubject.toTerm(rhs.getSort()));
+			result = SmtUtils.div(script, rhs, divisor);
 			break;
 		default:
 			throw new AssertionError("unknown relation symbol: " + relSymb);
@@ -1010,14 +1012,13 @@ public class PolynomialRelation implements IBinaryRelation {
 	 *            the relation symbol and the sign of the divisor's values.
 	 */
 	private static Term constructRhsIntegerQuotientHelper(final Script script, final Term divident,
-			final Rational divisor, final Rational postDivisionOffset) {
+			final Term divisor, final Rational postDivisionOffset) {
 		// The preDivisionOffset is always minus one.
 		final Term preDivisionOffset = SmtUtils.rational2Term(script, Rational.MONE, divident.getSort());
 		final Term divArgument = SmtUtils.sum(script, divident.getSort(), divident, preDivisionOffset);
 		final Term simplifiedDivArgument = ((IPolynomialTerm) (new PolynomialTermTransformer(script))
 				.transform(divArgument)).toTerm(script);
-		final Term quotient = SmtUtils.div(script, simplifiedDivArgument,
-				SmtUtils.rational2Term(script, divisor, divident.getSort()));
+		final Term quotient = SmtUtils.div(script, simplifiedDivArgument, divisor);
 		return SmtUtils.sum(script, divident.getSort(), quotient,
 				SmtUtils.rational2Term(script, postDivisionOffset, divident.getSort()));
 	}
