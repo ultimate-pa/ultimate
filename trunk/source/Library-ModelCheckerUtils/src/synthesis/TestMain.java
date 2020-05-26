@@ -20,7 +20,8 @@ public class TestMain {
 	public static void testEntryPoint(IIcfg<IcfgLocation> icfg) {
 		System.out.println("got root node");
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
-		DisjunctionTemplate dt = new DisjunctionTemplate(2, new int[] {1,2}, new int[][] {{1}, {1, 1}}, new HashSet<TermVariable>(), "name");
+		Strategy strategy = new Strategy(icfg);
+		//DisjunctionTemplate dt = new DisjunctionTemplate(2, new int[] {1,2}, new int[][] {{1}, {1, 1}}, new HashSet<TermVariable>(), "name");
 		System.out.println("formula");
 	}
 }
