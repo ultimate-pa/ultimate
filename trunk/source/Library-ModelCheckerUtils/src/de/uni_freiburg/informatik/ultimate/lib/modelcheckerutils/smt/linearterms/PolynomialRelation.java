@@ -718,12 +718,18 @@ public class PolynomialRelation implements IBinaryRelation {
 
 	private Case constructAntiDerIntegerDivisibilityCase(final Script script,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf, final Term stageTwoRhs, final Term[] divisorAsArray) {
+		final Set<SupportingTerm> suppTerms = new HashSet<>();
 		final boolean negate = mRelationSymbol.equals(RelationSymbol.DISTINCT);
-		final Term divisibilityConstraintTerm = constructDivisibilityConstraint(script,
-				negate, stageTwoRhs, SmtUtils.mul(script, mPolynomialTerm.getSort(), divisorAsArray));
+		final Term divisibilityConstraintTerm = constructDivisibilityConstraint(script, negate, stageTwoRhs,
+				SmtUtils.mul(script, mPolynomialTerm.getSort(), divisorAsArray));
 		final SupportingTerm divisibilityConstraint = new SupportingTerm(divisibilityConstraintTerm,
 				IntricateOperation.DIV_BY_INTEGER_CONSTANT, Collections.emptySet());
-		final Case result = new Case(null, Collections.singleton(divisibilityConstraint), xnf);
+		suppTerms.add(divisibilityConstraint);
+		final SupportingTerm inRelationToZero = constructInRelationToZeroSupportingTerm(script,
+				SmtUtils.mul(script, mPolynomialTerm.getSort(), divisorAsArray),
+				negateForCnf(RelationSymbol.DISTINCT, xnf));
+		suppTerms.add(inRelationToZero);
+		final Case result = new Case(null, suppTerms, xnf);
 		return result;
 	}
 
