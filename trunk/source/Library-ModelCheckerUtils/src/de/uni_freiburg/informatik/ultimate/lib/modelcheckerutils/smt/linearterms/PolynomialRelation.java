@@ -615,14 +615,14 @@ public class PolynomialRelation implements IBinaryRelation {
 					}
 					if (isEqOrDistinct(mRelationSymbol) || exp % 2 == 0) {
 						twoCaseVariables.add(var2exp.getKey());
-						distinctZeroSupportingTerms.add(constructInRelationToZeroSupportingTerm(script, var2exp.getKey(), RelationSymbol.DISTINCT));
+						distinctZeroSupportingTerms.add(constructInRelationToZeroSupportingTerm(script, var2exp.getKey(), negateForCnf(RelationSymbol.DISTINCT, xnf)));
 					} else {
 						// We have to distinguish the case now into two cases,
 						// since the RelationSymbol has to be swapped, when we divide by a negative
 						// variable.
 						threeCaseVariables.add(var2exp.getKey());
-						isNegativeSupportingTerms.add(constructInRelationToZeroSupportingTerm(script, var2exp.getKey(), RelationSymbol.LESS));
-						isPositiveSupportingTerms.add(constructInRelationToZeroSupportingTerm(script, var2exp.getKey(), RelationSymbol.GREATER));
+						isNegativeSupportingTerms.add(constructInRelationToZeroSupportingTerm(script, var2exp.getKey(), negateForCnf(RelationSymbol.LESS, xnf)));
+						isPositiveSupportingTerms.add(constructInRelationToZeroSupportingTerm(script, var2exp.getKey(), negateForCnf(RelationSymbol.GREATER, xnf)));
 					}
 				}
 			}
@@ -698,8 +698,18 @@ public class PolynomialRelation implements IBinaryRelation {
 		return result;
 	}
 
+	private RelationSymbol negateForCnf(final RelationSymbol symb, final Xnf xnf) {
+		if (xnf == Xnf.CNF) {
+			return BinaryRelation.negateRelation(symb);
+		} else {
+			return symb;
+		}
+	}
+
 	private boolean isDerIntegerDivisionSupportingTermRequired(final Xnf xnf) {
-		return SmtSortUtils.isIntSort(mPolynomialTerm.getSort()) && (mRelationSymbol == RelationSymbol.EQ);
+		return SmtSortUtils.isIntSort(mPolynomialTerm.getSort()) &&
+				((mRelationSymbol == RelationSymbol.EQ) && xnf == Xnf.DNF
+				|| (mRelationSymbol == RelationSymbol.DISTINCT) && xnf == Xnf.CNF);
 	}
 
 	private SupportingTerm constructDerIntegerDivisionSupportingTerm(final Script script, final Term stageTwoRhs,
@@ -713,7 +723,9 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	private boolean isAntiDerIntegerDivisionCaseRequired(final Xnf xnf) {
-		return SmtSortUtils.isIntSort(mPolynomialTerm.getSort()) && (mRelationSymbol == RelationSymbol.DISTINCT);
+		return SmtSortUtils.isIntSort(mPolynomialTerm.getSort()) &&
+				((mRelationSymbol == RelationSymbol.DISTINCT) && xnf == Xnf.DNF
+				|| (mRelationSymbol == RelationSymbol.EQ) && xnf == Xnf.CNF);
 	}
 
 	private Case constructAntiDerIntegerDivisibilityCase(final Script script,
@@ -853,7 +865,19 @@ public class PolynomialRelation implements IBinaryRelation {
 		final Set<SupportingTerm> suppTerms = new LinkedHashSet<>();
 		final Term zeroTerm = SmtUtils.rational2Term(script, Rational.ZERO, mPolynomialTerm.getSort());
 		final Term varEqualZero = SmtUtils.binaryEquality(script, zeroTerm, divisorVar);
-		suppTerms.add(new SupportingTerm(varEqualZero, IntricateOperation.DIV_BY_NONCONSTANT, Collections.emptySet()));
+		final SupportingTerm st;
+		switch (xnf) {
+		case CNF:
+			st = new SupportingTerm(SmtUtils.not(script, varEqualZero), IntricateOperation.DIV_BY_NONCONSTANT,
+					Collections.emptySet());
+			break;
+		case DNF:
+			st = new SupportingTerm(varEqualZero, IntricateOperation.DIV_BY_NONCONSTANT, Collections.emptySet());
+			break;
+		default:
+			throw new AssertionError("unknown value " + xnf);
+		}
+		suppTerms.add(st);
 		final Term rhsRelationZeroTerm;
 		switch (relSym) {
 		case EQ:

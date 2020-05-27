@@ -113,10 +113,10 @@ public class MultiCaseSolutionBuilder {
 		if (mConstructionFinished) {
 			throw new IllegalStateException("construction already finished");
 		}
-		switch (mXnf) {
-		case CNF:
-			throw new UnsupportedOperationException("not yet implemented");
-		case DNF:
+//		switch (mXnf) {
+//		case CNF:
+//			throw new UnsupportedOperationException("not yet implemented");
+//		case DNF:
 			final List<Case> resultCases = new ArrayList<Case>();
 			for (final Case conjunction : dnf) {
 				if (mCases.isEmpty()) {
@@ -126,10 +126,10 @@ public class MultiCaseSolutionBuilder {
 				}
 			}
 			mCases = resultCases;
-			break;
-		default:
-			throw new AssertionError();
-		}
+//			break;
+//		default:
+//			throw new AssertionError();
+//		}
 
 	}
 
