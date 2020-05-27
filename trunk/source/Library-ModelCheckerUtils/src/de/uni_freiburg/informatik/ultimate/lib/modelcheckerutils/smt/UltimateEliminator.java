@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
@@ -40,11 +42,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Si
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierSequence;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -64,11 +68,17 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 public class UltimateEliminator extends WrapperScript {
 
 	private static final boolean WRAP_BACKEND_SOLVER_WITH_QUANTIFIER_OVERAPPROXIMATION = true;
+	private static final boolean APPLY_SIMPLE_E_SKOLEMIZATION = true;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
 	private LBool mExpectedResult;
 	private long mTreeSizeOfAssertedTerms = 0;
+	/**
+	 * Number of terms that were ever asserted (some might have been already popped
+	 * from the assertion stack).
+	 */
+	private int mNumberOfAssertedTerms = 0;
 
 	public UltimateEliminator(final IUltimateServiceProvider services, final ILogger logger, final Script script) {
 		super(wrapIfNecessary(services, logger, script));
@@ -135,6 +145,7 @@ public class UltimateEliminator extends WrapperScript {
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
+		mNumberOfAssertedTerms++;
 		final NamedTermWrapper ntw = new NamedTermWrapper(term);
 		if (ntw.isIsNamed()) {
 			// we alredy removed quantifiers
@@ -152,18 +163,47 @@ public class UltimateEliminator extends WrapperScript {
 		final Term unf = new UnfTransformer(mMgdScript.getScript()).transform(annotationFree);
 		final Term lessQuantifier = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, unf,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-
-		final boolean furtherOptimizations = false;
-		if (furtherOptimizations) {
-			// TODO
-		}
+		// TODO futher optimizations. E.g., overapproximation by replacing all
+		// quantified formulas.
 		if (!QuantifierUtils.isQuantifierFree(lessQuantifier)) {
 			final Term pnf = new PrenexNormalForm(mMgdScript).transform(lessQuantifier);
 			final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
+			if (APPLY_SIMPLE_E_SKOLEMIZATION && qs.getNumberOfQuantifierBlocks() == 1
+					&& qs.getQuantifierBlocks().get(0).getQuantifier() == QuantifiedFormula.EXISTS) {
+				return doSimpleESkolemization(lessQuantifier, qs);
+			}
 			throw new AssertionError("Result of partial quantifier elimination is not quantifier-free but an "
 					+ qs.buildQuantifierSequenceStringRepresentation() + " term.");
 		}
 		return lessQuantifier;
+	}
+
+	private Term doSimpleESkolemization(final Term lessQuantifier, final QuantifierSequence qs) {
+		final QuantifiedVariables firstBlock = qs.getQuantifierBlocks().get(0);
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final TermVariable tv : firstBlock.getVariables()) {
+			final String identifier = generateIdentifierForESkolemization(tv);
+			mMgdScript.getScript().declareFun(identifier, new Sort[0], tv.getSort());
+			final Term constant = mMgdScript.getScript().term(identifier);
+			substitutionMapping.put(tv, constant);
+		}
+		final Term result = new Substitution(mMgdScript, substitutionMapping).transform(qs.getInnerTerm());
+		return result;
+	}
+
+	/**
+	 * Workaround, does not guarantee that identifier is unique. Techniques for that
+	 * are difficult because we do not yet know which symbols will be declared in
+	 * the future. Rationale
+	 * <ul>
+	 * <li>UltimateSkolemizationId should occur seldomly.
+	 * <li>Add mNumberOfAssertedTerms because similar variables may be used in
+	 * different assert commands.
+	 * <li>The original variable name can be helpful for debugging.
+	 * </ul>
+	 */
+	private String generateIdentifierForESkolemization(final TermVariable tv) {
+		return "UltimateSkolemizationId" + mNumberOfAssertedTerms + "_" + tv.getName();
 	}
 
 	@Override
@@ -240,6 +280,6 @@ public class UltimateEliminator extends WrapperScript {
 				severity);
 		return ultimateOutput;
 	}
-	
-	
+
+
 }
