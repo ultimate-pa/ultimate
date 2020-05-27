@@ -450,18 +450,18 @@ public class PolynomialRelation implements IBinaryRelation {
 	 */
 	public MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf) {
-		boolean subjectIsNotAVariableButOccursInDivOrModSubterm = false;
-		ApplicationTerm allowedSubterm = null;
+		final boolean subjectIsNotAVariableButOccursInDivOrModSubterm = false;
+		final ApplicationTerm allowedSubterm = null;
 		if (!isVariable(subject)) {
 			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
 				throw new UnsupportedOperationException("subject is not a variable");
 			} else {
-				allowedSubterm = searchModOrDivSubterm(mPolynomialTerm.toTerm(script), script, subject);
-				if (allowedSubterm != null) {
-					subjectIsNotAVariableButOccursInDivOrModSubterm = true;
-				} else {
-					return null;
-				}
+//				allowedSubterm = searchModOrDivSubterm(mPolynomialTerm.toTerm(script), script, subject);
+//				if (allowedSubterm != null) {
+//					subjectIsNotAVariableButOccursInDivOrModSubterm = true;
+//				} else {
+//					return null;
+//				}
 			}
 		}
 		Term abstractVarOfSubject = getTheAbstractVarOfSubject(subject);
