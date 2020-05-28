@@ -9,28 +9,28 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class Strategy {
 	
-	private Template disjunction;
-	private int disjuncts;
-	private int[] conjuncts;
-	private int[][] relation;
-	private Set<TermVariable> vars;
-	private String name;
+	private DisjunctionTemplate mDisjunction;
+	private int mDisjuncts;
+	private int[] mConjuncts;
+	private int[][] mRelation;
+	private Set<TermVariable> mVars;
+	private String mName;
  	
 	
 	public Strategy(IIcfg<IcfgLocation> icfg) {
-		disjuncts = 2;
-		conjuncts = new int[] {1,2};
-		relation = new int[][] {{1}, {1, 1}};
-		vars = new HashSet<TermVariable>();
-		name = "name";
+		mDisjuncts = 2;
+		mConjuncts = new int[] {1,2};
+		mRelation = new int[][] {{1}, {1, 1}};
+		mVars = new HashSet<TermVariable>();
+		mName = "name";
 		
-		disjunction = new DisjunctionTemplate(disjuncts, conjuncts, relation, vars, name);
+		mDisjunction = new DisjunctionTemplate(mDisjuncts, mConjuncts, mRelation, mVars, mName);
 	}
 	
 	public void complicate() {
-		disjuncts++;
-		conjuncts = ArrayUtils.add(conjuncts, disjuncts);
-		relation = ArrayUtils.add(relation, new int[disjuncts]);
+		mDisjuncts++;
+		mConjuncts = ArrayUtils.add(mConjuncts, mDisjuncts);
+		mRelation = ArrayUtils.add(mRelation, new int[mDisjuncts]);
 	}
 	
 	
