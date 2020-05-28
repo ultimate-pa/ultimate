@@ -41,3 +41,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
  net.sf.javabdd
+Import-Package: org.apache.commons.lang3

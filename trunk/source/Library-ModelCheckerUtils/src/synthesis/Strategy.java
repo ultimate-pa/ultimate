@@ -2,7 +2,7 @@ package synthesis;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import org.apache.commons.lang3.ArrayUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -25,6 +25,12 @@ public class Strategy {
 		name = "name";
 		
 		disjunction = new DisjunctionTemplate(disjuncts, conjuncts, relation, vars, name);
+	}
+	
+	public void complicate() {
+		disjuncts++;
+		conjuncts = ArrayUtils.add(conjuncts, disjuncts);
+		relation = ArrayUtils.add(relation, new int[disjuncts]);
 	}
 	
 	
