@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import synthesis.Starter;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -79,7 +80,7 @@ public class InvariantSynthesisObserver implements IUnmanagedObserver {
 
 			if (System.getenv("REDIRECT_INVARIANT_SYNTHESIS_FLOWGRAPH") != null) {
 				try {
-					synthesis.TestMain.testEntryPoint(rcfgRootNode);
+					Starter s = new Starter(rcfgRootNode);
 				} catch (final Exception e) {
 					e.printStackTrace(System.out);
 				}
