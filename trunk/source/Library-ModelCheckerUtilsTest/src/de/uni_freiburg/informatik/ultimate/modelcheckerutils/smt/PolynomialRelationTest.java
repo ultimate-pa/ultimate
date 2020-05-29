@@ -334,6 +334,13 @@ public class PolynomialRelationTest {
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
+	@Test
+	public void relationIntPolyPuristDistinct() throws NotAffineException {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
+		final String inputSTR = "(not (= (* y x) z))";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
 	/**
 	 * One of the supporting terms in the y-not-zero-case
 	 * is not (< x (div z y)) but (< x (+ (div (- z 1)  y) 1))
@@ -371,6 +378,15 @@ public class PolynomialRelationTest {
 		final String inputSTR = "(= (* 3 y x) (* 9 y))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
+
+	@Test
+	public void relationIntPolyZ3CVC4Distinct6() throws NotAffineException {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(not (= (* 3 y x) (* 9 y)))";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+
 
 	@Test
 	public void relationIntPolyZ3CVC4MATHSATEQ7() throws NotAffineException {
