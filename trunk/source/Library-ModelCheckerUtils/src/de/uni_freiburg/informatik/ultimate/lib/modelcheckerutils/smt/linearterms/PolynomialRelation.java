@@ -464,20 +464,8 @@ public class PolynomialRelation implements IBinaryRelation {
 				}
 			}
 		}
-		Term abstractVarOfSubject = getTheAbstractVarOfSubject(subject);
-		if (subjectIsNotAVariableButOccursInDivOrModSubterm && (abstractVarOfSubject == null)) {
-			abstractVarOfSubject = subject;
-		}
-		if (abstractVarOfSubject == null) {
-			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
-				throw new UnsupportedOperationException("subject occurs in several abstract variables");
-			} else {
-				return null;
-			}
-		}
-		final Rational coeffOfSubject = mPolynomialTerm.getAbstractVariable2Coefficient().get(abstractVarOfSubject);
-		Rational divisor = null;
-		if (subjectIsNotAVariableButOccursInDivOrModSubterm && (coeffOfSubject == null)) {
+
+		if (subjectIsNotAVariableButOccursInDivOrModSubterm) {
 			if (!(allowedSubterm.getParameters()[1] instanceof ConstantTerm)) {
 				// divisor of div/mod is not a constant
 				return null;
@@ -488,43 +476,8 @@ public class PolynomialRelation implements IBinaryRelation {
 				return null;
 			}
 			final ConstantTerm coeffTerm = (ConstantTerm) allowedSubterm.getParameters()[1];
-			divisor = SmtUtils.convertConstantTermToRational(coeffTerm);
-		}
-		if (coeffOfSubject.equals(Rational.ZERO)) {
-			throw new AssertionError("no abstract variable must have coefficient zero");
-		}
-		if (isBvAndCantBeSolved(coeffOfSubject, abstractVarOfSubject)) {
-			// for bitvectors we may only divide by 1 or -1
-			// reason: consider bitvectors of length 8 (i.e., 256=0)
-			// then e.g., 2*x = 0 is not equivalent to x = 0 because
-			// for x=128 the first equation hold but the second does not
-			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
-				throw new UnsupportedOperationException(
-						"for bitvector subjects only coefficients 1 and -1 are supported");
-			} else {
-				return null;
-			}
-		}
-
-
-
-		final Term stageTwoRhs;
-		final Rational stageTwoCoefficient;
-		final boolean isOriginalCoefficientPositive = !isNegative(coeffOfSubject);
-		{
-			final Term simplySolvableRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
-					coeffOfSubject);
-			if (simplySolvableRhsTerm == null) {
-				stageTwoRhs = constructRhsForAbstractVariable(script, abstractVarOfSubject, Rational.ONE);
-				stageTwoCoefficient = coeffOfSubject;
-			} else {
-				stageTwoRhs = simplySolvableRhsTerm;
-				stageTwoCoefficient = null;
-			}
-		}
-
-		final MultiCaseSolutionBuilder mcsb = new MultiCaseSolutionBuilder(subject, xnf);
-		if (subjectIsNotAVariableButOccursInDivOrModSubterm) {
+			final Rational divisor = SmtUtils.convertConstantTermToRational(coeffTerm);
+			if (subjectIsNotAVariableButOccursInDivOrModSubterm) {
 				// Solve for subject in affineterm with a parameter of form (mod/div (subterm
 				// with subject) constant)
 				final Sort termSort = mPolynomialTerm.getSort();
@@ -538,6 +491,7 @@ public class PolynomialRelation implements IBinaryRelation {
 						SmtUtils.rational2Term(script, divisor, termSort), auxDiv);
 				final Term sum = SmtUtils.sum(script, termSort, auxMod, multiplication);
 
+				final MultiCaseSolutionBuilder mcsb = new MultiCaseSolutionBuilder(subject, xnf);
 				final AbstractGeneralizedAffineTerm recursion = (AbstractGeneralizedAffineTerm) new AffineTermTransformer(
 						script).transform(allowedSubterm.getParameters()[0]);
 				if (!recursion.isVariable(subject)) {
@@ -592,6 +546,51 @@ public class PolynomialRelation implements IBinaryRelation {
 							result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 				return result;
 			}
+		}
+
+		Term abstractVarOfSubject = getTheAbstractVarOfSubject(subject);
+		if (subjectIsNotAVariableButOccursInDivOrModSubterm && (abstractVarOfSubject == null)) {
+			abstractVarOfSubject = subject;
+		}
+		if (abstractVarOfSubject == null) {
+			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
+				throw new UnsupportedOperationException("subject occurs in several abstract variables");
+			} else {
+				return null;
+			}
+		}
+		final Rational coeffOfSubject = mPolynomialTerm.getAbstractVariable2Coefficient().get(abstractVarOfSubject);
+		if (coeffOfSubject.equals(Rational.ZERO)) {
+			throw new AssertionError("no abstract variable must have coefficient zero");
+		}
+		if (isBvAndCantBeSolved(coeffOfSubject, abstractVarOfSubject)) {
+			// for bitvectors we may only divide by 1 or -1
+			// reason: consider bitvectors of length 8 (i.e., 256=0)
+			// then e.g., 2*x = 0 is not equivalent to x = 0 because
+			// for x=128 the first equation hold but the second does not
+			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
+				throw new UnsupportedOperationException(
+						"for bitvector subjects only coefficients 1 and -1 are supported");
+			} else {
+				return null;
+			}
+		}
+
+		final Term stageTwoRhs;
+		final Rational stageTwoCoefficient;
+		final boolean isOriginalCoefficientPositive = !isNegative(coeffOfSubject);
+		{
+			final Term simplySolvableRhsTerm = constructRhsForAbstractVariable(script, abstractVarOfSubject,
+					coeffOfSubject);
+			if (simplySolvableRhsTerm == null) {
+				stageTwoRhs = constructRhsForAbstractVariable(script, abstractVarOfSubject, Rational.ONE);
+				stageTwoCoefficient = coeffOfSubject;
+			} else {
+				stageTwoRhs = simplySolvableRhsTerm;
+				stageTwoCoefficient = null;
+			}
+		}
+		final MultiCaseSolutionBuilder mcsb = new MultiCaseSolutionBuilder(subject, xnf);
 		final Collection<Case> cases = new ArrayList<>();
 		final Term[] divisorAsArray;
 		if (divisionByVariablesNecessary(abstractVarOfSubject)) {
