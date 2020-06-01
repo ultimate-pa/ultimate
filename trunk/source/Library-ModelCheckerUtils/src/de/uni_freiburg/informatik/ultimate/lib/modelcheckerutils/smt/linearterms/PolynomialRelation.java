@@ -477,9 +477,12 @@ public class PolynomialRelation implements IBinaryRelation {
 		}
 		Rational coeffOfSubject = mPolynomialTerm.getAbstractVariable2Coefficient().get(abstractVarOfSubject);
 		if (subjectIsNotAVariableButOccursInDivOrModSubterm && (coeffOfSubject == null)) {
+			if (!(allowedSubterm.getParameters()[1] instanceof ConstantTerm)) {
+				// divisor of div/mod is not a constant
+				return null;
+			}
 			final ConstantTerm coeffTerm = (ConstantTerm) allowedSubterm.getParameters()[1];
 			coeffOfSubject = SmtUtils.convertConstantTermToRational(coeffTerm);
-			// TODO if no constantTErm throw error or handle it
 		}
 		if (coeffOfSubject.equals(Rational.ZERO)) {
 			throw new AssertionError("no abstract variable must have coefficient zero");
