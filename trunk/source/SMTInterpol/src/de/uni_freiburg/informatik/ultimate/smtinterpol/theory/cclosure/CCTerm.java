@@ -225,20 +225,63 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 		assert mSharedTerm != this;
 		engine.getLogger().debug("CC-Share %s", this);
 
-		final CCTerm oldShared = mSharedTerm;
-		/* now go through the rep chain and switch out all pointers to oldShared with this term. */
+		/*
+		 * Find the old shared term, that would have been first merged with us, if this would have been shared earlier.
+		 * Also determine, if we or oldShared would have gone to the representative. And in term we compute the common
+		 * ancestor of oldShared and us.
+		 */
+		final CCTerm oldShared;
+		final boolean weWin;
 		CCTerm term = this;
-		while (term.mSharedTerm == oldShared) {
+		if (mSharedTerm != null) {
+			oldShared = mSharedTerm;
+			weWin = true;
+		} else {
+			/*
+			 * The descendants of this didn't have a shared term so far. We search for the first shared term in the
+			 * other part of the congruence class
+			 */
 			term.mSharedTerm = this;
-			term = term.mRep;
+			while (term.mRep.mSharedTerm == null) {
+				term = term.mRep;
+				/* so far, we are the only shared term in the congruence class */
+				term.mSharedTerm = this;
+			}
+			if (term != term.mRep) {
+				/* we found another shared term. Check which merge happened earlier */
+				final CCTerm rep = term.mRep;
+				assert rep.mSharedTerm != null;
+				oldShared = rep.mSharedTerm;
+				if (oldShared == rep) {
+					weWin = false;
+				} else {
+					CCTerm otherTerm = oldShared;
+					while (otherTerm.mRep != rep) {
+						otherTerm = otherTerm.mRep;
+					}
+					assert otherTerm.mRep == rep && term.mRep == rep;
+					assert otherTerm != term;
+					/* the sharedTerm that was merged first, wins */
+					weWin = term.mMergeTime < otherTerm.mMergeTime;
+				}
+				term = rep;
+			} else {
+				/* no other shared term found */
+				oldShared = null;
+				weWin = true;
+			}
 		}
-		// propagate the equality with oldShared and with term.mSharedTerm.
-		// TODO do we need both?
+		// propagate the equality with oldShared.
 		if (oldShared != null) {
+			/* update the remaining shared terms, if we win. */
+			if (weWin) {
+				/* we need to update exactly those, where oldShared was stored to */
+				while (term.mSharedTerm == oldShared) {
+					term.mSharedTerm = this;
+					term = term.mRep;
+				}
+			}
 			propagateSharedEquality(engine, oldShared);
-		}
-		if (term.mSharedTerm != this) {
-			propagateSharedEquality(engine, term.mSharedTerm);
 		}
 	}
 
@@ -255,6 +298,7 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 	 * @param otherSharedTerm
 	 */
 	private void propagateSharedEquality(final CClosure engine, final CCTerm otherSharedTerm) {
+		assert mRepStar == otherSharedTerm.mRepStar;
 		/* create equality formula.  This should never give TRUE or FALSE,
 		 * as sterm is a newly shared term, which must be linear independent
 		 * of all previously created terms.
@@ -265,9 +309,15 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 			engine.getLogger().debug("PL: %s", cceq);
 		}
 		if (cceq.getDecideStatus() == null) {
-			engine.addPending(cceq);
+			/* Creating the CCEquality should already propagate it, if it is true */
+			assert engine.mPendingLits.contains(cceq);
 		} else if (cceq.getLASharedData().getDecideStatus() == null) {
+			assert cceq.getDecideStatus() == cceq;
+			/*
+			 * Creating an LAEquality doesn't automatically propagate it, though, if the CCEquality is already decided
+			 */
 			engine.addPending(cceq.getLASharedData());
+			engine.mRecheckOnBacktrackLits.add(cceq);
 		}
 	}
 
@@ -583,6 +633,7 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 		mEqualEdge = null;
 		mOldRep = null;
 		dest = mRepStar;
+		assert src.mRep == dest;
 		dest.mCCPars.unmergeParentInfo(src.mCCPars);
 		// Congruence merge
 		if (src.mReasonLiteral == null) {

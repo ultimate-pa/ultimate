@@ -1097,8 +1097,14 @@ public class CClosure implements ITheory {
 		for (final Literal l : mRecheckOnBacktrackLits) {
 			final CCEquality eq = (CCEquality) l.getAtom();
 			if (eq.getDecideStatus() != null) {
-				/* we did not yet backtrack the literal; keep it for later */
+				/* We did not yet backtrack the literal; keep it for later */
 				newRecheckOnBacktrackLits.add(l);
+				/* It may have an LAEquality that was backtracked. Then we need to propagate the LAEquality. */
+				final LAEquality laeq = eq.getLASharedData();
+				if (laeq != null && laeq.getDecideStatus() == null) {
+					getLogger().debug("repropagating LAEQ: %s -> %s", eq, laeq);
+					mPendingLits.add(l == eq ? laeq : laeq.negate());
+				}
 				continue;
 			}
 			final CCTerm lhs = eq.getLhs().getRepresentative();
@@ -1116,7 +1122,7 @@ public class CClosure implements ITheory {
 			}
 			/* repropagate the literal by adding it to the pending literals. */
 			if (repropagate) {
-				getLogger().debug("CC-Prop: %s", l);
+				getLogger().debug("CC-ReProp: %s", l);
 				mPendingLits.add(l);
 				newRecheckOnBacktrackLits.add(l);
 			}

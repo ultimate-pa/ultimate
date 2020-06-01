@@ -989,6 +989,7 @@ public class ArrayTheory implements ITheory {
 			mConsts.add((CCAppTerm) array);
 		}
 		mArrays.add(array);
+		cleanCaches();
 	}
 
 	public void notifyDiff(final CCAppTerm diff) {
@@ -1443,7 +1444,7 @@ public class ArrayTheory implements ITheory {
 		return mConsts.contains(term);
 	}
 
-	private void cleanCaches() {
+	public void cleanCaches() {
 		mCongRoots = null;
 		mPropClauses.clear();
 	}

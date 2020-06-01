@@ -1,0 +1,13 @@
+(set-logic UF)
+(declare-fun v3 () Bool)
+(declare-fun v4 () Bool)
+(declare-fun v5 () Bool)
+(declare-fun v14 () Bool)
+(push 1)
+(assert (xor v14 v4 v5 v3))
+(declare-fun v21 () Bool)
+(assert (or (forall ((q12 Bool) (q13 Bool) (q14 Bool) (q15 Bool)) (not (or q13 q12 q15 q15 q13 v21 q14 q13))) (exists ((q12 Bool) (q13 Bool) (q14 Bool) (q15 Bool)) (not (= v14 q15 (xor v14 v4 v5 v3) q13 q13)))))
+(pop 1)
+(assert (forall ((q54 Bool)) (not (= v14 q54 q54 v4 q54 (xor v3 v5) q54))))
+(check-sat)
+

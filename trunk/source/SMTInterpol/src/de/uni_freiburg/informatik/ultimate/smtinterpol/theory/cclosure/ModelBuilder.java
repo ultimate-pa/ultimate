@@ -47,6 +47,10 @@ public class ModelBuilder {
 			}
 			mArgs[mNextPos++] = arg;
 		}
+
+		public int getLastArg() {
+			return mArgs[0];
+		}
 		public int[] toArray() {
 			final int[] res = new int[mNextPos];
 			int pos = 0;
@@ -141,6 +145,11 @@ public class ModelBuilder {
 		}
 	}
 
+	private static boolean isDivision(final FunctionSymbol fs) {
+		final String name = fs.getName();
+		return name == "/" || name == "div" || name == "mod";
+	}
+
 	private void addApp(final Model model, final CCAppTerm app, final int value, final Theory t) {
 		final ArgHelper args = new ArgHelper();
 		CCTerm walk = app;
@@ -154,7 +163,8 @@ public class ModelBuilder {
 		final CCBaseTerm base = (CCBaseTerm) walk;
 		if (base.isFunctionSymbol()) {
 			final FunctionSymbol fs = base.getFunctionSymbol();
-			if (!fs.isIntern()) {
+			if (!fs.isIntern() ||
+					(isDivision(fs) && model.getNumericSortInterpretation().get(args.getLastArg()) == Rational.ZERO)) {
 				model.map(fs, args.toArray(), value);
 			}
 		}

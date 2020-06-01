@@ -345,7 +345,7 @@ public class InstantiationManager {
 				if (qLit.isArithmetical()) { // will be treated later
 					arithLits.add(qLit);
 				} else if (mEMatching.isUsingEmatching(qLit)) {
-					Dawg<Term, InstantiationInfo> litDawg = computeEMatchingLitDawg(qLit);
+					final Dawg<Term, InstantiationInfo> litDawg = computeEMatchingLitDawg(qLit);
 					clauseDawg = clauseDawg.combine(litDawg, combinator);
 				} else {
 					unknownLits.add(qLit);
@@ -606,7 +606,8 @@ public class InstantiationManager {
 				if (val != mDefaultValueForLitDawgs) {
 					partialSubs.set(varPosInClause, subs);
 					final Dawg<Term, InstantiationInfo> remainderDawgForVarSub =
-							Dawg.createConst(remainderDawgLengthForVar, new InstantiationInfo(val, partialSubs));
+							Dawg.createConst(remainderDawgLengthForVar,
+									new InstantiationInfo(val, new ArrayList<>(partialSubs)));
 					transitionsFromVar.put(subs, remainderDawgForVarSub);
 				}
 				mQuantTheory.addDawgTime(System.nanoTime() - time);

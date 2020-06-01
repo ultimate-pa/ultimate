@@ -110,6 +110,9 @@ public class Clausifier {
 				} else {
 					if (needCCTerm(mTerm)) {
 						final FunctionSymbol fs = ((ApplicationTerm) mTerm).getFunction();
+						if (fs.isIntern() && fs.getName() == "select") {
+							mArrayTheory.cleanCaches();
+						}
 						mOps.push(new SaveCCTerm(mTerm));
 						final ApplicationTerm at = (ApplicationTerm) mTerm;
 						final Term[] args = at.getParameters();

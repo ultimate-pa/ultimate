@@ -22,12 +22,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 
-import org.eclipse.core.runtime.FileLocator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,45 +40,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SolverOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
-import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 @RunWith(Parameterized.class)
 public class SystemTest {
-
-	public File mFile;
-
-	public SystemTest(final File file) {
-		mFile = file;
-	}
-
-	@Test
-	public void testSystem() throws FileNotFoundException {
-		performTest();
-	}
-
-	@Parameters
-	public static Collection<File> testFiles() throws URISyntaxException, FileNotFoundException {
-		final Collection<File> testFiles = new ArrayList<>();
-		final File f = ReflectionUtil.getClassFolder(SystemTest.class, FileLocator::toFileURL);
-		if (f == null) {
-			throw new AssertionError("Could not find test file folder");
-		}
-
-		final File testDir = new File(f.getParentFile().getParentFile(), "test");
-		assert testDir.exists();
-		final ArrayDeque<File> todo = new ArrayDeque<>();
-		todo.add(testDir);
-		while (!todo.isEmpty()) {
-			final File file = todo.removeFirst();
-			if (file.isDirectory()) {
-				todo.addAll(Arrays.asList(file.listFiles()));
-			} else if (file.getName().endsWith(".smt2") && !file.getName().endsWith(".msat.smt2")
-					&& shouldExecute(file)) {
-				testFiles.add(file);
-			}
-		}
-		return testFiles;
-	}
 
 	private void performTest() throws SMTLIBException, FileNotFoundException {
 		final File f = mFile;
@@ -98,7 +61,7 @@ public class SystemTest {
 		if (f.getAbsolutePath().contains("test" + File.separatorChar + "epr")) {
 			solver.setOption(SolverOptions.EPR, true);
 		}
-		testEnv.parseStream(new FileReader(f), "TestStream");
+		testEnv.parseStream(new FileReader(f), f.getName());
 		testEnv.checkExpected();
 	}
 
@@ -130,7 +93,44 @@ public class SystemTest {
 		return true;
 	}
 
-	private final class TestEnvironment extends ParseEnvironment {
+	@Parameters // (name = "{0}")
+	public static Collection<File> testFiles() throws URISyntaxException, FileNotFoundException {
+		final Collection<File> testFiles = new ArrayList<>();
+
+		final String name = SystemTest.class.getPackage().getName();
+		final URL url = SystemTest.class.getClassLoader().getResource(name);
+		final File f = new File(url.toURI());
+		final File testDir = new File(f.getParentFile().getParentFile(), "test");
+		assert testDir.exists();
+		final ArrayDeque<File> todo = new ArrayDeque<>();
+		todo.add(testDir);
+		while (!todo.isEmpty()) {
+			final File file = todo.removeFirst();
+			if (file.isDirectory()) {
+				for (final File subFile : file.listFiles()) {
+					todo.add(subFile);
+				}
+			} else if (file.getName().endsWith(".smt2") && !file.getName().endsWith(".msat.smt2")) {
+				if (shouldExecute(file)) {
+					testFiles.add(file);
+				}
+			}
+		}
+		return testFiles;
+	}
+
+	public File mFile;
+
+	public SystemTest(final File file) {
+		mFile = file;
+	}
+
+	@Test
+	public void testSystem() throws FileNotFoundException {
+		performTest();
+	}
+
+	class TestEnvironment extends ParseEnvironment {
 		int mExpectedErrors = 0;
 		int mExpectedUnsupported = 0;
 
@@ -168,21 +168,21 @@ public class SystemTest {
 
 		@Override
 		public void printError(final String message) {
-			Assert.assertTrue(mFile.getAbsolutePath() + ": " + message, mExpectedErrors > 0);
 			mExpectedErrors--;
+			super.printError(message);
 		}
 
 		@Override
 		public void printResponse(final Object response) {
 			if ("unsupported".equals(response)) {
-				Assert.assertTrue(mFile.getAbsolutePath() + ": " + "unsupported", mExpectedUnsupported > 0);
 				mExpectedUnsupported--;
 			}
 			super.printResponse(response);
 		}
 
 		public void checkExpected() {
-			Assert.assertTrue("Expected errors did not occur", mExpectedErrors == 0 && mExpectedUnsupported == 0);
+			Assert.assertTrue(mFile.getAbsolutePath() + ": Unexpected error or unsupported results", mExpectedErrors >= 0 && mExpectedUnsupported >= 0);
+			Assert.assertTrue(mFile.getAbsolutePath() + ": Too few error or unsupported results", mExpectedErrors <= 0 && mExpectedUnsupported <= 0);
 		}
 	}
 }
