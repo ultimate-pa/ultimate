@@ -475,7 +475,8 @@ public class PolynomialRelation implements IBinaryRelation {
 				return null;
 			}
 		}
-		Rational coeffOfSubject = mPolynomialTerm.getAbstractVariable2Coefficient().get(abstractVarOfSubject);
+//		Rational coeffOfSubject = mPolynomialTerm.getAbstractVariable2Coefficient().get(abstractVarOfSubject);
+		final Rational divisor;
 		if (subjectIsNotAVariableButOccursInDivOrModSubterm && (coeffOfSubject == null)) {
 			if (!(allowedSubterm.getParameters()[1] instanceof ConstantTerm)) {
 				// divisor of div/mod is not a constant
@@ -487,7 +488,7 @@ public class PolynomialRelation implements IBinaryRelation {
 				return null;
 			}
 			final ConstantTerm coeffTerm = (ConstantTerm) allowedSubterm.getParameters()[1];
-			coeffOfSubject = SmtUtils.convertConstantTermToRational(coeffTerm);
+			divisor = SmtUtils.convertConstantTermToRational(coeffTerm);
 		}
 		if (coeffOfSubject.equals(Rational.ZERO)) {
 			throw new AssertionError("no abstract variable must have coefficient zero");
@@ -534,7 +535,7 @@ public class PolynomialRelation implements IBinaryRelation {
 				final TermVariable auxMod = script.variable("aux_mod_" + recVarName, termSort);
 
 				final Term multiplication = SmtUtils.mul(script, termSort,
-						SmtUtils.rational2Term(script, coeffOfSubject, termSort), auxDiv);
+						SmtUtils.rational2Term(script, divisor, termSort), auxDiv);
 				final Term sum = SmtUtils.sum(script, termSort, auxMod, multiplication);
 
 				final AbstractGeneralizedAffineTerm recursion = (AbstractGeneralizedAffineTerm) new AffineTermTransformer(
@@ -581,7 +582,7 @@ public class PolynomialRelation implements IBinaryRelation {
 						IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 
 				// construct SupportingTerm (aux_mod < k)
-				final Term auxModLessCoefTerm = SmtUtils.less(script, auxMod, coeffOfSubject.toTerm(termSort));
+				final Term auxModLessCoefTerm = SmtUtils.less(script, auxMod, divisor.toTerm(termSort));
 				final SupportingTerm auxModLessCoef = new SupportingTerm(auxModLessCoefTerm,
 						IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 
