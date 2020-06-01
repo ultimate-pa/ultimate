@@ -475,7 +475,7 @@ public class PolynomialRelation implements IBinaryRelation {
 				return null;
 			}
 		}
-//		Rational coeffOfSubject = mPolynomialTerm.getAbstractVariable2Coefficient().get(abstractVarOfSubject);
+		final Rational coeffOfSubject = mPolynomialTerm.getAbstractVariable2Coefficient().get(abstractVarOfSubject);
 		final Rational divisor;
 		if (subjectIsNotAVariableButOccursInDivOrModSubterm && (coeffOfSubject == null)) {
 			if (!(allowedSubterm.getParameters()[1] instanceof ConstantTerm)) {
