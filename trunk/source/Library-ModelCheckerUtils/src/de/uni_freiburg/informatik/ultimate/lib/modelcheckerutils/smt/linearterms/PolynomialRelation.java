@@ -475,8 +475,7 @@ public class PolynomialRelation implements IBinaryRelation {
 				// (the number of parameters for mod is limited by the SMT-LIB standard)
 				return null;
 			}
-			final ConstantTerm coeffTerm = (ConstantTerm) allowedSubterm.getParameters()[1];
-			final Rational divisor = SmtUtils.convertConstantTermToRational(coeffTerm);
+			final Term divisor = allowedSubterm.getParameters()[1];
 			if (subjectIsNotAVariableButOccursInDivOrModSubterm) {
 				// Solve for subject in affineterm with a parameter of form (mod/div (subterm
 				// with subject) constant)
@@ -487,8 +486,7 @@ public class PolynomialRelation implements IBinaryRelation {
 				final TermVariable auxDiv = script.variable("aux_div_" + recVarName, termSort);
 				final TermVariable auxMod = script.variable("aux_mod_" + recVarName, termSort);
 
-				final Term multiplication = SmtUtils.mul(script, termSort,
-						SmtUtils.rational2Term(script, divisor, termSort), auxDiv);
+				final Term multiplication = SmtUtils.mul(script, termSort, divisor, auxDiv);
 				final Term sum = SmtUtils.sum(script, termSort, auxMod, multiplication);
 
 				final MultiCaseSolutionBuilder mcsb = new MultiCaseSolutionBuilder(subject, xnf);
@@ -536,7 +534,7 @@ public class PolynomialRelation implements IBinaryRelation {
 						IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 
 				// construct SupportingTerm (aux_mod < k)
-				final Term auxModLessCoefTerm = SmtUtils.less(script, auxMod, divisor.toTerm(termSort));
+				final Term auxModLessCoefTerm = SmtUtils.less(script, auxMod, divisor);
 				final SupportingTerm auxModLessCoef = new SupportingTerm(auxModLessCoefTerm,
 						IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 
