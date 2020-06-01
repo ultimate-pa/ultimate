@@ -22,11 +22,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.eclipse.core.runtime.FileLocator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SolverOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 @RunWith(Parameterized.class)
 public class SystemTest {
@@ -97,9 +98,7 @@ public class SystemTest {
 	public static Collection<File> testFiles() throws URISyntaxException, FileNotFoundException {
 		final Collection<File> testFiles = new ArrayList<>();
 
-		final String name = SystemTest.class.getPackage().getName();
-		final URL url = SystemTest.class.getClassLoader().getResource(name);
-		final File f = new File(url.toURI());
+		final File f = ReflectionUtil.getClassFolder(SystemTest.class, FileLocator::toFileURL);
 		final File testDir = new File(f.getParentFile().getParentFile(), "test");
 		assert testDir.exists();
 		final ArrayDeque<File> todo = new ArrayDeque<>();
@@ -181,8 +180,10 @@ public class SystemTest {
 		}
 
 		public void checkExpected() {
-			Assert.assertTrue(mFile.getAbsolutePath() + ": Unexpected error or unsupported results", mExpectedErrors >= 0 && mExpectedUnsupported >= 0);
-			Assert.assertTrue(mFile.getAbsolutePath() + ": Too few error or unsupported results", mExpectedErrors <= 0 && mExpectedUnsupported <= 0);
+			Assert.assertTrue(mFile.getAbsolutePath() + ": Unexpected error or unsupported results",
+					mExpectedErrors >= 0 && mExpectedUnsupported >= 0);
+			Assert.assertTrue(mFile.getAbsolutePath() + ": Too few error or unsupported results",
+					mExpectedErrors <= 0 && mExpectedUnsupported <= 0);
 		}
 	}
 }
