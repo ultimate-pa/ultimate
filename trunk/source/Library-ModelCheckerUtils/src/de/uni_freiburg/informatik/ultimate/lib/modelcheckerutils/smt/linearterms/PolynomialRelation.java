@@ -481,6 +481,11 @@ public class PolynomialRelation implements IBinaryRelation {
 				// divisor of div/mod is not a constant
 				return null;
 			}
+			if (allowedSubterm.getParameters().length > 1) {
+				// here, we do not yet support div with more than two parameters
+				// (the number of parameters for mod is limited by the SMT-LIB standard)
+				return null;
+			}
 			final ConstantTerm coeffTerm = (ConstantTerm) allowedSubterm.getParameters()[1];
 			coeffOfSubject = SmtUtils.convertConstantTermToRational(coeffTerm);
 		}
