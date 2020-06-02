@@ -498,14 +498,14 @@ public class PolynomialRelation implements IBinaryRelation {
 							.solveForSubject(script, subject, xnf);
 					final SupportingTerm recSupTerm = new SupportingTerm(mcsbr.asTerm(script),
 							IntricateOperation.MUL_BY_INTEGER_CONSTANT, mcsbr.getAuxiliaryVariables());
-					mcsb.conjoinWithConjunction(recSupTerm);
+					mcsb.addAtoms(recSupTerm);
 				} else {
 					// solve terms of form (mod (subterm) const) where subterm contains x but is no
 					// mod or div term
 					final SolvedBinaryRelation sbr = PolynomialRelation
 							.convert(script, SmtUtils.binaryEquality(script, allowedSubterm.getParameters()[0], sum))
 							.solveForSubject(script, subject);
-					mcsb.conjoinWithConjunction(sbr);
+					mcsb.addAtoms(sbr);
 				}
 
 				// construct SupportingTerm (t = aux_mod) or (t = aux_div)
@@ -537,7 +537,7 @@ public class PolynomialRelation implements IBinaryRelation {
 				final SupportingTerm auxModLessCoef = new SupportingTerm(auxModLessCoefTerm,
 						IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 
-				mcsb.conjoinWithConjunction(auxModLessCoef, auxEquals, auxModGreaterZero);
+				mcsb.addAtoms(auxModLessCoef, auxEquals, auxModGreaterZero);
 				final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
 					assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
 							result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
@@ -693,7 +693,7 @@ public class PolynomialRelation implements IBinaryRelation {
 					divisorAsArray);
 			cases.add(result);
 		}
-		mcsb.conjoinWithDnf(cases);
+		mcsb.splitCases(cases);
 
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
 		if (!subjectIsNotAVariableButOccursInDivOrModSubterm) {

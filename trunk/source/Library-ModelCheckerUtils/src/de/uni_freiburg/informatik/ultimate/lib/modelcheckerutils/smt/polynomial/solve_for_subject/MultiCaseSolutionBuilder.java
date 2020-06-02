@@ -64,73 +64,39 @@ public class MultiCaseSolutionBuilder {
 		mAdditionalIntricateOperations = new HashSet<IntricateOperation>();
 	}
 
-	public void conjoinWithConjunction(final Object... newConjuncts) {
+	/**
+	 * Add new atoms to each case. If there is not yet a case, a new case will take
+	 * the atoms is constructed.
+	 */
+	public void addAtoms(final Object... newAtoms) {
 		if (mConstructionFinished) {
 			throw new IllegalStateException("construction already finished");
 		}
-		switch (mXnf) {
-		case CNF:
-			mCases.addAll(buildSingletonCases(newConjuncts));
-			break;
-		case DNF:
-			if (mCases.isEmpty()) {
-				mCases.add(new Case(null, Collections.emptySet(), mXnf));
-			}
-			mCases = buildCopyAndAddToEachCase(mCases, buildCase(newConjuncts));
-			break;
-		default:
-			throw new AssertionError();
+		if (mCases.isEmpty()) {
+			mCases.add(new Case(null, Collections.emptySet(), mXnf));
 		}
-	}
-
-	public void conjoinWithDisjunction(final Object... disjunction) {
-		if (mConstructionFinished) {
-			throw new IllegalStateException("construction already finished");
-		}
-		switch (mXnf) {
-		case CNF:
-			mCases.add(buildCase(disjunction));
-			break;
-		case DNF:
-			if (mCases.isEmpty()) {
-				mCases.add(new Case(null, Collections.emptySet(), mXnf));
-			}
-			mCases = buildProduct(mCases, disjunction);
-			break;
-		default:
-			throw new AssertionError();
-		}
+		mCases = buildCopyAndAddToEachCase(mCases, buildCase(newAtoms));
 	}
 
 	/**
-	 * Let the {@link MultiCaseSolutionBuilder} store the conjunction of its
-	 * current content and the input of this method. The input of this method is
-	 * a disjunctive normal form (DNF) given as a collection of collections. The
-	 * inner collections represent conjunctions the outer collection represents
-	 * a disjunction of these conjunctions.
+	 * Take the cases that we already have and split them furthermore according to
+	 * the new cases. This means that if there are n new cases, each old case will
+	 * be split n times. For DNFs this corresponds to taking the conjunction of two
+	 * DNFs.
 	 */
-	public void conjoinWithDnf(final Collection<Case> dnf) {
+	public void splitCases(final Collection<Case> newCases) {
 		if (mConstructionFinished) {
 			throw new IllegalStateException("construction already finished");
 		}
-//		switch (mXnf) {
-//		case CNF:
-//			throw new UnsupportedOperationException("not yet implemented");
-//		case DNF:
-			final List<Case> resultCases = new ArrayList<Case>();
-			for (final Case conjunction : dnf) {
-				if (mCases.isEmpty()) {
-					resultCases.add(conjunction);
-				}else {
-					resultCases.addAll(buildCopyAndAddToEachCase(mCases, conjunction));
-				}
+		final List<Case> resultCases = new ArrayList<Case>();
+		for (final Case newCase : newCases) {
+			if (mCases.isEmpty()) {
+				resultCases.add(newCase);
+			} else {
+				resultCases.addAll(buildCopyAndAddToEachCase(mCases, newCase));
 			}
-			mCases = resultCases;
-//			break;
-//		default:
-//			throw new AssertionError();
-//		}
-
+		}
+		mCases = resultCases;
 	}
 
 	private static List<List<?>> convertDnfToCnf(final List<List<?>> dnf) {
