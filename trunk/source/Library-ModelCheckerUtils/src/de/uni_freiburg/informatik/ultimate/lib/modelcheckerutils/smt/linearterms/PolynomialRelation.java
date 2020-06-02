@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -466,16 +467,14 @@ public class PolynomialRelation implements IBinaryRelation {
 		}
 
 		if (subjectIsNotAVariableButOccursInDivOrModSubterm) {
-			if (!(allowedSubterm.getParameters()[1] instanceof ConstantTerm)) {
+			if (!tailIsConstant(Arrays.asList(allowedSubterm.getParameters()))) {
 				// divisor of div/mod is not a constant
+				// note that the number of parameters for mod is limited by the SMT-LIB standard
 				return null;
 			}
-			if (allowedSubterm.getParameters().length > 2) {
-				// here, we do not yet support div with more than two parameters
-				// (the number of parameters for mod is limited by the SMT-LIB standard)
-				return null;
-			}
-			final Term divisor = allowedSubterm.getParameters()[1];
+			final Term divisor = SmtUtils.mul(script, "*",
+					Arrays.copyOfRange(allowedSubterm.getParameters(), 1, allowedSubterm.getParameters().length));
+			assert (divisor instanceof ConstantTerm) : "not constant";
 			if (subjectIsNotAVariableButOccursInDivOrModSubterm) {
 				// Solve for subject in affineterm with a parameter of form (mod/div (subterm
 				// with subject) constant)
@@ -702,6 +701,21 @@ public class PolynomialRelation implements IBinaryRelation {
 					result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		}
 		return result;
+	}
+
+	/**
+	 * @return true iff all params starting from index 1 are {@link ConstantTerm}s.
+	 */
+	private boolean tailIsConstant(final List<Term> parameters) {
+		assert parameters.size() > 1;
+		final Iterator<Term> it = parameters.iterator();
+		it.next();
+		while (it.hasNext()) {
+			if (!(it.next() instanceof ConstantTerm)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private RelationSymbol negateForCnf(final RelationSymbol symb, final Xnf xnf) {

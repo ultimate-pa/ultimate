@@ -653,6 +653,13 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
+	public void relationIntMultiParamDivEq() throws NotAffineException {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
+		final String inputSTR = "(= (div x 2 2 3) eq )";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	@Test
 	public void relationIntRecModSimplifyEq() throws NotAffineException {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (mod (mod x 3) 3) eq )";
