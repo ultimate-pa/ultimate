@@ -534,7 +534,14 @@ public final class SmtUtils {
 	 */
 	public static Term mul(final Script script, final String funcname, final Term... factors) {
 		assert "*".equals(funcname) || "bvmul".equals(funcname);
-		final Term product = script.term(funcname, factors);
+		final Term product;
+		if (factors.length == 0) {
+			throw new UnsupportedOperationException("Method does not support empty factors.");
+		} else if (factors.length == 1) {
+			product = factors[0];
+		} else {
+			product = script.term(funcname, factors);
+		}
 		final AffineTerm affine = (AffineTerm) new AffineTermTransformer(script).transform(product);
 		if (affine.isErrorTerm()) {
 			return product;
