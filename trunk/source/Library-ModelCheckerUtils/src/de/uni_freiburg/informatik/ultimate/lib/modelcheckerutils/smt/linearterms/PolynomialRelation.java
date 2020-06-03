@@ -489,25 +489,14 @@ public class PolynomialRelation implements IBinaryRelation {
 				final Term sum = SmtUtils.sum(script, termSort, auxMod, multiplication);
 
 				final MultiCaseSolutionBuilder mcsb = new MultiCaseSolutionBuilder(subject, xnf);
-				final AbstractGeneralizedAffineTerm recursion = (AbstractGeneralizedAffineTerm) new AffineTermTransformer(
-						script).transform(allowedSubterm.getParameters()[0]);
-				final Term subtermSumComparison = SmtUtils.binaryEquality(script, allowedSubterm.getParameters()[0], sum);
-				if (!recursion.isVariable(subject)) {
-					// recursiv call for terms of form: "(mod ...(mod subject const1)... const 2)"
-					final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation
-							.convert(script, subtermSumComparison)
-							.solveForSubject(script, subject, xnf);
-					final SupportingTerm recSupTerm = new SupportingTerm(mcsbr.asTerm(script),
-							IntricateOperation.MUL_BY_INTEGER_CONSTANT, mcsbr.getAuxiliaryVariables());
-					mcsb.addAtoms(recSupTerm);
-				} else {
-					// solve terms of form (mod (subterm) const) where subterm contains x but is no
-					// mod or div term
-					final SolvedBinaryRelation sbr = PolynomialRelation
-							.convert(script, subtermSumComparison)
-							.solveForSubject(script, subject);
-					mcsb.addAtoms(sbr);
-				}
+				final Term subtermSumComparison = SmtUtils.binaryEquality(script, allowedSubterm.getParameters()[0],
+						sum);
+				// recursiv call for terms of form: "(mod ...(mod subject const1)... const 2)"
+				final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.convert(script, subtermSumComparison)
+						.solveForSubject(script, subject, xnf);
+				final SupportingTerm recSupTerm = new SupportingTerm(mcsbr.asTerm(script),
+						IntricateOperation.MUL_BY_INTEGER_CONSTANT, mcsbr.getAuxiliaryVariables());
+				mcsb.addAtoms(recSupTerm);
 
 				// construct SupportingTerm (t = aux_mod) or (t = aux_div)
 				final Set<TermVariable> setAuxVars = new HashSet<>();
