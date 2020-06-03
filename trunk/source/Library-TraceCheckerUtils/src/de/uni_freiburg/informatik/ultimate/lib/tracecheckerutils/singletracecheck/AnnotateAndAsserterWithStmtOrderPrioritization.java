@@ -93,14 +93,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndAsserter {
 
-	public enum PartitionStrategy {
-		RANDOM_INCREMENTAL, RANDOM_UNIFORM_DISTRIBUTED, UNIFORM_DISTRIBUTED, INCREMENTAL
-	}
-
 	private final AssertCodeBlockOrder mAssertCodeBlocksOrder;
 	private int mCheckSat;
 	private final ScoringMethod mAssertCodeBlockOrderSMTFeatureScoringMethod;
-	private final PartitionStrategy mAssertCodeBlockOrderPartitionStrategy;
 	private final int mAssertCodeBlockOrderNumPartitions;
 
 	public AnnotateAndAsserterWithStmtOrderPrioritization(final ManagedScript mgdScriptTc,
@@ -113,7 +108,6 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 		// TODO: Settings for this Hardcoded stuff
 		mAssertCodeBlockOrderSMTFeatureScoringMethod = ScoringMethod.NUM_FUNCTIONS;
-		mAssertCodeBlockOrderPartitionStrategy = PartitionStrategy.INCREMENTAL;
 		mAssertCodeBlockOrderNumPartitions = 4;
 	}
 
@@ -455,7 +449,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		return new LinkedHashSet<Integer>(indices);
 	}
 
-	private void addPartitionsIncremental(final LinkedHashSet<LinkedHashSet<Integer>> partitions,
+	private void partitionEven(final LinkedHashSet<LinkedHashSet<Integer>> partitions,
 			final List<Triple<Term, Double, Integer>> termScoreIndexTriples, final boolean random) {
 
 		// The incremental Strategy creates N partitions.
@@ -468,8 +462,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 		final LinkedHashSet<Integer> indices = getIndices(termScoreIndexTriples, random);
 
-		final double incremental_percentage = 1.0 / mAssertCodeBlockOrderNumPartitions;
-		final int incremental_chunksize = (int) Math.ceil(termScoreIndexTriples.size() * incremental_percentage);
+		final int chunksize =
+				(int) Math.ceil(termScoreIndexTriples.size() * (1.0 / mAssertCodeBlockOrderNumPartitions));
 
 		LinkedHashSet<Integer> current_chunk = new LinkedHashSet<Integer>();
 		LinkedHashSet<Integer> last_chunk = new LinkedHashSet<Integer>();
@@ -479,7 +473,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		for (final int index : indices) {
 			current_chunk.add(index);
 			numProcessed += 1;
-			if (current_chunk.size() == incremental_chunksize || numProcessed == indices.size()) {
+			if (current_chunk.size() == chunksize || numProcessed == indices.size()) {
 				last_chunk = new LinkedHashSet<Integer>(current_chunk);
 				partitions.add(last_chunk);
 				current_chunk = new LinkedHashSet<Integer>();
@@ -491,29 +485,13 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	private LinkedHashSet<LinkedHashSet<Integer>>
 			partitionStmtsAccordingToHeuristicValues(final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
 		final LinkedHashSet<LinkedHashSet<Integer>> partitions = new LinkedHashSet<LinkedHashSet<Integer>>();
-
-		if (mAssertCodeBlockOrderPartitionStrategy == PartitionStrategy.UNIFORM_DISTRIBUTED) {
-			// TODO
-
-		} else if (mAssertCodeBlockOrderPartitionStrategy == PartitionStrategy.INCREMENTAL) {
-
-			addPartitionsIncremental(partitions, termScoreIndexTriples, false);
-
-		} else if (mAssertCodeBlockOrderPartitionStrategy == PartitionStrategy.RANDOM_INCREMENTAL) {
-
-			addPartitionsIncremental(partitions, termScoreIndexTriples, true);
-
-		} else if (mAssertCodeBlockOrderPartitionStrategy == PartitionStrategy.RANDOM_UNIFORM_DISTRIBUTED) {
-			// TODO
-		}
-		// No matter which partition strategy is chosen, we always want one that contains the whole trace.
-		// partitions.add(getIndices(termScoreIndexTriples, false));
+		partitionEven(partitions, termScoreIndexTriples, false);
 		return partitions;
 	}
 
 	private LBool annotateAndAssertStmtsAccordingSMTFeatureHeuristic(final NestedWord<? extends IAction> trace,
 			final Collection<Integer> callPositions, final Collection<Integer> pendingReturnPositions) {
-		LBool sat = LBool.SAT;
+		LBool sat = LBool.UNKNOWN;
 		// Score Trace Terms and order them according to score.
 		final List<Triple<Term, Double, Integer>> termScoreTriples = ScoreTrace(trace);
 		final LinkedHashSet<LinkedHashSet<Integer>> partitions =
@@ -523,6 +501,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			mLogger.debug("TermScoreTriples: " + termScoreTriples.toString());
 			mLogger.debug("Partitions: " + partitions.toString());
 		}
+
+		assert partitions.size() > 0;
+
 		for (final LinkedHashSet<Integer> partition : partitions) {
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, partition);
 			countCheckSat();
