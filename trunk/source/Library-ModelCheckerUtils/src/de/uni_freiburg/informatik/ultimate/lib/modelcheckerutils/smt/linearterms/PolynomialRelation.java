@@ -488,15 +488,15 @@ public class PolynomialRelation implements IBinaryRelation {
 				final Term multiplication = SmtUtils.mul(script, termSort, divisor, auxDiv);
 				final Term sum = SmtUtils.sum(script, termSort, auxMod, multiplication);
 
-				final MultiCaseSolutionBuilder mcsb = new MultiCaseSolutionBuilder(subject, xnf);
-				final Term subtermSumComparison = SmtUtils.binaryEquality(script, allowedSubterm.getParameters()[0],
-						sum);
-				// recursiv call for terms of form: "(mod ...(mod subject const1)... const 2)"
-				final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.convert(script, subtermSumComparison)
-						.solveForSubject(script, subject, xnf);
-				final SupportingTerm recSupTerm = new SupportingTerm(mcsbr.asTerm(script),
-						IntricateOperation.MUL_BY_INTEGER_CONSTANT, mcsbr.getAuxiliaryVariables());
-				mcsb.addAtoms(recSupTerm);
+				final MultiCaseSolutionBuilder mcsb;
+				{
+					final Term subtermSumComparison = SmtUtils.binaryEquality(script, allowedSubterm.getParameters()[0],
+							sum);
+					// recursiv call for terms of form: "(mod ...(mod subject const1)... const 2)"
+					final MultiCaseSolvedBinaryRelation solvedComparison = PolynomialRelation
+							.convert(script, subtermSumComparison).solveForSubject(script, subject, xnf);
+					mcsb = solvedComparison.constructCopy();
+				}
 
 				// construct SupportingTerm (t = aux_mod) or (t = aux_div)
 				final Set<TermVariable> setAuxVars = new HashSet<>();

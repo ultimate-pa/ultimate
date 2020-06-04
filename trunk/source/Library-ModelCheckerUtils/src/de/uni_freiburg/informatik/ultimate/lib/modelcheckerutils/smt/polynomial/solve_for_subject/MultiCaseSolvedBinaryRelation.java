@@ -163,4 +163,17 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 		return result;
 	}
 
+
+	public MultiCaseSolutionBuilder constructCopy() {
+		final MultiCaseSolutionBuilder result = new MultiCaseSolutionBuilder(getSubject(), getXnf());
+		result.splitCases(getCases());
+		for (final TermVariable add : mAdditionalAuxiliaryVariables) {
+			result.reportAdditionalAuxiliaryVariable(add);
+		}
+		for (final IntricateOperation add : mAdditionalIntricateOperations) {
+			result.reportAdditionalIntricateOperation(add);
+		}
+		return result;
+	}
+
 }
