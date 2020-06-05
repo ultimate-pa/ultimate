@@ -492,13 +492,15 @@ public class PolynomialRelation implements IBinaryRelation {
 				{
 					final Term subtermSumComparison = SmtUtils.binaryEquality(script, allowedSubterm.getParameters()[0],
 							sum);
-					// recursiv call for terms of form: "(mod ...(mod subject const1)... const 2)"
+					// recursive call for (= divident[subject] (+ (* aux_div divisor) aux_mod))
 					final MultiCaseSolvedBinaryRelation solvedComparison = PolynomialRelation
 							.convert(script, subtermSumComparison).solveForSubject(script, subject, xnf);
 					mcsb = solvedComparison.constructCopy();
 				}
 
-				// construct SupportingTerm (t = aux_mod) or (t = aux_div)
+				// construct as SupportingTerm either
+				// (= (div divident[subject] divisor) aux_div) or
+				// (= (mod divident[subject] divisor) mod_div)
 				final Set<TermVariable> setAuxVars = new HashSet<>();
 				// substitute allowedSubterm with corresponding aux variable for terms of form
 				// (+ (mod/div subject const) const)
