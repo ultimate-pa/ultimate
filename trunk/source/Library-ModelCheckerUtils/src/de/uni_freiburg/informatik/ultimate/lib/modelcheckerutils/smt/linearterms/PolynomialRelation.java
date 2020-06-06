@@ -472,67 +472,7 @@ public class PolynomialRelation implements IBinaryRelation {
 				// note that the number of parameters for mod is limited by the SMT-LIB standard
 				return null;
 			}
-			final Term divisor = SmtUtils.mul(script, "*",
-					Arrays.copyOfRange(allowedSubterm.getParameters(), 1, allowedSubterm.getParameters().length));
-			assert (divisor instanceof ConstantTerm) : "not constant";
-			// Solve for subject in affineterm with a parameter of form (mod/div (subterm
-			// with subject) constant)
-			final Sort termSort = mPolynomialTerm.getSort();
-			// recVarName ensures different names in each recursion, since AffineRelation is
-			// made new each time
-			final int recVarName = allowedSubterm.toString().length();
-			final TermVariable auxDiv = script.variable("aux_div_" + recVarName, termSort);
-			final TermVariable auxMod = script.variable("aux_mod_" + recVarName, termSort);
-
-			final Term multiplication = SmtUtils.mul(script, termSort, divisor, auxDiv);
-			final Term sum = SmtUtils.sum(script, termSort, auxMod, multiplication);
-
-			final MultiCaseSolutionBuilder mcsb;
-			{
-				final Term subtermSumComparison = SmtUtils.binaryEquality(script, allowedSubterm.getParameters()[0],
-						sum);
-				// recursive call for (= divident[subject] (+ (* aux_div divisor) aux_mod))
-				final MultiCaseSolvedBinaryRelation solvedComparison = PolynomialRelation
-						.convert(script, subtermSumComparison).solveForSubject(script, subject, xnf);
-				mcsb = solvedComparison.constructCopy();
-			}
-
-			// construct as SupportingTerm either
-			// (= (div divident[subject] divisor) aux_div) or
-			// (= (mod divident[subject] divisor) mod_div)
-			final Set<TermVariable> setAuxVars = new HashSet<>();
-			// substitute allowedSubterm with corresponding aux variable for terms of form
-			// (+ (mod/div subject const) const)
-			final Map<Term, Term> submap = new HashMap<>();
-			if (allowedSubterm.getFunction().getName().contentEquals("mod")) {
-				submap.put(allowedSubterm, auxMod);
-				setAuxVars.add(auxMod);
-				mcsb.reportAdditionalAuxiliaryVariable(auxDiv);
-			} else if (allowedSubterm.getFunction().getName().contentEquals("div")) {
-				setAuxVars.add(auxDiv);
-				submap.put(allowedSubterm, auxDiv);
-			}
-			final Substitution sub = new Substitution(script, submap);
-			final Term auxModEqualsTerm = sub.transform(this.positiveNormalForm(script));
-			final SupportingTerm auxEquals = new SupportingTerm(auxModEqualsTerm,
-					IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
-			setAuxVars.add(auxMod);
-
-			// construct SupportingTerm (0<=aux_mod)
-			final Term auxModGreaterZeroTerm = SmtUtils.geq(script, auxMod, Rational.ZERO.toTerm(termSort));
-			final SupportingTerm auxModGreaterZero = new SupportingTerm(auxModGreaterZeroTerm,
-					IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
-
-			// construct SupportingTerm (aux_mod < k)
-			final Term auxModLessCoefTerm = SmtUtils.less(script, auxMod, divisor);
-			final SupportingTerm auxModLessCoef = new SupportingTerm(auxModLessCoefTerm,
-					IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
-
-			mcsb.addAtoms(auxModLessCoef, auxEquals, auxModGreaterZero);
-			final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
-			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
-					result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
-			return result;
+			return handleSubjectInDivModSubterm(script, subject, xnf, allowedSubterm);
 		}
 
 		final Term abstractVarOfSubject = getTheAbstractVarOfSubject(subject);
@@ -687,6 +627,71 @@ public class PolynomialRelation implements IBinaryRelation {
 			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
 					result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		}
+		return result;
+	}
+
+	private MultiCaseSolvedBinaryRelation handleSubjectInDivModSubterm(final Script script, final Term subject,
+			final MultiCaseSolvedBinaryRelation.Xnf xnf, ApplicationTerm divModSubterm) {
+		final Term divisor = SmtUtils.mul(script, "*",
+				Arrays.copyOfRange(divModSubterm.getParameters(), 1, divModSubterm.getParameters().length));
+		assert (divisor instanceof ConstantTerm) : "not constant";
+		// Solve for subject in affineterm with a parameter of form (mod/div (subterm
+		// with subject) constant)
+		final Sort termSort = mPolynomialTerm.getSort();
+		// recVarName ensures different names in each recursion, since AffineRelation is
+		// made new each time
+		final int recVarName = divModSubterm.toString().length();
+		final TermVariable auxDiv = script.variable("aux_div_" + recVarName, termSort);
+		final TermVariable auxMod = script.variable("aux_mod_" + recVarName, termSort);
+
+		final Term multiplication = SmtUtils.mul(script, termSort, divisor, auxDiv);
+		final Term sum = SmtUtils.sum(script, termSort, auxMod, multiplication);
+
+		final MultiCaseSolutionBuilder mcsb;
+		{
+			final Term subtermSumComparison = SmtUtils.binaryEquality(script, divModSubterm.getParameters()[0],
+					sum);
+			// recursive call for (= divident[subject] (+ (* aux_div divisor) aux_mod))
+			final MultiCaseSolvedBinaryRelation solvedComparison = PolynomialRelation
+					.convert(script, subtermSumComparison).solveForSubject(script, subject, xnf);
+			mcsb = solvedComparison.constructCopy();
+		}
+
+		// construct as SupportingTerm either
+		// (= (div divident[subject] divisor) aux_div) or
+		// (= (mod divident[subject] divisor) mod_div)
+		final Set<TermVariable> setAuxVars = new HashSet<>();
+		// substitute allowedSubterm with corresponding aux variable for terms of form
+		// (+ (mod/div subject const) const)
+		final Map<Term, Term> submap = new HashMap<>();
+		if (divModSubterm.getFunction().getName().contentEquals("mod")) {
+			submap.put(divModSubterm, auxMod);
+			setAuxVars.add(auxMod);
+			mcsb.reportAdditionalAuxiliaryVariable(auxDiv);
+		} else if (divModSubterm.getFunction().getName().contentEquals("div")) {
+			setAuxVars.add(auxDiv);
+			submap.put(divModSubterm, auxDiv);
+		}
+		final Substitution sub = new Substitution(script, submap);
+		final Term auxModEqualsTerm = sub.transform(this.positiveNormalForm(script));
+		final SupportingTerm auxEquals = new SupportingTerm(auxModEqualsTerm,
+				IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
+		setAuxVars.add(auxMod);
+
+		// construct SupportingTerm (0<=aux_mod)
+		final Term auxModGreaterZeroTerm = SmtUtils.geq(script, auxMod, Rational.ZERO.toTerm(termSort));
+		final SupportingTerm auxModGreaterZero = new SupportingTerm(auxModGreaterZeroTerm,
+				IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
+
+		// construct SupportingTerm (aux_mod < k)
+		final Term auxModLessCoefTerm = SmtUtils.less(script, auxMod, divisor);
+		final SupportingTerm auxModLessCoef = new SupportingTerm(auxModLessCoefTerm,
+				IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
+
+		mcsb.addAtoms(auxModLessCoef, auxEquals, auxModGreaterZero);
+		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
+		assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
+				result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		return result;
 	}
 
