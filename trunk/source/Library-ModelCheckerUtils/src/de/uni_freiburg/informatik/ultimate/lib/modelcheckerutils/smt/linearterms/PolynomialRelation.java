@@ -663,11 +663,11 @@ public class PolynomialRelation implements IBinaryRelation {
 		final Set<TermVariable> setAuxVars = new HashSet<>();
 		// substitute allowedSubterm with corresponding aux variable in input
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		if (divModSubterm.getFunction().getName().contentEquals("mod")) {
+		if (divModSubterm.getFunction().getName().equals("mod")) {
 			substitutionMapping.put(divModSubterm, auxMod);
 			setAuxVars.add(auxMod);
 			mcsb.reportAdditionalAuxiliaryVariable(auxDiv);
-		} else if (divModSubterm.getFunction().getName().contentEquals("div")) {
+		} else if (divModSubterm.getFunction().getName().equals("div")) {
 			setAuxVars.add(auxDiv);
 			substitutionMapping.put(divModSubterm, auxDiv);
 		} else {
@@ -795,13 +795,13 @@ public class PolynomialRelation implements IBinaryRelation {
 				final boolean containsSubject = new ContainsSubterm(subject).containsSubterm(para);
 				if (containsSubject && para instanceof ApplicationTerm) {
 					ApplicationTerm paraAppTerm = ((ApplicationTerm) para);
-					if (paraAppTerm.getFunction().getName().contentEquals("div")) {
+					if (paraAppTerm.getFunction().getName().equals("div")) {
 						return paraAppTerm;
-					} else if (paraAppTerm.getFunction().getName().contentEquals("mod")) {
+					} else if (paraAppTerm.getFunction().getName().equals("mod")) {
 						// optimization: simplifies (mod (mod...(mod x k)...k) k) to (mod x k)
 						while (!paraAppTerm.getParameters()[0].equals(subject)) {
 							final ApplicationTerm subterm = ((ApplicationTerm) paraAppTerm.getParameters()[0]);
-							if (subterm.getFunction().getName().contentEquals("mod")) {
+							if (subterm.getFunction().getName().equals("mod")) {
 								if (subterm.getParameters()[1].equals(paraAppTerm.getParameters()[1])) {
 									paraAppTerm = subterm;
 								} else {
