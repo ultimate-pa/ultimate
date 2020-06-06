@@ -638,6 +638,26 @@ public class PolynomialRelationTest {
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
+	/**
+	 * Bug: Detection of div/mod fails if input is too simple.
+	 */
+	@Test
+	public void relationIntModEqZero() throws NotAffineException {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
+		final String inputSTR = "(= (mod x 3) 0 )";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	/**
+	 * Bug: Fails to detect that we cannot solve for x.
+	 */
+	@Test
+	public void relationIntDivUnsolvable() throws NotAffineException {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
+		final String inputSTR = "(= (div (* x x) 3) eq )";
+		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
 	@Test
 	public void relationIntModNEWEq() throws NotAffineException {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
