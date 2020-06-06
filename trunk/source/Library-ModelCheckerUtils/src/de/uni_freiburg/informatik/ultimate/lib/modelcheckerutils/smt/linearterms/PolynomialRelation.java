@@ -513,7 +513,7 @@ public class PolynomialRelation implements IBinaryRelation {
 				submap.put(allowedSubterm, auxDiv);
 			}
 			final Substitution sub = new Substitution(script, submap);
-			final Term auxModEqualsTerm = sub.transform(mOriginalTerm);
+			final Term auxModEqualsTerm = sub.transform(this.positiveNormalForm(script));
 			final SupportingTerm auxEquals = new SupportingTerm(auxModEqualsTerm,
 					IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 			setAuxVars.add(auxMod);

@@ -632,6 +632,13 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
+	public void relationIntModEqUselessSummands() throws NotAffineException {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String inputSTR = "(= (+ (mod x 3) (* y y) y 1) (* y (+ y 1)) )";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	@Test
 	public void relationIntModNEWEq() throws NotAffineException {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (+(mod x 3)1) eq )";
