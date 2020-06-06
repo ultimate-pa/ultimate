@@ -671,6 +671,8 @@ public class PolynomialRelation implements IBinaryRelation {
 		} else if (divModSubterm.getFunction().getName().contentEquals("div")) {
 			setAuxVars.add(auxDiv);
 			substitutionMapping.put(divModSubterm, auxDiv);
+		} else {
+			throw new AssertionError("input must be div or mod");
 		}
 		final Term auxModEqualsTerm = new Substitution(script, substitutionMapping)
 				.transform(this.positiveNormalForm(script));
