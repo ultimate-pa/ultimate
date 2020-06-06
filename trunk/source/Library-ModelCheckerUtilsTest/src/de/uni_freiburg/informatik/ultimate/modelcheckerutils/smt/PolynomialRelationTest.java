@@ -658,6 +658,16 @@ public class PolynomialRelationTest {
 		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
+	/**
+	 * Bug: Fails to detect that we cannot solve if subject is in divisor.
+	 */
+	@Test
+	public void relationIntDivSubjectInDivisor() throws NotAffineException {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
+		final String inputSTR = "(= (div 1337 x) eq )";
+		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
 	@Test
 	public void relationIntModNEWEq() throws NotAffineException {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
