@@ -661,8 +661,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		// (= (div divident[subject] divisor) aux_div) or
 		// (= (mod divident[subject] divisor) mod_div)
 		final Set<TermVariable> setAuxVars = new HashSet<>();
-		// substitute allowedSubterm with corresponding aux variable for terms of form
-		// (+ (mod/div subject const) const)
+		// substitute allowedSubterm with corresponding aux variable in input
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		if (divModSubterm.getFunction().getName().contentEquals("mod")) {
 			substitutionMapping.put(divModSubterm, auxMod);
