@@ -631,7 +631,7 @@ public class PolynomialRelation implements IBinaryRelation {
 	}
 
 	private MultiCaseSolvedBinaryRelation handleSubjectInDivModSubterm(final Script script, final Term subject,
-			final MultiCaseSolvedBinaryRelation.Xnf xnf, ApplicationTerm divModSubterm) {
+			final MultiCaseSolvedBinaryRelation.Xnf xnf, final ApplicationTerm divModSubterm) {
 		final Term divisor = SmtUtils.mul(script, "*",
 				Arrays.copyOfRange(divModSubterm.getParameters(), 1, divModSubterm.getParameters().length));
 		assert (divisor instanceof ConstantTerm) : "not constant";
@@ -663,17 +663,17 @@ public class PolynomialRelation implements IBinaryRelation {
 		final Set<TermVariable> setAuxVars = new HashSet<>();
 		// substitute allowedSubterm with corresponding aux variable for terms of form
 		// (+ (mod/div subject const) const)
-		final Map<Term, Term> submap = new HashMap<>();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		if (divModSubterm.getFunction().getName().contentEquals("mod")) {
-			submap.put(divModSubterm, auxMod);
+			substitutionMapping.put(divModSubterm, auxMod);
 			setAuxVars.add(auxMod);
 			mcsb.reportAdditionalAuxiliaryVariable(auxDiv);
 		} else if (divModSubterm.getFunction().getName().contentEquals("div")) {
 			setAuxVars.add(auxDiv);
-			submap.put(divModSubterm, auxDiv);
+			substitutionMapping.put(divModSubterm, auxDiv);
 		}
-		final Substitution sub = new Substitution(script, submap);
-		final Term auxModEqualsTerm = sub.transform(this.positiveNormalForm(script));
+		final Term auxModEqualsTerm = new Substitution(script, substitutionMapping)
+				.transform(this.positiveNormalForm(script));
 		final SupportingTerm auxEquals = new SupportingTerm(auxModEqualsTerm,
 				IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 		setAuxVars.add(auxMod);
