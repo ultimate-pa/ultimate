@@ -663,11 +663,11 @@ public class PolynomialRelation implements IBinaryRelation {
 		final Set<TermVariable> setAuxVars = new HashSet<>();
 		// substitute allowedSubterm with corresponding aux variable in input
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		if (divModSubterm.getFunction().getName().equals("mod")) {
+		if (SmtUtils.isIntMod(divModSubterm)) {
 			substitutionMapping.put(divModSubterm, auxMod);
 			setAuxVars.add(auxMod);
 			mcsb.reportAdditionalAuxiliaryVariable(auxDiv);
-		} else if (divModSubterm.getFunction().getName().equals("div")) {
+		} else if (SmtUtils.isIntDiv(divModSubterm)) {
 			setAuxVars.add(auxDiv);
 			substitutionMapping.put(divModSubterm, auxDiv);
 		} else {
@@ -795,13 +795,13 @@ public class PolynomialRelation implements IBinaryRelation {
 				final boolean containsSubject = new ContainsSubterm(subject).containsSubterm(para);
 				if (containsSubject && para instanceof ApplicationTerm) {
 					ApplicationTerm paraAppTerm = ((ApplicationTerm) para);
-					if (paraAppTerm.getFunction().getName().equals("div")) {
+					if (SmtUtils.isIntDiv(paraAppTerm)) {
 						return paraAppTerm;
-					} else if (paraAppTerm.getFunction().getName().equals("mod")) {
+					} else if (SmtUtils.isIntMod(paraAppTerm)) {
 						// optimization: simplifies (mod (mod...(mod x k)...k) k) to (mod x k)
 						while (!paraAppTerm.getParameters()[0].equals(subject)) {
 							final ApplicationTerm subterm = ((ApplicationTerm) paraAppTerm.getParameters()[0]);
-							if (subterm.getFunction().getName().equals("mod")) {
+							if (SmtUtils.isIntMod(subterm)) {
 								if (subterm.getParameters()[1].equals(paraAppTerm.getParameters()[1])) {
 									paraAppTerm = subterm;
 								} else {
@@ -820,6 +820,8 @@ public class PolynomialRelation implements IBinaryRelation {
 		}
 		return null;
 	}
+
+
 
 	private static Term constructDivisibilityConstraint(final Script script, final boolean negate, final Term divident,
 			final Term divisor) {

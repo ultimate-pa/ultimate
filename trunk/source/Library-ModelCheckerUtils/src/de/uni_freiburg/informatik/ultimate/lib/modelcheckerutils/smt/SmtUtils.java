@@ -1953,6 +1953,40 @@ public final class SmtUtils {
 	}
 
 	/**
+	 * @return true iff term is a div from the theory of Ints
+	 */
+	public static boolean isIntDiv(final Term term) {
+		if (term instanceof ApplicationTerm) {
+			final FunctionSymbol fun = ((ApplicationTerm) term).getFunction();
+			if (fun.isIntern()) {
+				return ((ApplicationTerm) term).getFunction().getName().equals("div");
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 *
+	 * @return true iff term is a mod from the theory of Ints
+	 */
+	public static boolean isIntMod(final Term term) {
+		if (term instanceof ApplicationTerm) {
+			final FunctionSymbol fun = ((ApplicationTerm) term).getFunction();
+			if (fun.isIntern()) {
+				return ((ApplicationTerm) term).getFunction().getName().equals("mod");
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+
+
+	/**
 	 * @return logically equivalent term in disjunctive normal form (DNF)
 	 */
 	public static Term toDnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term,
