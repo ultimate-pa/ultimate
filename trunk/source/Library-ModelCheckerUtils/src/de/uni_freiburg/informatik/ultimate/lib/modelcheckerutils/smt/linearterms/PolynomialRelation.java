@@ -457,7 +457,7 @@ public class PolynomialRelation implements IBinaryRelation {
 			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
 				throw new UnsupportedOperationException("subject is not a variable");
 			} else {
-				allowedSubterm = searchModOrDivSubterm(mPolynomialTerm.toTerm(script), script, subject);
+				allowedSubterm = searchModOrDivSubterm(script, subject, mPolynomialTerm, null);
 				if (allowedSubterm != null) {
 					subjectIsNotAVariableButOccursInDivOrModSubterm = true;
 				} else {
@@ -783,45 +783,45 @@ public class PolynomialRelation implements IBinaryRelation {
 
 
 	/**
-	 * go thru the parameters of the affineTerm and search for a term of form (mod
-	 * subterm const) or (div subterm const) where subterm contains the subject
+	 * TODO: (1) Documentation (2) Max has an optimization for nested mod terms with
+	 * similar divisor, maybe we should simplify such terms in advance or here
 	 *
-	 * @return (mod/div ... (mod/div subject const)... const)
 	 */
-	private ApplicationTerm searchModOrDivSubterm(final Term affineTerm, final Script script, final Term subject) {
-		if (affineTerm instanceof ApplicationTerm) {
-			final ApplicationTerm appAffineTerm = (ApplicationTerm) affineTerm;
-			for (final Term para : appAffineTerm.getParameters()) {
-				final boolean containsSubject = new ContainsSubterm(subject).containsSubterm(para);
-				if (containsSubject && para instanceof ApplicationTerm) {
-					ApplicationTerm paraAppTerm = ((ApplicationTerm) para);
-					if (SmtUtils.isIntDiv(paraAppTerm)) {
-						return paraAppTerm;
-					} else if (SmtUtils.isIntMod(paraAppTerm)) {
-						// optimization: simplifies (mod (mod...(mod x k)...k) k) to (mod x k)
-						while (!paraAppTerm.getParameters()[0].equals(subject)) {
-							final ApplicationTerm subterm = ((ApplicationTerm) paraAppTerm.getParameters()[0]);
-							if (SmtUtils.isIntMod(subterm)) {
-								if (subterm.getParameters()[1].equals(paraAppTerm.getParameters()[1])) {
-									paraAppTerm = subterm;
-								} else {
-									return paraAppTerm;
-								}
-							} else {
-								return paraAppTerm;
-							}
-						}
-						return paraAppTerm;
-					} else {
-						return searchModOrDivSubterm(para, script, subject);
+	private ApplicationTerm searchModOrDivSubterm(final Script script, final Term subject,
+			final IPolynomialTerm divident, final ApplicationTerm parentDivModTerm) {
+		boolean someMonomialIsSubject = false;
+		boolean someOtherMonomialContainsSubject = false;
+		for (final Monomial m : divident.getMonomial2Coefficient().keySet()) {
+			final Term monomialAsTerm = m.toTerm(script);
+			if (SmtUtils.isIntDiv(monomialAsTerm) || SmtUtils.isIntMod(monomialAsTerm)) {
+				final ApplicationTerm appTerm = (ApplicationTerm) monomialAsTerm;
+				final boolean dividentContainsSubject = new ContainsSubterm(subject)
+						.containsSubterm(appTerm.getParameters()[0]);
+				final boolean tailIsConstant = tailIsConstant(Arrays.asList(appTerm.getParameters()));
+				if (dividentContainsSubject && tailIsConstant) {
+					final IPolynomialTerm innerDivident = (IPolynomialTerm) new PolynomialTermTransformer(script)
+							.transform(appTerm.getParameters()[0]);
+					final ApplicationTerm rec = searchModOrDivSubterm(script, subject, innerDivident, appTerm);
+					if (rec != null) {
+						return rec;
 					}
 				}
 			}
+			if (monomialAsTerm.equals(subject)) {
+				someMonomialIsSubject = true;
+			} else {
+				final boolean containsSubject = new ContainsSubterm(subject).containsSubterm(monomialAsTerm);
+				if (containsSubject) {
+					someOtherMonomialContainsSubject = true;
+				}
+			}
 		}
-		return null;
+		if (someMonomialIsSubject && !someOtherMonomialContainsSubject) {
+			return parentDivModTerm;
+		} else {
+			return null;
+		}
 	}
-
-
 
 	private static Term constructDivisibilityConstraint(final Script script, final boolean negate, final Term divident,
 			final Term divisor) {
