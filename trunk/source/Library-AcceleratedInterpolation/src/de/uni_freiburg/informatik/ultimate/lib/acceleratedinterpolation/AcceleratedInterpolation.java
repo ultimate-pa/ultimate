@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -251,64 +252,77 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	}
 
 	/**
-	 * Transforms the tracescheme interpolants to inductive interpolants Problem: either not enough inteprolants or not
-	 * inductive TODO build a trace scheme with \epsilon for unbounded/underapprox loops
+	 * Transforms the tracescheme interpolants to inductive interpolants Problem
 	 */
 	private IPredicate[] constructInductive(final IPredicate[] preds) {
 		final IPredicate[] actualInterpolants = new IPredicate[mCounterexample.size() - 1];
 		int cnt = 0;
 		for (int i = 0; i < actualInterpolants.length; i++) {
 			final IcfgLocation target = mCounterexample.get(i).getTarget();
-
 			if (mAccelerations.containsKey(target)) {
 				final Pair<Integer, Integer> loopSize = mLoopSize.get(target);
+				final List<UnmodifiableTransFormula> loopAccelerations = new ArrayList<>(mAccelerations.get(target));
+				final List<Term> loopAccelerationsForEntryLocation = new ArrayList<>();
+				for (int k = 0; k < loopAccelerations.size(); k++) {
+					final IPredicate currentLoopAccelerationInterpolant = preds[cnt];
+					loopAccelerationsForEntryLocation.add(currentLoopAccelerationInterpolant.getFormula());
+					cnt = cnt + 2;
+				}
+				final Term loopAccelerationsForEntryLocationDisjunction =
+						SmtUtils.or(mScript.getScript(), loopAccelerationsForEntryLocation);
 
-				/**
-				 * TODO Fix for multiple accelerations
-				 */
-				final UnmodifiableTransFormula loopAccelerationTf = mAccelerations.get(target).get(0);
-				IPredicate interpolantPred = preds[cnt];
+				IPredicate interpolantPred =
+						mPredUnifier.getOrConstructPredicate(loopAccelerationsForEntryLocationDisjunction);
+
+				final UnmodifiableTransFormula loopAccelerationTf = TransFormulaUtils.parallelComposition(mLogger,
+						mServices, 0, mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+						loopAccelerations.toArray(new UnmodifiableTransFormula[loopAccelerations.size()]));
 
 				if (mPredHelper.predContainsTfVar(interpolantPred, loopAccelerationTf)) {
-					Term postPredTf = mPredTransformer.strongestPostcondition(interpolantPred, loopAccelerationTf);
-					postPredTf = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, postPredTf,
-							SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-					final Term newLoopEntryTerm = SmtUtils.or(mScript.getScript(), preds[cnt].getFormula(), postPredTf);
-
-					/**
-					 * TODO Is a disjunction more useful?
-					 */
+					final Term postPredTf =
+							mPredTransformer.strongestPostcondition(interpolantPred, loopAccelerationTf);
+					final Term newLoopEntryTerm =
+							SmtUtils.or(mScript.getScript(), interpolantPred.getFormula(), postPredTf);
 					interpolantPred = mPredUnifier.getOrConstructPredicate(postPredTf);
 					interpolantPred = mPredUnifier.getOrConstructPredicate(newLoopEntryTerm);
-
+				}
+				actualInterpolants[i] = interpolantPred;
+				final int limit;
+				int j = i + 1;
+				if (loopAccelerations.size() > 1) {
+					limit = loopSize.getSecond() + 1;
+					i = loopSize.getSecond();
+				} else {
+					limit = loopSize.getSecond();
+					i = loopSize.getSecond() - 1;
 				}
 
-				actualInterpolants[i] = interpolantPred;
-
-				for (int j = i + 1; j < loopSize.getSecond(); j++) {
+				while (j < limit) {
 					final UnmodifiableTransFormula transRel = mCounterexample.get(j).getTransformula();
 					final Term loopPostTerm =
 							mPredTransformer.strongestPostcondition(actualInterpolants[j - 1], transRel);
 					actualInterpolants[j] = mPredUnifier.getOrConstructPredicate(loopPostTerm);
+					j++;
 				}
-				i = loopSize.getSecond() - 1;
-				if (mAccelerations.get(target).size() > 1) {
-					cnt = mAccelerations.get(target).size() + 1;
-				} else {
-					cnt = mAccelerations.get(target).size();
-				}
+				// if (mAccelerations.get(target).size() > 1) {
+				// cnt = mAccelerations.get(target).size() + 1;
+				// } else {
+				// cnt = mAccelerations.get(target).size();
+				// }
 			} else {
-				final IPredicate prevInterpol;
-				if (i == 0) {
-					prevInterpol = getPrecondition();
-				} else {
-					prevInterpol = actualInterpolants[i - 1];
-				}
-				final Term post =
-						mPredTransformer.strongestPostcondition(prevInterpol, mCounterexample.get(i).getTransformula());
-				actualInterpolants[i] = mPredUnifier.getOrConstructPredicate(post);
+				// final IPredicate prevInterpol;
+				// if (i == 0) {
+				// prevInterpol = getPrecondition();
+				// } else {
+				// prevInterpol = actualInterpolants[i - 1];
+				// }
+				// final Term post =
+				// mPredTransformer.strongestPostcondition(prevInterpol, mCounterexample.get(i).getTransformula());
+				// actualInterpolants[i] = mPredUnifier.getOrConstructPredicate(post);
+
+				actualInterpolants[i] = preds[cnt];
+				cnt++;
 			}
-			cnt++;
 		}
 		return actualInterpolants;
 	}
