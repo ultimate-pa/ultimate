@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 /**
  *
- * @author Jonas Werner (jonaswerner95@gmail.com)
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -48,7 +48,10 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 		implements IStatisticsDataProvider {
 
 	private static final String[] STOPWATCHES =
-			new String[] { AcceleratedInterpolationStatisticsDefinitions.AccelIinterpol.toString() };
+			new String[] { AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_CORE.toString(),
+					AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_OVERALL.toString(),
+					AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR.toString(),
+					AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR.toString() };
 
 	@Override
 	public Collection<String> getKeys() {
@@ -60,7 +63,25 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 		final AcceleratedInterpolationStatisticsDefinitions keyEnum =
 				Enum.valueOf(AcceleratedInterpolationStatisticsDefinitions.class, key);
 		switch (keyEnum) {
-		case AccelIinterpol:
+		case ACCELINTERPOL_CORE:
+			try {
+				return getElapsedTime(key);
+			} catch (final StopwatchStillRunningException e) {
+				throw new AssertionError("clock still running: " + key);
+			}
+		case ACCELINTERPOL_OVERALL:
+			try {
+				return getElapsedTime(key);
+			} catch (final StopwatchStillRunningException e) {
+				throw new AssertionError("clock still running: " + key);
+			}
+		case ACCELINTERPOL_LOOPDETECTOR:
+			try {
+				return getElapsedTime(key);
+			} catch (final StopwatchStillRunningException e) {
+				throw new AssertionError("clock still running: " + key);
+			}
+		case ACCELINTERPOL_LOOPACCELERATOR:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
@@ -87,7 +108,10 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 	 *
 	 */
 	public enum AcceleratedInterpolationStatisticsDefinitions implements IStatisticsElement {
-		AccelIinterpol(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY);
+		ACCELINTERPOL_CORE(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+		ACCELINTERPOL_OVERALL(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+		ACCELINTERPOL_LOOPDETECTOR(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
+		ACCELINTERPOL_LOOPACCELERATOR(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY);
 
 		private final Class<?> mClass;
 		private final Function<Object, Function<Object, Object>> mAggr;

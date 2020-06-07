@@ -38,11 +38,13 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.Interpolator.InterpolationMethod;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark;
+import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark.AcceleratedInterpolationStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator.AccelerationMethod;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.Loopdetector;
@@ -78,7 +80,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -114,11 +119,11 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private final ITraceCheckPreferences mPrefs;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
 	private final IcfgEdgeFactory mIcfgEdgeFactory;
-	private final LBool mIsTraceCorrect;
+	private LBool mIsTraceCorrect;
 	private IPredicate[] mInterpolants;
 	private IProgramExecution<IIcfgTransition<IcfgLocation>, Term> mFeasibleProgramExecution;
-	private final TraceCheckReasonUnknown mReasonUnknown;
-	private final boolean mTraceCheckFinishedNormally;
+	private TraceCheckReasonUnknown mReasonUnknown;
+	private boolean mTraceCheckFinishedNormally;
 	private final IIcfgSymbolTable mSymbolTable;
 
 	private final Map<IcfgLocation, Set<List<LETTER>>> mLoops;
@@ -140,11 +145,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mCounterexampleTrace = counterexample;
 		mCounterexample = mCounterexampleTrace.getWord().asList();
 		mPrefs = prefs;
-
-		/**
-		 * Is there a possibility to save things like how many loop accelerations/time for each of them?
-		 */
 		mAccelInterpolBench = new AcceleratedInterpolationBenchmark();
+		mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_OVERALL);
 
 		mIcfg = mPrefs.getIcfgContainer();
 		mIcfgEdgeFactory = mIcfg.getCfgSmtToolkit().getIcfgEdgeFactory();
@@ -157,18 +159,19 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 
 		mAccelerator = new Accelerator<>(mLogger, mScript, mServices);
+
+		mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR);
 		mLoopdetector = new Loopdetector<>(mCounterexample, mLogger, 1);
+		mAccelInterpolBench.stop(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR);
+
 		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 
 		mPredHelper = new PredicateHelper<>(mPredUnifier, mPredTransformer, mLogger, mScript, mServices);
 		mCounterexampleTf = mPredHelper.traceToListOfTfs(mCounterexample);
 
 		mApproximationType = AccelerationApproximationType.PRECISE;
-
-		// TODO give a better reason
 		mReasonUnknown = null;
 		mTraceCheckFinishedNormally = true;
-
 		/*
 		 * Find loops in the trace.
 		 */
@@ -176,12 +179,37 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mLoopExitTransitions = mLoopdetector.getLoopExitTransitions();
 		mLoopSize = mLoopdetector.getLoopSize();
 
+		try {
+			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_CORE);
+			mIsTraceCorrect = acceleratedInterpolationCore();
+			mLogger.info("Finished Analysing Program using " + mApproximationType.toString() + " loop Acceleration");
+			mReasonUnknown = null;
+			mTraceCheckFinishedNormally = true;
+		} catch (final ToolchainCanceledException tce) {
+			mTraceCheckFinishedNormally = false;
+			mIsTraceCorrect = LBool.UNKNOWN;
+			mReasonUnknown = new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT, tce,
+					ExceptionHandlingCategory.KNOWN_DEPENDING);
+		} catch (final SMTLIBException e) {
+			mTraceCheckFinishedNormally = false;
+			mIsTraceCorrect = LBool.UNKNOWN;
+			mReasonUnknown = TraceCheckReasonUnknown.constructReasonUnknown(e);
+		} finally {
+			mAccelInterpolBench.stopAllStopwatches();
+			mLogger.debug("Finished");
+		}
+	}
+
+	private LBool acceleratedInterpolationCore() {
 		/*
 		 * After finding loops in the trace, start calculating loop accelerations.
 		 */
-		for (final Entry<IcfgLocation, Set<List<LETTER>>> loophead : mLoops.entrySet()) {
+		for (
+
+		final Entry<IcfgLocation, Set<List<LETTER>>> loophead : mLoops.entrySet()) {
 			final List<UnmodifiableTransFormula> accelerations = new ArrayList<>();
-			int i = 0;
+
+			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR);
 			for (final List<LETTER> loop : loophead.getValue()) {
 				final UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
 				final UnmodifiableTransFormula acceleratedLoopRelation =
@@ -201,8 +229,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 				final UnmodifiableTransFormula accelerationNoQuantifiersTf = tfb.finishConstruction(mScript);
 				accelerations.add(accelerationNoQuantifiersTf);
-				i++;
 			}
+			mAccelInterpolBench.stop(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR);
 			if (accelerations.size() > 1) {
 				mApproximationType = AccelerationApproximationType.UNDERAPPROXIMATION;
 			}
@@ -226,11 +254,11 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		if (mLoops.isEmpty()) {
 			mLogger.debug("No loops found in this trace.");
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
-			mIsTraceCorrect = interpolator.isTraceCorrect();
-			if (mIsTraceCorrect == LBool.UNSAT) {
+			if (interpolator.isTraceCorrect() == LBool.UNSAT) {
 				mInterpolants = interpolator.getInterpolants();
+				return LBool.UNSAT;
 			}
-			return;
+			return LBool.SAT;
 		}
 
 		/*
@@ -241,14 +269,15 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, traceScheme);
 		// interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
 
-		mIsTraceCorrect = interpolator.isTraceCorrect();
-		if (mIsTraceCorrect == LBool.UNSAT) {
+		if (interpolator.isTraceCorrect() == LBool.UNSAT) {
 			final IPredicate[] tempInterpolants = interpolator.getInterpolants();
 			final IPredicate[] inductiveInterpolants = constructInductive(tempInterpolants);
 
 			// mInterpolants = interpolator.getInterpolants();
 			mInterpolants = inductiveInterpolants;
+			return LBool.UNSAT;
 		}
+		return LBool.SAT;
 	}
 
 	/**
