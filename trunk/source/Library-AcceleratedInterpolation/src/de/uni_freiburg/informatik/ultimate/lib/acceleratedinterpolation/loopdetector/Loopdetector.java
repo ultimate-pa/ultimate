@@ -194,7 +194,9 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 				final int firstOccurenceOther = otherCycle.getValue().get(0);
 				final int lastOccurenceOther = otherCycle.getValue().get(otherCycle.getValue().size() - 1);
 				if (loopHead != loopHeadOther
-						&& (firstOccurence < firstOccurenceOther && lastOccurence > lastOccurenceOther)) {
+						&& (firstOccurence < firstOccurenceOther && lastOccurence > lastOccurenceOther)
+						|| firstOccurence < firstOccurenceOther && firstOccurenceOther < lastOccurence
+								&& lastOccurenceOther > lastOccurence) {
 					nestedCycles.add(loopHeadOther);
 				}
 			}
