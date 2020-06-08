@@ -497,7 +497,7 @@ public class PolynomialRelationTest {
 		final Term inputAsTerm = TermParseUtils.parseTerm(script, inputAsString);
 		final Term subject = TermParseUtils.parseTerm(script, "x");
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.DNF);
-		 testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.CNF);
+		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.CNF);
 	}
 
 

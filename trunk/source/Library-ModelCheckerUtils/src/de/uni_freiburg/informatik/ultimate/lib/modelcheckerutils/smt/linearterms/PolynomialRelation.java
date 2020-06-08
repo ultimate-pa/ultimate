@@ -649,8 +649,8 @@ public class PolynomialRelation implements IBinaryRelation {
 
 		final MultiCaseSolutionBuilder mcsb;
 		{
-			final Term subtermSumComparison = SmtUtils.binaryEquality(script, divModSubterm.getParameters()[0],
-					sum);
+			final Term subtermSumComparison = BinaryRelation.toTerm(script, negateForCnf(RelationSymbol.EQ, xnf),
+					divModSubterm.getParameters()[0], sum);
 			// recursive call for (= divident[subject] (+ (* aux_div divisor) aux_mod))
 			final MultiCaseSolvedBinaryRelation solvedComparison = PolynomialRelation
 					.convert(script, subtermSumComparison).solveForSubject(script, subject, xnf);
@@ -680,19 +680,21 @@ public class PolynomialRelation implements IBinaryRelation {
 		setAuxVars.add(auxMod);
 
 		// construct SupportingTerm (0<=aux_mod)
-		final Term auxModGreaterZeroTerm = SmtUtils.geq(script, auxMod, Rational.ZERO.toTerm(termSort));
+		final Term auxModGreaterZeroTerm = BinaryRelation.toTerm(script, negateForCnf(RelationSymbol.LEQ, xnf),
+				Rational.ZERO.toTerm(termSort), auxMod);
 		final SupportingTerm auxModGreaterZero = new SupportingTerm(auxModGreaterZeroTerm,
 				IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 
 		// construct SupportingTerm (aux_mod < k)
-		final Term auxModLessCoefTerm = SmtUtils.less(script, auxMod, divisor);
+		final Term auxModLessCoefTerm = BinaryRelation.toTerm(script, negateForCnf(RelationSymbol.LESS, xnf), auxMod,
+				divisor);
 		final SupportingTerm auxModLessCoef = new SupportingTerm(auxModLessCoefTerm,
 				IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 
 		mcsb.addAtoms(auxModLessCoef, auxEquals, auxModGreaterZero);
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
-		assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
-				result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
+		assert script instanceof INonSolverScript
+				|| isEquivalent(script, mOriginalTerm, result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		return result;
 	}
 
