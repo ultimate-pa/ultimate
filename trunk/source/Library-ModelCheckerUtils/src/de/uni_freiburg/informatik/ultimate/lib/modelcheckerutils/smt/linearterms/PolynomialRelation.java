@@ -623,10 +623,8 @@ public class PolynomialRelation implements IBinaryRelation {
 		mcsb.splitCases(cases);
 
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
-		if (!subjectIsNotAVariableButOccursInDivOrModSubterm) {
-			assert script instanceof INonSolverScript || isEquivalent(script, mOriginalTerm,
-					result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
-		}
+		assert script instanceof INonSolverScript
+				|| isEquivalent(script, mOriginalTerm, result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		return result;
 	}
 
