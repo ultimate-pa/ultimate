@@ -623,6 +623,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		mcsb.splitCases(cases);
 
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
+		assert result.isSubjectOnlyOnRhs() : "subject not only LHS";
 		assert script instanceof INonSolverScript
 				|| isEquivalent(script, mOriginalTerm, result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		return result;
@@ -691,6 +692,7 @@ public class PolynomialRelation implements IBinaryRelation {
 
 		mcsb.addAtoms(auxModLessCoef, auxEquals, auxModGreaterZero);
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
+		assert result.isSubjectOnlyOnRhs() : "subject not only LHS";
 		assert script instanceof INonSolverScript
 				|| isEquivalent(script, mOriginalTerm, result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		return result;

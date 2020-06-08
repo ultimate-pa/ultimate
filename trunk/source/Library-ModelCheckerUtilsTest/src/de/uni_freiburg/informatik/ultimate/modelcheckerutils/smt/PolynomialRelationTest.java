@@ -800,4 +800,11 @@ public class PolynomialRelationTest {
 		final String inputSTR = "(= (mod (+ (* (mod (+ b 1) 4294967296) 4294967295) x) 4294967296) 1)";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
+
+	@Test
+	public void relationIntMultiDivMod01() throws NotAffineException {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
+		final String inputSTR = "(= (+ (div x 3) (mod x 3)) eq )";
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
 }

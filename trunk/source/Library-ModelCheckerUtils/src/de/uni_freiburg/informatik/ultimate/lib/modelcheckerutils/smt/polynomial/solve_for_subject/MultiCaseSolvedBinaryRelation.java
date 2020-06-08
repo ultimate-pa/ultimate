@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ContainsSubterm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ITermProviderOnDemand;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
@@ -46,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * {@link SolvedBinaryRelation} object of this class can also represent binary
  * relations for which a case distinction is necessary. E.g., if we solve y*x<t
  * for subject x the result is the following disjunction.
- * 
+ *
  * <pre>
  * x < (div t y) ∧ (mod t y) = 0 ∧ y > 0
  * ∨ x > (div t y) ∧ (mod t y) = 0 ∧ y < 0
@@ -96,7 +97,7 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 	private final Xnf mXnf;
 
 	/**
-	 * 
+	 *
 	 * @param additionalIntricateOperations
 	 *            {@link IntricateOperation}s that were made and do not already
 	 *            occur in one of the {@link SupportingTerm}s of the
@@ -174,6 +175,31 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 			result.reportAdditionalIntricateOperation(add);
 		}
 		return result;
+	}
+
+	public boolean isSubjectOnlyOnRhs() {
+		for (final Case c : getCases()) {
+			final boolean isSubjectOnlyOnRhs = isSubjectOnlyOnRhs(mSubject, c);
+			if (!isSubjectOnlyOnRhs) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private boolean isSubjectOnlyOnRhs(final Term subject, final Case c) {
+		if (c.getSolvedBinaryRelation() != null) {
+			if (!c.getSolvedBinaryRelation().getLeftHandSide().equals(subject)) {
+				throw new AssertionError("illegal subject");
+			}
+		}
+		for (final SupportingTerm st : c.getSupportingTerms()) {
+			final boolean containsSubject = new ContainsSubterm(subject).containsSubterm(st.asTerm());
+			if (containsSubject) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 }
