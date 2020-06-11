@@ -1,3 +1,4 @@
+//#Safe
 #include <math.h>
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
