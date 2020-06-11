@@ -643,19 +643,20 @@ public class PolynomialRelation implements IBinaryRelation {
 		final TermVariable auxDiv = script.variable("aux_div_" + recVarName, termSort);
 		final TermVariable auxMod = script.variable("aux_mod_" + recVarName, termSort);
 
-		final Term multiplication = SmtUtils.mul(script, termSort, divisor, auxDiv);
-		final Term sum = SmtUtils.sum(script, termSort, auxMod, multiplication);
 
-		final MultiCaseSolutionBuilder mcsb;
+		final MultiCaseSolvedBinaryRelation solvedComparison;
+
 		{
+			final Term multiplication = SmtUtils.mul(script, termSort, divisor, auxDiv);
+			final Term sum = SmtUtils.sum(script, termSort, auxMod, multiplication);
 			final Term subtermSumComparison = BinaryRelation.toTerm(script, negateForCnf(RelationSymbol.EQ, xnf),
 					divModSubterm.getParameters()[0], sum);
 			// recursive call for (= divident[subject] (+ (* aux_div divisor) aux_mod))
-			final MultiCaseSolvedBinaryRelation solvedComparison = PolynomialRelation
+			solvedComparison = PolynomialRelation
 					.convert(script, subtermSumComparison).solveForSubject(script, subject, xnf);
-			mcsb = solvedComparison.constructCopy();
 		}
 
+		final MultiCaseSolutionBuilder mcsb = new MultiCaseSolutionBuilder(subject, xnf);
 		// construct as SupportingTerm either
 		// (= (div divident[subject] divisor) aux_div) or
 		// (= (mod divident[subject] divisor) mod_div)
@@ -672,10 +673,35 @@ public class PolynomialRelation implements IBinaryRelation {
 		} else {
 			throw new AssertionError("input must be div or mod");
 		}
-		final Term auxModEqualsTerm = new Substitution(script, substitutionMapping)
-				.transform(this.positiveNormalForm(script));
-		final SupportingTerm auxEquals = new SupportingTerm(auxModEqualsTerm,
-				IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
+		final List<Case> resultCases = new ArrayList<>();
+		for (final Case c : solvedComparison.getCases()) {
+			if (c.getSolvedBinaryRelation() != null) {
+				substitutionMapping.put(subject, c.getSolvedBinaryRelation().getRightHandSide());
+			}
+			final Term auxModEqualsTerm = new Substitution(script, substitutionMapping)
+					.transform(this.positiveNormalForm(script));
+			if (c.getSolvedBinaryRelation() == null) {
+				final boolean containsSubject = new ContainsSubterm(subject).containsSubterm(auxModEqualsTerm);
+				if (containsSubject) {
+					throw new AssertionError("uneliminatable subject");
+				}
+			}
+			final SupportingTerm auxEquals = new SupportingTerm(auxModEqualsTerm,
+					IntricateOperation.MUL_BY_INTEGER_CONSTANT, new HashSet<>(setAuxVars));
+			final Set<SupportingTerm> resultSupportingTerms = new HashSet<>(c.getSupportingTerms());
+			resultSupportingTerms.add(auxEquals);
+			final Case resultCase = new Case(c.getSolvedBinaryRelation(), resultSupportingTerms, xnf);
+			resultCases.add(resultCase);
+		}
+
+		mcsb.splitCases(resultCases);
+		for (final TermVariable add : solvedComparison.getAuxiliaryVariables()) {
+			mcsb.reportAdditionalAuxiliaryVariable(add);
+		}
+		for (final IntricateOperation add : solvedComparison.getIntricateOperations()) {
+			mcsb.reportAdditionalIntricateOperation(add);
+		}
+
 		setAuxVars.add(auxMod);
 
 		// construct SupportingTerm (0<=aux_mod)
@@ -690,7 +716,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		final SupportingTerm auxModLessCoef = new SupportingTerm(auxModLessCoefTerm,
 				IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 
-		mcsb.addAtoms(auxModLessCoef, auxEquals, auxModGreaterZero);
+		mcsb.addAtoms(auxModLessCoef, auxModGreaterZero);
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
 		assert result.isSubjectOnlyOnRhs() : "subject not only LHS";
 		assert script instanceof INonSolverScript
