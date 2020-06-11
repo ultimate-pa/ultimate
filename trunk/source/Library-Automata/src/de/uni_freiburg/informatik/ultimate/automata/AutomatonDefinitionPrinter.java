@@ -39,6 +39,7 @@ import java.util.Locale;
 
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.visualization.AlternatingAutomatonWriter;
+import de.uni_freiburg.informatik.ultimate.automata.counting.CountingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
@@ -342,6 +343,10 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		} else if (na.getAutomaton() instanceof BranchingProcess<?, ?>) {
 			printBranchingProcess(na.getName(), (BranchingProcess<LETTER, STATE>) na.getAutomaton(), format,
 					printWriter);
+		} else if (na.getAutomaton() instanceof CountingAutomaton) {
+			printCountingAutomaton(na.getName(), (CountingAutomaton<LETTER, STATE>) na.getAutomaton(), format, printWriter);
+		} else {
+			throw new AssertionError("unknown kind of automaton");
 		}
 	}
 
@@ -408,6 +413,22 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			}
 			new GoalFormatWriter<>(printWriter, nwa);
 			break;
+		default:
+			throw new AssertionError(UNSUPPORTED_LABELING);
+		}
+	}
+
+	private static <LETTER, STATE> void printCountingAutomaton(final String name,
+			final CountingAutomaton<LETTER, STATE> automaton, final Format format, final PrintWriter printWriter) {
+		switch (format) {
+		case ATS:
+			// TODO #CountingAutomataTodo: Write automaton to printWrinter
+			break;
+		case ATS_QUOTED:
+		case ATS_NUMERATE:
+		case BA:
+		case HOA:
+		case GFF:
 		default:
 			throw new AssertionError(UNSUPPORTED_LABELING);
 		}
