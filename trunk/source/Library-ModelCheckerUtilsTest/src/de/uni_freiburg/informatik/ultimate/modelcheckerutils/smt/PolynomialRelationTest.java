@@ -818,8 +818,15 @@ public class PolynomialRelationTest {
 	@Test
 	public void relationIntDivModMultiOccurrence03() throws NotAffineException {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "eq") };
-		final String inputSTR = "(= (+ (div (div x y) 3) (mod (div x y) 5)) eq )";
+		final String inputSTR = "(= (div (* x y) 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+	}
+
+	@Test
+	public void relationIntDivModMultiOccurrence04() throws NotAffineException {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "eq") };
+		final String inputSTR = "(= (+ (div (* x y) 3) x) eq )";
+		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 }
