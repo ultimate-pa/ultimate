@@ -32,6 +32,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -159,6 +160,57 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 		}
 	}
 
+	/**
+	 *
+	 * @return A {@link Monomial} in which subject is a variable and no other
+	 *         variable of the {@link Monomial} contains subject as a subterm and no
+	 *         other monomial contains the subject. If no such monomial exists we
+	 *         return null
+	 */
+	Monomial getExclusiveMonomialOfSubject(final Term subject) {
+		Monomial result = null;
+		for (final Term abstractVar : getAbstractVariable2Coefficient().keySet()) {
+			if (abstractVar instanceof Monomial) {
+				final Monomial monomial = (Monomial) abstractVar;
+				switch (monomial.isExclusiveVariable(subject)) {
+				case AS_EXCLUSIVE_VARIABlE:
+					if (result != null) {
+						// not exclusive
+						return null;
+					} else {
+						result = monomial;
+					}
+					break;
+				case NON_EXCLUSIVE_OR_SUBTERM:
+					return null;
+				case NOT:
+					break;
+				default:
+					throw new AssertionError("illegal value");
+				}
+			} else {
+				if (subject.equals(abstractVar)) {
+					if (result != null) {
+						// not exclusive
+						return null;
+					} else {
+						result = new Monomial(abstractVar, Rational.ONE);
+					}
+				} else {
+					final boolean subjectOccursAsSubterm = new SubtermPropertyChecker(x -> x == subject)
+							.isPropertySatisfied(abstractVar);
+					if (subjectOccursAsSubterm) {
+						return null;
+					}
+				}
+			}
+		}
+		return result;
+	}
+
+
+
+
 	@Override
 	public String toString() {
 		if (isErrorTerm()) {
@@ -192,7 +244,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR extends Term> extends T
 	 * @return an SMT {@link Term} that represents an abstract variable that occurs in the map of this object TIMES the given coefficient.
 	 */
 	protected abstract Term abstractVariableTimesCoeffToTerm(Script script, AVAR abstractVariable, Rational coeff);
-	
+
 	/**
 	 * Transforms this {@link AbstractGeneralizedAffineTerm} into a Term that is supported by the solver.
 	 *

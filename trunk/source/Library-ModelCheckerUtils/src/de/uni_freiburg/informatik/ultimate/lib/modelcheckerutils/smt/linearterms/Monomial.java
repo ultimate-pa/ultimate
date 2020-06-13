@@ -1,12 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms;
 
-import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -16,17 +17,24 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * This represents a Monomial in the form of
- * 
+ *
  * <pre>
  * Π x_i^{e_i}
  * </pre>
- * 
+ *
  * where x_i's are variables and e_i are literals.
- * 
+ *
  * @author Leonard Fichtner (leonard.fichtner@web.de)
  *
  */
 public class Monomial extends Term {
+
+	/**
+	 * Return value for {@link Monomial#isExclusiveVariable}
+	 */
+	public enum Occurrence {
+		NOT, AS_EXCLUSIVE_VARIABlE, NON_EXCLUSIVE_OR_SUBTERM
+	};
 
 	/**
 	 * Map from Variables to their exponent. Exponent Zero is forbidden. Roots are not prohibited but we cannot handle
@@ -92,7 +100,7 @@ public class Monomial extends Term {
 
 	/**
 	 * Find out whether this Term is linear.
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean isLinear() {
@@ -105,13 +113,43 @@ public class Monomial extends Term {
 	public Map<Term, Rational> getVariable2Exponent() {
 		return Collections.unmodifiableMap(mVariable2Exponent);
 	}
-	
+
 	/**
-	 * @return true iff var is a variable of this {@link Monomial}. Note that for returning true it is especially NOT
-	 *         sufficient if var occurs only as a subterm of some variable.
+	 * @return true iff var is a variable of this {@link Monomial}. Note that for
+	 *         returning true it is especially NOT sufficient if var occurs only as
+	 *         a subterm of some variable.
 	 */
 	public boolean isVariable(final Term var) {
 		return getVariable2Exponent().keySet().contains(var);
+	}
+
+	/**
+	 * Find out if var occurs as a proper subterm of some variable or otherwise as a
+	 * variable or does not occur at all.
+	 *
+	 */
+	public Occurrence isExclusiveVariable(final Term var) {
+		boolean varOccurred = false;
+		for (final Entry<Term, Rational> var2exp : getVariable2Exponent().entrySet()) {
+			if (var2exp.getKey().equals(var)) {
+				if (varOccurred) {
+					throw new AssertionError("var occurs twice");
+				} else {
+					varOccurred = true;
+				}
+			} else {
+				final boolean subjectOccursAsSubterm = new SubtermPropertyChecker(x -> x == var)
+						.isPropertySatisfied(var2exp.getKey());
+				if (subjectOccursAsSubterm) {
+					return Occurrence.NON_EXCLUSIVE_OR_SUBTERM;
+				}
+			}
+		}
+		if (varOccurred) {
+			return Occurrence.AS_EXCLUSIVE_VARIABlE;
+		} else {
+			return Occurrence.NOT;
+		}
 	}
 
 	@Override
@@ -133,14 +171,14 @@ public class Monomial extends Term {
 	public Term toTerm(final Script script) {
 		return timesCoefficientToTerm(script, Rational.ONE);
 	}
-	
+
 	/**
 	 * Transforms this Monomial times the given coefficient into a Term that is supported by the solver.
 	 */
-	public Term timesCoefficientToTerm(final Script script, Rational coeff) {
+	public Term timesCoefficientToTerm(final Script script, final Rational coeff) {
 		Term[] factors;
 		int i;
-		int size = sumOfExponents();
+		final int size = sumOfExponents();
 		if (coeff.equals(Rational.ONE)) {
 			factors = new Term[size];
 			i = 0;
@@ -150,7 +188,7 @@ public class Monomial extends Term {
 			i = 1;
 		}
 		for (final Map.Entry<Term, Rational> entry : mVariable2Exponent.entrySet()) {
-			Term factor = entry.getKey();
+			final Term factor = entry.getKey();
 			final int exponent = entry.getValue().numerator().intValueExact();
 			for (int j = 0; j < exponent; j++) {
 				factors[i] = factor;
@@ -160,7 +198,7 @@ public class Monomial extends Term {
 		final Term result = SmtUtils.mul(script, mSort, factors);
 		return result;
 	}
-	
+
 	private int sumOfExponents() {
 		Rational size = Rational.ZERO;
 		for (final Rational exp : mVariable2Exponent.values()) {
