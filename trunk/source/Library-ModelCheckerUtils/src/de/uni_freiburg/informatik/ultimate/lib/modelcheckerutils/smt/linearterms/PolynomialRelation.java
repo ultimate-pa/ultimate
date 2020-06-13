@@ -451,28 +451,21 @@ public class PolynomialRelation implements IBinaryRelation {
 	 */
 	public MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf) {
-		boolean subjectIsNotAVariableButOccursInDivOrModSubterm = false;
-		ApplicationTerm allowedSubterm = null;
+		final MultiCaseSolvedBinaryRelation res = searchModOrDivSubterm(script, subject, mPolynomialTerm, null, xnf, this.positiveNormalForm(script));
+		if (res != null) {
+			return res;
+		}
+		return solveForSubjectWithoutDivMod(script, subject, xnf);
+	}
+
+	private MultiCaseSolvedBinaryRelation solveForSubjectWithoutDivMod(final Script script, final Term subject,
+			final MultiCaseSolvedBinaryRelation.Xnf xnf) throws AssertionError {
 		if (!isVariable(subject)) {
 			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
 				throw new UnsupportedOperationException("subject is not a variable");
 			} else {
-				allowedSubterm = searchModOrDivSubterm(script, subject, mPolynomialTerm, null);
-				if (allowedSubterm != null) {
-					subjectIsNotAVariableButOccursInDivOrModSubterm = true;
-				} else {
-					return null;
-				}
-			}
-		}
-
-		if (subjectIsNotAVariableButOccursInDivOrModSubterm) {
-			if (!tailIsConstant(Arrays.asList(allowedSubterm.getParameters()))) {
-				// divisor of div/mod is not a constant
-				// note that the number of parameters for mod is limited by the SMT-LIB standard
 				return null;
 			}
-			return handleSubjectInDivModSubterm(script, subject, xnf, allowedSubterm);
 		}
 
 		final Term abstractVarOfSubject = getTheAbstractVarOfSubject(subject);
@@ -629,14 +622,14 @@ public class PolynomialRelation implements IBinaryRelation {
 		return result;
 	}
 
-	private MultiCaseSolvedBinaryRelation handleSubjectInDivModSubterm(final Script script, final Term subject,
-			final MultiCaseSolvedBinaryRelation.Xnf xnf, final ApplicationTerm divModSubterm) {
+	private static MultiCaseSolvedBinaryRelation handleSubjectInDivModSubterm(final Script script, final Term subject,
+			final MultiCaseSolvedBinaryRelation.Xnf xnf, final ApplicationTerm divModSubterm, final Term pnf) {
 		final Term divisor = SmtUtils.mul(script, "*",
 				Arrays.copyOfRange(divModSubterm.getParameters(), 1, divModSubterm.getParameters().length));
 		assert (divisor instanceof ConstantTerm) : "not constant";
 		// Solve for subject in affineterm with a parameter of form (mod/div (subterm
 		// with subject) constant)
-		final Sort termSort = mPolynomialTerm.getSort();
+		final Sort termSort = subject.getSort();
 		// recVarName ensures different names in each recursion, since AffineRelation is
 		// made new each time
 		final int recVarName = divModSubterm.toString().length();
@@ -654,6 +647,9 @@ public class PolynomialRelation implements IBinaryRelation {
 			// recursive call for (= divident[subject] (+ (* aux_div divisor) aux_mod))
 			solvedComparison = PolynomialRelation
 					.convert(script, subtermSumComparison).solveForSubject(script, subject, xnf);
+			if (solvedComparison == null) {
+				return null;
+			}
 		}
 
 		final MultiCaseSolutionBuilder mcsb = new MultiCaseSolutionBuilder(subject, xnf);
@@ -678,12 +674,16 @@ public class PolynomialRelation implements IBinaryRelation {
 			if (c.getSolvedBinaryRelation() != null) {
 				substitutionMapping.put(subject, c.getSolvedBinaryRelation().getRightHandSide());
 			}
-			final Term auxModEqualsTerm = new Substitution(script, substitutionMapping)
-					.transform(this.positiveNormalForm(script));
+			final Term auxModEqualsTerm = new Substitution(script, substitutionMapping).transform(pnf);
 			if (c.getSolvedBinaryRelation() == null) {
 				final boolean containsSubject = new ContainsSubterm(subject).containsSubterm(auxModEqualsTerm);
 				if (containsSubject) {
-					throw new AssertionError("uneliminatable subject");
+					// cannot solve, one Case has no SolvedBinaryRelation and the PolynomialRelation
+					// contains the subject also outside the considered div/mod term.
+					// TODO 20200612 Matthias: Optimization: Try to solve differently for this
+					// case and use the other occurrence of the subject.
+					// Complicated, but probably not yet relevant in practice.
+					return null;
 				}
 			}
 			final SupportingTerm auxEquals = new SupportingTerm(auxModEqualsTerm,
@@ -720,14 +720,14 @@ public class PolynomialRelation implements IBinaryRelation {
 		final MultiCaseSolvedBinaryRelation result = mcsb.buildResult();
 		assert result.isSubjectOnlyOnRhs() : "subject not only LHS";
 		assert script instanceof INonSolverScript
-				|| isEquivalent(script, mOriginalTerm, result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
+				|| isEquivalent(script, pnf, result.asTerm(script)) != LBool.SAT : "solveForSubject unsound";
 		return result;
 	}
 
 	/**
 	 * @return true iff all params starting from index 1 are {@link ConstantTerm}s.
 	 */
-	private boolean tailIsConstant(final List<Term> parameters) {
+	private static boolean tailIsConstant(final List<Term> parameters) {
 		assert parameters.size() > 1;
 		final Iterator<Term> it = parameters.iterator();
 		it.next();
@@ -739,7 +739,7 @@ public class PolynomialRelation implements IBinaryRelation {
 		return true;
 	}
 
-	private RelationSymbol negateForCnf(final RelationSymbol symb, final Xnf xnf) {
+	private static RelationSymbol negateForCnf(final RelationSymbol symb, final Xnf xnf) {
 		if (xnf == Xnf.CNF) {
 			return BinaryRelation.negateRelation(symb);
 		} else {
@@ -813,42 +813,41 @@ public class PolynomialRelation implements IBinaryRelation {
 	/**
 	 * TODO: (1) Documentation (2) Max has an optimization for nested mod terms with
 	 * similar divisor, maybe we should simplify such terms in advance or here
+	 * @param xnf
+	 * @param term
 	 *
 	 */
-	private ApplicationTerm searchModOrDivSubterm(final Script script, final Term subject,
-			final IPolynomialTerm divident, final ApplicationTerm parentDivModTerm) {
-		boolean someMonomialIsSubject = false;
-		boolean someOtherMonomialContainsSubject = false;
+	private static MultiCaseSolvedBinaryRelation searchModOrDivSubterm(final Script script, final Term subject,
+			final IPolynomialTerm divident, final ApplicationTerm parentDivModTerm, final Xnf xnf, final Term pnf) {
 		for (final Monomial m : divident.getMonomial2Coefficient().keySet()) {
-			final Term monomialAsTerm = m.toTerm(script);
-			if (SmtUtils.isIntDiv(monomialAsTerm) || SmtUtils.isIntMod(monomialAsTerm)) {
-				final ApplicationTerm appTerm = (ApplicationTerm) monomialAsTerm;
-				final boolean dividentContainsSubject = new ContainsSubterm(subject)
-						.containsSubterm(appTerm.getParameters()[0]);
-				final boolean tailIsConstant = tailIsConstant(Arrays.asList(appTerm.getParameters()));
-				if (dividentContainsSubject && tailIsConstant) {
-					final IPolynomialTerm innerDivident = (IPolynomialTerm) new PolynomialTermTransformer(script)
-							.transform(appTerm.getParameters()[0]);
-					final ApplicationTerm rec = searchModOrDivSubterm(script, subject, innerDivident, appTerm);
-					if (rec != null) {
-						return rec;
+			for (final Term abstractVariable : m.getVariable2Exponent().keySet()) {
+				if (SmtUtils.isIntDiv(abstractVariable) || SmtUtils.isIntMod(abstractVariable)) {
+					final ApplicationTerm appTerm = (ApplicationTerm) abstractVariable;
+					final boolean dividentContainsSubject = new ContainsSubterm(subject)
+							.containsSubterm(appTerm.getParameters()[0]);
+					final boolean tailIsConstant = tailIsConstant(Arrays.asList(appTerm.getParameters()));
+					if (dividentContainsSubject) {
+						final IPolynomialTerm innerDivident = (IPolynomialTerm) new PolynomialTermTransformer(script)
+								.transform(appTerm.getParameters()[0]);
+						final ApplicationTerm suiteableDivModParent;
+						if (tailIsConstant) {
+							suiteableDivModParent = appTerm;
+						} else {
+							suiteableDivModParent = null;
+						}
+						final MultiCaseSolvedBinaryRelation rec = searchModOrDivSubterm(script, subject, innerDivident,
+								suiteableDivModParent, xnf, pnf);
+						if (rec != null) {
+							return rec;
+						}
 					}
 				}
 			}
-			if (monomialAsTerm.equals(subject)) {
-				someMonomialIsSubject = true;
-			} else {
-				final boolean containsSubject = new ContainsSubterm(subject).containsSubterm(monomialAsTerm);
-				if (containsSubject) {
-					someOtherMonomialContainsSubject = true;
-				}
-			}
 		}
-		if (someMonomialIsSubject && !someOtherMonomialContainsSubject) {
-			return parentDivModTerm;
-		} else {
+		if (parentDivModTerm == null) {
 			return null;
 		}
+		return handleSubjectInDivModSubterm(script, subject, xnf, parentDivModTerm, pnf);
 	}
 
 	private static Term constructDivisibilityConstraint(final Script script, final boolean negate, final Term divident,
