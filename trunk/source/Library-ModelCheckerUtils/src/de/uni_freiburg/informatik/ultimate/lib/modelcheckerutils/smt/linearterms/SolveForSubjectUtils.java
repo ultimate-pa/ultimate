@@ -74,7 +74,7 @@ public class SolveForSubjectUtils {
 
 	private static final boolean THROW_EXCEPTION_IF_NOT_SOLVABLE = false;
 
-	static SolvedBinaryRelation solveForSubject3(final Script script, final Term subject,
+	static SolvedBinaryRelation solveForSubject(final Script script, final Term subject,
 			final PolynomialRelation polyRel) {
 		if (!polyRel.isVariable(subject)) {
 			if (THROW_EXCEPTION_IF_NOT_SOLVABLE) {
@@ -171,7 +171,7 @@ public class SolveForSubjectUtils {
 		return result;
 	}
 
-	static MultiCaseSolvedBinaryRelation solveForSubject2(final Script script, final Term subject,
+	static MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf, final PolynomialRelation polyRel) throws AssertionError {
 		MultiCaseSolvedBinaryRelation res = findTreatableDivModSubterm(script, subject, polyRel.getPolynomialTerm(),
 				null, xnf, polyRel.positiveNormalForm(script));

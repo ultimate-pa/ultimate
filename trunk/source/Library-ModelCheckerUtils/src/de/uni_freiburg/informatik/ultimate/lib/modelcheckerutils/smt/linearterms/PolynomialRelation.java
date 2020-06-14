@@ -314,7 +314,7 @@ public class PolynomialRelation implements IBinaryRelation {
 	 */
 	@Override
 	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) {
-		return SolveForSubjectUtils.solveForSubject3(script, subject, this);
+		return SolveForSubjectUtils.solveForSubject(script, subject, this);
 	}
 
 	/**
@@ -324,7 +324,7 @@ public class PolynomialRelation implements IBinaryRelation {
 	 */
 	public MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf) {
-		return SolveForSubjectUtils.solveForSubject2(script, subject, xnf, this);
+		return SolveForSubjectUtils.solveForSubject(script, subject, xnf, this);
 	}
 
 	/**
