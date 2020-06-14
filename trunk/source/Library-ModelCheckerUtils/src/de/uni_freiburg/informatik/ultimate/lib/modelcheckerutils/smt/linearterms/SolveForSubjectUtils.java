@@ -639,7 +639,7 @@ public class SolveForSubjectUtils {
 	/**
 	 * @return true iff all params starting from index 1 are {@link ConstantTerm}s.
 	 */
-	private static boolean tailIsConstant(final List<Term> parameters) {
+	public static boolean tailIsConstant(final List<Term> parameters) {
 		assert parameters.size() > 1;
 		final Iterator<Term> it = parameters.iterator();
 		it.next();

@@ -26,9 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolveForSubjectUtils;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -54,6 +56,7 @@ public class TermClassifier extends NonRecursive {
 	private final Set<String> mOccuringFunctionNames;
 	private final Set<Integer> mOccuringQuantifiers;
 	private boolean mHasArrays;
+	private boolean mHasNonlinearArithmetic;
 
 	public TermClassifier() {
 		super();
@@ -79,6 +82,10 @@ public class TermClassifier extends NonRecursive {
 		return mHasArrays;
 	}
 
+	public boolean hasNonlinearArithmetic() {
+		return mHasNonlinearArithmetic;
+	}
+
 	/**
 	 * Check a/another Term and add the result to the existing classification results.
 	 */
@@ -102,6 +109,26 @@ public class TermClassifier extends NonRecursive {
 				mOccuringSortNames.add(currentSort.getName());
 				if (currentSort.isArraySort()) {
 					mHasArrays = true;
+				}
+				if (getTerm() instanceof ApplicationTerm) {
+					final ApplicationTerm appTerm  = (ApplicationTerm) getTerm();
+					if (appTerm.getFunction().getName().equals("*")) {
+						final long nonConstantTerms = Arrays.asList(appTerm.getParameters()).stream()
+								.filter(x -> !(x instanceof ConstantTerm)).count();
+						if (nonConstantTerms > 1) {
+							mHasNonlinearArithmetic = true;
+						}
+					}
+					if (appTerm.getFunction().getName().equals("mod")) {
+						if (!(appTerm.getParameters()[1] instanceof ConstantTerm)) {
+							mHasNonlinearArithmetic = true;
+						}
+					}
+					if (appTerm.getFunction().getName().equals("div")) {
+						if (!(SolveForSubjectUtils.tailIsConstant(Arrays.asList(appTerm.getParameters())))) {
+							mHasNonlinearArithmetic = true;
+						}
+					}
 				}
 				super.walk(walker);
 			}
