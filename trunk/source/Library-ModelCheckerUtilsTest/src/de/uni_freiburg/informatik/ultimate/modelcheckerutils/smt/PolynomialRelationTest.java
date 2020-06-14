@@ -35,6 +35,7 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.LoggingScriptForMainTrackBenchmarks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
@@ -56,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
+import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -68,10 +70,12 @@ public class PolynomialRelationTest {
 	 * Warning: each test will overwrite the SMT script of the preceding test.
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
-	private static final String SOLVER_COMMAND_Z3 = "z3 SMTLIB2_COMPLIANT=true -t:3500 -memory:2024 -smt2 -in smt.arith.solver=2";
-	private static final String SOLVER_COMMAND_CVC4 =
-			"cvc4 --incremental --print-success --lang smt --rewrite-divk --tlimit-per=3000";
+	private static final boolean WRITE_MAIN_TRACK_SCRIPT_IF_UNKNOWN_TO_FILE = false;
+
+	private static final String SOLVER_COMMAND_Z3 = "z3 SMTLIB2_COMPLIANT=true -t:13500 -memory:2024 -smt2 -in smt.arith.solver=2";
+	private static final String SOLVER_COMMAND_CVC4 = "cvc4 --incremental --print-success --lang smt --rewrite-divk --tlimit-per=3000";
 	private static final String SOLVER_COMMAND_MATHSAT = "mathsat";
+
 	private static final boolean USE_QUANTIFIER_ELIMINATION_TO_SIMPLIFY_INPUT_OF_EQUIVALENCE_CHECK = false;
 	private Script mScript;
 
@@ -90,16 +94,19 @@ public class PolynomialRelationTest {
 	}
 
 	private Script createSolver(final String solverCommand) {
-		final Script tmp = new HistoryRecordingScript(UltimateMocks.createSolver(solverCommand, LogLevel.INFO));
-		final Script result;
+		Script result = new HistoryRecordingScript(UltimateMocks.createSolver(solverCommand, LogLevel.INFO));
+		final String testName = ReflectionUtil.getCallerMethodName(4);
 		if (WRITE_SMT_SCRIPTS_TO_FILE) {
 			try {
-				result = new LoggingScript(tmp, "PolynomialRelationTest.smt2", true);
+				final String filename = testName + ".smt2";
+				result = new LoggingScript(result, filename, true);
 			} catch (final IOException e) {
 				throw new AssertionError("IOException while constructing LoggingScript");
 			}
-		} else {
-			result = tmp;
+		}
+		if (WRITE_MAIN_TRACK_SCRIPT_IF_UNKNOWN_TO_FILE) {
+			final String baseFilename = testName;
+			result = new LoggingScriptForMainTrackBenchmarks(result, baseFilename, ".");
 		}
 		return result;
 	}
