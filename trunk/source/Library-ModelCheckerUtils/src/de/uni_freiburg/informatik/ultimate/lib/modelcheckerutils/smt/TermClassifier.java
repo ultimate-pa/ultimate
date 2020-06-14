@@ -111,7 +111,7 @@ public class TermClassifier extends NonRecursive {
 					mHasArrays = true;
 				}
 				if (getTerm() instanceof ApplicationTerm) {
-					final ApplicationTerm appTerm  = (ApplicationTerm) getTerm();
+					final ApplicationTerm appTerm = (ApplicationTerm) getTerm();
 					if (appTerm.getFunction().getName().equals("*")) {
 						final long nonConstantTerms = Arrays.asList(appTerm.getParameters()).stream()
 								.filter(x -> !(x instanceof ConstantTerm)).count();
