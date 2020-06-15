@@ -332,18 +332,20 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				i = loopSize.getSecond() - 1;
 				cnt++;
 			} else {
-				final IPredicate prevInterpol;
+				IPredicate prevInterpol;
 				/*
 				 * post does not work well with false
 				 */
 				if (SmtUtils.isFalseLiteral(preds[cnt].getFormula()) && i != 0) {
 					prevInterpol = actualInterpolants[i - 1];
+					final Term post = mPredTransformer.strongestPostcondition(prevInterpol,
+							mCounterexample.get(i).getTransformula());
+					prevInterpol = mPredUnifier.getOrConstructPredicate(post);
 				} else {
 					prevInterpol = preds[cnt];
 				}
-				final Term post =
-						mPredTransformer.strongestPostcondition(prevInterpol, mCounterexample.get(i).getTransformula());
-				actualInterpolants[i] = mPredUnifier.getOrConstructPredicate(post);
+
+				actualInterpolants[i] = prevInterpol;
 			}
 			cnt++;
 		}
