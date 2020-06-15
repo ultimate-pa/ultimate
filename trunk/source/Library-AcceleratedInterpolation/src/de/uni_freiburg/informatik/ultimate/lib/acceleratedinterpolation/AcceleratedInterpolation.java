@@ -204,9 +204,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		/*
 		 * After finding loops in the trace, start calculating loop accelerations.
 		 */
-		for (
-
-		final Entry<IcfgLocation, Set<List<LETTER>>> loophead : mLoops.entrySet()) {
+		for (final Entry<IcfgLocation, Set<List<LETTER>>> loophead : mLoops.entrySet()) {
 			final List<UnmodifiableTransFormula> accelerations = new ArrayList<>();
 
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR);
@@ -214,11 +212,9 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				final UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
 				final UnmodifiableTransFormula acceleratedLoopRelation =
 						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.FAST_UPR);
-
 				final Term t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
 						acceleratedLoopRelation.getFormula(), SimplificationTechnique.SIMPLIFY_BDD_FIRST_ORDER,
 						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-
 				final TransFormulaBuilder tfb = new TransFormulaBuilder(acceleratedLoopRelation.getInVars(),
 						acceleratedLoopRelation.getOutVars(), true, Collections.emptySet(), true,
 						Collections.emptySet(), false);
@@ -234,7 +230,13 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			if (accelerations.size() > 1) {
 				mApproximationType = AccelerationApproximationType.UNDERAPPROXIMATION;
 			}
-			mAccelerations.put(loophead.getKey(), accelerations);
+
+			final UnmodifiableTransFormula disjunction =
+					TransFormulaUtils.parallelComposition(mLogger, mServices, 0, mScript, null, false, null,
+							accelerations.toArray(new UnmodifiableTransFormula[accelerations.size()]));
+			final List<UnmodifiableTransFormula> disjunctionList = new ArrayList<>();
+			disjunctionList.add(disjunction);
+			mAccelerations.put(loophead.getKey(), disjunctionList);
 		}
 
 		/*
@@ -292,11 +294,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				final Pair<Integer, Integer> loopSize = mLoopSize.get(target);
 				final List<UnmodifiableTransFormula> loopAccelerations = new ArrayList<>(mAccelerations.get(target));
 				final List<Term> loopAccelerationsForEntryLocation = new ArrayList<>();
-				for (int k = 0; k < loopAccelerations.size(); k++) {
-					final IPredicate currentLoopAccelerationInterpolant = preds[cnt];
-					loopAccelerationsForEntryLocation.add(currentLoopAccelerationInterpolant.getFormula());
-					cnt = cnt + 2;
-				}
+				final IPredicate currentLoopAccelerationInterpolant = preds[cnt];
+				loopAccelerationsForEntryLocation.add(currentLoopAccelerationInterpolant.getFormula());
 				final Term loopAccelerationsForEntryLocationDisjunction =
 						SmtUtils.or(mScript.getScript(), loopAccelerationsForEntryLocation);
 
@@ -316,40 +315,25 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 					interpolantPred = mPredUnifier.getOrConstructPredicate(newLoopEntryTerm);
 				}
 				actualInterpolants[i] = interpolantPred;
-				final int limit;
 				int j = i + 1;
-				if (loopAccelerations.size() > 1) {
-					limit = loopSize.getSecond() + 1;
-					i = loopSize.getSecond();
-				} else {
-					limit = loopSize.getSecond();
-					i = loopSize.getSecond() - 1;
-				}
-
-				while (j < limit) {
+				while (j < loopSize.getSecond() + 1) {
 					final UnmodifiableTransFormula transRel = mCounterexample.get(j).getTransformula();
 					final Term loopPostTerm =
 							mPredTransformer.strongestPostcondition(actualInterpolants[j - 1], transRel);
 					actualInterpolants[j] = mPredUnifier.getOrConstructPredicate(loopPostTerm);
 					j++;
 				}
-				// if (mAccelerations.get(target).size() > 1) {
-				// cnt = mAccelerations.get(target).size() + 1;
-				// } else {
-				// cnt = mAccelerations.get(target).size();
-				// }
+				i = loopSize.getSecond();
 			} else {
-				// final IPredicate prevInterpol;
-				// if (i == 0) {
-				// prevInterpol = getPrecondition();
-				// } else {
-				// prevInterpol = actualInterpolants[i - 1];
-				// }
-				// final Term post =
-				// mPredTransformer.strongestPostcondition(prevInterpol, mCounterexample.get(i).getTransformula());
-				// actualInterpolants[i] = mPredUnifier.getOrConstructPredicate(post);
-
-				actualInterpolants[i] = preds[cnt];
+				final IPredicate prevInterpol;
+				if (i == 0) {
+					prevInterpol = getPrecondition();
+				} else {
+					prevInterpol = actualInterpolants[i - 1];
+				}
+				final Term post =
+						mPredTransformer.strongestPostcondition(prevInterpol, mCounterexample.get(i).getTransformula());
+				actualInterpolants[i] = mPredUnifier.getOrConstructPredicate(post);
 				cnt++;
 			}
 		}
@@ -418,31 +402,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 					loopExitLocation, loopExitLocation.getPayload(), loopExitTransition.getTransformula());
 
 			final List<UnmodifiableTransFormula> accelerations = mAccelerations.get(target);
-			if (accelerations.size() > 1) {
-				for (int j = 0; j < accelerations.size() - 1; j++) {
-					final UnmodifiableTransFormula loopAcceleration = accelerations.get(j);
-
-					final LETTER acceleratedTransition = (LETTER) mIcfgEdgeFactory.createInternalTransition(target,
-							newExitLocation, target.getPayload(), loopAcceleration);
-
-					final UnmodifiableTransFormula epsilon = constructEpsilon(loopAcceleration);
-					final LETTER epsilonTransition = (LETTER) mIcfgEdgeFactory.createInternalTransition(newExitLocation,
-							target, target.getPayload(), epsilon);
-
-					final Term acceleratedTransitionDefaultVars = mPredHelper.normalizeTerm(loopAcceleration);
-					final Term epsilonDefaultVars = mPredHelper.normalizeTerm(epsilon);
-					final SPredicate acceleratedSPred =
-							predFactory.newSPredicate(newExitLocation, acceleratedTransitionDefaultVars);
-					final SPredicate epsilonSPred = predFactory.newSPredicate(target, epsilonDefaultVars);
-
-					counterExampleAcceleratedLetter.add(acceleratedTransition);
-					counterExampleAcceleratedLetter.add(epsilonTransition);
-
-					acceleratedTraceSchemeStates.add(acceleratedSPred);
-					acceleratedTraceSchemeStates.add(epsilonSPred);
-				}
-			}
-
 			final UnmodifiableTransFormula lastLoopAcceleration = accelerations.get(accelerations.size() - 1);
 			/**
 			 * TODO: Deal with unsafe cast!
