@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -204,14 +205,19 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		/*
 		 * After finding loops in the trace, start calculating loop accelerations.
 		 */
-		for (final Entry<IcfgLocation, Set<List<LETTER>>> loophead : mLoops.entrySet()) {
+		final Iterator<Entry<IcfgLocation, Set<List<LETTER>>>> loopheadIterator = mLoops.entrySet().iterator();
+		while (loopheadIterator.hasNext()) {
+			final Entry<IcfgLocation, Set<List<LETTER>>> loophead = loopheadIterator.next();
 			final List<UnmodifiableTransFormula> accelerations = new ArrayList<>();
-
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR);
 			for (final List<LETTER> loop : loophead.getValue()) {
 				final UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
 				final UnmodifiableTransFormula acceleratedLoopRelation =
 						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.FAST_UPR);
+				if (!mAccelerator.accelerationFinishedCorrectly()) {
+					loopheadIterator.remove();
+					continue;
+				}
 				final Term t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
 						acceleratedLoopRelation.getFormula(), SimplificationTechnique.SIMPLIFY_BDD_FIRST_ORDER,
 						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);

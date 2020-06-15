@@ -87,8 +87,7 @@ public class FastUPRCore {
 	 * @param formula
 	 *            The {@link UnmodifiableTransFormula} to be transformed.
 	 * @param managedScript
-	 *            The {@link ManagedScript} to use for {@link Term}
-	 *            transformation.
+	 *            The {@link ManagedScript} to use for {@link Term} transformation.
 	 * @param logger
 	 *            The {@link ILogger} used for Debug Logging.
 	 * @param services
@@ -115,7 +114,8 @@ public class FastUPRCore {
 		mOctagonDetector = new OctagonDetector(logger, managedScript, services);
 		mOctagonTransformer = new OctagonTransformer(mUtils, managedScript.getScript(), mOctagonDetector);
 		mOctagonCalculator = new OctagonCalculator(mUtils, managedScript);
-		mFormulaBuilder = new FastUPRFormulaBuilder(mUtils, mManagedScript, mOctagonCalculator, mOctagonTransformer);
+		mFormulaBuilder =
+				new FastUPRFormulaBuilder(mUtils, mManagedScript, mOctagonCalculator, mOctagonTransformer, mServices);
 		mTermChecker = new FastUPRTermChecker(mUtils, mManagedScript, mOctagonCalculator, mFormulaBuilder, mServices);
 
 		mUtils.output("Formula:" + mFormula.toString());
@@ -180,8 +180,8 @@ public class FastUPRCore {
 			final boolean forAll = checkForAll(difference, b, c);
 			if (forAll) {
 				mUtils.output("ForAll Successful.");
-				mResultTerm = mFormulaBuilder.buildParametricResult(mConjunc, b, difference, mInVars, mOutVars,
-						mVariables);
+				mResultTerm =
+						mFormulaBuilder.buildParametricResult(mConjunc, b, difference, mInVars, mOutVars, mVariables);
 				return true;
 			}
 			mUtils.output("ForAll Unsuccessful. Periodicity until Inconsistency.");
@@ -229,8 +229,8 @@ public class FastUPRCore {
 
 		}
 
-		mResultTerm = mFormulaBuilder.buildPeriodicityResult(mConjunc, difference, b, c, n, mInVars, mOutVars,
-				mVariables);
+		mResultTerm =
+				mFormulaBuilder.buildPeriodicityResult(mConjunc, difference, b, c, n, mInVars, mOutVars, mVariables);
 		return true;
 	}
 
@@ -244,13 +244,14 @@ public class FastUPRCore {
 		final ParametricOctMatrix intervalMatrix = differenceN.add(rBMatrix);
 
 		final OctConjunction rC = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, c);
-		final OctConjunction interval = mOctagonCalculator.binarySequentialize(intervalMatrix.toOctConjunction(), rC,
-				mInVars, mOutVars);
+		final OctConjunction interval =
+				mOctagonCalculator.binarySequentialize(intervalMatrix.toOctConjunction(), rC, mInVars, mOutVars);
 
-		final Term quantified = script.quantifier(QuantifiedFormula.EXISTS,
-				new TermVariable[] { differenceN.getParametricVar() },
-				script.term("and", script.term(">=", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO)),
-						interval.toTerm(script)));
+		final Term quantified =
+				script.quantifier(QuantifiedFormula.EXISTS, new TermVariable[] { differenceN.getParametricVar() },
+						script.term("and",
+								script.term(">=", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO)),
+								interval.toTerm(script)));
 		return mTermChecker.checkQuantifiedTerm(quantified);
 	}
 
@@ -342,8 +343,8 @@ public class FastUPRCore {
 		intervalMatrix.setLogger(mUtils.getLogger());
 
 		final OctConjunction intervalMatrixConjunction = intervalMatrix.toOctConjunction();
-		final OctConjunction intervalBeginning = mOctagonCalculator.binarySequentialize(intervalMatrixConjunction, rC,
-				mInVars, mOutVars);
+		final OctConjunction intervalBeginning =
+				mOctagonCalculator.binarySequentialize(intervalMatrixConjunction, rC, mInVars, mOutVars);
 		final OctConjunction intervalEnd = intervalMatrix.toOctConjunction(1);
 
 		mUtils.debug("Intervals:");

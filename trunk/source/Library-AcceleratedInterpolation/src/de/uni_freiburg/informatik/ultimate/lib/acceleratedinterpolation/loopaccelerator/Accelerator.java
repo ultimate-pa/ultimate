@@ -56,12 +56,14 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
+	private boolean mFoundAcceleration;
 
 	public Accelerator(final ILogger logger, final ManagedScript managedScript,
 			final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mScript = managedScript;
 		mServices = services;
+		mFoundAcceleration = false;
 	}
 
 	/**
@@ -94,14 +96,24 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 	 * @return
 	 */
 	private UnmodifiableTransFormula fastUprAcceleration(final UnmodifiableTransFormula loop) {
+		UnmodifiableTransFormula acceleratedLoop;
 		try {
 			mLogger.debug("Accelerating Loop using FastUPR");
 			final FastUPRCore uprCore = new FastUPRCore(loop, mScript, mLogger, mServices);
-			final UnmodifiableTransFormula acceleratedLoop = uprCore.getResult();
+			acceleratedLoop = uprCore.getResult();
+			mFoundAcceleration = true;
 			mLogger.debug("Done.");
 			return acceleratedLoop;
 		} catch (final NotAffineException e) {
+			mFoundAcceleration = false;
 			e.printStackTrace();
+		} catch (final UnsupportedOperationException ue) {
+			/*
+			 * Unsupported Operation error because FastUPR could not accelerate the loop. Either return null, to make
+			 * the program unknown, or just return the loop for possible worse performance.
+			 */
+			mFoundAcceleration = false;
+			return loop;
 		}
 		return loop;
 	}
@@ -112,5 +124,9 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 
 	private void overApproxAcceleration(final Map<IcfgLocation, List<LETTER>> loops) {
 		throw new UnsupportedOperationException("There is no such acceleration method yet");
+	}
+
+	public boolean accelerationFinishedCorrectly() {
+		return mFoundAcceleration;
 	}
 }

@@ -10,7 +10,7 @@ procedure main() {
 	var x : int;
 	x := 0;
 	
-	while (x <= 10) {
+	while (x <= 5) {
 		if (x - 2 > 1) {
 			x := x + 1;
 		} else {
@@ -18,5 +18,5 @@ procedure main() {
 		}
 		x := x + 2;
 	}	
-	assert x == 13;
+	assert x == 7;
 }

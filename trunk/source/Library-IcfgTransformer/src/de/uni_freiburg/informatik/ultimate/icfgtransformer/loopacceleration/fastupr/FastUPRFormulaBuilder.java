@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctConjunction;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonCalculator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonTransformer;
@@ -42,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -62,47 +65,53 @@ public class FastUPRFormulaBuilder {
 	private final OctagonCalculator mCalculator;
 	private final OctagonTransformer mTransformer;
 	private final FastUPRTermTransformer mTermTransformer;
+	private final IUltimateServiceProvider mServices;
 
 	/**
 	 *
 	 * @param utils
 	 *            The {@link FastUPRUtils} used for debug output.
 	 * @param mgdScript
-	 *            The {@link ManagedScript} used for {@link Term}
-	 *            transformation.
+	 *            The {@link ManagedScript} used for {@link Term} transformation.
 	 * @param calc
 	 *            An {@link OctagonCalculator}
 	 * @param transformer
 	 *            An {@link OctagonTransformer}
 	 */
-	public FastUPRFormulaBuilder(FastUPRUtils utils, ManagedScript mgdScript, OctagonCalculator calc,
-			OctagonTransformer transformer) {
+	public FastUPRFormulaBuilder(final FastUPRUtils utils, final ManagedScript mgdScript, final OctagonCalculator calc,
+			final OctagonTransformer transformer, final IUltimateServiceProvider services) {
 		mUtils = utils;
 		mManagedScript = mgdScript;
 		mScript = mgdScript.getScript();
 		mCalculator = calc;
 		mTransformer = transformer;
+		mServices = services;
 		mTermTransformer = new FastUPRTermTransformer(mScript);
 	}
 
 	/**
-	 * Builds an {@link UnmodifiableTransFormula} from a given {@link Term} and
-	 * variable Mappings.
+	 * Builds an {@link UnmodifiableTransFormula} from a given {@link Term} and variable Mappings.
 	 *
 	 * @param term
 	 *            The {@link Term} of the TransFormula.
 	 * @param inVars
-	 *            An InVar-Mapping from {@link IProgramVar} to
-	 *            {@link TermVariable}.
+	 *            An InVar-Mapping from {@link IProgramVar} to {@link TermVariable}.
 	 * @param outVars
-	 *            An OutVar-Mapping from {@link IProgramVar} to
-	 *            {@link TermVariable}.
+	 *            An OutVar-Mapping from {@link IProgramVar} to {@link TermVariable}.
 	 * @return new {@link UmodifiableTransFormula} based on the input.
 	 */
-	public UnmodifiableTransFormula buildTransFormula(Term term, Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars) {
+	public UnmodifiableTransFormula buildTransFormula(final Term term, final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars) {
 		final Term withoutInt = mTermTransformer.transformToInt(term);
-		final ModifiableTransFormula modFormula = new ModifiableTransFormula(withoutInt);
+
+		/*
+		 * JW: we need to simplify the acceleration at least once to get rid of terms like (+ 0 22) as the
+		 * transformulabuilder does not like them.
+		 */
+		final Term simplify = SmtUtils.simplify(mManagedScript, withoutInt, mServices,
+				SimplificationTechnique.SIMPLIFY_BDD_FIRST_ORDER);
+
+		final ModifiableTransFormula modFormula = new ModifiableTransFormula(simplify);
 		for (final IProgramVar p : inVars.keySet()) {
 			modFormula.addInVar(p, inVars.get(p));
 		}
@@ -114,23 +123,20 @@ public class FastUPRFormulaBuilder {
 	}
 
 	/**
-	 * Build an Accelerated Loop Edge for Octagons that do not pass the
-	 * Consistency Check.
+	 * Build an Accelerated Loop Edge for Octagons that do not pass the Consistency Check.
 	 *
 	 * @param conjunc
 	 *            The {@link OctConjunction} representing the Octagon.
 	 * @param count
 	 *            The last iteration where the Octagon is consistent.
 	 * @param inVars
-	 *            An InVar-Mapping from {@link IProgramVar} to
-	 *            {@link TermVariable}.
+	 *            An InVar-Mapping from {@link IProgramVar} to {@link TermVariable}.
 	 * @param outVars
-	 *            An OutVar-Mapping from {@link IProgramVar} to
-	 *            {@link TermVariable}.
+	 *            An OutVar-Mapping from {@link IProgramVar} to {@link TermVariable}.
 	 * @return The Disjunction representing the Loop up to it's inconsistency.
 	 */
-	public Term buildConsistencyResult(OctConjunction conjunc, int count, Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars) {
+	public Term buildConsistencyResult(final OctConjunction conjunc, final int count,
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 
 		mUtils.output("Returning Consistency Result");
 		final ArrayList<Term> orTerms = new ArrayList<>();
@@ -141,30 +147,26 @@ public class FastUPRFormulaBuilder {
 	}
 
 	/**
-	 * Build an Accelerated Loop Edge for Octagons that are ultimately periodic
-	 * without inconsistency.
+	 * Build an Accelerated Loop Edge for Octagons that are ultimately periodic without inconsistency.
 	 *
 	 * @param conjunc
 	 *            The {@link OctConjunction} representing the Octagon.
 	 * @param b
 	 *            The length of the loop prefix.
 	 * @param difference
-	 *            The Matrix representing the difference between two loop
-	 *            periods.
+	 *            The Matrix representing the difference between two loop periods.
 	 * @param inVars
 	 * @param outVars
 	 * @param variables
 	 * @param inVars
-	 *            An InVar-Mapping from {@link IProgramVar} to
-	 *            {@link TermVariable}.
+	 *            An InVar-Mapping from {@link IProgramVar} to {@link TermVariable}.
 	 * @param outVars
-	 *            An OutVar-Mapping from {@link IProgramVar} to
-	 *            {@link TermVariable}.
+	 *            An OutVar-Mapping from {@link IProgramVar} to {@link TermVariable}.
 	 * @return The Disjunction representing the Loop
 	 */
-	public Term buildParametricResult(OctConjunction conjunc, int b, ParametricOctMatrix difference,
-			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars,
-			List<TermVariable> variables) {
+	public Term buildParametricResult(final OctConjunction conjunc, final int b, final ParametricOctMatrix difference,
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
+			final List<TermVariable> variables) {
 		// R* := OR(i=0->b-1) (R^i) or EXISTS k>=0. OR(i=0->c-1)
 		// (pi(k*difference + sigma(R^b)) ○ R^i
 
@@ -172,8 +174,8 @@ public class FastUPRFormulaBuilder {
 		for (int i = 0; i < b; i++) {
 			firstOrTerms.add(mCalculator.sequentialize(conjunc, inVars, outVars, i).toTerm(mScript));
 		}
-		final Term firstOr = firstOrTerms.size() > 1 ? mScript.term("or", firstOrTerms.toArray(new Term[0]))
-				: firstOrTerms.get(0);
+		final Term firstOr =
+				firstOrTerms.size() > 1 ? mScript.term("or", firstOrTerms.toArray(new Term[0])) : firstOrTerms.get(0);
 
 		final ArrayList<Term> secondOrTerms = new ArrayList<>();
 		final ParametricOctMatrix parametricDiff = difference.multiplyVar("k", mManagedScript);
@@ -183,22 +185,22 @@ public class FastUPRFormulaBuilder {
 		}
 		final Term secondOr = secondOrTerms.size() > 1 ? mScript.term("or", secondOrTerms.toArray(new Term[0]))
 				: secondOrTerms.get(0);
-		final Term secondOrQuantified = mScript.quantifier(QuantifiedFormula.EXISTS,
-				new TermVariable[] { parametricDiff.getParametricVar() },
-				mScript.term("and",
-						mScript.term(">=", parametricDiff.getParametricVar(), mScript.decimal(BigDecimal.ZERO)),
-						secondOr));
+		final Term secondOrQuantified =
+				mScript.quantifier(QuantifiedFormula.EXISTS, new TermVariable[] { parametricDiff.getParametricVar() },
+						mScript.term("and",
+								mScript.term(">=", parametricDiff.getParametricVar(), mScript.decimal(BigDecimal.ZERO)),
+								secondOr));
 		final Term result = mScript.term("or", firstOr, secondOrQuantified);
 
 		mUtils.output("Returning Parametric Result");
 		return result;
 	}
 
-	private Term getParametricSolutionRightSide(OctConjunction conjunc, int b, int i,
-			ParametricOctMatrix parametricDiff, Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars, List<TermVariable> variables) {
-		final ParametricOctMatrix rBMatrix = mTransformer
-				.getMatrix(mCalculator.sequentialize(conjunc, inVars, outVars, b), variables);
+	private Term getParametricSolutionRightSide(final OctConjunction conjunc, final int b, final int i,
+			final ParametricOctMatrix parametricDiff, final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars, final List<TermVariable> variables) {
+		final ParametricOctMatrix rBMatrix =
+				mTransformer.getMatrix(mCalculator.sequentialize(conjunc, inVars, outVars, b), variables);
 		final ParametricOctMatrix completeMatrix = parametricDiff.add(rBMatrix);
 		final OctConjunction firstPart = completeMatrix.toOctConjunction();
 		final OctConjunction result = mCalculator.binarySequentialize(firstPart,
@@ -208,15 +210,13 @@ public class FastUPRFormulaBuilder {
 	}
 
 	/**
-	 * Build an Accelerated Loop Edge for Octagons, where a period was found but
-	 * also an inconsistency at some point.
+	 * Build an Accelerated Loop Edge for Octagons, where a period was found but also an inconsistency at some point.
 	 *
 	 * @param conjunc
 	 *            The {@link OctConjunction} representing the Octagon.
 	 *
 	 * @param difference
-	 *            The Matrix representing the difference between two loop
-	 *            periods.
+	 *            The Matrix representing the difference between two loop periods.
 	 * @param b
 	 *            The length of the loop prefix.
 	 * @param c
@@ -224,19 +224,16 @@ public class FastUPRFormulaBuilder {
 	 * @param n
 	 *            The largest amount of loop calls that are consistent.
 	 * @param inVars
-	 *            An InVar-Mapping from {@link IProgramVar} to
-	 *            {@link TermVariable}.
+	 *            An InVar-Mapping from {@link IProgramVar} to {@link TermVariable}.
 	 * @param outVars
-	 *            An OutVar-Mapping from {@link IProgramVar} to
-	 *            {@link TermVariable}.
+	 *            An OutVar-Mapping from {@link IProgramVar} to {@link TermVariable}.
 	 * @param variables
-	 *            The Ordered List of {@link TermVariable}s to build a
-	 *            {@link ParametricOctMatrix}.
+	 *            The Ordered List of {@link TermVariable}s to build a {@link ParametricOctMatrix}.
 	 * @return The Disjunction representing the Loop.
 	 */
-	public Term buildPeriodicityResult(OctConjunction conjunc, ParametricOctMatrix difference, int b, int c, int n,
-			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars,
-			List<TermVariable> variables) {
+	public Term buildPeriodicityResult(final OctConjunction conjunc, final ParametricOctMatrix difference, final int b,
+			final int c, final int n, final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars, final List<TermVariable> variables) {
 		// R* := OR(i=0->b-1) (R^i) or OR(k=0->n0-1) OR (i=0->c-1)
 		// rho(k*difference + sigma(R^b)) ○ R^i
 
@@ -244,8 +241,8 @@ public class FastUPRFormulaBuilder {
 		for (int i = 0; i < b; i++) {
 			firstOrTerms.add(mCalculator.sequentialize(conjunc, inVars, outVars, i).toTerm(mScript));
 		}
-		final Term firstOr = firstOrTerms.size() > 1 ? mScript.term("or", firstOrTerms.toArray(new Term[0]))
-				: firstOrTerms.get(0);
+		final Term firstOr =
+				firstOrTerms.size() > 1 ? mScript.term("or", firstOrTerms.toArray(new Term[0])) : firstOrTerms.get(0);
 		final List<Term> outerOrTerms = new ArrayList<>();
 		for (int k = 0; k < n; k++) {
 			final List<Term> innerOrTerms = new ArrayList<>();
@@ -256,8 +253,8 @@ public class FastUPRFormulaBuilder {
 					: innerOrTerms.get(0);
 			outerOrTerms.add(innerOr);
 		}
-		final Term outerOr = outerOrTerms.size() > 1 ? mScript.term("or", outerOrTerms.toArray(new Term[0]))
-				: outerOrTerms.get(0);
+		final Term outerOr =
+				outerOrTerms.size() > 1 ? mScript.term("or", outerOrTerms.toArray(new Term[0])) : outerOrTerms.get(0);
 		final Term result = mScript.term("or", firstOr, outerOr);
 
 		mUtils.output("Returning Periodicity Result");
@@ -265,11 +262,11 @@ public class FastUPRFormulaBuilder {
 		return result;
 	}
 
-	private Term getInnerOrTerm(OctConjunction conjunc, int b, int i, int n, ParametricOctMatrix difference,
-			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars,
-			List<TermVariable> variables) {
-		final ParametricOctMatrix rBMatrix = mTransformer
-				.getMatrix(mCalculator.sequentialize(conjunc, inVars, outVars, b), variables);
+	private Term getInnerOrTerm(final OctConjunction conjunc, final int b, final int i, final int n,
+			final ParametricOctMatrix difference, final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars, final List<TermVariable> variables) {
+		final ParametricOctMatrix rBMatrix =
+				mTransformer.getMatrix(mCalculator.sequentialize(conjunc, inVars, outVars, b), variables);
 		final ParametricOctMatrix differenceMultiplied = difference.multiplyConstant(new BigDecimal(n));
 		final ParametricOctMatrix completeMatrix = differenceMultiplied.add(rBMatrix);
 		final OctConjunction firstPart = completeMatrix.toOctConjunction();
@@ -278,7 +275,8 @@ public class FastUPRFormulaBuilder {
 		return result.toTerm(mScript);
 	}
 
-	private Term getIdentityRelation(Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars) {
+	private Term getIdentityRelation(final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars) {
 		final ArrayList<Term> terms = new ArrayList<>();
 		for (final IProgramVar p : inVars.keySet()) {
 			final TermVariable in = inVars.get(p);
@@ -316,15 +314,13 @@ public class FastUPRFormulaBuilder {
 	 * @param t
 	 *            The term to merge with the exit edge.
 	 * @param inVars
-	 *            An InVar-Mapping from {@link IProgramVar} to
-	 *            {@link TermVariable}.
+	 *            An InVar-Mapping from {@link IProgramVar} to {@link TermVariable}.
 	 * @param outVars
-	 *            An OutVar-Mapping from {@link IProgramVar} to
-	 *            {@link TermVariable}.
+	 *            An OutVar-Mapping from {@link IProgramVar} to {@link TermVariable}.
 	 * @return Merged exit edge and Term t.
 	 */
-	public Term getExitEdgeResult(UnmodifiableTransFormula exitEdgeFormula, Term t,
-			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars) {
+	public Term getExitEdgeResult(final UnmodifiableTransFormula exitEdgeFormula, final Term t,
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		final Term identityRelation = getIdentityRelation(inVars, outVars);
 		final Term loop = mScript.term("or", identityRelation, t);
 
@@ -333,8 +329,8 @@ public class FastUPRFormulaBuilder {
 		return mScript.term("and", loop, exitTerm);
 	}
 
-	private Term buldExitRelation(Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars,
-			UnmodifiableTransFormula exitEdgeFormula) {
+	private Term buldExitRelation(final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars, final UnmodifiableTransFormula exitEdgeFormula) {
 		Term exitTerm = exitEdgeFormula.getFormula();
 
 		for (final Entry<IProgramVar, TermVariable> e : exitEdgeFormula.getInVars().entrySet()) {
