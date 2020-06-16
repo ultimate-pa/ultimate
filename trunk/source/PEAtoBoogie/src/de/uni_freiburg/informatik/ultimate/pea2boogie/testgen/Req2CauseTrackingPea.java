@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Decision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
@@ -230,6 +231,7 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 			final Set<String> effectVars){
 		final Set<String> toTrackVars = new HashSet<>();
 		final PhaseBits pb = location.getPhaseBits();
+		final CDD effectCDD = dcFormula[effectPhase].getInvariant();
 		if (pb == null) {
 			return Collections.emptySet();
 		}
@@ -243,24 +245,19 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 					cddVars.addAll(Req2CauseTrackingCDD.getCddVariables(dcFormula[i+1].getInvariant()));
 				}
 				if (effectPhase == i) {
-					//when in effect phase or waiting for effect phase, remove only effect vars
+					//if this phase is also an effect phase then remove all effect vars from the phases vars
 					cddVars.removeAll(effectVars);
+				}
+				if (pb.isWaiting(effectPhase)){
+					//we are waiting for the effect to happen so do not try to prove absence of effect
+					final Set<Decision<?>> effectObservables = Req2CauseTrackingCDD.getDecisions(effectCDD);
+					final Set<Decision<?>> invarObservables = Req2CauseTrackingCDD.getDecisions(invar);
+					invarObservables.removeAll(effectObservables);
+					cddVars.retainAll(Req2CauseTrackingCDD.getCddVariables(invarObservables));
 				}
 				toTrackVars.addAll(cddVars);
 			}
 		}
-		//TODO: this was a bad idea:
-		// to per CDD, i.e. encode each observable on its own!
-		/*final Set<String> waitingVars = new HashSet<>();
-		for(int i = 0; i < dcFormula.length; i++) {
-			if(pb.isActive(i) && pb.isWaiting(i)) {
-				final CDD invar = dcFormula[i].getInvariant();
-				final Set<String> cddVars = Req2CauseTrackingCDD.getCddVariables(invar);
-				waitingVars.addAll(cddVars);
-			}
-		}
-		waitingVars.retainAll(effectVars); //again, only effectvars!
-		toTrackVars.removeAll(waitingVars);*/
 		return toTrackVars;
 	}
 

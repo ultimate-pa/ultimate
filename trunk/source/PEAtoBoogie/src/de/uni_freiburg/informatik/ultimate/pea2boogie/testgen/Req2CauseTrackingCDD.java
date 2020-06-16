@@ -294,20 +294,18 @@ public class Req2CauseTrackingCDD {
 
 	public static Set<String> getCddVariables(final CDD cdd) {
 		final Set<String> variables = new HashSet<>();
-		extractVars(cdd, variables);
+		for(final Decision<?> dec: getDecisions(cdd)){
+			variables.addAll(getVarsFromDecision(dec));
+		}
 		return variables;
 	}
 
-	private static void extractVars(final CDD cdd, final Set<String> variables) {
-		if (cdd == CDD.TRUE || cdd == CDD.FALSE) {
-			return;
+	public static Set<String> getCddVariables(final Set<Decision<?>> cdds) {
+		final Set<String> variables = new HashSet<>();
+		for(final Decision<?> dec: cdds){
+			variables.addAll(getVarsFromDecision(dec));
 		}
-		variables.addAll(getVarsFromDecision(cdd.getDecision()));
-		if (cdd.getChilds() != null) {
-			for (final CDD child : cdd.getChilds()) {
-				extractVars(child, variables);
-			}
-		}
+		return variables;
 	}
 
 	private static Set<String> getVarsFromDecision(final Decision<?> dec) {
@@ -334,5 +332,47 @@ public class Req2CauseTrackingCDD {
 	public Map<String, String> getTrackingVars() {
 		return mTrackingVars;
 	}
+
+
+
+	public static Set<Decision<?>> getDecisions(final CDD cdd) {
+		final Set<Decision<?>> decisions = new HashSet<>();
+		extractDecisions(cdd, decisions);
+		return decisions;
+	}
+
+	private static void extractDecisions(final CDD cdd, final Set<Decision<?>> decisions) {
+		if (cdd == CDD.TRUE || cdd == CDD.FALSE) {
+			return;
+		}
+		decisions.add(cdd.getDecision());
+		if (cdd.getChilds() != null) {
+			for (final CDD child : cdd.getChilds()) {
+				extractDecisions(child, decisions);
+			}
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }
