@@ -1,4 +1,4 @@
-//#Unsafe
+//#Safe
 /* Date: 2017-06-10
  * Author: jonaswerner95@gmail.com
  *

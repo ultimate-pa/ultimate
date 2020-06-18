@@ -208,6 +208,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		final Iterator<Entry<IcfgLocation, Set<List<LETTER>>>> loopheadIterator = mLoops.entrySet().iterator();
 		while (loopheadIterator.hasNext()) {
 			final Entry<IcfgLocation, Set<List<LETTER>>> loophead = loopheadIterator.next();
+			boolean accelerationFinishedCorrectly = false;
 			final List<UnmodifiableTransFormula> accelerations = new ArrayList<>();
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR);
 			for (final List<LETTER> loop : loophead.getValue()) {
@@ -215,9 +216,10 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				final UnmodifiableTransFormula acceleratedLoopRelation =
 						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.FAST_UPR);
 				if (!mAccelerator.accelerationFinishedCorrectly()) {
-					loopheadIterator.remove();
-					continue;
+					accelerationFinishedCorrectly = false;
+					break;
 				}
+				accelerationFinishedCorrectly = true;
 				final Term t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
 						acceleratedLoopRelation.getFormula(), SimplificationTechnique.SIMPLIFY_BDD_FIRST_ORDER,
 						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
@@ -231,6 +233,10 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 				final UnmodifiableTransFormula accelerationNoQuantifiersTf = tfb.finishConstruction(mScript);
 				accelerations.add(accelerationNoQuantifiersTf);
+			}
+			if (!accelerationFinishedCorrectly) {
+				loopheadIterator.remove();
+				break;
 			}
 			mAccelInterpolBench.stop(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR);
 			if (accelerations.size() > 1) {
@@ -392,7 +398,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			counterExampleAcceleratedLetter.add(l);
 			acceleratedTraceSchemeStates.add(traceStates.get(i));
 
-			if (!mLoops.containsKey(l.getTarget())) {
+			if (!mAccelerations.containsKey(l.getTarget())) {
 				continue;
 			}
 

@@ -10,13 +10,13 @@ procedure main() {
 	var x : int;
 	x := 0;
 	
-	while (x < 10) {
-		x := x + 1;
+	while (x < 5) {
+		x := x + 3;
 	}
-	assert x == 10;
+	assert x == 6;
 	
-	while (x < 20) {
-		x := x + 1;
+	while (x < 10) {
+		x := x + 3;
 	}
-	assert x == 21;
+	assert x == 13;
 }
