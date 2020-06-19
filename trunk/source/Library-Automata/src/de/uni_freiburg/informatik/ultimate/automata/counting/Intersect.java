@@ -26,6 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.counting;
 
+import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -34,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * TODO documentation
+ * Intersection method for Counting Automata 
  *
- * @author who is the author?
+ * @author Marcel Ebbinghaus
  * @author who is the author?
  */
 public class Intersect<LETTER, STATE, CRSF extends IStateFactory<STATE>> implements IOperation<LETTER, STATE, CRSF> {
@@ -49,7 +55,9 @@ public class Intersect<LETTER, STATE, CRSF extends IStateFactory<STATE>> impleme
 	private final IIntersectionStateFactory<STATE> mStateFactory;
 
 
-	public Intersect(final AutomataLibraryServices services, final IIntersectionStateFactory<STATE> stateFactory,
+	public Intersect(
+			final AutomataLibraryServices services, 
+			final IIntersectionStateFactory<STATE> stateFactory,
 			final CountingAutomaton<LETTER, STATE> fstOperand,
 			final CountingAutomaton<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		mServices = services;
@@ -70,8 +78,89 @@ public class Intersect<LETTER, STATE, CRSF extends IStateFactory<STATE>> impleme
 	}
 
 	private CountingAutomaton<LETTER, STATE> computeResult() {
-		// TODO #CountingAutomataTodo: implement operation here
-		return null;
+		Set<LETTER> intersectAlphabet = mFstOperand.getAlphabet();
+		ArrayList<Counter> intersectCounter = mFstOperand.getCounter();
+		intersectCounter.addAll(mSndOperand.getCounter());
+		Set<STATE> intersectStates = new HashSet<STATE>();
+		Map<STATE, ArrayList<ArrayList<Guard>>> intersectInitialConditions = new HashMap<STATE, ArrayList<ArrayList<Guard>>>();
+		Map<STATE, ArrayList<ArrayList<Guard>>> intersectFinalConditions = new HashMap<STATE, ArrayList<ArrayList<Guard>>>();
+		Map<STATE, ArrayList<Transition<LETTER, STATE>>> intersectTransitions = new HashMap<STATE, ArrayList<Transition<LETTER, STATE>>>();
+		
+		Map<HashSet<STATE>, STATE> stateMemory = new HashMap<HashSet<STATE>, STATE>();
+		
+		//states
+		for (STATE stateFstOp : mFstOperand.getStates()) {
+			
+			for (STATE stateSndOp : mSndOperand.getStates()) {
+				
+				STATE newState = mStateFactory.intersection(stateFstOp, stateSndOp);
+				intersectStates.add(newState);
+				HashSet<STATE> statePair = new HashSet<STATE>();
+				statePair.add(stateFstOp);
+				statePair.add(stateSndOp);
+				stateMemory.put(statePair, newState);
+			}
+		}
+		
+		for (STATE stateFstOp : mFstOperand.getStates()) {
+			
+			for (STATE stateSndOp : mSndOperand.getStates()) {
+				
+				HashSet<STATE> statePair = new HashSet<STATE>();
+				statePair.add(stateFstOp);
+				statePair.add(stateSndOp);
+				STATE newState = stateMemory.get(statePair);
+				
+				//initialConditions
+				ConjunctGuards initialConjunction = new ConjunctGuards(
+						mFstOperand.getInitialConditions().get(stateFstOp), 
+						mSndOperand.getInitialConditions().get(stateSndOp));
+				ArrayList<ArrayList<Guard>> newInitialConditions = initialConjunction.getResult();
+				intersectInitialConditions.put(newState, newInitialConditions);
+				
+				//finalConditions
+				ConjunctGuards finalConjunction = new ConjunctGuards(
+						mFstOperand.getFinalConditions().get(stateFstOp), 
+						mSndOperand.getFinalConditions().get(stateSndOp));
+				ArrayList<ArrayList<Guard>> newFinalConditions = finalConjunction.getResult();
+				intersectFinalConditions.put(newState, newFinalConditions);
+				
+				//transitions
+				ArrayList<Transition<LETTER, STATE>> newOutgoingTransitions = new ArrayList<Transition<LETTER, STATE>>();
+				
+				for (Transition<LETTER, STATE> transOfStateFstOp : mFstOperand.getTransitions().get(stateFstOp)) {
+					
+					for (Transition<LETTER, STATE> transOfStateSndOp : mSndOperand.getTransitions().get(stateSndOp)) {
+						
+						if (transOfStateFstOp.getLetter() == transOfStateSndOp.getLetter()) {
+							
+							ConjunctGuards transitionConjunction = new ConjunctGuards(transOfStateFstOp.getGuards(), transOfStateSndOp.getGuards());
+							ArrayList<ArrayList<Guard>> newTransitionGuards = transitionConjunction.getResult();
+							ArrayList<Update> newTransitionUpdates = transOfStateFstOp.getUpdates();
+							newTransitionUpdates.addAll(transOfStateSndOp.getUpdates());
+							HashSet<STATE> sucStatePair = new HashSet<STATE>();
+							sucStatePair.add(transOfStateFstOp.getSucState());
+							sucStatePair.add(transOfStateSndOp.getSucState());
+							STATE newSuccessorState = stateMemory.get(sucStatePair);
+							newOutgoingTransitions.add(new Transition<LETTER, STATE>(transOfStateFstOp.getLetter(), newState, newSuccessorState, newTransitionGuards, newTransitionUpdates));
+							
+						}
+					}
+				}
+				intersectTransitions.put(newState, newOutgoingTransitions);
+			}
+		}		
+		
+		//result
+		CountingAutomaton<LETTER, STATE> resultAutomaton = new CountingAutomaton<LETTER, STATE>(
+				mServices,
+				intersectAlphabet,
+				intersectStates,
+				intersectCounter,
+				intersectInitialConditions,
+				intersectFinalConditions,
+				intersectTransitions);
+		return resultAutomaton;
 	}
 
 	@Override

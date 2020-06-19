@@ -26,36 +26,105 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.counting;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 
 /**
- * TODO documentation
+ * Data structure for Counting Automata
  *
- * @author who is the author?
+ * @author Marcel Ebbinghaus
  * @author who is the author?
  */
 public class CountingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 
 	protected final AutomataLibraryServices mServices;
+	
+	private Set<LETTER> mAlphabet;
+	private Set<STATE> mStates;
+	private ArrayList<Counter> mCounter;
+	private Map<STATE, ArrayList<ArrayList<Guard>>> mInitialConditions;
+	private Map<STATE, ArrayList<ArrayList<Guard>>> mFinalConditions;
+	private Map<STATE, ArrayList<Transition<LETTER, STATE>>> mTransitions;
 
 	public CountingAutomaton(final AutomataLibraryServices services) {
 		super();
 		mServices = services;
 	}
+	
+	public CountingAutomaton(final AutomataLibraryServices services,
+			Set<LETTER> alphabet,
+			Set<STATE> states,
+			ArrayList<Counter> counter, 
+			Map<STATE,ArrayList<ArrayList<Guard>>> initialConditions,
+			Map<STATE, ArrayList<ArrayList<Guard>>> finalConditions,
+			Map<STATE, ArrayList<Transition<LETTER, STATE>>> transitions) {
+		super();
+		mServices = services;
+		mAlphabet = alphabet;
+		mStates = states;
+		mCounter = counter;
+		mInitialConditions = initialConditions;
+		mFinalConditions = finalConditions;
+		mTransitions = transitions;
+	}
 
 	@Override
 	public Set<LETTER> getAlphabet() {
 		// TODO Auto-generated method stub
-		return null;
+		return mAlphabet;
+	}
+	
+	public Set<STATE> getStates() {
+		return mStates;
+	}
+	
+	public ArrayList<Counter> getCounter() {
+		return mCounter;
 	}
 
+	public Map<STATE,ArrayList<ArrayList<Guard>>> getInitialConditions() {
+		return mInitialConditions;
+	}
+	
+	public Map<STATE,ArrayList<ArrayList<Guard>>> getFinalConditions() {
+		return mFinalConditions;
+	}
+	
+	public Map<STATE, ArrayList<Transition<LETTER, STATE>>> getTransitions() {
+		return mTransitions;
+	}
+	
+	public void addTransition(STATE preState, Transition<LETTER, STATE> transition) {
+		ArrayList<Transition<LETTER, STATE>> currentTransitions = mTransitions.get(preState);
+		currentTransitions.add(transition);
+		mTransitions.put(preState, currentTransitions);
+	}
+	
+	public void addInitialCondition(STATE state, ArrayList<ArrayList<Guard>> conditionDNF) {
+		ArrayList<ArrayList<Guard>> currentInitialConditions = mInitialConditions.get(state);
+		ConjunctGuards conjunction = new ConjunctGuards(currentInitialConditions, conditionDNF);
+		mInitialConditions.put(state, conjunction.getResult());
+	}
+	
+	public void addFinalCondition(STATE state, ArrayList<ArrayList<Guard>> conditionDNF) {
+		ArrayList<ArrayList<Guard>> currentFinalConditions = mFinalConditions.get(state);
+		ConjunctGuards conjunction = new ConjunctGuards(currentFinalConditions, conditionDNF);
+		mFinalConditions.put(state, conjunction.getResult());
+	}
+	
 	@Override
 	public int size() {
 		// TODO Auto-generated method stub
