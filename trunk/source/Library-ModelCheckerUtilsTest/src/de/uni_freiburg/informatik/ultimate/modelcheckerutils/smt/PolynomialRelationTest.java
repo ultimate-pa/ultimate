@@ -66,15 +66,19 @@ import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
  */
 public class PolynomialRelationTest {
 
-	/**
-	 * Warning: each test will overwrite the SMT script of the preceding test.
-	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_MAIN_TRACK_SCRIPT_IF_UNKNOWN_TO_FILE = false;
 
-	private static final String SOLVER_COMMAND_Z3 = "z3 SMTLIB2_COMPLIANT=true -t:13500 -memory:2024 -smt2 -in smt.arith.solver=2";
-	private static final String SOLVER_COMMAND_CVC4 = "cvc4 --incremental --print-success --lang smt --rewrite-divk --tlimit-per=3000";
+	private static final String SOLVER_COMMAND_Z3 = "z3 SMTLIB2_COMPLIANT=true -t:6000 -memory:2024 -smt2 -in smt.arith.solver=2";
+	private static final String SOLVER_COMMAND_CVC4 = "cvc4 --incremental --print-success --lang smt --rewrite-divk --tlimit-per=6000";
 	private static final String SOLVER_COMMAND_MATHSAT = "mathsat";
+	/**
+	 * If DEFAULT_SOLVER_COMMAND is not null we ignore the solver specified for each
+	 * test and use only the solver specified here. This can be useful to check if
+	 * there is a suitable solver for all tests and this can be useful for
+	 * generating difficult SMT-LIB benchmarks.
+	 */
+	private static final String DEFAULT_SOLVER_COMMAND = null;
 
 	private static final boolean USE_QUANTIFIER_ELIMINATION_TO_SIMPLIFY_INPUT_OF_EQUIVALENCE_CHECK = false;
 	private Script mScript;
@@ -93,8 +97,14 @@ public class PolynomialRelationTest {
 		return SmtSortUtils.getBitvectorSort(script, 8);
 	}
 
-	private Script createSolver(final String solverCommand) {
-		Script result = new HistoryRecordingScript(UltimateMocks.createSolver(solverCommand, LogLevel.INFO));
+	private Script createSolver(final String proviededSolverCommand) {
+		String effectiveSolveCommand;
+		if (proviededSolverCommand == null) {
+			effectiveSolveCommand = DEFAULT_SOLVER_COMMAND;
+		} else {
+			effectiveSolveCommand = proviededSolverCommand;
+		}
+		Script result = new HistoryRecordingScript(UltimateMocks.createSolver(effectiveSolveCommand, LogLevel.INFO));
 		final String testName = ReflectionUtil.getCallerMethodName(4);
 		if (WRITE_SMT_SCRIPTS_TO_FILE) {
 			try {
@@ -358,7 +368,7 @@ public class PolynomialRelationTest {
 	public void relationIntPolyPuristLeq() throws NotAffineException {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(< (* y x) z )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, vars);
 	}
 
 	public void relationIntPolyMATHSATEQ3() throws NotAffineException {
@@ -642,7 +652,7 @@ public class PolynomialRelationTest {
 	public void relationIntModEqUselessSummands() throws NotAffineException {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (+ (mod x 3) (* y y) y 1) (* y (+ y 1)) )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, vars);
 	}
 
 	/**
@@ -700,7 +710,7 @@ public class PolynomialRelationTest {
 	public void relationIntMultiParamDivEq() throws NotAffineException {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (div x 2 2 3) eq )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, vars);
 	}
 
 	@Test
