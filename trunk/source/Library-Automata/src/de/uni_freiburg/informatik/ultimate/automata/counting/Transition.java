@@ -40,8 +40,8 @@ public class Transition<LETTER, STATE> {
 	private LETTER mLetter;
 	private STATE mPredecessorState;
 	private STATE mSuccessorState;
-	static ArrayList<ArrayList<Guard>> mGuards;
-	static ArrayList<Update> mUpdates;
+	private ArrayList<ArrayList<Guard>> mGuards;
+	private ArrayList<Update> mUpdates;
 	
 	public Transition()
 	{}

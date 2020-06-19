@@ -35,10 +35,10 @@ package de.uni_freiburg.informatik.ultimate.automata.counting;
 
 public class Update {
 
-	static private Counter mCounterLeft;
-	static private Counter mCounterRight;
-	static private Integer mConstant;
-	static private Integer mTermType; // 0 means true, 1 means false, 2 means constant, 3 means counter, 4 means both
+	private Counter mCounterLeft;
+	private Counter mCounterRight;
+	private Integer mConstant;
+	private Integer mTermType; // 0 means true, 1 means false, 2 means constant, 3 means counter, 4 means both
 	
 	public Update()
 	{}

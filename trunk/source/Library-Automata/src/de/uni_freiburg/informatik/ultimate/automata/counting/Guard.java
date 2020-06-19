@@ -35,11 +35,11 @@ package de.uni_freiburg.informatik.ultimate.automata.counting;
 
 public class Guard {
 
-	static private Counter mCounterLeft;
-	static private Counter mCounterRight;
-	static private Integer mConstant;
-	static private Integer mRelationType; //0 means =, 1 means !=, 2 means <, 3 means >, 4 means <=, 5 means >=
-	static private Integer mTermType; //0 means true, 1 means false, 2 means constant, 3 means counter, 4 means both
+	private Counter mCounterLeft;
+	private Counter mCounterRight;
+	private Integer mConstant;
+	private Integer mRelationType; //0 means =, 1 means !=, 2 means <, 3 means >, 4 means <=, 5 means >=
+	private Integer mTermType; //0 means true, 1 means false, 2 means constant, 3 means counter, 4 means both
 	
 	public Guard()
 	{}
