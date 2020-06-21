@@ -5,7 +5,10 @@ import java.util.Set;
 import org.apache.commons.lang3.ArrayUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 public class Strategy {
 	
@@ -24,7 +27,10 @@ public class Strategy {
 		mVars = new HashSet<TermVariable>();
 		mName = "name";
 		
-		mDisjunction = new DisjunctionTemplate(mDisjuncts, mConjuncts, mRelation, mVars, mName);
+		// I really don't know how to do this better
+		Script s = icfg.getCfgSmtToolkit().getManagedScript().getScript();
+		
+		mDisjunction = new DisjunctionTemplate(s, mDisjuncts, mConjuncts, mRelation, mVars, mName);
 	}
 	
 	public void complicate() {

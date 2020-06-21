@@ -38,7 +38,7 @@ public class Starter {
 		// TODO(Daniel): Create edge list, variable names and number of locations
 		
 		// TODO: Create Strategy
-		
+		Strategy s = new Strategy(icfg);
 		// Loop
 		// -----
 		
