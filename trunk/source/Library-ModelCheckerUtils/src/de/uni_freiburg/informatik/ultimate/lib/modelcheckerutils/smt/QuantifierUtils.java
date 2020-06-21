@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -126,9 +127,28 @@ public class QuantifierUtils {
 	}
 
 	/**
-	 * Get all parameters of the outer operation of a XNF For the case of existential quantification: Get all disjuncts
-	 * of a formula in DNF. (conjuncts of CNF for case of universal quantification)
+	 * If the topmost symbol of the term is the corresponding finite connective
+	 * (i.e. ∨ for ∃, ∧ for ∀) then return all parameters of this
+	 * {@link ApplicationTerm}, otherwise return a singleton array that contains the
+	 * term. E.g., in case we have an existential quantifier we return all disjuncts
+	 * if the term is a disjunction and we return the term if it is not a
+	 * disjunction.
+	 *
 	 */
+	public static Term[] getCorrespondingFiniteJunction(final int quantifier, final Term term) {
+		return getXjunctsInner(quantifier, term);
+	}
+
+	/**
+	 * Get all parameters of the outer operation of a XNF For the case of
+	 * existential quantification: Get all disjuncts of a formula in DNF. (conjuncts
+	 * of CNF for case of universal quantification)
+	 *
+	 * @deprecated The method name does not explain the method very well, see
+	 *             {@link QuantifierUtils#getDualCorrespondingJunction} for an
+	 *             alternative.
+	 */
+	@Deprecated
 	public static Term[] getXjunctsOuter(final int quantifier, final Term xnf) {
 		Term[] xjunctsOuter;
 		if (quantifier == QuantifiedFormula.EXISTS) {
@@ -142,9 +162,26 @@ public class QuantifierUtils {
 	}
 
 	/**
-	 * Get all parameters of the inner operation of a XNF For the case of existential quantification: Get all conjuncts
-	 * of a conjunction. (disjuncts of disjunction in case of universal quantification)
+	 * If the topmost symbol of the term is the dual finite connective (i.e. ∧ for
+	 * ∃, ∨ for ∀) then return all parameters of this {@link ApplicationTerm},
+	 * otherwise return a singleton array that contains the term. E.g., in case we
+	 * have an existential quantifier we return all conjuncts if the term is a
+	 * conjunction and we return the term if it is not a conjunction.
+	 *
 	 */
+	public static Term[] getDualFiniteJunction(final int quantifier, final Term term) {
+		return getXjunctsInner(quantifier, term);
+	}
+
+	/**
+	 * Get all parameters of the inner operation of a XNF For the case of
+	 * existential quantification: Get all conjuncts of a conjunction. (disjuncts of
+	 * disjunction in case of universal quantification)
+	 *
+	 * @deprecated The method name does not explain the method very well, see
+	 *             {@link QuantifierUtils#getDualFiniteJunction} for an alternative.
+	 */
+	@Deprecated
 	public static Term[] getXjunctsInner(final int quantifier, final Term xnf) {
 		Term[] xjunctsOuter;
 		if (quantifier == QuantifiedFormula.EXISTS) {
