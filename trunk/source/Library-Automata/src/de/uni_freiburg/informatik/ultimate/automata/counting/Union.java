@@ -107,6 +107,16 @@ public class Union<LETTER, STATE, CRSF extends IStateFactory<STATE>> implements 
 		ArrayList<ArrayList<Guard>> newFinalConditions = new ArrayList<ArrayList<Guard>>();
 		addNewUnionFinalConditions(mFstOperand, newFinalConditions);
 		addNewUnionFinalConditions(mSndOperand, newFinalConditions);
+		
+		//construct finalCondition == false, if there were no states in mFstOperand and mSndOperand which are initial and final at once
+		if (newFinalConditions.size() == 0) {
+			
+			Guard newGuardFalse = new Guard();
+			newGuardFalse.changeTermType(1);
+			ArrayList<Guard> guardList = new ArrayList<Guard>();
+			guardList.add(newGuardFalse);
+			newFinalConditions.add(guardList);
+		}
 		unionFinalConditions.put(mNewInitialState, newFinalConditions);
 		
 		//transitions
