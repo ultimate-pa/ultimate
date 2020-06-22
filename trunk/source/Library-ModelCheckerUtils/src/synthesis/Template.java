@@ -5,12 +5,14 @@
  */
 package synthesis;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public abstract class Template {	
-	private TransFormula mFormula;
-	public TransFormula getFormula() {
-		return mFormula;
+	protected Term mTerm;
+	protected Script mScript;
+	public Term getTerm() {
+		return mTerm;
 	}
 	//public abstract getTerm();
 	

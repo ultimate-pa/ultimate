@@ -35,7 +35,7 @@ package de.uni_freiburg.informatik.ultimate.automata.counting;
 
 public class Counter {
 	
-	static private String mName;
+	private String mName;
 	
 	public Counter()
 	{}
@@ -47,5 +47,4 @@ public class Counter {
 	public String getCounterName() {
 		return mName;
 	}
-
 }

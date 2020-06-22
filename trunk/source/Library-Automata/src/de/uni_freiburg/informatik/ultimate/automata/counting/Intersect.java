@@ -143,7 +143,6 @@ public class Intersect<LETTER, STATE, CRSF extends IStateFactory<STATE>> impleme
 							sucStatePair.add(transOfStateSndOp.getSucState());
 							STATE newSuccessorState = stateMemory.get(sucStatePair);
 							newOutgoingTransitions.add(new Transition<LETTER, STATE>(transOfStateFstOp.getLetter(), newState, newSuccessorState, newTransitionGuards, newTransitionUpdates));
-							
 						}
 					}
 				}

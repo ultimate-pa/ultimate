@@ -37,9 +37,9 @@ import java.util.ArrayList;
 
 public class ConjunctGuards {
 	
-	static private ArrayList<ArrayList<Guard>> mFstGuardDNF;
-	static private ArrayList<ArrayList<Guard>> mSndGuardDNF;
-	static private ArrayList<ArrayList<Guard>> mResult;
+	private ArrayList<ArrayList<Guard>> mFstGuardDNF;
+	private ArrayList<ArrayList<Guard>> mSndGuardDNF;
+	private ArrayList<ArrayList<Guard>> mResult;
 	
 	public ConjunctGuards(ArrayList<ArrayList<Guard>> fstDNF, ArrayList<ArrayList<Guard>> sndDNF) {
 		mFstGuardDNF = fstDNF;

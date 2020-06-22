@@ -182,7 +182,7 @@ public class QuantifierPusher extends TermTransformer {
 	private Term applyEliminationToAtom(final QuantifiedFormula quantifiedFormula) {
 		final Term elimResult = applyEliminationTechniques(quantifiedFormula.getQuantifier(),
 				new HashSet<>(Arrays.asList(quantifiedFormula.getVariables())),
-				new Term[] { quantifiedFormula.getSubformula() });
+				new Term[] { quantifiedFormula.getSubformula() }, mMgdScript, mServices, mPqeTechniques);
 		if (elimResult == null) {
 			return quantifiedFormula;
 		}
@@ -258,7 +258,8 @@ public class QuantifierPusher extends TermTransformer {
 		dualFiniteParams = QuantifierUtils.getXjunctsInner(quantifier,
 				QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, dualFiniteParams));
 		{
-			final Term eliminationResult = applyEliminationTechniques(quantifier, eliminatees, dualFiniteParams);
+			final Term eliminationResult = applyEliminationTechniques(quantifier, eliminatees, dualFiniteParams,
+					mMgdScript, mServices, mPqeTechniques);
 			if (eliminationResult != null) {
 				// something was removed
 				return eliminationResult;
@@ -486,46 +487,27 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	private Term applyEliminationTechniques(final int quantifier, final Set<TermVariable> eliminatees,
-			final Term[] dualFiniteParams) throws AssertionError {
+			final Term[] dualFiniteParams, final ManagedScript mgdScript, final IUltimateServiceProvider services,
+			final PqeTechniques pqeTechniques) throws AssertionError {
 		final int numberOfEliminateesBefore = eliminatees.size();
-		final List<XjunctPartialQuantifierElimination> elimtechniques = new ArrayList<>();
-		switch (mPqeTechniques) {
-		case ALL_LOCAL:
-			elimtechniques.add(new XnfPlr(mMgdScript, mServices));
-			elimtechniques.add(new XnfDer(mMgdScript, mServices));
-			elimtechniques.add(new XnfIrd(mMgdScript, mServices));
-			elimtechniques
-					.add(new XnfTir(mMgdScript, mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
-			elimtechniques.add(new XnfUpd(mMgdScript, mServices));
-			break;
-		case NO_UPD:
-			elimtechniques.add(new XnfPlr(mMgdScript, mServices));
-			elimtechniques.add(new XnfDer(mMgdScript, mServices));
-			elimtechniques.add(new XnfIrd(mMgdScript, mServices));
-			elimtechniques
-					.add(new XnfTir(mMgdScript, mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
-			break;
-		case ONLY_DER:
-			elimtechniques.add(new XnfDer(mMgdScript, mServices));
-			break;
-		default:
-			throw new AssertionError("unknown value " + mPqeTechniques);
-		}
+		final List<XjunctPartialQuantifierElimination> elimtechniques = generateEliminationTechniques(pqeTechniques,
+				mgdScript, services);
 		for (final XjunctPartialQuantifierElimination technique : elimtechniques) {
 			// nothing was removed in last iteration, continue with original params
-			final Term[] elimResulDualFiniteParams =
-					technique.tryToEliminate(quantifier, dualFiniteParams, eliminatees);
-			final Term result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
+			final Term[] elimResulDualFiniteParams = technique.tryToEliminate(quantifier, dualFiniteParams,
+					eliminatees);
+			final Term result = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier,
 					Arrays.asList(elimResulDualFiniteParams));
-			final Set<TermVariable> eliminateesAfterwards =
-					PartialQuantifierElimination.constructNewEliminatees(result, eliminatees);
+			final Set<TermVariable> eliminateesAfterwards = PartialQuantifierElimination.constructNewEliminatees(result,
+					eliminatees);
 			if (eliminateesAfterwards.isEmpty()) {
 				// all were removed
 				return result;
 			}
 			if (numberOfEliminateesBefore > eliminateesAfterwards.size()) {
 				// something was removed
-				final Term quantified = SmtUtils.quantifier(mScript, quantifier, eliminateesAfterwards, result);
+				final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), quantifier, eliminateesAfterwards,
+						result);
 				if (quantified instanceof QuantifiedFormula) {
 					final QuantifiedFormula intermediate = (QuantifiedFormula) quantified;
 					return tryToPush(intermediate);
@@ -540,7 +522,35 @@ public class QuantifierPusher extends TermTransformer {
 		return null;
 	}
 
-	private SubformulaClassification classify(final int quantifier, final Term subformula) {
+	private static List<XjunctPartialQuantifierElimination> generateEliminationTechniques(
+			final PqeTechniques pqeTechniques, final ManagedScript mgdScript, final IUltimateServiceProvider services) {
+		final List<XjunctPartialQuantifierElimination> elimtechniques = new ArrayList<>();
+		switch (pqeTechniques) {
+		case ALL_LOCAL:
+			elimtechniques.add(new XnfPlr(mgdScript, services));
+			elimtechniques.add(new XnfDer(mgdScript, services));
+			elimtechniques.add(new XnfIrd(mgdScript, services));
+			elimtechniques
+					.add(new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+			elimtechniques.add(new XnfUpd(mgdScript, services));
+			break;
+		case NO_UPD:
+			elimtechniques.add(new XnfPlr(mgdScript, services));
+			elimtechniques.add(new XnfDer(mgdScript, services));
+			elimtechniques.add(new XnfIrd(mgdScript, services));
+			elimtechniques
+					.add(new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+			break;
+		case ONLY_DER:
+			elimtechniques.add(new XnfDer(mgdScript, services));
+			break;
+		default:
+			throw new AssertionError("unknown value " + pqeTechniques);
+		}
+		return elimtechniques;
+	}
+
+	private static SubformulaClassification classify(final int quantifier, final Term subformula) {
 		if (subformula instanceof QuantifiedFormula) {
 			final QuantifiedFormula quantifiedSubFormula = (QuantifiedFormula) subformula;
 			if (quantifiedSubFormula.getQuantifier() == quantifier) {
