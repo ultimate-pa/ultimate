@@ -315,9 +315,11 @@ public class Req2CauseTrackingPea implements IReq2Pea {
 				CDD guard = mCddTransformer.transformGurad(trans.getGuard(), effectVars, reqSymbolTable.getInputVars(),
 						reqSymbolTable.getConstVars(), effectTransition);
 				// add time bound in lower automaton if effect phase has an upper bound
-				if (oldLocations[i].getPhaseBits().isWaiting(effectDCPhaseId)
-						&& !oldLocations[dest].getPhaseBits().isWaiting(effectDCPhaseId)) {
-
+				final PhaseBits pbSource = oldLocations[i].getPhaseBits();
+				final PhaseBits pbDest = oldLocations[dest].getPhaseBits();
+				if (pbSource != null && pbSource.isWaiting(effectDCPhaseId) &&
+						//if pbDest is null, it is a sink state after having waited
+						(pbDest == null || !pbDest.isWaiting(effectDCPhaseId))) {
 					guard = guard.and(mCddTransformer.upperToLowerBoundCdd(sourcePhase.getClockInvariant(), true));
 				}
 				sourcePhase.addTransition(newLocations[seem + dest], guard, trans.getResets());
