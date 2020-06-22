@@ -1,6 +1,6 @@
 /* 
- * Program from Exercise 3 of sheet 12 in the lecture on program verification.
- * https://swt.informatik.uni-freiburg.de/teaching/SS2019/program-verification
+ * Program from Exercise 04 of sheet 10 in the lecture on program verification.
+ * https://swt.informatik.uni-freiburg.de/teaching/SS2020/program-verification
  * Task: find a loop invariant that is sufficient to prove that the program
  * satisfies the given precondition-postcondition pair.
  * 

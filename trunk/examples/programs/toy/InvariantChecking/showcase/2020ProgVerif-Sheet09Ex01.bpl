@@ -1,7 +1,7 @@
 //#Safe
 /* 
- * Program from Exercise 4 of Sheet 10 in the lecture on program verification.
- * https://swt.informatik.uni-freiburg.de/teaching/SS2019/program-verification
+ * Program from Exercise 01 of Sheet 09 in the lecture on program verification.
+ * https://swt.informatik.uni-freiburg.de/teaching/SS2020/program-verification
  * 
  * Author: Matthias Heizmann
  * Date: 2018-05-28
