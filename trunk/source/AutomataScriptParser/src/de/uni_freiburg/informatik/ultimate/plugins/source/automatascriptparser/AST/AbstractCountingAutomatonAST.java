@@ -8,6 +8,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * @author Jacob Maxam
@@ -22,12 +23,12 @@ public abstract class AbstractCountingAutomatonAST extends AutomatonAST {
 	private final Map<String, String> mInitialConditions;
 	private final Map<String, String> mFinalConditions;
 
-	private final Map<String, Map<String, Set<Pair<Pair<String, Set<String>>, String>>>> mTransitions;
+	private final Map<String, Map<String, List<Triple<String, List<String>, String>>>> mTransitions;
 
 	public AbstractCountingAutomatonAST(final ILocation loc, final String name, final List<String> alphabet,
 			final List<String> states, final List<String> counters, final Map<String, String> initConditions,
 			final Map<String, String> finConditions,
-			final Map<String, Map<String, Set<Pair<Pair<String, Set<String>>, String>>>> transitions) {
+			final Map<String, Map<String, List<Triple<String, List<String>, String>>>> transitions) {
 		super(loc, name);
 		if (alphabet != null) {
 			mAlphabet = alphabet;
@@ -57,7 +58,7 @@ public abstract class AbstractCountingAutomatonAST extends AutomatonAST {
 		if (transitions != null) {
 			mTransitions = transitions;
 		} else {
-			mTransitions = new HashMap<String, Map<String, Set<Pair<Pair<String, Set<String>>, String>>>>();
+			mTransitions = new HashMap<String, Map<String, List<Triple<String, List<String>, String>>>>();
 		}
 	}
 
