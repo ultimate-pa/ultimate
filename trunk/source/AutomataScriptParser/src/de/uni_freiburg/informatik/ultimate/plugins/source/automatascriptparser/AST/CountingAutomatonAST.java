@@ -1,37 +1,130 @@
+/*
+ * Copyright (C) 2020 Jacob Maxam (jacob.maxam@googlemail.com)
+ * Copyright (C) 2020 University of Freiburg
+ * 
+ * This file is part of the ULTIMATE AutomataScriptParser plug-in.
+ * 
+ * The ULTIMATE AutomataScriptParser plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * The ULTIMATE AutomataScriptParser plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE AutomataScriptParser plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE AutomataScriptParser plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AutomataScriptParser plug-in grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * @author Jacob Maxam
  */
-public class CountingAutomatonAST extends AbstractCountingAutomatonAST {
+public abstract class CountingAutomatonAST extends AutomatonAST {
 	//private static final long serialVersionUID = ???;
+
+	private final List<String> mAlphabet;
+	private final List<String> mStates;
+	private final List<String> mCounters;
 	
-	public CountingAutomatonAST(ILocation loc, String name, List<String> alphabet, List<String> states,
-			List<String> counters, Map<String, String> initConditions, Map<String, String> finConditions,
-			Map<String, Map<String, Set<Pair<Pair<String, Set<String>>, String>>>> transitions) {
-		super(loc, name, alphabet, states, counters, initConditions, finConditions, transitions);
+	private final Map<String, String> mInitialConditions;
+	private final Map<String, String> mFinalConditions;
+
+	private final Map<String, Map<String, List<Triple<String, List<String>, String>>>> mTransitions;
+
+	public CountingAutomatonAST(final ILocation loc, final String name, final List<String> alphabet,
+			final List<String> states, final List<String> counters, final Map<String, String> initConditions,
+			final Map<String, String> finConditions,
+			final Map<String, Map<String, List<Triple<String, List<String>, String>>>> transitions) {
+		super(loc, name);
+		if (alphabet != null) {
+			mAlphabet = alphabet;
+		} else {
+			mAlphabet = new ArrayList<String>();
+		}
+		if (states != null) {
+			mStates = states;
+		} else {
+			mStates = new ArrayList<String>();
+		}
+		if (counters != null) {
+			mCounters = counters;
+		} else {
+			mCounters = new ArrayList<String>();
+		}
+		if (initConditions != null) {
+			mInitialConditions = initConditions;
+		} else {
+			mInitialConditions = new HashMap<String, String>();
+		}
+		if (finConditions != null) {
+			mFinalConditions = finConditions;
+		} else {
+			mFinalConditions = new HashMap<String, String>();
+		}
+		if (transitions != null) {
+			mTransitions = transitions;
+		} else {
+			mTransitions = new HashMap<String, Map<String, List<Triple<String, List<String>, String>>>>();
+		}
+	}
+
+	public List<String> getmAlphabet() {
+		return mAlphabet;
+	}
+
+	public List<String> getmStates() {
+		return mStates;
+	}
+
+	public List<String> getmCounters() {
+		return mCounters;
+	}
+
+	public Map<String, String> getmInitialConditions() {
+		return mInitialConditions;
+	}
+
+	public Map<String, String> getmFinalConditions() {
+		return mFinalConditions;
+	}
+
+	public Map<String, Map<String, List<Triple<String, List<String>, String>>>> getmTransitions() {
+		return mTransitions;
 	}
 	
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
 		builder.append("CountingAutomaton(" + mName + "): " + "[#Alph: ");
-		builder.append(getmAlphabet().size());
+		builder.append(mAlphabet.size());
 		builder.append(" #States: ");
-		builder.append(getmStates().size());
+		builder.append(mStates.size());
 		builder.append(" #Counters: ");
-		builder.append(getmCounters().size());
+		builder.append(mCounters.size());
 		builder.append(" #Trans: ");
-		builder.append(getmTransitions().size());
+		builder.append(mTransitions.size());
 		builder.append("]");
 		return builder.toString();
 	}
-
 }
