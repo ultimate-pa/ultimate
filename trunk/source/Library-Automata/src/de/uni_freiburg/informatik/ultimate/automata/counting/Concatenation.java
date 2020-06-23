@@ -89,8 +89,20 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 		Map<STATE, ArrayList<Transition<LETTER, STATE>>> concatenationTransitions = mFstOperand.getTransitions();
 		concatenationTransitions.putAll(mSndOperand.getTransitions());
 		
+		//set all initialConditions of all states of mSndOperand to false
+			Guard newGuardFalse = new Guard();
+			newGuardFalse.changeTermType(1);
+			ArrayList<Guard> guardListFalse = new ArrayList<Guard>();
+			guardListFalse.add(newGuardFalse);
+			ArrayList<ArrayList<Guard>> newInitialCondition = new ArrayList<ArrayList<Guard>>();
+			newInitialCondition.add(guardListFalse);
+			
+		for (STATE state : mSndOperand.getStates()) {
+			
+			concatenationInitialConditions.put(state, newInitialCondition);
+		}
 		
-		
+		//connect finalStates of mFstOperand with initialStates of mSndOperand
 		for (STATE stateFstOp : mFstOperand.getStates()) {
 			
 			if (mFstOperand.getFinalConditions().get(stateFstOp).get(0).get(0).getTermType() != 1) {
@@ -133,12 +145,8 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 				
 				//construct finalCondition == false, if there were no states in mSndOperand which are initial and final at once
 				if (newFinalConditions.size() == 0) {
-					
-					Guard newGuardFalse = new Guard();
-					newGuardFalse.changeTermType(1);
-					ArrayList<Guard> guardList = new ArrayList<Guard>();
-					guardList.add(newGuardFalse);
-					newFinalConditions.add(guardList);
+
+					newFinalConditions.add(guardListFalse);
 				}
 				concatenationFinalConditions.put(stateFstOp, newFinalConditions);
 			}			
