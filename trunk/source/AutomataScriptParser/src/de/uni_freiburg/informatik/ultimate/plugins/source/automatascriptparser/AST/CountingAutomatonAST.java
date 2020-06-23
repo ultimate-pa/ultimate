@@ -50,12 +50,12 @@ public abstract class CountingAutomatonAST extends AutomatonAST {
 	private final Map<String, String> mInitialConditions;
 	private final Map<String, String> mFinalConditions;
 
-	private final Map<String, Map<String, List<Triple<String, List<String>, String>>>> mTransitions;
+	private final Map<String, Map<String, List<Triple<String, List<Pair<String, String>>, String>>>> mTransitions;
 
 	public CountingAutomatonAST(final ILocation loc, final String name, final List<String> alphabet,
 			final List<String> states, final List<String> counters, final Map<String, String> initConditions,
 			final Map<String, String> finConditions,
-			final Map<String, Map<String, List<Triple<String, List<String>, String>>>> transitions) {
+			final Map<String, Map<String, List<Triple<String, List<Pair<String, String>>, String>>>> transitions) {
 		super(loc, name);
 		if (alphabet != null) {
 			mAlphabet = alphabet;
@@ -85,31 +85,31 @@ public abstract class CountingAutomatonAST extends AutomatonAST {
 		if (transitions != null) {
 			mTransitions = transitions;
 		} else {
-			mTransitions = new HashMap<String, Map<String, List<Triple<String, List<String>, String>>>>();
+			mTransitions = new HashMap<String, Map<String, List<Triple<String, List<Pair<String, String>>, String>>>>();
 		}
 	}
 
-	public List<String> getmAlphabet() {
+	public List<String> getAlphabet() {
 		return mAlphabet;
 	}
 
-	public List<String> getmStates() {
+	public List<String> getStates() {
 		return mStates;
 	}
 
-	public List<String> getmCounters() {
+	public List<String> getCounters() {
 		return mCounters;
 	}
 
-	public Map<String, String> getmInitialConditions() {
+	public Map<String, String> getInitialConditions() {
 		return mInitialConditions;
 	}
 
-	public Map<String, String> getmFinalConditions() {
+	public Map<String, String> getFinalConditions() {
 		return mFinalConditions;
 	}
 
-	public Map<String, Map<String, List<Triple<String, List<String>, String>>>> getmTransitions() {
+	public Map<String, Map<String, List<Triple<String, List<Pair<String, String>>, String>>>> getTransitions() {
 		return mTransitions;
 	}
 	
