@@ -187,7 +187,6 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 
 	@Override
 	public Object getResult() {
-		// TODO Auto-generated method stub
 		return mResult;
 	}
 

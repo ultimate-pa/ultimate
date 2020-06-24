@@ -178,7 +178,6 @@ public class Union<LETTER, STATE, CRSF extends IStateFactory<STATE>> implements 
 
 	@Override
 	public Object getResult() {
-		// TODO Auto-generated method stub
 		return mResult;
 	}
 

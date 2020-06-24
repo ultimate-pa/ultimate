@@ -77,7 +77,6 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 		}
 	}
 
-	//needs to be adjusted to suit new datastructure
 	private CountingAutomaton<LETTER, STATE> computeResult() {
 		Set<LETTER> concatenationAlphabet = new HashSet<LETTER>();
 		concatenationAlphabet.addAll(mFstOperand.getAlphabet());
@@ -87,73 +86,91 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 		Set<STATE> concatenationStates = new HashSet<STATE>();
 		concatenationStates.addAll(mFstOperand.getStates());
 		concatenationStates.addAll(mSndOperand.getStates());
-		Map<STATE, ArrayList<ArrayList<Guard>>> concatenationInitialConditions = new HashMap<STATE, ArrayList<ArrayList<Guard>>>();
-		concatenationInitialConditions.putAll(mFstOperand.getInitialConditions()); //needs to create new objects for every element
-		Map<STATE, ArrayList<ArrayList<Guard>>> concatenationFinalConditions = mFstOperand.getFinalConditions();
-		concatenationFinalConditions.putAll(mSndOperand.getFinalConditions()); //needs to create new objects for every element
-		Map<STATE, ArrayList<Transition<LETTER, STATE>>> concatenationTransitions = mFstOperand.getTransitions();
-		concatenationTransitions.putAll(mSndOperand.getTransitions());
+		Map<STATE, InitialCondition> concatenationInitialConditions = new HashMap<STATE, InitialCondition>();
+		Map<STATE, FinalCondition> concatenationFinalConditions = new HashMap<STATE, FinalCondition>();
+		Map<STATE, ArrayList<Transition<LETTER, STATE>>> concatenationTransitions = new HashMap<STATE, ArrayList<Transition<LETTER, STATE>>>();
 		
-		//set all initialConditions of all states of mSndOperand to false
+		//initialize parameters of fstOperand
+		for (STATE state : mFstOperand.getStates()) {		
+			concatenationInitialConditions.put(state, mFstOperand.getInitialConditions().get(state).copyInitialCondition());
+			concatenationFinalConditions.put(state, mFstOperand.getFinalConditions().get(state).copyFinalCondition());
+			ArrayList<Transition<LETTER, STATE>> transitionList = new ArrayList<Transition<LETTER, STATE>>();
+			for (Transition<LETTER, STATE> transition : mFstOperand.getTransitions().get(state)) {
+				transitionList.add(transition.copyTransition());
+			}
+			concatenationTransitions.put(state, transitionList);
+		}
+		
+		//initialize parameters of SndOperand
+		for (STATE state : mSndOperand.getStates()) {
 			Guard newGuardFalse = new Guard();
 			newGuardFalse.changeTermType(1);
 			ArrayList<Guard> guardListFalse = new ArrayList<Guard>();
 			guardListFalse.add(newGuardFalse);
-			ArrayList<ArrayList<Guard>> newInitialCondition = new ArrayList<ArrayList<Guard>>();
-			newInitialCondition.add(guardListFalse);
-			
-		for (STATE state : mSndOperand.getStates()) {
-			
+			ArrayList<ArrayList<Guard>> newInitialConditionList = new ArrayList<ArrayList<Guard>>();
+			newInitialConditionList.add(guardListFalse);
+			InitialCondition newInitialCondition = new InitialCondition(newInitialConditionList);
 			concatenationInitialConditions.put(state, newInitialCondition);
+			concatenationFinalConditions.put(state, mSndOperand.getFinalConditions().get(state).copyFinalCondition());
+			ArrayList<Transition<LETTER, STATE>> transitionList = new ArrayList<Transition<LETTER, STATE>>();
+			for (Transition<LETTER, STATE> transition : mSndOperand.getTransitions().get(state)) {
+				transitionList.add(transition.copyTransition());
+			}
+			concatenationTransitions.put(state, transitionList);
 		}
 		
 		//connect finalStates of mFstOperand with initialStates of mSndOperand
 		for (STATE stateFstOp : mFstOperand.getStates()) {
 			
-			if (mFstOperand.getFinalConditions().get(stateFstOp).get(0).get(0).getTermType() != 1) {
+			if (mFstOperand.getFinalConditions().get(stateFstOp).getCondition().get(0).get(0).getTermType() != 1) {
 				
 				ArrayList<Transition<LETTER, STATE>> newTransitions = mFstOperand.getTransitions().get(stateFstOp);
-				ArrayList<ArrayList<Guard>> newFinalConditions = new ArrayList<ArrayList<Guard>>();
+				ArrayList<ArrayList<Guard>> newFinalConditionsList = new ArrayList<ArrayList<Guard>>();
 				
 				for (STATE stateSndOp : mSndOperand.getStates()) {
 					
-					if (mSndOperand.getInitialConditions().get(stateSndOp).get(0).get(0).getTermType() != 1) {
+					if (mSndOperand.getInitialConditions().get(stateSndOp).getCondition().get(0).get(0).getTermType() != 1) {
 						
 						//add new transitions
 						for (Transition<LETTER, STATE> transition : mSndOperand.getTransitions().get(stateSndOp)) {
 							
 							ConjunctGuards conjunction1 = new ConjunctGuards(
 									transition.getGuards(), 
-									mFstOperand.getFinalConditions().get(stateFstOp));
+									mFstOperand.getFinalConditions().get(stateFstOp).getCondition());
 							ConjunctGuards conjunction2 = new ConjunctGuards(
 									conjunction1.getResult(),
-									mSndOperand.getInitialConditions().get(stateSndOp));
+									mSndOperand.getInitialConditions().get(stateSndOp).getCondition());
 							Transition<LETTER, STATE> newTransition = new Transition<LETTER, STATE>(transition.getLetter(), stateFstOp, transition.getSucState(), conjunction2.getResult(), transition.getUpdates());
 							newTransitions.add(newTransition);
 						}
 						
 						//add finalCondition if stateSndOp is final as well
-						if (mSndOperand.getFinalConditions().get(stateSndOp).get(0).get(0).getTermType() != 1) {
+						if (mSndOperand.getFinalConditions().get(stateSndOp).getCondition().get(0).get(0).getTermType() != 1) {
 							
 							ConjunctGuards conjunction1 = new ConjunctGuards(
-									mFstOperand.getFinalConditions().get(stateFstOp),
-									mSndOperand.getInitialConditions().get(stateSndOp));
+									mFstOperand.getFinalConditions().get(stateFstOp).getCondition(),
+									mSndOperand.getInitialConditions().get(stateSndOp).getCondition());
 							ConjunctGuards conjunction2 = new ConjunctGuards(
 									conjunction1.getResult(),
-									mSndOperand.getFinalConditions().get(stateSndOp));
+									mSndOperand.getFinalConditions().get(stateSndOp).getCondition());
 							
-							newFinalConditions.addAll(conjunction2.getResult());
+							newFinalConditionsList.addAll(conjunction2.getResult());
 						}
 					}
 				}
 				concatenationTransitions.put(stateFstOp, newTransitions);
 				
 				//construct finalCondition == false, if there were no states in mSndOperand which are initial and final at once
-				if (newFinalConditions.size() == 0) {
+				if (newFinalConditionsList.size() == 0) {
 
-					newFinalConditions.add(guardListFalse);
+					Guard newGuardFalse = new Guard();
+					newGuardFalse.changeTermType(1);
+					ArrayList<Guard> guardListFalse = new ArrayList<Guard>();
+					guardListFalse.add(newGuardFalse);
+					newFinalConditionsList.add(guardListFalse);
 				}
-				concatenationFinalConditions.put(stateFstOp, newFinalConditions);
+				FinalCondition newFinalCondition = new FinalCondition(newFinalConditionsList);
+				concatenationFinalConditions.put(stateFstOp, newFinalCondition);
 			}			
 		}
 		
@@ -171,7 +188,6 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 
 	@Override
 	public Object getResult() {
-		// TODO Auto-generated method stub
 		return mResult;
 	}
 

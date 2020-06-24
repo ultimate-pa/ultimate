@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 
@@ -111,7 +110,6 @@ public class CountingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, STAT
 
 	@Override
 	public Set<LETTER> getAlphabet() {
-		// TODO Auto-generated method stub
 		return mAlphabet;
 	}
 	
