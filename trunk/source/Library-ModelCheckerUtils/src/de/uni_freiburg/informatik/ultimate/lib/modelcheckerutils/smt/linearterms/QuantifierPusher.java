@@ -180,9 +180,9 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	private Term applyEliminationToAtom(final QuantifiedFormula quantifiedFormula) {
-		final Term elimResult = applyEliminationTechniques(quantifiedFormula.getQuantifier(),
-				new HashSet<>(Arrays.asList(quantifiedFormula.getVariables())),
-				new Term[] { quantifiedFormula.getSubformula() }, mMgdScript, mServices, mPqeTechniques);
+		final Term elimResult = applyDualJunctionEliminationTechniques(new EliminationTask(
+				quantifiedFormula.getQuantifier(), new HashSet<>(Arrays.asList(quantifiedFormula.getVariables())),
+				quantifiedFormula.getSubformula()), mMgdScript, mServices, mPqeTechniques);
 		if (elimResult == null) {
 			return quantifiedFormula;
 		}
@@ -258,7 +258,10 @@ public class QuantifierPusher extends TermTransformer {
 		dualFiniteParams = QuantifierUtils.getXjunctsInner(quantifier,
 				QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, dualFiniteParams));
 		{
-			final Term eliminationResult = applyEliminationTechniques(quantifier, eliminatees, dualFiniteParams,
+			;
+			final Term eliminationResult = applyDualJunctionEliminationTechniques(
+					new EliminationTask(quantifier, eliminatees,
+							QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, dualFiniteParams)),
 					mMgdScript, mServices, mPqeTechniques);
 			if (eliminationResult != null) {
 				// something was removed
@@ -486,27 +489,27 @@ public class QuantifierPusher extends TermTransformer {
 		return false;
 	}
 
-	private Term applyEliminationTechniques(final int quantifier, final Set<TermVariable> eliminatees,
-			final Term[] dualFiniteParams, final ManagedScript mgdScript, final IUltimateServiceProvider services,
+	private Term applyDualJunctionEliminationTechniques(final EliminationTask et, final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final PqeTechniques pqeTechniques) throws AssertionError {
-		final int numberOfEliminateesBefore = eliminatees.size();
+		final int numberOfEliminateesBefore = et.getEliminatees().size();
 		final List<XjunctPartialQuantifierElimination> elimtechniques = generateEliminationTechniques(pqeTechniques,
 				mgdScript, services);
+		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
 		for (final XjunctPartialQuantifierElimination technique : elimtechniques) {
 			// nothing was removed in last iteration, continue with original params
-			final Term[] elimResulDualFiniteParams = technique.tryToEliminate(quantifier, dualFiniteParams,
-					eliminatees);
-			final Term result = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier,
+			final Term[] elimResulDualFiniteParams = technique.tryToEliminate(et.getQuantifier(), dualFiniteParams,
+					new HashSet<>(et.getEliminatees()));
+			final Term result = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), et.getQuantifier(),
 					Arrays.asList(elimResulDualFiniteParams));
 			final Set<TermVariable> eliminateesAfterwards = PartialQuantifierElimination.constructNewEliminatees(result,
-					eliminatees);
+					et.getEliminatees());
 			if (eliminateesAfterwards.isEmpty()) {
 				// all were removed
 				return result;
 			}
 			if (numberOfEliminateesBefore > eliminateesAfterwards.size()) {
 				// something was removed
-				final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), quantifier, eliminateesAfterwards,
+				final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(), eliminateesAfterwards,
 						result);
 				if (quantified instanceof QuantifiedFormula) {
 					final QuantifiedFormula intermediate = (QuantifiedFormula) quantified;
