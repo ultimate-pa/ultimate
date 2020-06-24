@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  */
 public class EliminationTask {
 	private static final boolean DEBUG_USE_TO_STRING_DIRECT = false;
-	
+
 	private final int mQuantifier;
 	private final LinkedHashSet<TermVariable> mEliminatees;
 	private final Term mTerm;
@@ -57,15 +57,10 @@ public class EliminationTask {
 		super();
 		assert (quantifier == QuantifiedFormula.EXISTS || quantifier == QuantifiedFormula.FORALL);
 		mQuantifier = quantifier;
-		mEliminatees = new LinkedHashSet<>();
-		for (final TermVariable freeVar : term.getFreeVars()) {
-			if (eliminatees.contains(freeVar)) {
-				mEliminatees.add(freeVar);
-			}
-		}
+		mEliminatees = QuantifierUtils.projectToFreeVars(eliminatees, term);
 		mTerm = term;
 	}
-	
+
 	public int getQuantifier() {
 		return mQuantifier;
 	}
@@ -77,7 +72,7 @@ public class EliminationTask {
 	public Term getTerm() {
 		return mTerm;
 	}
-	
+
 	public Term toTerm(final Script script) {
 		if (mEliminatees.isEmpty()) {
 			return mTerm;
@@ -85,8 +80,8 @@ public class EliminationTask {
 			return script.quantifier(mQuantifier, mEliminatees.toArray(new TermVariable[mEliminatees.size()]), mTerm);
 		}
 	}
-	
-	
+
+
 	@Override
 	public String toString() {
 		final String quantifier = (getQuantifier() == QuantifiedFormula.EXISTS ? "∃" : "∀");
@@ -94,7 +89,7 @@ public class EliminationTask {
 		final String term = (DEBUG_USE_TO_STRING_DIRECT ? getTerm().toStringDirect() : getTerm().toString());
 		return quantifier + " " + vars + ". " + term;
 	}
-	
+
 
 	/**
 	 * Check if the terms of two {@link EliminationTasks} can be disjoint.

@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -39,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Provides static methods for handling of quantifiers and their finite connectives
@@ -358,5 +361,20 @@ public class QuantifierUtils {
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
+	}
+
+
+	/**
+	 * @return A new set that is the projection of varSet to the free variables of
+	 *         term.
+	 */
+	public static LinkedHashSet<TermVariable> projectToFreeVars(final Set<TermVariable> varSet, final Term term) {
+		final LinkedHashSet<TermVariable> result = new LinkedHashSet<>();
+		for (final TermVariable freeVar : term.getFreeVars()) {
+			if (varSet.contains(freeVar)) {
+				result.add(freeVar);
+			}
+		}
+		return result;
 	}
 }
