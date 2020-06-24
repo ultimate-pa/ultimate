@@ -124,7 +124,9 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 			
 			if (mFstOperand.getFinalConditions().get(stateFstOp).getCondition().get(0).get(0).getTermType() != 1) {
 				
-				ArrayList<Transition<LETTER, STATE>> newTransitions = mFstOperand.getTransitions().get(stateFstOp);
+				ArrayList<Transition<LETTER, STATE>> newTransitions = new ArrayList<Transition<LETTER, STATE>>();
+				for (Transition<LETTER, STATE> transition : mFstOperand.getTransitions().get(stateFstOp))
+						newTransitions.add(transition.copyTransition());
 				ArrayList<ArrayList<Guard>> newFinalConditionsList = new ArrayList<ArrayList<Guard>>();
 				
 				for (STATE stateSndOp : mSndOperand.getStates()) {
@@ -134,13 +136,14 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 						//add new transitions
 						for (Transition<LETTER, STATE> transition : mSndOperand.getTransitions().get(stateSndOp)) {
 							
+							Transition<LETTER, STATE> transitionCopy = transition.copyTransition();
 							ConjunctGuards conjunction1 = new ConjunctGuards(
-									transition.getGuards(), 
-									mFstOperand.getFinalConditions().get(stateFstOp).getCondition());
+									transitionCopy.getGuards(), 
+									mFstOperand.getFinalConditions().get(stateFstOp).copyFinalCondition().getCondition());
 							ConjunctGuards conjunction2 = new ConjunctGuards(
 									conjunction1.getResult(),
-									mSndOperand.getInitialConditions().get(stateSndOp).getCondition());
-							Transition<LETTER, STATE> newTransition = new Transition<LETTER, STATE>(transition.getLetter(), stateFstOp, transition.getSucState(), conjunction2.getResult(), transition.getUpdates());
+									mSndOperand.getInitialConditions().get(stateSndOp).copyInitialCondition().getCondition());
+							Transition<LETTER, STATE> newTransition = new Transition<LETTER, STATE>(transitionCopy.getLetter(), stateFstOp, transitionCopy.getSucState(), conjunction2.getResult(), transitionCopy.getUpdates());
 							newTransitions.add(newTransition);
 						}
 						
@@ -148,11 +151,11 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 						if (mSndOperand.getFinalConditions().get(stateSndOp).getCondition().get(0).get(0).getTermType() != 1) {
 							
 							ConjunctGuards conjunction1 = new ConjunctGuards(
-									mFstOperand.getFinalConditions().get(stateFstOp).getCondition(),
-									mSndOperand.getInitialConditions().get(stateSndOp).getCondition());
+									mFstOperand.getFinalConditions().get(stateFstOp).copyFinalCondition().getCondition(),
+									mSndOperand.getInitialConditions().get(stateSndOp).copyInitialCondition().getCondition());
 							ConjunctGuards conjunction2 = new ConjunctGuards(
 									conjunction1.getResult(),
-									mSndOperand.getFinalConditions().get(stateSndOp).getCondition());
+									mSndOperand.getFinalConditions().get(stateSndOp).copyFinalCondition().getCondition());
 							
 							newFinalConditionsList.addAll(conjunction2.getResult());
 						}
