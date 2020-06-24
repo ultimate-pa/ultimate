@@ -80,6 +80,7 @@ public class Union<LETTER, STATE, CRSF extends IStateFactory<STATE>> implements 
 		}
 	}
 
+	//needs to be adjusted to suit new datastructure
 	private CountingAutomaton<LETTER, STATE> computeResult() {
 		
 		Set<LETTER> unionAlphabet = mFstOperand.getAlphabet();

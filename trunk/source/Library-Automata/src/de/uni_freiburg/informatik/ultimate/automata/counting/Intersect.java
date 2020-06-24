@@ -77,6 +77,7 @@ public class Intersect<LETTER, STATE, CRSF extends IStateFactory<STATE>> impleme
 		}
 	}
 
+	//needs to be adjusted to suit new datastructure
 	private CountingAutomaton<LETTER, STATE> computeResult() {
 		Set<LETTER> intersectAlphabet = mFstOperand.getAlphabet();
 		ArrayList<Counter> intersectCounter = mFstOperand.getCounter();

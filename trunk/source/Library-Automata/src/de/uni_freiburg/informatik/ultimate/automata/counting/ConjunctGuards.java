@@ -49,12 +49,16 @@ public class ConjunctGuards {
 	}
 	
 	private ArrayList<ArrayList<Guard>> computeResult(){
-		//do stuff
 		ArrayList<ArrayList<Guard>> resultDNF = new ArrayList<ArrayList<Guard>>();
-		for (ArrayList<Guard> i : mFstGuardDNF) {
-			for (ArrayList<Guard> k : mSndGuardDNF) {
-				ArrayList<Guard> tempGuard = i;
-				tempGuard.addAll(k);
+		for (ArrayList<Guard> fstList : mFstGuardDNF) {
+			for (ArrayList<Guard> sndList : mSndGuardDNF) {
+				ArrayList<Guard> tempGuard = new ArrayList<Guard>();
+				for (Guard fstGuard : fstList) {
+					tempGuard.add(fstGuard.copyGuard());
+				}
+				for (Guard sndGuard : sndList) {
+					tempGuard.add(sndGuard.copyGuard());
+				}
 				resultDNF.add(tempGuard);
 			}
 		}

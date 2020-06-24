@@ -65,4 +65,9 @@ public class Update {
 	public Integer getTermType() {
 		return mTermType;
 	}
+	
+	public Update copyUpdate() {
+		Update copy = new Update(mCounterLeft.copyCounter(), mCounterRight.copyCounter(), mConstant, mTermType);
+		return copy;
+	}
 }

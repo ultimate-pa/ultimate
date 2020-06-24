@@ -55,15 +55,42 @@ public class CountingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, STAT
 	private Set<LETTER> mAlphabet;
 	private Set<STATE> mStates;
 	private ArrayList<Counter> mCounter;
+	private Map<STATE, InitialCondition> mInitialConditions;
+	private Map<STATE, FinalCondition> mFinalConditions;
+	private Map<STATE, ArrayList<Transition<LETTER, STATE>>> mTransitions;
+	
+	/**
+	private Set<LETTER> mAlphabet;
+	private Set<STATE> mStates;
+	private ArrayList<Counter> mCounter;
 	private Map<STATE, ArrayList<ArrayList<Guard>>> mInitialConditions;
 	private Map<STATE, ArrayList<ArrayList<Guard>>> mFinalConditions;
 	private Map<STATE, ArrayList<Transition<LETTER, STATE>>> mTransitions;
+	*/
 
 	public CountingAutomaton(final AutomataLibraryServices services) {
 		super();
 		mServices = services;
 	}
 	
+	public CountingAutomaton(final AutomataLibraryServices services,
+			Set<LETTER> alphabet,
+			Set<STATE> states,
+			ArrayList<Counter> counter, 
+			Map<STATE, InitialCondition> initialConditions,
+			Map<STATE, FinalCondition> finalConditions,
+			Map<STATE, ArrayList<Transition<LETTER, STATE>>> transitions) {
+		super();
+		mServices = services;
+		mAlphabet = alphabet;
+		mStates = states;
+		mCounter = counter;
+		mInitialConditions = initialConditions;
+		mFinalConditions = finalConditions;
+		mTransitions = transitions; 
+	}
+	
+	/**
 	public CountingAutomaton(final AutomataLibraryServices services,
 			Set<LETTER> alphabet,
 			Set<STATE> states,
@@ -80,6 +107,7 @@ public class CountingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, STAT
 		mFinalConditions = finalConditions;
 		mTransitions = transitions;
 	}
+	*/
 
 	@Override
 	public Set<LETTER> getAlphabet() {
@@ -95,6 +123,14 @@ public class CountingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, STAT
 		return mCounter;
 	}
 
+	public Map<STATE, InitialCondition> getInitialConditions() {
+		return mInitialConditions;
+	}
+	
+	public Map<STATE, FinalCondition> getFinalConditions(){
+		return mFinalConditions;
+	}
+	/**
 	public Map<STATE,ArrayList<ArrayList<Guard>>> getInitialConditions() {
 		return mInitialConditions;
 	}
@@ -102,6 +138,7 @@ public class CountingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, STAT
 	public Map<STATE,ArrayList<ArrayList<Guard>>> getFinalConditions() {
 		return mFinalConditions;
 	}
+	*/
 	
 	public Map<STATE, ArrayList<Transition<LETTER, STATE>>> getTransitions() {
 		return mTransitions;
@@ -114,6 +151,21 @@ public class CountingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, STAT
 	}
 	
 	public void addInitialCondition(STATE state, ArrayList<ArrayList<Guard>> conditionDNF) {
+		InitialCondition currentInitialCondition = mInitialConditions.get(state);
+		ConjunctGuards conjunction = new ConjunctGuards(currentInitialCondition.getCondition(), conditionDNF);
+		InitialCondition newInitialCondition = new InitialCondition(conjunction.getResult());
+		mInitialConditions.put(state, newInitialCondition);
+	}
+	
+	public void addFinalCondition(STATE state, ArrayList<ArrayList<Guard>> conditionDNF) {
+		FinalCondition currentFinalCondition = mFinalConditions.get(state);
+		ConjunctGuards conjunction = new ConjunctGuards(currentFinalCondition.getCondition(), conditionDNF);
+		FinalCondition newFinalCondition = new FinalCondition(conjunction.getResult());
+		mFinalConditions.put(state, newFinalCondition);
+	}
+	
+	/**
+	public void addInitialCondition(STATE state, ArrayList<ArrayList<Guard>> conditionDNF) {
 		ArrayList<ArrayList<Guard>> currentInitialConditions = mInitialConditions.get(state);
 		ConjunctGuards conjunction = new ConjunctGuards(currentInitialConditions, conditionDNF);
 		mInitialConditions.put(state, conjunction.getResult());
@@ -123,6 +175,41 @@ public class CountingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, STAT
 		ArrayList<ArrayList<Guard>> currentFinalConditions = mFinalConditions.get(state);
 		ConjunctGuards conjunction = new ConjunctGuards(currentFinalConditions, conditionDNF);
 		mFinalConditions.put(state, conjunction.getResult());
+	}
+	*/
+	
+	public CountingAutomaton<LETTER, STATE> copyCountingAutomaton() {
+		
+		ArrayList<Counter> counterListCopy = new ArrayList<Counter>();
+		for (Counter counter : mCounter) {
+			counterListCopy.add(counter.copyCounter());
+		}
+		
+		Map<STATE, InitialCondition> initialConditionsCopy = new HashMap<STATE, InitialCondition>();
+		Map<STATE, FinalCondition> finalConditionsCopy = new HashMap<STATE, FinalCondition>();
+		Map<STATE, ArrayList<Transition<LETTER, STATE>>> transitionsCopy = new HashMap<STATE, ArrayList<Transition<LETTER, STATE>>>();
+		for (STATE state : mStates) {
+			InitialCondition initialConditionCopy = mInitialConditions.get(state).copyInitialCondition();
+			initialConditionsCopy.put(state, initialConditionCopy);
+			FinalCondition finalConditionCopy = mFinalConditions.get(state).copyFinalCondition();
+			finalConditionsCopy.put(state, finalConditionCopy);
+			ArrayList<Transition<LETTER, STATE>> transitionListCopy = new ArrayList<Transition<LETTER, STATE>>();
+			for (Transition<LETTER, STATE> transition : mTransitions.get(state)) {
+				transitionListCopy.add(transition.copyTransition());
+			}
+			transitionsCopy.put(state, transitionListCopy);
+		}
+		
+		
+		CountingAutomaton<LETTER, STATE> copy = new CountingAutomaton<LETTER, STATE>(
+				mServices, 
+				mAlphabet, 
+				mStates, 
+				counterListCopy, 
+				initialConditionsCopy, 
+				finalConditionsCopy, 
+				transitionsCopy);
+		return copy;
 	}
 	
 	@Override

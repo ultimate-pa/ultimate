@@ -76,6 +76,7 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 		}
 	}
 	
+	//needs to be adjusted to suit new datastructure
 	private CountingAutomaton<LETTER, STATE> computeResult() {
 		
 		Map<STATE, ArrayList<ArrayList<Guard>>> complementFinalConditions = new HashMap<STATE, ArrayList<ArrayList<Guard>>>();

@@ -77,4 +77,25 @@ public class Transition<LETTER, STATE> {
 	public ArrayList<Update> getUpdates() {
 		return mUpdates;
 	}
+	
+	public Transition<LETTER, STATE> copyTransition() {
+		ArrayList<ArrayList<Guard>> guardDNFCopy = new ArrayList<ArrayList<Guard>>();
+		for (ArrayList<Guard> list : mGuards) {
+			ArrayList<Guard> guardListCopy = new ArrayList<Guard>();
+			for (Guard guard : list) {
+				Guard guardCopy = guard.copyGuard();
+				guardListCopy.add(guardCopy);
+			}
+			guardDNFCopy.add(guardListCopy);
+		}
+		
+		ArrayList<Update> updateListCopy = new ArrayList<Update>();
+		for (Update update : mUpdates) {
+			Update updateCopy = update.copyUpdate();
+			updateListCopy.add(updateCopy);
+		}
+		
+		Transition<LETTER, STATE> copy = new Transition<LETTER, STATE>(mLetter, mPredecessorState, mSuccessorState, guardDNFCopy, updateListCopy);
+		return copy;
+	}
 }

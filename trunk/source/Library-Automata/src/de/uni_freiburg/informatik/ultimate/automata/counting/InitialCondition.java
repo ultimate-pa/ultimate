@@ -26,66 +26,32 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.counting;
 
+import java.util.ArrayList;
+
 /**
- * Data structure for the guards of Counting Automata
+ * Data structure for the initialConditions of Counting Automata
  *
  * @author Marcel Ebbinghaus
  * @author who is the author?
  */
 
-public class Guard {
-
-	private Counter mCounterLeft;
-	private Counter mCounterRight;
-	private Integer mConstant;
-	private Integer mRelationType; //0 means =, 1 means !=, 2 means <, 3 means >, 4 means <=, 5 means >=
-	private Integer mTermType; //0 means true, 1 means false, 2 means constant, 3 means counter, 4 means both
+public class InitialCondition {
 	
-	public Guard()
+	private ArrayList<ArrayList<Guard>> mCondition;
+	
+	public InitialCondition()
 	{}
 	
-	public Guard(Counter c1, Counter c2, Integer constant, Integer relation, Integer term) {
-		mCounterLeft = c1;
-		mCounterRight = c2;
-		mConstant = constant;
-		mRelationType = relation;
-		mTermType = term;
+	public InitialCondition(ArrayList<ArrayList<Guard>> condition) {
+		mCondition = condition;
 	}
 	
-	public Counter getCounterLeft() {
-		return mCounterLeft;
+	public ArrayList<ArrayList<Guard>> getCondition() {
+		return mCondition;
 	}
 	
-	public Counter getCounterRight() {
-		return mCounterRight;
-	}
-	
-	public Integer getConstant() {
-		return mConstant;
-	}
-	
-	public Integer getRelationType() {
-		return mRelationType;
-	}
-	
-	public Integer getTermType() {
-		return mTermType;
-	}
-	
-	public void changeConstant(Integer newConstant) {
-		mConstant = newConstant;
-	}
-	
-	public void changeRelationType(Integer newRelationType) {
-		mRelationType = newRelationType;
-	}
-	
-	public void changeTermType(Integer newTermType) {
-		mTermType = newTermType;
-	}
-	
-	public Guard copyGuard() {
-		Guard copy = new Guard(mCounterLeft.copyCounter(), mCounterRight.copyCounter(), mConstant, mRelationType, mTermType);
+	public InitialCondition copyInitialCondition() {
+		InitialCondition copy = new InitialCondition(mCondition);
 		return copy;
 	}
 }

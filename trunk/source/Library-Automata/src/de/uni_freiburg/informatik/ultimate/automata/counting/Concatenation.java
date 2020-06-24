@@ -77,15 +77,20 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 		}
 	}
 
+	//needs to be adjusted to suit new datastructure
 	private CountingAutomaton<LETTER, STATE> computeResult() {
-		Set<LETTER> concatenationAlphabet = mFstOperand.getAlphabet();
-		ArrayList<Counter> concatenationCounter = mFstOperand.getCounter();
+		Set<LETTER> concatenationAlphabet = new HashSet<LETTER>();
+		concatenationAlphabet.addAll(mFstOperand.getAlphabet());
+		ArrayList<Counter> concatenationCounter = new ArrayList<Counter>();
+		concatenationCounter.addAll(mFstOperand.getCounter());
 		concatenationCounter.addAll(mSndOperand.getCounter());
-		Set<STATE> concatenationStates = mFstOperand.getStates();
+		Set<STATE> concatenationStates = new HashSet<STATE>();
+		concatenationStates.addAll(mFstOperand.getStates());
 		concatenationStates.addAll(mSndOperand.getStates());
-		Map<STATE, ArrayList<ArrayList<Guard>>> concatenationInitialConditions = mFstOperand.getInitialConditions();
+		Map<STATE, ArrayList<ArrayList<Guard>>> concatenationInitialConditions = new HashMap<STATE, ArrayList<ArrayList<Guard>>>();
+		concatenationInitialConditions.putAll(mFstOperand.getInitialConditions()); //needs to create new objects for every element
 		Map<STATE, ArrayList<ArrayList<Guard>>> concatenationFinalConditions = mFstOperand.getFinalConditions();
-		concatenationFinalConditions.putAll(mSndOperand.getFinalConditions());
+		concatenationFinalConditions.putAll(mSndOperand.getFinalConditions()); //needs to create new objects for every element
 		Map<STATE, ArrayList<Transition<LETTER, STATE>>> concatenationTransitions = mFstOperand.getTransitions();
 		concatenationTransitions.putAll(mSndOperand.getTransitions());
 		

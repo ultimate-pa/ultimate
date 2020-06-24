@@ -47,4 +47,9 @@ public class Counter {
 	public String getCounterName() {
 		return mName;
 	}
+	
+	public Counter copyCounter() {
+		Counter copy = new Counter(mName);
+		return copy;
+	}
 }
