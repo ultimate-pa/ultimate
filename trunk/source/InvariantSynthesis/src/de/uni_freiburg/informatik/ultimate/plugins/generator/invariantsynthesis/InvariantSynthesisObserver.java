@@ -80,7 +80,8 @@ public class InvariantSynthesisObserver implements IUnmanagedObserver {
 
 			if (System.getenv("REDIRECT_INVARIANT_SYNTHESIS_FLOWGRAPH") != null) {
 				try {
-					Starter s = new Starter(rcfgRootNode);
+					// Starter s = new Starter(rcfgRootNode);
+					synthesis.TestMain.testEntryPoint(rcfgRootNode, mServices);
 				} catch (final Exception e) {
 					e.printStackTrace(System.out);
 				}
