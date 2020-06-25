@@ -81,8 +81,12 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 		Set<LETTER> concatenationAlphabet = new HashSet<LETTER>();
 		concatenationAlphabet.addAll(mFstOperand.getAlphabet());
 		ArrayList<Counter> concatenationCounter = new ArrayList<Counter>();
-		concatenationCounter.addAll(mFstOperand.getCounter());
-		concatenationCounter.addAll(mSndOperand.getCounter());
+		for (Counter counter : mFstOperand.getCounter()) {
+			concatenationCounter.add(counter.copyCounter());
+		}
+		for (Counter counter : mSndOperand.getCounter()) {
+			concatenationCounter.add(counter.copyCounter());
+		}
 		Set<STATE> concatenationStates = new HashSet<STATE>();
 		concatenationStates.addAll(mFstOperand.getStates());
 		concatenationStates.addAll(mSndOperand.getStates());

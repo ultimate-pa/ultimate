@@ -79,11 +79,24 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 	//needs to be adjusted to suit new datastructure
 	private CountingAutomaton<LETTER, STATE> computeResult() {
 		
-		Map<STATE, ArrayList<ArrayList<Guard>>> complementFinalConditions = new HashMap<STATE, ArrayList<ArrayList<Guard>>>();
+		ArrayList<Counter> complementCounter = new ArrayList<Counter>();
+		for (Counter counter : mOperand.getCounter()) {
+			complementCounter.add(counter.copyCounter());
+		}
+		Map<STATE, InitialCondition> complementInitialConditions = new HashMap<STATE, InitialCondition>();
+		Map<STATE, FinalCondition> complementFinalConditions = new HashMap<STATE, FinalCondition>();
+		Map<STATE, ArrayList<Transition<LETTER, STATE>>> complementTransitions = new HashMap<STATE, ArrayList<Transition<LETTER, STATE>>>();
 		
 		for (STATE state : mOperand.getStates()) {
 			
-			ArrayList<ArrayList<Guard>> finalConditionsCopy1 = mOperand.getFinalConditions().get(state);
+			complementInitialConditions.put(state, mOperand.getInitialConditions().get(state).copyInitialCondition());
+			ArrayList<Transition<LETTER, STATE>> transitionList = new ArrayList<Transition<LETTER, STATE>>();
+			for (Transition<LETTER, STATE> transition : mOperand.getTransitions().get(state)) {
+				transitionList.add(transition.copyTransition());
+			}
+			complementTransitions.put(state, transitionList);
+			
+			ArrayList<ArrayList<Guard>> finalConditionsCopy1 = mOperand.getFinalConditions().get(state).copyFinalCondition().getCondition();
 			
 			//negate guards
 			for (ArrayList<Guard> guardList : finalConditionsCopy1) {
@@ -133,7 +146,7 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 			//transform back to DNF
 			if (finalConditionsCopy1.size() == 1) {
 				
-				complementFinalConditions.put(state, finalConditionsCopy1);
+				complementFinalConditions.put(state, new FinalCondition(finalConditionsCopy1));
 			}
 			else {
 				
@@ -145,8 +158,8 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 					for (Guard guard2 : finalConditionsCopy1.get(1)) {
 						
 						ArrayList<Guard> tempCondition = new ArrayList<Guard>();
-						tempCondition.add(guard1);
-						tempCondition.add(guard2);
+						tempCondition.add(guard1.copyGuard());
+						tempCondition.add(guard2.copyGuard());
 						finalConditionsCopy3.add(tempCondition);
 					}
 				}
@@ -155,20 +168,25 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 				
 				while (finalConditionsCopy1.size() > 0) {
 					
-					for (Guard guard : finalConditionsCopy1.get(0)) {
+					for (Guard guard1 : finalConditionsCopy1.get(0)) {
 						
 						for (ArrayList<Guard> guardList : finalConditionsCopy3) {
 							
-							ArrayList<Guard> tempCondition = guardList;
-							tempCondition.add(guard);
+							ArrayList<Guard> tempCondition = new ArrayList<Guard>();
+							for (Guard guard3 : guardList) {
+								tempCondition.add(guard3.copyGuard());
+							}
+							tempCondition.add(guard1.copyGuard());
 							finalConditionsCopy2.add(tempCondition);
 						}
 					}
-					finalConditionsCopy3 = finalConditionsCopy2;
+					for (ArrayList<Guard> list : finalConditionsCopy2) {
+						finalConditionsCopy3.add(list);
+					}
 					finalConditionsCopy1.remove(0);
 					finalConditionsCopy2.clear();
 				}
-				complementFinalConditions.put(state, finalConditionsCopy3);
+				complementFinalConditions.put(state, new FinalCondition(finalConditionsCopy3));
 			}
 		}
 		
@@ -177,10 +195,10 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 						mServices,
 						mOperand.getAlphabet(),
 						mOperand.getStates(),
-						mOperand.getCounter(),
-						mOperand.getInitialConditions(),
+						complementCounter,
+						complementInitialConditions,
 						complementFinalConditions,
-						mOperand.getTransitions());
+						complementTransitions);
 				return resultAutomaton;
 	}
 
