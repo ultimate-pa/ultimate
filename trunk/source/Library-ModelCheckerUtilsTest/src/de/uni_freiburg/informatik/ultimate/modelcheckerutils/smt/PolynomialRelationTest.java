@@ -364,11 +364,11 @@ public class PolynomialRelationTest {
 	 * You can see the problem for y=2, x=1, and z=3
 	 *
 	 */
-	@Test
+	// @Test Insufficient resources to check soundness
 	public void relationIntPolyPuristLeq() throws NotAffineException {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(< (* y x) z )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, vars);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	// @Test Insufficient resources to check soundness
