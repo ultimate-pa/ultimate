@@ -76,7 +76,6 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 		}
 	}
 	
-	//needs to be adjusted to suit new datastructure
 	private CountingAutomaton<LETTER, STATE> computeResult() {
 		
 		ArrayList<Counter> complementCounter = new ArrayList<Counter>();
@@ -181,7 +180,7 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 						}
 					}
 					for (ArrayList<Guard> list : finalConditionsCopy2) {
-						finalConditionsCopy3.add(list);
+						finalConditionsCopy3.add(new ArrayList<Guard>(list));
 					}
 					finalConditionsCopy1.remove(0);
 					finalConditionsCopy2.clear();
