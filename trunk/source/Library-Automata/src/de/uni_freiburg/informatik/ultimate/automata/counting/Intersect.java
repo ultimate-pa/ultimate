@@ -77,14 +77,18 @@ public class Intersect<LETTER, STATE, CRSF extends IStateFactory<STATE>> impleme
 		}
 	}
 
-	//needs to be adjusted to suit new datastructure
 	private CountingAutomaton<LETTER, STATE> computeResult() {
 		Set<LETTER> intersectAlphabet = mFstOperand.getAlphabet();
-		ArrayList<Counter> intersectCounter = mFstOperand.getCounter();
-		intersectCounter.addAll(mSndOperand.getCounter());
+		ArrayList<Counter> intersectCounter = new ArrayList<Counter>();
+		for (Counter counter : mFstOperand.getCounter()) {
+			intersectCounter.add(counter.copyCounter());
+		}
+		for (Counter counter : mSndOperand.getCounter()) {
+			intersectCounter.add(counter.copyCounter());
+		}
 		Set<STATE> intersectStates = new HashSet<STATE>();
-		Map<STATE, ArrayList<ArrayList<Guard>>> intersectInitialConditions = new HashMap<STATE, ArrayList<ArrayList<Guard>>>();
-		Map<STATE, ArrayList<ArrayList<Guard>>> intersectFinalConditions = new HashMap<STATE, ArrayList<ArrayList<Guard>>>();
+		Map<STATE, InitialCondition> intersectInitialConditions = new HashMap<STATE, InitialCondition>();
+		Map<STATE, FinalCondition> intersectFinalConditions = new HashMap<STATE, FinalCondition>();
 		Map<STATE, ArrayList<Transition<LETTER, STATE>>> intersectTransitions = new HashMap<STATE, ArrayList<Transition<LETTER, STATE>>>();
 		
 		Map<HashSet<STATE>, STATE> stateMemory = new HashMap<HashSet<STATE>, STATE>();
@@ -114,17 +118,17 @@ public class Intersect<LETTER, STATE, CRSF extends IStateFactory<STATE>> impleme
 				
 				//initialConditions
 				ConjunctGuards initialConjunction = new ConjunctGuards(
-						mFstOperand.getInitialConditions().get(stateFstOp), 
-						mSndOperand.getInitialConditions().get(stateSndOp));
+						mFstOperand.getInitialConditions().get(stateFstOp).copyInitialCondition().getCondition(), 
+						mSndOperand.getInitialConditions().get(stateSndOp).copyInitialCondition().getCondition());
 				ArrayList<ArrayList<Guard>> newInitialConditions = initialConjunction.getResult();
-				intersectInitialConditions.put(newState, newInitialConditions);
+				intersectInitialConditions.put(newState, new InitialCondition(newInitialConditions));
 				
 				//finalConditions
 				ConjunctGuards finalConjunction = new ConjunctGuards(
-						mFstOperand.getFinalConditions().get(stateFstOp), 
-						mSndOperand.getFinalConditions().get(stateSndOp));
+						mFstOperand.getFinalConditions().get(stateFstOp).copyFinalCondition().getCondition(), 
+						mSndOperand.getFinalConditions().get(stateSndOp).copyFinalCondition().getCondition());
 				ArrayList<ArrayList<Guard>> newFinalConditions = finalConjunction.getResult();
-				intersectFinalConditions.put(newState, newFinalConditions);
+				intersectFinalConditions.put(newState, new FinalCondition(newFinalConditions));
 				
 				//transitions
 				ArrayList<Transition<LETTER, STATE>> newOutgoingTransitions = new ArrayList<Transition<LETTER, STATE>>();
@@ -135,15 +139,18 @@ public class Intersect<LETTER, STATE, CRSF extends IStateFactory<STATE>> impleme
 						
 						if (transOfStateFstOp.getLetter() == transOfStateSndOp.getLetter()) {
 							
-							ConjunctGuards transitionConjunction = new ConjunctGuards(transOfStateFstOp.getGuards(), transOfStateSndOp.getGuards());
+							Transition<LETTER, STATE> transCopy1 = transOfStateFstOp.copyTransition();
+							Transition<LETTER, STATE> transCopy2 = transOfStateSndOp.copyTransition();
+							ConjunctGuards transitionConjunction = new ConjunctGuards(transCopy1.getGuards(), transCopy2.getGuards());
 							ArrayList<ArrayList<Guard>> newTransitionGuards = transitionConjunction.getResult();
-							ArrayList<Update> newTransitionUpdates = transOfStateFstOp.getUpdates();
-							newTransitionUpdates.addAll(transOfStateSndOp.getUpdates());
+							ArrayList<Update> newTransitionUpdates = new ArrayList<Update>();
+							newTransitionUpdates.addAll(transCopy1.getUpdates());
+							newTransitionUpdates.addAll(transCopy2.getUpdates());
 							HashSet<STATE> sucStatePair = new HashSet<STATE>();
-							sucStatePair.add(transOfStateFstOp.getSucState());
-							sucStatePair.add(transOfStateSndOp.getSucState());
+							sucStatePair.add(transCopy1.getSucState());
+							sucStatePair.add(transCopy2.getSucState());
 							STATE newSuccessorState = stateMemory.get(sucStatePair);
-							newOutgoingTransitions.add(new Transition<LETTER, STATE>(transOfStateFstOp.getLetter(), newState, newSuccessorState, newTransitionGuards, newTransitionUpdates));
+							newOutgoingTransitions.add(new Transition<LETTER, STATE>(transCopy1.getLetter(), newState, newSuccessorState, newTransitionGuards, newTransitionUpdates));
 						}
 					}
 				}
