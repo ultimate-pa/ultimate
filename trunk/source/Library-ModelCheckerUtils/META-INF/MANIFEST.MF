@@ -41,6 +41,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
  net.sf.javabdd
-Import-Package: de.uni_freiburg.informatik.ultimate.lassoranker,
- de.uni_freiburg.informatik.ultimate.lassoranker.termination,
- org.apache.commons.lang3
+Import-Package: org.apache.commons.lang3
