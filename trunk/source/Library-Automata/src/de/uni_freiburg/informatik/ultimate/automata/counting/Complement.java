@@ -145,6 +145,12 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 			//transform back to DNF
 			if (finalConditionsCopy1.size() == 1) {
 				
+				for (Guard guard : finalConditionsCopy1.get(0)) {
+					ArrayList<Guard> guardList = new ArrayList<Guard>();
+					guardList.add(guard.copyGuard());
+					finalConditionsCopy1.add(guardList);
+				}
+				finalConditionsCopy1.remove(0);
 				complementFinalConditions.put(state, new FinalCondition(finalConditionsCopy1));
 			}
 			else {
@@ -179,6 +185,7 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 							finalConditionsCopy2.add(tempCondition);
 						}
 					}
+					finalConditionsCopy3.clear();
 					for (ArrayList<Guard> list : finalConditionsCopy2) {
 						finalConditionsCopy3.add(new ArrayList<Guard>(list));
 					}
