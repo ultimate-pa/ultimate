@@ -40,21 +40,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 /**
  * @author Jacob Maxam
  */
-public abstract class CountingAutomatonAST extends AutomatonAST {
+public class CountingAutomatonAST extends AutomatonAST {
 	//private static final long serialVersionUID = ???;
 
 	private final List<String> mAlphabet;
 	private final List<String> mStates;
 	private final List<String> mCounters;
 	
-	private final Map<String, String> mInitialConditions;
-	private final Map<String, String> mFinalConditions;
+	private final ConditionListAST mInitialConditions;
+	private final ConditionListAST mFinalConditions;
 
 	private final Map<String, Map<String, List<Triple<String, List<Pair<String, String>>, String>>>> mTransitions;
 
 	public CountingAutomatonAST(final ILocation loc, final String name, final List<String> alphabet,
-			final List<String> states, final List<String> counters, final Map<String, String> initConditions,
-			final Map<String, String> finConditions,
+			final List<String> states, final List<String> counters, final ConditionListAST initConditions,
+			final ConditionListAST finConditions,
 			final Map<String, Map<String, List<Triple<String, List<Pair<String, String>>, String>>>> transitions) {
 		super(loc, name);
 		if (alphabet != null) {
@@ -72,16 +72,11 @@ public abstract class CountingAutomatonAST extends AutomatonAST {
 		} else {
 			mCounters = new ArrayList<String>();
 		}
-		if (initConditions != null) {
-			mInitialConditions = initConditions;
-		} else {
-			mInitialConditions = new HashMap<String, String>();
-		}
-		if (finConditions != null) {
-			mFinalConditions = finConditions;
-		} else {
-			mFinalConditions = new HashMap<String, String>();
-		}
+		
+		mInitialConditions = initConditions;
+		
+		mFinalConditions = finConditions;
+		
 		if (transitions != null) {
 			mTransitions = transitions;
 		} else {
@@ -101,11 +96,11 @@ public abstract class CountingAutomatonAST extends AutomatonAST {
 		return mCounters;
 	}
 
-	public Map<String, String> getInitialConditions() {
+	public ConditionListAST getInitialConditions() {
 		return mInitialConditions;
 	}
 
-	public Map<String, String> getFinalConditions() {
+	public ConditionListAST getFinalConditions() {
 		return mFinalConditions;
 	}
 

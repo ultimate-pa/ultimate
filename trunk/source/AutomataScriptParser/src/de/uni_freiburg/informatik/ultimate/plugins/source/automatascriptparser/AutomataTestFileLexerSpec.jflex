@@ -105,6 +105,7 @@ StringCharacter = [^\r\n\"\\]
   "NestedWordAutomaton"         { m_LastToken = m_CurToken; m_CurToken = "NestedWordAutomaton"; return symbol(sym.NESTEDWORD_AUTOMATA); }
   "EpsilonNestedWordAutomaton"  { m_LastToken = m_CurToken; m_CurToken = "EpsilonNestedWordAutomaton"; return symbol(sym.EPSILON_NESTEDWORD_AUTOMATA); }
   "FiniteAutomaton"             { m_LastToken = m_CurToken; m_CurToken = "FiniteAutomaton"; return symbol(sym.FINITE_AUTOMATON); }
+  "CountingAutomaton"           { m_LastToken = m_CurToken; m_CurToken = "CountingAutomaton"; return symbol(sym.COUNTING_AUTOMATON); }
   "PetriNet"                    { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.PETRINET_AUTOMATA); }
   "BranchingProcess"            { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.BRANCHINGPROCESS_AUTOMATA); }
   "alphabet"                    { m_LastToken = m_CurToken; m_CurToken = "alphabet"; return symbol(sym.ALPHABET); }
@@ -134,6 +135,11 @@ StringCharacter = [^\r\n\"\\]
   /* Tree Automata */
   "TreeAutomaton"               { m_LastToken = m_CurToken; m_CurToken = "TreeAutomaton"; return symbol(sym.TREE_AUTOMATON); }
   "rankedAlphabet"              { m_LastToken = m_CurToken; m_CurToken = "rankedAlphabet"; return symbol(sym.RANKED_ALPHABET); }
+  
+  /* Counting Automata */
+  "counters"					{ m_LastToken = m_CurToken; m_CurToken = "counters"; return symbol(sym.COUNTERS); }
+  "initialConditions"			{ m_LastToken = m_CurToken; m_CurToken = "initialConditions"; return symbol(sym.INITIAL_CONDITIONS); }
+  "finalConditions"             { m_LastToken = m_CurToken; m_CurToken = "finalConditions"; return symbol(sym.FINAL_CONDITIONS); }
   
   // Net transitions  
   "initialMarking"                  { m_LastToken = m_CurToken; m_CurToken = "initialMarking"; return symbol(sym.INITIAL_MARKINGS); }
