@@ -129,8 +129,8 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 			if (mFstOperand.getFinalConditions().get(stateFstOp).getCondition().get(0).get(0).getTermType() != 1) {
 				
 				ArrayList<Transition<LETTER, STATE>> newTransitions = new ArrayList<Transition<LETTER, STATE>>();
-				for (Transition<LETTER, STATE> transition : mFstOperand.getTransitions().get(stateFstOp))
-						newTransitions.add(transition.copyTransition());
+				for (Transition<LETTER, STATE> transition : concatenationTransitions.get(stateFstOp))
+						newTransitions.add(transition);
 				ArrayList<ArrayList<Guard>> newFinalConditionsList = new ArrayList<ArrayList<Guard>>();
 				
 				for (STATE stateSndOp : mSndOperand.getStates()) {
