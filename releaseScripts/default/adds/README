@@ -42,11 +42,9 @@ This archive also contains binaries for the following theorem provers.
 
  * MathSAT5 (http://mathsat.fbk.eu)  
    - Windows (mathsat.exe, mpir.dll)
-     MathSAT5 version 50d9330d8efd 
-     (Nov 16 2017 22:42:29, gmp 5.0.1, gcc 6.3.0, 64-bit)
+     MathSAT5 version 5.6.3 (973d615f065f) (May 12 2020 08:55:00, gmp 6.1.2, msvc 18.00, 64-bit)
    - Linux (mathsat)
-     MathSAT5 version 50d9330d8efd 
-     (Nov 16 2017 22:36:38, gmp 5.1.3, gcc 4.8.4, 64-bit)
+     MathSAT5 version 5.6.3 (973d615f065f) (May 12 2020 08:42:13, gmp 6.1.0, gcc 4.8.5, 64-bit)
 
 For each of these theorem provers, a corresponding license file (z3-LICENSE, cvc4-LICENSE, 
 mathsat-LICENSE) can be found in our archive. Please consult these files for additional 
