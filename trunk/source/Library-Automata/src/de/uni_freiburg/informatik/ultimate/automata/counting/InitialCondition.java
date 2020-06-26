@@ -51,7 +51,16 @@ public class InitialCondition {
 	}
 	
 	public InitialCondition copyInitialCondition() {
-		InitialCondition copy = new InitialCondition(mCondition);
+		ArrayList<ArrayList<Guard>> guardDNFCopy = new ArrayList<ArrayList<Guard>>();
+		for (ArrayList<Guard> list : mCondition) {
+			ArrayList<Guard> guardListCopy = new ArrayList<Guard>();
+			for (Guard guard : list) {
+				Guard guardCopy = guard.copyGuard();
+				guardListCopy.add(guardCopy);
+			}
+			guardDNFCopy.add(guardListCopy);
+		}
+		InitialCondition copy = new InitialCondition(guardDNFCopy);
 		return copy;
 	}
 }

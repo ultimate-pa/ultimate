@@ -51,7 +51,16 @@ public class FinalCondition {
 	}
 	
 	public FinalCondition copyFinalCondition() {
-		FinalCondition copy = new FinalCondition(mCondition);
+		ArrayList<ArrayList<Guard>> guardDNFCopy = new ArrayList<ArrayList<Guard>>();
+		for (ArrayList<Guard> list : mCondition) {
+			ArrayList<Guard> guardListCopy = new ArrayList<Guard>();
+			for (Guard guard : list) {
+				Guard guardCopy = guard.copyGuard();
+				guardListCopy.add(guardCopy);
+			}
+			guardDNFCopy.add(guardListCopy);
+		}
+		FinalCondition copy = new FinalCondition(guardDNFCopy);
 		return copy;
 	}
 }
