@@ -7,6 +7,7 @@ Fragment-Host: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinte
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
  org.junit,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.lib.test
