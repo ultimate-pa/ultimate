@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.Arra
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -64,7 +64,7 @@ public class ArrayEqualityExplicator {
 		final List<TermVariable> newAuxVars = new ArrayList();
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final BinaryEqualityRelation ber : bers) {
-			if (ber.getRelationSymbol() != BinaryRelation.negateRelation(getDerRelationSymbol(quantifier))) {
+			if (ber.getRelationSymbol() != getDerRelationSymbol(quantifier).negate()) {
 				throw new IllegalArgumentException("incompatible relation");
 			}
 			final Term elementwiseEquality = constructElementwiseEquality(mgdScript, ber.getLhs(), ber.getRhs(),

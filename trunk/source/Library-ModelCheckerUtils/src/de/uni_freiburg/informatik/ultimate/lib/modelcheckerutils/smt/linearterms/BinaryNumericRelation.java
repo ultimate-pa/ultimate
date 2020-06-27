@@ -61,7 +61,7 @@ public class BinaryNumericRelation extends BinaryRelation {
 		RelationSymbol relSymb = null;
 		for (final RelationSymbol symb : RelationSymbol.values()) {
 			if (symb.toString().equals(functionSymbolName)) {
-				relSymb = isNegated ? negateRelation(symb) : symb;
+				relSymb = isNegated ? symb.negate() : symb;
 				break;
 			}
 		}
@@ -116,7 +116,8 @@ public class BinaryNumericRelation extends BinaryRelation {
 			return null;
 		}
 		if (isNegated) {
-			relSymb = BinaryRelation.negateRelation(relSymb);
+			final RelationSymbol symb = relSymb;
+			relSymb = symb.negate();
 		}
 		return new BinaryNumericRelation(relSymb, params[0], params[1]);
 	}

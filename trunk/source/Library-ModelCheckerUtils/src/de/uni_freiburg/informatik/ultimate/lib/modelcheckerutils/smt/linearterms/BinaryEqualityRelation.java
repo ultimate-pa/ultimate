@@ -65,7 +65,8 @@ public class BinaryEqualityRelation extends BinaryRelation {
 			throw new NoRelationOfThisKindException(
 					"no equality relation symbol");
 		}
-		symb = isNegated ? negateRelation(symb) : symb;
+		final RelationSymbol symb1 = symb;
+		symb = isNegated ? symb1.negate() : symb;
 		return symb;
 	}
 
@@ -105,7 +106,8 @@ public class BinaryEqualityRelation extends BinaryRelation {
 			return null;
 		}
 		if (isNegated) {
-			relSymb = BinaryRelation.negateRelation(relSymb);
+			final RelationSymbol symb = relSymb;
+			relSymb = symb.negate();
 		}
 		return new BinaryEqualityRelation(relSymb, params[0], params[1]);
 	}

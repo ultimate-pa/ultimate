@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ContainsSub
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.Case;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.polynomial.solve_for_subject.MultiCaseSolutionBuilder;
@@ -152,7 +151,7 @@ public class SolveForSubjectUtils {
 		final RelationSymbol resultRelationSymbol;
 		if (isNegative(coeffOfSubject, subject.getSort())) {
 			// if coefficient is negative we have to use the "swapped" RelationSymbol
-			resultRelationSymbol = BinaryRelation.swapParameters(polyRel.getRelationSymbol());
+			resultRelationSymbol = polyRel.getRelationSymbol().swapParameters();
 		} else {
 			resultRelationSymbol = polyRel.getRelationSymbol();
 		}
@@ -653,7 +652,7 @@ public class SolveForSubjectUtils {
 
 	private static RelationSymbol negateForCnf(final RelationSymbol symb, final Xnf xnf) {
 		if (xnf == Xnf.CNF) {
-			return BinaryRelation.negateRelation(symb);
+			return symb.negate();
 		} else {
 			return symb;
 		}
@@ -724,7 +723,7 @@ public class SolveForSubjectUtils {
 			resultRelationSymbol = relSymb;
 		} else {
 			// if coefficient is negative we have to use the "swapped" RelationSymbol
-			resultRelationSymbol = BinaryRelation.swapParameters(relSymb);
+			resultRelationSymbol = relSymb.swapParameters();
 		}
 		final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, resultRhs, resultRelationSymbol,
 				Collections.emptyMap());

@@ -41,156 +41,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public abstract class BinaryRelation implements IBinaryRelation {
 
-	public enum RelationSymbol {
-		EQ("="), DISTINCT("distinct"), LEQ("<="), GEQ(">="), LESS("<"), GREATER(">");
-
-		private final String mStringRepresentation;
-
-		RelationSymbol(final String stringRepresentation) {
-			mStringRepresentation = stringRepresentation;
-		}
-
-		@Override
-		public String toString() {
-			return mStringRepresentation;
-		}
-
-		/**
-		 * @return {@link RelationSymbol} whose string representation is relAsString and
-		 *         null if no {@link RelationSymbol} has such a string representation.
-		 */
-		public static RelationSymbol convert(final String relAsString) {
-			switch (relAsString) {
-			case "=":
-				return RelationSymbol.EQ;
-			case "distinct":
-				return RelationSymbol.DISTINCT;
-			case "<=":
-				return RelationSymbol.LEQ;
-			case ">=":
-				return RelationSymbol.GEQ;
-			case "<":
-				return RelationSymbol.LESS;
-			case ">":
-				return RelationSymbol.GREATER;
-			default:
-				return null;
-			}
-		}
-	}
-
-	/**
-	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the relation ψ ◾ φ is equivalent to the
-	 * relation ¬(ψ ▷ φ), which is the negated relation.
-	 */
-	public static RelationSymbol negateRelation(final RelationSymbol symb) {
-		final RelationSymbol result;
-		switch (symb) {
-		case EQ:
-			result = RelationSymbol.DISTINCT;
-			break;
-		case DISTINCT:
-			result = RelationSymbol.EQ;
-			break;
-		case LEQ:
-			result = RelationSymbol.GREATER;
-			break;
-		case GEQ:
-			result = RelationSymbol.LESS;
-			break;
-		case LESS:
-			result = RelationSymbol.GEQ;
-			break;
-		case GREATER:
-			result = RelationSymbol.LEQ;
-			break;
-		default:
-			throw new UnsupportedOperationException("unknown numeric relation");
-		}
-		return result;
-	}
-
-	/**
-	 * Given a relation symbol ▷, returns the relation symbol ◾ such that the relation ψ ◾ φ is equivalent to the
-	 * relation φ ▷ ψ, which is the relation where we swaped the parameters.
-	 */
-	public static RelationSymbol swapParameters(final RelationSymbol symb) {
-		final RelationSymbol result;
-		switch (symb) {
-		case EQ:
-			result = RelationSymbol.EQ;
-			break;
-		case DISTINCT:
-			result = RelationSymbol.DISTINCT;
-			break;
-		case LEQ:
-			result = RelationSymbol.GEQ;
-			break;
-		case GEQ:
-			result = RelationSymbol.LEQ;
-			break;
-		case LESS:
-			result = RelationSymbol.GREATER;
-			break;
-		case GREATER:
-			result = RelationSymbol.LESS;
-			break;
-		default:
-			throw new UnsupportedOperationException("unknown numeric relation");
-		}
-		return result;
-	}
-
-	/**
-	 * Returns the term (relationSymbol lhsTerm rhsTerm) if relationSymbol is not a greater-than relation symbol.
-	 * Otherwise returns an equivalent term where relation symbol and parameters are swapped.
-	 */
-	public static Term constructLessNormalForm(final Script script, final RelationSymbol relationSymbol,
-			final Term lhsTerm, final Term rhsTerm) throws AssertionError {
-		final Term result;
-		switch (relationSymbol) {
-		case DISTINCT:
-		case EQ:
-		case LEQ:
-		case LESS:
-			result = toTerm(script, relationSymbol, lhsTerm, rhsTerm);
-			break;
-		case GEQ:
-		case GREATER:
-			final RelationSymbol swapped = BinaryRelation.swapParameters(relationSymbol);
-			result = toTerm(script, swapped, rhsTerm, lhsTerm);
-			break;
-		default:
-			throw new AssertionError("unknown relation symbol");
-		}
-		return result;
-	}
-
-	public Term toTerm(final Script script) {
-		return toTerm(script, getRelationSymbol(), getLhs(), getRhs());
-	}
-
-	public static Term toTerm(final Script script, final RelationSymbol relationSymbol, final Term lhsTerm,
-			final Term rhsTerm) {
-		Term result;
-		switch (relationSymbol) {
-		case DISTINCT:
-			final Term eq = script.term("=", lhsTerm, rhsTerm);
-			result = script.term("not", eq);
-			break;
-		case EQ:
-		case LEQ:
-		case LESS:
-		case GEQ:
-		case GREATER:
-			result = script.term(relationSymbol.toString(), lhsTerm, rhsTerm);
-			break;
-		default:
-			throw new AssertionError("unknown relation symbol");
-		}
-		return result;
-	}
-
 	protected final RelationSymbol mRelationSymbol;
 	protected final Term mLhs;
 	protected final Term mRhs;
@@ -231,7 +81,7 @@ public abstract class BinaryRelation implements IBinaryRelation {
 		RelationSymbol relSymb = getRelationSymbol(functionSymbolName, isNegated);
 		for (final RelationSymbol symb : RelationSymbol.values()) {
 			if (symb.toString().equals(functionSymbolName)) {
-				relSymb = isNegated ? negateRelation(symb) : symb;
+				relSymb = isNegated ? symb.negate() : symb;
 				break;
 			}
 		}
@@ -274,6 +124,56 @@ public abstract class BinaryRelation implements IBinaryRelation {
 		return mRhs;
 	}
 
+	/**
+	 * Returns the term (relationSymbol lhsTerm rhsTerm) if relationSymbol is not a greater-than relation symbol.
+	 * Otherwise returns an equivalent term where relation symbol and parameters are swapped.
+	 */
+	public static Term constructLessNormalForm(final Script script, final RelationSymbol relationSymbol,
+			final Term lhsTerm, final Term rhsTerm) throws AssertionError {
+		final Term result;
+		switch (relationSymbol) {
+		case DISTINCT:
+		case EQ:
+		case LEQ:
+		case LESS:
+			result = toTerm(script, relationSymbol, lhsTerm, rhsTerm);
+			break;
+		case GEQ:
+		case GREATER:
+			final RelationSymbol swapped = relationSymbol.swapParameters();
+			result = toTerm(script, swapped, rhsTerm, lhsTerm);
+			break;
+		default:
+			throw new AssertionError("unknown relation symbol");
+		}
+		return result;
+	}
+
+	public Term toTerm(final Script script) {
+		return toTerm(script, getRelationSymbol(), getLhs(), getRhs());
+	}
+
+	public static Term toTerm(final Script script, final RelationSymbol relationSymbol, final Term lhsTerm,
+			final Term rhsTerm) {
+		Term result;
+		switch (relationSymbol) {
+		case DISTINCT:
+			final Term eq = script.term("=", lhsTerm, rhsTerm);
+			result = script.term("not", eq);
+			break;
+		case EQ:
+		case LEQ:
+		case LESS:
+		case GEQ:
+		case GREATER:
+			result = script.term(relationSymbol.toString(), lhsTerm, rhsTerm);
+			break;
+		default:
+			throw new AssertionError("unknown relation symbol");
+		}
+		return result;
+	}
+
 	@Override
 	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) {
 		if (getLhs().equals(subject)) {
@@ -286,7 +186,7 @@ public abstract class BinaryRelation implements IBinaryRelation {
 			if (new ContainsSubterm(subject).containsSubterm(getLhs())) {
 				return null;
 			} else {
-				return new SolvedBinaryRelation(subject, getLhs(), swapParameters(getRelationSymbol()),
+				return new SolvedBinaryRelation(subject, getLhs(), getRelationSymbol().swapParameters(),
 						Collections.emptyMap());
 			}
 		} else {

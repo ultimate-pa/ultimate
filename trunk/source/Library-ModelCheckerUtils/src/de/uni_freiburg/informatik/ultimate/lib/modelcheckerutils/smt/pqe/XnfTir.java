@@ -43,10 +43,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Si
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryNumericRelation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation.TransformInequality;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -175,8 +174,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					return null;
 				}
 				if (!sbr.getAssumptionsMap().isEmpty()
-						&& !sbr.getRelationSymbol().equals(BinaryRelation.RelationSymbol.DISTINCT)
-						&& !sbr.getRelationSymbol().equals(BinaryRelation.RelationSymbol.EQ)) {
+						&& !sbr.getRelationSymbol().equals(RelationSymbol.DISTINCT)
+						&& !sbr.getRelationSymbol().equals(RelationSymbol.EQ)) {
 					return null;
 				}
 				final Term eliminateeOnLhs = sbr.asTerm(mScript);
