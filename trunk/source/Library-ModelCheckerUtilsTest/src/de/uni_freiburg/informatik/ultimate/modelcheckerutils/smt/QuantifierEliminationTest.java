@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.Xn
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.DeclarableFunctionSymbol;
@@ -465,6 +466,66 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
+	public void derIntAffine1Exists() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("t", new Sort[0], intSort);
+		mScript.declareFun("a", new Sort[0], intSort);
+		final String formulaAsString = "(exists ((x Int)) (and (= (* x 2) t) (= (* x x x) 8)))";
+		final String expectedResultAsString = "(and (= 8 (* (div t 2) (div t 2) (div t 2))) (= (mod t 2) 0))";
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+				mCsvWriter);
+	}
+
+	@Test
+	public void derIntAffine1Forall() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("t", new Sort[0], intSort);
+		mScript.declareFun("a", new Sort[0], intSort);
+		final String formulaAsString = "(forall ((x Int)) (or (distinct (* x 2) t) (distinct (* x x x) 8)))";
+		final String expectedResultAsString = "(or (not (= 8 (* (div t 2) (div t 2) (div t 2)))) (not (= (mod t 2) 0)))";
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+				mCsvWriter);
+	}
+
+	@Test
+	public void derIntPoly1Exists() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("t", new Sort[0], intSort);
+		mScript.declareFun("a", new Sort[0], intSort);
+		final String formulaAsString = "(exists ((x Int)) (and (= (* x a a a 2) t) (= (* x x x) 8)))";
+		final String expectedResultAsString = "true";
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+				mCsvWriter);
+	}
+
+	@Test
+	public void derIntPoly1Forall() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("t", new Sort[0], intSort);
+		mScript.declareFun("a", new Sort[0], intSort);
+		final String formulaAsString = "(forall ((x Int)) (or (not (= (* x a a a 2) t)) (not (= (* x x x) 8))))";
+		final String expectedResultAsString = "true";
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+				mCsvWriter);
+	}
+
+
+	public void tirRealPoly1Exists() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("a", new Sort[0], realSort);
+		mScript.declareFun("b", new Sort[0], realSort);
+		mScript.declareFun("t", new Sort[0], realSort);
+		mScript.declareFun("hi", new Sort[0], realSort);
+		mScript.declareFun("lo", new Sort[0], realSort);
+		final String formulaAsString = "(exists ((x Int)) (and (<= (* x a a b (- 2)) t) (<= lo x) (<= x hi)))";
+		final String expectedResultAsString = "true";
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+				mCsvWriter);
+	}
+
+
+
+	@Test
 	public void critConsReform01() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, intSort, intSort);
@@ -534,6 +595,25 @@ public class QuantifierEliminationTest {
 		csvWriter.reportEliminationBegin(formulaAsTerm);
 		final Term result = PartialQuantifierElimination.tryToEliminate(services, logger, mgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		logger.info("Result: " + result);
+		if (checkResultIsQuantifierFree) {
+			final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
+			Assert.assertTrue("Not quantifier-free ", resultIsQuantifierFree);
+		}
+		if (expectedResultAsString != null) {
+			final boolean resultIsEquivalentToExpectedResult =
+					SmtTestUtils.areLogicallyEquivalent(mgdScript.getScript(), result, expectedResultAsString);
+			Assert.assertTrue(resultIsEquivalentToExpectedResult);
+		}
+		csvWriter.reportEliminationSuccess(result);
+	}
+
+	static void runQuantifierPusherTest(final String eliminationInputAsString, final String expectedResultAsString,
+			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
+			final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
+		csvWriter.reportEliminationBegin(formulaAsTerm);
+		final Term result = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(formulaAsTerm);
 		logger.info("Result: " + result);
 		if (checkResultIsQuantifierFree) {
 			final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
@@ -856,6 +936,94 @@ public class QuantifierEliminationTest {
 				"(and (or (< lo hi) (< lo (+ (div y 4) 1))) (or (< (div (+ y (- 1)) 4) hi) (< lo hi)))";
 		runQuantifierEliminationTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
+
+
+
+	@Test
+	public void bugTirAntiDer() {
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("b", new Sort[0], intSort);
+		final String formulaAsString = "(exists ((a Int)) (and (> (* 4 a) b ) (< a 3) (< b 12)))";
+		final String expectedResultAsString = "(and (< b 12) (exists ((a Int)) (and (< a 3) (> (* 4 a) b))))";
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	@Test
+	public void ironModulo() {
+		mScript.declareFun("p", new Sort[] {SmtSortUtils.getIntSort(mMgdScript)}, SmtSortUtils.getBoolSort(mMgdScript));
+		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
+		mScript.declareFun("y", new Sort[0], intSort);
+		final String formulaAsString = "(exists ((x Int)) (and (p x) (= x (+ (mod x 23) y))))";
+		final String expectedResultAsString = "(and (= 0 (mod y 2)) (p (div y 2)))";
+		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void lraSchollSmt08Model6_53() {
+		final Sort boolSort = SmtSortUtils.getBoolSort(mMgdScript);
+		mScript.declareFun("bool.b5", new Sort[0], boolSort);
+		mScript.declareFun("bool.b6", new Sort[0], boolSort);
+		mScript.declareFun("bool.b7", new Sort[0], boolSort);
+		mScript.declareFun("bool.b8", new Sort[0], boolSort);
+		mScript.declareFun("bool.b10", new Sort[0], boolSort);
+		mScript.declareFun("bool.b12", new Sort[0], boolSort);
+		mScript.declareFun("bool.b14", new Sort[0], boolSort);
+		mScript.declareFun("bool.b22", new Sort[0], boolSort);
+		mScript.declareFun("bool.b23", new Sort[0], boolSort);
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x5", new Sort[0], realSort);
+		mScript.declareFun("x4", new Sort[0], realSort);
+		mScript.declareFun("x3", new Sort[0], realSort);
+		final String formulaAsString = "(forall ((?lambda Real)) (or (exists ((?lambdaprime Real)) (and (or (<= 10.0 (+ ?lambdaprime x5)) (and bool.b22 (<= x3 (* 3.0 ?lambdaprime))) (and (not bool.b5) bool.b6 (or (<= 4910.0 (+ (* 20.0 ?lambdaprime) x4)) (<= x3 (+ (* 3.0 ?lambdaprime) 45.0))) (not bool.b7) (not bool.b22)) (and (not bool.b5) (not bool.b6) (not bool.b7) (not bool.b22) (or (<= 4100.0 (+ (* 20.0 ?lambdaprime) x4)) (<= x3 (+ (* 3.0 ?lambdaprime) 45.0)))) (and (not bool.b5) bool.b7 (not bool.b6) (or (<= 4500.0 (+ (* 20.0 ?lambdaprime) x4)) (<= x3 (+ (* 3.0 ?lambdaprime) 45.0))) (not bool.b22)) (and (not bool.b5) bool.b6 bool.b7 (not bool.b22) (<= x3 (* 3.0 ?lambdaprime)))) (<= 0.0 ?lambdaprime) (<= ?lambdaprime ?lambda))) bool.b22 (and (or (not bool.b5) bool.b6) (not bool.b7)) (and bool.b7 (or (and (not bool.b23) (or (and (or (and (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) (/ 743.0 2.0)))) (or (and (<= (+ (* 3.0 ?lambda) 50.0) x3) (or bool.b8 bool.b10 (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) 610.0))) bool.b12 bool.b14 (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) (not (<= x3 (+ (* 3.0 ?lambda) 50.0))) bool.b5)) (and (or bool.b8 bool.b10 (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) 610.0))) bool.b12 bool.b14 (not (<= x3 (+ (* 3.0 ?lambda) 30.0))) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) (not (<= x3 (+ (* 3.0 ?lambda) 50.0))) bool.b5) (not (<= (+ (* 3.0 ?lambda) 50.0) x3))))) (and (or bool.b8 bool.b10 (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) bool.b12 bool.b14 (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) (/ 743.0 2.0)))) (not (<= x3 (+ (* 3.0 ?lambda) 40.0)))) (<= 10.0 (+ ?lambda x5))) (and (or (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) (and (not (<= 30.0 (+ x3 (* 3.0 x5)))) bool.b5) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) (and (<= 30.0 (+ x3 (* 3.0 x5))) (or bool.b8 bool.b10 bool.b12 (not (<= (+ x3 (* 3.0 x5)) 50.0)) bool.b14 bool.b5))) (not (<= 10.0 (+ ?lambda x5)))))) (and bool.b23 (or (and (not (<= 10.0 (+ ?lambda x5))) (or (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) (not (<= (+ x3 (* 3.0 x5)) 30.0)) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5)) (and (<= 10.0 (+ ?lambda x5)) (or (and (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) (/ 743.0 2.0))) (or (and (or bool.b8 bool.b10 (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) bool.b12 bool.b14 (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (not (<= (+ x3 (* 3.0 x5)) 30.0))) (and (or (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (<= (+ x3 (* 3.0 x5)) 30.0)))) (not (<= x3 (+ (* 3.0 ?lambda) 40.0))) (and (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) (/ 743.0 2.0)))) (or (and (or (and (or bool.b8 bool.b10 (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) 610.0))) bool.b12 (not (<= (+ x3 (* 3.0 x5)) 50.0)) bool.b14 (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0))) (and (or bool.b8 bool.b10 (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) 610.0))) bool.b12 (not (<= 50.0 (+ x3 (* 3.0 x5)))) (not (<= (+ x3 (* 3.0 x5)) 50.0)) bool.b14 bool.b5) (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0))) (not (<= (+ x3 (* 3.0 x5)) 30.0))) (and (or (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (<= (+ x3 (* 3.0 x5)) 30.0)))))))) (not bool.b6))) (< ?lambda 0.0)))";
+		runQuantifierEliminationTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void lraSchollSmt08Rnd4_15() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x1", new Sort[0], realSort);
+		final String formulaAsString = "(exists ((?y1 Real)) (exists ((?y2 Real)) (and (exists ((?y3 Real)) (exists ((?y4 Real)) (or (and (or (<= 7.0 (+ (* 73.0 ?y2) (* 56.0 ?y3) (* 13.0 ?y4) (* 51.0 x1) (* 15.0 ?y1))) (not (= 51.0 (+ (* ?y2 (- 62.0)) (* ?y4 (- 61.0)))))) (or (not (= (- 66.0) (+ (* ?y2 (- 12.0)) (* ?y3 (- 71.0)) (* ?y4 8.0) (* ?y1 (- 46.0))))) (not (= (- 66.0) (+ (* ?y2 (- 14.0)) (* ?y3 (- 77.0)) (* ?y4 65.0) (* x1 86.0) (* ?y1 (- 85.0))))))) (and (not (= 33.0 (+ (* ?y2 (- 95.0)) (* ?y3 (- 81.0)) (* ?y4 74.0) (* x1 10.0) (* ?y1 76.0)))) (= (- 85.0) (* ?y1 (- 25.0)))) (and (<= (+ (* 21.0 ?y4) (* 57.0 ?y1)) (+ (* 53.0 ?y2) (* 8.0 ?y3) (* 6.0 x1) 5.0)) (= 11.0 (+ (* ?y2 (- 98.0)) (* ?y3 (- 95.0)) (* ?y4 80.0) (* x1 (- 19.0)) (* ?y1 (- 16.0)))))))) (or (forall ((?y3 Real)) (and (or (not (= 36.0 (+ (* ?y2 (- 2.0)) (* ?y3 42.0) (* x1 7.0)))) (and (<= (+ (* 81.0 ?y2) (* 29.0 ?y1)) (+ (* 44.0 ?y3) (* 19.0 x1) 84.0)) (forall ((?y4 Real)) (and (<= (+ (* 14.0 ?y3) (* 54.0 ?y4) (* 48.0 x1) (* 77.0 ?y1) 64.0) (* 46.0 ?y2)) (<= 0.0 (+ (* 29.0 ?y3) (* 39.0 ?y4) (* 70.0 x1) 32.0)))) (= (- 30.0) (+ (* x1 9.0) (* ?y1 (- 4.0))))) (and (<= (* 17.0 ?y1) (* 11.0 x1)) (< (* 52.0 x1) (+ (* 66.0 ?y2) (* 74.0 ?y3) (* 46.0 ?y1) 25.0)))) (or (< (+ (* 46.0 ?y1) 80.0) (+ (* 4.0 ?y2) (* 34.0 ?y3) (* 32.0 x1))) (and (< 80.0 (* 59.0 ?y1)) (not (= 0.0 (+ (* ?y2 (- 40.0)) (* ?y3 (- 55.0)) (* x1 (- 35.0)))))) (and (or (= (- 24.0) (+ (* ?y2 (- 88.0)) (* ?y3 95.0))) (< (+ (* 37.0 ?y2) (* 15.0 ?y3) (* 63.0 ?y1)) (+ (* 27.0 x1) 79.0))) (or (<= (+ (* 41.0 ?y2) ?y1) (* 62.0 x1)) (<= (+ (* 79.0 x1) (* 74.0 ?y1)) (+ (* 17.0 ?y2) (* 10.0 ?y3) 14.0)))) (< (+ (* 21.0 ?y2) (* 30.0 ?y1)) (+ (* 77.0 ?y3) (* 100.0 x1) 19.0))))) (and (not (= (- 33.0) (+ (* ?y2 61.0) (* x1 (- 3.0)) (* ?y1 31.0)))) (exists ((?y4 Real)) (and (<= (+ (* 32.0 ?y4) (* 35.0 ?y1)) (* 84.0 x1)) (not (= 23.0 (+ (* ?y4 (- 21.0)) (* x1 53.0) (* ?y1 8.0)))) (or (<= (* 53.0 ?y2) (* 94.0 x1)) (<= (+ (* 94.0 ?y2) (* 50.0 ?y4) 69.0) (* 55.0 x1))) (or (and (= (- 63.0) (+ (* ?y2 (- 22.0)) (* ?y4 37.0) (* x1 (- 9.0)) (* ?y1 89.0))) (< 35.0 (+ (* 100.0 ?y2) (* 10.0 x1)))) (< (+ (* 88.0 ?y2) (* 2.0 ?y1)) (+ (* 31.0 x1) 46.0))))) (exists ((?y4 Real)) (and (<= (+ (* 82.0 ?y4) (* 88.0 x1)) (+ (* 39.0 ?y1) 95.0)) (< 0.0 (+ (* 86.0 ?y1) 21.0)))) (exists ((?y4 Real)) (and (= (- 93.0) (+ (* ?y4 75.0) (* x1 (- 19.0)))) (<= (+ ?y4 (* 38.0 x1) (* 15.0 ?y1)) (* 38.0 ?y2)))) (< (* 91.0 ?y1) 0.0))))))";
+		runQuantifierEliminationTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void lraSchollSmt08Rnd4_15Red() {
+		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
+		mScript.declareFun("x1", new Sort[0], realSort);
+		mScript.declareFun("?y4", new Sort[0], realSort);
+		mScript.declareFun("?y3", new Sort[0], realSort);
+		mScript.declareFun("?y2", new Sort[0], realSort);
+		final String formulaAsString = "(exists ((?y1 Real)) (and (not (= (- 66.0) (+ (* ?y2 (- 14.0)) (* ?y3 (- 77.0)) (* ?y4 65.0) (* x1 86.0) (* ?y1 (- 85.0)))))  (or (forall ((?y3 Real)) (<= (+ (* 41.0 ?y2) ?y1) (* 62.0 x1)) ) (and (< 0.0 (+ (* 86.0 ?y1) 21.0)) (< (* 91.0 ?y1) 0.0)))))";
+		runQuantifierEliminationTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void multiTechniques() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "a", "b") };
+		for (final VarDecl varDecl : vars) {
+			varDecl.declareVars(mScript);
+		}
+		final String formulaAsString = "(exists ((x Int) (y Int)) (and (= x b) (<= y x) (<= a y)))";
+		runQuantifierPusherTest(formulaAsString, "(<= a b)", true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	/**
+	 * Reveals conceptual bug in {@link QuantifierPusher}. We have to apply rules
+	 * for nested quantifiers after elimination techniques.
+	 */
+	public void resolvedQuantifierNesting() {
+		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "a", "b") };
+		for (final VarDecl varDecl : vars) {
+			varDecl.declareVars(mScript);
+		}
+		final String formulaAsString = "(exists ((x Int) (y Int)) (and (= x b) (exists ((z Int)) (and (<= y x) (= (* y y z z) 0)))))";
+		runQuantifierPusherTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
 
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
 			final String formulaAsString) {
