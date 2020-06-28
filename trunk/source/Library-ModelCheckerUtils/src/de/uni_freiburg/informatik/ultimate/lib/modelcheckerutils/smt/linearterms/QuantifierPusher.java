@@ -50,6 +50,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionQeAdapter2014;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionQuantifierElimination.EliminationResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XjunctPartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XnfDer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XnfIrd;
@@ -489,8 +492,13 @@ public class QuantifierPusher extends TermTransformer {
 		return false;
 	}
 
-	private Term applyDualJunctionEliminationTechniques(final EliminationTask et, final ManagedScript mgdScript, final IUltimateServiceProvider services,
-			final PqeTechniques pqeTechniques) throws AssertionError {
+	private Term applyDualJunctionEliminationTechniques(final EliminationTask et, final ManagedScript mgdScript,
+			final IUltimateServiceProvider services, final PqeTechniques pqeTechniques) {
+		return applyEliminationTechniques(et, mgdScript, services, pqeTechniques);
+	}
+
+	private Term applyEliminationTechniques(final EliminationTask et, final ManagedScript mgdScript,
+			final IUltimateServiceProvider services, final PqeTechniques pqeTechniques) {
 		final int numberOfEliminateesBefore = et.getEliminatees().size();
 		final List<XjunctPartialQuantifierElimination> elimtechniques = generateEliminationTechniques(pqeTechniques,
 				mgdScript, services);
@@ -523,6 +531,69 @@ public class QuantifierPusher extends TermTransformer {
 			}
 		}
 		return null;
+	}
+
+	private Term applyEliminationTechniques2(final EliminationTask et, final ManagedScript mgdScript,
+			final IUltimateServiceProvider services, final PqeTechniques pqeTechniques) {
+		final List<DualJunctionQuantifierElimination> elimtechniques = generateEliminationTechniques2(pqeTechniques,
+				mgdScript, services);
+		EliminationTask currentEt = et;
+//		boolean someSuccesfullElimination = false;
+//		do {
+//			someSuccesfullElimination = false;
+			for (final DualJunctionQuantifierElimination djqe : elimtechniques) {
+				final EliminationResult er = djqe.tryToEliminate(currentEt);
+				if (er != null) {
+					if (!er.getNewEliminatees().isEmpty()) {
+						throw new AssertionError("to be implemented");
+					}
+					currentEt = er.getEliminationTask();
+//					if (!QuantifierUtils.isDualFiniteJunction(currentEt.getQuantifier(), currentEt.getTerm())) {
+//						// the boolean structure of the formula was changed
+//						return currentEt.toTerm(mgdScript.getScript());
+//					}
+//					someSuccesfullElimination = true;
+					final Term iRes = currentEt.toTerm(mgdScript.getScript());
+					if (iRes instanceof QuantifiedFormula) {
+						return tryToPush((QuantifiedFormula) iRes);
+					} else {
+						return iRes;
+					}
+				}
+			}
+//			if (someSuccesfullElimination)
+//		} while(someSuccesfullElimination);
+//		return currentEt.toTerm(mgdScript.getScript());
+		return null;
+	}
+
+	private List<DualJunctionQuantifierElimination> generateEliminationTechniques2(final PqeTechniques pqeTechniques,
+			final ManagedScript mgdScript, final IUltimateServiceProvider services) {
+		final List<DualJunctionQuantifierElimination> elimtechniques = new ArrayList<>();
+		switch (pqeTechniques) {
+		case ALL_LOCAL:
+			new DualJunctionQeAdapter2014(mgdScript, services, null);
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfPlr(mgdScript, services)));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfDer(mgdScript, services)));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services,
+					new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfUpd(mgdScript, services)));
+			break;
+		case NO_UPD:
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfPlr(mgdScript, services)));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfDer(mgdScript, services)));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services,
+					new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
+			break;
+		case ONLY_DER:
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfDer(mgdScript, services)));
+			break;
+		default:
+			throw new AssertionError("unknown value " + pqeTechniques);
+		}
+		return elimtechniques;
 	}
 
 	private static List<XjunctPartialQuantifierElimination> generateEliminationTechniques(
