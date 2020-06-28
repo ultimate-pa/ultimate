@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtil
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -122,7 +121,7 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationRealDefault() throws NotAffineException {
+	public void relationRealDefault() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y") };
 		final String inputSTR = "(= (+ 7.0 x) y )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
@@ -130,7 +129,7 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationRealEQ() throws NotAffineException {
+	public void relationRealEQ() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y") };
 		final String inputSTR = "(= (* 7.0 x) y )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
@@ -138,63 +137,63 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationRealEQ2() throws NotAffineException {
+	public void relationRealEQ2() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y") };
 		final String inputSTR = "(= (* 3.0 x) (* 7.0 y) )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealEQ3() throws NotAffineException {
+	public void relationRealEQ3() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3.0 x) (+ (* 7.0 y) (* 5.0 z)) )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealEQ4() throws NotAffineException {
+	public void relationRealEQ4() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 6.0 (+ y x)) (* 7.0 z) )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyEQPurist01() throws NotAffineException {
+	public void relationRealPolyEQPurist01() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "ri") };
 		final String inputSTR = "(= (* y x) ri)";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyEQPurist02() throws NotAffineException {
+	public void relationRealPolyEQPurist02() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z", "ri") };
 		final String inputSTR = "(= (* y x z) ri)";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyEQ5() throws NotAffineException {
+	public void relationRealPolyEQ5() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 6.0 (* y x)) (+ 3.0 (* z z)))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyEQ6() throws NotAffineException {
+	public void relationRealPolyEQ6() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z") };
 		final String inputSTR = "(= (* z (+ 6.0 (* (* y y) x))) (+ 3.0 (* z z)))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyEQ7() throws NotAffineException {
+	public void relationRealPolyEQ7() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3.0 x (/ y z) z 5.0) (* y z)))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyMultipleSubjectsEQ7() throws NotAffineException {
+	public void relationRealPolyMultipleSubjectsEQ7() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z") };
 		final String inputSTR = "(= (* z (+ 6.0 (* (* x y) x))) (+ 3.0 (* z z)))";
 		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
@@ -205,154 +204,154 @@ public class PolynomialRelationTest {
 	 * but now the subject occurs in this variable.
 	 */
 	@Test
-	public void relationRealPolyNestedSubjectEQ8() throws NotAffineException {
+	public void relationRealPolyNestedSubjectEQ8() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y") };
 		final String inputSTR = "(= 1.0 (/ y x))";
 		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyWithDivisionsEQ9() throws NotAffineException {
+	public void relationRealPolyWithDivisionsEQ9() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z") };
 		final String inputSTR = "(= (/ (+ 6.0 (* (/ z y) x)) 2.0) (+ 3.0 (/ y z)))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyDetectNestedSecondVariableEQ10() throws NotAffineException {
+	public void relationRealPolyDetectNestedSecondVariableEQ10() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z") };
 		final String inputSTR = "(= (/ (+ 6.0 (* (/ z y) x)) 2.0) (+ 3.0 (/ y x)))";
 		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealGEQ01() throws NotAffineException {
+	public void relationRealGEQ01() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "lo") };
 		final String inputSTR = "(>= (* 3.0 x) lo )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyGEQPurist01() throws NotAffineException {
+	public void relationRealPolyGEQPurist01() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "ri") };
 		final String inputSTR = "(>= (* x y) ri)";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyGEQPurist02() throws NotAffineException {
+	public void relationRealPolyGEQPurist02() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z", "u", "ri") };
 		final String inputSTR = "(>= (* x y y y z z u) ri)";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyGEQ02() throws NotAffineException {
+	public void relationRealPolyGEQ02() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z", "lo") };
 		final String inputSTR = "(>= (* 3.0 x (/ y z) z 5.0) (* y lo))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealLEQ01() throws NotAffineException {
+	public void relationRealLEQ01() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "hi") };
 		final String inputSTR = "(<= (* 3.0 x) hi )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyLEQ02() throws NotAffineException {
+	public void relationRealPolyLEQ02() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z", "hi") };
 		final String inputSTR = "(<= (* 3.0 x (/ y z) z 5.0) (* y hi))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealDISTINCT01() throws NotAffineException {
+	public void relationRealDISTINCT01() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y") };
 		final String inputSTR = "(not(= (* 3.0 x) y ))";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyDISTINCT02() throws NotAffineException {
+	public void relationRealPolyDISTINCT02() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z") };
 		final String inputSTR = "(not(= (* 3.0 x (/ y z) z 5.0) (* y z)))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealGREATER01() throws NotAffineException {
+	public void relationRealGREATER01() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "lo") };
 		final String inputSTR = "(> (* 3.0 x) lo )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyGREATER02() throws NotAffineException {
+	public void relationRealPolyGREATER02() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z", "lo") };
 		final String inputSTR = "(> (* 3.0 x (/ y z) z 5.0) (* y lo))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealLESS01() throws NotAffineException {
+	public void relationRealLESS01() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "hi") };
 		final String inputSTR = "(< (* 4.0 x) hi )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationRealPolyLESS02() throws NotAffineException {
+	public void relationRealPolyLESS02() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getRealSort, "x", "y", "z", "hi") };
 		final String inputSTR = "(< (* 3.0 x (/ y z) z 5.0) (* y hi))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationBvPolyEQ01() throws NotAffineException {
+	public void relationBvPolyEQ01() {
 		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x", "y") };
 		final String inputSTR = "(= (bvmul (_ bv255 8) x) (bvmul (_ bv64 8) y y y))";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationBvPolyEQ02() throws NotAffineException {
+	public void relationBvPolyEQ02() {
 		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x", "y") };
 		final String inputSTR = "(= (bvmul (_ bv1 8) x) (bvmul (_ bv64 8) y y y))";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationBvPolyEQ03() throws NotAffineException {
+	public void relationBvPolyEQ03() {
 		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x", "y") };
 		final String inputSTR = "(= (bvmul (_ bv255 8) x y) (bvmul (_ bv64 8) y y y))";
 		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationBvPolyEQ04() throws NotAffineException {
+	public void relationBvPolyEQ04() {
 		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x", "y") };
 		final String inputSTR = "(= (bvmul (_ bv252 8) x) (bvmul (_ bv64 8) y y y))";
 		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationBvEQ05() throws NotAffineException {
+	public void relationBvEQ05() {
 		final VarDecl[] vars = { new VarDecl(PolynomialRelationTest::getBitvectorSort8, "x", "y") };
 		final String inputSTR = "(= (bvmul (_ bv255 8) x) (bvmul (_ bv8 8) y))";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	// @Test Insufficient resources to check soundness
-	public void relationIntPolyPuristEq() throws NotAffineException {
+	public void relationIntPolyPuristEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* y x) z )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntPolyPuristDistinct() throws NotAffineException {
+	public void relationIntPolyPuristDistinct() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(not (= (* y x) z))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
@@ -365,105 +364,105 @@ public class PolynomialRelationTest {
 	 *
 	 */
 	// @Test Insufficient resources to check soundness
-	public void relationIntPolyPuristLeq() throws NotAffineException {
+	public void relationIntPolyPuristLeq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(< (* y x) z )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	// @Test Insufficient resources to check soundness
-	public void relationIntPolyMATHSATEQ3() throws NotAffineException {
+	public void relationIntPolyMATHSATEQ3() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 6 (* y x)) (+ 3 (* z z)))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	// @Test Insufficient resources to check soundness
-	public void relationIntPolyUnknownEQ4() throws NotAffineException {
+	public void relationIntPolyUnknownEQ4() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* z (+ 6 (* (* y y) x))) (+ 3 (* z z)))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	// @Test Insufficient resources to check soundness
-	public void relationIntPolyUnknownEQ5() throws NotAffineException {
+	public void relationIntPolyUnknownEQ5() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3 x (div y z) z 5) (* y z)))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntPolyZ3CVC4EQ6() throws NotAffineException {
+	public void relationIntPolyZ3CVC4EQ6() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 3 y x) (* 9 y))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntPolyZ3CVC4Distinct6() throws NotAffineException {
+	public void relationIntPolyZ3CVC4Distinct6() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(not (= (* 3 y x) (* 9 y)))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntPolyZ3CVC4MATHSATEQ7() throws NotAffineException {
+	public void relationIntPolyZ3CVC4MATHSATEQ7() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 3 y x) (* 333 y))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntPolyMATHSATEQ8() throws NotAffineException {
+	public void relationIntPolyMATHSATEQ8() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3 y x) (* 21 z))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntPolyCVC4MATHSATEQ9() throws NotAffineException {
+	public void relationIntPolyCVC4MATHSATEQ9() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3 y x) (* 21 z y))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntPolyZ3MATHSATEQ10() throws NotAffineException {
+	public void relationIntPolyZ3MATHSATEQ10() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 3 y x) (* 11 y))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntPolyCVC4MATHSATEQ11() throws NotAffineException {
+	public void relationIntPolyCVC4MATHSATEQ11() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 3 y x) (* 333 y y y))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, vars);
 	}
 
 	// @Test Insufficient resources to check soundness
-	public void relationIntPolyUnknownEQ12() throws NotAffineException {
+	public void relationIntPolyUnknownEQ12() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* y (+ 6 (* y x))) (+ 3 y))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	// @Test Insufficient resources to check soundness
-	public void relationIntPolyZ3EQ13() throws NotAffineException {
+	public void relationIntPolyZ3EQ13() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3 (div x 6) (div y z)) (* y z))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	// @Test Insufficient resources to check soundness
-	public void relationIntPolyUnknownEQ14() throws NotAffineException {
+	public void relationIntPolyUnknownEQ14() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3 (div x 6) (+ 5 (div y z))) (* y z))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntPolyZ3CVC4MATHSATEQ15() throws NotAffineException {
+	public void relationIntPolyZ3CVC4MATHSATEQ15() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* y (+ 6 x)) (+ 3 y))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
@@ -475,13 +474,13 @@ public class PolynomialRelationTest {
 	 * finished
 	 */
 	@Test
-	public void relationIntPolyUnknownEQ16() throws NotAffineException {
+	public void relationIntPolyUnknownEQ16() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (div (div x 5 2) (div y z)) y))";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
-	private void notSolvableForX(final String solverCommand, final String inputAsString, final VarDecl... varDecls) throws NotAffineException {
+	private void notSolvableForX(final String solverCommand, final String inputAsString, final VarDecl... varDecls) {
 		final Script script = createSolver(solverCommand);
 		script.setLogic(Logics.ALL);
 		for (final VarDecl varDecl : varDecls) {
@@ -495,7 +494,7 @@ public class PolynomialRelationTest {
 		Assert.assertNull(sbr);
 	}
 
-	private void testSolveForX(final String solverCommand, final String inputAsString, final VarDecl... varDecls) throws NotAffineException {
+	private void testSolveForX(final String solverCommand, final String inputAsString, final VarDecl... varDecls) {
 		final Script script = createSolver(solverCommand);
 		script.setLogic(Logics.ALL);
 		for (final VarDecl varDecl : varDecls) {
@@ -510,7 +509,7 @@ public class PolynomialRelationTest {
 	}
 
 	private void testSolveForXMultiCaseOnly(final String solverCommand, final String inputAsString,
-			final VarDecl... varDecls) throws NotAffineException {
+			final VarDecl... varDecls) {
 		final Script script = createSolver(solverCommand);
 		script.setLogic(Logics.ALL);
 		for (final VarDecl varDecl : varDecls) {
@@ -524,14 +523,13 @@ public class PolynomialRelationTest {
 	}
 
 
-	private void testSingleCaseSolveForSubject(final Term inputAsTerm, final Term x) throws NotAffineException {
+	private void testSingleCaseSolveForSubject(final Term inputAsTerm, final Term x) {
 		final SolvedBinaryRelation sbr = PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x);
 		mScript.echo(new QuotedObject("Checking if input and output of solveForSubject are equivalent"));
 		Assert.assertTrue(assumptionsImpliesEquality(inputAsTerm, sbr));
 	}
 
-	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf)
-			throws NotAffineException {
+	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf) {
 		final MultiCaseSolvedBinaryRelation mcsbr =
 				PolynomialRelation.convert(mScript, inputAsTerm).solveForSubject(mScript, x, xnf);
 		mScript.echo(new QuotedObject("Checking if input and output of multiCaseSolveForSubject are equivalent"));
@@ -576,7 +574,7 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationIntDivDefault() throws NotAffineException {
+	public void relationIntDivDefault() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (+ 7 x) y )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
@@ -584,7 +582,7 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationIntDivEQ() throws NotAffineException {
+	public void relationIntDivEQ() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 7 x) y )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
@@ -592,70 +590,70 @@ public class PolynomialRelationTest {
 	}
 
 	@Test
-	public void relationIntDivEQ2() throws NotAffineException {
+	public void relationIntDivEQ2() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 3 x) (* 7 y) )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntDivEQ3() throws NotAffineException {
+	public void relationIntDivEQ3() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3 x) (+ (* 7 y) (* 5 z)) )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntDivEQ4() throws NotAffineException {
+	public void relationIntDivEQ4() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 6 (+ y x)) (* 7 z) )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntDivGEQ() throws NotAffineException {
+	public void relationIntDivGEQ() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "lo") };
 		final String inputSTR = "(>= (* 3 x) lo )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntDivLEQ() throws NotAffineException {
+	public void relationIntDivLEQ() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "hi") };
 		final String inputSTR = "(<= (* 3 x) hi )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntDivDISTINCT() throws NotAffineException {
+	public void relationIntDivDISTINCT() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(not(= (* 3 x) y ))";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntDivGREATER() throws NotAffineException {
+	public void relationIntDivGREATER() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "lo") };
 		final String inputSTR = "(> (* 3 x) lo )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntDivLESS() throws NotAffineException {
+	public void relationIntDivLESS() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "hi") };
 		final String inputSTR = "(< (* 4 x) hi )";
 		testSolveForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntModEq() throws NotAffineException {
+	public void relationIntModEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (mod x 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntModEqUselessSummands() throws NotAffineException {
+	public void relationIntModEqUselessSummands() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (+ (mod x 3) (* y y) y 1) (* y (+ y 1)) )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, vars);
@@ -665,7 +663,7 @@ public class PolynomialRelationTest {
 	 * Bug: Detection of div/mod fails if input is too simple.
 	 */
 	@Test
-	public void relationIntModEqZero() throws NotAffineException {
+	public void relationIntModEqZero() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x") };
 		final String inputSTR = "(= (mod x 3) 0 )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
@@ -675,7 +673,7 @@ public class PolynomialRelationTest {
 	 * Bug: Fails to detect that we cannot solve for x.
 	 */
 	@Test
-	public void relationIntDivUnsolvable() throws NotAffineException {
+	public void relationIntDivUnsolvable() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (div (* x x) 3) eq )";
 		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
@@ -685,168 +683,168 @@ public class PolynomialRelationTest {
 	 * Bug: Fails to detect that we cannot solve if subject is in divisor.
 	 */
 	@Test
-	public void relationIntDivSubjectInDivisor() throws NotAffineException {
+	public void relationIntDivSubjectInDivisor() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (div 1337 x) eq )";
 		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntModNEWEq() throws NotAffineException {
+	public void relationIntModNEWEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (+(mod x 3)1) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntDivNEWEq() throws NotAffineException {
+	public void relationIntDivNEWEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (+(div x 3)1) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntDivEq() throws NotAffineException {
+	public void relationIntDivEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (div x 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntMultiParamDivEq() throws NotAffineException {
+	public void relationIntMultiParamDivEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (div x 2 2 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntRecModSimplifyEq() throws NotAffineException {
+	public void relationIntRecModSimplifyEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (mod (mod x 3) 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntRecModSimplifyMoreEq() throws NotAffineException {
+	public void relationIntRecModSimplifyMoreEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (mod (mod (mod x 3) 3) 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntRecModMoreEq() throws NotAffineException {
+	public void relationIntRecModMoreEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (mod (mod (mod x 7) 9) 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntRecModMore1Eq() throws NotAffineException {
+	public void relationIntRecModMore1Eq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (mod (mod (mod (mod x 5) 7) 9) 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntRecModMore2Eq() throws NotAffineException {
+	public void relationIntRecModMore2Eq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (mod (mod (mod (mod (mod x 13) 5) 7) 9) 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntRecModSimplifyMore1Eq() throws NotAffineException {
+	public void relationIntRecModSimplifyMore1Eq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (mod (mod (mod x 3) 4) 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntRecModSimplifyMore2Eq() throws NotAffineException {
+	public void relationIntRecModSimplifyMore2Eq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (mod (mod (mod x 4) 3) 7) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntRecModDivEq() throws NotAffineException {
+	public void relationIntRecModDivEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (mod (div x 7) 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntRecModEq() throws NotAffineException {
+	public void relationIntRecModEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (mod (mod x 7) 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntRecDivModEq() throws NotAffineException {
+	public void relationIntRecDivModEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (div (mod x 7) 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntRecDivasdModEq() throws NotAffineException {
+	public void relationIntRecDivasdModEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (div (mod x 7) 7) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntDefaultModEq() throws NotAffineException {
+	public void relationIntDefaultModEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "eq") };
 		final String inputSTR = "(= (+ (mod (mod y 7) 3)  x) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntRecDivEq() throws NotAffineException {
+	public void relationIntRecDivEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "eq") };
 		final String inputSTR = "(= (div (div x 7) 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntRecDivSimplifyEq() throws NotAffineException {
+	public void relationIntRecDivSimplifyEq() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (div (div x 3) 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	// @Test Insufficient resources to check soundness
-	public void choirNightTrezor01() throws NotAffineException {
+	public void choirNightTrezor01() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "b") };
 		final String inputSTR = "(= (mod (+ (* (mod (+ b 1) 4294967296) 4294967295) x) 4294967296) 1)";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntDivModMultiOccurrence01() throws NotAffineException {
+	public void relationIntDivModMultiOccurrence01() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (+ (div x 3) x) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntDivModMultiOccurrence02() throws NotAffineException {
+	public void relationIntDivModMultiOccurrence02() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (+ (div x 3) (mod (+ x 1) 5)) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	// @Test Insufficient resources to check soundness
-	public void relationIntDivModMultiOccurrence03() throws NotAffineException {
+	public void relationIntDivModMultiOccurrence03() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "eq") };
 		final String inputSTR = "(= (div (* x y) 3) eq )";
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
 	@Test
-	public void relationIntDivModMultiOccurrence04() throws NotAffineException {
+	public void relationIntDivModMultiOccurrence04() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y", "eq") };
 		final String inputSTR = "(= (+ (div (* x y) 3) x) eq )";
 		notSolvableForX(SOLVER_COMMAND_Z3, inputSTR, vars);
