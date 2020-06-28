@@ -39,6 +39,7 @@ import java.util.Locale;
 
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.visualization.AlternatingAutomatonWriter;
+import de.uni_freiburg.informatik.ultimate.automata.counting.CaWriter;
 import de.uni_freiburg.informatik.ultimate.automata.counting.CountingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -422,7 +423,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			final CountingAutomaton<LETTER, STATE> automaton, final Format format, final PrintWriter printWriter) {
 		switch (format) {
 		case ATS:
-			// TODO #CountingAutomataTodo: Write automaton to printWrinter
+			new CaWriter<>(printWriter, name, automaton);
 			break;
 		case ATS_QUOTED:
 		case ATS_NUMERATE:
