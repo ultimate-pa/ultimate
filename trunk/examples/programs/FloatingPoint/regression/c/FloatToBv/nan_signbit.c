@@ -6,10 +6,10 @@ void __VERIFIER_assert(int cond) { if (!(cond)) { ERROR: __VERIFIER_error(); } r
 
 int main(void)
 {
-    if (signbit(-NaN) == 0.0) {
+    if (signbit(-NAN) == 0.0) {
 	    __VERIFIER_error();
     }
-    if (signbit(NaN) != 0.0) {
+    if (signbit(NAN) != 0.0) {
 	    __VERIFIER_error();
     }
     return 0;

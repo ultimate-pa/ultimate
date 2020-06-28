@@ -6,10 +6,10 @@ void __VERIFIER_assert(int cond) { if (!(cond)) { ERROR: __VERIFIER_error(); } r
 
 int main(void)
 {
-    if (!isnan(fdim(NaN, 5.0))) {
+    if (!isnan(fdim(NAN, 5.0))) {
 	    __VERIFIER_error();
     }
-    if (!isnan(fdim(5.0, NaN))) {
+    if (!isnan(fdim(5.0, NAN))) {
 	    __VERIFIER_error();
     }
     return 0;
