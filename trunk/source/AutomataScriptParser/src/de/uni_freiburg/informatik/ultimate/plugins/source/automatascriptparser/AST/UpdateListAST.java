@@ -27,29 +27,28 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
-import java.util.HashMap;
-import java.util.Map;
+
+import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 
-public class ConditionAST extends AtsASTNode{
+public class UpdateListAST extends AtsASTNode{
 	
-	private final String mState, mFormula;
+	private final ArrayList<UpdateAST> mUpdates;
 
-	public ConditionAST(ILocation loc, String state, String formula) {
+	public UpdateListAST(ILocation loc) {
 		super(loc);
-		this.mState = state;
-		this.mFormula = formula;
+		this.mUpdates = new ArrayList<UpdateAST>();
 	}
 	
-	public String getState(){
-		return mState;
+	public void addUpdate(UpdateAST update) {
+		mUpdates.add(update);
 	}
 	
-	public String getFormula() {
-		return mFormula;
+	public  ArrayList<UpdateAST> getUpdates(){
+		return mUpdates;
 	}
 
 }

@@ -47,15 +47,15 @@ public class CountingAutomatonAST extends AutomatonAST {
 	private final List<String> mStates;
 	private final List<String> mCounters;
 	
-	private final ConditionListAST mInitialConditions;
-	private final ConditionListAST mFinalConditions;
+	private final StateConditionPairListAST mInitialConditions;
+	private final StateConditionPairListAST mFinalConditions;
 
-	private final Map<String, Map<String, List<Triple<String, List<Pair<String, String>>, String>>>> mTransitions;
+	private final CountingTransitionListAST mTransitions;
 
 	public CountingAutomatonAST(final ILocation loc, final String name, final List<String> alphabet,
-			final List<String> states, final List<String> counters, final ConditionListAST initConditions,
-			final ConditionListAST finConditions,
-			final Map<String, Map<String, List<Triple<String, List<Pair<String, String>>, String>>>> transitions) {
+			final List<String> states, final List<String> counters, final StateConditionPairListAST initConditions,
+			final StateConditionPairListAST finConditions,
+			final CountingTransitionListAST transitions) {
 		super(loc, name);
 		if (alphabet != null) {
 			mAlphabet = alphabet;
@@ -77,11 +77,7 @@ public class CountingAutomatonAST extends AutomatonAST {
 		
 		mFinalConditions = finConditions;
 		
-		if (transitions != null) {
-			mTransitions = transitions;
-		} else {
-			mTransitions = new HashMap<String, Map<String, List<Triple<String, List<Pair<String, String>>, String>>>>();
-		}
+		mTransitions = transitions;
 	}
 
 	public List<String> getAlphabet() {
@@ -96,15 +92,15 @@ public class CountingAutomatonAST extends AutomatonAST {
 		return mCounters;
 	}
 
-	public ConditionListAST getInitialConditions() {
+	public StateConditionPairListAST getInitialConditions() {
 		return mInitialConditions;
 	}
 
-	public ConditionListAST getFinalConditions() {
+	public StateConditionPairListAST getFinalConditions() {
 		return mFinalConditions;
 	}
 
-	public Map<String, Map<String, List<Triple<String, List<Pair<String, String>>, String>>>> getTransitions() {
+	public CountingTransitionListAST getTransitions() {
 		return mTransitions;
 	}
 	

@@ -34,16 +34,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 
-public class ConditionListAST extends AtsASTNode{
+public class StateConditionPairListAST extends AtsASTNode{
 	
 	private final Map<String, String> mConditions;
 
-	public ConditionListAST(ILocation loc) {
+	public StateConditionPairListAST(ILocation loc) {
 		super(loc);
 		this.mConditions = new HashMap<String, String>();
 	}
 	
-	public void addCondition(ConditionAST condition) {
+	public void addCondition(StateConditionPairAST condition) {
 		mConditions.put(condition.getState(), condition.getFormula());
 	}
 	

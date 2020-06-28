@@ -181,7 +181,7 @@ terminal Object BOOLEAN; // primitive_type
 terminal Object INT; // integral_type
 terminal Object STRING;
 terminal Object LBRACK, RBRACK;
-terminal Object SEMICOLON, COMMA, EQ, LBRACE, RBRACE, LPAREN, RPAREN, COLON;
+terminal Object SEMICOLON, COMMA, EQ, CEQ, LBRACE, RBRACE, LPAREN, RPAREN, COLON;
 terminal Object IF, ELSE; // if_then_statement, if_then_else_statement
 terminal Object WHILE; // while_statement
 terminal Object FOR; // for_statement
@@ -316,8 +316,8 @@ non terminal TreeAutomatonTransitionAST ta_transition;
 non terminal AutomatonAST ta_definition_ranked, ta_definition_implicit;
 // Counting Automata
 non terminal IdentifierListAST counters;
-non terminal ConditionListAST initial_conditions, final_conditions, condition_list, condition_list_opt;
-non terminal ConditionAST condition;
+non terminal StateConditionPairListAST initial_conditions, final_conditions, state_condition_pair_list, state_condition_pair_list_opt;
+non terminal StateConditionPairAST state_condition_pair;
 non terminal CountingTransitionListAST counting_transitions, counting_transition_list, counting_transition_list_opt;
 non terminal CountingTransitionAST counting_transition;
 non terminal UpdateListAST updates, update_list, update_list_opt;
@@ -1134,17 +1134,17 @@ ca_definition ::=		variable_identifier:id EQ LPAREN:l
 								states:states COMMA
 								counters:counters COMMA
 								initial_conditions:init_cond COMMA
-								final_conditions:fin_cond RPAREN:r
+								final_conditions:fin_cond COMMA
+								counting_transitions:count_trans RPAREN:r
 						{: CountingAutomatonAST ca = new CountingAutomatonAST(getLocation(l$, r$), id, 
 						  alpha.getIdentifierList(),
 						  states.getIdentifierList(),
 						  counters.getIdentifierList(),
 						  init_cond,
 						  fin_cond,
-						  null);
+						  count_trans);
 						  RESULT = ca; :} ;
-								
-/* COMMA counting_transitions:count_trans */
+
 
 call_alphabet ::=  CALL_ALPHABET EQ LBRACE:l identifier_list_opt:idList  RBRACE:r 
 				   {:RESULT = idList; :} ;
@@ -1464,24 +1464,63 @@ counters ::= COUNTERS EQ LBRACE:l identifier_list_opt:idList RBRACE:r
 						}
 					:}; 
 
-initial_conditions ::= INITIAL_CONDITIONS EQ LBRACE:l condition_list_opt:conList RBRACE:r {: RESULT = conList; :};
+initial_conditions ::= INITIAL_CONDITIONS EQ LBRACE:l state_condition_pair_list_opt:conList RBRACE:r {: RESULT = conList; :};
 
-final_conditions ::= FINAL_CONDITIONS EQ LBRACE:l condition_list_opt:conList RBRACE:r {: RESULT = conList; :};
+final_conditions ::= FINAL_CONDITIONS EQ LBRACE:l state_condition_pair_list_opt:conList RBRACE:r {: RESULT = conList; :};
 						
-condition_list_opt ::= condition_list:conList {:RESULT = conList; :} 
+state_condition_pair_list_opt ::= state_condition_pair_list:conList {:RESULT = conList; :} 
                      | {:com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
-                         RESULT = new ConditionListAST(getLocation(symb,symb)); :};
+                         RESULT = new StateConditionPairListAST(getLocation(symb,symb)); :};
 
-condition_list ::= condition:con
-                    {: ConditionListAST conList = new ConditionListAST(getLocation(con$,con$));
-                      conList.addCondition(con);
+state_condition_pair_list ::= state_condition_pair:scp
+                    {: StateConditionPairListAST conList = new StateConditionPairListAST(getLocation(scp$,scp$));
+                      conList.addCondition(scp);
                       RESULT = conList; :} 
-                    | condition_list:conList condition:con
-                      {:conList.addCondition(con);
+                    | state_condition_pair_list:conList state_condition_pair:scp
+                      {:conList.addCondition(scp);
                     	RESULT = conList; :};
 
-condition ::= LPAREN:l SIMPLE_IDENTIFIER:state STRING_LITERAL:formula RPAREN:r
+state_condition_pair ::= LPAREN:l identifier:state STRING_LITERAL:formula RPAREN:r
 					{:
-						ConditionAST con = new ConditionAST(getLocation(l$, r$), state, formula);
-						RESULT = con;
+						StateConditionPairAST scp = new StateConditionPairAST(getLocation(l$, r$), state, formula);
+						RESULT = scp;
+					:};
+
+counting_transitions ::= TRANSITIONS EQ LBRACE:l counting_transition_list_opt:transList RBRACE:r {: RESULT = transList; :};
+
+counting_transition_list_opt ::= counting_transition_list:transList {:RESULT = transList; :} 
+                     | {:com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
+                         RESULT = new CountingTransitionListAST(getLocation(symb,symb)); :};
+counting_transition_list ::= counting_transition:trans
+                    {: CountingTransitionListAST transList = new CountingTransitionListAST(getLocation(trans$,trans$));
+                      transList.addTransition(trans);
+                      RESULT = transList; :} 
+                    | counting_transition_list:transList counting_transition:trans
+                      {:transList.addTransition(trans);
+                    	RESULT = transList; :};
+
+counting_transition ::= LPAREN:l identifier:preState identifier:letter STRING_LITERAL:guard updates:updates identifier:succState RPAREN:r
+					{:
+						CountingTransitionAST trans = new CountingTransitionAST(getLocation(l$, r$), preState, letter, guard, updates, succState);
+						RESULT = trans;
+					:};
+
+updates ::= LBRACE:l update_list_opt:upd RBRACE:r {: RESULT = upd; :};
+
+update_list_opt ::= update_list:updList {:RESULT = updList; :} 
+                     | {:com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
+                         RESULT = new UpdateListAST(getLocation(symb,symb)); :};
+
+update_list ::= update:upd
+                    {: UpdateListAST updList = new UpdateListAST(getLocation(upd$,upd$));
+                      updList.addUpdate(upd);
+                      RESULT = updList; :} 
+                    | update_list:updList COMMA update:upd
+                      {:updList.addUpdate(upd);
+                    	RESULT = updList; :};
+                    
+update ::= identifier:state CEQ STRING_LITERAL:term
+					{:
+						UpdateAST upd = new UpdateAST(getLocation(state$, term$), state, term);
+						RESULT = upd;
 					:};

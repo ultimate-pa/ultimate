@@ -162,6 +162,7 @@ StringCharacter = [^\r\n\"\\]
 
   /* operators */
   "="                            { m_LastToken = m_CurToken; m_CurToken = "="; return symbol(sym.EQ); }
+  ":="                            { m_LastToken = m_CurToken; m_CurToken = ":="; return symbol(sym.CEQ); }
   ">"                            { m_LastToken = m_CurToken; m_CurToken = ">"; return symbol(sym.GT); }
   "<"                            { m_LastToken = m_CurToken; m_CurToken = "<"; return symbol(sym.LT); }
   "!"                            { m_LastToken = m_CurToken; m_CurToken = "!"; return symbol(sym.NOT); }
