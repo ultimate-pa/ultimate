@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.MultiDimensionalNestedStore;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
@@ -364,7 +363,7 @@ public class QuantifierEliminationTest {
 		final String formulaAsString =
 				"(exists ((C Real) (A Real) (BD Real) (AK Int) (AP Int) (BH Int) (BC Int) (J Real) (M Real) (AN Int) (AW Int) (AT Int) (AF Int) (AD Real) (U Real) (S Real) (D Real) (O Int) (BG Int) (AA Real) (I Int) (AL Int) (V Real) (AJ Int) (AS Int) (L Real) (W Real) (AI Int) (AX Int) (AM Int) (AC Real) (K Real) (BJ Int) (T Int) (Z Real) (P Real) (Y Real) (AR Real) (B Real) (AG Int) (BE Int) (AZ Int) (E Bool) (AB Bool) (BB Int) (H Int) (AV Int) (AO Real) (BI Int) (N Real) (BA Int) (AQ Int) (R Real) (Q Real) (AY Int) (AH Int) (G Int) (F Real) (BF Int) (X Real) (AE Int) (AU Int)) (and (<= 0.0 P) (<= BI 255) (or (and (or AB (not E)) (= AO V)) (not (< AA (* 5.0 C))) (not E) (and (or (and (not AB) E) (and (not (= AO V)) E)) (< AA (* 5.0 C)))) (<= 0.0 N) (<= L 5100.0) (<= AK 15) (<= N 5100.0) (<= G 2) (<= Z 255.0) (<= C 255.0) (<= 0.0 Q) (<= 0 AK) (<= AU 253) (<= AL 255) (<= M 5100.0) (<= BJ 255) (<= 0.0 X) (<= 0.0 AA) (<= 0 AL) (<= AI 1023) (<= K 5100.0) (<= F 255.0) (<= AW 254) (<= 0 BI) (<= 0.0 Z) (or (and (<= 0 AN) (<= AN 240)) (= AN 254) (= AN 255)) (or (= AG 1023) (and (<= AG 1000) (or (<= 1 AG) (= AG 0)))) (<= V 65535.0) (or (= BC 14) (= BC 1) (= BC 2) (= BC 0)) (<= Y 255.0) (<= R 1310700.0) (<= B 255.0) (<= S 5100.0) (<= H 3) (<= 0 BJ) (<= D 255.0) (<= AT 1000) (or (and (or (not (< U AC)) (not (= I H)) (and (= AR (/ (* (+ (* (- 1.0) AO) U) (+ (* (- 1.0) S) R)) (+ (* (- 1.0) V) U))) (= AO U))) (= AR (/ (* (+ (* (- 1.0) AO) U) (+ (* (- 1.0) S) R)) (+ (* (- 1.0) V) U))) (= AO U)) (and (< BK 50.0) (or (and (or (not (= AR (/ (* (+ (* (- 1.0) AO) U) (+ (* (- 1.0) S) R)) (+ (* (- 1.0) V) U)))) (not (= AO U))) (not (= I H))) (and (not (< U AC)) (or (not (= AR (/ (* (+ (* (- 1.0) AO) U) (+ (* (- 1.0) S) R)) (+ (* (- 1.0) V) U)))) (not (= AO U)))))) (and (= I H) (< BK 50.0) (or (not (= AR (/ (* (+ (* (- 1.0) AO) U) (+ (* (- 1.0) S) R)) (+ (* (- 1.0) V) U)))) (not (= AO U))) (< U AC))) (<= 0.0 M) (<= AC 5000.0) (or (and (or (<= 1 AF) (= AF 0)) (<= AF 1000)) (= AF 1023)) (<= 0.0 C) (or (and (<= AS 201) (<= 1 AS)) (= AS 0)) (<= 0.0 J) (<= 0.0 AC) (<= Q 255.0) (<= A 255.0) (<= AA 5.0) (<= 0.0 R) (<= 0.0 S) (<= 0.0 U) (<= 0 AJ) (or (and (<= AH 254) (<= 1 AH)) (= 255 AH) (= 0 AH)) (<= 0.0 V) (<= AJ 255) (<= 0 G) (<= 0 T) (or (and (<= AV 1000) (<= 1 AV)) (= 0 AV)) (or (<= 1 AU) (= 0 AU)) (<= U 65535.0) (<= 0.0 B) (<= 0.0 F) (<= P 5100.0) (or (= BB 254) (and (<= 0 BB) (<= BB 100))) (<= J 5100.0) (<= 0 O) (<= 0.0 K) (<= 0.0 AD) (or (= 0 AZ) (= 1 AZ) (= 14 AZ)) (<= T 3) (<= BG 1023) (<= O 65535) (or (= 1022 AP) (= 1023 AP) (and (<= AP 1021) (<= 0 AP))) (<= X 255.0) (<= 0.0 L) (<= 0.0 D) (or (and (<= AM 240) (<= 0 AM)) (= 254 AM) (= 255 AM)) (or (and (<= AE 254) (<= 1 AE)) (= 0 AE) (= 255 AE)) (or (= BE 65535) (= BE 254) (= BE 65534) (and (<= BE 240) (<= 0 BE)) (= BE 255)) (or (and (<= BD 250.0) (<= 0.0 BD)) (= BD 254.0)) (or (and (<= 0 AX) (<= AX 1021)) (= 1022 AX)) (<= 0.0 A) (<= 0.0 W) (or (= 14 AY) (= 1 AY) (= 0 AY)) (<= W 255.0) (<= 0 AI) (<= 0 H) (or (and (<= 0 BF) (<= BF 240)) (= BF 65534) (= BF 254) (= BF 65535) (= BF 255)) (or (= 14 BA) (= 1 BA) (= 0 BA)) (or (= BH 1022) (= BH 1023) (and (<= BH 1021) (<= 0 BH))) (or (= 254 AQ) (= 255 AQ) (and (<= 0 AQ) (<= AQ 253))) (or (= 0 AT) (<= 1 AT)) (<= 0.0 Y) (<= AD 5000.0) (<= 0 AW) (<= 0 BG)))";
 		final String expectedResultAsString = "true";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
 
@@ -376,7 +375,7 @@ public class QuantifierEliminationTest {
 		final String formulaAsString =
 				" (exists ((|adp_diag_ks_masse'| Real) (|adp_count_fast'| Real) (|s_mvb_Smartlightsensor_Sensorspannung'| Real) (|si_RLSs_01__RLS_Zaehler_LIN1'| Int) (|s_LS_Helligkeit_FW'| Int) (|so_RLS_01__LS_Helligkeit_FW_SCAN'| Int) (|s_mvb_Smartlightsensor_Licht'| Int) (|adp_lx_dawn_to_day'| Real) (|adp_lx_LHO_CHO_Schwelle'| Real) (|si_SoSes_01__SoSe_SunInt_2D_Re_LIN1'| Int) (|s_mvb_Helligkeit_Infrarot'| Int) (|s_mvb_Feuchtesensorik_Scheibentemperatur'| Int) (|si_FSs_01__FS_Taupunkt_LIN1'| Int) (|s_helligkeit_uin_mM_roh'| Real) (|adp_s_outmax'| Real) (|adp_s_inpmin'| Real) (|adp_diag_ks_versorgung'| Real) (|adp_lx_off_kombi'| Int) (|so_RLS_01__LS_Helligkeit_FW_KCAN'| Int) (|ai_helligkeit_uin'| Real) (|adp_Lichtsensor_Typ_SMART_LS'| Int) (|si_Sensorik_Dimmung_01__KBI_Phototransistor_KCAN'| Int) (|adp_s_outmin'| Real) (|si_RLSs_01__LS_Helligkeit_IR_LIN1'| Int) (|s_mvb_Feuchtesensorik_relative_Luftfeuchte'| Int) (|adp_lx_fastcount'| Real) (|adp_step_fast'| Real) (|si_RLSs_01__LS_Helligkeit_FW_LIN1'| Int) (|s_mvb_Helligkeit_Sichtbar'| Int) (|si_SoSes_01__SoSe_SunInt_2D_Li_LIN1'| Int) (|s_helligkeit_uin_mM'| Real) (|adp_lx_day_to_dawn'| Real) (|so_RLS_01__LS_Helligkeit_IR_SCAN'| Int) (|adp_sonnensensor_Typ'| Int) (|adp_t_ls_countmax'| Real) (|adp_lx_on'| Real) (|adp_t_ls_calc'| Real) (|s_ls_in'| Real) (|adp_count_slow'| Real) (|si_FSs_01__FS_Temp_Scheibe_LIN1'| Int) (|s_mvb_Sonnensensor_Sonnenintensitaet_links'| Int) (|s_mvb_Licht_ein_bei_Regen'| Int) (|adp_diag_qualifizierung_notlauf'| Bool) (|s_afl_error'| Bool) (|s_mvb_Smartlightsensor_Helligkeit'| Int) (|adp_Lichtsensor_Typ'| Int) (|s_mvb_Feuchtesensorik_Taupunkt'| Int) (|s_ls_anaout'| Real) (|so_RLS_01__LS_Helligkeit_IR_KCAN'| Int) (|adp_lx_off'| Real) (|s_mvb_RLS_Status'| Int) (|s_LS_Helligkeit_IR'| Int) (|adp_s_inpmax'| Real) (|adp_lx_tunnel'| Real) (|s_mvb_Licht_ein_bei_Autobahn'| Int) (|si_FSs_01__FS_Temp_Sensor_LIN1'| Int) (|adp_Feuchtesensor_Typ'| Int) (|adp_diag_unplausibel'| Real) (|s_mvb_Sonnensensor_Sonnenintensitaet_rechts'| Int) (|adp_step_slow'| Real) (|si_FSs_01__FS_Luftfeuchte_rel_LIN1'| Int) (|s_mvb_Feuchtesensorik_Sensortemperatur'| Int)) (and (<= 0.0 |adp_lx_on'|) (<= |so_RLS_01__LS_Helligkeit_IR_KCAN'| 255) (or (and (or |s_afl_error'| (not |adp_diag_qualifizierung_notlauf'|)) (= |s_ls_anaout'| |adp_s_outmin'|)) (not (< |ai_helligkeit_uin'| (* 5.0 |adp_diag_ks_masse'|))) (not |adp_diag_qualifizierung_notlauf'|) (and (or (and (not |s_afl_error'|) |adp_diag_qualifizierung_notlauf'|) (and (not (= |s_ls_anaout'| |adp_s_outmin'|)) |adp_diag_qualifizierung_notlauf'|)) (< |ai_helligkeit_uin'| (* 5.0 |adp_diag_ks_masse'|)))) (<= 0.0 |adp_lx_off'|) (<= |adp_lx_fastcount'| 5100.0) (<= |si_RLSs_01__RLS_Zaehler_LIN1'| 15) (<= |adp_lx_off'| 5100.0) (<= |adp_Feuchtesensor_Typ'| 2) (<= |adp_t_ls_countmax'| 255.0) (<= |adp_diag_ks_masse'| 255.0) (<= 0.0 |adp_lx_tunnel'|) (<= 0 |si_RLSs_01__RLS_Zaehler_LIN1'|) (<= |s_mvb_Feuchtesensorik_Sensortemperatur'| 253) (<= |si_Sensorik_Dimmung_01__KBI_Phototransistor_KCAN'| 255) (<= |adp_lx_LHO_CHO_Schwelle'| 5100.0) (<= |so_RLS_01__LS_Helligkeit_IR_SCAN'| 255) (<= 0.0 |adp_step_slow'|) (<= 0.0 |ai_helligkeit_uin'|) (<= 0 |si_Sensorik_Dimmung_01__KBI_Phototransistor_KCAN'|) (<= |si_RLSs_01__LS_Helligkeit_FW_LIN1'| 1023) (<= |adp_lx_day_to_dawn'| 5100.0) (<= |adp_diag_unplausibel'| 255.0) (<= |s_mvb_Helligkeit_Infrarot'| 254) (<= 0 |so_RLS_01__LS_Helligkeit_IR_KCAN'|) (<= 0.0 |adp_t_ls_countmax'|) (or (and (<= 0 |si_SoSes_01__SoSe_SunInt_2D_Re_LIN1'|) (<= |si_SoSes_01__SoSe_SunInt_2D_Re_LIN1'| 240)) (= |si_SoSes_01__SoSe_SunInt_2D_Re_LIN1'| 254) (= |si_SoSes_01__SoSe_SunInt_2D_Re_LIN1'| 255)) (or (= |si_FSs_01__FS_Temp_Scheibe_LIN1'| 1023) (and (<= |si_FSs_01__FS_Temp_Scheibe_LIN1'| 1000) (or (<= 1 |si_FSs_01__FS_Temp_Scheibe_LIN1'|) (= |si_FSs_01__FS_Temp_Scheibe_LIN1'| 0)))) (<= |adp_s_outmin'| 65535.0) (or (= |s_mvb_Smartlightsensor_Licht'| 14) (= |s_mvb_Smartlightsensor_Licht'| 1) (= |s_mvb_Smartlightsensor_Licht'| 2) (= |s_mvb_Smartlightsensor_Licht'| 0)) (<= |adp_t_ls_calc'| 255.0) (<= |adp_s_inpmax'| 1310700.0) (<= |adp_count_slow'| 255.0) (<= |adp_s_inpmin'| 5100.0) (<= |adp_Lichtsensor_Typ'| 3) (<= 0 |so_RLS_01__LS_Helligkeit_IR_SCAN'|) (<= |adp_diag_ks_versorgung'| 255.0) (<= |s_mvb_Feuchtesensorik_Scheibentemperatur'| 1000) (or (and (or (not (< |adp_s_outmax'| |s_helligkeit_uin_mM'|)) (not (= |adp_Lichtsensor_Typ_SMART_LS'| |adp_Lichtsensor_Typ'|)) (and (= |s_ls_in'| (/ (* (+ (* (- 1.0) |s_ls_anaout'|) |adp_s_outmax'|) (+ (* (- 1.0) |adp_s_inpmin'|) |adp_s_inpmax'|)) (+ (* (- 1.0) |adp_s_outmin'|) |adp_s_outmax'|))) (= |s_ls_anaout'| |adp_s_outmax'|))) (= |s_ls_in'| (/ (* (+ (* (- 1.0) |s_ls_anaout'|) |adp_s_outmax'|) (+ (* (- 1.0) |adp_s_inpmin'|) |adp_s_inpmax'|)) (+ (* (- 1.0) |adp_s_outmin'|) |adp_s_outmax'|))) (= |s_ls_anaout'| |adp_s_outmax'|)) (and (< SysRS_ADLSw_360_0_Glob_BndResponseUT_117_X2 50.0) (or (and (or (not (= |s_ls_in'| (/ (* (+ (* (- 1.0) |s_ls_anaout'|) |adp_s_outmax'|) (+ (* (- 1.0) |adp_s_inpmin'|) |adp_s_inpmax'|)) (+ (* (- 1.0) |adp_s_outmin'|) |adp_s_outmax'|)))) (not (= |s_ls_anaout'| |adp_s_outmax'|))) (not (= |adp_Lichtsensor_Typ_SMART_LS'| |adp_Lichtsensor_Typ'|))) (and (not (< |adp_s_outmax'| |s_helligkeit_uin_mM'|)) (or (not (= |s_ls_in'| (/ (* (+ (* (- 1.0) |s_ls_anaout'|) |adp_s_outmax'|) (+ (* (- 1.0) |adp_s_inpmin'|) |adp_s_inpmax'|)) (+ (* (- 1.0) |adp_s_outmin'|) |adp_s_outmax'|)))) (not (= |s_ls_anaout'| |adp_s_outmax'|)))))) (and (= |adp_Lichtsensor_Typ_SMART_LS'| |adp_Lichtsensor_Typ'|) (< SysRS_ADLSw_360_0_Glob_BndResponseUT_117_X2 50.0) (or (not (= |s_ls_in'| (/ (* (+ (* (- 1.0) |s_ls_anaout'|) |adp_s_outmax'|) (+ (* (- 1.0) |adp_s_inpmin'|) |adp_s_inpmax'|)) (+ (* (- 1.0) |adp_s_outmin'|) |adp_s_outmax'|)))) (not (= |s_ls_anaout'| |adp_s_outmax'|))) (< |adp_s_outmax'| |s_helligkeit_uin_mM'|))) (<= 0.0 |adp_lx_LHO_CHO_Schwelle'|) (<= |s_helligkeit_uin_mM'| 5000.0) (or (and (or (<= 1 |si_FSs_01__FS_Taupunkt_LIN1'|) (= |si_FSs_01__FS_Taupunkt_LIN1'| 0)) (<= |si_FSs_01__FS_Taupunkt_LIN1'| 1000)) (= |si_FSs_01__FS_Taupunkt_LIN1'| 1023)) (<= 0.0 |adp_diag_ks_masse'|) (or (and (<= |s_mvb_Feuchtesensorik_relative_Luftfeuchte'| 201) (<= 1 |s_mvb_Feuchtesensorik_relative_Luftfeuchte'|)) (= |s_mvb_Feuchtesensorik_relative_Luftfeuchte'| 0)) (<= 0.0 |adp_lx_dawn_to_day'|) (<= 0.0 |s_helligkeit_uin_mM'|) (<= |adp_lx_tunnel'| 255.0) (<= |adp_count_fast'| 255.0) (<= |ai_helligkeit_uin'| 5.0) (<= 0.0 |adp_s_inpmax'|) (<= 0.0 |adp_s_inpmin'|) (<= 0.0 |adp_s_outmax'|) (<= 0 |si_RLSs_01__LS_Helligkeit_IR_LIN1'|) (or (and (<= |si_FSs_01__FS_Temp_Sensor_LIN1'| 254) (<= 1 |si_FSs_01__FS_Temp_Sensor_LIN1'|)) (= 255 |si_FSs_01__FS_Temp_Sensor_LIN1'|) (= 0 |si_FSs_01__FS_Temp_Sensor_LIN1'|)) (<= 0.0 |adp_s_outmin'|) (<= |si_RLSs_01__LS_Helligkeit_IR_LIN1'| 255) (<= 0 |adp_Feuchtesensor_Typ'|) (<= 0 |adp_sonnensensor_Typ'|) (or (and (<= |s_mvb_Feuchtesensorik_Taupunkt'| 1000) (<= 1 |s_mvb_Feuchtesensorik_Taupunkt'|)) (= 0 |s_mvb_Feuchtesensorik_Taupunkt'|)) (or (<= 1 |s_mvb_Feuchtesensorik_Sensortemperatur'|) (= 0 |s_mvb_Feuchtesensorik_Sensortemperatur'|)) (<= |adp_s_outmax'| 65535.0) (<= 0.0 |adp_count_slow'|) (<= 0.0 |adp_diag_unplausibel'|) (<= |adp_lx_on'| 5100.0) (or (= |s_mvb_Smartlightsensor_Helligkeit'| 254) (and (<= 0 |s_mvb_Smartlightsensor_Helligkeit'|) (<= |s_mvb_Smartlightsensor_Helligkeit'| 100))) (<= |adp_lx_dawn_to_day'| 5100.0) (<= 0 |adp_lx_off_kombi'|) (<= 0.0 |adp_lx_day_to_dawn'|) (<= 0.0 |s_helligkeit_uin_mM_roh'|) (or (= 0 |s_mvb_Licht_ein_bei_Regen'|) (= 1 |s_mvb_Licht_ein_bei_Regen'|) (= 14 |s_mvb_Licht_ein_bei_Regen'|)) (<= |adp_sonnensensor_Typ'| 3) (<= |so_RLS_01__LS_Helligkeit_FW_KCAN'| 1023) (<= |adp_lx_off_kombi'| 65535) (or (= 1022 |s_LS_Helligkeit_FW'|) (= 1023 |s_LS_Helligkeit_FW'|) (and (<= |s_LS_Helligkeit_FW'| 1021) (<= 0 |s_LS_Helligkeit_FW'|))) (<= |adp_step_slow'| 255.0) (<= 0.0 |adp_lx_fastcount'|) (<= 0.0 |adp_diag_ks_versorgung'|) (or (and (<= |si_SoSes_01__SoSe_SunInt_2D_Li_LIN1'| 240) (<= 0 |si_SoSes_01__SoSe_SunInt_2D_Li_LIN1'|)) (= 254 |si_SoSes_01__SoSe_SunInt_2D_Li_LIN1'|) (= 255 |si_SoSes_01__SoSe_SunInt_2D_Li_LIN1'|)) (or (and (<= |si_FSs_01__FS_Luftfeuchte_rel_LIN1'| 254) (<= 1 |si_FSs_01__FS_Luftfeuchte_rel_LIN1'|)) (= 0 |si_FSs_01__FS_Luftfeuchte_rel_LIN1'|) (= 255 |si_FSs_01__FS_Luftfeuchte_rel_LIN1'|)) (or (= |s_mvb_Sonnensensor_Sonnenintensitaet_links'| 65535) (= |s_mvb_Sonnensensor_Sonnenintensitaet_links'| 254) (= |s_mvb_Sonnensensor_Sonnenintensitaet_links'| 65534) (and (<= |s_mvb_Sonnensensor_Sonnenintensitaet_links'| 240) (<= 0 |s_mvb_Sonnensensor_Sonnenintensitaet_links'|)) (= |s_mvb_Sonnensensor_Sonnenintensitaet_links'| 255)) (or (and (<= |s_mvb_Smartlightsensor_Sensorspannung'| 250.0) (<= 0.0 |s_mvb_Smartlightsensor_Sensorspannung'|)) (= |s_mvb_Smartlightsensor_Sensorspannung'| 254.0)) (or (and (<= 0 |s_mvb_Helligkeit_Sichtbar'|) (<= |s_mvb_Helligkeit_Sichtbar'| 1021)) (= 1022 |s_mvb_Helligkeit_Sichtbar'|)) (<= 0.0 |adp_count_fast'|) (<= 0.0 |adp_step_fast'|) (or (= 14 |s_mvb_Licht_ein_bei_Autobahn'|) (= 1 |s_mvb_Licht_ein_bei_Autobahn'|) (= 0 |s_mvb_Licht_ein_bei_Autobahn'|)) (<= |adp_step_fast'| 255.0) (<= 0 |si_RLSs_01__LS_Helligkeit_FW_LIN1'|) (<= 0 |adp_Lichtsensor_Typ'|) (or (and (<= 0 |s_mvb_Sonnensensor_Sonnenintensitaet_rechts'|) (<= |s_mvb_Sonnensensor_Sonnenintensitaet_rechts'| 240)) (= |s_mvb_Sonnensensor_Sonnenintensitaet_rechts'| 65534) (= |s_mvb_Sonnensensor_Sonnenintensitaet_rechts'| 254) (= |s_mvb_Sonnensensor_Sonnenintensitaet_rechts'| 65535) (= |s_mvb_Sonnensensor_Sonnenintensitaet_rechts'| 255)) (or (= 14 |s_mvb_RLS_Status'|) (= 1 |s_mvb_RLS_Status'|) (= 0 |s_mvb_RLS_Status'|)) (or (= |so_RLS_01__LS_Helligkeit_FW_SCAN'| 1022) (= |so_RLS_01__LS_Helligkeit_FW_SCAN'| 1023) (and (<= |so_RLS_01__LS_Helligkeit_FW_SCAN'| 1021) (<= 0 |so_RLS_01__LS_Helligkeit_FW_SCAN'|))) (or (= 254 |s_LS_Helligkeit_IR'|) (= 255 |s_LS_Helligkeit_IR'|) (and (<= 0 |s_LS_Helligkeit_IR'|) (<= |s_LS_Helligkeit_IR'| 253))) (or (= 0 |s_mvb_Feuchtesensorik_Scheibentemperatur'|) (<= 1 |s_mvb_Feuchtesensorik_Scheibentemperatur'|)) (<= 0.0 |adp_t_ls_calc'|) (<= |s_helligkeit_uin_mM_roh'| 5000.0) (<= 0 |s_mvb_Helligkeit_Infrarot'|) (<= 0 |so_RLS_01__LS_Helligkeit_FW_KCAN'|)))";
 		final String expectedResultAsString = "true";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
 
@@ -386,7 +385,7 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("c", new Sort[0], SmtSortUtils.getRealSort(mMgdScript));
 		final String formulaAsString = " (exists ((x Real)) (and (= x c) (< 2.0 (/ 1.0 (- c x)))))";
 		final String expectedResultAsString = "(< 2.0 (/ 1.0 0.0))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
 
@@ -461,7 +460,7 @@ public class QuantifierEliminationTest {
 
 		final String formulaAsString = "(exists ((x Int)) (or (and (= x a) (= x 1)) (and (= x b) (= x 2))))";
 		final String expectedResultAsString = "(or (= a 1) (= b 2))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
 
@@ -472,7 +471,7 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("a", new Sort[0], intSort);
 		final String formulaAsString = "(exists ((x Int)) (and (= (* x 2) t) (= (* x x x) 8)))";
 		final String expectedResultAsString = "(and (= 8 (* (div t 2) (div t 2) (div t 2))) (= (mod t 2) 0))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
 
@@ -483,7 +482,7 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("a", new Sort[0], intSort);
 		final String formulaAsString = "(forall ((x Int)) (or (distinct (* x 2) t) (distinct (* x x x) 8)))";
 		final String expectedResultAsString = "(or (not (= 8 (* (div t 2) (div t 2) (div t 2)))) (not (= (mod t 2) 0)))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
 
@@ -494,7 +493,7 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("a", new Sort[0], intSort);
 		final String formulaAsString = "(exists ((x Int)) (and (= (* x a a a 2) t) (= (* x x x) 8)))";
 		final String expectedResultAsString = "true";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
 
@@ -505,7 +504,7 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("a", new Sort[0], intSort);
 		final String formulaAsString = "(forall ((x Int)) (or (not (= (* x a a a 2) t)) (not (= (* x x x) 8))))";
 		final String expectedResultAsString = "true";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
 
@@ -519,7 +518,7 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("lo", new Sort[0], realSort);
 		final String formulaAsString = "(exists ((x Int)) (and (<= (* x a a b (- 2)) t) (<= lo x) (<= x hi)))";
 		final String expectedResultAsString = "true";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
 
@@ -805,7 +804,7 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("main_#t~mem8", new Sort[0], intSort);
 		final String formulaAsString = "(exists ((x Int)) (> (* 11 x) 17))";
 		final String expectedResultAsString = "true";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
 
@@ -817,7 +816,7 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("y", new Sort[0], intSort);
 		final String formulaAsString = "(exists ((x Int)) (and (p x) (= (* 2 x) y)))";
 		final String expectedResultAsString = "(and (= 0 (mod y 2)) (p (div y 2)))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
 
@@ -829,92 +828,92 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("y", new Sort[0], intSort);
 		final String formulaAsString = "(forall ((x Int)) (or (p x) (not (= (* 2 x) y))))";
 		final String expectedResultAsString = "(or (not (= 0 (mod y 2))) (p (div y 2)))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
 
 	@Test
-	public void greaterTIR() throws NotAffineException {
+	public void greaterTIR() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("lo", new Sort[0], intSort);
 		mScript.declareFun("hi", new Sort[0], intSort);
 		final String inputSTR = "(exists ((x Int)) 	(and (> (* 7 x) lo ) (> hi x)))";
 		final String expectedResult = "(<= (+ (div (+ (+ lo 1) (- 1)) 7) 2) hi)";
-		runQuantifierEliminationTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
-	public void lessTIR() throws NotAffineException {
+	public void lessTIR() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("lo", new Sort[0], intSort);
 		mScript.declareFun("hi", new Sort[0], intSort);
 		final String inputSTR = "(exists ((x Int)) 	(and (< (* 7 x) hi ) (< lo x)))";
 		final String expectedResult = "(<= (+ lo 1) (div (+ hi (- 1)) 7))";
-		runQuantifierEliminationTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
-	public void greaterEqTIR() throws NotAffineException {
+	public void greaterEqTIR() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("lo", new Sort[0], intSort);
 		mScript.declareFun("hi", new Sort[0], intSort);
 		final String inputSTR = "(forall ((x Int)) 	(or (>= (* 7 x) lo ) (> hi x)))";
 		final String expectedResult = "(< (div (+ lo (- 1)) 7) hi)";
-		runQuantifierEliminationTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
-	public void lessEqTIR() throws NotAffineException {
+	public void lessEqTIR() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("lo", new Sort[0], intSort);
 		mScript.declareFun("hi", new Sort[0], intSort);
 		final String inputSTR = "(forall ((x Int)) 	(or (<= (* 7 x) hi ) (< lo x)))";
 		final String expectedResult = "(< lo (+ (div (+ (+ hi 1) (- 1)) 7) 1))";
-		runQuantifierEliminationTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
-	public void greaterTIRNegativeCoef() throws NotAffineException {
+	public void greaterTIRNegativeCoef() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("lo", new Sort[0], intSort);
 		mScript.declareFun("hi", new Sort[0], intSort);
 		final String inputSTR = "(exists ((x Int)) 	(and (> (* (- 7) x) hi ) (< lo x)))";
 		final String expectedResult = "(<= (+ lo 2) (div (+ (+ hi 1) (- 1)) (- 7)))";
-		runQuantifierEliminationTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
-	public void lessTIRNegativeCoef() throws NotAffineException {
+	public void lessTIRNegativeCoef() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("lo", new Sort[0], intSort);
 		mScript.declareFun("hi", new Sort[0], intSort);
 		final String inputSTR = "(exists ((x Int)) 	(and (< (* (- 7) x) lo ) (> hi x)))";
 		final String expectedResult = "(<= (+ (div (+ lo (- 1)) (- 7)) 1) hi)";
-		runQuantifierEliminationTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
-	public void greaterEqTIRNegativeCoef() throws NotAffineException {
+	public void greaterEqTIRNegativeCoef() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("lo", new Sort[0], intSort);
 		mScript.declareFun("hi", new Sort[0], intSort);
 		final String inputSTR = "(forall ((x Int)) 	(or (>= (* (- 7) x) hi ) (> x lo)))";
 		final String expectedResult = "(< lo (div (+ hi (- 1)) (- 7)))";
-		runQuantifierEliminationTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
-	public void lessEqTIRNegativeCoef() throws NotAffineException {
+	public void lessEqTIRNegativeCoef() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("lo", new Sort[0], intSort);
 		mScript.declareFun("hi", new Sort[0], intSort);
 		final String inputSTR = "(forall ((x Int)) 	(or (<= (* (- 7) x) lo ) (> hi x)))";
 		final String expectedResult = "(< (div (+ (+ lo 1) (- 1)) (- 7)) (+ hi 1))";
-		runQuantifierEliminationTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
-	public void antiDerTirExist() throws NotAffineException {
+	public void antiDerTirExist() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("lo", new Sort[0], intSort);
 		mScript.declareFun("hi", new Sort[0], intSort);
@@ -922,11 +921,11 @@ public class QuantifierEliminationTest {
 		final String inputSTR = "(exists ((x Int)) (and	(not(=(* 4 x) y)) (> x lo) (< x hi)) )";
 		final String expectedResult =
 				"(or (and (<= (+ lo 2) hi) (<= (+ lo 1) (div (+ y (- 1)) 4))) (and (<= (+ lo 2) hi) (<= (+ (div y 4) 2) hi)))";
-		runQuantifierEliminationTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
-	public void antiDerTirForall() throws NotAffineException {
+	public void antiDerTirForall() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
 		mScript.declareFun("lo", new Sort[0], intSort);
 		mScript.declareFun("hi", new Sort[0], intSort);
@@ -934,7 +933,7 @@ public class QuantifierEliminationTest {
 		final String inputSTR = "(forall ((x Int)) (or	(=(* 4 x) y) (> x lo) (< x hi))  )";
 		final String expectedResult =
 				"(and (or (< lo hi) (< lo (+ (div y 4) 1))) (or (< (div (+ y (- 1)) 4) hi) (< lo hi)))";
-		runQuantifierEliminationTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(inputSTR, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 
@@ -946,7 +945,7 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("b", new Sort[0], intSort);
 		final String formulaAsString = "(exists ((a Int)) (and (> (* 4 a) b ) (< a 3) (< b 12)))";
 		final String expectedResultAsString = "(and (< b 12) (exists ((a Int)) (and (< a 3) (> (* 4 a) b))))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 
@@ -957,7 +956,7 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("y", new Sort[0], intSort);
 		final String formulaAsString = "(exists ((x Int)) (and (p x) (= x (+ (mod x 23) y))))";
 		final String expectedResultAsString = "(and (= 0 (mod y 2)) (p (div y 2)))";
-		runQuantifierEliminationTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -977,7 +976,7 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("x4", new Sort[0], realSort);
 		mScript.declareFun("x3", new Sort[0], realSort);
 		final String formulaAsString = "(forall ((?lambda Real)) (or (exists ((?lambdaprime Real)) (and (or (<= 10.0 (+ ?lambdaprime x5)) (and bool.b22 (<= x3 (* 3.0 ?lambdaprime))) (and (not bool.b5) bool.b6 (or (<= 4910.0 (+ (* 20.0 ?lambdaprime) x4)) (<= x3 (+ (* 3.0 ?lambdaprime) 45.0))) (not bool.b7) (not bool.b22)) (and (not bool.b5) (not bool.b6) (not bool.b7) (not bool.b22) (or (<= 4100.0 (+ (* 20.0 ?lambdaprime) x4)) (<= x3 (+ (* 3.0 ?lambdaprime) 45.0)))) (and (not bool.b5) bool.b7 (not bool.b6) (or (<= 4500.0 (+ (* 20.0 ?lambdaprime) x4)) (<= x3 (+ (* 3.0 ?lambdaprime) 45.0))) (not bool.b22)) (and (not bool.b5) bool.b6 bool.b7 (not bool.b22) (<= x3 (* 3.0 ?lambdaprime)))) (<= 0.0 ?lambdaprime) (<= ?lambdaprime ?lambda))) bool.b22 (and (or (not bool.b5) bool.b6) (not bool.b7)) (and bool.b7 (or (and (not bool.b23) (or (and (or (and (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) (/ 743.0 2.0)))) (or (and (<= (+ (* 3.0 ?lambda) 50.0) x3) (or bool.b8 bool.b10 (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) 610.0))) bool.b12 bool.b14 (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) (not (<= x3 (+ (* 3.0 ?lambda) 50.0))) bool.b5)) (and (or bool.b8 bool.b10 (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) 610.0))) bool.b12 bool.b14 (not (<= x3 (+ (* 3.0 ?lambda) 30.0))) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) (not (<= x3 (+ (* 3.0 ?lambda) 50.0))) bool.b5) (not (<= (+ (* 3.0 ?lambda) 50.0) x3))))) (and (or bool.b8 bool.b10 (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) bool.b12 bool.b14 (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) (/ 743.0 2.0)))) (not (<= x3 (+ (* 3.0 ?lambda) 40.0)))) (<= 10.0 (+ ?lambda x5))) (and (or (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) (and (not (<= 30.0 (+ x3 (* 3.0 x5)))) bool.b5) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) (and (<= 30.0 (+ x3 (* 3.0 x5))) (or bool.b8 bool.b10 bool.b12 (not (<= (+ x3 (* 3.0 x5)) 50.0)) bool.b14 bool.b5))) (not (<= 10.0 (+ ?lambda x5)))))) (and bool.b23 (or (and (not (<= 10.0 (+ ?lambda x5))) (or (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) (not (<= (+ x3 (* 3.0 x5)) 30.0)) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5)) (and (<= 10.0 (+ ?lambda x5)) (or (and (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) (/ 743.0 2.0))) (or (and (or bool.b8 bool.b10 (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) bool.b12 bool.b14 (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (not (<= (+ x3 (* 3.0 x5)) 30.0))) (and (or (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (<= (+ x3 (* 3.0 x5)) 30.0)))) (not (<= x3 (+ (* 3.0 ?lambda) 40.0))) (and (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) (/ 743.0 2.0)))) (or (and (or (and (or bool.b8 bool.b10 (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) 610.0))) bool.b12 (not (<= (+ x3 (* 3.0 x5)) 50.0)) bool.b14 (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0))) (and (or bool.b8 bool.b10 (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) 610.0))) bool.b12 (not (<= 50.0 (+ x3 (* 3.0 x5)))) (not (<= (+ x3 (* 3.0 x5)) 50.0)) bool.b14 bool.b5) (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0))) (not (<= (+ x3 (* 3.0 x5)) 30.0))) (and (or (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (<= (+ x3 (* 3.0 x5)) 30.0)))))))) (not bool.b6))) (< ?lambda 0.0)))";
-		runQuantifierEliminationTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -985,7 +984,7 @@ public class QuantifierEliminationTest {
 		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
 		mScript.declareFun("x1", new Sort[0], realSort);
 		final String formulaAsString = "(exists ((?y1 Real)) (exists ((?y2 Real)) (and (exists ((?y3 Real)) (exists ((?y4 Real)) (or (and (or (<= 7.0 (+ (* 73.0 ?y2) (* 56.0 ?y3) (* 13.0 ?y4) (* 51.0 x1) (* 15.0 ?y1))) (not (= 51.0 (+ (* ?y2 (- 62.0)) (* ?y4 (- 61.0)))))) (or (not (= (- 66.0) (+ (* ?y2 (- 12.0)) (* ?y3 (- 71.0)) (* ?y4 8.0) (* ?y1 (- 46.0))))) (not (= (- 66.0) (+ (* ?y2 (- 14.0)) (* ?y3 (- 77.0)) (* ?y4 65.0) (* x1 86.0) (* ?y1 (- 85.0))))))) (and (not (= 33.0 (+ (* ?y2 (- 95.0)) (* ?y3 (- 81.0)) (* ?y4 74.0) (* x1 10.0) (* ?y1 76.0)))) (= (- 85.0) (* ?y1 (- 25.0)))) (and (<= (+ (* 21.0 ?y4) (* 57.0 ?y1)) (+ (* 53.0 ?y2) (* 8.0 ?y3) (* 6.0 x1) 5.0)) (= 11.0 (+ (* ?y2 (- 98.0)) (* ?y3 (- 95.0)) (* ?y4 80.0) (* x1 (- 19.0)) (* ?y1 (- 16.0)))))))) (or (forall ((?y3 Real)) (and (or (not (= 36.0 (+ (* ?y2 (- 2.0)) (* ?y3 42.0) (* x1 7.0)))) (and (<= (+ (* 81.0 ?y2) (* 29.0 ?y1)) (+ (* 44.0 ?y3) (* 19.0 x1) 84.0)) (forall ((?y4 Real)) (and (<= (+ (* 14.0 ?y3) (* 54.0 ?y4) (* 48.0 x1) (* 77.0 ?y1) 64.0) (* 46.0 ?y2)) (<= 0.0 (+ (* 29.0 ?y3) (* 39.0 ?y4) (* 70.0 x1) 32.0)))) (= (- 30.0) (+ (* x1 9.0) (* ?y1 (- 4.0))))) (and (<= (* 17.0 ?y1) (* 11.0 x1)) (< (* 52.0 x1) (+ (* 66.0 ?y2) (* 74.0 ?y3) (* 46.0 ?y1) 25.0)))) (or (< (+ (* 46.0 ?y1) 80.0) (+ (* 4.0 ?y2) (* 34.0 ?y3) (* 32.0 x1))) (and (< 80.0 (* 59.0 ?y1)) (not (= 0.0 (+ (* ?y2 (- 40.0)) (* ?y3 (- 55.0)) (* x1 (- 35.0)))))) (and (or (= (- 24.0) (+ (* ?y2 (- 88.0)) (* ?y3 95.0))) (< (+ (* 37.0 ?y2) (* 15.0 ?y3) (* 63.0 ?y1)) (+ (* 27.0 x1) 79.0))) (or (<= (+ (* 41.0 ?y2) ?y1) (* 62.0 x1)) (<= (+ (* 79.0 x1) (* 74.0 ?y1)) (+ (* 17.0 ?y2) (* 10.0 ?y3) 14.0)))) (< (+ (* 21.0 ?y2) (* 30.0 ?y1)) (+ (* 77.0 ?y3) (* 100.0 x1) 19.0))))) (and (not (= (- 33.0) (+ (* ?y2 61.0) (* x1 (- 3.0)) (* ?y1 31.0)))) (exists ((?y4 Real)) (and (<= (+ (* 32.0 ?y4) (* 35.0 ?y1)) (* 84.0 x1)) (not (= 23.0 (+ (* ?y4 (- 21.0)) (* x1 53.0) (* ?y1 8.0)))) (or (<= (* 53.0 ?y2) (* 94.0 x1)) (<= (+ (* 94.0 ?y2) (* 50.0 ?y4) 69.0) (* 55.0 x1))) (or (and (= (- 63.0) (+ (* ?y2 (- 22.0)) (* ?y4 37.0) (* x1 (- 9.0)) (* ?y1 89.0))) (< 35.0 (+ (* 100.0 ?y2) (* 10.0 x1)))) (< (+ (* 88.0 ?y2) (* 2.0 ?y1)) (+ (* 31.0 x1) 46.0))))) (exists ((?y4 Real)) (and (<= (+ (* 82.0 ?y4) (* 88.0 x1)) (+ (* 39.0 ?y1) 95.0)) (< 0.0 (+ (* 86.0 ?y1) 21.0)))) (exists ((?y4 Real)) (and (= (- 93.0) (+ (* ?y4 75.0) (* x1 (- 19.0)))) (<= (+ ?y4 (* 38.0 x1) (* 15.0 ?y1)) (* 38.0 ?y2)))) (< (* 91.0 ?y1) 0.0))))))";
-		runQuantifierEliminationTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -996,7 +995,7 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("?y3", new Sort[0], realSort);
 		mScript.declareFun("?y2", new Sort[0], realSort);
 		final String formulaAsString = "(exists ((?y1 Real)) (and (not (= (- 66.0) (+ (* ?y2 (- 14.0)) (* ?y3 (- 77.0)) (* ?y4 65.0) (* x1 86.0) (* ?y1 (- 85.0)))))  (or (forall ((?y3 Real)) (<= (+ (* 41.0 ?y2) ?y1) (* 62.0 x1)) ) (and (< 0.0 (+ (* 86.0 ?y1) 21.0)) (< (* 91.0 ?y1) 0.0)))))";
-		runQuantifierEliminationTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
