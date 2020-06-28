@@ -38,12 +38,12 @@ public class Update {
 	private Counter mCounterLeft;
 	private Counter mCounterRight;
 	private Integer mConstant;
-	private Integer mTermType; // 0 means true, 1 means false, 2 means constant, 3 means counter, 4 means both
+	private TermType mTermType;
 	
 	public Update()
 	{}
 	
-	public Update(Counter c1, Counter c2, Integer constant, Integer term) {
+	public Update(Counter c1, Counter c2, Integer constant, TermType term) {
 		mCounterLeft = c1;
 		mCounterRight = c2;
 		mConstant = constant;
@@ -62,7 +62,7 @@ public class Update {
 		return mConstant;
 	}
 	
-	public Integer getTermType() {
+	public TermType getTermType() {
 		return mTermType;
 	}
 	

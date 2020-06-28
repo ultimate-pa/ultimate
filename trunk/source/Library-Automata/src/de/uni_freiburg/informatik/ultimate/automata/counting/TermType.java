@@ -26,68 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.counting;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
-
 /**
- * Data structure for the guards of Counting Automata
+ * Values of this enum represent the term type of guards and updates of counting automata.
  *
  * @author Marcel Ebbinghaus
- * @author who is the author?
+ *
  */
 
-public class Guard {
-
-	private Counter mCounterLeft;
-	private Counter mCounterRight;
-	private Integer mConstant;
-	private RelationSymbol mRelationSymbol;
-	private TermType mTermType;
-	
-	public Guard()
-	{}
-	
-	public Guard(Counter c1, Counter c2, Integer constant, RelationSymbol relation, TermType term) {
-		mCounterLeft = c1;
-		mCounterRight = c2;
-		mConstant = constant;
-		mRelationSymbol = relation;
-		mTermType = term;
-	}
-	
-	public Counter getCounterLeft() {
-		return mCounterLeft;
-	}
-	
-	public Counter getCounterRight() {
-		return mCounterRight;
-	}
-	
-	public Integer getConstant() {
-		return mConstant;
-	}
-	
-	public RelationSymbol getRelationSymbol() {
-		return mRelationSymbol;
-	}
-	
-	public TermType getTermType() {
-		return mTermType;
-	}
-	
-	public void changeConstant(Integer newConstant) {
-		mConstant = newConstant;
-	}
-	
-	public void changeRelationType(RelationSymbol newRelationSymbol) {
-		mRelationSymbol = newRelationSymbol;
-	}
-	
-	public void changeTermType(TermType newTermType) {
-		mTermType = newTermType;
-	}
-	
-	public Guard copyGuard() {
-		Guard copy = new Guard(mCounterLeft.copyCounter(), mCounterRight.copyCounter(), mConstant, mRelationSymbol, mTermType);
-		return copy;
-	}
+public enum TermType {
+	TRUE, FALSE, CONSTANT, COUNTER, SUM;
 }
+

@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 
 /**
  * Complement method for Counting Automata
@@ -102,40 +103,40 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 				
 				for (Guard guard : guardList) {
 					
-					if (guard.getTermType() == 0) {
+					if (guard.getTermType() == TermType.TRUE) {
 						
-						guard.changeTermType(1);
+						guard.changeTermType(TermType.FALSE);
 					}
-					else if (guard.getTermType() == 1) {
+					else if (guard.getTermType() == TermType.FALSE) {
 						
-						guard.changeTermType(0);
+						guard.changeTermType(TermType.TRUE);
 					}
 					else {
 						
-						switch(guard.getRelationType()) {
+						switch(guard.getRelationSymbol()) {
 						
-						case 0:
-							guard.changeRelationType(1);
+						case EQ:
+							guard.changeRelationType(RelationSymbol.DISTINCT);
 							break;
 							
-						case 1:
-							guard.changeRelationType(0);
+						case DISTINCT:
+							guard.changeRelationType(RelationSymbol.EQ);
 							break;
 							
-						case 2:
-							guard.changeRelationType(5);
+						case LESS:
+							guard.changeRelationType(RelationSymbol.GEQ);
 							break;
 							
-						case 3:
-							guard.changeRelationType(4);
+						case GREATER:
+							guard.changeRelationType(RelationSymbol.LEQ);
 							break;
 							
-						case 4:
-							guard.changeRelationType(3);
+						case LEQ:
+							guard.changeRelationType(RelationSymbol.GREATER);
 							break;
 							
-						case 5:
-							guard.changeRelationType(2);
+						case GEQ:
+							guard.changeRelationType(RelationSymbol.LESS);
 							break;
 						}
 					}

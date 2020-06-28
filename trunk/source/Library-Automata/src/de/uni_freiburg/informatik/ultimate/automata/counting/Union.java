@@ -101,7 +101,7 @@ public class Union<LETTER, STATE, CRSF extends IStateFactory<STATE>> implements 
 		
 		//initialConditions
 		Guard newInitialGuard = new Guard();
-		newInitialGuard.changeTermType(0);
+		newInitialGuard.changeTermType(TermType.TRUE);
 		ArrayList<Guard> newGuardList = new ArrayList<Guard>();
 		newGuardList.add(newInitialGuard);
 		ArrayList<ArrayList<Guard>> newInitialConditionList = new ArrayList<ArrayList<Guard>>();
@@ -119,7 +119,7 @@ public class Union<LETTER, STATE, CRSF extends IStateFactory<STATE>> implements 
 		if (newFinalConditionList.size() == 0) {
 			
 			Guard newGuardFalse = new Guard();
-			newGuardFalse.changeTermType(1);
+			newGuardFalse.changeTermType(TermType.FALSE);
 			ArrayList<Guard> guardList = new ArrayList<Guard>();
 			guardList.add(newGuardFalse);
 			newFinalConditionList.add(guardList);
@@ -149,7 +149,7 @@ public class Union<LETTER, STATE, CRSF extends IStateFactory<STATE>> implements 
 		for (STATE state : automaton.getStates()) {
 			
 			Guard newInitialGuard = new Guard();
-			newInitialGuard.changeTermType(1);
+			newInitialGuard.changeTermType(TermType.FALSE);
 			ArrayList<Guard> newGuardList = new ArrayList<Guard>();
 			newGuardList.add(newInitialGuard);
 			ArrayList<ArrayList<Guard>> newInitialConditionList = new ArrayList<ArrayList<Guard>>();
@@ -164,8 +164,8 @@ public class Union<LETTER, STATE, CRSF extends IStateFactory<STATE>> implements 
 			
 			unionFinalConditions.put(state, automaton.getFinalConditions().get(state).copyFinalCondition());
 			
-			if (automaton.getInitialConditions().get(state).getCondition().get(0).get(0).getTermType() != 1 &&
-					automaton.getFinalConditions().get(state).getCondition().get(0).get(0).getTermType() != 1) {
+			if (automaton.getInitialConditions().get(state).getCondition().get(0).get(0).getTermType() != TermType.FALSE &&
+					automaton.getFinalConditions().get(state).getCondition().get(0).get(0).getTermType() != TermType.FALSE) {
 				
 				ConjunctGuards conjunction = new ConjunctGuards(
 						automaton.getFinalConditions().get(state).copyFinalCondition().getCondition(), 
@@ -186,7 +186,7 @@ public class Union<LETTER, STATE, CRSF extends IStateFactory<STATE>> implements 
 				}
 				unionTransitions.put(state, transitionList);
 				
-				if (automaton.getInitialConditions().get(state).getCondition().get(0).get(0).getTermType() != 1) {
+				if (automaton.getInitialConditions().get(state).getCondition().get(0).get(0).getTermType() != TermType.FALSE) {
 				
 					for (Transition<LETTER, STATE> transition : automaton.getTransitions().get(state)) {
 					

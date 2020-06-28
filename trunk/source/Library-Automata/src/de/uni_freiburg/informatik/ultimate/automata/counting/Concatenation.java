@@ -108,7 +108,7 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 		//initialize parameters of SndOperand
 		for (STATE state : mSndOperand.getStates()) {
 			Guard newGuardFalse = new Guard();
-			newGuardFalse.changeTermType(1);
+			newGuardFalse.changeTermType(TermType.FALSE);
 			ArrayList<Guard> guardListFalse = new ArrayList<Guard>();
 			guardListFalse.add(newGuardFalse);
 			ArrayList<ArrayList<Guard>> newInitialConditionList = new ArrayList<ArrayList<Guard>>();
@@ -126,7 +126,7 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 		//connect finalStates of mFstOperand with initialStates of mSndOperand
 		for (STATE stateFstOp : mFstOperand.getStates()) {
 			
-			if (mFstOperand.getFinalConditions().get(stateFstOp).getCondition().get(0).get(0).getTermType() != 1) {
+			if (mFstOperand.getFinalConditions().get(stateFstOp).getCondition().get(0).get(0).getTermType() != TermType.FALSE) {
 				
 				ArrayList<Transition<LETTER, STATE>> newTransitions = new ArrayList<Transition<LETTER, STATE>>();
 				for (Transition<LETTER, STATE> transition : concatenationTransitions.get(stateFstOp))
@@ -135,7 +135,7 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 				
 				for (STATE stateSndOp : mSndOperand.getStates()) {
 					
-					if (mSndOperand.getInitialConditions().get(stateSndOp).getCondition().get(0).get(0).getTermType() != 1) {
+					if (mSndOperand.getInitialConditions().get(stateSndOp).getCondition().get(0).get(0).getTermType() != TermType.FALSE) {
 						
 						//add new transitions
 						for (Transition<LETTER, STATE> transition : mSndOperand.getTransitions().get(stateSndOp)) {
@@ -152,7 +152,7 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 						}
 						
 						//add finalCondition if stateSndOp is final as well
-						if (mSndOperand.getFinalConditions().get(stateSndOp).getCondition().get(0).get(0).getTermType() != 1) {
+						if (mSndOperand.getFinalConditions().get(stateSndOp).getCondition().get(0).get(0).getTermType() != TermType.FALSE) {
 							
 							ConjunctGuards conjunction1 = new ConjunctGuards(
 									mFstOperand.getFinalConditions().get(stateFstOp).copyFinalCondition().getCondition(),
@@ -171,7 +171,7 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 				if (newFinalConditionsList.size() == 0) {
 
 					Guard newGuardFalse = new Guard();
-					newGuardFalse.changeTermType(1);
+					newGuardFalse.changeTermType(TermType.FALSE);
 					ArrayList<Guard> guardListFalse = new ArrayList<Guard>();
 					guardListFalse.add(newGuardFalse);
 					newFinalConditionsList.add(guardListFalse);
