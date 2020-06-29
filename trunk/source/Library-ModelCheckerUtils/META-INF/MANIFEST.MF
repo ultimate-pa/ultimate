@@ -37,9 +37,9 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
- net.sf.javabdd,
- de.uni_freiburg.informatik.ultimate.lib.smtlibutils
+ net.sf.javabdd
 Import-Package: org.apache.commons.lang3
