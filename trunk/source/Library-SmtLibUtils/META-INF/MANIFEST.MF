@@ -6,10 +6,3 @@ Bundle-Version: 0.1.25
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation
-Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
- de.uni_freiburg.informatik.ultimate.lib.smtlib,
- de.uni_freiburg.informatik.ultimate.lib.util,
- de.uni_freiburg.informatik.ultimate.smtinterpol,
- de.uni_freiburg.informatik.ultimate.smtsolver.external,
- net.sf.javabdd
-Import-Package: org.apache.commons.lang3
