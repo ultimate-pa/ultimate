@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.counting;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -76,6 +77,68 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		printCollectionSuffix();
 	}
 	
+	private void printGuard(Guard guard) {
+		switch(guard.getTermType()) {
+		
+		case TRUE:
+			print("true");
+			break;
+			
+		case FALSE:
+			print("false");
+			break;
+			
+		case CONSTANT:
+			print('(');
+			print(guard.getRelationSymbol().toString());
+			print(' ');
+			print(guard.getCounterLeft().getCounterName());
+			print(' ');
+			print(guard.getConstant().toString());
+			print(')');
+			break;
+			
+		case COUNTER:
+			print('(');
+			print(guard.getRelationSymbol().toString());
+			print(' ');
+			print(guard.getCounterLeft().getCounterName());
+			print(' ');
+			print(guard.getCounterRight().getCounterName());
+			print(')');
+			break;
+			
+		case SUM:
+			print('(');
+			print(guard.getRelationSymbol().toString());
+			print(' ');
+			print(guard.getCounterLeft().getCounterName());
+			print(" (+ ");
+			print(guard.getCounterRight().getCounterName());
+			print(' ');
+			print(guard.getConstant().toString());
+			print("))");
+			break;
+		}
+	}
+	
+	private void printSublist(ArrayList<Guard> sublist) {
+		if (sublist.size() > 1) {
+			print(" (and");
+			for (Guard guard : sublist) {
+				print(' ');
+				printGuard(guard);
+			}
+			print(')');
+		}
+		else {
+			for (Guard guard : sublist) {
+				print(' ');
+				printGuard(guard);
+			}
+		}
+	}
+	
 	private void printInitialConditions() {
 		printCollectionPrefix("initialConditions");
 		for (STATE state : mCa.getStates()) {
@@ -83,7 +146,19 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 			print(mStateMapping.get(state));
 			print(' ');
 			print('\"');
-			//print(string representation of mCa.getInitialConditions().get(state))
+			ArrayList<ArrayList<Guard>> conditionList = mCa.getInitialConditions().get(state).getCondition();
+			if (conditionList.size() > 1) {
+				print("(or");
+				for (ArrayList<Guard> sublist : conditionList) {
+					printSublist(sublist);
+				}
+				print(')');
+			}
+			else {
+				for (ArrayList<Guard> sublist : conditionList) {
+					printSublist(sublist);
+				}
+			}
 			print('\"');
 			printOneTransitionSuffix();
 		}
@@ -97,7 +172,19 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 			print(mStateMapping.get(state));
 			print(' ');
 			print('\"');
-			//print(string representation of mCa.getFinalConditions().get(state))
+			ArrayList<ArrayList<Guard>> conditionList = mCa.getFinalConditions().get(state).getCondition();
+			if (conditionList.size() > 1) {
+				print("(or");
+				for (ArrayList<Guard> sublist : conditionList) {
+					printSublist(sublist);
+				}
+				print(')');
+			}
+			else {
+				for (ArrayList<Guard> sublist : conditionList) {
+					printSublist(sublist);
+				}
+			}
 			print('\"');
 			printOneTransitionSuffix();
 		}
@@ -114,14 +201,61 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 				print(mAlphabetMapping.get(transition.getLetter()));
 				print(' ');
 				print('\"');
-				//print(string representation of transition.getGuards());
+				ArrayList<ArrayList<Guard>> conditionList = transition.getGuards();
+				if (conditionList.size() > 1) {
+					print("(or");
+					for (ArrayList<Guard> sublist : conditionList) {
+						printSublist(sublist);
+					}
+					print(')');
+				}
+				else {
+					for (ArrayList<Guard> sublist : conditionList) {
+						printSublist(sublist);
+					}
+				}
 				print('\"');
 				print(' ');
 				print('{');
 				for (Update update : transition.getUpdates()) {
 					print(' ');
-					//print(string representation of update);
-					if (transition.getUpdates().indexOf(transition) < (transition.getUpdates().size()-1)) {
+					
+					switch(update.getTermType()) {
+					
+					case TRUE:
+						print("true");
+						break;
+						
+					case FALSE:
+						print("false");
+						break;
+						
+					case CONSTANT:
+						print(update.getCounterLeft().getCounterName());
+						print(" := \"");
+						print(update.getConstant().toString());
+						print('\"');
+						break;
+						
+					case COUNTER:
+						print(update.getCounterLeft().getCounterName());
+						print(" := \"");
+						print(update.getCounterRight().getCounterName());
+						print('\"');
+						break;
+						
+					case SUM:
+						print(update.getCounterLeft().getCounterName());
+						print(" := \"");
+						print("(+ ");
+						print(update.getCounterRight().getCounterName());
+						print(' ');
+						print(update.getConstant().toString());
+						print('\"');
+						break;
+					}
+					
+					if (transition.getUpdates().indexOf(update) < (transition.getUpdates().size()-1)) {
 						print(',');
 					}
 				}
