@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.GeneralAutomatonPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 
 /**
  * Prints a Counting Automaton
@@ -18,11 +17,13 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	
 	private final CountingAutomaton<LETTER, STATE> mCa;
 	private final Map<STATE, String> mStateMapping;
+	private final Map<LETTER, String> mAlphabetMapping;
 	
 	public CaWriter(final PrintWriter writer, final String name, final CountingAutomaton<LETTER, STATE> ca) {
 		super(writer);
 		mCa = ca;
 		mStateMapping = getStateMapping(mCa.getStates());
+		mAlphabetMapping = getAlphabetMapping(mCa.getAlphabet());
 		
 		print("CountingAutomaton ");
 		print(name);
@@ -47,11 +48,17 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		return stateMapping;
 	}
 	
-	private void printAlphabet() {
-		printCollectionPrefix("alphabet");
-		for (LETTER letter : mCa.getAlphabet()) {
-			//printElement(string representation of letter)
+	protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet) {
+		final Map<LETTER, String> alphabetMapping = new HashMap<>();
+		for (final LETTER letter : alphabet) {
+			alphabetMapping.put(letter, quoteAndReplaceBackslashes(letter));
 		}
+		return alphabetMapping;
+	}
+	
+	private void printAlphabet() {
+		printCollectionPrefix("callAlphabet");
+		printValues(mAlphabetMapping);
 		printCollectionSuffix();
 	}
 	
@@ -65,9 +72,7 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	
 	private void printStates() {
 		printCollectionPrefix("states");
-		for (STATE state : mCa.getStates()) {
-			//printElement(string representation of state)	
-		}
+		printValues(mStateMapping);
 		printCollectionSuffix();
 	}
 	
@@ -75,7 +80,7 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		printCollectionPrefix("initialConditions");
 		for (STATE state : mCa.getStates()) {
 			printOneTransitionPrefix();
-			//print(string representation of state)
+			print(mStateMapping.get(state));
 			print(' ');
 			print('\"');
 			//print(string representation of mCa.getInitialConditions().get(state))
@@ -89,7 +94,7 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		printCollectionPrefix("finalConditions");
 		for (STATE state : mCa.getStates()) {
 			printOneTransitionPrefix();
-			//print(string representation of state)
+			print(mStateMapping.get(state));
 			print(' ');
 			print('\"');
 			//print(string representation of mCa.getFinalConditions().get(state))
@@ -104,9 +109,9 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		for (STATE state : mCa.getStates()) {
 			for (Transition<LETTER, STATE> transition : mCa.getTransitions().get(state)) {
 				printOneTransitionPrefix();
-				//print(string representation of state)
+				print(mStateMapping.get(state));
 				print(' ');
-				//print(string representation of transition.getLetter());
+				print(mAlphabetMapping.get(transition.getLetter()));
 				print(' ');
 				print('\"');
 				//print(string representation of transition.getGuards());
@@ -123,7 +128,7 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 				print(' ');
 				print('}');
 				print(' ');
-				//print(string representation of transition.getSucStates());
+				print(mStateMapping.get(transition.getSucState()));
 				printOneTransitionSuffix();
 			}	
 		}
