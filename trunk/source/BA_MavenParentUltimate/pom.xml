@@ -521,9 +521,6 @@
         <module>../Library-CZT</module>
         <module>../Library-Disruptor</module>
         <module>../Library-IcfgTransformer</module>
-        
-        
-        
         <module>../Library-JavaBDD</module>
         <module>../Library-jdom</module>
         <module>../Library-Jung</module>
@@ -541,6 +538,7 @@
         <module>../Library-SMTLIB</module>
         <module>../Library-srParse</module>
         <module>../Library-Sifa</module>
+        <module>../Library-SmtLibUtils</module>
         <module>../Library-TraceCheckerUtils</module>
         <module>../Library-UltimateCore</module>
         <module>../Library-UltimateModel</module>
