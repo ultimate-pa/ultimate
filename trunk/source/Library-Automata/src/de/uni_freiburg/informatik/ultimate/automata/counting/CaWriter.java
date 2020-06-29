@@ -251,7 +251,7 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 						print(update.getCounterRight().getCounterName());
 						print(' ');
 						print(update.getConstant().toString());
-						print('\"');
+						print(")\"");
 						break;
 					}
 					
