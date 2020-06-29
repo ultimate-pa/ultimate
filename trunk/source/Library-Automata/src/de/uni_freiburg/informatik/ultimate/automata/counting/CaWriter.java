@@ -58,7 +58,7 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	}
 	
 	private void printAlphabet() {
-		printCollectionPrefix("callAlphabet");
+		printCollectionPrefix("alphabet");
 		printValues(mAlphabetMapping);
 		printCollectionSuffix();
 	}
