@@ -34,12 +34,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -59,8 +61,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.DnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.normalforms.UnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -1875,29 +1877,66 @@ public final class SmtUtils {
 	 */
 	public static Term quantifier(final Script script, final int quantifier, final Set<TermVariable> vars,
 			final Term body) {
-		if (vars.isEmpty()) {
-			return body;
-		}
-		final Collection<TermVariable> resultVars = filterToVarsThatOccurFreelyInTerm(vars, body);
-		if (resultVars.isEmpty()) {
-			return body;
-		}
-		final QuantifiedFormula innerQuantifiedFormula = isQuantifiedFormulaWithSameQuantifier(quantifier, body);
-		if (innerQuantifiedFormula == null) {
-			return script.quantifier(quantifier, resultVars.toArray(new TermVariable[resultVars.size()]), body);
-		}
-		final Set<TermVariable> resultQuantifiedVars =
-				new HashSet<>(Arrays.asList(innerQuantifiedFormula.getVariables()));
-		resultQuantifiedVars.addAll(vars);
-		return script.quantifier(quantifier,
-				resultQuantifiedVars.toArray(new TermVariable[resultQuantifiedVars.size()]),
-				innerQuantifiedFormula.getSubformula());
+		return quantifier(script, quantifier, new ArrayList<TermVariable>(vars), body);
+//		if (vars.isEmpty()) {
+//			return body;
+//		}
+//		final Collection<TermVariable> resultVars = projectToFreeVars(vars, body);
+//		if (resultVars.isEmpty()) {
+//			return body;
+//		}
+//		final QuantifiedFormula innerQuantifiedFormula = isQuantifiedFormulaWithSameQuantifier(quantifier, body);
+//		if (innerQuantifiedFormula == null) {
+//			return script.quantifier(quantifier, resultVars.toArray(new TermVariable[resultVars.size()]), body);
+//		}
+//		final Set<TermVariable> resultQuantifiedVars =
+//				new HashSet<>(Arrays.asList(innerQuantifiedFormula.getVariables()));
+//		resultQuantifiedVars.addAll(vars);
+//		return script.quantifier(quantifier,
+//				resultQuantifiedVars.toArray(new TermVariable[resultQuantifiedVars.size()]),
+//				innerQuantifiedFormula.getSubformula());
 	}
+
+	public static Term quantifier(final Script script, final int quantifier, final List<TermVariable> vars,
+			final Term subformula) {
+		final LinkedHashMap<String, TermVariable> varMap = new LinkedHashMap<>();
+		Term currentSubformula = subformula;
+		Set<TermVariable> freeVarsOfCurrentSubformula = Arrays.stream(currentSubformula.getFreeVars())
+				.collect(Collectors.toSet());
+		vars.stream().filter(freeVarsOfCurrentSubformula::contains).forEach(x -> varMap.put(x.getName(), x));
+		while (currentSubformula instanceof QuantifiedFormula
+				&& ((QuantifiedFormula) currentSubformula).getQuantifier() == quantifier) {
+			final QuantifiedFormula qf = (QuantifiedFormula) currentSubformula;
+			currentSubformula = qf.getSubformula();
+			freeVarsOfCurrentSubformula = Arrays.stream(currentSubformula.getFreeVars()).collect(Collectors.toSet());
+			Arrays.stream(qf.getVariables()).filter(freeVarsOfCurrentSubformula::contains)
+					.forEach(x -> varMap.put(x.getName(), x));
+
+		}
+		if (varMap.isEmpty()) {
+			return subformula;
+		} else {
+			final TermVariable[] resultVars = varMap.entrySet().stream().map(x -> x.getValue())
+					.toArray(TermVariable[]::new);
+			return script.quantifier(quantifier, resultVars, currentSubformula);
+		}
+	}
+
 
 	/**
 	 * Returns a new {@link Set} that contains all variables that are contained in vars and occur freely in term.
 	 */
-	public static Set<TermVariable> filterToVarsThatOccurFreelyInTerm(final Set<TermVariable> vars, final Term term) {
+	public static List<TermVariable> projectToFreeVars(final List<TermVariable> vars, final Term term) {
+		final Set<TermVariable> freeVars = Arrays.stream(term.getFreeVars()).collect(Collectors.toSet());
+		final List<TermVariable> result = vars.stream().filter(freeVars::contains).collect(Collectors.toList());
+		return result;
+	}
+
+
+	/**
+	 * Returns a new {@link Set} that contains all variables that are contained in vars and occur freely in term.
+	 */
+	public static Set<TermVariable> projectToFreeVars(final Set<TermVariable> vars, final Term term) {
 		final HashSet<TermVariable> result = new HashSet<>();
 		for (final TermVariable tv : Arrays.asList(term.getFreeVars())) {
 			if (vars.contains(tv)) {
