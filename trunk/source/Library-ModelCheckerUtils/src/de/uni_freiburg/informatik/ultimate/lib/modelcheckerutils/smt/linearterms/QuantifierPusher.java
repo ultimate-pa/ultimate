@@ -94,8 +94,8 @@ public class QuantifierPusher extends TermTransformer {
 		NO_UPD,
 	}
 
-	private enum SubformulaClassification {
-		CORRESPONDING_FINITE_CONNECTIVE, DUAL_FINITE_CONNECTIVE, SAME_QUANTIFIER, DUAL_QUANTIFIER, ATOM,
+	private enum FormulaClassification {
+		NOT_QUANTIFIED, CORRESPONDING_FINITE_CONNECTIVE, DUAL_FINITE_CONNECTIVE, SAME_QUANTIFIER, DUAL_QUANTIFIER, ATOM,
 	}
 
 	/**
@@ -131,63 +131,77 @@ public class QuantifierPusher extends TermTransformer {
 
 	@Override
 	protected void convert(final Term term) {
-		if (term instanceof QuantifiedFormula) {
-			final QuantifiedFormula quantifiedFormula = (QuantifiedFormula) term;
-			final Term termToRecurseOn = tryToPush(quantifiedFormula);
-			super.convert(termToRecurseOn);
-		} else {
-			super.convert(term);
-		}
-	}
-
-	private Term tryToPush(QuantifiedFormula quantifiedFormula) throws AssertionError {
-		SubformulaClassification classification =
-				classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
-		if (classification == SubformulaClassification.DUAL_QUANTIFIER) {
-			final Term dualQuantifierPushResult = processDualQuantifier(quantifiedFormula);
-			if (dualQuantifierPushResult instanceof QuantifiedFormula) {
-				quantifiedFormula = (QuantifiedFormula) dualQuantifierPushResult;
-			} else {
-				// Pushing the inner dual quantifier did not only remove that
-				// quantifier but also the quantified variables bounded
-				// by the outer quantifier
-				return dualQuantifierPushResult;
+		FormulaClassification classification = null;
+		Term currentTerm = term;
+		int iterations = 0;
+		while (true) {
+			classification = classify(currentTerm);
+			switch (classification) {
+			case NOT_QUANTIFIED: {
+				// let's recurse, there may be quantifiers in subformulas
+				super.convert(currentTerm);
+				return;
 			}
-			classification = classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
+			case SAME_QUANTIFIER: {
+				currentTerm = QuantifierUtils.flattenQuantifiers(mScript, (QuantifiedFormula) currentTerm);
+				break;
+			}
+			case DUAL_QUANTIFIER: {
+				final Term tmp = processDualQuantifier((QuantifiedFormula) currentTerm);
+				final FormulaClassification tmpClassification = classify(tmp);
+				if (tmpClassification == FormulaClassification.DUAL_QUANTIFIER) {
+					// unable to push, we have to take this subformula as result
+					setResult(tmp);
+					return;
+				} else {
+					currentTerm = tmp;
+					break;
+				}
+			}
+			case CORRESPONDING_FINITE_CONNECTIVE: {
+				currentTerm = pushOverCorrespondingFiniteConnective((QuantifiedFormula) currentTerm);
+				assert currentTerm != null : "corresponding connective case must never fail";
+				break;
+			}
+			case ATOM: {
+				final Term tmp = applyEliminationToAtom((QuantifiedFormula) currentTerm);
+				if (tmp == null) {
+					// no more eliminations possible
+					// let's recurse, there may be quantifiers in subformulas
+					super.convert(currentTerm);
+					return;
+				} else {
+					currentTerm = tmp;
+					break;
+				}
+			}
+			case DUAL_FINITE_CONNECTIVE: {
+				final Term tmp = tryToPushOverDualFiniteConnective((QuantifiedFormula) currentTerm);
+				if (tmp == null) {
+					// no more eliminations possible
+					// let's recurse, there may be quantifiers in subformulas
+					super.convert(currentTerm);
+					return;
+				} else {
+					currentTerm = tmp;
+					break;
+				}
+			}
+			default:
+				throw new AssertionError("unknown value " + classification);
+			}
+			iterations++;
 		}
-		while (classification == SubformulaClassification.SAME_QUANTIFIER) {
-			quantifiedFormula = processSameQuantifier(quantifiedFormula);
-			classification = classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
-		}
-		Term result;
-		switch (classification) {
-		case ATOM:
-			result = applyEliminationToAtom(quantifiedFormula);
-			break;
-		case CORRESPONDING_FINITE_CONNECTIVE:
-			result = pushOverCorrespondingFiniteConnective(quantifiedFormula);
-			break;
-		case DUAL_FINITE_CONNECTIVE:
-			result = tryToPushOverDualFiniteConnective(quantifiedFormula);
-			break;
-		case DUAL_QUANTIFIER:
-			// unable to push inner quantifier, hence we cannot push
-			result = quantifiedFormula;
-			break;
-		case SAME_QUANTIFIER:
-			throw new AssertionError("must have been handled above");
-		default:
-			throw new AssertionError("unknown value " + classification);
-		}
-		return result;
 	}
 
 	private Term applyEliminationToAtom(final QuantifiedFormula quantifiedFormula) {
-		final Term elimResult = applyDualJunctionEliminationTechniques(new EliminationTask(
-				quantifiedFormula.getQuantifier(), new HashSet<>(Arrays.asList(quantifiedFormula.getVariables())),
-				quantifiedFormula.getSubformula()), mMgdScript, mServices, mPqeTechniques);
-		if (elimResult == null) {
-			return quantifiedFormula;
+		final EliminationTask et = new EliminationTask(quantifiedFormula);
+		final Term elimResult;
+		if (et.getEliminatees().size() < quantifiedFormula.getVariables().length) {
+			// instant removal of variables that do not occur
+			elimResult = et.toTerm(mScript);
+		} else {
+			elimResult = applyDualJunctionEliminationTechniques(et, mMgdScript, mServices, mPqeTechniques);
 		}
 		return elimResult;
 	}
@@ -207,6 +221,13 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	private Term tryToPushOverDualFiniteConnective(final QuantifiedFormula quantifiedFormula) {
+
+		final EliminationTask inputEt = new EliminationTask(quantifiedFormula);
+		if (inputEt.getEliminatees().size() < quantifiedFormula.getVariables().length) {
+			// instant removal of variables that do not occur
+			return inputEt.toTerm(mScript);
+		}
+
 		assert quantifiedFormula.getSubformula() instanceof ApplicationTerm;
 		final ApplicationTerm appTerm = (ApplicationTerm) quantifiedFormula.getSubformula();
 		assert appTerm.getFunction().getApplicationString().equals(SmtUtils
@@ -272,8 +293,8 @@ public class QuantifierPusher extends TermTransformer {
 			}
 		}
 		if (!mApplyDistributivity) {
-			// return original
-			return quantifiedFormula;
+			// nothing eliminated
+			return null;
 		}
 
 		if (eliminatees.size() > 1 && ELIMINATEE_SEQUENTIALIZATION) {
@@ -338,14 +359,14 @@ public class QuantifierPusher extends TermTransformer {
 					// returns false positives if the coincidentally there is an inner quantified
 					// variables that has the same name.
 					// </pre>
-					return quantifiedFormula;
+					return null;
 				} else {
 					return pushed;
 				}
 			}
 		}
 		// failed to apply distributivity, return original
-		return quantifiedFormula;
+		return null;
 	}
 
 	private EliminationTask doit(final int quantifier, final Set<TermVariable> eliminatees, final Term[] dualFiniteParams) {
@@ -494,7 +515,7 @@ public class QuantifierPusher extends TermTransformer {
 
 	private Term applyDualJunctionEliminationTechniques(final EliminationTask et, final ManagedScript mgdScript,
 			final IUltimateServiceProvider services, final PqeTechniques pqeTechniques) {
-		return applyEliminationTechniques(et, mgdScript, services, pqeTechniques);
+		return applyEliminationTechniques2(et, mgdScript, services, pqeTechniques);
 	}
 
 	private Term applyEliminationTechniques(final EliminationTask et, final ManagedScript mgdScript,
@@ -519,10 +540,10 @@ public class QuantifierPusher extends TermTransformer {
 				// something was removed
 				final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), et.getQuantifier(), eliminateesAfterwards,
 						result);
-				if (quantified instanceof QuantifiedFormula) {
-					final QuantifiedFormula intermediate = (QuantifiedFormula) quantified;
-					return tryToPush(intermediate);
-				}
+//				if (quantified instanceof QuantifiedFormula) {
+//					final QuantifiedFormula intermediate = (QuantifiedFormula) quantified;
+//					return tryToPush(intermediate);
+//				}
 				// special case:
 				// eliminatees not reported correctly, no quantifier needed
 				// handle similar as empty eliminatees case
@@ -554,11 +575,11 @@ public class QuantifierPusher extends TermTransformer {
 //					}
 //					someSuccesfullElimination = true;
 					final Term iRes = currentEt.toTerm(mgdScript.getScript());
-					if (iRes instanceof QuantifiedFormula) {
-						return tryToPush((QuantifiedFormula) iRes);
-					} else {
+//					if (iRes instanceof QuantifiedFormula) {
+//						return tryToPush((QuantifiedFormula) iRes);
+//					} else {
 						return iRes;
-					}
+//					}
 				}
 			}
 //			if (someSuccesfullElimination)
@@ -624,43 +645,37 @@ public class QuantifierPusher extends TermTransformer {
 		return elimtechniques;
 	}
 
-	private static SubformulaClassification classify(final int quantifier, final Term subformula) {
+	private static FormulaClassification classify(final Term term) {
+		if (term instanceof QuantifiedFormula) {
+			final QuantifiedFormula qf = (QuantifiedFormula) term;
+			return classify(qf.getQuantifier(), qf.getSubformula());
+		} else {
+			return FormulaClassification.NOT_QUANTIFIED;
+		}
+	}
+
+	private static FormulaClassification classify(final int quantifier, final Term subformula) {
 		if (subformula instanceof QuantifiedFormula) {
 			final QuantifiedFormula quantifiedSubFormula = (QuantifiedFormula) subformula;
 			if (quantifiedSubFormula.getQuantifier() == quantifier) {
-				return SubformulaClassification.SAME_QUANTIFIER;
+				return FormulaClassification.SAME_QUANTIFIER;
 			}
-			return SubformulaClassification.DUAL_QUANTIFIER;
+			return FormulaClassification.DUAL_QUANTIFIER;
 		} else if (subformula instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) subformula;
 			final String correspondingFiniteConnective = SmtUtils.getCorrespondingFiniteConnective(quantifier);
 			if (appTerm.getFunction().getApplicationString().equals(correspondingFiniteConnective)) {
-				return SubformulaClassification.CORRESPONDING_FINITE_CONNECTIVE;
+				return FormulaClassification.CORRESPONDING_FINITE_CONNECTIVE;
 			}
 			final String dualFiniteConnective =
 					SmtUtils.getCorrespondingFiniteConnective(SmtUtils.getOtherQuantifier(quantifier));
 			if (appTerm.getFunction().getApplicationString().equals(dualFiniteConnective)) {
-				return SubformulaClassification.DUAL_FINITE_CONNECTIVE;
+				return FormulaClassification.DUAL_FINITE_CONNECTIVE;
 			}
-			return SubformulaClassification.ATOM;
+			return FormulaClassification.ATOM;
 		} else {
-			return SubformulaClassification.ATOM;
+			return FormulaClassification.ATOM;
 		}
-	}
-
-	private QuantifiedFormula processSameQuantifier(final QuantifiedFormula quantifiedFormula) {
-		assert quantifiedFormula.getSubformula() instanceof QuantifiedFormula;
-		final QuantifiedFormula quantifiedSubFormula = (QuantifiedFormula) quantifiedFormula.getSubformula();
-		assert quantifiedSubFormula.getQuantifier() == quantifiedFormula.getQuantifier();
-		TermVariable[] vars;
-		{
-			final TermVariable[] varsOuter = quantifiedFormula.getVariables();
-			final TermVariable[] varsInner = quantifiedSubFormula.getVariables();
-			vars = Arrays.copyOf(varsOuter, varsOuter.length + varsInner.length);
-			System.arraycopy(varsInner, 0, vars, varsOuter.length, varsInner.length);
-		}
-		final Term body = quantifiedSubFormula.getSubformula();
-		return (QuantifiedFormula) mScript.quantifier(quantifiedFormula.getQuantifier(), vars, body);
 	}
 
 	private Term processDualQuantifier(final QuantifiedFormula quantifiedFormula) {
@@ -670,8 +685,8 @@ public class QuantifierPusher extends TermTransformer {
 		final Term quantifiedSubFormulaPushed =
 				new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques)
 						.transform(quantifiedSubFormula);
-		final Term result = mScript.quantifier(quantifiedFormula.getQuantifier(), quantifiedFormula.getVariables(),
-				quantifiedSubFormulaPushed);
+		final Term result = SmtUtils.quantifier(mMgdScript.getScript(), quantifiedFormula.getQuantifier(),
+				new HashSet<>(Arrays.asList(quantifiedFormula.getVariables())), quantifiedSubFormulaPushed);
 		return result;
 	}
 
