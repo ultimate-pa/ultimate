@@ -1872,31 +1872,25 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Returns quantified formula. Drops quantifiers for variables that do not occur in formula. If subformula is
-	 * quantified formula with same quantifier both are merged.
+	 * Returns quantified formula. Drops quantifiers for variables that do not occur
+	 * in formula. If subformula is quantified formula with same quantifier both are
+	 * merged.
 	 */
 	public static Term quantifier(final Script script, final int quantifier, final Set<TermVariable> vars,
 			final Term body) {
 		return quantifier(script, quantifier, new ArrayList<TermVariable>(vars), body);
-//		if (vars.isEmpty()) {
-//			return body;
-//		}
-//		final Collection<TermVariable> resultVars = projectToFreeVars(vars, body);
-//		if (resultVars.isEmpty()) {
-//			return body;
-//		}
-//		final QuantifiedFormula innerQuantifiedFormula = isQuantifiedFormulaWithSameQuantifier(quantifier, body);
-//		if (innerQuantifiedFormula == null) {
-//			return script.quantifier(quantifier, resultVars.toArray(new TermVariable[resultVars.size()]), body);
-//		}
-//		final Set<TermVariable> resultQuantifiedVars =
-//				new HashSet<>(Arrays.asList(innerQuantifiedFormula.getVariables()));
-//		resultQuantifiedVars.addAll(vars);
-//		return script.quantifier(quantifier,
-//				resultQuantifiedVars.toArray(new TermVariable[resultQuantifiedVars.size()]),
-//				innerQuantifiedFormula.getSubformula());
 	}
 
+	/**
+	 * Returns a quantified formula with the following two optimizations.
+	 * <ul>
+	 * <li>Nested quantified formulas that have the same quantifier are merged.
+	 * <li>Quantified variables that do not occur in the subformula are dropped.
+	 * </ul>
+	 * The order of the quantified variables is preserved. If quantified formulas
+	 * are merged, the variables of the outer formula come before the variables of
+	 * the inner formula.
+	 */
 	public static Term quantifier(final Script script, final int quantifier, final List<TermVariable> vars,
 			final Term subformula) {
 		final LinkedHashMap<String, TermVariable> varMap = new LinkedHashMap<>();
@@ -1922,9 +1916,9 @@ public final class SmtUtils {
 		}
 	}
 
-
 	/**
-	 * Returns a new {@link Set} that contains all variables that are contained in vars and occur freely in term.
+	 * Returns a new {@link Set} that contains all variables that are contained in
+	 * vars and occur freely in term.
 	 */
 	public static List<TermVariable> projectToFreeVars(final List<TermVariable> vars, final Term term) {
 		final Set<TermVariable> freeVars = Arrays.stream(term.getFreeVars()).collect(Collectors.toSet());
