@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -59,6 +60,14 @@ public class EliminationTask {
 		mQuantifier = quantifier;
 		mEliminatees = QuantifierUtils.projectToFreeVars(eliminatees, term);
 		mTerm = term;
+	}
+
+	public EliminationTask(final QuantifiedFormula quantifiedFormula) {
+		super();
+		mQuantifier = quantifiedFormula.getQuantifier();
+		mEliminatees = QuantifierUtils.projectToFreeVars(Arrays.asList(quantifiedFormula.getVariables()),
+				quantifiedFormula.getSubformula());
+		mTerm = quantifiedFormula.getSubformula();
 	}
 
 	public int getQuantifier() {

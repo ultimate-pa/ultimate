@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -365,16 +364,20 @@ public class QuantifierUtils {
 
 
 	/**
-	 * @return A new set that is the projection of varSet to the free variables of
+	 * @return A new set that is the projection of vars to the free variables of
 	 *         term.
 	 */
-	public static LinkedHashSet<TermVariable> projectToFreeVars(final Set<TermVariable> varSet, final Term term) {
+	public static LinkedHashSet<TermVariable> projectToFreeVars(final Collection<TermVariable> vars, final Term term) {
 		final LinkedHashSet<TermVariable> result = new LinkedHashSet<>();
 		for (final TermVariable freeVar : term.getFreeVars()) {
-			if (varSet.contains(freeVar)) {
+			if (vars.contains(freeVar)) {
 				result.add(freeVar);
 			}
 		}
 		return result;
+	}
+
+	public static Term flattenQuantifiers(final Script script, final QuantifiedFormula qf) {
+		return SmtUtils.quantifier(script, qf.getQuantifier(), Arrays.asList(qf.getVariables()), qf.getSubformula());
 	}
 }
