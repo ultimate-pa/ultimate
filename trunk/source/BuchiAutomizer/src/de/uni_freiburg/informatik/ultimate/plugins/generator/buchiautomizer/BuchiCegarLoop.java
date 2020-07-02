@@ -975,7 +975,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 					"");
 		}
 		if (mConstructTermcompProof) {
-			mTermcompProofBenchmark.reportFiniteModule(mIteration, mRefineBuchi.getInterpolAutomatonUsedInRefinement());
+			mTermcompProofBenchmark.reportFiniteModule(mIteration, mInterpolAutomaton);
 		}
 		mMDBenchmark.reportTrivialModule(mIteration, mInterpolAutomaton.size());
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
