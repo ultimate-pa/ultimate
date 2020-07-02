@@ -36,6 +36,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.visualization.AlternatingAutomatonWriter;
@@ -508,6 +509,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 
 		public NamedAutomaton(final String name, final IAutomaton<LETTER, STATE> automaton) {
 			super();
+			Objects.requireNonNull(name);
+			Objects.requireNonNull(automaton);
 			mName = name;
 			mAutomaton = automaton;
 		}
