@@ -439,7 +439,7 @@ def __get_out_of_ressources_ymls(input_dir):
     xml_files = [f for f in __list_xml_filepaths(input_dir)]
     if len(xml_files) == 0:
         print('There are no benchexec .xml files in {}, cannot exclude timeouts properly'.format(input_dir))
-        return []
+        return [], [], False
 
     timeout_ymls = []
     oom_ymls = []
@@ -461,20 +461,24 @@ def __get_out_of_ressources_ymls(input_dir):
                 timeout_ymls += [logfile_name]
             elif status == "OUT OF MEMORY":
                 oom_ymls += [logfile_name]
-    return timeout_ymls, oom_ymls
+    return timeout_ymls, oom_ymls, True
 
 
 def main():
     args = parse_args()
     input_dir = args.input[0]
 
-    timeout_ymls, oom_ymls = __get_out_of_ressources_ymls(input_dir)
+    timeout_ymls, oom_ymls, benchexec_xml = __get_out_of_ressources_ymls(input_dir)
     log_file_count, results = process_input_dir(input_dir, timeout_ymls, oom_ymls)
 
     if log_file_count > len(results):
+        if not benchexec_xml:
+          msg = "missing benchexec files"
+        else:
+          msg = "something is wrong"
         print(
-            'We processed {} .log files but collected only {} results, something is wrong!'.format(log_file_count,
-                                                                                                   len(results)))
+            'We processed {} .log files but collected only {} results. Possible reason: {}'.format(log_file_count,
+                                                                                                   len(results), msg))
     else:
         print(
             'Overview of {} results from {} .log files ({} {}, {} {})'.format(len(results), log_file_count,
