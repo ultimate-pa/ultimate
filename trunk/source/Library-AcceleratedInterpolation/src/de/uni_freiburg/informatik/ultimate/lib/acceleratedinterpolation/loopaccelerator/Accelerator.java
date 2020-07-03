@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.Accelera
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -104,9 +103,6 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 			mFoundAcceleration = true;
 			mLogger.debug("Done.");
 			return acceleratedLoop;
-		} catch (final NotAffineException e) {
-			mFoundAcceleration = false;
-			e.printStackTrace();
 		} catch (final UnsupportedOperationException ue) {
 			/*
 			 * Unsupported Operation error because FastUPR could not accelerate the loop. Either return null, to make
@@ -115,7 +111,6 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 			mFoundAcceleration = false;
 			return loop;
 		}
-		return loop;
 	}
 
 	private void underApproxAcceleration(final Map<IcfgLocation, List<LETTER>> loops) {
