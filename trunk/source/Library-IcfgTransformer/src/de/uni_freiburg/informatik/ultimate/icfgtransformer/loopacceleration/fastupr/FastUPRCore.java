@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -96,7 +95,7 @@ public class FastUPRCore {
 	 *             If the Formula is not an Octagon an Exception will be thrown.
 	 */
 	public FastUPRCore(final UnmodifiableTransFormula formula, final ManagedScript managedScript, final ILogger logger,
-			final IUltimateServiceProvider services) throws NotAffineException {
+			final IUltimateServiceProvider services) {
 		mServices = services;
 		mManagedScript = managedScript;
 		mUtils = new FastUPRUtils(logger, false);
@@ -383,7 +382,7 @@ public class FastUPRCore {
 		return isConsistent;
 	}
 
-	private boolean isOctagon(final Term relation, final Script script) throws NotAffineException {
+	private boolean isOctagon(final Term relation, final Script script) {
 
 		// Convert Term to CNF
 
