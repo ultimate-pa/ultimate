@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.e
 import java.util.Objects;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public enum ErrorAutomatonStatisticsDefinitions implements IStatisticsElement {
 	NumberErrorTraces(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),

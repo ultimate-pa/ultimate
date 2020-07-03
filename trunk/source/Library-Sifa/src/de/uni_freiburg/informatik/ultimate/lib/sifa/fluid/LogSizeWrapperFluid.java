@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.fluid;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 
 /**
  * Logs the size of a formula before asking another fluid whether to abstract or not.

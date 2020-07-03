@@ -38,10 +38,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -87,7 +89,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
 		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
-		final Validity result = IHoareTripleChecker.convertLBool2Validity(isInductive(pre, act, succ));
+		final Validity result = IncrementalPlicationChecker.convertLBool2Validity(isInductive(pre, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
@@ -108,7 +110,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
 		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
-		final Validity result = IHoareTripleChecker.convertLBool2Validity(isInductiveCall(pre, act, succ));
+		final Validity result = IncrementalPlicationChecker.convertLBool2Validity(isInductiveCall(pre, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
@@ -131,7 +133,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			final IPredicate succ) {
 		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		final Validity result =
-				IHoareTripleChecker.convertLBool2Validity(isInductiveReturn(preLin, preHier, act, succ));
+				IncrementalPlicationChecker.convertLBool2Validity(isInductiveReturn(preLin, preHier, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
@@ -436,7 +438,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		final Validity testRes = sdhtch.sdecReturn(ps1, psk, ta, ps2);
 		if (testRes != null) {
 			// assert testRes == result : "my return dataflow check failed";
-			if (testRes != IHoareTripleChecker.convertLBool2Validity(result)) {
+			if (testRes != IncrementalPlicationChecker.convertLBool2Validity(result)) {
 				sdhtch.sdecReturn(ps1, psk, ta, ps2);
 			}
 		}
@@ -451,7 +453,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 		final Validity testRes = sdhtch.sdecCall(ps1, ta, ps2);
 		if (testRes != null) {
-			assert testRes == IHoareTripleChecker.convertLBool2Validity(result) : "my call dataflow check failed";
+			assert testRes == IncrementalPlicationChecker.convertLBool2Validity(result) : "my call dataflow check failed";
 			// if (testRes != result) {
 			// sdhtch.sdecReturn(ps1, psk, ta, ps2);
 			// }
@@ -465,8 +467,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 			final Validity testRes = sdhtch.sdecInternalToFalse(ps1, ta);
 			if (testRes != null) {
-				assert testRes == IHoareTripleChecker.convertLBool2Validity(result)
-						|| testRes == IHoareTripleChecker.convertLBool2Validity(LBool.UNKNOWN)
+				assert testRes == IncrementalPlicationChecker.convertLBool2Validity(result)
+						|| testRes == IncrementalPlicationChecker.convertLBool2Validity(LBool.UNKNOWN)
 								&& result == LBool.SAT : "my internal dataflow check failed";
 				// if (testRes != result) {
 				// sdhtch.sdecInternalToFalse(ps1, ta);
@@ -478,7 +480,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 			final Validity testRes = sdhtch.sdecInternalSelfloop(ps1, ta);
 			if (testRes != null) {
-				assert testRes == IHoareTripleChecker
+				assert testRes == IncrementalPlicationChecker
 						.convertLBool2Validity(result) : "my internal dataflow check failed";
 				// if (testRes != result) {
 				// sdhtch.sdecReturn(ps1, psk, ta, ps2);
@@ -491,7 +493,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 		final Validity testRes = sdhtch.sdecInteral(ps1, ta, ps2);
 		if (testRes != null) {
-			assert testRes == IHoareTripleChecker.convertLBool2Validity(result) : "my internal dataflow check failed";
+			assert testRes == IncrementalPlicationChecker.convertLBool2Validity(result) : "my internal dataflow check failed";
 			// if (testRes != result) {
 			// sdhtch.sdecReturn(ps1, psk, ta, ps2);
 			// }

@@ -1,48 +1,49 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Check implication between two formulas that each represent a set of 
+ * Check implication between two formulas that each represent a set of
  * program states.
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class MonolithicImplicationChecker {
-	
+
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
 
@@ -51,19 +52,19 @@ public class MonolithicImplicationChecker {
 		mServices = services;
 		mManagedScript = managedScript;
 	}
-	
-	
+
+
 	/**
-	 * Check if implication  antecedent ==> succedent  is valid. 
+	 * Check if implication  antecedent ==> succedent  is valid.
 	 */
 	public Validity checkImplication(final IPredicate antecedent, final boolean affirmAntecedentNeitherValidNorUnsat,
 			final IPredicate succedent, final boolean affirmSuccedentNeitherValidNorUnsat) {
-		return checkImplication(antecedent.getFormula(), antecedent.getClosedFormula(),	affirmAntecedentNeitherValidNorUnsat, 
+		return checkImplication(antecedent.getFormula(), antecedent.getClosedFormula(),	affirmAntecedentNeitherValidNorUnsat,
 				succedent.getFormula(), succedent.getClosedFormula(), affirmSuccedentNeitherValidNorUnsat);
 	}
-	
+
 	/**
-	 * Check if implication  antecedent ==> succedent  is valid. 
+	 * Check if implication  antecedent ==> succedent  is valid.
 	 */
 	public Validity checkImplication(final Term antecedent, final Term antecedentClosedFormula, final boolean affirmAntecedentNeitherValidNorUnsat,
 			final Term succedent, final Term succedentClosedFormula, final boolean affirmSuccedentNeitherValidNorUnsat) {
@@ -85,7 +86,7 @@ public class MonolithicImplicationChecker {
 		mManagedScript.pop(this, 1);
 		mManagedScript.echo(this, new QuotedObject("Finished implication check"));
 		mManagedScript.unlock(this);
-		return IHoareTripleChecker.convertLBool2Validity(lbool);
+		return IncrementalPlicationChecker.convertLBool2Validity(lbool);
 	}
 
 	private Validity dataflowBasedImplicationCheck(final Term antecedent, final Term succedent) {

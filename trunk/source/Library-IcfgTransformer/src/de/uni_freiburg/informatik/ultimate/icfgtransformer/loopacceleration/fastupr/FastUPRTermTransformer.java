@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fas
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;

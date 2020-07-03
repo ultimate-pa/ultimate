@@ -30,9 +30,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb;
 
 import java.util.ArrayList;
-
 import java.util.HashMap;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;

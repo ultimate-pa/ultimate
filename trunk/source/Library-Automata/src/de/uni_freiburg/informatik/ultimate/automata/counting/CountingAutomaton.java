@@ -27,10 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.counting;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 

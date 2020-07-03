@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -68,7 +68,7 @@ public interface IPredicateUnifier {
 
 	/**
 	 * Get a unified version of a predicate.
-	 * 
+	 *
 	 * Note that the given predicate needs to be built by the same predicate factory than the one used in the predicate
 	 * unifier, or else this might lead to difficult-to-detect bugs
 	 */

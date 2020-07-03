@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.Comparator;
-import java.util.List;
 
 /**
  *

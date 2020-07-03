@@ -37,12 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-
-
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.WaToBuchiWrapper;
-
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.Options;
-
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.WaToBuchiWrapper;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.automata.IBuchiWa;
 //import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.inclusion.BuchiWaDifferenceAscc;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;

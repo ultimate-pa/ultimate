@@ -27,8 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.mapelimination;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)

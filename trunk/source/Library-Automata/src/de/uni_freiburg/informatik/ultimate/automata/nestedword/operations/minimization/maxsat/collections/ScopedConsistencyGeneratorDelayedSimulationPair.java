@@ -7,7 +7,6 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ScopedConsistencyGeneratorDelayedSimulationPair<T, LETTER, STATE> extends ScopedConsistencyGeneratorDelayedSimulation<Pair<T, T>, LETTER, STATE>{

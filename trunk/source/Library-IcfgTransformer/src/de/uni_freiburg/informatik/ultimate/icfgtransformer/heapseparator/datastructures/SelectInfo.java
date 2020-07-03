@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.arrays.ArrayIndex;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 
 /**
  * Represents a select term somewhere in the program.

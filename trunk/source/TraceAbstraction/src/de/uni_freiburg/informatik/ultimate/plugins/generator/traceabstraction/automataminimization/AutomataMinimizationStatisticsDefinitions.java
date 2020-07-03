@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.a
 
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)

@@ -31,11 +31,11 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript.ILockHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript.ILockHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 /**
  * Object that implement this interface check if Hoare Triples are valid. Hoare triples that we check are of the form {
@@ -46,13 +46,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
  *
  */
 public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease {
-
-	/**
-	 * Hoare Triple Truth Value. This is the result of a Hoare triple check.
-	 */
-	public enum Validity {
-		VALID, INVALID, UNKNOWN, NOT_CHECKED
-	}
 
 	/**
 	 * Check if the Hoare triple {pre} act {succ} is valid for an internal action act. Internal transition means that
@@ -74,34 +67,6 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 	Validity checkReturn(IPredicate preLin, IPredicate preHier, IReturnAction act, IPredicate succ);
 
 	HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark();
-
-	static Validity convertLBool2Validity(final LBool lbool) {
-		switch (lbool) {
-		case SAT:
-			return Validity.INVALID;
-		case UNKNOWN:
-			return Validity.UNKNOWN;
-		case UNSAT:
-			return Validity.VALID;
-		default:
-			throw new AssertionError();
-		}
-	}
-	
-	static LBool convertValidity2Lbool(final Validity validity) {
-		switch (validity) {
-		case INVALID:
-			return LBool.SAT;
-		case NOT_CHECKED:
-			throw new AssertionError();
-		case UNKNOWN:
-			return LBool.UNKNOWN;
-		case VALID:
-			return LBool.UNSAT;
-		default:
-			throw new AssertionError();
-		}
-	}
 
 	public enum HoareTripleCheckerStatisticsDefinitions implements IStatisticsElement {
 
