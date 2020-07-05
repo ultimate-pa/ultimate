@@ -31,4 +31,4 @@
  * @author Jan Oreans (oreansj@cs.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-package synthesis;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.synthesis;

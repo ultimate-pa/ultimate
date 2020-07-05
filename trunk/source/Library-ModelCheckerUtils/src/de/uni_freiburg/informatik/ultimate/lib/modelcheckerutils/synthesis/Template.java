@@ -3,7 +3,7 @@
  * Copyright (C) 2020 Jan Oreans (oreansj@cs.uni-freiburg.de)
  * Copyright (C) 2020 University of Freiburg
  */
-package synthesis;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.synthesis;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;

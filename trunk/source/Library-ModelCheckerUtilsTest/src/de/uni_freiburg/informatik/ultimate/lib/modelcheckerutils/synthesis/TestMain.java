@@ -1,4 +1,4 @@
-package synthesis;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.synthesis;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;

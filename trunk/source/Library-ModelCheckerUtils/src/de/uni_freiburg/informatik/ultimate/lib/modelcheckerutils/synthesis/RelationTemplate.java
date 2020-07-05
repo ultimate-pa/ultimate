@@ -4,7 +4,7 @@
  * Copyright (C) 2020 University of Freiburg
  */
 
-package synthesis;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.synthesis;
 
 import java.util.Set;
 

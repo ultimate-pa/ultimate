@@ -1,4 +1,4 @@
-package synthesis;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.synthesis;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;

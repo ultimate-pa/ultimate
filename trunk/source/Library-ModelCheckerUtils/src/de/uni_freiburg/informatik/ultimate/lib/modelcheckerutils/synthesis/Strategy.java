@@ -1,4 +1,4 @@
-package synthesis;
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.synthesis;
 
 import java.util.HashSet;
 import java.util.Set;
