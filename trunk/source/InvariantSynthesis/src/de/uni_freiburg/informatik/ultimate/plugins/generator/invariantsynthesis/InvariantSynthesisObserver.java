@@ -77,17 +77,18 @@ public class InvariantSynthesisObserver implements IUnmanagedObserver {
 				throw new UnsupportedOperationException("InvariantSynthesis needs an RCFG");
 			}
 
-			if (System.getenv("REDIRECT_INVARIANT_SYNTHESIS_FLOWGRAPH") != null) {
-				try {
-					// Starter s = new Starter(rcfgRootNode);
-					de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.synthesis.TestMain.testEntryPoint(rcfgRootNode, mServices);
-				} catch (final Exception e) {
-					e.printStackTrace(System.out);
-				}
-
-				System.out.println("test main finished, exiting..");
-				System.exit(0);
-			}
+			// if (System.getenv("REDIRECT_INVARIANT_SYNTHESIS_FLOWGRAPH") != null) {
+			// try {
+			// // Starter s = new Starter(rcfgRootNode);
+			// de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.synthesis.TestMain.testEntryPoint(rcfgRootNode,
+			// mServices);
+			// } catch (final Exception e) {
+			// e.printStackTrace(System.out);
+			// }
+			//
+			// System.out.println("test main finished, exiting..");
+			// System.exit(0);
+			// }
 
 			mLogger.info("Analyzing ICFG " + rcfgRootNode.getIdentifier());
 			final InvariantSynthesisStarter tas = new InvariantSynthesisStarter(mServices, rcfgRootNode);
