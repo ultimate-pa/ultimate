@@ -41,7 +41,7 @@ echo "Updating $dir_ultimate..."
 pushd "$dir_ultimate" > /dev/null
 exitOnFail git fetch 
 exitOnFail git rebase
-smtinterpol_ver=$(grep version trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.properties | cut -d'=' -f 2)
+smtinterpol_ver=$(grep -oP "VERSION\s*=\s*\"\K[0-9\.\-a-zA-Z]*" trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.java)
 popd > /dev/null
 
 echo "Normalizing versions..."
@@ -108,7 +108,7 @@ else
 fi
 
 echo "Updating version"
-cp "$dir_smtinterpol"/SMTInterpol/release/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.properties "$dir_ultimate"/trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.properties
+cp "$dir_smtinterpol"/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.java "$dir_ultimate"/trunk/source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.java
 git commit -a -m"Updated SMTInterpol to $smtinterpol_cur"
 
 popd > /dev/null
