@@ -6,7 +6,7 @@ exitOnFail() {
     "$@"
     local status=$?
     if [ $status -ne 0 ]; then
-        echo "$@ failed with exit code $status"
+        echo "$* failed with exit code $status"
         exit $status
     fi
     return $status
@@ -45,10 +45,10 @@ smtinterpol_ver=$(grep version trunk/source/SMTInterpol/src/de/uni_freiburg/info
 popd > /dev/null
 
 echo "Normalizing versions..."
-smtinterpol_hash=$(echo $smtinterpol_cur | cut -d'-' -f 3)
-ultimate_hash=$(echo $smtinterpol_ver | cut -d'-' -f 3)
-smtinterpol_prehash=$(echo $smtinterpol_cur | cut -d'-' -f 1-2)
-ultimate_prehash=$(echo $smtinterpol_ver | cut -d'-' -f 1-2)
+smtinterpol_hash=$(echo "$smtinterpol_cur" | cut -d'-' -f 3)
+ultimate_hash=$(echo "$smtinterpol_ver" | cut -d'-' -f 3)
+smtinterpol_prehash=$(echo "$smtinterpol_cur" | cut -d'-' -f 1-2)
+ultimate_prehash=$(echo "$smtinterpol_ver" | cut -d'-' -f 1-2)
 smtinterpol_curnorm="$smtinterpol_prehash""-""${smtinterpol_hash:0:8}"
 smtinterpol_vernorm="$ultimate_prehash""-""${ultimate_hash:0:8}"
 
@@ -100,7 +100,7 @@ else
           continue
         fi 
         target_file="${dir_ultimate}/trunk/source/${line}"
-        target_dir=$(dirname $target_file)
+        target_dir=$(dirname "$target_file")
         exitOnFail mkdir -p "$target_dir"
         exitOnFail cp "$source_file" "$target_file"
         git add "$target_file"
