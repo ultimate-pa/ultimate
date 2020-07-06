@@ -380,7 +380,7 @@ constantTerm ::= NUMERAL:n
              			parser.report_error(se.getMessage());
              			RESULT = null;
              		} :}
-             | STRING:n {: RESULT = parser.getScript().string(n); :};
+             | STRING:n {: RESULT = parser.getScript().string(new QuotedObject(n)); :};
 index ::= NUMERAL:n {: RESULT = n.toString(); :} | symbol;
 identifierIndexed ::= LPAR UNDERSCORE symbol:id index+:indices RPAR
              {: RESULT = new IndexedIdentifier(id, indices); :};
