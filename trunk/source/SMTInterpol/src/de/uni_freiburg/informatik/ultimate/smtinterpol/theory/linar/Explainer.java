@@ -66,8 +66,8 @@ public class Explainer {
 			Literal explainedLiteral) {
 		mSolver = solver;
 		mExplainedLiteral = explainedLiteral;
-		mSubReasons = new HashMap<LAReason, LAAnnotation>();
-		mAnnotationStack = new ArrayDeque<LAAnnotation>();
+		mSubReasons = new HashMap<>();
+		mAnnotationStack = new ArrayDeque<>();
 		mAnnotationStack.add(new LAAnnotation());
 	}
 
@@ -189,5 +189,14 @@ public class Explainer {
 
 	public Literal createComposite(CompositeReason reason) {
 		return mSolver.createCompositeLiteral(reason, mExplainedLiteral);
+	}
+
+	public boolean checkSlack(InfinitesimalNumber slack) {
+		assert (mAnnotationStack.size() == 1);
+		assert slack.signum() > 0;
+		final MutableAffineTerm mat = mAnnotationStack.getFirst().addLiterals();
+		assert mat.isConstant() && mat.getConstant().signum() > 0;
+		assert mat.getConstant().sub(slack).signum() >= 0 && mat.getConstant().mReal.equals(slack.mReal);
+		return true;
 	}
 }

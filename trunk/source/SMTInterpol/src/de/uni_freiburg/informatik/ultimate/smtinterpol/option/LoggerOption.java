@@ -82,5 +82,4 @@ public class LoggerOption extends Option {
 	public void started() {
 		mDefaultDest = mLogger.getDestination();
 	}
-
 }

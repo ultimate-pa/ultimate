@@ -19,17 +19,21 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
@@ -39,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ITheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ArraySortInterpretation;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ArrayValue;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation.RuleKind;
@@ -151,11 +154,6 @@ public class ArrayTheory implements ITheory {
 		CCAppTerm mSecondaryStore;
 
 		/**
-		 * The array nodes in the same weak equivalence class form a cyclic linked list by virtue of this pointer.
-		 */
-		ArrayNode mNext;
-
-		/**
 		 * A map from index to the selects that exists for this weak-i equivalence class. Used to quickly merge weak-i
 		 * classes and to quickly compute new equivalences. We only have to remember one of the select terms for each
 		 * index, since the other are supposed to be equal.
@@ -163,7 +161,7 @@ public class ArrayTheory implements ITheory {
 		 * The key is always the representative of the index of the corresponding select.
 		 *
 		 * This is an arbitrary map for weak representative (no primary edge), should be a singleton for weak-i
-		 * representatives (primary edge exists, but no seconddary edge) and empty for all other nodes (where both edges
+		 * representatives (primary edge exists, but no secondary edge) and empty for all other nodes (where both edges
 		 * exist).
 		 */
 		Map<CCTerm, CCAppTerm> mSelects;
@@ -179,7 +177,6 @@ public class ArrayTheory implements ITheory {
 		public ArrayNode(final CCTerm ccterm) {
 			assert ccterm.isRepresentative();
 			mTerm = ccterm;
-			mNext = this;
 			mPrimaryEdge = mSecondaryEdge = null;
 			mPrimaryStore = null;
 		}
@@ -398,11 +395,6 @@ public class ArrayTheory implements ITheory {
 			assert mPrimaryEdge == null && storeNode.mPrimaryEdge == null;
 			mPrimaryEdge = storeNode;
 			mPrimaryStore = store;
-
-			// merge next linkage
-			final ArrayNode next = mNext;
-			mNext = storeNode.mNext;
-			storeNode.mNext = next;
 
 			// merge the consts;
 			// this map collects all selects in the other class, that may need to be merge with the const.
@@ -634,6 +626,11 @@ public class ArrayTheory implements ITheory {
 
 	/// Cache for the congruence roots;
 	Map<CCTerm, ArrayNode> mCongRoots = null;
+	/**
+	 * The array models store for every array node the index-value map. The indices are all their own representative.
+	 * The value is the select cc term representative. If there is no select term for that index, the value is the
+	 * weak-i representative node. At index null, the map stores the weak representative node.
+	 */
 	Map<ArrayNode, Map<CCTerm, Object>> mArrayModels = null;
 
 	// =============== STATISTICS ===============
@@ -870,112 +867,114 @@ public class ArrayTheory implements ITheory {
 										{ "Explanations", mTimeExplanations } } } } };
 	}
 
-	public void fillInModel(final Model model, final Theory t, final SharedTermEvaluator ste) {
-		final HashMap<ArrayNode, Integer> freshIndices = new HashMap<>();
-		final HashMap<ArrayNode, Integer> freshValues = new HashMap<>();
-		final HashMap<ArrayNode, Set<CCTerm>> storeIndices = new HashMap<>();
-		/* first create a fresh value for each array, unless it is the constant 0 array */
-		final ArrayDeque<ArrayNode> todoQueue = new ArrayDeque<>(mArrayModels.keySet());
-		while (!todoQueue.isEmpty()) {
-			final ArrayNode node = todoQueue.removeFirst();
+	public void fillInModel(final ModelBuilder builder, final Model model, final Theory t,
+			final SharedTermEvaluator ste) {
+		final Map<Sort, List<ArrayNode>> arraysBySort = new HashMap<>();
+		for (final ArrayNode node : mCongRoots.values()) {
 			final Sort arraySort = node.mTerm.getFlatTerm().getSort();
-			final ArraySortInterpretation arraySortInterpretation = (ArraySortInterpretation) model
-					.provideSortInterpretation(arraySort);
-			if (node.mConstTerm == null) {
-				/* if the node is not constant, create a fresh value for the node. */
-				node.mTerm.mModelVal = arraySortInterpretation.createEmptyArrayValue();
-				continue;
+			List<ArrayNode> list = arraysBySort.get(arraySort);
+			if (list == null) {
+				list = new ArrayList<>();
+				arraysBySort.put(arraySort, list);
 			}
-			final CCTerm constValueTerm = getValueFromConst(node.mConstTerm).getRepresentative();
-			final ArrayNode constValueArrayNode = mCongRoots.get(constValueTerm);
-			if (constValueArrayNode != null && todoQueue.contains(constValueArrayNode)) {
-				/* we need to evaluate that first */
-				todoQueue.remove(constValueArrayNode);
-				todoQueue.addFirst(node);
-				todoQueue.addFirst(constValueArrayNode);
-				continue;
-			}
-			if (constValueTerm.mModelVal == 0) {
-				node.mTerm.mModelVal = 0;
-			} else {
-				node.mTerm.mModelVal = arraySortInterpretation.createEmptyArrayValue();
-			}
+			list.add(node);
 		}
-		for (final Entry<ArrayNode, Map<CCTerm, Object>> e : mArrayModels.entrySet()) {
-			final ArrayNode root = (ArrayNode) e.getValue().get(null);
-			if (root.mConstTerm != null) {
+		final ArrayDeque<Sort> todoSorts = new ArrayDeque<>(arraysBySort.keySet());
+		while (!todoSorts.isEmpty()) {
+			final Sort arraySort = todoSorts.getFirst();
+			assert arraySort.isArraySort();
+			final Sort indexSort = arraySort.getArguments()[0];
+			final Sort valueSort = arraySort.getArguments()[1];
+			if (indexSort.isArraySort() && arraysBySort.containsKey(indexSort)) {
+				// do indexSort first
+				todoSorts.addFirst(indexSort);
 				continue;
 			}
-			Set<CCTerm> stores = storeIndices.get(root);
-			if (stores == null) {
-				stores = new HashSet<>();
-				storeIndices.put(root, stores);
+			if (valueSort.isArraySort() && arraysBySort.containsKey(valueSort)) {
+				// do valueSort first
+				todoSorts.addFirst(valueSort);
+				continue;
 			}
-			/*
-			 * Collect the indices for which a store that explicitly stores a zero value exists. We need to set the
-			 * values for the root at these indices to a fresh value.
-			 *
-			 * In our paper we set all indices for which a store exists to a fresh value, but this is enough.
-			 *
-			 * But only do this if the array is not a constant array.
-			 */
-			for (final Entry<CCTerm, Object> mapping : e.getValue().entrySet()) {
-				if (mapping.getValue() instanceof CCTerm) {
-					assert ((CCTerm) mapping.getValue()).isRepresentative();
-					final int val = ((CCTerm) mapping.getValue()).mModelVal;
-					if (val == 0) {
-						stores.add(mapping.getKey());
-					}
-				}
+			todoSorts.removeFirst();
+			if (!arraysBySort.containsKey(arraySort)) {
+				// already did this sort.
+				continue;
 			}
-		}
-		for (final Entry<ArrayNode, Map<CCTerm, Object>> e : mArrayModels.entrySet()) {
-			final CCTerm ccterm = e.getKey().mTerm;
-			assert ccterm.isRepresentative();
-			final Sort arraySort = ccterm.getFlatTerm().getSort();
-			final ArraySortInterpretation interp = model.getArrayInterpretation(arraySort);
-			final ArrayValue aval = interp.getValue(ccterm.mModelVal);
-			final ArrayNode root = (ArrayNode) e.getValue().get(null);
-			if (root.mConstTerm == null) {
-				if (!freshIndices.containsKey(root)) {
-					final int idx = interp.getIndexInterpretation().extendFresh();
-					freshIndices.put(root, idx);
-				}
-				interp.getValueInterpretation().ensureCapacity(2);
-				aval.store(freshIndices.get(root), 1);
-				final Set<CCTerm> storeIdxs = storeIndices.get(root);
-				for (final CCTerm index : storeIdxs) {
-					if (!e.getValue().containsKey(index)) {
-						if (!freshValues.containsKey(root)) {
-							freshValues.put(root, interp.getValueInterpretation().extendFresh());
-						}
-						final int val = freshValues.get(root);
-						aval.store(index.mModelVal, val);
-					}
-				}
-			} else {
-				final CCTerm defaultValue = getValueFromConst(root.mConstTerm).getRepresentative();
-				aval.setDefaultValue(defaultValue.mModelVal);
-			}
-			for (final Entry<CCTerm, Object> mapping : e.getValue().entrySet()) {
-				final CCTerm index = mapping.getKey();
-				if (index == null) {
+			final ArraySortInterpretation arraySortInterpretation =
+					(ArraySortInterpretation) model.provideSortInterpretation(arraySort);
+			final List<ArrayNode> arraysOfSort = arraysBySort.remove(arraySort);
+			final ArrayDeque<ArrayNode> todoQueue = new ArrayDeque<>(arraysOfSort);
+			while (!todoQueue.isEmpty()) {
+				final ArrayNode node = todoQueue.removeFirst();
+				if (builder.getModelValue(node.mTerm) != null) {
+					// we already did that term
 					continue;
 				}
-				assert index.isRepresentative();
-				final Object value = mapping.getValue();
-				int val;
-				if (value instanceof CCTerm) {
-					assert ((CCTerm) value).isRepresentative();
-					val = ((CCTerm) value).mModelVal;
-				} else {
-					final ArrayNode weaki = (ArrayNode) value;
-					if (!freshValues.containsKey(weaki)) {
-						freshValues.put(weaki, interp.getValueInterpretation().extendFresh());
+				final ArrayNode parent = node.mPrimaryEdge;
+				if (parent == null) {
+					// Note that constant arrays are the representatives, so either this is a constant array or
+					// it's not weakly equivalent to one.
+					if (node.mConstTerm != null) {
+						final Term value = builder.getModelValue(getValueFromConst(node.mConstTerm).getRepresentative());
+						if (value == null) {
+							// the const is probably an array that we build later.
+							assert getValueFromConst(node.mConstTerm).getFlatTerm().getSort().isArraySort();
+							todoQueue.addLast(node);
+							continue;
+						}
+						final FunctionSymbol constFunc = t.getFunctionWithResult("const", null, arraySort, valueSort);
+						final Term nodeValue = t.term(constFunc, value);
+						builder.setModelValue(node.mTerm, nodeValue);
+					} else {
+						// this is not a weakly related to a constant array.  Use some fresh array.
+						Term nodeValue = model.extendFresh(arraySort);
+						// change all indices to the right select value
+						for (final Entry<CCTerm, CCAppTerm> indexValuePairs : node.mSelects.entrySet()) {
+							final CCTerm index = indexValuePairs.getKey();
+							final CCTerm value = indexValuePairs.getValue().getRepresentative();
+							nodeValue = t.term("store",
+									nodeValue, builder.getModelValue(index), builder.getModelValue(value));
+						}
+						// we also need to change the indices we store in the same weak-equivalence class, so that
+						// they don't accidentally match the default value.
+						for (final ArrayNode other : arraysOfSort) {
+							if (other.getWeakRepresentative() != node
+									|| other == node
+									|| other.mSelects.isEmpty()
+									|| other.mSecondaryEdge != null) {
+								continue;
+							}
+							assert other.mSelects.size() == 1;
+							final CCTerm index = other.mSelects.keySet().iterator().next();
+							final CCTerm value = other.mSelects.get(index).getRepresentative();
+							if (!node.mSelects.containsKey(index)) {
+								// we have another array in the weak-equivalence class that may by accident store the
+								// default value. To make sure it doesn't equal node, we change the node value at
+								// this index to a fresh value
+								final Term freshValue = model.extendFresh(valueSort);
+								nodeValue = t.term("store", nodeValue, builder.getModelValue(index), freshValue);
+							}
+						}
+						nodeValue = arraySortInterpretation.normalizeStoreTerm(nodeValue);
+						builder.setModelValue(node.mTerm, nodeValue);
 					}
-					val = freshValues.get(weaki);
+				} else {
+					final Term parentTerm = builder.getModelValue(parent.mTerm);
+					if (parentTerm == null) {
+						// parent wasn't visited yet; it must be visited first
+						// enqueue the node again and its parent.
+						todoQueue.addFirst(node);
+						todoQueue.addFirst(parent);
+						continue;
+					}
+					final CCTerm ccIndex = getIndexFromStore(node.mPrimaryStore).getRepresentative();
+					final CCTerm ccValue = node.mSelects.get(ccIndex);
+					final Term index = builder.getModelValue(ccIndex);
+					final Term value = ccValue == null ? model.extendFresh(valueSort) : builder.getModelValue(ccValue);
+					Term nodeValue = t.term("store", parentTerm, index, value);
+					nodeValue = arraySortInterpretation.normalizeStoreTerm(nodeValue);
+					builder.setModelValue(node.mTerm, nodeValue);
 				}
-				aval.store(index.mModelVal, val);
 			}
 		}
 	}

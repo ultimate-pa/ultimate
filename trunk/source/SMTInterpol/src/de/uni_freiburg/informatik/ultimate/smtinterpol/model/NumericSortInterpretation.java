@@ -18,6 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -25,71 +26,44 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 public class NumericSortInterpretation implements SortInterpretation {
 
-	private final BidiMap<Rational> mValues = new BidiMap<Rational>();
 	// Desired invariants:
 	// mBiggest.isIntegral()
 	// (\forall int i; 0<=i<mValues.size; mValues.get(i).compareTo(mBiggest) < 0)
 	private Rational mBiggest = Rational.TWO;
 
 	public NumericSortInterpretation() {
-		mValues.add(0, Rational.ZERO);
-		mValues.add(1, Rational.ONE);
 	}
 
 	@Override
-	public Term toSMTLIB(Theory t, Sort sort) {
+	public Term toSMTLIB(final Theory t, final Sort sort) {
 		throw new InternalError("Should never be called!");
 	}
 
-	public int extend(Rational rat) {
-		if (mValues.containsVal(rat)) {
-			return mValues.get(rat);
-		}
-		final int idx = mValues.size();
-		mValues.add(idx, rat);
+	public Term extend(final Rational rat, final Sort sort) {
 		if (rat.compareTo(mBiggest) >= 0) {
-			mBiggest = rat.ceil().add(Rational.ONE);
+			mBiggest = rat.floor().add(Rational.ONE);
 		}
-		return idx;
+		return rat.toTerm(sort);
 	}
 
 	@Override
-	public int extendFresh() {
-		final int idx = mValues.size();
-		mValues.add(idx, mBiggest);
+	public Term extendFresh(final Sort sort) {
+		final Rational rat = mBiggest;
 		mBiggest = mBiggest.add(Rational.ONE);
-		return idx;
+		return rat.toTerm(sort);
 	}
 
 	@Override
 	public String toString() {
-		return mValues.toString();
+		return "numericSort[biggest=" + mBiggest + "]";
+	}
+
+	public static Rational toRational(final Term constTerm) {
+		return ((Rational) ((ConstantTerm) constTerm).getValue());
 	}
 
 	@Override
-	public int ensureCapacity(int numValues) {
-		while (mValues.size() < numValues) {
-			extendFresh();
-		}
-		return mValues.size();
+	public Term getModelValue(final int idx, final Sort sort) {
+		return Rational.valueOf(idx, 1).toTerm(sort);
 	}
-
-	@Override
-	public int size() {
-		return mValues.size();
-	}
-
-	@Override
-	public Term get(int idx, Sort s, Theory t) throws IndexOutOfBoundsException {
-		if (idx < 0 || idx >= mValues.size()) {
-			throw new IndexOutOfBoundsException();
-		}
-		final Rational rat = mValues.get(idx);
-		return rat.toTerm(s);
-	}
-
-	public Rational get(int idx) {
-		return mValues.get(idx);
-	}
-
 }

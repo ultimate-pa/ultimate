@@ -36,22 +36,38 @@ public class QuotedObject {
 	/**
 	 * The underlying Object.
 	 */
-	private final Object mValue;
+	private final String mValue;
+	
+	/**
+	 * True, if this needs to be quoted using the smt-lib 2.5 syntax. 
+	 */
+	private boolean mIsSMTLIB25;
 
 	/**
 	 * Create a quoted object.
 	 * @param value the value that is quoted.  Usually this is a string
 	 * 	without the quotes.
 	 */
-	public QuotedObject(Object value) {
+	public QuotedObject(String value) {
+		this(value, true);
+		assert value.indexOf('\\') < 0 && value.indexOf('\"') < 0;
+	}
+
+	/**
+	 * Create a quoted object.
+	 * @param value the value that is quoted.  Usually this is a string
+	 * 	without the quotes.
+	 */
+	public QuotedObject(String value, boolean isSMTLIB25) {
 		mValue = value;
+		mIsSMTLIB25 = isSMTLIB25;
 	}
 
 	/**
 	 * Get the underlying object.
 	 * @return the underlying object.
 	 */
-	public Object getValue() {
+	public String getValue() {
 		return mValue;
 	}
 
@@ -90,17 +106,12 @@ public class QuotedObject {
 	}
 
 	/**
-	 * Returns the SMTLIB 2.5 representation of the string.  This adds the
+	 * Returns the representation of the string.  This adds the
 	 * quotes and converts escape sequences appropriately.
-	 * @return the SMTLIB 2.5 compatible string representation.
+	 * @return the SMTLIB compatible string representation.
 	 */
 	@Override
 	public String toString() {
-		return toString(true);
-	}
-
-	public String toString(boolean version25) {
-		return version25 ? quoteString25(mValue.toString())
-				: quoteString20(mValue.toString());
+		return mIsSMTLIB25 ? quoteString25(mValue) : quoteString20(mValue);
 	}
 }

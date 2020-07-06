@@ -121,6 +121,10 @@ public class ExactInfinitesimalNumber implements Comparable<ExactInfinitesimalNu
 		return signum() < 0 ? negate() : this;
 	}
 
+	public InfinitesimalNumber roundToInfinitesimal() {
+		return new InfinitesimalNumber(mReal, mEps.signum());
+	}
+
 	public int compareTo(final InfinitesimalNumber other) {
 		final int cmp = mReal.compareTo(other.mReal);
 		return cmp == 0 ? mEps.compareTo(Rational.valueOf(other.mEps, 1)) : cmp;

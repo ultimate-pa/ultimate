@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ITheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.model.NumericSortInterpretation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCEquality;
@@ -561,15 +562,15 @@ public class LinArSolve implements ITheory {
 				final int coeffSign = row.getRawCoeff(i).signum();
 				final LinVar colvar = mLinvars.get(row.getRawIndex(i));
 				if (hasUpper) {
-					final InfinitesimalNumber colBound = coeffSign == sign ? colvar.getTightUpperBound()
-							: colvar.getTightLowerBound();
+					final InfinitesimalNumber colBound = coeffSign == sign ? colvar.getUpperBound()
+							: colvar.getLowerBound();
 					if (colBound.isInfinity()) {
 						hasUpper = false;
 					}
 				}
 				if (hasLower) {
-					final InfinitesimalNumber colBound = coeffSign == sign ? colvar.getTightLowerBound()
-							: colvar.getTightUpperBound();
+					final InfinitesimalNumber colBound = coeffSign == sign ? colvar.getLowerBound()
+							: colvar.getUpperBound();
 					if (colBound.isInfinity()) {
 						hasLower = false;
 					}
@@ -673,8 +674,8 @@ public class LinArSolve implements ITheory {
 
 	private boolean compositesSatisfied() {
 		for (final LinVar v : mLinvars) {
-			assert v.getValue().compareTo(v.getTightUpperBound()) <= 0;
-			assert v.getValue().compareTo(v.getTightLowerBound()) >= 0;
+			assert v.getValue().roundToInfinitesimal().compareTo(v.getTightUpperBound()) <= 0;
+			assert v.getValue().roundToInfinitesimal().compareTo(v.getTightLowerBound()) >= 0;
 		}
 		return true;
 	}
@@ -1404,7 +1405,7 @@ public class LinArSolve implements ITheory {
 					final LinVar nb = mLinvars.get(row.getRawIndex(i + 1));
 					final Rational coeff = Rational.valueOf(row.getRawCoeff(i + 1), denom);
 					rowVars[i] = nb;
-					reasons[i] = coeff.isNegative() == isUpper ? nb.mLower : nb.mUpper;
+					reasons[i] = coeff.isNegative() == isUpper ? nb.mLowerLiteral : nb.mUpperLiteral;
 					coeffs[i] = coeff;
 					final LiteralReason lastOfThis = reasons[i].getLastLiteral();
 					if (lastLiteral == null
@@ -1419,8 +1420,8 @@ public class LinArSolve implements ITheory {
 				coeffs = basic.mCachedRowCoeffs;
 				reasons = new LAReason[rowVars.length];
 				for (int i = 0; i < rowVars.length; i++) {
-					reasons[i] = coeffs[i].isNegative() == isUpper
-						? rowVars[i].mLower : rowVars[i].mUpper;
+					reasons[i] = coeffs[i].isNegative() == isUpper ? rowVars[i].mLowerLiteral
+							: rowVars[i].mUpperLiteral;
 					final LiteralReason lastOfThis = reasons[i].getLastLiteral();
 					if (lastLiteral == null
 						|| lastOfThis.getStackPosition() > lastLiteral.getStackPosition()) {
@@ -2137,7 +2138,9 @@ public class LinArSolve implements ITheory {
 				final FunctionSymbol fsym = getsValueFromLA(term);
 				if (fsym != null) {
 					final Rational val = realValue(var);
-					model.extendNumeric(fsym, val);
+					final NumericSortInterpretation si =
+							(NumericSortInterpretation) model.provideSortInterpretation(term.getSort());
+					model.map(fsym, si.extend(val, term.getSort()));
 				}
 			}
 		}

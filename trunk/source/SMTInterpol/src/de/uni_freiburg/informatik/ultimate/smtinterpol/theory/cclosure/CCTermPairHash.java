@@ -97,7 +97,7 @@ public class CCTermPairHash extends CuckooHashSet<CCTermPairHash.Info> {
 	}
 
 	public Info getInfo(CCTerm lhs, CCTerm rhs) {
-		final int hash = hash(pairHash(lhs, rhs));
+		final int hash = hashJenkins(pairHash(lhs, rhs));
 		final int hash1 = hash1(hash);
 		Info bucket = (Info) mBuckets[hash1];
 		if (bucket != null && bucket.equals(lhs, rhs)) {

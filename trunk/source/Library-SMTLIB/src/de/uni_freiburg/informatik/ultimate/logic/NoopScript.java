@@ -613,7 +613,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Term string(final String str) throws SMTLIBException {
+	public Term string(final QuotedObject str) throws SMTLIBException {
 		if (mTheory == null) {
 			throw new SMTLIBException("No logic set!");
 		}

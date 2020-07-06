@@ -103,7 +103,8 @@ class InstClause {
 	 * @return a Clause consisting of the literals of this InstClause, including the proof if enabled.
 	 */
 	Clause toClause(final boolean produceProofs) {
-		final Clause clause = new Clause(mLits.toArray(new Literal[mLits.size()]));
+		final Clause clause = new Clause(mLits.toArray(new Literal[mLits.size()]),
+				mQuantClause.getQuantTheory().getEngine().getAssertionStackLevel());
 		if (produceProofs) {
 			final Term[] subsAsTerm = new Term[mSubs.size()];
 			for (int i = 0; i < mSubs.size(); i++) {

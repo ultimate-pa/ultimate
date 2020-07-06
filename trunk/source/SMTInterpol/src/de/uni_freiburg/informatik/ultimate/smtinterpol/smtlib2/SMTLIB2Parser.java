@@ -18,7 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2;
 
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.IParser;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
@@ -33,11 +32,8 @@ public class SMTLIB2Parser implements IParser {
 
 		final ParseEnvironment parseEnv = new ParseEnvironment(script,
 				options);
-		try {
-			parseEnv.parseScript(filename);
-		} catch (final SMTLIBException se) {
-			parseEnv.printError(se.getMessage());
-		}
+		parseEnv.parseScript(filename);
+		parseEnv.exit();
 		return 0;
 	}
 

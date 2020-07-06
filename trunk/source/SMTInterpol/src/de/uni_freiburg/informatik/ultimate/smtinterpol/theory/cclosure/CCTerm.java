@@ -106,8 +106,6 @@ public abstract class CCTerm extends SimpleListable<CCTerm> {
 
 	int mHashCode;
 
-	int mModelVal;
-
 	static class TermPairMergeInfo {
 		CCTermPairHash.Info.Entry mInfo;
 		TermPairMergeInfo mNext;

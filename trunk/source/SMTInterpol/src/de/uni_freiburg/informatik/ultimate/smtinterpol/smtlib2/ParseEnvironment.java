@@ -29,25 +29,22 @@ import java.io.Reader;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Locale;
-import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
 
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.FrontEndOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 
 public class ParseEnvironment {
 	final Script mScript;
 	private File mCwd = null;
-	// What to do when script exits
-	private ExitHook mExitHook;
 	// Initialize this lazily.
 	private Deque<Long> mTiming;
 
@@ -57,51 +54,19 @@ public class ParseEnvironment {
 	private boolean mVersion25 = true;
 
 	public ParseEnvironment(final Script script, final OptionMap options) {
-		this(script, null, options);
-	}
-
-	public ParseEnvironment(final Script script, final ExitHook exit, final OptionMap options) {
 		mScript = script;
-		mExitHook = exit;
 		mOptions = options.getFrontEndOptions();
 		if (!mOptions.isFrontEndActive()) {
 			throw new IllegalArgumentException("Front End not active!");
 		}
 	}
 
-	public Script getScript() {
-		return mScript;
+	public boolean isSMTLIB25() {
+		return mVersion25;
 	}
 
-	static boolean convertSexp(final StringBuilder sb, final Object o, final int level) {
-		if (o instanceof Object[]) {
-			if (Config.RESULTS_ONE_PER_LINE && level > 0) {
-				sb.append(System.getProperty("line.separator"));
-				for (int i = 0; i < level; ++i) {
-					sb.append(' ');
-				}
-			}
-			sb.append('(');
-			final Object[] array = (Object[]) o;
-			boolean subarray = false;
-			String sep = "";
-			for (final Object el : array) {
-				sb.append(sep);
-				subarray |= convertSexp(sb, el, level + Config.INDENTATION);
-				sep = " ";
-			}
-			if (subarray && Config.RESULTS_ONE_PER_LINE) {
-				sb.append(System.getProperty("line.separator"));
-				for (int i = 0; i < level; ++i) {
-					sb.append(' ');
-				}
-			}
-			sb.append(')');
-			return true;
-		} else {
-			sb.append(o);
-		}
-		return false;
+	public Script getScript() {
+		return mScript;
 	}
 
 	public void parseScript(final String filename) throws SMTLIBException {
@@ -161,58 +126,30 @@ public class ParseEnvironment {
 	}
 
 	public void include(final String filename) throws SMTLIBException {
-		final ExitHook oldexit = mExitHook;
-		mExitHook = new ExitHook() {
-			@Override
-			public void exitHook() {
-				/* ignore exit */
-			}
-		};
-		final File oldcwd = mCwd;
 		parseScript(filename);
-		mCwd = oldcwd;
-		mExitHook = oldexit;
 	}
 
 	public void printSuccess() {
 		if (mOptions.isPrintSuccess()) {
-			final PrintWriter out = mOptions.getOutChannel();
-			out.println("success");
-			out.flush();
+			printResponse("success");
 		}
 	}
 
 	public void printError(final String message) {
-		final PrintWriter out = mOptions.getOutChannel();
-		out.print("(error \"");
-		out.print(message);
-		out.println("\")");
-		out.flush();
+		printResponse(new SExpression(new Object[] { "error", new QuotedObject(message, mVersion25) }));
 		if (!mOptions.continueOnError()) {
-			System.exit(1);
+			exitWithStatus(1);
 		}
 	}
 
-	public void printValues(final Map<Term, Term> values) {
-		final PrintTerm pt = new PrintTerm();
-		final PrintWriter out = mOptions.getOutChannel();
-		out.print('(');
-		String sep = "";
-		final String itemSep = Config.RESULTS_ONE_PER_LINE ? System.getProperty("line.separator") + " " : " ";
-		for (final Map.Entry<Term, Term> me : values.entrySet()) {
-			out.print(sep);
-			out.print('(');
-			pt.append(out, me.getKey());
-			out.print(' ');
-			pt.append(out, me.getValue());
-			out.print(')');
-			sep = itemSep;
+	public void printUnsupported() {
+		printResponse("unsupported");
+		if (!mOptions.continueOnError()) {
+			exitWithStatus(1);
 		}
-		out.println(')');
-		out.flush();
 	}
 
-	public void printResponse(final Object response) {
+	public void printResponse(Object response) {
 		final PrintWriter out = mOptions.getOutChannel();
 		if (!mOptions.isPrintTermsCSE()) {
 			if (response instanceof Term) {
@@ -220,75 +157,29 @@ public class ParseEnvironment {
 				out.println();
 				out.flush();
 				return;
-			} else if (response instanceof Term[]) {
-				printTermResponse((Term[]) response);
+			} else if (response instanceof SExpression
+					   && ((SExpression) response).getData() instanceof Term[]) {
+				new PrintTerm().append(out, (Term[]) ((SExpression) response).getData());
+				out.println();
 				out.flush();
 				return;
 			}
 		}
-		if (response instanceof Object[]) {
-			final StringBuilder sb = new StringBuilder();
-			convertSexp(sb, response, 0);
-			out.println(sb.toString());
-		} else if (response instanceof Iterable) {
-			final Iterable<?> it = (Iterable<?>) response;
-			out.print("(");
-			for (final Object o : it) {
-				printResponse(o);
-			}
-			out.println(")");
-		} else if (response instanceof QuotedObject) {
-			out.println(((QuotedObject) response).toString(mVersion25));
-		} else {
-			out.println(response);
-		}
+		out.println(response);
 		out.flush();
 	}
-
-	public void printInfoResponse(final String info, final Object response) {
-		final PrintWriter out = mOptions.getOutChannel();
-		final StringBuilder sb = new StringBuilder();
-		sb.append('(').append(info).append(' ');
-		convertSexp(sb, response, 0);
-		out.println(sb.append(')').toString());
-		out.flush();
-	}
-
-	/**
-	 * Direct printing of a term array response. This function is introduced to satisfy the requirement of the SMTLIB
-	 * standard for the get-assertions command. We have to print the terms "as they are asserted", i.e., without
-	 * introducing let terms via cse.
-	 *
-	 * @param response
-	 *            The response to print.
-	 */
-	public void printTermResponse(final Term[] response) {
-		final StringBuilder sb = new StringBuilder();
-		final PrintTerm pt = new PrintTerm();
-		sb.append('(');
-		String sep = "";
-		final String itemSep = Config.RESULTS_ONE_PER_LINE ? System.getProperty("line.separator") + " " : " ";
-		for (final Term t : response) {
-			sb.append(sep);
-			pt.append(sb, t);
-			sep = itemSep;
-		}
-		sb.append(')');
-		mOptions.getOutChannel().println(sb.toString());
-		mOptions.getOutChannel().flush();
+	
+	public void exitWithStatus(int statusCode) {
+		System.exit(statusCode);
 	}
 
 	public void exit() {
-		if (mExitHook == null) {
-			mScript.exit();
-			Runtime.getRuntime().exit(0);
-		} else {
-			mExitHook.exitHook();
-		}
+		mScript.exit();
+		exitWithStatus(0);
 	}
 
 	public void setInfo(final String info, final Object value) {
-		if (info.equals(":smt-lib-version")) {
+		if (info.equals(SMTLIBConstants.SMT_LIB_VERSION)) {
 			final String svalue = String.valueOf(value);
 			if ("2.5".equals(svalue) || "2.6".equals(svalue)) {
 				mVersion25 = true;
@@ -297,21 +188,27 @@ public class ParseEnvironment {
 				mVersion25 = false;
 				mLexer.setVersion25(false);
 			} else {
-				printError("Unknown SMTLIB version");
+				throw new SMTLIBException("Unknown SMT-LIB version");
 			}
-		} else if (info.equals(":error-behavior")) {
-			if ("immediate-exit".equals(value)) {
+		} else if (info.equals(SMTLIBConstants.ERROR_BEHAVIOR)) {
+			switch ((String) value) {
+			case SMTLIBConstants.IMMEDIATE_EXIT:
 				mScript.setOption(":continue-on-error", false);
-			} else if ("continued-execution".equals(value)) {
+				break;
+			case SMTLIBConstants.CONTINUED_EXECUTION:
 				mScript.setOption(":continue-on-error", true);
+				break;
+			default:
+				throw new SMTLIBException("Value should be " + SMTLIBConstants.CONTINUED_EXECUTION
+						+ " or " + SMTLIBConstants.IMMEDIATE_EXIT);
 			}
 		}
 		mScript.setInfo(info, value);
 	}
 
 	public Object getInfo(final String info) {
-		if (info.equals(":error-behavior")) {
-			return mOptions.continueOnError() ? "continued-execution" : "immediate-exit";
+		if (info.equals(SMTLIBConstants.ERROR_BEHAVIOR)) {
+			return mOptions.continueOnError() ? SMTLIBConstants.CONTINUED_EXECUTION : SMTLIBConstants.IMMEDIATE_EXIT;
 		}
 		return mScript.getInfo(info);
 	}

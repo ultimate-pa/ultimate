@@ -18,6 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.option;
 
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.Transformations.AvailableTransformations;
@@ -43,25 +44,6 @@ public class SolverOptions {
 	private final BooleanOption mArrayInterpolation;
 	private final BooleanOption mProofCheckMode;
 	private final EnumOption<CheckType> mSimpCheckType;
-
-	public static final String TIMEOUT = ":timeout";
-	public static final String RANDOM_SEED = ":random-seed";
-	public static final String MODELS_PARTIAL = ":models-partial";
-	public static final String MODEL_CHECK_MODE = ":model-check-mode";
-	public static final String PRODUCE_PROOFS = ":produce-proofs";
-	public static final String PROOF_TRANSFORMATION = ":proof-transformation";
-	public static final String PROOF_CHECK_MODE = ":proof-check-mode";
-	public static final String PRODUCE_INTERPOLANTS = ":produce-interpolants";
-	public static final String INTERPOLANT_CHECK_MODE = ":interpolant-check-mode";
-	public static final String SIMPLIFY_INTERPOLANTS = ":simplify-interpolants";
-	public static final String ARRAY_INTERPOLATION = ":array-interpolation";
-	public static final String CHECK_TYPE = ":check-type";
-	public static final String SIMPLIFY_CHECK_TYPE = ":simplify-check-type";
-	public static final String EPR = ":epr";
-	public static final String E_MATCHING = ":e-matching";
-	public static final String UNKNOWN_TERM_DAWGS = ":unknown-term-dawgs";
-	public static final String PROPAGATE_UNKNOWN_TERMS = ":propagate-unknown-terms";
-	public static final String PROPAGATE_UNKNOWN_AUX = ":propagate-unknown-aux";
 
 	SolverOptions(final OptionMap options, final LogProxy logger) {
 		mTimeout = new LongOption(0, true, "Soft timeout in milliseconds for "
@@ -94,81 +76,81 @@ public class SolverOptions {
 				+ " simplifier used in the simplify command");
 
 		// general standard compliant options
-		options.addOption(":verbosity", new VerbosityOption(logger));
-		options.addOption(TIMEOUT, mTimeout);
-		options.addOption(RANDOM_SEED, mRandomSeed);
-		options.addOption(":produce-assertions", new BooleanOption(false, false,
+		options.addOption(SMTLIBConstants.VERBOSITY, new VerbosityOption(logger));
+		options.addOption(SMTInterpolOptions.TIMEOUT, mTimeout);
+		options.addOption(SMTLIBConstants.RANDOM_SEED, mRandomSeed);
+		options.addOption(SMTLIBConstants.PRODUCE_ASSERTIONS, new BooleanOption(false, false,
 				"Store asserted formulas for later retrieval."));
-		options.addAlias(":interactive-mode", ":produce-assertions");
+		options.addAlias(SMTLIBConstants.INTERACTIVE_MODE, SMTLIBConstants.PRODUCE_ASSERTIONS);
 		// model options
-		options.addOption(":produce-models", new BooleanOption(false, true,
+		options.addOption(SMTLIBConstants.PRODUCE_MODELS, new BooleanOption(false, true,
 				"Produce models for satisfiable formulas"));
-		options.addOption(MODELS_PARTIAL, mModelsPartial);
-		options.addOption(MODEL_CHECK_MODE, mModelCheckMode);
-		options.addOption(":produce-assignments", new BooleanOption(false,
+		options.addOption(SMTInterpolOptions.MODELS_PARTIAL, mModelsPartial);
+		options.addOption(SMTInterpolOptions.MODEL_CHECK_MODE, mModelCheckMode);
+		options.addOption(SMTLIBConstants.PRODUCE_ASSIGNMENTS, new BooleanOption(false,
 				false, "Produce assignments of named Boolean terms for "
 				+ "satisfiable formulas"));
 
 		// proof options
-		options.addOption(PRODUCE_PROOFS, mProduceProofs);
-		options.addOption(PROOF_TRANSFORMATION, mProofTrans);
-		options.addOption(PROOF_CHECK_MODE, mProofCheckMode);
+		options.addOption(SMTLIBConstants.PRODUCE_PROOFS, mProduceProofs);
+		options.addOption(SMTInterpolOptions.PROOF_TRANSFORMATION, mProofTrans);
+		options.addOption(SMTInterpolOptions.PROOF_CHECK_MODE, mProofCheckMode);
 
 		// interpolant options
-		options.addOption(PRODUCE_INTERPOLANTS, mProduceInterpolants);
-		options.addOption(INTERPOLANT_CHECK_MODE, mInterpolantCheckMode);
-		options.addOption(SIMPLIFY_INTERPOLANTS, mSimpIps);
-		options.addOption(ARRAY_INTERPOLATION, mArrayInterpolation);
+		options.addOption(SMTInterpolOptions.PRODUCE_INTERPOLANTS, mProduceInterpolants);
+		options.addOption(SMTInterpolOptions.INTERPOLANT_CHECK_MODE, mInterpolantCheckMode);
+		options.addOption(SMTInterpolOptions.SIMPLIFY_INTERPOLANTS, mSimpIps);
+		options.addOption(SMTInterpolOptions.ARRAY_INTERPOLATION, mArrayInterpolation);
 
 		// unsat core options
-		options.addOption(":produce-unsat-cores", new BooleanOption(
+		options.addOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, new BooleanOption(
 				false, false, "Enable production of unsatisfiable cores."));
-		options.addOption(":unsat-core-check-mode", new BooleanOption(
+		options.addOption(SMTInterpolOptions.UNSAT_CORE_CHECK_MODE, new BooleanOption(
 				false, false, "Check generated unsat cores"));
 
 		// unsat assumptions options
-		options.addOption(":produce-unsat-assumptions", new BooleanOption(
+		options.addOption(SMTLIBConstants.PRODUCE_UNSAT_ASSUMPTIONS, new BooleanOption(
 				false, false, "Enable production of unsatisfiable assumptions."));
-		options.addOption(":unsat-assumptions-check-mode", new BooleanOption(
+		options.addOption(SMTInterpolOptions.UNSAT_ASSUMPTIONS_CHECK_MODE, new BooleanOption(
 				false, false, "Check generated unsat assumptions"));
 
 		// general non-standard options
-		options.addOption(CHECK_TYPE, mCheckType);
-		options.addOption(EPR, new BooleanOption(false, false,
+		options.addOption(SMTInterpolOptions.CHECK_TYPE, mCheckType);
+		options.addOption(SMTInterpolOptions.EPR, new BooleanOption(false, false,
 				"Assume formula is in EPR fragment. This give an error if the formula is outside EPR."));
-		options.addOption(E_MATCHING, new BooleanOption(true, false,
+		options.addOption(SMTInterpolOptions.E_MATCHING, new BooleanOption(true, false,
 				"Quantifier Theory: Use E-matching for conflict and unit search."));
-		options.addOption(UNKNOWN_TERM_DAWGS, new BooleanOption(true, false,
+		options.addOption(SMTInterpolOptions.UNKNOWN_TERM_DAWGS, new BooleanOption(true, false,
 				"Quantifier Theory: Use fourth instance value UNKNOWN_TERM as default in literal dawgs."));
-		options.addOption(PROPAGATE_UNKNOWN_TERMS, new BooleanOption(false, false,
+		options.addOption(SMTInterpolOptions.PROPAGATE_UNKNOWN_TERMS, new BooleanOption(false, false,
 				"Quantifier Theory: Allow propagation on atoms with non-existing term."));
-		options.addOption(PROPAGATE_UNKNOWN_AUX, new BooleanOption(false, false,
+		options.addOption(SMTInterpolOptions.PROPAGATE_UNKNOWN_AUX, new BooleanOption(false, false,
 				"Quantifier Theory: Allow propagation on atoms with non-existing @AUX applications."));
 
 		// simplifier options
-		options.addOption(SIMPLIFY_CHECK_TYPE, mSimpCheckType);
-		options.addOption(":simplify-repeatedly", new BooleanOption(true, true,
+		options.addOption(SMTInterpolOptions.SIMPLIFY_CHECK_TYPE, mSimpCheckType);
+		options.addOption(SMTInterpolOptions.SIMPLIFY_REPEATEDLY, new BooleanOption(true, true,
 				"Simplify until the fixpoint is reached."));
 
-		options.addOption(":global-declarations", new BooleanOption(false, false,
+		options.addOption(SMTLIBConstants.GLOBAL_DECLARATIONS, new BooleanOption(false, false,
 				"Make all declared and defined symbols global.  Global symbols survive pop operations."));
 	}
 
 	@SuppressWarnings("unchecked")
 	SolverOptions(final OptionMap options) {
-		mTimeout = (LongOption) options.getOption(TIMEOUT);
-		mProduceProofs = (BooleanOption) options.getOption(PRODUCE_PROOFS);
-		mRandomSeed = (LongOption) options.getOption(RANDOM_SEED);
-		mInterpolantCheckMode = (BooleanOption) options.getOption(INTERPOLANT_CHECK_MODE);
-		mProduceInterpolants = (BooleanOption) options.getOption(PRODUCE_INTERPOLANTS);
-		mModelCheckMode = (BooleanOption) options.getOption(MODEL_CHECK_MODE);
-		mProofTrans = (EnumOption<AvailableTransformations>) options.getOption(PROOF_TRANSFORMATION);
-		mModelsPartial = (BooleanOption) options.getOption(MODELS_PARTIAL);
-		mCheckType = (EnumOption<CheckType>) options.getOption(CHECK_TYPE);
-		mSimpIps = (BooleanOption) options.getOption(SIMPLIFY_INTERPOLANTS);
-		mArrayInterpolation = (BooleanOption) options.getOption(ARRAY_INTERPOLATION);
-		mProofCheckMode = (BooleanOption) options.getOption(PROOF_CHECK_MODE);
-		mSimpCheckType = (EnumOption<CheckType>) options.getOption(SIMPLIFY_CHECK_TYPE);
+		mTimeout = (LongOption) options.getOption(SMTInterpolOptions.TIMEOUT);
+		mProduceProofs = (BooleanOption) options.getOption(SMTLIBConstants.PRODUCE_PROOFS);
+		mRandomSeed = (LongOption) options.getOption(SMTLIBConstants.RANDOM_SEED);
+		mInterpolantCheckMode = (BooleanOption) options.getOption(SMTInterpolOptions.INTERPOLANT_CHECK_MODE);
+		mProduceInterpolants = (BooleanOption) options.getOption(SMTInterpolOptions.PRODUCE_INTERPOLANTS);
+		mModelCheckMode = (BooleanOption) options.getOption(SMTInterpolOptions.MODEL_CHECK_MODE);
+		mProofTrans = (EnumOption<AvailableTransformations>) options.getOption(SMTInterpolOptions.PROOF_TRANSFORMATION);
+		mModelsPartial = (BooleanOption) options.getOption(SMTInterpolOptions.MODELS_PARTIAL);
+		mCheckType = (EnumOption<CheckType>) options.getOption(SMTInterpolOptions.CHECK_TYPE);
+		mSimpIps = (BooleanOption) options.getOption(SMTInterpolOptions.SIMPLIFY_INTERPOLANTS);
+		mArrayInterpolation = (BooleanOption) options.getOption(SMTInterpolOptions.ARRAY_INTERPOLATION);
+		mProofCheckMode = (BooleanOption) options.getOption(SMTInterpolOptions.PROOF_CHECK_MODE);
+		mSimpCheckType = (EnumOption<CheckType>) options.getOption(SMTInterpolOptions.SIMPLIFY_CHECK_TYPE);
 	}
 
 	public final CheckType getCheckType() {

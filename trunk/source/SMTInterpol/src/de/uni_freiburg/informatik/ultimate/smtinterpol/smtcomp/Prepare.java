@@ -24,13 +24,10 @@ import java.io.IOException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ExitHook;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.scripts.PrepareScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 
-public class Prepare implements ExitHook {
-
-	Script mScript;
-
+public class Prepare {
 	/**
 	 * @param args
 	 * @throws FileNotFoundException
@@ -54,7 +51,7 @@ public class Prepare implements ExitHook {
 				return;
 			}
 		}
-		final Prepare exit = new Prepare();
+		final Prepare prepare = new Prepare();
 		final DefaultLogger logger = new DefaultLogger();
 		final OptionMap options = new OptionMap(logger, true);
 		while (fileStartIdx < args.length) {
@@ -62,17 +59,11 @@ public class Prepare implements ExitHook {
 			// Insert .prep before .smt2
 			target.insert(target.length() - 5, ".prep");// NOCHECKSTYLE
 			options.reset();
-			final ParseEnvironment pe = new ParseEnvironment(exit.mScript =
-					new PrepareScript(track, target.toString()), exit,
-					options);
+			Script script = new PrepareScript(track, target.toString());
+			final ParseEnvironment pe = new ParseEnvironment(script, options);
 			pe.parseScript(args[fileStartIdx]);
+			script.exit();
 			++fileStartIdx;
 		}
 	}
-
-	@Override
-	public void exitHook() {
-		mScript.exit();
-	}
-
 }

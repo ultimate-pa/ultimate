@@ -106,7 +106,7 @@ public class EqualityProxy {
 		final CCTerm ccLhs = mClausifier.getCCTerm(lhs);
 		final CCTerm ccRhs = mClausifier.getCCTerm(rhs);
 		assert ccLhs != null && ccRhs != null;
-		DPLLAtom eqAtom = getLiteral(null);
+		final DPLLAtom eqAtom = getLiteral(null);
 		LAEquality laeq;
 		if (eqAtom instanceof CCEquality) {
 			final CCEquality eq = (CCEquality) eqAtom;
@@ -169,7 +169,7 @@ public class EqualityProxy {
 			final CCTerm ccRhs = mClausifier.createCCTerm(mRhs, source);
 
 			/* Creating the CC terms could have created the equality */
-			DPLLAtom atom = (DPLLAtom) mClausifier.getILiteral(eqTerm);
+			final DPLLAtom atom = (DPLLAtom) mClausifier.getILiteral(eqTerm);
 			if (atom != null) {
 				return atom;
 			}
@@ -180,7 +180,7 @@ public class EqualityProxy {
 	}
 
 	public DPLLAtom getLiteral(final SourceAnnotation source) {
-		Term eqTerm = mLhs.getTheory().term("=", mLhs, mRhs);
+		final Term eqTerm = mLhs.getTheory().term("=", mLhs, mRhs);
 		DPLLAtom lit = (DPLLAtom) mClausifier.getILiteral(eqTerm);
 		if (lit == null) {
 			lit = createAtom(eqTerm, source);
@@ -190,7 +190,7 @@ public class EqualityProxy {
 					| Clausifier.NEG_AUX_AXIOMS_ADDED);
 			mClausifier.setLiteral(eqTerm, lit);
 		}
-		return (DPLLAtom) lit;
+		return lit;
 	}
 
 	@Override

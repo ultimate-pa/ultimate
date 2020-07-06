@@ -261,7 +261,7 @@ public class ProofChecker extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive engine) {
 			final ProofChecker checker = (ProofChecker) engine;
-			Term subProof = checker.stackPop();
+			final Term subProof = checker.stackPop();
 			checker.stackPush(checker.walkExists(mTerm, subProof), mTerm);
 		}
 	}
@@ -325,7 +325,7 @@ public class ProofChecker extends NonRecursive {
 	/**
 	 * The result stack. This contains the terms proved by the proof terms.
 	 */
-	Stack<Term> mStackResults = new Stack<Term>();
+	Stack<Term> mStackResults = new Stack<>();
 
 	/**
 	 * Statistics.
@@ -358,13 +358,13 @@ public class ProofChecker extends NonRecursive {
 	public boolean check(Term proof) {
 		final FormulaUnLet unletter = new FormulaUnLet();
 		final Term[] assertions = mSkript.getAssertions();
-		mAssertions = new HashSet<Term>(assertions.length);
+		mAssertions = new HashSet<>(assertions.length);
 		for (final Term ass : assertions) {
 			mAssertions.add(unletter.transform(ass));
 		}
 
 		// Initializing the proof-checker-cache
-		mCacheConv = new HashMap<Term, Term>();
+		mCacheConv = new HashMap<>();
 		mError = 0;
 		// Now non-recursive:
 		proof = unletter.unlet(proof);
@@ -557,7 +557,7 @@ public class ProofChecker extends NonRecursive {
 
 
 		/* collect literals and search for the disequality */
-		final HashSet<SymmetricPair<Term>> allEqualities = new HashSet<SymmetricPair<Term>>();
+		final HashSet<SymmetricPair<Term>> allEqualities = new HashSet<>();
 		boolean foundDiseq = false;
 		for (final Term literal : clause) {
 			if (isApplication("not", literal)) {
@@ -572,7 +572,7 @@ public class ProofChecker extends NonRecursive {
 					reportError("Expected binary equality, found " + atom);
 					return;
 				}
-				allEqualities.add(new SymmetricPair<Term>(sides[0], sides[1]));
+				allEqualities.add(new SymmetricPair<>(sides[0], sides[1]));
 			} else {
 				if (unquote(literal) != goalEquality || foundDiseq) {
 					reportError("Unexpected positive literal in CC lemma.");
@@ -598,8 +598,8 @@ public class ProofChecker extends NonRecursive {
 		if (!foundDiseq && !checkTrivialDisequality(sides[0], sides[1])) {
 			reportError("Did not find goal equality in CC lemma");
 		}
-		if (!new SymmetricPair<Term>(mainPath[0], mainPath[mainPath.length - 1])
-				.equals(new SymmetricPair<Term>(sides[0], sides[1]))) {
+		if (!new SymmetricPair<>(mainPath[0], mainPath[mainPath.length - 1])
+				.equals(new SymmetricPair<>(sides[0], sides[1]))) {
 			reportError("Did not explain main equality " + goalEquality);
 		}
 
@@ -623,7 +623,7 @@ public class ProofChecker extends NonRecursive {
 			final Term[] rhsArgs = rhs.getParameters();
 			for (int i = 0; i < lhsArgs.length; i++) {
 				if (lhsArgs[i] != rhsArgs[i]
-						&& !allEqualities.contains(new SymmetricPair<Term>(lhsArgs[i], rhsArgs[i]))) {
+						&& !allEqualities.contains(new SymmetricPair<>(lhsArgs[i], rhsArgs[i]))) {
 					reportError("Malformed congruence lemma");
 				}
 			}
@@ -658,9 +658,9 @@ public class ProofChecker extends NonRecursive {
 		 * weakPaths maps from a symmetric pair to the set of weak indices such that a weak path was proven for this
 		 * pair. strongPaths contains the sets of all proven strong paths.
 		 */
-		final HashSet<SymmetricPair<Term>> allEqualities = new HashSet<SymmetricPair<Term>>();
+		final HashSet<SymmetricPair<Term>> allEqualities = new HashSet<>();
 		/* indexDiseqs contains all index equalities in the clause */
-		final HashSet<SymmetricPair<Term>> allDisequalities = new HashSet<SymmetricPair<Term>>();
+		final HashSet<SymmetricPair<Term>> allDisequalities = new HashSet<>();
 
 		/* collect literals and search for the disequality */
 		for (final Term literal : clause) {
@@ -677,9 +677,9 @@ public class ProofChecker extends NonRecursive {
 			}
 			if (negated) {
 				// negated atom in clause -> equality in conflict
-				allEqualities.add(new SymmetricPair<Term>(sides[0], sides[1]));
+				allEqualities.add(new SymmetricPair<>(sides[0], sides[1]));
 			} else {
-				allDisequalities.add(new SymmetricPair<Term>(sides[0], sides[1]));
+				allDisequalities.add(new SymmetricPair<>(sides[0], sides[1]));
 			}
 		}
 		final Term goalEquality = unquote((Term) ccAnnotation[0]);
@@ -692,7 +692,7 @@ public class ProofChecker extends NonRecursive {
 			reportError("Expected binary equality in array lemma");
 			return;
 		}
-		if (!allDisequalities.contains(new SymmetricPair<Term>(goalTerms[0], goalTerms[1]))
+		if (!allDisequalities.contains(new SymmetricPair<>(goalTerms[0], goalTerms[1]))
 				&& !checkTrivialDisequality(goalTerms[0], goalTerms[1])) {
 			reportError("Did not find goal equality in array lemma");
 		}
@@ -726,12 +726,12 @@ public class ProofChecker extends NonRecursive {
 			mainIdx = null;
 			mainPath = (Term[]) ccAnnotation[2];
 		}
-		final SymmetricPair<Term> endPoints = new SymmetricPair<Term>(mainPath[0], mainPath[mainPath.length - 1]);
+		final SymmetricPair<Term> endPoints = new SymmetricPair<>(mainPath[0], mainPath[mainPath.length - 1]);
 		/*
 		 * Collect the weakpaths of weakeq ext first.
 		 */
 		if (isWeakEqExt) {
-			final HashSet<Term> weakIndices = new HashSet<Term>();
+			final HashSet<Term> weakIndices = new HashSet<>();
 			for (int i = 3; i < ccAnnotation.length; i += 2) {
 				if (ccAnnotation[i] != ":weakpath" ||  !(ccAnnotation[i + 1] instanceof Object[])) {
 					reportError("Malformed Array subpath");
@@ -774,13 +774,13 @@ public class ProofChecker extends NonRecursive {
 				}
 				final Term[] p1 = ((ApplicationTerm) goalTerms[0]).getParameters();
 				final Term[] p2 = ((ApplicationTerm) goalTerms[1]).getParameters();
-				if (p1[1] != p2[1] && !allEqualities.contains(new SymmetricPair<Term>(p1[1], p2[1]))) {
+				if (p1[1] != p2[1] && !allEqualities.contains(new SymmetricPair<>(p1[1], p2[1]))) {
 					reportError("Missing index equality in read-over-weakeq lemma");
 				}
 				if (mainIdx != p1[1] && mainIdx != p2[1]) {
 					reportError("Wrong index in weak path");
 				}
-				if (!endPoints.equals(new SymmetricPair<Term>(p1[0], p2[0]))) {
+				if (!endPoints.equals(new SymmetricPair<>(p1[0], p2[0]))) {
 					reportError("Wrong path ends in weak path");
 				}
 				break;
@@ -847,7 +847,7 @@ public class ProofChecker extends NonRecursive {
 			return;
 		}
 		for (int i = 0; i < path.length - 1; i++) {
-			final SymmetricPair<Term> pair = new SymmetricPair<Term>(path[i], path[i + 1]);
+			final SymmetricPair<Term> pair = new SymmetricPair<>(path[i], path[i + 1]);
 			/* check for strong path first */
 			if (equalities.contains(pair)) {
 				continue;
@@ -858,7 +858,7 @@ public class ProofChecker extends NonRecursive {
 				// this is a step from a to (store a storeIndex v).  Check if storeIndex is okay.
 				if (weakIdx != null) {
 					// for a weak path it needs to be different from weakIdx to prove a[weakIdx] = store[weakIdx]
-					if (disequalities.contains(new SymmetricPair<Term>(weakIdx, storeIndex))
+					if (disequalities.contains(new SymmetricPair<>(weakIdx, storeIndex))
 							|| checkTrivialDisequality(weakIdx, storeIndex)) {
 						continue;
 					}
@@ -1273,8 +1273,8 @@ public class ProofChecker extends NonRecursive {
 		 *
 		 * The possible types are defined in ProofConstants.AUX_*
 		 */
-		final String tautolyName = checkAndGetAnnotationKey(tautologyApp.getParameters()[0]);
-		if (tautolyName == null) {
+		final String tautologyName = checkAndGetAnnotationKey(tautologyApp.getParameters()[0]);
+		if (tautologyName == null) {
 			reportError("Malformed tautology rule " + tautologyApp);
 			return null;
 		}
@@ -1282,7 +1282,7 @@ public class ProofChecker extends NonRecursive {
 		final Term[] clause = termToClause(tautology);
 
 		boolean result;
-		switch (tautolyName) {
+		switch (tautologyName) {
 		case ":trueNotFalse":
 			result = (clause.length == 1 && clause[0] == mSkript.term("not",
 					mSkript.term("=", mSkript.term("true"), mSkript.term("false"))));
@@ -1299,13 +1299,13 @@ public class ProofChecker extends NonRecursive {
 		case ":ite-1":
 		case ":ite-2":
 		case ":ite-red":
-			result = checkTautIte(tautolyName, clause);
+			result = checkTautIte(tautologyName, clause);
 			break;
 		case ":xor+1":
 		case ":xor+2":
 		case ":xor-1":
 		case ":xor-2":
-			result = checkTautXor(tautolyName, clause);
+			result = checkTautXor(tautologyName, clause);
 			break;
 		case ":termITE":
 			result = checkTautTermIte(clause);
@@ -1315,13 +1315,13 @@ public class ProofChecker extends NonRecursive {
 			break;
 		case ":excludedMiddle1":
 		case ":excludedMiddle2":
-			result = checkTautExcludedMiddle(clause);
+			result = checkTautExcludedMiddle(tautologyName, clause);
 			break;
 		case ":divHigh":
 		case ":divLow":
 		case ":toIntHigh":
 		case ":toIntLow":
-			result = checkTautLowHigh(tautolyName, clause);
+			result = checkTautLowHigh(tautologyName, clause);
 			break;
 		case ":store":
 			result = checkTautStore(clause);
@@ -1621,21 +1621,26 @@ public class ProofChecker extends NonRecursive {
 		return false;
 	}
 
-	private boolean checkTautExcludedMiddle(final Term[] clause) {
+	private boolean checkTautExcludedMiddle(final String name, final Term[] clause) {
 		if (clause.length != 2) {
 			return false;
 		}
-		// Check for the form: (or (not p) (= p true))
-		// or (or p (= p false))
-
-		final boolean negated = isApplication("not", clause[0]);
-		final Term lit = negated ? negate(clause[0]) : clause[0];
-		if (!isApplication("=", clause[1])) {
+		final boolean isEqTrue = name == ":excludedMiddle1";
+		// Check for the form: (or (! (= p true) :quoted) (not p)) :excludedMiddle1
+		// or (or (! (= p false) :quoted) p) :excludedMiddle2
+		final Term equality = unquote(clause[0]);
+		if (!isApplication("=", equality)) {
 			return false;
 		}
-		final Theory theory = lit.getTheory();
-		final Term[] eqArgs = ((ApplicationTerm) clause[1]).getParameters();
-		if (eqArgs.length != 2 || eqArgs[0] != lit || eqArgs[1] != (negated ? theory.mTrue : theory.mFalse)) {
+		final Term[] eqArgs = ((ApplicationTerm) equality).getParameters();
+		Term lit = clause[1];
+		if (isEqTrue) {
+			if (!isApplication("not", lit)) {
+				return false;
+			}
+			lit = negate(lit);
+		}
+		if (eqArgs.length != 2 || eqArgs[0] != lit || !isApplication(isEqTrue ? "true" : "false", eqArgs[1])) {
 			return false;
 		}
 		return true;
@@ -1806,19 +1811,19 @@ public class ProofChecker extends NonRecursive {
 			}
 			return null;
 		}
-		
-		AnnotatedTerm annotatedTerm = (AnnotatedTerm) existsApp.getParameters()[0];
-		Annotation varAnnot = annotatedTerm.getAnnotations()[0];
+
+		final AnnotatedTerm annotatedTerm = (AnnotatedTerm) existsApp.getParameters()[0];
+		final Annotation varAnnot = annotatedTerm.getAnnotations()[0];
 		if (annotatedTerm.getAnnotations().length != 1
 			|| varAnnot.getKey() != ":vars"
 			|| !(varAnnot.getValue() instanceof TermVariable[])) {
 			reportError("@exists with malformed annotation: " + existsApp);
 		}
-		TermVariable[] vars = (TermVariable[]) varAnnot.getValue();
+		final TermVariable[] vars = (TermVariable[]) varAnnot.getValue();
 
 		/* compute the proven equality (= (exists (...) lhs) (exists (...) rhs)) */
-		Term lhs = ((ApplicationTerm) subProof).getParameters()[0];
-		Term rhs = ((ApplicationTerm) subProof).getParameters()[1];
+		final Term lhs = ((ApplicationTerm) subProof).getParameters()[0];
+		final Term rhs = ((ApplicationTerm) subProof).getParameters()[1];
 		final Theory theory = existsApp.getTheory();
 		final Term newEquality = theory.term("=", theory.exists(vars, lhs), theory.exists(vars, rhs));
 		return newEquality;
@@ -2100,7 +2105,7 @@ public class ProofChecker extends NonRecursive {
 			return false;
 		}
 		boolean found = false;
-		final LinkedHashSet<Term> args = new LinkedHashSet<Term>();
+		final LinkedHashSet<Term> args = new LinkedHashSet<>();
 		for (final Term t : ((ApplicationTerm) lhs).getParameters()) {
 			if (trueCase && isApplication("true", t)) {
 				found = true;
@@ -2148,7 +2153,7 @@ public class ProofChecker extends NonRecursive {
 		if (!isApplication("=", lhs)) {
 			return false;
 		}
-		final LinkedHashSet<Term> args = new LinkedHashSet<Term>();
+		final LinkedHashSet<Term> args = new LinkedHashSet<>();
 		for (final Term t : ((ApplicationTerm) lhs).getParameters()) {
 			args.add(t);
 		}
@@ -2211,7 +2216,7 @@ public class ProofChecker extends NonRecursive {
 		if (!isApplication("or", lhs)) {
 			return false;
 		}
-		final LinkedHashSet<Term> args = new LinkedHashSet<Term>();
+		final LinkedHashSet<Term> args = new LinkedHashSet<>();
 		for (final Term t : ((ApplicationTerm) lhs).getParameters()) {
 			if (!isApplication("false", t)) {
 				args.add(t);
@@ -2316,7 +2321,7 @@ public class ProofChecker extends NonRecursive {
 			return args.length > 2 && args[0].getSort().getName() == "Bool" && isApplication("false", rhs);
 		case ":distinctSame": {
 			// (distinct ... x ... x ...) = false
-			final HashSet<Term> seen = new HashSet<Term>();
+			final HashSet<Term> seen = new HashSet<>();
 			for (final Term t : args) {
 				// If seen already contains the term we found the duplicate
 				if (!seen.add(t)) {
@@ -2496,7 +2501,7 @@ public class ProofChecker extends NonRecursive {
 		}
 		final Term[] rhsArgs = ((ApplicationTerm) rhs).getParameters();
 		int rhsOffset = 0;
-		final ArrayDeque<Term> lhsArgs = new ArrayDeque<Term>();
+		final ArrayDeque<Term> lhsArgs = new ArrayDeque<>();
 		for (final Term t : ((ApplicationTerm) lhs).getParameters()) {
 			lhsArgs.add(t);
 		}
@@ -2519,7 +2524,7 @@ public class ProofChecker extends NonRecursive {
 		}
 		return rhsOffset == rhsArgs.length;
 	}
- 
+
 	boolean checkRewriteDivisible(final Term lhs, final Term rhs) {
 		// ((_ divisible n) x) --> (= x (* n (div x n)))
 		if (!isApplication("divisible", lhs)) {
@@ -2528,7 +2533,7 @@ public class ProofChecker extends NonRecursive {
 		BigInteger num1;
 		try {
 			num1 = new BigInteger(((ApplicationTerm) lhs).getFunction().getIndices()[0]);
-		} catch(NumberFormatException e){
+		} catch(final NumberFormatException e){
 			throw new SMTLIBException("index must be numeral", e);
 		}
 		final Rational num = Rational.valueOf(num1, BigInteger.ONE);
@@ -2984,26 +2989,26 @@ public class ProofChecker extends NonRecursive {
 		return false;
 	}
 
-	boolean checkRewriteForallExists(final Term lhs, Term rhs) {
+	boolean checkRewriteForallExists(final Term lhs, final Term rhs) {
 		// lhs: (forall (vs) F)
 		// rhs: (not (exists (vs) (not F)))
 		if (!isApplication("not", rhs)) {
 			return false;
 		}
-		Term rhsArg = ((ApplicationTerm) rhs).getParameters()[0];
+		final Term rhsArg = ((ApplicationTerm) rhs).getParameters()[0];
 		if (!(lhs instanceof QuantifiedFormula) || !(rhsArg instanceof QuantifiedFormula)) {
 			return false;
 		}
-		QuantifiedFormula forall = (QuantifiedFormula) lhs;
-		QuantifiedFormula exists = (QuantifiedFormula) rhsArg;
+		final QuantifiedFormula forall = (QuantifiedFormula) lhs;
+		final QuantifiedFormula exists = (QuantifiedFormula) rhsArg;
 		if (forall.getQuantifier() != QuantifiedFormula.FORALL || exists.getQuantifier() != QuantifiedFormula.EXISTS) {
 			return false;
 		}
 		if (!Arrays.equals(forall.getVariables(), exists.getVariables())) {
 			return false;
 		}
-		Term forallSubformula = forall.getSubformula();
-		Term existsSubformula = exists.getSubformula();
+		final Term forallSubformula = forall.getSubformula();
+		final Term existsSubformula = exists.getSubformula();
 		if (!isApplication("not", existsSubformula)) {
 			return false;
 		}
@@ -3060,7 +3065,7 @@ public class ProofChecker extends NonRecursive {
 		/*
 		 * allDisjuncts is the currently computed resolution result.
 		 */
-		final HashSet<Term> allDisjuncts = new HashSet<Term>();
+		final HashSet<Term> allDisjuncts = new HashSet<>();
 
 		/* Now get the disjuncts of the first argument. */
 		allDisjuncts.addAll(Arrays.asList(termToClause(subProofs[0])));
@@ -3156,8 +3161,8 @@ public class ProofChecker extends NonRecursive {
 		if (provedLits.length != expectedLits.length) {
 			reportError("Clause has different number of literals: " + provedClause + " versus " + expectedClause);
 		} else {
-			final HashSet<Term> param1Disjuncts = new HashSet<Term>(Arrays.asList(provedLits));
-			final HashSet<Term> param2Disjuncts = new HashSet<Term>(Arrays.asList(expectedLits));
+			final HashSet<Term> param1Disjuncts = new HashSet<>(Arrays.asList(provedLits));
+			final HashSet<Term> param2Disjuncts = new HashSet<>(Arrays.asList(expectedLits));
 			/*
 			 * Check if the clause operation was correct. Each later disjunct has to be in the first disjunction and
 			 * reverse and there should be no double literal.

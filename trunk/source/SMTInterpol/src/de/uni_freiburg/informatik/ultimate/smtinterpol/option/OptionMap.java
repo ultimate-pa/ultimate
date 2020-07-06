@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
@@ -61,12 +62,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
  * @author Juergen Christ
  */
 public class OptionMap {
-
-	private final static String DIAG_OUTPUT_CHANNEL_NAME =
-		":diagnostic-output-channel";
 	private final static String DIAG_OUTPUT_CHANNEL_DESC =
-		"Where to print diagnostic output to.  Use \"stdout\" for standard "
-			+ "output and \"stderr\" for standard error.";
+		"Where to print diagnostic output to.  Use \"" + SMTLIBConstants.STDOUT + "\" for standard "
+			+ "output and \"" + SMTLIBConstants.STDERR + "\" for standard error.";
 	/**
 	 * When copying this map, the options stored in this map can be either stay
 	 * unchanged or be reset to their default value.  This is controlled by this
@@ -112,7 +110,7 @@ public class OptionMap {
 		mAliases = new LinkedHashMap<String, String>();
 		mSolverOptions = new SolverOptions(this, logger);
 		mLogger = logger;
-		addOption(DIAG_OUTPUT_CHANNEL_NAME, new LoggerOption(
+		addOption(SMTLIBConstants.DIAGNOSTIC_OUTPUT_CHANNEL, new LoggerOption(
 				DIAG_OUTPUT_CHANNEL_DESC, logger));
 		mOnline = false;
 		mFrontEndOptions = new FrontEndOptions(this, activeFrontEnd);
@@ -228,7 +226,7 @@ public class OptionMap {
 	 * @param option The option to get information for.
 	 * @return Information for this option.
 	 */
-	public Object[] getInfo(String option) {
+	public Object[] getInfo(String option, boolean isSMTLIB25) {
 		if (mAliases.containsKey(option)) {
 			option = mAliases.get(option);
 		}
@@ -238,7 +236,7 @@ public class OptionMap {
 		}
 		final ArrayList<Object> result = new ArrayList<Object>();
 		result.add(":description");
-		result.add(new QuotedObject(o.getDescription()));
+		result.add(new QuotedObject(o.getDescription(), isSMTLIB25));
 		result.add(":default");
 		result.add(o.defaultValue());
 		if (o.isOnlineModifiable()) {
@@ -278,7 +276,7 @@ public class OptionMap {
 		return new OptionMap(mLogger, options, new LinkedHashMap<String, String>(mAliases));
 	}
 
-	Option getOption(final String key) {
+	public Option getOption(final String key) {
 		return mOptions.get(key);
 	}
 }

@@ -18,115 +18,100 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
+import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.model.NumericSortInterpretation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
 
 public class ModelBuilder {
 
-	private static class ArgHelper {
-		private int[] mArgs;
-		private int mNextPos;
-		public ArgHelper() {
-			mArgs = new int[4];
-			mNextPos = 0;
-		}
-		public void add(final int arg) {
-			if (mNextPos == mArgs.length) {
-				final int[] old = mArgs;
-				mArgs = new int[old.length << 1];
-				System.arraycopy(old, 0, mArgs, 0, old.length);
-			}
-			mArgs[mNextPos++] = arg;
-		}
-
-		public int getLastArg() {
-			return mArgs[0];
-		}
-		public int[] toArray() {
-			final int[] res = new int[mNextPos];
-			int pos = 0;
-			for (int i = mNextPos - 1; i >= 0; --i) {
-				res[pos++] = mArgs[i];
-			}
-			return res;
-		}
-	}
+	Map<CCTerm, Term> mModelValues = new HashMap<>();
 
 	public ModelBuilder(final CClosure closure, final List<CCTerm> terms, final Model model,
 			final Theory t, final SharedTermEvaluator ste,
 			final ArrayTheory array, final CCTerm trueNode, final CCTerm falseNode) {
 		fillInTermValues(terms, model, t, ste, trueNode, falseNode);
 		if (array != null) {
-			array.fillInModel(model, t, ste);
+			array.fillInModel(this, model, t, ste);
 		}
 		fillInFunctions(terms, model, t);
 	}
 
+	public Term getModelValue(final CCTerm term) {
+		return mModelValues.get(term.getRepresentative());
+	}
+
+	public void setModelValue(final CCTerm term, final Term value) {
+		assert term == term.getRepresentative();
+		final Term old = mModelValues.put(term, value);
+		assert old == null || old == value;
+	}
+
 	public void fillInTermValues(final List<CCTerm> terms, final Model model, final Theory t, final SharedTermEvaluator ste, final CCTerm trueNode,
 			final CCTerm falseNode) {
-		Rational biggest = Rational.MONE;
 		final Set<CCTerm> delayed = new HashSet<>();
-		for (final CCTerm term : terms) {
-			if (term == term.mRepStar && !term.isFunc()) {
-				int value;
-				final Term smtterm = term.getFlatTerm();
-				if (smtterm.getSort().isNumericSort()) {
+		for (final CCTerm ccterm : terms) {
+			if (ccterm == ccterm.mRepStar && !ccterm.isFunc()) {
+				Term value;
+				final Term smtterm = ccterm.getFlatTerm();
+				final Sort sort = smtterm.getSort();
+				if (sort.isNumericSort()) {
 					Rational v;
-					if (term.getSharedTerm() != null) {
-						v = ste.evaluate(term.getSharedTerm().getFlatTerm(), t);
+					if (ccterm.getSharedTerm() != null) {
+						v = ste.evaluate(ccterm.getSharedTerm().getFlatTerm(), t);
 						if (smtterm.getSort().getName().equals("Int") && !v.isIntegral()) {
 							throw new AssertionError("Int term has non-integral value");
 						}
-						biggest = v.compareTo(biggest) > 0 ? v : biggest;
-						value = model.putNumeric(v);
+						value = model.getNumericSortInterpretation().extend(v, smtterm.getSort());
 					} else {
-						delayed.add(term);
+						delayed.add(ccterm);
 						continue;
 					}
-				} else if (term == trueNode.mRepStar) {
-					value = model.getTrueIdx();
+				} else if (ccterm == trueNode.mRepStar) {
+					value = sort.getTheory().mTrue;
 				} else if (smtterm.getSort() == t.getBooleanSort()) {
 					// By convention, we convert to == TRUE.  Hence, if a value
 					// is not equal to TRUE but Boolean, we have to adjust the
 					// model and set it to false.
-					value = model.getFalseIdx();
+					value = sort.getTheory().mFalse;
 				} else if (smtterm.getSort().isArraySort()) {
 					// filled in later by ArrayTheory
 					continue;
 				} else {
 					value = model.extendFresh(smtterm.getSort());
 				}
-				term.mModelVal = value;
+				setModelValue(ccterm, value);
 			}
 		}
 		// Handle all delayed elements
-		// We use the smallest integer bigger than biggest
-		biggest = biggest.add(Rational.ONE).floor();
-		for (final CCTerm term : delayed) {
-			final int idx = model.putNumeric(biggest);
-			term.mModelVal = idx;
-			biggest = biggest.add(Rational.ONE);
+		// note that extendFresh must be called after all values in the model have been extended to the numeric sort.
+		for (final CCTerm ccterm : delayed) {
+			final Term value = model.extendFresh(ccterm.getFlatTerm().getSort());
+			setModelValue(ccterm, value);
 		}
 	}
 
 	public void fillInFunctions(final List<CCTerm> terms, final Model model, final Theory t) {
 		for (final CCTerm term : terms) {
 			if (!term.isFunc()) {
-				add(model, term, term.getRepresentative().mModelVal, t);
+				add(model, term, mModelValues.get(term.getRepresentative()), t);
 			}
 		}
 	}
 
-	private void add(final Model model, final CCTerm term, final int value, final Theory t) {
+	private void add(final Model model, final CCTerm term, final Term value, final Theory t) {
 		assert !term.isFunc();
 		if (term instanceof CCBaseTerm) {
 			final CCBaseTerm bt = (CCBaseTerm) term;
@@ -150,12 +135,12 @@ public class ModelBuilder {
 		return name == "/" || name == "div" || name == "mod";
 	}
 
-	private void addApp(final Model model, final CCAppTerm app, final int value, final Theory t) {
-		final ArgHelper args = new ArgHelper();
+	private void addApp(final Model model, final CCAppTerm app, final Term value, final Theory t) {
+		final ArrayDeque<Term> args = new ArrayDeque<>();
 		CCTerm walk = app;
 		while (walk instanceof CCAppTerm) {
 			final CCAppTerm appwalk = (CCAppTerm) walk;
-			args.add(appwalk.getArg().getRepresentative().mModelVal);
+			args.addFirst(mModelValues.get(appwalk.getArg().getRepresentative()));
 			walk = appwalk.getFunc();
 		}
 		// Now, walk is the CCBaseTerm corresponding the the function
@@ -164,8 +149,8 @@ public class ModelBuilder {
 		if (base.isFunctionSymbol()) {
 			final FunctionSymbol fs = base.getFunctionSymbol();
 			if (!fs.isIntern() ||
-					(isDivision(fs) && model.getNumericSortInterpretation().get(args.getLastArg()) == Rational.ZERO)) {
-				model.map(fs, args.toArray(), value);
+					(isDivision(fs) && NumericSortInterpretation.toRational(args.getLast()) == Rational.ZERO)) {
+				model.map(fs, args.toArray(new Term[args.size()]), value);
 			}
 		}
 	}

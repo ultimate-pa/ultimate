@@ -180,7 +180,7 @@ public class Theory {
 
 	/**
 	 * Method to check if indices is a numeral or symbol. If numeral return as BigInteger, if symbol return null
-	 **/
+	 */
 	public BigInteger toNumeral(final String index) {
 		try {
 			return new BigInteger(index);
@@ -561,8 +561,8 @@ public class Theory {
 		}
 	}
 
-	public Term string(final String value) {
-		return constant(new QuotedObject(value), mStringSort);
+	public Term string(final QuotedObject value) {
+		return constant(value, mStringSort);
 	}
 
 	/******************** LOGICS AND THEORIES ********************************/
@@ -1166,6 +1166,99 @@ public class Theory {
 		defineFunction(new RegularFloatingPointFunction("fp.to_real", 1, mRealSort, FunctionSymbol.INTERNAL));
 	}
 
+	private void createStringOperators() {
+		final Sort str = declareInternalSort(SMTLIBConstants.STRING, 0, 0).getSort(null);
+		final Sort re = declareInternalSort(SMTLIBConstants.REGLAN, 0, 0).getSort(null);
+		mStringSort = str;
+		final Sort[] str1 = new Sort[] { str };
+		final Sort[] str2 = new Sort[] { str, str };
+		final Sort[] str3 = new Sort[] { str, str, str };
+		final Sort[] str_re = new Sort[] { str, re };
+		final Sort[] str_re_str = new Sort[] { str, re, str };
+		final Sort[] re1 = new Sort[] { re };
+		final Sort[] re2 = new Sort[] { re, re };
+		defineFunction(new FunctionSymbolFactory(SMTLIBConstants.CHAR) {
+			@Override
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
+				if (indices == null || indices.length != 1 || paramSorts.length != 0 || resultSort != null) {
+					return null;
+				}
+				String index = indices[0];
+				if (!index.startsWith("#x") || index.length() <= 2 || index.length() > 7
+						|| (index.length() == 7 && index.charAt(2) > '2')) {
+					return null;
+				}
+				return str;
+			}
+		});
+		declareInternalFunction(SMTLIBConstants.STR_CONCAT, str2, str, FunctionSymbol.LEFTASSOC);
+		declareInternalFunction(SMTLIBConstants.STR_LT, str2, mBooleanSort, FunctionSymbol.CHAINABLE);
+		declareInternalFunction(SMTLIBConstants.STR_TO_RE, str1, re, 0);
+		declareInternalFunction(SMTLIBConstants.STR_IN_RE, str_re, mBooleanSort, 0);
+		declareInternalFunction(SMTLIBConstants.RE_NONE, EMPTY_SORT_ARRAY, re, 0);
+		declareInternalFunction(SMTLIBConstants.RE_ALL, EMPTY_SORT_ARRAY, re, 0);
+		declareInternalFunction(SMTLIBConstants.RE_ALLCHAR, EMPTY_SORT_ARRAY, re, 0);
+		declareInternalFunction(SMTLIBConstants.RE_CONCAT, re2, re, FunctionSymbol.LEFTASSOC);
+		declareInternalFunction(SMTLIBConstants.RE_UNION, re2, re, FunctionSymbol.LEFTASSOC);
+		declareInternalFunction(SMTLIBConstants.RE_INTER, re2, re, FunctionSymbol.LEFTASSOC);
+		declareInternalFunction(SMTLIBConstants.RE_STAR, re1, re, 0);
+
+		declareInternalFunction(SMTLIBConstants.STR_LE, str2, mBooleanSort, FunctionSymbol.CHAINABLE);
+		declareInternalFunction(SMTLIBConstants.STR_PREFIXOF, str2, mBooleanSort, 0);
+		declareInternalFunction(SMTLIBConstants.STR_SUFFIXOF, str2, mBooleanSort, 0);
+		declareInternalFunction(SMTLIBConstants.STR_CONTAINS, str2, mBooleanSort, 0);
+		declareInternalFunction(SMTLIBConstants.STR_REPLACE, str3, str, 0);
+		declareInternalFunction(SMTLIBConstants.STR_REPLACE_ALL, str3, str, 0);
+		declareInternalFunction(SMTLIBConstants.STR_REPLACE_RE, str_re_str, str, 0);
+		declareInternalFunction(SMTLIBConstants.STR_REPLACE_RE_ALL, str_re_str, str, 0);
+
+		declareInternalFunction(SMTLIBConstants.RE_COMP, re1, re, 0);
+		declareInternalFunction(SMTLIBConstants.RE_DIFF, re2, re, FunctionSymbol.LEFTASSOC);
+		declareInternalFunction(SMTLIBConstants.RE_PLUS, re1, re, 0);
+		declareInternalFunction(SMTLIBConstants.RE_OPT, re1, re, 0);
+		declareInternalFunction(SMTLIBConstants.RE_RANGE, str2, re, 0);
+
+		declareInternalFunction(SMTLIBConstants.STR_IS_DIGIT, str1, mBooleanSort, 0);
+
+		defineFunction(new FunctionSymbolFactory(SMTLIBConstants.RE_ITER) {
+			@Override
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
+				if (indices == null || indices.length != 1 || paramSorts.length != 1 || resultSort != null 
+						|| paramSorts[0] != re) {
+					return null;
+				}
+				toNumeral(indices[0]);
+				return re;
+			}
+		});
+		defineFunction(new FunctionSymbolFactory(SMTLIBConstants.RE_LOOP) {
+			@Override
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
+				if (indices == null || indices.length != 2 || paramSorts.length != 1 || resultSort != null 
+						|| paramSorts[0] != re) {
+					return null;
+				}
+				toNumeral(indices[0]);
+				toNumeral(indices[1]);
+				return re;
+			}
+		});
+		if (mLogic.hasIntegers()) {
+			final Sort[] int1 = new Sort[] { mNumericSort };
+			final Sort[] str_int = new Sort[] { str, mNumericSort };
+			final Sort[] str2_int = new Sort[] { str, str, mNumericSort };
+			final Sort[] str_int2 = new Sort[] { str, mNumericSort, mNumericSort };
+			declareInternalFunction(SMTLIBConstants.STR_LEN, str1, mNumericSort, 0);
+			declareInternalFunction(SMTLIBConstants.STR_AT, str_int, str, 0);
+			declareInternalFunction(SMTLIBConstants.STR_SUBSTR, str_int2, str, 0);
+			declareInternalFunction(SMTLIBConstants.STR_INDEXOF, str2_int, mNumericSort, 0);
+			declareInternalFunction(SMTLIBConstants.STR_TO_CODE, str1, mNumericSort, 0);
+			declareInternalFunction(SMTLIBConstants.STR_FROM_CODE, int1, str, 0);
+			declareInternalFunction(SMTLIBConstants.STR_TO_INT, str1, mNumericSort, 0);
+			declareInternalFunction(SMTLIBConstants.STR_FROM_INT, int1, str, 0);
+		}
+	}
+
 	private void setLogic(final Logics logic) {
 		mLogic = logic;
 
@@ -1202,6 +1295,10 @@ public class Theory {
 
 		if (logic.isFloatingPoint()) {
 			createFloatingPointOperators();
+		}
+
+		if (logic.isString()) {
+			createStringOperators();
 		}
 		if (mSolverSetup != null) {
 			mSolverSetup.setLogic(this, logic);

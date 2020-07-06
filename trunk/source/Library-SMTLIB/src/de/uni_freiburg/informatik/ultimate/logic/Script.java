@@ -544,11 +544,11 @@ public interface Script {
 	public Term binary(String bin) throws SMTLIBException;
 	/**
 	 * Create a string term.
-	 * @param str The parsed string with quotes removed.
+	 * @param str The string constant (as quoted object).
 	 * @return A string term.
 	 * @throws SMTLIBException If an error occurred.
 	 */
-	public Term string(String str) throws SMTLIBException;
+	public Term string(QuotedObject str) throws SMTLIBException;
 
 	/* Non-SMTLIB extensions */
 	/**

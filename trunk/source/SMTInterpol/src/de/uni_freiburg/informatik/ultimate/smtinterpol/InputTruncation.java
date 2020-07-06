@@ -22,6 +22,7 @@ import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ErrorCallback;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
@@ -35,15 +36,21 @@ public final class InputTruncation {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		System.setProperty("smtinterpol.ddfriendly", "on");
 		final String infile = args[0];
 		final String outfile = args[1];
 		try {
 			final DefaultLogger logger = new DefaultLogger();
 			final OptionMap options = new OptionMap(logger, true);
+			final SMTInterpol smtinterpol = new SMTInterpol(logger);
 			final ParseEnvironment pe = new ParseEnvironment(
-					new LoggingScript(new SMTInterpol(logger), outfile, true),
+					new LoggingScript(smtinterpol, outfile, true),
 					options);
+			smtinterpol.setErrorCallback(new ErrorCallback() {
+				@Override
+				public void notifyError(ErrorReason reason) {
+					System.exit(reason.ordinal() + 1);
+				}
+			});
 			pe.parseScript(infile);
 		} catch (final IOException e) {
 			e.printStackTrace();

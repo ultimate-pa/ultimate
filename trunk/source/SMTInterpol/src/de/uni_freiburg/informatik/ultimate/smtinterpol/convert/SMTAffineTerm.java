@@ -112,6 +112,10 @@ public final class SMTAffineTerm {
 				return term;
 			}
 			denominator = convertConstant((ConstantTerm) params[1]);
+			/* if denominator is 0, this is not a valid constant, but should be treated as uninterpreted term. */
+			if (denominator == Rational.ZERO) {
+				return term;
+			}
 		} else {
 			numerator = term;
 			denominator = Rational.ONE;

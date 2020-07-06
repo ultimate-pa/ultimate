@@ -343,8 +343,10 @@ public class ModelTest {
 		script.declareFun("y", Script.EMPTY_SORT_ARRAY, intSort);
 		final Term x = script.term("x");
 		final Term y = script.term("y");
+		final Term fx = script.term("f", x);
 		final Term fx5 = script.term("f", script.term("+", x, script.numeral("5")));
 		final Rational five = Rational.valueOf(5, 1);// NOCHECKSTYLE
+		script.assertTerm(script.term("=", fx, script.numeral("0")));
 		script.assertTerm(script.term("=", fx5, x));
 		script.assertTerm(script.term("=", x, script.numeral("5")));
 		script.assertTerm(script.term(">", y, script.numeral(BigInteger.ZERO)));
@@ -362,7 +364,8 @@ public class ModelTest {
 								.getValue());
 		Assert.assertEquals(five, getConstantTerm(model, script.term("f", script.numeral(BigInteger.TEN))).getValue());
 		final TermVariable[] args = new TermVariable[] { script.variable("@x", intSort) };
-		Assert.assertEquals("(ite (= @x 10) 5 0)", model.getFunctionDefinition("f", args).toString());
+		final String funcdef = model.getFunctionDefinition("f", args).toString();
+		Assert.assertTrue(funcdef.equals("(ite (= @x 10) 5 0)") || funcdef.equals("(ite (= @x 5) 0 5)"));
 	}
 
 	@Test
@@ -423,7 +426,7 @@ public class ModelTest {
 		Assert.assertEquals(val, model.evaluate(script.term("f", fx)));
 		// Test for stack overflows in the evaluation
 		Term testTerm = fx;
-		for (int i = 0; i < 1000000; ++i) {
+		for (int i = 0; i < 100000; ++i) {
 			testTerm = script.term("f", testTerm);
 		}
 		Assert.assertEquals(val, model.evaluate(testTerm));
@@ -479,5 +482,4 @@ public class ModelTest {
 			Assert.assertEquals(expected, model.evaluate(intTerms[i]));
 		}
 	}
-
 }

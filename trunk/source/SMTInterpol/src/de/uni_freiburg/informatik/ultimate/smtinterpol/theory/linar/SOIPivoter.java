@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -35,11 +37,22 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 public class SOIPivoter {
 
 	LinArSolve mSolver;
-	/** The current coefficients for the sum of out of bounds variables expressed using the current column variables. */
+	/**
+	 * The variables that are currently out of bounds, and participate in the SOI
+	 */
+	ArrayList<LiteralReason> mOOBs;
+	/**
+	 * The current coefficients for the sum of out of bounds variables expressed
+	 * using the current column variables.
+	 */
 	SortedMap<LinVar, Rational> mSOIVar;
-	/** The current value for the sum of infeasibility */
+	/**
+	 * The current value for the sum of infeasibility
+	 */
 	ExactInfinitesimalNumber mSOIValue;
-	/** The limiter describing the next pivot step. */
+	/**
+	 * The limiter describing the next pivot step.
+	 */
 	FreedomLimiter mBestLimiter;
 
 	public SOIPivoter(final LinArSolve solver) {
@@ -55,23 +68,25 @@ public class SOIPivoter {
 		boolean isOOB = false;
 		mSOIValue = ExactInfinitesimalNumber.ZERO;
 		mSOIVar = new TreeMap<>();
+		mOOBs = new ArrayList<>();
 		for (final LinVar var : mSolver.mLinvars) {
 			boolean isUpper;
 			ExactInfinitesimalNumber diff = var.getValue().isub(var.getLowerBound());
 			if (diff.signum() > 0) {
 				isUpper = false;
-				mSOIValue = mSOIValue.add(diff);
 			} else {
-				diff = var.getValue().isub(var.getUpperBound());
-				if (diff.signum() < 0) {
+				diff = var.getValue().isub(var.getUpperBound()).negate();
+				if (diff.signum() > 0) {
 					isUpper = true;
-					mSOIValue = mSOIValue.sub(diff);
 				} else {
 					continue;
 				}
 			}
 
+			assert var.mBasic;
 			isOOB = true;
+			mOOBs.add(isUpper ? var.mUpperLiteral : var.mLowerLiteral);
+			mSOIValue = mSOIValue.add(diff);
 			// now we have found an out of bound variable.
 			// isUpper is true if we violate the upper bound.
 			// mSoiValue is already updated.
@@ -81,13 +96,33 @@ public class SOIPivoter {
 			if (isUpper) {
 				divisor = divisor.negate();
 			}
+			boolean isConflicting = true;
 			for (final MatrixEntry entry : var.getTableauxRow(mSolver)) {
+				final LinVar colVar = entry.getColumn();
 				Rational coeff = Rational.valueOf(entry.getCoeff(), divisor);
-				final Rational oldValue = mSOIVar.get(entry.getColumn());
+				final LiteralReason reason = coeff.signum() < 0 ? colVar.mUpperLiteral : colVar.mLowerLiteral;
+				if (reason == null || !colVar.getValue().equals(reason.getBound())) {
+					isConflicting = false;
+				}
+				final Rational oldValue = mSOIVar.get(colVar);
 				if (oldValue != null) {
 					coeff = coeff.add(oldValue);
 				}
-				mSOIVar.put(entry.getColumn(), coeff);
+				mSOIVar.put(colVar, coeff);
+			}
+			// if we already found a conflict in a single variable, make it the only variable in the SOI.  The
+			// remaining code will immediately find the conflict again and conflict and report it.
+			if (isConflicting) {
+				mOOBs.clear();
+				mOOBs.add(isUpper ? var.mUpperLiteral : var.mLowerLiteral);
+				mSOIValue = diff;
+				mSOIVar.clear();
+				for (final MatrixEntry entry : var.getTableauxRow(mSolver)) {
+					final LinVar colVar = entry.getColumn();
+					final Rational coeff = Rational.valueOf(entry.getCoeff(), divisor);
+					mSOIVar.put(colVar, coeff);
+				}
+				return true;
 			}
 		}
 		return isOOB;
@@ -259,15 +294,79 @@ public class SOIPivoter {
 		return mBestLimiter != null;
 	}
 
-	public Clause computeConflict() {
-		final Explainer explainer = new Explainer(mSolver, mSolver.getEngine().isProofGenerationEnabled(), null);
-		for (final LinVar var : mSolver.mLinvars) {
-			if (var.getValue().isub(var.getLowerBound()).signum() > 0) {
-				var.mLowerLiteral.explain(explainer, InfinitesimalNumber.ZERO, Rational.MONE);
-			} else if (var.getValue().isub(var.getUpperBound()).signum() < 0) {
-				var.mUpperLiteral.explain(explainer, InfinitesimalNumber.ZERO, Rational.ONE);
+	/**
+	 * Check if the current conflict is still a conflict if the bound is removed
+	 * from the SOI. This must only be called if bound is already part of the SOI
+	 * and the SOIVar is already in conflict.
+	 *
+	 * @return true, if the bound can be removed from the current conflict.
+	 */
+	private boolean isRedundant(LiteralReason bound) {
+		// check if removing the bound from the SOI would still lead to a conflict.
+		final LinVar var = bound.getVar();
+		BigInteger divisor = mSolver.mTableaux.get(var.mMatrixpos).getRawCoeff(0);
+		if (!bound.isUpper()) {
+			divisor = divisor.negate();
+		}
+		for (final MatrixEntry entry : var.getTableauxRow(mSolver)) {
+			final LinVar colVar = entry.getColumn();
+			Rational coeff = Rational.valueOf(entry.getCoeff(), divisor);
+			final Rational oldValue = mSOIVar.get(colVar);
+			if (oldValue != null) {
+				coeff = coeff.add(oldValue);
+			}
+			final InfinitesimalNumber colBound = coeff.signum() < 0 ? colVar.getUpperBound() : colVar.getLowerBound();
+			if (!colVar.getValue().equals(colBound)) {
+				return false;
 			}
 		}
+		return true;
+	}
+
+	/**
+	 * Compute the conflict clause from the Sum-Of-Infeasibility variable. All
+	 * column variables should be at their bounds and the bound can be used to
+	 * explain the conflict with the sum of all currently violated bounds.
+	 *
+	 * @return A conflict clause.
+	 */
+	public Clause computeConflict() {
+		assert mSOIValue.signum() > 0;
+		// Check for each OOB, if it can be removed without changing the conflict.
+		for (final Iterator<LiteralReason> it = mOOBs.iterator(); it.hasNext();) {
+			final LiteralReason bound = it.next();
+			if (mOOBs.size() > 1 && isRedundant(bound)) {
+				// remove it from the SOI.
+				final LinVar var = bound.getVar();
+				mSOIValue = mSOIValue.sub(bound.getBound().sub(var.getValue()).abs());
+				assert mSOIValue.signum() > 0;
+				BigInteger divisor = mSolver.mTableaux.get(var.mMatrixpos).getRawCoeff(0);
+				if (!bound.isUpper()) {
+					divisor = divisor.negate();
+				}
+				for (final MatrixEntry entry : var.getTableauxRow(mSolver)) {
+					final LinVar colVar = entry.getColumn();
+					Rational coeff = Rational.valueOf(entry.getCoeff(), divisor);
+					final Rational oldValue = mSOIVar.get(colVar);
+					if (oldValue != null) {
+						coeff = coeff.add(oldValue);
+					}
+					mSOIVar.put(colVar, coeff);
+				}
+				it.remove();
+			}
+		}
+		final Explainer explainer = new Explainer(mSolver, mSolver.getEngine().isProofGenerationEnabled(), null);
+		InfinitesimalNumber slack = mSOIValue.roundToInfinitesimal();
+		// Now sum up the remaining bounds
+		for (final LiteralReason bound : mOOBs) {
+			final Rational factor = bound.isUpper() ? Rational.ONE : Rational.MONE;
+			assert slack.signum() > 0;
+			slack = bound.explain(explainer, slack, factor);
+			assert slack.signum() > 0;
+		}
+		// Now go through all columns and sum up the bounds of all involved column
+		// variables.
 		for (final Entry<LinVar, Rational> entry : mSOIVar.entrySet()) {
 			final LinVar colVar = entry.getKey();
 			final Rational coeff = entry.getValue();
@@ -275,8 +374,14 @@ public class SOIPivoter {
 				continue;
 			}
 			final LiteralReason reason = coeff.signum() < 0 ? colVar.mUpperLiteral : colVar.mLowerLiteral;
-			reason.explain(explainer, InfinitesimalNumber.ZERO, coeff.negate());
+			assert colVar.getValue().equals(reason.getBound());
+			slack = slack.div(coeff.abs());
+			assert slack.signum() > 0;
+			slack = reason.explain(explainer, slack, coeff.negate());
+			assert slack.signum() > 0;
+			slack = slack.mul(coeff.abs());
 		}
+		assert (explainer.checkSlack(slack));
 		return explainer.createClause(mSolver.getEngine());
 	}
 

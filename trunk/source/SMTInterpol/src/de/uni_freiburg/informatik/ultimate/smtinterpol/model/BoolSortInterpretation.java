@@ -24,46 +24,18 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 public class BoolSortInterpretation implements SortInterpretation {
 
-	private final static int TRUE_INDEX = 1;
-	private final static int FALSE_INDEX = 0;
-
 	@Override
-	public Term toSMTLIB(Theory t, Sort sort) {
+	public Term toSMTLIB(final Theory t, final Sort sort) {
 		throw new InternalError("Should never be called");
 	}
 
-	public int getFalseIdx() {
-		return FALSE_INDEX;
-	}
-
-	public int getTrueIdx() {
-		return TRUE_INDEX;
-	}
-
 	@Override
-	public int ensureCapacity(int maxValue) {
-		if (maxValue > 2) {
-			throw new InternalError("Three-valued Bool?");
-		}
-		return 2;
-	}
-
-	@Override
-	public int size() {
-		return 2;
-	}
-
-	@Override
-	public Term get(int idx, Sort s, Theory t) throws IndexOutOfBoundsException {
-		if (idx != TRUE_INDEX && idx != FALSE_INDEX) {
-			throw new IndexOutOfBoundsException();
-		}
-		return idx == TRUE_INDEX ? t.mTrue : t.mFalse;
-	}
-
-	@Override
-	public int extendFresh() {
+	public Term extendFresh(final Sort sort) {
 		throw new InternalError("Three-valued Bool?");
 	}
 
+	@Override
+	public Term getModelValue(final int idx, final Sort sort) {
+		return idx == 0 ? sort.getTheory().mFalse : sort.getTheory().mTrue;
+	}
 }

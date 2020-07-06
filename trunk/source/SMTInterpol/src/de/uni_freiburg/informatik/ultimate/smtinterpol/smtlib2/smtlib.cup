@@ -456,6 +456,7 @@ non terminal String index;
 non terminal IndexedIdentifier identifier, identifierIndexed;
 non terminal Object specConstant;
 non terminal Object sExpr;
+non terminal QuotedObject string;
 
 non terminal Sort sort;
 non terminal Object attributeValue;
@@ -478,7 +479,7 @@ non terminal parFunSymbolDecl, funSymbolDecl;
 non terminal theoryAttribute;
 non terminal logicAttribute;
 non terminal Boolean bValue;
-non terminal option;
+non terminal Object[] option;
 non terminal String infoFlag;
 non terminal command;
 non terminal commandPar;
@@ -486,11 +487,13 @@ non terminal goal, theoryDecl, logic, script;
 
 goal ::= theoryDecl | logic | script;
 
-specConstant ::= NUMERAL:n {: RESULT = n; :}
-             | DECIMAL:n {: RESULT = n; :}
-             | HEXADECIMAL:n {: RESULT = n; :}
-             | BINARY:n {: RESULT = n; :}
-             | STRING:n {: RESULT = new QuotedObject(n); :};
+string ::= STRING:n {: RESULT = new QuotedObject(n, parser.env.isSMTLIB25()); :};
+
+specConstant ::= NUMERAL
+             | DECIMAL
+             | HEXADECIMAL
+             | BINARY
+             | string;
 sExpr ::= specConstant
         | allsymbol
         | KEYWORD
@@ -522,13 +525,13 @@ constantTerm ::= NUMERAL:n
              			parser.report_error(se.getMessage());
              			RESULT = null;
              		} :}
-             | STRING:n {: try {
+             | string:n {: try {
                     RESULT = parser.env.getScript().string(n);
              		} catch (SMTLIBException se) {
              			parser.report_error(se.getMessage());
              			RESULT = null;
              		} :};
-index ::= NUMERAL:n {: RESULT = n.toString(); :} | symbol;
+index ::= NUMERAL:n {: RESULT = n.toString(); :} | symbol | HEXADECIMAL | BINARY;
 identifierIndexed ::= LPAR UNDERSCORE symbol:id index+:indices RPAR
              {: RESULT = new IndexedIdentifier(id, indices); :};
 identifier ::= symbol:s {: RESULT = new IndexedIdentifier(s, null); :}
@@ -689,42 +692,11 @@ booleanOption ::= CPRINTSUCCESS | CEXPANDDEFINITIONS | CINTERACTIVEMODE
                 | CSTRONGSIMPLIFIER | CPRODUCEUNSATASSUMPTIONS;
 stringOption ::= CREGULAROUTPUTCHANNEL | CDIAGNOSTICOUTPUTCHANNEL;
 numeralOption ::= CRANDOMSEED | CVERBOSITY | CTIMEOUT;
-option ::= booleanOption:o bValue:b
-           {: try {
-           		parser.env.getScript().setOption(o, b);
-           		parser.env.printSuccess();
-           	} catch (UnsupportedOperationException uoe) {
-           		parser.env.printResponse("unsupported");
-           	} catch (SMTLIBException se) {
-           		parser.env.printError(se.getMessage());
-           	} :}
-         | stringOption:o STRING:s
-           {: try {
-           		parser.env.getScript().setOption(o, s);
-           		parser.env.printSuccess();
-           	} catch (UnsupportedOperationException uoe) {
-           		parser.env.printResponse("unsupported");
-           	} catch (SMTLIBException se) {
-           		parser.env.printError(se.getMessage());
-           	}:}
-         | numeralOption:o NUMERAL:n
-           {: try {
-           		parser.env.getScript().setOption(o, n);
-           		parser.env.printSuccess();
-           	} catch (UnsupportedOperationException uoe) {
-           		parser.env.printResponse("unsupported");
-           	} catch (SMTLIBException se) {
-           		parser.env.printError(se.getMessage());
-           	}:}
-         | keywordNoOption:k attributeValue?:v
-           {: try {
-           		parser.env.getScript().setOption(k, v);
-           		parser.env.printSuccess();
-           	} catch (UnsupportedOperationException uoe) {
-           		parser.env.printResponse("unsupported");
-           	} catch (SMTLIBException se) {
-           		parser.env.printError(se.getMessage());
-           	} :};
+option ::= booleanOption:o bValue:b {: RESULT = new Object[] { o, b }; :}
+         | stringOption:o STRING:s {: RESULT = new Object[] { o, s }; :}
+         | numeralOption:o NUMERAL:n {: RESULT = new Object[] { o, n }; :}
+         | keywordNoOption:o attributeValue?:v {: RESULT = new Object[] { o, v }; :}
+         ;
 infoFlag ::= keyword;
 
 interpolantpartition
@@ -788,61 +760,79 @@ datatypeDec ::= LPAR constructorDec+:cons RPAR
 
 command ::= SETLOGIC symbol:logic
             {: try {
-            	parser.env.getScript().setLogic(logic);
-            	parser.env.printSuccess();
-            } catch (UnsupportedOperationException uoe) {
-            	parser.env.printResponse("unsupported");
-            } catch (SMTLIBException se) {
-				parser.report_error(se.getMessage(), logic$);
-				parser.env.printError(getError());
-            }
+                   parser.env.getScript().setLogic(logic);
+                   parser.env.printSuccess();
+               } catch (UnsupportedOperationException uoe) {
+                   parser.env.printUnsupported();
+               } catch (SMTLIBException se) {
+                   parser.report_error(se.getMessage(), logic$);
+                   parser.env.printError(getError());
+               }
              :}
           | SETOPTION option:opt
+            {: try {
+                   parser.env.getScript().setOption((String) opt[0], opt[1]);
+                   parser.env.printSuccess();
+               } catch (UnsupportedOperationException uoe) {
+                   parser.env.printUnsupported();
+               } catch (SMTLIBException se) {
+                   parser.report_error(se.getMessage(), opt$);
+                   parser.env.printError(getError());
+               }
+            :}
           | SETINFO keyword:k attributeValue?:v
-            {: parser.env.setInfo(k, v);
-            parser.env.printSuccess(); :}
+            {: try {
+                   parser.env.setInfo(k, v);
+                   parser.env.printSuccess();
+               } catch (UnsupportedOperationException uoe) {
+                   parser.env.printUnsupported();
+               } catch (SMTLIBException se) {
+                   parser.report_error(se.getMessage(), k$);
+                   parser.env.printError(getError());
+               }
+            :}
           | DECLARESORT symbol:sort NUMERAL:n
-			{:
-				if (n.bitLength() >= 32)
-					parser.report_error("sort has too many arguments", n$);
-				if (hasError())
-					parser.env.printError(getError());
-				else {
-					try {
-						parser.env.getScript().declareSort(sort, n.intValue());
-						parser.env.printSuccess();
-					} catch (SMTLIBException se) {
-						parser.report_error(se.getMessage(), sort$);
-						parser.env.printError(getError());
-					}
-				}
-			:}
+            {:
+                if (n.bitLength() >= 32)
+                    parser.report_error("sort has too many arguments", n$);
+                if (hasError()) {
+                    parser.env.printError(getError());
+                } else {
+                    try {
+                        parser.env.getScript().declareSort(sort, n.intValue());
+                        parser.env.printSuccess();
+                    } catch (SMTLIBException se) {
+                        parser.report_error(se.getMessage(), sort$);
+                        parser.env.printError(getError());
+                    }
+                }
+            :}
           | DEFINESORT symbol:sort LPAR symbol*:sortVars
             {: pushSortParams(sortVars); :}
             RPAR sort:def
-            {: if (hasError())
-            	   parser.env.printError(getError());
-               else {
+            {: if (hasError()) {
+                   parser.env.printError(getError());
+               } else {
                    try {
-                   		parser.env.getScript().defineSort(sort, getSortParams(), def);
-                   		parser.env.printSuccess();
+                       parser.env.getScript().defineSort(sort, getSortParams(), def);
+                       parser.env.printSuccess();
                    } catch (SMTLIBException se) {
-                   		parser.report_error(se.getMessage(), sort$);
-                   		parser.env.printError(getError());
+                       parser.report_error(se.getMessage(), sort$);
+                       parser.env.printError(getError());
                    }
                }
                popSortParams();
             :}
           | DECLAREFUN symbol:fun LPAR sort*:param RPAR sort:result
-            {: if (hasError())
-            	   parser.env.printError(getError());
-               else {
+            {: if (hasError()) {
+                   parser.env.printError(getError());
+               } else {
                    try {
-                   		parser.env.getScript().declareFun(fun, param, result);
-                   		parser.env.printSuccess();
+                       parser.env.getScript().declareFun(fun, param, result);
+                       parser.env.printSuccess();
                    } catch (SMTLIBException se) {
-                   		parser.report_error(se.getMessage(), fun$);
-                   		parser.env.printError(getError());
+                       parser.report_error(se.getMessage(), fun$);
+                       parser.env.printError(getError());
                    }
                }
             :}
@@ -889,191 +879,217 @@ command ::= SETLOGIC symbol:logic
                       LPAR sortedVar*:param RPAR sort:resultSort term:value
             {: localVars.endScope();
                if (hasError())
-            	   parser.env.printError(getError());
+                   parser.env.printError(getError());
                else {
                    try {
-                   	parser.env.getScript().defineFun(fun, param, resultSort, value);
-                   	parser.env.printSuccess();
+                       parser.env.getScript().defineFun(fun, param, resultSort, value);
+                       parser.env.printSuccess();
                    } catch (SMTLIBException se) {
-                   		parser.report_error(se.getMessage(), fun$);
-                   		parser.env.printError(getError());
+                       parser.report_error(se.getMessage(), fun$);
+                       parser.env.printError(getError());
                    }
                }
             :}
           | PUSH NUMERAL:n
             {: if (n.bitLength() >= 32)  {
-            	   parser.report_error("too many push levels", n$);
-            	   parser.env.printError(getError());
+                   parser.report_error("too many push levels", n$);
+                   parser.env.printError(getError());
                } else {
                	   try {
-                      parser.env.getScript().push(n.intValue());
-                      parser.env.printSuccess();
+                       parser.env.getScript().push(n.intValue());
+                       parser.env.printSuccess();
                    } catch (SMTLIBException se) {
-                   		parser.report_error(se.getMessage(), n$);
-                   		parser.env.printError(getError());
+                       parser.report_error(se.getMessage(), n$);
+                       parser.env.printError(getError());
                    }
                } :}
           | POP NUMERAL:n
             {: if (n.bitLength() >= 32) {
-            	   parser.report_error("too many pop levels", n$);
-            	   parser.env.printError(getError());
+                   parser.report_error("too many pop levels", n$);
+                   parser.env.printError(getError());
                } else {
-               	try {
-                   parser.env.getScript().pop(n.intValue());
-                   parser.env.printSuccess();
-                } catch (SMTLIBException se) {
-                   		parser.report_error(se.getMessage(), n$);
-                   		parser.env.printError(getError());
-                }
+                   try {
+                       parser.env.getScript().pop(n.intValue());
+                       parser.env.printSuccess();
+                   } catch (SMTLIBException se) {
+                       parser.report_error(se.getMessage(), n$);
+                       parser.env.printError(getError());
+                   }
                } :}
           | PUSH
             {: try {
-            	parser.env.getScript().push(1);
-            	parser.env.printSuccess();
+                   parser.env.getScript().push(1);
+                   parser.env.printSuccess();
                } catch (SMTLIBException se) {
-               	parser.env.printError(se.getMessage());
+                   parser.report_error(se.getMessage());
+                   parser.env.printError(getError());
                } :}
           | POP
             {: try {
-            	parser.env.getScript().pop(1);
-            	parser.env.printSuccess();
-            } catch (SMTLIBException se) {
-            	parser.env.printError(se.getMessage());
-            }  :}
+                   parser.env.getScript().pop(1);
+                   parser.env.printSuccess();
+               } catch (SMTLIBException se) {
+                   parser.report_error(se.getMessage());
+                   parser.env.printError(getError());
+               } :}
           | ASSERT term:t
             {: if (hasError()) {
                    parser.env.printError(getError());
                } else {
-               	try {
-                   parser.env.getScript().assertTerm(t);
-                   parser.env.printSuccess();
-                 } catch (SMTLIBException se) {
-                 	parser.report_error(se.getMessage());
-                 	parser.env.printError(getError());
-                 }
+                   try {
+                       parser.env.getScript().assertTerm(t);
+                       parser.env.printSuccess();
+                   } catch (UnsupportedOperationException ignored) {
+                       parser.env.printUnsupported();
+                   } catch (SMTLIBException se) {
+                       parser.report_error(se.getMessage());
+                       parser.env.printError(getError());
+                   }
                }
             :}
           | CHECKSAT
             {: try {
-            	Script.LBool res = parser.env.getScript().checkSat();
-            	parser.env.printResponse(res);
+                Script.LBool res = parser.env.getScript().checkSat();
+                parser.env.printResponse(res);
             } catch(SMTLIBException se) {
-            	parser.env.printError(se.getMessage());
+                parser.report_error(se.getMessage());
+                parser.env.printError(getError());
+            } catch (UnsupportedOperationException ignored) {
+                parser.env.printUnsupported();
             } :}
           | CHECKSATASSUMING LPAR term*:t RPAR
             {:
-				if (hasError()) {
-					parser.env.printError(getError());
-				} else {
-					try {
-						Script.LBool res = parser.env.getScript().checkSatAssuming(t);
-						parser.env.printResponse(res);
-					} catch(SMTLIBException se) {
-						parser.env.printError(se.getMessage());
-					}
-				}
+                if (hasError()) {
+                    parser.env.printError(getError());
+                } else {
+                    try {
+                        Script.LBool res = parser.env.getScript().checkSatAssuming(t);
+                        parser.env.printResponse(res);
+                    } catch (UnsupportedOperationException ignored) {
+                        parser.env.printUnsupported();
+                    } catch(SMTLIBException se) {
+                        parser.report_error(se.getMessage());
+                        parser.env.printError(getError());
+                    }
+                }
             :}
           | GETASSERTIONS
             {: try {
-            	Term[] res = parser.env.getScript().getAssertions();
-            	parser.env.printTermResponse(res);
+            	parser.env.printResponse(new AssertionList(parser.env.getScript().getAssertions()));
             } catch (SMTLIBException se) {
-            	parser.env.printError(se.getMessage());
+                parser.report_error(se.getMessage());
+                parser.env.printError(getError());
             } :}
           | GETINTERPOLANTS interpolantpartition:ips
             {: if (!ips.isClosedTree())
                    parser.report_error("Interpolation tree malformed", ips$);
-               if (hasError())
-            	   parser.env.printError(getError());
-               else {
-               	try {
-                   Term[] partition = ips.getPartition();
-                   int[] startOfSubtree = ips.getTreeStructure();
-                   Term[] res = parser.env.getScript()
-                       .getInterpolants(partition, startOfSubtree);
-                   parser.env.printResponse(res);
-                } catch (SMTLIBException se) {
-                	parser.env.printError(se.getMessage());
-                } catch (UnsupportedOperationException ignored) {
-            	    parser.env.printResponse("unsupported");
-                }
+               if (hasError()) {
+                  parser.env.printError(getError());
+               } else {
+                   try {
+                       Term[] partition = ips.getPartition();
+                       int[] startOfSubtree = ips.getTreeStructure();
+                       Term[] res = parser.env.getScript()
+                           .getInterpolants(partition, startOfSubtree);
+                       parser.env.printResponse(new SExpression(res));
+                   } catch (SMTLIBException se) {
+                       parser.report_error(se.getMessage());
+                       parser.env.printError(getError());
+                   } catch (UnsupportedOperationException ignored) {
+                       parser.env.printUnsupported();
+                   }
                } :}
           | GETPROOF
             {: try {
-            	Term proof = parser.env.getScript().getProof();
-            	parser.env.printResponse(proof);
+                Term proof = parser.env.getScript().getProof();
+                parser.env.printResponse(proof);
             } catch (SMTLIBException se) {
-            	parser.env.printError(se.getMessage());
+                parser.report_error(se.getMessage());
+                parser.env.printError(getError());
+            } catch (UnsupportedOperationException uoe) {
+                parser.env.printUnsupported();
             } :}
           | GETUNSATCORE
             {: try {
-            	Term[] res = parser.env.getScript().getUnsatCore();
-            	parser.env.printResponse(res);
+                Term[] res = parser.env.getScript().getUnsatCore();
+                parser.env.printResponse(new SExpression(res));
             } catch (SMTLIBException se) {
-            	parser.env.printError(se.getMessage());
+                parser.report_error(se.getMessage());
+                parser.env.printError(getError());
             } catch (UnsupportedOperationException uoe) {
-            	parser.env.printResponse("unsupported");
+                parser.env.printUnsupported();
             } :}
           | GETUNSATASSUMPTIONS
             {: try {
-            	Term[] res = parser.env.getScript().getUnsatAssumptions();
-            	parser.env.printResponse(res);
+                Term[] res = parser.env.getScript().getUnsatAssumptions();
+                parser.env.printResponse(new SExpression(res));
             } catch (SMTLIBException se) {
-            	parser.env.printError(se.getMessage());
+                parser.report_error(se.getMessage());
+                parser.env.printError(getError());
             } catch (UnsupportedOperationException uoe) {
-            	parser.env.printResponse("unsupported");
+                parser.env.printUnsupported();
             } :}
-          |  GETMODEL
+          | GETMODEL
             {: try {
                 Model model = parser.env.getScript().getModel();
                 parser.env.printResponse(model);
             } catch (SMTLIBException se) {
-            	parser.env.printError(se.getMessage());
+                parser.report_error(se.getMessage());
+                parser.env.printError(getError());
             } catch (UnsupportedOperationException uoe) {
-            	parser.env.printResponse("unsupported");
+                parser.env.printUnsupported();
             } :}
           | GETVALUE LPAR term+:t RPAR
-            {: if (hasError())
-            	   parser.env.printError(getError());
-               else {
-               	try {
-                   Map<Term, Term> val = parser.env.getScript().getValue(t);
-                   parser.env.printValues(val);
-                } catch (SMTLIBException se) {
-                	parser.env.printError(se.getMessage());
-                }
+            {: if (hasError()) {
+                   parser.env.printError(getError());
+               } else {
+                   try {
+                       Map<Term, Term> val = parser.env.getScript().getValue(t);
+                       parser.env.printResponse(new GetValueResult(val));
+                   } catch (SMTLIBException se) {
+                       parser.report_error(se.getMessage());
+                       parser.env.printError(getError());
+                   }
                } :}
           | GETASSIGNMENT
             {: try {
-            	Assignments ass = parser.env.getScript().getAssignment();
-            	parser.env.printResponse(ass);
+                Assignments ass = parser.env.getScript().getAssignment();
+                parser.env.printResponse(ass);
             } catch (SMTLIBException se) {
-            	parser.env.printError(se.getMessage());
+                parser.report_error(se.getMessage());
+                parser.env.printError(getError());
+            } catch (UnsupportedOperationException uoe) {
+                parser.env.printUnsupported();
             } :}
           | GETOPTION keyword:opt
             {: try {
-            	parser.env.printResponse(parser.env.getScript().getOption(opt));
-            } catch (UnsupportedOperationException ignored) {
-            	parser.env.printResponse("unsupported");
+                parser.env.printResponse(parser.env.getScript().getOption(opt));
+            } catch (SMTLIBException se) {
+                parser.report_error(se.getMessage());
+                parser.env.printError(getError());
+            } catch (UnsupportedOperationException uoe) {
+                parser.env.printUnsupported();
             } :}
           | GETINFO infoFlag:info
             {: try {
-            	parser.env.printInfoResponse(info, parser.env.getInfo(info));
+                parser.env.printResponse(new SExpression(new Object[] { info, parser.env.getInfo(info) }));
             } catch (UnsupportedOperationException ignored) {
-            	parser.env.printResponse("unsupported");
+                parser.env.printUnsupported();
             } catch (SMTLIBException se) {
-            	parser.env.printError(se.getMessage());
+                parser.report_error(se.getMessage());
+                parser.env.printError(getError());
             } :}
           | INCLUDE STRING:file
-          	{: try {
-          		parser.env.include(file);
-          		parser.env.printSuccess();
-          	} catch (SMTLIBException se) {
-          		parser.env.printError(se.getMessage());
-          	}:}
+            {: try {
+                parser.env.include(file);
+                parser.env.printSuccess();
+            } catch (SMTLIBException se) {
+                parser.report_error(se.getMessage());
+                parser.env.printError(getError());
+            }:}
           | SIMPLIFY term:t
             {: if (hasError())
-            	   parser.env.printError(getError());
+                   parser.env.printError(getError());
                else
                    parser.env.printResponse(parser.env.getScript().simplify(t));
             :}
@@ -1082,35 +1098,39 @@ command ::= SETLOGIC symbol:logic
           | RESETASSERTIONS
             {: parser.env.getScript().resetAssertions(); parser.env.printSuccess(); :}
           | EXIT
-            {: parser.env.getScript().exit(); parser.done_parsing(); :}
+            {: parser.done_parsing(); /* Only exit the parser. */ :}
           | TIMED
             {: parser.env.startTiming(); :}
             commandPar*
             {: parser.env.endTiming(); :}
           | ALLSAT LPAR term+:p RPAR
-          	{: if (hasError())
-            	  parser.env.printError(getError());
-              else {
-                try {
-          			parser.env.printResponse(parser.env.getScript().checkAllsat(p));
-          	   	} catch (SMTLIBException se) {
-          	   		parser.env.printError(se.getMessage());
-          	   	}
-          	  }
-          	 :}
-           | ECHO STRING:msg
-             {: parser.env.printResponse(parser.env.getScript().echo(new QuotedObject(msg))); :}
-           | FINDIMPLIEDEQUALITY LPAR term+:x RPAR LPAR term+:y RPAR
-             {: if (hasError())
-            	  parser.env.printError(getError());
-              else {
-                try {
-          			parser.env.printResponse(parser.env.getScript().findImpliedEquality(x, y));
-          	   	} catch (SMTLIBException se) {
-          	   		parser.env.printError(se.getMessage());
-          	   	}
-          	  }
-          	 :}
+            {: if (hasError()) {
+                   parser.env.printError(getError());
+               } else {
+                   try {
+                       parser.env.printResponse(new SExpression(parser.env.getScript().checkAllsat(p)));
+                   } catch (UnsupportedOperationException ignored) {
+                       parser.env.printUnsupported();
+                   } catch (SMTLIBException se) {
+                       parser.report_error(se.getMessage());
+                       parser.env.printError(getError());
+                   }
+               }
+            :}
+          | ECHO STRING:msg
+            {: parser.env.printResponse(parser.env.getScript().echo(new QuotedObject(msg, parser.env.isSMTLIB25()))); :}
+          | FINDIMPLIEDEQUALITY LPAR term+:x RPAR LPAR term+:y RPAR
+            {: if (hasError()) {
+                   parser.env.printError(getError());
+               } else {
+                   try {
+                       parser.env.printResponse(parser.env.getScript().findImpliedEquality(x, y));
+                   } catch (SMTLIBException se) {
+                       parser.report_error(se.getMessage());
+                       parser.env.printError(getError());
+                   }
+               }
+            :}
           ;
 commandPar ::= LPAR command RPAR
              | error;

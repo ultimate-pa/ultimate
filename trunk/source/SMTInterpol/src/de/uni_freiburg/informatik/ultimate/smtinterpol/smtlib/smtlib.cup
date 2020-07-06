@@ -122,7 +122,7 @@ bench_attribute ::=
 	| ATTR_EXTRAFUNS LPAR extraFun+ RPAR
 	| ATTR_EXTRAPREDS LPAR extraPred+ RPAR
 	| ATTR_NOTES ATTR_STRING:s {: parser.benchmark.note(s); :}
-	| ATTRIBUTE:a USERVAL:v {: parser.benchmark.setInfo(":" + a, new QuotedObject(v).toString()); :}
+	| ATTRIBUTE:a USERVAL:v {: parser.benchmark.setInfo(":" + a, new QuotedObject(v, false).toString()); :}
 	| ATTRIBUTE
 	;
 status ::= SAT {: RESULT = "sat"; :}

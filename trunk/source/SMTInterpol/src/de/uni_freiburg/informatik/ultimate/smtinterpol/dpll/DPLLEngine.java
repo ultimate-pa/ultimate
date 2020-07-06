@@ -1278,11 +1278,6 @@ public class DPLLEngine {
 		} catch (final OutOfMemoryError eOOM) {
 			setCompleteness(INCOMPLETE_MEMOUT);
 			return true;
-		} catch (final RuntimeException eUnknown) {
-			if (System.getProperty("smtinterpol.ddfriendly") != null) {
-				System.exit(3);
-			}
-			throw eUnknown;
 		} finally {
 			for (final ITheory t : mTheories) {
 				t.endCheck();

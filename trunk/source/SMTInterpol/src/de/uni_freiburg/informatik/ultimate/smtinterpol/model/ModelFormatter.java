@@ -92,15 +92,16 @@ public class ModelFormatter {
 	private void appendFunctionValue(final FunctionValue value, final TermVariable[] vars, final Sort resultSort) {
 		if (vars.length == 0) {
 			newline();
-			mString.append(mModel.toModelTerm(value.getDefault(), resultSort).toStringDirect());
+			mString.append(value.getDefault().toStringDirect());
 		} else {
-			final int defaultVal = value.getDefault();
+			final Term defaultVal = value.getDefault();
 			int closing = 0;
-			for (final Entry<Index, Integer> me : value.values().entrySet()) {
+			for (final Entry<Index, Term> me : value.values().entrySet()) {
 				if (me.getValue() != defaultVal) {
 					newline();
-					mString.append("(ite ").append(mModel.index2Term(me.getKey(), vars).toStringDirect()).append(' ')
-							.append(mModel.toModelTerm(me.getValue(), resultSort).toStringDirect());
+					mString.append("(ite ").append(mModel.generateCondition(me.getKey(), vars).toStringDirect())
+							.append(' ')
+							.append(me.getValue().toStringDirect());
 					// We have to close one parenthesis;
 					++closing;
 				}
@@ -108,7 +109,7 @@ public class ModelFormatter {
 			// Default value
 			mIndent += Config.INDENTATION;
 			newline();
-			mString.append(mModel.toModelTerm(defaultVal, resultSort).toStringDirect());
+			mString.append(defaultVal.toStringDirect());
 			for (int i = 0; i < closing; ++i) {
 				mString.append(')');
 			}

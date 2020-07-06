@@ -34,7 +34,7 @@ import java.util.ArrayDeque;
  * {@link Script#decimal(BigDecimal)},
  * {@link Script#binary(String)},
  * {@link Script#hexadecimal(String)}, and
- * {@link Script#string(String)}.
+ * {@link Script#string(QuotedObject)}.
  *
  * Also {@link Rational#toTerm(Sort)} creates a constant term.
  *

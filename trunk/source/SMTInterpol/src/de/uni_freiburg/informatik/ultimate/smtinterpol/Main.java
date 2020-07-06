@@ -18,16 +18,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
-
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.aiger.AIGERFrontEnd;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dimacs.DIMACSParser;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib.SMTLIBParser;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ErrorCallback;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTLIB2Parser;
 
@@ -38,56 +35,30 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTLIB2Parser;
  */
 public final class Main {
 
-	public static Properties sVersionInfo; //NOCHECKSTYLE
-	static {
-		sVersionInfo = new Properties();
-		try {
-			final InputStream is =
-					Main.class.getResourceAsStream("Version.properties");
-			if (is != null) {
-				sVersionInfo.load(is);
-			}
-		} catch (final IOException ex) {
-			/* ignore */
-		}
-	}
-
 	private Main() {
 		// Hide constructor
-	}
-
-	public static final String getVersion() {
-		String version = sVersionInfo.getProperty("version", "unknown version");
-		if (Config.COMPETITION)
-		 {
-			version += "-comp"; // NOPMD
-		}
-		return version;
 	}
 
 	private static void usage() {
 		System.err.println("USAGE: smtinterpol [OPTION]... [INPUTFILE]");
 		System.err.println("If no INPUTFILE is given, stdin is used.");
-		System.err.println("  -script <class>      Send the input to another Java class implementing Script.");// NOCHECKSTYLE
-		System.err.println("  -no-success          Don't print success messages.");// NOCHECKSTYLE
-		System.err.println("  -o <opt>=<value>     Set option :opt to value. The default value is true.");// NOCHECKSTYLE
-		System.err.println("  -q                   Only print error messages.");// NOCHECKSTYLE
-		System.err.println("  -w                   Don't print statistics and models.");// NOCHECKSTYLE
+		System.err.println("  -script <class>      Send the input to another Java class implementing Script.");
+		System.err.println("  -ddfriendly          Exit with error code indicating problems (delta-debugger friendly).");
+		System.err.println("  -no-success          Don't print success messages.");
+		System.err.println("  -o <opt>=<value>     Set option :opt to value. The default value is true.");
+		System.err.println("  -q                   Only print error messages.");
+		System.err.println("  -w                   Don't print statistics and models.");
 		System.err.println("  -v                   Print debugging messages.");
-		System.err.println("  -t <num>             Set the timeout per check-sat call to <num> milliseconds.");// NOCHECKSTYLE
-		System.err.println("  -r <num>             Use a different random seed.");// NOCHECKSTYLE
-		System.err.println("  -smt2                Parse input as SMTLIB 2 script.");// NOCHECKSTYLE
-		System.err.println("  -smt                 Parse input as SMTLIB 1 benchmark.");// NOCHECKSTYLE
-		System.err.println("  -d                   Parse input as DIMACS benchmark.");// NOCHECKSTYLE
+		System.err.println("  -t <num>             Set the timeout per check-sat call to <num> milliseconds.");
+		System.err.println("  -r <num>             Use a different random seed.");
+		System.err.println("  -smt2                Parse input as SMTLIB 2 script.");
+		System.err.println("  -smt                 Parse input as SMTLIB 1 benchmark.");
+		System.err.println("  -d                   Parse input as DIMACS benchmark.");
 		System.err.println("  -version             Print version and exit.");
 	}
 
 	private static void version() {
-		final String date = sVersionInfo.getProperty("build.date");
-		System.err.println("SMTInterpol " + getVersion());
-		if (date != null) {
-			System.err.println("  built on " + date);
-		}
+		System.err.println("SMTInterpol " + Version.VERSION);
 	}
 
 	/**
@@ -96,6 +67,7 @@ public final class Main {
 	public static void main(String[] param) throws Exception {
 		final DefaultLogger logger = new DefaultLogger();
 		final OptionMap options = new OptionMap(logger, true);
+		ErrorCallback errorCallback = null;
 		IParser parser = new SMTLIB2Parser();
 		Script solver = null;
 		int paramctr = 0;
@@ -107,8 +79,19 @@ public final class Main {
 			} else if (param[paramctr].equals("-script")
 					&& paramctr + 1 < param.length) {
 				paramctr++;
-				final Class<?> scriptClass = Class.forName(param[paramctr]);
+				String scriptName = param[paramctr];
+				if (!scriptName.contains(".")) {
+					scriptName = "de.uni_freiburg.informatik.ultimate.smtinterpol.scripts." + scriptName;
+				}
+				final Class<?> scriptClass = Class.forName(scriptName);
 				solver = (Script) scriptClass.newInstance();
+			} else if (param[paramctr].equals("-ddfriendly")) {
+				errorCallback = new ErrorCallback() {
+					@Override
+					public void notifyError(ErrorReason reason) {
+						System.exit(reason.ordinal() + 1);
+					}
+				};
 			} else if (param[paramctr].equals("-no-success")) {
 				options.set(":print-success", false);
 			} else if (param[paramctr].equals("-v")) {
@@ -175,7 +158,9 @@ public final class Main {
 		}
 		options.started();
 		if (solver == null) {
-			solver = new SMTInterpol(null, options);
+			final SMTInterpol smtinterpol = new SMTInterpol(null, options);
+			smtinterpol.setErrorCallback(errorCallback);
+			solver = smtinterpol;
 		}
 		final int exitCode = parser.run(solver, filename, options);
 		System.exit(exitCode);

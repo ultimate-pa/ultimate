@@ -28,7 +28,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -54,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTh
  */
 public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 
-	private final HashMap<Sort, SortInterpretation> mSorts = new HashMap<>();
+	private final HashMap<Sort, FiniteSortInterpretation> mSorts = new HashMap<>();
 
 	private final HashMap<Sort, ArraySortInterpretation> mArraySorts = new HashMap<>();
 
@@ -72,16 +71,16 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 
 	private final boolean mPartialModel;
 
-	public Model(final Clausifier clausifier, final Theory t, final boolean partial) {
-		mTheory = t;
+	public Model(final Clausifier clausifier, final Theory theory, final boolean partial) {
+		mTheory = theory;
 		mPartialModel = partial;
 		mBoolSort = new BoolSortInterpretation();
 		mNumSorts = new NumericSortInterpretation();
 		// Extract Boolean model
-		final FunctionValue trueValue = new FunctionValue(mBoolSort.getTrueIdx());
-		final FunctionValue falseValue = new FunctionValue(mBoolSort.getFalseIdx());
+		final FunctionValue trueValue = new FunctionValue(theory.mTrue);
+		final FunctionValue falseValue = new FunctionValue(theory.mFalse);
 		for (final BooleanVarAtom atom : clausifier.getBooleanVars()) {
-			final ApplicationTerm at = (ApplicationTerm) atom.getSMTFormula(t);
+			final ApplicationTerm at = (ApplicationTerm) atom.getSMTFormula(theory);
 			FunctionValue value;
 			if (atom.getDecideStatus() == null) {
 				value = atom.getPreferredStatus() == atom ? trueValue : falseValue;
@@ -94,39 +93,36 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		CClosure cc = null;
 		LinArSolve la = null;
 		ArrayTheory array = null;
-		for (final ITheory theory : clausifier.getEngine().getAttachedTheories()) {
-			if (theory instanceof CClosure) {
-				cc = (CClosure) theory;
-			} else if (theory instanceof LinArSolve) {
-				la = (LinArSolve) theory;
-			} else if (theory instanceof ArrayTheory) {
-				array = (ArrayTheory) theory;
-			} else if (theory instanceof QuantifierTheory) {
-				if (!((QuantifierTheory) theory).getQuantClauses().isEmpty()) {
+		for (final ITheory theorySolver : clausifier.getEngine().getAttachedTheories()) {
+			if (theorySolver instanceof CClosure) {
+				cc = (CClosure) theorySolver;
+			} else if (theorySolver instanceof LinArSolve) {
+				la = (LinArSolve) theorySolver;
+			} else if (theorySolver instanceof ArrayTheory) {
+				array = (ArrayTheory) theorySolver;
+			} else if (theorySolver instanceof QuantifierTheory) {
+				if (!((QuantifierTheory) theorySolver).getQuantClauses().isEmpty()) {
 					throw new UnsupportedOperationException("Modelproduction for quantifier theory not implemented.");
 				}
-			} else if (theory instanceof EprTheory) {
+			} else if (theorySolver instanceof EprTheory) {
 				if (!EprTheorySettings.FullInstatiationMode) {
 					throw new UnsupportedOperationException("Modelproduction for EPR theory not implemented.");
 				}
 			} else {
-				throw new InternalError("Unknown theory: " + theory);
+				throw new InternalError("Unknown theory: " + theorySolver);
 			}
 		}
 		final SharedTermEvaluator ste = new SharedTermEvaluator(clausifier);
 		if (la != null) {
-			la.fillInModel(this, t, ste);
+			la.fillInModel(this, theory, ste);
 		}
 		if (cc != null) {
-			cc.fillInModel(this, t, ste, array);
+			cc.fillInModel(this, theory, ste, array);
 		}
 		if (!partial) {
-			for (final FunctionSymbol fs : t.getDeclaredFunctions().values()) {
+			for (final FunctionSymbol fs : theory.getDeclaredFunctions().values()) {
 				if (fs.getDefinition() == null && !fs.isIntern() && !mFuncVals.containsKey(fs)) {
-					final SortInterpretation si = provideSortInterpretation(fs.getReturnSort());
-					// ensure the sort is inhabited
-					si.ensureCapacity(1);
-					map(fs, 0);
+					map(fs, getSomeValue(fs.getReturnSort()));
 				}
 			}
 		}
@@ -137,19 +133,21 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		boolean correct = true;
 		for (final Map.Entry<FunctionSymbol, FunctionValue> me : mFuncVals.entrySet()) {
 			final FunctionSymbol fs = me.getKey();
+			final FunctionValue functionMap = me.getValue();
+			// Check that all integer functions/constants map to integer
 			if (fs.getReturnSort().getName().equals("Int")) {
-				if (!mNumSorts.get(me.getValue().getDefault()).isIntegral()) {
-					correct = false;
+				if (!NumericSortInterpretation.toRational(functionMap.getDefault()).isIntegral()) {
 					if (fs.getParameterSorts().length == 0) {
 						logger.fatal("Non-integral value for integer variable " + fs);
 					} else {
 						logger.fatal("Non-integral default value for function " + fs);
 					}
+					correct = false;
 				}
-				for (final Map.Entry<Index, Integer> val : me.getValue().values().entrySet()) {
-					if (!mNumSorts.get(val.getValue()).isIntegral()) {
+				for (final Map.Entry<Index, Term> valEntry : functionMap.values().entrySet()) {
+					if (!NumericSortInterpretation.toRational(valEntry.getValue()).isIntegral()) {
+						logger.fatal("Non-integral value for function " + fs + " at index " + valEntry.getKey());
 						correct = false;
-						logger.fatal("Non-integral value for function " + fs + " at index " + me.getKey());
 					}
 				}
 			}
@@ -157,42 +155,20 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		return correct;
 	}
 
-	public int getFalseIdx() {
-		return mBoolSort.getFalseIdx();
+	public Term getModelValue(final int index, final Sort sort) {
+		return provideSortInterpretation(sort).getModelValue(index, sort);
 	}
 
-	public int getTrueIdx() {
-		return mBoolSort.getTrueIdx();
+	public Term getSomeValue(final Sort sort) {
+		return getModelValue(0, sort);
 	}
 
-	public int extendNumeric(final FunctionSymbol fsym, final Rational rat) {
-		assert fsym.getReturnSort().isNumericSort();
-		assert !fsym.getReturnSort().getName().equals("Int") || rat.isIntegral();
-		final int idx = mNumSorts.extend(rat);
-		mFuncVals.put(fsym, new FunctionValue(idx));
-		return idx;
+	public Term getSecondValue(final Sort sort) {
+		return getModelValue(1, sort);
 	}
 
-	public int putNumeric(final Rational rat) {
-		return mNumSorts.extend(rat);
-	}
-
-	public int extendFresh(final Sort s) {
-		if (s.isArraySort()) {
-			ArraySortInterpretation si = mArraySorts.get(s);
-			if (si == null) {
-				si = new ArraySortInterpretation(provideSortInterpretation(s.getArguments()[0]),
-						provideSortInterpretation(s.getArguments()[1]));
-				mArraySorts.put(s, si);
-			}
-			return si.extendFresh();
-		}
-		SortInterpretation si = mSorts.get(s);
-		if (si == null) {
-			si = new FiniteSortInterpretation();
-			mSorts.put(s, si);
-		}
-		return si.extendFresh();
+	public Term extendFresh(final Sort sort) {
+		return provideSortInterpretation(sort).extendFresh(sort);
 	}
 
 	@Override
@@ -200,12 +176,12 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		return Collections.unmodifiableSet(mFuncVals.keySet());
 	}
 
-	Term index2Term(final Index index, final TermVariable[] vars) {
-		final int[] idx = index.getArray();
+	Term generateCondition(final Index index, final TermVariable[] vars) {
+		final Term[] idx = index.toArray();
 		assert vars.length == idx.length;
 		final Term[] conj = new Term[vars.length];
 		for (int i = 0; i < vars.length; ++i) {
-			conj[i] = mTheory.equals(vars[i], toModelTerm(idx[i], vars[i].getSort()));
+			conj[i] = mTheory.equals(vars[i], idx[i]);
 		}
 		return mTheory.and(conj);
 	}
@@ -218,14 +194,12 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		if (fs.getParameterSorts().length != vars.length) {
 			throw new IllegalArgumentException("Wrong number of variables");
 		}
-		final int defaultVal = value.getDefault();
-		final Sort resultSort = fs.getReturnSort();
-		Term definition = toModelTerm(defaultVal, resultSort);
-		for (final Entry<Index, Integer> me : value.values().entrySet()) {
+		final Term defaultVal = value.getDefault();
+		Term definition = defaultVal;
+		for (final Entry<Index, Term> me : value.values().entrySet()) {
 			if (me.getValue() != defaultVal) {
-				final Term cond = index2Term(me.getKey(), vars);
-				final Term val = toModelTerm(me.getValue(), resultSort);
-				definition = mTheory.ifthenelse(cond, val, definition);
+				final Term cond = generateCondition(me.getKey(), vars);
+				definition = mTheory.ifthenelse(cond, me.getValue(), definition);
 			}
 		}
 		return definition;
@@ -244,7 +218,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		return getFunctionDefinition(fs, args);
 	}
 
-	public FunctionValue map(final FunctionSymbol fs, final int value) {
+	public FunctionValue map(final FunctionSymbol fs, final Term value) {
 		FunctionValue res = mFuncVals.get(fs);
 		if (res == null) {
 			res = new FunctionValue(value);
@@ -254,11 +228,11 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		return res;
 	}
 
-	public FunctionValue map(final FunctionSymbol fs, final int[] args, final int value) {
+	public FunctionValue map(final FunctionSymbol fs, final Term[] args, final Term value) {
 		assert fs.getParameterSorts().length == args.length;
 		FunctionValue val = mFuncVals.get(fs);
 		if (val == null) {
-			val = new FunctionValue();
+			val = new FunctionValue(value);
 			mFuncVals.put(fs, val);
 		}
 		val.put(value, args);
@@ -272,8 +246,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 
 	@Override
 	public Term evaluate(final Term input) {
-		final Term unletted = mUnlet.unlet(input);
-		return mEval.evaluate(unletted);
+		return mEval.evaluate(input);
 	}
 
 	@Override
@@ -324,13 +297,13 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		if (sort.isArraySort()) {
 			ArraySortInterpretation array = mArraySorts.get(sort);
 			if (array == null) {
-				array = new ArraySortInterpretation(provideSortInterpretation(sort.getArguments()[0]),
+				array = new ArraySortInterpretation(this, provideSortInterpretation(sort.getArguments()[0]),
 						provideSortInterpretation(sort.getArguments()[1]));
 				mArraySorts.put(sort, array);
 			}
 			return array;
 		}
-		SortInterpretation res = mSorts.get(sort);
+		FiniteSortInterpretation res = mSorts.get(sort);
 		if (res == null) {
 			res = new FiniteSortInterpretation();
 			mSorts.put(sort, res);
@@ -340,40 +313,6 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 
 	public FunctionValue getFunctionValue(final FunctionSymbol fs) {
 		return mFuncVals.get(fs);
-	}
-
-	public Term toModelTerm(final int idx, final Sort resultSort) {
-		if (idx == -1) {
-			return getUndefined(resultSort);
-		}
-		if (resultSort == mTheory.getBooleanSort()) {
-			return mBoolSort.get(idx, resultSort, mTheory);
-		}
-		if (resultSort.isNumericSort()) {
-			final Rational val = mNumSorts.get(idx);
-			return val.toTerm(resultSort);
-		}
-		if (resultSort.isArraySort()) {
-			ArraySortInterpretation array = mArraySorts.get(resultSort);
-			if (array == null) {
-				if (mPartialModel) {
-					return getUndefined(resultSort);
-				}
-				array = new ArraySortInterpretation(provideSortInterpretation(resultSort.getArguments()[0]),
-						provideSortInterpretation(resultSort.getArguments()[1]));
-				mArraySorts.put(resultSort, array);
-			}
-			return array.get(idx, resultSort, mTheory);
-		}
-		SortInterpretation si = mSorts.get(resultSort);
-		if (si == null) {
-			if (mPartialModel) {
-				return getUndefined(resultSort);
-			}
-			si = new FiniteSortInterpretation();
-			si.ensureCapacity(idx + 1);
-		}
-		return si.get(idx, resultSort, mTheory);
 	}
 
 	public ArraySortInterpretation getArrayInterpretation(final Sort arraySort) {

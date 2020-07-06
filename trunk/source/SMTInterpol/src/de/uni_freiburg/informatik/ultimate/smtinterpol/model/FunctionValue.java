@@ -23,13 +23,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+
 public class FunctionValue {
 
 	public static class Index {
-		private final int[] mIdx;
+		private final Term[] mIdx;
 		private final int mHash;
 
-		public Index(final int[] idx) {
+		public Index(final Term[] idx) {
 			mIdx = idx;
 			mHash = Arrays.hashCode(mIdx);
 		}
@@ -47,7 +49,7 @@ public class FunctionValue {
 			return false;
 		}
 
-		public int[] getArray() {
+		public Term[] toArray() {
 			return mIdx;
 		}
 
@@ -57,47 +59,43 @@ public class FunctionValue {
 		}
 	}
 
-	private Map<Index, Integer> mValues;
+	private Map<Index, Term> mValues;
 
-	private int mDefault;
+	private Term mDefault;
 
 	public FunctionValue() {
-		this(0); // 0 is default for every sort
+		mDefault = null;
 	}
 
-	public FunctionValue(final int idx) {
-		mDefault = idx;
+	public FunctionValue(final Term defaultValue) {
+		mDefault = defaultValue;
 	}
 
-	public void put(final int value, final int... idx) {
+	public void put(final Term value, final Term... idx) {
 		if (idx.length == 0) {
-			assert mDefault == 0;
+			assert mDefault == null;
 			mDefault = value;
 		} else {
 			if (mValues == null) {
-				mValues = new HashMap<Index, Integer>();
+				mValues = new HashMap<>();
 			}
 			mValues.put(new Index(idx), value);
 		}
 	}
 
-	public int get(final int[] idx, final boolean partial) {
-		if (idx == null || idx.length == 0) {
+	public Term get(final Term[] idx) {
+		if (mValues == null) {
 			return mDefault;
 		}
-		if (mValues == null) {
-			return partial ? -1 : mDefault;
-		}
-		final Integer res = mValues.get(new Index(idx));
-		return res == null ? partial ? -1 : mDefault : res.intValue();
+		final Term res = mValues.get(new Index(idx));
+		return res == null ? mDefault : res;
 	}
 
-	public int getDefault() {
+	public Term getDefault() {
 		return mDefault;
 	}
 
-	public Map<Index, Integer> values() {
-		final Map<Index, Integer> empty = Collections.emptyMap();
-		return mValues == null ? empty : mValues;
+	public Map<Index, Term> values() {
+		return mValues != null ? mValues : Collections.emptyMap();
 	}
 }

@@ -18,15 +18,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayDeque;
-import java.util.HashMap;
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.DataType.Constructor;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.MatchTerm;
@@ -34,19 +32,25 @@ import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
  * An evaluator for terms against the current model.
- * @author Juergen Christ
+ *
+ * @author Jochen Hoenicke, Juergen Christ
  */
-public class ModelEvaluator extends NonRecursive {
+public class ModelEvaluator extends TermTransformer {
 
 	/**
 	 * A helper to enqueue either the true or the false branch of an ite.
-	 * @author Juergen Christ
+	 *
+	 * @author Jochen Hoenicke
 	 */
 	private static class ITESelector implements Walker {
 
@@ -59,366 +63,296 @@ public class ModelEvaluator extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive engine) {
 			final ModelEvaluator eval = (ModelEvaluator) engine;
-			final int selector = eval.getConverted();
-			if (selector == -1) {
-				eval.setResult(-1);
-			} else {
-				eval.pushTerm(mIte.getParameters()
-						[selector == eval.mModel.getBoolSortInterpretation()
-						.getTrueIdx() ? 1 : 2]);
-			}
+			final ApplicationTerm condition = (ApplicationTerm) eval.getConverted();
+			assert isBooleanValue(condition) : "condition must be 'true' or 'false'";
+			eval.pushTerm(mIte.getParameters()[condition.getFunction().getName() == "true" ? 1 : 2]);
 		}
-
 	}
 
-	private static class AddToCache implements Walker {
+	/**
+	 * A helper to enqueue either the true or the false branch of an ite.
+	 *
+	 * @author Jochen Hoenicke
+	 */
+	private static class MatchSelector implements Walker {
 
-		private final Term mTerm;
-		public AddToCache(final Term t) {
-			mTerm = t;
+		private final MatchTerm mMatch;
+
+		public MatchSelector(final MatchTerm match) {
+			mMatch = match;
 		}
 
 		@Override
 		public void walk(final NonRecursive engine) {
+			final Theory theory = mMatch.getTheory();
 			final ModelEvaluator eval = (ModelEvaluator) engine;
-			eval.mCache.put(mTerm, eval.mEvaluated.peekLast());
-		}
-
-	}
-
-	private static class Evaluator implements Walker {
-
-		private final ApplicationTerm mTerm;
-		public Evaluator(final ApplicationTerm term) {
-			mTerm = term;
-		}
-
-		@Override
-		public void walk(final NonRecursive engine) {
-			final ModelEvaluator eval = (ModelEvaluator) engine;
-			final int[] args = eval.getConvertedArgs(mTerm.getParameters().length);
-			eval.setResult(eval.getValue(mTerm.getFunction(), args, mTerm));
-		}
-
-	}
-
-	private static class CachedEvaluator extends TermWalker {
-
-		public CachedEvaluator(final Term term) {
-			super(term);
-		}
-
-		@Override
-		public void walk(final NonRecursive walker) {
-			final ModelEvaluator eval = (ModelEvaluator) walker;
-			final Integer cached = eval.mCache.get(mTerm);
-			if (cached == null) {
-				eval.enqueueWalker(new AddToCache(mTerm));
-				super.walk(walker);
-			} else {
-				eval.setResult(cached);
-			}
-		}
-
-		@Override
-		public void walk(final NonRecursive walker, final ConstantTerm term) {
-			if (!term.getSort().isNumericSort()) {
-				throw new InternalError(
-						"Don't know how to evaluate this: " + term);
-			}
-			final ModelEvaluator eval = (ModelEvaluator) walker;
-			final NumericSortInterpretation numSorts =
-					eval.mModel.getNumericSortInterpretation();
-			Rational val;
-			if (term.getValue() instanceof BigInteger) {
-				val = Rational.valueOf(
-						(BigInteger) term.getValue(), BigInteger.ONE);
-			} else if (term.getValue() instanceof BigDecimal) {
-				final BigDecimal decimal = (BigDecimal) term.getValue();
-				if (decimal.scale() <= 0) {
-					final BigInteger num = decimal.toBigInteger();
-					val = Rational.valueOf(num, BigInteger.ONE);
-				} else {
-					final BigInteger num = decimal.unscaledValue();
-					final BigInteger denom = BigInteger.TEN.pow(decimal.scale());
-					val = Rational.valueOf(num, denom);
+			final ApplicationTerm dataTerm = (ApplicationTerm) eval.getConverted();
+			for (int i = 0; i < mMatch.getConstructors().length; i++) {
+				final Constructor cons = mMatch.getConstructors()[i];
+				if (cons == null) {
+					// default value
+					eval.pushTerm(theory.let(mMatch.getVariables()[i][0], dataTerm, mMatch.getCases()[i]));
+					return;
+				} else if (dataTerm.getFunction().getName() == cons.getName()) {
+					eval.pushTerm(theory.let(mMatch.getVariables()[i], dataTerm.getParameters(), mMatch.getCases()[i]));
+					return;
 				}
-			} else {
-				assert(term.getValue() instanceof Rational);
-				val = (Rational) term.getValue();
 			}
-			eval.setResult(numSorts.extend(val));
-		}
-
-		@Override
-		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
-			final ModelEvaluator eval = (ModelEvaluator) walker;
-			eval.enqueueWalker(new CachedEvaluator(term.getSubterm()));
-		}
-
-		@Override
-		public void walk(final NonRecursive walker, final ApplicationTerm term) {
-			final ModelEvaluator eval = (ModelEvaluator) walker;
-			if (term.getFunction().getName().equals("ite")) {
-				eval.enqueueWalker(new ITESelector(term));
-				eval.pushTerm(term.getParameters()[0]);
-			} else {
-				eval.enqueueWalker(new Evaluator(term));
-				eval.pushTerms(term.getParameters());
-			}
-		}
-
-		@Override
-		public void walk(final NonRecursive walker, final LetTerm term) {
-			throw new InternalError("Let-Terms should not be in model evaluation");
-		}
-
-		@Override
-		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
-			throw new SMTLIBException("Quantifiers not supported in model evaluation");
-		}
-
-		@Override
-		public void walk(final NonRecursive walker, final TermVariable term) {
-			throw new SMTLIBException("Terms to evaluate must be closed");
-		}
-
-		@Override
-		public void walk(final NonRecursive walker, final MatchTerm term) {
-			throw new SMTLIBException("Match not yet supported in model evaluation");
+			throw new InternalError("Match term not total or data term not evaluated");
 		}
 	}
 
-	HashMap<Term, Integer> mCache = new HashMap<Term, Integer>();
-
-	ArrayDeque<Integer> mEvaluated = new ArrayDeque<Integer>();
-
-	private Integer getConverted() {
-		return mEvaluated.removeLast();
-	}
-
-	public int getValue(final FunctionSymbol fs, final int[] args, final ApplicationTerm term) {
-		if (fs.isIntern() || fs.isModelValue()) {
-			return interpret(fs, args, term);
-		}
-		return evalFunction(fs, args);
-	}
-
-	public void pushTerms(final Term[] terms) {
-		for (int i = terms.length - 1; i >= 0; i--) {
-			pushTerm(terms[i]);
-		}
-	}
-
-	public int[] getConvertedArgs(int length) {
-		final int[] result = new int[length];
-		while (--length >= 0) {
-			result[length] = getConverted();
-		}
-		return result;
-	}
-
-	public void pushTerm(final Term term) {
-		enqueueWalker(new CachedEvaluator(term));
-	}
-
-	private void setResult(final int res) {
-		mEvaluated.addLast(res);
-	}
-
+	/**
+	 * The model where to evaluate in.
+	 */
 	private final Model mModel;
+
+	/**
+	 * The scoped let map. Each scope corresponds to a partially executed let or a quantifier on the todo stack. It
+	 * gives the mapping for each term variable defined in that scope to the corresponding term.
+	 */
+	private final ScopedHashMap<TermVariable, Term> mLetMap = new ScopedHashMap<>(false);
+
+	private static boolean isBooleanValue(final Term term) {
+		final Theory theory = term.getTheory();
+		return term == theory.mTrue || term == theory.mFalse;
+	}
+
+	@Override
+	public void convert(Term term) {
+		while (term instanceof AnnotatedTerm) {
+			term = ((AnnotatedTerm) term).getSubterm();
+		}
+		if (term instanceof ConstantTerm) {
+			if (!term.getSort().isNumericSort()) {
+				throw new InternalError("Don't know how to evaluate this: " + term);
+			}
+			final Term result = SMTAffineTerm.convertConstant((ConstantTerm) term).toTerm(term.getSort());
+			setResult(result);
+			return;
+		}
+		if (term instanceof TermVariable) {
+			if (mLetMap.containsKey(term)) {
+				setResult(mLetMap.get(term));
+				return;
+			}
+			throw new SMTLIBException("Terms to evaluate must be closed");
+		} else if (term instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			if (appTerm.getFunction().isIntern() && appTerm.getFunction().getName() == "ite") {
+				enqueueWalker(new ITESelector(appTerm));
+				pushTerm(appTerm.getParameters()[0]);
+				return;
+			}
+		} else if (term instanceof QuantifiedFormula) {
+			throw new SMTLIBException("Quantifiers not supported in model evaluation");
+		} else if (term instanceof MatchTerm) {
+			final MatchTerm matchTerm = (MatchTerm) term;
+			enqueueWalker(new MatchSelector(matchTerm));
+			pushTerm(matchTerm.getDataTerm());
+			return;
+		}
+		super.convert(term);
+	}
+
+	@Override
+	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
+		final FunctionSymbol fs = appTerm.getFunction();
+		if (fs.isIntern() || fs.isModelValue()) {
+			setResult(interpret(fs, newArgs));
+		} else if (fs.getDefinition() != null) {
+			pushTerm(appTerm.getTheory().let(fs.getDefinitionVars(), newArgs, fs.getDefinition()));
+		} else {
+			setResult(lookupFunction(fs, newArgs));
+		}
+	}
+
+	@Override
+	public void preConvertLet(final LetTerm oldLet, final Term[] newValues) {
+		mLetMap.beginScope();
+		final TermVariable[] vars = oldLet.getVariables();
+		for (int i = 0; i < vars.length; i++) {
+			mLetMap.put(vars[i], newValues[i]);
+		}
+		super.preConvertLet(oldLet, newValues);
+	}
+
+	@Override
+	public void postConvertLet(final LetTerm oldLet, final Term[] newValues, final Term newBody) {
+		setResult(newBody);
+		mLetMap.endScope();
+	}
 
 	public ModelEvaluator(final Model model) {
 		mModel = model;
 	}
 
 	public Term evaluate(final Term input) {
-		try {
-			run(new CachedEvaluator(input));
-			final int res = getConverted();
-			return mModel.toModelTerm(res, input.getSort());
-		} finally {
-			reset();
-		}
+		return transform(input);
 	}
 
-	private int evalFunction(final FunctionSymbol fs, final int... args) {
-		FunctionValue val = mModel.getFunctionValue(fs);
+	private Term lookupFunction(final FunctionSymbol fs, final Term[] args) {
+		final FunctionValue val = mModel.getFunctionValue(fs);
 		if (val == null) {
-			val = mModel.map(fs, 0);
+			final Sort sort = fs.getReturnSort();
+			return mModel.getSomeValue(sort);
 		}
-		return val.get(args, mModel.isPartialModel());
+		final Term value = val.values().get(new FunctionValue.Index(args));
+		return value == null ? val.getDefault() : value;
 	}
 
-	private int interpret(final FunctionSymbol fun, final int[] args,
-			final ApplicationTerm term) {
-		if (fun.isModelValue()) {
-			return Integer.parseInt(fun.getName().substring(1));
+	private Term interpret(final FunctionSymbol fs, final Term[] args) {
+		if (fs.isModelValue()) {
+			final int idx = Integer.parseInt(fs.getName().substring(1));
+			return mModel.getModelValue(idx, fs.getReturnSort());
 		}
 		final Theory theory = mModel.getTheory();
-		if (fun == theory.mTrue.getFunction()) {
-			return mModel.getTrueIdx();
+		if (fs == theory.mTrue.getFunction()) {
+			return theory.mTrue;
 		}
-		if (fun == theory.mFalse.getFunction()) {
-			return mModel.getFalseIdx();
+		if (fs == theory.mFalse.getFunction()) {
+			return theory.mFalse;
 		}
-		if (fun == theory.mAnd) {
-			int res = args[0];
-			for (final int arg : args) {
-				if (arg == -1) {
-					res = -1;
-				} else if (arg == mModel.getFalseIdx()) {
+		if (fs == theory.mAnd) {
+			for (final Term arg : args) {
+				if (arg == theory.mFalse) {
 					return arg;
 				}
-				assert (arg == -1 || arg == mModel.getTrueIdx());
+				assert arg == theory.mTrue;
 			}
-			return res;
+			return theory.mTrue;
 		}
-		if (fun == theory.mOr) {
-			int res = args[0];
-			for (final int arg : args) {
-				if (arg == -1) {
-					res = arg;
-				} else if (arg == mModel.getTrueIdx()) {
+		if (fs == theory.mOr) {
+			for (final Term arg : args) {
+				assert isBooleanValue(arg);
+				if (arg == theory.mTrue) {
 					return arg;
 				}
-				assert (arg == -1 || arg == mModel.getFalseIdx());
+				assert arg == theory.mFalse;
 			}
-			return res;
+			return theory.mFalse;
 		}
-		if (fun == theory.mImplies) {
-			int val = args[args.length - 1];
-			for (int i = args.length - 2; i >= 0; --i) {
-				final int argi = args[i];
-				if (val == mModel.getTrueIdx() || argi == mModel.getFalseIdx()) {
-					val = mModel.getTrueIdx();
-				} else if (!(argi == mModel.getTrueIdx()
-						&& val == mModel.getFalseIdx()))
-				 {
-					val = -1; // There is at least one undefined
+		if (fs == theory.mImplies) {
+			for (int i = 0; i < args.length - 1; i++) {
+				final Term argi = args[i];
+				assert isBooleanValue(argi);
+				if (argi == theory.mFalse) {
+					return theory.mTrue;
 				}
+				assert argi == theory.mTrue;
 			}
-			return val;
+			return args[args.length - 1];
 		}
-		// Propagate undefined
-		for (final int arg : args) {
-			if (arg == -1) {
-				return arg;
+		if (fs == theory.mNot) {
+			assert isBooleanValue(args[0]);
+			return theory.not(args[0]);
+		}
+		if (fs == theory.mXor) {
+			boolean result = false;
+			for (final Term arg : args) {
+				assert isBooleanValue(arg);
+				result ^= arg == theory.mTrue;
 			}
+			return result ? theory.mTrue : theory.mFalse;
 		}
-		if (fun == theory.mNot) {
-			return args[0] == mModel.getTrueIdx()
-					? mModel.getFalseIdx() : mModel.getTrueIdx();
-		}
-		if (fun == theory.mXor) {
-			int val = args[0];
-			for (int i = 1; i < args.length; ++i) {
-				final int argi = args[i];
-				val = argi == val ? mModel.getFalseIdx() : mModel.getTrueIdx();
-			}
-			return val;
-		}
-		final String name = fun.getName();
+		final String name = fs.getName();
 		if (name.equals("=")) {
 			for (int i = 1; i < args.length; ++i) {
 				if (args[i] != args[0]) {
-					return mModel.getFalseIdx();
+					return theory.mFalse;
 				}
 			}
-			return mModel.getTrueIdx();
+			return theory.mTrue;
 		}
 		if (name.equals("distinct")) {
-			final HashSet<Integer> vals = new HashSet<Integer>();
-			for (final int arg : args) {
+			final HashSet<Term> vals = new HashSet<>();
+			for (final Term arg : args) {
 				if (!vals.add(arg)) {
-					return mModel.getFalseIdx();
+					return theory.mFalse;
 				}
 			}
-			return mModel.getTrueIdx();
+			return theory.mTrue;
 		}
 		if (name.equals("ite")) {
-			assert(args.length == 3);// NOCHECKSTYLE since ite has 3 parameters
-			final int selector = args[0];
-			return args[selector + 1];
+			// ite is handled else-where
+			throw new InternalError("ITE not handled in convert?");
 		}
 		if (name.equals("+")) {
 			Rational val = rationalValue(args[0]);
 			for (int i = 1; i < args.length; ++i) {
 				val = val.add(rationalValue(args[i]));
 			}
-			return mModel.getNumericSortInterpretation().extend(val);
+			return val.toTerm(fs.getReturnSort());
 		}
 		if (name.equals("-")) {
 			Rational val = rationalValue(args[0]);
 			if (args.length == 1) {
-				return mModel.getNumericSortInterpretation().extend(val.negate());
+				val = val.negate();
 			} else {
 				for (int i = 1; i < args.length; ++i) {
 					val = val.sub(rationalValue(args[i]));
 				}
-				return mModel.getNumericSortInterpretation().extend(val);
 			}
+			return val.toTerm(fs.getReturnSort());
 		}
 		if (name.equals("*")) {
 			Rational val = rationalValue(args[0]);
 			for (int i = 1; i < args.length; ++i) {
 				val = val.mul(rationalValue(args[i]));
 			}
-			return mModel.getNumericSortInterpretation().extend(val);
+			return val.toTerm(fs.getReturnSort());
 		}
 		if (name.equals("/")) {
 			Rational val = rationalValue(args[0]);
 			for (int i = 1; i < args.length; ++i) {
 				final Rational divisor = rationalValue(args[i]);
 				if (divisor.equals(Rational.ZERO)) {
-					final int idx = mModel.getNumericSortInterpretation().extend(val);
-					final int divval = evalFunction(fun, idx, args[i]);
-					val = rationalValue(divval);
+					val = rationalValue(lookupFunction(fs, new Term[] { val.toTerm(args[0].getSort()), args[i] }));
 				} else {
 					val = val.div(divisor);
 				}
 			}
-			return mModel.getNumericSortInterpretation().extend(val);
+			return val.toTerm(fs.getReturnSort());
 		}
 		if (name.equals("<=")) {
 			for (int i = 1; i < args.length; ++i) {
 				final Rational arg1 = rationalValue(args[i - 1]);
 				final Rational arg2 = rationalValue(args[i]);
 				if (arg1.compareTo(arg2) > 0) {
-					return mModel.getFalseIdx();
+					return theory.mFalse;
 				}
 			}
-			return mModel.getTrueIdx();
+			return theory.mTrue;
 		}
 		if (name.equals("<")) {
 			for (int i = 1; i < args.length; ++i) {
 				final Rational arg1 = rationalValue(args[i - 1]);
 				final Rational arg2 = rationalValue(args[i]);
 				if (arg1.compareTo(arg2) >= 0) {
-					return mModel.getFalseIdx();
+					return theory.mFalse;
 				}
 			}
-			return mModel.getTrueIdx();
+			return theory.mTrue;
 		}
 		if (name.equals(">=")) {
 			for (int i = 1; i < args.length; ++i) {
 				final Rational arg1 = rationalValue(args[i - 1]);
 				final Rational arg2 = rationalValue(args[i]);
 				if (arg1.compareTo(arg2) < 0) {
-					return mModel.getFalseIdx();
+					return theory.mFalse;
 				}
 			}
-			return mModel.getTrueIdx();
+			return theory.mTrue;
 		}
 		if (name.equals(">")) {
 			for (int i = 1; i < args.length; ++i) {
 				final Rational arg1 = rationalValue(args[i - 1]);
 				final Rational arg2 = rationalValue(args[i]);
 				if (arg1.compareTo(arg2) <= 0) {
-					return mModel.getFalseIdx();
+					return theory.mFalse;
 				}
 			}
-			return mModel.getTrueIdx();
+			return theory.mTrue;
 		}
 		if (name.equals("div")) {
 			// From the standard...
@@ -426,98 +360,92 @@ public class ModelEvaluator extends NonRecursive {
 			for (int i = 1; i < args.length; ++i) {
 				final Rational n = rationalValue(args[i]);
 				if (n.equals(Rational.ZERO)) {
-					final int idx = mModel.getNumericSortInterpretation().extend(val);
-					final int divval = evalFunction(fun, idx, args[i]);
-					val = rationalValue(divval);
+					val = rationalValue(lookupFunction(fs, new Term[] { val.toTerm(args[0].getSort()), args[i] }));
 				} else {
 					final Rational div = val.div(n);
 					val = n.isNegative() ? div.ceil() : div.floor();
 				}
 			}
-			return mModel.getNumericSortInterpretation().extend(val);
+			return val.toTerm(fs.getReturnSort());
 		}
 		if (name.equals("mod")) {
 			assert(args.length == 2);
 			final Rational n = rationalValue(args[1]);
 			if (n.equals(Rational.ZERO)) {
-				return evalFunction(fun, args);
+				return lookupFunction(fs, args);
 			}
 			final Rational m = rationalValue(args[0]);
 			Rational div = m.div(n);
 			div = n.isNegative() ? div.ceil() : div.floor();
-			return mModel.getNumericSortInterpretation().extend(
-					m.sub(div.mul(n)));
+			return m.sub(div.mul(n)).toTerm(fs.getReturnSort());
 		}
 		if (name.equals("abs")) {
 			assert args.length == 1;
 			final Rational arg = rationalValue(args[0]);
-			return mModel.getNumericSortInterpretation().extend(arg.abs());
+			return arg.abs().toTerm(fs.getReturnSort());
 		}
 		if (name.equals("divisible")) {
 			assert(args.length == 1);
 			final Rational arg = rationalValue(args[0]);
-			final String[] indices = fun.getIndices();
+			final String[] indices = fs.getIndices();
 			assert(indices.length == 1);
-			BigInteger rdiv1;
+			BigInteger divisor;
 			try {
-				rdiv1 = new BigInteger(indices[0]);
-			} catch(NumberFormatException e){
-				throw new SMTLIBException("index must be numeral", e);
-			};
-			final Rational rdiv = Rational.valueOf(rdiv1, BigInteger.ONE);
-			return arg.div(rdiv).isIntegral()
-					? mModel.getTrueIdx() : mModel.getFalseIdx();
+				divisor = new BigInteger(indices[0]);
+			} catch (final NumberFormatException e) {
+				throw new SMTLIBException("index of divisible must be numeral", e);
+			}
+			final Rational rdivisor = Rational.valueOf(divisor, BigInteger.ONE);
+			return arg.div(rdivisor).isIntegral() ? theory.mTrue : theory.mFalse;
 		}
 		if (name.equals("to_int")) {
 			assert (args.length == 1);
 			final Rational arg = rationalValue(args[0]);
-			return mModel.getNumericSortInterpretation().extend(arg.floor());
+			return arg.floor().toTerm(fs.getReturnSort());
 		}
 		if (name.equals("to_real")) {
 			assert (args.length == 1);
-			return args[0];
+			final Rational arg = rationalValue(args[0]);
+			return arg.toTerm(fs.getReturnSort());
 		}
 		if (name.equals("is_int")) {
 			assert (args.length == 1);
 			final Rational arg = rationalValue(args[0]);
-			return arg.isIntegral()
-					? mModel.getTrueIdx() : mModel.getFalseIdx();
+			return arg.isIntegral() ? theory.mTrue : theory.mFalse;
 		}
 		if (name.equals("store")) {
 			final ArraySortInterpretation array = (ArraySortInterpretation)
-					mModel.provideSortInterpretation(fun.getParameterSorts()[0]);
-			ArrayValue storeVal = array.getValue(args[0]);
-			if (storeVal.select(args[1]) == args[2]) {
-				return args[0];
-			}
-			storeVal = storeVal.copy();
-			storeVal.store(args[1], args[2]);
-			return array.value2index(storeVal);
+					mModel.provideSortInterpretation(fs.getParameterSorts()[0]);
+			return array.normalizeStoreTerm(theory.term(fs, args));
 		}
 		if (name.equals("const")) {
-			final ArraySortInterpretation array = (ArraySortInterpretation)
-					mModel.provideSortInterpretation(fun.getReturnSort());
-			final ArrayValue constVal = new ArrayValue();
-			constVal.setDefaultValue(args[0]);
-			return array.value2index(constVal);
+			return theory.term(fs, args[0]);
 		}
 		if (name.equals("select")) {
-			final ArraySortInterpretation array = (ArraySortInterpretation)
-					mModel.provideSortInterpretation(fun.getParameterSorts()[0]);
-			final ArrayValue val = array.getValue(args[0]);
-			return val.select(args[1]);
+			// we assume that the array parameter is a term of the form store(store(...(const v),...))
+			ApplicationTerm array = (ApplicationTerm) args[0];
+			final Term index = args[1];
+			FunctionSymbol head = array.getFunction();
+			// go through the store chain and check if we write to the index
+			while (head.getName() == "store") {
+				if (array.getParameters()[1] == index) {
+					return array.getParameters()[2];
+				}
+				array = (ApplicationTerm) array.getParameters()[0];
+				head = array.getFunction();
+			}
+			assert head.getName() == "const";
+			return array.getParameters()[0];
 		}
 		if (name.equals("@diff")) {
 			final ArraySortInterpretation array = (ArraySortInterpretation)
-					mModel.provideSortInterpretation(fun.getParameterSorts()[0]);
-			final ArrayValue left = array.getValue(args[0]);
-			final ArrayValue right = array.getValue(args[1]);
-			return left.computeDiff(args[1], right, array);
+					mModel.provideSortInterpretation(fs.getParameterSorts()[0]);
+			return array.computeDiff(args[0], args[1], fs.getReturnSort());
 		}
 		throw new AssertionError("Unknown internal function " + name);
 	}
 
-	private Rational rationalValue(final int idx) {
-		return mModel.getNumericSortInterpretation().get(idx);
+	private Rational rationalValue(final Term term) {
+		return (Rational) ((ConstantTerm) term).getValue();
 	}
 }

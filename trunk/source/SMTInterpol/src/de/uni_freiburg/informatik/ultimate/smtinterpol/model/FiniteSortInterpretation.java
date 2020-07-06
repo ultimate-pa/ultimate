@@ -35,7 +35,7 @@ public class FiniteSortInterpretation implements SortInterpretation {
 	private int mSize = 0;
 
 	@Override
-	public Term toSMTLIB(Theory t, Sort sort) {
+	public Term toSMTLIB(final Theory t, final Sort sort) {
 		final TermVariable var = t.createTermVariable("@v", sort);
 		final Term[] disj = new Term[mSize];
 		for (int i = 0; i < mSize; ++i) {
@@ -44,34 +44,22 @@ public class FiniteSortInterpretation implements SortInterpretation {
 		return t.forall(new TermVariable[] {var}, t.or(disj));
 	}
 
-	@Override
-	public int ensureCapacity(int numValues) {
-		if (mSize < numValues) {
-			mSize = numValues;
-		}
-		return mSize;
-	}
-
-	@Override
-	public int size() {
-		return mSize;
-	}
-
-	@Override
-	public Term get(int idx, Sort s, Theory t) throws IndexOutOfBoundsException {
-		if (idx < 0 || idx >= mSize) {
-			throw new IndexOutOfBoundsException();
-		}
-		return genModelTerm(idx, t, s);
-	}
-
-	private Term genModelTerm(int idx, Theory t, Sort s) {
+	private Term genModelTerm(final int idx, final Theory t, final Sort s) {
 		return t.term(t.getFunctionWithResult("@" + idx, null, s));
 	}
 
 	@Override
-	public int extendFresh() {
-		return mSize++;
+	public Term extendFresh(final Sort sort) {
+		final Theory theory = sort.getTheory();
+		final int idx = mSize++;
+		return theory.term(theory.getFunctionWithResult("@" + idx, null, sort));
 	}
 
+	@Override
+	public Term getModelValue(final int idx, final Sort sort) {
+		assert idx >= 0;
+		final Theory theory = sort.getTheory();
+		mSize = Math.max(mSize, idx);
+		return theory.term(theory.getFunctionWithResult("@" + idx, null, sort));
+	}
 }

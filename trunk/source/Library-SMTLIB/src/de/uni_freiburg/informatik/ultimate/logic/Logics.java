@@ -28,60 +28,88 @@ public enum Logics {
 			   Features.BV + Features.UF + Features.AX + Features.FP),
 	HORN      (Features.QU + Features.NA + Features.IA + Features.RA +
 			   Features.BV + Features.UF + Features.AX + Features.FP),
-	QF_BV     (Features.BV),
-	QF_FP     (Features.FP),
-	QF_BVFP   (Features.BV + Features.FP),
-	QF_IDL    (Features.DL + Features.IA),
-	QF_RDL    (Features.DL + Features.RA),
-	QF_LIA    (Features.LA + Features.IA),
-	QF_LRA    (Features.LA + Features.RA),
-	QF_LIRA   (Features.LA + Features.RA + Features.IA),
-	QF_NIA    (Features.NA + Features.IA),
-	QF_NRA    (Features.NA + Features.RA),
-	QF_NIRA   (Features.NA + Features.RA + Features.IA),
-	QF_UF     (Features.UF),
-	QF_UFBV   (Features.UF + Features.BV),
-	QF_UFIDL  (Features.UF + Features.DL + Features.IA),
-	QF_UFLIA  (Features.UF + Features.LA + Features.IA),
-	QF_UFLRA  (Features.UF + Features.LA + Features.RA),
-	QF_UFLIRA (Features.UF + Features.LA + Features.IA + Features.RA),
-	QF_UFNIA  (Features.UF + Features.NA + Features.IA),
-	QF_UFNRA  (Features.UF + Features.NA + Features.RA),
-	QF_AX     (Features.AX),
 	QF_ABV    (Features.AX + Features.BV),
 	QF_ABVFP  (Features.AX + Features.BV + Features.FP),
-	QF_AUFBV  (Features.AX + Features.UF + Features.BV),
+	QF_ABVFPLRA (Features.AX + Features.BV + Features.FP + Features.LA + Features.RA),
 	QF_ALIA   (Features.AX + Features.LA + Features.IA),
+	QF_ANIA   (Features.AX + Features.NA + Features.IA),
+	QF_AUFBV  (Features.AX + Features.UF + Features.BV),
+	QF_AUFBVLIA (Features.AX + Features.UF + Features.BV + Features.LA + Features.IA),
+	QF_AUFBVNIA (Features.AX + Features.UF + Features.BV + Features.NA + Features.IA),
 	QF_AUFLIA (Features.AX + Features.UF + Features.LA + Features.IA),
+	QF_AUFLIRA (Features.AX + Features.UF + Features.LA + Features.IA + Features.RA),
 	QF_AUFNIA (Features.AX + Features.UF + Features.NA + Features.IA),
-	QF_AUFLIRA(Features.AX + Features.UF + Features.LA + Features.IA + Features.RA),
-	QF_AUFNIRA(Features.AX + Features.UF + Features.NA + Features.IA + Features.RA),
+	QF_AUFNIRA (Features.AX + Features.UF + Features.NA + Features.IA + Features.RA),
+	QF_AX     (Features.AX),
+	QF_BV     (Features.BV),
+	QF_BVFP   (Features.BV + Features.FP),
+	QF_BVFPLRA (Features.BV + Features.FP + Features.LA + Features.RA),
 	QF_DT     (Features.DT),
-	QF_UFDTLIA (Features.DT + Features.UF + Features.LA + Features.IA),
+	QF_FP     (Features.FP),
+	QF_FPLRA  (Features.FP + Features.LA + Features.RA),
+	QF_IDL    (Features.DL + Features.IA),
+	QF_LIA    (Features.LA + Features.IA),
+	QF_LIRA   (Features.LA + Features.RA + Features.IA),
+	QF_LRA    (Features.LA + Features.RA),
+	QF_NIA    (Features.NA + Features.IA),
+	QF_NIRA   (Features.NA + Features.RA + Features.IA),
+	QF_NRA    (Features.NA + Features.RA),
+	QF_RDL    (Features.DL + Features.RA),
+	QF_S      (Features.S),
+	QF_SLIA   (Features.S + Features.LA + Features.IA),
+	QF_UF     (Features.UF),
+	QF_UFBV   (Features.UF + Features.BV),
+	QF_UFBVLIA (Features.UF + Features.BV + Features.LA + Features.IA),
+	QF_UFDTLIA (Features.UF + Features.DT + Features.LA + Features.IA),
+	QF_UFFP   (Features.UF + Features.FP),
+	QF_UFIDL  (Features.UF + Features.DL + Features.IA),
+	QF_UFLIA  (Features.UF + Features.LA + Features.IA),
+	QF_UFLIRA (Features.UF + Features.LA + Features.IA + Features.RA),
+	QF_UFLRA  (Features.UF + Features.LA + Features.RA),
+	QF_UFNIA  (Features.UF + Features.NA + Features.IA),
+	QF_UFNRA  (Features.UF + Features.NA + Features.RA),
 
+	ABV       (Features.QU + Features.AX + Features.BV),
+	ABVFP     (Features.QU + Features.AX + Features.BV + Features.FP),
+	ABVFPLRA  (Features.QU + Features.AX + Features.BV + Features.FP + Features.LA + Features.RA),
+	ALIA      (Features.QU + Features.AX + Features.LA + Features.IA),
+	ANIA      (Features.QU + Features.AX + Features.NA + Features.IA),
+	AUFBV     (Features.QU + Features.AX + Features.UF + Features.BV),
+	AUFBVDTLIA (Features.QU + Features.AX + Features.UF + Features.BV + Features.DT + Features.LA + Features.IA),
+	AUFBVDTNIA (Features.QU + Features.AX + Features.UF + Features.BV + Features.DT + Features.NA + Features.IA),
+	AUFDTLIA  (Features.QU + Features.AX + Features.UF + Features.DT + Features.LA + Features.IA),
+	AUFDTNIA  (Features.QU + Features.AX + Features.UF + Features.DT + Features.NA + Features.IA),
+	AUFDTLIRA (Features.QU + Features.AX + Features.UF + Features.DT + Features.LA + Features.IA + Features.RA),
+	AUFDTNIRA (Features.QU + Features.AX + Features.UF + Features.DT + Features.NA + Features.IA + Features.RA),
+	AUFFPDTLIRA (Features.QU + Features.AX + Features.UF + Features.FP + Features.DT + Features.LA + Features.IA + Features.RA),
+	AUFFPDTNIRA (Features.QU + Features.AX + Features.UF + Features.FP + Features.DT + Features.NA + Features.IA + Features.RA),
+	AUFLIA    (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA),
+	AUFLIRA   (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA + Features.RA),
+	AUFNIA    (Features.QU + Features.AX + Features.UF + Features.NA + Features.IA),
+	AUFNIRA   (Features.QU + Features.AX + Features.UF + Features.NA + Features.IA + Features.RA),
 	BV        (Features.QU + Features.BV),
-	FP        (Features.QU + Features.FP),
 	BVFP      (Features.QU + Features.BV + Features.FP),
+	BVFPLRA   (Features.QU + Features.BV + Features.FP + Features.LA + Features.RA),
+	FP        (Features.QU + Features.FP),
+	FPLRA     (Features.QU + Features.FP + Features.LA + Features.RA),
 	LIA       (Features.QU + Features.LA + Features.IA),
 	LRA       (Features.QU + Features.LA + Features.RA),
 	NIA       (Features.QU + Features.NA + Features.IA),
 	NRA       (Features.QU + Features.NA + Features.RA),
 	UF        (Features.QU + Features.UF),
 	UFBV      (Features.QU + Features.UF + Features.BV),
+	UFDT      (Features.QU + Features.UF + Features.DT),
+	UFDTLIA   (Features.QU + Features.DT + Features.UF + Features.LA + Features.IA),
+	UFDTLIRA  (Features.QU + Features.DT + Features.UF + Features.LA + Features.IA + Features.RA),
+	UFDTNIA   (Features.QU + Features.DT + Features.UF + Features.NA + Features.IA),
+	UFDTNIRA  (Features.QU + Features.DT + Features.UF + Features.NA + Features.IA + Features.RA),
+	UFFPDTLIRA (Features.QU + Features.FP + Features.DT + Features.UF + Features.LA + Features.IA + Features.RA),
+	UFFPDTNIRA (Features.QU + Features.FP + Features.DT + Features.UF + Features.NA + Features.IA + Features.RA),
 	UFIDL     (Features.QU + Features.UF + Features.DL + Features.IA),
 	UFLIA     (Features.QU + Features.UF + Features.LA + Features.IA),
 	UFLRA     (Features.QU + Features.UF + Features.LA + Features.RA),
 	UFNIA     (Features.QU + Features.UF + Features.NA + Features.IA),
-	ABV       (Features.QU + Features.AX + Features.BV),
-	ABVFP     (Features.QU + Features.AX + Features.BV + Features.FP),
-	AUFBV     (Features.QU + Features.AX + Features.UF + Features.BV),
-	ALIA      (Features.QU + Features.AX + Features.LA + Features.IA),
-	AUFLIA    (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA),
-	AUFNIA    (Features.QU + Features.AX + Features.UF + Features.NA + Features.IA),
-	AUFLIRA   (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA + Features.RA),
-	AUFNIRA   (Features.QU + Features.AX + Features.UF + Features.NA + Features.IA + Features.RA),
-	UFDT      (Features.QU + Features.DT + Features.UF),
-	UFDTLIA   (Features.QU + Features.DT + Features.UF + Features.LA + Features.IA),
+	UFNRA     (Features.QU + Features.UF + Features.NA + Features.RA),
 
 	; //NOCHECKSTYLE
 
@@ -108,6 +136,8 @@ public enum Logics {
 		static final int FP = (1 << 9);
 		/** flag for datatypes. */
 		static final int DT = (1 << 10);
+		/** flag for string theory. */
+		static final int S = (1 << 11);
 	}
 
 	private final int mFeatures;
@@ -174,12 +204,11 @@ public enum Logics {
 		return (mFeatures & Features.DL) != 0;
 	}
 	/**
-	 * Does this logic support linear arithmetic?
-	 * @return <code>true</code> if and only if this logic support difference
-	 * logic; it returns false for nonlinear arithmetic logics.
+	 * Is this logic restricted to linear arithmetic?
+	 * @return <code>true</code> if and only if this logic is restricted to linear arithmetic. 
 	 */
 	public boolean isLinearArithmetic() {
-		return (mFeatures & Features.LA) != 0;
+		return (mFeatures & (Features.LA | Features.DL)) != 0;
 	}
 	/**
 	 * Does this logic support non-linear arithmetic?
@@ -212,10 +241,17 @@ public enum Logics {
 		return (mFeatures & Features.FP) != 0;
 	}
 	/**
-	 Does this logic support datatypes?
+	 * Does this logic support datatypes?
 	 * @return <code>true</code> if and only if this logic supports datatypes.
 	 */
 	public boolean isDatatype() {
 		return (mFeatures & Features.DT) != 0;
+	}
+	/**
+	 * Does this logic support strings?
+	 * @return <code>true</code> if and only if this logic supports strings.
+	 */
+	public boolean isString() {
+		return (mFeatures & Features.S) != 0;
 	}
 }

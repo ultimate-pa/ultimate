@@ -20,6 +20,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.option;
 
 import java.io.PrintWriter;
 
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 
 /**
@@ -33,23 +34,22 @@ public class FrontEndOptions {
 	private final BooleanOption mPrintTermsCSE;
 	private final BooleanOption mContinueOnError;
 
-	private static final String REG_OUT_CHANNEL_NAME = ":regular-output-channel";
-	private static final String REG_OUT_CHANNEL_DEF = "stdout";
+	private static final String REG_OUT_CHANNEL_DEF = SMTLIBConstants.STDOUT;
 	private static final String REG_OUT_CHANNEL_DESC =
 			"Where to print command responses to.  Use \"stdout\" for standard "
 					+ "output and \"stderr\" for standard error.";
 
 	FrontEndOptions(final OptionMap options) {
 		mPrintSuccess = (BooleanOption) options.getOption(":print-success");
-		final Option outChannel = options.getOption(REG_OUT_CHANNEL_NAME);
+		final Option outChannel = options.getOption(SMTLIBConstants.REGULAR_OUTPUT_CHANNEL);
 		if (outChannel instanceof ChannelOption) {
 			mOut = (ChannelOption) outChannel;
 		} else {
 			/* Frontend is not active */
 			mOut = null;
 		}
-		mPrintTermsCSE = (BooleanOption) options.getOption(":print-terms-cse");
-		mContinueOnError = (BooleanOption) options.getOption(":continue-on-error");
+		mPrintTermsCSE = (BooleanOption) options.getOption(SMTInterpolOptions.PRINT_TERMS_CSE);
+		mContinueOnError = (BooleanOption) options.getOption(SMTInterpolOptions.CONTINUE_ON_ERROR);
 	}
 
 	FrontEndOptions(final OptionMap options, final boolean active) {
@@ -58,18 +58,18 @@ public class FrontEndOptions {
 		mPrintTermsCSE = new BooleanOption(true, true, "Eliminate common subexpressions before printing terms.");
 		mContinueOnError = new BooleanOption(true, true,
 				"Continue on errors.  Corresponds to (set-info :error-behavior continued-execution).");
-		options.addOption(":print-success", mPrintSuccess);
+		options.addOption(SMTLIBConstants.PRINT_SUCCESS, mPrintSuccess);
 		if (active) {
 			mOut = new ChannelOption(REG_OUT_CHANNEL_DEF, true, REG_OUT_CHANNEL_DESC);
-			options.addOption(REG_OUT_CHANNEL_NAME, mOut);
+			options.addOption(SMTLIBConstants.REGULAR_OUTPUT_CHANNEL, mOut);
 		} else {
-			options.addOption(REG_OUT_CHANNEL_NAME,
+			options.addOption(SMTLIBConstants.REGULAR_OUTPUT_CHANNEL,
 					new StringOptionWithWarning(REG_OUT_CHANNEL_DEF, true, REG_OUT_CHANNEL_DESC,
 							"Front End not active.  Option change will not have an effect!", options.getLogProxy()));
 			mOut = null;
 		}
-		options.addOption(":print-terms-cse", mPrintTermsCSE);
-		options.addOption(":continue-on-error", mContinueOnError);
+		options.addOption(SMTInterpolOptions.PRINT_TERMS_CSE, mPrintTermsCSE);
+		options.addOption(SMTInterpolOptions.CONTINUE_ON_ERROR, mContinueOnError);
 	}
 
 	public final boolean isFrontEndActive() {

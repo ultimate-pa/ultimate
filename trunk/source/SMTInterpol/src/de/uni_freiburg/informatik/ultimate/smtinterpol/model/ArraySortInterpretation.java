@@ -18,80 +18,161 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 public class ArraySortInterpretation implements SortInterpretation {
-
+	private final Model mModel;
 	private final SortInterpretation mIndexSort;
 	private final SortInterpretation mValueSort;
 
-	private final ArrayList<ArrayValue> mValues;
-	private HashMap<ArrayValue, Integer> mUnifier;
+	private final HashMap<Map<Term, Term>, Map<Term, Term>> mUnifier;
+	private final HashMap<Term, HashMap<Term, Term>> mDiffMap;
 
-	public ArraySortInterpretation(SortInterpretation index,
-			SortInterpretation value) {
+	public ArraySortInterpretation(final Model model, final SortInterpretation index,
+			final SortInterpretation value) {
+		mModel = model;
 		mIndexSort = index;
 		mValueSort = value;
-		mValues = new ArrayList<ArrayValue>();
-		mValues.add(0, ArrayValue.DEFAULT_ARRAY);
+		mUnifier = new HashMap<>();
+		final Map<Term, Term> empty = Collections.emptyMap();
+		mUnifier.put(empty, empty);
+		mDiffMap = new HashMap<>();
 	}
 
 	@Override
-	public int ensureCapacity(int numValues) {
-		while (mValues.size() < numValues) {
-			extendFresh();
+	public Term getModelValue(final int idx, final Sort arraySort) {
+		final Sort valueSort = arraySort.getArguments()[1];
+		return createArray(Collections.emptyMap(), mValueSort.getModelValue(idx, valueSort), arraySort);
+	}
+
+	private Term createArray(final Map<Term, Term> mapping, final Term defaultValue, final Sort arraySort) {
+		final Theory theory = defaultValue.getTheory();
+		final FunctionSymbol constFunc = theory.getFunctionWithResult("const", null, arraySort, defaultValue.getSort());
+		Term result = theory.term(constFunc, defaultValue);
+		final ArrayDeque<Term> keys = new ArrayDeque<>(mapping.keySet());
+		// build the store term from back to front
+		while (!keys.isEmpty()) {
+			final Term index = keys.removeLast();
+			result = theory.term("store", result, index, mapping.get(index));
 		}
-		return mValues.size();
+		return result;
 	}
 
-	public int createEmptyArrayValue() {
-		final int val = mValues.size();
-		final ArrayValue fresh = new ArrayValue();
-		mValues.add(val, fresh);
-		return val;
-	}
-
-	@Override
-	public int extendFresh() {
-		final int val = mValues.size();
-		final ArrayValue fresh = new ArrayValue();
-		mValueSort.ensureCapacity(2);
-		final int idxval = mIndexSort.extendFresh();
-		final int old = fresh.store(idxval, 1);
-		assert old == 1 : "Fresh index already used!";
-		mValues.add(val, fresh);
-		if (mUnifier != null) {
-			mUnifier.put(fresh, val);
+	public Term normalizeStoreTerm(final Term storeTerm) {
+		final Map<Term, Term> map = new LinkedHashMap<>();
+		ApplicationTerm arrayTerm = (ApplicationTerm) storeTerm;
+		while (arrayTerm.getFunction().getName() == "store") {
+			final Term index = arrayTerm.getParameters()[1];
+			if (!map.containsKey(index)) {
+				map.put(index, arrayTerm.getParameters()[2]);
+			}
+			arrayTerm = (ApplicationTerm) arrayTerm.getParameters()[0];
 		}
-		return val;
-	}
-
-	@Override
-	public int size() {
-		return mValues.size();
-	}
-
-	@Override
-	public Term get(int idx, Sort s, Theory t) throws IndexOutOfBoundsException {
-		if (idx < 0 || idx >= mValues.size()) {
-			throw new IndexOutOfBoundsException();
+		assert arrayTerm.getFunction().getName() == "const";
+		final Term defaultValue = arrayTerm.getParameters()[0];
+		for (final Iterator<Entry<Term, Term>> entryIterator = map.entrySet().iterator(); entryIterator.hasNext();) {
+			final Entry<Term, Term> entry = entryIterator.next();
+			if (entry.getValue() == defaultValue) {
+				entryIterator.remove();
+			}
 		}
-		return mValues.get(idx).toSMTLIB(s, t, mIndexSort, mValueSort);
+		Map<Term, Term> unified = mUnifier.get(map);
+		if (unified == null) {
+			mUnifier.put(map, map);
+			unified = map;
+		}
+		return createArray(unified, defaultValue, storeTerm.getSort());
 	}
 
 	@Override
-	public Term toSMTLIB(Theory t, Sort sort) {
-		// TODO Auto-generated method stub
-		return null;
+	public Term extendFresh(final Sort arraySort) {
+		assert arraySort.getSortSymbol().getName() == "Array";
+		final Sort indexSort = arraySort.getArguments()[0];
+		final Sort valueSort = arraySort.getArguments()[1];
+		final Term freshIndex = mIndexSort.extendFresh(indexSort);
+		final Term value = mModel.getSecondValue(valueSort);
+		final Map<Term, Term> map = Collections.singletonMap(freshIndex, value);
+		final Map<Term, Term> old = mUnifier.put(map, map);
+		assert old == null;
+		return createArray(map, mModel.getSomeValue(valueSort), arraySort);
 	}
 
-	public ArrayValue getValue(int idx) {
-		return mValues.get(idx);
+	@Override
+	public Term toSMTLIB(final Theory t, final Sort sort) {
+		throw new InternalError("toSMTLIB called");
+	}
+
+	public void addDiff(final Term fstArray, final Term sndArray, final Term index) {
+		HashMap<Term,Term> subMap = mDiffMap.get(fstArray);
+		if (subMap == null) {
+			subMap = new HashMap<>();
+			mDiffMap.put(fstArray, subMap);
+		}
+		final Term old = subMap.put(sndArray, index);
+		assert old == null;
+	}
+
+	public Term computeDiff(final Term fstArray, final Term sndArray, final Sort indexSort) {
+		// first check diff map
+		final Map<Term, Term> subMap = mDiffMap.get(fstArray);
+		if (subMap != null) {
+			final Term result = subMap.get(sndArray);
+			if (result != null) {
+				return result;
+			}
+		}
+
+		// return canonical value if arrays equal
+		if (fstArray == sndArray) {
+			return mModel.getSomeValue(indexSort);
+		}
+
+		// no diff matches; search first explicit difference
+
+		// first build the map from the second array term.
+		final Map<Term, Term> secondValues = new HashMap<>();
+		ApplicationTerm arrayTerm = (ApplicationTerm) sndArray;
+		while (arrayTerm.getFunction().getName() == "store") {
+			final Term index = arrayTerm.getParameters()[1];
+			secondValues.put(index, arrayTerm.getParameters()[2]);
+			arrayTerm = (ApplicationTerm) arrayTerm.getParameters()[0];
+		}
+		assert arrayTerm.getFunction().getName() == "const";
+		final Term secondDefault = arrayTerm.getParameters()[0];
+
+		// check each entry in the first array term, whether it differs.
+		arrayTerm = (ApplicationTerm) fstArray;
+		while (arrayTerm.getFunction().getName() == "store") {
+			final Term index = arrayTerm.getParameters()[1];
+			Term secondValue = secondValues.get(index);
+			if (secondValue == null) {
+				secondValue = secondDefault;
+			}
+			// check if firstValue is defined there and differs.
+			if (secondValue != arrayTerm.getParameters()[2]) {
+				return index;
+			}
+			arrayTerm = (ApplicationTerm) arrayTerm.getParameters()[0];
+		}
+		assert arrayTerm.getFunction().getName() == "const";
+		// they must differ on default value, so just return a fresh value.
+		assert secondDefault != arrayTerm.getParameters()[0];
+		final Term diffIndex = mIndexSort.extendFresh(indexSort);
+		// store the index for future use, so we will return it again.
+		addDiff(fstArray, sndArray, diffIndex);
+		return diffIndex;
 	}
 
 	public SortInterpretation getIndexInterpretation() {
@@ -101,24 +182,4 @@ public class ArraySortInterpretation implements SortInterpretation {
 	public SortInterpretation getValueInterpretation() {
 		return mValueSort;
 	}
-
-	public int value2index(ArrayValue value) {
-		if (mUnifier == null) {
-			mUnifier = new HashMap<ArrayValue, Integer>();
-			for (int i = 0; i < mValues.size(); ++i) {
-				final Integer prev = mUnifier.put(mValues.get(i), i);
-				assert (prev == null) : "Same array values at different indices";
-			}
-		}
-		final Integer res = mUnifier.get(value);
-		if (res != null) {
-			return res;
-		}
-		// Create a new element
-		final int idx = mValues.size();
-		mValues.add(idx, value);
-		mUnifier.put(value, idx);
-		return idx;
-	}
-
 }

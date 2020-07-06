@@ -30,31 +30,18 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
  */
 public interface SortInterpretation {
 	/**
-	 * Ensure the sort interpretation contains at least a specified number of
-	 * distinct elements.
-	 * @param numValues The minimum number of elements required for this sort.
-	 * @return Total number of elements stored in this interpretation.
+	 * Get some model value for the sort interpretation. This is what the model constant {@literal @}idx evaluates to.
+	 *
+	 * @return Index.
 	 */
-	public int ensureCapacity(int numValues);
+	public Term getModelValue(int index, Sort sort);
+
 	/**
 	 * Add a fresh distinct term to the sort interpretation.
+	 *
 	 * @return Index of the fresh element.
 	 */
-	public int extendFresh();
-	/**
-	 * Returns the number of distinct elements of this sort.
-	 * @return The number of distinct elements of this sort.
-	 */
-	public int size();
-	/**
-	 * Get a term corresponding to the index.
-	 * @param idx Non-negative index of the element.
-	 * @param s   Sort of the result term.
-	 * @param t   Theory used to generate the result term.
-	 * @return A term corresponding to the index.
-	 * @throws IndexOutOfBoundsException If the index is not valid.
-	 */
-	public Term get(int idx, Sort s, Theory t) throws IndexOutOfBoundsException;
+	public Term extendFresh(Sort sort);
 	/**
 	 * Convert this sort interpretation to SMTLIB.
 	 * @param t    Theory to use during conversion.
