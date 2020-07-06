@@ -20,7 +20,7 @@ changed_files="smtinterpol.changed"
 if [ ! -d "$dir_smtinterpol" ]; then 
     echo "Could not find directory $dir_smtinterpol"
     exit 1
-fi 
+fi
 
 if [ ! -d "$dir_ultimate" ]; then 
     echo "Could not find directory $dir_ultimate"
@@ -28,13 +28,13 @@ if [ ! -d "$dir_ultimate" ]; then
 fi 
 
 echo "Updating $dir_smtinterpol..."
-pushd "$dir_smtinterpol" > /dev/null 
+pushd "$dir_smtinterpol" > /dev/null
 exitOnFail git fetch
 exitOnFail git rebase
 exitOnFail git clean -f -d
 echo "Building SMTInterpol..."
 exitOnFail ant > /dev/null
-smtinterpol_cur=`git describe --tags` 
+smtinterpol_cur=$(git describe --tags)
 popd > /dev/null
 
 echo "Updating $dir_ultimate..."
@@ -63,7 +63,7 @@ if [ "$smtinterpol_ver" = "$smtinterpol_cur" ]; then
 fi
 
 echo "Latest SMTInterpol version is $smtinterpol_cur, in Ultimate is $smtinterpol_ver, updating..."
-pushd "$dir_smtinterpol" > /dev/null 
+pushd "$dir_smtinterpol" > /dev/null
 echo "Creating diff..."
 [ -e "$diff_file" ] && rm "$diff_file"
 [ -e "$changed_files" ] && rm "$changed_files"
@@ -88,7 +88,7 @@ popd > /dev/null
 pushd "$dir_ultimate" > /dev/null 
 echo "Trying to apply patch..."
 ## first check, if nothing can be applied, do not update version
-if git apply --check --directory=trunk/source/ "$diff_file"; then 
+if git apply --check --directory=trunk/source/ "$diff_file"; then
     echo "Using git to apply the patch"
     git apply --whitespace=nowarn --directory=trunk/source/ "$diff_file"
     
@@ -96,7 +96,7 @@ else
     echo "Problems applying the patch with git tools, just copying all changed files"
     while IFS= read -r line ; do
         source_file="${dir_smtinterpol}/${line}"
-        if [ ! -f "$source_file" ]; then 
+        if [ ! -f "$source_file" ]; then
           continue
         fi 
         target_file="${dir_ultimate}/trunk/source/${line}"
