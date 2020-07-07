@@ -106,7 +106,7 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 				}
 			}
 			if (disjuncts.size() > 0) {
-				final Expression expr = new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICIFF,
+				final Expression expr = new BinaryExpression(mLocation, BinaryExpression.Operator.LOGICIMPLIES,
 						mSymbolTable.getIdentifierExpression(trackingVar), genDisjunction(disjuncts, mLocation));
 				statements.add(new AssumeStatement(mLocation, expr));
 			}
