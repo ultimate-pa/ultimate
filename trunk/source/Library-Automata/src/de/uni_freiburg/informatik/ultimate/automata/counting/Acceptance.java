@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.counting;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -94,17 +95,69 @@ public class Acceptance<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 
 
 	private Term dnfToFormula(List<List<Guard>> dnf){
-		Term dnfFormula, conjunctionFormula, atomicGuardFormula, leftCounterVariable, rightCounterVariable, constant;
+		Term dnfFormula, conjunctionFormula, atomicGuardFormula, leftCounterVariable, rightSide, rightCounterVariable, constant;
+		dnfFormula = null;
 		for (List<Guard> guardList : dnf) {
+			conjunctionFormula = null;
 			for (Guard guard : guardList) {
+				atomicGuardFormula = null;
+				leftCounterVariable = null;
+				rightSide = null;
 				switch (guard.getTermType()) {
 				case TRUE :
-					atomicGuardFormula = mScript.binary("true");
+					//?
+					break;
+				case FALSE:
+					//?
+					break;
+				case CONSTANT:
+					leftCounterVariable = mScript.variable(guard.getCounterLeft().getCounterName(), SmtSortUtils.getIntSort(mScript));
+					rightSide = mScript.numeral(BigInteger.valueOf(guard.getConstant()));
+					break;
+				case COUNTER:
+					leftCounterVariable = mScript.variable(guard.getCounterLeft().getCounterName(), SmtSortUtils.getIntSort(mScript));
+					rightSide = mScript.variable(guard.getCounterRight().getCounterName(), SmtSortUtils.getIntSort(mScript));
+					break;
+				case SUM:
+					leftCounterVariable = mScript.variable(guard.getCounterLeft().getCounterName(), SmtSortUtils.getIntSort(mScript));
+					rightCounterVariable = mScript.variable(guard.getCounterRight().getCounterName(), SmtSortUtils.getIntSort(mScript));
+					constant = mScript.numeral(BigInteger.valueOf(guard.getConstant()));
+					rightSide = mScript.term("+", rightCounterVariable, constant);
+					break;
 				}
-				leftCounterVariable = mScript.variable(guard.getCounterLeft().getCounterName(), SmtSortUtils.getIntSort(mScript));
+				switch (guard.getRelationSymbol()) {
+				case EQ:
+					atomicGuardFormula = mScript.term("=", leftCounterVariable, rightSide);
+					break;
+				case DISTINCT:
+					atomicGuardFormula = mScript.term("distinct", leftCounterVariable, rightSide);
+					break;
+				case GREATER:
+					atomicGuardFormula = mScript.term(">", leftCounterVariable, rightSide);
+					break;
+				case LESS:
+					atomicGuardFormula = mScript.term("<", leftCounterVariable, rightSide);
+					break;
+				case GEQ:
+					atomicGuardFormula = mScript.term(">=", leftCounterVariable, rightSide);
+					break;
+				case LEQ:
+					atomicGuardFormula = mScript.term("<=", leftCounterVariable, rightSide);
+					break;
+				}
+				if (conjunctionFormula == null) {
+					conjunctionFormula = atomicGuardFormula;
+				} else {
+					conjunctionFormula = mScript.term("and", conjunctionFormula, atomicGuardFormula);
+				}
+			}
+			if (dnfFormula == null) {
+				dnfFormula = conjunctionFormula;
+			} else {
+				dnfFormula = mScript.term("and", dnfFormula, conjunctionFormula);
 			}
 		}
-		return null;
+		return dnfFormula;
 	}
 
 	
