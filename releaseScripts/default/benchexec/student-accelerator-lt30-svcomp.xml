@@ -42,6 +42,7 @@
       <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
     </tasks>
     <option name="--traceabstraction.compute.interpolants.along.a.counterexample">Craig_NestedInterpolation</option>
+    <option name="--traceabstraction.use.separate.solver.for.trace.checks">true</option>
   </rundefinition>
 
 </benchmark>
