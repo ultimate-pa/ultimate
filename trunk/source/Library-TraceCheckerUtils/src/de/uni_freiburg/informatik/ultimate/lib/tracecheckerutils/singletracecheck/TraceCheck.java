@@ -223,8 +223,11 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 				}
 			} else {
 				if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
-					managedScriptTc.echo(mTraceCheckLock, new QuotedObject(
-							"Trace is feasible, we will do another trace check, this time with branch encoders."));
+					final String msg =
+							"Trace is feasible, we will do another trace check, this time with branch encoders.";
+					managedScriptTc.echo(mTraceCheckLock, new QuotedObject(msg));
+					mLogger.info(msg);
+
 					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches();
 					if (icfgProgramExecution != null) {
 						providesIcfgProgramExecution = true;
@@ -342,8 +345,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 			final TraceCheck<? extends IAction> tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
 					mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(), withBE, mServices,
 					mCsToolkit, mTcSmtManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
-			assert tc.isCorrect() == LBool.SAT : "result of second trace check is " + tc.isCorrect()
-					+ tc.getTraceCheckReasonUnknown().getReason();
+			assert tc.isCorrect() == LBool.SAT : "result of second trace check is not SAT, but " + tc.isCorrect();
 			return tc.getRcfgProgramExecution();
 		}
 		return computeRcfgProgramExecution(mNsb);

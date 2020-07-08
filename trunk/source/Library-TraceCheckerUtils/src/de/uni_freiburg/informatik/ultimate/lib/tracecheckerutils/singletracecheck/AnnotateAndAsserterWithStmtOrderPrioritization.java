@@ -47,11 +47,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractionTermClassifier.ScoringMethod;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -425,14 +424,13 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 	// Function to score a trace, according to a heuristic.
 	private List<Triple<Term, Double, Integer>> ScoreTrace(final NestedWord<? extends IAction> trace) {
-		final List<Triple<Term, Double, Integer>> termScoreIndexTriples =
-				new ArrayList<Triple<Term, Double, Integer>>();
+		final List<Triple<Term, Double, Integer>> termScoreIndexTriples = new ArrayList<>();
 		for (int i = 0; i < trace.length(); i++) {
 			final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier();
 			final Term term = ((IAction) trace.getSymbol(i)).getTransformula().getFormula();
 			tc.checkTerm(term);
 			final Double score = tc.getScore(mAssertCodeBlockOrderSMTFeatureScoringMethod);
-			termScoreIndexTriples.add(new Triple<Term, Double, Integer>(term, score, i));
+			termScoreIndexTriples.add(new Triple<>(term, score, i));
 		}
 		// sort reverse
 		Collections.sort(termScoreIndexTriples, Comparator.comparing(p -> -p.getSecond()));
@@ -446,7 +444,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		if (random) {
 			Collections.shuffle(indices);
 		}
-		return new LinkedHashSet<Integer>(indices);
+		return new LinkedHashSet<>(indices);
 	}
 
 	private void partitionEven(final LinkedHashSet<LinkedHashSet<Integer>> partitions,
@@ -465,8 +463,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		final int chunksize =
 				(int) Math.ceil(termScoreIndexTriples.size() * (1.0 / mAssertCodeBlockOrderNumPartitions));
 
-		LinkedHashSet<Integer> current_chunk = new LinkedHashSet<Integer>();
-		LinkedHashSet<Integer> last_chunk = new LinkedHashSet<Integer>();
+		LinkedHashSet<Integer> current_chunk = new LinkedHashSet<>();
+		LinkedHashSet<Integer> last_chunk = new LinkedHashSet<>();
 
 		int numProcessed = 0;
 
@@ -474,9 +472,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			current_chunk.add(index);
 			numProcessed += 1;
 			if (current_chunk.size() == chunksize || numProcessed == indices.size()) {
-				last_chunk = new LinkedHashSet<Integer>(current_chunk);
+				last_chunk = new LinkedHashSet<>(current_chunk);
 				partitions.add(last_chunk);
-				current_chunk = new LinkedHashSet<Integer>();
+				current_chunk = new LinkedHashSet<>();
 			}
 		}
 	}
@@ -484,7 +482,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	// Function to partition a list of Terms according to their scores.
 	private LinkedHashSet<LinkedHashSet<Integer>>
 			partitionStmtsAccordingToHeuristicValues(final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
-		final LinkedHashSet<LinkedHashSet<Integer>> partitions = new LinkedHashSet<LinkedHashSet<Integer>>();
+		final LinkedHashSet<LinkedHashSet<Integer>> partitions = new LinkedHashSet<>();
 		partitionEven(partitions, termScoreIndexTriples, false);
 		return partitions;
 	}
@@ -502,9 +500,12 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			mLogger.debug("Partitions: " + partitions.toString());
 		}
 
-		assert partitions.size() > 0;
+		assert !partitions.isEmpty();
 
 		for (final LinkedHashSet<Integer> partition : partitions) {
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Checking partition " + partition);
+			}
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, partition);
 			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
