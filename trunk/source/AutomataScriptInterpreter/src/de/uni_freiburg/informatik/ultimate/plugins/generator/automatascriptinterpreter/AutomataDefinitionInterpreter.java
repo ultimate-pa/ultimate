@@ -44,6 +44,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.BooleanExpression;
+import de.uni_freiburg.informatik.ultimate.automata.counting.datastructures.CountingAutomatonDataStructure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.EpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -61,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AbstractNestedwordAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AlternatingAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitionsAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.CountingAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.EpsilonNestedwordAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedwordAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetAutomatonAST;
@@ -147,6 +149,8 @@ public class AutomataDefinitionInterpreter {
 					interpret((TreeAutomatonAST) n);
 				} else if (n instanceof TreeAutomatonRankedAST) {
 					interpret((TreeAutomatonRankedAST) n);
+				} else if (n instanceof CountingAutomatonAST) {
+					interpret((CountingAutomatonAST) n);
 				} else {
 					throw new AssertionError("unsupported kind of automaton " + n);
 				}
@@ -327,7 +331,7 @@ public class AutomataDefinitionInterpreter {
 		mAutomata.put(nwa.getName(), result);
 	}
 
-	public void interpret(final EpsilonNestedwordAutomatonAST nwa) {
+	private void interpret(final EpsilonNestedwordAutomatonAST nwa) {
 		mErrorLocation = nwa.getLocation();
 
 		final EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> result = constructEpsilonNestedWordAutomaton(
@@ -458,6 +462,13 @@ public class AutomataDefinitionInterpreter {
 			}
 		}
 		return nw;
+	}
+
+	private void interpret(final CountingAutomatonAST caAst) throws InterpreterException {
+		final CountingAutomatonDataStructure<String, String> countingAutomatonDataStructure = CountingAutomataUtils
+				.constructCountingAutomaton(mServices, caAst);
+		final Object ca = CountingAutomataUtils.translateDataStructureToAutomaton(mServices, countingAutomatonDataStructure);
+		mAutomata.put(caAst.getName(), countingAutomatonDataStructure);
 	}
 
 	/**
