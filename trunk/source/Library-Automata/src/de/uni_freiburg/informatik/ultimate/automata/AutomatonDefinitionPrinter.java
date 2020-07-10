@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutom
 import de.uni_freiburg.informatik.ultimate.automata.alternating.visualization.AlternatingAutomatonWriter;
 import de.uni_freiburg.informatik.ultimate.automata.counting.CaWriter;
 import de.uni_freiburg.informatik.ultimate.automata.counting.CountingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.counting.datastructures.CaDatastructureWriter;
+import de.uni_freiburg.informatik.ultimate.automata.counting.datastructures.CountingAutomatonDataStructure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
@@ -347,6 +349,9 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 					printWriter);
 		} else if (na.getAutomaton() instanceof CountingAutomaton) {
 			printCountingAutomaton(na.getName(), (CountingAutomaton<LETTER, STATE>) na.getAutomaton(), format, printWriter);
+		} else if (na.getAutomaton() instanceof CountingAutomatonDataStructure) {
+			printCountingAutomatonDataStructure(na.getName(),
+					(CountingAutomatonDataStructure<LETTER, STATE>) na.getAutomaton(), format, printWriter);
 		} else {
 			throw new AssertionError("unknown kind of automaton");
 		}
@@ -425,6 +430,22 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		switch (format) {
 		case ATS:
 			new CaWriter<>(printWriter, name, automaton);
+			break;
+		case ATS_QUOTED:
+		case ATS_NUMERATE:
+		case BA:
+		case HOA:
+		case GFF:
+		default:
+			throw new AssertionError(UNSUPPORTED_LABELING);
+		}
+	}
+
+	private static <LETTER, STATE> void printCountingAutomatonDataStructure(final String name,
+			final CountingAutomatonDataStructure<LETTER, STATE> automaton, final Format format, final PrintWriter printWriter) {
+		switch (format) {
+		case ATS:
+			new CaDatastructureWriter<>(printWriter, name, automaton);
 			break;
 		case ATS_QUOTED:
 		case ATS_NUMERATE:

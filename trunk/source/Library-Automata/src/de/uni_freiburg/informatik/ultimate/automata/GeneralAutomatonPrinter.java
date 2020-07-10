@@ -103,7 +103,7 @@ public abstract class GeneralAutomatonPrinter {
 		printCollection(alphabet.values());
 	}
 
-	private void printCollection(final Collection<String> collection) {
+	protected void printCollection(final Collection<String> collection) {
 		for (final String string : collection) {
 			printElement(string);
 		}
