@@ -18,7 +18,9 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lassoranker,
  de.uni_freiburg.informatik.ultimate.lassoranker.exceptions,
  de.uni_freiburg.informatik.ultimate.lassoranker.nontermination,
  de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors,
+ de.uni_freiburg.informatik.ultimate.lassoranker.synthesis,
  de.uni_freiburg.informatik.ultimate.lassoranker.termination,
  de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions,
  de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates,
  de.uni_freiburg.informatik.ultimate.lassoranker.variables
+Import-Package: org.apache.commons.lang3
