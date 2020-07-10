@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IEpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.counting.CountingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
@@ -442,7 +443,7 @@ type	::=     INT
         |       FINITE_AUTOMATON
                 {: RESULT = INestedWordAutomaton.class; :}
         |       COUNTING_AUTOMATON
-        		{: RESULT = Object.class; :}
+        		{: RESULT = CountingAutomaton.class; :}
         |       PETRINET_AUTOMATA         
                 {: RESULT = BoundedPetriNet.class; :}
         |       BRANCHINGPROCESS_AUTOMATA         
@@ -482,7 +483,11 @@ variable_declaration ::=
              else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"INestedWordAutomaton\""); }
              RESULT = null;:}
         | type:t ca_definition:counting
-          {: RESULT = null;:}
+          {: if (t.equals(CountingAutomaton.class))
+                { counting.setType(t);
+                  m_automataDefinitions.addAutomaton(counting);}
+             else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"INestedWordAutomaton\""); }
+             RESULT = null;:}
         | type:t boundedPetrinet_definition:petri
           {: if (t.equals(BoundedPetriNet.class))
                 { petri.setType(t);
