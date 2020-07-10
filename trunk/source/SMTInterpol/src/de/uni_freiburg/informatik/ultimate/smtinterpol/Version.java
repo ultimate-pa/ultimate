@@ -23,5 +23,5 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol;
  * @author Jochen Hoenicke
  */
 public interface Version {
-	public final static String VERSION = "2.5-703-g4e106c2b";
+	public final static String VERSION = "2.5-709-g9645faac";
 }

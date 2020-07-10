@@ -139,13 +139,13 @@ public class NoopScript implements Script {
 	 * @return 0 or RETURNOVERLOAD, depending on if the flag is needed.
 	 */
 	private int checkReturnOverload(Sort[] sortParams, Sort[] argumentSorts) {
-		BitSet unused = new BitSet();
+		final BitSet unused = new BitSet();
 		unused.set(0, sortParams.length);
-		ArrayDeque<Sort> todo = new ArrayDeque<>();
-		HashSet<Sort> seen = new HashSet<>();
+		final ArrayDeque<Sort> todo = new ArrayDeque<>();
+		final HashSet<Sort> seen = new HashSet<>();
 		todo.addAll(Arrays.asList(argumentSorts));
 		while (!todo.isEmpty()) {
-			Sort sort = todo.removeFirst();
+			final Sort sort = todo.removeFirst();
 			if (seen.add(sort)) {
 				if (sort.isParametric()) {
 					for (int i = 0; i < sortParams.length; i++) {
@@ -168,7 +168,7 @@ public class NoopScript implements Script {
 	 * @throws SMTLIBException
 	 */
 	private void declareConstructorFunctions(DataType datatype, DataType.Constructor[] constrs, Sort[] sortParams) {
-		String[] indices = null;
+		final String[] indices = null;
 		Sort datatypeSort;
 		if (sortParams == null) {
 			if (datatype.mNumParams != 0) {
@@ -181,13 +181,13 @@ public class NoopScript implements Script {
 			}
 			datatypeSort = datatype.getSort(indices, sortParams);
 		}
-		Sort[] selectorParamSorts = new Sort[] { datatypeSort };
+		final Sort[] selectorParamSorts = new Sort[] { datatypeSort };
 
 		for (int i = 0; i < constrs.length; i++) {
 
-			String constrName = constrs[i].getName();
-			String[] selectors = constrs[i].getSelectors();
-			Sort[] argumentSorts = constrs[i].getArgumentSorts();
+			final String constrName = constrs[i].getName();
+			final String[] selectors = constrs[i].getSelectors();
+			final Sort[] argumentSorts = constrs[i].getArgumentSorts();
 
 			if (sortParams == null) {
 				getTheory().declareInternalFunction(constrName, argumentSorts, datatypeSort, FunctionSymbol.CONSTRUCTOR);
@@ -388,6 +388,12 @@ public class NoopScript implements Script {
 	@Override
 	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
 		throws SMTLIBException, UnsupportedOperationException {
+		return getInterpolants(partition, startOfSubtree, getProof());
+	}
+
+	@Override
+	public Term[] getInterpolants(Term[] partition, int[] startOfSubtree, Term proofTree)
+			throws SMTLIBException, UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -532,9 +538,9 @@ public class NoopScript implements Script {
 			final DataType.Constructor[] constructors) throws SMTLIBException {
 		return mTheory.match(dataArg, vars, cases, constructors);
 	}
-	
-	
-	
+
+
+
 	@Override
 	public Term annotate(final Term t, final Annotation... annotations)
 		throws SMTLIBException {

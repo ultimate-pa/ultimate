@@ -5,7 +5,6 @@
 (set-option :proof-check-mode true)
 (set-option :interpolant-check-mode true)
 (set-option :proof-transformation LU)
-(set-option :array-interpolation true)
 (set-logic QF_AUFLIRA)
 (set-info :source |
     SMT script generated on 2018/05/17 by Ultimate. http://ultimate.informatik.uni-freiburg.de/

@@ -434,13 +434,16 @@ public class LoggingScript extends WrapperScript {
 		return super.getInterpolants(partition);
 	}
 
-	// [a,b,c], [0,1,0] -> a (b) c
-	// c
-	// a b
-	@Override
-	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
-			throws SMTLIBException, UnsupportedOperationException {
-		mPw.print("(get-interpolants ");
+	private void printInterpolantQuery(final Term[] partition, final int[] startOfSubtree) {
+		// Grammar for tree interpolation:
+		// tree ::= children term
+		// children ::= tree ('(' tree ')')*
+		//
+		// So the an open parenthesis marks the beginning of a new sibling.
+		// example: parent c, children a, b.
+		// partitions: [a,b,c]
+		// startofSubtree: [0,1,0]
+		// textual representation: a (b) c
 		mTermPrinter.append(mPw, partition[0]);
 		for (int i = 1; i < partition.length; ++i) {
 			int prevStart = startOfSubtree[i - 1];
@@ -454,6 +457,24 @@ public class LoggingScript extends WrapperScript {
 			}
 			mTermPrinter.append(mPw, partition[i]);
 		}
+	}
+
+	@Override
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
+			throws SMTLIBException, UnsupportedOperationException {
+		mPw.print("(get-interpolants ");
+		printInterpolantQuery(partition, startOfSubtree);
+		mPw.println(')');
+		return super.getInterpolants(partition, startOfSubtree);
+	}
+
+	@Override
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree)
+			throws SMTLIBException, UnsupportedOperationException {
+		mPw.print("(get-interpolants ");
+		printInterpolantQuery(partition, startOfSubtree);
+		mPw.print(" :proof ");
+		mTermPrinter.append(mPw, proofTree);
 		mPw.println(')');
 		return super.getInterpolants(partition, startOfSubtree);
 	}

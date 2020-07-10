@@ -37,7 +37,6 @@ public interface SMTInterpolOptions {
 	public String UNSAT_CORE_CHECK_MODE = ":unsat-core-check-mode";
 	public String UNSAT_ASSUMPTIONS_CHECK_MODE = ":unsat-assumptions-check-mode";
 	public String SIMPLIFY_INTERPOLANTS = ":simplify-interpolants";
-	public String ARRAY_INTERPOLATION = ":array-interpolation";
 	public String CHECK_TYPE = ":check-type";
 	public String SIMPLIFY_CHECK_TYPE = ":simplify-check-type";
 	public String EPR = ":epr";

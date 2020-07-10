@@ -1,8 +1,7 @@
-; Expect unsupported due to quantifier + compute interpolant
 ; Expect errors (undeclared interpolation partitions)
-(set-info :expect-unsupported 8)
 (set-info :expect-errors 2)
 (set-option :produce-interpolants true)
+(set-option :interpolant-check-mode true)
 (set-logic ALIA)
 (declare-fun v0 () Bool)
 (declare-fun v1 () Bool)

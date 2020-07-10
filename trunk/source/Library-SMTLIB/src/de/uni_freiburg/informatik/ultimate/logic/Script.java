@@ -362,11 +362,11 @@ public interface Script {
 	 * @throws UnsupportedOperationException If option is unsupported.
 	 */
 	public Object getOption(String opt) throws UnsupportedOperationException;
-	
+
 	/**
 	 * Get information from the solver. Note that the solver only has to implement the info values described in the
 	 * standard.
-	 * 
+	 *
 	 * @param info
 	 *            Name of the info. Note that it has to start with a colon ({@code :}).
 	 * @return Value of the option.
@@ -587,20 +587,42 @@ public interface Script {
 	 */
 	public Term[] getInterpolants(Term[] partition)
 		throws SMTLIBException, UnsupportedOperationException;
+
 	/**
-	 * Compute a sequence of interpolants.  The nesting array describes the
-	 * start of the subtree for tree interpolants.  For inductive sequences of
-	 * interpolants use a nesting array completely filled with 0.
-	 * @param partition      The array of formulas.  This should contain either
-	 * 						 top-level names or conjunction of top-level names.
-	 * @param startOfSubtree The start of the subtree containing the formula at
-	 * 						 this index as root.
+	 * Compute a sequence of interpolants. The nesting array describes the start of
+	 * the subtree for tree interpolants. For inductive sequences of interpolants
+	 * use a nesting array completely filled with 0.
+	 *
+	 * @param partition      The array of formulas. This should contain either
+	 *                       top-level names or conjunction of top-level names.
+	 * @param startOfSubtree The start of the subtree containing the formula at this
+	 *                       index as root.
 	 * @return Tree interpolants respecting the nesting relation.
-	 * @throws SMTLIBException An error occurred.
+	 * @throws SMTLIBException               An error occurred.
 	 * @throws UnsupportedOperationException If interpolant computation is
 	 *                                       unsupported.
 	 */
 	public Term[] getInterpolants(Term[] partition, int[] startOfSubtree)
+		throws SMTLIBException, UnsupportedOperationException;
+
+	/**
+	 * Compute a sequence of interpolants. The nesting array describes the start of
+	 * the subtree for tree interpolants. For inductive sequences of interpolants
+	 * use a nesting array completely filled with 0. This computes the interpolants
+	 * from the given proof. It can be called at any time, even if the assertion
+	 * stack has been modified since computing the proof.
+	 *
+	 * @param partition      The array of formulas. This should contain either
+	 *                       top-level names or conjunction of top-level names.
+	 * @param startOfSubtree The start of the subtree containing the formula at this
+	 *                       index as root.
+	 * @param proofTree      The proof tree that used to compute interpolants.
+	 * @return Tree interpolants respecting the nesting relation.
+	 * @throws SMTLIBException               An error occurred.
+	 * @throws UnsupportedOperationException If interpolant computation is
+	 *                                       unsupported.
+	 */
+	public Term[] getInterpolants(Term[] partition, int[] startOfSubtree, Term proofTree)
 		throws SMTLIBException, UnsupportedOperationException;
 	/**
 	 * Retrieve a complete model from the solver.  This is an optional (non-

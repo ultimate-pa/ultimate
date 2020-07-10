@@ -41,7 +41,6 @@ public class SolverOptions {
 	private final BooleanOption mModelsPartial;
 	private final EnumOption<CheckType> mCheckType;
 	private final BooleanOption mSimpIps;
-	private final BooleanOption mArrayInterpolation;
 	private final BooleanOption mProofCheckMode;
 	private final EnumOption<CheckType> mSimpCheckType;
 
@@ -68,7 +67,6 @@ public class SolverOptions {
 				CheckType.class, "Strength of check used in check-sat command.");
 		mSimpIps = new BooleanOption(false, true,
 				"Apply strong context simplification to generated interpolants.");
-		mArrayInterpolation = new BooleanOption(true, true, "Support interpolation for array theory lemmas.");
 		mProofCheckMode = new BooleanOption(false,
 				false, "Check the produced proof for unsatisfiable formulas.");
 		mSimpCheckType = new EnumOption<>(CheckType.QUICK, true,
@@ -100,7 +98,6 @@ public class SolverOptions {
 		options.addOption(SMTInterpolOptions.PRODUCE_INTERPOLANTS, mProduceInterpolants);
 		options.addOption(SMTInterpolOptions.INTERPOLANT_CHECK_MODE, mInterpolantCheckMode);
 		options.addOption(SMTInterpolOptions.SIMPLIFY_INTERPOLANTS, mSimpIps);
-		options.addOption(SMTInterpolOptions.ARRAY_INTERPOLATION, mArrayInterpolation);
 
 		// unsat core options
 		options.addOption(SMTLIBConstants.PRODUCE_UNSAT_CORES, new BooleanOption(
@@ -148,7 +145,6 @@ public class SolverOptions {
 		mModelsPartial = (BooleanOption) options.getOption(SMTInterpolOptions.MODELS_PARTIAL);
 		mCheckType = (EnumOption<CheckType>) options.getOption(SMTInterpolOptions.CHECK_TYPE);
 		mSimpIps = (BooleanOption) options.getOption(SMTInterpolOptions.SIMPLIFY_INTERPOLANTS);
-		mArrayInterpolation = (BooleanOption) options.getOption(SMTInterpolOptions.ARRAY_INTERPOLATION);
 		mProofCheckMode = (BooleanOption) options.getOption(SMTInterpolOptions.PROOF_CHECK_MODE);
 		mSimpCheckType = (EnumOption<CheckType>) options.getOption(SMTInterpolOptions.SIMPLIFY_CHECK_TYPE);
 	}
