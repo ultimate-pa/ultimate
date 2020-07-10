@@ -363,4 +363,10 @@ public class WrapperScript implements Script {
 		return mScript.getFunctionSymbol(constructor);
 	}
 
+	@Override
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree)
+			throws SMTLIBException, UnsupportedOperationException {
+		return mScript.getInterpolants(partition, startOfSubtree, proofTree);
+	}
+
 }
