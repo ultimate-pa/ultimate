@@ -1131,8 +1131,8 @@ fa_definition ::=      variable_identifier:id EQ
                           
 ca_definition ::=		variable_identifier:id EQ LPAREN:l
 								alphabet:alpha COMMA
-								states:states COMMA
 								counters:counters COMMA
+								states:states COMMA
 								initial_conditions:init_cond COMMA
 								final_conditions:fin_cond COMMA
 								counting_transitions:count_trans RPAREN:r
