@@ -129,7 +129,7 @@ public class Acceptance<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 			}
 		}
 	}
-	return LBool.UNSAT;
+	return result;
 }
 
 	private Term dnfToFormula(ArrayList<ArrayList<Guard>> dnf, int step) {
