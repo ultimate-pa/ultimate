@@ -5,7 +5,7 @@
 
 // Declare a nondeterministic counting automaton called "nca1".
 CountingAutomaton nca1 = (
-     alphabet = {A B},
+     alphabet = {a b},
 	 counters = {c d},
      states = {q1 q2},
      initialConditions = {
@@ -26,7 +26,7 @@ CountingAutomaton nca1 = (
 
 // Declare a second nondeterministic counting automaton called "nca2".
 CountingAutomaton nca2 = (
-     alphabet = {A B},
+     alphabet = {a b},
 	 counters = {c},
      states = {q1 q2 q3},
      initialConditions = {
@@ -45,6 +45,6 @@ CountingAutomaton nca2 = (
 		 (q2 a "true" {c := "(+ c 1)"} q3)
 		 (q2 b "true" {} q2)
 		 (q3 a "true" {c := "(+ c 1)"} q2)
-		 {q3 b "true" {} q3)
+		 (q3 b "true" {} q3)
      }
 );
