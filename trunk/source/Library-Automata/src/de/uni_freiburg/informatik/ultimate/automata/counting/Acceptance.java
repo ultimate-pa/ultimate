@@ -240,6 +240,7 @@ public class Acceptance<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 						SmtSortUtils.getIntSort(mScript));
 				rightSide = mScript.term("+", constant, rightCounterVariable);
 				atomicUpdateFormula = mScript.term("=", leftCounterVariable, rightSide);
+				break;
 			}
 			if (updateFormula == null) {
 				updateFormula = atomicUpdateFormula;
