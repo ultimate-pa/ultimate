@@ -1172,6 +1172,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		 * a subdirectory of another in the list to avoid unnecessary work.
 		 */
 		final String[] packages = { "de.uni_freiburg.informatik.ultimate.automata.alternating",
+				"de.uni_freiburg.informatik.ultimate.automata.counting",
 				"de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi",
 				"de.uni_freiburg.informatik.ultimate.automata.nestedword.operations",
 				"de.uni_freiburg.informatik.ultimate.automata.petrinet",
