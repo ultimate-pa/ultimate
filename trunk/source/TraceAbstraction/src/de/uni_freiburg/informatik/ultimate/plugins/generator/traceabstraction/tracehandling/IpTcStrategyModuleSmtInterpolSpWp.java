@@ -59,19 +59,17 @@ public class IpTcStrategyModuleSmtInterpolSpWp<LETTER extends IIcfgTransition<?>
 
 	private final boolean mUseTimeout;
 	private final InterpolationTechnique mInterpolationTechnique;
-	private final boolean mArrayInterpolation;
 
 	public IpTcStrategyModuleSmtInterpolSpWp(final TaskIdentifier taskIdentifier,
 			final IUltimateServiceProvider services, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IRun<LETTER, ?> counterExample, final IPredicate precondition, final IPredicate postcondition,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation, final IPredicateUnifier predicateUnifier,
 			final PredicateFactory predicateFactory, final boolean useTimeout,
-			final InterpolationTechnique interpolationTechnique, final boolean arrayInterpolation) {
+			final InterpolationTechnique interpolationTechnique) {
 		super(taskIdentifier, services, prefs, counterExample, precondition, postcondition, assertionOrderModulation,
 				predicateUnifier, predicateFactory);
 		mUseTimeout = useTimeout;
 		mInterpolationTechnique = interpolationTechnique;
-		mArrayInterpolation = arrayInterpolation;
 		assert Arrays.stream(SUPPORTED_TECHNIQUES).anyMatch(
 				a -> a == mInterpolationTechnique) : "Unsupported interpolation technique " + mInterpolationTechnique;
 	}
@@ -79,8 +77,7 @@ public class IpTcStrategyModuleSmtInterpolSpWp<LETTER extends IIcfgTransition<?>
 	@Override
 	protected ManagedScript constructManagedScript() {
 		final long timeout = mUseTimeout ? SolverBuilder.TIMEOUT_SMTINTERPOL : SolverBuilder.TIMEOUT_NONE_SMTINTERPOL;
-		final SolverMode solverMode =
-				mArrayInterpolation ? SolverMode.Internal_SMTInterpol : SolverMode.Internal_SMTInterpol_NoArrayInterpol;
+		final SolverMode solverMode = SolverMode.Internal_SMTInterpol;
 
 		final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier).setSolverMode(solverMode)
 				.setSmtInterpolTimeout(timeout).setSolverLogics(SolverBuilder.LOGIC_SMTINTERPOL);

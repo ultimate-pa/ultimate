@@ -52,7 +52,6 @@ public class InterpolationPreferenceChecker {
 		case Craig_TreeInterpolation:
 		case Craig_NestedInterpolation:
 			legalSolverSettings.add(SolverMode.Internal_SMTInterpol);
-			legalSolverSettings.add(SolverMode.Internal_SMTInterpol_NoArrayInterpol);
 			legalSolverSettings.add(SolverMode.External_PrincessInterpolationMode);
 			legalSolverSettings.add(SolverMode.External_SMTInterpolInterpolationMode);
 			legalSolverSettings.add(SolverMode.External_Z3InterpolationMode);
@@ -62,7 +61,6 @@ public class InterpolationPreferenceChecker {
 		case ForwardPredicates:
 		case PathInvariants:
 			legalSolverSettings.add(SolverMode.Internal_SMTInterpol);
-			legalSolverSettings.add(SolverMode.Internal_SMTInterpol_NoArrayInterpol);
 			legalSolverSettings.add(SolverMode.External_ModelsAndUnsatCoreMode);
 			break;
 		default:

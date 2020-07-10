@@ -114,7 +114,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModuleSmtInterpolCraig<>(mTaskIdentifier, mServices,
 				mPrefs, mCounterexample, mPrecondition, mPostcondition,
 				new AssertionOrderModulation<>(mPathProgramCache, mLogger, order), mPredicateUnifier, mPredicateFactory,
-				useTimeout, technique, arrayInterpolation));
+				useTimeout, technique));
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSmtInterpolSpWp(final boolean useTimeout,
@@ -123,7 +123,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModuleSmtInterpolSpWp<>(mTaskIdentifier, mServices,
 				mPrefs, mCounterexample, mPrecondition, mPostcondition,
 				new AssertionOrderModulation<>(mPathProgramCache, mLogger, order), mPredicateUnifier, mPredicateFactory,
-				useTimeout, technique, arrayInterpolation));
+				useTimeout, technique));
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleZ3(final boolean useTimeout,

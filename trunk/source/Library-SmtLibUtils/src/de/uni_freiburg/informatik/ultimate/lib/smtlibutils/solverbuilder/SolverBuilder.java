@@ -65,8 +65,6 @@ public class SolverBuilder {
 	public enum SolverMode {
 		Internal_SMTInterpol(false),
 
-		Internal_SMTInterpol_NoArrayInterpol(false),
-
 		External_PrincessInterpolationMode(true),
 
 		External_SMTInterpolInterpolationMode(true),
@@ -145,9 +143,8 @@ public class SolverBuilder {
 		final ILogger solverLogger = getSolverLogger(services);
 		Script script;
 		if (settings.useExternalSolver()) {
-			assert settings.getSolverMode() == null
-					|| settings.getSolverMode() != SolverMode.Internal_SMTInterpol && settings
-							.getSolverMode() != SolverMode.Internal_SMTInterpol_NoArrayInterpol : "You set solver mode to Internal* and enabled useExternalSolver";
+			assert settings.getSolverMode() == null || settings
+					.getSolverMode() != SolverMode.Internal_SMTInterpol : "You set solver mode to Internal* and enabled useExternalSolver";
 			final String command = settings.getCommandExternalSolver();
 			solverLogger.info("constructing external solver with command" + settings.getCommandExternalSolver());
 			try {
@@ -273,24 +270,6 @@ public class SolverBuilder {
 			script.setOption(":produce-interpolants", true);
 			script.setOption(":interpolant-check-mode", true);
 			script.setOption(":proof-transformation", "LU");
-			script.setOption(":array-interpolation", true);
-			// mScript.setOption(":proof-transformation", "RPI");
-			// mScript.setOption(":proof-transformation", "LURPI");
-			// mScript.setOption(":proof-transformation", "RPILU");
-			// mScript.setOption(":verbosity", 0);
-			if (logic != null) {
-				script.setLogic(logic);
-			} else {
-				script.setLogic(LOGIC_SMTINTERPOL.toString());
-			}
-			break;
-		case Internal_SMTInterpol_NoArrayInterpol:
-			script.setOption(":produce-models", true);
-			script.setOption(":produce-unsat-cores", true);
-			script.setOption(":produce-interpolants", true);
-			script.setOption(":interpolant-check-mode", true);
-			script.setOption(":proof-transformation", "LU");
-			script.setOption(":array-interpolation", false);
 			// mScript.setOption(":proof-transformation", "RPI");
 			// mScript.setOption(":proof-transformation", "LURPI");
 			// mScript.setOption(":proof-transformation", "RPILU");
@@ -613,7 +592,6 @@ public class SolverBuilder {
 				useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
 				logics = mSolverLogics;
 				break;
-			case Internal_SMTInterpol_NoArrayInterpol:
 			case Internal_SMTInterpol:
 				useExternalSolver = false;
 				timeoutSmtInterpol = -1;
