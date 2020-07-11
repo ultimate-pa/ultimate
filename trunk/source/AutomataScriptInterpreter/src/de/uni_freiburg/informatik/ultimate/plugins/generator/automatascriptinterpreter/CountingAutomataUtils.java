@@ -310,7 +310,8 @@ public class CountingAutomataUtils {
 		throw new InterpreterException(loc, "Term does not have supported form");
 	}
 
-	public static Object translateDataStructureToAutomaton(final IUltimateServiceProvider uServices,
+	public static CountingAutomaton<String, String> translateDataStructureToAutomaton(
+			final IUltimateServiceProvider uServices,
 			final CountingAutomatonDataStructure<String, String> countingAutomatonDataStructure) {
 		
 		final AutomataLibraryServices services = new AutomataLibraryServices(uServices);

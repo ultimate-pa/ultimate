@@ -44,6 +44,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.BooleanExpression;
+import de.uni_freiburg.informatik.ultimate.automata.counting.CountingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.counting.datastructures.CountingAutomatonDataStructure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.EpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -467,8 +468,9 @@ public class AutomataDefinitionInterpreter {
 	private void interpret(final CountingAutomatonAST caAst) throws InterpreterException {
 		final CountingAutomatonDataStructure<String, String> countingAutomatonDataStructure = CountingAutomataUtils
 				.constructCountingAutomaton(mServices, caAst);
-		final Object ca = CountingAutomataUtils.translateDataStructureToAutomaton(mServices, countingAutomatonDataStructure);
-		mAutomata.put(caAst.getName(), countingAutomatonDataStructure);
+		final CountingAutomaton<String, String> ca = CountingAutomataUtils.translateDataStructureToAutomaton(mServices,
+				countingAutomatonDataStructure);
+		mAutomata.put(caAst.getName(), ca);
 	}
 
 	/**
