@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.counting.datastructures;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a transition whose guard is a conjunction of atomic counter
@@ -47,6 +48,11 @@ public class ConjunctiveTransition<LETTER, STATE> {
 	public ConjunctiveTransition(final STATE predecessor, final STATE successor, final LETTER letter,
 			final ConjunctiveCounterFormula guard, final List<AtomicCounterAssingment> assignment) {
 		super();
+		Objects.nonNull(predecessor);
+		Objects.nonNull(successor);
+		Objects.nonNull(letter);
+		Objects.nonNull(guard);
+		Objects.nonNull(assignment);
 		mPredecessor = predecessor;
 		mSuccessor = successor;
 		mLetter = letter;

@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.counting.datastructures;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 /**
  * Represents assignments of the form
@@ -44,15 +45,20 @@ public class AtomicCounterAssingment {
 	private final String mRhsCounter;
 	private final BigInteger mRhsNaturalNumber;
 
+	/**
+	 * @param rhsCounter
+	 *            null iff there is no counter on the right-hand side.
+	 */
 	public AtomicCounterAssingment(final String lhsCounter, final String rhsCounter,
 			final BigInteger rhsNaturalNumber) {
 		super();
-		mLhsCounter = lhsCounter;
-		mRhsCounter = rhsCounter;
-		mRhsNaturalNumber = rhsNaturalNumber;
+		Objects.nonNull(lhsCounter);
 		if (rhsNaturalNumber.compareTo(BigInteger.ZERO) < 0) {
 			throw new IllegalArgumentException("Literal in counter assignment mus be non-negative");
 		}
+		mLhsCounter = lhsCounter;
+		mRhsCounter = rhsCounter;
+		mRhsNaturalNumber = rhsNaturalNumber;
 	}
 
 	public String getLhsCounter() {

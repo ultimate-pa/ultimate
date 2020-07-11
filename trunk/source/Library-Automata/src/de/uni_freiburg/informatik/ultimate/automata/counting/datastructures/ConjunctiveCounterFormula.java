@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.counting.datastructures;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -44,6 +45,7 @@ public class ConjunctiveCounterFormula {
 
 	public ConjunctiveCounterFormula(final LinkedHashSet<IAtomicCounterGuard> conjuncts) {
 		super();
+		Objects.nonNull(conjuncts);
 		mConjuncts = conjuncts;
 	}
 
