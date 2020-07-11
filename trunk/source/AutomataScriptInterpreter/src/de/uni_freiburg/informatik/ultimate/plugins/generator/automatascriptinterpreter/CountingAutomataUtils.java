@@ -248,7 +248,7 @@ public class CountingAutomataUtils {
 				throw new InterpreterException(loc, "Term does not have supported form");
 			}
 			final BigInteger resultLiteral = (varIsNegated ? affineLiteral : affineLiteral.negate());
-			final RelationSymbol resultRelationSymbol = (varIsNegated ? polyRel.getRelationSymbol().negate()
+			final RelationSymbol resultRelationSymbol = (varIsNegated ? polyRel.getRelationSymbol().swapParameters()
 					: polyRel.getRelationSymbol());
 			result = new IAtomicCounterGuard.SingleCounterGuard(resultRelationSymbol, counter, resultLiteral);
 			break;
