@@ -562,6 +562,11 @@ public class CountingAutomataUtils {
 		CountingAutomaton<String, String> countingAutomaton = new CountingAutomaton<String, String>(services, alphabet, states, counterList, initialConditions, finalConditions, transitions);
 		
 		//return countingAutomatonDataStructure;
+
+		// TODO 20200711 Matthias:
+		// This is an auxiliary call of toString() in order to reproduce NullPointerExceptions
+		// more easily. This code can be removed after the code was tested.
+		countingAutomaton.toString();
 		return countingAutomaton;
 	}
 
