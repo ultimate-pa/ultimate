@@ -205,7 +205,7 @@ public class Union<LETTER, STATE, CRSF extends IStateFactory<STATE>> implements 
 	}
 
 	@Override
-	public Object getResult() {
+	public CountingAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 
