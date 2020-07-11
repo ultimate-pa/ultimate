@@ -48,3 +48,5 @@ CountingAutomaton nca2 = (
 		 (q3 b "true" {} q3)
      }
 );
+
+print(nca1);

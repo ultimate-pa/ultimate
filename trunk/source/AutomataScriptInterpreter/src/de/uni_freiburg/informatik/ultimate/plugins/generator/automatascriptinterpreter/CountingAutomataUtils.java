@@ -360,7 +360,7 @@ public class CountingAutomataUtils {
 								SingleCounterGuard guard = (SingleCounterGuard)atomicGuard;
 								Counter cLeftCounter = null;
 								for (Counter counter : counterList) {
-									if (counter.getCounterName() == guard.getLhsCounter()) {
+									if (counter.getCounterName().equals(guard.getLhsCounter())) {
 										cLeftCounter = counter;
 									}
 								}
@@ -372,10 +372,10 @@ public class CountingAutomataUtils {
 								Counter cLeftCounter = null;
 								Counter cRightCounter = null;
 								for (Counter counter : counterList) {
-									if (counter.getCounterName() == guard.getLhsCounter()) {
+									if (counter.getCounterName().equals(guard.getLhsCounter())) {
 										cLeftCounter = counter;
 									}
-									if (counter.getCounterName() == guard.getRhsCounter()) {
+									if (counter.getCounterName().equals(guard.getRhsCounter())) {
 										cRightCounter = counter;
 									} 
 								}
@@ -426,7 +426,7 @@ public class CountingAutomataUtils {
 								SingleCounterGuard guard = (SingleCounterGuard)atomicGuard;
 								Counter cLeftCounter = null;
 								for (Counter counter : counterList) {
-									if (counter.getCounterName() == guard.getLhsCounter()) {
+									if (counter.getCounterName().equals(guard.getLhsCounter())) {
 										cLeftCounter = counter;
 									}
 								}
@@ -438,10 +438,10 @@ public class CountingAutomataUtils {
 								Counter cLeftCounter = null;
 								Counter cRightCounter = null;
 								for (Counter counter : counterList) {
-									if (counter.getCounterName() == guard.getLhsCounter()) {
+									if (counter.getCounterName().equals(guard.getLhsCounter())) {
 										cLeftCounter = counter;
 									}
-									if (counter.getCounterName() == guard.getRhsCounter()) {
+									if (counter.getCounterName().equals(guard.getRhsCounter())) {
 										cRightCounter = counter;
 									} 
 								}
@@ -469,73 +469,61 @@ public class CountingAutomataUtils {
 			ArrayList<Transition<String, String>> transitionList = new ArrayList<Transition<String, String>>();
 			for (ConjunctiveTransition<String, String> transition : countingAutomatonDataStructure.getOutgoingTransitions(state)){
 				ArrayList<ArrayList<Guard>> dnf = new ArrayList<ArrayList<Guard>>();
-				if (countingAutomatonDataStructure.getAcceptingConditions().get(state).size() == 0) {
-					//false
+				if (transition.getGuard().getConjuncts().size() == 0) {
+					//true
 					Guard newGuardFalse = new Guard();
-					newGuardFalse.changeTermType(TermType.FALSE);
+					newGuardFalse.changeTermType(TermType.TRUE);
 					ArrayList<Guard> guardList = new ArrayList<Guard>();
 					guardList.add(newGuardFalse);
 					dnf.add(guardList);
 				}
 				else {
-					for (ConjunctiveCounterFormula conjunctSet : countingAutomatonDataStructure.getAcceptingConditions().get(state)) {
-						if (conjunctSet.getConjuncts().size() == 0) {
-							//true
-							Guard newGuardFalse = new Guard();
-							newGuardFalse.changeTermType(TermType.TRUE);
-							ArrayList<Guard> guardList = new ArrayList<Guard>();
-							guardList.add(newGuardFalse);
-							dnf.add(guardList);
-						}
-						else {
-							ArrayList<Guard> guardList = new ArrayList<Guard>();
-							for (IAtomicCounterGuard atomicGuard : conjunctSet.getConjuncts()) {
-								if (atomicGuard instanceof SingleCounterGuard) {
-									SingleCounterGuard guard = (SingleCounterGuard)atomicGuard;
-									Counter cLeftCounter = null;
-									for (Counter counter : counterList) {
-										if (counter.getCounterName() == guard.getLhsCounter()) {
-											cLeftCounter = counter;
-										}
-									}
-									Guard newGuard = new Guard(cLeftCounter, null, guard.getRhsNaturalNumber().intValue(), guard.getRelationSymbol(),TermType.CONSTANT);
-									guardList.add(newGuard);
-								}
-								else if (atomicGuard instanceof TermEqualityTest){
-									TermEqualityTest guard = (TermEqualityTest)atomicGuard;
-									Counter cLeftCounter = null;
-									Counter cRightCounter = null;
-									for (Counter counter : counterList) {
-										if (counter.getCounterName() == guard.getLhsCounter()) {
-											cLeftCounter = counter;
-										}
-										if (counter.getCounterName() == guard.getRhsCounter()) {
-											cRightCounter = counter;
-										} 
-									}
-									if (guard.getRhsNaturalNumber().intValue() == 0) {
-										Guard newGuard = new Guard(cLeftCounter, cRightCounter, null, RelationSymbol.EQ, TermType.COUNTER);
-										guardList.add(newGuard);
-									}
-									else {
-										Guard newGuard = new Guard(cLeftCounter, cRightCounter, guard.getRhsNaturalNumber().intValue(), RelationSymbol.EQ, TermType.SUM);
-										guardList.add(newGuard);
-									}
+					ArrayList<Guard> guardList = new ArrayList<Guard>();
+					for (IAtomicCounterGuard atomicGuard : transition.getGuard().getConjuncts()) {
+						if (atomicGuard instanceof SingleCounterGuard) {
+							SingleCounterGuard guard = (SingleCounterGuard)atomicGuard;
+							Counter cLeftCounter = null;
+							for (Counter counter : counterList) {
+								if (counter.getCounterName().equals(guard.getLhsCounter())) {
+									cLeftCounter = counter;
 								}
 							}
-							dnf.add(guardList);
+							Guard newGuard = new Guard(cLeftCounter, null, guard.getRhsNaturalNumber().intValue(), guard.getRelationSymbol(),TermType.CONSTANT);
+							guardList.add(newGuard);
+						}
+						else if (atomicGuard instanceof TermEqualityTest){
+							TermEqualityTest guard = (TermEqualityTest)atomicGuard;
+							Counter cLeftCounter = null;
+							Counter cRightCounter = null;
+							for (Counter counter : counterList) {
+								if (counter.getCounterName().equals(guard.getLhsCounter())) {
+									cLeftCounter = counter;
+								}
+								if (counter.getCounterName().equals(guard.getRhsCounter())) {
+									cRightCounter = counter;
+								} 
+							}
+							if (guard.getRhsNaturalNumber().intValue() == 0) {
+								Guard newGuard = new Guard(cLeftCounter, cRightCounter, null, RelationSymbol.EQ, TermType.COUNTER);
+								guardList.add(newGuard);
+							}
+							else {
+								Guard newGuard = new Guard(cLeftCounter, cRightCounter, guard.getRhsNaturalNumber().intValue(), RelationSymbol.EQ, TermType.SUM);
+								guardList.add(newGuard);
+							}
 						}
 					}
+					dnf.add(guardList);
 				}
 				ArrayList<Update> updates = new ArrayList<Update>();
 				for (AtomicCounterAssingment assignment : transition.getAssignment()) {
 					Counter cLeftCounter = null;
 					Counter cRightCounter = null;
 					for (Counter counter : counterList) {
-						if (counter.getCounterName() == assignment.getLhsCounter()) {
+						if (counter.getCounterName().equals(assignment.getLhsCounter())) {
 							cLeftCounter = counter;
 						}
-						if (counter.getCounterName() == assignment.getRhsCounter()) {
+						if (counter.getCounterName().equals(assignment.getRhsCounter())) {
 							cRightCounter = counter;
 						} 
 					}
@@ -566,7 +554,7 @@ public class CountingAutomataUtils {
 		// TODO 20200711 Matthias:
 		// This is an auxiliary call of toString() in order to reproduce NullPointerExceptions
 		// more easily. This code can be removed after the code was tested.
-		countingAutomaton.toString();
+		//countingAutomaton.toString();
 		return countingAutomaton;
 	}
 
