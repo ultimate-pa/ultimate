@@ -51,6 +51,9 @@ public interface IAtomicCounterGuard {
 		public SingleCounterGuard(final RelationSymbol relationSymbol, final String lhsCounter,
 				final BigInteger rhsNaturalNumber) {
 			super();
+			Objects.nonNull(relationSymbol);
+			Objects.nonNull(lhsCounter);
+			Objects.nonNull(rhsNaturalNumber);
 			mRelationSymbol = relationSymbol;
 			mLhsCounter = lhsCounter;
 			mRhsNaturalNumber = rhsNaturalNumber;
