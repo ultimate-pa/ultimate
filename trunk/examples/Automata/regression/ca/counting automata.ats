@@ -30,26 +30,26 @@ CountingAutomaton nca2 = (
 	 counters = {c},
      states = {q1 q2 q3},
      initialConditions = {
-		 (q1 "true")
+		 (q1 "(= c 0)")
 		 (q2 "false")
 		 (q3 "false")
 	 },
      finalConditions = {
-		 (q1 "false")
-		 (q2 "(>= c 3)")
-		 (q3 "false")
+		 (q1 "true")
+		 (q2 "(> c 5)")
+		 (q3 "true")
 	 },
      transitions = {
          (q1 a "true" {c := "(+ c 1)"} q2)
 		 (q1 b "true" {} q3)
-		 (q2 a "true" {c := "(+ c 1)"} q3)
-		 (q2 b "true" {} q2)
-		 (q3 a "true" {c := "(+ c 1)"} q2)
-		 (q3 b "true" {} q3)
+		 (q2 a "true" {c := "(+ c 1)"} q2)
      }
 );
 
-//print(nca1);
+print(nca1);
+Word word1 = [a a a a a a a a a];
+print(acceptance(nca2, word1));
 
-CountingAutomaton nca3 = intersect(nca1, nca2);
-print(nca3);
+//CountingAutomaton nca3 = intersect(nca1, nca2);
+
+//print(nca3);
