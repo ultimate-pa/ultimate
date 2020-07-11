@@ -49,4 +49,7 @@ CountingAutomaton nca2 = (
      }
 );
 
-print(nca1);
+//print(nca1);
+
+CountingAutomaton nca3 = intersect(nca1, nca2);
+print(nca3);

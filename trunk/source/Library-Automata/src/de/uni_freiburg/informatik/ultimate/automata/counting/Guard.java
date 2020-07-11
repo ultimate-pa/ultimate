@@ -87,7 +87,15 @@ public class Guard {
 	}
 	
 	public Guard copyGuard() {
-		Guard copy = new Guard(mCounterLeft.copyCounter(), mCounterRight.copyCounter(), mConstant, mRelationSymbol, mTermType);
+		Counter copyC1 = null;
+		Counter copyC2 = null;
+		if (mCounterLeft != null) {
+			copyC1 = mCounterLeft.copyCounter();
+		}
+		if (mCounterRight != null) {
+			copyC2 = mCounterLeft.copyCounter();
+		}
+		Guard copy = new Guard(copyC1, copyC2, mConstant, mRelationSymbol, mTermType);
 		return copy;
 	}
 }

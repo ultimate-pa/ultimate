@@ -91,7 +91,7 @@ public class Intersect<LETTER, STATE, CRSF extends IStateFactory<STATE>> impleme
 		Map<STATE, FinalCondition> intersectFinalConditions = new HashMap<STATE, FinalCondition>();
 		Map<STATE, ArrayList<Transition<LETTER, STATE>>> intersectTransitions = new HashMap<STATE, ArrayList<Transition<LETTER, STATE>>>();
 		
-		Map<HashSet<STATE>, STATE> stateMemory = new HashMap<HashSet<STATE>, STATE>();
+		Map<ArrayList<STATE>, STATE> stateMemory = new HashMap<ArrayList<STATE>, STATE>();
 		
 		//states
 		for (STATE stateFstOp : mFstOperand.getStates()) {
@@ -100,7 +100,7 @@ public class Intersect<LETTER, STATE, CRSF extends IStateFactory<STATE>> impleme
 				
 				STATE newState = mStateFactory.intersection(stateFstOp, stateSndOp);
 				intersectStates.add(newState);
-				HashSet<STATE> statePair = new HashSet<STATE>();
+				ArrayList<STATE> statePair = new ArrayList<STATE>();
 				statePair.add(stateFstOp);
 				statePair.add(stateSndOp);
 				stateMemory.put(statePair, newState);
@@ -111,7 +111,7 @@ public class Intersect<LETTER, STATE, CRSF extends IStateFactory<STATE>> impleme
 			
 			for (STATE stateSndOp : mSndOperand.getStates()) {
 				
-				HashSet<STATE> statePair = new HashSet<STATE>();
+				ArrayList<STATE> statePair = new ArrayList<STATE>();
 				statePair.add(stateFstOp);
 				statePair.add(stateSndOp);
 				STATE newState = stateMemory.get(statePair);
@@ -137,7 +137,7 @@ public class Intersect<LETTER, STATE, CRSF extends IStateFactory<STATE>> impleme
 					
 					for (Transition<LETTER, STATE> transOfStateSndOp : mSndOperand.getTransitions().get(stateSndOp)) {
 						
-						if (transOfStateFstOp.getLetter() == transOfStateSndOp.getLetter()) {
+						if (transOfStateFstOp.getLetter().equals(transOfStateSndOp.getLetter())) {
 							
 							Transition<LETTER, STATE> transCopy1 = transOfStateFstOp.copyTransition();
 							Transition<LETTER, STATE> transCopy2 = transOfStateSndOp.copyTransition();
@@ -146,7 +146,7 @@ public class Intersect<LETTER, STATE, CRSF extends IStateFactory<STATE>> impleme
 							ArrayList<Update> newTransitionUpdates = new ArrayList<Update>();
 							newTransitionUpdates.addAll(transCopy1.getUpdates());
 							newTransitionUpdates.addAll(transCopy2.getUpdates());
-							HashSet<STATE> sucStatePair = new HashSet<STATE>();
+							ArrayList<STATE> sucStatePair = new ArrayList<STATE>();
 							sucStatePair.add(transCopy1.getSucState());
 							sucStatePair.add(transCopy2.getSucState());
 							STATE newSuccessorState = stateMemory.get(sucStatePair);
