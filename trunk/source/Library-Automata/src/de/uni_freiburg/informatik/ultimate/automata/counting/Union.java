@@ -210,8 +210,8 @@ public class Union<LETTER, STATE, CRSF extends IStateFactory<STATE>> implements 
 	}
 
 	@Override
-	public boolean checkResult(CRSF stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
 		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 }
