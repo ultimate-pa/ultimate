@@ -35,7 +35,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -54,21 +53,20 @@ public class Union<LETTER, STATE, CRSF extends IStateFactory<STATE>> implements 
 	private final CountingAutomaton<LETTER, STATE> mSndOperand;
 	private final STATE mNewInitialState;
 	private final CountingAutomaton<LETTER, STATE> mResult;
-	private final IIntersectionStateFactory<STATE> mStateFactory;
+	private final ICaUnionStateFactory<STATE> mStateFactory;
 
 
 	public Union(
-			final AutomataLibraryServices services, 
-			final IIntersectionStateFactory<STATE> stateFactory,
+			final AutomataLibraryServices services,
+			final ICaUnionStateFactory<STATE> stateFactory,
 			final CountingAutomaton<LETTER, STATE> fstOperand,
-			final CountingAutomaton<LETTER, STATE> sndOperand,
-			final STATE newInitialState) throws AutomataLibraryException {
+			final CountingAutomaton<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(this.getClass());
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
-		mNewInitialState = newInitialState;
 		mStateFactory = stateFactory;
+		mNewInitialState = mStateFactory.constructInitialState();
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
@@ -82,58 +80,58 @@ public class Union<LETTER, STATE, CRSF extends IStateFactory<STATE>> implements 
 	}
 
 	private CountingAutomaton<LETTER, STATE> computeResult() {
-		
-		Set<LETTER> unionAlphabet = mFstOperand.getAlphabet();
-		ArrayList<Counter> unionCounter = new ArrayList<Counter>();
-		for (Counter counter : mFstOperand.getCounter()) {
+
+		final Set<LETTER> unionAlphabet = mFstOperand.getAlphabet();
+		final ArrayList<Counter> unionCounter = new ArrayList<Counter>();
+		for (final Counter counter : mFstOperand.getCounter()) {
 			unionCounter.add(counter.copyCounter());
 		}
-		for (Counter counter : mSndOperand.getCounter()) {
+		for (final Counter counter : mSndOperand.getCounter()) {
 			unionCounter.add(counter.copyCounter());
 		}
-		Set<STATE> unionStates = new HashSet<STATE>();
+		final Set<STATE> unionStates = new HashSet<STATE>();
 		unionStates.addAll(mFstOperand.getStates());
 		unionStates.addAll(mSndOperand.getStates());
 		unionStates.add(mNewInitialState);
-		Map<STATE, InitialCondition> unionInitialConditions = new HashMap<STATE, InitialCondition>();
-		Map<STATE, FinalCondition> unionFinalConditions = new HashMap<STATE, FinalCondition>();
-		Map<STATE, ArrayList<Transition<LETTER, STATE>>> unionTransitions = new HashMap<STATE, ArrayList<Transition<LETTER, STATE>>>();
-		
+		final Map<STATE, InitialCondition> unionInitialConditions = new HashMap<STATE, InitialCondition>();
+		final Map<STATE, FinalCondition> unionFinalConditions = new HashMap<STATE, FinalCondition>();
+		final Map<STATE, ArrayList<Transition<LETTER, STATE>>> unionTransitions = new HashMap<STATE, ArrayList<Transition<LETTER, STATE>>>();
+
 		//initialConditions
-		Guard newInitialGuard = new Guard();
+		final Guard newInitialGuard = new Guard();
 		newInitialGuard.changeTermType(TermType.TRUE);
-		ArrayList<Guard> newGuardList = new ArrayList<Guard>();
+		final ArrayList<Guard> newGuardList = new ArrayList<Guard>();
 		newGuardList.add(newInitialGuard);
-		ArrayList<ArrayList<Guard>> newInitialConditionList = new ArrayList<ArrayList<Guard>>();
+		final ArrayList<ArrayList<Guard>> newInitialConditionList = new ArrayList<ArrayList<Guard>>();
 		newInitialConditionList.add(newGuardList);
 		unionInitialConditions.put(mNewInitialState, new InitialCondition(newInitialConditionList));
 		addNewUnionInitialConditions(mFstOperand, unionInitialConditions);
 		addNewUnionInitialConditions(mSndOperand, unionInitialConditions);
-		
+
 		//finalConditions
-		ArrayList<ArrayList<Guard>> newFinalConditionList = new ArrayList<ArrayList<Guard>>();
+		final ArrayList<ArrayList<Guard>> newFinalConditionList = new ArrayList<ArrayList<Guard>>();
 		addNewUnionFinalConditions(mFstOperand, newFinalConditionList, unionFinalConditions);
 		addNewUnionFinalConditions(mSndOperand, newFinalConditionList, unionFinalConditions);
-		
+
 		//construct finalCondition == false, if there were no states in mFstOperand and mSndOperand which are initial and final at once
 		if (newFinalConditionList.size() == 0) {
-			
-			Guard newGuardFalse = new Guard();
+
+			final Guard newGuardFalse = new Guard();
 			newGuardFalse.changeTermType(TermType.FALSE);
-			ArrayList<Guard> guardList = new ArrayList<Guard>();
+			final ArrayList<Guard> guardList = new ArrayList<Guard>();
 			guardList.add(newGuardFalse);
 			newFinalConditionList.add(guardList);
 		}
 		unionFinalConditions.put(mNewInitialState, new FinalCondition(newFinalConditionList));
-		
+
 		//transitions
-		ArrayList<Transition<LETTER, STATE>> newTransitions = new ArrayList<Transition<LETTER, STATE>>();
+		final ArrayList<Transition<LETTER, STATE>> newTransitions = new ArrayList<Transition<LETTER, STATE>>();
 		addNewUnionTransitions(mFstOperand, newTransitions, unionTransitions);
 		addNewUnionTransitions(mSndOperand, newTransitions, unionTransitions);
 		unionTransitions.put(mNewInitialState, newTransitions);
-		
+
 		//result
-		CountingAutomaton<LETTER, STATE> resultAutomaton = new CountingAutomaton<LETTER, STATE>(
+		final CountingAutomaton<LETTER, STATE> resultAutomaton = new CountingAutomaton<LETTER, STATE>(
 				mServices,
 				unionAlphabet,
 				unionStates,
@@ -143,60 +141,60 @@ public class Union<LETTER, STATE, CRSF extends IStateFactory<STATE>> implements 
 				unionTransitions);
 		return resultAutomaton;
 	}
-	
-	private void addNewUnionInitialConditions (CountingAutomaton<LETTER, STATE> automaton, Map<STATE, InitialCondition> unionInitialConditions) {
-		
-		for (STATE state : automaton.getStates()) {
-			
-			Guard newInitialGuard = new Guard();
+
+	private void addNewUnionInitialConditions (final CountingAutomaton<LETTER, STATE> automaton, final Map<STATE, InitialCondition> unionInitialConditions) {
+
+		for (final STATE state : automaton.getStates()) {
+
+			final Guard newInitialGuard = new Guard();
 			newInitialGuard.changeTermType(TermType.FALSE);
-			ArrayList<Guard> newGuardList = new ArrayList<Guard>();
+			final ArrayList<Guard> newGuardList = new ArrayList<Guard>();
 			newGuardList.add(newInitialGuard);
-			ArrayList<ArrayList<Guard>> newInitialConditionList = new ArrayList<ArrayList<Guard>>();
+			final ArrayList<ArrayList<Guard>> newInitialConditionList = new ArrayList<ArrayList<Guard>>();
 			newInitialConditionList.add(newGuardList);
 			unionInitialConditions.put(state, new InitialCondition(newInitialConditionList));
 		}
 	}
-	
-	private void addNewUnionFinalConditions (CountingAutomaton<LETTER, STATE> automaton, ArrayList<ArrayList<Guard>> newFinalConditionList, Map<STATE, FinalCondition> unionFinalConditions) {
-		
-		for (STATE state : automaton.getStates()) {
-			
+
+	private void addNewUnionFinalConditions (final CountingAutomaton<LETTER, STATE> automaton, final ArrayList<ArrayList<Guard>> newFinalConditionList, final Map<STATE, FinalCondition> unionFinalConditions) {
+
+		for (final STATE state : automaton.getStates()) {
+
 			unionFinalConditions.put(state, automaton.getFinalConditions().get(state).copyFinalCondition());
-			
+
 			if (automaton.getInitialConditions().get(state).getCondition().get(0).get(0).getTermType() != TermType.FALSE &&
 					automaton.getFinalConditions().get(state).getCondition().get(0).get(0).getTermType() != TermType.FALSE) {
-				
-				ConjunctGuards conjunction = new ConjunctGuards(
-						automaton.getFinalConditions().get(state).copyFinalCondition().getCondition(), 
+
+				final ConjunctGuards conjunction = new ConjunctGuards(
+						automaton.getFinalConditions().get(state).copyFinalCondition().getCondition(),
 						automaton.getInitialConditions().get(state).copyInitialCondition().getCondition());
 				newFinalConditionList.addAll(conjunction.getResult());
 			}
 		}
 	}
-	
-	private void addNewUnionTransitions (CountingAutomaton<LETTER, STATE> automaton, ArrayList<Transition<LETTER, STATE>> newTransitions, Map<STATE, ArrayList<Transition<LETTER, STATE>>> unionTransitions) {
-		
-			for (STATE state : automaton.getStates()) {
-			
-				ArrayList<Transition<LETTER, STATE>> transitionList = new ArrayList<Transition<LETTER, STATE>>();
-				for (Transition<LETTER, STATE> transition : automaton.getTransitions().get(state)) {
-					Transition<LETTER, STATE> transitionCopy = transition.copyTransition();
+
+	private void addNewUnionTransitions (final CountingAutomaton<LETTER, STATE> automaton, final ArrayList<Transition<LETTER, STATE>> newTransitions, final Map<STATE, ArrayList<Transition<LETTER, STATE>>> unionTransitions) {
+
+			for (final STATE state : automaton.getStates()) {
+
+				final ArrayList<Transition<LETTER, STATE>> transitionList = new ArrayList<Transition<LETTER, STATE>>();
+				for (final Transition<LETTER, STATE> transition : automaton.getTransitions().get(state)) {
+					final Transition<LETTER, STATE> transitionCopy = transition.copyTransition();
 					transitionList.add(transitionCopy);
 				}
 				unionTransitions.put(state, transitionList);
-				
+
 				if (automaton.getInitialConditions().get(state).getCondition().get(0).get(0).getTermType() != TermType.FALSE) {
-				
-					for (Transition<LETTER, STATE> transition : automaton.getTransitions().get(state)) {
-					
-						Transition<LETTER, STATE> transitionCopy = transition.copyTransition();
-						ConjunctGuards conjunction = new ConjunctGuards(transitionCopy.getGuards(), automaton.getInitialConditions().get(state).copyInitialCondition().getCondition());
-						Transition<LETTER, STATE> newTransition = new Transition<LETTER, STATE>(
-								transitionCopy.getLetter(), 
-								mNewInitialState, 
-								transitionCopy.getSucState(), 
-								conjunction.getResult(), 
+
+					for (final Transition<LETTER, STATE> transition : automaton.getTransitions().get(state)) {
+
+						final Transition<LETTER, STATE> transitionCopy = transition.copyTransition();
+						final ConjunctGuards conjunction = new ConjunctGuards(transitionCopy.getGuards(), automaton.getInitialConditions().get(state).copyInitialCondition().getCondition());
+						final Transition<LETTER, STATE> newTransition = new Transition<LETTER, STATE>(
+								transitionCopy.getLetter(),
+								mNewInitialState,
+								transitionCopy.getSucState(),
+								conjunction.getResult(),
 								transitionCopy.getUpdates());
 						newTransitions.add(newTransition);
 				}

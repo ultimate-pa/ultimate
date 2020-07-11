@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.counting.ICaUnionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.StateWithRankInfo;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incrementalinclusion.IIncrementalInclusionStateFactory;
@@ -57,7 +58,8 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		IPetriNet2FiniteAutomatonStateFactory<String>, IIncrementalInclusionStateFactory<String>,
 		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String>, IUnionStateFactory<String>,
 		IBuchiComplementNcsbSimpleStateFactory<String>, IRelabelStateFactory<String>,
-		IConcurrentProductStateFactory<String>, IPetriNetAndAutomataInclusionStateFactory<String> {
+		IConcurrentProductStateFactory<String>, IPetriNetAndAutomataInclusionStateFactory<String>,
+		ICaUnionStateFactory<String> {
 
 	public static final String INFINITY = "∞";
 	private static final String EMPTY_STRING = "";
@@ -388,5 +390,12 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 	public String relabel(final String state, final int i) {
 		return "q" + i;
 	}
+
+	@Override
+	public String constructInitialState() {
+		return "UnionInitialState";
+	}
+
+
 
 }
