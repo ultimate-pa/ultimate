@@ -141,6 +141,7 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	
 	private void printInitialConditions() {
 		printCollectionPrefix("initialConditions");
+		print('\n');
 		for (STATE state : mCa.getStates()) {
 			printOneTransitionPrefix();
 			print(mStateMapping.get(state));
@@ -167,6 +168,7 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	
 	private void printFinalConditions() {
 		printCollectionPrefix("finalConditions");
+		print('\n');
 		for (STATE state : mCa.getStates()) {
 			printOneTransitionPrefix();
 			print(mStateMapping.get(state));
@@ -193,6 +195,7 @@ public class CaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	
 	private void printTransitions() {
 		printCollectionPrefix("transitions");
+		print('\n');
 		for (STATE state : mCa.getStates()) {
 			for (Transition<LETTER, STATE> transition : mCa.getTransitions().get(state)) {
 				printOneTransitionPrefix();
