@@ -50,9 +50,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Destructive equality resolution (DER) for conjunctions (resp. disjunctions).
  * <br>
- * The DER elimination technique does the following transformation,
- * where t is a term in which x does not occur and [x-->t] denotes the
- * substitution that replaces all occurrences of x by t.
+ * The DER elimination technique does the following transformation, where t is a
+ * term in which x does not occur and [x-->t] denotes the substitution that
+ * replaces all occurrences of x by t.
  *
  * <pre>
  * ∃x. x=t ∧ φ(x)   ⟿⟿⟿      φ[x-->t]
