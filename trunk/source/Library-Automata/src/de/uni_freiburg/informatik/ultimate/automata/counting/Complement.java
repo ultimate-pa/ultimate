@@ -58,8 +58,7 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 	public Complement(
 			final AutomataLibraryServices services, 
 			final IIntersectionStateFactory<STATE> stateFactory,
-			final CountingAutomaton<LETTER, STATE> operand,
-			final STATE newInitialState) throws AutomataLibraryException {
+			final CountingAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(this.getClass());
 		mOperand = operand;
@@ -210,7 +209,7 @@ public class Complement<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 
 
 	@Override
-	public Object getResult() {
+	public CountingAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 

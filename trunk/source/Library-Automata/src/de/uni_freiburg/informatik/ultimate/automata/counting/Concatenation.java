@@ -194,7 +194,7 @@ public class Concatenation<LETTER, STATE, CRSF extends IStateFactory<STATE>> imp
 	}
 
 	@Override
-	public Object getResult() {
+	public CountingAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 
