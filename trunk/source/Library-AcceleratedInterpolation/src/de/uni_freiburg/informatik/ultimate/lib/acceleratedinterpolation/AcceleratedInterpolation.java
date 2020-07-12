@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.Interpol
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.benchmark.AcceleratedInterpolationBenchmark.AcceleratedInterpolationStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator;
-import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopaccelerator.Accelerator.AccelerationMethod;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.loopdetector.Loopdetector;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -107,6 +106,13 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		PRECISE, UNDERAPPROXIMATION
 	}
 
+	/**
+	 * How to deal with loops.
+	 */
+	public enum AccelerationMethod {
+		NONE, FAST_UPR
+	}
+
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
@@ -125,6 +131,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	private TraceCheckReasonUnknown mReasonUnknown;
 	private boolean mTraceCheckFinishedNormally;
 	private final IIcfgSymbolTable mSymbolTable;
+	private final SimplificationTechnique mSimplificationTechnique;
 
 	private final Map<IcfgLocation, Set<List<LETTER>>> mLoops;
 	private final Map<IcfgLocation, LETTER> mLoopExitTransitions;
@@ -145,10 +152,9 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mCounterexampleTrace = counterexample;
 		mCounterexample = mCounterexampleTrace.getWord().asList();
 		mPrefs = prefs;
+		mSimplificationTechnique = mPrefs.getSimplificationTechnique();
 		mAccelInterpolBench = new AcceleratedInterpolationBenchmark();
 		mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_OVERALL);
-
-		mLogger.debug("AccelInterpol !");
 
 		mIcfg = mPrefs.getIcfgContainer();
 		mIcfgEdgeFactory = mIcfg.getCfgSmtToolkit().getIcfgEdgeFactory();
@@ -161,7 +167,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mSymbolTable = mIcfg.getCfgSmtToolkit().getSymbolTable();
 
 		mAccelerator = new Accelerator<>(mLogger, mScript, mServices);
-
 		mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR);
 		mLoopdetector = new Loopdetector<>(mCounterexample, mLogger, 1);
 		mAccelInterpolBench.stop(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR);
@@ -235,7 +240,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				}
 				accelerationFinishedCorrectly = true;
 				final Term t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
-						acceleratedLoopRelation.getFormula(), SimplificationTechnique.SIMPLIFY_BDD_FIRST_ORDER,
+						acceleratedLoopRelation.getFormula(), mSimplificationTechnique,
 						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 				final TransFormulaBuilder tfb = new TransFormulaBuilder(acceleratedLoopRelation.getInVars(),
 						acceleratedLoopRelation.getOutVars(), true, Collections.emptySet(), true,

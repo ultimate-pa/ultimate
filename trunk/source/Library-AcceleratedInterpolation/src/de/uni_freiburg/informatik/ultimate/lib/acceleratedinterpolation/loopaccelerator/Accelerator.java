@@ -45,13 +45,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
  *         {@link AcceleratedInterpolation}
  */
 public class Accelerator<LETTER extends IIcfgTransition<?>> {
-	/**
-	 * How to deal with loops.
-	 */
-	public enum AccelerationMethod {
-		NONE, FAST_UPR, OVERAPPROXIMATION, UNDERAPPROXIMATION
-	}
-
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
@@ -74,16 +67,12 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 	 * @return
 	 */
 	public UnmodifiableTransFormula accelerateLoop(final UnmodifiableTransFormula loop,
-			final AccelerationMethod accelerationMethod) {
+			final AcceleratedInterpolation.AccelerationMethod accelerationMethod) {
 		switch (accelerationMethod) {
 		case NONE:
 			break;
 		case FAST_UPR:
 			return fastUprAcceleration(loop);
-		case OVERAPPROXIMATION:
-			break;
-		case UNDERAPPROXIMATION:
-			break;
 		}
 		return loop;
 	}

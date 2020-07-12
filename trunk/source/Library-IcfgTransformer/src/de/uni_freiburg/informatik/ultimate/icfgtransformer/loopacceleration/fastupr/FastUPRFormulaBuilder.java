@@ -108,8 +108,8 @@ public class FastUPRFormulaBuilder {
 		 * JW: we need to simplify the acceleration at least once to get rid of terms like (+ 0 22) as the
 		 * transformulabuilder does not like them.
 		 */
-		final Term simplify = SmtUtils.simplify(mManagedScript, withoutInt, mServices,
-				SimplificationTechnique.SIMPLIFY_BDD_FIRST_ORDER);
+		final Term simplify =
+				SmtUtils.simplify(mManagedScript, withoutInt, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 
 		final ModifiableTransFormula modFormula = new ModifiableTransFormula(simplify);
 		for (final IProgramVar p : inVars.keySet()) {
