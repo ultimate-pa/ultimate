@@ -148,6 +148,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		mAccelInterpolBench = new AcceleratedInterpolationBenchmark();
 		mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_OVERALL);
 
+		mLogger.debug("AccelInterpol !");
+
 		mIcfg = mPrefs.getIcfgContainer();
 		mIcfgEdgeFactory = mIcfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 		mPredUnifier = predicateUnifier;
@@ -183,8 +185,18 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_CORE);
 			mIsTraceCorrect = acceleratedInterpolationCore();
 			mLogger.info("Finished Analysing Program using " + mApproximationType.toString() + " loop Acceleration");
-			mReasonUnknown = null;
-			mTraceCheckFinishedNormally = true;
+			/*
+			 * Quick fix for unsound false: Sometimes the interpolator returns unknown.
+			 */
+			if (mIsTraceCorrect == LBool.UNKNOWN) {
+				mReasonUnknown = new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, null,
+						ExceptionHandlingCategory.KNOWN_DEPENDING);
+				mTraceCheckFinishedNormally = true;
+
+			} else {
+				mTraceCheckFinishedNormally = true;
+				mReasonUnknown = null;
+			}
 		} catch (final ToolchainCanceledException tce) {
 			mTraceCheckFinishedNormally = false;
 			mIsTraceCorrect = LBool.UNKNOWN;
@@ -264,19 +276,16 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		if (mLoops.isEmpty()) {
 			mLogger.debug("No loops found in this trace.");
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
-			if (interpolator.isTraceCorrect() == LBool.UNSAT) {
-				mInterpolants = interpolator.getInterpolants();
-				return LBool.UNSAT;
-			}
-			return LBool.SAT;
 		}
 
 		/*
 		 * translate the given trace into a meta trace which makes use of the loop acceleration.
 		 */
-		final NestedRun<LETTER, IPredicate> traceScheme = generateMetaTrace();
+		else {
+			final NestedRun<LETTER, IPredicate> traceScheme = generateMetaTrace();
+			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, traceScheme);
+		}
 
-		interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, traceScheme);
 		if (interpolator.isTraceCorrect() == LBool.UNSAT) {
 			final IPredicate[] tempInterpolants = interpolator.getInterpolants();
 			final IPredicate[] inductiveInterpolants = constructInductive(tempInterpolants);
@@ -284,6 +293,8 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			// mInterpolants = interpolator.getInterpolants();
 			mInterpolants = inductiveInterpolants;
 			return LBool.UNSAT;
+		} else if (interpolator.isTraceCorrect() == LBool.UNKNOWN) {
+			return LBool.UNKNOWN;
 		}
 		return LBool.SAT;
 	}
@@ -347,19 +358,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				}
 				i = loopSize.getSecond() - 1;
 			} else {
-				IPredicate prevInterpol;
-				/*
-				 * post does not work well with false
-				 */
-				if (SmtUtils.isFalseLiteral(preds[cnt].getFormula()) && i != 0) {
-					prevInterpol = actualInterpolants[i - 1];
-					final Term post = mPredTransformer.strongestPostcondition(prevInterpol,
-							mCounterexample.get(i).getTransformula());
-					prevInterpol = mPredUnifier.getOrConstructPredicate(post);
-				} else {
-					prevInterpol = preds[cnt];
-				}
-
+				final IPredicate prevInterpol = preds[cnt];
 				actualInterpolants[i] = prevInterpol;
 			}
 			cnt++;
@@ -497,7 +496,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 
 	/**
 	 * Constructs a Transformula where every variable is unchanged.
-	 * 
+	 *
 	 * @param tf
 	 * @return
 	 */
