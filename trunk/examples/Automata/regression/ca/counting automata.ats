@@ -46,18 +46,18 @@ CountingAutomaton nca2 = (
      }
 );
 
-//print(nca1);
-//Word word1 = [a a a a a a a a a];
-//print(acceptance(nca2, word1));
+print(nca1);
+Word word1 = [a a a a a a a a a];
+print(acceptance(nca2, word1));
 
-//CountingAutomaton nca3 = intersect(nca1, nca2);
-//print(nca3);
+CountingAutomaton nca3 = intersect(nca1, nca2);
+print(nca3);
 
-//CountingAutomaton nca4 = union(nca1, nca2);
-//print(nca4);
+CountingAutomaton nca4 = union(nca1, nca2);
+print(nca4);
 
-//CountingAutomaton nca5 = complement(nca1);
-//print(nca5);
+CountingAutomaton nca5 = complement(nca1);
+print(nca5);
 
-//CountingAutomaton nca6 = concatenation(nca1, nca2);
-//print(nca6);
+CountingAutomaton nca6 = concatenation(nca1, nca2);
+print(nca6);
