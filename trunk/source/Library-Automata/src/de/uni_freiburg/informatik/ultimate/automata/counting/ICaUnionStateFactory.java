@@ -26,11 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.counting;
 
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public interface ICaUnionStateFactory<STATE> {
+public interface ICaUnionStateFactory<STATE> extends IStateFactory<STATE> {
 
 	public STATE constructInitialState();
 
