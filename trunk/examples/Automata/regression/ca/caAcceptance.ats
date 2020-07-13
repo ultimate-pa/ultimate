@@ -1,0 +1,38 @@
+// Example that demonstrates how to use counting automata in this automata library
+// Author: Jacob Maxam, Marcel Ebbinghaus
+// Date: 2020-07-13
+
+// Declare a nondeterministic counting automaton called "nca".
+CountingAutomaton nca = (
+     alphabet = {a b c},
+	 counters = {a b c},
+     states = {q1 q2 q3},
+     initialConditions = {
+		(q1 "(and (= a 0) (= b 0) (= c 0))")
+		(q2 "(and (= a 0) (= b 0) (= c 0))")
+		(q3 "(and (= a 0) (= b 0) (= c 0))")
+	 },
+     finalConditions = {
+		(q1 "(and (> a 5) (< a 20))")
+		(q2 "(and (> b 5) (< b 20))")
+		(q3 "(and (> c 5) (< c 20))")
+	 },
+     transitions = {
+	 (q1 a "true" {a := "(+ a 1)"} q1)
+		 (q2 b "true" {b := "(+ b 1)"} q2)
+		 (q3 c "true" {c := "(+ c 1)"} q3)
+		 (q1 b "(> a 5)" {b := "(+ b 1)"} q2)
+		 (q1 c "(> a 5)" {c := "(+ c 1)"} q3)
+		 (q2 a "(> b 10)" {a := "(+ a 1)"} q1)
+		 (q2 c "(> b 10)" {c := "(+ c 1)"} q3)
+		 (q3 a "(> c 15)" {a := "(+ a 1)"} q1)
+		 (q3 b "(> c 15)" {b := "(+ b 1)"} q2)
+     }
+);
+
+Word word = [a a a a a a b b b b b b b b b b b b c c c c c c c c c c c c c c c c c c a b c];
+
+print(nca);
+
+print(acceptance(nca, word));
+

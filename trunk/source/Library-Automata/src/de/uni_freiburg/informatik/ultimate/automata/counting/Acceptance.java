@@ -64,7 +64,6 @@ public class Acceptance<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 	private final CountingAutomaton<LETTER, STATE> mOperand;
 	private final List<LETTER> mWord;
 	private final LBool mResult;
-	// private final IIntersectionStateFactory<STATE> mStateFactory;
 
 	public Acceptance(final AutomataLibraryServices services, final CountingAutomaton<LETTER, STATE> operand,
 			final NestedWord<LETTER> word) throws AutomataLibraryException {
@@ -90,14 +89,6 @@ public class Acceptance<LETTER, STATE, CRSF extends IStateFactory<STATE>> implem
 		ArrayList<ArrayList<Guard>> preConditions = new ArrayList<ArrayList<Guard>>();
 		preConditions.add(new ArrayList<Guard>());
 		return iterativeAcceptance(mOperand, preConditions);
-//		Term a = mScript.variable("a", SmtSortUtils.getIntSort(mScript));
-//		Term one = mScript.numeral(BigInteger.valueOf(1));
-//		Term testTerm = mScript.term(">", a, one);
-//		Term b = mScript.term("=", a, one);
-//		testTerm = mScript.term("or", testTerm, b);
-//		testTerm = mScript.quantifier(mScript.EXISTS, testTerm.getFreeVars(), testTerm, null);
-//		mScript.assertTerm(testTerm);
-//		return mScript.checkSat();
 	}
 
 	private LBool iterativeAcceptance(CountingAutomaton<LETTER, STATE> ca, ArrayList<ArrayList<Guard>> preConditions) {
