@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 
 /**
  * {@link ITraceCheckPreferences} describes types that provide all options that are of interest to the various
@@ -127,5 +128,7 @@ public interface ITraceCheckPreferences {
 	boolean collectInterpolantStatistics();
 
 	boolean computeCounterexample();
+
+	ScoringMethod getAssertCodeblocksHeuristic();
 
 }

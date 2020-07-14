@@ -274,6 +274,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_OVERRIDE_INTERPOLANT_AUTOMATON =
 			"Override the interpolant automaton setting of the refinement strategy";
 
+	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC = "Assert CodeBlocks Term Scoring Heuristic";
+	public static final ScoringMethod DEF_ASSERT_CODEBLOCKS_HEURISTIC = ScoringMethod.NUM_FUNCTIONS;
+	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC =
+			"Defines what Scoring method is used to score traces during partioning Assertion order Modulation";
+
 	/**
 	 * Constructor.
 	 */
@@ -354,6 +359,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_LIVE_VARIABLES, Boolean.TRUE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, PreferenceType.Combo, AssertCodeBlockOrder.values()),
+				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_HEURISTIC, DEF_ASSERT_CODEBLOCKS_HEURISTIC,
+						DESC_ASSERT_CODEBLOCKS_HEURISTIC, PreferenceType.Combo, ScoringMethod.values()),
 				new UltimatePreferenceItem<>(LABEL_OVERRIDE_INTERPOLANT_AUTOMATON, DEF_OVERRIDE_INTERPOLANT_AUTOMATON,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_AUTOMATON, InterpolantAutomaton.STRAIGHT_LINE,
