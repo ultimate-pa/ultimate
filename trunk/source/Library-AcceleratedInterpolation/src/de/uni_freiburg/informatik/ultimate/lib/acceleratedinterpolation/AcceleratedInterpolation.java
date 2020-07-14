@@ -168,7 +168,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 
 		mAccelerator = new Accelerator<>(mLogger, mScript, mServices);
 		mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR);
-		mLoopdetector = new Loopdetector<>(mCounterexample, mLogger, 1);
+		mLoopdetector = new Loopdetector<>(mCounterexample, mLogger, 1, mIcfg);
 		mAccelInterpolBench.stop(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR);
 
 		mPredTransformer = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));

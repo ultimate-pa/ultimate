@@ -38,6 +38,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -56,6 +57,7 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 	private final Map<IcfgLocation, LETTER> mLoopExitTransitions;
 	private final Map<IcfgLocation, Pair<Integer, Integer>> mLoopSize;
 	private final Integer mDelay;
+	private final IIcfg<? extends IcfgLocation> mIcfg;
 
 	private final CycleFinder mCycleFinder;
 
@@ -68,10 +70,12 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 	 *            How many iterations of a loop are needed until we decide to accelerate it. The lower the earlier the
 	 *            loop gets accelerated.
 	 */
-	public Loopdetector(final List<LETTER> trace, final ILogger logger, final Integer delay) {
+	public Loopdetector(final List<LETTER> trace, final ILogger logger, final Integer delay,
+			final IIcfg<? extends IcfgLocation> icfg) {
 		mLogger = logger;
 		mTrace = new ArrayList<>(trace);
 		mCycleFinder = new CycleFinder();
+		mIcfg = icfg;
 		mTraceLocations = mCycleFinder.statementsToLocations(mTrace);
 		mLoops = new HashMap<>();
 		mLoopExitTransitions = new HashMap<>();
@@ -90,12 +94,12 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 	 */
 	private void findLoopPaths() {
 		final Map<IcfgLocation, List<Integer>> possibleCycles = mCycleFinder.getCyclesInTrace(mTraceLocations);
-		mLogger.debug("Loopdetector: Found Loops");
 		final Set<IcfgLocation> nestedCycles = getNestedCycles(possibleCycles);
-		final Map<IcfgLocation, List<Integer>> withoutNestedCycles = new HashMap<>(possibleCycles);
+		Map<IcfgLocation, List<Integer>> withoutNestedCycles = new HashMap<>(possibleCycles);
 		for (final IcfgLocation nestedHead : nestedCycles) {
 			withoutNestedCycles.remove(nestedHead);
 		}
+		withoutNestedCycles = filterProcedures(withoutNestedCycles);
 		mLoops = cyclePaths(withoutNestedCycles);
 		for (final Entry<IcfgLocation, List<Integer>> loop : withoutNestedCycles.entrySet()) {
 			final IcfgLocation loopHead = loop.getKey();
@@ -105,6 +109,34 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 			mLoopExitTransitions.put(loopHead, mTrace.get(loopExitTrans));
 			mLoopSize.put(loopHead, new Pair<>(loopSize.get(0), loopSize.get(loopSize.size() - 1)));
 		}
+	}
+
+	/*
+	 *
+	 */
+	private Map<IcfgLocation, List<Integer>> filterProcedures(final Map<IcfgLocation, List<Integer>> possibleCycles) {
+		final Map<String, ? extends IcfgLocation> procEntries = mIcfg.getProcedureEntryNodes();
+		final Map<IcfgLocation, List<Integer>> result = new HashMap<>(possibleCycles);
+		for (final Entry<IcfgLocation, List<Integer>> loop : possibleCycles.entrySet()) {
+			final IcfgLocation loopHead = loop.getKey();
+			final IcfgLocation procedureEntry = procEntries.get(loopHead.getProcedure());
+			if (loopHead == procedureEntry) {
+				result.remove(loopHead);
+				// final List<Integer> loopBody = new ArrayList<>(loop.getValue());
+				// for (int j = 0; j < loopBody.size(); j++) {
+				// final Pair<Integer, Integer> currentLoop = new Pair<>(loopBody.get(j), loopBody.get(j + 1));
+				// for (int i = currentLoop.getFirst(); i < currentLoop.getSecond(); i++) {
+				// if (!mTraceLocations.get(i).getProcedure().equals(loopHead.getProcedure())) {
+				// loopBody.remove(currentLoop.getSecond());
+				//
+				// }
+				//
+				// }
+				// }
+
+			}
+		}
+		return result;
 	}
 
 	/**
