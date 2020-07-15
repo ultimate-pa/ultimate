@@ -95,9 +95,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 	private final AssertCodeBlockOrder mAssertCodeBlocksOrder;
 	private int mCheckSat;
-	private final ScoringMethod mAssertCodeBlockOrderSMTFeatureScoringMethod;
-	private final int mAssertCodeBlockOrderNumPartitions;
-	private final PartitioningStrategy mAssertCodeBlockOrderPartitioningStrategy;
+	private final ScoringMethod mAssertCodeBlockOrderSMTFeatureHeuristicScoringMethod;
+	private final int mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions;
+	private final PartitioningStrategy mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy;
 
 	public AnnotateAndAsserterWithStmtOrderPrioritization(final ManagedScript mgdScriptTc,
 			final NestedFormulas<Term, Term> nestedSSA, final AnnotateAndAssertCodeBlocks aaacb,
@@ -108,9 +108,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		mCheckSat = 0;
 
 		// TODO: Settings for this Hardcoded stuff
-		mAssertCodeBlockOrderSMTFeatureScoringMethod = ScoringMethod.NUM_FUNCTIONS;
-		mAssertCodeBlockOrderPartitioningStrategy = PartitioningStrategy.FIXED_SIZE;
-		mAssertCodeBlockOrderNumPartitions = 4;
+		mAssertCodeBlockOrderSMTFeatureHeuristicScoringMethod = ScoringMethod.NUM_FUNCTIONS;
+		mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy = PartitioningStrategy.FIXED_SIZE;
+		mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions = 4;
 	}
 
 	/**
@@ -432,7 +432,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier();
 			final Term term = ((IAction) trace.getSymbol(i)).getTransformula().getFormula();
 			tc.checkTerm(term);
-			final Double score = tc.getScore(mAssertCodeBlockOrderSMTFeatureScoringMethod);
+			final Double score = tc.getScore(mAssertCodeBlockOrderSMTFeatureHeuristicScoringMethod);
 			termScoreIndexTriples.add(new Triple<>(term, score, i));
 		}
 		// sort reverse
@@ -463,8 +463,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 		final LinkedHashSet<Integer> indices = getIndices(termScoreIndexTriples, random);
 
-		final int chunksize =
-				(int) Math.ceil(termScoreIndexTriples.size() * (1.0 / mAssertCodeBlockOrderNumPartitions));
+		final int chunksize = (int) Math
+				.ceil(termScoreIndexTriples.size() * (1.0 / mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions));
 
 		LinkedHashSet<Integer> current_chunk = new LinkedHashSet<>();
 		LinkedHashSet<Integer> last_chunk = new LinkedHashSet<>();
@@ -486,11 +486,11 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	private LinkedHashSet<LinkedHashSet<Integer>>
 			partitionStmtsAccordingToTermScores(final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
 		final LinkedHashSet<LinkedHashSet<Integer>> partitions = new LinkedHashSet<>();
-		if (mAssertCodeBlockOrderPartitioningStrategy == PartitioningStrategy.FIXED_SIZE) {
+		if (mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy == PartitioningStrategy.FIXED_SIZE) {
 
 			partitionFixedNumberOfPartitions(partitions, termScoreIndexTriples, false);
 
-		} else if (mAssertCodeBlockOrderPartitioningStrategy == PartitioningStrategy.THRESHOLD) {
+		} else if (mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy == PartitioningStrategy.THRESHOLD) {
 
 			throw new UnsupportedOperationException("PartitioningStrategy.THRESHOLD is not implemented yet");
 		}
