@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.PartitioningStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
@@ -96,6 +97,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	private int mCheckSat;
 	private final ScoringMethod mAssertCodeBlockOrderSMTFeatureScoringMethod;
 	private final int mAssertCodeBlockOrderNumPartitions;
+	private final PartitioningStrategy mAssertCodeBlockOrderPartitioningStrategy;
 
 	public AnnotateAndAsserterWithStmtOrderPrioritization(final ManagedScript mgdScriptTc,
 			final NestedFormulas<Term, Term> nestedSSA, final AnnotateAndAssertCodeBlocks aaacb,
@@ -107,6 +109,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 		// TODO: Settings for this Hardcoded stuff
 		mAssertCodeBlockOrderSMTFeatureScoringMethod = ScoringMethod.NUM_FUNCTIONS;
+		mAssertCodeBlockOrderPartitioningStrategy = PartitioningStrategy.FIXED_SIZE;
 		mAssertCodeBlockOrderNumPartitions = 4;
 	}
 
@@ -422,7 +425,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		return sat;
 	}
 
-	// Function to score a trace, according to a heuristic.
+	// Function to score a trace, using the SMTFeatureExtractionTermClassifier.
 	private List<Triple<Term, Double, Integer>> ScoreTrace(final NestedWord<? extends IAction> trace) {
 		final List<Triple<Term, Double, Integer>> termScoreIndexTriples = new ArrayList<>();
 		for (int i = 0; i < trace.length(); i++) {
@@ -447,7 +450,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		return new LinkedHashSet<>(indices);
 	}
 
-	private void partitionEven(final LinkedHashSet<LinkedHashSet<Integer>> partitions,
+	private void partitionFixedNumberOfPartitions(final LinkedHashSet<LinkedHashSet<Integer>> partitions,
 			final List<Triple<Term, Double, Integer>> termScoreIndexTriples, final boolean random) {
 
 		// The incremental Strategy creates N partitions.
@@ -481,9 +484,17 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 	// Function to partition a list of Terms according to their scores.
 	private LinkedHashSet<LinkedHashSet<Integer>>
-			partitionStmtsAccordingToHeuristicValues(final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
+			partitionStmtsAccordingToTermScores(final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
 		final LinkedHashSet<LinkedHashSet<Integer>> partitions = new LinkedHashSet<>();
-		partitionEven(partitions, termScoreIndexTriples, false);
+		if (mAssertCodeBlockOrderPartitioningStrategy == PartitioningStrategy.FIXED_SIZE) {
+
+			partitionFixedNumberOfPartitions(partitions, termScoreIndexTriples, false);
+
+		} else if (mAssertCodeBlockOrderPartitioningStrategy == PartitioningStrategy.THRESHOLD) {
+
+			throw new UnsupportedOperationException("PartitioningStrategy.THRESHOLD is not implemented yet");
+		}
+
 		return partitions;
 	}
 
@@ -492,8 +503,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		LBool sat = LBool.UNKNOWN;
 		// Score Trace Terms and order them according to score.
 		final List<Triple<Term, Double, Integer>> termScoreTriples = ScoreTrace(trace);
-		final LinkedHashSet<LinkedHashSet<Integer>> partitions =
-				partitionStmtsAccordingToHeuristicValues(termScoreTriples);
+		final LinkedHashSet<LinkedHashSet<Integer>> partitions = partitionStmtsAccordingToTermScores(termScoreTriples);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Trace: " + trace.toString());
 			mLogger.debug("TermScoreTriples: " + termScoreTriples.toString());

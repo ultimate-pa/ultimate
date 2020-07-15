@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.PartitioningStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -274,10 +275,24 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_OVERRIDE_INTERPOLANT_AUTOMATON =
 			"Override the interpolant automaton setting of the refinement strategy";
 
-	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC = "Assert CodeBlocks Term Scoring Heuristic";
-	public static final ScoringMethod DEF_ASSERT_CODEBLOCKS_HEURISTIC = ScoringMethod.NUM_FUNCTIONS;
-	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC =
-			"Defines what Scoring method is used to score traces during partioning Assertion order Modulation";
+	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD =
+			"Assert CodeBlocks Term Scoring Heuristic";
+	public static final ScoringMethod DEF_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD = ScoringMethod.NUM_FUNCTIONS;
+	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD =
+			"Defines what Scoring method is used to score traces during partioning in Assertion order Modulation, when Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC";
+
+	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
+			"Assert CodeBlocks Term Scoring Heuristic Partitioning Strategy";
+	public static final PartitioningStrategy DEF_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
+			PartitioningStrategy.FIXED_SIZE;
+	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
+			"Defines which partitioning strategy is used during partitioning in Assertion order Modulation,  when Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC";
+
+	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
+			"Assert CodeBlocks Term Scoring Heuristic FIXED_SIZE";
+	public static final Integer DEF_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS = 4;
+	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
+			"Defines which size the partitions have wis used during partitioning in Assertion order Modulation,  when Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is FIXED_SIZE";
 
 	/**
 	 * Constructor.
@@ -359,8 +374,16 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_LIVE_VARIABLES, Boolean.TRUE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, PreferenceType.Combo, AssertCodeBlockOrder.values()),
-				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_HEURISTIC, DEF_ASSERT_CODEBLOCKS_HEURISTIC,
-						DESC_ASSERT_CODEBLOCKS_HEURISTIC, PreferenceType.Combo, ScoringMethod.values()),
+				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD,
+						DEF_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD, DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD,
+						PreferenceType.Combo, ScoringMethod.values()),
+				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY,
+						DEF_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY,
+						DESC_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY, PreferenceType.Combo,
+						PartitioningStrategy.values()),
+				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS,
+						DEF_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS, DESC_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_OVERRIDE_INTERPOLANT_AUTOMATON, DEF_OVERRIDE_INTERPOLANT_AUTOMATON,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_AUTOMATON, InterpolantAutomaton.STRAIGHT_LINE,

@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
@@ -90,7 +89,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final String mFeatureVectorDumpPath;
 	private final boolean mDumpFeatureVectors;
 	private final boolean mCompressDumpedScript;
-	private final ScoringMethod mAssertCodeblocksHeuristic;
 
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
@@ -161,8 +159,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_COUNTEREXAMPLE);
 		mUsePredicateTrieBasedPredicateUnifier = ultimatePrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER);
-		mAssertCodeblocksHeuristic = ultimatePrefs
-				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_HEURISTIC, ScoringMethod.class);
 	}
 
 	private String getFeatureVectorsDumpPath() {
@@ -247,11 +243,6 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	@Override
 	public AssertCodeBlockOrder getAssertCodeBlocksOrder() {
 		return mAssertCodeBlocksOrder;
-	}
-
-	@Override
-	public ScoringMethod getAssertCodeblocksHeuristic() {
-		return mAssertCodeblocksHeuristic;
 	}
 
 	@Override
