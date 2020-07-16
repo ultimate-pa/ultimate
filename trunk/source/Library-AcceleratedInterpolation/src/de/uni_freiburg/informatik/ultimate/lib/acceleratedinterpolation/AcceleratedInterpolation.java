@@ -363,7 +363,19 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				}
 				i = loopSize.getSecond() - 1;
 			} else {
-				final IPredicate prevInterpol = preds[cnt];
+				IPredicate prevInterpol = preds[cnt];
+				/*
+				 * post does not work well with false, there are instances where the interpolant on the loopexit in the
+				 * meta trace is false, this, however, may not always be inductive.
+				 */
+				if (SmtUtils.isFalseLiteral(preds[cnt].getFormula()) && i != 0) {
+					prevInterpol = actualInterpolants[i - 1];
+					final Term post = mPredTransformer.strongestPostcondition(prevInterpol,
+							mCounterexample.get(i).getTransformula());
+					prevInterpol = mPredUnifier.getOrConstructPredicate(post);
+				} else {
+					prevInterpol = preds[cnt];
+				}
 				actualInterpolants[i] = prevInterpol;
 			}
 			cnt++;
