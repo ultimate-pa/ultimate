@@ -109,7 +109,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 		// TODO: Settings for this Hardcoded stuff
 		mAssertCodeBlockOrderSMTFeatureHeuristicScoringMethod = ScoringMethod.NUM_FUNCTIONS;
-		mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy = PartitioningStrategy.FIXED_SIZE;
+		mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy = PartitioningStrategy.FIXED_NUM_PARTITIONS;
 		mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions = 4;
 	}
 
@@ -486,7 +486,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	private LinkedHashSet<LinkedHashSet<Integer>>
 			partitionStmtsAccordingToTermScores(final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
 		final LinkedHashSet<LinkedHashSet<Integer>> partitions = new LinkedHashSet<>();
-		if (mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy == PartitioningStrategy.FIXED_SIZE) {
+		if (mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy == PartitioningStrategy.FIXED_NUM_PARTITIONS) {
 
 			partitionFixedNumberOfPartitions(partitions, termScoreIndexTriples, false);
 

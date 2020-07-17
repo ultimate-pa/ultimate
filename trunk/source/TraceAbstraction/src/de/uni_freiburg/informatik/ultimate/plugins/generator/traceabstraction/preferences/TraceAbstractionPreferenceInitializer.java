@@ -279,20 +279,27 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"Assert CodeBlocks Term Scoring Heuristic";
 	public static final ScoringMethod DEF_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD = ScoringMethod.NUM_FUNCTIONS;
 	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD =
-			"Defines what Scoring method is used to score traces during partioning in Assertion order Modulation, when Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC";
+			"if Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC, each term in a trace is scored. This setting defines which scoring method is used to score traces";
 
 	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
 			"Assert CodeBlocks Term Scoring Heuristic Partitioning Strategy";
 	public static final PartitioningStrategy DEF_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
-			PartitioningStrategy.FIXED_SIZE;
+			PartitioningStrategy.FIXED_NUM_PARTITIONS;
 	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
-			"Defines which partitioning strategy is used during partitioning in Assertion order Modulation,  when Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC";
+			"if Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC, this setting defines which partitioning strategy is used.";
 
 	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
-			"Assert CodeBlocks Term Scoring Heuristic FIXED_SIZE";
+			"Assert CodeBlocks Term Scoring Heuristic NUM_PARTITIONS";
 	public static final Integer DEF_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS = 4;
 	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
-			"Defines which size the partitions have wis used during partitioning in Assertion order Modulation,  when Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is FIXED_SIZE";
+			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is FIXED_NUM_PARTITIONS, this setting defines the amount of partitions.";
+	
+	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
+			"Assert CodeBlocks Term Scoring Heuristic Score Threshold";
+	public static final Double DEF_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD = 0.75;
+	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
+			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is THRESHOLD, two partitions are created, one partition contains all terms >= threshold  and one all terms < threshold";
+
 
 	/**
 	 * Constructor.

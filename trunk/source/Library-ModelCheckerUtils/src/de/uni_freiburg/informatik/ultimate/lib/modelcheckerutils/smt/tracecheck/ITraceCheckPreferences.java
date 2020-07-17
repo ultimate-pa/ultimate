@@ -95,7 +95,7 @@ public interface ITraceCheckPreferences {
 	}
 
 	public enum PartitioningStrategy {
-		FIXED_SIZE, THRESHOLD
+		FIXED_NUM_PARTITIONS, THRESHOLD
 	}
 
 	boolean getUseSeparateSolverForTracechecks();
