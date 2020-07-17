@@ -19,18 +19,30 @@
 		<ultimate-version>0.1.25</ultimate-version>
 
 		<!-- maven plugin versions -->
-		<tycho-version>1.4.0</tycho-version>
+		<!-- https://mvnrepository.com/artifact/org.eclipse.tycho/tycho-core -->
+		<tycho-version>1.7.0</tycho-version>
+		<!-- https://mvnrepository.com/artifact/org.sonarsource.scanner.maven/sonar-maven-plugin -->
 		<sonar-version>3.7.0.1746</sonar-version>
-		<jacoco-version>0.8.1</jacoco-version>
-		<m2e-version>1.0.0</m2e-version>
-		<coveralls-version>4.2.0</coveralls-version>
-		<git-commit-id-version>2.2.3</git-commit-id-version>
-		<maven-clean-version>3.0.0</maven-clean-version>
-		<maven-antrun-version>1.8</maven-antrun-version>
-		<maven-war-version>3.2.0</maven-war-version>
-		<maven-assembly-version>3.1.0</maven-assembly-version>
-		<maven-resources-version>3.0.2</maven-resources-version>
-		<maven-compiler-version>3.8.0</maven-compiler-version>
+		<!-- https://mvnrepository.com/artifact/org.jacoco/jacoco-maven-plugin -->
+		<jacoco-version>0.8.5</jacoco-version>
+		<!-- https://mvnrepository.com/artifact/org.eclipse.m2e/core -->
+		<m2e-version>1.4.0</m2e-version>
+		<!-- https://mvnrepository.com/artifact/org.eluder.coveralls/coveralls-maven-plugin -->
+		<coveralls-version>4.3.0</coveralls-version>
+		<!-- https://mvnrepository.com/artifact/pl.project13.maven/git-commit-id-plugin -->
+		<git-commit-id-version>4.0.1</git-commit-id-version>
+		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-clean-plugin -->
+		<maven-clean-version>3.1.0</maven-clean-version>
+		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-antrun-plugin -->
+		<maven-antrun-version>3.0.0</maven-antrun-version>
+		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-war-plugin -->
+		<maven-war-version>3.3.1</maven-war-version>
+		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
+		<maven-assembly-version>3.3.0</maven-assembly-version>
+		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-resources-plugin -->
+		<maven-resources-version>3.1.0</maven-resources-version>
+		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
+		<maven-compiler-version>3.8.1</maven-compiler-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
@@ -80,8 +92,11 @@
 		<!-- <sonar.jacoco.itReportPath>${jacoco.reportDir}/jacoco-it.exec</sonar.jacoco.itReportPath> -->
 
 		<!-- Exclude completely from any sonar analysis (including coverage) -->
-		<sonar.exclusions>src/jdd/**, src/net/sf/javabdd/**,
-			src/com/github/jhoenicke/javacup/**, src/org/apache/commons/cli/**,
+		<sonar.exclusions>
+			src/jdd/**,
+			src/net/sf/javabdd/**,
+			src/com/github/jhoenicke/javacup/**,
+			src/org/apache/commons/cli/**,
 			src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLResultExpression.java,
 			src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLTransformer.java,
 			src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLType.java,
@@ -301,7 +316,7 @@
 		<sonar.issue.ignore.multicriteria></sonar.issue.ignore.multicriteria>
 
 		<!-- Global arguments for the VM used during junit tests depending on profile -->
-		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps 
+		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps
 			on OutOfMemory exceptions -->
 		<manualtest-argline>-Xmx4g </manualtest-argline>
 		<coverage-argline>-Xmx4g -ea</coverage-argline>
@@ -309,15 +324,15 @@
 	</properties>
 
 	<repositories>
-		<!-- 
-		We proxy repositories via monteverdi to reduce load and speed up the 
-		build in our LAN You can configure monteverdis proxy by visiting <url>https://monteverdi.informatik.uni-freiburg.de/nexus</url> 
-		The user/password is managed by DD 
-			
-		The original URLs are 
-		<url>http://download.eclipse.org/releases/mars/</url>
-		<url>http://download.eclipse.org/releases/neon/</url>
-		<url>http://download.eclipse.org/releases/2018-09/</url>
+		<!--
+			We proxy repositories via monteverdi to reduce load and speed up the
+			build in our LAN You can configure monteverdis proxy by visiting <url>https://monteverdi.informatik.uni-freiburg.de/nexus</url>
+			The user/password is managed by DD
+
+			The original URLs are
+			<url>http://download.eclipse.org/releases/mars/</url>
+			<url>http://download.eclipse.org/releases/neon/</url>
+			<url>http://download.eclipse.org/releases/2018-09/</url>
 		-->
 
 		<repository>
@@ -402,10 +417,10 @@
 					<commitIdGenerationMode>flat</commitIdGenerationMode>
 					<gitDescribe>
 						<skip>false</skip>
-						<!-- when the build is triggered while the repo is in "dirty state", 
+						<!-- when the build is triggered while the repo is in "dirty state",
 							append this suffix -->
 						<dirty>-m</dirty>
-						<!-- Only consider tags matching the given pattern. This can be used 
+						<!-- Only consider tags matching the given pattern. This can be used
 							to avoid leaking private tags from the repository. -->
 						<match>*</match>
 						<tags>true</tags>
@@ -435,7 +450,7 @@
 
 		<pluginManagement>
 			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings 
+				<!--This plugin's configuration is used to store Eclipse m2e settings
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
@@ -479,105 +494,105 @@
 	</build>
 
 	<modules>
-        <module>../AbstractInterpretationV2</module>
-        <module>../ACSLParser</module>
-        <module>../ASTBuilder</module>
-        <module>../AutomataScriptInterpreter</module>
-        <module>../AutomataScriptParser</module>
-        <module>../AutomatonDeltaDebugger</module>
-        <module>../BlockEncoding</module>
-        <module>../BlockEncodingV2</module>
-        <module>../BoogieModSetAnnotator</module>
-        <module>../BoogiePLParser</module>
-        <module>../BoogiePreprocessor</module>
-        <module>../BoogiePrinter</module>
-        <module>../BoogieProcedureInliner</module>
-        <module>../BuchiAutomizer</module>
-        <module>../BuchiProgramProduct</module>
-        <module>../CACSL2BoogieTranslator</module>
-        <module>../CDTParser</module>
-        <module>../CDTPlugin</module>
-        <module>../ChcSmtPrinter</module>
-        <module>../ChcToBoogie</module>
-        <module>../CodeCheck</module>
-        <module>../CoreRCP</module>
-        <module>../Crocotta</module>
-        <module>../GUIGeneratedPreferencePages</module>
-        <module>../GUILoggingWindow</module>
-        <module>../GuiRCP</module>
-        <module>../IcfgToChc</module>
-        <module>../IcfgTransformation</module>
-        <module>../InvariantSynthesis</module>
-        <module>../IRSDependencies</module>
-        <module>../JavaCup</module>
-        <module>../JungVisualization</module>
-        <module>../LassoRanker</module>
-        <module>../Library-ApacheCommonsCLI</module>
-        <module>../Library-ApacheCommonsLang</module>
-        <module>../Library-Automata</module>
-        <module>../Library-Batik</module>
-        <module>../Library-BoogieAST</module>
-        <module>../Library-CHC</module>
-        <module>../Library-CZT</module>
-        <module>../Library-Disruptor</module>
-        <module>../Library-IcfgTransformer</module>
-        <module>../Library-JavaBDD</module>
-        <module>../Library-jdom</module>
-        <module>../Library-Jung</module>
-        <module>../Library-LassoRanker</module>
-        <module>../Library-Log4j2</module>
-        <module>../Library-log4j</module>
-        <module>../Library-MCR</module>
-        <module>../Library-ModelCheckerUtils</module>
-        <module>../Library-MSOD</module>
-        <module>../Library-ojAlgo</module>
-        <module>../Library-PathExpressions</module>
-        <module>../Library-PDR</module>
-        <module>../Library-AcceleratedInterpolation</module>
-        <module>../Library-PEA</module>
-        <module>../Library-SMTLIB</module>
-        <module>../Library-srParse</module>
-        <module>../Library-Sifa</module>
-        <module>../Library-SmtLibUtils</module>
-        <module>../Library-TraceCheckerUtils</module>
-        <module>../Library-UltimateCore</module>
-        <module>../Library-UltimateModel</module>
-        <module>../Library-UltimateUtil</module>
-        <module>../Library-xerces</module>
-        <module>../LTL2aut</module>
-        <module>../PeaExampleGenerator</module>
-        <module>../PEAtoBoogie</module>
-        <module>../RCFGBuilder</module>
-        <module>../ReachingDefinitions</module>
-        <module>../Referee</module>
-        <module>../ReqParser</module>
-        <module>../ReqPrinter</module>
-        <module>../ReqToTest</module>
-        <module>../SMTInterpol</module>
-        <module>../SmtParser</module>
-        <module>../SMTSolverBridge</module>
-        <module>../SpaceExParser</module>
-        <module>../SyntaxChecker</module>
+		<module>../AbstractInterpretationV2</module>
+		<module>../ACSLParser</module>
+		<module>../ASTBuilder</module>
+		<module>../AutomataScriptInterpreter</module>
+		<module>../AutomataScriptParser</module>
+		<module>../AutomatonDeltaDebugger</module>
+		<module>../BlockEncoding</module>
+		<module>../BlockEncodingV2</module>
+		<module>../BoogieModSetAnnotator</module>
+		<module>../BoogiePLParser</module>
+		<module>../BoogiePreprocessor</module>
+		<module>../BoogiePrinter</module>
+		<module>../BoogieProcedureInliner</module>
+		<module>../BuchiAutomizer</module>
+		<module>../BuchiProgramProduct</module>
+		<module>../CACSL2BoogieTranslator</module>
+		<module>../CDTParser</module>
+		<module>../CDTPlugin</module>
+		<module>../ChcSmtPrinter</module>
+		<module>../ChcToBoogie</module>
+		<module>../CodeCheck</module>
+		<module>../CoreRCP</module>
+		<module>../Crocotta</module>
+		<module>../GUIGeneratedPreferencePages</module>
+		<module>../GUILoggingWindow</module>
+		<module>../GuiRCP</module>
+		<module>../IcfgToChc</module>
+		<module>../IcfgTransformation</module>
+		<module>../InvariantSynthesis</module>
+		<module>../IRSDependencies</module>
+		<module>../JavaCup</module>
+		<module>../JungVisualization</module>
+		<module>../LassoRanker</module>
+		<module>../Library-ApacheCommonsCLI</module>
+		<module>../Library-ApacheCommonsLang</module>
+		<module>../Library-Automata</module>
+		<module>../Library-Batik</module>
+		<module>../Library-BoogieAST</module>
+		<module>../Library-CHC</module>
+		<module>../Library-CZT</module>
+		<module>../Library-Disruptor</module>
+		<module>../Library-IcfgTransformer</module>
+		<module>../Library-JavaBDD</module>
+		<module>../Library-jdom</module>
+		<module>../Library-Jung</module>
+		<module>../Library-LassoRanker</module>
+		<module>../Library-Log4j2</module>
+		<module>../Library-log4j</module>
+		<module>../Library-MCR</module>
+		<module>../Library-ModelCheckerUtils</module>
+		<module>../Library-MSOD</module>
+		<module>../Library-ojAlgo</module>
+		<module>../Library-PathExpressions</module>
+		<module>../Library-PDR</module>
+		<module>../Library-AcceleratedInterpolation</module>
+		<module>../Library-PEA</module>
+		<module>../Library-SMTLIB</module>
+		<module>../Library-srParse</module>
+		<module>../Library-Sifa</module>
+		<module>../Library-SmtLibUtils</module>
+		<module>../Library-TraceCheckerUtils</module>
+		<module>../Library-UltimateCore</module>
+		<module>../Library-UltimateModel</module>
+		<module>../Library-UltimateUtil</module>
+		<module>../Library-xerces</module>
+		<module>../LTL2aut</module>
+		<module>../PeaExampleGenerator</module>
+		<module>../PEAtoBoogie</module>
+		<module>../RCFGBuilder</module>
+		<module>../ReachingDefinitions</module>
+		<module>../Referee</module>
+		<module>../ReqParser</module>
+		<module>../ReqPrinter</module>
+		<module>../ReqToTest</module>
+		<module>../SMTInterpol</module>
+		<module>../SmtParser</module>
+		<module>../SMTSolverBridge</module>
+		<module>../SpaceExParser</module>
+		<module>../SyntaxChecker</module>
 		<module>../Sifa</module>
-        <module>../TraceAbstractionConcurrent</module>
-        <module>../TraceAbstraction</module>
-        <module>../TraceAbstractionWithAFAs</module>
-        <module>../TreeAutomizer</module>
-        <module>../UltimateCLI</module>
-        <module>../UltimateDeltaDebugger</module>
-        
-        <module>../WitnessParser</module>
-        <module>../WitnessPrinter</module>
-        <module>../UltimateEliminatorController</module>
-        
+		<module>../TraceAbstractionConcurrent</module>
+		<module>../TraceAbstraction</module>
+		<module>../TraceAbstractionWithAFAs</module>
+		<module>../TreeAutomizer</module>
+		<module>../UltimateCLI</module>
+		<module>../UltimateDeltaDebugger</module>
+
+		<module>../WitnessParser</module>
+		<module>../WitnessPrinter</module>
+		<module>../UltimateEliminatorController</module>
+
 	</modules>
 
 	<profiles>
 
 		<profile>
-			<!-- The profile coverage is used to generate junit test case coverage 
-				through jenkins and sonar. It uses all regression tests, but not UltimateTest, 
-				as those tests are very slow and should be executed manually via profile 
+			<!-- The profile coverage is used to generate junit test case coverage
+				through jenkins and sonar. It uses all regression tests, but not UltimateTest,
+				as those tests are very slow and should be executed manually via profile
 				manualtest. You should not need to run this profile manually. -->
 			<id>coverage</id>
 
@@ -659,20 +674,20 @@
 				<module>../SpaceExParserTest</module>
 				<module>../PEAtoBoogieTest</module>
 
-				<!-- UltimateRegressionTest contains system tests that are relatively 
+				<!-- UltimateRegressionTest contains system tests that are relatively
 					fast -->
 				<module>../UltimateRegressionTest</module>
 
-				<!-- UltimateTest contains system tests, but should not be run. It is 
+				<!-- UltimateTest contains system tests, but should not be run. It is
 					excluded in surefire. -->
 				<module>../UltimateTest</module>
 			</modules>
 		</profile>
 
 		<profile>
-			<!-- The profile travis is used to generate junit test case coverage through 
-				travis and coveralls. It uses all regression tests, but not UltimateTest, 
-				as those tests are very slow and should be executed manually via profile 
+			<!-- The profile travis is used to generate junit test case coverage through
+				travis and coveralls. It uses all regression tests, but not UltimateTest,
+				as those tests are very slow and should be executed manually via profile
 				manualtest. You should not need to run this profile manually. -->
 			<id>travis</id>
 
@@ -724,7 +739,7 @@
 						<artifactId>coveralls-maven-plugin</artifactId>
 						<version>${coveralls-version}</version>
 						<configuration>
-							<!-- We should not publish the repo token, but I dont know any other 
+							<!-- We should not publish the repo token, but I dont know any other
 								way of telling travis. Its either here or in .travis.yml -->
 							<repoToken>EfXcoEYdCZRch9bAt6OULUTnGEz43OyEw</repoToken>
 							<jacocoReports>
@@ -760,18 +775,23 @@
 		</profile>
 
 		<profile>
-			<!-- The profile manualtest is used to start manual tests from the commandline. 
-				It allows you to run all tests, but you should nevertheless specify which 
-				suite you want to run, as all the suites may require several days to run. 
-				To run this, you can use the following syntax: time mvn clean integration-test 
-				-Pmanualtest -Dtest=SVCOMP15TestSuite > output.log 2>&1 You can also use 
-				the following options to customize your run: -o enables offline mode, skipping 
-				lookup of online repositories -T n uses n threads during build export _JAVA_OPTIONS="-enableassertions" 
-				(Linux) or set _JAVA_OPTIONS=-enableassertions (Windows) before the actual 
-				command supplies additional options to the test VM without changing this 
-				pom.xml Further notes: Maven chooses your VM by inspecting JAVA_HOME. Under 
-				Windows, you can show it with echo %JAVA_HOME% and change it temporarily 
-				with set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_05 This profile should 
+			<!-- The profile manualtest is used to start manual tests from the commandline.
+				It allows you to run all tests, but you should nevertheless specify which
+				suite you want to run, as all the suites may require several days to 
+				run.
+				To run this, you can use the following syntax: time mvn clean integration-test
+				-Pmanualtest -Dtest=SVCOMP15TestSuite > output.log 2>&1 You can also 
+				use
+				the following options to customize your run: -o enables offline mode, 
+				skipping
+				lookup of online repositories -T n uses n threads during build export 
+				_JAVA_OPTIONS="-enableassertions"
+				(Linux) or set _JAVA_OPTIONS=-enableassertions (Windows) before the actual
+				command supplies additional options to the test VM without changing this
+				pom.xml Further notes: Maven chooses your VM by inspecting JAVA_HOME. 
+				Under
+				Windows, you can show it with echo %JAVA_HOME% and change it temporarily
+				with set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_05 This profile should
 				(probably) only be used manually. -->
 			<id>manualtest</id>
 			<build>
@@ -789,11 +809,12 @@
 							<threadCount>1</threadCount>
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>false</trimStackTrace>
-							<!-- redirectTestOutputToFile=false is the default, but to debug strange 
-								maven/junit bugs, you may want to set it to true to have all the test output 
+							<!-- redirectTestOutputToFile=false is the default, but to debug strange
+								maven/junit bugs, you may want to set it to true to have all the 
+								test output
 								written to file -->
 							<redirectTestOutputToFile>false</redirectTestOutputToFile>
-							<!-- if you want to change the argLine, use the global property; Note: 
+							<!-- if you want to change the argLine, use the global property; Note:
 								for some reason, in this profile we cannot use ${tycho.testArgLine} -->
 							<argLine>${manualtest-argline}</argLine>
 
@@ -832,13 +853,13 @@
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
 				<module>../PEAtoBoogieTest</module>
-				
 
-				<!-- UltimateRegressionTest contains system tests that are relatively 
+
+				<!-- UltimateRegressionTest contains system tests that are relatively
 					fast -->
 				<module>../UltimateRegressionTest</module>
 
-				<!-- UltimateTest contains system tests, but should not be run. It is 
+				<!-- UltimateTest contains system tests, but should not be run. It is
 					excluded in surefire. -->
 				<module>../UltimateTest</module>
 			</modules>
