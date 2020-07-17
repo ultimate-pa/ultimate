@@ -29,8 +29,8 @@
       <includesfile>../../../trunk/examples/svcomp/heuristic_less_30s_reach64.set</includesfile>
     </tasks>
     <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic">NUM_FUNCTIONS</option>
-    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic.partitioning.strategy">FIXED_SIZE</option>
-    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic.fixed_size">4</option>
+    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic.partitioning.strategy">FIXED_NUM_PARTITIONS</option>
+    <option name="--traceabstraction.assert.codeblocks.term.scoring.heuristic.number.of.partitions">4</option>
   </rundefinition>
 
 </benchmark>
