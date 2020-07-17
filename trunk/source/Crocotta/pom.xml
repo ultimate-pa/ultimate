@@ -41,7 +41,7 @@
 						<id>generate parser sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
-							<tasks>
+							<target>
 								<echo>Crocotta: workspaceDir is ${workspaceDir}</echo>
 								<echo>Crocotta: cupDir is ${cupDir}</echo>
 								<echo>Crocotta: crocottaDir is ${crocottaDir}</echo>
@@ -62,7 +62,7 @@
 									<arg value="-crocotta" />
 									<arg value="Crocotta.ast" />
 								</java>
-							</tasks>
+							</target>
 						</configuration>
 						<goals>
 							<goal>run</goal>

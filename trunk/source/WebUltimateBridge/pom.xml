@@ -24,7 +24,7 @@
 						<id>generate parser sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
-							<tasks>
+							<target>
 								<echo>Copying various files from ${examplesDir} to
 									${websiteExamplesDir}</echo>
 
@@ -116,7 +116,7 @@
 									<fileset dir="${examplesDir}/smtlib/QuantifierElimination/"
 										includes="*.smt2" />
 								</copy>
-							</tasks>
+							</target>
 						</configuration>
 						<goals>
 							<goal>run</goal>

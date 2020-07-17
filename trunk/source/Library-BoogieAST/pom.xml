@@ -42,7 +42,7 @@
 						<id>generate parser sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
-							<tasks>
+							<target>
 								<echo>Library-BoogieAST: workspaceDir is ${workspaceDir}</echo>
 								<echo>Library-BoogieAST: cupDir is ${cupDir}</echo>
 								<echo>Library-BoogieAST: astbuilderBinaries is
@@ -55,7 +55,7 @@
 									<arg value="-ultimatenew" />
 									<arg value="Boogie.ast" />
 								</java>
-							</tasks>
+							</target>
 						</configuration>
 						<goals>
 							<goal>run</goal>

@@ -51,7 +51,7 @@
 						<id>generate parser sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
-							<tasks>
+							<target>
 								<echo>BoogiePLParser: workspaceDir is ${workspaceDir}</echo>
 								<echo>BoogiePLParser: cupDir is ${cupDir}</echo>
 								<echo>BoogiePLParser: boogieparserDir is ${boogieparserDir}</echo>
@@ -65,7 +65,7 @@
 								<java jar="${flexBinary}" fork="true" dir="${boogieparserDir}" failonerror="true">
 									<arg value="Boogie.flex" />
 								</java>
-							</tasks>
+							</target>
 						</configuration>
 						<goals>
 							<goal>run</goal>

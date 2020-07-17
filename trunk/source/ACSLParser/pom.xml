@@ -49,7 +49,7 @@
 						<id>generate parser sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
-							<tasks>
+							<target>
 								<echo>ACSLParser: workspaceDir is ${workspaceDir}</echo>
 								<echo>ACSLParser: cupDir is ${cupDir}</echo>
 								<echo>ACSLParser: acslparserDir is ${acslparserDir}</echo>
@@ -69,7 +69,7 @@
 									<arg value="-acsl" />
 									<arg value="acsl.ast" />
 								</java>
-							</tasks>
+							</target>
 						</configuration>
 						<goals>
 							<goal>run</goal>

@@ -50,7 +50,7 @@
 						<id>generate parser sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
-							<tasks>
+							<target>
 								<echo>SMTSolverBridge: workspaceDir is ${workspaceDir}</echo>
 								<echo>SMTSolverBridge: cupDir is ${cupDir}</echo>
 								<echo>SMTSolverBridge: externalsmtsolverDir is ${externalsmtsolverDir}</echo>
@@ -62,7 +62,7 @@
 								<java jar="${flexBinary}" fork="true" dir="${externalsmtsolverDir}" failonerror="true">
 									<arg value="scriptResult.flex" />
 								</java>
-							</tasks>
+							</target>
 						</configuration>
 						<goals>
 							<goal>run</goal>

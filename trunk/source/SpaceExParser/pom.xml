@@ -53,7 +53,7 @@
 						<id>generate parser sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
-							<tasks>
+							<target>
 								<echo>SpaceEx Parser: workspaceDir is ${workspaceDir}</echo>
 								<echo>SpaceEx Parser: spaceexDir is ${spaceexDir}</echo>
 								<exec executable="xjc" failonerror="true">
@@ -65,7 +65,7 @@
 									<arg value="${spaceexDir}/sspaceex.xsd" />
 								</exec>
 
-							</tasks>
+							</target>
 						</configuration>
 						<goals>
 							<goal>run</goal>

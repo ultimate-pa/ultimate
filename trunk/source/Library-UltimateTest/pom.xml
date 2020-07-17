@@ -51,7 +51,7 @@
 						<id>generate parser sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
-							<tasks>
+							<target>
 								<echo>Library-UltimateCore: workspaceDir is ${workspaceDir}</echo>
 								<echo>Library-UltimateCore: rundefDir is ${benchexecDir}</echo>
 								<exec executable="xjc" failonerror="true" dir="${project.basedir}">
@@ -62,7 +62,7 @@
 									<arg
 										value="${benchexecDir}/benchmark-1.9.xsd" />
 								</exec>
-							</tasks>
+							</target>
 						</configuration>
 						<goals>
 							<goal>run</goal>

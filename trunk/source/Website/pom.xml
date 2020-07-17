@@ -40,7 +40,7 @@
 								<id>generate parser sources</id>
 								<phase>generate-sources</phase>
 								<configuration>
-									<tasks>
+									<target>
 										<echo>Converting .html in ${websiteHtmlDir} to .json in
 											${websiteJsonDir}</echo>
 										<apply executable="java">
@@ -53,7 +53,7 @@
 												<include name="**/*.html" />
 											</fileset>
 										</apply>
-									</tasks>
+									</target>
 								</configuration>
 								<goals>
 									<goal>run</goal>

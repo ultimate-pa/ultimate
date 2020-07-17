@@ -23,7 +23,7 @@
 						<id>generate parser sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
-							<tasks>
+							<target>
 								<echo>Library-srParse: workspaceDir is ${workspaceDir}</echo>
 								<echo>Library-srParse: cupDir is ${cupDir}</echo>
 								<echo>Library-srParse: srparseparserDir is ${srparseparserDir}</echo>
@@ -36,7 +36,7 @@
 								<java jar="${flexBinary}" fork="true" dir="${srparseparserDir}" failonerror="true">
 									<arg value="Requirements.flex" />
 								</java>
-							</tasks>
+							</target>
 						</configuration>
 						<goals>
 							<goal>run</goal>

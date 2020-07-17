@@ -52,7 +52,7 @@
 						<id>generate parser sources</id>
 						<phase>generate-sources</phase>
 						<configuration>
-							<tasks>
+							<target>
 								<echo>AutomataScriptParser: workspaceDir is ${workspaceDir}</echo>
 								<echo>AutomataScriptParser: cupDir is ${cupDir}</echo>
 								<echo>AutomataScriptParser: automatascriptparserDir is
@@ -76,7 +76,7 @@
 								<java jar="${flexBinary}" fork="true" dir="${ltl2autParserDir}" failonerror="true">
 									<arg value="Apformula.flex" />
 								</java>
-							</tasks>
+							</target>
 						</configuration>
 						<goals>
 							<goal>run</goal>
