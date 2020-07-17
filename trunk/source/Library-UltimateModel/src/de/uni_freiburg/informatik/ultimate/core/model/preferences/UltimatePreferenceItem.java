@@ -182,6 +182,27 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 				return "Valid range is " + mMin + " <= value <= " + mMax;
 			}
 		}
+		
+		public class DoubleValidator implements IUltimatePreferenceItemValidator<Double> {
+
+			private final double mMin;
+			private final double mMax;
+
+			public DoubleValidator(final double min, final double max) {
+				mMin = min;
+				mMax = max;
+			}
+
+			@Override
+			public boolean isValid(final Double value) {
+				return mMin <= value && value <= mMax;
+			}
+
+			@Override
+			public String getInvalidValueErrorMessage(final Double value) {
+				return "Valid range is " + mMin + " <= value <= " + mMax;
+			}
+		}
 	}
 
 }

@@ -88,6 +88,10 @@ public abstract class BaseUltimatePreferenceItem {
 		 */
 		Integer,
 		/**
+		 * A single number representing an Double.
+		 */
+		Double,
+		/**
 		 * A string representing one or multiple paths to a file or directory on the system. If multiple paths are
 		 * specified by the user, they are separated by a semicolon.
 		 */

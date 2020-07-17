@@ -35,6 +35,7 @@ import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.ColorFieldEditor;
 import org.eclipse.jface.preference.ComboFieldEditor;
 import org.eclipse.jface.preference.DirectoryFieldEditor;
+import org.eclipse.jface.preference.DoubleFieldEditor;
 import org.eclipse.jface.preference.FieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.FileFieldEditor;
@@ -97,6 +98,9 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 				case Integer:
 					editor = createIntegerFieldEditor(item.getLabel());
 					break;
+				case Double:
+					editor = createDoubleFieldEditor(item.getLabel());
+					break;	
 				case Boolean:
 					editor = createBooleanFieldEditor(item.getLabel());
 					break;
@@ -200,6 +204,10 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 				validateField((IUltimatePreferenceItemValidator<Integer>) validator,
 						((IntegerFieldEditor) editor).getIntValue());
 				break;
+			case Double:
+				validateField((IUltimatePreferenceItemValidator<Double>) validator,
+						((DoubleFieldEditor) editor).getDoubleValue());
+				break;
 			case Directory:
 			case Path:
 			case String:
@@ -270,6 +278,13 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 		editor.setValidRange(Integer.MIN_VALUE, Integer.MAX_VALUE);
 		return editor;
 	}
+	
+	private DoubleFieldEditor createDoubleFieldEditor(String label) {
+		final DoubleFieldEditor editor = new DoubleFieldEditor(label, label, getFieldEditorParent());
+		editor.setValidRange(Double.MIN_VALUE, Double.MAX_VALUE);
+		return editor;
+	}
+
 
 	private BooleanFieldEditor createBooleanFieldEditor(String label) {
 		return new BooleanFieldEditor(label, label, getFieldEditorParent());

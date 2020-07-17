@@ -75,6 +75,9 @@ public final class RcpPreferenceBinder {
 				case Integer:
 					preferenceStore.putInt(label, (Integer) value);
 					break;
+				case Double:
+					preferenceStore.putDouble(label, (Double) value);
+					break;	
 				case Directory:
 				case String:
 				case MultilineString:
