@@ -251,7 +251,7 @@ public class J2UPPAALConverter {
 			final String source = transition.getSrc().getName();
 			final String destination = transition.getDest().getName();
 
-			if (source.matches(destination) && (resets.length <= 0)) {
+			if (source.matches(destination) && resets.length <= 0) {
 				// selfloops in which no clock is reset do not need to be transfered to the uppaal model
 				deletedSelfloops++; // only for measurement
 			} else {
@@ -346,10 +346,10 @@ public class J2UPPAALConverter {
 		}
 		System.out.println("*****************************");
 		System.out.println("Writing Uppaal representation took " + (System.currentTimeMillis() - actTime) + "ms");
-		System.out.println("Computed " + (--dnfCount) + " disjunctive normalforms");
-		System.out.println("Added: " + (pea.getInit().length) + " further transitions to initial states");
-		System.out.println("Deleted: " + (deletedSelfloops) + " selfloops without clock reset");
-		System.out.println("The Timed Automaton has " + (pea.getPhases().length) + " phases");
+		System.out.println("Computed " + --dnfCount + " disjunctive normalforms");
+		System.out.println("Added: " + pea.getInit().length + " further transitions to initial states");
+		System.out.println("Deleted: " + deletedSelfloops + " selfloops without clock reset");
+		System.out.println("The Timed Automaton has " + pea.getPhases().length + " phases");
 		System.out.println("The Timed Automaton has " + transitionsInS + " transitions");
 		System.out.println("The PEA has " + transitionsInA + " transitions");
 		System.out.println("*****************************");
@@ -359,17 +359,9 @@ public class J2UPPAALConverter {
 		return systemName;
 	}
 
-	/**
-	 * @param args
+	/*
+	 * XML special characters format
 	 */
-	public static void main(final String[] args) {
-		// TODO Auto-generated method stub
-	}
-
-	// Wie in HTML m�ssen auch in XML Sonderzeichen speziell formatiert werden. Die Zeichen &, <, > sind:
-	// & &amp;
-	// < &lt;
-	// > &gt;
 	public static class XMLString {
 		public static final String AND = " &amp;&amp; ";
 		public static final String LESS = " &lt; ";

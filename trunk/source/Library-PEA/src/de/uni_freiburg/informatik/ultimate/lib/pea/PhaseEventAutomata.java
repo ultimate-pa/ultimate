@@ -336,8 +336,8 @@ public class PhaseEventAutomata implements Comparable<Object> {
 
 	public void rename() {
 		final int locCounter = getNumberOfLocations();
-		int counter = 0; // der ist nur aus technischen Gr�nden da: wenn wir zwei zustande st0Xst2 und st2Xst1 haben
-		// dann w�rden sonst beide auf st3 umbenannt - das wollen wir nicht, daher dieser counter dazu
+		int counter = 0; // der ist nur aus technischen Gründen da: wenn wir zwei zustande st0Xst2 und st2Xst1 haben
+		// dann würden sonst beide auf st3 umbenannt - das wollen wir nicht, daher dieser counter dazu
 		for (int i = 0; i < locCounter; i++) {
 			final Phase location = getLocation(i);
 			final String[] result = splitForComponents(location.getName());

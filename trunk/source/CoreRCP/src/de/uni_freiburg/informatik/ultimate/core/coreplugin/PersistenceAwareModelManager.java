@@ -25,12 +25,6 @@
  * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
-/*
-� * Project:	CoreRCP
- * Package:	de.uni_freiburg.informatik.ultimate.model
- * File:	PersistenceAwareModelManager.java created on Nov 11, 2009 by Bj�rn Buchhold
- *
- */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.io.File;

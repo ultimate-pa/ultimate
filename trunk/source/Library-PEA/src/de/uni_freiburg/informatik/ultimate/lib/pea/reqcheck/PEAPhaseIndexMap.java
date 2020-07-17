@@ -2,16 +2,16 @@ package de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 
-//mapt eine Phase in einem pea auf den h�chsten index der phase
+//mapt eine Phase in einem pea auf den höchsten index der phase
 //zum index: da wir auch states wie stinit haben, werden diese auf 0 gemapt, alle anderen states werden um daher um eine
 //zahl nach oben gesetzt: stinit-->0, st0-->1; st0123-->4
 public class PEAPhaseIndexMap {
-	
+
 	private Phase phase;
 	private String name;
 	private int index;
-	private boolean wait; //true iff phase is in wait, false else
-	
+	private boolean wait; // true iff phase is in wait, false else
+
 	public PEAPhaseIndexMap(final Phase phase) {
 		wait = false;
 		setPhase(phase);
@@ -43,7 +43,7 @@ public class PEAPhaseIndexMap {
 			}
 		}
 	}
-	
+
 	public PEAPhaseIndexMap(final String name) {
 		setName(name);
 		wait = false;
@@ -69,30 +69,30 @@ public class PEAPhaseIndexMap {
 			} catch (final NumberFormatException e) {
 				setIndex(0);
 			}
-			
+
 		}
 	}
-	
+
 	private void setPhase(final Phase phase) {
 		this.phase = phase;
 	}
-	
+
 	public Phase getPhase() {
 		return phase;
 	}
-	
+
 	private void setIndex(final int d) {
 		index = d;
 	}
-	
+
 	public int getIndex() {
 		return index;
 	}
-	
+
 	public String getName() {
 		return name;
 	}
-	
+
 	public void setName(final String name) {
 		this.name = name;
 	}

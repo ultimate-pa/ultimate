@@ -97,7 +97,7 @@ public class Transition {
 		return src;
 	}
 
-	// F�r den Fall dass ein Guard eine ODER Verkn�pfung hat werden die Transitionen manchmal nicht korrekt
+	// Für den Fall dass ein Guard eine ODER Verknüpfung hat werden die Transitionen manchmal nicht korrekt
 	// vereinfacht; Bsp: ein Guard der Form "\neg P || c<10 " auf einer Transition mit dest.StateInvariant = P
 	// sollte auf "c<10" vereinfacht werden
 	public void simplifyGuard() {
