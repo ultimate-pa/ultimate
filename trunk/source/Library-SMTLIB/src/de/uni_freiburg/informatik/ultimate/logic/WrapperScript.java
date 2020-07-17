@@ -214,6 +214,11 @@ public class WrapperScript implements Script {
 	}
 
 	@Override
+	public Theory getTheory() {
+		return mScript.getTheory();
+	}
+
+	@Override
 	public Sort sort(final String sortname, final Sort... params) throws SMTLIBException {
 		return mScript.sort(sortname, params);
 	}

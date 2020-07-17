@@ -391,6 +391,15 @@ public interface Script {
 	 * Constant representing existential quantification.
 	 */
 	public static final int EXISTS = QuantifiedFormula.EXISTS;
+
+	/**
+	 * Get the theory that is used to maintain the term database and list of
+	 * declared and defined functions.
+	 *
+	 * @return the theory.
+	 */
+	public Theory getTheory();
+
 	/**
 	 * Instantiate an n-ary sort with parameters.
 	 * @param sortname Name of the sort.

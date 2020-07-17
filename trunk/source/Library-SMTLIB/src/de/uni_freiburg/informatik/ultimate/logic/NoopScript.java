@@ -57,6 +57,7 @@ public class NoopScript implements Script {
 		mSolverSetup = setup;
 	}
 
+	@Override
 	public Theory getTheory() {
 		return mTheory;
 	}

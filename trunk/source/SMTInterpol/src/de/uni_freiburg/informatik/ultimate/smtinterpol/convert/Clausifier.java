@@ -1324,8 +1324,8 @@ public class Clausifier {
 	final static ILiteral mTRUE = new TrueLiteral();
 	final static ILiteral mFALSE = new FalseLiteral();
 
-	public Clausifier(final DPLLEngine engine, final int proofLevel) {
-		mTheory = engine.getSMTTheory();
+	public Clausifier(final Theory theory, final DPLLEngine engine, final int proofLevel) {
+		mTheory = theory;
 		mEngine = engine;
 		mLogger = engine.getLogger();
 		mTracker = proofLevel == 2 ? new ProofTracker() : new NoopProofTracker();

@@ -47,8 +47,8 @@ public final class PairHashTest {
 
 	public PairHashTest() {
 		mTheory = new Theory(Logics.QF_UF);
-		final DPLLEngine dpllEngine = new DPLLEngine(mTheory, new DefaultLogger(), () -> false);
-		final Clausifier clausifier = new Clausifier(dpllEngine, 0);
+		final DPLLEngine dpllEngine = new DPLLEngine(new DefaultLogger(), () -> false);
+		final Clausifier clausifier = new Clausifier(mTheory, dpllEngine, 0);
 		mCClosure = new CClosure(clausifier);
 		createtermss();
 		dpllEngine.getLogger().setLoglevel(LogProxy.LOGLEVEL_DEBUG);

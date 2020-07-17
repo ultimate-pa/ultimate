@@ -68,8 +68,8 @@ public class CongruentAddTest {
 		mTheory = new Theory(Logics.QF_UF);
 		mLogger = new DefaultLogger();
 		mLogger.setLoglevel(LogProxy.LOGLEVEL_DEBUG);
-		mDPLL = new DPLLEngine(mTheory, mLogger, () -> false);
-		mClausifier = new Clausifier(mDPLL, 0);
+		mDPLL = new DPLLEngine(mLogger, () -> false);
+		mClausifier = new Clausifier(mTheory, mDPLL, 0);
 		mClausifier.setLogic(Logics.QF_UF);
 		mClosure = mClausifier.getCClosure();
 		createterms();

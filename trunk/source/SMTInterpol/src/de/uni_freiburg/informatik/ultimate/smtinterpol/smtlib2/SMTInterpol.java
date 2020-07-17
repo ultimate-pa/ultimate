@@ -377,7 +377,7 @@ public class SMTInterpol extends NoopScript {
 	 *
 	 * @param callback The error callback.
 	 */
-	public void setErrorCallback(ErrorCallback callback) {
+	public void setErrorCallback(final ErrorCallback callback) {
 		mErrorCallback = callback;
 	}
 
@@ -406,7 +406,7 @@ public class SMTInterpol extends NoopScript {
 		if (mAssertions != null) {
 			mAssertions.clear();
 		}
-		setupClausifier(mEngine.getSMTTheory().getLogic());
+		setupClausifier(getTheory().getLogic());
 	}
 
 	@Override
@@ -614,8 +614,8 @@ public class SMTInterpol extends NoopScript {
 	private void setupClausifier(final Logics logic) {
 		try {
 			final int proofMode = getProofMode();
-			mEngine = new DPLLEngine(getTheory(), mLogger, mCancel);
-			mClausifier = new Clausifier(mEngine, proofMode);
+			mEngine = new DPLLEngine(mLogger, mCancel);
+			mClausifier = new Clausifier(getTheory(), mEngine, proofMode);
 			// This has to be before set-logic since we need to capture
 			// initialization of CClosure.
 			mEngine.setProofGeneration(proofMode > 0);
@@ -636,7 +636,7 @@ public class SMTInterpol extends NoopScript {
 				mAssertions = new ScopedArrayList<>();
 			}
 			mOptions.setOnline();
-			mEngine.getSMTTheory().setGlobalSymbols(getBooleanOption(SMTLIBConstants.GLOBAL_DECLARATIONS));
+			getTheory().setGlobalSymbols(getBooleanOption(SMTLIBConstants.GLOBAL_DECLARATIONS));
 		} catch (final UnsupportedOperationException eLogicUnsupported) {
 			super.reset();
 			mEngine = null;
@@ -803,7 +803,7 @@ public class SMTInterpol extends NoopScript {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, Term proofTree) {
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree) {
 		final long timeout = mSolverOptions.getTimeout();
 		if (timeout > 0) {
 			mCancel.setTimeout(timeout);
@@ -1174,7 +1174,7 @@ public class SMTInterpol extends NoopScript {
 	 */
 	public Term[] getSatisfiedLiterals() throws SMTLIBException {
 		checkAssertionStackModified();
-		return mEngine.getSatisfiedLiterals();
+		return mEngine.getSatisfiedLiterals(getTheory());
 	}
 
 	/**

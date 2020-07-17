@@ -101,7 +101,6 @@ public class DPLLEngine {
 	SimpleList<Clause> mLearnedClauses = new SimpleList<>();
 	private long mPropTime, mPropClauseTime, mExplainTime;
 	private long mSetTime, mCheckTime, mBacktrackTime;
-	private final Theory mSmtTheory;
 	private int mNumRandomSplits;
 
 	private boolean mHasModel;
@@ -138,8 +137,7 @@ public class DPLLEngine {
 
 	private final TerminationRequest mCancel;
 
-	public DPLLEngine(final Theory smtTheory, final LogProxy logger, final TerminationRequest cancel) {
-		mSmtTheory = smtTheory;
+	public DPLLEngine(final LogProxy logger, final TerminationRequest cancel) {
 		mCompleteness = COMPLETE;
 		assert logger != null;
 		mLogger = logger;
@@ -1342,21 +1340,17 @@ public class DPLLEngine {
 		mTheories = newTheories;
 	}
 
-	public Theory getSMTTheory() {
-		return mSmtTheory;
-	}
-
-	public String dumpClauses() {
+	public String dumpClauses(final Theory smtTheory) {
 		final StringBuilder sb = new StringBuilder();
 		for (final Clause c : mClauses) {
 			sb.append("(assert ");
 			final Literal[] lits = c.mLiterals;
 			if (lits.length == 1) {
-				sb.append(lits[0].getSMTFormula(mSmtTheory)).append(")\n");
+				sb.append(lits[0].getSMTFormula(smtTheory)).append(")\n");
 			} else {
 				sb.append("(or");
 				for (final Literal l : lits) {
-					sb.append(' ').append(l.getSMTFormula(mSmtTheory));
+					sb.append(' ').append(l.getSMTFormula(smtTheory));
 				}
 				sb.append("))\n");
 			}
@@ -1749,7 +1743,7 @@ public class DPLLEngine {
 		return mClauses;
 	}
 
-	public Term[] getSatisfiedLiterals() {
+	public Term[] getSatisfiedLiterals(final Theory smtTheory) {
 		int size = 0;
 		for (final Literal lit : mDPLLStack) {
 			if (!(lit.getAtom() instanceof NamedAtom)) {
@@ -1760,7 +1754,7 @@ public class DPLLEngine {
 		int i = -1;
 		for (final Literal lit : mDPLLStack) {
 			if (!(lit.getAtom() instanceof NamedAtom)) {
-				res[++i] = lit.getSMTFormula(mSmtTheory, true);
+				res[++i] = lit.getSMTFormula(smtTheory, true);
 			}
 		}
 		return res;
@@ -1807,7 +1801,7 @@ public class DPLLEngine {
 				if (!(l.getAtom() instanceof TrueAtom)) {
 					mBlocker[i] = l.getAtom().mDecideStatus.negate();
 				}
-				res[i] = l.getAtom().mDecideStatus == l ? mTerms[i] : getSMTTheory().term("not", mTerms[i]);
+				res[i] = l.getAtom().mDecideStatus == l ? mTerms[i] : mTerms[i].getTheory().term("not", mTerms[i]);
 			}
 			return res;
 		}

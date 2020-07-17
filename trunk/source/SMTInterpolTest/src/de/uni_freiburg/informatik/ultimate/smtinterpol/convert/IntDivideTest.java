@@ -49,8 +49,8 @@ public final class IntDivideTest {
 
 	public IntDivideTest() {
 		mTheory = new Theory(Logics.QF_UFLIRA);
-		final DPLLEngine dpllEngine = new DPLLEngine(mTheory, new DefaultLogger(), () -> false);
-		mClausifier = new Clausifier(dpllEngine, 0) {
+		final DPLLEngine dpllEngine = new DPLLEngine(new DefaultLogger(), () -> false);
+		mClausifier = new Clausifier(mTheory, dpllEngine, 0) {
 			@Override
 			public void addClause(final Literal[] lits, final ClauseDeletionHook hook, final ProofNode pn) {
 				mClauses.add(lits);
