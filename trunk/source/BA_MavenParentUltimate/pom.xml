@@ -83,7 +83,7 @@
 		<sonar.language>java</sonar.language>
 		<sonar.java.source>1.8</sonar.java.source>
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
-		<sonar.jacoco.reportPath>${jacoco.reportDir}/jacoco.exec</sonar.jacoco.reportPath>
+		<sonar.coverage.jacoco.xmlReportPaths>${jacoco.reportDir}/jacoco.exec</sonar.coverage.jacoco.xmlReportPaths>
 		<sonar.showProfiling>false</sonar.showProfiling>
 		<sonar.verbose>false</sonar.verbose>
 		<sonar.log.level>WARN</sonar.log.level>
