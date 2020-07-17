@@ -87,6 +87,7 @@
 		<sonar.showProfiling>false</sonar.showProfiling>
 		<sonar.verbose>false</sonar.verbose>
 		<sonar.log.level>WARN</sonar.log.level>
+		<sonar.cpd.cross_project>true</sonar.cpd.cross_project>
 
 		<!-- we currently do not use integration tests -->
 		<!-- <sonar.jacoco.itReportPath>${jacoco.reportDir}/jacoco-it.exec</sonar.jacoco.itReportPath> -->
