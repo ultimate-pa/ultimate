@@ -98,6 +98,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	private final ScoringMethod mAssertCodeBlockOrderSMTFeatureHeuristicScoringMethod;
 	private final int mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions;
 	private final PartitioningStrategy mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy;
+	private double mAssertCodeBlockOrderSMTFeatureHeuristicThreshold;
 
 	public AnnotateAndAsserterWithStmtOrderPrioritization(final ManagedScript mgdScriptTc,
 			final NestedFormulas<Term, Term> nestedSSA, final AnnotateAndAssertCodeBlocks aaacb,
@@ -107,10 +108,11 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		mAssertCodeBlocksOrder = assertCodeBlocksOrder;
 		mCheckSat = 0;
 
-		// TODO: Settings for this Hardcoded stuff
+		// TODO: Get actual Settings for this Hardcoded stuff
 		mAssertCodeBlockOrderSMTFeatureHeuristicScoringMethod = ScoringMethod.NUM_FUNCTIONS;
 		mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy = PartitioningStrategy.FIXED_NUM_PARTITIONS;
 		mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions = 4;
+		mAssertCodeBlockOrderSMTFeatureHeuristicThreshold = 0.75;
 	}
 
 	/**
@@ -481,6 +483,41 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			}
 		}
 	}
+	
+	private void partitionUsingThreshold(final LinkedHashSet<LinkedHashSet<Integer>> partitions,
+			final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
+
+		// The incremental Strategy creates N partitions.
+		// Example:
+		// Indices = [1,2,3,4,5,6]
+		// N = 4
+		// percentage_per_chunk = 1 / 4 = 0.25
+		// Chunk_size = 2
+		// Partitions = [1,2], [3,4], [5,6]
+
+		LinkedHashSet<Integer> partition_one = new LinkedHashSet<>();
+		LinkedHashSet<Integer> partition_two = new LinkedHashSet<>();
+
+		for (final Triple<Term, Double, Integer> triple : termScoreIndexTriples) {
+			Term term = triple.getFirst();
+			Double score  = triple.getSecond();
+			Integer index = triple.getThird();
+			if(score >= mAssertCodeBlockOrderSMTFeatureHeuristicThreshold) {
+				partition_one.add(index);
+			} else {
+				partition_two.add(index);
+			}
+		}
+		
+		if(!partition_one.isEmpty()) {
+			partitions.add(partition_one);
+		}
+		if(!partition_two.isEmpty()) {
+			partitions.add(partition_two);
+		}
+	}
+	
+	
 
 	// Function to partition a list of Terms according to their scores.
 	private LinkedHashSet<LinkedHashSet<Integer>>
@@ -492,7 +529,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 		} else if (mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy == PartitioningStrategy.THRESHOLD) {
 
-			throw new UnsupportedOperationException("PartitioningStrategy.THRESHOLD is not implemented yet");
+			partitionUsingThreshold(partitions, termScoreIndexTriples);
 		}
 
 		return partitions;

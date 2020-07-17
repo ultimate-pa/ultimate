@@ -84,6 +84,7 @@ public final class TAPreferences {
 	private final ScoringMethod mAssertCodeBlockOrderSMTFeatureHeuristicScoringMethod;
 	private final PartitioningStrategy mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy;
 	private final int mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions;
+	private final double mAssertCodeBlockOrderSMTFeatureHeuristicThreshold;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -183,6 +184,8 @@ public final class TAPreferences {
 				PartitioningStrategy.class);
 		mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions = mPrefs
 				.getInt(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS, 4);
+		mAssertCodeBlockOrderSMTFeatureHeuristicThreshold = mPrefs
+				.getDouble(TraceAbstractionPreferenceInitializer.DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD, 0.75);
 
 	}
 
@@ -448,5 +451,9 @@ public final class TAPreferences {
 
 	public Integer getAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions() {
 		return mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions;
+	}
+	
+	public Double getAssertCodeBlockOrderSMTFeatureHeuristicThreshold() {
+		return mAssertCodeBlockOrderSMTFeatureHeuristicThreshold;
 	}
 }

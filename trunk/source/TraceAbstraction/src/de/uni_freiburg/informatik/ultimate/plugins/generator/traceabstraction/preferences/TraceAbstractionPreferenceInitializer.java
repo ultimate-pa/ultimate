@@ -289,7 +289,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"if Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC, this setting defines which partitioning strategy is used.";
 
 	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
-			"Assert CodeBlocks Term Scoring Heuristic NUM_PARTITIONS";
+			"Assert CodeBlocks Term Scoring Heuristic number of partitions";
 	public static final Integer DEF_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS = 4;
 	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
 			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is FIXED_NUM_PARTITIONS, this setting defines the amount of partitions.";
@@ -391,6 +391,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS,
 						DEF_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS, DESC_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS,
 						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD,
+						DEF_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD, DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD,
+						PreferenceType.Double, new IUltimatePreferenceItemValidator.DoubleValidator(0.5, 1.0)),
 				new UltimatePreferenceItem<>(LABEL_OVERRIDE_INTERPOLANT_AUTOMATON, DEF_OVERRIDE_INTERPOLANT_AUTOMATON,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_AUTOMATON, InterpolantAutomaton.STRAIGHT_LINE,
