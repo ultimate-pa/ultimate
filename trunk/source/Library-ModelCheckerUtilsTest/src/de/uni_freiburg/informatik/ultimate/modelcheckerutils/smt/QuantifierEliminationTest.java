@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl.SortConstructor;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -355,6 +356,46 @@ public class QuantifierEliminationTest {
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mLogger.info("Result: " + result.toStringDirect());
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
+	}
+
+	@Test
+	public void plrTest07ExistsPositive() {
+		final FunDecl funDecl = new FunDecl(new SortConstructor[] { SmtSortUtils::getBoolSort }, SmtSortUtils::getBoolSort, "p");
+		funDecl.declareFuns(mScript);
+		final String formulaAsString = "(exists ((x Bool)) (and (p x) x))";
+		runQuantifierPusherTest(formulaAsString, "(p true)", true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void plrTest08ExistsNegative() {
+		final FunDecl funDecl = new FunDecl(new SortConstructor[] { SmtSortUtils::getBoolSort }, SmtSortUtils::getBoolSort, "p");
+		funDecl.declareFuns(mScript);
+		final String formulaAsString = "(exists ((x Bool)) (and (p x) (not x)))";
+		runQuantifierPusherTest(formulaAsString, "(p false)", true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void plrTest09ForallPositive() {
+		final FunDecl funDecl = new FunDecl(new SortConstructor[] { SmtSortUtils::getBoolSort }, SmtSortUtils::getBoolSort, "p");
+		funDecl.declareFuns(mScript);
+		final String formulaAsString = "(forall ((x Bool)) (or (p x) x))";
+		runQuantifierPusherTest(formulaAsString, "(p false)", true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void plrTest10ForallNegative() {
+		final FunDecl funDecl = new FunDecl(new SortConstructor[] { SmtSortUtils::getBoolSort }, SmtSortUtils::getBoolSort, "p");
+		funDecl.declareFuns(mScript);
+		final String formulaAsString = "(forall ((x Bool)) (and (p x) (not x)))";
+		runQuantifierPusherTest(formulaAsString, "(p true)", true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void plrTest11Multinegation() {
+		final FunDecl funDecl = new FunDecl(new SortConstructor[] { SmtSortUtils::getBoolSort }, SmtSortUtils::getBoolSort, "p");
+		funDecl.declareFuns(mScript);
+		final String formulaAsString = "(exists ((x Bool)) (and (p x) (not (not (not (not x))))))";
+		runQuantifierPusherTest(formulaAsString, "(p true)", true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
