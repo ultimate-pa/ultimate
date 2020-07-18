@@ -77,7 +77,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<!-- Path to dir were jacoco should append all the coverage metrics -->
-		<jacoco.reportDir>${project.basedir}/../target</jacoco.reportDir>
+		<jacoco.reportDir>${project.basedir}/target</jacoco.reportDir>
 
 		<!-- Sonar parameters -->
 		<sonar.language>java</sonar.language>
