@@ -247,6 +247,8 @@ public class OptionBuilder {
 			return builder.hasArg(true).numberOfArgs(1).type(Boolean.class).build();
 		case Integer:
 			return builder.hasArg(true).numberOfArgs(1).type(Integer.class).build();
+		case Double:
+			return builder.hasArg(true).numberOfArgs(1).type(Double.class).build();
 		case Combo:
 		case Color:
 		case Directory:
@@ -349,9 +351,8 @@ public class OptionBuilder {
 		final int lastIdx = pluginId.lastIndexOf('.');
 		final String prefix = lastIdx > 0 ? pluginId.substring(lastIdx + 1) : pluginId;
 		final String unprocessedName = prefix + " " + label;
-		final String processedName = unprocessedName
-				.replaceAll(":", "").replaceAll("[ ()\"'.]+", ".")
-				.toLowerCase(Locale.ENGLISH);
+		final String processedName =
+				unprocessedName.replaceAll(":", "").replaceAll("[ ()\"'.]+", ".").toLowerCase(Locale.ENGLISH);
 		final int newLength = processedName.length();
 
 		if (newLength > MAX_NAME_LENGTH) {
