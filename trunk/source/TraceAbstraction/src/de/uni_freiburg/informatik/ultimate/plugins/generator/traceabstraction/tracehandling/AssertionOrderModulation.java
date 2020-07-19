@@ -44,8 +44,6 @@ public class AssertionOrderModulation<LETTER> {
 
 	private static final AssertCodeBlockOrder[] DEFAULT_ORDER = {
 
-			new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC),
-
 			AssertCodeBlockOrder.NOT_INCREMENTALLY,
 
 			new AssertCodeBlockOrder(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST1),
