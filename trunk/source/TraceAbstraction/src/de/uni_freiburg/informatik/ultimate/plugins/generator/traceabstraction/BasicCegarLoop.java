@@ -325,9 +325,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 		// Heuristic Emptiness Check
 		mUseHeuristicEmptinessCheck = taPrefs.useHeuristicEmptinessCheck();
-		mScoringMethod = taPrefs.HeuristicEmptinessCheckScoringMethod();
-		mAStarHeuristic = taPrefs.HeuristicEmptinessCheckAStarHeuristic();
-		mAStarRandomHeuristicSeed = taPrefs.HeuristicEmptinessCheckAStarHeuristicRandomSeed();
+		mScoringMethod = taPrefs.getHeuristicEmptinessCheckScoringMethod();
+		mAStarHeuristic = taPrefs.getHeuristicEmptinessCheckAStarHeuristic();
+		mAStarRandomHeuristicSeed = taPrefs.getHeuristicEmptinessCheckAStarHeuristicRandomSeed();
 	}
 
 	@Override

@@ -168,8 +168,7 @@ public final class TAPreferences {
 						ScoringMethod.class);
 
 		mHeuristicEmptinessCheckAStarHeuristicRandomSeed = mPrefs.getInt(
-				TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED,
-				1337);
+				TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED);
 
 		mSMTFeatureExtraction = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION);
 		mSMTFeatureExtractionDumpPath =
@@ -182,10 +181,10 @@ public final class TAPreferences {
 		mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy = mPrefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY,
 				PartitioningStrategy.class);
-		mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions = mPrefs
-				.getInt(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS, 4);
+		mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions =
+				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS);
 		mAssertCodeBlockOrderSMTFeatureHeuristicThreshold = mPrefs
-				.getDouble(TraceAbstractionPreferenceInitializer.DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD, 0.75);
+				.getDouble(TraceAbstractionPreferenceInitializer.DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD);
 
 	}
 
@@ -417,15 +416,15 @@ public final class TAPreferences {
 		return mHeuristicEmptinessCheck;
 	}
 
-	public ScoringMethod HeuristicEmptinessCheckScoringMethod() {
+	public ScoringMethod getHeuristicEmptinessCheckScoringMethod() {
 		return mHeuristicEmptinessCheckSmtFeatureScoringMethod;
 	}
 
-	public AStarHeuristic HeuristicEmptinessCheckAStarHeuristic() {
+	public AStarHeuristic getHeuristicEmptinessCheckAStarHeuristic() {
 		return mHeuristicEmptinessCheckAStarHeuristic;
 	}
 
-	public Integer HeuristicEmptinessCheckAStarHeuristicRandomSeed() {
+	public Integer getHeuristicEmptinessCheckAStarHeuristicRandomSeed() {
 		return mHeuristicEmptinessCheckAStarHeuristicRandomSeed;
 	}
 
@@ -452,7 +451,7 @@ public final class TAPreferences {
 	public Integer getAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions() {
 		return mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions;
 	}
-	
+
 	public Double getAssertCodeBlockOrderSMTFeatureHeuristicThreshold() {
 		return mAssertCodeBlockOrderSMTFeatureHeuristicThreshold;
 	}

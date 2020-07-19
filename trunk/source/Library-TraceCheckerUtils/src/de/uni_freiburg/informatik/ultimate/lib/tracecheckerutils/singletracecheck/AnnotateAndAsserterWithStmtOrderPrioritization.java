@@ -98,7 +98,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	private final ScoringMethod mAssertCodeBlockOrderSMTFeatureHeuristicScoringMethod;
 	private final int mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions;
 	private final PartitioningStrategy mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy;
-	private double mAssertCodeBlockOrderSMTFeatureHeuristicThreshold;
+	private final double mAssertCodeBlockOrderSMTFeatureHeuristicThreshold;
 
 	public AnnotateAndAsserterWithStmtOrderPrioritization(final ManagedScript mgdScriptTc,
 			final NestedFormulas<Term, Term> nestedSSA, final AnnotateAndAssertCodeBlocks aaacb,
@@ -243,21 +243,16 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 				mTcbg.reportNewCheckSat();
 				mTcbg.reportNewAssertedCodeBlocks(stmtsWithinLoop.size());
 			}
-		}
-		// Apply 2. heuristic
-		else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST2) {
+		} else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST2) {
 			mSatisfiable = annotateAndAssertStmtsAccording2Heuristic(mTrace, callPositions, pendingReturnPositions,
 					depth2Statements);
-		} // Apply 3. Heuristic
-		else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.INSIDE_LOOP_FIRST1) {
+		} else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.INSIDE_LOOP_FIRST1) {
 			mSatisfiable = annotateAndAssertStmtsAccording3Heuristic(mTrace, callPositions, pendingReturnPositions,
 					depth2Statements);
-		} // Apply 4. Heuristic
-		else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.MIX_INSIDE_OUTSIDE) {
+		} else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.MIX_INSIDE_OUTSIDE) {
 			mSatisfiable = annotateAndAssertStmtsAccording4Heuristic(mTrace, callPositions, pendingReturnPositions,
 					depth2Statements);
-		} // Apply 5. Heuristic
-		else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST) {
+		} else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST) {
 			mSatisfiable = annotateAndAssertStmtsAccording5Heuristic(mTrace, callPositions, pendingReturnPositions);
 		} else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.SMT_FEATURE_HEURISTIC) {
 			mSatisfiable =
@@ -483,7 +478,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			}
 		}
 	}
-	
+
 	private void partitionUsingThreshold(final LinkedHashSet<LinkedHashSet<Integer>> partitions,
 			final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
 
@@ -495,29 +490,27 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		// Chunk_size = 2
 		// Partitions = [1,2], [3,4], [5,6]
 
-		LinkedHashSet<Integer> partition_one = new LinkedHashSet<>();
-		LinkedHashSet<Integer> partition_two = new LinkedHashSet<>();
+		final LinkedHashSet<Integer> partition_one = new LinkedHashSet<>();
+		final LinkedHashSet<Integer> partition_two = new LinkedHashSet<>();
 
 		for (final Triple<Term, Double, Integer> triple : termScoreIndexTriples) {
-			Term term = triple.getFirst();
-			Double score  = triple.getSecond();
-			Integer index = triple.getThird();
-			if(score >= mAssertCodeBlockOrderSMTFeatureHeuristicThreshold) {
+			final Term term = triple.getFirst();
+			final Double score = triple.getSecond();
+			final Integer index = triple.getThird();
+			if (score >= mAssertCodeBlockOrderSMTFeatureHeuristicThreshold) {
 				partition_one.add(index);
 			} else {
 				partition_two.add(index);
 			}
 		}
-		
-		if(!partition_one.isEmpty()) {
+
+		if (!partition_one.isEmpty()) {
 			partitions.add(partition_one);
 		}
-		if(!partition_two.isEmpty()) {
+		if (!partition_two.isEmpty()) {
 			partitions.add(partition_two);
 		}
 	}
-	
-	
 
 	// Function to partition a list of Terms according to their scores.
 	private LinkedHashSet<LinkedHashSet<Integer>>
