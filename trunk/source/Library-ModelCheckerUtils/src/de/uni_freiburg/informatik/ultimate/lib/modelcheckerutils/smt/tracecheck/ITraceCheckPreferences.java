@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 
 /**
  * {@link ITraceCheckPreferences} describes types that provide all options that are of interest to the various
@@ -52,7 +53,7 @@ public interface ITraceCheckPreferences {
 	 * Code block assertion order. Determines in which order the different codeblocks of a trace are asserted during a
 	 * trace check.
 	 */
-	public enum AssertCodeBlockOrder {
+	public enum AssertCodeBlockOrderType {
 		/**
 		 * Assert all codeblocks at once.
 		 */
@@ -73,15 +74,16 @@ public interface ITraceCheckPreferences {
 		OUTSIDE_LOOP_FIRST2,
 
 		/**
-		 * Similar to {@link AssertCodeBlockOrder#OUTSIDE_LOOP_FIRST2}, but in reverse order (start with the deepest
+		 * Similar to {@link AssertCodeBlockOrderType#OUTSIDE_LOOP_FIRST2}, but in reverse order (start with the deepest
 		 * codeblocks).
 		 */
 		INSIDE_LOOP_FIRST1,
 
 		/**
-		 * Similar to {@link AssertCodeBlockOrder#OUTSIDE_LOOP_FIRST2} and
-		 * {@link AssertCodeBlockOrder#INSIDE_LOOP_FIRST1} in that it also uses the depth of a codeblock. This setting
-		 * alternates between depths, starting with depth 0, then asserting the maximal depth, then depth 1, etc.
+		 * Similar to {@link AssertCodeBlockOrderType#OUTSIDE_LOOP_FIRST2} and
+		 * {@link AssertCodeBlockOrderType#INSIDE_LOOP_FIRST1} in that it also uses the depth of a codeblock. This
+		 * setting alternates between depths, starting with depth 0, then asserting the maximal depth, then depth 1,
+		 * etc.
 		 */
 		MIX_INSIDE_OUTSIDE,
 
@@ -91,16 +93,83 @@ public interface ITraceCheckPreferences {
 		 */
 		TERMS_WITH_SMALL_CONSTANTS_FIRST,
 
+		/**
+		 * Use the SMT feature heuristic together with additional parameters.
+		 */
 		SMT_FEATURE_HEURISTIC
 	}
 
-	public enum PartitioningStrategy {
+	public enum SmtFeatureHeuristicPartitioningType {
 		FIXED_NUM_PARTITIONS, THRESHOLD
+	}
+
+	/**
+	 * Container that holds all settings related to {@link AssertCodeBlockOrderType}.
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public class AssertCodeBlockOrder {
+
+		public static final AssertCodeBlockOrder NOT_INCREMENTALLY =
+				new AssertCodeBlockOrder(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
+
+		public static final SmtFeatureHeuristicPartitioningType DEF_PARTITIONING_STRATEGY =
+				SmtFeatureHeuristicPartitioningType.FIXED_NUM_PARTITIONS;
+		public static final ScoringMethod DEF_SCORING_METHOD = ScoringMethod.NUM_FUNCTIONS;
+		public static final Integer DEF_NUM_PARTITIONS = 4;
+		public static final Double DEF_SCORE_THRESHOLD = 0.75;
+
+		private final AssertCodeBlockOrderType mAssertCodeBlockOrderType;
+		private final SmtFeatureHeuristicPartitioningType mSmtFeatureHeuristicPartitioningType;
+		private final ScoringMethod mSmtFeatureHeuristicScoringMethod;
+		private final int mSmtFeatureHeuristicNumPartitions;
+		private final double mSmtFeatureHeuristicThreshold;
+
+		public AssertCodeBlockOrder(final AssertCodeBlockOrderType assertCodeBlockOrderType) {
+			mAssertCodeBlockOrderType = assertCodeBlockOrderType;
+			mSmtFeatureHeuristicPartitioningType = DEF_PARTITIONING_STRATEGY;
+			mSmtFeatureHeuristicScoringMethod = DEF_SCORING_METHOD;
+			mSmtFeatureHeuristicNumPartitions = DEF_NUM_PARTITIONS;
+			mSmtFeatureHeuristicThreshold = DEF_SCORE_THRESHOLD;
+		}
+
+		public AssertCodeBlockOrder(final AssertCodeBlockOrderType assertCodeBlockOrderType,
+				final SmtFeatureHeuristicPartitioningType smtFeatureHeuristicPartitioningType,
+				final ScoringMethod smtFeatureHeuristicScoringMethod, final int smtFeatureHeuristicNumPartitions,
+				final double smtFeatureHeuristicThreshold) {
+			mAssertCodeBlockOrderType = assertCodeBlockOrderType;
+			mSmtFeatureHeuristicPartitioningType = smtFeatureHeuristicPartitioningType;
+			mSmtFeatureHeuristicScoringMethod = smtFeatureHeuristicScoringMethod;
+			mSmtFeatureHeuristicNumPartitions = smtFeatureHeuristicNumPartitions;
+			mSmtFeatureHeuristicThreshold = smtFeatureHeuristicThreshold;
+		}
+
+		public AssertCodeBlockOrderType getAssertCodeBlockOrderType() {
+			return mAssertCodeBlockOrderType;
+		}
+
+		public SmtFeatureHeuristicPartitioningType getSmtFeatureHeuristicPartitioningType() {
+			return mSmtFeatureHeuristicPartitioningType;
+		}
+
+		public ScoringMethod getSmtFeatureHeuristicScoringMethod() {
+			return mSmtFeatureHeuristicScoringMethod;
+		}
+
+		public int getSmtFeatureHeuristicNumPartitions() {
+			return mSmtFeatureHeuristicNumPartitions;
+		}
+
+		public double getSmtFeatureHeuristicThreshold() {
+			return mSmtFeatureHeuristicThreshold;
+		}
+
 	}
 
 	boolean getUseSeparateSolverForTracechecks();
 
-	AssertCodeBlockOrder getAssertCodeBlocksOrder();
+	AssertCodeBlockOrder getAssertCodeBlockOrder();
 
 	IUltimateServiceProvider getUltimateServices();
 

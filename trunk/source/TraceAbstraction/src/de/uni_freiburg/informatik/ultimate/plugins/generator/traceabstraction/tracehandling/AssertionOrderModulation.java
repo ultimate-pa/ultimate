@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 
@@ -43,19 +44,19 @@ public class AssertionOrderModulation<LETTER> {
 
 	private static final AssertCodeBlockOrder[] DEFAULT_ORDER = {
 
-			AssertCodeBlockOrder.SMT_FEATURE_HEURISTIC,
+			new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC),
 
 			AssertCodeBlockOrder.NOT_INCREMENTALLY,
 
-			AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1,
+			new AssertCodeBlockOrder(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST1),
 
-			AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST2,
+			new AssertCodeBlockOrder(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2),
 
-			AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST,
+			new AssertCodeBlockOrder(AssertCodeBlockOrderType.TERMS_WITH_SMALL_CONSTANTS_FIRST),
 
-			AssertCodeBlockOrder.INSIDE_LOOP_FIRST1,
+			new AssertCodeBlockOrder(AssertCodeBlockOrderType.INSIDE_LOOP_FIRST1),
 
-			AssertCodeBlockOrder.MIX_INSIDE_OUTSIDE, };
+			new AssertCodeBlockOrder(AssertCodeBlockOrderType.MIX_INSIDE_OUTSIDE), };
 
 	private final AssertCodeBlockOrder[] mOrder;
 	private final ILogger mLogger;

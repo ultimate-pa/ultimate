@@ -48,10 +48,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.PartitioningStrategy;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.SmtFeatureHeuristicPartitioningType;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -95,10 +95,6 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 	private final AssertCodeBlockOrder mAssertCodeBlocksOrder;
 	private int mCheckSat;
-	private final ScoringMethod mAssertCodeBlockOrderSMTFeatureHeuristicScoringMethod;
-	private final int mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions;
-	private final PartitioningStrategy mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy;
-	private final double mAssertCodeBlockOrderSMTFeatureHeuristicThreshold;
 
 	public AnnotateAndAsserterWithStmtOrderPrioritization(final ManagedScript mgdScriptTc,
 			final NestedFormulas<Term, Term> nestedSSA, final AnnotateAndAssertCodeBlocks aaacb,
@@ -107,12 +103,6 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		super(mgdScriptTc, nestedSSA, aaacb, tcbg, services);
 		mAssertCodeBlocksOrder = assertCodeBlocksOrder;
 		mCheckSat = 0;
-
-		// TODO: Get actual Settings for this Hardcoded stuff
-		mAssertCodeBlockOrderSMTFeatureHeuristicScoringMethod = ScoringMethod.NUM_FUNCTIONS;
-		mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy = PartitioningStrategy.FIXED_NUM_PARTITIONS;
-		mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions = 4;
-		mAssertCodeBlockOrderSMTFeatureHeuristicThreshold = 0.75;
 	}
 
 	/**
@@ -204,7 +194,6 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		final List<IcfgLocation> pps = TraceCheckUtils.getSequenceOfProgramPoints(mTrace);
 		final HashTreeRelation<IcfgLocation, Integer> rwt = computeRelationWithTreeSetForTrace(0, mTrace.length(), pps);
 
-		final Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, mTrace.length());
 		mAnnotSSA = new ModifiableNestedFormulas<>(mTrace, new TreeMap<Integer, Term>());
 
 		mAnnotSSA.setPrecondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
@@ -216,47 +205,23 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		// Report benchmark
 		mTcbg.reportNewCodeBlocks(mTrace.length());
 
-		// Apply 1. heuristic
-		if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1) {
-			// Statements outside of a loop have depth 0.
-			final Set<Integer> stmtsOutsideOfLoop = depth2Statements.get(0);
-			// First, annotate and assert the statements, which doesn't occur within a loop
-			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, pendingReturnPositions,
-					stmtsOutsideOfLoop);
+		final AssertCodeBlockOrderType orderType = mAssertCodeBlocksOrder.getAssertCodeBlockOrderType();
 
-			countCheckSat();
-			mSatisfiable = mMgdScriptTc.getScript().checkSat();
-			// Report benchmarks
-			mTcbg.reportNewCheckSat();
-			mTcbg.reportNewAssertedCodeBlocks(stmtsOutsideOfLoop.size());
-			// If the statements outside of a loop are not unsatisfiable, then annotate and assert also
-			// the rest of the statements
-			if (mSatisfiable != LBool.UNSAT && stmtsOutsideOfLoop.size() != mTrace.length()) {
-				final Set<Integer> stmtsWithinLoop = integerSetDifference(integersFromTrace, stmtsOutsideOfLoop);
-				buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, pendingReturnPositions,
-						stmtsWithinLoop);
-				assert callPositions.containsAll(mTrace.getCallPositions());
-				assert mTrace.getCallPositions().containsAll(callPositions);
-				countCheckSat();
-				mSatisfiable = mMgdScriptTc.getScript().checkSat();
-				// Report benchmarks
-				mTcbg.reportNewCheckSat();
-				mTcbg.reportNewAssertedCodeBlocks(stmtsWithinLoop.size());
-			}
-		} else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST2) {
-			mSatisfiable = annotateAndAssertStmtsAccording2Heuristic(mTrace, callPositions, pendingReturnPositions,
-					depth2Statements);
-		} else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.INSIDE_LOOP_FIRST1) {
-			mSatisfiable = annotateAndAssertStmtsAccording3Heuristic(mTrace, callPositions, pendingReturnPositions,
-					depth2Statements);
-		} else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.MIX_INSIDE_OUTSIDE) {
-			mSatisfiable = annotateAndAssertStmtsAccording4Heuristic(mTrace, callPositions, pendingReturnPositions,
-					depth2Statements);
-		} else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST) {
-			mSatisfiable = annotateAndAssertStmtsAccording5Heuristic(mTrace, callPositions, pendingReturnPositions);
-		} else if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.SMT_FEATURE_HEURISTIC) {
+		if (orderType == AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST1) {
+			mSatisfiable = annotateAndAssertOutsideLoopFirst1(callPositions, pendingReturnPositions, depth2Statements);
+		} else if (orderType == AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2) {
 			mSatisfiable =
-					annotateAndAssertStmtsAccordingSMTFeatureHeuristic(mTrace, callPositions, pendingReturnPositions);
+					annotateAndAssertOutsideLoopFirst2(mTrace, callPositions, pendingReturnPositions, depth2Statements);
+		} else if (orderType == AssertCodeBlockOrderType.INSIDE_LOOP_FIRST1) {
+			mSatisfiable =
+					annotateAndAssertInsideLoopFirst1(mTrace, callPositions, pendingReturnPositions, depth2Statements);
+		} else if (orderType == AssertCodeBlockOrderType.MIX_INSIDE_OUTSIDE) {
+			mSatisfiable =
+					annotateAndAssertMixInsideOutside(mTrace, callPositions, pendingReturnPositions, depth2Statements);
+		} else if (orderType == AssertCodeBlockOrderType.TERMS_WITH_SMALL_CONSTANTS_FIRST) {
+			mSatisfiable = annotateAndAssertTermsWithSmallConstantsFirst(mTrace, callPositions, pendingReturnPositions);
+		} else if (orderType == AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC) {
+			mSatisfiable = annotateAndAssertStmtsSmtFeatureHeuristic(mTrace, callPositions, pendingReturnPositions);
 		} else {
 			throw new AssertionError("unknown heuristic " + mAssertCodeBlocksOrder);
 		}
@@ -268,10 +233,38 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		mCheckSat++;
 	}
 
-	/**
-	 * See class description!
-	 */
-	private LBool annotateAndAssertStmtsAccording2Heuristic(final NestedWord<? extends IAction> trace,
+	private LBool annotateAndAssertOutsideLoopFirst1(final Collection<Integer> callPositions,
+			final Collection<Integer> pendingReturnPositions, final Map<Integer, Set<Integer>> depth2Statements) {
+		// Statements outside of a loop have depth 0.
+		final Set<Integer> stmtsOutsideOfLoop = depth2Statements.get(0);
+		// First, annotate and assert the statements, which doesn't occur within a loop
+		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, pendingReturnPositions,
+				stmtsOutsideOfLoop);
+
+		countCheckSat();
+		LBool sat = mMgdScriptTc.getScript().checkSat();
+		// Report benchmarks
+		mTcbg.reportNewCheckSat();
+		mTcbg.reportNewAssertedCodeBlocks(stmtsOutsideOfLoop.size());
+		// If the statements outside of a loop are not unsatisfiable, then annotate and assert also
+		// the rest of the statements
+		if (sat != LBool.UNSAT && stmtsOutsideOfLoop.size() != mTrace.length()) {
+			final Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, mTrace.length());
+			final Set<Integer> stmtsWithinLoop = integerSetDifference(integersFromTrace, stmtsOutsideOfLoop);
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, pendingReturnPositions,
+					stmtsWithinLoop);
+			assert callPositions.containsAll(mTrace.getCallPositions());
+			assert mTrace.getCallPositions().containsAll(callPositions);
+			countCheckSat();
+			sat = mMgdScriptTc.getScript().checkSat();
+			// Report benchmarks
+			mTcbg.reportNewCheckSat();
+			mTcbg.reportNewAssertedCodeBlocks(stmtsWithinLoop.size());
+		}
+		return sat;
+	}
+
+	private LBool annotateAndAssertOutsideLoopFirst2(final NestedWord<? extends IAction> trace,
 			final Collection<Integer> callPositions, final Collection<Integer> pendingReturnPositions,
 			final Map<Integer, Set<Integer>> depth2Statements) {
 		final List<Integer> keysInSortedOrder = new ArrayList<>(depth2Statements.keySet());
@@ -295,7 +288,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	/**
 	 * See class description!
 	 */
-	private LBool annotateAndAssertStmtsAccording3Heuristic(final NestedWord<? extends IAction> trace,
+	private LBool annotateAndAssertInsideLoopFirst1(final NestedWord<? extends IAction> trace,
 			final Collection<Integer> callPositions, final Collection<Integer> pendingReturnPositions,
 			final Map<Integer, Set<Integer>> depth2Statements) {
 		final List<Integer> keysInDescendingOrder = new ArrayList<>(depth2Statements.keySet());
@@ -319,7 +312,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	/**
 	 * See class description!
 	 */
-	private LBool annotateAndAssertStmtsAccording4Heuristic(final NestedWord<? extends IAction> trace,
+	private LBool annotateAndAssertMixInsideOutside(final NestedWord<? extends IAction> trace,
 			final Collection<Integer> callPositions, final Collection<Integer> pendingReturnPositions,
 			final Map<Integer, Set<Integer>> depth2Statements) {
 		final LinkedList<Integer> depthAsQueue = new LinkedList<>(depth2Statements.keySet());
@@ -352,7 +345,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * Determines whether the given term 't' contains a constant (a (real/natural) number) that is greater than the
 	 * given size 'constantSize'.
 	 */
-	private boolean termHasConstantGreaterThan(final Term t, final int constantSize) {
+	private static boolean termHasConstantGreaterThan(final Term t, final int constantSize) {
 		if (t instanceof ApplicationTerm) {
 			final Term[] args = ((ApplicationTerm) t).getParameters();
 			for (final Term arg : args) {
@@ -382,7 +375,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * contain only constants smaller than or equal to 'constantSize'. The second set contains the statements, which
 	 * contain only constants greater than 'constantSize'.
 	 */
-	private Set<Integer> partitionStmtsAccordingToConstantSize(final NestedWord<? extends IAction> trace,
+	private static Set<Integer> partitionStmtsAccordingToConstantSize(final NestedWord<? extends IAction> trace,
 			final int constantSize) {
 		final Set<Integer> result = new HashSet<>();
 
@@ -398,7 +391,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	/**
 	 * See class description!
 	 */
-	private LBool annotateAndAssertStmtsAccording5Heuristic(final NestedWord<? extends IAction> trace,
+	private LBool annotateAndAssertTermsWithSmallConstantsFirst(final NestedWord<? extends IAction> trace,
 			final Collection<Integer> callPositions, final Collection<Integer> pendingReturnPositions) {
 		// Choose statements that contains only constants <= constantSize and assert them
 		final int constantSize = 10;
@@ -423,13 +416,13 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	}
 
 	// Function to score a trace, using the SMTFeatureExtractionTermClassifier.
-	private List<Triple<Term, Double, Integer>> ScoreTrace(final NestedWord<? extends IAction> trace) {
+	private List<Triple<Term, Double, Integer>> scoreTrace(final NestedWord<? extends IAction> trace) {
 		final List<Triple<Term, Double, Integer>> termScoreIndexTriples = new ArrayList<>();
 		for (int i = 0; i < trace.length(); i++) {
 			final SMTFeatureExtractionTermClassifier tc = new SMTFeatureExtractionTermClassifier();
 			final Term term = ((IAction) trace.getSymbol(i)).getTransformula().getFormula();
 			tc.checkTerm(term);
-			final Double score = tc.getScore(mAssertCodeBlockOrderSMTFeatureHeuristicScoringMethod);
+			final Double score = tc.getScore(mAssertCodeBlocksOrder.getSmtFeatureHeuristicScoringMethod());
 			termScoreIndexTriples.add(new Triple<>(term, score, i));
 		}
 		// sort reverse
@@ -437,10 +430,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		return termScoreIndexTriples;
 	}
 
-	private LinkedHashSet<Integer> getIndices(final List<Triple<Term, Double, Integer>> termScoreIndexTriples,
+	private static LinkedHashSet<Integer> getIndices(final List<Triple<Term, Double, Integer>> termScoreIndexTriples,
 			final boolean random) {
-		final List<Integer> indices =
-				termScoreIndexTriples.stream().map(x -> x.getThird()).collect(Collectors.toList());
+		final List<Integer> indices = termScoreIndexTriples.stream().map(Triple<Term, Double, Integer>::getThird)
+				.collect(Collectors.toList());
 		if (random) {
 			Collections.shuffle(indices);
 		}
@@ -460,21 +453,19 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 		final LinkedHashSet<Integer> indices = getIndices(termScoreIndexTriples, random);
 
-		final int chunksize = (int) Math
-				.ceil(termScoreIndexTriples.size() * (1.0 / mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions));
+		final int chunksize = (int) Math.ceil(
+				termScoreIndexTriples.size() * (1.0 / mAssertCodeBlocksOrder.getSmtFeatureHeuristicNumPartitions()));
 
-		LinkedHashSet<Integer> current_chunk = new LinkedHashSet<>();
-		LinkedHashSet<Integer> last_chunk = new LinkedHashSet<>();
+		LinkedHashSet<Integer> currentChunk = new LinkedHashSet<>();
 
 		int numProcessed = 0;
 
 		for (final int index : indices) {
-			current_chunk.add(index);
+			currentChunk.add(index);
 			numProcessed += 1;
-			if (current_chunk.size() == chunksize || numProcessed == indices.size()) {
-				last_chunk = new LinkedHashSet<>(current_chunk);
-				partitions.add(last_chunk);
-				current_chunk = new LinkedHashSet<>();
+			if (currentChunk.size() == chunksize || numProcessed == indices.size()) {
+				partitions.add(new LinkedHashSet<>(currentChunk));
+				currentChunk = new LinkedHashSet<>();
 			}
 		}
 	}
@@ -490,25 +481,24 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		// Chunk_size = 2
 		// Partitions = [1,2], [3,4], [5,6]
 
-		final LinkedHashSet<Integer> partition_one = new LinkedHashSet<>();
-		final LinkedHashSet<Integer> partition_two = new LinkedHashSet<>();
+		final LinkedHashSet<Integer> partitionOne = new LinkedHashSet<>();
+		final LinkedHashSet<Integer> partitionTwo = new LinkedHashSet<>();
 
 		for (final Triple<Term, Double, Integer> triple : termScoreIndexTriples) {
-			final Term term = triple.getFirst();
 			final Double score = triple.getSecond();
 			final Integer index = triple.getThird();
-			if (score >= mAssertCodeBlockOrderSMTFeatureHeuristicThreshold) {
-				partition_one.add(index);
+			if (score >= mAssertCodeBlocksOrder.getSmtFeatureHeuristicThreshold()) {
+				partitionOne.add(index);
 			} else {
-				partition_two.add(index);
+				partitionTwo.add(index);
 			}
 		}
 
-		if (!partition_one.isEmpty()) {
-			partitions.add(partition_one);
+		if (!partitionOne.isEmpty()) {
+			partitions.add(partitionOne);
 		}
-		if (!partition_two.isEmpty()) {
-			partitions.add(partition_two);
+		if (!partitionTwo.isEmpty()) {
+			partitions.add(partitionTwo);
 		}
 	}
 
@@ -516,23 +506,26 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	private LinkedHashSet<LinkedHashSet<Integer>>
 			partitionStmtsAccordingToTermScores(final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
 		final LinkedHashSet<LinkedHashSet<Integer>> partitions = new LinkedHashSet<>();
-		if (mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy == PartitioningStrategy.FIXED_NUM_PARTITIONS) {
-
+		final SmtFeatureHeuristicPartitioningType partitioningType =
+				mAssertCodeBlocksOrder.getSmtFeatureHeuristicPartitioningType();
+		switch (partitioningType) {
+		case FIXED_NUM_PARTITIONS:
 			partitionFixedNumberOfPartitions(partitions, termScoreIndexTriples, false);
-
-		} else if (mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy == PartitioningStrategy.THRESHOLD) {
-
+			break;
+		case THRESHOLD:
 			partitionUsingThreshold(partitions, termScoreIndexTriples);
+			break;
+		default:
+			throw new UnsupportedOperationException("Unknown partitioning type " + partitioningType);
 		}
-
 		return partitions;
 	}
 
-	private LBool annotateAndAssertStmtsAccordingSMTFeatureHeuristic(final NestedWord<? extends IAction> trace,
+	private LBool annotateAndAssertStmtsSmtFeatureHeuristic(final NestedWord<? extends IAction> trace,
 			final Collection<Integer> callPositions, final Collection<Integer> pendingReturnPositions) {
 		LBool sat = LBool.UNKNOWN;
 		// Score Trace Terms and order them according to score.
-		final List<Triple<Term, Double, Integer>> termScoreTriples = ScoreTrace(trace);
+		final List<Triple<Term, Double, Integer>> termScoreTriples = scoreTrace(trace);
 		final LinkedHashSet<LinkedHashSet<Integer>> partitions = partitionStmtsAccordingToTermScores(termScoreTriples);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Trace: " + trace.toString());

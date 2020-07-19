@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
@@ -137,7 +138,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mNestedFormulas;
 	protected NestedSsaBuilder mNsb;
 	protected final TraceCheckStatisticsGenerator mTraceCheckBenchmarkGenerator;
-	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
+	protected final AssertCodeBlockOrder mAssertCodeBlockOrder;
 	protected final IIcfgSymbolTable mBoogie2SmtSymbolTable;
 	protected final FeasibilityCheckResult mFeasibilityResult;
 
@@ -145,36 +146,27 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
 	 * pendingContext maps the positions of pending returns to predicates which define possible variable valuations in
 	 * the context to which the return leads the trace.
-	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param assertCodeBlocksIncrementally
-	 *            If set to false, check-sat is called after all CodeBlocks are asserted. If set to true we use Betim's
-	 *            heuristic an incrementally assert CodeBlocks and do check-sat until all CodeBlocks are asserted or the
-	 *            result to a check-sat is UNSAT.
-	 * @param logger
-	 *            logger
 	 */
 	public TraceCheck(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
 			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final boolean computeRcfgProgramExecution,
+			final AssertCodeBlockOrder assertCodeBlockOrder, final boolean computeRcfgProgramExecution,
 			final boolean collectInterpolatSequenceStatistics) {
 		this(precondition, postcondition, pendingContexts, trace,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts,
 						csToolkit.getOldVarsAssignmentCache(), false),
-				services, csToolkit, assertCodeBlocksIncrementally, computeRcfgProgramExecution,
+				services, csToolkit, assertCodeBlockOrder, computeRcfgProgramExecution,
 				collectInterpolatSequenceStatistics, true);
 	}
 
 	protected TraceCheck(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv, final IUltimateServiceProvider services,
-			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlockOrder,
 			final boolean computeRcfgProgramExecution, final boolean collectInterpolatSequenceStatistics,
 			final boolean unlockSmtSolverAlsoIfUnsat) {
 		this(precondition, postcondition, pendingContexts, trace, rv, services, csToolkit, csToolkit.getManagedScript(),
-				assertCodeBlocksIncrementally, computeRcfgProgramExecution, collectInterpolatSequenceStatistics,
+				assertCodeBlockOrder, computeRcfgProgramExecution, collectInterpolatSequenceStatistics,
 				unlockSmtSolverAlsoIfUnsat);
 	}
 
@@ -187,7 +179,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final ManagedScript managedScriptTc,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final boolean computeRcfgProgramExecution,
+			final AssertCodeBlockOrder assertCodeBlockOrder, final boolean computeRcfgProgramExecution,
 			final boolean collectInterpolatSequenceStatistics, final boolean unlockSmtSolverAlsoIfUnsat) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
@@ -204,7 +196,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 		}
 		mPendingContexts = pendingContexts;
 		mNestedFormulas = rv;
-		mAssertCodeBlocksIncrementally = assertCodeBlocksIncrementally;
+		mAssertCodeBlockOrder = assertCodeBlockOrder;
 		mTraceCheckBenchmarkGenerator = new TraceCheckStatisticsGenerator(collectInterpolatSequenceStatistics);
 
 		boolean providesIcfgProgramExecution = false;
@@ -288,10 +280,10 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 		mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SsaConstructionTime.toString());
 
 		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
-		if (mAssertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY) {
+		if (mAssertCodeBlockOrder.getAssertCodeBlockOrderType() != AssertCodeBlockOrderType.NOT_INCREMENTALLY) {
 			mAAA = new AnnotateAndAsserterWithStmtOrderPrioritization(mTcSmtManager, ssa,
-					getAnnotateAndAsserterCodeBlocks(ssa), mTraceCheckBenchmarkGenerator,
-					mAssertCodeBlocksIncrementally, mServices);
+					getAnnotateAndAsserterCodeBlocks(ssa), mTraceCheckBenchmarkGenerator, mAssertCodeBlockOrder,
+					mServices);
 		} else {
 			mAAA = new AnnotateAndAsserter(mTcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
 					mTraceCheckBenchmarkGenerator, mServices);

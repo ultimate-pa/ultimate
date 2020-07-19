@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
@@ -74,7 +75,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final RefinementStrategyExceptionBlacklist mExceptionBlacklist;
 
 	// fields that can be read from the IUltimateServiceProvider
-	private final AssertCodeBlockOrder mAssertCodeBlocksOrder;
+	private final AssertCodeBlockOrder mAssertCodeBlockOrder;
 	private final UnsatCores mUnsatCores;
 	private final boolean mUseLiveVariables;
 	private final boolean mUseInterpolantConsolidation;
@@ -140,9 +141,8 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		mFeatureVectorDumpPath = taPrefs.getSMTFeatureExtractionDumpPath();
 
 		final IPreferenceProvider ultimatePrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
-		mAssertCodeBlocksOrder =
-				ultimatePrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
-						AssertCodeBlockOrder.class);
+		mAssertCodeBlockOrder = new TaAssertCodeBlockOrder(ultimatePrefs);
+
 		mUnsatCores = ultimatePrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
 		mUseLiveVariables = ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
 		mUseAbstractInterpretationPredicates = ultimatePrefs
@@ -241,8 +241,8 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	}
 
 	@Override
-	public AssertCodeBlockOrder getAssertCodeBlocksOrder() {
-		return mAssertCodeBlocksOrder;
+	public AssertCodeBlockOrder getAssertCodeBlockOrder() {
+		return mAssertCodeBlockOrder;
 	}
 
 	@Override
@@ -310,6 +310,31 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 				.setUseExternalSolver(getUseSeparateSolverForTracechecks(), getCommandExternalSolver(),
 						getLogicForExternalSolver())
 				.setSolverMode(getSolverMode());
+	}
+
+	public class TaAssertCodeBlockOrder extends AssertCodeBlockOrder {
+
+		public TaAssertCodeBlockOrder(final AssertCodeBlockOrderType assertCodeBlockOrderType,
+				final SmtFeatureHeuristicPartitioningType smtFeatureHeuristicPartitioningType,
+				final ScoringMethod smtFeatureHeuristicScoringMethod, final int smtFeatureHeuristicNumPartitions,
+				final double smtFeatureHeuristicThreshold) {
+			super(assertCodeBlockOrderType, smtFeatureHeuristicPartitioningType, smtFeatureHeuristicScoringMethod,
+					smtFeatureHeuristicNumPartitions, smtFeatureHeuristicThreshold);
+		}
+
+		public TaAssertCodeBlockOrder(final IPreferenceProvider ups) {
+			super(ups.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
+					AssertCodeBlockOrderType.class),
+					ups.getEnum(
+							TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY,
+							SmtFeatureHeuristicPartitioningType.class),
+					ups.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD,
+							ScoringMethod.class),
+					ups.getInt(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS),
+					ups.getDouble(
+							TraceAbstractionPreferenceInitializer.DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD));
+		}
+
 	}
 
 }

@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.PartitioningStrategy;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
@@ -81,10 +80,6 @@ public final class TAPreferences {
 	private final boolean mSMTFeatureExtraction;
 	private final String mSMTFeatureExtractionDumpPath;
 	private final boolean mOverrideInterpolantAutomaton;
-	private final ScoringMethod mAssertCodeBlockOrderSMTFeatureHeuristicScoringMethod;
-	private final PartitioningStrategy mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy;
-	private final int mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions;
-	private final double mAssertCodeBlockOrderSMTFeatureHeuristicThreshold;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -175,17 +170,6 @@ public final class TAPreferences {
 				mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH);
 		mOverrideInterpolantAutomaton =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OVERRIDE_INTERPOLANT_AUTOMATON);
-		mAssertCodeBlockOrderSMTFeatureHeuristicScoringMethod =
-				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD,
-						ScoringMethod.class);
-		mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy = mPrefs.getEnum(
-				TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY,
-				PartitioningStrategy.class);
-		mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions =
-				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS);
-		mAssertCodeBlockOrderSMTFeatureHeuristicThreshold = mPrefs
-				.getDouble(TraceAbstractionPreferenceInitializer.DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD);
-
 	}
 
 	/**
@@ -440,19 +424,4 @@ public final class TAPreferences {
 		return mOverrideInterpolantAutomaton;
 	}
 
-	public ScoringMethod getAssertCodeblocksHeuristic() {
-		return mAssertCodeBlockOrderSMTFeatureHeuristicScoringMethod;
-	}
-
-	public PartitioningStrategy getAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy() {
-		return mAssertCodeBlockOrderSMTFeatureHeuristicPartitioningStrategy;
-	}
-
-	public Integer getAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions() {
-		return mAssertCodeBlockOrderSMTFeatureHeuristicNumPartitions;
-	}
-
-	public Double getAssertCodeBlockOrderSMTFeatureHeuristicThreshold() {
-		return mAssertCodeBlockOrderSMTFeatureHeuristicThreshold;
-	}
 }

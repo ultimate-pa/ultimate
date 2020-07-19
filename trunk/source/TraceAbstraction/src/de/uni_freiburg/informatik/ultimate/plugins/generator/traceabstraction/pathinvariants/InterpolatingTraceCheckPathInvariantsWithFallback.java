@@ -68,13 +68,13 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 	public InterpolatingTraceCheckPathInvariantsWithFallback(final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
 			final NestedRun<LETTER, IPredicate> run, final CfgSmtToolkit csToolkit,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
+			final AssertCodeBlockOrder assertCodeBlockOrder, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final InvariantSynthesisSettings invariantSynthesisSettings,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final IIcfg<?> icfgContainer, final boolean collectInterpolantStatistics) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), run.getStateSequence(), services, csToolkit,
-				csToolkit.getManagedScript(), predicateFactory, predicateUnifier, assertCodeBlocksIncrementally,
+				csToolkit.getManagedScript(), predicateFactory, predicateUnifier, assertCodeBlockOrder,
 				computeRcfgProgramExecution, collectInterpolantStatistics, simplificationTechnique,
 				xnfConversionTechnique);
 		mNestedRun = run;
@@ -97,10 +97,9 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 	@Override
 	protected void computeInterpolants(final Set<Integer> interpolatedPositions,
 			final InterpolationTechnique interpolation) {
-		final PathInvariantsGenerator<LETTER> pathInvariantsGenerator =
-				new PathInvariantsGenerator<>(super.mServices, mNestedRun, super.getPrecondition(),
-						super.getPostcondition(), mPredicateFactory, mPredicateUnifier, mIcfg,
-						mInvariantSynthesisSettings, mSimplificationTechnique, mXnfConversionTechnique);
+		final PathInvariantsGenerator<LETTER> pathInvariantsGenerator = new PathInvariantsGenerator<>(super.mServices,
+				mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateFactory, mPredicateUnifier,
+				mIcfg, mInvariantSynthesisSettings, mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolantComputationStatus = pathInvariantsGenerator.getInterpolantComputationStatus();
 		final IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {

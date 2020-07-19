@@ -58,9 +58,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
@@ -119,8 +119,8 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 
 	public TraceCheckSpWp(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
-			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			final UnsatCores unsatCores, final boolean useLiveVariables, final IUltimateServiceProvider services,
+			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlockOrder, final UnsatCores unsatCores,
+			final boolean useLiveVariables, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
 			final ManagedScript mgdScriptTc, final XnfConversionTechnique xnfConversionTechnique,
@@ -128,9 +128,8 @@ public class TraceCheckSpWp<LETTER extends IAction> extends InterpolatingTraceCh
 			final boolean collectInterpolatSequenceStatistics) {
 		// superclass does feasibility check
 		super(precondition, postcondition, pendingContexts, trace, controlLocationSequence, services, csToolkit,
-				mgdScriptTc, predicateFactory, predicateUnifier, assertCodeBlocksIncrementally,
-				computeRcfgProgramExecution, collectInterpolatSequenceStatistics, simplificationTechnique,
-				xnfConversionTechnique);
+				mgdScriptTc, predicateFactory, predicateUnifier, assertCodeBlockOrder, computeRcfgProgramExecution,
+				collectInterpolatSequenceStatistics, simplificationTechnique, xnfConversionTechnique);
 		mUnsatCores = unsatCores;
 		mLiveVariables = useLiveVariables;
 		switch (interpolation) {

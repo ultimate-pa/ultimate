@@ -35,27 +35,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class TraceCheckWithAccessibleSSATerms extends TraceCheck<CodeBlock> {
 
-	private final Script mScript;
-
 	public TraceCheckWithAccessibleSSATerms(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<CodeBlock> trace,
-			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlockOrder,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
-			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
 			final boolean collectInterpolatSequenceStatistics) {
-		super(precondition, postcondition, pendingContexts, trace, services, csToolkit, assertCodeBlocksIncrementally,
+		super(precondition, postcondition, pendingContexts, trace, services, csToolkit, assertCodeBlockOrder,
 				computeRcfgProgramExecution, collectInterpolatSequenceStatistics);
-		mScript = csToolkit.getManagedScript().getScript();
 	}
 
 	public void traceCheckFinished() {

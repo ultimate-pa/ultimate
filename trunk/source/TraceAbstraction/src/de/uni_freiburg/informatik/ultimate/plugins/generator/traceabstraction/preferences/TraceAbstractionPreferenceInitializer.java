@@ -35,7 +35,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.PartitioningStrategy;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.SmtFeatureHeuristicPartitioningType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -277,29 +278,31 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD =
 			"Assert CodeBlocks Term Scoring Heuristic";
-	public static final ScoringMethod DEF_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD = ScoringMethod.NUM_FUNCTIONS;
+	public static final ScoringMethod DEF_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD =
+			AssertCodeBlockOrder.DEF_SCORING_METHOD;
 	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD =
 			"if Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC, each term in a trace is scored. This setting defines which scoring method is used to score traces";
 
 	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
 			"Assert CodeBlocks Term Scoring Heuristic Partitioning Strategy";
-	public static final PartitioningStrategy DEF_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
-			PartitioningStrategy.FIXED_NUM_PARTITIONS;
+	public static final SmtFeatureHeuristicPartitioningType DEF_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
+			AssertCodeBlockOrder.DEF_PARTITIONING_STRATEGY;
 	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
 			"if Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC, this setting defines which partitioning strategy is used.";
 
 	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
 			"Assert CodeBlocks Term Scoring Heuristic number of partitions";
-	public static final Integer DEF_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS = 4;
+	public static final Integer DEF_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
+			AssertCodeBlockOrder.DEF_NUM_PARTITIONS;
 	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
 			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is FIXED_NUM_PARTITIONS, this setting defines the amount of partitions.";
-	
+
 	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
 			"Assert CodeBlocks Term Scoring Heuristic Score Threshold";
-	public static final Double DEF_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD = 0.75;
+	public static final Double DEF_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
+			AssertCodeBlockOrder.DEF_SCORE_THRESHOLD;
 	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
 			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is THRESHOLD, two partitions are created, one partition contains all terms >= threshold  and one all terms < threshold";
-
 
 	/**
 	 * Constructor.
@@ -380,20 +383,22 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						UnsatCores.values()),
 				new UltimatePreferenceItem<>(LABEL_LIVE_VARIABLES, Boolean.TRUE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
-						AssertCodeBlockOrder.NOT_INCREMENTALLY, PreferenceType.Combo, AssertCodeBlockOrder.values()),
+						AssertCodeBlockOrderType.NOT_INCREMENTALLY, PreferenceType.Combo,
+						AssertCodeBlockOrderType.values()),
 				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD,
 						DEF_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD, DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD,
 						PreferenceType.Combo, ScoringMethod.values()),
 				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY,
 						DEF_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY,
 						DESC_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY, PreferenceType.Combo,
-						PartitioningStrategy.values()),
+						SmtFeatureHeuristicPartitioningType.values()),
 				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS,
 						DEF_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS, DESC_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS,
 						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD,
-						DEF_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD, DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD,
-						PreferenceType.Double, new IUltimatePreferenceItemValidator.DoubleValidator(0.5, 1.0)),
+						DEF_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD,
+						DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD, PreferenceType.Double,
+						new IUltimatePreferenceItemValidator.DoubleValidator(0.5, 1.0)),
 				new UltimatePreferenceItem<>(LABEL_OVERRIDE_INTERPOLANT_AUTOMATON, DEF_OVERRIDE_INTERPOLANT_AUTOMATON,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_AUTOMATON, InterpolantAutomaton.STRAIGHT_LINE,

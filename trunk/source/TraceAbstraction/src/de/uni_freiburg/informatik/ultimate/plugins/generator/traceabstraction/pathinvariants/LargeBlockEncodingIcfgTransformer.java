@@ -255,7 +255,6 @@ public final class LargeBlockEncodingIcfgTransformer {
 			final IPredicate precondition, final IPredicate postcondition, final IPredicateUnifier predicateUnifier,
 			final CfgSmtToolkit csToolkit) {
 		final SortedMap<Integer, IPredicate> pendingContexts = Collections.emptySortedMap();
-		final AssertCodeBlockOrder assertCodeBlocksIncrementally = AssertCodeBlockOrder.NOT_INCREMENTALLY;
 		final UnsatCores unsatCores = UnsatCores.CONJUNCT_LEVEL;
 		final boolean useLiveVariables = true;
 		final boolean computeRcfgProgramExecution = false;
@@ -265,8 +264,8 @@ public final class LargeBlockEncodingIcfgTransformer {
 		final XnfConversionTechnique xnfConversionTechnique =
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 		final TraceCheckSpWp<? extends IAction> tc = new TraceCheckSpWp<>(precondition, postcondition, pendingContexts,
-				run.getWord(), csToolkit, assertCodeBlocksIncrementally, unsatCores, useLiveVariables, mServices,
-				computeRcfgProgramExecution, mPredicateFactory, predicateUnifier, interpolation, mgdScriptTc,
+				run.getWord(), csToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, unsatCores, useLiveVariables,
+				mServices, computeRcfgProgramExecution, mPredicateFactory, predicateUnifier, interpolation, mgdScriptTc,
 				xnfConversionTechnique, simplificationTechnique, run.getStateSequence(), false);
 		return tc.getInterpolants();
 	}

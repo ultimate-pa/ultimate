@@ -146,7 +146,7 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 		final InterpolatingTraceCheckCraig<LETTER> itcc = new InterpolatingTraceCheckCraig<>(preCondition,
 				postCondition, pendingContexts, nestedWord, counterexampleRun.getStateSequence(), mServices,
 				mPrefs.getCfgSmtToolkit(), mScript, (PredicateFactory) mPredicateUnifier.getPredicateFactory(),
-				mPredicateUnifier, mPrefs.getAssertCodeBlocksOrder(), mPrefs.computeCounterexample(),
+				mPredicateUnifier, mPrefs.getAssertCodeBlockOrder(), mPrefs.computeCounterexample(),
 				mPrefs.collectInterpolantStatistics(), InterpolationTechnique.Craig_NestedInterpolation,
 				instanticateArrayExt, mPrefs.getXnfConversionTechnique(), mPrefs.getSimplificationTechnique(),
 				innerRecursiveNestedInterpolationCall);

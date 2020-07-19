@@ -74,25 +74,19 @@ public abstract class InterpolatingTraceCheck<LETTER extends IAction> extends Tr
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
 	 * pendingContext maps the positions of pending returns to predicates which define possible variable valuations in
 	 * the context to which the return leads the trace.
-	 *
-	 * @param predicateFactory
-	 * @param assertCodeBlocksIncrementally
-	 *            If set to false, check-sat is called after all CodeBlocks are asserted. If set to true we use Betims
-	 *            heuristic an incrementally assert CodeBlocks and do check-sat until all CodeBlocks are asserted or the
-	 *            result to a check-sat is UNSAT.
 	 */
 	public InterpolatingTraceCheck(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
 			final List<? extends Object> controlLocationSequence, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final ManagedScript tcSmtManager, final PredicateFactory predicateFactory,
-			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlockOrder,
 			final boolean computeRcfgProgramExecution, final boolean collectInterpolatSequenceStatistics,
 			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(precondition, postcondition, pendingContexts, trace,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts,
 						csToolkit.getOldVarsAssignmentCache(), false),
-				services, csToolkit, tcSmtManager, assertCodeBlocksIncrementally, computeRcfgProgramExecution,
+				services, csToolkit, tcSmtManager, assertCodeBlockOrder, computeRcfgProgramExecution,
 				collectInterpolatSequenceStatistics, false);
 		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = predicateFactory;

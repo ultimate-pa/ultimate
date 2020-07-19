@@ -46,11 +46,11 @@ public class MammothNoAmRefinementStrategy<LETTER extends IIcfgTransition<?>> ex
 	public MammothNoAmRefinementStrategy(final StrategyModuleFactory<LETTER> factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
-				new IIpTcStrategyModule[] {
-						factory.createIpTcStrategyModuleSmtInterpolCraig(false, InterpolationTechnique.Craig_TreeInterpolation,
-								true, AssertCodeBlockOrder.NOT_INCREMENTALLY),
+				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(false,
+						InterpolationTechnique.Craig_TreeInterpolation, true, AssertCodeBlockOrder.NOT_INCREMENTALLY),
 						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP,
-								AssertCodeBlockOrder.NOT_INCREMENTALLY) }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+								AssertCodeBlockOrder.NOT_INCREMENTALLY) },
+				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@Override
