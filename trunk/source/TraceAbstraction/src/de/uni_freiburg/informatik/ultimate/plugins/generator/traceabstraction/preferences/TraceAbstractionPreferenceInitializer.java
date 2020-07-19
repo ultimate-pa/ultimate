@@ -584,6 +584,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		CAMEL_NO_AM,
 		/**
+		 * Like {@link #CAMEL_NO_AM}, but only uses {@link AssertCodeBlockOrderType#SMT_FEATURE_HEURISTIC} as assertion
+		 * order.
+		 */
+		CAMEL_SMT_AM,
+		/**
 		 * An integer strategy without assertion order modulation using SMTInterpol with interpolation, Z3 with FP, and
 		 * Mathsat with FP. This strategy is used by ReqChecker.
 		 */
