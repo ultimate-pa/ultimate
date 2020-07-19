@@ -60,7 +60,7 @@ public class SifaTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> ext
 				new AssertCodeBlockOrder(AssertCodeBlockOrderType.TERMS_WITH_SMALL_CONSTANTS_FIRST) };
 
 		final IIpTcStrategyModule<?, LETTER> smtinterpol = factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-				InterpolationTechnique.Craig_TreeInterpolation, true, order);
+				InterpolationTechnique.Craig_TreeInterpolation, order);
 		final IIpTcStrategyModule<?, LETTER> z3 =
 				factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP, order);
 		final IIpTcStrategyModule<?, LETTER> sifa = factory.createIpTcStrategyModuleSifa();

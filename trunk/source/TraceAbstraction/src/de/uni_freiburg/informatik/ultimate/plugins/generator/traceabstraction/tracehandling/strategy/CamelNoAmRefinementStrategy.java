@@ -51,7 +51,7 @@ public class CamelNoAmRefinementStrategy<LETTER extends IIcfgTransition<?>> exte
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
 				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-						InterpolationTechnique.Craig_NestedInterpolation, true, AssertCodeBlockOrder.NOT_INCREMENTALLY),
+						InterpolationTechnique.Craig_NestedInterpolation, AssertCodeBlockOrder.NOT_INCREMENTALLY),
 						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates,
 								AssertCodeBlockOrder.NOT_INCREMENTALLY) },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);

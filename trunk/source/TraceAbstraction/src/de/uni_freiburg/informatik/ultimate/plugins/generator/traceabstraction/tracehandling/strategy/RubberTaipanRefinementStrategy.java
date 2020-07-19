@@ -55,7 +55,7 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> e
 			createModules(final StrategyModuleFactory<LETTER> factory) {
 
 		final IIpTcStrategyModule<?, LETTER> smtinterpol = factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-				InterpolationTechnique.Craig_TreeInterpolation, true);
+				InterpolationTechnique.Craig_TreeInterpolation);
 		final IIpTcStrategyModule<?, LETTER> z3 =
 				factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP);
 		final IIpTcStrategyModule<?, LETTER> cvc4 = factory.createIpTcStrategyModuleCVC4(false,

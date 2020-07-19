@@ -44,9 +44,8 @@ public class SmtInterpolRefinementStrategy<LETTER extends IIcfgTransition<?>> ex
 		super(factory,
 				new IIpTcStrategyModule[] {
 						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-								InterpolationTechnique.Craig_NestedInterpolation, false),
-						factory.createIpTcStrategyModuleSmtInterpolSpWp(false, InterpolationTechnique.ForwardPredicates,
-								true) }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+								InterpolationTechnique.Craig_NestedInterpolation),
+						factory.createIpTcStrategyModuleSmtInterpolSpWp(false, InterpolationTechnique.ForwardPredicates) }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@Override

@@ -56,7 +56,7 @@ public class PenguinRefinementStrategy<LETTER extends IIcfgTransition<?>> extend
 		super(factory,
 				new IIpTcStrategyModule[] {
 						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-								InterpolationTechnique.Craig_TreeInterpolation, true),
+								InterpolationTechnique.Craig_TreeInterpolation),
 						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP),
 						factory.createIpTcStrategyModuleCVC4(false, InterpolationTechnique.FPandBP,
 								SolverBuilder.LOGIC_CVC4_DEFAULT), },

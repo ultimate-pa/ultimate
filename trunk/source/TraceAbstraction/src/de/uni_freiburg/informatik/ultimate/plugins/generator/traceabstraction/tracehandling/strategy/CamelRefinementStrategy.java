@@ -52,7 +52,7 @@ public class CamelRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 		super(factory,
 				new IIpTcStrategyModule[] {
 						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-								InterpolationTechnique.Craig_NestedInterpolation, true),
+								InterpolationTechnique.Craig_NestedInterpolation),
 						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates) },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}

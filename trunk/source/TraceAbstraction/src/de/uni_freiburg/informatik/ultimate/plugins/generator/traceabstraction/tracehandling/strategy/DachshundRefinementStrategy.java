@@ -53,7 +53,7 @@ public class DachshundRefinementStrategy<LETTER extends IIcfgTransition<?>> exte
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
 				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-						InterpolationTechnique.Craig_NestedInterpolation, true), factory.createIpTcStrategyModulePdr() }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+						InterpolationTechnique.Craig_NestedInterpolation), factory.createIpTcStrategyModulePdr() }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
 	@Override

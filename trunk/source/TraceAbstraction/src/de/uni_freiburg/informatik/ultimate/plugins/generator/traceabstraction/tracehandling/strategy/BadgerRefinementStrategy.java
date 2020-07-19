@@ -50,7 +50,7 @@ public class BadgerRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 		super(factory,
 				new IIpTcStrategyModule[] {
 						factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-								InterpolationTechnique.Craig_NestedInterpolation, true),
+								InterpolationTechnique.Craig_NestedInterpolation),
 						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.ForwardPredicates),
 						factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect) },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);

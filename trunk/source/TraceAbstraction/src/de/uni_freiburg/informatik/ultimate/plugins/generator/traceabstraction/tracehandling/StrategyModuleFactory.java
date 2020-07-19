@@ -109,8 +109,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSmtInterpolCraig(final boolean useTimeout,
-			final InterpolationTechnique technique, final boolean arrayInterpolation,
-			final AssertCodeBlockOrder... order) {
+			final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModuleSmtInterpolCraig<>(mTaskIdentifier, mServices,
 				mPrefs, mCounterexample, mPrecondition, mPostcondition,
 				new AssertionOrderModulation<>(mPathProgramCache, mLogger, order), mPredicateUnifier, mPredicateFactory,
@@ -118,8 +117,7 @@ public class StrategyModuleFactory<LETTER extends IIcfgTransition<?>> {
 	}
 
 	public IIpTcStrategyModule<?, LETTER> createIpTcStrategyModuleSmtInterpolSpWp(final boolean useTimeout,
-			final InterpolationTechnique technique, final boolean arrayInterpolation,
-			final AssertCodeBlockOrder... order) {
+			final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
 		return createModuleWrapperIfNecessary(new IpTcStrategyModuleSmtInterpolSpWp<>(mTaskIdentifier, mServices,
 				mPrefs, mCounterexample, mPrecondition, mPostcondition,
 				new AssertionOrderModulation<>(mPathProgramCache, mLogger, order), mPredicateUnifier, mPredicateFactory,

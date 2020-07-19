@@ -46,7 +46,7 @@ public class MammothRefinementStrategy<LETTER extends IIcfgTransition<?>> extend
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory,
 				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(false,
-						InterpolationTechnique.Craig_TreeInterpolation, true),
+						InterpolationTechnique.Craig_TreeInterpolation),
 						factory.createIpTcStrategyModuleZ3(false, InterpolationTechnique.FPandBP) }, factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
