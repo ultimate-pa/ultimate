@@ -76,21 +76,14 @@
 		<!-- Encoding settings -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-		<!-- Path to dir were jacoco should append all the coverage metrics -->
-		<!-- <jacoco.reportDir>${project.basedir}/target</jacoco.reportDir> -->
-
 		<!-- Sonar parameters -->
 		<sonar.language>java</sonar.language>
 		<sonar.java.source>1.8</sonar.java.source>
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
-		<!-- <sonar.coverage.jacoco.xmlReportPaths>${jacoco.reportDir}/jacoco.exec</sonar.coverage.jacoco.xmlReportPaths> -->
 		<sonar.showProfiling>false</sonar.showProfiling>
 		<sonar.verbose>false</sonar.verbose>
 		<sonar.log.level>WARN</sonar.log.level>
 		<sonar.cpd.cross_project>true</sonar.cpd.cross_project>
-
-		<!-- we currently do not use integration tests -->
-		<!-- <sonar.jacoco.itReportPath>${jacoco.reportDir}/jacoco-it.exec</sonar.jacoco.itReportPath> -->
 
 		<!-- Exclude completely from any sonar analysis (including coverage) -->
 		<sonar.exclusions>
@@ -642,10 +635,12 @@
 								<goals>
 									<goal>prepare-agent</goal>
 								</goals>
-								<configuration>
-									<!-- <destFile>${sonar.jacoco.reportPath}</destFile> -->
-									<append>true</append>
-								</configuration>
+							</execution>
+							<execution>
+								<id>report</id>
+								<goals>
+									<goal>report</goal>
+								</goals>
 							</execution>
 						</executions>
 					</plugin>
@@ -726,10 +721,12 @@
 								<goals>
 									<goal>prepare-agent</goal>
 								</goals>
-								<configuration>
-									<!-- <destFile>${sonar.jacoco.reportPath}</destFile> -->
-									<append>true</append>
-								</configuration>
+							</execution>
+							<execution>
+								<id>report</id>
+								<goals>
+									<goal>report</goal>
+								</goals>
 							</execution>
 						</executions>
 					</plugin>
@@ -743,9 +740,6 @@
 							<!-- We should not publish the repo token, but I dont know any other
 								way of telling travis. Its either here or in .travis.yml -->
 							<repoToken>EfXcoEYdCZRch9bAt6OULUTnGEz43OyEw</repoToken>
-							<jacocoReports>
-								<jacocoReport>${jacoco.reportDir}/report/jacoco.xml</jacocoReport>
-							</jacocoReports>
 						</configuration>
 					</plugin>
 				</plugins>
