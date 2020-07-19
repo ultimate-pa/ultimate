@@ -111,14 +111,13 @@ public interface ITraceCheckPreferences {
 	 */
 	public class AssertCodeBlockOrder {
 
-		public static final AssertCodeBlockOrder NOT_INCREMENTALLY =
-				new AssertCodeBlockOrder(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
-
 		public static final SmtFeatureHeuristicPartitioningType DEF_PARTITIONING_STRATEGY =
 				SmtFeatureHeuristicPartitioningType.FIXED_NUM_PARTITIONS;
 		public static final ScoringMethod DEF_SCORING_METHOD = ScoringMethod.NUM_FUNCTIONS;
-		public static final Integer DEF_NUM_PARTITIONS = 4;
-		public static final Double DEF_SCORE_THRESHOLD = 0.75;
+		public static final int DEF_NUM_PARTITIONS = 4;
+		public static final double DEF_SCORE_THRESHOLD = 0.75;
+		public static final AssertCodeBlockOrder NOT_INCREMENTALLY =
+				new AssertCodeBlockOrder(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
 
 		private final AssertCodeBlockOrderType mAssertCodeBlockOrderType;
 		private final SmtFeatureHeuristicPartitioningType mSmtFeatureHeuristicPartitioningType;
