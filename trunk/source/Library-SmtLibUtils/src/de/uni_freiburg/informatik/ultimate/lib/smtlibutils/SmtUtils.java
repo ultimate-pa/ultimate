@@ -2311,6 +2311,12 @@ public final class SmtUtils {
 		return rat;
 	}
 
+	public static Set<FunctionSymbol> extractNonTheoryFunctionSymbols(final Term term) {
+		final Set<Term> appTerms = new SubTermFinder(x -> (x instanceof ApplicationTerm)).findMatchingSubterms(term);
+		return appTerms.stream().map(x -> ((ApplicationTerm) x).getFunction()).filter(x -> !x.isIntern())
+				.collect(Collectors.toSet());
+	}
+
 	/**
 	 * SMTInterpol changed its API with 2.5-554-g428a944, so we cannot pass BigInteger indices anymore, but have to
 	 * convert them to strings. This function performs this conversion, until we can decide for each place which
