@@ -171,6 +171,14 @@ public class QuantifierUtils {
 	}
 
 	/**
+	 * @return true iff the quantifier is ∃ and the term is a disjunction or the
+	 *         quantifier is ∀ and the term is a conjunction.
+	 */
+	public static boolean isCorrespondingFiniteJunction(final int quantifier, final Term term) {
+		return getCorrespondingFiniteJunction(quantifier, term).length > 1;
+	}
+
+	/**
 	 * If the topmost symbol of the term is the dual finite connective (i.e. ∧ for
 	 * ∃, ∨ for ∀) then return all parameters of this {@link ApplicationTerm},
 	 * otherwise return a singleton array that contains the term. E.g., in case we
@@ -359,6 +367,10 @@ public class QuantifierUtils {
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
+	}
+
+	public static boolean isDerRelationSymbol(final int quantifier, final RelationSymbol relSymb) {
+		return relSymb.equals(getDerOperator(quantifier));
 	}
 
 
