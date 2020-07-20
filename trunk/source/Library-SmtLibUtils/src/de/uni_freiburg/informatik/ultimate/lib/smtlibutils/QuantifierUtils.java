@@ -42,8 +42,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Provides static methods for handling of quantifiers and their finite connectives
- * (and/or)
+ * Provides static methods for handling of quantifiers and their finite
+ * connectives (and/or)
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -54,8 +55,8 @@ public class QuantifierUtils {
 	}
 
 	/**
-	 * Compose term with outer operation of a XNF. For the case of existential quantification: Compose disjuncts to a
-	 * disjunction.
+	 * Compose term with outer operation of a XNF. For the case of existential
+	 * quantification: Compose disjuncts to a disjunction.
 	 */
 	public static Term applyCorrespondingFiniteConnective(final Script script, final int quantifier,
 			final Collection<Term> xjunctsOuter) {
@@ -76,8 +77,8 @@ public class QuantifierUtils {
 	}
 
 	/**
-	 * Compose term with inner operation of a XNF. For the case of existential quantification: Compose atoms to a
-	 * conjunction.
+	 * Compose term with inner operation of a XNF. For the case of existential
+	 * quantification: Compose atoms to a conjunction.
 	 */
 	public static Term applyDualFiniteConnective(final Script script, final int quantifier,
 			final Collection<Term> xjunctsInner) {
@@ -98,7 +99,8 @@ public class QuantifierUtils {
 	}
 
 	/**
-	 * Apply equals if quantifier is existential and not equals if quantifier is universal.
+	 * Apply equals if quantifier is existential and not equals if quantifier is
+	 * universal.
 	 */
 	public static Term applyDerOperator(final Script script, final int quantifier, final Term lhs, final Term rhs) {
 		Term result;
@@ -113,7 +115,8 @@ public class QuantifierUtils {
 	}
 
 	/**
-	 * Apply not equals if quantifier is existential and equals if quantifier is universal.
+	 * Apply not equals if quantifier is existential and equals if quantifier is
+	 * universal.
 	 */
 	public static Term applyAntiDerOperator(final Script script, final int quantifier, final Term lhs, final Term rhs) {
 		Term result;
@@ -211,7 +214,6 @@ public class QuantifierUtils {
 		return xjunctsOuter;
 	}
 
-
 	public static Term getNeutralElement(final Script script, final int quantifier) {
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			return script.term("false");
@@ -232,10 +234,9 @@ public class QuantifierUtils {
 		}
 	}
 
-
 	/**
-	 * Transform to DNF for existential quantifier,
-	 * transform to CNF for universal quantifier.
+	 * Transform to DNF for existential quantifier, transform to CNF for universal
+	 * quantifier.
 	 */
 	public static Term transformToXnf(final IUltimateServiceProvider services, final Script script,
 			final int quantifier, final ManagedScript freshTermVariableConstructor, Term term,
@@ -250,7 +251,6 @@ public class QuantifierUtils {
 		return term;
 	}
 
-
 	public static int getCorrespondingQuantifier(final String booleanConnective) {
 		if (booleanConnective.equals("and")) {
 			return QuantifiedFormula.FORALL;
@@ -260,7 +260,6 @@ public class QuantifierUtils {
 			throw new AssertionError("unsupported connective " + booleanConnective);
 		}
 	}
-
 
 	public static String getDualBooleanConnective(final String booleanConnective) {
 		if (booleanConnective.equals("and")) {
@@ -291,8 +290,24 @@ public class QuantifierUtils {
 	}
 
 	/**
-	 * Return inputTerm if quantifier is existential, negate and transform to NNF if
-	 * quantifier is universal.
+	 * Return inputTerm if quantifier is existential, negate if quantifier is
+	 * universal.
+	 */
+	public static Term negateIfUniversal(final Script script, final int quantifier, final Term inputTerm) {
+		Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = inputTerm;
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = SmtUtils.not(script, inputTerm);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
+
+	/**
+	 * Return inputTerm if quantifier is universal, negate and transform to NNF if
+	 * quantifier is existential.
 	 */
 	public static Term negateIfExistential(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final int quantifier, final Term inputTerm) {
@@ -300,6 +315,22 @@ public class QuantifierUtils {
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			result = new NnfTransformer(mgdScript, services, QuantifierHandling.IS_ATOM)
 					.transform(SmtUtils.not(mgdScript.getScript(), inputTerm));
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = inputTerm;
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
+
+	/**
+	 * Return inputTerm if quantifier is universal, negate if quantifier is
+	 * existential.
+	 */
+	public static Term negateIfExistential(final Script script, final int quantifier, final Term inputTerm) {
+		Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = SmtUtils.not(script, inputTerm);
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			result = inputTerm;
 		} else {
@@ -372,7 +403,6 @@ public class QuantifierUtils {
 	public static boolean isDerRelationSymbol(final int quantifier, final RelationSymbol relSymb) {
 		return relSymb.equals(getDerOperator(quantifier));
 	}
-
 
 	/**
 	 * @return A new set that is the projection of vars to the free variables of
