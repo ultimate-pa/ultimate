@@ -372,6 +372,7 @@ public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends Interp
 				assert interpolantAtReturnPosition != null;
 			}
 
+			mLogger.info("Compute interpolants for subsequence at non-pending call position " + nonPendingCall);
 			// Compute interpolants for subsequence and add them to interpolants
 			// computed by this traceCheck
 			final InterpolatingTraceCheckCraig<LETTER> tc = new InterpolatingTraceCheckCraig<>(precondition,
