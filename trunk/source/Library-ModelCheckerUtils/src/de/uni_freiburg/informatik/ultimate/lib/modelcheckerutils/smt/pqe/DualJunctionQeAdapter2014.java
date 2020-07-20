@@ -72,12 +72,12 @@ public class DualJunctionQeAdapter2014 extends DualJunctionQuantifierElimination
 		final Set<TermVariable> modifiableEliminateeSet = new LinkedHashSet<>(et.getEliminatees());
 		final Term[] resultdualJuncts = mXjunctPqe.tryToEliminate(et.getQuantifier(), dualJuncts,
 				modifiableEliminateeSet);
-		if (modifiableEliminateeSet.containsAll(et.getEliminatees())) {
+		final EliminationTask resultEt = new EliminationTask(et.getQuantifier(), modifiableEliminateeSet,
+				QuantifierUtils.applyDualFiniteConnective(mScript, et.getQuantifier(), resultdualJuncts));
+		if (resultEt.getEliminatees().containsAll(et.getEliminatees())) {
 			// no eliminatee has been removed
 			return null;
 		} else {
-			final EliminationTask resultEt = new EliminationTask(et.getQuantifier(), modifiableEliminateeSet,
-					QuantifierUtils.applyDualFiniteConnective(mScript, et.getQuantifier(), resultdualJuncts));
 			return new EliminationResult(resultEt, Collections.emptySet());
 		}
 	}
