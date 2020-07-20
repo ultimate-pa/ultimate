@@ -26,15 +26,22 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 
 public final class SmtTestGenerationUtils {
 
@@ -42,6 +49,10 @@ public final class SmtTestGenerationUtils {
 		// do not instantiate
 	}
 
+	/**
+	 * @deprecated Superseded by {@link SmtTestGenerationUtils#generateStringForTestfile2}.
+	 */
+	@Deprecated
 	public static String generateStringForTestfile(final Term term) {
 		final StringBuilder result = new StringBuilder();
 		result.append(System.lineSeparator());
@@ -96,6 +107,99 @@ public final class SmtTestGenerationUtils {
 		result.append("final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);");
 		return result.toString();
 	}
+
+
+	/**
+	 * Hack for generating tests for quantifier elimination. Probably usable for
+	 * SMT-based tests in general.
+	 */
+	public static String generateStringForTestfile2(final Term term) {
+		final TermVariable[] freeVars = term.getFreeVars();
+		final Set<FunctionSymbol> funSyms = SmtUtils.extractNonTheoryFunctionSymbols(term);
+		// collect sorts
+		final Set<Sort> sorts = new HashSet<>();
+		for (final TermVariable tv : freeVars) {
+			sorts.add(tv.getSort());
+		}
+		for (final FunctionSymbol fun : funSyms) {
+			sorts.add(fun.getReturnSort());
+			for (final Sort pSort : fun.getParameterSorts()) {
+				sorts.add(pSort);
+			}
+		}
+
+		final Map<Sort, String> sortVarMapping = new HashMap<>();
+		final int counter = 0;
+		for (final Sort sort : sorts) {
+			final String constructionString;
+			if (SmtSortUtils.isBoolSort(sort)) {
+				constructionString = "SmtSortUtils::getBoolSort";
+			} else if (SmtSortUtils.isRealSort(sort)) {
+				constructionString = "SmtSortUtils::getRealSort";
+			} else if (SmtSortUtils.isIntSort(sort)) {
+				constructionString = "SmtSortUtils::getIntSort";
+			} else if (SmtSortUtils.isArraySort(sort)) {
+				if (isIntIntArray(sort)) {
+					constructionString = "QuantifierEliminationTest::constructIntIntArray";
+				} else if (isIntIntIntArray(sort)) {
+					constructionString = "QuantifierEliminationTest::constructIntIntIntArray";
+				} else {
+					constructionString = "arraySort" + counter;
+				}
+			} else {
+				constructionString = "otherSort" + counter;
+			}
+			sortVarMapping.put(sort, constructionString);
+		}
+
+		final HashRelation<Sort, TermVariable> sort2TermVariable = new HashRelation<>();
+		for (final TermVariable tv : freeVars) {
+			sort2TermVariable.addPair(tv.getSort(), tv);
+		}
+		final HashRelation3<Sort[], Sort, FunctionSymbol> sortFunctionSymbol = new HashRelation3<>();
+		for (final FunctionSymbol funSym : funSyms) {
+			sortFunctionSymbol.addTriple(funSym.getParameterSorts(), funSym.getReturnSort(), funSym);
+		}
+		final StringBuilder result = new StringBuilder();
+		result.append(System.lineSeparator());
+
+		result.append("\tfinal FunDecl[] funDecls = new FunDecl[] {");
+		result.append(System.lineSeparator());
+
+		for (final Entry<Sort, HashSet<TermVariable>> entry : sort2TermVariable.entrySet()) {
+			final String idList = entry.getValue().stream().map(x -> ("\"" + x + "\""))
+					.collect(Collectors.joining(", "));
+			final String sortConstructionString = sortVarMapping.get(entry.getKey());
+			final String funDecl = String.format("\t\tnew FunDecl(%s, %s),", sortConstructionString, idList);
+			result.append(funDecl);
+			result.append(System.lineSeparator());
+		}
+
+		for (final Sort[] paramSorts : sortFunctionSymbol.projectToFst()) {
+			for (final Sort returnSort : sortFunctionSymbol.projectToSnd(paramSorts)) {
+				final String returnSortConstructionString = sortVarMapping.get(returnSort);
+				final Set<FunctionSymbol> funs = sortFunctionSymbol.projectToTrd(paramSorts, returnSort);
+				final String idList = funs.stream().map(x -> ("\"" + x.getName() + "\""))
+						.collect(Collectors.joining(", "));
+				if (Arrays.equals(paramSorts, new Sort[0])) {
+					final String funDecl = String.format("\t\tnew FunDecl(%s, %s),", returnSortConstructionString,
+							idList);
+					result.append(funDecl);
+					result.append(System.lineSeparator());
+				} else {
+					throw new UnsupportedOperationException("not yet implemented");
+				}
+			}
+		}
+
+		result.append("\t};");
+		result.append(System.lineSeparator());
+
+		result.append(String.format("\tfinal String formulaAsString = \"%s\";", term.toStringDirect()));
+		result.append(System.lineSeparator());
+		return result.toString();
+	}
+
 
 	private static boolean isIntIntArray(final Sort sort) {
 		if (SmtSortUtils.isArraySort(sort)) {
