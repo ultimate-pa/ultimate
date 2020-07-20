@@ -53,10 +53,8 @@ public class WalrusRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 		super(factory, createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
-	@SuppressWarnings("unchecked")
 	private static <LETTER extends IIcfgTransition<?>> IIpTcStrategyModule<?, LETTER>[]
 			createModules(final StrategyModuleFactory<LETTER> factory) {
-
 		return WolfRefinementStrategy.createModules(factory);
 	}
 
