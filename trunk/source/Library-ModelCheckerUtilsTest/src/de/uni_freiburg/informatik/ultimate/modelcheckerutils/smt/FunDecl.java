@@ -50,6 +50,13 @@ public class FunDecl {
 		mIdentifiers = identifiers;
 	}
 
+	public FunDecl(final SortConstructor returnSort, final String... identifiers) {
+		super();
+		mParamSorts = new SortConstructor[0];
+		mReturnSort = returnSort;
+		mIdentifiers = identifiers;
+	}
+
 	public void declareFuns(final Script script) {
 		final Sort[] paramSorts = Arrays.stream(mParamSorts).map(x -> x.constructSort(script)).toArray(Sort[]::new);
 		final Sort sort = mReturnSort.constructSort(script);
