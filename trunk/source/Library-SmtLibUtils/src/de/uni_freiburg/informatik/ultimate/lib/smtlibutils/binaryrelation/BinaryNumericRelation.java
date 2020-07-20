@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -81,26 +82,21 @@ public class BinaryNumericRelation extends BinaryRelation {
 
 
 	public static BinaryNumericRelation convert(final Term term) {
-		if (!(term instanceof ApplicationTerm)) {
+		Term afterPreprocessing;
+		boolean isNegated;
+		if (SmtUtils.unzipNot(term) == null) {
+			afterPreprocessing = term;
+			isNegated = false;
+		} else {
+			afterPreprocessing = SmtUtils.unzipNot(term);
+			isNegated = true;
+		}
+		if (!(afterPreprocessing instanceof ApplicationTerm)) {
 			return null;
 		}
-		ApplicationTerm appTerm = (ApplicationTerm) term;
-		String functionSymbolName = appTerm.getFunction().getName();
-		Term[] params = appTerm.getParameters();
-		boolean isNegated;
-		if (functionSymbolName.equals("not")) {
-			assert params.length == 1;
-			final Term notTerm = params[0];
-			if (!(notTerm instanceof ApplicationTerm)) {
-				return null;
-			}
-			isNegated = true;
-			appTerm = (ApplicationTerm) notTerm;
-			functionSymbolName = appTerm.getFunction().getName();
-			params = appTerm.getParameters();
-		} else {
-			isNegated = false;
-		}
+		final ApplicationTerm appTerm = (ApplicationTerm) afterPreprocessing;
+		final String functionSymbolName = appTerm.getFunction().getName();
+		final Term[] params = appTerm.getParameters();
 		if (appTerm.getParameters().length != 2) {
 			return null;
 		}
@@ -111,13 +107,18 @@ public class BinaryNumericRelation extends BinaryRelation {
 			return null;
 		}
 		assert params[1].getSort().isNumericSort() || SmtSortUtils.isBitvecSort(params[1].getSort());
-		RelationSymbol relSymb = RelationSymbol.convert(functionSymbolName);
-		if (relSymb == null) {
-			return null;
-		}
-		if (isNegated) {
-			final RelationSymbol symb = relSymb;
-			relSymb = symb.negate();
+		final RelationSymbol relSymb;
+		{
+			final RelationSymbol tmp = RelationSymbol.convert(functionSymbolName);
+			if (tmp == null) {
+				return null;
+			} else {
+				if (isNegated) {
+					relSymb = tmp.negate();
+				} else {
+					relSymb = tmp;
+				}
+			}
 		}
 		return new BinaryNumericRelation(relSymb, params[0], params[1]);
 	}
