@@ -49,46 +49,44 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**
+ *
+ * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
+ *
+ */
 public class Interpolator<LETTER extends IIcfgTransition<?>> {
-
+	/**
+	 *
+	 * @author Jonas Werner (wernerj@informatik.uni-freiburg.de)
+	 *
+	 */
 	public enum InterpolationMethod {
 		POST, BINARY, CRAIG_NESTED, CRAIG_TREE
 	}
 
 	private final IPredicateUnifier mPredicateUnifier;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredTransformer;
-	private final PredicateHelper mPredHelper;
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 	private final ITraceCheckPreferences mPrefs;
 	private IPredicate[] mInterpolants;
-	private LBool mIsTraceCorrect;
+	private LBool mTraceCheckResult;
 
 	/**
-	 * Class to help with interplation.
+	 * Class to help with interpolation.
 	 *
-	 * @param predicateUnifier
-	 * @param predTransformer
-	 * @param logger
-	 * @param script
-	 * @param services
-	 * @param predHelper
 	 */
 	public Interpolator(final IPredicateUnifier predicateUnifier,
 			final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer, final ILogger logger,
-			final ManagedScript script, final IUltimateServiceProvider services, final PredicateHelper predHelper,
-			final ITraceCheckPreferences prefs) {
+			final ManagedScript script, final IUltimateServiceProvider services, final ITraceCheckPreferences prefs) {
 
 		mPredicateUnifier = predicateUnifier;
 		mPredTransformer = predTransformer;
-		mPredHelper = predHelper;
 		mScript = script;
 		mLogger = logger;
 		mServices = services;
 		mPrefs = prefs;
-		mIsTraceCorrect = null;
-		mInterpolants = new IPredicate[0];
 
 	}
 
@@ -96,10 +94,10 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 			final IRun<LETTER, IPredicate> counterexample) {
 		switch (interpolationMethod) {
 		case POST:
-			generateInterpolantsPost(counterexample);
+			mInterpolants = generateInterpolantsPost(counterexample);
 			return;
 		case CRAIG_NESTED:
-			generateInterpolantsCraigNested(counterexample);
+			mInterpolants = generateInterpolantsCraigNested(counterexample);
 			return;
 		default:
 			throw new UnsupportedOperationException();
@@ -114,6 +112,9 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 	 * @return
 	 */
 	private IPredicate[] generateInterpolantsPost(final IRun<LETTER, IPredicate> counterexampleRun) {
+		// TODO: Seems necessary by construction
+		mTraceCheckResult = LBool.UNSAT;
+
 		final List<LETTER> counterexample = counterexampleRun.getWord().asList();
 		final IPredicate[] interpolants = new IPredicate[counterexample.size() + 1];
 		interpolants[0] = mPredicateUnifier.getTruePredicate();
@@ -122,8 +123,7 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 			interpolants[i] = mPredicateUnifier.getOrConstructPredicate(mPredTransformer
 					.strongestPostcondition(interpolants[i - 1], counterexample.get(i - 1).getTransformula()));
 		}
-		final IPredicate[] actualInterpolants = Arrays.copyOfRange(interpolants, 1, counterexample.size());
-		return actualInterpolants;
+		return Arrays.copyOfRange(interpolants, 1, counterexample.size());
 	}
 
 	/**
@@ -132,9 +132,9 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 	 * module to gain more flexibility.
 	 *
 	 * @param counterexample
+	 * @return
 	 */
-	private void generateInterpolantsCraigNested(final IRun<LETTER, IPredicate> counterexampleRun) {
-
+	private IPredicate[] generateInterpolantsCraigNested(final IRun<LETTER, IPredicate> counterexampleRun) {
 		final List<LETTER> counterexample = counterexampleRun.getWord().asList();
 		final NestedWord<LETTER> nestedWord = TraceCheckUtils.toNestedWord(counterexample);
 		final TreeMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
@@ -150,14 +150,15 @@ public class Interpolator<LETTER extends IIcfgTransition<?>> {
 				mPrefs.collectInterpolantStatistics(), InterpolationTechnique.Craig_NestedInterpolation,
 				instanticateArrayExt, mPrefs.getXnfConversionTechnique(), mPrefs.getSimplificationTechnique(),
 				innerRecursiveNestedInterpolationCall);
-		mIsTraceCorrect = itcc.isCorrect();
-		if (mIsTraceCorrect == LBool.UNSAT) {
-			mInterpolants = itcc.getInterpolants();
+		mTraceCheckResult = itcc.isCorrect();
+		if (mTraceCheckResult == LBool.UNSAT) {
+			return itcc.getInterpolants();
 		}
+		return null;
 	}
 
-	public LBool isTraceCorrect() {
-		return mIsTraceCorrect;
+	public LBool getTraceCheckResult() {
+		return mTraceCheckResult;
 	}
 
 	public IPredicate[] getInterpolants() {

@@ -188,8 +188,9 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 
 		try {
 			mAccelInterpolBench.start(AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_CORE);
+			mLogger.info("Starting analysis with loop acceleration approximation " + mApproximationType.toString());
 			mIsTraceCorrect = acceleratedInterpolationCore();
-			mLogger.info("Finished Analysing Program using " + mApproximationType.toString() + " loop Acceleration");
+
 			/*
 			 * Quick fix for unsound false: Sometimes the interpolator returns unknown.
 			 */
@@ -221,9 +222,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	 * Main function of accelInteprol
 	 */
 	private LBool acceleratedInterpolationCore() {
-		/*
-		 * After finding loops in the trace, start calculating loop accelerations.
-		 */
+		// After finding loops in the trace, start calculating loop accelerations.
 		final Iterator<Entry<IcfgLocation, Set<List<LETTER>>>> loopheadIterator = mLoops.entrySet().iterator();
 		while (loopheadIterator.hasNext()) {
 			final Entry<IcfgLocation, Set<List<LETTER>>> loophead = loopheadIterator.next();
@@ -264,44 +263,28 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			mAccelerations.put(loophead.getKey(), accelerations);
 		}
 
-		/*
-		 * Use new Script for interpolation:
-		 */
+		// Use new Script for interpolation:
 		final ManagedScript ipScript = constructManagedScriptForInterpolation();
-		/*
-		 * Or use CFG's script for interpolation:
-		 */
-		// final ManagedScript ipScript = mScript;
 		final Interpolator<LETTER> interpolator =
-				new Interpolator<>(mPredUnifier, mPredTransformer, mLogger, ipScript, mServices, mPredHelper, mPrefs);
+				new Interpolator<>(mPredUnifier, mPredTransformer, mLogger, ipScript, mServices, mPrefs);
 
-		/*
-		 * No loops -> no acceleration
-		 */
 		if (mLoops.isEmpty()) {
-			mLogger.debug("No loops found in this trace.");
+			// No loops -> no acceleration
+			mLogger.info("No loops in this trace, falling back to nested interpolation");
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, mCounterexampleTrace);
-		}
-
-		/*
-		 * translate the given trace into a meta trace which makes use of the loop acceleration.
-		 */
-		else {
+			mInterpolants = interpolator.getInterpolants();
+		} else {
+			// translate the given trace into a meta trace which makes use of the loop acceleration.
 			final NestedRun<LETTER, IPredicate> traceScheme = generateMetaTrace();
 			interpolator.generateInterpolants(InterpolationMethod.CRAIG_NESTED, traceScheme);
+			if (interpolator.getTraceCheckResult() == LBool.UNSAT) {
+				final IPredicate[] tempInterpolants = interpolator.getInterpolants();
+				final IPredicate[] inductiveInterpolants = constructInductive(tempInterpolants);
+				mInterpolants = inductiveInterpolants;
+			}
 		}
 
-		if (interpolator.isTraceCorrect() == LBool.UNSAT) {
-			final IPredicate[] tempInterpolants = interpolator.getInterpolants();
-			final IPredicate[] inductiveInterpolants = constructInductive(tempInterpolants);
-
-			// mInterpolants = interpolator.getInterpolants();
-			mInterpolants = inductiveInterpolants;
-			return LBool.UNSAT;
-		} else if (interpolator.isTraceCorrect() == LBool.UNKNOWN) {
-			return LBool.UNKNOWN;
-		}
-		return LBool.SAT;
+		return interpolator.getTraceCheckResult();
 	}
 
 	/**
@@ -363,14 +346,14 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				}
 				i = loopSize.getSecond() - 1;
 			} else {
-				IPredicate prevInterpol = preds[cnt];
+				final IPredicate prevInterpol;
 				/*
 				 * post does not work well with false, there are instances where the interpolant on the loopexit in the
 				 * meta trace is false, this, however, may not always be inductive.
 				 */
 				if (SmtUtils.isFalseLiteral(preds[cnt].getFormula()) && i != 0) {
-					prevInterpol = actualInterpolants[i - 1];
-					final Term post = mPredTransformer.strongestPostcondition(prevInterpol,
+					final IPredicate tmpPrevInterpol = actualInterpolants[i - 1];
+					final Term post = mPredTransformer.strongestPostcondition(tmpPrevInterpol,
 							mCounterexample.get(i).getTransformula());
 					prevInterpol = mPredUnifier.getOrConstructPredicate(post);
 				} else {
@@ -506,9 +489,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		 * Turn the new trace into a nested word for easier interpolation
 		 */
 		final NestedWord<LETTER> traceSchemeNestedWord = TraceCheckUtils.toNestedWord(counterExampleAcceleratedLetter);
-		final NestedRun<LETTER, IPredicate> traceSchemeRun =
-				new NestedRun<>(traceSchemeNestedWord, acceleratedTraceSchemeStates);
-		return traceSchemeRun;
+		return new NestedRun<>(traceSchemeNestedWord, acceleratedTraceSchemeStates);
 	}
 
 	/**
