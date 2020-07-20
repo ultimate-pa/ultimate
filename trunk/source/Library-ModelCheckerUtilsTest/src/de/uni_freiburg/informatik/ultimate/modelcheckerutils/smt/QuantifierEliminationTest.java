@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -157,101 +156,23 @@ public class QuantifierEliminationTest {
 
 	@Test
 	public void varStilThereBug() {
-
-		// Sorts
-		final Sort sort_Array = SmtSortUtils.getArraySort(mScript, SmtSortUtils.getIntSort(mMgdScript),
-				SmtSortUtils.getIntSort(mMgdScript));
-
-		// Constants
-		final Term con_0 = Rational.ZERO.toTerm(SmtSortUtils.getIntSort(mMgdScript));
-		final Term con_1 = mScript.numeral("1");
-
-		// Vars
-		final TermVariable var_v_oldvalid_88 = mScript.variable("v_old(#valid)_88", sort_Array);
-		final TermVariable var_v_valid_207 = mScript.variable("v_#valid_207", sort_Array);
-		final TermVariable var_v_probe3_6_p9base_40 =
-				mScript.variable("v_probe3_6_~p~9.base_40", SmtSortUtils.getIntSort(mMgdScript));
-		final TermVariable var_valid = mScript.variable("#valid", sort_Array);
-		final TermVariable var_oldvalid = mScript.variable("old(#valid)", sort_Array);
-
-		// Functions
-
-		// term
-		final Term term = mScript.quantifier(1,
-				new TermVariable[] { var_v_oldvalid_88, var_v_oldvalid_88, var_v_oldvalid_88 },
-				mScript.term("or", mScript.term("not", mScript.term(
-						"and",
-						mScript.quantifier(1, new TermVariable[] { var_v_probe3_6_p9base_40, var_v_probe3_6_p9base_40 },
-								mScript.term("or",
-										mScript.term("=", var_v_oldvalid_88,
-												mScript.term(
-														"store", var_v_valid_207, var_v_probe3_6_p9base_40, con_0)),
-										mScript.term("=", var_v_probe3_6_p9base_40, con_0),
-										mScript.term("not",
-												mScript.term("=",
-														mScript.term("select", var_v_valid_207,
-																var_v_probe3_6_p9base_40),
-														con_0)))),
-						mScript.term("=", var_oldvalid, var_v_valid_207))),
-						mScript.term("=", var_valid, var_v_oldvalid_88)));
-
-		PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, term,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-
-		// //Sorts
-		// final Sort sort_Bool = SmtSortUtils.getBoolSort(mScript);
-		// final Sort sort_Int = SmtSortUtils.getIntSort(mScript);
-		// final Sort sort_Array = SmtSortUtils.getArraySort(mScript, sort_Int,
-		// sort_Int);
-		//
-		// //Constants
-		// final Term con_0 = script.numeral("0");
-		// final Term con_1 = script.numeral("1");
-		//
-		// //Vars
-		// final TermVariable oldValid33 = script.variable("v_old(#valid)_33",
-		// sort_Array);
-		// final TermVariable valid = script.variable("#valid", sort_Array);
-		// final TermVariable oldValid = script.variable("old(#valid)", sort_Array);
-		// final TermVariable var_v_entry_point_array7base_21 =
-		// script.variable("v_entry_point_~array~7.base_21",
-		// sort_Int);
-		//
-		// //Functions
-		//
-		// //term
-		// final Term term = script.term("or", script.quantifier(0, new
-		// TermVariable[]{var_v_entry_point_array7base_21,
-		// var_v_entry_point_array7base_21}, script.term("and", script.term("not",
-		// script.term("=", script.term("store",
-		// script.term("store", oldValid, var_v_entry_point_array7base_21, con_1),
-		// var_v_entry_point_array7base_21,
-		// con_0), oldValid33)), script.term("=", script.term("select", oldValid,
-		// var_v_entry_point_array7base_21),
-		// con_0), script.term("not", script.term("=", var_v_entry_point_array7base_21,
-		// con_0)))), script.term("=",
-		// valid, oldValid33));
-		// PartialQuantifierElimination.tryToEliminate(services,
-		// services.getLoggingService().getLogger("lol"),
-		// mgdScript, term, SimplificationTechnique.SIMPLIFY_DDA,
-		// XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::constructIntIntArray, "v_#valid_207", "#valid", "old(#valid)"),
+		};
+		final String formulaAsString = "(forall ((|v_old(#valid)_88| (Array Int Int)) (|v_old(#valid)_88| (Array Int Int)) (|v_old(#valid)_88| (Array Int Int))) (or (not (and (forall ((v_probe3_6_~p~9.base_40 Int) (v_probe3_6_~p~9.base_40 Int)) (or (= |v_old(#valid)_88| (store |v_#valid_207| v_probe3_6_~p~9.base_40 0)) (= v_probe3_6_~p~9.base_40 0) (not (= (select |v_#valid_207| v_probe3_6_~p~9.base_40) 0)))) (= |old(#valid)| |v_#valid_207|))) (= |#valid| |v_old(#valid)_88|)))";
+		final String expextedResultAsString = null;
+		runQuantifierEliminationTest(funDecls, formulaAsString, expextedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void otherArrayBug() {
-		final Sort intintArraySort = SmtSortUtils.getArraySort(mScript, SmtSortUtils.getIntSort(mMgdScript),
-				SmtSortUtils.getIntSort(mMgdScript));
-		mScript.declareFun("b", new Sort[0], intintArraySort);
-		mScript.declareFun("i", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		final String formulaAsString =
-				"(exists ((a (Array Int Int))) (and (= (select a i) (select b 0)) (= (select a 0) (select b 1))))";
-
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
-
-		final Term result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		mLogger.info("Result: " + result);
-		Assert.assertTrue(!SmtUtils.isTrueLiteral(result));
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(QuantifierEliminationTest::constructIntIntArray, "b"),
+			new FunDecl(SmtSortUtils::getIntSort, "i"),
+		};
+		final String formulaAsString = "(exists ((a (Array Int Int))) (and (= (select a i) (select b 0)) (= (select a 0) (select b 1))))";
+		final String expextedResultAsString = "(or (= (select b 0) (select b 1)) (not (= 0 i)))";
+		runQuantifierEliminationTest(funDecls, formulaAsString, expextedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -317,7 +238,6 @@ public class QuantifierEliminationTest {
 		final String formulaAsString = "(forall ((v_idx_7 Int) (v_idx_8 Int) (v_idx_9 Int) (v_idx_12 Int) (v_idx_3 Int) (v_idx_10 Int) (v_idx_4 Int) (v_idx_11 Int) (v_idx_5 Int) (v_idx_6 Int) (v_idx_1 Int) (v_idx_2 Int)) (exists ((v_v_9_1 Int) (v_v_10_1 (Array Int Int)) (v_v_11_1 Int) (v_v_8_1 (Array Int Int)) (v_v_0_1 Int) (v_v_1_1 Int) (v_v_2_1 Int) (v_v_3_1 (Array Int Int)) (v_v_4_1 Int) (v_v_5_1 Int) (v_v_6_1 Int) (v_v_7_1 Int)) (and (= v_v_1_1 (select A v_idx_7)) (= v_v_0_1 (select D v_idx_4)) (= v_v_8_1 (select B v_idx_5)) (= (select F v_idx_9) v_v_3_1) (= v_v_11_1 (select v_v_10_1 v_idx_1)) (= (select v_v_3_1 v_idx_10) v_v_4_1) (= v_v_5_1 (select E v_idx_12)) (= v_v_7_1 (select oldC v_idx_3)) (= v_v_9_1 (select v_v_8_1 v_idx_11)) (= v_v_6_1 (select C v_idx_2)) (= v_v_10_1 (select oldB v_idx_6)) (= (select oldA v_idx_8) v_v_2_1))))";
 		final String expextedResultAsString = "true";
 		runQuantifierPusherTest(funDecls, formulaAsString, expextedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
-
 	}
 
 	@Test
