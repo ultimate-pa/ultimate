@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.DerScout;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.DerScout.DerApplicability;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.EliminationTask;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionDer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionQeAdapter2014;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionQuantifierElimination.EliminationResult;
@@ -563,7 +564,7 @@ public class QuantifierPusher extends TermTransformer {
 
 	private Term applyEliminationTechniques2(final EliminationTask et, final ManagedScript mgdScript,
 			final IUltimateServiceProvider services, final PqeTechniques pqeTechniques) {
-		final List<DualJunctionQuantifierElimination> elimtechniques = generateEliminationTechniques2(pqeTechniques,
+		final List<DualJunctionQuantifierElimination> elimtechniques = generateEliminationTechniques3(pqeTechniques,
 				mgdScript, services);
 		EliminationTask currentEt = et;
 //		boolean someSuccesfullElimination = false;
@@ -617,6 +618,33 @@ public class QuantifierPusher extends TermTransformer {
 			break;
 		case ONLY_DER:
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfDer(mgdScript, services)));
+			break;
+		default:
+			throw new AssertionError("unknown value " + pqeTechniques);
+		}
+		return elimtechniques;
+	}
+
+	private List<DualJunctionQuantifierElimination> generateEliminationTechniques3(final PqeTechniques pqeTechniques,
+			final ManagedScript mgdScript, final IUltimateServiceProvider services) {
+		final List<DualJunctionQuantifierElimination> elimtechniques = new ArrayList<>();
+		switch (pqeTechniques) {
+		case ALL_LOCAL:
+			new DualJunctionQeAdapter2014(mgdScript, services, null);
+			elimtechniques.add(new DualJunctionDer(mgdScript, services));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services,
+					new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfUpd(mgdScript, services)));
+			break;
+		case NO_UPD:
+			elimtechniques.add(new DualJunctionDer(mgdScript, services));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
+			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services,
+					new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
+			break;
+		case ONLY_DER:
+			elimtechniques.add(new DualJunctionDer(mgdScript, services));
 			break;
 		default:
 			throw new AssertionError("unknown value " + pqeTechniques);
