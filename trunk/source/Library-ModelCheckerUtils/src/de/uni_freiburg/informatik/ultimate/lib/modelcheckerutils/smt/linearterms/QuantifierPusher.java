@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.CondisDepthCodeGenerator;
@@ -48,17 +49,17 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuan
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionQeAdapter2014;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionQuantifierElimination.EliminationResult;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XjunctPartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XnfDer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XnfIrd;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XnfPlr;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XnfTir;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XnfUpd;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -295,6 +296,12 @@ public class QuantifierPusher extends TermTransformer {
 		if (!mApplyDistributivity) {
 			// nothing eliminated
 			return null;
+		}
+
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(this.getClass(),
+					"eliminating " + eliminatees.size() + " quantified variables from " + dualFiniteParams.length + " "
+							+ QuantifierUtils.getNameOfDualJuncts(quantifier));
 		}
 
 		if (eliminatees.size() > 1 && ELIMINATEE_SEQUENTIALIZATION) {
