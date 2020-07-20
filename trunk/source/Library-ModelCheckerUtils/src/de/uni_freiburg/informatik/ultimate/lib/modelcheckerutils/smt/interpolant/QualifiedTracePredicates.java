@@ -71,6 +71,11 @@ public final class QualifiedTracePredicates {
 		if (usedIpps.isEmpty()) {
 			return Collections.emptyList();
 		}
-		return usedIpps.stream().map(a -> a.getTracePredicates()).collect(Collectors.toList());
+		return usedIpps.stream().map(QualifiedTracePredicates::getTracePredicates).collect(Collectors.toList());
+	}
+
+	@Override
+	public String toString() {
+		return mTracePredicates.toString();
 	}
 }

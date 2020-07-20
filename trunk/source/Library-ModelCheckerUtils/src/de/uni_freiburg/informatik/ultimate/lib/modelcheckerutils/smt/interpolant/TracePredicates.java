@@ -111,4 +111,9 @@ public class TracePredicates {
 	public IPredicate getPostcondition() {
 		return mPostcondition;
 	}
+
+	@Override
+	public String toString() {
+		return String.format("{%s} %s {%s}", mPrecondition, mPredicates, mPostcondition);
+	}
 }
