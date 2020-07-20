@@ -2327,6 +2327,16 @@ public final class SmtUtils {
 				.collect(Collectors.toSet());
 	}
 
+	public static Term unzipNot(final Term term) {
+		if (term instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			if (appTerm.getFunction().isIntern() && appTerm.getFunction().getName().equals("not")) {
+				return appTerm.getParameters()[0];
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * SMTInterpol changed its API with 2.5-554-g428a944, so we cannot pass BigInteger indices anymore, but have to
 	 * convert them to strings. This function performs this conversion, until we can decide for each place which
