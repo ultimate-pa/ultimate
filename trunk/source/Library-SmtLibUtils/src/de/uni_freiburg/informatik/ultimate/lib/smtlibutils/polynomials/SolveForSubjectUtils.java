@@ -170,8 +170,13 @@ public class SolveForSubjectUtils {
 
 	static MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf, final PolynomialRelation polyRel) throws AssertionError {
-		MultiCaseSolvedBinaryRelation res = findTreatableDivModSubterm(script, subject, polyRel.getPolynomialTerm(),
-				null, xnf, polyRel.positiveNormalForm(script));
+		MultiCaseSolvedBinaryRelation res;
+		if (SmtSortUtils.isNumericSort(subject.getSort())) {
+			res = findTreatableDivModSubterm(script, subject, polyRel.getPolynomialTerm(), null, xnf,
+					polyRel.positiveNormalForm(script));
+		} else {
+			res = null;
+		}
 		if (res == null) {
 			res = solveForSubjectWithoutTreatableDivMod(script, subject, polyRel, xnf);
 		}
@@ -444,15 +449,15 @@ public class SolveForSubjectUtils {
 
 		setAuxVars.add(auxMod);
 
-		// construct SupportingTerm (0<=aux_mod)
+		// construct SupportingTerm (0 <= aux_mod)
 		final Term auxModGreaterZeroTerm = BinaryRelation.toTerm(script, negateForCnf(RelationSymbol.LEQ, xnf),
 				Rational.ZERO.toTerm(termSort), auxMod);
 		final SupportingTerm auxModGreaterZero = new SupportingTerm(auxModGreaterZeroTerm,
 				IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 
-		// construct SupportingTerm (aux_mod < k)
+		// construct SupportingTerm (aux_mod < abs(k))
 		final Term auxModLessCoefTerm = BinaryRelation.toTerm(script, negateForCnf(RelationSymbol.LESS, xnf), auxMod,
-				divisor);
+				SmtUtils.abs(script, divisor));
 		final SupportingTerm auxModLessCoef = new SupportingTerm(auxModLessCoefTerm,
 				IntricateOperation.MUL_BY_INTEGER_CONSTANT, setAuxVars);
 
