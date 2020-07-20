@@ -36,10 +36,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.EliminationTask;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation.AssumptionForSolvability;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Case;
@@ -214,6 +217,42 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		}
 	}
 
+
+	public static SolvedBinaryRelation tryPlr(final Script script, final int quantifier, final TermVariable eliminatee, final Term atom) {
+		final Term rightHandSide;
+		if (occursPositive(eliminatee, atom)) {
+			rightHandSide = QuantifierUtils.negateIfUniversal(script, quantifier, script.term("true"));
+		} else if (occursNegative(eliminatee, atom)) {
+			rightHandSide = QuantifierUtils.negateIfUniversal(script, quantifier, script.term("false"));
+		} else {
+			return null;
+		}
+		final RelationSymbol relationSymbol = QuantifierUtils.getDerOperator(quantifier);
+		return new SolvedBinaryRelation(eliminatee, rightHandSide, relationSymbol, Collections.emptyMap());
+	}
+
+	private static boolean occursPositive(final TermVariable eliminatee, final Term atom) {
+		if (atom.equals(eliminatee)) {
+			return true;
+		}
+		final Term unzipped = SmtUtils.unzipNot(atom);
+		if (unzipped != null) {
+			return occursNegative(eliminatee, unzipped);
+		} else {
+			return false;
+		}
+	}
+
+	private static boolean occursNegative(final TermVariable eliminatee, final Term atom) {
+		final Term unzipped = SmtUtils.unzipNot(atom);
+		if (unzipped != null) {
+			return occursPositive(eliminatee, unzipped);
+		} else {
+			return false;
+		}
+	}
+
+
 	private static abstract class IDerHelper<SR> {
 
 		public Pair<Integer, SR> findBestReplacementSbr(final Script script, final int quantifier,
@@ -257,6 +296,12 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		@Override
 		public SolvedBinaryRelation solveForSubject(final Script script, final int quantifier,
 				final TermVariable eliminatee, final Term term) {
+			if (SmtSortUtils.isBoolSort(eliminatee.getSort()) && SmtSortUtils.isBoolSort(term.getSort())) {
+				final SolvedBinaryRelation sbr = DualJunctionDer.tryPlr(script, quantifier, eliminatee, term);
+				if (sbr != null) {
+					return sbr;
+				}
+			}
 			final BinaryEqualityRelation ber = BinaryEqualityRelation.convert(term);
 			if (ber != null && QuantifierUtils.isDerRelationSymbol(quantifier, ber.getRelationSymbol())) {
 				final SolvedBinaryRelation sfs = ber.solveForSubject(script, eliminatee);
@@ -376,5 +421,6 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 					Collections.emptySet());
 		}
 	}
+
 
 }
