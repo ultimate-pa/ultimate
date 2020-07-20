@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
@@ -84,6 +83,18 @@
 		<sonar.verbose>false</sonar.verbose>
 		<sonar.log.level>WARN</sonar.log.level>
 		<sonar.cpd.cross_project>true</sonar.cpd.cross_project>
+
+		<!--
+			For multi-module Maven builds, generate the comma-seperated list of xml
+			files (one per module) dynamically by using the command (on, e.g. monteverdi
+			jenkins the dir is /storage/jenkins/jenkins_home/jobs/Ultimate Nightly/workspace)
+
+			find . -path '*jacoco.xml' | sed 's/\.\/trunk\/source//' | sed 's/.*/${workspaceDir}&/' | tr '\n' ','
+
+			and copy it to the sonar.coverage.jacoco.xmlReportPaths property.
+
+		-->
+		<sonar.coverage.jacoco.xmlReportPaths>${workspaceDir}/Library-ModelCheckerUtilsTest/target/site/jacoco/jacoco.xml,${workspaceDir}/UltimateRegressionTest/target/site/jacoco/jacoco.xml,${workspaceDir}/Library-srParseTest/target/site/jacoco/jacoco.xml,${workspaceDir}/SMTInterpolTest/target/site/jacoco/jacoco.xml,${workspaceDir}/Library-UltimateUtilTest/target/site/jacoco/jacoco.xml,${workspaceDir}/BoogiePreprocessorTest/target/site/jacoco/jacoco.xml,${workspaceDir}/Library-SifaTest/target/site/jacoco/jacoco.xml,${workspaceDir}/Library-IcfgTransformerTest/target/site/jacoco/jacoco.xml,${workspaceDir}/PEAtoBoogieTest/target/site/jacoco/jacoco.xml,${workspaceDir}/Library-UltimateTestTest/target/site/jacoco/jacoco.xml,${workspaceDir}/CoreRCPTest/target/site/jacoco/jacoco.xml,${workspaceDir}/Library-MSODTest/target/site/jacoco/jacoco.xml,${workspaceDir}/Library-PathExpressionsTest/target/site/jacoco/jacoco.xml,${workspaceDir}/Library-AutomataTest/target/site/jacoco/jacoco.xml,${workspaceDir}/AbstractInterpretationV2Test/target/site/jacoco/jacoco.xml,${workspaceDir}/Library-SMTLIBTest/target/site/jacoco/jacoco.xml,${workspaceDir}/SpaceExParserTest/target/site/jacoco/jacoco.xml,${workspaceDir}/UltimateTest/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
 		<!-- Exclude completely from any sonar analysis (including coverage) -->
 		<sonar.exclusions>
@@ -639,8 +650,9 @@
 							<execution>
 								<id>report</id>
 								<goals>
-									<goal>report</goal>
+									<goal>report-aggregate</goal>
 								</goals>
+								<phase>verify</phase>
 							</execution>
 						</executions>
 					</plugin>
@@ -725,8 +737,9 @@
 							<execution>
 								<id>report</id>
 								<goals>
-									<goal>report</goal>
+									<goal>report-aggregate</goal>
 								</goals>
+								<phase>verify</phase>
 							</execution>
 						</executions>
 					</plugin>
