@@ -164,6 +164,25 @@ public interface ITraceCheckPreferences {
 			return mSmtFeatureHeuristicThreshold;
 		}
 
+		@Override
+		public String toString() {
+			if (mAssertCodeBlockOrderType != AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC) {
+				return mAssertCodeBlockOrderType.toString();
+			}
+			switch (mSmtFeatureHeuristicPartitioningType) {
+			case FIXED_NUM_PARTITIONS:
+				return String.format("%s (partitioning type %s, %s partitions)", mAssertCodeBlockOrderType.toString(),
+						mSmtFeatureHeuristicPartitioningType.toString(),
+						String.valueOf(mSmtFeatureHeuristicNumPartitions));
+			case THRESHOLD:
+				return String.format("%s (partitioning type %s, threshold %s)", mAssertCodeBlockOrderType.toString(),
+						mSmtFeatureHeuristicPartitioningType.toString(), String.valueOf(mSmtFeatureHeuristicThreshold));
+			default:
+				return String.format("%s (unknown partitioning type %s)", mAssertCodeBlockOrderType.toString(),
+						mSmtFeatureHeuristicPartitioningType.toString());
+			}
+		}
+
 	}
 
 	boolean getUseSeparateSolverForTracechecks();
