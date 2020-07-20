@@ -137,7 +137,7 @@ public class QuantifierUtils {
 	 *
 	 */
 	public static Term[] getCorrespondingFiniteJunction(final int quantifier, final Term term) {
-		return getXjunctsInner(quantifier, term);
+		return getXjunctsOuter(quantifier, term);
 	}
 
 	/**
