@@ -1474,6 +1474,16 @@ public final class SmtUtils {
 		return script.term("div", dividend, divisor);
 	}
 
+	public static Term abs(final Script script, final Term operand) {
+		if (operand instanceof ConstantTerm && SmtSortUtils.isIntSort(operand.getSort())) {
+			final Rational operandAsRational = convertConstantTermToRational((ConstantTerm) operand);
+			return operandAsRational.abs().toTerm(operand.getSort());
+		} else {
+			return script.term("abs", operand);
+		}
+	}
+
+
 	/**
 	 * Division for reals with the following simplifications.
 	 * <ul>
