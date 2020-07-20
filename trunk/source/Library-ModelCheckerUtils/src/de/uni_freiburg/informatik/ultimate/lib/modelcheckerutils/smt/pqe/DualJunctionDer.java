@@ -92,7 +92,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 	@Override
 	public EliminationResult tryToEliminate(final EliminationTask inputEt) {
-		final EliminationResult er = tryExhaustivelyToEliminate(inputEt, new DerHelperSbr(mServices),
+		final EliminationResult er = tryExhaustivelyToEliminate(inputEt, new DerHelperSbr(),
 				new DerHelperMcsbr(IntricateOperations.ADDITIONAL_DUAL_JUNCTS));
 		if (er != null && false) {
 			final XnfDer oldDer = new XnfDer(mMgdScript, mServices);
@@ -286,11 +286,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 	private static class DerHelperSbr extends IDerHelper<SolvedBinaryRelation> {
 
-		private final IUltimateServiceProvider mServices;
 
-		public DerHelperSbr(final IUltimateServiceProvider services) {
+		public DerHelperSbr() {
 			super();
-			mServices = services;
 		}
 
 		@Override
@@ -334,7 +332,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			final SolvedBinaryRelation sbr = pair.getSecond();
 			if (!sbr.getAssumptionsMap().isEmpty()) {
 				for (final Entry<AssumptionForSolvability, Term> entry : sbr.getAssumptionsMap().entrySet()) {
-					dualJunctsResult.add(QuantifierUtils.negateIfUniversal(mServices, mgdScript, et.getQuantifier(),
+					dualJunctsResult.add(QuantifierUtils.negateIfUniversal(mgdScript.getScript(), et.getQuantifier(),
 							entry.getValue()));
 				}
 			}
