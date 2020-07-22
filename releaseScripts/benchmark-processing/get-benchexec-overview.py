@@ -9,9 +9,14 @@ import re
 import signal
 import sys
 import xml.etree.ElementTree as ET
-from functools import reduce
+from functools import reduce, lru_cache
+from typing import Tuple, List, Iterator
 
 from tqdm import tqdm
+
+# some type defs
+# first is category, second is message
+Classification = Tuple[str, str]
 
 """
 (k,v) where
@@ -23,7 +28,7 @@ known_exceptions = {
     "UnsupportedOperationException: Unsupported type": True,
     "AssertionError: at least one of both input predicates is unknown": True,
     "command is only available in interactive mode": True,
-    "Argument of \"settings\" has invalid value": True,
+    'Argument of "settings" has invalid value': True,
     "encountered a call to a var args function, var args are not supported at the moment": True,
     "we do not support pthread": True,
     "unable to decide satisfiability of path constraint": True,
@@ -64,7 +69,7 @@ known_exceptions = {
     "RESULT: Ultimate could not prove your program: Toolchain returned no result.": True,
 }
 
-UNEXPECTED_EXTERNAL_KILL = 'Killed from outside'
+UNEXPECTED_EXTERNAL_KILL = "Killed from outside"
 
 known_timeouts = {
     "Cannot interrupt operation gracefully because timeout expired. Forcing shutdown": True,
@@ -100,10 +105,16 @@ str_no_result_unknown = "Unknown"
 str_benchexec_timeout = "Timeout by benchexec"
 str_benchexec_oom = "OOM by benchexec"
 
-version_matcher = re.compile('^.*(\d+\.\d+\.\d+-\w+).*$')
-order = [known_exceptions, known_timeouts, {str_benchexec_timeout: True, str_benchexec_oom: True}, known_unsafe,
-         known_unknown, known_safe,
-         known_wrapper_errors]
+version_matcher = re.compile(r"^.*(\d+\.\d+\.\d+-\w+).*$")
+order = [
+    known_exceptions,
+    known_timeouts,
+    {str_benchexec_timeout: True, str_benchexec_oom: True},
+    known_unsafe,
+    known_unknown,
+    known_safe,
+    known_wrapper_errors,
+]
 interesting_strings = reduce(lambda x, y: dict(x, **y), order)
 
 enable_debug = False
@@ -119,32 +130,47 @@ class UnsupportedLogFile(ValueError):
     """
     Raised when the log file is not an Ultimate log file
     """
+
     pass
 
 
 class Result:
-    def __init__(self, result, call, version):
+    version: str
+    call: str
+    result: Classification
+
+    def __init__(self, result: Classification, call: str, version: str) -> None:
         self.version = version
         self.call = call
         self.result = result
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.result)
+
+    @lru_cache(maxsize=1)
+    def input_file(self) -> str:
+        if self.call is None:
+            return None
+        regex = r"-i\s+[\"]?(.*)[\"]?\s?"
+        match = re.search(regex, self.call)
+        if match is None:
+            return None
+        return match.group(1)
 
 
 def signal_handler(sig, frame):
     if sig == signal.SIGTERM:
-        print('Killed by {}'.format(sig))
-    print('Abort by user: you pressed Ctrl+C!')
+        print("Killed by {}".format(sig))
+    print("Abort by user: you pressed Ctrl+C!")
     sys.exit(2)
 
 
 def limit(msg, lim):
     if lim < 4:
-        raise ValueError('limit must be larger or equal 4 but was {}'.format(lim))
+        raise ValueError("limit must be larger or equal 4 but was {}".format(lim))
     if len(msg) > lim:
-        return msg[0:lim - 3] + '...'
-    return msg.ljust(lim, ' ')
+        return msg[0 : lim - 3] + "..."
+    return msg.ljust(lim, " ")
 
 
 def debug(msg):
@@ -154,22 +180,30 @@ def debug(msg):
 
 def parse_args():
     try:
-        parser = argparse.ArgumentParser(description='Scan Ultimate log file for exception results')
-        parser.add_argument('-i', '--input', nargs=1, metavar='<dir>', required=True,
-                            help='Specify directory containing Ultimate log files or single log file')
+        parser = argparse.ArgumentParser(
+            description="Scan Ultimate log file for exception results"
+        )
+        parser.add_argument(
+            "-i",
+            "--input",
+            nargs=1,
+            metavar="<dir>",
+            required=True,
+            help="Specify directory containing Ultimate log files or single log file",
+        )
         args = parser.parse_args()
         if not os.path.isdir(args.input[0]) and not os.path.isfile(args.input[0]):
-            print('Input does not exist')
+            print("Input does not exist")
             sys.exit(1)
         return args
     except argparse.ArgumentError as exc:
-        print(exc.message + '\n' + exc.argument)
+        print(exc.message + "\n" + exc.argument)
         sys.exit(1)
 
 
-def scan_line(line, result, line_iter):
+def scan_line(line: str, result: Result, line_iter: Iterator[str]):
     new_result = None
-    debug('Looking at line {}'.format(line))
+    debug("Looking at line {}".format(line))
 
     for exc, v in interesting_strings.items():
         if exc in line:
@@ -177,7 +211,7 @@ def scan_line(line, result, line_iter):
                 new_result = exc, line
             else:
                 new_result = exc, line_iter.__next__()
-            debug('Found result {} with line {}'.format(exc, line))
+            debug("Found result {} with line {}".format(exc, line))
             break
 
     if not result and new_result:
@@ -191,42 +225,42 @@ def scan_line(line, result, line_iter):
     old_class = class_idx(result)
     if new_class < old_class:
         return new_result
-    debug('Keeping old result because new one has lower priority')
+    debug("Keeping old result because new one has lower priority")
     return result
 
 
 def rescan_wrapper_preamble(file, call, version):
-    '''
+    """
     If there was no result in the wrapper script log so far, we rescan it and search for errors reported directly by
     the wrapper script
     :param lines: Iterator over the lines
     :param call: A call if any was found
     :param version: A version if any was found
     :return:
-    '''
+    """
     debug("Rescanning wrapper preamble")
-    with open(file, 'rb') as f:
+    with open(file, "rb") as f:
         # If the wrapper script was killed without any chance to print a message, the last elements are dots.
         # In this case we group the result as timeout and return a hardcoded line
         f.seek(-3, 2)
         last_elems = f.read()
-        if b'...' == last_elems:
-            return [Result((UNEXPECTED_EXTERNAL_KILL, '...'), call, version)]
+        if b"..." == last_elems:
+            return [Result((UNEXPECTED_EXTERNAL_KILL, "..."), call, version)]
         else:
-            debug('Last 3 elements of file are {}'.format(last_elems))
+            debug("Last 3 elements of file are {}".format(last_elems))
 
     with open(file) as f:
-        lines = [line.rstrip('\n') for line in f].__iter__()
+        lines = [line.rstrip("\n") for line in f].__iter__()
 
         regex_file_does_not_exist = re.compile(".*File.*does not exist")
         result = None
         for line in lines:
             if not line:
                 continue
-            if 'Ultimate.py: error: argument' in line:
+            if "Ultimate.py: error: argument" in line:
                 debug("Found argument error")
                 # hacky special case
-                if '--validate' in line and regex_file_does_not_exist.match(line):
+                if "--validate" in line and regex_file_does_not_exist.match(line):
                     return [Result(scan_line(line, None, lines), None, None)]
                 return [Result(None, None, None)]
             else:
@@ -245,7 +279,7 @@ def process_wrapper_script_log(file):
     default_call = None
     bitvec_call = None
     with open(file) as f:
-        lines = [line.rstrip('\n') for line in f].__iter__()
+        lines = [line.rstrip("\n") for line in f].__iter__()
         for line in lines:
             if not line:
                 continue
@@ -256,62 +290,66 @@ def process_wrapper_script_log(file):
                     call = [line]
                     collect_call = True
                 elif collect_call:
-                    if 'Execution finished normally' in line:
+                    if "Execution finished normally" in line:
                         collect_call = False
                         if default:
                             default_call = call[:-1]
-                            debug('Found default call {}'.format(default_call))
+                            debug("Found default call {}".format(default_call))
                         else:
                             bitvec_call = call[:-1]
-                            debug('Found bitvector call {}'.format(bitvec_call))
+                            debug("Found bitvector call {}".format(bitvec_call))
                     else:
                         call += [line]
-                elif '--- Real Ultimate output ---' in line:
+                elif "--- Real Ultimate output ---" in line:
                     wrapper_preamble = False
             else:
                 if line.startswith("This is Ultimate"):
                     new_version = version_matcher.findall(line)[0]
                     if version and not new_version == version:
                         raise ValueError(
-                            'Found different Ultimate versions in one log file. First was {} and second was {}'.format(
-                                version, new_version))
+                            "Found different Ultimate versions in one log file. First was {} and second was {}".format(
+                                version, new_version
+                            )
+                        )
                     version = new_version
-                    debug('Found Ultimate version {}'.format(version))
+                    debug("Found Ultimate version {}".format(version))
                 elif "### Bit-precise run ###" in line:
-                    debug('Found default result: {}'.format(result))
+                    debug("Found default result: {}".format(result))
                     results += [Result(result, default_call, version)]
                     result = None
                 else:
                     result = scan_line(line, result, lines)
     if bitvec_call:
-        debug('Found bitvec result: {}'.format(result))
+        debug("Found bitvec result: {}".format(result))
         results += [Result(result, bitvec_call, version)]
     if not results:
         if result and default_call:
             # case where the bitvector run did not start, e.g., termination
-            debug('Using default result: {}'.format(result))
+            debug("Using default result: {}".format(result))
             return [Result(result, default_call, version)]
-        debug('No results for file {}'.format(file))
-        return rescan_wrapper_preamble(file,
-                                       default_call if default_call else (bitvec_call if bitvec_call else None),
-                                       version)
+        debug("No results for file {}".format(file))
+        return rescan_wrapper_preamble(
+            file,
+            default_call if default_call else (bitvec_call if bitvec_call else None),
+            version,
+        )
     return results
 
 
 def process_direct_call_log(file):
     result = None
     with open(file) as f:
-        version = ''
-        lines = [line.rstrip('\n') for line in f].__iter__()
+        version = ""
+        lines = [line.rstrip("\n") for line in f].__iter__()
         for line in lines:
             if not line:
                 continue
-            if "/java " in line or line.startswith("java"):
+            if "/java " in line or line.startswith("java "):
                 call = line
-                debug('Found Ultimate call {}'.format(call))
+                debug("Found Ultimate call {}".format(call))
             elif line.startswith("This is Ultimate"):
                 version = version_matcher.findall(line)[0]
-                debug('Found Ultimate version {}'.format(version))
+                debug("Found Ultimate version {}".format(version))
             else:
                 result = scan_line(line, result, lines)
         if call is None:
@@ -321,42 +359,44 @@ def process_direct_call_log(file):
 
 def process_log_file(file):
     with open(file) as f:
-        lines = [line.rstrip('\n') for line in f]
+        lines = [line.rstrip("\n") for line in f]
         for line in lines:
-            if 'Ultimate.py' in line:
+            if "Ultimate.py" in line:
                 debug("Wrapper script detected")
                 return process_wrapper_script_log(file)
-            elif 'This is Ultimate' in line:
+            elif "This is Ultimate" in line:
                 debug("No wrapper script detected")
                 return process_direct_call_log(file)
-    raise UnsupportedLogFile('Encountered unrecognized file (not an Ultimate log file): {}'.format(file))
+    raise UnsupportedLogFile(
+        "Encountered unrecognized file (not an Ultimate log file): {}".format(file)
+    )
 
 
-def print_results(results):
-    cnt = collections.Counter()
+def print_results(results: List[Result]) -> None:
+    cat_cnt = collections.Counter()
     for r in results:
-        cnt[r.result[0]] += 1
+        cat_cnt[r.result[0]] += 1
 
-    print('Categories')
-    for cat, i in cnt.most_common():
-        print('{:>7}  {}'.format(i, cat))
+    print("Categories")
+    for cat, i in cat_cnt.most_common():
+        print("{:>7}  {}".format(i, cat))
     print()
 
-    print('Actual results')
-    inner_counter = collections.Counter()
+    print("Actual results")
+    result_cnt = collections.Counter()
     processed = {}
     for r in results:
         if r.result[0] == str_no_result_unknown or not interesting_strings[r.result[0]]:
             key = r.result[1]
         else:
             key = r.result[0]
-        inner_counter[key] += 1
+        result_cnt[key] += 1
         processed[key] = r
 
     resort = []
-    for subcat, j in inner_counter.most_common():
+    for subcat, j in result_cnt.most_common():
         r = processed[subcat].result
-        msg = '{:>7}  {}  {}:'.format(j, limit(r[0], 20), r[1])
+        msg = "{:>7}  {}  {}:".format(j, limit(r[0], 20), r[1])
         if j < 10:
             resort += [msg]
         else:
@@ -372,11 +412,15 @@ def __set_unknowns(results, file, timeout_ymls, oom_ymls):
         if r.result is None:
             basename = ntpath.basename(file)
             if any(f == basename for f in timeout_ymls):
-                real_results += [Result((str_benchexec_timeout, '...'), r.call, r.version)]
+                real_results += [
+                    Result((str_benchexec_timeout, "..."), r.call, r.version)
+                ]
             elif any(f == basename for f in oom_ymls):
-                real_results += [Result((str_benchexec_oom, '...'), r.call, r.version)]
+                real_results += [Result((str_benchexec_oom, "..."), r.call, r.version)]
             else:
-                real_results += [Result((str_no_result_unknown, file), r.call, r.version)]
+                real_results += [
+                    Result((str_no_result_unknown, file), r.call, r.version)
+                ]
         else:
             real_results += [r]
     return real_results
@@ -385,7 +429,7 @@ def __set_unknowns(results, file, timeout_ymls, oom_ymls):
 def __list_logfile_paths_in_dir(input_dir):
     for dirpath, dirnames, files in os.walk(input_dir):
         for file in files:
-            if not file.endswith('.log'):
+            if not file.endswith(".log"):
                 continue
             yield os.path.join(dirpath, file)
 
@@ -393,7 +437,7 @@ def __list_logfile_paths_in_dir(input_dir):
 def __list_xml_filepaths(input_dir):
     for xml in os.listdir(input_dir):
         file = os.path.join(input_dir, xml)
-        if os.path.isfile(file) and file.endswith('.xml'):
+        if os.path.isfile(file) and file.endswith(".xml"):
             yield file
 
 
@@ -403,28 +447,39 @@ def consume_task(queue, results, timeout_ymls, oom_ymls):
         if path is None:
             break
         try:
-            tmp_result = __set_unknowns(process_log_file(path), path, timeout_ymls, oom_ymls)
+            tmp_result = __set_unknowns(
+                process_log_file(path), path, timeout_ymls, oom_ymls
+            )
         except UnsupportedLogFile:
             continue
         results += tmp_result
 
 
-def process_input_dir(input_dir, timeout_ymls, oom_ymls):
+def process_input_dir(input_dir, timeout_ymls, oom_ymls) -> Tuple[int, List[Result]]:
     results = multiprocessing.Manager().list()
     if os.path.isfile(input_dir):
-        results += __set_unknowns(process_log_file(input_dir), input_dir, timeout_ymls, oom_ymls)
+        results += __set_unknowns(
+            process_log_file(input_dir), input_dir, timeout_ymls, oom_ymls
+        )
         log_file_count = 1
     else:
         local_cores = max(multiprocessing.cpu_count() - 4, 1)
         queue = multiprocessing.Queue(maxsize=local_cores)
-        pool = multiprocessing.Pool(local_cores, initializer=consume_task,
-                                    initargs=(queue, results, timeout_ymls, oom_ymls))
+        pool = multiprocessing.Pool(
+            local_cores,
+            initializer=consume_task,
+            initargs=(queue, results, timeout_ymls, oom_ymls),
+        )
 
         progress_bar = tqdm([i for i in __list_logfile_paths_in_dir(input_dir)])
         log_file_count = len(progress_bar)
 
         for path in progress_bar:
-            progress_bar.set_description('Processing ...{:100.100} [{:>3}C]'.format(path[len(input_dir):], local_cores))
+            progress_bar.set_description(
+                "Processing ...{:100.100} [{:>3}C]".format(
+                    path[len(input_dir) :], local_cores
+                )
+            )
             queue.put(path)
 
         # tell workers we're done
@@ -438,7 +493,11 @@ def process_input_dir(input_dir, timeout_ymls, oom_ymls):
 def __get_out_of_ressources_ymls(input_dir):
     xml_files = [f for f in __list_xml_filepaths(input_dir)]
     if len(xml_files) == 0:
-        print('There are no benchexec .xml files in {}, cannot exclude timeouts properly'.format(input_dir))
+        print(
+            "There are no benchexec .xml files in {}, cannot exclude timeouts properly".format(
+                input_dir
+            )
+        )
         return [], [], False
 
     timeout_ymls = []
@@ -446,7 +505,7 @@ def __get_out_of_ressources_ymls(input_dir):
     for xml in __list_xml_filepaths(input_dir):
         root = ET.parse(xml).getroot()
         result = root.find(".")
-        name = result.attrib["name"].split('.')
+        name = result.attrib["name"].split(".")
         toolname = name[0]
         for elem in root.findall(".//run"):
             # files = elem.attrib["files"]
@@ -473,18 +532,25 @@ def main():
 
     if log_file_count > len(results):
         if not benchexec_xml:
-          msg = "missing benchexec files"
+            msg = "missing benchexec files"
         else:
-          msg = "something is wrong"
+            msg = "something is wrong"
         print(
-            'We processed {} .log files but collected only {} results. Possible reason: {}'.format(log_file_count,
-                                                                                                   len(results), msg))
+            "We processed {} .log files but collected only {} results. Possible reason: {}".format(
+                log_file_count, len(results), msg
+            )
+        )
     else:
         print(
-            'Overview of {} results from {} .log files ({} {}, {} {})'.format(len(results), log_file_count,
-                                                                              len(timeout_ymls),
-                                                                              str_benchexec_timeout, len(oom_ymls),
-                                                                              str_benchexec_oom))
+            "Overview of {} results from {} .log files ({} {}, {} {})".format(
+                len(results),
+                log_file_count,
+                len(timeout_ymls),
+                str_benchexec_timeout,
+                len(oom_ymls),
+                str_benchexec_oom,
+            )
+        )
     print_results(results)
 
 
