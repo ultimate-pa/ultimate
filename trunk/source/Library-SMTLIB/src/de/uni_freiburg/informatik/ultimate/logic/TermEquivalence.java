@@ -131,7 +131,8 @@ public class TermEquivalence extends NonRecursive {
 								&& rannot[i].getValue() instanceof Object[]) {
 							te.enqueueWalker(
 									new ArrayEq((Object[]) lannot[i].getValue(), (Object[]) rannot[i].getValue()));
-						} else if (!lannot[i].getValue().equals(rannot[i].getValue())) {
+						} else if (lannot[i].getValue() != rannot[i].getValue() && (lannot[i].getValue() == null
+								|| !lannot[i].getValue().equals(rannot[i].getValue()))) {
 							notEqual();
 						}
 					}
@@ -219,7 +220,7 @@ public class TermEquivalence extends NonRecursive {
 					} else if (mLhs[i] instanceof Object[] && mRhs[i] instanceof Object[]) {
 						te.enqueueWalker(new ArrayEq((Object[]) mLhs[i], (Object[]) mRhs[i]));
 					} else {
-						if (!mLhs[i].equals(mRhs[i])) {
+						if (mLhs[i] != mRhs[i] && (mLhs[i] == null || !mLhs[i].equals(mRhs[i]))) {
 							notEqual();
 						}
 					}
