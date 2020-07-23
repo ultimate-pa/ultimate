@@ -10,7 +10,7 @@ import signal
 import sys
 import xml.etree.ElementTree as ET
 from functools import reduce, lru_cache
-from typing import Tuple, List, Iterator
+from typing import Tuple, List, Iterator, Any, Dict
 
 from tqdm import tqdm
 
@@ -18,6 +18,7 @@ from tqdm import tqdm
 # first is category, second is message
 Classification = Tuple[str, str]
 
+# global variables
 """
 (k,v) where
   k is the string we search,
@@ -120,12 +121,6 @@ interesting_strings = reduce(lambda x, y: dict(x, **y), order)
 enable_debug = False
 
 
-def class_idx(result):
-    if not result or not result[0]:
-        return len(order) + 1
-    return [i for i, e in enumerate(order) if result[0] in e][0]
-
-
 class UnsupportedLogFile(ValueError):
     """
     Raised when the log file is not an Ultimate log file
@@ -138,8 +133,12 @@ class Result:
     version: str
     call: str
     result: Classification
+    logfile: str
 
-    def __init__(self, result: Classification, call: str, version: str) -> None:
+    def __init__(
+        self, logfile: str, result: Classification, call: str, version: str
+    ) -> None:
+        self.logfile = logfile
         self.version = version
         self.call = call
         self.result = result
@@ -156,6 +155,57 @@ class Result:
         if match is None:
             return None
         return match.group(1)
+
+
+class Run:
+    logfile: str
+    cputime: float
+    walltime: float
+    memory: int
+    status: str
+    category: str
+    options: str
+
+    def __init__(self, xml_run: ET.Element, logfile: str) -> None:
+        self.logfile = logfile
+        self.options = xml_run.attrib["options"]
+        self.status = Run.__get_column_value(xml_run, "status")
+        self.category = Run.__get_column_value(xml_run, "category")
+        self.cputime = Run.__time_to_float(Run.__get_column_value(xml_run, "cputime"))
+        self.walltime = Run.__time_to_float(Run.__get_column_value(xml_run, "walltime"))
+        self.memory = Run.__byte_to_int(Run.__get_column_value(xml_run, "memory"))
+
+    def is_timeout(self):
+        return self.status == "TIMEOUT"
+
+    def is_oom(self):
+        return self.status == "OUT OF MEMORY"
+
+    def is_unsound(self):
+        return self.category == "wrong"
+
+    @staticmethod
+    def __get_column_value(xml_run: ET.Element, title: str) -> str:
+        column = xml_run.find(f"./column[@title='{title}']")
+        if column is None:
+            return None
+        return column.attrib["value"]
+
+    @staticmethod
+    def __time_to_float(val: str) -> float:
+        """Remove second unit from benchexec time and convert to float """
+        return float(val[:-1]) if val else None
+
+    @staticmethod
+    def __byte_to_int(val: str) -> int:
+        """Remove byte unit from benchexec time and convert to float """
+        return int(val[:-1]) if val else None
+
+
+def class_idx(result: Classification) -> int:
+    if not result or not result[0]:
+        return len(order) + 1
+    return [i for i, e in enumerate(order) if result[0] in e][0]
 
 
 def signal_handler(sig, frame):
@@ -201,7 +251,9 @@ def parse_args():
         sys.exit(1)
 
 
-def scan_line(line: str, result: Result, line_iter: Iterator[str]):
+def scan_line(
+    line: str, result: Classification, line_iter: Iterator[str]
+) -> Classification:
     new_result = None
     debug("Looking at line {}".format(line))
 
@@ -229,7 +281,9 @@ def scan_line(line: str, result: Result, line_iter: Iterator[str]):
     return result
 
 
-def rescan_wrapper_preamble(file, call, version):
+def rescan_wrapper_preamble(
+    file: str, call: str, version: str
+) -> Tuple[Result, str, str]:
     """
     If there was no result in the wrapper script log so far, we rescan it and search for errors reported directly by
     the wrapper script
@@ -245,7 +299,7 @@ def rescan_wrapper_preamble(file, call, version):
         f.seek(-3, 2)
         last_elems = f.read()
         if b"..." == last_elems:
-            return [Result((UNEXPECTED_EXTERNAL_KILL, "..."), call, version)]
+            return [Result(file, (UNEXPECTED_EXTERNAL_KILL, "..."), call, version)]
         else:
             debug("Last 3 elements of file are {}".format(last_elems))
 
@@ -253,7 +307,7 @@ def rescan_wrapper_preamble(file, call, version):
         lines = [line.rstrip("\n") for line in f].__iter__()
 
         regex_file_does_not_exist = re.compile(".*File.*does not exist")
-        result = None
+        classification = None
         for line in lines:
             if not line:
                 continue
@@ -261,15 +315,15 @@ def rescan_wrapper_preamble(file, call, version):
                 debug("Found argument error")
                 # hacky special case
                 if "--validate" in line and regex_file_does_not_exist.match(line):
-                    return [Result(scan_line(line, None, lines), None, None)]
-                return [Result(None, None, None)]
+                    return [Result(file, scan_line(line, None, lines), None, None)]
+                return [Result(file, None, None, None)]
             else:
-                result = scan_line(line, result, lines)
+                classification = scan_line(line, classification, lines)
 
-        return [Result(result, call, version)]
+        return [Result(file, classification, call, version)]
 
 
-def process_wrapper_script_log(file):
+def process_wrapper_script_log(file: str) -> List[Result]:
     results = []
     default = True
     wrapper_preamble = True
@@ -315,18 +369,18 @@ def process_wrapper_script_log(file):
                     debug("Found Ultimate version {}".format(version))
                 elif "### Bit-precise run ###" in line:
                     debug("Found default result: {}".format(result))
-                    results += [Result(result, default_call, version)]
+                    results += [Result(file, result, default_call, version)]
                     result = None
                 else:
                     result = scan_line(line, result, lines)
     if bitvec_call:
         debug("Found bitvec result: {}".format(result))
-        results += [Result(result, bitvec_call, version)]
+        results += [Result(file, result, bitvec_call, version)]
     if not results:
         if result and default_call:
             # case where the bitvector run did not start, e.g., termination
             debug("Using default result: {}".format(result))
-            return [Result(result, default_call, version)]
+            return [Result(file, result, default_call, version)]
         debug("No results for file {}".format(file))
         return rescan_wrapper_preamble(
             file,
@@ -354,7 +408,7 @@ def process_direct_call_log(file):
                 result = scan_line(line, result, lines)
         if call is None:
             print(file + " has no call")
-        return [Result(result, call, version)]
+        return [Result(file, result, call, version)]
 
 
 def process_log_file(file):
@@ -406,20 +460,23 @@ def print_results(results: List[Result]) -> None:
         print(msg)
 
 
-def __set_unknowns(results, file, timeout_ymls, oom_ymls):
+def __set_unknowns(results: List[Result], file: str, runs: Dict[str, Run]):
     real_results = []
     for r in results:
         if r.result is None:
             basename = ntpath.basename(file)
-            if any(f == basename for f in timeout_ymls):
+            run = runs[basename]
+            if run.is_timeout():
                 real_results += [
-                    Result((str_benchexec_timeout, "..."), r.call, r.version)
+                    Result(file, (str_benchexec_timeout, "..."), r.call, r.version)
                 ]
-            elif any(f == basename for f in oom_ymls):
-                real_results += [Result((str_benchexec_oom, "..."), r.call, r.version)]
+            elif run.is_oom():
+                real_results += [
+                    Result(file, (str_benchexec_oom, "..."), r.call, r.version)
+                ]
             else:
                 real_results += [
-                    Result((str_no_result_unknown, file), r.call, r.version)
+                    Result(file, (str_no_result_unknown, file), r.call, r.version)
                 ]
         else:
             real_results += [r]
@@ -441,34 +498,28 @@ def __list_xml_filepaths(input_dir):
             yield file
 
 
-def consume_task(queue, results, timeout_ymls, oom_ymls):
+def consume_task(queue, results, runs):
     while True:
         path = queue.get()
         if path is None:
             break
         try:
-            tmp_result = __set_unknowns(
-                process_log_file(path), path, timeout_ymls, oom_ymls
-            )
+            tmp_result = __set_unknowns(process_log_file(path), path, runs)
         except UnsupportedLogFile:
             continue
         results += tmp_result
 
 
-def process_input_dir(input_dir, timeout_ymls, oom_ymls) -> Tuple[int, List[Result]]:
+def process_input_dir(input_dir: str, runs: Dict[str, Run]) -> Tuple[int, List[Result]]:
     results = multiprocessing.Manager().list()
     if os.path.isfile(input_dir):
-        results += __set_unknowns(
-            process_log_file(input_dir), input_dir, timeout_ymls, oom_ymls
-        )
+        results += __set_unknowns(process_log_file(input_dir), input_dir, runs)
         log_file_count = 1
     else:
         local_cores = max(multiprocessing.cpu_count() - 4, 1)
         queue = multiprocessing.Queue(maxsize=local_cores)
         pool = multiprocessing.Pool(
-            local_cores,
-            initializer=consume_task,
-            initargs=(queue, results, timeout_ymls, oom_ymls),
+            local_cores, initializer=consume_task, initargs=(queue, results, runs),
         )
 
         progress_bar = tqdm([i for i in __list_logfile_paths_in_dir(input_dir)])
@@ -490,7 +541,7 @@ def process_input_dir(input_dir, timeout_ymls, oom_ymls) -> Tuple[int, List[Resu
     return log_file_count, results
 
 
-def __get_out_of_ressources_ymls(input_dir):
+def __parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
     xml_files = [f for f in __list_xml_filepaths(input_dir)]
     if len(xml_files) == 0:
         print(
@@ -498,37 +549,30 @@ def __get_out_of_ressources_ymls(input_dir):
                 input_dir
             )
         )
-        return [], [], False
+        return {}, False
 
-    timeout_ymls = []
-    oom_ymls = []
+    rtr = {}
     for xml in __list_xml_filepaths(input_dir):
         root = ET.parse(xml).getroot()
         result = root.find(".")
         name = result.attrib["name"].split(".")
-        toolname = name[0]
+        tool_name = name[0]
         for elem in root.findall(".//run"):
             # files = elem.attrib["files"]
             yml = elem.attrib["name"]
             base_yml = ntpath.basename(yml)
-            status_tag = elem.find("./column[@title='status']")
-            if status_tag is None:
-                continue
-            status = status_tag.attrib["value"]
-            logfile_name = "{}.{}.log".format(toolname, base_yml)
-            if status == "TIMEOUT":
-                timeout_ymls += [logfile_name]
-            elif status == "OUT OF MEMORY":
-                oom_ymls += [logfile_name]
-    return timeout_ymls, oom_ymls, True
+            logfile_name = "{}.{}.log".format(tool_name, base_yml)
+            rtr[logfile_name] = Run(elem, logfile_name)
+
+    return rtr, True
 
 
 def main():
     args = parse_args()
     input_dir = args.input[0]
 
-    timeout_ymls, oom_ymls, benchexec_xml = __get_out_of_ressources_ymls(input_dir)
-    log_file_count, results = process_input_dir(input_dir, timeout_ymls, oom_ymls)
+    runs, benchexec_xml = __parse_benchexec_xmls(input_dir)
+    log_file_count, results = process_input_dir(input_dir, runs)
 
     if log_file_count > len(results):
         if not benchexec_xml:
@@ -541,13 +585,14 @@ def main():
             )
         )
     else:
+        len({k: v for k, v in runs.items() if v.is_timeout()})
         print(
             "Overview of {} results from {} .log files ({} {}, {} {})".format(
                 len(results),
                 log_file_count,
-                len(timeout_ymls),
+                len({k: v for k, v in runs.items() if v.is_timeout()}),
                 str_benchexec_timeout,
-                len(oom_ymls),
+                len({k: v for k, v in runs.items() if v.is_oom()}),
                 str_benchexec_oom,
             )
         )
