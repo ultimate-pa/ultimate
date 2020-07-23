@@ -1603,15 +1603,14 @@ public final class SmtUtils {
 							resultParams.add(inputParams[i]);
 							simplificationPossible = false;
 						} else {
-							final Rational resultRat = numerator.div(nextAsRational);
-							if (resultRat.isIntegral()) {
-								final Term resultTerm = resultRat.toTerm(SmtSortUtils.getIntSort(script));
-								resultParams.set(0, resultTerm);
-							} else {
-								// cannot simplify
-								resultParams.add(inputParams[i]);
-								simplificationPossible = false;
+							if (!numerator.isIntegral() || !nextAsRational.isIntegral()) {
+								throw new AssertionError("no integers");
 							}
+							// Euclidean division. E.g. (div -5 2) is -3
+							final BigInteger div = BoogieUtils.euclideanDiv(numerator.numerator(), nextAsRational.numerator());
+							final Term resultTerm = SmtUtils.rational2Term(script,
+									Rational.valueOf(div, BigInteger.ONE), resultParams.get(0).getSort());
+							resultParams.set(0, resultTerm);
 						}
 					}
 				}
