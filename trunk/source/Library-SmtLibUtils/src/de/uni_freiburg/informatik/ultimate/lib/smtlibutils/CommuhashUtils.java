@@ -82,7 +82,7 @@ public class CommuhashUtils {
 	}
 
 	public static Term term(final Script script, final String funcname, final String[] indices, final Sort returnSort,
-			final Term[] params) {
+			final Term... params) {
 		if (isKnownToBeCommutative(funcname)) {
 			return script.term(funcname, indices, returnSort, sortByHashCode(params));
 		}

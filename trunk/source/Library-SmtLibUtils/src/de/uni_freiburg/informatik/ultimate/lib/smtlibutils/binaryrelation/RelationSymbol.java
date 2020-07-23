@@ -26,6 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+
 /**
  * Values of this enum represent the relation symbol of some binary relations.
  *
@@ -125,6 +130,33 @@ public enum RelationSymbol {
 			break;
 		case GREATER:
 			result = RelationSymbol.LESS;
+			break;
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
+		}
+		return result;
+	}
+
+	public Term constructTerm(final Script script, final Term lhs, final Term rhs) {
+		Term result;
+		switch (this) {
+		case EQ:
+			result = CommuhashUtils.term(script, "=", null, null, lhs, rhs);
+			break;
+		case DISTINCT:
+			result = SmtUtils.not(script, CommuhashUtils.term(script, "=", null, null, lhs, rhs));
+			break;
+		case LEQ:
+			result = SmtUtils.leq(script, lhs, rhs);
+			break;
+		case GEQ:
+			result = SmtUtils.leq(script, rhs, lhs);
+			break;
+		case LESS:
+			result = SmtUtils.less(script, lhs, rhs);
+			break;
+		case GREATER:
+			result = SmtUtils.less(script, rhs, lhs);
 			break;
 		default:
 			throw new AssertionError("unknown RelationSymbol " + this);
