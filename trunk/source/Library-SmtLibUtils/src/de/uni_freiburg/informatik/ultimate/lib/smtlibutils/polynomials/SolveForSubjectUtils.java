@@ -704,7 +704,7 @@ public class SolveForSubjectUtils {
 	private static SupportingTerm constructInRelationToZeroSupportingTerm(final Script script, final Term term,
 			final RelationSymbol relSym) {
 		final Term zero = SmtUtils.rational2Term(script, Rational.ZERO, term.getSort());
-		final Term termRelZero = script.term(relSym.toString(), term, zero);
+		final Term termRelZero =  relSym.constructTerm(script, term, zero);
 		return new SupportingTerm(termRelZero, IntricateOperation.DIV_BY_NONCONSTANT, Collections.emptySet());
 	}
 
