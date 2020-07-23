@@ -381,6 +381,13 @@ public class SolveForSubjectUtils {
 		final int recVarName = divModSubterm.toString().length();
 		final TermVariable auxDiv = script.variable("aux_div_" + recVarName, termSort);
 		final TermVariable auxMod = script.variable("aux_mod_" + recVarName, termSort);
+		if (Arrays.stream(pnf.getFreeVars()).anyMatch(x -> x.getName().equals(auxDiv.getName()))) {
+			throw new AssertionError("Possible infinite loop detected " + auxDiv + " already exists");
+		}
+		if (Arrays.stream(pnf.getFreeVars()).anyMatch(x -> x.getName().equals(auxMod.getName()))) {
+			throw new AssertionError("Possible infinite loop detected " + auxMod + " already exists");
+		}
+
 
 		final MultiCaseSolvedBinaryRelation solvedComparison;
 
