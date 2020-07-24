@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -39,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Abstract superclass for our partial quantifier elimination techniques that we
- * apply to a dualJunction. Objects that implement this class can be kept
- * alive throughout an elimination process.
+ * apply to a dualJunction. Objects that implement this class can be kept alive
+ * throughout an elimination process.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -51,23 +52,23 @@ public abstract class DualJunctionQuantifierElimination {
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 
-
-	public DualJunctionQuantifierElimination(final ManagedScript script,
-			final IUltimateServiceProvider services) {
+	public DualJunctionQuantifierElimination(final ManagedScript script, final IUltimateServiceProvider services) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mMgdScript = script;
 		mScript = script.getScript();
 	}
+
 	public abstract String getName();
+
 	public abstract String getAcronym();
 
-
 	/**
-	 * Try to remove {@link TermVariable}s specified by the input {@link EliminationTask}.
-	 * If nothing can be removed, the method must return null.
-	 * If some eliminatee was removed return as soon as the intermediate result becomes a correspondingJunction
+	 * Try to remove {@link TermVariable}s specified by the input
+	 * {@link EliminationTask}. If nothing can be removed, the method must return
+	 * null. If some eliminatee was removed return as soon as the intermediate
+	 * result becomes a correspondingJunction
 	 * <p>
 	 * If the quantifier is an existential (resp. universal) quantifier this method
 	 * returns an array of {@link Term}s <code>result</code> such that
@@ -83,25 +84,33 @@ public abstract class DualJunctionQuantifierElimination {
 	 * <p>
 	 * Every variable that was successfully eliminated is removed from the set.
 	 * However, due to formula simplifications some variables might get removed
-	 * accidentally. Hence, there might be variables that are not removed from
-	 * the eliminatees set but do not occur in the resulting terms.
+	 * accidentally. Hence, there might be variables that are not removed from the
+	 * eliminatees set but do not occur in the resulting terms.
 	 */
 	public abstract EliminationResult tryToEliminate(EliminationTask et);
-
 
 	public static class EliminationResult {
 		private final EliminationTask mEliminationTask;
 		private final Set<TermVariable> mNewEliminatees;
+
 		public EliminationResult(final EliminationTask eliminationTask, final Set<TermVariable> newEliminatees) {
 			super();
 			mEliminationTask = eliminationTask;
 			mNewEliminatees = newEliminatees;
 		}
+
 		public EliminationTask getEliminationTask() {
 			return mEliminationTask;
 		}
+
 		public Set<TermVariable> getNewEliminatees() {
 			return mNewEliminatees;
+		}
+
+		public EliminationTask integrateNewEliminatees() {
+			final Set<TermVariable> eliminatees = new LinkedHashSet<>(getNewEliminatees());
+			eliminatees.addAll(getEliminationTask().getEliminatees());
+			return new EliminationTask(getEliminationTask().getQuantifier(), eliminatees, getEliminationTask().getTerm());
 		}
 	}
 
