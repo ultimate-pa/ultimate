@@ -1,0 +1,79 @@
+# Configuration file for get-benchexec-overview.py
+# Each entry in one of the five maps can have the following keys (see also class MessageClassifier in the script itself)
+#   show_line: True
+#   dump_smt: False
+#   delta_debug: False
+
+known_exceptions:
+  "UnsupportedOperationException: Unsupported type":
+  "AssertionError: at least one of both input predicates is unknown":
+  "command is only available in interactive mode":
+  'Argument of "settings" has invalid value':
+  "encountered a call to a var args function, var args are not supported at the moment":
+  "we do not support pthread":
+  "unable to decide satisfiability of path constraint":
+  "overapproximation of large string literal":
+  "TerminationAnalysisResult: Unable to decide termination":
+  "An exception occured during the execution of Ultimate: The toolchain threw an exception":
+  "overapproximation of shiftRight":
+  "overapproximation of overflow check for bitwise shift operation":
+  "overapproximation of bitwiseAnd":
+  "overapproximation of shiftLeft":
+  "overapproximation of memtrack":
+  "There is insufficient memory for the Java Runtime Environment to continue":
+  "UnsupportedSyntaxResult":
+    show_line: False
+  "TypeErrorResult":
+    show_line: False
+  "SyntaxErrorResult":
+    show_line: False
+  "TypeCheckException":
+  "SMTLIBException: Cannot handle literal (exists":
+  "IllegalArgumentException: cannot bring into simultaneous update form":
+  "No Boogie because C type is incomplete":
+  "AssertionError: Invalid VarList":
+  "AssertionError: Invalid Procedure":
+  "AssertionError: No corresponding IProgramVar":
+  "Wrong parameter type at index":
+  "Undeclared identifier ":
+  "Modifies not transitive":
+  "encountered a call to a var args function and varargs usage is unknown":
+  "UnsupportedOperationException: floating point operation not supported in non-bitprecise translation":
+  "ClassCastException: de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer cannot be cast to de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive":
+  "StackOverflowError: null":
+  "No suitable toolchain file found":
+  "No suitable file found in config dir":
+  "AssertionError: var is still there":
+  "IllegalStateException: Petrification does not provide enough thread instances":
+  "IllegalStateException: ManagedScript already locked by":
+    show_line: False
+  "ExceptionOrErrorResult":
+    show_line: False
+  "was unable to instantiate class":
+  "de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.ParserInitializationException: Parser initialization failed":
+  "RESULT: Ultimate could not prove your program: Toolchain returned no result.":
+
+known_timeouts:
+  "Cannot interrupt operation gracefully because timeout expired. Forcing shutdown":
+  "Toolchain execution was canceled (user or tool) before executing":
+  "TimeoutResultAtElement":
+  "TimeoutResult":
+  "Killed by 15":
+  "Killed from outside":
+
+known_safe:
+  "AllSpecificationsHoldResult":
+  "TerminationAnalysisResult: Termination proven":
+
+known_unsafe:
+  "CounterExampleResult":
+  "NonterminatingLassoResult":
+
+known_unknown:
+  "UnprovableResult":
+
+known_wrapper_errors:
+  "Ultimate.py: error: argument --validate: File":
+  "Checking for LTL property":
+  "WARNING: YOUR LOGFILE WAS TOO LONG, SOME LINES IN THE MIDDLE WERE REMOVED.":
+  "Skipped default analysis because property is memsafety":

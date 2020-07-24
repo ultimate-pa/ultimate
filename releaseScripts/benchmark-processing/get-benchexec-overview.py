@@ -9,116 +9,15 @@ import re
 import signal
 import sys
 import xml.etree.ElementTree as ET
-from functools import reduce, lru_cache
-from typing import Tuple, List, Iterator, Any, Dict
+from functools import lru_cache
+from typing import Tuple, List, Iterator, Any, Dict, Optional, cast, Pattern, ChainMap
 
+import yaml
 from tqdm import tqdm
 
 # some type defs
 # first is category, second is message
 Classification = Tuple[str, str]
-
-# global variables
-"""
-(k,v) where
-  k is the string we search,
-  v iff the log line where we found the string is the one we want to show,
-  !v iff the following log line is the one we want to show
-"""
-known_exceptions = {
-    "UnsupportedOperationException: Unsupported type": True,
-    "AssertionError: at least one of both input predicates is unknown": True,
-    "command is only available in interactive mode": True,
-    'Argument of "settings" has invalid value': True,
-    "encountered a call to a var args function, var args are not supported at the moment": True,
-    "we do not support pthread": True,
-    "unable to decide satisfiability of path constraint": True,
-    "overapproximation of large string literal": True,
-    "TerminationAnalysisResult: Unable to decide termination": True,
-    "An exception occured during the execution of Ultimate: The toolchain threw an exception": True,
-    "overapproximation of shiftRight": True,
-    "overapproximation of overflow check for bitwise shift operation": True,
-    "overapproximation of bitwiseAnd": True,
-    "overapproximation of shiftLeft": True,
-    "overapproximation of memtrack": True,
-    "There is insufficient memory for the Java Runtime Environment to continue": True,
-    "UnsupportedSyntaxResult": False,
-    "TypeErrorResult": False,
-    "SyntaxErrorResult": False,
-    "TypeCheckException": True,
-    "SMTLIBException: Cannot handle literal (exists": True,
-    "IllegalArgumentException: cannot bring into simultaneous update form": True,
-    "No Boogie because C type is incomplete": True,
-    "AssertionError: Invalid VarList": True,
-    "AssertionError: Invalid Procedure": True,
-    "AssertionError: No corresponding IProgramVar": True,
-    "Wrong parameter type at index": True,
-    "Undeclared identifier ": True,
-    "Modifies not transitive": True,
-    "encountered a call to a var args function and varargs usage is unknown": True,
-    "UnsupportedOperationException: floating point operation not supported in non-bitprecise translation": True,
-    "ClassCastException: de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer cannot be cast to de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive": True,
-    "StackOverflowError: null": True,
-    "No suitable toolchain file found": True,
-    "No suitable file found in config dir": True,
-    "AssertionError: var is still there": True,
-    "IllegalStateException: Petrification does not provide enough thread instances": True,
-    "IllegalStateException: ManagedScript already locked by": False,
-    "ExceptionOrErrorResult": False,
-    "was unable to instantiate class": True,
-    "de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.ParserInitializationException: Parser initialization failed": True,
-    "RESULT: Ultimate could not prove your program: Toolchain returned no result.": True,
-}
-
-UNEXPECTED_EXTERNAL_KILL = "Killed from outside"
-
-known_timeouts = {
-    "Cannot interrupt operation gracefully because timeout expired. Forcing shutdown": True,
-    "Toolchain execution was canceled (user or tool) before executing": True,
-    "TimeoutResultAtElement": True,
-    "TimeoutResult": True,
-    "Killed by 15": True,
-    UNEXPECTED_EXTERNAL_KILL: True,
-}
-
-known_safe = {
-    "AllSpecificationsHoldResult": True,
-    "TerminationAnalysisResult: Termination proven": True,
-}
-
-known_unsafe = {
-    "CounterExampleResult": True,
-    "NonterminatingLassoResult": True,
-}
-
-known_unknown = {
-    "UnprovableResult": True,
-}
-
-known_wrapper_errors = {
-    "Ultimate.py: error: argument --validate: File": True,
-    "Checking for LTL property": True,
-    "WARNING: YOUR LOGFILE WAS TOO LONG, SOME LINES IN THE MIDDLE WERE REMOVED.": True,
-    "Skipped default analysis because property is memsafety": True,
-}
-
-str_no_result_unknown = "Unknown"
-str_benchexec_timeout = "Timeout by benchexec"
-str_benchexec_oom = "OOM by benchexec"
-
-version_matcher = re.compile(r"^.*(\d+\.\d+\.\d+-\w+).*$")
-order = [
-    known_exceptions,
-    known_timeouts,
-    {str_benchexec_timeout: True, str_benchexec_oom: True},
-    known_unsafe,
-    known_unknown,
-    known_safe,
-    known_wrapper_errors,
-]
-interesting_strings = reduce(lambda x, y: dict(x, **y), order)
-
-enable_debug = False
 
 
 class UnsupportedLogFile(ValueError):
@@ -136,7 +35,11 @@ class Result:
     logfile: str
 
     def __init__(
-        self, logfile: str, result: Classification, call: str, version: str
+        self,
+        logfile: Optional[str],
+        result: Optional[Classification],
+        call: Optional[str],
+        version: Optional[str],
     ) -> None:
         self.logfile = logfile
         self.version = version
@@ -147,7 +50,7 @@ class Result:
         return str(self.result)
 
     @lru_cache(maxsize=1)
-    def input_file(self) -> str:
+    def input_file(self) -> Optional[str]:
         if self.call is None:
             return None
         regex = r"-i\s+[\"]?(.*)[\"]?\s?"
@@ -175,17 +78,17 @@ class Run:
         self.walltime = Run.__time_to_float(Run.__get_column_value(xml_run, "walltime"))
         self.memory = Run.__byte_to_int(Run.__get_column_value(xml_run, "memory"))
 
-    def is_timeout(self):
+    def is_timeout(self) -> bool:
         return self.status == "TIMEOUT"
 
-    def is_oom(self):
+    def is_oom(self) -> bool:
         return self.status == "OUT OF MEMORY"
 
-    def is_unsound(self):
+    def is_unsound(self) -> bool:
         return self.category == "wrong"
 
     @staticmethod
-    def __get_column_value(xml_run: ET.Element, title: str) -> str:
+    def __get_column_value(xml_run: ET.Element, title: str) -> Optional[str]:
         column = xml_run.find(f"./column[@title='{title}']")
         if column is None:
             return None
@@ -202,20 +105,55 @@ class Run:
         return int(val[:-1]) if val else None
 
 
+class MessageClassifier:
+    category: str
+    message: str
+    show_line: bool
+    dump_smt: bool
+    delta_debug: bool
+
+    def __init__(
+        self, category: str, message: str, values: Dict[str, Any] = None
+    ) -> None:
+        self.category = category
+        self.message = message
+        self.show_line = True
+        self.dump_smt = False
+        self.delta_debug = False
+
+        if values:
+            self.show_line = values.get("show_line", self.show_line)
+            self.dump_smt = values.get("dump_smt", self.dump_smt)
+            self.delta_debug = values.get("delta_debug", self.delta_debug)
+
+    def __str__(self) -> str:
+        return f"[{type(self).__name__}] {self.category}: {self.message} show_line={self.show_line} dump_smt={self.dump_smt} delta_debug={self.delta_debug}"
+
+
+# global variables
+order: List[Dict[str, MessageClassifier]] = []
+interesting_strings: ChainMap[str, MessageClassifier] = collections.ChainMap()
+str_no_result_unknown: str = "Unknown"
+str_benchexec_timeout: str = "Timeout by benchexec"
+str_benchexec_oom: str = "OOM by benchexec"
+version_matcher: Pattern[str] = re.compile(r"^.*(\d+\.\d+\.\d+-\w+).*$")
+enable_debug: bool = False
+
+
 def class_idx(result: Classification) -> int:
     if not result or not result[0]:
         return len(order) + 1
     return [i for i, e in enumerate(order) if result[0] in e][0]
 
 
-def signal_handler(sig, frame):
+def signal_handler(sig, frame) -> None:
     if sig == signal.SIGTERM:
         print("Killed by {}".format(sig))
     print("Abort by user: you pressed Ctrl+C!")
     sys.exit(2)
 
 
-def limit(msg, lim):
+def limit(msg: str, lim: int) -> str:
     if lim < 4:
         raise ValueError("limit must be larger or equal 4 but was {}".format(lim))
     if len(msg) > lim:
@@ -223,12 +161,12 @@ def limit(msg, lim):
     return msg.ljust(lim, " ")
 
 
-def debug(msg):
+def debug(msg: str) -> None:
     if enable_debug:
         print(msg)
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     try:
         parser = argparse.ArgumentParser(
             description="Scan Ultimate log file for exception results"
@@ -252,18 +190,18 @@ def parse_args():
 
 
 def scan_line(
-    line: str, result: Classification, line_iter: Iterator[str]
+    line: str, result: Optional[Classification], line_iter: Iterator[str]
 ) -> Classification:
     new_result = None
     debug("Looking at line {}".format(line))
 
-    for exc, v in interesting_strings.items():
-        if exc in line:
-            if v:
-                new_result = exc, line
+    for message, mc in interesting_strings.items():
+        if message in line:
+            if mc.show_line:
+                new_result = message, line
             else:
-                new_result = exc, line_iter.__next__()
-            debug("Found result {} with line {}".format(exc, line))
+                new_result = message, line_iter.__next__()
+            debug("Found result {} with line {}".format(message, line))
             break
 
     if not result and new_result:
@@ -281,16 +219,10 @@ def scan_line(
     return result
 
 
-def rescan_wrapper_preamble(
-    file: str, call: str, version: str
-) -> Tuple[Result, str, str]:
+def rescan_wrapper_preamble(file: str, call: str, version: str) -> List[Result]:
     """
     If there was no result in the wrapper script log so far, we rescan it and search for errors reported directly by
     the wrapper script
-    :param lines: Iterator over the lines
-    :param call: A call if any was found
-    :param version: A version if any was found
-    :return:
     """
     debug("Rescanning wrapper preamble")
     with open(file, "rb") as f:
@@ -299,7 +231,7 @@ def rescan_wrapper_preamble(
         f.seek(-3, 2)
         last_elems = f.read()
         if b"..." == last_elems:
-            return [Result(file, (UNEXPECTED_EXTERNAL_KILL, "..."), call, version)]
+            return [Result(file, ("Killed from outside", "..."), call, version)]
         else:
             debug("Last 3 elements of file are {}".format(last_elems))
 
@@ -324,14 +256,14 @@ def rescan_wrapper_preamble(
 
 
 def process_wrapper_script_log(file: str) -> List[Result]:
-    results = []
-    default = True
-    wrapper_preamble = True
-    collect_call = False
-    version = None
-    result = None
-    default_call = None
-    bitvec_call = None
+    results: List[Result] = []
+    default: bool = True
+    wrapper_preamble: bool = True
+    collect_call: bool = False
+    version: Optional[str] = None
+    classification: Optional[Classification] = None
+    default_call: Optional[str] = None
+    bitvec_call: Optional[str] = None
     with open(file) as f:
         lines = [line.rstrip("\n") for line in f].__iter__()
         for line in lines:
@@ -341,16 +273,16 @@ def process_wrapper_script_log(file: str) -> List[Result]:
                 if "Using bit-precise analysis" in line:
                     default = False
                 elif line.startswith("Calling Ultimate with:"):
-                    call = [line]
+                    call: List[str] = [line]
                     collect_call = True
                 elif collect_call:
                     if "Execution finished normally" in line:
                         collect_call = False
                         if default:
-                            default_call = call[:-1]
+                            default_call = cast(str, call[:-1])
                             debug("Found default call {}".format(default_call))
                         else:
-                            bitvec_call = call[:-1]
+                            bitvec_call = cast(str, call[:-1])
                             debug("Found bitvector call {}".format(bitvec_call))
                     else:
                         call += [line]
@@ -368,19 +300,19 @@ def process_wrapper_script_log(file: str) -> List[Result]:
                     version = new_version
                     debug("Found Ultimate version {}".format(version))
                 elif "### Bit-precise run ###" in line:
-                    debug("Found default result: {}".format(result))
-                    results += [Result(file, result, default_call, version)]
-                    result = None
+                    debug("Found default result: {}".format(classification))
+                    results += [Result(file, classification, default_call, version)]
+                    classification = None
                 else:
-                    result = scan_line(line, result, lines)
+                    classification = scan_line(line, classification, lines)
     if bitvec_call:
-        debug("Found bitvec result: {}".format(result))
-        results += [Result(file, result, bitvec_call, version)]
+        debug("Found bitvec result: {}".format(classification))
+        results += [Result(file, classification, bitvec_call, version)]
     if not results:
-        if result and default_call:
+        if classification and default_call:
             # case where the bitvector run did not start, e.g., termination
-            debug("Using default result: {}".format(result))
-            return [Result(file, result, default_call, version)]
+            debug("Using default result: {}".format(classification))
+            return [Result(file, classification, default_call, version)]
         debug("No results for file {}".format(file))
         return rescan_wrapper_preamble(
             file,
@@ -390,7 +322,7 @@ def process_wrapper_script_log(file: str) -> List[Result]:
     return results
 
 
-def process_direct_call_log(file):
+def process_direct_call_log(file: str) -> List[Result]:
     result = None
     with open(file) as f:
         version = ""
@@ -411,7 +343,7 @@ def process_direct_call_log(file):
         return [Result(file, result, call, version)]
 
 
-def process_log_file(file):
+def process_log_file(file: str) -> List[Result]:
     with open(file) as f:
         lines = [line.rstrip("\n") for line in f]
         for line in lines:
@@ -460,7 +392,9 @@ def print_results(results: List[Result]) -> None:
         print(msg)
 
 
-def __set_unknowns(results: List[Result], file: str, runs: Dict[str, Run]):
+def set_unknowns(
+    results: List[Result], file: str, runs: Dict[str, Run]
+) -> List[Result]:
     real_results = []
     for r in results:
         if r.result is None:
@@ -483,7 +417,7 @@ def __set_unknowns(results: List[Result], file: str, runs: Dict[str, Run]):
     return real_results
 
 
-def __list_logfile_paths_in_dir(input_dir):
+def list_logfile_paths_in_dir(input_dir: str) -> Iterator[str]:
     for dirpath, dirnames, files in os.walk(input_dir):
         for file in files:
             if not file.endswith(".log"):
@@ -491,38 +425,45 @@ def __list_logfile_paths_in_dir(input_dir):
             yield os.path.join(dirpath, file)
 
 
-def __list_xml_filepaths(input_dir):
+def list_xml_filepaths(input_dir: str) -> Iterator[str]:
     for xml in os.listdir(input_dir):
         file = os.path.join(input_dir, xml)
         if os.path.isfile(file) and file.endswith(".xml"):
             yield file
 
 
-def consume_task(queue, results, runs):
+def consume_task(queue, results, runs, o, i) -> None:
+    global order
+    global interesting_strings
+    order = o
+    interesting_strings = i
+    tmp_result = []
     while True:
         path = queue.get()
         if path is None:
             break
         try:
-            tmp_result = __set_unknowns(process_log_file(path), path, runs)
+            tmp_result += set_unknowns(process_log_file(path), path, runs)
         except UnsupportedLogFile:
             continue
-        results += tmp_result
+    results += tmp_result
 
 
 def process_input_dir(input_dir: str, runs: Dict[str, Run]) -> Tuple[int, List[Result]]:
-    results = multiprocessing.Manager().list()
+    results: List[Result] = multiprocessing.Manager().list()
     if os.path.isfile(input_dir):
-        results += __set_unknowns(process_log_file(input_dir), input_dir, runs)
+        results += set_unknowns(process_log_file(input_dir), input_dir, runs)
         log_file_count = 1
     else:
         local_cores = max(multiprocessing.cpu_count() - 4, 1)
         queue = multiprocessing.Queue(maxsize=local_cores)
         pool = multiprocessing.Pool(
-            local_cores, initializer=consume_task, initargs=(queue, results, runs),
+            local_cores,
+            initializer=consume_task,
+            initargs=(queue, results, runs, order, interesting_strings),
         )
 
-        progress_bar = tqdm([i for i in __list_logfile_paths_in_dir(input_dir)])
+        progress_bar = tqdm([i for i in list_logfile_paths_in_dir(input_dir)])
         log_file_count = len(progress_bar)
 
         for path in progress_bar:
@@ -541,8 +482,8 @@ def process_input_dir(input_dir: str, runs: Dict[str, Run]) -> Tuple[int, List[R
     return log_file_count, results
 
 
-def __parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
-    xml_files = [f for f in __list_xml_filepaths(input_dir)]
+def parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
+    xml_files = [f for f in list_xml_filepaths(input_dir)]
     if len(xml_files) == 0:
         print(
             "There are no benchexec .xml files in {}, cannot exclude timeouts properly".format(
@@ -552,7 +493,7 @@ def __parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
         return {}, False
 
     rtr = {}
-    for xml in __list_xml_filepaths(input_dir):
+    for xml in list_xml_filepaths(input_dir):
         root = ET.parse(xml).getroot()
         result = root.find(".")
         name = result.attrib["name"].split(".")
@@ -567,11 +508,54 @@ def __parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
     return rtr, True
 
 
-def main():
+def read_yaml_files() -> None:
+    conf_file_name = "get-benchexec-overview.yaml"
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+
+    with open(os.path.join(script_dir, conf_file_name)) as conf_file:
+        conf = {}
+        try:
+            conf_yaml = yaml.safe_load(conf_file)
+            for category, values in conf_yaml.items():
+                conf[category] = {
+                    k: MessageClassifier(category, k, v) for k, v in values.items()
+                }
+
+        except yaml.YAMLError as exc:
+            print(f"Could not load configuration file {conf_file_name}: {exc}")
+            sys.exit(1)
+
+        global order
+        global interesting_strings
+
+        order = [
+            conf["known_exceptions"],
+            conf["known_timeouts"],
+            {
+                str_benchexec_timeout: MessageClassifier(
+                    "known_timeouts", str_benchexec_timeout
+                ),
+                str_benchexec_oom: MessageClassifier(
+                    "known_timeouts", str_benchexec_oom
+                ),
+            },
+            conf["known_unsafe"],
+            conf["known_unknown"],
+            conf["known_safe"],
+            conf["known_wrapper_errors"],
+        ]
+
+        interesting_strings = collections.ChainMap(*order)
+
+        # todo: populate globals from conf
+
+
+def main() -> None:
     args = parse_args()
     input_dir = args.input[0]
 
-    runs, benchexec_xml = __parse_benchexec_xmls(input_dir)
+    read_yaml_files()
+    runs, benchexec_xml = parse_benchexec_xmls(input_dir)
     log_file_count, results = process_input_dir(input_dir, runs)
 
     if log_file_count > len(results):
