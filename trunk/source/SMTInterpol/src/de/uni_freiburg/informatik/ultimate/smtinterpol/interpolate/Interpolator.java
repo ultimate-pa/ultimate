@@ -595,18 +595,26 @@ public class Interpolator extends NonRecursive {
 	 */
 	private void colorLiterals(final Term proofTree) {
 
+		final Set<Term> seen = new HashSet<>();
 		final Deque<Term> todoStack = new ArrayDeque<>();
+		seen.add(proofTree);
 		todoStack.add(proofTree);
 
 		while (!todoStack.isEmpty()) {
 			final Term proofTerm = todoStack.pop();
 			final InterpolatorClauseTermInfo proofTermInfo = getClauseTermInfo(proofTerm);
 			if (proofTermInfo.isResolution()) {
-				todoStack.add(proofTermInfo.getPrimary());
+				final Term primary = proofTermInfo.getPrimary();
+				if (seen.add(primary)) {
+					todoStack.add(primary);
+				}
 				final Term[] antecedents = proofTermInfo.getAntecedents();
 				for (final Term a : antecedents) {
 					assert a instanceof AnnotatedTerm;
-					todoStack.add(((AnnotatedTerm) a).getSubterm());
+					final Term subterm = ((AnnotatedTerm) a).getSubterm();
+					if (seen.add(subterm)) {
+						todoStack.add(subterm);
+					}
 				}
 			} else {
 				assert proofTermInfo.isLeaf();
