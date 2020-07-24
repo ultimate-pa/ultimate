@@ -31,7 +31,7 @@ class UnsupportedLogFile(ValueError):
 class Result:
     version: str
     call: str
-    result: Classification
+    classification: Classification
     logfile: str
 
     def __init__(
@@ -44,10 +44,16 @@ class Result:
         self.logfile = logfile
         self.version = version
         self.call = call
-        self.result = result
+        self.classification = result
 
     def __str__(self) -> str:
-        return str(self.result)
+        return str(self.classification)
+
+    def category(self) -> str:
+        return self.classification[0]
+
+    def message(self) -> str:
+        return self.classification[1]
 
     @lru_cache(maxsize=1)
     def input_file(self) -> Optional[str]:
@@ -361,7 +367,7 @@ def process_log_file(file: str) -> List[Result]:
 def print_results(results: List[Result]) -> None:
     cat_cnt = collections.Counter()
     for r in results:
-        cat_cnt[r.result[0]] += 1
+        cat_cnt[r.category()] += 1
 
     print("Categories")
     for cat, i in cat_cnt.most_common():
@@ -372,16 +378,19 @@ def print_results(results: List[Result]) -> None:
     result_cnt = collections.Counter()
     processed = {}
     for r in results:
-        if r.result[0] == str_no_result_unknown or not interesting_strings[r.result[0]]:
-            key = r.result[1]
+        if (
+            r.category() == str_no_result_unknown
+            or not interesting_strings[r.category()]
+        ):
+            key = r.message()
         else:
-            key = r.result[0]
+            key = r.category()
         result_cnt[key] += 1
         processed[key] = r
 
     resort = []
     for subcat, j in result_cnt.most_common():
-        r = processed[subcat].result
+        r = processed[subcat].classification
         msg = "{:>7}  {}  {}:".format(j, limit(r[0], 20), r[1])
         if j < 10:
             resort += [msg]
@@ -397,7 +406,7 @@ def set_unknowns(
 ) -> List[Result]:
     real_results = []
     for r in results:
-        if r.result is None:
+        if r.classification is None:
             basename = ntpath.basename(file)
             run = runs[basename]
             if run.is_timeout():
@@ -432,7 +441,13 @@ def list_xml_filepaths(input_dir: str) -> Iterator[str]:
             yield file
 
 
-def consume_task(queue, results, runs, o, i) -> None:
+def consume_task(
+    queue: multiprocessing.Queue,
+    results: List[Result],
+    runs: Dict[str, Run],
+    o: List[Dict[str, MessageClassifier]],
+    i: ChainMap[str, MessageClassifier],
+) -> None:
     global order
     global interesting_strings
     order = o
