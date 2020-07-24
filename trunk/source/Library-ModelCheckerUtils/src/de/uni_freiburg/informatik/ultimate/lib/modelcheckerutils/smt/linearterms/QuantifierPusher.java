@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.DerScout;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.DerScout.DerApplicability;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.EliminationTask;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtTestGenerationUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionDer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionQeAdapter2014;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionQuantifierElimination;
@@ -274,6 +275,19 @@ public class QuantifierPusher extends TermTransformer {
 		// (1) maybe elimination techniques should be applied before
 		// and after pushing params
 		// (2) Keep pushed params even if we do not (successfully) apply distribution
+		// TODO 20200724 Matthias:
+		// Future plan:
+		// (1) apply non-expensive elimination techniques
+		// (2) check if already corresponding connective
+		// (3) try to push all (not only quantified) params without distributivity
+		// (better with distributivity bu only for elimination guarantee)
+		// include single param eliminatees
+		// (4) pull corresponding quantifiers one step
+		// (4a) flatten connective if necessary
+		// (4b) apply iteratively if necessary
+		// (5) apply all elimination techniques
+		// (6) re-do until no change (probably suppported by caller of this method)
+		// (7) apply distributivity
 		for (int i = 0; i < dualFiniteParams.length; i++) {
 			if (dualFiniteParams[i] instanceof QuantifiedFormula) {
 				dualFiniteParams[i] = new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques)
@@ -523,13 +537,14 @@ public class QuantifierPusher extends TermTransformer {
 
 	private Term applyDualJunctionEliminationTechniques(final EliminationTask et, final ManagedScript mgdScript,
 			final IUltimateServiceProvider services, final PqeTechniques pqeTechniques) {
-		return applyEliminationTechniques2(et, mgdScript, services, pqeTechniques);
+		return applyNewEliminationTechniquesExhaustively(et, mgdScript, services, pqeTechniques);
 	}
 
-	private Term applyEliminationTechniques(final EliminationTask et, final ManagedScript mgdScript,
-			final IUltimateServiceProvider services, final PqeTechniques pqeTechniques) {
+	@Deprecated
+	private Term applyOldEliminationTechniquesSequentially(final EliminationTask et,
+			final ManagedScript mgdScript, final IUltimateServiceProvider services, final PqeTechniques pqeTechniques) {
 		final int numberOfEliminateesBefore = et.getEliminatees().size();
-		final List<XjunctPartialQuantifierElimination> elimtechniques = generateEliminationTechniques(pqeTechniques,
+		final List<XjunctPartialQuantifierElimination> elimtechniques = generateOldEliminationTechniques(pqeTechniques,
 				mgdScript, services);
 		final Term[] dualFiniteParams = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
 		for (final XjunctPartialQuantifierElimination technique : elimtechniques) {
@@ -562,9 +577,10 @@ public class QuantifierPusher extends TermTransformer {
 		return null;
 	}
 
-	private Term applyEliminationTechniques2(final EliminationTask et, final ManagedScript mgdScript,
+
+	private Term applyNewEliminationTechniquesSequentially(final EliminationTask et, final ManagedScript mgdScript,
 			final IUltimateServiceProvider services, final PqeTechniques pqeTechniques) {
-		final List<DualJunctionQuantifierElimination> elimtechniques = generateEliminationTechniques3(pqeTechniques,
+		final List<DualJunctionQuantifierElimination> elimtechniques = generateNewEliminationTechniques(pqeTechniques,
 				mgdScript, services);
 		EliminationTask currentEt = et;
 //		boolean someSuccesfullElimination = false;
@@ -596,8 +612,62 @@ public class QuantifierPusher extends TermTransformer {
 		return null;
 	}
 
-	private List<DualJunctionQuantifierElimination> generateEliminationTechniques2(final PqeTechniques pqeTechniques,
-			final ManagedScript mgdScript, final IUltimateServiceProvider services) {
+	private Term applyNewEliminationTechniquesExhaustively(final EliminationTask inputEt, final ManagedScript mgdScript,
+			final IUltimateServiceProvider services, final PqeTechniques pqeTechniques) {
+		final List<DualJunctionQuantifierElimination> elimtechniques = generateNewEliminationTechniques(pqeTechniques,
+				mgdScript, services);
+		boolean successInLastIteration = false;
+		EliminationTask currentEt = inputEt;
+		int iterations = 0;
+		do {
+			final EliminationResult er = tryToEliminateOne(currentEt, elimtechniques);
+			successInLastIteration = (er != null);
+			if (er != null) {
+				if (!er.getNewEliminatees().isEmpty()) {
+					final String test = SmtTestGenerationUtils.generateStringForTestfile2(inputEt.toTerm(mScript));
+					final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
+					logger.info(test);
+//					throw new UnsupportedOperationException("not yet implemented: auxiliary eliminatees \n" + test);
+				}
+				if (QuantifierUtils.isCorrespondingFiniteJunction(inputEt.getQuantifier(),
+						er.getEliminationTask().getTerm())) {
+					return er.integrateNewEliminatees().toTerm(mScript);
+				}
+				currentEt = er.integrateNewEliminatees();
+			}
+			iterations++;
+			if (iterations % 10 == 0) {
+				final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
+				logger.info(String.format(
+						"Run %s iterations of DualJunctionQuantifierElimination maybe there is a nontermination bug.",
+						iterations));
+			}
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(this.getClass(),
+						String.format("running %s iterations of DualJunctionQuantifierElimination", iterations));
+			}
+		} while (successInLastIteration);
+		if (currentEt == inputEt) {
+			// only one non-successful iteration
+			return null;
+		} else {
+			return currentEt.toTerm(mMgdScript.getScript());
+		}
+	}
+
+	private EliminationResult tryToEliminateOne(final EliminationTask currentEt, final List<DualJunctionQuantifierElimination> elimtechniques) {
+		for (final DualJunctionQuantifierElimination djqe : elimtechniques) {
+			final EliminationResult er = djqe.tryToEliminate(currentEt);
+			if (er != null) {
+				return er;
+			}
+		}
+		return null;
+	}
+
+	@Deprecated
+	private List<DualJunctionQuantifierElimination> generateOldEliminationTechniquesWithAdapter(
+			final PqeTechniques pqeTechniques, final ManagedScript mgdScript, final IUltimateServiceProvider services) {
 		final List<DualJunctionQuantifierElimination> elimtechniques = new ArrayList<>();
 		switch (pqeTechniques) {
 		case ALL_LOCAL:
@@ -625,26 +695,29 @@ public class QuantifierPusher extends TermTransformer {
 		return elimtechniques;
 	}
 
-	private List<DualJunctionQuantifierElimination> generateEliminationTechniques3(final PqeTechniques pqeTechniques,
+	private List<DualJunctionQuantifierElimination> generateNewEliminationTechniques(final PqeTechniques pqeTechniques,
 			final ManagedScript mgdScript, final IUltimateServiceProvider services) {
 		final List<DualJunctionQuantifierElimination> elimtechniques = new ArrayList<>();
 		switch (pqeTechniques) {
 		case ALL_LOCAL:
 			new DualJunctionQeAdapter2014(mgdScript, services, null);
-			elimtechniques.add(new DualJunctionDer(mgdScript, services));
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services,
 					new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfUpd(mgdScript, services)));
+//			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
 			break;
 		case NO_UPD:
-			elimtechniques.add(new DualJunctionDer(mgdScript, services));
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services,
 					new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
+//			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
 			break;
 		case ONLY_DER:
-			elimtechniques.add(new DualJunctionDer(mgdScript, services));
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
+//			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
 			break;
 		default:
 			throw new AssertionError("unknown value " + pqeTechniques);
@@ -652,7 +725,8 @@ public class QuantifierPusher extends TermTransformer {
 		return elimtechniques;
 	}
 
-	private static List<XjunctPartialQuantifierElimination> generateEliminationTechniques(
+	@Deprecated
+	private static List<XjunctPartialQuantifierElimination> generateOldEliminationTechniques(
 			final PqeTechniques pqeTechniques, final ManagedScript mgdScript, final IUltimateServiceProvider services) {
 		final List<XjunctPartialQuantifierElimination> elimtechniques = new ArrayList<>();
 		switch (pqeTechniques) {

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -72,12 +73,28 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
+	/**
+	 * @see constructor
+	 */
+	private final boolean mExpensiveEliminations;
+
 	public enum IntricateOperations {
 		NONE, ADDITIONAL_DUAL_JUNCTS, AUXILIARY_VARIABLES, CASE_DISTINCTION,
 	}
 
-	public DualJunctionDer(final ManagedScript script, final IUltimateServiceProvider services) {
+	/**
+	 * @param expensiveEliminations
+	 *            If set to true we do expensive eliminations where auxiliary
+	 *            variables and case distinctions are allowed. If set to false we do
+	 *            only inexpensive eliminations where non of the above is allowed.
+	 *            Note that in the first case we will not do all simple
+	 *            eliminations. If you want the full elimination power you should
+	 *            two instances of this class.
+	 */
+	public DualJunctionDer(final ManagedScript script, final IUltimateServiceProvider services,
+			final boolean expensiveEliminations) {
 		super(script, services);
+		mExpensiveEliminations = expensiveEliminations;
 	}
 
 	@Override
@@ -92,8 +109,15 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 	@Override
 	public EliminationResult tryToEliminate(final EliminationTask inputEt) {
-		final EliminationResult er = tryExhaustivelyToEliminate(inputEt, new DerHelperSbr(),
-				new DerHelperMcsbr(IntricateOperations.ADDITIONAL_DUAL_JUNCTS));
+		final IDerHelper<?>[] helpers;
+		if (mExpensiveEliminations) {
+			helpers = new IDerHelper[] { new DerHelperMcsbr(IntricateOperations.AUXILIARY_VARIABLES),
+					new DerHelperMcsbr(IntricateOperations.CASE_DISTINCTION) };
+		} else {
+			helpers = new IDerHelper[] { new DerHelperSbr(),
+					new DerHelperMcsbr(IntricateOperations.ADDITIONAL_DUAL_JUNCTS) };
+		}
+		final EliminationResult er = tryExhaustivelyToEliminate(inputEt, helpers);
 		if (er != null && false) {
 			final XnfDer oldDer = new XnfDer(mMgdScript, mServices);
 			final DualJunctionQeAdapter2014 adapter = new DualJunctionQeAdapter2014(mMgdScript, mServices, oldDer);
@@ -105,32 +129,44 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		return er;
 	}
 
+	/**
+	 * Try to iteratively eliminate as many eliminatees as possible using the given
+	 * "derHelpers", one after another. Return null if did not make progress for any
+	 * eliminatee.
+	 */
 	public EliminationResult tryExhaustivelyToEliminate(final EliminationTask inputEt,
 			final IDerHelper<?>... derHelpers) {
-		boolean successInLastIteration = false;
 		EliminationTask currentEt = inputEt;
-		do {
+		final LinkedHashSet<TermVariable> aquiredEliminatees = new LinkedHashSet<>();
+		while (true) {
 			final EliminationResult er = tryToEliminateOne(currentEt, derHelpers);
-			successInLastIteration = (er != null);
-			if (er != null) {
-				if (!er.getNewEliminatees().isEmpty()) {
-					throw new UnsupportedOperationException("not yet implemented");
-				}
-				if (QuantifierUtils.isCorrespondingFiniteJunction(inputEt.getQuantifier(),
-						er.getEliminationTask().getTerm())) {
-					return er;
-				}
-				currentEt = er.getEliminationTask();
+			if (er == null) {
+				// no success, no further iterations
+				break;
 			}
-		} while (successInLastIteration);
+			aquiredEliminatees.addAll(er.getNewEliminatees());
+			currentEt = er.getEliminationTask();
+			if (QuantifierUtils.isCorrespondingFiniteJunction(currentEt.getQuantifier(),
+					er.getEliminationTask().getTerm())) {
+				// we can push the quantifier, no further iterations
+				break;
+			}
+		}
 		if (currentEt == inputEt) {
 			// only one non-successful iteration
 			return null;
 		} else {
-			return new EliminationResult(currentEt, Collections.emptySet());
+			return new EliminationResult(currentEt, aquiredEliminatees);
 		}
 	}
 
+	/**
+	 * Try to eliminate some eliminatee using the given "derHelpers", one after
+	 * another. Return immediately after the first successful step (note that a step
+	 * can be successful if a case distinction was made and the variable was only
+	 * eliminated in for some cases). Return null if did not make progress for any
+	 * eliminatee.
+	 */
 	private EliminationResult tryToEliminateOne(final EliminationTask inputEt, final IDerHelper<?>... derHelpers) {
 		for (final IDerHelper<?> derHelper : derHelpers) {
 			final EliminationResult er = tryExhaustivelyToEliminate(derHelper, inputEt);
@@ -141,31 +177,42 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		return null;
 	}
 
+	/**
+	 * Try to iteratively eliminate as many eliminatees as possible using the given
+	 * "derHelper". Return null if did not make progress for any eliminatee.
+	 */
 	public EliminationResult tryExhaustivelyToEliminate(final IDerHelper<?> derHelper, final EliminationTask inputEt) {
-		boolean successInLastIteration = false;
 		EliminationTask currentEt = inputEt;
-		do {
+		final LinkedHashSet<TermVariable> aquiredEliminatees = new LinkedHashSet<>();
+		while (true) {
 			final EliminationResult er = tryToEliminateOne(derHelper, currentEt);
-			successInLastIteration = (er != null);
-			if (er != null) {
-				if (!er.getNewEliminatees().isEmpty()) {
-					throw new UnsupportedOperationException("not yet implemented");
-				}
-				if (QuantifierUtils.isCorrespondingFiniteJunction(inputEt.getQuantifier(),
-						er.getEliminationTask().getTerm())) {
-					return er;
-				}
-				currentEt = er.getEliminationTask();
+			if (er == null) {
+				// no success, no further iterations
+				break;
 			}
-		} while (successInLastIteration);
+			aquiredEliminatees.addAll(er.getNewEliminatees());
+			currentEt = er.getEliminationTask();
+			if (QuantifierUtils.isCorrespondingFiniteJunction(currentEt.getQuantifier(),
+					er.getEliminationTask().getTerm())) {
+				// we can push the quantifier, no further iterations
+				break;
+			}
+		}
 		if (currentEt == inputEt) {
 			// only one non-successful iteration
 			return null;
 		} else {
-			return new EliminationResult(currentEt, Collections.emptySet());
+			return new EliminationResult(currentEt, aquiredEliminatees);
 		}
 	}
 
+	/**
+	 * Try to eliminate some eliminatee using the given "derHelper". Return
+	 * immediately after the first successful step (note that a step can be
+	 * successful if a case distinction was made and the variable was only
+	 * eliminated in for some cases). Return null if did not make progress
+	 * for any eliminatee.
+	 */
 	private EliminationResult tryToEliminateOne(final IDerHelper<?> derHelper, final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
 			final EliminationResult er = derHelper.tryToEliminateSbr(mMgdScript, eliminatee, inputEt);
@@ -416,7 +463,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 					et.getQuantifier(), correspondingJunctsResult);
 			return new EliminationResult(
 					new EliminationTask(et.getQuantifier(), et.getEliminatees(), correspondingJunction),
-					Collections.emptySet());
+					mcsbr.getAuxiliaryVariables());
 		}
 	}
 
