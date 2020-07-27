@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Transitive inequality resolution (TIR) for terms in XNF.
  *
  * @author Matthias Heizmann
+ * @author Max Barth
  */
 public class XnfTir extends XjunctPartialQuantifierElimination {
 
