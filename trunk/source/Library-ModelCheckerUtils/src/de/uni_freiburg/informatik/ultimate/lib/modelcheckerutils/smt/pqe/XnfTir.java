@@ -322,14 +322,6 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		return false;
 	}
 
-	private Term buildInequality(final String symbol, final Term lhs, final Term rhs) {
-		final Term term = mScript.term(symbol, lhs, rhs);
-		final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, term);
-		if (polyRel == null) {
-			throw new AssertionError("should be affine");
-		}
-		return polyRel.positiveNormalForm(mScript);
-	}
 
 	private Term buildInequality(final int quantifier, final Bound lowerBound, final Bound upperBound) {
 		final boolean isStrict;
@@ -426,6 +418,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					resultXJuncts.toArray(new Term[resultXJuncts.size()]));
 		}
 
+
 		private Bound computeBound(final Term term, final int quantifier, final BoundType boundType) {
 			final Bound result;
 			if (SmtSortUtils.isRealSort(term.getSort())) {
@@ -466,37 +459,6 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				}
 			} else {
 				throw new AssertionError("unknown sort " + term.getSort());
-			}
-			return result;
-		}
-
-		private String computeRelationSymbol(final int quantifier, final Sort sort) {
-			if (quantifier == QuantifiedFormula.FORALL) {
-				return "<=";
-			}
-			switch (mSort.getName()) {
-			case SmtSortUtils.INT_SORT:
-				return "<=";
-			case SmtSortUtils.REAL_SORT:
-				return "<";
-			default:
-				throw new UnsupportedOperationException("unknown Sort");
-			}
-		}
-
-		/**
-		 * Add Term summand2
-		 *
-		 * @param adUpperBounds
-		 * @param term
-		 * @return
-		 */
-		private ArrayList<Term> add(final ArrayList<Term> terms, final Term summand) {
-			assert SmtSortUtils.isIntSort(summand.getSort());
-			final ArrayList<Term> result = new ArrayList<>();
-			for (final Term term : terms) {
-				assert SmtSortUtils.isIntSort(term.getSort());
-				result.add(mScript.term("+", term, summand));
 			}
 			return result;
 		}
