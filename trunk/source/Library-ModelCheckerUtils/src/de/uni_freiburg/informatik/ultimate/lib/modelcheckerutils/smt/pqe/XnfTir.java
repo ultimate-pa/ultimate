@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Solved
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -130,8 +130,10 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 
 	private List<Term> tryToEliminateSingleDisjuct(final int quantifier, final Term disjunct,
 			final TermVariable eliminatee) {
-		final Term[] conjuncts = QuantifierUtils.getXjunctsInner(quantifier, disjunct);
-		final List<Term> result = tryToEliminateConjuncts(quantifier, conjuncts, eliminatee);
+		final Term conjunction = tryToEliminateConjuncts(mServices, mScript, quantifier, disjunct, eliminatee);
+		if (conjunction == null) {
+			return null;
+		}
 		// Following lines used for debugging - remove them
 		// Term term = SmtUtils.or(mScript, (Collection<Term>) result);
 		// term = SmtUtils.simplify(mScript, term, mServices);
@@ -139,11 +141,31 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		// Arrays.asList(PartialQuantifierElimination.getXjunctsOuter(quantifier,
 		// term));
 		//
-		return result;
+
+		// TODO 2018-08-11 Matthias: Do not convert to XNF because this
+		// will also affect all input xjuncts
+		// In once introduced this as a workaround when the input was
+		// already in XNF.
+		Term disjunction;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			disjunction = SmtUtils.toDnf(mServices, mMgdScript, conjunction, mXnfConversionTechnique);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			disjunction = SmtUtils.toCnf(mServices, mMgdScript, conjunction, mXnfConversionTechnique);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		assert !Arrays.asList(disjunction.getFreeVars()).contains(eliminatee) : "not eliminated";
+		final ExtendedSimplificationResult simp = SmtUtils.simplifyWithStatistics(mMgdScript, conjunction, null,
+					mServices, SimplificationTechnique.SIMPLIFY_DDA);
+		disjunction = simp.getSimplifiedTerm();
+
+		final List<Term> resultDisjunctions = Arrays.asList(QuantifierUtils.getCorrespondingFiniteJunction(quantifier, disjunction));
+		return resultDisjunctions;
 	}
 
-	private List<Term> tryToEliminateConjuncts(final int quantifier, final Term[] inputAtoms,
-			final TermVariable eliminatee) {
+	private static Term tryToEliminateConjuncts(final IUltimateServiceProvider services, final Script script,
+			final int quantifier, final Term disjunct, final TermVariable eliminatee) {
+		final Term[] inputAtoms  = QuantifierUtils.getDualFiniteJunction(quantifier, disjunct);
 		final List<Term> termsWithoutEliminatee = new ArrayList<>();
 		final List<Bound> upperBounds = new ArrayList<>();
 		final List<Bound> lowerBounds = new ArrayList<>();
@@ -161,7 +183,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				} else {
 					throw new AssertionError("unknown quantifier");
 				}
-				final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, term, transform);
+				final PolynomialRelation polyRel = PolynomialRelation.convert(script, term, transform);
 				if (polyRel == null) {
 					// no chance to eliminate the variable
 					return null;
@@ -170,7 +192,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 					// eliminatee occurs probably only in select
 					return null;
 				}
-				final SolvedBinaryRelation sbr = polyRel.solveForSubject(mScript, eliminatee);
+				final SolvedBinaryRelation sbr = polyRel.solveForSubject(script, eliminatee);
 				if (sbr == null) {
 					return null;
 				}
@@ -179,32 +201,33 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 						&& !sbr.getRelationSymbol().equals(RelationSymbol.EQ)) {
 					return null;
 				}
-				final Term eliminateeOnLhs = sbr.asTerm(mScript);
+				final Term eliminateeOnLhs = sbr.asTerm(script);
 				final BinaryNumericRelation bnr = BinaryNumericRelation.convert(eliminateeOnLhs);
 				switch (bnr.getRelationSymbol()) {
 				case DISTINCT:
 					if (quantifier == QuantifiedFormula.EXISTS) {
 						if (!sbr.getAssumptionsMap().isEmpty()) {
-							antiDer.add(antiDerWithAssumption(QuantifiedFormula.EXISTS, term, eliminatee));
+							antiDer.add(antiDerWithAssumption(script, QuantifiedFormula.EXISTS, term, eliminatee));
 						} else {
 							antiDer.add(new Pair<Term, Term>(bnr.getRhs(), bnr.getRhs()));
 						}
-
 					} else {
 						assert occursInsideSelectTerm(term, eliminatee) : "should have been removed by DER";
 						// no chance to eliminate the variable
+						throw new AssertionError("should have been removed by DER");
 					}
 					break;
 				case EQ:
 					if (quantifier == QuantifiedFormula.FORALL) {
 						if (!sbr.getAssumptionsMap().isEmpty()) {
-							antiDer.add(antiDerWithAssumption(QuantifiedFormula.FORALL, term, eliminatee));
+							antiDer.add(antiDerWithAssumption(script, QuantifiedFormula.FORALL, term, eliminatee));
 						} else {
 							antiDer.add(new Pair<Term, Term>(bnr.getRhs(), bnr.getRhs()));
 						}
 					} else {
 						assert occursInsideSelectTerm(term, eliminatee) : "should have been removed by DER";
 						// no chance to eliminate the variable
+						throw new AssertionError("should have been removed by DER");
 					}
 					break;
 				case GEQ:
@@ -224,44 +247,24 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				}
 			}
 		}
-		final BuildingInstructions bi = new BuildingInstructions(quantifier, eliminatee.getSort(),
-				termsWithoutEliminatee, upperBounds, lowerBounds, antiDer);
+		final AntiDerBuildingInstructions bi = new XnfTir.AntiDerBuildingInstructions(services, script, quantifier, upperBounds, lowerBounds, antiDer);
 		final List<Term> resultAtoms = new ArrayList<>();
 		for (final Bound lowerBound : lowerBounds) {
 			for (final Bound upperBound : upperBounds) {
-				resultAtoms.add(buildInequality(quantifier, lowerBound, upperBound));
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
-					throw new ToolchainCanceledException(this.getClass(),
+				resultAtoms.add(buildInequality(script, quantifier, lowerBound, upperBound));
+				if (!services.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(XnfTir.class,
 							"building " + lowerBounds.size() * upperBounds.size() + " inequalities");
 				}
 			}
 		}
 		resultAtoms.addAll(termsWithoutEliminatee);
-		final List<Term> resultDisjunctions;
-		if (antiDer.isEmpty()) {
-			resultDisjunctions = new ArrayList<>();
-			final Term tmp = constructConjunction(quantifier, resultAtoms);
-			assert !Arrays.asList(tmp.getFreeVars()).contains(eliminatee) : "not eliminated";
-			resultDisjunctions.add(tmp);
-		} else {
-			resultAtoms.add(bi.computeAdDisjunction());
-			final Term tmp = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, resultAtoms);
-			// TODO 2018-08-11 Matthias: Do not convert to XNF because this
-			// will also affect all input xjuncts
-			// In once introduced this as a workaround when the input was
-			// already in XNF.
-			final Term disjunction;
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				disjunction = SmtUtils.toDnf(mServices, mMgdScript, tmp, mXnfConversionTechnique);
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				disjunction = SmtUtils.toCnf(mServices, mMgdScript, tmp, mXnfConversionTechnique);
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
-			assert !Arrays.asList(disjunction.getFreeVars()).contains(eliminatee) : "not eliminated";
-			resultDisjunctions = Arrays.asList(QuantifierUtils.getXjunctsOuter(quantifier, disjunction));
+		if (!antiDer.isEmpty()) {
+			resultAtoms.add(bi.buildCorrespondingFiniteJuntion());
 		}
-		return resultDisjunctions;
+		final Term result = QuantifierUtils.applyDualFiniteConnective(script, quantifier, resultAtoms);
+		assert !Arrays.asList(result.getFreeVars()).contains(eliminatee) : "not eliminated";
+		return result;
 	}
 
 	/**
@@ -271,7 +274,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	 * uses solveForSubject on both disjuncts to get the right hand side of the both relations.
 	 * returns lower/upper bound right hand side.
 	 */
-	private Pair<Term, Term> antiDerWithAssumption(final int quantifier, final Term originalTerm,
+	private static Pair<Term, Term> antiDerWithAssumption(final Script script, final int quantifier, final Term originalTerm,
 			final Term eliminatee) {
 		// Strict to NONStrict transformation is done in the method "computeBound"
 		final TransformInequality transform = TransformInequality.NO_TRANFORMATION;
@@ -287,12 +290,12 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(originalTerm);
 
 		final BinaryNumericRelation lowerBoundBnr = bnr.changeRelationSymbol(lowerRelationSymbol);
-		final PolynomialRelation relLower = PolynomialRelation.convert(mScript, lowerBoundBnr.toTerm(mScript), transform);
-		final SolvedBinaryRelation sbrLower = relLower.solveForSubject(mScript, eliminatee);
+		final PolynomialRelation relLower = PolynomialRelation.convert(script, lowerBoundBnr.toTerm(script), transform);
+		final SolvedBinaryRelation sbrLower = relLower.solveForSubject(script, eliminatee);
 
 		final BinaryNumericRelation upperBoundBnr = bnr.changeRelationSymbol(upperRelationSymbol);
-		final PolynomialRelation relUpper = PolynomialRelation.convert(mScript, upperBoundBnr.toTerm(mScript), transform);
-		final SolvedBinaryRelation sbrUpper = relUpper.solveForSubject(mScript, eliminatee);
+		final PolynomialRelation relUpper = PolynomialRelation.convert(script, upperBoundBnr.toTerm(script), transform);
+		final SolvedBinaryRelation sbrUpper = relUpper.solveForSubject(script, eliminatee);
 
 		if ((sbrLower == null) || (sbrUpper == null)) {
 			return null;
@@ -324,7 +327,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	}
 
 
-	private Term buildInequality(final int quantifier, final Bound lowerBound, final Bound upperBound) {
+	private static Term buildInequality(final Script script, final int quantifier, final Bound lowerBound,
+			final Bound upperBound) {
 		final boolean isStrict;
 		final boolean lbIsInt = SmtSortUtils.isIntSort(lowerBound.getTerm().getSort());
 		if (quantifier == QuantifiedFormula.EXISTS) {
@@ -339,46 +343,35 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			throw new AssertionError("unknown quantifier");
 		}
 		final String symbol = isStrict ? "<" : "<=";
-		final Term term = mScript.term(symbol, lowerBound.getTerm(), upperBound.getTerm());
-		final PolynomialRelation polyRel = PolynomialRelation.convert(mScript, term);
+		final Term term = script.term(symbol, lowerBound.getTerm(), upperBound.getTerm());
+		final PolynomialRelation polyRel = PolynomialRelation.convert(script, term);
 		if (polyRel == null) {
 			throw new AssertionError("should be affine");
 		}
-		return polyRel.positiveNormalForm(mScript);
+		return polyRel.positiveNormalForm(script);
 	}
 
-	private Term constructConjunction(final int quantifier, final List<Term> resultAtoms) {
-		final Term conjunction = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, resultAtoms);
-		if (resultAtoms.size() > 9) {
-			final ExtendedSimplificationResult res = SmtUtils.simplifyWithStatistics(mMgdScript, conjunction, null,
-					mServices, SimplificationTechnique.SIMPLIFY_DDA);
-			return res.getSimplifiedTerm();
-		} else {
-			return conjunction;
-		}
-	}
-
-	private class BuildingInstructions {
+	private static class AntiDerBuildingInstructions {
+		private final IUltimateServiceProvider mServices;
+		private final Script mScript;
 		private final int mQuantifier;
-		private final Sort mSort;
-		private final List<Term> mTermsWithoutEliminatee;
 		private final List<Bound> mUpperBounds;
 		private final List<Bound> mLowerBounds;
 		private final List<Pair<Term, Term>> mAntiDer;
 
-		public BuildingInstructions(final int quantifier, final Sort sort, final List<Term> termsWithoutEliminatee,
+		public AntiDerBuildingInstructions(final IUltimateServiceProvider services, final Script script, final int quantifier,
 				final List<Bound> upperBounds, final List<Bound> lowerBounds, final List<Pair<Term, Term>> antiDer) {
 			super();
+			mServices = services;
+			mScript = script;
 			mQuantifier = quantifier;
-			mSort = sort;
-			mTermsWithoutEliminatee = termsWithoutEliminatee;
 			mUpperBounds = upperBounds;
 			mLowerBounds = lowerBounds;
 			mAntiDer = antiDer;
 		}
 
-		Term computeAdDisjunction() {
-			final ArrayList<Term> resultXJuncts = new ArrayList<>();
+		Term buildCorrespondingFiniteJuntion() {
+			final ArrayList<Term> resultCorrespondingFiniteJuncts = new ArrayList<>();
 			for (int i = 0; i < Math.pow(2, mAntiDer.size()); i++) {
 				final ArrayList<Term> resultAtoms = new ArrayList<>();
 				final ArrayList<Bound> adLowerBounds = new ArrayList<>();
@@ -398,25 +391,24 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 
 				for (final Bound adLower : adLowerBounds) {
 					for (final Bound adUpper : adUpperBounds) {
-						resultAtoms.add(buildInequality(mQuantifier, adLower, adUpper));
+						resultAtoms.add(buildInequality(mScript, mQuantifier, adLower, adUpper));
 					}
 					for (final Bound upperBound : mUpperBounds) {
-						resultAtoms.add(buildInequality(mQuantifier, adLower, upperBound));
+						resultAtoms.add(buildInequality(mScript, mQuantifier, adLower, upperBound));
 					}
 				}
 				for (final Bound adUpper : adUpperBounds) {
 					for (final Bound lowerBound : mLowerBounds) {
-						resultAtoms.add(buildInequality(mQuantifier, lowerBound, adUpper));
+						resultAtoms.add(buildInequality(mScript, mQuantifier, lowerBound, adUpper));
 					}
 				}
-				resultXJuncts.add(constructConjunction(mQuantifier, resultAtoms));
+				resultCorrespondingFiniteJuncts.add(QuantifierUtils.applyDualFiniteConnective(mScript, mQuantifier, resultAtoms));
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(),
 							"building " + Math.pow(2, mAntiDer.size()) + " xjuncts");
 				}
 			}
-			return QuantifierUtils.applyCorrespondingFiniteConnective(mScript, mQuantifier,
-					resultXJuncts.toArray(new Term[resultXJuncts.size()]));
+			return QuantifierUtils.applyCorrespondingFiniteConnective(mScript, mQuantifier, resultCorrespondingFiniteJuncts);
 		}
 
 
