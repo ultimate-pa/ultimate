@@ -10,7 +10,7 @@ import signal
 import sys
 import xml.etree.ElementTree as ET
 from functools import lru_cache
-from typing import Tuple, List, Iterator, Any, Dict, Optional, cast, Pattern, ChainMap
+from typing import Tuple, List, Iterator, Any, Dict, Optional, cast, Pattern, ChainMap, TypeVar
 
 import yaml
 from tqdm import tqdm
@@ -18,6 +18,7 @@ from tqdm import tqdm
 # some type defs
 # first is category, second is message
 Classification = Tuple[str, str]
+T = TypeVar('T', bound=Any)
 
 
 class UnsupportedLogFile(ValueError):
@@ -35,11 +36,11 @@ class Result:
     logfile: str
 
     def __init__(
-        self,
-        logfile: Optional[str],
-        result: Optional[Classification],
-        call: Optional[str],
-        version: Optional[str],
+            self,
+            logfile: Optional[str],
+            result: Optional[Classification],
+            call: Optional[str],
+            version: Optional[str],
     ) -> None:
         self.logfile = logfile
         self.version = version
@@ -67,7 +68,7 @@ class Result:
 
 
 class Run:
-    logfile: str
+    logfile_basename: str
     cputime: float
     walltime: float
     memory: int
@@ -75,8 +76,8 @@ class Run:
     category: str
     options: str
 
-    def __init__(self, xml_run: ET.Element, logfile: str) -> None:
-        self.logfile = logfile
+    def __init__(self, xml_run: ET.Element, logfile_basename: str) -> None:
+        self.logfile_basename = logfile_basename
         self.options = xml_run.attrib["options"]
         self.status = Run.__get_column_value(xml_run, "status")
         self.category = Run.__get_column_value(xml_run, "category")
@@ -119,7 +120,7 @@ class MessageClassifier:
     delta_debug: bool
 
     def __init__(
-        self, category: str, message: str, values: Dict[str, Any] = None
+            self, category: str, message: str, values: Dict[str, Any] = None
     ) -> None:
         self.category = category
         self.message = message
@@ -163,8 +164,36 @@ def limit(msg: str, lim: int) -> str:
     if lim < 4:
         raise ValueError("limit must be larger or equal 4 but was {}".format(lim))
     if len(msg) > lim:
-        return msg[0 : lim - 3] + "..."
+        return msg[0: lim - 3] + "..."
     return msg.ljust(lim, " ")
+
+
+def n_min(items: List[T], n: int, key=lambda x: x) -> List[T]:
+    if n >= len(items):
+        mins = items
+        mins.sort(key=key)
+        return mins
+    mins = items[:n]
+    mins.sort(key=key)
+    for i in items[n:]:
+        if key(i) < key(mins[-1]):
+            mins.append(i)
+            mins.sort(key=key)
+            mins = mins[:n]
+    return mins
+
+
+def is_file(value: str) -> str:
+    if not os.path.isdir(value) and not os.path.isfile(value):
+        raise argparse.ArgumentTypeError(f"{value} is not a directory")
+    return value
+
+
+def is_positive(value: str) -> int:
+    as_int = int(value)
+    if as_int <= 0:
+        raise argparse.ArgumentTypeError(f"{value} is not a positive int value")
+    return as_int
 
 
 def debug(msg: str) -> None:
@@ -180,23 +209,22 @@ def parse_args() -> argparse.Namespace:
         parser.add_argument(
             "-i",
             "--input",
-            nargs=1,
             metavar="<dir>",
             required=True,
+            type=is_file,
             help="Specify directory containing Ultimate log files or single log file",
         )
-        args = parser.parse_args()
-        if not os.path.isdir(args.input[0]) and not os.path.isfile(args.input[0]):
-            print("Input does not exist")
-            sys.exit(1)
-        return args
+        parser.add_argument("--fastest-n", metavar="<n>", type=is_positive, default=1,
+                            help="Specify how many of the fastest examples per category should be shown")
+
+        return parser.parse_args()
     except argparse.ArgumentError as exc:
         print(exc.message + "\n" + exc.argument)
         sys.exit(1)
 
 
 def scan_line(
-    line: str, result: Optional[Classification], line_iter: Iterator[str]
+        line: str, result: Optional[Classification], line_iter: Iterator[str]
 ) -> Classification:
     new_result = None
     debug("Looking at line {}".format(line))
@@ -364,23 +392,15 @@ def process_log_file(file: str) -> List[Result]:
     )
 
 
-def print_results(results: List[Result]) -> None:
+def print_results(results: List[Result], runs: Optional[Dict[str, Run]], args: argparse.Namespace) -> None:
     cat_cnt = collections.Counter()
-    for r in results:
-        cat_cnt[r.category()] += 1
-
-    print("Categories")
-    for cat, i in cat_cnt.most_common():
-        print("{:>7}  {}".format(i, cat))
-    print()
-
-    print("Actual results")
     result_cnt = collections.Counter()
     processed = {}
     for r in results:
+        cat_cnt[r.category()] += 1
         if (
-            r.category() == str_no_result_unknown
-            or not interesting_strings[r.category()]
+                r.category() == str_no_result_unknown
+                or not interesting_strings[r.category()]
         ):
             key = r.message()
         else:
@@ -388,21 +408,37 @@ def print_results(results: List[Result]) -> None:
         result_cnt[key] += 1
         processed[key] = r
 
+    print("Categories")
+    for cat, i in cat_cnt.most_common():
+        print("{:>7}  {}".format(i, cat))
+    print()
+
+    print("Actual results (n>=10)")
     resort = []
     for subcat, j in result_cnt.most_common():
-        r = processed[subcat].classification
-        msg = "{:>7}  {}  {}:".format(j, limit(r[0], 20), r[1])
+        r = processed[subcat]
+        msg = "{:>7}  {}  {}:".format(j, limit(r.category(), 20), r.message())
+
+        fastest = n_min([x for x in results if x.category() == r.category()], args.fastest_n,
+                        key=lambda y: runs[os.path.basename(y.logfile)].walltime)
+        for f in fastest:
+            msg += f'\n{" ":<8} {runs[os.path.basename(f.logfile)].walltime} {f.call}'
+
         if j < 10:
             resort += [msg]
         else:
             print(msg)
+        # TODO: add delta-debugging and smt output
 
+    print()
+
+    print("Actual results (n<10)")
     for msg in sorted(resort, reverse=True):
         print(msg)
 
 
 def set_unknowns(
-    results: List[Result], file: str, runs: Dict[str, Run]
+        results: List[Result], file: str, runs: Dict[str, Run]
 ) -> List[Result]:
     real_results = []
     for r in results:
@@ -442,11 +478,11 @@ def list_xml_filepaths(input_dir: str) -> Iterator[str]:
 
 
 def consume_task(
-    queue: multiprocessing.Queue,
-    results: List[Result],
-    runs: Dict[str, Run],
-    o: List[Dict[str, MessageClassifier]],
-    i: ChainMap[str, MessageClassifier],
+        queue: multiprocessing.Queue,
+        results: List[Result],
+        runs: Dict[str, Run],
+        o: List[Dict[str, MessageClassifier]],
+        i: ChainMap[str, MessageClassifier],
 ) -> None:
     global order
     global interesting_strings
@@ -484,7 +520,7 @@ def process_input_dir(input_dir: str, runs: Dict[str, Run]) -> Tuple[int, List[R
         for path in progress_bar:
             progress_bar.set_description(
                 "Processing ...{:100.100} [{:>3}C]".format(
-                    path[len(input_dir) :], local_cores
+                    path[len(input_dir):], local_cores
                 )
             )
             queue.put(path)
@@ -494,7 +530,8 @@ def process_input_dir(input_dir: str, runs: Dict[str, Run]) -> Tuple[int, List[R
             queue.put(None)
         pool.close()
         pool.join()
-    return log_file_count, results
+    # convert multiprocessing.Manager().list() to python list
+    return log_file_count, [x for x in results]
 
 
 def parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
@@ -517,8 +554,8 @@ def parse_benchexec_xmls(input_dir: str) -> Tuple[Dict[str, Run], bool]:
             # files = elem.attrib["files"]
             yml = elem.attrib["name"]
             base_yml = ntpath.basename(yml)
-            logfile_name = "{}.{}.log".format(tool_name, base_yml)
-            rtr[logfile_name] = Run(elem, logfile_name)
+            logfile_basename = "{}.{}.log".format(tool_name, base_yml)
+            rtr[logfile_basename] = Run(elem, logfile_basename)
 
     return rtr, True
 
@@ -567,11 +604,10 @@ def read_yaml_files() -> None:
 
 def main() -> None:
     args = parse_args()
-    input_dir = args.input[0]
 
     read_yaml_files()
-    runs, benchexec_xml = parse_benchexec_xmls(input_dir)
-    log_file_count, results = process_input_dir(input_dir, runs)
+    runs, benchexec_xml = parse_benchexec_xmls(args.input)
+    log_file_count, results = process_input_dir(args.input, runs)
 
     if log_file_count > len(results):
         if not benchexec_xml:
@@ -595,7 +631,7 @@ def main() -> None:
                 str_benchexec_oom,
             )
         )
-    print_results(results)
+    print_results(results, runs, args)
 
 
 if __name__ == "__main__":
