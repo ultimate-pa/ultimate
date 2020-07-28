@@ -1,0 +1,42 @@
+#Fri Apr 03 17:28:56 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/To\ the\ following\ directory=/home/matthias/ultimate/dump
+
+
+
+#Fri Apr 03 17:28:56 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Rating-Boundary\ (empty\ for\ LBE)=0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Minimize\ Call\ and\ Return\ Edges=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Strategy\ for\ the\ edge\ rating=DISJUNCTIVE_RATING
+
+
+
+
+@de.uni_freiburg.informatik.ultimate.ltl2aut=0.1.8
+\!/instance/de.uni_freiburg.informatik.ultimate.ltl2aut=
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Read\ property\ from\ file=false
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Path\ to\ LTL*BA\ executable\ (LTL2BA,\ LTL3BA)=ltl2ba
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Rewrite\ not\ equals\ during\ small\ block\ encoding=false
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Use\ small\ block\ encoding=false
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Property\ to\ check= F AP(diagnos == NoCancer)
+
+
+
+#Fri Apr 03 17:28:56 CEST 2015
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Try\ to\ simplify\ termination\ arguments=true
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Rank\ analysis=LINEAR_WITH_GUESSES
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (rank\ synthesis)=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ files=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ the\ following\ directory=/home/matthias/ultimate/dump/auto
