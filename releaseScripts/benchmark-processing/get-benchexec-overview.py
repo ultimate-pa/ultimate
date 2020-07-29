@@ -10,6 +10,7 @@ import signal
 import sys
 import xml.etree.ElementTree as ET
 from functools import lru_cache
+from pathlib import Path
 from typing import Tuple, List, Iterator, Any, Dict, Optional, cast, Pattern, ChainMap, TypeVar
 
 import yaml
@@ -104,12 +105,28 @@ class Run:
     @staticmethod
     def __time_to_float(val: str) -> float:
         """Remove second unit from benchexec time and convert to float """
-        return float(val[:-1]) if val else None
+        num, unit = Run.split_number_and_unit(val)
+        if not unit or unit == "s":
+            return float(num) if val else None
+        else:
+            raise ValueError(f"unknown unit: {unit}")
 
     @staticmethod
     def __byte_to_int(val: str) -> int:
         """Remove byte unit from benchexec time and convert to float """
         return int(val[:-1]) if val else None
+
+    @staticmethod
+    def split_number_and_unit(s: str) -> Tuple[str, str]:
+        if not s:
+            raise ValueError("empty value")
+        s = s.strip()
+        pos = len(s)
+        while pos and not s[pos - 1].isdigit():
+            pos -= 1
+        number = s[:pos]
+        unit = s[pos:].strip()
+        return number, unit
 
 
 class MessageClassifier:
@@ -118,6 +135,9 @@ class MessageClassifier:
     show_line: bool
     dump_smt: bool
     delta_debug: bool
+    delta_debug_result_type: str
+    delta_debug_short: bool
+    delta_debug_category: bool
 
     def __init__(
             self, category: str, message: str, values: Dict[str, Any] = None
@@ -127,11 +147,17 @@ class MessageClassifier:
         self.show_line = True
         self.dump_smt = False
         self.delta_debug = False
+        self.delta_debug_result_type = "ExceptionOrErrorResult"
+        self.delta_debug_short = True
+        self.delta_debug_category = True
 
         if values:
             self.show_line = values.get("show_line", self.show_line)
             self.dump_smt = values.get("dump_smt", self.dump_smt)
             self.delta_debug = values.get("delta_debug", self.delta_debug)
+            self.delta_debug_result_type = values.get("delta_debug_result_type", self.delta_debug_result_type)
+            self.delta_debug_short = values.get("delta_debug_short", self.delta_debug_short)
+            self.delta_debug_category = values.get("delta_debug_category", self.delta_debug_category)
 
     def __str__(self) -> str:
         return f"[{type(self).__name__}] {self.category}: {self.message} show_line={self.show_line} dump_smt={self.dump_smt} delta_debug={self.delta_debug}"
@@ -196,6 +222,12 @@ def is_positive(value: str) -> int:
     return as_int
 
 
+def format_number(number: float, number_of_digits: int) -> str:
+    if number is None:
+        return ""
+    return f'{number:.{number_of_digits}f}'
+
+
 def debug(msg: str) -> None:
     if enable_debug:
         print(msg)
@@ -215,7 +247,11 @@ def parse_args() -> argparse.Namespace:
             help="Specify directory containing Ultimate log files or single log file",
         )
         parser.add_argument("--fastest-n", metavar="<n>", type=is_positive, default=1,
-                            help="Specify how many of the fastest examples per category should be shown")
+                            help="Specify how many of the fastest examples per category should be shown."
+                                 "Default: 1")
+        parser.add_argument("--cut-off", metavar="<n>", type=is_positive, default=10,
+                            help="The size of the result class that should be grouped separately at the bottom."
+                                 "Default: 10")
 
         return parser.parse_args()
     except argparse.ArgumentError as exc:
@@ -400,7 +436,7 @@ def print_results(results: List[Result], runs: Optional[Dict[str, Run]], args: a
         cat_cnt[r.category()] += 1
         if (
                 r.category() == str_no_result_unknown
-                or not interesting_strings[r.category()]
+                or not interesting_strings[r.category()].show_line
         ):
             key = r.message()
         else:
@@ -413,28 +449,63 @@ def print_results(results: List[Result], runs: Optional[Dict[str, Run]], args: a
         print("{:>7}  {}".format(i, cat))
     print()
 
-    print("Actual results (n>=10)")
-    resort = []
+    print(f"Actual results (n>={args.cut_off})")
+    print_cutoff = []
+    print_detail = []
+    print_cutoff_detail = []
     for subcat, j in result_cnt.most_common():
         r = processed[subcat]
         msg = "{:>7}  {}  {}:".format(j, limit(r.category(), 20), r.message())
+        msg_detail = msg
 
-        fastest = n_min([x for x in results if x.category() == r.category()], args.fastest_n,
+        fastest = n_min([x for x in results if x.category() == r.category() and x.message() == r.message()],
+                        args.fastest_n,
                         key=lambda y: runs[os.path.basename(y.logfile)].walltime)
         for f in fastest:
-            msg += f'\n{" ":<8} {runs[os.path.basename(f.logfile)].walltime} {f.call}'
+            run = runs[os.path.basename(f.logfile)]
+            msg_detail += f'\n{" ":<8} {format_number(run.walltime, 2):>8}s {f.logfile}'
+            msg_detail += f'\n{" ":<18} {"Call:":<8} {f.call}'
+            mc = interesting_strings[r.category()]
+            if mc.delta_debug:
+                desc = "--deltadebugger.result.short.description.prefix" if mc.delta_debug_short else "--deltadebugger.result.long.description.prefix"
+                msg_detail += f'\n{" ":<18} {"Delta:":<8} {f.call} ' \
+                              f'--deltadebugger.look.for.result.of.type "{mc.delta_debug_result_type}" ' \
+                              f'{desc} "{r.category() if mc.delta_debug_category else r.message()}" '
 
-        if j < 10:
-            resort += [msg]
+            if mc.dump_smt:
+                dump_dir = Path(f"{os.path.dirname(f.logfile)}-dump")
+                dump_dir.mkdir(parents=True, exist_ok=True)
+                msg_detail += f'\n{" ":<18} {"Dump SMT:":<8} {f.call} SMT' \
+                              f'--rcfgbuilder.dump.smt.script.to.file true' \
+                              f'--rcfgbuilder.compress.dumped.smt.script true' \
+                              f'--rcfgbuilder.to.the.following.directory "{dump_dir}"' \
+                              f'--traceabstraction.dump.smt.script.to.file true' \
+                              f'--traceabstraction.compress.dumped.smt.script true' \
+                              f'--traceabstraction.to.the.following.directory "{dump_dir}"'
+
+        if j < args.cut_off:
+            print_cutoff += [msg]
+            print_cutoff_detail += [msg_detail]
         else:
             print(msg)
-        # TODO: add delta-debugging and smt output
+            print_detail += [msg_detail]
+
+    if print_cutoff:
+        print()
+        print(f"Actual results (n<{args.cut_off})")
+        for msg_detail in sorted(print_cutoff, reverse=True):
+            print(msg_detail)
 
     print()
-
-    print("Actual results (n<10)")
-    for msg in sorted(resort, reverse=True):
+    print(f"Detailed actual results (n>={args.cut_off})")
+    for msg in print_detail:
         print(msg)
+
+    if print_cutoff_detail:
+        print()
+        print(f"Detailed actual results (n<{args.cut_off})")
+        for msg_detail in sorted(print_cutoff_detail, reverse=True):
+            print(msg_detail)
 
 
 def set_unknowns(
