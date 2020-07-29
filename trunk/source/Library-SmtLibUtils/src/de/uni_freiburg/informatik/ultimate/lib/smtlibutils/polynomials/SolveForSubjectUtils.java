@@ -154,8 +154,14 @@ public class SolveForSubjectUtils {
 			resultRelationSymbol = polyRel.getRelationSymbol();
 		}
 
+		final IntricateOperation intricateOp;
+		if (simpliySolvableRhsTerm == null) {
+			intricateOp = IntricateOperation.DIV_BY_INTEGER_CONSTANT;
+		} else {
+			intricateOp = null;
+		}
 		final SolvedBinaryRelation result = new SolvedBinaryRelation(subject, rhsTerm, resultRelationSymbol,
-				assumptionMapBuilder.getExplicitAssumptionMap());
+				assumptionMapBuilder.getExplicitAssumptionMap(), intricateOp);
 		final Term relationToTerm = result.asTerm(script);
 		if (!assumptionMapBuilder.isEmpty()) {
 			assert script instanceof INonSolverScript || assumptionImpliesEquivalence(script,
@@ -735,8 +741,9 @@ public class SolveForSubjectUtils {
 			// if coefficient is negative we have to use the "swapped" RelationSymbol
 			resultRelationSymbol = relSymb.swapParameters();
 		}
+		final IntricateOperation intricateOp = divisor.length == 0 ? null : IntricateOperation.DIV_BY_INTEGER_CONSTANT;
 		final SolvedBinaryRelation sbr = new SolvedBinaryRelation(subject, resultRhs, resultRelationSymbol,
-				Collections.emptyMap());
+				Collections.emptyMap(), intricateOp);
 		return sbr;
 	}
 

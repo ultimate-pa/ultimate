@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -56,14 +58,16 @@ public class SolvedBinaryRelation implements ITermProviderOnDemand {
 	private final Term mRightHandSide;
 	private final RelationSymbol mRelationSymbol;
 	private final Map<AssumptionForSolvability, Term> mAssumptionsMap;
+	private final IntricateOperation mIntricateOperation;
 
 	public SolvedBinaryRelation(final Term leftHandSide, final Term rightHandSide, final RelationSymbol relationSymbol,
-			final Map<AssumptionForSolvability, Term> assumptionsMap) {
+			final Map<AssumptionForSolvability, Term> assumptionsMap, final IntricateOperation intricateOperation) {
 		super();
 		mLeftHandSide = leftHandSide;
 		mRightHandSide = rightHandSide;
 		mRelationSymbol = relationSymbol;
 		mAssumptionsMap = assumptionsMap;
+		mIntricateOperation = intricateOperation;
 	}
 
 	/**
@@ -88,9 +92,16 @@ public class SolvedBinaryRelation implements ITermProviderOnDemand {
 	/**
 	 * @return A map whose values are terms that represent the assumptions
 	 * under which the original relation is equivalent to the solved relation.
+	 * @deprecated we will only use {@link MultiCaseSolvedBinaryRelation} for
+	 * non-trivial solved relations.
 	 */
+	@Deprecated
 	public Map<AssumptionForSolvability, Term> getAssumptionsMap() {
 		return mAssumptionsMap;
+	}
+
+	public IntricateOperation getIntricateOperation() {
+		return mIntricateOperation;
 	}
 
 	/**

@@ -180,14 +180,14 @@ public abstract class BinaryRelation implements IBinaryRelation {
 			if (SmtUtils.isSubterm(getRhs(), subject)) {
 				return null;
 			} else {
-				return new SolvedBinaryRelation(subject, getRhs(), getRelationSymbol(), Collections.emptyMap());
+				return new SolvedBinaryRelation(subject, getRhs(), getRelationSymbol(), Collections.emptyMap(), null);
 			}
 		} else if (getRhs().equals(subject)) {
 			if (SmtUtils.isSubterm(getLhs(), subject)) {
 				return null;
 			} else {
 				return new SolvedBinaryRelation(subject, getLhs(), getRelationSymbol().swapParameters(),
-						Collections.emptyMap());
+						Collections.emptyMap(), null);
 			}
 		} else {
 			return null;
