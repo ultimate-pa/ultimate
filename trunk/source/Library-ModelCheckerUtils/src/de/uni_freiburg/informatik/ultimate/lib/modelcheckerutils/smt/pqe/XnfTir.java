@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Relati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SolveForSubjectUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -106,7 +107,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			}
 			boolean unableToRemoveEliminatee = false;
 			for (final Term oldDisjunct : currentDisjuncts) {
-				final List<Term> elimResultDisjuncts = tryToEliminateSingleDisjuct(quantifier, oldDisjunct, eliminatee);
+				final List<Term> elimResultDisjuncts = tryToEliminateSingleDisjuct(quantifier, oldDisjunct, eliminatee, eliminatees);
 				if (elimResultDisjuncts == null) {
 					// unable to eliminate
 					unableToRemoveEliminatee = true;
@@ -122,15 +123,24 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			}
 			currentDisjuncts = nextDisjuncts;
 		}
+		} catch (final IllegalStateException uoe) {
+			final Term quantified = SmtUtils.quantifier(mScript, quantifier, eliminatees, inputConjunction);
+			throw new AssertionError("AntiDER:\n" + SmtTestGenerationUtils.generateStringForTestfile2(quantified));
+		}
 		final Term[] resultDisjuncts = currentDisjuncts.toArray(new Term[currentDisjuncts.size()]);
 		final Term resultDisjunction = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, quantifier,
 				resultDisjuncts);
+		//		final List<TermVariable> eliminateesAfter = eliminateesBefore.stream().filter(x -> !eliminatees.contains(x)).collect(Collectors.toList());
+//		final String message = "Applied " + getAcronym() + " to " + inputConjuncts.length + " " +
+//				QuantifierUtils.getNameOfDualJuncts(quantifier) + " and " + eliminateesBefore.size() + "eliminatees: " + eliminateesBefore +
+//				" removed " + (eliminateesAfter.isEmpty() ? "nothing" : eliminateesAfter);
+//		mLogger.info(message);
 		return new Term[] { resultDisjunction };
 	}
 
 	private List<Term> tryToEliminateSingleDisjuct(final int quantifier, final Term disjunct,
-			final TermVariable eliminatee) {
-		final Term conjunction = tryToEliminateConjuncts(mServices, mScript, quantifier, disjunct, eliminatee);
+			final TermVariable eliminatee, final Set<TermVariable> allEliminatees) {
+		final Term conjunction = tryToEliminateConjuncts(mServices, mScript, quantifier, disjunct, eliminatee, allEliminatees);
 		if (conjunction == null) {
 			return null;
 		}
@@ -163,8 +173,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		return resultDisjunctions;
 	}
 
-	private static Term tryToEliminateConjuncts(final IUltimateServiceProvider services, final Script script,
-			final int quantifier, final Term disjunct, final TermVariable eliminatee) {
+	public static Term tryToEliminateConjuncts(final IUltimateServiceProvider services, final Script script,
+			final int quantifier, final Term disjunct, final TermVariable eliminatee, final Set<TermVariable> allEliminatees) {
 		final Term[] inputAtoms  = QuantifierUtils.getDualFiniteJunction(quantifier, disjunct);
 		final List<Term> termsWithoutEliminatee = new ArrayList<>();
 		final List<Bound> upperBounds = new ArrayList<>();
@@ -194,6 +204,9 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				}
 				final SolvedBinaryRelation sbr = polyRel.solveForSubject(script, eliminatee);
 				if (sbr == null) {
+					return null;
+				}
+				if (SolveForSubjectUtils.isVariableDivCaptured(sbr, allEliminatees)) {
 					return null;
 				}
 				if (!sbr.getAssumptionsMap().isEmpty()
