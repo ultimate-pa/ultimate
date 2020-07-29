@@ -877,4 +877,34 @@ public class SolveForSubjectUtils {
 		return SmtUtils.checkEquivalence(impli1, impli2, script);
 	}
 
+	public static boolean isVariableDivCaptured(final SolvedBinaryRelation sbr, final Set<TermVariable> termVariables) {
+		if (sbr.getIntricateOperation() == IntricateOperation.DIV_BY_INTEGER_CONSTANT) {
+			if (SmtUtils.getFunctionApplication(sbr.getRightHandSide(), "div") != null) {
+				return Arrays.stream(sbr.getRightHandSide().getFreeVars()).anyMatch(termVariables::contains);
+			}
+		}
+		return false;
+	}
+
+	public static boolean isVariableDivCaptured(final MultiCaseSolvedBinaryRelation mcsbr,
+			final Set<TermVariable> termVariables) {
+		if (mcsbr.getIntricateOperations().contains(IntricateOperation.DIV_BY_INTEGER_CONSTANT)) {
+			for (final Case c : mcsbr.getCases()) {
+				if (SmtUtils.getFunctionApplication(c.getSolvedBinaryRelation().getRightHandSide(), "div") != null) {
+					if (Arrays.stream(c.getSolvedBinaryRelation().getRightHandSide().getFreeVars())
+							.anyMatch(termVariables::contains)) {
+						return true;
+					}
+				}
+				for (final SupportingTerm st : c.getSupportingTerms()) {
+					if (st.getIntricateOperation() == IntricateOperation.DIV_BY_INTEGER_CONSTANT
+							&& Arrays.stream(st.asTerm().getFreeVars()).anyMatch(termVariables::contains)) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
 }
