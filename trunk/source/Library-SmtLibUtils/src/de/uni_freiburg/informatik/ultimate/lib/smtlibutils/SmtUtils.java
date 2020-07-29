@@ -2004,6 +2004,16 @@ public final class SmtUtils {
 		return false;
 	}
 
+	public static ApplicationTerm getFunctionApplication(final Term term, final String functionName) {
+		if (term instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			if (appTerm.getFunction().getName().equals(functionName)) {
+				return appTerm;
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * @return true iff term is a div from the theory of Ints
 	 */
