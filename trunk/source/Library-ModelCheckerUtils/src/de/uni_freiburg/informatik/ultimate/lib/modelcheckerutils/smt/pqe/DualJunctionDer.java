@@ -32,6 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.EliminationTask;
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Case;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SolveForSubjectUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SupportingTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -215,7 +217,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 	 */
 	private EliminationResult tryToEliminateOne(final IDerHelper<?> derHelper, final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
-			final EliminationResult er = derHelper.tryToEliminateSbr(mMgdScript, eliminatee, inputEt);
+			final EliminationResult er = derHelper.tryToEliminateSbr(mMgdScript, eliminatee, inputEt, inputEt.getEliminatees());
 			if (er != null) {
 				return er;
 			}
@@ -275,7 +277,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			return null;
 		}
 		final RelationSymbol relationSymbol = QuantifierUtils.getDerOperator(quantifier);
-		return new SolvedBinaryRelation(eliminatee, rightHandSide, relationSymbol, Collections.emptyMap());
+		return new SolvedBinaryRelation(eliminatee, rightHandSide, relationSymbol, Collections.emptyMap(), null);
 	}
 
 	private static boolean occursPositive(final TermVariable eliminatee, final Term atom) {
@@ -303,9 +305,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 	private static abstract class IDerHelper<SR> {
 
 		public Pair<Integer, SR> findBestReplacementSbr(final Script script, final int quantifier,
-				final TermVariable eliminatee, final Term[] dualJuncts) {
+				final TermVariable eliminatee, final Term[] dualJuncts, final Set<TermVariable> allEliminatees) {
 			for (int i = 0; i < dualJuncts.length; i++) {
-				final SR sbr = solveForSubject(script, quantifier, eliminatee, dualJuncts[i]);
+				final SR sbr = solveForSubject(script, quantifier, eliminatee, dualJuncts[i], allEliminatees);
 				if (sbr != null) {
 					return new Pair<Integer, SR>(i, sbr);
 				}
@@ -314,13 +316,13 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		}
 
 		protected abstract SR solveForSubject(final Script script, final int quantifier, final TermVariable eliminatee,
-				final Term term);
+				final Term term, Set<TermVariable> allEliminatees);
 
 		private EliminationResult tryToEliminateSbr(final ManagedScript mgdScript, final TermVariable eliminatee,
-				final EliminationTask et) {
+				final EliminationTask et, final Set<TermVariable> allEliminatees) {
 			final Term[] dualJuncts = QuantifierUtils.getDualFiniteJunction(et.getQuantifier(), et.getTerm());
 			final Pair<Integer, SR> pair = findBestReplacementSbr(mgdScript.getScript(), et.getQuantifier(), eliminatee,
-					dualJuncts);
+					dualJuncts, allEliminatees);
 			if (pair == null) {
 				return null;
 			}
@@ -340,7 +342,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 		@Override
 		public SolvedBinaryRelation solveForSubject(final Script script, final int quantifier,
-				final TermVariable eliminatee, final Term term) {
+				final TermVariable eliminatee, final Term term, final Set<TermVariable> allEliminatees) {
 			if (SmtSortUtils.isBoolSort(eliminatee.getSort()) && SmtSortUtils.isBoolSort(term.getSort())) {
 				final SolvedBinaryRelation sbr = DualJunctionDer.tryPlr(script, quantifier, eliminatee, term);
 				if (sbr != null) {
@@ -363,6 +365,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 				return null;
 			}
 			if (!sfs.getAssumptionsMap().isEmpty()) {
+				return null;
+			}
+			if (SolveForSubjectUtils.isVariableDivCaptured(sfs, allEliminatees)) {
 				return null;
 			}
 			if (QuantifierUtils.isDerRelationSymbol(quantifier, sfs.getRelationSymbol())) {
@@ -402,7 +407,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 
 		@Override
 		public MultiCaseSolvedBinaryRelation solveForSubject(final Script script, final int quantifier,
-				final TermVariable eliminatee, final Term term) {
+				final TermVariable eliminatee, final Term term, final Set<TermVariable> allEliminatees) {
 			final PolynomialRelation pr = PolynomialRelation.convert(script, term);
 			if (pr == null) {
 				return null;
@@ -429,6 +434,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 				break;
 			default:
 				throw new AssertionError("unknon value " + mIntricateOperations);
+			}
+			if (SolveForSubjectUtils.isVariableDivCaptured(mcsbr, allEliminatees)) {
+				return null;
 			}
 			if (eachCaseHasDerRelationSymbol(mcsbr, quantifier)) {
 				return mcsbr;
