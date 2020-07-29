@@ -363,7 +363,8 @@ public class SolveForSubjectUtils {
 			}
 			cases.add(new Case(sbr, supportingTerms, xnf));
 		}
-		if (isAntiDerIntegerDivisionCaseRequired(xnf, subject.getSort(), polyRel.getRelationSymbol())) {
+		if (divisorAsArray.length > 0
+				&& isAntiDerIntegerDivisionCaseRequired(xnf, subject.getSort(), polyRel.getRelationSymbol())) {
 			final Case result = constructAntiDerIntegerDivisibilityCase(script, xnf, stageTwoRhs,
 					polyRel.getRelationSymbol(), divisorAsArray);
 			cases.add(result);
