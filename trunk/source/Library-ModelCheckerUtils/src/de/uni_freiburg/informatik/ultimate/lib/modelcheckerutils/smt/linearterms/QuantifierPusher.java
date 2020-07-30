@@ -46,11 +46,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.DerScout;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.DerScout.DerApplicability;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.EliminationTask;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtTestGenerationUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionDer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionQeAdapter2014;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionQuantifierElimination.EliminationResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.DualJunctionTir;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XjunctPartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XnfDer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.pqe.XnfIrd;
@@ -623,12 +623,12 @@ public class QuantifierPusher extends TermTransformer {
 			final EliminationResult er = tryToEliminateOne(currentEt, elimtechniques);
 			successInLastIteration = (er != null);
 			if (er != null) {
-				if (!er.getNewEliminatees().isEmpty()) {
-					final String test = SmtTestGenerationUtils.generateStringForTestfile2(inputEt.toTerm(mScript));
-					final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
-					logger.info(test);
-//					throw new UnsupportedOperationException("not yet implemented: auxiliary eliminatees \n" + test);
-				}
+//				if (!er.getNewEliminatees().isEmpty()) {
+//					final String test = SmtTestGenerationUtils.generateStringForTestfile2(inputEt.toTerm(mScript));
+//					final ILogger logger = mServices.getLoggingService().getLogger(QuantifierPusher.class);
+//					logger.info(test);
+////					throw new UnsupportedOperationException("not yet implemented: auxiliary eliminatees \n" + test);
+//				}
 				if (QuantifierUtils.isCorrespondingFiniteJunction(inputEt.getQuantifier(),
 						er.getEliminationTask().getTerm())) {
 					return er.integrateNewEliminatees().toTerm(mScript);
@@ -703,21 +703,23 @@ public class QuantifierPusher extends TermTransformer {
 			new DualJunctionQeAdapter2014(mgdScript, services, null);
 			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
-			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services,
-					new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
+			elimtechniques.add(new DualJunctionTir(mgdScript, services, false));
+//			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services,
+//					new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfUpd(mgdScript, services)));
-//			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
 			break;
 		case NO_UPD:
 			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
 			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services, new XnfIrd(mgdScript, services)));
-			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services,
-					new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
-//			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
+			elimtechniques.add(new DualJunctionTir(mgdScript, services, false));
+//			elimtechniques.add(new DualJunctionQeAdapter2014(mgdScript, services,
+//					new XnfTir(mgdScript, services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION)));
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
 			break;
 		case ONLY_DER:
 			elimtechniques.add(new DualJunctionDer(mgdScript, services, false));
-//			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
+			elimtechniques.add(new DualJunctionDer(mgdScript, services, true));
 			break;
 		default:
 			throw new AssertionError("unknown value " + pqeTechniques);
