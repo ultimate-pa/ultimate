@@ -11,7 +11,7 @@ import sys
 import xml.etree.ElementTree as ET
 from functools import lru_cache
 from pathlib import Path
-from typing import Tuple, List, Iterator, Any, Dict, Optional, cast, Pattern, ChainMap, TypeVar
+from typing import Tuple, List, Iterator, Any, Dict, Optional, Pattern, ChainMap, TypeVar
 
 import yaml
 from tqdm import tqdm
@@ -349,10 +349,10 @@ def process_wrapper_script_log(file: str) -> List[Result]:
                     if "Execution finished normally" in line:
                         collect_call = False
                         if default:
-                            default_call = cast(str, call[:-1])
+                            default_call = ' '.join(call[:-1])
                             debug("Found default call {}".format(default_call))
                         else:
-                            bitvec_call = cast(str, call[:-1])
+                            bitvec_call = ' '.join(call[:-1])
                             debug("Found bitvector call {}".format(bitvec_call))
                     else:
                         call += [line]
@@ -475,13 +475,13 @@ def print_results(results: List[Result], runs: Optional[Dict[str, Run]], args: a
             if mc.dump_smt:
                 dump_dir = Path(f"{os.path.dirname(f.logfile)}-dump")
                 dump_dir.mkdir(parents=True, exist_ok=True)
-                msg_detail += f'\n{" ":<18} {"Dump SMT:":<8} {f.call} SMT' \
-                              f'--rcfgbuilder.dump.smt.script.to.file true' \
-                              f'--rcfgbuilder.compress.dumped.smt.script true' \
-                              f'--rcfgbuilder.to.the.following.directory "{dump_dir}"' \
-                              f'--traceabstraction.dump.smt.script.to.file true' \
-                              f'--traceabstraction.compress.dumped.smt.script true' \
-                              f'--traceabstraction.to.the.following.directory "{dump_dir}"'
+                msg_detail += f'\n{" ":<18} {"Dump SMT:":<8} {f.call} ' \
+                              f'--rcfgbuilder.dump.smt.script.to.file true ' \
+                              f'--rcfgbuilder.compress.dumped.smt.script true ' \
+                              f'--rcfgbuilder.to.the.following.directory "{dump_dir}" ' \
+                              f'--traceabstraction.dump.smt.script.to.file true ' \
+                              f'--traceabstraction.compress.dumped.smt.script true ' \
+                              f'--traceabstraction.to.the.following.directory "{dump_dir}" '
 
         if j < args.cut_off:
             print_cutoff += [msg]
