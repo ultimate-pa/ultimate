@@ -890,7 +890,8 @@ public class SolveForSubjectUtils {
 			final Set<TermVariable> termVariables) {
 		if (mcsbr.getIntricateOperations().contains(IntricateOperation.DIV_BY_INTEGER_CONSTANT)) {
 			for (final Case c : mcsbr.getCases()) {
-				if (SmtUtils.getFunctionApplication(c.getSolvedBinaryRelation().getRightHandSide(), "div") != null) {
+				if (c.getSolvedBinaryRelation() != null && SmtUtils
+						.getFunctionApplication(c.getSolvedBinaryRelation().getRightHandSide(), "div") != null) {
 					if (Arrays.stream(c.getSolvedBinaryRelation().getRightHandSide().getFreeVars())
 							.anyMatch(termVariables::contains)) {
 						return true;
