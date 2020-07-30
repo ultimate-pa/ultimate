@@ -1170,15 +1170,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 											handleNumberClassificationMacro(loc, "FP_ZERO").getValue()))));
 			return new RValue(resultExpr, new CPrimitive(CPrimitives.INT));
 		} else if ("signbit".equals(floatFunction.getFunctionName())) {
-
-// 			TODO: init single bit for comparison
-//			final FloatingPointSize argSize =
-//					mTypeSizes.getFloatingPointSize(((CPrimitive) argumentProcessed.getCType()).getType());
+			
+// 			TODO: init single bit for comparison, might need to be non-deterministic, as signbit only returns "non-zero"?
+			
+			
+//			final FloatingPointSize argSize = mTypeSizes.getFloatingPointSize(((CPrimitive) argumentProcessed.getCType()).getType());
 //			final Expression signBit =
 //					extractBits(loc, argumentProcessed.getValue(), argSize.getDataSize(), argSize.getDataSize() - 1);
-//			final Expression isNegative = constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_equals,
-//					signBit, signBit.getType(), exp2, type2);
-//			
+			
 //			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
 //			final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegative,
 //			mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE),
