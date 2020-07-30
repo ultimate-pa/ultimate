@@ -126,10 +126,8 @@ public class MultiCaseSolvedBinaryRelation implements ITermProviderOnDemand {
 	}
 
 	public Set<IntricateOperation> getIntricateOperations() {
-		return Stream
-				.concat(mAdditionalIntricateOperations.stream(), mCases.stream()
-						.flatMap(x -> x.getSupportingTerms().stream()).map(x -> x.getIntricateOperation()))
-				.collect(Collectors.toSet());
+		return Stream.concat(mAdditionalIntricateOperations.stream(),
+				mCases.stream().flatMap(Case::streamOfIntricateOperations)).collect(Collectors.toSet());
 	}
 
 	public Set<TermVariable> getAuxiliaryVariables() {

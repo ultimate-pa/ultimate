@@ -30,10 +30,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProviderOnDemand;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -86,6 +88,15 @@ public class Case implements ITermProviderOnDemand {
 				.collect(Collectors.toSet());
 	}
 
+	public Stream<IntricateOperation> streamOfIntricateOperations() {
+		if (mSolvedBinaryRelation != null && mSolvedBinaryRelation.getIntricateOperation() != null) {
+			return Stream.concat(Stream.of(mSolvedBinaryRelation.getIntricateOperation()),
+					getSupportingTerms().stream().map(x -> x.getIntricateOperation()));
+		} else {
+			return getSupportingTerms().stream().map(x -> x.getIntricateOperation());
+		}
+	}
+
 	@Override
 	public Term asTerm(final Script script) {
 		final Collection<Term> params = mSupportingTerms.stream().map(x -> x.asTerm()).collect(Collectors.toList());
@@ -105,7 +116,7 @@ public class Case implements ITermProviderOnDemand {
 		}
 		return result;
 	}
-	
+
 	@Override
 	public String toString() {
 		String junctor;
