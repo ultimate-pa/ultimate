@@ -238,19 +238,21 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 					break;
 				}
 				accelerationFinishedCorrectly = true;
-				final Term t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
+				Term t = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
 						acceleratedLoopRelation.getFormula(), mSimplificationTechnique,
 						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-				final TransFormulaBuilder tfb = new TransFormulaBuilder(acceleratedLoopRelation.getInVars(),
-						acceleratedLoopRelation.getOutVars(), true, Collections.emptySet(), true,
-						Collections.emptySet(), false);
-				for (final TermVariable auxVar : acceleratedLoopRelation.getAuxVars()) {
-					tfb.addAuxVar(auxVar);
-				}
-				tfb.setFormula(t);
-				tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-				final UnmodifiableTransFormula accelerationNoQuantifiersTf = tfb.finishConstruction(mScript);
-				accelerations.add(accelerationNoQuantifiersTf);
+				t = mPredHelper.makeReflexive(t, acceleratedLoopRelation);
+				final UnmodifiableTransFormula tf = mPredHelper.normalizeTerm(t, acceleratedLoopRelation, true);
+				// final TransFormulaBuilder tfb = new TransFormulaBuilder(acceleratedLoopRelation.getInVars(),
+				// acceleratedLoopRelation.getOutVars(), true, Collections.emptySet(), true,
+				// Collections.emptySet(), false);
+				// for (final TermVariable auxVar : acceleratedLoopRelation.getAuxVars()) {
+				// tfb.addAuxVar(auxVar);
+				// }
+				// tfb.setFormula(t);
+				// tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+				// final UnmodifiableTransFormula accelerationNoQuantifiersTf = tfb.finishConstruction(mScript);
+				accelerations.add(tf);
 			}
 			if (!accelerationFinishedCorrectly) {
 				loopheadIterator.remove();
@@ -283,7 +285,6 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				mInterpolants = inductiveInterpolants;
 			}
 		}
-
 		return interpolator.getTraceCheckResult();
 	}
 
@@ -304,30 +305,36 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 
 				final List<Term> loopAccelerationsForEntryLocation = new ArrayList<>();
 				loopAccelerationsForEntryLocation.add(preds[cnt].getFormula());
-				int currentPredCounter = cnt;
-				int currentIterationCounter = 0;
+
 				final int maxLoopPredicates = 2 * loopAccelerations.size();
 				/*
 				 * In case there are multiple loop accelerations, construct post of meta trace's interpolant and
 				 * corresponding loop acceleration
 				 */
-				while (currentPredCounter < maxLoopPredicates) {
-					final IPredicate loopEntryInterpolantMetaTrace = preds[currentPredCounter];
-					final UnmodifiableTransFormula loopAccelerationForCorrespondingLoop =
-							loopAccelerations.get(currentIterationCounter);
+				final Term loopAccelerationsForEntryLocationDisjunction;
+				if (loopAccelerations.size() > 1) {
+					int currentPredCounter = cnt;
+					// int currentIterationCounter = 0;
+					while (currentPredCounter < maxLoopPredicates) {
+						final IPredicate loopEntryInterpolantMetaTrace = preds[currentPredCounter];
+						loopAccelerationsForEntryLocation.add(loopEntryInterpolantMetaTrace.getFormula());
+						// currentIterationCounter++;
+						currentPredCounter = currentPredCounter + 3;
+					}
+					loopAccelerationsForEntryLocationDisjunction =
+							SmtUtils.and(mScript.getScript(), loopAccelerationsForEntryLocation);
+				} else {
+					final IPredicate loopEntryInterpolantMetaTrace = preds[cnt];
+					final UnmodifiableTransFormula loopAccelerationForCorrespondingLoop = loopAccelerations.get(0);
 					final Term postInterpolantLoopacceleration = mPredTransformer.strongestPostcondition(
 							loopEntryInterpolantMetaTrace, loopAccelerationForCorrespondingLoop);
-					loopAccelerationsForEntryLocation.add(postInterpolantLoopacceleration);
-					currentIterationCounter++;
-					currentPredCounter = currentPredCounter + 2;
+					loopAccelerationsForEntryLocationDisjunction = postInterpolantLoopacceleration;
+					// loopAccelerationsForEntryLocation.add(postInterpolantLoopacceleration);
+					// loopAccelerationsForEntryLocationDisjunction =
+					// SmtUtils.or(mScript.getScript(), loopAccelerationsForEntryLocation);
 				}
-				cnt = cnt + maxLoopPredicates - 1;
-				/*
-				 * Then construct a disjunction of all possible loop accelerations posts at the loop head
-				 */
-				final Term loopAccelerationsForEntryLocationDisjunction =
-						SmtUtils.or(mScript.getScript(), loopAccelerationsForEntryLocation);
 
+				cnt = cnt + maxLoopPredicates - 1;
 				final IPredicate interpolantPred =
 						mPredUnifier.getOrConstructPredicate(loopAccelerationsForEntryLocationDisjunction);
 
@@ -338,10 +345,16 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 				 * inductive interpolant sequence
 				 */
 				while (j < loopSize.getSecond() + 1) {
-					final UnmodifiableTransFormula transRel = mCounterexample.get(j).getTransformula();
-					final Term loopPostTerm =
-							mPredTransformer.strongestPostcondition(actualInterpolants[j - 1], transRel);
-					actualInterpolants[j] = mPredUnifier.getOrConstructPredicate(loopPostTerm);
+					final LETTER l = mCounterexample.get(j);
+					final UnmodifiableTransFormula transRel = l.getTransformula();
+					final IPredicate loopPostTerm;
+					// if (loopAccelerations.size() > 1 && l.getSource() == target) {
+					// loopPostTerm = interpolantPred;
+					// } else {
+					loopPostTerm = actualInterpolants[j - 1];
+					// }
+					final Term postTfPred = mPredTransformer.strongestPostcondition(loopPostTerm, transRel);
+					actualInterpolants[j] = mPredUnifier.getOrConstructPredicate(postTfPred);
 					j++;
 				}
 				i = loopSize.getSecond() - 1;

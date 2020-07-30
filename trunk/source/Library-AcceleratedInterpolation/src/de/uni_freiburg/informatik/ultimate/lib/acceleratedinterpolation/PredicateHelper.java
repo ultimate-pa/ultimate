@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,13 +40,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -110,6 +114,76 @@ public class PredicateHelper<LETTER extends IIcfgTransition<?>> {
 		final Substitution sub = new Substitution(mScript, subMap);
 		final Term newTerm = sub.transform(tTerm);
 		return newTerm;
+	}
+
+	/**
+	 * replace variables in term with its default termvariables, needed for {@link IPredicate} creation
+	 *
+	 * @param tf
+	 * @return
+	 */
+	public UnmodifiableTransFormula normalizeTerm(final Term t, final UnmodifiableTransFormula tf,
+			final Boolean fresh) {
+		final HashMap<Term, Term> subMap = new HashMap<>();
+		final Term tTerm = t;
+
+		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
+		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
+
+		for (final Entry<IProgramVar, TermVariable> outVar : tf.getOutVars().entrySet()) {
+			final TermVariable newTV;
+			if (fresh) {
+				newTV = mScript.constructFreshCopy(outVar.getKey().getTermVariable());
+			} else {
+				newTV = outVar.getKey().getTermVariable();
+			}
+			subMap.put(outVar.getValue(), newTV);
+			outVars.put(outVar.getKey(), newTV);
+		}
+		for (final Entry<IProgramVar, TermVariable> inVar : tf.getInVars().entrySet()) {
+			final TermVariable newTV;
+			if (fresh) {
+				newTV = mScript.constructFreshCopy(inVar.getKey().getTermVariable());
+			} else {
+				newTV = inVar.getKey().getTermVariable();
+			}
+			subMap.put(inVar.getValue(), newTV);
+			inVars.put(inVar.getKey(), newTV);
+		}
+		final Substitution sub = new Substitution(mScript, subMap);
+		final Term newTerm = sub.transform(tTerm);
+
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, Collections.emptySet(), true,
+				Collections.emptySet(), false);
+		for (final TermVariable auxVar : tf.getAuxVars()) {
+			tfb.addAuxVar(auxVar);
+		}
+		tfb.setFormula(newTerm);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(mScript);
+	}
+
+	/**
+	 * To make a given loopacceleration reflexive, create disjunction of acceleration and conjunction of equalities
+	 * between in and out vars
+	 *
+	 * @param t
+	 * @param acceleration
+	 * @return
+	 */
+	public Term makeReflexive(final Term t, final UnmodifiableTransFormula acceleration) {
+		final Map<IProgramVar, TermVariable> invars = acceleration.getInVars();
+		final Map<IProgramVar, TermVariable> outvars = acceleration.getOutVars();
+		final List<Term> equalities = new ArrayList<>();
+		for (final Entry<IProgramVar, TermVariable> invar : invars.entrySet()) {
+			final IProgramVar var = invar.getKey();
+			final TermVariable invarTV = invar.getValue();
+			final TermVariable outvarTV = outvars.get(var);
+			final Term equality = SmtUtils.binaryEquality(mScript.getScript(), invarTV, outvarTV);
+			equalities.add(equality);
+		}
+		final Term conjunct = SmtUtils.and(mScript.getScript(), equalities);
+		return SmtUtils.or(mScript.getScript(), t, conjunct);
 	}
 
 	public boolean predContainsTfVar(final IPredicate predicate, final UnmodifiableTransFormula tf) {
