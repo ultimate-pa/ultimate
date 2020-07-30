@@ -123,10 +123,6 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			}
 			currentDisjuncts = nextDisjuncts;
 		}
-		} catch (final IllegalStateException uoe) {
-			final Term quantified = SmtUtils.quantifier(mScript, quantifier, eliminatees, inputConjunction);
-			throw new AssertionError("AntiDER:\n" + SmtTestGenerationUtils.generateStringForTestfile2(quantified));
-		}
 		final Term[] resultDisjuncts = currentDisjuncts.toArray(new Term[currentDisjuncts.size()]);
 		final Term resultDisjunction = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, quantifier,
 				resultDisjuncts);
