@@ -56,6 +56,10 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -254,7 +258,7 @@ public class QuantifierEliminationTest {
 	public void plrTest08ExistsNegative() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(new SortConstructor[] { SmtSortUtils::getBoolSort }, SmtSortUtils::getBoolSort, "p")
-			};
+		};
 		final String formulaAsString = "(exists ((x Bool)) (and (p x) (not x)))";
 		final String expextedResultAsString = "(p false)";
 		runQuantifierPusherTest(funDecls, formulaAsString, expextedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -264,7 +268,7 @@ public class QuantifierEliminationTest {
 	public void plrTest09ForallPositive() {
 		final FunDecl[] funDecls = new FunDecl[] {
 				new FunDecl(new SortConstructor[] { SmtSortUtils::getBoolSort }, SmtSortUtils::getBoolSort, "p")
-			};
+		};
 		final String formulaAsString = "(forall ((x Bool)) (or (p x) x))";
 		final String expextedResultAsString = "(p false)";
 		runQuantifierPusherTest(funDecls, formulaAsString, expextedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
@@ -420,23 +424,19 @@ public class QuantifierEliminationTest {
 
 	@Test
 	public void derIntPoly1Exists() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("t", new Sort[0], intSort);
-		mScript.declareFun("a", new Sort[0], intSort);
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "a", "t"), };
 		final String formulaAsString = "(exists ((x Int)) (and (= (* x a a a 2) t) (= (* x x x) 8)))";
-		final String expectedResultAsString = "true";
-		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+		final String expectedResultAsString = "(let ((.cse0 (= 0 a))) (or (and (= 0 (mod t (* 2 a a a))) (not .cse0) (= 8 (let ((.cse1 (div t 2 a a a))) (* .cse1 .cse1 .cse1)))) (and .cse0 (= 0 t))))";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
 
 	@Test
 	public void derIntPoly1Forall() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("t", new Sort[0], intSort);
-		mScript.declareFun("a", new Sort[0], intSort);
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "a", "t"), };
 		final String formulaAsString = "(forall ((x Int)) (or (not (= (* x a a a 2) t)) (not (= (* x x x) 8))))";
-		final String expectedResultAsString = "true";
-		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
+		final String expectedResultAsString = "(let ((.cse1 (= 0 a))) (and (or (not (= 0 (mod t (* 2 a a a)))) (not (= 8 (let ((.cse0 (div t 2 a a a))) (* .cse0 .cse0 .cse0)))) .cse1) (or (not .cse1) (not (= 0 t)))))";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript,
 				mCsvWriter);
 	}
 
@@ -530,6 +530,10 @@ public class QuantifierEliminationTest {
 				services, logger, mgdScript, csvWriter);
 	}
 
+	/**
+	 * @deprecated use instead method with argument "FunDecl[] funDecls"
+	 */
+	@Deprecated
 	static void runQuantifierEliminationTest(final String eliminationInputAsString, final String expectedResultAsString,
 			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
@@ -537,6 +541,7 @@ public class QuantifierEliminationTest {
 		csvWriter.reportEliminationBegin(formulaAsTerm);
 		final Term result = PartialQuantifierElimination.tryToEliminate(services, logger, mgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		SmtUtils.simplifyWithStatistics(mgdScript, result, null, services, SimplificationTechnique.SIMPLIFY_DDA);
 		logger.info("Result: " + result);
 		if (checkResultIsQuantifierFree) {
 			final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
@@ -562,12 +567,19 @@ public class QuantifierEliminationTest {
 				services, logger, mgdScript, csvWriter);
 	}
 
+	/**
+	 * @deprecated use instead method with argument "FunDecl[] funDecls"
+	 */
+	@Deprecated
 	static void runQuantifierPusherTest(final String eliminationInputAsString, final String expectedResultAsString,
 			final boolean checkResultIsQuantifierFree, final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
+		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
+		final Term unf = new UnfTransformer(mgdScript.getScript()).transform(letFree);
+		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(unf);
 		csvWriter.reportEliminationBegin(formulaAsTerm);
-		final Term result = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(formulaAsTerm);
+		final Term result = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(nnf);
 		logger.info("Result: " + result);
 		if (checkResultIsQuantifierFree) {
 			final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(result);
@@ -661,6 +673,9 @@ public class QuantifierEliminationTest {
 				mCsvWriter);
 	}
 
+	/**
+	 * TODO: Bug. Some array variable is not eliminated.
+	 */
 	@Test
 	public void dimensionProblem() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
@@ -709,6 +724,9 @@ public class QuantifierEliminationTest {
 				mCsvWriter);
 	}
 
+	/**
+	 * TODO: Bug. Some array variable ist not eliminated.
+	 */
 	@Test
 	public void caseShouldHaveBeenHandledByDerPqeBug04simplified01Forward() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
@@ -896,72 +914,45 @@ public class QuantifierEliminationTest {
 
 	@Test
 	public void bugTirAntiDer() {
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("b", new Sort[0], intSort);
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "b") };
 		final String formulaAsString = "(exists ((a Int)) (and (> (* 4 a) b ) (< a 3) (< b 12)))";
 		final String expectedResultAsString = "(and (< b 12) (exists ((a Int)) (and (< a 3) (> (* 4 a) b))))";
-		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 
 	@Test
 	public void ironModulo() {
-		mScript.declareFun("p", new Sort[] {SmtSortUtils.getIntSort(mMgdScript)}, SmtSortUtils.getBoolSort(mMgdScript));
-		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		mScript.declareFun("y", new Sort[0], intSort);
+		final FunDecl[] funDecls = new FunDecl[] {
+				new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getBoolSort, "p"),
+				new FunDecl(SmtSortUtils::getIntSort, "y"),
+		};
 //		final String formulaAsString = "(exists ((x Int)) (and (p x) (= x (+ (mod x 23) y))))";
-		final String formulaAsString = "(exists ((x Int)) (and (p x) (= y (mod x 2))))";
+//		final String formulaAsString = "(exists ((x Int)) (and (p x) (= y (mod x 2))))";
+		final String formulaAsString = "(exists ((x Int)) (and (p x) (= y (* x 2))))";
 		final String expectedResultAsString = "(and (= 0 (mod y 2)) (p (div y 2)))";
-		runQuantifierPusherTest(formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void lraSchollSmt08Model6_53() {
-		final Sort boolSort = SmtSortUtils.getBoolSort(mMgdScript);
-		mScript.declareFun("bool.b5", new Sort[0], boolSort);
-		mScript.declareFun("bool.b6", new Sort[0], boolSort);
-		mScript.declareFun("bool.b7", new Sort[0], boolSort);
-		mScript.declareFun("bool.b8", new Sort[0], boolSort);
-		mScript.declareFun("bool.b10", new Sort[0], boolSort);
-		mScript.declareFun("bool.b12", new Sort[0], boolSort);
-		mScript.declareFun("bool.b14", new Sort[0], boolSort);
-		mScript.declareFun("bool.b22", new Sort[0], boolSort);
-		mScript.declareFun("bool.b23", new Sort[0], boolSort);
-		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
-		mScript.declareFun("x5", new Sort[0], realSort);
-		mScript.declareFun("x4", new Sort[0], realSort);
-		mScript.declareFun("x3", new Sort[0], realSort);
-		final String formulaAsString = "(forall ((?lambda Real)) (or (exists ((?lambdaprime Real)) (and (or (<= 10.0 (+ ?lambdaprime x5)) (and bool.b22 (<= x3 (* 3.0 ?lambdaprime))) (and (not bool.b5) bool.b6 (or (<= 4910.0 (+ (* 20.0 ?lambdaprime) x4)) (<= x3 (+ (* 3.0 ?lambdaprime) 45.0))) (not bool.b7) (not bool.b22)) (and (not bool.b5) (not bool.b6) (not bool.b7) (not bool.b22) (or (<= 4100.0 (+ (* 20.0 ?lambdaprime) x4)) (<= x3 (+ (* 3.0 ?lambdaprime) 45.0)))) (and (not bool.b5) bool.b7 (not bool.b6) (or (<= 4500.0 (+ (* 20.0 ?lambdaprime) x4)) (<= x3 (+ (* 3.0 ?lambdaprime) 45.0))) (not bool.b22)) (and (not bool.b5) bool.b6 bool.b7 (not bool.b22) (<= x3 (* 3.0 ?lambdaprime)))) (<= 0.0 ?lambdaprime) (<= ?lambdaprime ?lambda))) bool.b22 (and (or (not bool.b5) bool.b6) (not bool.b7)) (and bool.b7 (or (and (not bool.b23) (or (and (or (and (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) (/ 743.0 2.0)))) (or (and (<= (+ (* 3.0 ?lambda) 50.0) x3) (or bool.b8 bool.b10 (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) 610.0))) bool.b12 bool.b14 (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) (not (<= x3 (+ (* 3.0 ?lambda) 50.0))) bool.b5)) (and (or bool.b8 bool.b10 (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) 610.0))) bool.b12 bool.b14 (not (<= x3 (+ (* 3.0 ?lambda) 30.0))) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) (not (<= x3 (+ (* 3.0 ?lambda) 50.0))) bool.b5) (not (<= (+ (* 3.0 ?lambda) 50.0) x3))))) (and (or bool.b8 bool.b10 (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) bool.b12 bool.b14 (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) (/ 743.0 2.0)))) (not (<= x3 (+ (* 3.0 ?lambda) 40.0)))) (<= 10.0 (+ ?lambda x5))) (and (or (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) (and (not (<= 30.0 (+ x3 (* 3.0 x5)))) bool.b5) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) (and (<= 30.0 (+ x3 (* 3.0 x5))) (or bool.b8 bool.b10 bool.b12 (not (<= (+ x3 (* 3.0 x5)) 50.0)) bool.b14 bool.b5))) (not (<= 10.0 (+ ?lambda x5)))))) (and bool.b23 (or (and (not (<= 10.0 (+ ?lambda x5))) (or (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) (not (<= (+ x3 (* 3.0 x5)) 30.0)) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5)) (and (<= 10.0 (+ ?lambda x5)) (or (and (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) (/ 743.0 2.0))) (or (and (or bool.b8 bool.b10 (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) bool.b12 bool.b14 (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (not (<= (+ x3 (* 3.0 x5)) 30.0))) (and (or (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (<= (+ x3 (* 3.0 x5)) 30.0)))) (not (<= x3 (+ (* 3.0 ?lambda) 40.0))) (and (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) (/ 743.0 2.0)))) (or (and (or (and (or bool.b8 bool.b10 (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) 610.0))) bool.b12 (not (<= (+ x3 (* 3.0 x5)) 50.0)) bool.b14 (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0))) (and (or bool.b8 bool.b10 (not (<= (+ x3 (* (/ 3.0 40.0) x4)) (+ (* (/ 3.0 2.0) ?lambda) 610.0))) bool.b12 (not (<= 50.0 (+ x3 (* 3.0 x5)))) (not (<= (+ x3 (* 3.0 x5)) 50.0)) bool.b14 bool.b5) (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0))) (not (<= (+ x3 (* 3.0 x5)) 30.0))) (and (or (<= (+ x3 (* (/ 3.0 20.0) x4)) 723.0) (not (<= (+ x3 (* (/ 3.0 20.0) x4)) 1200.0)) bool.b5) (<= (+ x3 (* 3.0 x5)) 30.0)))))))) (not bool.b6))) (< ?lambda 0.0)))";
-		runQuantifierPusherTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void lraSchollSmt08Rnd4_15() {
-		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
-		mScript.declareFun("x1", new Sort[0], realSort);
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getRealSort, "x1") };
 		final String formulaAsString = "(exists ((?y1 Real)) (exists ((?y2 Real)) (and (exists ((?y3 Real)) (exists ((?y4 Real)) (or (and (or (<= 7.0 (+ (* 73.0 ?y2) (* 56.0 ?y3) (* 13.0 ?y4) (* 51.0 x1) (* 15.0 ?y1))) (not (= 51.0 (+ (* ?y2 (- 62.0)) (* ?y4 (- 61.0)))))) (or (not (= (- 66.0) (+ (* ?y2 (- 12.0)) (* ?y3 (- 71.0)) (* ?y4 8.0) (* ?y1 (- 46.0))))) (not (= (- 66.0) (+ (* ?y2 (- 14.0)) (* ?y3 (- 77.0)) (* ?y4 65.0) (* x1 86.0) (* ?y1 (- 85.0))))))) (and (not (= 33.0 (+ (* ?y2 (- 95.0)) (* ?y3 (- 81.0)) (* ?y4 74.0) (* x1 10.0) (* ?y1 76.0)))) (= (- 85.0) (* ?y1 (- 25.0)))) (and (<= (+ (* 21.0 ?y4) (* 57.0 ?y1)) (+ (* 53.0 ?y2) (* 8.0 ?y3) (* 6.0 x1) 5.0)) (= 11.0 (+ (* ?y2 (- 98.0)) (* ?y3 (- 95.0)) (* ?y4 80.0) (* x1 (- 19.0)) (* ?y1 (- 16.0)))))))) (or (forall ((?y3 Real)) (and (or (not (= 36.0 (+ (* ?y2 (- 2.0)) (* ?y3 42.0) (* x1 7.0)))) (and (<= (+ (* 81.0 ?y2) (* 29.0 ?y1)) (+ (* 44.0 ?y3) (* 19.0 x1) 84.0)) (forall ((?y4 Real)) (and (<= (+ (* 14.0 ?y3) (* 54.0 ?y4) (* 48.0 x1) (* 77.0 ?y1) 64.0) (* 46.0 ?y2)) (<= 0.0 (+ (* 29.0 ?y3) (* 39.0 ?y4) (* 70.0 x1) 32.0)))) (= (- 30.0) (+ (* x1 9.0) (* ?y1 (- 4.0))))) (and (<= (* 17.0 ?y1) (* 11.0 x1)) (< (* 52.0 x1) (+ (* 66.0 ?y2) (* 74.0 ?y3) (* 46.0 ?y1) 25.0)))) (or (< (+ (* 46.0 ?y1) 80.0) (+ (* 4.0 ?y2) (* 34.0 ?y3) (* 32.0 x1))) (and (< 80.0 (* 59.0 ?y1)) (not (= 0.0 (+ (* ?y2 (- 40.0)) (* ?y3 (- 55.0)) (* x1 (- 35.0)))))) (and (or (= (- 24.0) (+ (* ?y2 (- 88.0)) (* ?y3 95.0))) (< (+ (* 37.0 ?y2) (* 15.0 ?y3) (* 63.0 ?y1)) (+ (* 27.0 x1) 79.0))) (or (<= (+ (* 41.0 ?y2) ?y1) (* 62.0 x1)) (<= (+ (* 79.0 x1) (* 74.0 ?y1)) (+ (* 17.0 ?y2) (* 10.0 ?y3) 14.0)))) (< (+ (* 21.0 ?y2) (* 30.0 ?y1)) (+ (* 77.0 ?y3) (* 100.0 x1) 19.0))))) (and (not (= (- 33.0) (+ (* ?y2 61.0) (* x1 (- 3.0)) (* ?y1 31.0)))) (exists ((?y4 Real)) (and (<= (+ (* 32.0 ?y4) (* 35.0 ?y1)) (* 84.0 x1)) (not (= 23.0 (+ (* ?y4 (- 21.0)) (* x1 53.0) (* ?y1 8.0)))) (or (<= (* 53.0 ?y2) (* 94.0 x1)) (<= (+ (* 94.0 ?y2) (* 50.0 ?y4) 69.0) (* 55.0 x1))) (or (and (= (- 63.0) (+ (* ?y2 (- 22.0)) (* ?y4 37.0) (* x1 (- 9.0)) (* ?y1 89.0))) (< 35.0 (+ (* 100.0 ?y2) (* 10.0 x1)))) (< (+ (* 88.0 ?y2) (* 2.0 ?y1)) (+ (* 31.0 x1) 46.0))))) (exists ((?y4 Real)) (and (<= (+ (* 82.0 ?y4) (* 88.0 x1)) (+ (* 39.0 ?y1) 95.0)) (< 0.0 (+ (* 86.0 ?y1) 21.0)))) (exists ((?y4 Real)) (and (= (- 93.0) (+ (* ?y4 75.0) (* x1 (- 19.0)))) (<= (+ ?y4 (* 38.0 x1) (* 15.0 ?y1)) (* 38.0 ?y2)))) (< (* 91.0 ?y1) 0.0))))))";
-		runQuantifierPusherTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void lraSchollSmt08Rnd4_15Red() {
-		final Sort realSort = SmtSortUtils.getRealSort(mMgdScript);
-		mScript.declareFun("x1", new Sort[0], realSort);
-		mScript.declareFun("?y4", new Sort[0], realSort);
-		mScript.declareFun("?y3", new Sort[0], realSort);
-		mScript.declareFun("?y2", new Sort[0], realSort);
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getRealSort, "x1", "?y2", "?y3", "?y4") };
 		final String formulaAsString = "(exists ((?y1 Real)) (and (not (= (- 66.0) (+ (* ?y2 (- 14.0)) (* ?y3 (- 77.0)) (* ?y4 65.0) (* x1 86.0) (* ?y1 (- 85.0)))))  (or (forall ((?y3 Real)) (<= (+ (* 41.0 ?y2) ?y1) (* 62.0 x1)) ) (and (< 0.0 (+ (* 86.0 ?y1) 21.0)) (< (* 91.0 ?y1) 0.0)))))";
-		runQuantifierPusherTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void multiTechniques() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "a", "b") };
-		for (final VarDecl varDecl : vars) {
-			varDecl.declareVars(mScript);
-		}
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "a", "b") };
 		final String formulaAsString = "(exists ((x Int) (y Int)) (and (= x b) (<= y x) (<= a y)))";
-		runQuantifierPusherTest(formulaAsString, "(<= a b)", true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, formulaAsString, "(<= a b)", true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 
@@ -970,56 +961,45 @@ public class QuantifierEliminationTest {
 	 * for nested quantifiers after elimination techniques.
 	 */
 	public void resolvedQuantifierNesting() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "a", "b") };
-		for (final VarDecl varDecl : vars) {
-			varDecl.declareVars(mScript);
-		}
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "a", "b") };
 		final String formulaAsString = "(exists ((x Int) (y Int)) (and (= x b) (exists ((z Int)) (and (<= y x) (= (* y y z z) 0)))))";
-		runQuantifierPusherTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void uselessOuterQuantifier() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "a", "b") };
-		for (final VarDecl varDecl : vars) {
-			varDecl.declareVars(mScript);
-		}
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "a", "b") };
 		mScript.declareFun("p", new Sort[] { SmtSortUtils.getIntSort(mMgdScript)}, SmtSortUtils.getBoolSort(mMgdScript));
 		final String formulaAsString = "(exists ((x Int) ) (forall ((y Int) (z Int)) (or (p z) (and (p x) (distinct y 0) ))))";
-		runQuantifierPusherTest(formulaAsString, "(forall ((z Int)) (p z))", false, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, formulaAsString, "(forall ((z Int)) (p z))", false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 
 	@Test
 	public void innerPush() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "a", "b") };
-		for (final VarDecl varDecl : vars) {
-			varDecl.declareVars(mScript);
-		}
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "a", "b") };
 		mScript.declareFun("p", new Sort[] { SmtSortUtils.getIntSort(mMgdScript)}, SmtSortUtils.getBoolSort(mMgdScript));
 		final String formulaAsString = "(exists ((x Int) ) (and (<= a x) (forall ((y Int) (z Int)) (or (p z) (and (p x) (distinct y 0))))))";
-		runQuantifierPusherTest(formulaAsString, "(forall ((z Int)) (p z))", false, mServices, mLogger, mMgdScript, mCsvWriter);
+		runQuantifierPusherTest(funDecls, formulaAsString, "(forall ((z Int)) (p z))", false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void Wildboellen() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "z", "y") };
-		for (final VarDecl varDecl : vars) {
-			varDecl.declareVars(mScript);
-		}
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "z", "y") };
 		final String formulaAsString = "(forall ((x Int) ) (or (= 0 x) (not (= (* z (+ x 1)) y))))";
-		runQuantifierPusherTest(formulaAsString, "(or (= z 0) (= 0 (div (+ y (- z)) z)) (not (= 0 (mod (+ y (* z (- 1))) z))))", true, mServices, mLogger, mMgdScript, mCsvWriter);
+		final String expectedResult = "(let ((.cse0 (+ y (- z))) (.cse1 (= 0 z))) (and (or (not (= 0 .cse0)) (not .cse1)) (or (= 0 (div .cse0 z)) (not (= 0 (mod (+ y (* z (- 1))) z))) .cse1)))";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void Oppenau() {
-		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
-		for (final VarDecl varDecl : vars) {
-			varDecl.declareVars(mScript);
-		}
-		mScript.declareFun("square", new Sort[] { SmtSortUtils.getIntSort(mMgdScript)}, SmtSortUtils.getIntSort(mMgdScript));
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getIntSort, "square"),
+			new FunDecl(SmtSortUtils::getIntSort, "x", "y"),
+		};
 		final String formulaAsString = "(exists ((v_proc_i_AFTER_CALL_1 Int) (v_f_4 Int) (v_proc_res_BEFORE_RETURN_1 Int)) (and (exists ((v_f_4 Int)) (<= (+ x (square v_f_4)) v_proc_i_AFTER_CALL_1)) (<= v_proc_res_BEFORE_RETURN_1 y) (<= (+ x (square v_f_4)) v_proc_i_AFTER_CALL_1) (<= v_proc_i_AFTER_CALL_1 v_proc_res_BEFORE_RETURN_1)))";
-		runQuantifierPusherTest(formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+		final String expectedResult = null;
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
@@ -1030,40 +1010,58 @@ public class QuantifierEliminationTest {
 	}
 
 	@Test
-	public void mod02() {
+	public void mod02Uneliminatable() {
 		final FunDecl[] funDecls = new FunDecl[] {
-				new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getBoolSort, "p"),
-				new FunDecl(SmtSortUtils::getIntSort, "c"),
-			};
-		final String formulaAsString = "(exists ((x Int) (y Int)) (and (= (div x 7) (div y 5)) (p x) (p y)))";
-		runQuantifierPusherTest(funDecls, formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+			new FunDecl(new SortConstructor[] { SmtSortUtils::getIntSort }, SmtSortUtils::getBoolSort, "p"),
+			new FunDecl(SmtSortUtils::getIntSort, "c"),
+		};
+		final String formulaAsString = "(exists ((x Int) (y Int)) (and (= (div x 7) (div (+ y 1) 5)) (p x) (p y)))";
+		final String expectedResult = "(exists ((x Int) (y Int)) (and (= (div x 7) (div (+ y 1) 5)) (p x) (p y)))";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void mod03Nutz01() {
 		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "y"), };
 		final String formulaAsString = "(exists ((x Int)) (and (<= (mod x 4294967296) 0) (= y (mod x 4294967296))))";
-		runQuantifierPusherTest(funDecls, formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+		final String expectedResult = "(let ((.cse0 (* y (- 1)))) (and (<= (div y (- 4294967296)) (div .cse0 4294967296)) (<= 0 y) (< y 4294967296) (<= (div y (- 4294967296)) (div (+ .cse0 4294967295) 4294967296))))";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void sandmanForward() {
-	final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(SmtSortUtils::getIntSort, "c"),
-		};
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "c"), };
 		final String formulaAsString = "(exists ((x Int)) (and (<= (mod x 256) (+ c 256)) (not (<= (mod x 256) 127))))";
-		runQuantifierPusherTest(funDecls, formulaAsString, "true", true, mServices, mLogger, mMgdScript, mCsvWriter);
+		final String expectedResult = "(and (<= 0 (div (+ c 256) 256)) (<= 0 (+ c 256)) (<= 0 (div (+ c 128) 256)))";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void sandmanForwardStep() {
-	final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(SmtSortUtils::getIntSort, "c"),
-		};
-		final String expectedResult = "(and (<= 0 (div (+ c 256) 256)) (<= 0 (+ c 256)) (<= 0 (div (+ c 128) 256)))";
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "c"), };
 		final String formulaAsString = "(exists ((x Int)) (and (< x 256) (not (<= (mod x 256) 127)) (<= x (+ c 256)) (<= 0 x)))";
+		final String expectedResult = "(and (<= 0 (div (+ c 256) 256)) (<= 0 (+ c 256)) (<= 0 (div (+ c 128) 256)))";
 		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
+
+	@Test
+	public void PointerInBooleanExpression() {
+		final FunDecl[] funDecls = new FunDecl[] { new FunDecl(SmtSortUtils::getIntSort, "main_~a~0"), };
+		final String formulaAsString = "(exists ((main_~p~0.offset Int) (|main_#t~malloc0.base| Int)) (and (not (= 0 |main_#t~malloc0.base|)) (or (and (= 0 main_~p~0.offset) (= 0 |main_#t~malloc0.base|) (= 1 main_~a~0)) (and (= 0 main_~a~0) (or (not (= 0 main_~p~0.offset)) (not (= 0 |main_#t~malloc0.base|)))))))";
+		final String expectedResult = "(= 0 main_~a~0)";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void choirNightTrezor02WhiteRussia() {
+		final FunDecl[] funDecls = new FunDecl[] {};
+		final String formulaAsString = "(exists ((main_~a~0 Int) (main_~b~0 Int)) (and (<= 1 (mod (+ (* main_~b~0 4294967295) main_~a~0) 4294967296)) (= 0 main_~b~0) (not (< (mod main_~b~0 4294967296) (mod main_~a~0 4294967296))) (<= (mod main_~a~0 4294967296) 1)))";
+		final String expectedResult = "false";
+		runQuantifierPusherTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+
 
 
 	private Term createQuantifiedFormulaFromString(final int quantor, final String quantVars,
