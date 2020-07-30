@@ -416,6 +416,7 @@ public class Elim1Store {
 								new EliminationTask(quantifier, Collections.singleton(eliminatee),
 										inputTerm)) != LBool.SAT : "Bug array QE Input: " + inputTerm + " Result:"
 												+ resultEt;
+		assert !mMgdScript.isLocked() : "Solver still locked";
 		return resultEt;
 
 	}

@@ -249,6 +249,7 @@ public class ElimStorePlain {
 			if (THROW_ELIMINATION_EXCEPTIONS) {
 				throw new UnsupportedOperationException(e);
 			} else {
+				assert !mMgdScript.isLocked() : "Solver still locked";
 				return new EliminationTask(eTask.getQuantifier(), new HashSet<>(eTask.getEliminatees()), eTask.getTerm());
 			}
 		}
