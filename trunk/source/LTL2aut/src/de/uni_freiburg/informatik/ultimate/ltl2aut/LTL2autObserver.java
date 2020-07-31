@@ -129,15 +129,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	}
 
 	private LTLPropertyCheck createCheckFromPropertyString(final String ltlProperty) throws Throwable {
-		final Map<String, CheckableExpression> apIrs = new LinkedHashMap<>();
-		final Pattern pattern = Pattern.compile("AP\\((.*)\\)");
-		final Matcher matcher = pattern.matcher(ltlProperty);
-
-		while (matcher.find()) {
-			final String key = matcher.group(0);
-			final CheckableExpression expr = createCheckableExpression(matcher.group(1));
-			apIrs.put(key, expr);
-		}
+		final Map<String, CheckableExpression> apIrs = parseAtomicPropositions(ltlProperty);
 		if (apIrs.isEmpty()) {
 			throw new IllegalArgumentException("No atomic propositions in " + ltlProperty);
 		}
@@ -154,6 +146,41 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		}
 
 		return new LTLPropertyCheck(newLtlProperty, irs, null);
+	}
+
+	// Parse atomic propositions while respecting proper parenthesis nesting.
+	private Map<String, CheckableExpression> parseAtomicPropositions(final String ltlProperty) {
+		final Map<String, CheckableExpression> apIrs = new LinkedHashMap<>();
+
+		int pos = ltlProperty.indexOf("AP(");
+		while (pos >= 0) {
+			pos += "AP(".length();
+			final int start = pos;
+
+			int numParens = 1;
+			while (numParens > 0) {
+				int firstOpen = ltlProperty.indexOf("(", pos);
+				int firstClose = ltlProperty.indexOf(")", pos);
+
+				assert firstOpen >= 0 || firstClose >= 0 : "Unmatched opening parenthesis";
+				if (firstOpen >= 0 && firstOpen < firstClose) {
+					numParens++;
+					pos = firstOpen + 1;
+				} else /* if (firstClose >= 0 ) */ {
+					numParens--;
+					pos = firstClose + 1;
+				}
+			}
+
+			final int end = pos - 1;
+			final String code = ltlProperty.substring(start, end);
+			final CheckableExpression expr = createCheckableExpression(code);
+			apIrs.put("AP(" + code + ")", expr);
+
+			pos = ltlProperty.indexOf("AP(", pos);
+		}
+
+		return apIrs;
 	}
 
 	private CheckableExpression createCheckableExpression(final String expr) {
