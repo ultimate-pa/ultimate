@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2020 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2020 University of Freiburg
  *
  * This file is part of the ULTIMATE Test Library.
  *
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyChec
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 
 /**
- * @author heizmann@informatik.uni-freiburg.de
+ * @author klumpp@informatik.uni-freiburg.de
  *
  */
 public class ClinicalGuidelinesTest extends AbstractBuchiAutomizerTestSuite {
