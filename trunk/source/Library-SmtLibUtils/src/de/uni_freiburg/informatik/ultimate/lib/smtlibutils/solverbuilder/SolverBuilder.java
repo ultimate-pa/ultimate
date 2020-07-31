@@ -242,7 +242,6 @@ public class SolverBuilder {
 		case External_SMTInterpolInterpolationMode:
 			script.setOption(":produce-models", true);
 			script.setOption(":produce-interpolants", true);
-			script.setOption(":array-interpolation", true);
 			if (logic != null) {
 				script.setLogic(logic);
 			}
