@@ -107,7 +107,7 @@ public abstract class UltimateTestSuite {
 
 	protected UltimateTestCase buildTestCase(final UltimateRunDefinition urd, final ITestResultDecider decider,
 			final Function<IUltimateServiceProvider, IUltimateServiceProvider> callback) {
-		return new UltimateTestCase(decider, urd, mLogs, callback);
+		return new UltimateTestCase(decider, urd, mLogs, callback, urd.toString());
 	}
 
 	@TestFactory

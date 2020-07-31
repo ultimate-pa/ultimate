@@ -41,7 +41,7 @@ public class LTLCheckerOverallResultEvaluator extends SafetyCheckerOverallResult
 	protected SafetyCheckerOverallResult detectResultCategory(final IResult result) {
 		if (result instanceof AllSpecificationsHoldResult) {
 			mAllSaveCounter++;
-			if (mAllSaveCounter < 2) {
+			if (mAllSaveCounter < 1) {
 				return SafetyCheckerOverallResult.NO_RESULT;
 			}
 			return SafetyCheckerOverallResult.SAFE;

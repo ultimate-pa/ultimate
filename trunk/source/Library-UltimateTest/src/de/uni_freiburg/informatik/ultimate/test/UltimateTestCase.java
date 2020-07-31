@@ -70,7 +70,8 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 
 	public UltimateTestCase(final ITestResultDecider decider, final UltimateRunDefinition urd,
 			final List<ITestLogfile> logs,
-			final Function<IUltimateServiceProvider, IUltimateServiceProvider> servicesCallback) {
+			final Function<IUltimateServiceProvider, IUltimateServiceProvider> servicesCallback,
+			final String name) {
 		if (urd == null) {
 			throw new IllegalArgumentException("ultimateRunDefinition");
 		}
@@ -79,7 +80,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 		mDecider = decider;
 		mLogs = logs;
 
-		mName = urd.toString();
+		mName = name;
 		mUltimateRunDefinition = urd;
 		mTestLogger = new ConsoleLogger();
 		mHasStarted = false;
