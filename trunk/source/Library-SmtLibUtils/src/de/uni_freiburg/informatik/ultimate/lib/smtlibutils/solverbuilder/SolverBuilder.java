@@ -109,11 +109,13 @@ public class SolverBuilder {
 	private static final String SOLVER_LOGGER_NAME = "SolverLogger";
 	private static final boolean USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS = false;
 
-	private static Script wrapScriptWithLoggingScript(final Script script, final ILogger solverLogger,
-			final String fullPathOfDumpedFile) {
+	private static Script wrapScriptWithLoggingScript(final IUltimateServiceProvider services, final Script script,
+			final ILogger solverLogger, final String fullPathOfDumpedFile) {
 		final Script wrappedScript;
 		try {
-			wrappedScript = new LoggingScript(script, fullPathOfDumpedFile, true);
+			// wrap with SelfDestructingSolverStorable to ensure that .gz streams are closed if solver crashes
+			wrappedScript = new SelfDestructingSolverStorable(new LoggingScript(script, fullPathOfDumpedFile, true),
+					services.getStorage());
 			solverLogger.info("Dumping SMT script to " + fullPathOfDumpedFile);
 		} catch (final IOException e) {
 			solverLogger.error("Unable dump SMT script to " + fullPathOfDumpedFile);
@@ -175,14 +177,15 @@ public class SolverBuilder {
 			final TerminationRequest termRequest =
 					new SMTInterpolTerminationRequest(services.getProgressMonitorService());
 			script = new SMTInterpol(loggerWrapper, termRequest);
-			// ensure that SMTInterpol is exited when toolchain ends
-			script = new SelfDestructingSolverStorable(script, services.getStorage());
 		}
 		if (settings.dumpSmtScriptToFile()) {
-			script = wrapScriptWithLoggingScript(script, solverLogger, settings.constructFullPathOfDumpedScript());
+			script = wrapScriptWithLoggingScript(services, script, solverLogger,
+					settings.constructFullPathOfDumpedScript());
 		}
 		if (!settings.useExternalSolver()) {
 			script.setOption(":timeout", settings.getTimeoutSmtInterpol());
+			// ensure that SMTInterpol is exited when toolchain ends
+			script = new SelfDestructingSolverStorable(script, services.getStorage());
 		}
 		if (USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS) {
 			script = new ScriptWithTermConstructionChecks(script);
