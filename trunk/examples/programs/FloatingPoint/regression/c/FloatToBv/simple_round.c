@@ -6,7 +6,7 @@ void __VERIFIER_assert(int cond) { if (!(cond)) { ERROR: __VERIFIER_error(); } r
 
 int main(void)
 {
-    if (round(1.0000.1) != 1.0) {
+    if (round(1.00001) != 1.0) {
 	    __VERIFIER_error();
     }
     return 0;
