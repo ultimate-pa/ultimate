@@ -223,17 +223,14 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				continue;
 			}
 
-			// TODO: find a better way to do this, I don't want any checks regarding the heuristic / scoring method
-			// here.
-			// DD 2020-04-24: If you have to see all the successors , why do you skip summary successors?
-			if (heuristic instanceof SmtFeatureHeuristic && ((SmtFeatureHeuristic<STATE, LETTER>) heuristic)
-					.getScoringMethod() == ScoringMethod.COMPARE_FEATURES) {
-				((SmtFeatureHeuristic<STATE, LETTER>) heuristic).compareSuccessors(unvaluatedSuccessors);
-			}
-
 			final List<Item> successors =
 					addCostAndSummaries(unvaluatedSuccessors, summaries, usedSummaries, heuristic, current.mCostSoFar);
 			successors.addAll(stragglingSummaries);
+
+			if (heuristic instanceof SmtFeatureHeuristic && ((SmtFeatureHeuristic<STATE, LETTER>) heuristic)
+					.getScoringMethod() == ScoringMethod.COMPARE_FEATURES) {
+				((SmtFeatureHeuristic<STATE, LETTER>) heuristic).compareSuccessors(successors);
+			}
 
 			for (final Item succ : successors) {
 				if (mLogger.isDebugEnabled()) {
