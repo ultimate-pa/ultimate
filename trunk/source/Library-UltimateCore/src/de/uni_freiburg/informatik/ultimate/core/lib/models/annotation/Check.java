@@ -172,10 +172,7 @@ public class Check extends ModernAnnotations {
 	}
 
 	public Check(final EnumSet<Spec> newSpec) {
-		assert newSpec != null && !newSpec.isEmpty();
-		mSpec = newSpec;
-		mPosMsgProvider = Check::getPositiveMessage;
-		mNegMsgProvider = Check::getNegativeMessage;
+		this(newSpec, Check::getPositiveMessage, Check::getNegativeMessage);
 	}
 
 	protected Check(final EnumSet<Spec> newSpec, final Function<Spec, String> funPositiveMessageProvider,
