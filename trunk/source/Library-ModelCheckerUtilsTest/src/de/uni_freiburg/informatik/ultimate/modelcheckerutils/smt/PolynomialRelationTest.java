@@ -433,7 +433,7 @@ public class PolynomialRelationTest {
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, vars);
 	}
 
-	// @Test Mathsat loops on this input
+	@Test
 	public void relationIntPolyCVC4MATHSATEQ11() {
 		final VarDecl[] vars = { new VarDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (* 3 y x) (* 333 y y y))";
