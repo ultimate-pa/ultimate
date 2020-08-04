@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2019-2020 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2019-2020 University of Freiburg
+ *
+ * This file is part of the ULTIMATE PEAtoBoogie plug-in.
+ *
+ * The ULTIMATE PEAtoBoogie plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE PEAtoBoogie plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE PEAtoBoogie plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE PEAtoBoogie plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE PEAtoBoogie plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.pea2boogie;
 
 import java.util.Collection;
@@ -9,44 +35,47 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 
 public interface IReqSymbolTable {
 
-	public IdentifierExpression getIdentifierExpression(final String name);
+	IdentifierExpression getIdentifierExpression(final String name);
 
-	public String getPcName(PhaseEventAutomata automaton);
+	String getPcName(PhaseEventAutomata automaton);
 
-	public Set<String> getConstVars();
+	Set<String> getConstVars();
 
-	public Set<String> getPrimedVars();
+	Set<String> getPrimedVars();
 
-	public Set<String> getHistoryVars();
+	Set<String> getHistoryVars();
 
-	public Set<String> getEventVars();
+	Set<String> getEventVars();
 
-	public Set<String> getInputVars();
+	Set<String> getInputVars();
 
-	public Set<String> getOutputVars();
+	Set<String> getOutputVars();
 
-	public String getDeltaVarName();
+	String getDeltaVarName();
 
-	public VariableLHS getVariableLhs(String clockVar);
+	VariableLHS getVariableLhs(String clockVar);
 
-	public Collection<String> getClockVars();
+	Collection<String> getClockVars();
 
-	public Collection<String> getStateVars();
+	Collection<String> getStateVars();
 
-	public String getPrimedVarId(String stateVar);
+	String getPrimedVarId(String stateVar);
 
-	public String getHistoryVarId(String name);
+	String getHistoryVarId(String name);
 
-	public Collection<? extends String> getPcVars();
+	Collection<String> getPcVars();
 
-	public Collection<? extends Declaration> getDeclarations();
+	Collection<Declaration> getDeclarations();
 
-	public Map<PatternType, BoogieLocation> getLocations();
+	Map<PatternType, BoogieLocation> getLocations();
 
-	public Map<String, Expression> getConstToValue();
+	Map<String, Expression> getConstToValue();
+
+	IBoogieType getFunctionReturnType(String identifier);
 }

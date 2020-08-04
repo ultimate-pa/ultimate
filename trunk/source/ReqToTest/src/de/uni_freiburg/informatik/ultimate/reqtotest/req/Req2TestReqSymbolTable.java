@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
@@ -57,7 +58,6 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 	private final Set<String> mAuxVars;
 	private final Set<String> mClockVars;
 	private final Set<String> mHistoryVars;
-
 
 	private final ILocation mDummyLocation;
 
@@ -342,13 +342,13 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 	}
 
 	@Override
-	public Collection<? extends String> getPcVars() {
+	public Collection<String> getPcVars() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Collection<? extends Declaration> getDeclarations() {
+	public Collection<Declaration> getDeclarations() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -366,7 +366,13 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 	}
 
 	@Override
-	public String getHistoryVarId(String name) {
+	public String getHistoryVarId(final String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public IBoogieType getFunctionReturnType(final String identifier) {
 		// TODO Auto-generated method stub
 		return null;
 	}

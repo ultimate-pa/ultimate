@@ -32,11 +32,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckException;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieConst;
@@ -245,7 +247,7 @@ public class CddToSmt {
 
 	}
 
-	private static final class TypeAdder extends GeneratedBoogieAstTransformer {
+	private final class TypeAdder extends GeneratedBoogieAstTransformer {
 
 		private Pair<String, Expression> mTypeError;
 
@@ -264,6 +266,19 @@ public class CddToSmt {
 				return new IdentifierExpression(node.getLoc(), BoogieType.TYPE_ERROR, "Error",
 						DeclarationInformation.DECLARATIONINFO_GLOBAL);
 			}
+		}
+
+		@Override
+		public Expression transform(final FunctionApplication node) {
+			if (node.getType() != null) {
+				return super.transform(node);
+			}
+			final Expression[] newArgs = new Expression[node.getArguments().length];
+			for (int i = 0; i < node.getArguments().length; ++i) {
+				newArgs[i] = node.getArguments()[i].accept(this);
+			}
+			final IBoogieType type = mReqSymboltable.getFunctionReturnType(node.getIdentifier());
+			return new FunctionApplication(node.getLoc(), type, node.getIdentifier(), newArgs);
 		}
 
 		@Override

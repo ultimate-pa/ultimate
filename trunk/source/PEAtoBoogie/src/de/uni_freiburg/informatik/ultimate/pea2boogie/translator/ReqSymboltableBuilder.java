@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -48,8 +49,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -57,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
@@ -72,6 +76,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHa
  *
  */
 public class ReqSymboltableBuilder {
+
+	private static final BoogieLocation DUMMY_LOC = new BoogieLocation("", -1, -1, -1, -1);
 
 	private final ILogger mLogger;
 	private final LinkedHashRelation<String, ErrorInfo> mId2Errors;
@@ -90,6 +96,8 @@ public class ReqSymboltableBuilder {
 	private final Map<PatternType, BoogieLocation> mReq2Loc;
 	private final Set<String> mInputVars;
 	private final Set<String> mOutputVars;
+
+	private final Map<String, FunctionDeclaration> mBuiltinFunctions;
 
 	public ReqSymboltableBuilder(final ILogger logger) {
 		mLogger = logger;
@@ -112,6 +120,7 @@ public class ReqSymboltableBuilder {
 
 		mInputVars = new LinkedHashSet<>();
 		mOutputVars = new LinkedHashSet<>();
+		mBuiltinFunctions = generateBuildinFuntions();
 
 	}
 
@@ -179,13 +188,14 @@ public class ReqSymboltableBuilder {
 	}
 
 	public void addAuxvar(final String name, final String typeString, final PatternType source) {
-		addVar(name, toPrimitiveType(typeString), source, this.mStateVars);
+		addVar(name, toPrimitiveType(typeString), source, mStateVars);
 	}
 
 	public IReqSymbolTable constructSymbolTable() {
 		final String deltaVar = declareDeltaVar();
-		return new ReqSymbolTable(deltaVar, mId2Type, mId2IdExpr, mId2VarLHS, mStateVars, mPrimedVars, mHistoryVars, mConstVars,
-				mEventVars, mPcVars, mClockVars, mReq2Loc, mConst2Value, mInputVars, mOutputVars);
+		return new ReqSymbolTable(deltaVar, mId2Type, mId2IdExpr, mId2VarLHS, mStateVars, mPrimedVars, mHistoryVars,
+				mConstVars, mEventVars, mPcVars, mClockVars, mReq2Loc, mConst2Value, mInputVars, mOutputVars,
+				mBuiltinFunctions);
 	}
 
 	public Set<String> getConstIds() {
@@ -198,6 +208,28 @@ public class ReqSymboltableBuilder {
 
 	public Set<Entry<String, ErrorInfo>> getErrors() {
 		return Collections.unmodifiableSet(mId2Errors.getSetOfPairs());
+	}
+
+	/**
+	 * Generate a prelude of functions that can be used in observables.
+	 * 
+	 * TODO: It would be better to have a Boogie file that we automatically load, but due to RCP things we currently do
+	 * not do that.
+	 */
+	private static Map<String, FunctionDeclaration> generateBuildinFuntions() {
+		final Map<String, FunctionDeclaration> rtr = new LinkedHashMap<>();
+		final ASTType intAstType = BoogieType.TYPE_INT.toASTType(DUMMY_LOC);
+
+		// function { :builtin "abs" } abs(in : int) returns (res : int);
+		final String funName = "abs";
+		final NamedAttribute builtinAbs = new NamedAttribute(DUMMY_LOC, "builtin",
+				new Expression[] { ExpressionFactory.createStringLiteral(DUMMY_LOC, funName) });
+		final VarList[] inParams = new VarList[] { new VarList(DUMMY_LOC, new String[] { "in" }, intAstType) };
+		final VarList outParam = new VarList(DUMMY_LOC, new String[] { "res" }, intAstType);
+		rtr.put(funName, new FunctionDeclaration(DUMMY_LOC, new Attribute[] { builtinAbs }, funName, new String[0],
+				inParams, outParam));
+
+		return rtr;
 	}
 
 	private void addErrorError(final String name, final ErrorInfo typeErrorInfo) {
@@ -249,7 +281,8 @@ public class ReqSymboltableBuilder {
 		addVarOneKind(getPrimedVarId(name), type, source, mPrimedVars);
 	}
 
-	private void addVarOneKind(final String name, final BoogieType type, final PatternType source, final Set<String> kind) {
+	private void addVarOneKind(final String name, final BoogieType type, final PatternType source,
+			final Set<String> kind) {
 		if (type == null && (!kind.contains(name) || !mId2Type.containsKey(name))) {
 			throw new AssertionError();
 		}
@@ -285,9 +318,8 @@ public class ReqSymboltableBuilder {
 		if (loc != null) {
 			return loc;
 		}
-		final BoogieLocation newLoc = new BoogieLocation("", -1, -1, -1, -1);
-		mReq2Loc.put(source, newLoc);
-		return newLoc;
+		mReq2Loc.put(source, DUMMY_LOC);
+		return DUMMY_LOC;
 	}
 
 	private String declareDeltaVar() {
@@ -344,13 +376,15 @@ public class ReqSymboltableBuilder {
 		private final String mDeltaVar;
 		private final Set<String> mInputVars;
 		private final Set<String> mOutputVars;
+		private final Map<String, FunctionDeclaration> mBuildinFunctions;
 
 		private ReqSymbolTable(final String deltaVar, final Map<String, BoogieType> id2Type,
 				final Map<String, IdentifierExpression> id2idExp, final Map<String, VariableLHS> id2VarLhs,
-				final Set<String> stateVars, final Set<String> primedVars, final Set<String> historyVars, final Set<String> constVars,
-				final Set<String> eventVars, final Set<String> pcVars, final Set<String> clockVars,
-				final Map<PatternType, BoogieLocation> req2loc, final Map<String, Expression> const2Value,
-				final Set<String> inputVars, final Set<String> outputVars) {
+				final Set<String> stateVars, final Set<String> primedVars, final Set<String> historyVars,
+				final Set<String> constVars, final Set<String> eventVars, final Set<String> pcVars,
+				final Set<String> clockVars, final Map<PatternType, BoogieLocation> req2loc,
+				final Map<String, Expression> const2Value, final Set<String> inputVars, final Set<String> outputVars,
+				final Map<String, FunctionDeclaration> buildinFunctions) {
 			mId2Type = Collections.unmodifiableMap(id2Type);
 			mId2IdExpr = Collections.unmodifiableMap(id2idExp);
 			mId2VarLHS = Collections.unmodifiableMap(id2VarLhs);
@@ -366,6 +400,7 @@ public class ReqSymboltableBuilder {
 			mConst2Value = Collections.unmodifiableMap(const2Value);
 			mInputVars = Collections.unmodifiableSet(inputVars);
 			mOutputVars = Collections.unmodifiableSet(outputVars);
+			mBuildinFunctions = Collections.unmodifiableMap(buildinFunctions);
 			mDeltaVar = deltaVar;
 		}
 
@@ -454,14 +489,13 @@ public class ReqSymboltableBuilder {
 			return ReqSymboltableBuilder.getPrimedVarId(name);
 		}
 
-
 		@Override
 		public String getHistoryVarId(final String name) {
 			return ReqSymboltableBuilder.getHistoryVarId(name);
 		}
 
 		@Override
-		public Collection<? extends Declaration> getDeclarations() {
+		public Collection<Declaration> getDeclarations() {
 			final List<Declaration> decls = new ArrayList<>();
 			decls.add(constructVariableDeclaration(getDeltaVarName()));
 			decls.addAll(constructVariableDeclarations(mClockVars));
@@ -471,7 +505,17 @@ public class ReqSymboltableBuilder {
 			decls.addAll(constructVariableDeclarations(mPrimedVars));
 			decls.addAll(constructVariableDeclarations(mHistoryVars));
 			decls.addAll(constructVariableDeclarations(mEventVars));
+			decls.addAll(mBuildinFunctions.values());
 			return decls;
+		}
+
+		@Override
+		public IBoogieType getFunctionReturnType(final String identifier) {
+			final FunctionDeclaration decl = mBuildinFunctions.get(identifier);
+			if (decl == null) {
+				return BoogieType.TYPE_ERROR;
+			}
+			return decl.getOutParam().getType().getBoogieType();
 		}
 
 		private List<Declaration> constructVariableDeclarations(final Collection<String> identifiers) {
@@ -486,7 +530,7 @@ public class ReqSymboltableBuilder {
 			final List<Declaration> rtr = new ArrayList<>();
 			// add constant declarations
 			varlists.stream().map(a -> new ConstDeclaration(a.getLocation(), EMPTY_ATTRIBUTES, false, a, null, false))
-			.forEachOrdered(rtr::add);
+					.forEachOrdered(rtr::add);
 			// add axiom for each constant
 			for (final VarList varlist : varlists) {
 				for (final String id : varlist.getIdentifiers()) {
