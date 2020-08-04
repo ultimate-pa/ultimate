@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import com.github.jhoenicke.javacup.runtime.Symbol;
 import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
@@ -11,6 +14,7 @@ import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
@@ -151,6 +155,7 @@ non terminal SrParseScope scope;
 non terminal PatternType[] patternset;
 non terminal Integer num;
 non terminal boolean bool;
+non terminal List<Expression> exprCommaPlus, exprCommaStar;
 non terminal Expression exprImplies, exprImpliesNI, exprAnd, exprAndNI, exprOr, exprOrNI;
 non terminal Expression expr1NI, expr2NI, expr3NI, expr5NI; 
 non terminal Expression expr6NI, expr7NI, expr9NI;
@@ -264,6 +269,18 @@ rtpattern ::= ONCE expression:p BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
 
 expression ::= QUOTE expr:e QUOTE {: RESULT = e; :}
  			;
+ 			
+exprCommaStar ::=
+	/* empty */ {: RESULT = Collections.emptyList(); :}
+	| exprCommaPlus:l
+	;
+
+exprCommaPlus ::=
+	  expr1NI:e
+	  {: RESULT = new ArrayList<Expression>(); RESULT.add(e); :}
+	| exprCommaPlus:el COMMA expr1NI:e
+	  {: el.add(e); RESULT = el; :}
+	;
              
 expr ::= atom:a {: RESULT = BooleanDecision.create(a); :}
        | expr1NI:e {: RESULT = BoogieBooleanExpressionDecision.create(e); :}       
@@ -339,6 +356,8 @@ expr9NI ::= REALNUMBER:n {: RESULT = new RealLiteral(getLocation(n$,n$), BoogieT
      	| cid:i {: RESULT = new IdentifierExpression(getLocation(i$,i$), i); :}
 	    | bool:b {:RESULT = new BooleanLiteral(getLocation(b$,b$),BoogieType.TYPE_BOOL,b);:}
 	    | LPAR expr1NI:e RPAR {: RESULT = e; :}
+	    | ID:i LPAR exprCommaStar:args RPAR
+	      {: RESULT = new FunctionApplication(getLocation(i$,args$), i, args.toArray(new Expression[args.size()])); :}
 	    ;
 	
 cid ::= ID
