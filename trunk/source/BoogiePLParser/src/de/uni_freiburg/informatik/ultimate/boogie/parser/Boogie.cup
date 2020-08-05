@@ -4,7 +4,10 @@ package de.uni_freiburg.informatik.ultimate.boogie.parser;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.ArrayList;
+import java.util.Arrays;
 import com.github.jhoenicke.javacup.runtime.Symbol;
 
 import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieSymbolFactory.BoogieSymbol;
@@ -84,6 +87,35 @@ action code {:
 		}
 		return new StructConstructor(loc, fieldNames, fieldExprs);
 	}
+	
+	private static Check createCheck(final BoogieASTNode boogieASTNode) {
+		if (boogieASTNode instanceof AssertStatement) {
+			final NamedAttribute[] attrib = ((AssertStatement) boogieASTNode).getAttributes();
+			if (attrib != null) {
+				final Optional<NamedAttribute> checkAttrib =
+						Arrays.stream(attrib).filter(a -> "check".equals(a.getName())).findFirst();
+				if (checkAttrib.isPresent()) {
+					final Expression[] params = checkAttrib.get().getValues();
+					final String desc = Arrays.stream(params).map(a -> ((StringLiteral) a).getValue())
+							.collect(Collectors.joining(" "));
+					return new Check(Check.Spec.ASSERT, a -> String.format("assertion %s always holds", desc),
+							a -> String.format("assertion %s can be violated", desc));
+				}
+			}
+			return new Check(Check.Spec.ASSERT);
+		} else if (boogieASTNode instanceof LoopInvariantSpecification) {
+			return new Check(Check.Spec.INVARIANT);
+		} else if (boogieASTNode instanceof CallStatement) {
+			return new Check(Check.Spec.PRE_CONDITION);
+		} else if (boogieASTNode instanceof EnsuresSpecification) {
+			return new Check(Check.Spec.POST_CONDITION);
+		} else if (boogieASTNode == null) {
+			throw new IllegalArgumentException();
+		} else {
+			return new Check(Check.Spec.UNKNOWN);
+		}
+	}
+	
 :}
 
 /*init with {: getScanner().init(); :} */
@@ -700,7 +732,7 @@ stmt ::=
 	  ID:i COLON
 	  {: RESULT = new Label(getLocation(i$,i$), i); :}
 	| ASSERT:x attributes:attr expr:e SEMI
-	  {: RESULT = new AssertStatement(getLocation(x$,e$), attr, e); Check check = new Check(Spec.ASSERT); check.annotate(RESULT); :}
+	  {: RESULT = new AssertStatement(getLocation(x$,e$), attr, e); Check check = createCheck(RESULT); check.annotate(RESULT); :}
 	| ASSUME:x attributes:attr expr:e SEMI
 	  {: RESULT = new AssumeStatement(getLocation(x$,e$), attr, e); :}
 	| HAVOC:x varCommaPlus:i SEMI
