@@ -28,10 +28,12 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -195,7 +197,13 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
+		final Map<String, String> testContents = new LinkedHashMap<>();
+		testContents.put("key1", "value3");
+		testContents.put("key2", "value2");
+		testContents.put("key3", "value1");
 		return new UltimatePreferenceItem[] {
+
+				new UltimatePreferenceItem<>("testlabel", testContents, PreferenceType.KeyValue),
 
 				// Core
 				new UltimatePreferenceItem<>(LABEL_SHOWUSABLEPARSER, VALUE_SHOWUSABLEPARSER_DEFAULT,

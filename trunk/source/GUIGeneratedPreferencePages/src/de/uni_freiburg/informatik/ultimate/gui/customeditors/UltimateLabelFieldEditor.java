@@ -38,7 +38,7 @@ public class UltimateLabelFieldEditor extends FieldEditor {
 	/***
 	 * Label for this field editor.
 	 */
-	private Label label;
+	private Label mLabel;
 
 	/***
 	 * All labels can use the same preference name since they don't store any preference.
@@ -60,7 +60,7 @@ public class UltimateLabelFieldEditor extends FieldEditor {
 	 */
 	@Override
 	protected void adjustForNumColumns(final int numColumns) {
-		((GridData) label.getLayoutData()).horizontalSpan = numColumns;
+		((GridData) mLabel.getLayoutData()).horizontalSpan = numColumns;
 	}
 
 	/***
@@ -73,14 +73,14 @@ public class UltimateLabelFieldEditor extends FieldEditor {
 	 */
 	@Override
 	protected void doFillIntoGrid(final Composite parent, final int numColumns) {
-		label = getLabelControl(parent);
+		mLabel = getLabelControl(parent);
 		final GridData gridData = new GridData();
 		gridData.horizontalSpan = numColumns;
 		gridData.horizontalAlignment = GridData.FILL;
 		gridData.grabExcessHorizontalSpace = false;
 		gridData.verticalAlignment = GridData.CENTER;
 		gridData.grabExcessVerticalSpace = false;
-		label.setLayoutData(gridData);
+		mLabel.setLayoutData(gridData);
 	}
 
 	/***

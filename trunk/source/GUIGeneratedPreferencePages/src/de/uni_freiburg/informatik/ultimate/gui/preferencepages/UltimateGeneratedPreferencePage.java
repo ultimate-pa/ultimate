@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.gui.customeditors.KeyValueGridEditor;
 import de.uni_freiburg.informatik.ultimate.gui.customeditors.MultiLineTextFieldEditor;
 import de.uni_freiburg.informatik.ultimate.gui.customeditors.UltimateLabelFieldEditor;
 
@@ -128,6 +129,9 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 					break;
 				case Color:
 					editor = createColorEditor(item.getLabel());
+					break;
+				case KeyValue:
+					editor = createKeyValueEditor(item.getLabel());
 					break;
 				default:
 					throw new UnsupportedOperationException(
@@ -221,7 +225,10 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 				validateField((IUltimatePreferenceItemValidator<String>) validator,
 						((MultiLineTextFieldEditor) editor).getStringValue());
 				break;
-
+			case KeyValue:
+				validateField((IUltimatePreferenceItemValidator<Map<String, String>>) validator,
+						((KeyValueGridEditor) editor).getValue());
+				break;
 			case Label:
 			case Combo:
 			case Radio:
@@ -300,5 +307,9 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage i
 
 	private StringFieldEditor createStringEditor(final String label) {
 		return new StringFieldEditor(label, label, getFieldEditorParent());
+	}
+
+	private FieldEditor createKeyValueEditor(final String label) {
+		return new KeyValueGridEditor(label, label, getFieldEditorParent());
 	}
 }

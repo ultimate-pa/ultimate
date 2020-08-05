@@ -19,13 +19,15 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 
 package de.uni_freiburg.informatik.ultimate.core.preferences;
+
+import java.util.Map;
 
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -35,6 +37,7 @@ import org.osgi.service.prefs.BackingStoreException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.PreferenceException;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.KeyValueUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 
 /**
@@ -77,7 +80,7 @@ public final class RcpPreferenceBinder {
 					break;
 				case Double:
 					preferenceStore.putDouble(label, (Double) value);
-					break;	
+					break;
 				case Directory:
 				case String:
 				case MultilineString:
@@ -88,6 +91,13 @@ public final class RcpPreferenceBinder {
 				case Color:
 					preferenceStore.put(label, value.toString());
 					break;
+				case KeyValue:
+					if (value instanceof Map) {
+						preferenceStore.put(label, KeyValueUtil.toKeyValueString((Map<String, String>) value));
+						break;
+					}
+					throw new IllegalArgumentException(String.format(
+							"Value %s is of type %s, but must be of type Map<String,String>", value, value.getClass()));
 				case Label:
 					// A Label is not really a preference; its just nice for
 					// automatic generation of preference pages
