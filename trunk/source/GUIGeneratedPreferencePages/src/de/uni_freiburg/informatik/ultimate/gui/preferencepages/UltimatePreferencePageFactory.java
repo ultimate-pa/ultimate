@@ -79,7 +79,7 @@ public class UltimatePreferencePageFactory {
 		}
 	}
 
-	private String getParentNodeId(final IUltimatePlugin plugin) {
+	private static String getParentNodeId(final IUltimatePlugin plugin) {
 		if (plugin instanceof IGenerator || plugin instanceof IAnalysis) {
 			return "ToolPlugins";
 		}
@@ -95,7 +95,7 @@ public class UltimatePreferencePageFactory {
 		return "GeneratedUltimatePreferences";
 	}
 
-	private BaseUltimatePreferenceItem[] filterPreferences(final BaseUltimatePreferenceItem[] items) {
+	private static BaseUltimatePreferenceItem[] filterPreferences(final BaseUltimatePreferenceItem[] items) {
 		final ArrayList<BaseUltimatePreferenceItem> list = new ArrayList<>();
 		for (final BaseUltimatePreferenceItem item : items) {
 			if (!item.getUseCustomPreferencePage()) {
@@ -105,7 +105,7 @@ public class UltimatePreferencePageFactory {
 		return list.toArray(new BaseUltimatePreferenceItem[list.size()]);
 	}
 
-	private void createPreferencePage(final String pluginID, final String title,
+	private static void createPreferencePage(final String pluginID, final String title,
 			final BaseUltimatePreferenceItem[] preferenceItems, final String parentNodeID) {
 		final BaseUltimatePreferenceItem[] pageItems =
 				Arrays.stream(preferenceItems).filter(p -> p.getType() != PreferenceType.SubItemContainer)
@@ -138,8 +138,8 @@ public class UltimatePreferencePageFactory {
 		}
 	}
 
-	private IPreferenceNode findRootNode(final PreferenceManager pm, final String nodeID) {
-		final Queue<IPreferenceNode> toVisit = new LinkedList<IPreferenceNode>();
+	private static IPreferenceNode findRootNode(final PreferenceManager pm, final String nodeID) {
+		final Queue<IPreferenceNode> toVisit = new LinkedList<>();
 		for (final IPreferenceNode node : pm.getRootSubNodes()) {
 			toVisit.add(node);
 		}
