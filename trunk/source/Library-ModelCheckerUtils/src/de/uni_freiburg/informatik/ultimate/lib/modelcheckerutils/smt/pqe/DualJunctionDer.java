@@ -148,6 +148,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			}
 			aquiredEliminatees.addAll(er.getNewEliminatees());
 			currentEt = er.getEliminationTask();
+			if (!aquiredEliminatees.isEmpty()) {
+				break;
+			}
 			if (QuantifierUtils.isCorrespondingFiniteJunction(currentEt.getQuantifier(),
 					er.getEliminationTask().getTerm())) {
 				// we can push the quantifier, no further iterations
@@ -194,6 +197,9 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 			}
 			aquiredEliminatees.addAll(er.getNewEliminatees());
 			currentEt = er.getEliminationTask();
+			if (!aquiredEliminatees.isEmpty()) {
+				break;
+			}
 			if (QuantifierUtils.isCorrespondingFiniteJunction(currentEt.getQuantifier(),
 					er.getEliminationTask().getTerm())) {
 				// we can push the quantifier, no further iterations
