@@ -42,9 +42,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 public final class VisualizationEdge
 		extends BaseMultigraphEdge<VisualizationNode, VisualizationEdge, VisualizationNode, VisualizationEdge> {
 
+	private static final long serialVersionUID = 1L;
 	private final Object mBacking;
 
-	protected VisualizationEdge(final VisualizationNode source, final VisualizationNode target, final IPayload payload, final Object backing) {
+	protected VisualizationEdge(final VisualizationNode source, final VisualizationNode target, final IPayload payload,
+			final Object backing) {
 		super(source, target, payload);
 		mBacking = backing;
 	}
@@ -54,16 +56,12 @@ public final class VisualizationEdge
 		mBacking = backing;
 	}
 
-	private static final long serialVersionUID = 1L;
-
 	@Override
 	public String toString() {
 		if (mBacking == null) {
 			return "";
-		} else {
-
-			return mBacking.toString();
 		}
+		return mBacking.toString();
 	}
 
 	public Object getBacking() {
@@ -89,9 +87,8 @@ public final class VisualizationEdge
 	public int hashCode() {
 		if (mBacking == null) {
 			return super.hashCode();
-		} else {
-			return mBacking.hashCode();
 		}
+		return mBacking.hashCode();
 	}
 
 	@Override

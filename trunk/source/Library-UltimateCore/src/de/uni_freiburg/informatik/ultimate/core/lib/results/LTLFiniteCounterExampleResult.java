@@ -47,7 +47,7 @@ public class LTLFiniteCounterExampleResult<ELEM extends IElement, TE extends IEl
 	}
 
 	private static <ELEM extends IElement> ELEM annotatePositionWithCheck(final ELEM position, final Check check) {
-		if (check == null || !check.getSpec().equals(Spec.LTL)) {
+		if (check == null || !check.getSpec().contains(Spec.LTL)) {
 			throw new IllegalArgumentException("You cannot use " + LTLFiniteCounterExampleResult.class.getSimpleName()
 					+ " for specs different from LTL");
 		}
