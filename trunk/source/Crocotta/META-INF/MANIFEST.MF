@@ -10,3 +10,4 @@ Require-Bundle: com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.crocotta

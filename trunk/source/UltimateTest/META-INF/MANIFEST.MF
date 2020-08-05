@@ -42,3 +42,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.srparse,
  de.uni_freiburg.informatik.ultimate.lib.pea,
  de.uni_freiburg.informatik.ultimate.output.peaexamplegenerator
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.ultimatetest

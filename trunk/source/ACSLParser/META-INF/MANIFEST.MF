@@ -11,3 +11,4 @@ Bundle-ClassPath: .
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  com.github.jhoenicke.javacup;visibility:=reexport,
  de.uni_freiburg.informatik.ultimate.astbuilder
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.acsl.parser

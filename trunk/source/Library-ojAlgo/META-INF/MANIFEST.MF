@@ -218,3 +218,4 @@ Export-Package: org.ojalgo;
    org.ojalgo",
  org.ojalgo.type.format;uses:="org.ojalgo.function",
  org.ojalgo.type.keyvalue
+Automatic-Module-Name: org.ojalgo

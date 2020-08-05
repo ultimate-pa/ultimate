@@ -227,3 +227,4 @@ Export-Package: javax.xml,
  org.xml.sax.ext,
  org.xml.sax.helpers
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Automatic-Module-Name: org.apache.batik

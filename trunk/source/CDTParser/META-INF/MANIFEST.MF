@@ -13,3 +13,4 @@ Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.cdt.parser,
  de.uni_freiburg.informatik.ultimate.cdt.decorator
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.cdt.parser

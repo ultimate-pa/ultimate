@@ -19,3 +19,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdef
  de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.Activator
 Import-Package: de.uni_freiburg.informatik.ultimate.logic
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions

@@ -25,3 +25,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractint
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2

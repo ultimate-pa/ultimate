@@ -12,3 +12,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  org.eclipse.cdt.core,
  org.eclipse.jface.text,
  de.uni_freiburg.informatik.ultimate.acsl.parser
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.deltadebugger

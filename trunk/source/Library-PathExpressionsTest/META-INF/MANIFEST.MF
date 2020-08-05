@@ -8,3 +8,4 @@ Require-Bundle: org.junit
 Import-Package: de.uni_freiburg.informatik.ultimate.lib.pathexpressions,
  de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex
 Bundle-Version: 0.1.25
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.pathexpressions.test

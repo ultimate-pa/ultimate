@@ -27,3 +27,4 @@ Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
  org.junit.runners
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.test

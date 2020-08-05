@@ -58,3 +58,4 @@ Export-Package: org.apache.log4j;uses:="org.apache.log4j.helpers,org.apache.log4
    org.w3c.dom,
    org.xml.sax"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Automatic-Module-Name: org.apache.log4j

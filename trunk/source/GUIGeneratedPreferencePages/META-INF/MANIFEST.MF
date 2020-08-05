@@ -9,3 +9,4 @@ Require-Bundle: org.eclipse.ui;visibility:=reexport,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.core
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.gui.preferencepages

@@ -8,3 +8,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util
 Export-Package: de.uni_freiburg.informatik.ultimate.logic,
  de.uni_freiburg.informatik.ultimate.logic.simplification,
  de.uni_freiburg.informatik.ultimate.util
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.smtlib
