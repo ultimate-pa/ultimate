@@ -34,6 +34,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -156,7 +157,7 @@ public class Check extends ModernAnnotations {
 	private static final String KEY = Check.class.getName();
 
 	@Visualizable
-	private final EnumSet<Spec> mSpec;
+	private final Set<Spec> mSpec;
 
 	private final Function<Spec, String> mPosMsgProvider;
 
@@ -171,11 +172,11 @@ public class Check extends ModernAnnotations {
 		this(EnumSet.of(spec), funPositiveMessageProvider, funNegativeMessageProvider);
 	}
 
-	public Check(final EnumSet<Spec> newSpec) {
+	public Check(final Set<Spec> newSpec) {
 		this(newSpec, Check::getPositiveMessage, Check::getNegativeMessage);
 	}
 
-	protected Check(final EnumSet<Spec> newSpec, final Function<Spec, String> funPositiveMessageProvider,
+	protected Check(final Set<Spec> newSpec, final Function<Spec, String> funPositiveMessageProvider,
 			final Function<Spec, String> funNegativeMessageProvider) {
 		assert !newSpec.isEmpty();
 		mSpec = newSpec;
@@ -183,7 +184,7 @@ public class Check extends ModernAnnotations {
 		mNegMsgProvider = funNegativeMessageProvider;
 	}
 
-	public EnumSet<Spec> getSpec() {
+	public Set<Spec> getSpec() {
 		return mSpec;
 	}
 
@@ -356,7 +357,7 @@ public class Check extends ModernAnnotations {
 
 	@Override
 	public String toString() {
-		return mSpec.stream().map(a -> a.toString()).collect(Collectors.joining(MSG_AND));
+		return mSpec.stream().map(Spec::toString).collect(Collectors.joining(MSG_AND));
 	}
 
 	@Override

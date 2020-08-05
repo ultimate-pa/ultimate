@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -159,17 +158,17 @@ public class InvariantChecker {
 		}
 		final List<LoopFreeSegment<IcfgEdge>> validSegments = twoPointSubgraphsToSegments(validTpsds);
 		final List<LoopFreeSegment<IcfgEdge>> unknownSegments = twoPointSubgraphsToSegments(unknownTpsds);
-		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> invalidSegments = twoPointSubgraphsToSegments(
-				invalidTpsds);
-		mResultForUltimateUser = new AnnotationCheckResult<IcfgEdge, Term>(Activator.PLUGIN_ID,
+		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> invalidSegments =
+				twoPointSubgraphsToSegments(invalidTpsds);
+		mResultForUltimateUser = new AnnotationCheckResult<>(Activator.PLUGIN_ID,
 				mServices.getBacktranslationService(), validSegments, unknownSegments, invalidSegments);
 	}
 
 	private String icfgLocationsToListOfLineNumbers(final List<IcfgLocation> loopLocWithoutInvariant) {
 		final TreeSet<Integer> lineNumbersSorted = loopLocWithoutInvariant.stream()
 				.map(x -> guessLocation(x).getStartLine()).collect(Collectors.toCollection(TreeSet::new));
-		final String result = lineNumbersSorted.stream().map(x -> "line " + x.toString())
-				.collect(Collectors.joining(", "));
+		final String result =
+				lineNumbersSorted.stream().map(x -> "line " + x.toString()).collect(Collectors.joining(", "));
 		return result;
 	}
 
@@ -185,9 +184,9 @@ public class InvariantChecker {
 	private LoopFreeSegmentWithStatePair<IcfgEdge, Term>
 			twoPointSubgraphToSegment(final TwoPointSubgraphDefinition tpsd, final EdgeCheckResult value) {
 		final CategorizedProgramPoint cppBefore = constructCategorizedProgramPoint(tpsd.getStartLocation());
-		final CategorizedProgramPoint cppAfter= constructCategorizedProgramPoint(tpsd.getEndLocation());
-		final LoopFreeSegmentWithStatePair<IcfgEdge, Term> result = new LoopFreeSegmentWithStatePair<>(cppBefore,
-				cppAfter, value.getCtxPre(), value.getCtxPost());
+		final CategorizedProgramPoint cppAfter = constructCategorizedProgramPoint(tpsd.getEndLocation());
+		final LoopFreeSegmentWithStatePair<IcfgEdge, Term> result =
+				new LoopFreeSegmentWithStatePair<>(cppBefore, cppAfter, value.getCtxPre(), value.getCtxPost());
 		return result;
 	}
 
@@ -234,7 +233,7 @@ public class InvariantChecker {
 
 	private LoopFreeSegment<IcfgEdge> twoPointSubgraphToSegment(final TwoPointSubgraphDefinition tpsd) {
 		final CategorizedProgramPoint cppBefore = constructCategorizedProgramPoint(tpsd.getStartLocation());
-		final CategorizedProgramPoint cppAfter= constructCategorizedProgramPoint(tpsd.getEndLocation());
+		final CategorizedProgramPoint cppAfter = constructCategorizedProgramPoint(tpsd.getEndLocation());
 		final LoopFreeSegment<IcfgEdge> result = new LoopFreeSegment<>(cppBefore, cppAfter);
 		return result;
 	}
@@ -266,7 +265,8 @@ public class InvariantChecker {
 	}
 
 	private String message24(final List<TwoPointSubgraphDefinition> tpsds) {
-		final HashRelation<Pair<ProgramPointType, ProgramPointType>, TwoPointSubgraphDefinition> hr = new HashRelation<>();
+		final HashRelation<Pair<ProgramPointType, ProgramPointType>, TwoPointSubgraphDefinition> hr =
+				new HashRelation<>();
 		for (final TwoPointSubgraphDefinition tpsd : tpsds) {
 			final ProgramPointType startType = classify(tpsd.getStartLocation());
 			final ProgramPointType endType = classify(tpsd.getEndLocation());
@@ -517,8 +517,9 @@ public class InvariantChecker {
 		return result;
 	}
 
-	private static void processForward(final ArrayDeque<IcfgLocation> worklistForward, final Set<IcfgLocation> seenForward,
-			final Set<IcfgLocation> errorLocations, final IcfgLocation succLoc, final boolean checkForErrorLocs) {
+	private static void processForward(final ArrayDeque<IcfgLocation> worklistForward,
+			final Set<IcfgLocation> seenForward, final Set<IcfgLocation> errorLocations, final IcfgLocation succLoc,
+			final boolean checkForErrorLocs) {
 		seenForward.add(succLoc);
 		final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(succLoc);
 		if (loa != null) {
@@ -555,7 +556,7 @@ public class InvariantChecker {
 	private static boolean isInvariant(final IcfgLocation loc) {
 		final Check check = Check.getAnnotation(loc);
 		if (check != null) {
-			final EnumSet<Spec> specs = check.getSpec();
+			final Set<Spec> specs = check.getSpec();
 			// if (specs.size() == 1) {
 			return specs.contains(Spec.INVARIANT) || specs.contains(Spec.WITNESS_INVARIANT);
 			// } else {
@@ -567,12 +568,12 @@ public class InvariantChecker {
 
 	private static boolean isErrorLoc(final IcfgLocation loc) {
 		final Check check = Check.getAnnotation(loc);
-		return (check != null);
+		return check != null;
 	}
 
 	private static boolean isLoopLoc(final IcfgLocation loc) {
 		final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(loc);
-		return (loa != null);
+		return loa != null;
 	}
 
 	private String getNiceSubgraphPointDescription(final ProgramPointType lt) {

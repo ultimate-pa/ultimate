@@ -28,7 +28,6 @@
 
 package de.uni_freiburg.informatik.ultimate.test.decider.overallresult;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -109,7 +108,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 			final CounterExampleResult<?, ?, ?> cer = (CounterExampleResult<?, ?, ?>) result;
 
 			// TODO: This should change to take into account multiple specs
-			final EnumSet<Spec> spec = cer.getCheckedSpecification().getSpec();
+			final Set<Spec> spec = cer.getCheckedSpecification().getSpec();
 			if (spec.contains(Spec.ARRAY_INDEX) || spec.contains(Spec.MEMORY_DEREFERENCE)) {
 				return SafetyCheckerOverallResult.UNSAFE_DEREF;
 			} else if (spec.contains(Spec.MEMORY_FREE)) {
