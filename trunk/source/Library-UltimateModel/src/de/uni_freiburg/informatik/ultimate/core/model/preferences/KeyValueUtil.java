@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2020 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2020 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE GUIGeneratedPreferencePages plug-in.
- * 
+ *
  * The ULTIMATE GUIGeneratedPreferencePages plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE GUIGeneratedPreferencePages plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE GUIGeneratedPreferencePages plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE GUIGeneratedPreferencePages plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -32,7 +32,7 @@ import java.util.Map.Entry;
 
 /**
  * Small utility that supports the {@link PreferenceType#KeyValue}.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -99,7 +99,26 @@ public final class KeyValueUtil {
 			rtr.put(kvp[0], kvp[1]);
 		}
 		return rtr;
+	}
 
+	/**
+	 * Assumes each entry represents a key value pair of the form "key=value"
+	 */
+	public static String toKeyValueString(final Object[] values) {
+		final StringBuilder sb = new StringBuilder();
+		for (final Object val : values) {
+			final String[] kvp = String.valueOf(val).split(KV_SEPARATOR);
+			if (kvp.length == 0) {
+				sb.append(KV_SEPARATOR).append(PAIR_SEPARATOR);
+				continue;
+			}
+			if (kvp.length == 2) {
+				sb.append(check(kvp[0])).append(KV_SEPARATOR).append(check(kvp[1])).append(PAIR_SEPARATOR);
+				continue;
+			}
+			throw new IllegalArgumentException(String.format("Object %s is not of the form key=value", val));
+		}
+		return sb.toString();
 	}
 
 	public static boolean isValid(final String s) {
@@ -118,4 +137,5 @@ public final class KeyValueUtil {
 	public static boolean isValid(final Entry<String, String> entry) {
 		return isValid(entry.getKey()) && isValid(entry.getValue());
 	}
+
 }

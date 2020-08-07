@@ -35,13 +35,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.xml.bind.JAXBException;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
 import org.xml.sax.SAXException;
 
@@ -52,9 +53,12 @@ import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.KeyValueUtil;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -75,22 +79,34 @@ public class ParsedParameter {
 	}
 
 	public void applyCliSettings(final IUltimateServiceProvider services) throws ParseException {
-		for (final Option op : mCli.getOptions()) {
+		final Set<String> optLongNames = new LinkedHashSet<>();
+		Arrays.stream(mCli.getOptions()).sequential().map(a -> a.getLongOpt()).forEach(optLongNames::add);
+		for (final String op : optLongNames) {
 			applyCliSetting(op, services);
 		}
 	}
 
-	private void applyCliSetting(final Option op, final IUltimateServiceProvider services) throws ParseException {
-		final String optName = op.getLongOpt();
-		final Pair<String, String> prefName = mOptionFactory.getUltimatePreference(optName);
-		if (prefName == null) {
+	private void applyCliSetting(final String optLongName, final IUltimateServiceProvider services)
+			throws ParseException {
+		// pluginId, settings label, preference item
+		final Triple<String, String, UltimatePreferenceItem<?>> id2Label2Item =
+				mOptionFactory.getUltimatePreference(optLongName);
+		if (id2Label2Item == null) {
 			return;
 		}
-		final IPreferenceProvider preferences = services.getPreferenceProvider(prefName.getFirst());
-		final Object value = getParsedOption(optName);
-		mLogger.info(
-				"Applying setting for plugin " + prefName.getFirst() + ": " + prefName.getSecond() + " -> " + value);
-		preferences.put(prefName.getSecond(), String.valueOf(value));
+		final String id = id2Label2Item.getFirst();
+		final String label = id2Label2Item.getSecond();
+		final IPreferenceProvider preferences = services.getPreferenceProvider(id);
+		final Object value = getParsedOption(optLongName);
+		if (id2Label2Item.getThird().getType() == PreferenceType.KeyValue) {
+			final String kvStr = KeyValueUtil.toKeyValueString((Object[]) value);
+			mLogger.info("Applying setting for plugin " + id + ": " + label + " -> " + kvStr);
+			preferences.put(label, kvStr);
+		} else {
+			mLogger.info("Applying setting for plugin " + id + ": " + label + " -> " + value);
+			preferences.put(label, String.valueOf(value));
+		}
+
 	}
 
 	public boolean isHelpRequested() {
@@ -241,7 +257,13 @@ public class ParsedParameter {
 
 	@SuppressWarnings("unchecked")
 	private <T> T getParsedOption(final String optionName) throws ParseException {
-		final Object obj = mCli.getParsedOptionValue(optionName);
+		final Object[] obj = mCli.getParsedOptionValues(optionName);
+		if (obj == null) {
+			return null;
+		}
+		if (obj.length == 1) {
+			return (T) obj[0];
+		}
 		return (T) obj;
 	}
 
