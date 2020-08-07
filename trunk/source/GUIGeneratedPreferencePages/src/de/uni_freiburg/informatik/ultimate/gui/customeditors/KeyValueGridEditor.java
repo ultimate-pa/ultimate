@@ -235,12 +235,12 @@ public final class KeyValueGridEditor extends FieldEditor {
 
 		@Override
 		public void dispose() {
-			IStructuredContentProvider.super.dispose();
+			// not needed
 		}
 
 		@Override
 		public void inputChanged(final Viewer viewer, final Object oldInput, final Object newInput) {
-			IStructuredContentProvider.super.inputChanged(viewer, oldInput, newInput);
+			// not needed
 		}
 
 	}
