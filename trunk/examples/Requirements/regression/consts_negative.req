@@ -1,0 +1,10 @@
+// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:; results: 1
+// see https://github.com/ultimate-pa/ultimate/issues/426
+// Issue: ReqParser does not accept negative constants. 
+
+CONST EMPTY IS -1
+CONST EMPTY_REAL IS -1.0
+
+req1: Globally, it is always the case that "EMPTY==-1" holds.
+req2: Globally, it is always the case that "EMPTY_REAL==-1.0" holds.
+

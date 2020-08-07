@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
@@ -212,7 +213,7 @@ public class ReqSymboltableBuilder {
 
 	/**
 	 * Generate a prelude of functions that can be used in observables.
-	 * 
+	 *
 	 * TODO: It would be better to have a Boogie file that we automatically load, but due to RCP things we currently do
 	 * not do that.
 	 */
@@ -241,8 +242,30 @@ public class ReqSymboltableBuilder {
 	private void addId2Bounds(final InitializationPattern init) {
 
 		final Expression expr = init.getExpression();
+		final Integer val = tryParseInt(init, expr);
+		if (val == null) {
+			return;
+		}
+		mId2Bounds.put(init.getId(), val);
+	}
+
+	private Integer tryParseInt(final InitializationPattern init, final Expression expr) {
 		final Integer val;
-		if (expr instanceof RealLiteral) {
+		if (expr instanceof UnaryExpression) {
+			final UnaryExpression uexpr = (UnaryExpression) expr;
+			if (uexpr
+					.getOperator() == de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.ARITHNEGATIVE) {
+				final Integer pval = tryParseInt(init, uexpr.getExpr());
+				if (pval == null) {
+					return null;
+				}
+				val = -pval;
+			} else {
+				val = null;
+				addErrorError(init.getId(), new ErrorInfo(ErrorType.SYNTAX_ERROR, init,
+						"Unexpected CONST expression " + BoogiePrettyPrinter.print(expr)));
+			}
+		} else if (expr instanceof RealLiteral) {
 			val = tryParseInt(init, ((RealLiteral) expr).getValue());
 		} else if (expr instanceof IntegerLiteral) {
 			val = tryParseInt(init, ((IntegerLiteral) expr).getValue());
@@ -251,10 +274,7 @@ public class ReqSymboltableBuilder {
 			addErrorError(init.getId(), new ErrorInfo(ErrorType.SYNTAX_ERROR, init,
 					"Cannot convert CONST with expression " + BoogiePrettyPrinter.print(expr) + " to duration"));
 		}
-		if (val == null) {
-			return;
-		}
-		mId2Bounds.put(init.getId(), val);
+		return val;
 	}
 
 	private Integer tryParseInt(final PatternType pattern, final String val) {

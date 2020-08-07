@@ -184,6 +184,10 @@ property ::= propid?:id scope:s COMMA? pattern:p DOT?
 		  	   {: RESULT = new InitializationPattern(i,"int",InitializationPattern.VariableCategory.CONST, new IntegerLiteral(getLocation(v$,v$),BoogieType.TYPE_INT, v)); :}
 		 	| CONST cid:i IS REALNUMBER:v
 		  	   {: RESULT = new InitializationPattern(i,"real",InitializationPattern.VariableCategory.CONST, new RealLiteral(getLocation(v$,v$),BoogieType.TYPE_REAL, v)); :}
+		 	| CONST cid:i IS MINUS NUMBER:v
+		  	   {: RESULT = new InitializationPattern(i,"int",InitializationPattern.VariableCategory.CONST, new UnaryExpression(getLocation(v$,v$), UnaryExpression.Operator.ARITHNEGATIVE, new IntegerLiteral(getLocation(v$,v$),BoogieType.TYPE_INT, v))); :}
+		 	| CONST cid:i IS MINUS REALNUMBER:v
+		  	   {: RESULT = new InitializationPattern(i,"real",InitializationPattern.VariableCategory.CONST, new UnaryExpression(getLocation(v$,v$), UnaryExpression.Operator.ARITHNEGATIVE, new RealLiteral(getLocation(v$,v$),BoogieType.TYPE_REAL, v))); :}
 		 	| CONST cid:i IS bool:v
 		  	   {: RESULT = new InitializationPattern(i,"bool",InitializationPattern.VariableCategory.CONST, new BooleanLiteral(getLocation(v$,v$),BoogieType.TYPE_BOOL, v)); :}		  	   		  	   		  	   
            ;
