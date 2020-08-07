@@ -121,8 +121,11 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			mWitnessInvariants = mWitnessExtractor.getCorrectnessWitnessInvariants();
 		}
 		if (mLastModel) {
-			mRootNode = new MainTranslator(mServices, mLogger, mWitnessInvariants, mInputDecorator.getUnits(), mInputDecorator.getSymbolTable(),
-					mAdditionalAnnotationObserver.getAnnotation()).getResult();
+			if (mInputDecorator == null) {
+				throw new IllegalArgumentException("There is no C AST present. Did you parse a C file?");
+			}
+			mRootNode = new MainTranslator(mServices, mLogger, mWitnessInvariants, mInputDecorator.getUnits(),
+					mInputDecorator.getSymbolTable(), mAdditionalAnnotationObserver.getAnnotation()).getResult();
 		}
 	}
 
