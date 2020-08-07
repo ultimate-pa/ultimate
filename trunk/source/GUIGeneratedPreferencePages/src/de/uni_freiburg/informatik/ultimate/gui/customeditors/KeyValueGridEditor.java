@@ -233,6 +233,16 @@ public final class KeyValueGridEditor extends FieldEditor {
 			return EMPTY;
 		}
 
+		@Override
+		public void dispose() {
+			IStructuredContentProvider.super.dispose();
+		}
+
+		@Override
+		public void inputChanged(final Viewer viewer, final Object oldInput, final Object newInput) {
+			IStructuredContentProvider.super.inputChanged(viewer, oldInput, newInput);
+		}
+
 	}
 
 	private static final class KeyValueLabelProvider extends LabelProvider implements ITableLabelProvider {
