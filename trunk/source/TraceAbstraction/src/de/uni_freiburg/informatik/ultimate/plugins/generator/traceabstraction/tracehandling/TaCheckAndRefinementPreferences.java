@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -90,6 +92,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final String mFeatureVectorDumpPath;
 	private final boolean mDumpFeatureVectors;
 	private final boolean mCompressDumpedScript;
+	private final Map<String, String> mAdditionalSolverOptions;
 
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
@@ -159,6 +162,8 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_COUNTEREXAMPLE);
 		mUsePredicateTrieBasedPredicateUnifier = ultimatePrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER);
+		mAdditionalSolverOptions =
+				ultimatePrefs.getKeyValueMap(TraceAbstractionPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS);
 	}
 
 	private String getFeatureVectorsDumpPath() {
@@ -309,7 +314,11 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 						compressDumpedScript())
 				.setUseExternalSolver(getUseSeparateSolverForTracechecks(), getCommandExternalSolver(),
 						getLogicForExternalSolver())
-				.setSolverMode(getSolverMode());
+				.setSolverMode(getSolverMode()).setAdditionalOptions(getAdditionalSolverOptions());
+	}
+
+	public Map<String, String> getAdditionalSolverOptions() {
+		return mAdditionalSolverOptions;
 	}
 
 	public class TaAssertCodeBlockOrder extends AssertCodeBlockOrder {

@@ -50,6 +50,7 @@ import org.osgi.service.prefs.BackingStoreException;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.PreferenceException;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.KeyValueUtil;
 
 /**
  *
@@ -217,6 +218,11 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 	@Override
 	public long getLong(final String key, final long defaultValue) {
 		return getInstance().getLong(key, getDefault().getLong(key, defaultValue));
+	}
+
+	@Override
+	public Map<String, String> getKeyValueMap(final String key) {
+		return KeyValueUtil.toMap(getString(key, ""));
 	}
 
 	@Override

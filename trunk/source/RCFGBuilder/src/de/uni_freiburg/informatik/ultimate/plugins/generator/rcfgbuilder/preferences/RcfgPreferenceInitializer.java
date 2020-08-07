@@ -27,6 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences;
 
+import java.util.Collections;
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
@@ -94,6 +97,8 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	 */
 	public static final String LABEL_SIMPLE_PARTIAL_SKOLEMIZATION = "Skolemize terms";
 	public static final boolean DEF_SIMPLE_PARTIAL_SKOLEMIZATION = true;
+	public static final String LABEL_ADDITIONAL_SMT_OPTIONS = "Additional SMT options";
+	public static final Map<String, String> DEF_ADDITIONAL_SMT_OPTIONS = Collections.emptyMap();
 
 	public RcfgPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -122,7 +127,11 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_DUMP_MAIN_TRACK_BENCHMARK, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_COMPRESS_SMT_DUMP_FILE, false, DESC_COMPRESS_SMT_DUMP_FILE,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_DUMP_PATH, DEF_DUMP_PATH, PreferenceType.Directory), };
+				new UltimatePreferenceItem<>(LABEL_DUMP_PATH, DEF_DUMP_PATH, PreferenceType.Directory),
+				new UltimatePreferenceItem<>(LABEL_ADDITIONAL_SMT_OPTIONS, DEF_ADDITIONAL_SMT_OPTIONS,
+						PreferenceType.KeyValue),
+
+		};
 	}
 
 	public static IPreferenceProvider getPreferences(final IUltimateServiceProvider services) {

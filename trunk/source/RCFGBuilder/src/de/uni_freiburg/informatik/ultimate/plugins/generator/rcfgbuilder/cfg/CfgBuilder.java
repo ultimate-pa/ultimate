@@ -348,14 +348,18 @@ public class CfgBuilder {
 		final boolean dumpMainTrackBenchmark =
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
 
+		final Map<String, String> additionalSmtOptions =
+				prefs.getKeyValueMap(RcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS);
+
 		final Logics logicForExternalSolver =
 				Logics.valueOf(prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
-		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
-				.setUseFakeIncrementalScript(fakeNonIncrementalScript)
-				.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename, compressSmtScript)
-				.setDumpUnsatCoreTrackBenchmark(dumpUnsatCoreTrackBenchmark)
-				.setDumpMainTrackBenchmark(dumpMainTrackBenchmark)
-				.setUseExternalSolver(true, commandExternalSolver, logicForExternalSolver).setSolverMode(solverMode);
+		final SolverSettings solverSettings =
+				SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(fakeNonIncrementalScript)
+						.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename, compressSmtScript)
+						.setDumpUnsatCoreTrackBenchmark(dumpUnsatCoreTrackBenchmark)
+						.setDumpMainTrackBenchmark(dumpMainTrackBenchmark)
+						.setUseExternalSolver(true, commandExternalSolver, logicForExternalSolver)
+						.setSolverMode(solverMode).setAdditionalOptions(additionalSmtOptions);
 
 		return SolverBuilder.buildAndInitializeSolver(services, solverSettings, "CfgBuilderScript");
 	}
@@ -853,12 +857,10 @@ public class CfgBuilder {
 				if (st instanceof Label) {
 					final Label label = (Label) st;
 					return !allGotoTargets.contains(label.getName());
-				} else {
-					return true;
 				}
-			} else {
-				return false;
+				return true;
 			}
+			return false;
 		}
 
 		/**
@@ -1195,16 +1197,14 @@ public class CfgBuilder {
 				if (mBoogieDeclarations.getProcImplementation().containsKey(call.getMethodName())) {
 					// procedure has implementation
 					return false;
-				} else {
-					if (mBoogieDeclarations.getRequiresNonFree().get(call.getMethodName()) == null
-							|| mBoogieDeclarations.getRequiresNonFree().get(call.getMethodName()).isEmpty()) {
-						// procedure does not have non-free requires
-						// and hence does not require an additional branch into an error location
-						return true;
-					} else {
-						return false;
-					}
 				}
+				if (mBoogieDeclarations.getRequiresNonFree().get(call.getMethodName()) == null
+						|| mBoogieDeclarations.getRequiresNonFree().get(call.getMethodName()).isEmpty()) {
+					// procedure does not have non-free requires
+					// and hence does not require an additional branch into an error location
+					return true;
+				}
+				return false;
 			} else {
 				return false;
 			}

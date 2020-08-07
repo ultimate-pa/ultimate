@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.AStarHeuristic;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.PetriNetUnfolder.EventOrderEnum;
@@ -303,6 +305,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			AssertCodeBlockOrder.DEF_SCORE_THRESHOLD;
 	public static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
 			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is THRESHOLD, two partitions are created, one partition contains all terms >= threshold  and one all terms < threshold";
+	public static final String LABEL_ADDITIONAL_SMT_OPTIONS = RcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS;
+	public static final Map<String, String> DEF_ADDITIONAL_SMT_OPTIONS =
+			RcfgPreferenceInitializer.DEF_ADDITIONAL_SMT_OPTIONS;
 
 	/**
 	 * Constructor.
@@ -466,8 +471,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DESC_SMT_FEATURE_EXTRACTION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH,
 						DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH, DESC_SMT_FEATURE_EXTRACTION_DUMP_PATH,
-						PreferenceType.Directory), };
-
+						PreferenceType.Directory),
+				new UltimatePreferenceItem<>(LABEL_ADDITIONAL_SMT_OPTIONS, DEF_ADDITIONAL_SMT_OPTIONS,
+						PreferenceType.KeyValue), };
 	}
 
 	/**
