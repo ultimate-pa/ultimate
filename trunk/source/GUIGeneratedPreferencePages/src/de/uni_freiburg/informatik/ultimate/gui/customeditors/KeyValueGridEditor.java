@@ -138,10 +138,6 @@ public final class KeyValueGridEditor extends FieldEditor {
 		mTableViewer.setCellEditors(new CellEditor[] { new TextCellEditor(mTableViewer.getTable()),
 				new TextCellEditor(mTableViewer.getTable()) });
 
-		// mTableViewer.setCellEditors(new CellEditor[] {
-		// new ComboBoxCellEditor(mTableViewer.getTable(), new String[] { "", "A", "B" }, SWT.READ_ONLY),
-		// new TextCellEditor(mTableViewer.getTable()) });
-
 		mTableViewer.setCellModifier(new KeyValueCellModifier());
 
 		mTableViewer.getTable().setHeaderVisible(true);

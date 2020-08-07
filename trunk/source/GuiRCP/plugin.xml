@@ -35,17 +35,4 @@
                ratio="0.8f"/>
           </perspectiveExtension>
 	</extension>
-   <extension point="org.eclipse.ui.preferencePages">
-      <page
-            category="Core"
-            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingSpecificPluginsPreferencePage"
-            id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingDetailsPreferencePage"
-            name="Plug-in-specific Log Levels" />
-      
-      <page
-            category="Core"
-            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingExternalToolsPreferencePage"
-            id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingToolsPreferencePage"
-            name="Log Levels for external tools" />
-   </extension>
 </plugin>

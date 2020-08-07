@@ -86,9 +86,6 @@ public class UltimatePreferencePageFactory {
 		if (plugin instanceof IOutput) {
 			return "OutputPlugins";
 		}
-		if (plugin instanceof ICore) {
-			return "Core";
-		}
 		if (plugin instanceof ISource) {
 			return "SourcePlugins";
 		}
