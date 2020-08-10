@@ -42,7 +42,9 @@ import java.util.stream.Collectors;
 
 import javax.xml.bind.JAXBException;
 
+import org.apache.commons.cli.AlreadySelectedException;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
 import org.xml.sax.SAXException;
 
@@ -79,33 +81,53 @@ public class ParsedParameter {
 	}
 
 	public void applyCliSettings(final IUltimateServiceProvider services) throws ParseException {
+		final List<Option> availableOptions = Arrays.asList(mCli.getOptions());
+
 		final Set<String> optLongNames = new LinkedHashSet<>();
-		Arrays.stream(mCli.getOptions()).sequential().map(a -> a.getLongOpt()).forEach(optLongNames::add);
-		for (final String op : optLongNames) {
-			applyCliSetting(op, services);
+		for (final Option op : availableOptions) {
+
+			final String opName = op.getLongOpt();
+
+			// pluginId, settings label, preference item
+			final Triple<String, String, UltimatePreferenceItem<?>> id2Label2Item =
+					mOptionFactory.getUltimatePreference(opName);
+			if (id2Label2Item == null) {
+				continue;
+			}
+
+			final String id = id2Label2Item.getFirst();
+			final String label = id2Label2Item.getSecond();
+			final UltimatePreferenceItem<?> item = id2Label2Item.getThird();
+
+			if (!optLongNames.add(op.getLongOpt())) {
+				// we have already seen this Ultimate option. This is only allowed for KeyValue types.
+				if (item.getType() != PreferenceType.KeyValue) {
+					final String msg = String.format(
+							"You already specified option %s for an option of type %s. Only options of type %s can be specified multiple times.",
+							opName, item.getType(), PreferenceType.KeyValue);
+					throw new AlreadySelectedException(msg);
+				}
+			}
+
+			applyCliSetting(opName, services, id, label, item);
 		}
 	}
 
-	private void applyCliSetting(final String optLongName, final IUltimateServiceProvider services)
-			throws ParseException {
-		// pluginId, settings label, preference item
-		final Triple<String, String, UltimatePreferenceItem<?>> id2Label2Item =
-				mOptionFactory.getUltimatePreference(optLongName);
-		if (id2Label2Item == null) {
-			return;
-		}
-		final String id = id2Label2Item.getFirst();
-		final String label = id2Label2Item.getSecond();
+	private void applyCliSetting(final String optLongName, final IUltimateServiceProvider services, final String id,
+			final String label, final UltimatePreferenceItem<?> item) throws ParseException {
 		final IPreferenceProvider preferences = services.getPreferenceProvider(id);
-		final Object value = getParsedOption(optLongName);
-		if (id2Label2Item.getThird().getType() == PreferenceType.KeyValue) {
-			final String kvStr = KeyValueUtil.toKeyValueString((Object[]) value);
-			mLogger.info("Applying setting for plugin " + id + ": " + label + " -> " + kvStr);
-			preferences.put(label, kvStr);
+		final String valueStr;
+		if (item.getType() == PreferenceType.KeyValue) {
+			final Object[] values = getParsedOptions(optLongName);
+			valueStr = KeyValueUtil.toKeyValueString(values);
 		} else {
-			mLogger.info("Applying setting for plugin " + id + ": " + label + " -> " + value);
-			preferences.put(label, String.valueOf(value));
+			// note that this means that only KeyValue preferences can have duplicate occurrences. For all others, the
+			// first occurrence counts and others are swallowed silently
+			final Object value = getParsedOption(optLongName);
+			valueStr = String.valueOf(value);
 		}
+		mLogger.info("Applying setting for plugin " + id + ": " + label + " -> " + valueStr);
+		preferences.put(label, valueStr);
 
 	}
 
@@ -256,15 +278,17 @@ public class ParsedParameter {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> T getParsedOption(final String optionName) throws ParseException {
+	private <T> T[] getParsedOptions(final String optionName) throws ParseException {
 		final Object[] obj = mCli.getParsedOptionValues(optionName);
 		if (obj == null) {
 			return null;
 		}
-		if (obj.length == 1) {
-			return (T) obj[0];
-		}
-		return (T) obj;
+		return (T[]) obj;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> T getParsedOption(final String optionName) throws ParseException {
+		return (T) mCli.getParsedOptionValue(optionName);
 	}
 
 }
