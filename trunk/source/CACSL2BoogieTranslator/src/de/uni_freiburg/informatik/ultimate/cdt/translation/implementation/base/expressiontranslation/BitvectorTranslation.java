@@ -1173,16 +1173,20 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			
 // 			TODO: init single bit for comparison, might need to be non-deterministic, as signbit only returns "non-zero"?
 			
+			
 			final FloatingPointSize argSize = mTypeSizes.getFloatingPointSize(((CPrimitive) argumentProcessed.getCType()).getType());
 			final Expression signBit =
 					extractBits(loc, argumentProcessed.getValue(), argSize.getDataSize(), argSize.getDataSize() - 1);
-			final Expression comp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, signBit, null);
+			
+			final Expression one = ExpressionFactory.createBitvecLiteral(loc, "1", 1);
+			
+			final Expression comp = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, signBit, one);
 			
 			
 			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
             final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, comp,
-            mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE),
-            mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO));
+            		mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE),
+            		mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO));
             return new RValue(resultExpr, cPrimitive);
 		}
 		throw new UnsupportedOperationException("not yet supported float operation " + floatFunction.getFunctionName());
