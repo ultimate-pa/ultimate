@@ -448,9 +448,24 @@ public class ExpressionFactory {
 	 */
 	public static Expression constructBitvectorAccessExpression(final ILocation loc, final Expression operand,
 			final int high, final int low) {
+		return constructBitvectorAccessExpressionUnsafe(loc, operand, high, low, TypeCheckHelper.getBitVecLength((BoogieType) operand.getType()));
+	}
+	
+	/**
+	 *
+	 * @param loc
+	 * @param operand
+	 * @param high
+	 *            exclusive
+	 * @param low
+	 *            inclusive
+	 * @return
+	 */
+	public static Expression constructBitvectorAccessExpressionUnsafe(final ILocation loc, final Expression operand,
+			final int high, final int low, final int bitVecLength) {
 
 		final BoogieType type = TypeCheckHelper.typeCheckBitVectorAccessExpression(
-				TypeCheckHelper.getBitVecLength((BoogieType) operand.getType()), high, low,
+				bitVecLength, high, low,
 				(BoogieType) operand.getType(), new TypeErrorReporter(loc));
 
 		if (operand instanceof BitvecLiteral) {
