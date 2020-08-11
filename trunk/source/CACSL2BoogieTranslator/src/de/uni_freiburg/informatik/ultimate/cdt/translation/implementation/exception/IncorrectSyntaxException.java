@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
@@ -38,6 +40,6 @@ public class IncorrectSyntaxException extends CACSL2BoogieTranslationException {
 	private static final long serialVersionUID = 1L;
 
 	public IncorrectSyntaxException(final ILocation location, final String msg) {
-		super(location, msg);
+		super(Objects.requireNonNull(location), msg);
 	}
 }

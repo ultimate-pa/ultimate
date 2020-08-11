@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IFailedAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
@@ -44,7 +46,7 @@ public class SyntaxErrorResult extends AbstractResult implements IResultWithLoca
 
 	public SyntaxErrorResult(final String plugin, final ILocation location, final String longDescription) {
 		super(plugin);
-		mLocation = location;
+		mLocation = Objects.requireNonNull(location);
 		mLongDescription = longDescription;
 	}
 
