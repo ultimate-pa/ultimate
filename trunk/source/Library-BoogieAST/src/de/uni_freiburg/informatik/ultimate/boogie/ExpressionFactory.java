@@ -168,7 +168,7 @@ public class ExpressionFactory {
 			if (right instanceof BinaryExpression) {
 				// if possible, try to combine constants
 				// if expression is of the form (op c1 (op c2 x)), make (op c3 x) with c3 == (op c1 c2)
-				final BinaryExpression rightBinExp = ((BinaryExpression) right);
+				final BinaryExpression rightBinExp = (BinaryExpression) right;
 				if (rightBinExp.getOperator() == op && isLiteral(rightBinExp.getLeft())) {
 					return newBinaryExpression(loc, op, computeBinaryExpression(loc, op, left, rightBinExp.getLeft()),
 							rightBinExp.getRight());
@@ -449,9 +449,9 @@ public class ExpressionFactory {
 	public static Expression constructBitvectorAccessExpression(final ILocation loc, final Expression operand,
 			final int high, final int low) {
 
-		final BoogieType type = TypeCheckHelper.typeCheckBitVectorAccessExpression(
-				TypeCheckHelper.getBitVecLength((BoogieType) operand.getType()), high, low,
-				(BoogieType) operand.getType(), new TypeErrorReporter(loc));
+		final BoogieType type =
+				TypeCheckHelper.typeCheckBitVectorAccessExpression(TypeCheckHelper.getBitVecLength(operand.getType()),
+						high, low, (BoogieType) operand.getType(), new TypeErrorReporter(loc));
 
 		if (operand instanceof BitvecLiteral) {
 			final BigInteger biValue = new BigInteger(((BitvecLiteral) operand).getValue());
