@@ -624,6 +624,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public Expression extractBits(final ILocation loc, final Expression operand, final int high, final int low) {
 		return ExpressionFactory.constructBitvectorAccessExpression(loc, operand, high, low);
 	}
+	
+	public Expression extractBitsUnsafe(final ILocation loc, final Expression operand, final int high, final int low, final int bitVecLength) {
+		return ExpressionFactory.constructBitvectorAccessExpressionUnsafe(loc, operand, high, low, bitVecLength);
+	}
 
 	private ExpressionResult extend(final ILocation loc, final ExpressionResult operand, final CType resultType,
 			final CPrimitive resultPrimitive, final int resultLength, final int operandLength) {
@@ -1174,7 +1178,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			
 			final FloatingPointSize argSize = mTypeSizes.getFloatingPointSize(((CPrimitive) argument.getCType()).getType());
 			final Expression signBit =
-					extractBits(loc, argument.getValue(), argSize.getDataSize(), argSize.getDataSize() - 1);
+					extractBitsUnsafe(loc, argument.getValue(), argSize.getDataSize(), argSize.getDataSize() - 1, argSize.getBitSize());
 			
 			final Expression one = ExpressionFactory.createBitvecLiteral(loc, "1", 1);
 			
