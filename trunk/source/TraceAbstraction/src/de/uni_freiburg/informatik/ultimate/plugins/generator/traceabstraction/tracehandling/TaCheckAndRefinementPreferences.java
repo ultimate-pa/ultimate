@@ -94,6 +94,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final boolean mDumpFeatureVectors;
 	private final boolean mCompressDumpedScript;
 	private final Map<String, String> mAdditionalSolverOptions;
+	private final boolean mUseMinimalUnsatCoreEnumerationForSmtInterpol;
 
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
@@ -163,6 +164,8 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_COUNTEREXAMPLE);
 		mUsePredicateTrieBasedPredicateUnifier = ultimatePrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER);
+		mUseMinimalUnsatCoreEnumerationForSmtInterpol = ultimatePrefs.getBoolean(
+				TraceAbstractionPreferenceInitializer.LABEL_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL);
 		mAdditionalSolverOptions =
 				ultimatePrefs.getKeyValueMap(TraceAbstractionPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS);
 	}
@@ -314,7 +317,12 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 						compressDumpedScript())
 				.setUseExternalSolver(getUseSeparateSolverForTracechecks(), getCommandExternalSolver(),
 						getLogicForExternalSolver())
-				.setSolverMode(getSolverMode()).setAdditionalOptions(getAdditionalSolverOptions());
+				.setSolverMode(getSolverMode()).setAdditionalOptions(getAdditionalSolverOptions())
+				.setUseMinimalUnsatCoreEnumerationForSmtInterpol(getUseMinimalUnsatCoreEnumerationForSmtInterpol());
+	}
+
+	private boolean getUseMinimalUnsatCoreEnumerationForSmtInterpol() {
+		return mUseMinimalUnsatCoreEnumerationForSmtInterpol;
 	}
 
 	public Map<String, String> getAdditionalSolverOptions() {

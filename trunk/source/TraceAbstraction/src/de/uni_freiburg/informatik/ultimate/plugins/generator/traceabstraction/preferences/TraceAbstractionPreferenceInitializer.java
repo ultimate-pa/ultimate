@@ -359,6 +359,13 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_ADDITIONAL_SMT_OPTIONS = RcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS;
 	public static final Map<String, String> DEF_ADDITIONAL_SMT_OPTIONS =
 			RcfgPreferenceInitializer.DEF_ADDITIONAL_SMT_OPTIONS;
+	public static final String LABEL_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL =
+			"Use minimal unsat core enumeration";
+	public static final boolean DEF_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL = false;
+	public static final String DESC_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL =
+			"Highly experimental. " + "Enable minimal unsat core enumeration with SMTInterpol. "
+					+ "You can specify which heuristics should be used by setting appropriate SMT-LIB options. "
+					+ "Contact Jochen Hoenicke or Leonard Fichtner for more information.";
 
 	/**
 	 * Constructor.
@@ -546,6 +553,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH,
 						DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH, DESC_SMT_FEATURE_EXTRACTION_DUMP_PATH,
 						PreferenceType.Directory),
+				new UltimatePreferenceItem<>(LABEL_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL,
+						DEF_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL,
+						DESC_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ADDITIONAL_SMT_OPTIONS, DEF_ADDITIONAL_SMT_OPTIONS,
 						PreferenceType.KeyValue), };
 	}
