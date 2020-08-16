@@ -135,8 +135,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	}
 
 	private List<Term> tryToEliminateSingleDisjuct(final int quantifier, final Term disjunct,
-			final TermVariable eliminatee, final Set<TermVariable> allEliminatees) {
-		final Term conjunction = tryToEliminateConjuncts(mServices, mScript, quantifier, disjunct, eliminatee, allEliminatees);
+			final TermVariable eliminatee, final Set<TermVariable> bannedForDivCapture) {
+		final Term conjunction = tryToEliminateConjuncts(mServices, mScript, quantifier, disjunct, eliminatee, bannedForDivCapture);
 		if (conjunction == null) {
 			return null;
 		}
@@ -170,7 +170,8 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	}
 
 	public static Term tryToEliminateConjuncts(final IUltimateServiceProvider services, final Script script,
-			final int quantifier, final Term disjunct, final TermVariable eliminatee, final Set<TermVariable> allEliminatees) {
+			final int quantifier, final Term disjunct, final TermVariable eliminatee,
+			final Set<TermVariable> bannedForDivCapture) {
 		final Term[] inputAtoms  = QuantifierUtils.getDualFiniteJunction(quantifier, disjunct);
 		final List<Term> termsWithoutEliminatee = new ArrayList<>();
 		final List<Bound> upperBounds = new ArrayList<>();
@@ -202,7 +203,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				if (sbr == null) {
 					return null;
 				}
-				if (SolveForSubjectUtils.isVariableDivCaptured(sbr, allEliminatees)) {
+				if (SolveForSubjectUtils.isVariableDivCaptured(sbr, bannedForDivCapture)) {
 					return null;
 				}
 				if (!sbr.getAssumptionsMap().isEmpty()

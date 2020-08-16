@@ -122,7 +122,8 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 	 */
 	private EliminationResult tryToEliminateOne(final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
-			final Term resultTerm = XnfTir.tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(), inputEt.getTerm(), eliminatee, inputEt.getEliminatees());
+			final Term resultTerm = XnfTir.tryToEliminateConjuncts(mServices, mScript, inputEt.getQuantifier(),
+					inputEt.getTerm(), eliminatee, inputEt.getBannedForDivCapture());
 			if (resultTerm != null) {
 //				final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mMgdScript, resultTerm, null, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 //				final String sizeMessage = String.format("treesize reduction %d, result has %2.1f percent of original size",
