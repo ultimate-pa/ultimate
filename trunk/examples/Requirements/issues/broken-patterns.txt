@@ -1,10 +1,30 @@
 Broken Pattern:
 
-BndDelayedResponseUTPattern Globally: Needs 2 DC-formulae.
-PrecedenceCHain12Pattern Globally, Before, Between, After, AfterUntil: This pattern seems to be wrong. Reason is yet to be explored..
-PrecedenceChain21Pattern Globally: Seems to be wrong. Needs 2 DC-formulae.
-ResponseChain12Pattern Before, Between: Needs 2 DC-formulae.
-ResponseChain21Pattern Before, Between: Needs 2 DC-formulae.
-ResponsePattern Before: Is fishy in case 'Q' never holds (because of the 'eventually')
-TogglePattern Globally: Right now, it's something like an enable-Pattern. Should become a real toggle-Pattern, but needs 2 DC-formulae.
-ToggleDelayedPattern Globally: Right now, it's something like an enable-Pattern. Should become a real toggle-Pattern, but needs 2 DC-formulae. 
+BndDelayedResponseUTPattern --------------------------------------------------------------------------------------------
+- implemented
+
+ResponseChain12Pattern --------------------------------------------------------------------------------------------
+- pattern notwendig? Falls ja: Welche scopes?
+
+ResponseChain21Pattern -------------------------------------------------------------------------------------------------
+- R ; S ; !U verletzt Formel? Falls nein: Reicht eine Formel?
+
+PrecedenceChain12Pattern -----------------------------------------------------------------------------------------------
+After, AfterUntil, Between: P->T, S->P, T->S
+- mit T.negate() oder mit scope starten?
+
+PrecedenceChain21Pattern -----------------------------------------------------------------------------------------------
+- Globally falsch implementiert
+- 2 Formeln benötigt
+- Welche scopes?
+
+ResponsePattern Before -------------------------------------------------------------------------------------------------
+- Is fishy in case 'Q' never holds (because of the 'eventually')
+
+TogglePattern ----------------------------------------------------------------------------------------------------------
+- Right now, it's something like an enable-Pattern. Should become a real toggle-Pattern, but needs 2 DC-formulae.
+- Welche scopes?
+
+ToggleDelayedPattern ---------------------------------------------------------------------------------------------------
+- Right now, it's something like an enable-Pattern. Should become a real toggle-Pattern, but needs 2 DC-formulae. 
+- Welche scopes?
