@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * {scope}, it is always the case that if "P" holds, then "S", previously held and was preceded by "T"
+ * {scope}, it is always the case that if "P" holds, then "S" previously held and was preceded by "T"
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *

@@ -62,16 +62,12 @@ public class ResponseChain21Pattern extends PatternType {
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeBefore) {
 			final CDD P = getScope().getCdd1();
-			// TODO: a second ct formula is needed to express that after the premise is satisfied, U never holds before
-			// P, i.e. [!P], [!P && R], [!P], [!P && S], [!P && !U], [P], true
 			ct = counterTrace(phase(P.negate()), phase(R.and(P.negate())), phase(P.negate()), phase(P.negate().and(S)),
 					phase(P.negate()), phase(P.negate().and(U)), phase(P.negate().and(T.negate())), phase(P), phaseT());
 
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = getScope().getCdd1();
 			final CDD Q = getScope().getCdd2();
-			// TODO: a second ct formula is needed to express that after the premise is satisfied, U never holds before
-			// P, i.e. true, [P && !Q], [!Q], [!Q && R], [!Q], [!Q && S], [!Q && !U], [Q], true
 			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(Q.negate().and(R)),
 					phase(Q.negate()), phase(Q.negate().and(S)), phase(Q.negate()), phase(Q.negate().and(U)),
 					phase(Q.negate().and(T.negate())), phase(Q), phaseT());

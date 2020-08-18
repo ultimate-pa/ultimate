@@ -63,8 +63,7 @@ public class ResponsePattern extends PatternType {
 			// Globally, it is always the case that if P holds then S eventually holds.
 			// (¬(true;|P ∧ ¬S|;|¬S|)) -> true
 			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn
-			// S.negate müßte bis zum ende des
-			// intervalls gelten
+			// S.negate müßte bis zum ende des intervalls gelten
 			// TODO: Das leads-to scheint falsch
 			ct = counterTrace(phaseT(), phase(P.and(S.negate())), phase(S.negate()), phaseT());
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
@@ -76,15 +75,13 @@ public class ResponsePattern extends PatternType {
 					phase(S.negate().and(Q.negate())), phase(Q), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn
-			// S.negate müßte bis zum ende des
-			// intervalls gelten
+			// S.negate müßte bis zum ende des intervalls gelten
 			ct = counterTrace(phaseT());
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		} else if (scope instanceof SrParseScopeAfter) {
 			// (¬(true;|Q|;true;|P ∧ ¬S|;|¬S|)) -> true
 			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn
-			// S.negate müßte bis zum ende des
-			// intervalls gelten
+			// S.negate müßte bis zum ende des intervalls gelten
 			ct = counterTrace(phaseT());
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		} else if (scope instanceof SrParseScopeBetween) {
