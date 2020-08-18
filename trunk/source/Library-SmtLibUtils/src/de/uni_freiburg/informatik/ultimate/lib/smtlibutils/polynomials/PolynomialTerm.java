@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SparseMapBuilder;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -323,6 +324,13 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 			result = result.substring(1); // Drop first space
 		}
 		return result;
+	}
+
+	@Override
+	protected Pair<Rational, Rational> computeMinMax() {
+		// TODO implement for analogously to method in AffineTerm,
+		// helps only if all variables in all all monomials are variables
+		return null;
 	}
 
 }
