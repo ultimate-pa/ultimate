@@ -73,6 +73,9 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 			break;
 		case FAST_UPR:
 			return fastUprAcceleration(loop);
+		case UNDERAPPROXIMATION:
+			mLogger.warn("Not implmented yet");
+			throw new UnsupportedOperationException();
 		}
 		return loop;
 	}
