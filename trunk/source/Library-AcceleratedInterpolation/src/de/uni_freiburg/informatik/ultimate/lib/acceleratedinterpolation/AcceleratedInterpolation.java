@@ -461,6 +461,19 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 		 * Turn the new trace into a nested word for easier interpolation
 		 */
 		final NestedWord<LETTER> traceSchemeNestedWord = TraceCheckUtils.toNestedWord(counterExampleAcceleratedLetter);
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Current trace");
+			mCounterexample.forEach(a -> mLogger.debug(a.getTransformula()));
+
+			mLogger.debug("Simpified acceleration");
+			for (final LETTER letter : traceSchemeNestedWord) {
+				mLogger.debug(SmtUtils.simplify(mScript, letter.getTransformula().getFormula(), mServices,
+						SimplificationTechnique.SIMPLIFY_DDA).toStringDirect());
+				mLogger.debug(letter.getTransformula());
+			}
+		}
+
 		return new NestedRun<>(traceSchemeNestedWord, acceleratedTraceSchemeStates);
 	}
 

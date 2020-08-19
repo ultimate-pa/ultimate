@@ -162,7 +162,7 @@ public class FastUPRCore {
 	private boolean periodLoop(final int b) {
 		for (int c = 1; c <= b; c++) {
 			mUtils.output(">> Checking Consistency for b=" + b + ", c=" + c);
-			mUtils.setDetailed(true);
+			// mUtils.setDetailed(true);
 			final int k = mTermChecker.checkConsistency(b, c);
 			if (k >= 0) {
 				mUtils.output(">> NOT CONSISTENT FOR 2 ITERATIONS: RETURNING COMPOSITION RESULT");
@@ -170,7 +170,7 @@ public class FastUPRCore {
 				return true;
 			}
 			mUtils.output(">> CONSISTENT: CHECKING FOR PERIODICITY");
-			mUtils.setDetailed(false);
+			// mUtils.setDetailed(false);
 			final ParametricOctMatrix difference = periodCheck(b, c);
 			if (difference == null) {
 				mUtils.output("PeriodCheck Not Successful.");
@@ -198,7 +198,7 @@ public class FastUPRCore {
 		boolean consistent = true;
 		int n = 0;
 
-		mUtils.setDetailed(false);
+		// mUtils.setDetailed(false);
 
 		// Find minimum n for which the period becomes inconsistent.
 		while (consistent) {
@@ -285,14 +285,14 @@ public class FastUPRCore {
 		final ParametricOctMatrix difference = c1Matrix.subtract(c0Matrix);
 		final ParametricOctMatrix difference2 = c2Matrix.subtract(c1Matrix);
 
-		mUtils.setDetailed(true);
+		// mUtils.setDetailed(true);
 
 		mUtils.debug(difference.getMatrix().toString());
 		mUtils.debug(difference2.getMatrix().toString());
 		mUtils.debug(difference.toOctConjunction().toString());
 		mUtils.debug(difference2.toOctConjunction().toString());
 
-		mUtils.setDetailed(false);
+		// mUtils.setDetailed(false);
 		// Check Equality
 
 		if (difference.isEqualTo(difference2)) {
@@ -308,7 +308,7 @@ public class FastUPRCore {
 		// <=> rho((n+1) * difference + sigma(R^b)) <=/=> false
 
 		mUtils.output(">>> FOR ALL CHECK, b=" + b + ",c=" + c);
-		mUtils.setDetailed(true);
+		// mUtils.setDetailed(true);
 
 		// PREPARATIONS
 
@@ -332,14 +332,14 @@ public class FastUPRCore {
 		mUtils.debug(differenceN.getSummands().toString());
 		mUtils.debug(differenceN.getParametricVar().toString());
 
-		differenceN.setLogger(mUtils.getLogger());
+		// differenceN.setLogger(mUtils.getLogger());
 		final ParametricOctMatrix intervalMatrix = differenceN.add(rBMatrix);
 
 		mUtils.debug("Creating Intervals.");
 
 		// Back to OctagonConjunction and concatinate with R^c
 
-		intervalMatrix.setLogger(mUtils.getLogger());
+		// intervalMatrix.setLogger(mUtils.getLogger());
 
 		final OctConjunction intervalMatrixConjunction = intervalMatrix.toOctConjunction();
 		final OctConjunction intervalBeginning =
