@@ -26,15 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.fastupr;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Set;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRUtils;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctConjunction;
@@ -69,47 +69,45 @@ public class OctagonTransformerTest {
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mLogger = mServices.getLoggingService().getLogger("lol");
-		mScript = UltimateMocks.createZ3Script();
+		mScript = UltimateMocks.createZ3Script(LogLevel.INFO);
 		// script = new SMTInterpol();
 		mMgdScript = new ManagedScript(mServices, mScript);
 
 		mScript.setLogic(Logics.ALL);
 		mUtils = new FastUPRUtils(mLogger, false);
-		mLogger.info("Before finished");
 	}
 
 	@Test
 	public void testDetector() {
+		mLogger.info("DetectorTest:");
 
-		System.out.println("DetectorTest:");
 		final OctagonDetector detector = new OctagonDetector(mLogger, mMgdScript, mServices);
 		final TermVariable inVarX = mMgdScript.constructFreshTermVariable("xin", mScript.sort("Int"));
 		final TermVariable outVarX = mMgdScript.constructFreshTermVariable("yout", mScript.sort("Int"));
-		final Term exampleTerm = mScript.term("=", mScript.term("+", inVarX, mScript.decimal(BigDecimal.ONE)), outVarX);
+		final Term exampleTerm = mScript.term("=", mScript.term("+", inVarX, mScript.numeral(BigInteger.ONE)), outVarX);
+		mLogger.info("Input: %s", exampleTerm.toStringDirect());
 		mUtils.setDetailed(true);
 		final Set<Term> octTerms = detector.getConjunctSubTerms(exampleTerm);
 		mUtils.setDetailed(false);
-		Assert.assertEquals("", octTerms.toString());
+		mLogger.info("Output: %s", octTerms);
+		Assert.assertEquals("[(= (+ v_xin_1 1) v_yout_1)]", octTerms.toString());
 	}
 
 	@Test
 	public void testTermTransformation() {
-		System.out.println("TermTransformationTest:");
+		mLogger.info("TermTransformationTest:");
 		final OctagonDetector detector = new OctagonDetector(mLogger, mMgdScript, mServices);
 		final OctagonTransformer transformer =
 				new OctagonTransformer(new FastUPRUtils(mLogger, false), mScript, detector);
-		final TermVariable inVarX = mMgdScript.constructFreshTermVariable("xin", mScript.sort("Int"));
-		final TermVariable outVarX = mMgdScript.constructFreshTermVariable("yout", mScript.sort("Int"));
-		final Term exampleTerm = mScript.term("=", mScript.term("+", inVarX, mScript.decimal(BigDecimal.ONE)), outVarX);
-		System.out.println("Transform:");
-		final OctConjunction example = transformer.transform(exampleTerm);
-		System.out.println("Assert:");
-		Assert.assertEquals("", example.toString());
-	}
 
-	@After
-	public void executeAfterEachTest() {
-		System.out.println("After");
+		final TermVariable inVarX = mMgdScript.constructFreshTermVariable("i", mScript.sort("Int"));
+		final TermVariable outVarX = mMgdScript.constructFreshTermVariable("o", mScript.sort("Int"));
+
+		final Term exampleTerm = mScript.term("=", mScript.term("+", inVarX, mScript.numeral(BigInteger.ONE)), outVarX);
+		mLogger.info("Input: %s", exampleTerm.toStringDirect());
+		final OctConjunction example = transformer.transform(exampleTerm);
+		mLogger.info("Output: %s", example);
+		Assert.assertEquals("(-v_o_1 +v_i_1 <= -1) and (-v_i_1 +v_o_1 <= 1)", example.toString());
 	}
 
 }

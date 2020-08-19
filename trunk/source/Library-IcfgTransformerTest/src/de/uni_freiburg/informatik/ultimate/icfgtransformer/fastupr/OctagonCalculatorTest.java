@@ -34,20 +34,30 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRCore;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRUtils;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctConjunction;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonCalculator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.LocalBoogieVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -67,17 +77,19 @@ public class OctagonCalculatorTest {
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
+	private Term mTrue;
 
 	@Before
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mLogger = mServices.getLoggingService().getLogger("lol");
-		mScript = UltimateMocks.createZ3Script();
+		mScript = UltimateMocks.createZ3Script(LogLevel.INFO);
 		// script = new SMTInterpol();
 		mMgdScript = new ManagedScript(mServices, mScript);
 
 		mScript.setLogic(Logics.ALL);
-		mLogger.info("Before finished");
+		mTrue = mScript.term("true");
+		mLogger.info("\"Before\" finished");
 	}
 
 	@Test
@@ -115,7 +127,7 @@ public class OctagonCalculatorTest {
 	}
 
 	@Test
-	public void BinarySequentializeTest() {
+	public void binarySequentializeTest() {
 		mLogger.debug("BinarySequentializeTest:");
 		final OctagonCalculator calc = new OctagonCalculator(new FastUPRUtils(mLogger, false), mMgdScript);
 		final OctConjunction example = new OctConjunction();
@@ -148,6 +160,43 @@ public class OctagonCalculatorTest {
 				example.toString());
 		Assert.assertEquals("(2*v_yin_1 <= 10) and (v_xout_1 -v_xin_1 <= 2) and (-v_xout_1 +v_xin_1 <= -2)",
 				result.toString());
+
+	}
+
+	@Test
+	public void iterationAcceleration() {
+		mMgdScript.lock(this);
+		final BoogieNonOldVar varX =
+				ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(mScript), mMgdScript, this);
+		mMgdScript.unlock(this);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+
+		final TermVariable in = mMgdScript.constructFreshCopy(varX.getTermVariable());
+		final TermVariable out = mMgdScript.constructFreshCopy(varX.getTermVariable());
+
+		tfb.addInVar(varX, in);
+		tfb.addOutVar(varX, out);
+
+		final Term term = mScript.term("=", mScript.term("+", in, mScript.numeral("1")), out);
+
+		tfb.setFormula(term);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		final UnmodifiableTransFormula loopBody = tfb.finishConstruction(mMgdScript);
+
+		testAcceleration(loopBody, mTrue);
+	}
+
+	@Test
+	public void noLoopAcceleration() {
+		testAcceleration(TransFormulaBuilder.getTrivialTransFormula(mMgdScript), mTrue);
+	}
+
+	private void testAcceleration(final UnmodifiableTransFormula input, final Term expected) {
+		final UnmodifiableTransFormula accelerated = new FastUPRCore(input, mMgdScript, mLogger, mServices).getResult();
+		mLogger.info("Input           : %s", input);
+		mLogger.info("Output          : %s", accelerated);
+		mLogger.info("Expected formula: %s", expected);
+		Assert.assertEquals(accelerated.getFormula(), expected);
 	}
 
 	@After
