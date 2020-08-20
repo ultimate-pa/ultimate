@@ -39,25 +39,17 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRCore;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRUtils;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctConjunction;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonCalculator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.LocalBoogieVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -74,41 +66,37 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 public class OctagonCalculatorTest {
 
 	private IUltimateServiceProvider mServices;
-	private Script mScript;
-	private ManagedScript mMgdScript;
+	private Script mZ3;
+	private ManagedScript mMgdZ3;
 	private ILogger mLogger;
-	private Term mTrue;
 
 	@Before
 	public void setUp() {
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
 		mLogger = mServices.getLoggingService().getLogger("lol");
-		mScript = UltimateMocks.createZ3Script(LogLevel.INFO);
-		// script = new SMTInterpol();
-		mMgdScript = new ManagedScript(mServices, mScript);
-
-		mScript.setLogic(Logics.ALL);
-		mTrue = mScript.term("true");
-		mLogger.info("\"Before\" finished");
+		mZ3 = UltimateMocks.createZ3Script(LogLevel.INFO);
+		mZ3.setLogic(Logics.ALL);
+		mMgdZ3 = new ManagedScript(mServices, mZ3);
+		mLogger.info("setUp() finished");
 	}
 
 	@Test
-	public void SequentializeTest() {
+	public void sequentializeTest() {
 		mLogger.debug("SequentializeTest:");
-		final OctagonCalculator calc = new OctagonCalculator(new FastUPRUtils(mLogger, false), mMgdScript);
+		final OctagonCalculator calc = new OctagonCalculator(new FastUPRUtils(mLogger, false), mMgdZ3);
 		final OctConjunction example = new OctConjunction();
 		final BoogieVar x = new LocalBoogieVar("x", "x", BoogieType.createPlaceholderType(0),
-				mMgdScript.constructFreshTermVariable("c", mScript.sort("Int")),
-				(ApplicationTerm) mScript.term("false"), (ApplicationTerm) mScript.term("false"));
+				mMgdZ3.constructFreshTermVariable("c", mZ3.sort("Int")), (ApplicationTerm) mZ3.term("false"),
+				(ApplicationTerm) mZ3.term("false"));
 		final BoogieVar y = new LocalBoogieVar("y", "y", BoogieType.createPlaceholderType(0),
-				mMgdScript.constructFreshTermVariable("d", mScript.sort("Int")),
-				(ApplicationTerm) mScript.term("false"), (ApplicationTerm) mScript.term("false"));
+				mMgdZ3.constructFreshTermVariable("d", mZ3.sort("Int")), (ApplicationTerm) mZ3.term("false"),
+				(ApplicationTerm) mZ3.term("false"));
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-		final TermVariable inVarX = mMgdScript.constructFreshTermVariable("xin", mScript.sort("Int"));
-		final TermVariable inVarY = mMgdScript.constructFreshTermVariable("yin", mScript.sort("Int"));
-		final TermVariable outVarX = mMgdScript.constructFreshTermVariable("xout", mScript.sort("Int"));
-		final TermVariable outVarY = mMgdScript.constructFreshTermVariable("yout", mScript.sort("Int"));
+		final TermVariable inVarX = mMgdZ3.constructFreshTermVariable("xin", mZ3.sort("Int"));
+		final TermVariable inVarY = mMgdZ3.constructFreshTermVariable("yin", mZ3.sort("Int"));
+		final TermVariable outVarX = mMgdZ3.constructFreshTermVariable("xout", mZ3.sort("Int"));
+		final TermVariable outVarY = mMgdZ3.constructFreshTermVariable("yout", mZ3.sort("Int"));
 		inVars.put(x, inVarX);
 		inVars.put(y, inVarY);
 		outVars.put(x, outVarX);
@@ -129,20 +117,20 @@ public class OctagonCalculatorTest {
 	@Test
 	public void binarySequentializeTest() {
 		mLogger.debug("BinarySequentializeTest:");
-		final OctagonCalculator calc = new OctagonCalculator(new FastUPRUtils(mLogger, false), mMgdScript);
+		final OctagonCalculator calc = new OctagonCalculator(new FastUPRUtils(mLogger, false), mMgdZ3);
 		final OctConjunction example = new OctConjunction();
 		final BoogieVar x = new LocalBoogieVar("x", "x", BoogieType.createPlaceholderType(0),
-				mMgdScript.constructFreshTermVariable("c", mScript.sort("Int")),
-				(ApplicationTerm) mScript.term("false"), (ApplicationTerm) mScript.term("false"));
+				mMgdZ3.constructFreshTermVariable("c", mZ3.sort("Int")), (ApplicationTerm) mZ3.term("false"),
+				(ApplicationTerm) mZ3.term("false"));
 		final BoogieVar y = new LocalBoogieVar("y", "y", BoogieType.createPlaceholderType(0),
-				mMgdScript.constructFreshTermVariable("d", mScript.sort("Int")),
-				(ApplicationTerm) mScript.term("false"), (ApplicationTerm) mScript.term("false"));
+				mMgdZ3.constructFreshTermVariable("d", mZ3.sort("Int")), (ApplicationTerm) mZ3.term("false"),
+				(ApplicationTerm) mZ3.term("false"));
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-		final TermVariable inVarX = mMgdScript.constructFreshTermVariable("xin", mScript.sort("Int"));
-		final TermVariable inVarY = mMgdScript.constructFreshTermVariable("yin", mScript.sort("Int"));
-		final TermVariable outVarX = mMgdScript.constructFreshTermVariable("xout", mScript.sort("Int"));
-		final TermVariable outVarY = mMgdScript.constructFreshTermVariable("yout", mScript.sort("Int"));
+		final TermVariable inVarX = mMgdZ3.constructFreshTermVariable("xin", mZ3.sort("Int"));
+		final TermVariable inVarY = mMgdZ3.constructFreshTermVariable("yin", mZ3.sort("Int"));
+		final TermVariable outVarX = mMgdZ3.constructFreshTermVariable("xout", mZ3.sort("Int"));
+		final TermVariable outVarY = mMgdZ3.constructFreshTermVariable("yout", mZ3.sort("Int"));
 		inVars.put(x, inVarX);
 		inVars.put(y, inVarY);
 		outVars.put(x, outVarX);
@@ -163,45 +151,9 @@ public class OctagonCalculatorTest {
 
 	}
 
-	@Test
-	public void iterationAcceleration() {
-		mMgdScript.lock(this);
-		final BoogieNonOldVar varX =
-				ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(mScript), mMgdScript, this);
-		mMgdScript.unlock(this);
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
-
-		final TermVariable in = mMgdScript.constructFreshCopy(varX.getTermVariable());
-		final TermVariable out = mMgdScript.constructFreshCopy(varX.getTermVariable());
-
-		tfb.addInVar(varX, in);
-		tfb.addOutVar(varX, out);
-
-		final Term term = mScript.term("=", mScript.term("+", in, mScript.numeral("1")), out);
-
-		tfb.setFormula(term);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		final UnmodifiableTransFormula loopBody = tfb.finishConstruction(mMgdScript);
-
-		testAcceleration(loopBody, mTrue);
-	}
-
-	@Test
-	public void noLoopAcceleration() {
-		testAcceleration(TransFormulaBuilder.getTrivialTransFormula(mMgdScript), mTrue);
-	}
-
-	private void testAcceleration(final UnmodifiableTransFormula input, final Term expected) {
-		final UnmodifiableTransFormula accelerated = new FastUPRCore(input, mMgdScript, mLogger, mServices).getResult();
-		mLogger.info("Input           : %s", input);
-		mLogger.info("Output          : %s", accelerated);
-		mLogger.info("Expected formula: %s", expected);
-		Assert.assertEquals(accelerated.getFormula(), expected);
-	}
-
 	@After
 	public void executeAfterEachTest() {
-		System.out.println("After");
+		mZ3.exit();
+		mLogger.info("--");
 	}
-
 }
