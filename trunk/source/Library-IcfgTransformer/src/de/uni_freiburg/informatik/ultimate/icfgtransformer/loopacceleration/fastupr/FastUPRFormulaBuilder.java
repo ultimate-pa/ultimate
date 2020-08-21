@@ -247,7 +247,7 @@ public class FastUPRFormulaBuilder {
 		for (int k = 0; k < n; k++) {
 			final List<Term> innerOrTerms = new ArrayList<>();
 			for (int i = 0; i < c; i++) {
-				innerOrTerms.add(getInnerOrTerm(conjunc, b, i, n, difference, inVars, outVars, variables));
+				innerOrTerms.add(getInnerOrTerm(conjunc, b, i, k, difference, inVars, outVars, variables));
 			}
 			final Term innerOr = innerOrTerms.size() > 1 ? mScript.term("or", innerOrTerms.toArray(new Term[0]))
 					: innerOrTerms.get(0);
