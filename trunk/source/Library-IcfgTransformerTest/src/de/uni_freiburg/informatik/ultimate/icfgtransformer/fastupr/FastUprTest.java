@@ -53,10 +53,12 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.ConsoleLogger;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -66,6 +68,10 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  *
  */
 public class FastUprTest {
+
+	private static final boolean DUMP = false;
+	private static final String DUMP_PATH = "C:\\Users\\firefox\\Desktop\\dump";
+	private static final boolean PQE_AND_SIMPLIFY = false;
 
 	private IUltimateServiceProvider mServices;
 	private Script mZ3;
@@ -83,7 +89,8 @@ public class FastUprTest {
 				.setSolverMode(SolverMode.External_ModelsAndUnsatCoreMode).setSolverLogics(Logics.ALL)
 				.setUseExternalSolver(true, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, Logics.ALL)
 				.setSolverLogger(UltimateMocks.createUltimateServiceProviderMock(LogLevel.WARN).getLoggingService()
-						.getLogger(getClass()));
+						.getLogger(getClass()))
+				.setDumpSmtScriptToFile(DUMP, DUMP_PATH, getClass().getSimpleName() + "_z3", false);
 
 		mZ3 = SolverBuilder.buildAndInitializeSolver(mServices, solverSettingsZ3, "Z3");
 		mMgdZ3 = new ManagedScript(mServices, mZ3);
@@ -91,26 +98,67 @@ public class FastUprTest {
 		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
 				.setSolverMode(SolverMode.Internal_SMTInterpol).setSolverLogics(Logics.ALL)
 				.setSolverLogger(UltimateMocks.createUltimateServiceProviderMock(LogLevel.WARN).getLoggingService()
-						.getLogger(getClass()));
+						.getLogger(getClass()))
+				.setDumpSmtScriptToFile(DUMP, DUMP_PATH, getClass().getSimpleName() + "_smtinterpol", false);
 		mSmtInterpol = SolverBuilder.buildAndInitializeSolver(mServices, solverSettings, "SmtInterpol");
 		mMgdSmtInterpol = new ManagedScript(mServices, mSmtInterpol);
 
 		mLogger.info("setUp() finished");
 	}
 
+	/**
+	 * The expected formulas for {@link #tfEx01_Z3()} and {@link #tfEx01_SmtInterpol()} are equivalent according to
+	 * SmtInterpol (Z3 says unknown)
+	 */
 	@Test
 	public void tfEx01_Z3() {
-		iterationAcceleration(this::getTfEx01LoopBody, "???", this::testAccelerationZ3, mMgdZ3);
+		runAndTestAcceleration(this::getTfEx01LoopBody,
+				"(or (and (<= (+ (* (- 1) c_x_primed) c_x) (- 1)) (<= (+ (* (- 1) c_x) c_x_primed) 1)) "
+						+ "(exists ((v_k_1 Int)) (and (>= v_k_1 0) (and (<= (+ (* (- 1) c_x_primed) c_x) "
+						+ "(+ (* (- 1) v_k_1) (- 2))) (<= (+ c_x_primed (* (- 1) c_x)) (+ (* 1 v_k_1) 2))))))",
+				mMgdZ3);
 	}
 
+	/**
+	 * @see #tfEx01_Z3()
+	 */
 	@Test
 	public void tfEx01_SmtInterpol() {
-		iterationAcceleration(this::getTfEx01LoopBody, "???", this::testAccelerationSmtInterpol, mMgdSmtInterpol);
+		runAndTestAcceleration(this::getTfEx01LoopBody, "(<= (+ c_x 1) c_x_primed)", mMgdSmtInterpol);
 	}
 
 	@Test
 	public void tfEx02_SmtInterpol() {
-		iterationAcceleration(this::getTfEx02LoopBody, "???", this::testAccelerationSmtInterpol, mMgdSmtInterpol);
+		// smtinterpol sometimes shows equivalence, sometimes answers with unknown
+		final String simplified = "(or (and (<= (div (+ (* c_x_primed (- 1)) c_x 6) (- 3)) "
+				+ "(div (+ c_x_primed (* c_x (- 1)) (- 6)) 3)) (<= 0 (div (+ c_x_primed (* c_x (- 1)) (- 6)) 3)) "
+				+ "(<= (div (+ (* c_x_primed (- 1)) c_x 6) (- 3)) (div (+ (* c_x (- 2)) 992) 6))) "
+				+ "(and (<= (+ c_x 3) c_x_primed) (<= (* 2 c_x) 998) (<= c_x_primed (+ c_x 3))))";
+		final String actual = "(or (and (<= (* 2 c_x) 998) (<= (+ (* (- 1) c_x_primed) c_x) (- 3)) "
+				+ "(<= (+ (* (- 1) c_x) c_x_primed) 3)) " + "(exists ((v_k_1 Int)) " + "(and (>= v_k_1 0) " + "(and "
+				+ "(<= (+ c_x_primed (* (- 1) c_x)) (+ (* 3 v_k_1) 6)) " + "(<= (* 2 c_x) (+ (* (- 6) v_k_1) 992)) "
+				+ "(<= (+ (* (- 1) c_x_primed) c_x) (+ (* (- 3) v_k_1) (- 6))) "
+				+ "(<= (* 2 c_x) (+ (* (- 6) v_k_1) 998))))))";
+
+		runAndTestAcceleration(this::getTfEx02LoopBody, actual, mMgdSmtInterpol);
+	}
+
+	@Test
+	public void tfEx03_SmtInterpol() {
+		runAndTestAcceleration(this::getTfEx03LoopBody,
+				"(or (and (<= (+ c_x 2) c_x_primed) (<= (* 2 c_x) 20) (<= c_x_primed (+ c_x 2))) (and (<= 0 (div (+ c_x_primed (* c_x (- 1)) (- 4)) 2)) (<= (div (+ (* c_x_primed (- 1)) c_x 4) (- 2)) (div (+ c_x_primed (* c_x (- 1)) (- 4)) 2)) (<= (div (+ (* c_x_primed (- 1)) c_x 4) (- 2)) (div (+ (* c_x (- 2)) 16) 4))))",
+				mMgdSmtInterpol);
+	}
+
+	@Test
+	public void tfEx04_Z3() {
+		runAndTestAcceleration(this::getTfEx04LoopBody,
+				"(and (<= (+ c_x 2) c_x_primed) (<= 6 (* 2 c_x)) (<= (* 2 c_x) 20) (<= c_x_primed (+ c_x 2)))", mMgdZ3);
+	}
+
+	// @Test disabled because Z3 runs out of ressources during acceleration
+	public void tfEx02_Z3() {
+		runAndTestAcceleration(this::getTfEx02LoopBody, "???", mMgdZ3);
 	}
 
 	@Test
@@ -203,32 +251,187 @@ public class FastUprTest {
 		return tfb.finishConstruction(managedScript);
 	}
 
-	private static void iterationAcceleration(final TestData input, final String expected,
-			final TestAcceleration funTest, final ManagedScript managedScript) {
+	/**
+	 * Create loop body for
+	 *
+	 * [assume x <= 10;, assume !(x > 2);, x := x + 1;, x := x + 1;],
+	 *
+	 * by simplifying to
+	 *
+	 * x <= 10 && x' = x+2
+	 *
+	 * (accelerated interpolation 1)
+	 */
+	private UnmodifiableTransFormula getTfEx03LoopBody(final ManagedScript managedScript) {
+		final Script script = managedScript.getScript();
+		managedScript.lock(this);
+		final BoogieNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
+				managedScript, this);
+		managedScript.unlock(this);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+
+		final TermVariable in = managedScript.constructFreshCopy(varX.getTermVariable());
+		final TermVariable out = managedScript.constructFreshCopy(varX.getTermVariable());
+
+		tfb.addInVar(varX, in);
+		tfb.addOutVar(varX, out);
+
+		final Term term = script.term("and", script.term("<=", in, script.numeral("10")),
+				script.term("=", script.term("+", in, script.numeral("2")), out));
+
+		tfb.setFormula(term);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(managedScript);
+	}
+
+	/**
+	 * Create loop body for
+	 *
+	 * [assume x <= 10;, assume x > 2;, x := x + 1;, x := x + 1;]
+	 *
+	 * by simplifying to
+	 *
+	 * x <= 10 && x > 2 && x' = x+2
+	 *
+	 * (accelerated interpolation 2)
+	 */
+	private UnmodifiableTransFormula getTfEx04LoopBody(final ManagedScript managedScript) {
+		final Script script = managedScript.getScript();
+		managedScript.lock(this);
+		final BoogieNonOldVar varX = ProgramVarUtils.constructGlobalProgramVarPair("x", SmtSortUtils.getIntSort(script),
+				managedScript, this);
+		managedScript.unlock(this);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+
+		final TermVariable in = managedScript.constructFreshCopy(varX.getTermVariable());
+		final TermVariable out = managedScript.constructFreshCopy(varX.getTermVariable());
+
+		tfb.addInVar(varX, in);
+		tfb.addOutVar(varX, out);
+
+		final Term guard1 = script.term("<=", in, script.numeral("10"));
+		final Term guard2 = script.term(">", in, script.numeral("2"));
+		final Term body = script.term("=", script.term("+", in, script.numeral("2")), out);
+
+		final Term term = script.term("and", guard1, guard2, body);
+
+		tfb.setFormula(term);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(managedScript);
+	}
+
+	private void runAndTestAcceleration(final TestData input, final String expected,
+			final ManagedScript managedScript) {
 		final UnmodifiableTransFormula loopBody = input.getLoopBody(managedScript);
-		funTest.testAcceleration(loopBody, expected);
+		testAcceleration(managedScript, loopBody, expected);
 	}
 
 	@Test
 	public void noLoopAcceleration() {
-		testAccelerationZ3(TransFormulaBuilder.getTrivialTransFormula(mMgdZ3), "true");
+		testAcceleration(mMgdZ3, TransFormulaBuilder.getTrivialTransFormula(mMgdZ3), "true");
 	}
 
-	private void testAccelerationZ3(final UnmodifiableTransFormula input, final String expected) {
-		testAcceleration(mMgdZ3, input, expected);
-	}
-
-	private void testAccelerationSmtInterpol(final UnmodifiableTransFormula input, final String expected) {
-		testAcceleration(mMgdSmtInterpol, input, expected);
-	}
-
-	private void testAcceleration(final ManagedScript script, final UnmodifiableTransFormula input,
+	private void testAcceleration(final ManagedScript managedScript, final UnmodifiableTransFormula input,
 			final String expected) {
-		final UnmodifiableTransFormula accelerated = new FastUPRCore(input, script, mLogger, mServices).getResult();
-		mLogger.info("Input           : %s", input);
-		mLogger.info("Output          : %s", accelerated);
-		mLogger.info("Expected formula: %s", expected);
-		Assert.assertEquals(accelerated.getFormula().toStringDirect(), expected);
+		final UnmodifiableTransFormula accelerated =
+				new FastUPRCore(input, managedScript, mLogger, mServices).getResult();
+		final Term actualT = accelerated.getClosedFormula();
+		mLogger.info("Input            : %s", input.getClosedFormula());
+		mLogger.info("Output           : %s", actualT.toStringDirect());
+		mLogger.info("Expected formula : %s", expected);
+
+		final Script script = managedScript.getScript();
+		if (PQE_AND_SIMPLIFY) {
+			mLogger.info("Running PQE");
+			final Term pqe = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, managedScript, actualT,
+					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			mLogger.info("Running simplify");
+			final Term simpTerm =
+					SmtUtils.simplify(managedScript, pqe, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+			mLogger.info("Output Simplified: %s", simpTerm.toStringDirect());
+
+			script.echo(new QuotedObject("check (distinct simplified acceleration)"));
+			script.push(1);
+			script.assertTerm(script.term("distinct", simpTerm, actualT));
+			final LBool isDistinct = script.checkSat();
+			script.pop(1);
+			mLogger.info("isDistinct %s", isDistinct);
+			Assert.assertEquals(LBool.UNSAT, isDistinct);
+		}
+
+		final Term expectedT = TermParseUtils.parseTerm(script, expected);
+		final LBool isDistinct = SmtUtils.checkSatTerm(script, script.term("distinct", expectedT, actualT));
+		Assert.assertEquals(LBool.UNSAT, isDistinct);
+	}
+
+	// @Test not necessary, was just trying to look at possible error sources
+	public void quantifierElim1() {
+		final ManagedScript managedScript = mMgdZ3;
+		final Script script = managedScript.getScript();
+
+		final TermVariable x = script.variable("x", SmtSortUtils.getIntSort(managedScript));
+		final TermVariable k = script.variable("k", SmtSortUtils.getIntSort(managedScript));
+
+		/**
+		 * (exists ((k Int)) (and (>= k 0) (k <= 496 / 3) (out = 3k + 6 )
+		 */
+
+		final Term con1 = script.term(">=", k, script.numeral("0"));
+		final Term con2 = script.term("<=", k, script.term("div", script.numeral("496"), script.numeral("3")));
+		final Term con3 =
+				script.term("=", x, script.term("+", script.term("*", k, script.numeral("3")), script.numeral("6")));
+		final Term quantified =
+				script.quantifier(Script.EXISTS, new TermVariable[] { k }, script.term("and", con1, con2, con3));
+		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, managedScript,
+				quantified, SimplificationTechnique.SIMPLIFY_DDA,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+
+		final LBool isDistinct = SmtUtils.checkSatTerm(script, script.term("distinct", quantified, eliminated));
+		mLogger.info("Term     : %s", quantified.toStringDirect());
+		mLogger.info("Elim     : %s", eliminated.toStringDirect());
+		mLogger.info("Distinct?: %s", isDistinct);
+
+		Assert.assertEquals(LBool.UNSAT, isDistinct);
+	}
+
+	// @Test not necessary, was just trying to look at possible error sources
+	public void quantifierElim2() {
+		final ManagedScript managedScript = mMgdZ3;
+		final Script script = managedScript.getScript();
+
+		final TermVariable in = script.variable("in", SmtSortUtils.getIntSort(managedScript));
+		final TermVariable out = script.variable("out", SmtSortUtils.getIntSort(managedScript));
+		final TermVariable k = script.variable("k", SmtSortUtils.getIntSort(managedScript));
+
+		/**
+		 * (or (and (<= in 499) (= (+ (* (- 1) out) in) (- 3))
+		 *
+		 * (exists ((k Int)) (and (>= k 0) (k <= 496 / 3) (out = 3k + 6 )
+		 */
+
+		final Term d1c1 = script.term("<=", in, script.numeral("499"));
+		final Term d1c2 = script.term("=", script.term("+", script.term("*", script.numeral("-1"), out), in),
+				script.numeral("-3"));
+		final Term disj1 = script.term("and", d1c1, d1c2);
+
+		final Term qcon1 = script.term(">=", k, script.numeral("0"));
+		final Term qcon2 = script.term("<=", k, script.term("div", script.numeral("496"), script.numeral("3")));
+		final Term qcon3 =
+				script.term("=", out, script.term("+", script.term("*", k, script.numeral("3")), script.numeral("6")));
+		final Term disj2 =
+				script.quantifier(Script.EXISTS, new TermVariable[] { k }, script.term("and", qcon1, qcon2, qcon3));
+
+		final Term term = script.term("or", disj1, disj2);
+
+		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, managedScript, term,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+
+		final LBool isDistinct = SmtUtils.checkSatTerm(script, script.term("distinct", term, eliminated));
+		mLogger.info("Term     : %s", term.toStringDirect());
+		mLogger.info("Elim     : %s", eliminated.toStringDirect());
+		mLogger.info("Distinct?: %s", isDistinct);
+
+		Assert.assertEquals(LBool.UNSAT, isDistinct);
 	}
 
 	@After
@@ -240,7 +443,8 @@ public class FastUprTest {
 
 	@FunctionalInterface
 	private interface TestAcceleration {
-		public void testAcceleration(final UnmodifiableTransFormula input, final String expected);
+		public void testAcceleration(final ManagedScript script, final UnmodifiableTransFormula input,
+				final String expected);
 	}
 
 	@FunctionalInterface
