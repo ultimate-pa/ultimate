@@ -2,6 +2,8 @@
 /* Date: 2018-05-25
  * Author: jonaswerner95@gmail.com
  *
+ * loop with two paths inside, where both go through a shared node.
+ *	NOTE: FastUPR cannot deal with <= only with =, <, >
  */
 
 procedure main() {
@@ -16,5 +18,5 @@ procedure main() {
 		}
 		x := x + 1;
 	}	
-	assert x == 12;
+	assert x == 11;
 }
