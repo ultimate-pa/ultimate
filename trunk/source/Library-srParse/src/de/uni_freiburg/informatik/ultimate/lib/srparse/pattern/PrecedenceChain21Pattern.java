@@ -71,19 +71,23 @@ public class PrecedenceChain21Pattern extends PatternType {
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();
-			ct.add(counterTrace(phase(Q), phase(R.negate().and(S.negate())), phase(R.negate().and(P)), phaseT()));
-			ct.add(counterTrace(phase(Q), phase(R.negate().and(T.negate())), phase(R.negate().and(S)),
+			ct.add(counterTrace(phaseT(), phase(Q), phase(R.negate().and(S.negate())), phase(R.negate().and(P)),
+					phaseT()));
+			ct.add(counterTrace(phaseT(), phase(Q), phase(R.negate().and(T.negate())), phase(R.negate().and(S)),
 					phase(R.negate().and(T.negate())), phase(R.negate().and(P)), phaseT()));
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD Q = scope.getCdd1();
-			ct.add(counterTrace(phase(Q), phase(S.negate()), phase(P), phaseT()));
-			ct.add(counterTrace(phase(Q), phase(T.negate()), phase(S), phase(T.negate()), phase(P), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(Q), phase(S.negate()), phase(P), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(Q), phase(T.negate()), phase(S), phase(T.negate()), phase(P),
+					phaseT()));
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();
-			ct.add(counterTrace(phase(Q), phase(R.negate().and(S.negate())), phase(R.negate().and(P)), phaseT()));
-			ct.add(counterTrace(phase(Q), phase(R.negate().and(T.negate())), phase(R.negate().and(S)),
-					phase(R.negate().and(T.negate())), phase(R.negate().and(P)), phase(R), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate().and(S.negate())),
+					phase(R.negate().and(P)), phaseT()));
+			ct.add(counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate().and(T.negate())),
+					phase(R.negate().and(S)), phase(R.negate().and(T.negate())), phase(R.negate().and(P)), phase(R),
+					phaseT()));
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}

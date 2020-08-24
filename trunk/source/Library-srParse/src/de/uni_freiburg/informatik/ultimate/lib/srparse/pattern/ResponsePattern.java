@@ -32,11 +32,9 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
  * "{scope}, it is always the case that if "P" holds, then "S" eventually holds"
@@ -58,37 +56,20 @@ public class ResponsePattern extends PatternType {
 		final CDD P = cdds[1];
 
 		final CounterTrace ct;
-
-		if (scope instanceof SrParseScopeGlobally) {
-			// Globally, it is always the case that if P holds then S eventually holds.
-			// (¬(true;|P ∧ ¬S|;|¬S|)) -> true
-			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn
-			// S.negate müßte bis zum ende des intervalls gelten
-			// TODO: Das leads-to scheint falsch
-			ct = counterTrace(phaseT(), phase(P.and(S.negate())), phase(S.negate()), phaseT());
-			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
-		} else if (scope instanceof SrParseScopeBefore) {
-			// Before Q, it is always the case that if P holds then S eventually holds.
-			// ¬(|¬Q|;|P ∧ ¬S ∧ ¬Q|;|¬S ∧ ¬Q|;|Q|; true)
+		if (scope instanceof SrParseScopeBefore) {
 			final CDD Q = scope.getCdd1();
-			ct = counterTrace(phase(Q.negate()), phase(P.and(Q.negate()).and(S.negate())),
-					phase(S.negate().and(Q.negate())), phase(Q), phaseT());
+			ct = counterTrace(phase(Q.negate()), phase(Q.negate().and(P).and(S.negate())),
+					phase(Q.negate().and(S.negate())), phase(Q), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
-			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn
-			// S.negate müßte bis zum ende des intervalls gelten
-			ct = counterTrace(phaseT());
-			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
-		} else if (scope instanceof SrParseScopeAfter) {
-			// (¬(true;|Q|;true;|P ∧ ¬S|;|¬S|)) -> true
-			// TODO: Amalinda schrieb: hier brauchen wir einen anderen Mechanismus denn
-			// S.negate müßte bis zum ende des intervalls gelten
-			ct = counterTrace(phaseT());
-			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+			final CDD Q = scope.getCdd1();
+			final CDD R = scope.getCdd2();
+			ct = counterTrace(phaseT(), phase(Q), phase(R.negate()), phase(R.negate().and(P).and(S.negate())),
+					phase(R.negate().and(S.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();
 			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()),
-					phase(P.and(R.negate()).and(S.negate())), phase(R.negate().and(S.negate())), phase(R), phaseT());
+					phase(R.negate().and(P).and(S.negate())), phase(R.negate().and(S.negate())), phase(R), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
