@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
@@ -59,30 +59,36 @@ public class PrecedenceChain21Pattern extends PatternType {
 		final CDD S = cdds[1];
 		final CDD T = cdds[0];
 
-		// final CDD Q = scope.getCdd1();
-		// final CDD R = scope.getCdd2();
-
-		final CounterTrace ct;
+		final List<CounterTrace> ct = new ArrayList<>();
 		if (scope instanceof SrParseScopeGlobally) {
-			// TODO: needs 2 ct formulas
-			ct = counterTrace(phase(S.negate()), phase(S.and(T.negate())), phase(T.negate()), phase(P), phaseT());
+			ct.add(counterTrace(phase(S.negate()), phase(P), phaseT()));
+			ct.add(counterTrace(phase(T.negate()), phase(S), phase(T.negate()), phase(P), phaseT()));
 		} else if (scope instanceof SrParseScopeBefore) {
-			ct = counterTrace(phaseT());
-			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+			final CDD Q = scope.getCdd1();
+			ct.add(counterTrace(phase(Q.negate().and(S.negate())), phase(Q.negate().and(P)), phaseT()));
+			ct.add(counterTrace(phase(Q.negate().and(T.negate())), phase(Q.negate().and(S)),
+					phase(Q.negate().and(T.negate())), phase(Q.negate().and(P)), phaseT()));
 		} else if (scope instanceof SrParseScopeAfterUntil) {
-			ct = counterTrace(phaseT());
-			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+			final CDD Q = scope.getCdd1();
+			final CDD R = scope.getCdd2();
+			ct.add(counterTrace(phase(Q), phase(R.negate().and(S.negate())), phase(R.negate().and(P)), phaseT()));
+			ct.add(counterTrace(phase(Q), phase(R.negate().and(T.negate())), phase(R.negate().and(S)),
+					phase(R.negate().and(T.negate())), phase(R.negate().and(P)), phaseT()));
 		} else if (scope instanceof SrParseScopeAfter) {
-			ct = counterTrace(phaseT());
-			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+			final CDD Q = scope.getCdd1();
+			ct.add(counterTrace(phase(Q), phase(S.negate()), phase(P), phaseT()));
+			ct.add(counterTrace(phase(Q), phase(T.negate()), phase(S), phase(T.negate()), phase(P), phaseT()));
 		} else if (scope instanceof SrParseScopeBetween) {
-			ct = counterTrace(phaseT());
-			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
+			final CDD Q = scope.getCdd1();
+			final CDD R = scope.getCdd2();
+			ct.add(counterTrace(phase(Q), phase(R.negate().and(S.negate())), phase(R.negate().and(P)), phaseT()));
+			ct.add(counterTrace(phase(Q), phase(R.negate().and(T.negate())), phase(R.negate().and(S)),
+					phase(R.negate().and(T.negate())), phase(R.negate().and(P)), phase(R), phaseT()));
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
 
-		return Collections.singletonList(ct);
+		return ct;
 	}
 
 	@Override
