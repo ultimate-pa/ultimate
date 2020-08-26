@@ -23,5 +23,5 @@ modifies y;
 		call inc();
 		call inc();
 	}
-    assert (y == 10);
+    assert (y == 11);
 }

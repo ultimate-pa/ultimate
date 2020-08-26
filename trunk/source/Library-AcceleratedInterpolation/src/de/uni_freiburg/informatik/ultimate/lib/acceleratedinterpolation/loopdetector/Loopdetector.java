@@ -38,11 +38,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -121,18 +121,38 @@ public class Loopdetector<LETTER extends IIcfgTransition<?>> {
 		final Map<IcfgLocation, List<Integer>> result = new HashMap<>();
 		for (final Entry<IcfgLocation, List<Integer>> loop : possibleCycles.entrySet()) {
 			final IcfgLocation loopHead = loop.getKey();
-			final IcfgLocation procedureEntry = procEntries.get(loopHead.getProcedure());
 			final List<Integer> loopBody = new ArrayList<>(loop.getValue());
 			final List<Integer> loopBodyNoProcedures = new ArrayList<>(loopBody);
+			// if (loopHead == procedureEntry) {
+			// for (int j = 0; j < loopBody.size() - 1; j++) {
+			// final Pair<Integer, Integer> currentLoop = new Pair<>(loopBody.get(j), loopBody.get(j + 1));
+			// for (int i = currentLoop.getFirst(); i <= currentLoop.getSecond(); i++) {
+			// final LETTER l = mTrace.get(i);
+			// if (mTrace.get(i) instanceof ICallAction || mTrace.get(i) instanceof IReturnAction) {
+			// loopBodyNoProcedures.remove(currentLoop.getSecond());
+			// }
+			// }
+			// }
+			// }
 			/*
 			 * Allow only loops that either go through a procedure, meaning calling the procedure in another procedure.
 			 * Or only loops inside a procedure. This prevents procedures themselves being recognized as loops
 			 */
-			if (loopHead == procedureEntry) {
-				for (int j = 0; j < loopBody.size() - 1; j++) {
-					final Pair<Integer, Integer> currentLoop = new Pair<>(loopBody.get(j), loopBody.get(j + 1));
-					for (int i = currentLoop.getFirst(); i < currentLoop.getSecond(); i++) {
-						if (mTrace.get(i) instanceof ICallAction || mTrace.get(i) instanceof IReturnAction) {
+			for (int j = 0; j < loopBody.size() - 1; j++) {
+				final Pair<Integer, Integer> currentLoop = new Pair<>(loopBody.get(j), loopBody.get(j + 1));
+				for (int i = currentLoop.getFirst(); i <= currentLoop.getSecond(); i++) {
+					final LETTER l = mTrace.get(i);
+					boolean foundCall = false;
+					if (l instanceof IReturnAction) {
+						final Return ret = (Return) l;
+						final IcfgLocation call = ret.getCallerProgramPoint();
+						for (int k = i; k >= currentLoop.getFirst(); k--) {
+							if (mTraceLocations.get(k) == call) {
+								foundCall = true;
+								break;
+							}
+						}
+						if (!foundCall) {
 							loopBodyNoProcedures.remove(currentLoop.getSecond());
 						}
 					}

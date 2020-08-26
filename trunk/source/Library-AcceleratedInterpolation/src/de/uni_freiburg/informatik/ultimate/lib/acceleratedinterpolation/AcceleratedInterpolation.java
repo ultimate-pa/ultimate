@@ -111,7 +111,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 	 * How to deal with loops.
 	 */
 	public enum AccelerationMethod {
-		NONE, FAST_UPR, UNDERAPPROXIMATION
+		NONE, FAST_UPR, UNDERAPPROXIMATION, OVERAPPROXIMATION_WERNER
 	}
 
 	private final ILogger mLogger;
@@ -247,7 +247,7 @@ public class AcceleratedInterpolation<LETTER extends IIcfgTransition<?>> impleme
 			for (final List<LETTER> loop : loophead.getValue()) {
 				final UnmodifiableTransFormula loopRelation = mPredHelper.traceToTf(loop);
 				final UnmodifiableTransFormula acceleratedLoopRelation =
-						mAccelerator.accelerateLoop(loopRelation, AccelerationMethod.FAST_UPR);
+						mAccelerator.accelerateLoop(loopRelation, loophead.getKey(), AccelerationMethod.FAST_UPR);
 				if (!mAccelerator.accelerationFinishedCorrectly()) {
 					accelerationFinishedCorrectly = false;
 					break;

@@ -181,7 +181,6 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			loop.setOutVars(path.getFirst().getOutVars());
 
 			loop.setLoopExit(mLoopExitNodes.get(loopHead));
-
 		}
 	}
 

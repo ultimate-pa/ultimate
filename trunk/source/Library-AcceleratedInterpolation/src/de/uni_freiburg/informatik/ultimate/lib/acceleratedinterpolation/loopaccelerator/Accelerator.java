@@ -33,6 +33,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRCore;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.Loop;
 import de.uni_freiburg.informatik.ultimate.lib.acceleratedinterpolation.AcceleratedInterpolation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -66,13 +67,15 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 	 * @param accelerationMethod
 	 * @return
 	 */
-	public UnmodifiableTransFormula accelerateLoop(final UnmodifiableTransFormula loop,
+	public UnmodifiableTransFormula accelerateLoop(final UnmodifiableTransFormula loop, final IcfgLocation loopHead,
 			final AcceleratedInterpolation.AccelerationMethod accelerationMethod) {
 		switch (accelerationMethod) {
 		case NONE:
 			break;
 		case FAST_UPR:
 			return fastUprAcceleration(loop);
+		case OVERAPPROXIMATION_WERNER:
+			return overapproximationWernerAcceleration(loop, loopHead);
 		case UNDERAPPROXIMATION:
 			mLogger.warn("Not implmented yet");
 			throw new UnsupportedOperationException();
@@ -103,6 +106,12 @@ public class Accelerator<LETTER extends IIcfgTransition<?>> {
 			mFoundAcceleration = false;
 			return loop;
 		}
+	}
+
+	private UnmodifiableTransFormula overapproximationWernerAcceleration(final UnmodifiableTransFormula loopTf,
+			final IcfgLocation loopHead) {
+		final Loop loop = new Loop(loopHead, mScript);
+		return loopTf;
 	}
 
 	private void underApproxAcceleration(final Map<IcfgLocation, List<LETTER>> loops) {
