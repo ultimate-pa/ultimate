@@ -70,9 +70,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
@@ -115,7 +117,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pat
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
@@ -225,6 +226,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private final RelevanceAnalysisMode mFaultLocalizationMode;
 	private final boolean mFaultLocalizationAngelic;
 	private final Set<IcfgLocation> mHoareAnnotationLocations;
+	private final Set<IPredicate> mHoareAnnotationStates;
 	private final SearchStrategy mSearchStrategy;
 	private final StrategyFactory<LETTER> mStrategyFactory;
 	private final PathProgramDumpController<LETTER> mPathProgramDumpController;
@@ -268,12 +270,14 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mComputeHoareAnnotation) {
 			mHoareAnnotationLocations = (Set<IcfgLocation>) TraceAbstractionUtils
 					.getLocationsForWhichHoareAnnotationIsComputed(rootNode, mPref.getHoareAnnotationPositions());
+			mHoareAnnotationStates = new HashSet<>();
 		} else {
 			mHoareAnnotationLocations = Collections.emptySet();
+			mHoareAnnotationStates = Collections.emptySet();
 		}
 		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE;
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
-		mHaf = new HoareAnnotationFragments<>(mLogger, mHoareAnnotationLocations, mPref.getHoareAnnotationPositions());
+		mHaf = new HoareAnnotationFragments<>(mLogger, mHoareAnnotationStates, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mServices, super.mCsToolkit.getManagedScript(),
 				predicateFactory, computeHoareAnnotation, mHoareAnnotationLocations);
 		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(
@@ -331,6 +335,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mAStarRandomHeuristicSeed = taPrefs.getHeuristicEmptinessCheckAStarHeuristicRandomSeed();
 	}
 
+	private Map<Marking<LETTER, IPredicate>, IPredicate> mMarking2State = null;
+
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		if (isSequential()) {
@@ -356,8 +362,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				net = petrifiedCfg;
 			}
 			try {
-				mAbstraction = new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(mServices),
-						mStateFactoryForRefinement, net).getResult();
+				final PetriNet2FiniteAutomaton<LETTER, IPredicate> conversion = new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(mServices),
+						mStateFactoryForRefinement, net);
+				mAbstraction = conversion.getResult();
+				mMarking2State = conversion.getStateMap();
 			} catch (final PetriNetNot1SafeException e) {
 				final Collection<?> unsafePlaces = e.getUnsafePlaces();
 				if (unsafePlaces == null) {
@@ -371,17 +379,32 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			}
 		}
 
-		if (mComputeHoareAnnotation
-				&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
-			final INestedWordAutomaton<LETTER, IPredicate> nwa =
-					(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
+		if (mComputeHoareAnnotation) {
+			final INestedWordAutomaton<LETTER, IPredicate> nwa = (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
 			for (final IPredicate pred : nwa.getStates()) {
-				for (final OutgoingCallTransition<LETTER, IPredicate> trans : nwa.callSuccessors(pred)) {
-					mHoareAnnotationLocations.add(((ISLPredicate) pred).getProgramPoint());
-					mHoareAnnotationLocations.add(((ISLPredicate) trans.getSucc()).getProgramPoint());
+				if (pred instanceof ISLPredicate) {
+					ISLPredicate locPred = (ISLPredicate) pred;
+					if (mHoareAnnotationLocations.contains(locPred.getProgramPoint())) {
+						mHoareAnnotationStates.add(locPred);
+					}
+				} else if (pred instanceof IMLPredicate) {
+					IMLPredicate locPred = (IMLPredicate) pred;
+					if (Arrays.stream(locPred.getProgramPoints()).anyMatch(mHoareAnnotationLocations::contains)) {
+						mHoareAnnotationStates.add(locPred);
+					}
+				}
+
+				if (mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
+					for (final OutgoingCallTransition<LETTER, IPredicate> trans : nwa.callSuccessors(pred)) {
+						mHoareAnnotationLocations.add(((ISLPredicate)pred).getProgramPoint());
+						mHoareAnnotationStates.add((ISLPredicate)pred);
+						mHoareAnnotationLocations.add(((ISLPredicate) trans.getSucc()).getProgramPoint());
+						mHoareAnnotationStates.add(trans.getSucc());
+					}
 				}
 			}
 		}
+
 		if (mWitnessAutomaton != null) {
 			mAbstraction = WitnessUtils.constructIcfgAndWitnessProduct(mServices, mAbstraction, mWitnessAutomaton,
 					mCsToolkit, mPredicateFactory, mStateFactoryForRefinement, mLogger, Property.NON_REACHABILITY);
@@ -1044,20 +1067,25 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	@Override
 	protected void computeCFGHoareAnnotation() {
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
+		final HoareAnnotationComposer clha = computeHoareAnnotationComposer();
+		final HoareAnnotationWriter writer = new HoareAnnotationWriter(mIcfg, mCsToolkit, mPredicateFactory, clha,
+				mServices, mSimplificationTechnique, mXnfConversionTechnique);
+		// writer.addHoareAnnotationToCFG();
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
+		mCegarLoopBenchmark.addHoareAnnotationData(clha.getHoareAnnotationStatisticsGenerator());
+	}
+
+	protected HoareAnnotationComposer computeHoareAnnotationComposer() {
 		if (mCsToolkit.getManagedScript().isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of Hoare annotation computation");
 		}
 		final INestedWordAutomaton<LETTER, IPredicate> abstraction =
 				(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
 		new HoareAnnotationExtractor<>(mServices, abstraction, mHaf);
 		final HoareAnnotationComposer clha = new HoareAnnotationComposer(mCsToolkit, mPredicateFactory, mHaf, mServices,
 				mSimplificationTechnique, mXnfConversionTechnique);
-		final HoareAnnotationWriter writer = new HoareAnnotationWriter(mIcfg, mCsToolkit, mPredicateFactory, clha,
-				mServices, mSimplificationTechnique, mXnfConversionTechnique);
-		writer.addHoareAnnotationToCFG();
-		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
-		mCegarLoopBenchmark.addHoareAnnotationData(clha.getHoareAnnotationStatisticsGenerator());
+		return clha;
 	}
 
 	@Override
@@ -1103,13 +1131,25 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	 */
 	public void finish() {
 		if (!isSequential() && mPref.useLbeInConcurrentAnalysis() == PetriNetLbe.OFF) {
-			// TODO OwickiGriesAnnotation<LETTER, IPredicate> annotation = OwickiGriesAnnotation.fromFloydHoare(net, floydHoare, htc);
-
-			// TODO: simplify
-
-			//assert annotation.isValidAnnotation() : "Invalid Owicki-Gries annotation";
+			try {
+				computeOwickiGries(mStateFactoryForRefinement);
+			} catch (AutomataLibraryException e) {
+				throw new RuntimeException(e); // TODO
+			}
 		}
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
+	}
+
+	private void computeOwickiGries(IPetriNet2FiniteAutomatonStateFactory<IPredicate> factory) throws PetriNetNot1SafeException, AutomataOperationCanceledException {
+
+		Map<IPredicate, IPredicate> floydHoare = computeHoareAnnotationComposer().getLoc2hoare();
+		IHoareTripleChecker htc = null; // TODO
+
+		assert !floydHoare.isEmpty();
+		//OwickiGriesAnnotation<LETTER, STATE> annotation = OwickiGriesAnnotation.fromFloydHoare(petriNet,
+		//		petriFloydHoare, htc);
+		// TODO: simplify
+		//assert annotation.isValidAnnotation() : "Invalid Owicki-Gries annotation";
 	}
 
 	@Override

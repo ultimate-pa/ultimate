@@ -187,6 +187,10 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOpera
 		return mResult;
 	}
 
+	public Map<Marking<LETTER, PLACE>, PLACE> getStateMap() {
+		return mMarking2State;
+	}
+
 	@Override
 	public boolean checkResult(final IStateFactory<PLACE> stateFactory) throws AutomataLibraryException {
 		return true;

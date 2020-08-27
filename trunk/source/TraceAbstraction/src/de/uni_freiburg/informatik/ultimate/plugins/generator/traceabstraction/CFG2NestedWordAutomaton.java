@@ -283,6 +283,10 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		if (addThreadUsageMonitors) {
 			for (final Entry<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> entry : icfg
 					.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().entrySet()) {
+
+				final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
+				final Term trueTerm = mgdScript.getScript().term("true");
+
 				final List<ThreadInstance> threadInstances = entry.getValue();
 				final List<IPredicate> notinUseStates = new ArrayList<>();
 				final List<IPredicate> inUseStates = new ArrayList<>();
@@ -290,12 +294,12 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 					IPredicate threadNotInUsePredicate;
 					{
 						final String threadNotInUseString = ti.getThreadInstanceName() + "NotInUse";
-						threadNotInUsePredicate = predicateFactory.newDebugPredicate(threadNotInUseString);
+						threadNotInUsePredicate = predicateFactory.newPredicate(trueTerm); //.newDebugPredicate(threadNotInUseString);
 					}
 					IPredicate threadInUsePredicate;
 					{
 						final String threadInUseString = ti.getThreadInstanceName() + "InUse";
-						threadInUsePredicate = predicateFactory.newDebugPredicate(threadInUseString);
+						threadInUsePredicate = predicateFactory.newPredicate(trueTerm); //.newDebugPredicate(threadInUseString);
 					}
 					threadInstance2notinUseState.put(ti.getThreadInstanceName(), threadNotInUsePredicate);
 					threadInstance2inUseState.put(ti.getThreadInstanceName(), threadInUsePredicate);
