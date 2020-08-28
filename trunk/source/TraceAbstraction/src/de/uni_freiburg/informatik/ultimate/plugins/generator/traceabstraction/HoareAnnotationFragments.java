@@ -60,6 +60,8 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 
 	private final ILogger mLogger;
 
+	private final Map<IPredicate, IPredicate> mPred2ProgPoint = new HashMap<>();
+
 	/**
 	 * States for contexts were the context was already removed (because it was a dead end) from the abstraction.
 	 */
@@ -129,6 +131,25 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 	 * HoareAnnotationFragments stores double deckers that have been removed by a dead end removal.
 	 */
 	private void update(final IUpdate update, final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> newAbstraction) {
+		final Set<IPredicate> oldStates;
+		if (mPred2ProgPoint.isEmpty()) {
+			oldStates = (Set<IPredicate>) mHoareAnnotationPositions;
+		} else {
+			oldStates = mPred2ProgPoint.keySet();
+		}
+		// TODO possibly merge this loop with the next, avoid redundant computation of getNewPredicates
+		for (final IPredicate oldState : oldStates) {
+			final IPredicate pp = getProgramPoint(oldState);
+			final List<IPredicate> newStates = update.getNewPredicates(oldState);
+			if (newStates != null) {
+				for (final IPredicate newState : newStates) {
+					assert !mPred2ProgPoint.containsKey(newState);
+					mPred2ProgPoint.put(newState, pp);
+				}
+				mPred2ProgPoint.remove(oldState);
+			}
+		}
+
 		final Map<IPredicate, HashRelation<IPredicate, IPredicate>> oldLiveContexts2ProgPoint2Preds =
 				mLiveContexts2ProgPoint2Preds;
 		mLiveContexts2ProgPoint2Preds = new HashMap<>();
@@ -241,35 +262,31 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 	}
 
 	void addDoubleDecker(final IPredicate down, final IPredicate up, final IPredicate empty) {
-		//final STATE pp = (STATE)getProgramPoint(up); // TODO
+		final IPredicate pp = getProgramPoint(up);
 		if (mHoareAnnotationPos == HoareAnnotationPositions.LoopsAndPotentialCycles
-				&& !mHoareAnnotationPositions.contains(up)) {
+				&& !mHoareAnnotationPositions.contains(pp)) {
 			// do not compute Hoare annotation for this program point
 			return;
 		}
 		if (down == empty) {
-			mProgPoint2StatesWithEmptyContext.addPair(up, up);
+			mProgPoint2StatesWithEmptyContext.addPair(pp, up);
 		} else {
 			HashRelation<IPredicate, IPredicate> pp2preds = mLiveContexts2ProgPoint2Preds.get(down);
 			if (pp2preds == null) {
 				pp2preds = new HashRelation<>();
 				mLiveContexts2ProgPoint2Preds.put(down, pp2preds);
 			}
-			pp2preds.addPair(up, up);
+			pp2preds.addPair(pp, up);
 		}
 	}
 
-	/*private IcfgLocation getProgramPoint(final IPredicate pred) {
-		final IcfgLocation pp;
-		if (pred instanceof SPredicate) {
-			pp = ((SPredicate) pred).getProgramPoint();
-		} else if (pred instanceof UnknownState) {
-			pp = ((UnknownState) pred).getProgramPoint();
-		} else {
-			throw new AssertionError("predicate does not offer program point");
+	private IPredicate getProgramPoint(final IPredicate pred) {
+		final IPredicate pp = mPred2ProgPoint.get(pred);
+		if (pp == null) {
+			return pred;
 		}
 		return pp;
-	}*/
+	}
 
 	void addContextEntryPair(final IPredicate context, final IPredicate entry) {
 		mContext2Entry.put(context, entry);
