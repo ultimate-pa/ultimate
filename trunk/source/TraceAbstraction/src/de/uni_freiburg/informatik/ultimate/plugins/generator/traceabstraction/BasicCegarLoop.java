@@ -1146,15 +1146,12 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		Map<IPredicate, IPredicate> floydHoare = computeHoareAnnotationComposer().getLoc2hoare();
 		IHoareTripleChecker htc = null; // TODO
 
-		final Map<IPredicate, Marking<LETTER, IPredicate>> state2Marking = new HashMap<>();
-		for (final Map.Entry<Marking<LETTER, IPredicate>, IPredicate> entry : mMarking2State.entrySet()) {
-			state2Marking.put(entry.getValue(), entry.getKey());
-		}
-
 		final Map<Marking<LETTER, IPredicate>, IPredicate> petriFloydHoare = new HashMap<>();
-		for (final Map.Entry<IPredicate, IPredicate> entry : floydHoare.entrySet()) {
-			final Marking<LETTER, IPredicate> marking = state2Marking.get(entry.getKey());
-			petriFloydHoare.put(marking, entry.getValue());
+		for (final Map.Entry<Marking<LETTER, IPredicate>, IPredicate> entry : mMarking2State.entrySet()) {
+			final Marking<LETTER, IPredicate> marking = entry.getKey();
+			final IPredicate state = entry.getValue();
+			final IPredicate hoare = floydHoare.get(state);
+			petriFloydHoare.put(marking, hoare);
 		}
 
 		assert !petriFloydHoare.isEmpty();
