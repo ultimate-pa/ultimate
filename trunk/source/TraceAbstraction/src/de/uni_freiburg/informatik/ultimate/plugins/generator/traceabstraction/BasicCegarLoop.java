@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -1145,7 +1146,19 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		Map<IPredicate, IPredicate> floydHoare = computeHoareAnnotationComposer().getLoc2hoare();
 		IHoareTripleChecker htc = null; // TODO
 
-		assert !floydHoare.isEmpty();
+		final Map<IPredicate, Marking<LETTER, IPredicate>> state2Marking = new HashMap<>();
+		for (final Map.Entry<Marking<LETTER, IPredicate>, IPredicate> entry : mMarking2State.entrySet()) {
+			state2Marking.put(entry.getValue(), entry.getKey());
+		}
+
+		final Map<Marking<LETTER, IPredicate>, IPredicate> petriFloydHoare = new HashMap<>();
+		for (final Map.Entry<IPredicate, IPredicate> entry : floydHoare.entrySet()) {
+			final Marking<LETTER, IPredicate> marking = state2Marking.get(entry.getKey());
+			petriFloydHoare.put(marking, entry.getValue());
+		}
+
+		assert !petriFloydHoare.isEmpty();
+
 		//OwickiGriesAnnotation<LETTER, STATE> annotation = OwickiGriesAnnotation.fromFloydHoare(petriNet,
 		//		petriFloydHoare, htc);
 		// TODO: simplify
