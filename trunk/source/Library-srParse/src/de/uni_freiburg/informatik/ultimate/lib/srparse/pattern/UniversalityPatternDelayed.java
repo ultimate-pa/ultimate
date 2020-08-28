@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2018 Amalinda Post
+ * Copyright (C) 2018 Nico Hauff (hauffn@informatik.uni-freiburg.de)
  * Copyright (C) 2018 University of Freiburg
  *
  * This file is part of the ULTIMATE Library-srParse plug-in.
@@ -32,6 +31,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
@@ -40,15 +40,14 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * {scope}, it is always the case that "S" holds.
+ * {scope}, it is always the case that "S" holds at most "c1" time units later
  *
- * @author Amalinda Post
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
  *
  */
-public class UniversalityPattern extends PatternType {
+public class UniversalityPatternDelayed extends PatternType {
 
-	public UniversalityPattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public UniversalityPatternDelayed(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
@@ -57,26 +56,29 @@ public class UniversalityPattern extends PatternType {
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		final SrParseScope scope = getScope();
 		final CDD S = cdds[0];
+		final int c1 = durations[0];
 
 		final CounterTrace ct;
 		if (scope instanceof SrParseScopeGlobally) {
-			ct = counterTrace(phaseT(), phase(S.negate()), phaseT());
+			ct = counterTrace(phase(cddT(), BoundTypes.GREATEREQUAL, c1), phaseT(), phase(S.negate()), phaseT());
 		} else if (scope instanceof SrParseScopeBefore) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phase(P.negate()), phase(P.negate().and(S.negate())), phaseT());
+			ct = counterTrace(phase(P.negate(), BoundTypes.GREATEREQUAL, c1), phase(P.negate().and(S.negate())),
+					phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(S.negate().and(Q.negate())),
-					phaseT());
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate(), BoundTypes.GREATEREQUAL, c1),
+					phase(Q.negate().and(S.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
-			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(S.negate()), phaseT());
+			ct = counterTrace(phaseT(), phase(P), phase(cddT(), BoundTypes.GREATEREQUAL, c1), phase(S.negate()),
+					phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(S.negate().and(Q.negate())),
-					phase(Q.negate()), phase(Q), phaseT());
+			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate(), BoundTypes.GREATEREQUAL, c1),
+					phase(Q.negate().and(S.negate())), phaseT(), phase(Q), phaseT());
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
@@ -95,13 +97,15 @@ public class UniversalityPattern extends PatternType {
 		}
 		sb.append("it is always the case that \"");
 		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\" holds");
+		sb.append("\" holds at most \"");
+		sb.append(getDuration().get(0));
+		sb.append("\" time units later");
 		return sb.toString();
 	}
 
 	@Override
 	public PatternType rename(final String newName) {
-		return new UniversalityPattern(getScope(), newName, getCdds(), getDuration());
+		return new UniversalityPatternDelayed(getScope(), newName, getCdds(), getDuration());
 	}
 
 	@Override
@@ -111,6 +115,6 @@ public class UniversalityPattern extends PatternType {
 
 	@Override
 	public int getExpectedDurationSize() {
-		return 0;
+		return 1;
 	}
 }

@@ -52,15 +52,16 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
  */
 public class PatternBuilder {
 
-	private static final Class<?>[] PATTERNS = new Class<?>[] { BndDelayedResponsePatternUT.class,
-			BndEntryConditionPattern.class, BndExistencePattern.class, BndInvariancePattern.class,
-			BndPossResponsePattern.class, BndRecurrencePattern.class, BndResponsePatternTT.class,
-			BndResponsePatternTU.class, BndResponsePatternUT.class, BndTriggeredEntryConditionPattern.class,
-			ConstrainedChainPattern.class, InitializationPattern.class, InstAbsPattern.class, InvariantPattern.class,
-			MaxDurationPattern.class, MinDurationPattern.class, PossibilityPattern.class,
-			PrecedenceChain12Pattern.class, PrecedenceChain21Pattern.class, PrecedencePattern.class,
-			ResponseChain12Pattern.class, ResponseChain21Pattern.class, ResponsePattern.class,
-			UniversalityPattern.class, TogglePattern.class, TogglePatternDelayed.class };
+	private static final Class<?>[] PATTERNS =
+			new Class<?>[] { BndDelayedResponsePatternUT.class, BndEntryConditionPattern.class,
+					BndExistencePattern.class, BndInvariancePattern.class, BndPossResponsePattern.class,
+					BndRecurrencePattern.class, BndResponsePatternTT.class, BndResponsePatternTU.class,
+					BndResponsePatternUT.class, BndTriggeredEntryConditionPattern.class, ConstrainedChainPattern.class,
+					InitializationPattern.class, InstAbsPattern.class, InvariantPattern.class, MaxDurationPattern.class,
+					MinDurationPattern.class, PossibilityPattern.class, PrecedenceChain12Pattern.class,
+					PrecedenceChain21Pattern.class, PrecedencePattern.class, ResponseChain12Pattern.class,
+					ResponseChain21Pattern.class, ResponsePattern.class, UniversalityPattern.class,
+					UniversalityPatternDelayed.class, TogglePattern.class, TogglePatternDelayed.class };
 
 	private static final Map<Class<? extends PatternType>, PatternTypeConstructor> CONSTRUCTORS = new HashMap<>();
 

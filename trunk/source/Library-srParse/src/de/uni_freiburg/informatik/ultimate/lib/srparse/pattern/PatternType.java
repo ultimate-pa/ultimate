@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * All Hanfor patterns have this type as base type.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -183,7 +183,7 @@ public abstract class PatternType {
 	 * @return A phase with bound that can be empty
 	 */
 	protected static DCPhase phaseE(final CDD x, final BoundTypes boundType, final int duration) {
-		return new CounterTrace.DCPhase(CDD.TRUE, x, boundType.asValue(), duration, Collections.emptySet(), true);
+		return new CounterTrace.DCPhase(cddT(), x, boundType.asValue(), duration, Collections.emptySet(), true);
 	}
 
 	/**
@@ -269,7 +269,7 @@ public abstract class PatternType {
 	}
 
 	/**
-	 * 
+	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
