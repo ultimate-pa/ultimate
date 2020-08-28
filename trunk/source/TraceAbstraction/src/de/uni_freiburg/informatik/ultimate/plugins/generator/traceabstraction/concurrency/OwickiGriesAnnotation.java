@@ -4,9 +4,8 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
 public class OwickiGriesAnnotation<LETTER, PLACE> {
 
@@ -17,18 +16,9 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	private final Map<PLACE, IPredicate> mFormulaMapping;
 	// ...
 
-	private final IHoareTripleChecker mHtc;
-
-	public OwickiGriesAnnotation(IHoareTripleChecker htc) {
+	public OwickiGriesAnnotation() {
 		mPetriNet = null;
 		mFormulaMapping = null;
-		mHtc = htc;
-	}
-
-	public boolean isValidAnnotation() {
-		// ...
-		// mHtc.checkInternal(pre, act, succ)
-		return false;
 	}
 
 	public int getSize() {
@@ -37,9 +27,9 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 	}
 
 	public static <LETTER, PLACE> OwickiGriesAnnotation<LETTER, PLACE> fromFloydHoare(IPetriNet<LETTER, PLACE> net,
-			Map<Marking<LETTER, PLACE>, IPredicate> floydHoare, IHoareTripleChecker htc) {
+			Map<Marking<LETTER, PLACE>, IPredicate> floydHoare, IPredicateUnifier unifier) {
 		// ...
-		return new OwickiGriesAnnotation<>(htc);
+		return new OwickiGriesAnnotation<>();
 	}
 
 }
