@@ -4,8 +4,10 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
 public class OwickiGriesAnnotation<LETTER, PLACE> {
 
@@ -26,9 +28,14 @@ public class OwickiGriesAnnotation<LETTER, PLACE> {
 		return 0;
 	}
 
-	public static <LETTER, PLACE> OwickiGriesAnnotation<LETTER, PLACE> fromFloydHoare(IPetriNet<LETTER, PLACE> net,
-			Map<Marking<LETTER, PLACE>, IPredicate> floydHoare, IPredicateUnifier unifier) {
+	public static <LETTER, PLACE> OwickiGriesAnnotation<LETTER, PLACE> fromFloydHoare(IUltimateServiceProvider services,
+			CfgSmtToolkit csToolkit, IPetriNet<LETTER, PLACE> net, Map<Marking<LETTER, PLACE>, IPredicate> floydHoare) {
+		final BasicPredicateFactory factory = new BasicPredicateFactory(services, csToolkit.getManagedScript(),
+				csToolkit.getSymbolTable());
+
+		// TODO Use factory.and(preds)
 		// ...
+
 		return new OwickiGriesAnnotation<>();
 	}
 
