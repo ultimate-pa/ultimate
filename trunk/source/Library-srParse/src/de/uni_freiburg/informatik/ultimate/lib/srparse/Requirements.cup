@@ -208,8 +208,8 @@ scope ::=
   
 pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
 			{: RESULT = new PatternBuilder(); RESULT.setType(InstAbsPattern.class); RESULT.addCdd(r); :}
-  		| IT IS ALWAYS THE CASE THAT expression:p HOLDS
-			{: RESULT = new PatternBuilder(); RESULT.setType(UniversalityPattern.class); RESULT.addCdd(p); :}
+  		| IT IS ALWAYS THE CASE THAT expression:r HOLDS
+			{: RESULT = new PatternBuilder(); RESULT.setType(UniversalityPattern.class); RESULT.addCdd(r); :}
   		| IT IS ALWAYS THE CASE THAT IF expression:r HOLDS COMMA? THEN expression:s HOLDS AS WELL
       		{: RESULT = new PatternBuilder(); RESULT.setType(InvariantPattern.class); RESULT.addCdd(s,r); :}
 	  	| expression:r EVENTUALLY HOLDS
