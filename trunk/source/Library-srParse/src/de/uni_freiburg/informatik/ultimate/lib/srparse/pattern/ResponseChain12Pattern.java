@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 /**
- * {scope}, it is always the case that if "P" holds, then "S" eventually holds and is succeeded by "T".
+ * {scope}, it is always the case that if "R" holds, then "S" eventually holds and is succeeded by "T".
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -46,10 +46,15 @@ public class ResponseChain12Pattern extends PatternType {
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
+		assert cdds.length == 3 && durations.length == 0;
+
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope scope = getScope();
-		final CDD P = cdds[2];
+		final CDD R = cdds[2];
 		final CDD S = cdds[1];
 		final CDD T = cdds[0];
+
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
 
