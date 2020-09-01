@@ -210,8 +210,8 @@ pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
 			{: RESULT = new PatternBuilder(); RESULT.setType(InstAbsPattern.class); RESULT.addCdd(r); :}
   		| IT IS ALWAYS THE CASE THAT expression:p HOLDS
 			{: RESULT = new PatternBuilder(); RESULT.setType(UniversalityPattern.class); RESULT.addCdd(p); :}
-  		| IT IS ALWAYS THE CASE THAT IF expression:p HOLDS COMMA? THEN expression:q HOLDS AS WELL
-      		{: RESULT = new PatternBuilder(); RESULT.setType(InvariantPattern.class); RESULT.addCdd(q,p); :}
+  		| IT IS ALWAYS THE CASE THAT IF expression:r HOLDS COMMA? THEN expression:s HOLDS AS WELL
+      		{: RESULT = new PatternBuilder(); RESULT.setType(InvariantPattern.class); RESULT.addCdd(s,r); :}
 	  	| expression:p EVENTUALLY HOLDS
 	      	{: RESULT = new PatternBuilder(); RESULT.setType(ResponsePattern.class); RESULT.addCdd(BoogieBooleanExpressionDecision.createTrue(),p); :}
 		| TRANSITIONS TO STATES IN WHICH expression:r HOLDS OCCUR AT MOST TWICE

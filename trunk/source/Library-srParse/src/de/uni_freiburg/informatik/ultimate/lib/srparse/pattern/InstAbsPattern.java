@@ -75,6 +75,7 @@ public class InstAbsPattern extends PatternType {
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
+
 		return Collections.singletonList(ct);
 	}
 
