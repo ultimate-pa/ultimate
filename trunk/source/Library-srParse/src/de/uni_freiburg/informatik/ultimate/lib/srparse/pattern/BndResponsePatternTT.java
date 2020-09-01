@@ -51,8 +51,11 @@ public class BndResponsePatternTT extends PatternType {
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
+		assert cdds.length == 2 && durations.length == 2;
+
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope scope = getScope();
-		// note: P and Q are reserved for scope, cdds are parsed in reverse order
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
 		final int c1 = durations[0];
