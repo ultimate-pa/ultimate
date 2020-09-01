@@ -244,8 +244,8 @@ rtpattern ::= ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
 				{: RESULT = new PatternBuilder().setType(MaxDurationPattern.class).addCdd(r).addDuration(c1); :}
 			| expression:r HOLDS AT LEAST EVERY duration:c1
 				{: RESULT = new PatternBuilder().setType(BndRecurrencePattern.class).addCdd(r).addDuration(c1); :}
-			| expression:p HOLDS AT MOST duration:d LATER
-				{: RESULT = new PatternBuilder().setType(UniversalityPatternDelayed.class).addCdd(p).addDuration(d); :}
+			| expression:r HOLDS AT MOST duration:c1 LATER
+				{: RESULT = new PatternBuilder().setType(UniversalityPatternDelayed.class).addCdd(r).addDuration(c1); :}
   			| IF expression:r HOLDS COMMA? THEN expression:s HOLDS AFTER AT MOST duration:c1
 				{: RESULT = new PatternBuilder().setType(BndResponsePatternUT.class).addCdd(s,r).addDuration(c1); :}
   			| IF expression:r HOLDS FOR AT LEAST duration:c1 COMMA? THEN expression:s HOLDS AFTERWARDS FOR AT LEAST duration:c2
