@@ -27,7 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
 /**
- * {scope}, it is always the case that if "P" holds, then "Q" eventually holds and is succeeded by "R", where "S" does not hold between "T" and "U"
+ * {scope}, it is always the case that if "R" holds, then "S" eventually holds and is succeeded by "T", where "U" does
+ * not hold between "V" and "W"
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -47,7 +48,12 @@ public class ConstrainedChainPattern extends PatternType {
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
+		assert cdds.length == 6 && durations.length == 0;
+
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope scope = getScope();
+
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
 

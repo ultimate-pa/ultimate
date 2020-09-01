@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * "{scope}, it is always the case that if "R" holds for at least "c1" time units and "S" holds, then "T" holds."
+ * {scope}, it is always the case that if "R" holds for at least "c1" time units and "S" holds, then "T" holds
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
