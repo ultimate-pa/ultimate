@@ -212,8 +212,8 @@ pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
 			{: RESULT = new PatternBuilder(); RESULT.setType(UniversalityPattern.class); RESULT.addCdd(p); :}
   		| IT IS ALWAYS THE CASE THAT IF expression:r HOLDS COMMA? THEN expression:s HOLDS AS WELL
       		{: RESULT = new PatternBuilder(); RESULT.setType(InvariantPattern.class); RESULT.addCdd(s,r); :}
-	  	| expression:p EVENTUALLY HOLDS
-	      	{: RESULT = new PatternBuilder(); RESULT.setType(ResponsePattern.class); RESULT.addCdd(BoogieBooleanExpressionDecision.createTrue(),p); :}
+	  	| expression:r EVENTUALLY HOLDS
+	      	{: RESULT = new PatternBuilder(); RESULT.setType(ResponsePattern.class); RESULT.addCdd(BoogieBooleanExpressionDecision.createTrue(),r); :}
 		| TRANSITIONS TO STATES IN WHICH expression:r HOLDS OCCUR AT MOST TWICE
 	      	{: RESULT = new PatternBuilder(); RESULT.setType(BndExistencePattern.class); RESULT.addCdd(r); :}
 		| IT IS ALWAYS THE CASE THAT opattern:p 
@@ -228,8 +228,8 @@ opattern ::= IF expression:r HOLDS COMMA? THEN expression:s PREVIOUSLY HELD
 				{: RESULT = new PatternBuilder(); RESULT.setType(PrecedenceChain12Pattern.class); RESULT.addCdd(t,s,r); :}
   			| IF expression:r HOLDS COMMA? THEN expression:s PREVIOUSLY HELD AND WAS PRECEDED BY expression:t
 				{: RESULT = new PatternBuilder(); RESULT.setType(PrecedenceChain21Pattern.class); RESULT.addCdd(t,s,r); :}
-  			| IF expression:p HOLDS COMMA? THEN expression:q EVENTUALLY HOLDS
-				{: RESULT = new PatternBuilder(); RESULT.setType(ResponsePattern.class); RESULT.addCdd(q,p); :}
+  			| IF expression:r HOLDS COMMA? THEN expression:s EVENTUALLY HOLDS
+				{: RESULT = new PatternBuilder(); RESULT.setType(ResponsePattern.class); RESULT.addCdd(s,r); :}
   			| IF expression:r HOLDS COMMA? THEN expression:s EVENTUALLY HOLDS AND IS SUCCEEDED BY expression:t
 				{: RESULT = new PatternBuilder(); RESULT.setType(ResponseChain12Pattern.class); RESULT.addCdd(t,s,r); :}
   			| IF expression:r HOLDS COMMA? THEN expression:s EVENTUALLY HOLDS AND IS SUCCEEDED BY expression:t WHERE expression:u DOES NOT HOLD BETWEEN expression:v AND expression:w
