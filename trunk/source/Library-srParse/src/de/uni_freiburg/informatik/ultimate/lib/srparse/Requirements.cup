@@ -206,8 +206,8 @@ scope ::=
       {: RESULT = new SrParseScopeAfterUntil(p,q); :}
   ;
   
-pattern ::=	IT IS NEVER THE CASE THAT expression:p HOLDS
-			{: RESULT = new PatternBuilder(); RESULT.setType(InstAbsPattern.class); RESULT.addCdd(p); :}
+pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
+			{: RESULT = new PatternBuilder(); RESULT.setType(InstAbsPattern.class); RESULT.addCdd(r); :}
   		| IT IS ALWAYS THE CASE THAT expression:p HOLDS
 			{: RESULT = new PatternBuilder(); RESULT.setType(UniversalityPattern.class); RESULT.addCdd(p); :}
   		| IT IS ALWAYS THE CASE THAT IF expression:p HOLDS COMMA? THEN expression:q HOLDS AS WELL
