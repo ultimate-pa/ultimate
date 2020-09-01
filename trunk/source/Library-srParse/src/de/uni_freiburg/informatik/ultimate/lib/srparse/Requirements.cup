@@ -216,10 +216,10 @@ pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
 	      	{: RESULT = new PatternBuilder(); RESULT.setType(ResponsePattern.class); RESULT.addCdd(BoogieBooleanExpressionDecision.createTrue(),r); :}
 		| TRANSITIONS TO STATES IN WHICH expression:r HOLDS OCCUR AT MOST TWICE
 	      	{: RESULT = new PatternBuilder(); RESULT.setType(BndExistencePattern.class); RESULT.addCdd(r); :}
-		| IT IS ALWAYS THE CASE THAT opattern:p 
-			{: RESULT = p; :}
-	  	| IT IS ALWAYS THE CASE THAT rtpattern:p
-	  		{: RESULT = p; :}
+		| IT IS ALWAYS THE CASE THAT opattern:r 
+			{: RESULT = r; :}
+	  	| IT IS ALWAYS THE CASE THAT rtpattern:r
+	  		{: RESULT = r; :}
 	  	;
   
 opattern ::= IF expression:r HOLDS COMMA? THEN expression:s PREVIOUSLY HELD

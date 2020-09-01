@@ -33,7 +33,8 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 /**
- * {scope}, if "R" holds, then there is at least one execution sequence such that "S" eventually holds
+ * {scope}, it is always the case that if "R" holds, then there is at least one execution sequence such that "S"
+ * eventually holds
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
@@ -65,9 +66,9 @@ public class PossibilityPattern extends PatternType {
 			sb.append(getScope());
 		}
 		sb.append("it is always the case that if \"");
-		sb.append(getCdds().get(0).toBoogieString());
-		sb.append("\" holds, then there is at least one execution sequence such that \"");
 		sb.append(getCdds().get(1).toBoogieString());
+		sb.append("\" holds, then there is at least one execution sequence such that \"");
+		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" eventually holds");
 		return sb.toString();
 	}

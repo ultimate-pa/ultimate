@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * {scope}, it is always the case that if "R" holds for at least "c1" time units and "S" holds, then "T" holds
+ * {scope}, it is always the case that after "R" holds for at least "c1" time units and "S" holds, then "T" holds
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
@@ -81,13 +81,13 @@ public class BndTriggeredEntryConditionPattern extends PatternType {
 			sb.append(getScope());
 		}
 		sb.append("it is always the case that after \"");
-		sb.append(getCdds().get(0).toBoogieString());
+		sb.append(getCdds().get(2).toBoogieString());
 		sb.append("\" holds for at least \"");
 		sb.append(getDuration().get(0));
 		sb.append("\" time units and \"");
 		sb.append(getCdds().get(1).toBoogieString());
 		sb.append("\" holds, then \"");
-		sb.append(getCdds().get(2).toBoogieString());
+		sb.append(getCdds().get(0).toBoogieString());
 		sb.append("\" holds");
 		return sb.toString();
 	}
