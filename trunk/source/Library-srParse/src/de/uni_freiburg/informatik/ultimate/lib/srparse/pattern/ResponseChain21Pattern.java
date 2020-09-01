@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
+@Deprecated
 public class ResponseChain21Pattern extends PatternType {
 
 	public ResponseChain21Pattern(final SrParseScope scope, final String id, final List<CDD> cdds,

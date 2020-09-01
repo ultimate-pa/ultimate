@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
  * "{scope}, if S holds then P toggles T after at most c1 time units."
  *
  */
+@Deprecated
 public class TogglePatternDelayed extends PatternType {
 
 	public TogglePatternDelayed(final SrParseScope scope, final String id, final List<CDD> cdds,

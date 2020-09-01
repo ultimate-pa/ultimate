@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 /**
  * "{scope}, if S holds then P toggles T."
  *
- *
  */
+@Deprecated
 public class TogglePattern extends PatternType {
 
 	public TogglePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
