@@ -62,8 +62,7 @@ public class InstAbsPattern extends PatternType {
 		if (scope instanceof SrParseScopeGlobally) {
 			ct = counterTrace(phaseT(), phase(P), phaseT());
 		} else if (scope instanceof SrParseScopeAfterUntil) {
-			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()), phase(P.and(R.negate())),
-					phaseT());
+			ct = counterTrace(phaseT(), phase(Q), phase(R.negate()), phase(P.and(R.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			ct = counterTrace(phaseT(), phase(Q), phaseT(), phase(P), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {

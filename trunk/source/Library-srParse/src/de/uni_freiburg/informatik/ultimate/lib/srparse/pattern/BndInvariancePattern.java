@@ -70,7 +70,7 @@ public class BndInvariancePattern extends PatternType {
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()), phase(R.and(Q.negate())),
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(R.and(Q.negate())),
 					phase(Q.negate(), BoundTypes.LESS, c1), phase(S.negate().and(Q.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();

@@ -71,9 +71,8 @@ public class BndResponsePatternUT extends PatternType {
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate()),
-					phase(R.and(Q.negate()).and(S.negate())), phase(S.negate().and(Q.negate()), BoundTypes.GREATER, c1),
-					phaseT());
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate()), phase(R.and(Q.negate()).and(S.negate())),
+					phase(S.negate().and(Q.negate()), BoundTypes.GREATER, c1), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();
 			ct = counterTrace(phaseT(), phase(P), phaseT(), phase(R.and(S.negate())),

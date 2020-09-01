@@ -68,7 +68,7 @@ public class UniversalityPatternDelayed extends PatternType {
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD P = scope.getCdd1();
 			final CDD Q = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(P.and(Q.negate())), phase(Q.negate(), BoundTypes.GREATEREQUAL, c1),
+			ct = counterTrace(phaseT(), phase(P), phase(Q.negate(), BoundTypes.GREATEREQUAL, c1),
 					phase(Q.negate().and(S.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD P = scope.getCdd1();

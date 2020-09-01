@@ -70,7 +70,7 @@ public class BndEntryConditionPattern extends PatternType {
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()),
+			ct = counterTrace(phaseT(), phase(Q), phase(R.negate()),
 					phase(P.and(R.negate()), BoundTypes.GREATEREQUAL, c1), phase(S.negate().and(R.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD Q = scope.getCdd1();

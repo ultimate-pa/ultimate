@@ -67,7 +67,7 @@ public class BndExistencePattern extends PatternType {
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()), phase(P.and(R.negate())),
+			ct = counterTrace(phaseT(), phase(Q), phase(R.negate()), phase(P.and(R.negate())),
 					phase(P.negate().and(R.negate())), phase(P.and(R.negate())), phase(P.negate().and(R.negate())),
 					phase(P.and(R.negate())), phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {

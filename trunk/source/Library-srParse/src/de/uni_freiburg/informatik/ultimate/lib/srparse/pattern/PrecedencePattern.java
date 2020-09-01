@@ -67,11 +67,11 @@ public class PrecedencePattern extends PatternType {
 		} else if (scope instanceof SrParseScopeAfterUntil) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();
-			ct = counterTrace(phaseT(), phase(Q.and(R.negate()).and(S.negate())), phase(S.negate().and(R.negate())),
-					phase(P.and(R.negate())), phaseT());
+			ct = counterTrace(phaseT(), phase(Q), phase(S.negate().and(R.negate())), phase(P.and(R.negate())),
+					phaseT());
 		} else if (scope instanceof SrParseScopeAfter) {
 			final CDD Q = scope.getCdd1();
-			ct = counterTrace(phaseT(), phase(Q.and(S.negate())), phase(S.negate()), phase(P), phaseT());
+			ct = counterTrace(phaseT(), phase(Q), phase(S.negate()), phase(P), phaseT());
 		} else if (scope instanceof SrParseScopeBetween) {
 			final CDD Q = scope.getCdd1();
 			final CDD R = scope.getCdd2();
