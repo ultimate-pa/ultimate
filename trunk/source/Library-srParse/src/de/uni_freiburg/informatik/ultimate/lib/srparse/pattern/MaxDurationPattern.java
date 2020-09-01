@@ -53,7 +53,7 @@ public class MaxDurationPattern extends PatternType {
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		assert cdds.length == 1 && durations.length == 0;
+		assert cdds.length == 1 && durations.length == 1;
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
