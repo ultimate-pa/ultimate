@@ -45,7 +45,13 @@ public class PossibilityPattern extends PatternType {
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		throw new PatternScopeNotImplemented(getScope().getClass(), getClass());
+		assert cdds.length == 2 && durations.length == 0;
+
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
+		final SrParseScope scope = getScope();
+
+		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
 
 	@Override
