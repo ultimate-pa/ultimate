@@ -215,7 +215,7 @@ pattern ::=	IT IS NEVER THE CASE THAT expression:p HOLDS
 	  	| expression:p EVENTUALLY HOLDS
 	      	{: RESULT = new PatternBuilder(); RESULT.setType(ResponsePattern.class); RESULT.addCdd(BoogieBooleanExpressionDecision.createTrue(),p); :}
 		| TRANSITIONS TO STATES IN WHICH expression:p HOLDS OCCUR AT MOST TWICE
-	      	{: RESULT = new PatternBuilder(); RESULT.setType(BndExistencePattern.class); RESULT.addCdd(p); :}
+	      	{: RESULT = new PatternBuilder(); RESULT.setType(BndExistencePattern.class); RESULT.addCdd(r); :}
 		| IT IS ALWAYS THE CASE THAT opattern:p 
 			{: RESULT = p; :}
 	  	| IT IS ALWAYS THE CASE THAT rtpattern:p

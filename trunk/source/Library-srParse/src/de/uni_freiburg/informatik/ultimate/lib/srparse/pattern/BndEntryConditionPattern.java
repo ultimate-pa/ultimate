@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * "{scope}, it is always the case that after "P" holds for at least "c1" time units, then "S" holds
+ * "{scope}, it is always the case that after "R" holds for at least "c1" time units, then "S" holds
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -54,10 +54,11 @@ public class BndEntryConditionPattern extends PatternType {
 
 	@Override
 	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		final SrParseScope scope = getScope();
+		assert cdds.length == 2 && durations.length == 1;
 
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
+		final SrParseScope scope = getScope();
 		final CDD R = cdds[1];
 		final CDD S = cdds[0];
 		final int c1 = durations[0];
