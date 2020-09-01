@@ -240,8 +240,8 @@ opattern ::= IF expression:p HOLDS COMMA? THEN expression:q PREVIOUSLY HELD
   
 rtpattern ::= ONCE expression:p BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST duration:d
 				{: RESULT = new PatternBuilder().setType(MinDurationPattern.class).addCdd(p).addDuration(d); :}
-  			| ONCE expression:p BECOMES SATISFIED COMMA? IT HOLDS FOR LESS THAN duration:d
-				{: RESULT = new PatternBuilder().setType(MaxDurationPattern.class).addCdd(p).addDuration(d); :}
+  			| ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR LESS THAN duration:c1
+				{: RESULT = new PatternBuilder().setType(MaxDurationPattern.class).addCdd(r).addDuration(c1); :}
 			| expression:r HOLDS AT LEAST EVERY duration:c1
 				{: RESULT = new PatternBuilder().setType(BndRecurrencePattern.class).addCdd(r).addDuration(c1); :}
 			| expression:p HOLDS AT MOST duration:d LATER
