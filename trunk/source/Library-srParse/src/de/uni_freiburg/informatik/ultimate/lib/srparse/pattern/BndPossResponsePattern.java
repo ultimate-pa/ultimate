@@ -53,9 +53,6 @@ public class BndPossResponsePattern extends PatternType {
 		// P and Q are reserved for scope.
 		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope scope = getScope();
-		final CDD R = cdds[1];
-		final CDD S = cdds[0];
-		final int c1 = durations[0];
 
 		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
