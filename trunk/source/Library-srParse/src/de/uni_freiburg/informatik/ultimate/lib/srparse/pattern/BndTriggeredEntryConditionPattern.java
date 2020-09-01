@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 
 /**
- * "{scope}, it is always the case that if "P" holds for at least "c1" time units and "Q" holds, then "R" holds."
+ * "{scope}, it is always the case that if "R" holds for at least "c1" time units and "S" holds, then "T" holds."
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
@@ -53,19 +53,21 @@ public class BndTriggeredEntryConditionPattern extends PatternType {
 	protected List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
 		assert cdds.length == 3 && durations.length == 1;
 
+		// P and Q are reserved for scope.
+		// R, S, ... are reserved for CDDs, but they are parsed in reverse order.
 		final SrParseScope scope = getScope();
-		final CDD S = cdds[2];
-		final CDD R = cdds[1];
-		final CDD Q = cdds[0];
+		final CDD T = cdds[2];
+		final CDD S = cdds[1];
+		final CDD R = cdds[0];
 		final int c1 = durations[0];
 
 		if (scope instanceof SrParseScopeGlobally) {
-			final CounterTrace ct = counterTrace(phaseT(), phase(Q, BoundTypes.GREATEREQUAL, c1),
-					phase(S.negate().and(R).and(Q)), phaseT());
+			final CounterTrace ct = counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1),
+					phase(T.negate().and(S).and(R)), phaseT());
 			return Collections.singletonList(ct);
 		}
-		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 
+		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
 
 	@Override
