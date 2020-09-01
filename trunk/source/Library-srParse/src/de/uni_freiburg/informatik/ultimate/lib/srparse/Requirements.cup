@@ -224,8 +224,8 @@ pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
   
 opattern ::= IF expression:p HOLDS COMMA? THEN expression:q PREVIOUSLY HELD
       			{: RESULT = new PatternBuilder(); RESULT.setType(PrecedencePattern.class); RESULT.addCdd(q,p); :}
-  			| IF expression:p HOLDS AND IS SUCCEEDED BY expression:q COMMA? THEN expression:r PREVIOUSLY HELD
-				{: RESULT = new PatternBuilder(); RESULT.setType(PrecedenceChain12Pattern.class); RESULT.addCdd(r,q,p); :}
+  			| IF expression:r HOLDS AND IS SUCCEEDED BY expression:s COMMA? THEN expression:t PREVIOUSLY HELD
+				{: RESULT = new PatternBuilder(); RESULT.setType(PrecedenceChain12Pattern.class); RESULT.addCdd(t,s,r); :}
   			| IF expression:p HOLDS COMMA? THEN expression:q PREVIOUSLY HELD AND WAS PRECEDED BY expression:r
 				{: RESULT = new PatternBuilder(); RESULT.setType(PrecedenceChain21Pattern.class); RESULT.addCdd(r,q,p); :}
   			| IF expression:p HOLDS COMMA? THEN expression:q EVENTUALLY HOLDS
